@@ -186,8 +186,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   protected abstract void progressIsAdvanced(@NotNull HighlightingSession session, Editor editor, double progress);
   @ApiStatus.Internal
   protected static final int ANY_GROUP = -409423948;
-  @ApiStatus.Internal
-  protected static final int FILE_LEVEL_FAKE_LAYER = -4094; // the layer the (fake) RangeHighlighter is created for file-level HighlightInfo in
+
   @ApiStatus.Internal
   @RequiresBackgroundThread
   public void rescheduleShowIntentionsPass(@NotNull PsiFile psiFile, @NotNull HighlightInfo.Builder builder) {

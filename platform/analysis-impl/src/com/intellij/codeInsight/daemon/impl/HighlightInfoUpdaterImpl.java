@@ -71,6 +71,8 @@ import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Disposable {
+  @ApiStatus.Internal
+  static final int FILE_LEVEL_FAKE_LAYER = -4094; // the layer the (fake) RangeHighlighter is created for file-level HighlightInfo in
   private static final Logger LOG = Logger.getInstance(HighlightInfoUpdaterImpl.class);
   private static final Object UNKNOWN_ID = "unknownId";
   /**
@@ -1217,7 +1219,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       // workaround for rogue plugins that cache HighlightInfos and then return identical HI for different calls
       newInfo = newInfo.copy(true).createUnconditionally();
       newInfosToStore.add(newInfo);
-      int layer = isFileLevel ? DaemonCodeAnalyzerEx.FILE_LEVEL_FAKE_LAYER : UpdateHighlightersUtil.getLayer(newInfo, severityRegistrar);
+      int layer = isFileLevel ? FILE_LEVEL_FAKE_LAYER : UpdateHighlightersUtil.getLayer(newInfo, severityRegistrar);
       int infoStartOffset = TextRangeScalarUtil.startOffset(finalInfoRange);
       int infoEndOffset = TextRangeScalarUtil.endOffset(finalInfoRange);
 
@@ -1301,7 +1303,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       // recycle
       HighlightInfo oldInfo = recycled.info();
       HighlightSeverity oldSeverity = oldInfo.getSeverity();
-      int oldLayer = isFileLevel ? DaemonCodeAnalyzerEx.FILE_LEVEL_FAKE_LAYER : UpdateHighlightersUtil.getLayer(oldInfo, severityRegistrar);
+      int oldLayer = isFileLevel ? FILE_LEVEL_FAKE_LAYER : UpdateHighlightersUtil.getLayer(oldInfo, severityRegistrar);
       highlighter = oldInfo.getHighlighter();
       newInfo.setHighlighter(highlighter);
       if (isFileLevel) {
@@ -1327,7 +1329,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                                                                                   @Nullable CodeInsightContext context) {
     Document document = markupModel.getDocument();
     RangeHighlighterEx highlighter = toReuse != null && toReuse.isValid() ? toReuse
-             : (RangeHighlighterEx)markupModel.addRangeHighlighter(0, document.getTextLength(), DaemonCodeAnalyzerEx.FILE_LEVEL_FAKE_LAYER, null, HighlighterTargetArea.EXACT_RANGE);
+             : (RangeHighlighterEx)markupModel.addRangeHighlighter(0, document.getTextLength(), FILE_LEVEL_FAKE_LAYER, null, HighlighterTargetArea.EXACT_RANGE);
     highlighter.setGreedyToLeft(true);
     highlighter.setGreedyToRight(true);
     highlighter.setErrorStripeTooltip(info);
