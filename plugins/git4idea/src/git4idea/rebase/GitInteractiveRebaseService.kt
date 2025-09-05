@@ -11,10 +11,12 @@ import git4idea.rebase.interactive.startInteractiveRebase
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-internal class GitInteractiveRebaseService(private val project: Project, private val cs: CoroutineScope) {
-  fun launchRebase(repository: GitRepository, startCommit: VcsCommitMetadata, logData: VcsLogData) {
+class GitInteractiveRebaseService(private val project: Project, private val cs: CoroutineScope) {
+  fun launchRebase(repository: GitRepository, startCommit: VcsCommitMetadata, logData: VcsLogData? = null) {
     cs.launch {
       if (Registry.`is`("git.interactive.rebase.collect.entries.using.log")) {
         interactivelyRebaseUsingLog(repository, startCommit, logData)

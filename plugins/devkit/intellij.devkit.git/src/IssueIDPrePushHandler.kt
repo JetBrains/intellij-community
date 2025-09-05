@@ -49,6 +49,7 @@ internal abstract class IssueIDPrePushHandler : AbstractIntelliJProjectPrePushHa
 
   /**
    * Notify the user about commits that don't pass validation.
+   * Commits in [commitsToWarnAbout] are ordered from oldest to newest.
    *
    * @return `true` if user decided to skip validation, `false` otherwise.
    */

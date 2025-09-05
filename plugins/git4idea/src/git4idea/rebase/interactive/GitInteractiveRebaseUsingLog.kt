@@ -5,14 +5,15 @@ import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.DialogManager
 import git4idea.GitOperationsCollector
@@ -77,18 +78,26 @@ internal fun getEntriesUsingLog(
   }
 }
 
-internal suspend fun interactivelyRebaseUsingLog(repository: GitRepository, commit: VcsCommitMetadata, logData: VcsLogData) {
+internal suspend fun interactivelyRebaseUsingLog(repository: GitRepository, commit: VcsCommitMetadata, logData: VcsLogData? = null) {
   val project = repository.project
   val root = repository.root
 
   val generatedEntries = try {
     withBackgroundProgress(project, GitBundle.message("rebase.progress.indicator.preparing.title")) {
+      val logData = logData ?: VcsProjectLog.awaitLogIsReady(project)?.dataManager ?: run {
+        LOG.warn("Couldn't use log for rebasing - log not available")
+        return@withBackgroundProgress null
+      }
       getEntriesUsingLog(repository, commit, logData)
     }
   }
   catch (e: CantRebaseUsingLogException) {
     LOG.warn("Couldn't use log for rebasing: ${e.message}")
     logCantRebaseUsingLog(repository.project, e.reason)
+    null
+  }
+
+  if (generatedEntries == null) {
     startInteractiveRebase(repository, commit)
     return
   }
