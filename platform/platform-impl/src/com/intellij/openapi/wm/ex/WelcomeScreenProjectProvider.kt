@@ -5,6 +5,7 @@ import com.intellij.diagnostic.WindowsDefenderChecker
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -83,6 +84,7 @@ abstract class WelcomeScreenProjectProvider {
 
       val recentProjectsManager = RecentProjectsManagerBase.getInstanceEx()
       recentProjectsManager.setProjectHidden(project, true)
+      TipAndTrickManager.DISABLE_TIPS_FOR_PROJECT.set(project, true)
 
       return project
     }
