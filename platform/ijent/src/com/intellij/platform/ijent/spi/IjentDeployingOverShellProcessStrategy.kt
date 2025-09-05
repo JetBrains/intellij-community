@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.getIjentGrpcArgv
@@ -21,7 +20,11 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.measureTime
 
+// The timeout is based on internal measurements done on CI (max: 21.5s, p98: 12.2s)
+private const val SHELL_INIT_TIMEOUT_MILLS = "30000"
+
 private val EP_NAME = ExtensionPointName<IjentDeploymentListener>("com.intellij.ijent.deploymentListener")
+
 interface IjentDeploymentListener {
   fun shellInitialized(initializationTime: Duration)
 }
@@ -44,7 +47,8 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
       createdShellProcess = shellProcess
       createDeployingContext(shellProcess.apply {
         val initializationTime = measureTime {
-          withTimeout(runCatching { Registry.intValue("ijent.shell.initialization.timeout") }.getOrDefault(30_000).milliseconds) {
+          val timeout = System.getProperty("ijent.shell.initialization.timeout", SHELL_INIT_TIMEOUT_MILLS).toInt()
+          withTimeout(timeout.milliseconds) {
             val debugOption = if (LOG.isDebugEnabled) "x" else ""
             write("set -e$debugOption")
             ensureActive()
