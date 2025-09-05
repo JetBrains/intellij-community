@@ -653,8 +653,11 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         if (userData != null) {
           withContext(Dispatchers.EDT) {
             updateUserAccountsList()
-            val remoteCommunicator = RemoteCommunicatorHolder.createRemoteCommunicator(provider, userData.id, loginDisposable) ?: return@withContext
-            if (checkServerState(syncPanelHolder, remoteCommunicator, provider.authService.crossSyncSupported())) {
+            val serverStateChecked = withContext(Dispatchers.IO) {
+              val remoteCommunicator = RemoteCommunicatorHolder.createRemoteCommunicator(provider, userData.id, loginDisposable) ?: return@withContext false
+              checkServerState(syncPanelHolder, remoteCommunicator, provider.authService.crossSyncSupported())
+            }
+            if (serverStateChecked) {
               SettingsSyncEvents.getInstance().fireLoginStateChanged()
               val newHolder = UserProviderHolder(userData.id, userData, provider.authService.providerCode, provider.authService.providerName, null)
               userProviderHolder = newHolder
