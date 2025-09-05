@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.isCommandTypingMode
 import org.jetbrains.plugins.terminal.block.reworked.updateContent
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import java.lang.Runnable
@@ -57,12 +58,12 @@ internal class TerminalTypeAheadOutputModelController(
     }
   }
 
-  override fun isEnabled(): Boolean {
-    return Registry.`is`("terminal.type.ahead", false) && isTypingCommand()
+  private fun isTypeAheadEnabled(): Boolean {
+    return Registry.`is`("terminal.type.ahead", false) && blocksModel.isCommandTypingMode()
   }
 
   override fun type(string: String) {
-    if (!isEnabled()) return
+    if (!isTypeAheadEnabled()) return
 
     // At this moment we only support type-ahead at the end of the output
     if (outputModel.getTextAfterCursor().isBlank()) {
@@ -73,7 +74,7 @@ internal class TerminalTypeAheadOutputModelController(
   }
 
   override fun backspace() {
-    if (!isEnabled()) return
+    if (!isTypeAheadEnabled()) return
 
     val lastBlock = blocksModel.blocks.lastOrNull()
     val cursorOffset = outputModel.cursorOffsetState.value.toRelative()
@@ -188,14 +189,6 @@ internal class TerminalTypeAheadOutputModelController(
     else {
       update.run()
     }
-  }
-
-  private fun isTypingCommand(): Boolean {
-    return blocksModel.blocks.lastOrNull()?.let { lastBlock ->
-      // The command start offset is where the prompt ends. If it's not there yet, it means the user can't type a command yet.
-      // The output start offset is -1 until the command starts executing. Once that happens, it means the user can't type anymore.
-      lastBlock.commandStartOffset >= 0 && lastBlock.outputStartOffset == -1
-    } == true
   }
 
   companion object {

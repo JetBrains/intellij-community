@@ -23,11 +23,6 @@ internal interface TerminalTypeAhead {
   @RequiresEdt
   fun backspace()
 
-  /**
-   * Whether the type-ahead feature is enabled and context allows to use it.
-   */
-  fun isEnabled(): Boolean
-
   companion object {
     val KEY: Key<TerminalTypeAhead> = Key.create("TerminalTypeAhead")
   }

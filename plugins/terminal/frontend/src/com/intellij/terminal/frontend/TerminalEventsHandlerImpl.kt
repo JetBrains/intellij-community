@@ -15,10 +15,7 @@ import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
+import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import java.awt.Point
 import java.awt.event.InputEvent
@@ -81,16 +78,7 @@ internal open class TerminalEventsHandlerImpl(
     }
 
     syncEditorCaretWithModel()
-
-    val project = editor.project
-    if (project != null && typeAhead?.isEnabled() != false &&
-        LookupManager.getActiveLookup(editor) == null &&
-        editor.isOutputModelEditor &&
-        (Character.isLetterOrDigit(charTyped) || charTyped == '-' || charTyped == File.separatorChar) &&
-        TerminalCommandCompletion.isEnabled() &&
-        TerminalOptionsProvider.instance.showCompletionPopupAutomatically) {
-      AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
-    }
+    scheduleCompletionPopupIfNeeded(charTyped)
   }
 
   override fun keyPressed(e: TimedKeyEvent) {
@@ -397,6 +385,24 @@ internal open class TerminalEventsHandlerImpl(
         moveCaretAction()
       }
     }
+  }
+
+  private fun scheduleCompletionPopupIfNeeded(charTyped: Char) {
+    val project = editor.project ?: return
+    val blocksModel = editor.getUserData(TerminalBlocksModel.KEY) ?: return
+    if (editor.isOutputModelEditor
+        && TerminalCommandCompletion.isEnabled()
+        && TerminalOptionsProvider.instance.showCompletionPopupAutomatically
+        && blocksModel.isCommandTypingMode()
+        && canTriggerCompletion(charTyped)
+        && LookupManager.getActiveLookup(editor) == null
+    ) {
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
+    }
+  }
+
+  private fun canTriggerCompletion(char: Char): Boolean {
+    return Character.isLetterOrDigit(char) || char == '-' || char == File.separatorChar
   }
 
   companion object {

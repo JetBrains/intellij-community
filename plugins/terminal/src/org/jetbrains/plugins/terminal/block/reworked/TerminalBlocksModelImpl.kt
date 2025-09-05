@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.terminal.session.TerminalBlocksModelState
 import com.intellij.terminal.session.TerminalOutputBlock
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -172,4 +173,18 @@ class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksMo
   override fun toString(): String {
     return "TerminalBlocksModelImpl(blocks=$blocks)"
   }
+}
+
+/**
+ * Returns true if the user can type a command right now.
+ */
+@ApiStatus.Internal
+@RequiresEdt
+fun TerminalBlocksModel.isCommandTypingMode(): Boolean {
+  val lastBlock = blocks.lastOrNull() ?: return false
+  // The command start offset is where the prompt ends.
+  // If it's not there yet, it means the user can't type a command yet.
+  // The output start offset is -1 until the command starts executing.
+  // Once that happens, it means the user can't type anymore.
+  return lastBlock.commandStartOffset >= 0 && lastBlock.outputStartOffset == -1
 }
