@@ -736,9 +736,11 @@ public final class PyExtractMethodUtil {
         myFunction = s -> {
           ScopeOwner owner = parent;
           while (owner != null) {
-            final Scope scope = ControlFlowCache.getScope(owner);
-            if (scope.containsDeclaration(s)) {
-              return false;
+            if (!(owner instanceof PyClass)) {
+              final Scope scope = ControlFlowCache.getScope(owner);
+              if (scope.containsDeclaration(s)) {
+                return false;
+              }
             }
             owner = ScopeUtil.getScopeOwner(owner);
           }

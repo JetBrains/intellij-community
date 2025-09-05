@@ -391,4 +391,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testMethodNameCanShadowModuleFunction() {
     doTest("_require_instance");
   }
+
+  // PY-61591
+  public void testInnerFunctionWithSameNameAsOuterMethod() {
+    doTest("foo");
+  }
 }
