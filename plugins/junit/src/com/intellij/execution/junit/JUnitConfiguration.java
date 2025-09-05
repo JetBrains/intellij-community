@@ -141,7 +141,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
     @Override
     public void setPsiElement(final PsiClass psiClass) {
-      setCategory(psiClass.getQualifiedName());
+      setCategory(JavaExecutionUtil.getRuntimeQualifiedName(psiClass));
     }
   };
   public boolean ALTERNATIVE_JRE_PATH_ENABLED;
@@ -317,12 +317,8 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   @Override
   public String getRunClass() {
     final Data data = getPersistentData();
-    String mainClassName = !Comparing.strEqual(data.TEST_OBJECT, TEST_CLASS) &&
+    return !Comparing.strEqual(data.TEST_OBJECT, TEST_CLASS) &&
            !Comparing.strEqual(data.TEST_OBJECT, TEST_METHOD) ? null : data.getMainClassName();
-    if (mainClassName == null) return null;
-    PsiClass mainClass = getConfigurationModule().findClass(mainClassName);
-    if (mainClass == null) return null;
-    return JavaExecutionUtil.getRuntimeQualifiedName(mainClass);
   }
 
   @Override
@@ -608,7 +604,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       methodSuffix = "";
     }
     for (PsiClass pattern : classes) {
-      patterns.add(pattern.getQualifiedName() + methodSuffix);
+      patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + methodSuffix);
     }
     myData.setPatterns(patterns);
     final Module module = RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).findModule(this, getConfigurationModule()
@@ -940,7 +936,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     }
 
     public Module setMainClass(final PsiClass testClass) {
-      MAIN_CLASS_NAME = testClass.getQualifiedName();
+      MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(testClass);
       PACKAGE_NAME = StringUtil.getPackageName(Objects.requireNonNull(testClass.getQualifiedName()));
       return JavaExecutionUtil.findModule(testClass);
     }

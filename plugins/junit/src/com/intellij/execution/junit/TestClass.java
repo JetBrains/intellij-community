@@ -28,8 +28,8 @@ class TestClass extends TestObject {
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = super.createJavaParameters();
-    final String runClass = getConfiguration().getRunClass();
-    javaParameters.getProgramParametersList().add(runClass);
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    javaParameters.getProgramParametersList().add(data.getMainClassName());
     return javaParameters;
   }
 
@@ -72,7 +72,7 @@ class TestClass extends TestObject {
       // 'test class' configuration is not equal to the 'test method' configuration!
       return false;
     }
-    return Objects.equals(testClass.getQualifiedName(), configuration.getPersistentData().getMainClassName());
+    return Objects.equals(JavaExecutionUtil.getRuntimeQualifiedName(testClass), configuration.getPersistentData().getMainClassName());
   }
 
   @Override

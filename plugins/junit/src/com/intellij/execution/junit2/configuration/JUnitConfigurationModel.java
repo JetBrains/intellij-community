@@ -100,7 +100,9 @@ public class JUnitConfigurationModel {
 
   public void apply(final Module module, final JUnitConfiguration configuration, @Nullable ClassEditorField classField) {
     final boolean shouldUpdateName = configuration.isGeneratedName();
-    applyTo(configuration.getPersistentData(), module, classField);
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-359592")) {
+      applyTo(configuration.getPersistentData(), module, classField);
+    }
     if (shouldUpdateName && !JavaExecutionUtil.isNewName(configuration.getName())) {
       configuration.setGeneratedName();
     }
