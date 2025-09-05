@@ -394,6 +394,12 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     myEditor.getCaretModel().moveToOffset(myOrigOffset);
   }
 
+  @Override
+  protected @Nullable PsiElement checkLocalScope() {
+    PsiElement scope = super.checkLocalScope();
+    return scope != null && !(scope instanceof PsiFileSystemItem) ? scope.getParent() : scope;
+  }
+
   private @Nullable RangeHighlighter highlightConflictingElement(PsiElement conflictingElement) {
     if (conflictingElement != null) {
       try {

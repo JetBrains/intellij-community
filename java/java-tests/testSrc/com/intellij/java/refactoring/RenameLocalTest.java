@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -115,6 +115,12 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, 
                  "Variable 's' Already Exists",
                  () -> doTestInplaceRename("s"));
+  }
+  
+  public void testConflictInLambdaParameter() {
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class,
+                 "Variable 'o' Already Exists",
+                 () -> doTestInplaceRename("o"));
   }
 
   public void testConflictWithFutureVar() {

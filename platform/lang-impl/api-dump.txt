@@ -999,6 +999,8 @@ com.intellij.refactoring.introduce.IntroduceTarget
 - a:render():java.lang.String
 com.intellij.refactoring.move.MoveCallback
 - a:refactoringCompleted():V
+c:com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
+- p:checkLocalScope():com.intellij.psi.PsiElement
 com.intellij.refactoring.safeDelete.SafeDeleteDialog$Callback
 - a:run(com.intellij.refactoring.safeDelete.SafeDeleteDialog):V
 com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate
