@@ -1,6 +1,7 @@
 package com.intellij.terminal.tests.reworked.frontend
 
 import com.intellij.openapi.application.EDT
+import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
@@ -166,6 +167,19 @@ class TerminalCompletionTest : BasePlatformTestCase() {
                        listOf("set", "show", "start", "status", "stop", "sync"))
 
     fixture.pressKey(VK_LEFT)
+    assertFalse(fixture.isLookupActive())
+  }
+
+  @Test
+  fun `test completion popup closes when any text appears below the line with cursor`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixture = createFixture()
+
+    fixture.type("test_cmd st")
+    fixture.callCompletionPopup()
+    assertSameElements(fixture.getLookupElements().map { it.lookupString },
+                       listOf("start", "status", "stop"))
+
+    fixture.outputModel.update(1, "some text")
     assertFalse(fixture.isLookupActive())
   }
 

@@ -22,7 +22,6 @@ import com.intellij.terminal.session.TerminalOutputBlock
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.tests.block.util.TestCommandSpecsProvider
 import com.intellij.testFramework.ExtensionTestUtil
-import kotlinx.coroutines.yield
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
@@ -38,6 +37,9 @@ import kotlin.time.TimeSource
 class TerminalCompletionFixture(val project: Project, val testRootDisposable: Disposable) {
 
   private val view: ReworkedTerminalView
+
+  val outputModel: TerminalOutputModel
+    get() = view.outputModel
 
   init {
     val sessionFuture: CompletableFuture<TerminalSession> = CompletableFuture<TerminalSession>()

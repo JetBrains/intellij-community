@@ -9,11 +9,13 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.TextRange
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.frontend.TerminalInput
 import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import kotlin.math.max
@@ -29,9 +31,13 @@ internal class TerminalLookupManagerListener : LookupManagerListener {
     newLookup.presentation = LookupPresentation.Builder()
       .withMaxVisibleItemsCount(MaxVisibleItemsProperty())
       .build()
+
     newLookup.addLookupListener(TerminalLookupListener())
     newLookup.addPrefixChangeListener(TerminalSelectedItemIconUpdater(newLookup), newLookup)
     installLookupPrefixUpdater(newLookup)
+
+    val outputModel = newLookup.editor.getUserData(TerminalOutputModel.KEY) ?: error("Output model is not set in the terminal editor")
+    outputModel.addListener(newLookup, TerminalLookupOutputModelListener(newLookup, outputModel))
   }
 
   private fun installLookupPrefixUpdater(lookup: LookupImpl) {
@@ -148,6 +154,33 @@ private class TerminalSelectedItemIconUpdater(private val lookup: Lookup) : Pref
 
   companion object {
     private val LOG = logger<TerminalSelectedItemIconUpdater>()
+  }
+}
+
+/**
+ * Hides the lookup if the text below line with cursor is changed.
+ * It is the heuristic to address the following cases:
+ * 1. We showed the popup, the user pressed Tab, the shell printed the completion items.
+ * 2. We showed the popup, the user pressed Ctrl+R, search in command history feature was activated.
+ */
+private class TerminalLookupOutputModelListener(
+  private val lookup: LookupEx,
+  model: TerminalOutputModel,
+) : TerminalOutputModelListener {
+  private val initialTextBelowCursor = model.getTextBelowCursorLine().trim()
+
+  override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
+    val textBelowCursor = model.getTextBelowCursorLine().trim()
+    if (textBelowCursor != initialTextBelowCursor) {
+      lookup.hideLookup(true)
+    }
+  }
+
+  private fun TerminalOutputModel.getTextBelowCursorLine(): String {
+    val cursorOffset = cursorOffsetState.value.toRelative()
+    val line = document.getLineNumber(cursorOffset)
+    val lineEndOffset = document.getLineEndOffset(line)
+    return document.getText(TextRange(lineEndOffset, document.textLength))
   }
 }
 
