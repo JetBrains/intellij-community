@@ -98,12 +98,22 @@ class TerminalLookupPrefixUpdater private constructor(
 
   private fun truncatePrefix(times: Int) {
     val preserveSelection = CompletionServiceImpl.currentCompletionProgressIndicator?.isAutopopupCompletion != true
-    val hideOffset = (lookup.lookupStart - 1).coerceAtLeast(0)
+    val hideOffset = lookup.lookupStart
     repeat(times) {
       if (lookup.isLookupDisposed) {
         return
       }
+
       lookup.truncatePrefix(preserveSelection, hideOffset)
+    }
+
+    if (!lookup.isLookupDisposed && times > 0) {
+      // Hide the lookup if the prefix became empty after truncation
+      val curPrefix = calculateCurPrefix()
+      if (curPrefix != null && curPrefix.isEmpty()) {
+        lookup.hideLookup(true)
+        return
+      }
     }
   }
 

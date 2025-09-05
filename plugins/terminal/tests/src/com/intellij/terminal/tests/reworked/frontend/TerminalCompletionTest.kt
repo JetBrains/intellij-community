@@ -77,19 +77,19 @@ class TerminalCompletionTest : BasePlatformTestCase() {
     fixture.type("test_cmd ")
     fixture.callCompletionPopup()
 
-    fixture.type("st")
+    fixture.type("sta")
     val startResult = fixture.getLookupElements()
-    assertSameElements(startResult.map { it.lookupString }, listOf("start", "status", "stop"))
+    assertSameElements(startResult.map { it.lookupString }, listOf("start", "status"))
 
     fixture.pressKey(VK_LEFT)
     val afterFirstLeftResult = fixture.getLookupElements()
     assertSameElements(afterFirstLeftResult.map { it.lookupString },
-                       listOf("set", "show", "start", "status", "stop", "sync"))
+                       listOf("start", "status", "stop"))
 
     fixture.pressKey(VK_LEFT)
     val afterSecondLeftResult = fixture.getLookupElements()
     assertSameElements(afterSecondLeftResult.map { it.lookupString },
-                       listOf("bind", "branch", "build", "set", "show", "start", "status", "stop", "sync"))
+                       listOf("set", "show", "start", "status", "stop", "sync"))
 
     fixture.pressKey(VK_RIGHT)
     val afterRightResult = fixture.getLookupElements()
@@ -137,6 +137,36 @@ class TerminalCompletionTest : BasePlatformTestCase() {
     fixture.pressKey(VK_BACK_SPACE)
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
                        listOf("set", "show", "start", "status", "stop", "sync"))
+  }
+
+  @Test
+  fun `test completion popup closes on empty prefix after pressing backspace`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixture = createFixture()
+
+    fixture.type("test_cmd st")
+    fixture.callCompletionPopup()
+
+    fixture.pressKey(VK_BACK_SPACE)
+    assertSameElements(fixture.getLookupElements().map { it.lookupString },
+                       listOf("set", "show", "start", "status", "stop", "sync"))
+
+    fixture.pressKey(VK_BACK_SPACE)
+    assertFalse(fixture.isLookupActive())
+  }
+
+  @Test
+  fun `test completion popup closes on empty prefix after pressing left`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixture = createFixture()
+
+    fixture.type("test_cmd st")
+    fixture.callCompletionPopup()
+
+    fixture.pressKey(VK_LEFT)
+    assertSameElements(fixture.getLookupElements().map { it.lookupString },
+                       listOf("set", "show", "start", "status", "stop", "sync"))
+
+    fixture.pressKey(VK_LEFT)
+    assertFalse(fixture.isLookupActive())
   }
 
   private fun createFixture(): TerminalCompletionFixture {
