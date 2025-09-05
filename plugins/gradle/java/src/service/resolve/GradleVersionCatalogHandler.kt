@@ -35,10 +35,14 @@ fun getVersionCatalogFiles(project: Project) : Map<String, VirtualFile> {
 }
 
 /**
+ * Please use [org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogUtil.getVersionCatalogEntities],
+ * which relies on the data received from Gradle at sync.
+ *
  * Provides version catalogs for a Gradle build corresponding to the given module.
  * The build could be not only the main (in a root project directory), but also an included build (linked project) of a composite build.
  * @return a map between a version catalog name and a file with this catalog.
  */
+@ApiStatus.Obsolete
 fun getVersionCatalogFiles(module: Module) : Map<String, VirtualFile> {
   val container = mutableMapOf<String, VirtualFile>()
   for (extension in EP_NAME.extensionList) {

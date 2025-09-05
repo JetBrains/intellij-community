@@ -7,6 +7,7 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import groovy.lang.Closure
+import org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogUtil
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
@@ -49,7 +50,8 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
 
     val module = ModuleUtilCore.findModuleForPsiElement(place)
     val versionCatalogNames = if (module != null) {
-      getVersionCatalogFiles(module).keys
+      GradleVersionCatalogUtil.getVersionCatalogEntities(module).map { it.name }.toSet()
+        .ifEmpty { getVersionCatalogFiles(module).keys }
     } else {
       emptySet()
     }

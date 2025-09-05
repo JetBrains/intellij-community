@@ -11,6 +11,10 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionS
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 
+/**
+ * Currently, this test does not trigger Gradle sync. So, version catalogs are determined relying on settings.gradle parsing.
+ * If Gradle sync would be done, version catalog locations would be determined by GradleVersionCatalogEntity, willed with data from sync.
+ */
 class GradleVersionCatalogsRenameTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
