@@ -6,11 +6,10 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
+import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 suspend fun registerProjectRoot(project: Project, projectDir: VirtualFileUrl) {
