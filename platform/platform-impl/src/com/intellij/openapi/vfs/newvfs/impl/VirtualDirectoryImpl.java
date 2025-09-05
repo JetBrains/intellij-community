@@ -672,6 +672,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       //MAYBE RC: the code below is similar to addChild(child) -- how to reduce code duplication?
 
       boolean allChildrenLoaded = children.areAllChildrenLoaded();
+      Boolean wasInPersistentChildren = null; //TODO RC: for debug, remove afterwards
       if (children.isSorted() && worthBinarySearch(children)) {
         String childName = child.getName();
         //If children are sorted => 99% caseSensitivity _is_ known; otherwise how could children be sorted?
@@ -684,7 +685,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           return child;//childId is in cached children: OK
         }
         else if (!allChildrenLoaded
-                 && (TRUST_FIND_CHILD_BY_ID_CALLERS || isInPersistentChildren(pFS, getId(), childId))) {
+                 && (TRUST_FIND_CHILD_BY_ID_CALLERS || (wasInPersistentChildren = isInPersistentChildren(pFS, getId(), childId)))) {
           // Assume (either by 'trust' or because we checked) that childId is indeed a child of this directory
           // => we add it to the children list, once it is not there yet:
           int insertionIndex = -indexOfName - 1;
@@ -698,7 +699,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           return child;//childId is in cached children: OK
         }
         else if (!allChildrenLoaded
-                 && (TRUST_FIND_CHILD_BY_ID_CALLERS || isInPersistentChildren(pFS, getId(), childId))) {
+                 && (TRUST_FIND_CHILD_BY_ID_CALLERS || (wasInPersistentChildren = isInPersistentChildren(pFS, getId(), childId)))) {
           // Assume (either by 'trust' or because we checked) that childId is indeed a child of this directory
           // => we add it to the children list, once it is not there yet:
           //Here we 'trust' that childId is indeed a child of this directory -- so we add it to the children list, if it
@@ -714,11 +715,16 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       // - Race condition: someone has removed the child from 'this' children while we climb up and down the hierarchy in
       //   PersistentFSImpl.findFileById(). This is possible because in VFS we don't protect hierarchy walking with a single lock
       //   But WA/RA _should_ be used to access VFS from the outside, which prohibits the race
-      int parentId = owningPersistentFS().peer().getParent(childId);
+      //TODO RC: how could it be isInPersistentChildren=true here? We should add the child into the children list
+      //         above, if that is true!
+      int parentId = pFS.peer().getParent(childId);
+      VirtualDirectoryImpl parent = child.getParent();
       LOG.error(
-        "[" + child + ", id: " + child.getId() + ", parentId=" + parentId + "] " +
-        "expected to be in [" + this + ", id: " + getId() + "].children=" + children + " -- but absent. " +
-        "childId in persistent children: " + isInPersistentChildren(pFS, getId(), childId) + " " +
+        "[" + child + ", id: " + child.getId() + ", parentId: " + parentId + ", parent.id: " + parent.getId() + "] " +
+        "expected to be in " +
+        "[" + this + ", id: " + getId() + ", this <> parent: " + (this == parent) + "].children=" + children + " -- but absent. " +
+        "childId in persistent children: " + isInPersistentChildren(pFS, getId(), childId) + ", " +
+        "was in persistent children: " + wasInPersistentChildren +
         "-> refresh race or VFS inconsistency?"
       );
       return null;
