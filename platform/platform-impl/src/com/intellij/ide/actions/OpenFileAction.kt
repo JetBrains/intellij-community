@@ -29,18 +29,15 @@ import com.intellij.openapi.fileTypes.ex.FileTypeChooser
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.projectImport.ProjectOpenProcessor.Companion.getImportProvider
 import com.intellij.util.SlowOperations
-import com.intellij.workspaceModel.ide.registerProjectRoot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -166,10 +163,8 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
   protected open suspend fun doOpenFile(project: Project?, virtualFile: VirtualFile) {
     val file = virtualFile.toNioPath()
     if (Files.isDirectory(file)) {
-      val fromWelcomeScreenProject = project != null &&
-                                     WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
       @Suppress("TestOnlyProblems")
-      val openedProject = ProjectUtil.openExistingDir(file, project, forceReuseFrame = fromWelcomeScreenProject)
+      val openedProject = ProjectUtil.openExistingDir(file, project)
       return
     }
 

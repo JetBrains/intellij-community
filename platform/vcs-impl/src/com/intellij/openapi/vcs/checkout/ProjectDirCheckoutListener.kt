@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import java.nio.file.Path
 
 /**
@@ -26,7 +25,6 @@ private class ProjectDirCheckoutListener : CheckoutListener {
     runBlockingCancellable {
       ProjectManagerEx.getInstanceEx().openProjectAsync(directory, OpenProjectTask {
         projectToClose = project
-        forceReuseFrame = willOpenFromWelcomeScreenProject(project)
         projectRootDir = directory
       })
     }
@@ -44,13 +42,8 @@ private class PlatformProjectCheckoutListener : CheckoutListener {
     return runBlockingCancellable {
       ProjectUtil.openOrImportAsync(directory, OpenProjectTask {
         projectToClose = project
-        forceReuseFrame = willOpenFromWelcomeScreenProject(project)
         projectRootDir = directory
       }) != null
     }
   }
-}
-
-private fun willOpenFromWelcomeScreenProject(project: Project): Boolean {
-  return WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
 }

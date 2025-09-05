@@ -35,7 +35,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindowId
@@ -55,7 +54,6 @@ import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.ui.AppIcon
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.DisposableWindow
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.PlatformUtils
@@ -714,7 +712,7 @@ object ProjectUtil {
 
   @Internal
   @VisibleForTesting
-  suspend fun openExistingDir(file: Path, currentProject: Project?, forceReuseFrame: Boolean = false): Project? {
+  suspend fun openExistingDir(file: Path, currentProject: Project?): Project? {
     val canAttach = ProjectAttachProcessor.canAttachToProject()
     val preferAttach = currentProject != null &&
                        canAttach &&
@@ -725,14 +723,12 @@ object ProjectUtil {
 
     val project = if (canAttach) {
       val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject).copy(
-        forceReuseFrame = forceReuseFrame,
         projectRootDir = file,
         )
       (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options)
     }
     else {
       val options = OpenProjectTask().withProjectToClose(currentProject).copy(
-        forceReuseFrame = forceReuseFrame,
         projectRootDir = file,
       )
       openOrImportAsync(file, options)
