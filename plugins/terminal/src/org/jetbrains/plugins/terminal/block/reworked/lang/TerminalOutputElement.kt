@@ -22,17 +22,17 @@ import javax.swing.Icon
 
 /**
  * Represents the content of the [TerminalOutputPsiFile].
- * Which is always the current state of the terminal output [com.intellij.openapi.editor.Document].
+ * Which should always represent the current state of the terminal output model
+ * that is guaranteed by updating [charsSequence] property on output model changes.
  *
- * Since the terminal document is modified on EDT without write action,
+ * Since the terminal output model is modified on EDT without write action,
  * this PSI element can be changed even under read action when accessed in the background thread.
- * But all methods are implemented in a way that they always get the current snapshot of the document that is thread-safe.
  */
 @ApiStatus.Internal
-class TerminalOutputElement(private val parent: PsiFile) : PsiElement, ASTNode, UserDataHolderBase() {
-  private val charsSequence: CharSequence
-    get() = parent.viewProvider.document.immutableCharSequence
-
+class TerminalOutputElement(
+  private val parent: PsiFile,
+  var charsSequence: CharSequence,
+) : PsiElement, ASTNode, UserDataHolderBase() {
   override fun getProject(): Project {
     return parent.project
   }
@@ -74,7 +74,7 @@ class TerminalOutputElement(private val parent: PsiFile) : PsiElement, ASTNode, 
   }
 
   override fun clone(): TerminalOutputElement {
-    return TerminalOutputElement(parent)
+    return TerminalOutputElement(parent, charsSequence)
   }
 
   override fun getTextRange(): TextRange {

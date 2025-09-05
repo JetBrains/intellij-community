@@ -20,6 +20,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.CharTable
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -29,20 +30,28 @@ import javax.swing.Icon
  * and provide some features for the terminal specifically (like popup-completion, inline completion).
  *
  * This class overrides the [PsiFile] and [FileASTNode] interfaces manually
- * to always represent the state of the terminal [com.intellij.openapi.editor.Document].
+ * to always represent the snapshot of the terminal output document content.
  * This way, when the document changes, it is not detected as uncommitted in [com.intellij.psi.impl.PsiDocumentManagerBase].
  * And since we don't need to commit it, we avoid the write action, which benefits the terminal performance.
+ * Instead, we modify the [charsSequence] on output model changes without write actions.
  *
- * Since the terminal document is modified on EDT without write action,
+ * Since the terminal output model is modified on EDT without write action,
  * this PSI file can be changed even under read action when accessed in the background thread.
- * But all methods are implemented in a way that they always get the current snapshot of the document that is thread-safe.
  */
-internal class TerminalOutputPsiFile(
+@ApiStatus.Internal
+class TerminalOutputPsiFile(
   viewProvider: FileViewProvider,
+  initialContent: CharSequence,
 ) : PsiFile, FileASTNode, UserDataHolderBase() {
   private val viewProvider: AbstractFileViewProvider = viewProvider as AbstractFileViewProvider
-  private val contentElement = TerminalOutputElement(this)
+  private val contentElement = TerminalOutputElement(parent = this, initialContent)
   private val charTable = CharTableImpl()
+
+  var charsSequence: CharSequence
+    get() = contentElement.charsSequence
+    set(value) {
+      contentElement.charsSequence = value
+    }
 
   private var originalFile: PsiFile? = null
 
@@ -105,7 +114,7 @@ internal class TerminalOutputPsiFile(
   }
 
   override fun clone(): TerminalOutputPsiFile {
-    return TerminalOutputPsiFile(viewProvider.clone())
+    return TerminalOutputPsiFile(viewProvider.clone(), charsSequence)
   }
 
   override fun findElementAt(offset: Int): PsiElement? {

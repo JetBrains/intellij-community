@@ -2,6 +2,7 @@ package com.intellij.terminal.tests.reworked.frontend
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputFileType
+import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputPsiFile
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -85,6 +86,9 @@ internal class TerminalTextSelectionTest : BasePlatformTestCase() {
 
   private fun doTest(before: String, after: String) {
     myFixture.configureByText(TerminalOutputFileType, before)
+    val psiFile = myFixture.file as TerminalOutputPsiFile
+    psiFile.charsSequence = myFixture.editor.document.immutableCharSequence
+
     myFixture.editor.caretModel.currentCaret.selectWordAtCaret(false)
     myFixture.checkResult(after)
   }

@@ -21,16 +21,4 @@ internal class TerminalOutputPsiFileTest : BasePlatformTestCase() {
 
     assertThat(PsiDocumentManager.getInstance(project).isUncommited(document)).isFalse()
   }
-
-  @Test
-  fun `check psi file represents the actual document state after change`() {
-    val editor = TerminalEditorFactory.createOutputEditor(project, JBTerminalSystemSettingsProvider(), testRootDisposable)
-    val document = editor.document
-    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)!!
-    assertThat(psiFile.text).isEqualTo("")
-
-    document.insertString(0, "123")
-
-    assertThat(psiFile.text).isEqualTo("123")
-  }
 }
