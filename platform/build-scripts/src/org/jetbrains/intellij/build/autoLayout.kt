@@ -3,7 +3,11 @@ package org.jetbrains.intellij.build
 
 import com.intellij.util.xml.dom.readXmlAsModel
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.JarPackager
+import org.jetbrains.intellij.build.impl.ModuleItem
+import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.findFileInModuleSources
 
 private const val VERIFIER_MODULE = "intellij.platform.commercial.verifier"
 
@@ -98,7 +102,7 @@ internal suspend fun computeModuleSourcesByContent(
 }
 
 private fun PluginLayout.getDefaultJarName(moduleName: String, frontendModuleFilter: FrontendModuleFilter): String {
-  return if (moduleName != VERIFIER_MODULE && !frontendModuleFilter.isModuleCompatibleWithFrontend(mainModule) && frontendModuleFilter.isModuleCompatibleWithFrontend(moduleName)) {
+  return if (!frontendModuleFilter.isModuleCompatibleWithFrontend(mainModule) && frontendModuleFilter.isModuleCompatibleWithFrontend(moduleName)) {
     getMainJarName().removeSuffix(".jar") + "-frontend.jar"
   }
   else {
