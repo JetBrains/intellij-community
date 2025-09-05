@@ -6,6 +6,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
+import com.intellij.platform.rpc.backend.impl.DocumentSync
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.evaluation.EvaluationMode
@@ -74,6 +75,7 @@ internal class BackendXBreakpointApi : XBreakpointApi {
 
   override suspend fun setLine(breakpointId: XBreakpointId, requestId: Long, line: Int) {
     val breakpoint = breakpointId.findValue() as? XLineBreakpointImpl<*> ?: return
+    DocumentSync.awaitDocumentSync()
     edtWriteAction {
       breakpoint.setLine(requestId, line)
     }
@@ -81,6 +83,7 @@ internal class BackendXBreakpointApi : XBreakpointApi {
 
   override suspend fun updatePosition(breakpointId: XBreakpointId, requestId: Long) {
     val breakpoint = breakpointId.findValue() as? XLineBreakpointImpl<*> ?: return
+    DocumentSync.awaitDocumentSync()
     edtWriteAction {
       breakpoint.resetSourcePosition(requestId)
     }

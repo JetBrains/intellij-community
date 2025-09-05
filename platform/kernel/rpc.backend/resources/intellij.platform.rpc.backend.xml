@@ -8,6 +8,9 @@
     <extensionPoint qualifiedName="com.intellij.platform.rpc.backend.remoteApiProvider"
                     interface="com.intellij.platform.rpc.backend.RemoteApiProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.rpc.backend.documentSync"
+                    interface="com.intellij.platform.rpc.backend.impl.DocumentSync"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
