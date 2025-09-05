@@ -3,9 +3,11 @@ package org.jetbrains.idea.devkit.dom.ide;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.*;
 import com.intellij.util.xml.DomService;
 import org.jetbrains.annotations.NotNull;
@@ -13,8 +15,10 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 final class PluginDescriptorDomFileSearchScopeProvider implements SearchScopeProvider {
 
@@ -26,13 +30,7 @@ final class PluginDescriptorDomFileSearchScopeProvider implements SearchScopePro
   @Override
   public @NotNull List<SearchScope> getSearchScopes(@NotNull Project project, @NotNull DataContext dataContext) {
     if (!IntelliJProjectUtil.isIntelliJPlatformProject(project)) return Collections.emptyList();
-    GlobalSearchScope scope = GlobalSearchScope.filesScope(
-      project,
-      () -> {
-        GlobalSearchScope searchScope = GlobalSearchScopesCore.projectProductionScope(project);
-        return ReadAction.compute(() -> DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, searchScope));
-      }
-    );
+    GlobalSearchScope scope = GlobalSearchScope.filesScope(project, getPluginDescriptorsScopeSupplier(project));
     return Collections.singletonList(new DelegatingGlobalSearchScope(scope) {
       @Override
       public @NotNull String getDisplayName() {
@@ -44,5 +42,18 @@ final class PluginDescriptorDomFileSearchScopeProvider implements SearchScopePro
         return AllIcons.Nodes.Plugin;
       }
     });
+  }
+
+  private static @NotNull Supplier<Collection<? extends VirtualFile>> getPluginDescriptorsScopeSupplier(@NotNull Project project) {
+    return () -> {
+      if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+        return getDomFileCandidates(project);
+      }
+      return ReadAction.nonBlocking(() -> getDomFileCandidates(project)).executeSynchronously();
+    };
+  }
+
+  private static @NotNull Collection<VirtualFile> getDomFileCandidates(@NotNull Project project) {
+    return DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, GlobalSearchScopesCore.projectProductionScope(project));
   }
 }
