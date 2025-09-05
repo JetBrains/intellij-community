@@ -2962,6 +2962,20 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-81926
+  public void testUnionWithClassOverridingDunderOr() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   class Cls:
+                       def __or__(self, other: Self) -> Self:
+                           return self
+                   
+                   def foo(arg: Cls | None) -> None:
+                       print(arg)
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -817,11 +817,16 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   private static boolean typeHasOverloadedBitwiseOr(@NotNull PyType type, @NotNull PyExpression expression,
                                                     @NotNull Context context) {
-    if (type instanceof PyUnionType) return false;
-
-    PyType typeToClass = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toClass() : type;
-    var resolved = typeToClass.resolveMember("__or__", expression, AccessDirection.READ,
-                                             PyResolveContext.defaultContext(context.getTypeContext()));
+    if (!(type instanceof PyClassType classType)) {
+      return false;
+    }
+    TypeEvalContext typeContext = context.getTypeContext();
+    PyClassLikeType metaClassType = classType.getMetaClassType(typeContext, true);
+    if (metaClassType == null) {
+      return false;
+    }
+    var resolved = metaClassType
+      .resolveMember("__or__", expression, AccessDirection.READ, PyResolveContext.defaultContext(typeContext));
     if (resolved == null || resolved.isEmpty()) return false;
 
     return StreamEx.of(resolved)
