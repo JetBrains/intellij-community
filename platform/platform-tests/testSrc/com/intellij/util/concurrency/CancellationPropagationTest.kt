@@ -17,6 +17,8 @@ import com.intellij.openapi.application.impl.withModality
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.impl.ProgressResult
+import com.intellij.openapi.progress.impl.ProgressRunner
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Disposer
@@ -33,7 +35,6 @@ import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.asCancellablePromise
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -973,5 +974,30 @@ class CancellationPropagationTest {
       }
     }.join()
     assertEquals(entryCounter.get(), 2)
+  }
+
+  @Test
+  @SystemProperty("intellij.progress.task.ignoreHeadless", "true")
+  fun `blockingContextScope with ProgressRunner handles cancellation properly`() = timeoutRunBlocking {
+    repeat(50) {
+      var future: Future<*>? = null
+      val started = Semaphore(1)
+      // launch on Dispatchers.IO to make sure taskStarted.timeoutWaitUp() does not block it
+      val job = launch(Dispatchers.IO) {
+        blockingContextScope {
+          future = ProgressRunner { _ ->
+            started.up()
+            neverEndingStory()
+          }
+            .onThread(ProgressRunner.ThreadToUse.POOLED)
+            .submit()
+        }
+      }
+      started.timeoutWaitUp()
+      job.cancelAndJoin()
+      assertNotNull(future)
+      val progressResult = assertDoesNotThrow { future.get() as ProgressResult<*> }
+      assert(progressResult.isCanceled && progressResult.throwable is ProcessCanceledException)
+    }
   }
 }
