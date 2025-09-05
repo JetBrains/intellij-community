@@ -6,7 +6,10 @@ import com.intellij.util.io.DirectoryContentBuilder
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.jarFile
 import com.intellij.util.io.zipFile
+import java.nio.file.FileSystems
 import java.nio.file.Path
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 
 open class PluginPackagingConfig {
   open val ContentModuleSpec.descriptorFilename: String get() {
@@ -190,8 +193,15 @@ private fun PluginSpec.buildClasses(dir: DirectoryContentBuilder) {
   for ((pkg, classLoader) in packageClassFiles) {
     for (url in (classLoader ?: this::class.java.classLoader).getResources(pkg.replace('.', '/'))) {
       require(url.toString().endsWith('/')) { url }
-      val entries = url.readText().splitToSequence("\n").filter { !it.isBlank() }
-      for (entry in entries) {
+      val packageEntries: List<String> = if (url.protocol.contains("jar")) {
+        FileSystems.newFileSystem(url.toURI(), mutableMapOf<String, Any>()).use { jarFs ->
+          val pkgPath = jarFs.getPath(pkg.replace('.', '/'))
+          pkgPath.listDirectoryEntries().map { it.name }
+        }
+      } else {
+        url.readText().splitToSequence("\n").filter { !it.isBlank() }.toList()
+      }
+      for (entry in packageEntries) {
         if (entry.endsWith(".class")) {
           val bytes = this::class.java.classLoader.getResource("${pkg.replace('.', '/')}/$entry")!!.readBytes()
           dir.dirsFile(pkg.replace('.', '/') + "/$entry", bytes)
