@@ -5,7 +5,7 @@ package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
+import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_BACKEND_JAR
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -43,7 +43,7 @@ class PlatformLayout: BaseLayout() {
 
   fun isLibraryAlwaysPackedIntoPlugin(name: String) = projectLibraryToPolicy.get(name) == ProjectLibraryPackagingPolicy.ALWAYS_PACK_TO_PLUGIN
 
-  override fun getRelativeJarPath(moduleName: String) = APP_JAR
+  override fun getRelativeJarPath(moduleName: String) = APP_BACKEND_JAR
 
   fun withoutProjectLibrary(libraryName: String) {
     projectLibraryToPolicy.put(libraryName, ProjectLibraryPackagingPolicy.EXCLUDE)

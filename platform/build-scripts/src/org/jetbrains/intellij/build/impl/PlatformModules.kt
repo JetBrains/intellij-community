@@ -20,7 +20,7 @@ import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
 import org.jetbrains.intellij.build.UTIL_RT_JAR
-import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_CLIENT_JAR
+import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -338,7 +338,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
 
 private fun getProductModuleJarName(moduleName: String, context: BuildContext, frontendModuleFilter: FrontendModuleFilter): String {
   return when {
-    isModuleCloseSource(moduleName, context = context) -> if (frontendModuleFilter.isModuleIncluded(moduleName)) PRODUCT_CLIENT_JAR else PRODUCT_JAR
+    isModuleCloseSource(moduleName, context = context) -> if (frontendModuleFilter.isModuleIncluded(moduleName)) PRODUCT_JAR else PRODUCT_BACKEND_JAR
     else -> PlatformJarNames.getPlatformModuleJarName(moduleName, frontendModuleFilter)
   }
 }

@@ -8,7 +8,10 @@ import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import io.opentelemetry.api.common.AttributeKey
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PlatformJarNames
+import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_BACKEND_JAR
+import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
+import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
@@ -48,7 +51,7 @@ internal suspend fun generateClasspath(context: BuildContext): List<String> {
 internal fun computeAppClassPath(libDir: Path, existing: Set<Path>): LinkedHashSet<Path> {
   val result = LinkedHashSet<Path>(existing.size + 4)
   // add first - should be listed first
-  sequenceOf(PLATFORM_LOADER_JAR, UTIL_8_JAR, "app-client.jar", UTIL_JAR, "product.jar", "app.jar", "app.jar").map(libDir::resolve).filterTo(result, existing::contains)
+  sequenceOf(PLATFORM_LOADER_JAR, UTIL_8_JAR, APP_JAR, UTIL_JAR, PRODUCT_BACKEND_JAR, APP_BACKEND_JAR).map(libDir::resolve).filterTo(result, existing::contains)
   // sorted to ensure stable performance results
   result.addAll(if (isWindows) existing.sortedBy(Path::toString) else existing.sorted())
   return result

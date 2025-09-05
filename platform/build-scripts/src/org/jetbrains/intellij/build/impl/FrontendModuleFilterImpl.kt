@@ -103,7 +103,7 @@ fun isScrambledWithFrontend(element: JpsNamedElement): Boolean = when (element) 
 }
 
 internal object EmptyFrontendModuleFilter : FrontendModuleFilter {
-  override fun isModuleIncluded(moduleName: String): Boolean = false
-  override fun isProjectLibraryIncluded(libraryName: String): Boolean = false
+  override fun isModuleIncluded(moduleName: String): Boolean = true
+  override fun isProjectLibraryIncluded(libraryName: String): Boolean = true
   override fun isModuleCompatibleWithFrontend(moduleName: String): Boolean = false
 }

@@ -42,8 +42,8 @@ import kotlin.io.path.*
 private val LOG = Logger.getInstance("org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil")
 private val EXCLUDED_JAR_SUFFIXES = setOf(
   "lib/app.jar",
-  "lib/app-client.jar",
-  "lib/lib-client.jar"
+  "lib/app-backend.jar",
+  "lib/lib.jar"
 )
 
 @ApiStatus.Internal

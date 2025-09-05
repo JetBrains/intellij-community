@@ -91,7 +91,7 @@ public final class ClasspathBootstrap {
 
   private static final String[] FORBIDDEN_JARS = {
     "app.jar",
-    "app-client.java"
+    "app-backend.java"
   };
 
   @VisibleForTesting
