@@ -12,5 +12,5 @@ import java.util.List;
 interface ResultSink {
   void accept(@NotNull Object toolId,
               @NotNull PsiElement element,
-              @NotNull List<? extends HighlightInfo> info);
+              @NotNull List<? extends @NotNull HighlightInfo> info);
 }
