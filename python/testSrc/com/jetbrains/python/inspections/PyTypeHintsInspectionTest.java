@@ -2925,6 +2925,38 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-83583
+  public void testImplicitTypeAliasUsingAnnotatedWithNewStyleUnion() {
+    doTestByText("""
+                   from typing import Annotated
+                   from typing_extensions import Doc
+                   
+                   class A:
+                       pass
+                   
+                   class B:
+                       pass
+                   
+                   AOrB = Annotated[
+                       A | B,
+                       Doc("An instance of either A or B"),
+                   ]
+                   
+                   a_or_b: AOrB
+                   """);
+  }
+
+  // PY-83699
+  public void testImplicitTypeAliasUsingCallableWithNewStyleUnion() {
+    doTestByText("""
+                   from typing import Awaitable, Any, Callable
+                   
+                   AsyncFunc = Callable[[int], Awaitable[Any | None]]
+                   
+                   f: AsyncFunc
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
