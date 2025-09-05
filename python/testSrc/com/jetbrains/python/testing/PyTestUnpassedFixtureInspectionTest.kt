@@ -67,4 +67,8 @@ class PyTestUnpassedFixtureInspectionTest : PyInspectionTestCase() {
   fun testAttributeShadowing() {
     doTest()
   }
+
+  fun testQualifiedClassFixtureCall() {
+    doTest()
+  }
 }
