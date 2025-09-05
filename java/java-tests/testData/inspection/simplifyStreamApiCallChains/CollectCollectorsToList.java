@@ -245,3 +245,18 @@ class MissingIteratorRemoveAnalysis {
         list.add("foo");
     }
 }
+
+
+class UnmodifiableListTest {
+  private final List<String> myList = Stream.of("foo", "barA").collect(Collectors.toList());
+
+  private final List<String> myList2 = Stream.of("foo", "barB").<warning descr="'collect(toList())' can be replaced with 'toList()'">collect(Collectors.toList())</warning>;
+
+  void add() {
+    myList.add("foo");
+  }
+
+  List<String> get(boolean b) {
+    return Collections.unmodifiableList(b ? myList : myList2);
+  }
+}
