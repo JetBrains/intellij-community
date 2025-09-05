@@ -575,15 +575,55 @@ public final class PyExtractMethodUtil {
     if (isAsync) {
       builder.makeAsync();
     }
-    final String text;
-    if (expression instanceof PyYieldExpression) {
-      text = String.format("(%s)", expression.getText());
-    }
-    else {
-      text = expression.getText();
-    }
+    final String originalText = expression.getText();
+    final String text = shouldAddParentheses(expression, originalText) ? "(" + originalText + ")" : originalText;
     builder.statement("return " + text);
     return builder.buildFunction();
+  }
+
+  private static boolean shouldAddParentheses(@NotNull PsiElement expression, @NotNull String originalText) {
+    // Always add parentheses for yield expressions
+    if (expression instanceof PyYieldExpression) {
+      return true;
+    }
+
+    // Check if expression contains newlines
+    boolean hasNewlines = containsNewlines(originalText);
+
+    // For generator expressions with newlines, always add parentheses
+    if (expression instanceof PyGeneratorExpression && hasNewlines) {
+      return true;
+    }
+
+    // For multi-line expressions that aren't already grouped and aren't generator expressions
+    if (hasNewlines &&
+        !hasImplicitContinuationGrouping(originalText) &&
+        !isParenthesizedExpression((PyExpression)expression)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private static boolean containsNewlines(@NotNull String text) {
+    return text.contains("\n") || text.contains("\r");
+  }
+
+  private static boolean isParenthesizedExpression(@NotNull PyExpression e) {
+    return e instanceof PyParenthesizedExpression
+           || e instanceof PyListLiteralExpression
+           || e instanceof PyDictLiteralExpression
+           || e instanceof PySetLiteralExpression
+           || e instanceof PyTupleExpression
+           || e instanceof PyListCompExpression
+           || e instanceof PyDictCompExpression
+           || e instanceof PySetCompExpression
+           || e instanceof PyGeneratorExpression
+           || e instanceof PyCallExpression;
+  }
+
+  private static boolean hasImplicitContinuationGrouping(@NotNull String text) {
+    return text.indexOf('(') >= 0 || text.indexOf('[') >= 0 || text.indexOf('{') >= 0;
   }
 
   private static @NotNull PyFunction generateMethodFromElements(final @NotNull PyExtractMethodSettings methodSettings,
