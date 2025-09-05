@@ -493,14 +493,22 @@ public final class ProgressRunner<R> {
       Runnable runnable = new ProgressRunnable<>(resultFuture, task, progressIndicator);
       // If it sync modal execution on other thread — use current lock state
       ContextAwareRunnable contextRunnable = () -> {
-        childContext.runInChildContext(() -> {
-          CoroutineContext effectiveContext =
-            ThreadContext.currentThreadContext().plus(asContextElement(progressIndicator.getModalityState()).plus(sharedPermit));
-          ThreadContext.installThreadContext(effectiveContext, true, () -> {
-            runnable.run();
-            return Unit.INSTANCE;
+        try {
+          childContext.runInChildContext(() -> {
+            CoroutineContext effectiveContext =
+              ThreadContext.currentThreadContext().plus(asContextElement(progressIndicator.getModalityState()).plus(sharedPermit));
+            ThreadContext.installThreadContext(effectiveContext, true, () -> {
+              runnable.run();
+              return Unit.INSTANCE;
+            });
           });
-        });
+        }
+        catch (Throwable e) {
+          // Any exception from runnable or from context job should complete resultFuture exceptionally and should be handled by the caller.
+          if (!resultFuture.isCompletedExceptionally()) {
+            LOG.error(e);
+          }
+        }
       };
       switch (myThreadToUse) {
         case POOLED:
