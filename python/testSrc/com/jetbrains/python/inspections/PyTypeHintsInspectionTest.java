@@ -2957,6 +2957,11 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-83700
+  public void testImplicitTypeAliasAtClassLevelMultiFile() {
+    doMultiFileTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

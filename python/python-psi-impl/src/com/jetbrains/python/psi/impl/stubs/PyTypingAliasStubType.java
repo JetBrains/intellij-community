@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.impl.PyUtilCore;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -68,7 +69,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
   }
 
   private static @Nullable PyExpression getAssignedValueIfTypeAliasLike(@NotNull PyTargetExpression target, boolean forStubCreation) {
-    if (!PyUtil.isTopLevel(target) || !looksLikeTypeAliasTarget(target)) {
+    if (!(PyUtil.isTopLevel(target) || ScopeUtil.getScopeOwner(target) instanceof PyClass) || !looksLikeTypeAliasTarget(target)) {
       return null;
     }
     final PyExpression value = target.findAssignedValue();
