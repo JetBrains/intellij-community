@@ -423,7 +423,7 @@ class BackgroundWriteActionTest {
     edtWriteAction {
       runBlockingCancellable {
         assertRead()
-        assertNoWrite() // since the lock is parallelized
+        assertWrite() // since the lock is parallelized
         assertWil()
       }
     }

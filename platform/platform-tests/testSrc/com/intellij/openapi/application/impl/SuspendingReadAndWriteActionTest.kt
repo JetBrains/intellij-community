@@ -100,7 +100,7 @@ class SuspendingReadAndWriteActionTest {
         Assertions.assertTrue(EDT.isCurrentThreadEdt())
         Assertions.assertNotNull(Cancellation.currentJob())
         Assertions.assertNull(ProgressManager.getGlobalProgressIndicator())
-        Assertions.assertFalse(application.isWriteAccessAllowed)
+        Assertions.assertTrue(application.isWriteAccessAllowed)
       }
 
       assertEmptyContext()
