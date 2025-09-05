@@ -715,14 +715,12 @@ public final class PyExtractMethodUtil {
   }
 
   private static class PyExtractMethodValidator implements ExtractMethodValidator {
-    private final PsiElement myElement;
     private final Project myProject;
     private final @Nullable Function<String, Boolean> myFunction;
 
     PyExtractMethodValidator(final PsiElement element, final Project project) {
-      myElement = element;
       myProject = project;
-      final ScopeOwner parent = ScopeUtil.getScopeOwner(myElement);
+      final ScopeOwner parent = ScopeUtil.getScopeOwner(element);
       if (ScopeUtil.getScopeOwner(parent) instanceof PyClass enclosingClass) {
         myFunction = s -> {
           if (enclosingClass.findMethodByName(s, true, null) != null) {
