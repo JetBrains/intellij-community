@@ -4,13 +4,10 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.editorActions.wordSelection.AbstractWordSelectioner;
-import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,7 +23,8 @@ import java.util.List;
 
 public class HtmlSelectioner extends AbstractWordSelectioner {
 
-  private static final SelectWordUtil.CharCondition JAVA_IDENTIFIER_AND_HYPHEN_CONDITION = ch -> Character.isJavaIdentifierPart(ch) || ch == '-';
+  private static final SelectWordUtil.CharCondition JAVA_IDENTIFIER_AND_HYPHEN_CONDITION =
+    ch -> Character.isJavaIdentifierPart(ch) || ch == '-';
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
@@ -34,20 +32,24 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
   }
 
   static boolean canSelectElement(final PsiElement e) {
-    if (e instanceof XmlToken) {
-      return HtmlUtil.hasHtml(e.getContainingFile()) || HtmlUtil.supportsXmlTypedHandlers(e.getContainingFile());
-    }
-    return false;
+    return (e instanceof XmlToken || e instanceof XmlTag)
+           && (HtmlUtil.hasHtml(e.getContainingFile()) || HtmlUtil.supportsXmlTypedHandlers(e.getContainingFile()));
   }
 
   @Override
   public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result;
 
-    if (!(e instanceof XmlToken) ||
-        XmlTokenSelectioner.shouldSelectToken((XmlToken)e) ||
-        ((XmlToken)e).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
-      result = super.select(e, editorText, cursorOffset, editor);
+    if (e instanceof XmlTag) {
+      result = new ArrayList<>();
+      addTagSelection((XmlTag)e, result, editorText);
+      return result;
+    }
+    else if (!(e instanceof XmlToken) ||
+             XmlTokenSelectioner.shouldSelectToken((XmlToken)e) ||
+             ((XmlToken)e).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
+      var superResult = super.select(e, editorText, cursorOffset, editor);
+      result = superResult != null ? superResult : new ArrayList<>();
     }
     else {
       result = new ArrayList<>();
@@ -64,37 +66,51 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     final FileViewProvider fileViewProvider = psiFile.getViewProvider();
     for (Language lang : fileViewProvider.getLanguages()) {
       final PsiFile langFile = fileViewProvider.getPsi(lang);
-      if (langFile != psiFile) addAttributeSelection(result, editor, cursorOffset, editorText,
-                                                     fileViewProvider.findElementAt(cursorOffset, lang));
+      if (langFile != psiFile) {
+        addAttributeSelection(result, editor, cursorOffset, editorText,
+                              fileViewProvider.findElementAt(cursorOffset, lang));
+      }
     }
-
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(e.getProject(), psiFile.getVirtualFile());
-    highlighter.setText(editorText);
-
-    addTagSelection2(e, result);
-
     return result;
   }
 
-  private static void addTagSelection2(PsiElement e, List<? super TextRange> result) {
-    XmlTag tag = PsiTreeUtil.getParentOfType(e, XmlTag.class, true);
-    while (tag != null) {
-      result.add(tag.getTextRange());
-      final ASTNode tagStartEnd = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
-      final ASTNode tagEndStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(tag.getNode());
-      if (tagStartEnd != null && tagEndStart != null) {
-        result.add(new UnfairTextRange(tagStartEnd.getTextRange().getEndOffset(),
-                                       tagEndStart.getTextRange().getStartOffset()));
+  private static void addTagSelection(XmlTag tag, List<? super TextRange> result, @NotNull CharSequence editorText) {
+    // A parent can be a JS return statement, so we shouldn't expand the selection to the whole line
+    // if the parent does not have a new line inside. Expansion to the whole line should be done on the parent level.
+    boolean expandToWholeLine = tag.getParent() != null && tag.getParent().textContains('\n');
+    addRangeToResult(result, editorText, expandToWholeLine, tag.getTextRange());
+
+    final ASTNode tagStartEnd = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
+    final ASTNode tagEndStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(tag.getNode());
+
+    if (tagStartEnd != null && tagEndStart != null) {
+      var startOffset = tagStartEnd.getTextRange().getEndOffset();
+      var endOffset = tagEndStart.getTextRange().getStartOffset();
+      if (startOffset < endOffset) {
+        addRangeToResult(result, editorText, expandToWholeLine, new TextRange(startOffset, endOffset));
       }
-      if (tagStartEnd != null) {
-        result.add(new TextRange(tag.getTextRange().getStartOffset(),
-                                 tagStartEnd.getTextRange().getEndOffset()));
-      }
-      if (tagEndStart != null) {
-        result.add(new TextRange(tagEndStart.getTextRange().getStartOffset(),
-                                 tag.getTextRange().getEndOffset()));
-      }
-      tag = PsiTreeUtil.getParentOfType(tag, XmlTag.class, true);
+    }
+    if (tagStartEnd != null) {
+      TextRange range = new TextRange(tag.getTextRange().getStartOffset(),
+                                      tagStartEnd.getTextRange().getEndOffset());
+      addRangeToResult(result, editorText, expandToWholeLine, range);
+    }
+    if (tagEndStart != null) {
+      TextRange range = new TextRange(tagEndStart.getTextRange().getStartOffset(),
+                                      tag.getTextRange().getEndOffset());
+      addRangeToResult(result, editorText, expandToWholeLine, range);
+    }
+  }
+
+  private static void addRangeToResult(List<? super TextRange> result,
+                                       @NotNull CharSequence editorText,
+                                       boolean expandToWholeLine,
+                                       TextRange range) {
+    if (expandToWholeLine) {
+      result.addAll(expandToWholeLine(editorText, range, false));
+    }
+    else {
+      result.add(range);
     }
   }
 
