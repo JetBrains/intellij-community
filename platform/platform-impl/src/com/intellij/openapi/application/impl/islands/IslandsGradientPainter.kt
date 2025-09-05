@@ -18,11 +18,9 @@ import com.intellij.ui.paint.PaintUtil.alignTxToInt
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ui.JBUI
 import java.awt.*
+import javax.swing.JComponent
 
 internal class IslandsGradientPainter(private val frame: IdeFrame, private val mainColor: Color, private val enabled: () -> Boolean) : AbstractPainter() {
-  private val leftGradientCache: GradientTextureCache = GradientTextureCache()
-  private val rightGradientCache: GradientTextureCache = GradientTextureCache()
-
   private val projectWindowCustomizer = ProjectWindowCustomizerService.getInstance()
 
   private var doPaint = true
@@ -33,59 +31,71 @@ internal class IslandsGradientPainter(private val frame: IdeFrame, private val m
     if (doPaint) {
       try {
         doPaint = false
-        doPaint(component, g)
+        islandsGradientPaint(frame, mainColor, projectWindowCustomizer, component, g)
       }
       finally {
         doPaint = true
       }
     }
   }
+}
 
-  private fun doPaint(component: Component, g: Graphics2D) {
-    if (CustomWindowHeaderUtil.isCompactHeader()) {
-      return
-    }
-    if (component is IdeGlassPaneEx && !component.isColorfulToolbar) {
-      return
-    }
-
-    val project = frame.project ?: return
-
-    val centerColor = projectWindowCustomizer.getGradientProjectColor(project)
-
-    val centerX = project.service<ProjectWidgetGradientLocationService>().gradientOffsetRelativeToRootPane
-
-    val blendedColor = ColorUtil.blendColorsInRgb(mainColor, centerColor, 0.85 * (centerColor.alpha.toDouble() / 255))
-
-    val ctx = ScaleContext.create(g)
-
-    val length = JBUI.getInt("RecentProject.MainToolbarGradient.width", 700)
-    val height = JBUI.getInt("RecentProject.MainToolbarGradient.height", 200)
-
-    val leftWidth = alignIntToInt(centerX.toInt(), ctx, PaintUtil.RoundingMode.CEIL, null)
-    val rightWidth = alignIntToInt(length, ctx, PaintUtil.RoundingMode.CEIL, null)
-    val totalWidth = alignIntToInt(leftWidth + rightWidth, ctx, PaintUtil.RoundingMode.CEIL, null)
-
-    val leftGradientTexture = leftGradientCache.getHorizontalTexture(g, leftWidth, mainColor, blendedColor)
-    val rightGradientTexture = rightGradientCache.getHorizontalTexture(g, rightWidth, blendedColor, mainColor, leftWidth)
-
-    g.color = mainColor
-    g.fillRect(0, 0, component.width, component.height)
-
-    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-
-    alignTxToInt(g, null, true, false, PaintUtil.RoundingMode.FLOOR)
-
-    g.paint = leftGradientTexture
-    g.fillRect(0, 0, leftWidth, height)
-
-    g.paint = rightGradientTexture
-    g.fillRect(leftWidth, 0, rightWidth, height)
-
-    alignTxToInt(g, null, false, true, PaintUtil.RoundingMode.FLOOR)
-
-    val startColor = if (ClientSystemInfo.isMac()) Gray.TRANSPARENT else ColorUtil.toAlpha(mainColor, 0)
-    g.paint = GradientPaint(0f, 0f, startColor, 0f, height.toFloat(), mainColor)
-    g.fillRect(0, 0, totalWidth, height)
+internal fun islandsGradientPaint(frame: IdeFrame, mainColor: Color, projectWindowCustomizer: ProjectWindowCustomizerService, component: Component, g: Graphics2D) {
+  if (CustomWindowHeaderUtil.isCompactHeader()) {
+    return
   }
+  if (component is IdeGlassPaneEx && !component.isColorfulToolbar) {
+    return
+  }
+
+  val project = frame.project ?: return
+
+  val centerColor = projectWindowCustomizer.getGradientProjectColor(project)
+
+  val centerX = project.service<ProjectWidgetGradientLocationService>().gradientOffsetRelativeToRootPane
+
+  val blendedColor = ColorUtil.blendColorsInRgb(mainColor, centerColor, 0.85 * (centerColor.alpha.toDouble() / 255))
+
+  val ctx = ScaleContext.create(g)
+
+  val length = JBUI.getInt("RecentProject.MainToolbarGradient.width", 700)
+  val height = JBUI.getInt("RecentProject.MainToolbarGradient.height", 200)
+
+  val leftWidth = alignIntToInt(centerX.toInt(), ctx, PaintUtil.RoundingMode.CEIL, null)
+  val rightWidth = alignIntToInt(length, ctx, PaintUtil.RoundingMode.CEIL, null)
+  val totalWidth = alignIntToInt(leftWidth + rightWidth, ctx, PaintUtil.RoundingMode.CEIL, null)
+
+  val root = frame.component
+  val leftGradientTexture = getGradientCache(root, "LeftGradientCache").getHorizontalTexture(g, leftWidth, mainColor, blendedColor)
+  val rightGradientTexture = getGradientCache(root, "RightGradientCache").getHorizontalTexture(g, rightWidth, blendedColor, mainColor, leftWidth)
+
+  g.color = mainColor
+  g.fillRect(0, 0, component.width, component.height)
+
+  g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+
+  alignTxToInt(g, null, true, false, PaintUtil.RoundingMode.FLOOR)
+
+  g.paint = leftGradientTexture
+  g.fillRect(0, 0, leftWidth, height)
+
+  g.paint = rightGradientTexture
+  g.fillRect(leftWidth, 0, rightWidth, height)
+
+  alignTxToInt(g, null, false, true, PaintUtil.RoundingMode.FLOOR)
+
+  val startColor = if (ClientSystemInfo.isMac()) Gray.TRANSPARENT else ColorUtil.toAlpha(mainColor, 0)
+  g.paint = GradientPaint(0f, 0f, startColor, 0f, height.toFloat(), mainColor)
+  g.fillRect(0, 0, totalWidth, height)
+}
+
+private fun getGradientCache(root: JComponent, key: String): GradientTextureCache {
+  val gradientCache = root.getClientProperty(key)
+  if (gradientCache is GradientTextureCache) {
+    return gradientCache
+  }
+
+  val newValue = GradientTextureCache()
+  root.putClientProperty(key, newValue)
+  return newValue
 }
