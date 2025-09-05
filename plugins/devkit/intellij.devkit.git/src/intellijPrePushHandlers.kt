@@ -14,16 +14,6 @@ import git4idea.rebase.GitInteractiveRebaseService
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 
-internal class IntelliJPrePushHandler : IssueIDPrePushHandler() {
-  override val paths: List<String> = listOf("community", "platform")
-  override val pathsToIgnore: List<String> = listOf("plugins/kotlin/")
-  override val commitMessageRegex = Regex(".*[A-Z]+-\\d+.*", RegexOption.DOT_MATCHES_ALL)
-  override val ignorePattern = Regex("(tests|cleanup):.*")
-
-  override fun isAvailable(): Boolean = Registry.`is`("intellij.commit.message.validation.enabled", true)
-  override fun getPresentableName(): @Nls String = DevKitGitBundle.message("push.commit.handler.idea.name")
-}
-
 internal class IntelliJPlatformPrePushHandler : IssueIDPrePushHandler() {
   override val paths: List<String> = listOf("/community/platform/", "remote-dev")
   override val pathsToIgnore: List<String> = listOf()
