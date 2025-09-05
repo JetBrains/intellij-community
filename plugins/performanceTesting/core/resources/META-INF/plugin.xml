@@ -6,8 +6,11 @@
   <resource-bundle>messages.PerformanceTestingBundle</resource-bundle>
 
   <description><![CDATA[
-    Plugin for automated execution of test scripts, capturing performance snapshots
-    and gathering performance statistics.
+    <p>Plugin for automated execution of test scripts, capturing performance snapshots
+    and gathering performance statistics.</p>
+
+    <p>Want to report a performance problem? — <a href="https://intellij-support.jetbrains.com/hc/en-us/articles/207241235-Reporting-performance-problems">
+    Read More</a></p>
   ]]></description>
 
   <content>
