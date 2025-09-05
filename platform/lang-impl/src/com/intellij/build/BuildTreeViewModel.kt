@@ -31,7 +31,7 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
   private val id2Node = ConcurrentHashMap<Int, ExecutionNode>()
 
   private val navigationFlow = MutableSharedFlow<BuildTreeNavigationRequest>(extraBufferCapacity = Int.MAX_VALUE)
-  private val filteringStateFlow = MutableStateFlow(BuildTreeFilteringState(false, true))
+  private val filteringStateFlow = MutableStateFlow(BuildTreeFilteringState(false, false))
   private val isDisposed = MutableStateFlow(false)
 
   @Volatile
