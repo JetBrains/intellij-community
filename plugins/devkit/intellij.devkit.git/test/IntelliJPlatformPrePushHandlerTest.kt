@@ -213,8 +213,6 @@ class IntelliJPlatformPrePushHandlerTest {
             Relates to #WHATEVER-123
           """.trimIndent(),
 
-          "IJ-MR-123", "IJ-CR-0",
-
           "test thing", "test: thing", "[test] thing", "Test thing",
           "tests thing", "tests: thing", "[tests] thing",
           "cleanup thing", "cleanup: thing", "[cleanup] thing", "Cleanup stuff",
@@ -295,6 +293,9 @@ class IntelliJPlatformPrePushHandlerTest {
           "Fix test",
           "[subsystem] docs",
           "null",
+
+          "IJ-CR-160532 do not highlight parser errors twice for java",
+          "IJ-MR-123", "IJ-CR-0",
         )
       }
     }
