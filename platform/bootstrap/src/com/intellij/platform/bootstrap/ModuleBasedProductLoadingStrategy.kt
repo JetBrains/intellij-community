@@ -272,7 +272,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
     else {
       val defaultResolver = PluginXmlPathResolver(allResourceRootsList, zipFilePool)
-      val pathResolver = if (allResourceRootsList.size == 1)
+      val pathResolver = if (allResourceRootsList.size == 1 && pluginModuleGroup.notLoadedModuleIds.isEmpty())
         defaultResolver
       else
         ModuleBasedPluginXmlPathResolver(includedModules, pluginModuleGroup.optionalModuleIds, pluginModuleGroup.notLoadedModuleIds, defaultResolver)
