@@ -24,7 +24,6 @@ import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
-import java.io.File
 import java.nio.charset.Charset
 import javax.swing.SwingUtilities
 import kotlin.math.abs
@@ -405,7 +404,7 @@ internal open class TerminalEventsHandlerImpl(
   }
 
   private fun canTriggerCompletion(char: Char): Boolean {
-    return Character.isLetterOrDigit(char) || char == '-' || char == File.separatorChar
+    return Character.isLetterOrDigit(char) || char == '-'
   }
 
   private fun TerminalOutputModel.getTextAfterCursor(): @NlsSafe String {
