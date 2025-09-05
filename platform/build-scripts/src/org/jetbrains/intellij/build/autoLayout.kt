@@ -75,8 +75,7 @@ internal suspend fun computeModuleSourcesByContent(
       continue
     }
 
-    // CWM plugin is overcomplicated without any valid reason - it must be refactored
-    if (moduleName == "intellij.driver.backend.split" || !addedModules.add(moduleName)) {
+    if (!addedModules.add(moduleName)) {
       continue
     }
 
