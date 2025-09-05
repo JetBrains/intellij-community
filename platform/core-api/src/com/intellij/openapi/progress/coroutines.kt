@@ -161,8 +161,7 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParalleli
 }
 
 // reducing service stacktraces by inlining
-@Suppress("NOTHING_TO_INLINE")
-private inline fun <T> wrapInReadActionIfCurrentlyWriteAction(noinline action: () -> T): T {
+private inline fun <T> wrapInReadActionIfCurrentlyWriteAction(crossinline action: () -> T): T {
   return if (ApplicationManager.getApplication().isWriteAccessAllowed) {
     runReadAction {
       action()
