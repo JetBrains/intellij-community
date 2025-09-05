@@ -233,6 +233,7 @@ class IntelliJPlatformPrePushHandlerTest {
           "[testFramework] whatever",
           "[test framework] whatever",
           "test framework",
+          "Rename .java to .kt"
         )
       }
     }

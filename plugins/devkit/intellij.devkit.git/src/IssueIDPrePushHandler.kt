@@ -60,9 +60,6 @@ internal abstract class AbstractIntelliJProjectPrePushHandler : PrePushHandler {
     GitSharedSettings.getInstance(project).isBranchProtected(pushInfo.pushSpec.target.presentation)
 
   protected open fun breaksMessageRules(commit: VcsFullCommitDetails): Boolean {
-    if (commit.subject.startsWith("Rename .java to .kt")) {
-      return false
-    }
     return containSources(commit.changes.mapNotNull { it.virtualFile })
   }
 
@@ -121,8 +118,12 @@ internal abstract class IssueIDPrePushHandler : AbstractIntelliJProjectPrePushHa
     return !commitAsIs
   }
 
-  fun commitMessageIsCorrect(message: String): Boolean =
-    message.matches(commitMessageRegex) || message.matches(ignorePattern)
+  fun commitMessageIsCorrect(message: String): Boolean {
+    if (message == "Rename .java to .kt") {
+      return true
+    }
+    return message.matches(commitMessageRegex) || message.matches(ignorePattern)
+  }
 
   override fun breaksMessageRules(commit: VcsFullCommitDetails): Boolean {
     return super.breaksMessageRules(commit) && !commitMessageIsCorrect(commit.fullMessage)
