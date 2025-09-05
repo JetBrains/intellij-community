@@ -722,9 +722,8 @@ public final class PyExtractMethodUtil {
     PyExtractMethodValidator(final PsiElement element, final Project project) {
       myElement = element;
       myProject = project;
-      final PyClass enclosingClass = PsiTreeUtil.getParentOfType(myElement, PyClass.class, false);
-      if (enclosingClass != null) {
-        // Extracting into a class: only check for clashes within the class namespace
+      final ScopeOwner parent = ScopeUtil.getScopeOwner(myElement);
+      if (ScopeUtil.getScopeOwner(parent) instanceof PyClass enclosingClass) {
         myFunction = s -> {
           if (enclosingClass.findMethodByName(s, true, null) != null) {
             return false;
@@ -734,8 +733,6 @@ public final class PyExtractMethodUtil {
         };
       }
       else {
-        // Extracting at module or function level: keep outward-scan behavior
-        final ScopeOwner parent = ScopeUtil.getScopeOwner(myElement);
         myFunction = s -> {
           ScopeOwner owner = parent;
           while (owner != null) {
