@@ -574,7 +574,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     // over PSI files to skip files that are found to be within an AAR
     // folder. This removes all the false positives and speeds up code
     // analysis quite significantly!
-    if (isIgnoredFile(file)) {
+    if (isIgnoredFile(psiFile)) {
         return;
     }
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
