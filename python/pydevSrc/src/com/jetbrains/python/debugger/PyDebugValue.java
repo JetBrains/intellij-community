@@ -553,11 +553,6 @@ public class PyDebugValue extends XNamedValue {
                                                               null);
         action.actionPerformed(actionEvent);
       }
-
-      @Override
-      public boolean alwaysOnScreen() {
-        return true;
-      }
     });
   }
 
