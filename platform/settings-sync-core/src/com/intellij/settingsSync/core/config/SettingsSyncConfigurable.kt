@@ -506,7 +506,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     val result = suspendCancellableCoroutine<DeleteServerDataResult> { continuation ->
       SettingsSyncEvents.getInstance().fireSettingsChanged(
         SyncSettingsEvent.DeleteServerData { deleteResult ->
-          continuation.resume(deleteResult) { cause, _, _ -> }
+          continuation.resume(deleteResult) { cause -> }
         }
       )
     }
