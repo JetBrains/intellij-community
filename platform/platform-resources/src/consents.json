@@ -2,7 +2,7 @@
   {
     "consentId": "rsch.send.usage.stat",
     "version": "1.1",
-    "text": "This information includes, but is not limited to, anonymous data about your feature and plugin usage, hardware and software configuration, file type statistics, and the number of files per project. No personal data or sensitive information, such as source code or file names, is shared with us. Learn more <a href=\"https://www.jetbrains.com/legal/docs/terms/product_data_collection/\">here</a>.",
+    "text": "This information includes, but is not limited to, anonymous data about your feature and plugin usage, hardware and software configuration, file type statistics, and the number of files per project.\nNo personal data or sensitive information, such as source code or file names, is shared with us. Learn more <a href=\"https://www.jetbrains.com/legal/docs/terms/product_data_collection/\">here</a>.",
     "printableName": "Send anonymous usage statistics",
     "accepted": "false"
   },
