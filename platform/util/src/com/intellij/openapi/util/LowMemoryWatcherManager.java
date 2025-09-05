@@ -3,7 +3,6 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -21,6 +20,7 @@ import java.util.function.Consumer;
 import static com.intellij.util.SystemProperties.*;
 import static com.intellij.util.concurrency.SequentialTaskExecutor.createSequentialApplicationPoolExecutor;
 import static com.intellij.util.io.IOUtil.MiB;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -31,15 +31,18 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public final class LowMemoryWatcherManager {
   private static final Logger LOG = Logger.getInstance(LowMemoryWatcherManager.class);
 
+  //@formatter:off
   private static final long MIN_MEMORY_MARGIN = 5 * MiB;
   private static final float MEMORY_NOTIFICATION_THRESHOLD = getFloatProperty("low.memory.watcher.notification.threshold", 0.95f);
 
-  private static final boolean USE_EXPONENTIAL_GC_SMOOTHING =
-    getBooleanProperty("LowMemoryWatcherManager.USE_EXPONENTIAL_GC_SMOOTHING", false);
+  /** Use exponentially smoothing GcTracker instead of WindowedSum one */
+  private static final boolean USE_EXPONENTIALLY_SMOOTHING_GC_TRACKING = getBooleanProperty("LowMemoryWatcherManager.USE_EXPONENTIALLY_SMOOTHING_GC_TRACKING", false);
 
   private static final long WINDOW_SIZE_MS = getLongProperty("LowMemoryWatcherManager.WINDOW_SIZE_MS", SECONDS.toMillis(60));
-  private static final long IN_WINDOW_GC_DURATION_THRESHOLD_MS =
-    getLongProperty("LowMemoryWatcherManager.IN_WINDOW_GC_DURATION_THRESHOLD_MS", SECONDS.toMillis(10));
+  private static final long IN_WINDOW_GC_DURATION_THRESHOLD_MS = getLongProperty("LowMemoryWatcherManager.IN_WINDOW_GC_DURATION_THRESHOLD_MS", SECONDS.toMillis(10));
+
+  private static final long REGULAR_TRACKER_UPDATE_PERIOD_MS = getLongProperty("LowMemoryWatcherManager.REGULAR_TRACKER_UPDATE_PERIOD_MS", SECONDS.toMillis(5));
+  //@formatter:on
 
   /** Notify low-memory notifications will be delivered to {@link LowMemoryWatcher} via that pool, see watcherNotificationTask */
   private final ExecutorService watcherNotificationPool;
@@ -58,6 +61,7 @@ public final class LowMemoryWatcherManager {
   };
 
   private final Future<?> memoryPoolMXBeansInitializationFuture;
+  private ScheduledFuture<?> gcTimeTrackingFuture;
 
   private final GcTracker gcTracker;
 
@@ -92,7 +96,7 @@ public final class LowMemoryWatcherManager {
 
   public LowMemoryWatcherManager(@NotNull ExecutorService backendExecutorService) {
     long gcDurationMs = fetchMajorGcDurationAccumulated();
-    if (USE_EXPONENTIAL_GC_SMOOTHING) {
+    if (USE_EXPONENTIALLY_SMOOTHING_GC_TRACKING) {
       LOG.info("Use ExponentiallySmoothingTracker(" + WINDOW_SIZE_MS + " ms)");
       gcTracker = new ExponentiallySmoothingTracker(gcDurationMs, System.currentTimeMillis(), WINDOW_SIZE_MS);
     }
@@ -137,6 +141,32 @@ public final class LowMemoryWatcherManager {
             }
           }
           ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(lowMemoryListener, null, null);
+
+
+          //Setup regular gcTracker update: it is not _required_, but it is useful to update GcTracker not only at memory
+          // threshold violation, but also with some regularity -- to reduce variance caused by coarse updates granularity:
+
+          //By some reason, LowMemoryWatcherManager is not a service, but is initialized explicitly, as a part of
+          // AppScheduledExecutorService, (or other services in headless). This means that AppScheduledExecutorService
+          // itself is not fully initialized then LowMemoryWatcherManager ctor is called, hence we can't schedule
+          // that regular task in LowMemoryWatcherManager ctor, as a sane person would do -- instead we schedule it here,
+          // in a submitted task. I feel really sorry for that :(
+          //TODO RC: reconsider LowMemoryWatcherManager initialization -- e.g. make it a proper service?
+          if (REGULAR_TRACKER_UPDATE_PERIOD_MS > 0) {
+            if (backendExecutorService instanceof ScheduledExecutorService) {
+              ScheduledExecutorService scheduler = (ScheduledExecutorService)backendExecutorService;
+              LOG.info("Schedule GC time updating: each " + REGULAR_TRACKER_UPDATE_PERIOD_MS + "ms:");
+              gcTimeTrackingFuture = scheduler.scheduleWithFixedDelay(
+                () -> {
+                  long currentGcTime = fetchMajorGcDurationAccumulated();
+                  long gcLoadScore = gcTracker.trackGc(System.currentTimeMillis(), currentGcTime);
+                  if (LOG.isDebugEnabled()) {
+                    LOG.debug("GcTracker update: {gcTime: " + currentGcTime + "ms, GC load score: " + gcLoadScore + "}");
+                  }
+                },
+                /*initialDelay: */ 10_000, /*period: */ REGULAR_TRACKER_UPDATE_PERIOD_MS, MILLISECONDS);
+            }
+          }
         }
         catch (Throwable e) {
           // should not happen normally
@@ -155,6 +185,11 @@ public final class LowMemoryWatcherManager {
     try {
       memoryPoolMXBeansInitializationFuture.get();
       ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).removeNotificationListener(lowMemoryListener);
+
+      if (gcTimeTrackingFuture != null) {
+        gcTimeTrackingFuture.cancel(false);
+        gcTimeTrackingFuture = null;
+      }
     }
     catch (Exception e) {
       LOG.error(e);

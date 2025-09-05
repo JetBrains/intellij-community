@@ -40,6 +40,9 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   public AppScheduledExecutorService(@NotNull String name, long keepAliveTime, @NotNull TimeUnit unit) {
     super(new BackendThreadPoolExecutor(new MyThreadFactory(), keepAliveTime, unit), new AppDelayQueue());
     myName = name;
+    //TODO RC: why LowMemoryWatcher is owned by AppScheduledExecutorService? Shouldn't it be a dedicated service itself?
+    //         There are issues in LowMemoryWatcherManager initialization because of that, and also issues in tests,
+    //         see a todo in AppScheduledExecutorServiceTest
     myLowMemoryWatcherManager = new LowMemoryWatcherManager(this);
   }
 
