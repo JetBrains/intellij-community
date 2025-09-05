@@ -87,7 +87,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.SpeedSearchAdvertiser;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import io.opentelemetry.api.trace.Span;
@@ -900,19 +899,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     @NotNull Project project = parameters.project;
     @NotNull DialogPanel headerPanel = showUsagesPopupData.header.panel;
 
-    SpeedSearchAdvertiser advertiser = new SpeedSearchAdvertiser();
-    String hint = getSecondInvocationHint(actionHandler);
-
-    JPanel advertiserComponent = null;
-    boolean hintAdded = advertiser.addAdvertisement(hint);
-    boolean speedSearchAdded = advertiser.addSpeedSearchAdvertisement() != null;
-    if (hintAdded || speedSearchAdded) {
-      advertiserComponent = advertiser.getComponent();
-    }
-
     PopupChooserBuilder<?> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table).
       setTitle(showUsagesPopupData.header.getTitle()).
-      setAdvertiser(advertiserComponent).
       setMovable(true).
       setResizable(true).
       setCancelKeyEnabled(true).
