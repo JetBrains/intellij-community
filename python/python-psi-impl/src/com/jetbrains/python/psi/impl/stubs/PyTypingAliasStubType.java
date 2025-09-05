@@ -21,19 +21,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.impl.PyUtilCore;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub.InitializerType;
 import com.jetbrains.python.psi.stubs.PyTypingAliasStub;
-import org.jetbrains.annotations.ApiStatus;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,19 +165,44 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
     if (expression instanceof PyBinaryExpression) {
       return looksLikeTypeHint(expression);
     }
-    return PsiTreeUtil.processElements(expression, element -> {
-      // Check only composite elements
-      if (element instanceof ASTDelegatePsiElement) {
-        if (!VALID_TYPE_ANNOTATION_ELEMENTS.contains(element.getNode().getElementType())) {
-          return false;
+    boolean[] illegal = {false};
+    expression.accept(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPySubscriptionExpression(@NotNull PySubscriptionExpression node) {
+        if (node.getOperand() instanceof PyReferenceExpression refExpr &&
+            "Annotated".equals(refExpr.getName()) &&
+            node.getIndexExpression() instanceof PyTupleExpression tupleExpr) {
+          refExpr.accept(this);
+          tupleExpr.getElements()[0].accept(this);
         }
-        if (element instanceof PyReferenceExpression) {
-          // too complex reference expression, e.g. foo[bar].baz
-          return ((PyReferenceExpression)element).asQualifiedName() != null;
+        else if (node.getOperand() instanceof PyReferenceExpression refExpr &&
+                 "Literal".equals(refExpr.getName())) {
+          refExpr.accept(this);
+        }
+        else {
+          super.visitPySubscriptionExpression(node);
         }
       }
-      return true;
+
+      @Override
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
+        if (node.asQualifiedName() == null) {
+          illegal[0] = true;
+        }
+      }
+
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (element instanceof ASTDelegatePsiElement) {
+          if (!VALID_TYPE_ANNOTATION_ELEMENTS.contains(element.getNode().getElementType())) {
+            illegal[0] = true;
+            return;
+          }
+          super.visitElement(element);
+        }
+      }
     });
+    return !illegal[0];
   }
 
   @Override
