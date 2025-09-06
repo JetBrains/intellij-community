@@ -98,4 +98,11 @@ class PyTestFixtureAndParametrizedTest : PyTestCase() {
     myFixture.renameElementAtCaret("second")
     myFixture.checkResultByFile("after_rename_multiple_parametrization_second_param.txt")
   }
+
+  fun testParametrizeCoversTransitiveFixture() {
+    myFixture.copyDirectoryToProject(".", ".")
+    myFixture.configureByFile("test_parametrize_transitive_fixture.py")
+    myFixture.enableInspections(PyTestParametrizedInspection::class.java)
+    myFixture.checkHighlighting(true, false, true)
+  }
 }
