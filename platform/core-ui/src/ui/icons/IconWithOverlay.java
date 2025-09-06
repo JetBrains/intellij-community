@@ -9,6 +9,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.Icon;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -17,7 +18,7 @@ import java.awt.image.BufferedImage;
  * @author Konstantin Bulenkov
  */
 public abstract class IconWithOverlay extends LayeredIcon {
-  public IconWithOverlay(@NotNull Icon main, @NotNull Icon overlay) {
+  public IconWithOverlay(@NotNull javax.swing.Icon main, @NotNull javax.swing.Icon overlay) {
     super(main, overlay);
   }
 

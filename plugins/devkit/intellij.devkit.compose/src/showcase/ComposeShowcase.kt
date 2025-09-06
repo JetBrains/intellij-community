@@ -47,14 +47,19 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.NotPatchedIconRegistry
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.ui.IconDeferrer
 import com.intellij.ui.UIBundle
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import org.jetbrains.icons.api.Icon
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -128,6 +133,27 @@ private fun InfiniteAnimation() {
   Box(Modifier.alpha(animatedAlpha)) {
     Text("Animation!")
   }
+
+  val iconSize by transition.animateFloat(
+    0f,
+    250f,
+    infiniteRepeatable(tween(durationMillis = 1000, easing = EaseInOut), repeatMode = RepeatMode.Reverse),
+  )
+  Box {
+    Icon(AllIcons.General.OpenDisk as Icon, "Build Load Changes", modifier = Modifier.size(iconSize.dp))
+  }
+
+  Box {
+    Icon(deferedIcon as Icon, "Deferred Icon Sample")
+  }
+}
+
+private val deferedIcon = IconDeferrer.getInstance().deferAsync(
+  AllIcons.General.Print,
+  "KABOOM-DEF_ICON_TST"
+) {
+  delay(10000)
+  AllIcons.General.GreenCheckmark
 }
 
 @Composable
