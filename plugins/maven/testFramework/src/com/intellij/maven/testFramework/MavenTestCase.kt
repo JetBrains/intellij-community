@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
@@ -38,7 +39,6 @@ import com.intellij.testFramework.utils.io.createFile
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
@@ -224,9 +224,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   override fun tearDown() {
     RunAll(
       ThrowableRunnable {
-        val mavenProgressTracker =
-          myProject!!.getServiceIfCreated(MavenProgressTracker::class.java)
-        mavenProgressTracker?.assertProgressTasksCompleted()
+        myProject?.serviceIfCreated<MavenProgressTracker>()?.assertProgressTasksCompleted()
       },
       ThrowableRunnable { MavenServerManager.getInstance().closeAllConnectorsAndWait() },
       ThrowableRunnable { checkAllMavenConnectorsDisposed() },
