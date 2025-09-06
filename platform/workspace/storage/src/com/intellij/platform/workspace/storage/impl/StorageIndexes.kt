@@ -160,13 +160,8 @@ internal class MutableStorageIndexes(
   override val externalMappings: MutableMap<ExternalMappingKey<*>, MutableExternalEntityMappingImpl<*>>,
 ) : AbstractStorageIndexes() {
 
-  fun <T : WorkspaceEntity> entityAdded(entityData: WorkspaceEntityData<T>, symbolicId: SymbolicEntityId<*>?) {
+  internal fun <T : WorkspaceEntity> entityAdded(entityData: WorkspaceEntityData<T>, symbolicId: SymbolicEntityId<*>?) {
     val pid = entityData.createEntityId()
-
-    // Update soft links index
-    if (entityData is SoftLinkable) {
-      entityData.index(softLinks)
-    }
 
     val entitySource = entityData.entitySource
     entitySourceIndex.index(pid, entitySource)
@@ -278,7 +273,6 @@ internal class MutableStorageIndexes(
       builder.changeLog.addReplaceDataEvent(entityId, entity, originalEntityData)
       // TODO :: Avoid updating of all soft links for the dependent entity
       builder.indexes.updateSymbolicIdIndexes(builder, entity.createEntity(builder), editingBeforeSymbolicId, entity)
-      builder.trackChangedSoftLinks()
     }
   }
 

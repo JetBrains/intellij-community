@@ -261,9 +261,13 @@ internal class MutableEntityStorageImpl(
       // Add the change to changelog
       changeLog.addAddEvent(newEntityData.createEntityId(), newEntityData)
 
+      // Update soft links index
+      if (newEntityData is SoftLinkable) {
+        newEntityData.index(indexes.softLinks)
+        trackChangedSoftLinks()
+      }
       // Update indexes
       indexes.entityAdded(newEntityData, symbolicId)
-      trackChangedSoftLinks()
     }
     finally {
       finishWriting()
@@ -850,8 +854,10 @@ internal class MutableEntityStorageImpl(
 
     // Update indexes and generate changelog entry
     val entityData = entityDataByIdOrDie(id)
-    if (entityData is SoftLinkable) indexes.removeFromSoftLinksIndex(entityData)
-    trackChangedSoftLinks()
+    if (entityData is SoftLinkable) {
+      indexes.removeFromSoftLinksIndex(entityData)
+      trackChangedSoftLinks()
+    }
     indexes.entityRemoved(id)
     this.changeLog.addRemoveEvent(id, originalEntityData)
 
