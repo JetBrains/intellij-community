@@ -46,10 +46,22 @@ class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, priv
 
 class PyTextFixtureTypeProvider : PyTypeProviderBase() {
   override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
-    if (!context.maySwitchToAST(func)) {
-      return null
+    val fixtureFunc = param.references
+                        .filterIsInstance<PyTestFixtureReference>()
+                        .firstOrNull()
+                        ?.resolve() as? PyFunction ?: return null
+
+    if (!context.maySwitchToAST(fixtureFunc)) {
+      // Try a context bound to the fixture's file to enable AST-based inference across files
+      val fileCtx = TypeEvalContext.codeAnalysis(fixtureFunc.project, fixtureFunc.containingFile)
+      val returnType = fileCtx.getReturnType(fixtureFunc)
+      // Async or Generator type
+      coroutineOrGeneratorElementType(returnType)?.let { return it }
+      // generator as Iterator or Iterable
+      if (fixtureFunc.isGenerator && returnType is PyCollectionType) return Ref(returnType.iteratedItemType)
+      return Ref(returnType)
     }
-    val fixtureFunc = param.references.filterIsInstance<PyTestFixtureReference>().firstOrNull()?.resolve() as? PyFunction ?: return null
+
     val returnType = context.getReturnType(fixtureFunc)
 
     // Async or Generator type
@@ -85,7 +97,8 @@ private abstract class PyTestReferenceProvider : PsiReferenceProvider() {
 private object PyTestReferenceAsParameterProvider : PyTestReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val namedParam = element as? PyNamedParameter ?: return emptyArray()
-    val namedFixtureParameterLink = getFixtureLink(namedParam, TypeEvalContext.codeAnalysis(element.project, element.containingFile)) ?: return emptyArray()
+    val namedFixtureParameterLink = getFixtureLink(namedParam, TypeEvalContext.codeAnalysis(element.project, element.containingFile))
+                                    ?: return emptyArray()
     val annotationLength = namedParam.annotation?.textLength ?: 0
     return arrayOf(PyTestFixtureReference(namedParam, namedFixtureParameterLink.fixture, namedFixtureParameterLink.importElement, TextRange(0, element.textLength - annotationLength)))
   }
@@ -113,7 +126,8 @@ private object PyTestReferenceAsStringProvider : PyTestReferenceProvider() {
     // else
     if (!shouldProvide) return emptyArray()
 
-    val namedFixtureParameterLink = getFixtureLink(element, TypeEvalContext.codeAnalysis(element.project, element.containingFile)) ?: return emptyArray()
+    val namedFixtureParameterLink = getFixtureLink(element, TypeEvalContext.codeAnalysis(element.project, element.containingFile))
+                                    ?: return emptyArray()
     return arrayOf(PyTestFixtureReference(element, namedFixtureParameterLink.fixture, namedFixtureParameterLink.importElement, TextRange(1, element.textLength - 1)))
   }
 }
