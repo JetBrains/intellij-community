@@ -15,7 +15,6 @@ jps_test(
   tags = [
     "block-network",
   ],
-  ignored = False,
 )
 
 ### skip generation section `test kotlin.jvm-debugger.test.k2`
