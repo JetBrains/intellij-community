@@ -3,7 +3,9 @@ package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.openapi.util.Disposer
 import com.intellij.spellchecker.ProjectDictionaryLayer
+import com.intellij.spellchecker.settings.SpellCheckerSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
@@ -148,6 +150,22 @@ class JavaSupportTest : GrazieTestBase() {
 
   fun `test java keeps trailing spaces properly`() {
     runHighlightTestForFile("ide/language/java/Trailing.java")
+  }
+
+  @Suppress("MISSING_DEPENDENCY_SUPERCLASS_IN_TYPE_ARGUMENT")
+  fun `test add capitalized word to dictionary`() {
+    val isUseSingleDictionary = SpellCheckerSettings.getInstance(project).isUseSingleDictionaryToSave
+    Disposer.register(testRootDisposable) {
+      SpellCheckerSettings.getInstance(project).isUseSingleDictionaryToSave = isUseSingleDictionary
+    }
+    SpellCheckerSettings.getInstance(project).isUseSingleDictionaryToSave = true
+
+    myFixture.configureByText("a.java", "// <TYPO descr=\"Typo: In word 'Qdrant'\">Qdra<caret>nt</TYPO>")
+    myFixture.checkHighlighting()
+    val intention = myFixture.findSingleIntention("Save 'Qdrant' to dictionary")
+    myFixture.launchAction(intention)
+    myFixture.configureByText("a.java", "// Qdrant")
+    myFixture.checkHighlighting()
   }
 
   private fun doTest(beforeText: String, afterText: String, hint: String) {
