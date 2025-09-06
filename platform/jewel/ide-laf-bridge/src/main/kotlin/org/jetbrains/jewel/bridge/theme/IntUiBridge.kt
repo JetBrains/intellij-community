@@ -102,6 +102,8 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
         textFieldStyle = textFieldStyle,
         tooltipStyle = readTooltipStyle(),
         undecoratedDropdownStyle = readUndecoratedDropdownStyle(menuStyle),
+        speedSearchStyle = readSpeedSearchStyle(),
+        searchMatchStyle = readSearchMatchStyle(theme.isDark),
     )
 }
 
