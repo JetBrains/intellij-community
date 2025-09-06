@@ -276,11 +276,15 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
       // IntelliJ IDEA Ultimate has sources published since 242; otherwise we use IC.
       IntelliJPlatformProduct.IDEA -> when {
-        majorVersion >= 242 -> IntelliJPlatformProduct.IDEA
+        majorVersion >= 253 -> IntelliJPlatformProduct.IDEA
+        majorVersion >= 242 -> IntelliJPlatformProduct.IDEA_IU
         else -> IntelliJPlatformProduct.IDEA_IC
       }
 
       // Any other IntelliJ Platform should use IC
-      else -> IntelliJPlatformProduct.IDEA_IC
+      else -> when {
+        majorVersion >= 253 -> IntelliJPlatformProduct.IDEA
+        else -> IntelliJPlatformProduct.IDEA_IC
+      }
     }.mavenCoordinates
 }
