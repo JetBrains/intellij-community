@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing
 
+import com.intellij.idea.TestFor
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection
@@ -43,6 +44,42 @@ class PyTestFixtureAndParametrizedTest : PyTestCase() {
     myFixture.configureByFile("test_test.py")
     myFixture.completeBasicAllCarets('\t')
     myFixture.checkResultByFile("after_test_test.txt")
+  }
+
+  @TestFor(issues = ["PY-54771"])
+  fun `test usefixtures completion suggests fix on function`() {
+    myFixture.copyDirectoryToProject(".", ".")
+    myFixture.configureByFile("test_usefixtures_completion.py")
+    myFixture.completeBasic()
+    val variants = myFixture.lookupElementStrings
+    assertNotNull(variants)
+    assertTrue(variants!!.contains("my_fixture"))
+    // Built-in pytest fixtures should not be suggested
+    assertFalse(variants.contains("tmp_path"))
+  }
+
+  @TestFor(issues = ["PY-54771"])
+  fun `test usefixtures completion suggests fix on class`() {
+    myFixture.copyDirectoryToProject(".", ".")
+    myFixture.configureByFile("test_usefixtures_completion_class.py")
+    myFixture.completeBasic()
+    val variants = myFixture.lookupElementStrings
+    assertNotNull(variants)
+    assertTrue(variants!!.contains("my_fixture"))
+    // Built-in pytest fixtures should not be suggested
+    assertFalse(variants.contains("tmp_path"))
+  }
+
+  @TestFor(issues = ["PY-54771"])
+  fun `test usefixtures completion suggests fix on module`() {
+    myFixture.copyDirectoryToProject(".", ".")
+    myFixture.configureByFile("test_usefixtures_completion_module.py")
+    myFixture.completeBasic()
+    val variants = myFixture.lookupElementStrings
+    assertNotNull(variants)
+    assertTrue(variants!!.contains("my_fixture"))
+    // Built-in pytest fixtures should not be suggested
+    assertFalse(variants.contains("tmp_path"))
   }
 
   fun testRename() {
