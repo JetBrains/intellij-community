@@ -304,7 +304,7 @@ a:com.intellij.formatting.service.AsyncDocumentFormattingService
 - p:getTimeoutNotificationDisplayId():java.lang.String
 - p:needToUpdate():Z
 - p:prepareForFormatting(com.intellij.openapi.editor.Document,com.intellij.formatting.FormattingContext):V
-p:com.intellij.formatting.service.AsyncDocumentFormattingService$FormattingTask
+com.intellij.formatting.service.AsyncDocumentFormattingService$FormattingTask
 - java.lang.Runnable
 - a:cancel():Z
 - isRunUnderProgress():Z

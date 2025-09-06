@@ -299,6 +299,8 @@
                     serviceImplementation="com.intellij.formatting.service.FormattingUiNotificationService"/>
     <projectService serviceInterface="com.intellij.formatting.service.PostQuickFixTaskService"
                     serviceImplementation="com.intellij.formatting.service.PostQuickFixTaskServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.formatting.service.AsyncDocumentFormattingSupportFactory"
+                        serviceImplementation="com.intellij.formatting.service.AsyncDocumentFormattingSupportFactoryImpl"/>
 
     <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile"
