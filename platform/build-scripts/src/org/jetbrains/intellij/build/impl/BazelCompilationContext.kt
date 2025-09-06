@@ -25,6 +25,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.inputStream
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 @ApiStatus.Internal
@@ -77,7 +78,14 @@ class BazelCompilationContext(
   }
 
   override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
-    TODO()
+    return delegate.getModuleRuntimeClasspath(module, forTests).map(Path::of).flatMap {
+      if (it.startsWith(classesOutputDirectory)) {
+        getModuleOutputRoots(findRequiredModule(it.name), it.parent.name == "test").map { it.toString() }
+      }
+      else {
+        listOf(it.toString())
+      }
+    }
   }
 
   override fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean): Path? = delegate.findFileInModuleSources(moduleName, relativePath, forTests)
@@ -172,3 +180,11 @@ fun isRunningFromBazelOut(): Boolean {
 
   return url.protocol == URLUtil.JAR_PROTOCOL && Path.of(URI.create(url.path)).any { it.pathString == "bazel-out" }
 }
+
+val CompilationContextImpl.asBazelIfNeeded: CompilationContext
+  get() {
+    return when {
+      isRunningFromBazelOut() -> BazelCompilationContext(this)
+      else -> this
+    }
+  }

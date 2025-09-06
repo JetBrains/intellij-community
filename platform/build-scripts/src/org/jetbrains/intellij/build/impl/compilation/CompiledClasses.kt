@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.JpsCompilationRunner
 import org.jetbrains.intellij.build.impl.cleanOutput
 import org.jetbrains.intellij.build.impl.isBazelTestRun
+import org.jetbrains.intellij.build.impl.isRunningFromBazelOut
 import org.jetbrains.intellij.build.jpsCache.isForceDownloadJpsCache
 import org.jetbrains.intellij.build.jpsCache.isPortableCompilationCacheEnabled
 import org.jetbrains.intellij.build.jpsCache.jpsCacheRemoteGitUrl
@@ -128,7 +129,7 @@ internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Co
   val pathToCompiledClassArchiveMetadata = context.options.pathToCompiledClassesArchivesMetadata
   when {
     context.options.useCompiledClassesFromProjectOutput -> {
-      check(isBazelTestRun() || context.classesOutputDirectory.exists() || PathManager.getArchivedCompiledClassesMapping() != null) {
+      check(isBazelTestRun() || context.classesOutputDirectory.exists() || PathManager.getArchivedCompiledClassesMapping() != null || isRunningFromBazelOut()) {
         "${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled but the classes output directory ${context.classesOutputDirectory} doesn't exist"
       }
       val production = context.classesOutputDirectory.resolve("production")

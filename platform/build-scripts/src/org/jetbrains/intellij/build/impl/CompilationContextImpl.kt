@@ -76,7 +76,7 @@ fun createCompilationContextBlocking(
   projectHome: Path,
   defaultOutputRoot: Path,
   options: BuildOptions = BuildOptions(),
-): CompilationContextImpl = runBlocking(Dispatchers.Default) {
+): CompilationContext = runBlocking(Dispatchers.Default) {
   createCompilationContext(projectHome, defaultOutputRoot, options)
 }
 
@@ -84,10 +84,10 @@ suspend fun createCompilationContext(
   projectHome: Path,
   defaultOutputRoot: Path,
   options: BuildOptions = BuildOptions(),
-): CompilationContextImpl {
+): CompilationContext {
   val logDir = options.logDir ?: (options.outRootDir ?: defaultOutputRoot).resolve("log")
   JaegerJsonSpanExporterManager.setOutput(logDir.toAbsolutePath().normalize().resolve("trace.json"))
-  return CompilationContextImpl.createCompilationContext(projectHome, { defaultOutputRoot }, options, setupTracer = false)
+  return CompilationContextImpl.createCompilationContext(projectHome, { defaultOutputRoot }, options, setupTracer = false).asBazelIfNeeded
 }
 
 internal fun computeBuildPaths(options: BuildOptions, buildOut: Path, projectHome: Path, artifactDir: Path? = null): BuildPaths {

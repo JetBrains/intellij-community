@@ -183,7 +183,7 @@ class BuildContextImpl internal constructor(
     ): BuildContext {
       val compilationContext = CompilationContextImpl.createCompilationContext(
         projectHome, createBuildOutputRootEvaluator(projectHome, productProperties, options), options, setupTracer
-      )
+      ).asBazelIfNeeded
       return createContext(compilationContext, projectHome, productProperties, proprietaryBuildTools)
     }
 

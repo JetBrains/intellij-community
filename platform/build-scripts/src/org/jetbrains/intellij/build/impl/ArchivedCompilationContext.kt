@@ -123,6 +123,7 @@ val CompilationContext.asArchived: CompilationContext
   get() {
     return when (this) {
       is ArchivedCompilationContext -> this
+      is BazelCompilationContext -> error("BazelCompilationContext must not be used as archived")
       is BuildContextImpl -> compilationContext.asArchived
       else -> ArchivedCompilationContext(this)
     }
