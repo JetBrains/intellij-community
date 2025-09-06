@@ -1,7 +1,6 @@
 #  Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import inspect
 
-from functools import lru_cache
 import importlib
 
 from _pydevd_bundle import pydevd_utils
@@ -12,8 +11,7 @@ try:
 except Exception:
     _pydevd_import_class = None
 
-@lru_cache(maxsize=256)
-def _resolve_type(path: str):
+def _resolve_type(path):
     """Resolve 'pkg.mod.Class' -> class object, or None."""
     if not path:
         return None
