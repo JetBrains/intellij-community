@@ -7,10 +7,9 @@ import com.intellij.psi.PsiFile
 import com.jetbrains.python.fixtures.PyTestCase
 import junit.framework.TestCase
 
-open class PyTestRunLineMarkerTest : PyTestCase() {
+class PyTestRunLineMarkerRespectFilePatternTest : PyTestCase() {
   companion object {
-    const val TESTS_DIR = "/pyTestLineMarker/"
-    const val PYTHON_FILE = "pythonFile.py"
+    private const val TESTS_DIR = "/pyTestLineMarker/"
   }
 
   override fun getTestDataPath(): String = super.getTestDataPath() + TESTS_DIR
@@ -22,7 +21,9 @@ open class PyTestRunLineMarkerTest : PyTestCase() {
     myFixture.copyDirectoryToProject("", "")
   }
 
-  protected fun getCaretElement(fileName: String): PsiElement? {
+  private fun configureByFile(fileName: String): PsiFile? = myFixture.configureByFile(fileName)
+
+  private fun getCaretElement(fileName: String): PsiElement? {
     val psiFile = configureByFile(fileName)
     TestCase.assertNotNull("Can't find test file", psiFile)
     val element = psiFile?.findElementAt(myFixture.caretOffset)
@@ -30,27 +31,17 @@ open class PyTestRunLineMarkerTest : PyTestCase() {
     return element
   }
 
-  protected open fun configureByFile(fileName: String): PsiFile? = myFixture.configureByFile(fileName)
-
   private fun getInfo(element: PsiElement, lineMarkerContributor: RunLineMarkerContributor): Info? = lineMarkerContributor.getInfo(element)
 
-  protected fun assertInfoFound(element: PsiElement, lineMarkerContributor: RunLineMarkerContributor) {
-    val info = getInfo(element, lineMarkerContributor)
-    TestCase.assertNotNull("Info is not found", info)
-    if (info != null) {
-      TestCase.assertNotNull("Run icon is not found", info.icon)
-    }
-  }
-
-  protected fun assertInfoNotFound(element: PsiElement, lineMarkerContributor: RunLineMarkerContributor) {
+  private fun assertInfoNotFound(element: PsiElement, lineMarkerContributor: RunLineMarkerContributor) {
     TestCase.assertNull("Info is found", getInfo(element, lineMarkerContributor))
   }
 
-  fun testPythonFile() {
+  fun testNoGutterForNonTestModule() {
     val lineMarkerContributor = PyTestLineMarkerContributor()
-    val element = getCaretElement(PYTHON_FILE)
+    val element = getCaretElement("module.py")
     if (element != null) {
-      assertInfoFound(element, lineMarkerContributor)
+      assertInfoNotFound(element, lineMarkerContributor)
     }
   }
 }
