@@ -113,6 +113,16 @@ public abstract class JoinLinesTestGenerated extends AbstractJoinLinesTest {
             runTest("testData/joinLines/addSemicolon/Properties.kt");
         }
 
+        @TestMetadata("PropertiesAndNewLineBetween.kt")
+        public void testPropertiesAndNewLineBetween() throws Exception {
+            runTest("testData/joinLines/addSemicolon/PropertiesAndNewLineBetween.kt");
+        }
+
+        @TestMetadata("PropertiesAndNewLineBetweenInSelection.kt")
+        public void testPropertiesAndNewLineBetweenInSelection() throws Exception {
+            runTest("testData/joinLines/addSemicolon/PropertiesAndNewLineBetweenInSelection.kt");
+        }
+
         @TestMetadata("PropertyAccessors.kt")
         public void testPropertyAccessors() throws Exception {
             runTest("testData/joinLines/addSemicolon/PropertyAccessors.kt");

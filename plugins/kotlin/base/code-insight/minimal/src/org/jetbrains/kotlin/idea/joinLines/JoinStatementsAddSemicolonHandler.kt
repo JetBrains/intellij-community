@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.joinLines
 import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate
 import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 import com.intellij.openapi.editor.Document
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -13,22 +15,33 @@ import org.jetbrains.kotlin.parsing.KotlinExpressionParsing
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.psiUtil.siblings
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class JoinStatementsAddSemicolonHandler : JoinRawLinesHandlerDelegate {
 
     override fun tryJoinRawLines(document: Document, file: PsiFile, start: Int, end: Int): Int {
         if (file.fileType !is KotlinFileType) return JoinLinesHandlerDelegate.CANNOT_JOIN
 
-        val linebreak = file.findElementAt(start)
+        val startElement = file.findElementAt(start)
+        val endElement = file.findElementAt(end)
+        val endElementTextRange = endElement?.textRange
+        val nextElements = startElement
             ?.siblings(forward = true, withItself = true)
+            ?.takeWhile { endElementTextRange != null && it.startOffset <= endElementTextRange.startOffset }
+
+        val linebreak = nextElements
             ?.firstOrNull { it.textContains('\n') }
             ?: return JoinLinesHandlerDelegate.CANNOT_JOIN
 
-        val parent = linebreak.parent ?: return JoinLinesHandlerDelegate.CANNOT_JOIN
-        val element1 = linebreak.firstMaterialSiblingSameLine { prevSibling } ?: return JoinLinesHandlerDelegate.CANNOT_JOIN
-        val element2 = linebreak.firstMaterialSiblingSameLine { nextSibling } ?: return JoinLinesHandlerDelegate.CANNOT_JOIN
+        val parent = linebreak.parent
+            ?: return JoinLinesHandlerDelegate.CANNOT_JOIN
+        val element1 = linebreak.firstMaterialSiblingSameLine { prevSibling }
+            ?: return JoinLinesHandlerDelegate.CANNOT_JOIN
+        val element2 = nextElements.firstOrNull { it !is PsiWhiteSpace }
+            ?: linebreak.firstMaterialSiblingSameLine { nextSibling }
+            ?: return JoinLinesHandlerDelegate.CANNOT_JOIN
 
-        if (linebreak.text.count { it == '\n' } > 1) return JoinLinesHandlerDelegate.CANNOT_JOIN
+        if (element2 is PsiComment) return JoinLinesHandlerDelegate.CANNOT_JOIN
 
         if (element1 !is KtPropertyAccessor) {
             val parentOfElement1 = element1.parent
