@@ -283,6 +283,9 @@ public class LocalTaskImpl extends LocalTask {
     if (myCachedIcon != null) {
       return myCachedIcon;
     }
+    if (myCachedIcon != null) {
+      return myCachedIcon;
+    }
     return getIconFromType(myType, isIssue());
   }
 
