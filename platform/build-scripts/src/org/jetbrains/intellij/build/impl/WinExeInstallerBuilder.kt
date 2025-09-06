@@ -13,6 +13,8 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.intellij.build.downloadFileToCacheLocation
 import org.jetbrains.intellij.build.executeStep
+import org.jetbrains.intellij.build.impl.productInfo.resolveProductInfoJsonSibling
+import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -28,6 +30,7 @@ import kotlin.time.Duration.Companion.hours
 
 internal suspend fun buildNsisInstaller(
   winDistPath: Path,
+  productInfoJsonFile: Path,
   additionalDirectoryToInclude: Path,
   suffix: String,
   customizer: WindowsDistributionCustomizer,
@@ -122,13 +125,18 @@ internal suspend fun buildNsisInstaller(
 
   val installerFile = context.paths.artifactDir.resolve("$outFileName.exe")
   val uninstallerFile = uninstallerPath(context, arch)
+  val installerProductInfoJsonFile = installerFile.resolveProductInfoJsonSibling()
   check(Files.exists(installerFile)) { "Windows installer wasn't created." }
   check(Files.exists(uninstallerFile)) { "Windows uninstaller is missing." }
   context.executeStep(spanBuilder("sign").setAttribute("file", installerFile.toString()), BuildOptions.WIN_SIGN_STEP) {
     context.signFiles(listOf(installerFile))
   }
+  withContext(Dispatchers.IO) {
+    copyFile(productInfoJsonFile, installerProductInfoJsonFile)
+  }
   context.notifyArtifactBuilt(installerFile)
   context.notifyArtifactBuilt(uninstallerFile)
+  context.notifyArtifactBuilt(installerProductInfoJsonFile)
   return installerFile
 }
 

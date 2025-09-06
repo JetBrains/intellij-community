@@ -34,6 +34,7 @@ import org.jetbrains.intellij.build.impl.macOS.MachOUuid
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.generateEmbeddedFrontendLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
+import org.jetbrains.intellij.build.impl.productInfo.resolveProductInfoJsonSibling
 import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
 import org.jetbrains.intellij.build.impl.productInfo.writeProductInfoJson
 import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
@@ -174,34 +175,44 @@ class MacDistributionBuilder(
       val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
       val publishZipOnly = !publishSitArchive && context.isStepSkipped(BuildOptions.MAC_DMG_STEP)
       val macZip = (if (publishZipOnly) context.paths.artifactDir else context.paths.tempDir).resolve("$baseName.mac.${arch.name}.zip")
+      val macZipProductInfoJson = macZip.resolveProductInfoJsonSibling()
       val macZipWithoutRuntime = macZip.resolveSibling(macZip.nameWithoutExtension + NO_RUNTIME_SUFFIX + ".zip")
+      val macZipWithoutRuntimeProductInfoJson = macZipWithoutRuntime.resolveProductInfoJsonSibling()
       val zipRoot = getMacZipRoot(customizer, context)
       val compressionLevel = if (publishSitArchive || publishZipOnly) Deflater.DEFAULT_COMPRESSION else Deflater.BEST_SPEED
       val extraFiles = context.getDistFiles(OsFamily.MACOS, arch, MacLibcImpl.DEFAULT)
       val directories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDir)
       val builder = this@MacDistributionBuilder
+
       val productJson = generateProductJson(context, arch, withRuntime = true)
+      val productJsonWithoutRuntime = generateProductJson(context, arch, withRuntime = false)
+      withContext(Dispatchers.IO) {
+        macZipProductInfoJson.writeText(productJson)
+        macZipWithoutRuntimeProductInfoJson.writeText(productJsonWithoutRuntime)
+      }
+
       buildMacZip(
         builder, macZip, zipRoot, arch, productJson, directories, extraFiles, includeRuntime = true, compressionLevel
       )
 
       if (customizer.buildArtifactWithoutRuntime) {
-        val productJson = generateProductJson(context, arch, withRuntime = false)
         val directoriesSansRuntime = directories.filterNot { it == runtimeDir }
         buildMacZip(
-          builder, macZipWithoutRuntime, zipRoot, arch, productJson, directoriesSansRuntime, extraFiles, includeRuntime = false, compressionLevel
+          builder, macZipWithoutRuntime, zipRoot, arch, productJsonWithoutRuntime, directoriesSansRuntime, extraFiles, includeRuntime = false, compressionLevel
         )
       }
 
       if (publishZipOnly) {
         Span.current().addEvent("skip .dmg and .sit artifacts producing")
         context.notifyArtifactBuilt(macZip)
+        context.notifyArtifactBuilt(macZipWithoutRuntimeProductInfoJson)
         if (customizer.buildArtifactWithoutRuntime) {
           context.notifyArtifactBuilt(macZipWithoutRuntime)
+          context.notifyArtifactBuilt(macZipWithoutRuntimeProductInfoJson)
         }
       }
       else {
-        buildForArch(arch, macZip, macZipWithoutRuntime)
+        buildForArch(arch, macZip, macZipProductInfoJson, macZipWithoutRuntime, macZipWithoutRuntimeProductInfoJson)
       }
     }
   }
@@ -320,33 +331,41 @@ class MacDistributionBuilder(
   override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> =
     customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
 
-  private suspend fun buildForArch(arch: JvmArchitecture, macZip: Path, macZipWithoutRuntime: Path?) {
+  private suspend fun buildForArch(
+    arch: JvmArchitecture,
+    macZip: Path, macZipProductInfoJson: Path,
+    macZipWithoutRuntime: Path, macZipWithoutRuntimeProductInfoJson: Path,
+  ) {
     spanBuilder("build macOS artifacts for specific arch").setAttribute("arch", arch.name).use(Dispatchers.IO) {
       val notarize = System.getProperty("intellij.build.mac.notarize")?.toBoolean()
                      ?: !context.isStepSkipped(BuildOptions.MAC_NOTARIZE_STEP)
                      && !context.isStepSkipped(BuildOptions.MAC_SIGN_STEP)
-      buildForArch(arch, macZip, macZipWithoutRuntime, notarize)
+      buildForArch(arch, macZip, macZipProductInfoJson, macZipWithoutRuntime, macZipWithoutRuntimeProductInfoJson, notarize)
       Files.deleteIfExists(macZip)
     }
   }
 
-  private suspend fun buildForArch(arch: JvmArchitecture, macZip: Path, macZipWithoutRuntime: Path?, notarize: Boolean) {
+  private suspend fun buildForArch(
+    arch: JvmArchitecture,
+    macZip: Path, macZipProductInfoJson: Path,
+    macZipWithoutRuntime: Path, macZipWithoutRuntimeProductInfoJson: Path,
+    notarize: Boolean,
+    ) {
     val archStr = arch.name
     coroutineScope {
       val taskId = "${BuildOptions.MAC_ARTIFACTS_STEP}_jre_${archStr}"
       createSkippableJob(spanBuilder("build DMG with Runtime").setAttribute("arch", archStr), taskId, context) {
-        signAndBuildDmg(macZip, isRuntimeBundled = true, suffix(arch), arch, notarize)
+        signAndBuildDmg(macZip, macZipProductInfoJson, isRuntimeBundled = true, suffix(arch), arch, notarize)
       }
 
       if (customizer.buildArtifactWithoutRuntime) {
-        requireNotNull(macZipWithoutRuntime)
         createSkippableJob(
           spanBuilder("build DMG without Runtime").setAttribute("arch", archStr),
           stepId = "${BuildOptions.MAC_ARTIFACTS_STEP}_no_jre_${archStr}",
           context
         ) {
           val suffix = "${NO_RUNTIME_SUFFIX}${suffix(arch)}"
-          signAndBuildDmg(macZipWithoutRuntime, isRuntimeBundled = false, suffix, arch, notarize)
+          signAndBuildDmg(macZipWithoutRuntime, macZipWithoutRuntimeProductInfoJson, isRuntimeBundled = false, suffix, arch, notarize)
         }
       }
     }
@@ -556,11 +575,13 @@ class MacDistributionBuilder(
   private val publishSitArchive: Boolean
     get() = !context.isStepSkipped(BuildOptions.MAC_SIT_PUBLICATION_STEP)
 
-  private suspend fun signAndBuildDmg(macZip: Path, isRuntimeBundled: Boolean, suffix: String, arch: JvmArchitecture, notarize: Boolean) {
+  private suspend fun signAndBuildDmg(macZip: Path, productInfoJson: Path, isRuntimeBundled: Boolean, suffix: String, arch: JvmArchitecture, notarize: Boolean) {
     require(Files.isRegularFile(macZip))
 
     val baseName = context.productProperties.getBaseArtifactName(context) + suffix
     val sitFile = (if (publishSitArchive) context.paths.artifactDir else context.paths.tempDir).resolve("$baseName.sit")
+    val sitProductInfoFile = sitFile.resolveProductInfoJsonSibling()
+    copyFile(productInfoJson, sitProductInfoFile)
     Files.move(macZip, sitFile, StandardCopyOption.REPLACE_EXISTING)
 
     if (context.isMacCodeSignEnabled) {
@@ -571,10 +592,11 @@ class MacDistributionBuilder(
       notarize(sitFile, context)
     }
 
-    buildDmg(sitFile, "${baseName}.dmg", notarize)
+    buildDmg(sitFile, productInfoJson, "${baseName}.dmg", notarize)
 
     if (publishSitArchive) {
       context.notifyArtifactBuilt(sitFile)
+      context.notifyArtifactBuilt(sitProductInfoFile)
     }
 
     val zipRoot = getMacZipRoot(customizer, context)
@@ -585,7 +607,7 @@ class MacDistributionBuilder(
     }
   }
 
-  private suspend fun buildDmg(sitFile: Path, dmgName: String, staple: Boolean) {
+  private suspend fun buildDmg(sitFile: Path, productInfoJson: Path, dmgName: String, staple: Boolean) {
     val tempDir = context.paths.tempDir.resolve(sitFile.name.replace(".sit", ""))
     try {
       context.executeStep(spanBuilder("build .dmg locally"), BuildOptions.MAC_DMG_STEP) {
@@ -603,9 +625,12 @@ class MacDistributionBuilder(
         val tmpSit = Files.move(sitFile, tempDir.resolve(sitFile.fileName))
         runProcess(args = listOf("./${entrypoint.name}"), workingDir = tempDir, inheritOut = true)
         val dmgFile = tempDir.resolve(dmgName)
+        val dmgProductInfoJson = dmgFile.resolveProductInfoJsonSibling()
+        copyFile(productInfoJson, dmgProductInfoJson)
         check(Files.exists(dmgFile)) { "$dmgFile wasn't created" }
         Files.move(dmgFile, context.paths.artifactDir.resolve(dmgFile.name), StandardCopyOption.REPLACE_EXISTING)
         context.notifyArtifactBuilt(dmgFile)
+        context.notifyArtifactBuilt(dmgProductInfoJson)
         Files.move(tmpSit, sitFile)
       }
     }

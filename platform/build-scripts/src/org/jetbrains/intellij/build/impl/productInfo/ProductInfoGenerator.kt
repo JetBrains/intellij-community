@@ -133,3 +133,12 @@ internal suspend fun generateEmbeddedFrontendLaunchData(
     )
   }
 }
+
+/**
+ * See 'IJI-2228 Publish product-info.json next to installers'.
+ *
+ * E.g., if [this] is `installer.tag.gz`, returned Path will be `installer.tag.gz.product-info.json`.
+ */
+internal fun Path.resolveProductInfoJsonSibling(): Path {
+  return resolveSibling("${this.fileName}.$PRODUCT_INFO_FILE_NAME")
+}
