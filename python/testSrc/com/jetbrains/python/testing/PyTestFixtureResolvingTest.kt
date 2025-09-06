@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
+import com.intellij.idea.TestFor
 import com.intellij.psi.*
 import com.jetbrains.python.fixture.PythonCommonTestCase
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.testing.pyTestFixtures.*
@@ -105,6 +107,8 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     const val PARAMETRIZED_DIR = "/testParameters"
     const val TEST_PARAMETER_TYPES = "/test_parameter_types.py"
 
+    const val INNER_CLASS_TYPE_DIR = "/testInferenceForInnerClass"
+    const val INNER_CLASS_TYPE_FILE = "/test_.py"
   }
 
   override fun getTestDataPath() = super.getTestDataPath() + TESTS_SUBDIR
@@ -140,6 +144,14 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     val resolve = getResolve(dirName, fileName) as PyNamedParameter
     val element = getCaretElement(dirName, fileName)
     TestCase.assertNotNull(element)
+    val context = TypeEvalContext.codeAnalysis(element!!.project, element.containingFile)
+    assertType(typeName, resolve, context)
+  }
+
+  private fun assertCorrectAttributeType(dirName: String, fileName: String, typeName: String = STR_TYPE_NAME) {
+    val resolve = getResolve(dirName, fileName) as PyTargetExpression
+    val element = getCaretElement(dirName, fileName)
+    assertNotNull(element)
     val context = TypeEvalContext.codeAnalysis(element!!.project, element.containingFile)
     assertType(typeName, resolve, context)
   }
@@ -352,4 +364,10 @@ class PyTestFixtureResolvingTest : PyTestCase() {
   fun testNamedParameterTypes() {
     assertCorrectType(PARAMETRIZED_DIR, TEST_PARAMETER_TYPES, INT_STR_UNION)
   }
+
+  @TestFor(issues = ["PY-66245"])
+  fun testInferenceForInnerClass() {
+    assertCorrectAttributeType(INNER_CLASS_TYPE_DIR, INNER_CLASS_TYPE_FILE)
+  }
+
 }
