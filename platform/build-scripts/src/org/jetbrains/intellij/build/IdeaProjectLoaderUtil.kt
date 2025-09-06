@@ -51,6 +51,10 @@ internal object IdeaProjectLoaderUtil {
       moniker = "current directory",
       path = System.getProperty("user.dir"),
     ),
+    HomeSource(
+      moniker = "ultimate home directory",
+      path = PathManager.getHomePathFor(javaClass),
+    ),
   )
 
   /**
