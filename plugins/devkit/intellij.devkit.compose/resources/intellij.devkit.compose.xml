@@ -29,7 +29,7 @@
   <actions>
     <group id="ComposeToolsGroup" searchable="false">
       <action id="JewelToolwindow" class="com.intellij.devkit.compose.demo.dialog.JewelToolwindowAction"
-              icon="com.intellij.devkit.compose.demo.JewelIcons.ToolWindowIcon"/>
+              icon="org.jetbrains.idea.devkit.DevKitIcons.ComposeToolWindow"/>
       <action id="JewelComponentShowcaseDialog" class="com.intellij.devkit.compose.demo.dialog.ComponentShowcaseDialogAction"
               icon="org.jetbrains.idea.devkit.DevKitIcons.Items"/>
       <action id="JewelWizardDialog" class="com.intellij.devkit.compose.demo.dialog.JewelWizardDialogAction"/>
