@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
+import com.intellij.codeInsight.inline.completion.debounce.InlineCompletionAdaptiveDebounceListener
 import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
@@ -83,6 +84,9 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     addEventListener(logsListener)
     invalidationListeners.addListener(logsListener)
     addEventListener(UserFactorsListener())
+
+    // Adaptive debounce listener: tracks acceptance/rejection outcomes for the last 10 minutes
+    addEventListener(InlineCompletionAdaptiveDebounceListener(editor))
 
     Disposer.register(parentDisposable, /* child = */ executor)
   }
