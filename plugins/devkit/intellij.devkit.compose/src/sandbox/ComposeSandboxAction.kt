@@ -4,7 +4,9 @@ package com.intellij.devkit.compose.sandbox
 import com.intellij.devkit.compose.DevkitComposeBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.FileIconProvider
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.*
@@ -15,7 +17,6 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ui.JBUI
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.jewel.bridge.compose
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
@@ -26,7 +27,8 @@ internal class ComposeSandboxAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     // only needed when we develop a plugin, hide from unrelated projects
-    e.presentation.isEnabledAndVisible = e.project != null && PsiUtil.isPluginProject(e.project!!)
+    e.presentation.isEnabledAndVisible = e.project != null
+                                         && (PluginManagerCore.isRunningFromSources() || AppMode.isDevServer())
   }
 
   override fun actionPerformed(e: AnActionEvent) {
