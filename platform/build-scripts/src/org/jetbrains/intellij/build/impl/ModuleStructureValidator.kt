@@ -213,13 +213,14 @@ class ModuleStructureValidator(private val context: BuildContext, private val al
     for (moduleName in allProductModules.map { it.moduleName }.distinct()) {
       val jpsModule = context.findRequiredModule(moduleName)
 
+      if (jpsModule.sourceRoots.isEmpty()) {
+        // no source roots -> no classes
+        continue
+      }
+
       val outputDirectory = JpsJavaExtensionService.getInstance().getOutputDirectory(jpsModule, false)!!.toPath()
       val outputDirectoryPrefix = outputDirectory.toString().replace('\\', '/') + "/"
       if (!Files.isDirectory(outputDirectory)) {
-        if (jpsModule.contentRootsList.urls.isEmpty()) {
-          // no content roots -> no classes
-          continue
-        }
 
         throw IllegalStateException("Module output directory '$outputDirectory' is missing")
       }
