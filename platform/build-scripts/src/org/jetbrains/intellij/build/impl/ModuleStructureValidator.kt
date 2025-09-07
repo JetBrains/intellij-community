@@ -251,7 +251,7 @@ class ModuleStructureValidator(private val context: BuildContext, private val al
           val libraryFiles = getLibraryFiles(jpsLibrary)
           for (fileName in libraryFiles) {
             if (!fileName.endsWith(".class") || fileName.endsWith("Kt.class")) {
-              return
+              continue
             }
 
             classes.add(removeSuffixStrict(fileName, ".class").replace("/", "."))
