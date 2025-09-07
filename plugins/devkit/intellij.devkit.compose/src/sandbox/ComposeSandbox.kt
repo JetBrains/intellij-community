@@ -17,6 +17,9 @@ import org.jetbrains.jewel.ui.component.Text
 internal fun ComposeSandbox() {
   // IMPLEMENT YOUR DEMO HERE
 
+  // Enable `devkit.compose.hot.reload.enabled` registry key
+  // Hit `Code Changed` toolbar in the editor to Apply changes on the fly, without restarting debug sessions
+
   val btnText = remember { mutableStateOf("Awesome, I can do that!") }
   Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
     Text("Here is your Compose UI playground:", fontStyle = FontStyle.Italic)

@@ -7,7 +7,8 @@ create_kotlinc_options(
   opt_in = [
     "androidx.compose.foundation.ExperimentalFoundationApi",
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
-  ]
+  ],
+  plugin_options = ["plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true"]
 )
 
 jvm_resources(
@@ -36,6 +37,7 @@ jvm_library(
     "//platform/compose/markdown",
     "//plugins/devkit/devkit-core:core",
     "//platform/analysis-api:analysis",
+    "//platform/core-impl",
   ],
   runtime_deps = [":compose_resources"],
   plugins = ["@lib//:compose-plugin"]
