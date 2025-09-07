@@ -59,12 +59,11 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
 
   override fun update(e: AnActionEvent) {
     val grid = e.getData(DatabaseDataKeys.DATA_GRID_KEY)
+    val dataHookUp = grid?.getDataHookup()
     if (
-      grid == null ||
-      grid.getDataHookup().let { dataHookUp ->
-        dataHookUp is DocumentDataHookUp ||
-        (dataHookUp.pageModel as? NestedTableGridPagingModel<GridRow?, GridColumn?>)?.isStatic == true
-      }
+      dataHookUp == null ||
+      dataHookUp is DocumentDataHookUp ||
+      (dataHookUp.pageModel as? NestedTableGridPagingModel<GridRow?, GridColumn?>)?.isStatic == true
     ) {
       e.presentation.setEnabledAndVisible(false)
       return
@@ -119,7 +118,7 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
 
     val component = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY)
     if (component != null) {
-      component.setToolTipText(state.tooltip)
+      component.toolTipText = state.tooltip
       component.repaint()
     }
 
