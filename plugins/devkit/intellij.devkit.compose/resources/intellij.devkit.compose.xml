@@ -8,6 +8,8 @@
     <!-- For Markdown demos -->
     <module name="intellij.platform.compose.markdown"/>
     <module name="intellij.platform.jewel.markdown.extensions.images"/>
+
+    <plugin id="org.jetbrains.kotlin"/>
   </dependencies>
 
   <resource-bundle>messages.DevkitComposeBundle</resource-bundle>
@@ -24,6 +26,8 @@
 
     <registryKey key="devkit.compose.example.settings.page" defaultValue="false"
                  description="Enable example Settings page implemented with Compose UI"/>
+
+    <editorNotificationProvider implementation="com.intellij.devkit.compose.hotreload.ComposeHotReloadSuggester"/>
   </extensions>
 
   <actions>
