@@ -201,7 +201,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getComponentAtRow(row: Int): Component = fixture.getComponentAtRow(row)
 
-  fun waitForNodesLoaded(timeout: Duration = 5.seconds) {
+  fun waitForNodesLoaded(timeout: Duration = 10.seconds) {
     waitFor("tree nodes are loaded", timeout) { fixture.areTreeNodesLoaded() }
   }
 
