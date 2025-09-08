@@ -2,7 +2,6 @@
 package org.jetbrains.tools.model.updater
 
 import org.jdom.Document
-import org.jetbrains.tools.model.updater.KotlinTestsDependenciesUtil
 import org.jetbrains.tools.model.updater.impl.*
 import java.io.File
 import java.util.*
@@ -125,14 +124,23 @@ private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
 
 private fun updateCoopRunConfiguration(monorepoRoot: File?, communityRoot: File) {
     val runConfigurationFilePath = ".idea/runConfigurations/Kotlin_Coop__Publish_compiler_for_ide_JARs.xml"
-    val runConfiguration = communityRoot.resolve(runConfigurationFilePath)
-    val originalText = runConfiguration.readText()
-    val resultText = originalText.replace(bootstrapVersionRegex) { matchResult ->
+    val communityRunConfigurationFile = communityRoot.resolve(runConfigurationFilePath)
+    val originalText = communityRunConfigurationFile.readText()
+
+    val communityResultText = originalText.replace(bootstrapVersionRegex) { matchResult ->
         "${matchResult.groupValues[1]}$BOOTSTRAP_VERSION${matchResult.groupValues[4]}"
     }
 
-    runConfiguration.writeText(resultText)
-    monorepoRoot?.resolve(runConfigurationFilePath)?.writeText(resultText)
+    communityRunConfigurationFile.writeText(communityResultText)
+
+    val monorepoResultText = communityResultText.replace(Regex.fromLiteral("-Pkotlin.build.deploy-path=intellij/")) { matchResult ->
+        matchResult.groupValues[0] + "community/"
+    }
+
+    require(monorepoResultText != communityResultText)
+
+    val monorepoRunConfigurationFile = monorepoRoot?.resolve(runConfigurationFilePath)
+    monorepoRunConfigurationFile?.writeText(monorepoResultText)
 }
 
 private val bootstrapVersionRegex = Regex("(-P(deployVersion|build\\.number)=)(.+?)([ \"])")
