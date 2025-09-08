@@ -111,5 +111,9 @@ common:ci --show_progress_rate_limit=30
 build --nobuild_runfile_links
 
 # detailed tests output by default
-# https://bazel.build/reference/command-line-reference?utm_source=chatgpt.com#build-flag--test_summary
+# https://bazel.build/reference/command-line-reference#build-flag--test_summary
 test --test_summary=detailed
+
+# https://bazel.build/reference/test-encyclopedia
+# https://bazel.build/reference/command-line-reference#flag--test_timeout
+test --test_timeout=60,300,900,14400
