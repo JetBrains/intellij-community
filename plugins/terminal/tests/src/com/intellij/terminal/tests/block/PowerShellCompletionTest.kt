@@ -9,7 +9,6 @@ import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.tests.block.util.TerminalSessionTestUtil
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
@@ -18,6 +17,7 @@ import com.intellij.testFramework.fixtures.ModuleFixture
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.utils.io.createFile
 import com.intellij.testFramework.utils.io.deleteRecursively
+import com.intellij.util.system.OS
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
 import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionContributor
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
@@ -43,7 +43,8 @@ internal class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtu
   private val separator: Char = File.separatorChar
 
   override fun setUp() {
-    Assume.assumeTrue("This test is supposed to be run only on Windows", SystemInfo.isWindows)
+    Assume.assumeTrue("This test is supposed to be run only on Windows", OS.CURRENT == OS.Windows)
+    Assume.assumeTrue("It leaks project for some reason on Win10", OS.CURRENT.isAtLeast(11, 0))
     val powerShellFile = listOf("powershell.exe", "pwsh.exe").firstNotNullOfOrNull { PathEnvironmentVariableUtil.findInPath(it) }
     Assume.assumeTrue("Powershell executable not found", powerShellFile != null)
 
