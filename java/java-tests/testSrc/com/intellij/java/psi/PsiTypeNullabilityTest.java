@@ -377,4 +377,30 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     TypeNullability typeNullability = info.toTypeNullability();
     assertEquals("NOT_NULL (@NotNullByDefault on package foo)", typeNullability.toString());
   }
+  
+  public void testFBoundResolveUnderNotNull() {
+    myFixture.configureByText("Test.java", """
+      import org.jetbrains.annotations.NotNullByDefault;
+      
+      @NotNullByDefault
+      interface RestClient2 {
+          default void test(RequestHeadersUriSpec<?> spec2) {
+              spec2.uri().attributes().retrieve();
+          }
+
+          interface UriSpec<S extends RequestHeadersSpec<?>> {
+              S uri();
+          }
+      
+          interface RequestHeadersSpec<S extends RequestHeadersSpec<S>> {
+              S attributes();
+              Object retrieve();
+          }
+      
+          interface RequestHeadersUriSpec<S extends RequestHeadersSpec<S>> extends UriSpec<S>, RequestHeadersSpec<S> {
+          }
+      }
+      """);
+    myFixture.checkHighlighting();
+  }
 }

@@ -52,6 +52,19 @@ public interface PsiSubstitutor {
   PsiType substitute(@Nullable PsiType type);
 
   /**
+   * Substitutes type parameters occurring in {@code type} with their values.
+   * If value for type parameter is {@code null}, appropriate erasure is returned.
+   * The nullability of the original type 
+   *
+   * @param type the type to substitute the type parameters for.siT
+   * @return the result of the substitution.
+   */
+  @Contract(pure = true, value = "null -> null")
+  default PsiType substituteIgnoringNullability(@Nullable PsiType type) {
+    return substitute(type);
+  }
+
+  /**
    * @return true if this substitutor has at least one raw substitution
    */
   default boolean hasRawSubstitution() {

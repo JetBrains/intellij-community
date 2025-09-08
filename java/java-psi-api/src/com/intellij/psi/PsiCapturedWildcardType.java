@@ -53,7 +53,7 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
     PsiType originalBound = !wildcardType.isSuper() ? wildcardType.getBound() : null;
     PsiType glb = originalBound;
     for (PsiType boundType : boundTypes) {
-      final PsiType substitutedBoundType = captureSubstitutor.substitute(boundType);
+      final PsiType substitutedBoundType = captureSubstitutor.substituteIgnoringNullability(boundType);
       //glb for array types is not specified yet
       if (originalBound instanceof PsiArrayType &&
           substitutedBoundType instanceof PsiArrayType &&
