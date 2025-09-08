@@ -51,7 +51,7 @@ import java.util.Objects;
 public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperties> extends Breakpoint<P> {
   private static final Logger LOG = Logger.getInstance(BreakpointWithHighlighter.class);
 
-  private @Nullable SourcePosition mySourcePosition;
+  private volatile @Nullable SourcePosition mySourcePosition;
 
   private boolean myVisible = true;
   private volatile Icon myIcon = getSetIcon(false);

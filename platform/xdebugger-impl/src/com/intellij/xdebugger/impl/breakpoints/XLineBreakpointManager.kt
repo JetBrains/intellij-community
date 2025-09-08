@@ -308,6 +308,8 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
       val document = e.document
       val breakpoints = getDocumentBreakpointProxies(document)
       if (!breakpoints.isEmpty()) {
+        // Update position immediately to avoid races with doUpdateUI
+        breakpoints.forEach { it.fastUpdatePosition() }
         scheduleDocumentUpdate(document)
 
         InlineBreakpointInlayManager.getInstance(project).redrawDocument(e)

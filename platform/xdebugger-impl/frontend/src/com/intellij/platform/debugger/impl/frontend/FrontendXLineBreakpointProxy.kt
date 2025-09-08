@@ -13,11 +13,61 @@ import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
+import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicReference
 
 internal enum class RegistrationStatus {
   NOT_STARTED, IN_PROGRESS, REGISTERED, DEREGISTERED
+}
+
+private sealed interface BreakpointRequest {
+  val requestId: Long
+  suspend fun sendRequest(breakpointId: XBreakpointId, requestId: Long)
+
+  class SetLine(override val requestId: Long, val line: Int) : BreakpointRequest {
+    override suspend fun sendRequest(breakpointId: XBreakpointId, requestId: Long) {
+      XBreakpointApi.getInstance().setLine(breakpointId, requestId, line)
+    }
+  }
+
+  class UpdatePosition(override val requestId: Long) : BreakpointRequest {
+    override suspend fun sendRequest(breakpointId: XBreakpointId, requestId: Long) {
+      XBreakpointApi.getInstance().updatePosition(breakpointId, requestId)
+    }
+  }
+}
+
+private class RequestsDebouncer(cs: CoroutineScope, private val breakpointId: XBreakpointId) {
+  private val debouncedRequests = Channel<BreakpointRequest>(Channel.UNLIMITED)
+
+  init {
+    cs.launch {
+      val flows = hashMapOf<Class<out BreakpointRequest>, Channel<BreakpointRequest>>()
+      for (request in debouncedRequests) {
+        val flow = flows.getOrPut(request::class.java) { createRequestTypeFlow() }
+        flow.send(request)
+      }
+    }
+  }
+
+  private fun CoroutineScope.createRequestTypeFlow(): Channel<BreakpointRequest> {
+    val channel = Channel<BreakpointRequest>()
+    launch {
+      channel.consumeAsFlow().collectLatest {
+        it.sendRequest(breakpointId, it.requestId)
+      }
+    }
+    return channel
+  }
+
+  fun sendRequest(request: BreakpointRequest) {
+    debouncedRequests.trySend(request)
+  }
 }
 
 internal class FrontendXLineBreakpointProxy(
@@ -28,6 +78,8 @@ internal class FrontendXLineBreakpointProxy(
   manager: FrontendXBreakpointManager,
   onBreakpointChange: (XBreakpointProxy) -> Unit,
 ) : FrontendXBreakpointProxy(project, parentCs, dto, type, manager.breakpointRequestCounter, onBreakpointChange), XLineBreakpointProxy {
+  private val debouncer = RequestsDebouncer(cs, id)
+
   private var lineSourcePosition: XSourcePosition? = null
 
   private val visualRepresentation = XBreakpointVisualRepresentation(cs, this, useFeLineBreakpointProxy(), manager)
@@ -113,7 +165,7 @@ internal class FrontendXLineBreakpointProxy(
           visualRepresentation.redrawInlineInlays(getFile(), line)
         }
       ) { requestId ->
-        XBreakpointApi.getInstance().setLine(id, requestId, line)
+        debouncer.sendRequest(BreakpointRequest.SetLine(requestId, line))
       }
     }
     else {
@@ -128,7 +180,7 @@ internal class FrontendXLineBreakpointProxy(
         },
         forceRequestWithoutUpdate = true,
       ) { requestId ->
-        XBreakpointApi.getInstance().updatePosition(id, requestId)
+        debouncer.sendRequest(BreakpointRequest.UpdatePosition(requestId))
       }
     }
   }
@@ -140,6 +192,10 @@ internal class FrontendXLineBreakpointProxy(
   }
 
   override fun updatePosition() {
+    // everything is done in fastUpdatePosition
+  }
+
+  override fun fastUpdatePosition() {
     val highlighter: RangeMarker? = visualRepresentation.rangeMarker
     if (highlighter != null && highlighter.isValid()) {
       lineSourcePosition = null // reset the source position even if the line number has not changed, as the offset may be cached inside
