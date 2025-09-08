@@ -1,51 +1,40 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution;
+package com.intellij.execution
 
-import com.intellij.execution.actions.RunConfigurationProducer;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.HashSet;
-import java.util.Set;
+import com.intellij.execution.actions.RunConfigurationProducer
+import com.intellij.openapi.components.*
+import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 /**
- * Project component that keeps track of {@link RunConfigurationProducer} implementations that should be ignored for a given project. All
+ * Project component that keeps track of [RunConfigurationProducer] implementations that should be ignored for a given project. All
  * subclasses of classes specified here will be ignored when looking for configuration producers.
  */
 @Service(Service.Level.PROJECT)
-@State(name = "RunConfigurationProducerService", storages = @Storage("runConfigurations.xml"))
+@State(name = "RunConfigurationProducerService", storages = [Storage("runConfigurations.xml")])
 @ApiStatus.Internal
-public final class RunConfigurationProducerService implements PersistentStateComponent<RunConfigurationProducerService.State> {
-  private State myState = new State();
+class RunConfigurationProducerService : PersistentStateComponent<RunConfigurationProducerService.State> {
+  private var myState = State()
 
-  @Override
-  public @NotNull State getState() {
-    return myState;
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): RunConfigurationProducerService = project.service<RunConfigurationProducerService>()
   }
 
-  @Override
-  public void loadState(@NotNull State state) {
-    myState = state;
+  override fun getState(): State = myState
+
+  override fun loadState(state: State) {
+    myState = state
   }
 
-  public static final class State {
-    public final Set<String> ignoredProducers = new HashSet<>();
+  class State {
+    @JvmField
+    val ignoredProducers: MutableSet<String?> = HashSet<String?>()
   }
 
-  public static @NotNull RunConfigurationProducerService getInstance(@NotNull Project project) {
-    return project.getService(RunConfigurationProducerService.class);
+  fun addIgnoredProducer(ignoredProducer: Class<out RunConfigurationProducer<*>?>) {
+    myState.ignoredProducers.add(ignoredProducer.getName())
   }
 
-  public void addIgnoredProducer(@NotNull Class<? extends RunConfigurationProducer<?>> ignoredProducer) {
-    myState.ignoredProducers.add(ignoredProducer.getName());
-  }
-
-  public boolean isIgnored(@NotNull RunConfigurationProducer<?> producer) {
-    return myState.ignoredProducers.contains(producer.getClass().getName());
-  }
+  fun isIgnored(producer: RunConfigurationProducer<*>): Boolean = myState.ignoredProducers.contains(producer.javaClass.getName())
 }
