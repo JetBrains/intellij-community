@@ -13,8 +13,8 @@ import org.jetbrains.jewel.ui.icon.IconKey
 @ApiStatus.Internal
 interface WelcomeRightTabContentProvider {
   // Use Valkyrie IDEA plugin to generate the ImageVector
-  fun getBackgroundImageVectorLight(): ImageVector
-  fun getBackgroundImageVectorDark(): ImageVector
+  val backgroundImageVectorLight: ImageVector
+  val backgroundImageVectorDark: ImageVector
 
   val title: String
   val secondaryTitle: String

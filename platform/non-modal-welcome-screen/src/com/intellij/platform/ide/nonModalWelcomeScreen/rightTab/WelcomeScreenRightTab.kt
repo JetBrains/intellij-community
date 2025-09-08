@@ -308,8 +308,8 @@ class WelcomeScreenRightTab(
   @get:Composable
   private val backgroundImageVector: ImageVector
     get() = when (JewelTheme.isDark) {
-      true -> contentProvider.getBackgroundImageVectorDark()
-      false -> contentProvider.getBackgroundImageVectorLight()
+      true -> contentProvider.backgroundImageVectorDark
+      false -> contentProvider.backgroundImageVectorLight
     }
 
   @get:Composable
