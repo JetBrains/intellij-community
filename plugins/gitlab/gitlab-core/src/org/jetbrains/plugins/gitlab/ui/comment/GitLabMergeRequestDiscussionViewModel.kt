@@ -54,7 +54,7 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
   private val expandRequested = MutableStateFlow(false)
 
   override val isResolved: StateFlow<Boolean> = discussion.resolved
-  override val canChangeResolvedState: StateFlow<Boolean> = MutableStateFlow(discussion.canResolve)
+  override val canChangeResolvedState: StateFlow<Boolean> = discussion.resolvable.mapState { it && discussion.resolveAllowed }
 
   override val replyVm: StateFlow<GitLabDiscussionReplyViewModel?> =
     discussion.canAddNotes.mapScoped { canAddNotes ->

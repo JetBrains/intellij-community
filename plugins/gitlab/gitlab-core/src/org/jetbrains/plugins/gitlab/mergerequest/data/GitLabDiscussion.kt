@@ -25,7 +25,8 @@ interface GitLabDiscussion {
   val notes: StateFlow<List<GitLabNote>>
   val canAddDraftNotes: Boolean
 
-  val canResolve: Boolean
+  val resolvable: StateFlow<Boolean>
+  val resolveAllowed: Boolean
   val canAddNotes: StateFlow<Boolean>
   val resolved: StateFlow<Boolean>
 
@@ -116,8 +117,12 @@ class LoadedGitLabDiscussion(
     mr.details.value.userPermissions.createNote &&
     (glMetadata?.let { GitLabVersion(16, 3) <= it.version } ?: false)
 
-  // a little cheat that greatly simplifies the implementation
-  override val canResolve: Boolean = discussionData.notes.first().resolvable && discussionData.notes.first().userPermissions.resolveNote
+
+  override val resolvable: StateFlow<Boolean> =
+    loadedNotes.mapState { it.firstOrNull()?.resolvable ?: false }
+
+  // a little cheat that simplifies the implementation
+  override val resolveAllowed: Boolean = discussionData.notes.first().userPermissions.resolveNote
 
   override val resolved: StateFlow<Boolean> =
     loadedNotes.mapState { it.firstOrNull()?.resolved ?: false }
@@ -166,5 +171,5 @@ class LoadedGitLabDiscussion(
   }
 
   override fun toString(): String =
-    "LoadedGitLabDiscussion(id='$id', createdAt=$createdAt, canAddNotes=$canAddNotes, canResolve=$canResolve)"
+    "LoadedGitLabDiscussion(id='$id', createdAt=$createdAt)"
 }
