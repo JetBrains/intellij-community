@@ -351,6 +351,6 @@
   </actions>
   <projectListeners>
     <listener class="org.jetbrains.plugins.gradle.service.GradleFileModificationListener"
-              topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+              topic="com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable"/>
   </projectListeners>
 </idea-plugin>
