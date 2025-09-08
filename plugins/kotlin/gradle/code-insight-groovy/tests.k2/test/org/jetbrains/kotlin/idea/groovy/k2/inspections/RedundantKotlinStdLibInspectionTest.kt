@@ -216,7 +216,7 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testPluginIdNotApplied(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, JAVA_PLUGIN_WITH_KOTLIN_STDLIB_FIXTURE) {
+        runTest(gradleVersion, NOT_APPLIED_FIXTURE) {
             testHighlighting(
                 """
                 plugins { 
@@ -234,7 +234,7 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
     @ParameterizedTest
     @BaseGradleVersionSource
     fun testPluginFromVersionCatalogNotApplied(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, JAVA_PLUGIN_WITH_KOTLIN_STDLIB_FIXTURE) {
+        runTest(gradleVersion, NOT_APPLIED_FIXTURE) {
             testHighlighting(
                 """
                 plugins { 
@@ -567,6 +567,18 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
                 addApiDependency("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
             }
             withFile("gradle.properties", "kotlin.stdlib.default.dependency=false")
+        }
+        private val NOT_APPLIED_FIXTURE = GradleTestFixtureBuilder.create("not_applied_kotlin_jvm") { gradleVersion ->
+            withBuildFile(gradleVersion) {
+                withPlugin { code("id 'org.jetbrains.kotlin.jvm' version '2.2.0' apply false") }
+                withJavaPlugin()
+                withPrefix {
+                    call("configurations") {
+                        code("api")
+                    }
+                }
+                addApiDependency("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+            }
         }
     }
 }

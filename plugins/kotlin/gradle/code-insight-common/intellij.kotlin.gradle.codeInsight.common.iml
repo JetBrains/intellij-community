@@ -48,5 +48,8 @@
     <orderEntry type="module" module-name="kotlin.code-insight.inspections.shared" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.toml.core" />
+    <orderEntry type="module" module-name="kotlin.base.external-build-system" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" />
   </component>
 </module>

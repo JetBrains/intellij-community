@@ -44,7 +44,6 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-java",
     "//platform/platform-api:ide",
     "//plugins/gradle/java",
-    "//plugins/toml/core",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.groovy` end
