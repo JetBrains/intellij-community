@@ -19,7 +19,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.PyUtil.multiResolveTopPriority;
 
-public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern {
+public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern, PyCaptureContext {
   public PyClassPatternImpl(ASTNode astNode) {
     super(astNode);
   }
