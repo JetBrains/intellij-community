@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.serviceContainer.BaseKeyedLazyInstance
 import com.intellij.ui.components.JBLabel
@@ -15,6 +14,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComponent
 
 /**
  * Creates a UI component, that receives its data from a [SplitComponentModel] object. Provider should be registered in XML with id
@@ -26,12 +26,12 @@ interface SplitComponentProvider {
     private val EP = KeyedExtensionCollector<SplitComponentProvider, String>("com.intellij.frontend.splitComponentProvider")
 
     @ApiStatus.Internal
-    fun createComponent(project: Project, cs: CoroutineScope, id: SplitComponentIdWithProvider): ComponentContainer {
+    fun createComponent(project: Project, cs: CoroutineScope, id: SplitComponentIdWithProvider): JComponent {
       val provider = EP.findSingle(id.providerId)
       if (provider != null) {
-        val container = provider.createComponent(project, cs, id.componentId)
-        if (container != null) {
-          return container
+        val component = provider.createComponent(project, cs, id.componentId)
+        if (component != null) {
+          return component
         }
         else {
           fileLogger().warn("Provider ($provider) couldn't create component for id=$id")
@@ -41,13 +41,7 @@ interface SplitComponentProvider {
         fileLogger().warn("Couldn't find provider for id=$id")
       }
       val component = JBLabel(IdeBundle.message("split.component.missing", id))
-      return object : ComponentContainer {
-        override fun getComponent() = component
-        override fun getPreferredFocusableComponent() = null
-        override fun dispose() {}
-      }.apply {
-        Disposer.dispose(this)
-      }
+      return component
     }
   }
 
@@ -58,7 +52,7 @@ interface SplitComponentProvider {
    * @param scope that is going to be canceled when [CoroutineScope] passed to [SplitComponentFactory.createComponent] is canceled.
    */
   @RequiresEdt
-  fun createComponent(project: Project, scope: CoroutineScope, id: SplitComponentId): ComponentContainer?
+  fun createComponent(project: Project, scope: CoroutineScope, id: SplitComponentId): JComponent?
 }
 
 private class SplitComponentProviderBean : BaseKeyedLazyInstance<SplitComponentProvider>(), KeyedLazyInstance<SplitComponentProvider> {

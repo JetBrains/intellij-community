@@ -19,6 +19,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComponent
 import javax.swing.JPanel
 
 /**
@@ -51,19 +52,14 @@ class SplitComponentFactory private constructor() {
    * The scope passed in [SplitComponentProvider.createComponent] will be canceled when this [scope] is canceled.
    */
   @RequiresEdt
-  fun createComponent(project: Project, scope: CoroutineScope, model: SplitComponentModel): ComponentContainer {
+  fun createComponent(project: Project, scope: CoroutineScope, model: SplitComponentModel): JComponent {
     val providerId = model.providerId
     val componentId = storeValueGlobally(scope, model, SplitComponentModelIdType)
     val id = SplitComponentIdWithProvider(providerId, componentId)
     logger.debug { "Registered model with id=$id : $model" }
     if (AppMode.isRemoteDevHost()) {
       logger.debug("Creating component placeholder")
-      val placeholder = SplitComponentPlaceholder(project, scope, id)
-      return object : ComponentContainer {
-        override fun getComponent() = placeholder
-        override fun getPreferredFocusableComponent() = null
-        override fun dispose() {}
-      }
+      return SplitComponentPlaceholder(project, scope, id)
     }
     else {
       logger.debug("Creating component in-place")

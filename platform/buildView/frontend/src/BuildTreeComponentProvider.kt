@@ -2,13 +2,13 @@
 package com.intellij.platform.buildView.frontend
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.ui.split.SplitComponentId
 import com.intellij.ui.split.SplitComponentProvider
 import kotlinx.coroutines.CoroutineScope
+import javax.swing.JComponent
 
 private class BuildTreeComponentProvider : SplitComponentProvider {
-  override fun createComponent(project: Project, scope: CoroutineScope, id: SplitComponentId): ComponentContainer {
+  override fun createComponent(project: Project, scope: CoroutineScope, id: SplitComponentId): JComponent {
     return BuildTreeView(project, scope, id)
   }
 }
