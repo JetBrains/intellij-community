@@ -1361,7 +1361,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
           FindUsagesCollector.recordSearchFinished(System.currentTimeMillis() - startTime.get(), resultsCount.get(), ShowUsagesAction.getUsagesPageSize());
           onStop(hash);
 
-          myHelper.onSearchFinish(isEmpty ? 0 : myResultsPreviewTable.getRowCount());
+          if (FindKey.isEnabled()) {
+            myHelper.onSearchFinish(isEmpty ? 0 : myResultsPreviewTable.getRowCount());
+          }
         }, state);
       }
     }, myResultsPreviewSearchProgress);
@@ -1585,6 +1587,10 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       showEmptyText(message, false);
       if (backendValidator.isFinished) {
         header.loadingIcon.setIcon(EmptyIcon.ICON_16);
+      }
+
+      if (!FindKey.isEnabled()) {
+        myHelper.onSearchFinish(myResultsPreviewTable.getRowCount());
       }
     });
   }
