@@ -481,4 +481,6 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   fun getForegroundColor(): Color {
     return withComponent { Color(it.getForeground().getRGB()) }
   }
+
+  fun getLocationOnScreen(): Point = component.getLocationOnScreen()
 }
