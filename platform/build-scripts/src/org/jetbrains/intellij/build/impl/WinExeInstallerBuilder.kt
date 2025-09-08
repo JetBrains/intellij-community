@@ -43,8 +43,9 @@ internal suspend fun buildNsisInstaller(
   }
 
   val communityHome = context.paths.communityHomeDir
-  val outFileName = context.productProperties.getBaseArtifactName(context) + suffix
-  Span.current().setAttribute(outFileName, outFileName)
+  val installerFileName = context.productProperties.getBaseArtifactName(context) + suffix
+  val uninstallerFileName = "Uninstall-${context.applicationInfo.productCode}-${arch.dirName}.exe"
+  Span.current().setAttribute(installerFileName, installerFileName)
 
   withContext(Dispatchers.IO) {
     val box = context.paths.tempDir.resolve("winInstaller${suffix}")
@@ -72,7 +73,7 @@ internal suspend fun buildNsisInstaller(
     generator.generateInstallerFile(nsiConfDir.resolve("idea_win.nsh"))
     generator.generateUninstallerFile(nsiConfDir.resolve("un_idea_win.nsh"))
 
-    prepareConfigurationFiles(nsiConfDir, customizer, context, arch)
+    prepareConfigurationFiles(nsiConfDir, uninstallerFileName, customizer, context, arch)
     for (it in customizer.customNsiConfigurationFiles) {
       val file = Path.of(it)
       val copy = nsiConfDir.resolve(file.fileName)
@@ -94,7 +95,7 @@ internal suspend fun buildNsisInstaller(
             "/DCOMMUNITY_DIR=${communityHome}",
             "/DIPR=${customizer.associateIpr}",
             "/DOUT_DIR=${context.paths.artifactDir}",
-            "/DOUT_FILE=${outFileName}",
+            "/DOUT_FILE=${installerFileName}",
             "${nsiConfDir}/idea.nsi",
           ),
           workingDir = box,
@@ -109,7 +110,7 @@ internal suspend fun buildNsisInstaller(
             "-DCOMMUNITY_DIR=${communityHome}",
             "-DIPR=${customizer.associateIpr}",
             "-DOUT_DIR=${context.paths.artifactDir}",
-            "-DOUT_FILE=${outFileName}",
+            "-DOUT_FILE=${installerFileName}",
             "${nsiConfDir}/idea.nsi",
           ),
           workingDir = box,
@@ -120,15 +121,19 @@ internal suspend fun buildNsisInstaller(
     }
   }
 
-  val installerFile = context.paths.artifactDir.resolve("$outFileName.exe")
-  val uninstallerFile = uninstallerPath(context, arch)
+  val installerFile = context.paths.artifactDir.resolve("${installerFileName}.exe")
   check(Files.exists(installerFile)) { "Windows installer wasn't created." }
-  check(Files.exists(uninstallerFile)) { "Windows uninstaller is missing." }
   context.executeStep(spanBuilder("sign").setAttribute("file", installerFile.toString()), BuildOptions.WIN_SIGN_STEP) {
     context.signFiles(listOf(installerFile))
   }
   context.notifyArtifactBuilt(installerFile)
-  context.notifyArtifactBuilt(uninstallerFile)
+
+  if (customizer.publishUninstaller) {
+    val uninstallerFile = context.paths.artifactDir.resolve(uninstallerFileName)
+    check(Files.exists(uninstallerFile)) { "Windows uninstaller is missing." }
+    context.notifyArtifactBuilt(uninstallerFile)
+  }
+
   return installerFile
 }
 
@@ -149,7 +154,7 @@ private suspend fun prepareNsis(context: BuildContext, tempDir: Path): Pair<Path
   return nsisDir to nsisBin
 }
 
-private suspend fun prepareConfigurationFiles(nsiConfDir: Path, customizer: WindowsDistributionCustomizer, context: BuildContext, arch: JvmArchitecture) {
+private suspend fun prepareConfigurationFiles(nsiConfDir: Path, uninstallerFileName: String, customizer: WindowsDistributionCustomizer, context: BuildContext, arch: JvmArchitecture) {
   val expectedArch = when (arch) {  // https://learn.microsoft.com/en-us/windows/win32/sysinfo/image-file-machine-constants
     JvmArchitecture.x64 -> 0x8664  // IMAGE_FILE_MACHINE_AMD64
     JvmArchitecture.aarch64 -> 0xAA64  // IMAGE_FILE_MACHINE_ARM64
@@ -164,8 +169,11 @@ private suspend fun prepareConfigurationFiles(nsiConfDir: Path, customizer: Wind
   val productVersionNum = amendVersionNumber(appInfo.majorVersion + '.' + appInfo.minorVersion)
   val versionString = if (appInfo.isEAP) context.buildNumber else "${appInfo.majorVersion}.${appInfo.minorVersion}"
 
-  val uninstallerCopy = context.paths.artifactDir.resolve("Uninstall-${context.applicationInfo.productCode}-${arch.dirName}.exe")
+  val uninstallerCopy = context.paths.artifactDir.resolve(uninstallerFileName)
   val uninstallerSignCmd = when {
+    !customizer.publishUninstaller -> {
+      "echo uninstaller not published"
+    }
     !context.isStepSkipped(BuildOptions.WIN_SIGN_STEP) -> {
       val signTool = prepareSignTool(nsiConfDir, context, uninstallerCopy)
       "'${signTool}' '%1'"
@@ -232,6 +240,3 @@ private suspend fun prepareSignTool(nsiConfDir: Path, context: BuildContext, uni
   NioFiles.setExecutable(scriptFile)
   return scriptFile
 }
-
-private fun uninstallerPath(context: BuildContext, arch: JvmArchitecture): Path =
-  context.paths.artifactDir.resolve("Uninstall-${context.applicationInfo.productCode}-${arch.dirName}.exe")
