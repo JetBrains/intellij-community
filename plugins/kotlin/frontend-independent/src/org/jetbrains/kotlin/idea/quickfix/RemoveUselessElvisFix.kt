@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.psi.dropEnclosingParenthesesIfPossible
@@ -30,5 +32,9 @@ class RemoveUselessElvisFix(element: KtBinaryExpression) : PsiUpdateModCommandAc
                 RemoveUselessElvisFix(expression).asIntention()
             )
         }
+    }
+
+    override fun getPresentation(context: ActionContext, element: KtBinaryExpression): Presentation {
+        return Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
     }
 }
