@@ -38,8 +38,10 @@ internal sealed class GHPRDiffReviewPreviousNextCommentActionBase(
 
     val editorModel = editor?.getUserData(CodeReviewNavigableEditorViewModel.KEY)
                       ?: editor?.getUserData(GHPRReviewDiffEditorModel.KEY)
-    e.presentation.isVisible = editorModel != null
-    if (editor == null || editorModel == null) return
+    if (editor == null || editorModel == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
 
     val focused = findFocusedThreadId(project)
     e.presentation.isEnabled = if (focused != null) {
