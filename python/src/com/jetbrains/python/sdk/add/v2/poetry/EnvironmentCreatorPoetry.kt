@@ -24,7 +24,6 @@ import com.jetbrains.python.poetry.findPoetryToml
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
-import com.jetbrains.python.sdk.add.v2.PythonSelectableInterpreter
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.POETRY
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.PYTHON
 import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState.Error
@@ -37,7 +36,6 @@ import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -74,13 +72,9 @@ internal class EnvironmentCreatorPoetry(
     scope.launch(Dispatchers.IO) {
       val moduleDir = model.getBasePath(module).let { VirtualFileManager.getInstance().findFileByNioPath(it) }
 
-      val validatedInterpreters = if (moduleDir != null) {
+      val validatedInterpreters = moduleDir?.let {
         PoetryPyProjectTomlPythonVersionsService.instance.validateInterpretersVersions(moduleDir, model.baseInterpreters)
-          as? StateFlow<List<PythonSelectableInterpreter>> ?: model.baseInterpreters
-      }
-      else {
-        model.baseInterpreters
-      }
+      } ?: model.baseInterpreters
 
       withContext(Dispatchers.EDT) {
         basePythonComboBox.initialize(scope, validatedInterpreters)
