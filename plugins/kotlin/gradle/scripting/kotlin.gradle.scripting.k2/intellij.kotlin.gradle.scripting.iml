@@ -86,5 +86,6 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java" />
+    <orderEntry type="module" module-name="kotlin.base.facet" scope="TEST" />
   </component>
 </module>

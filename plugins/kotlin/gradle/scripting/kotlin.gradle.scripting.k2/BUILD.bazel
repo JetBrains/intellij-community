@@ -161,6 +161,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "//java/testFramework",
     "//plugins/gradle/java",
+    "//plugins/kotlin/base/facet",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting` end

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArgumentsNotationInspection
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
@@ -12,7 +11,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
 
-class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsightTestCase() {
+class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeInsightTestCase() {
 
     private fun runTest(
         gradleVersion: GradleVersion,
@@ -22,7 +21,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
     ) {
         test(gradleVersion, CUSTOM_PROJECT) {
             codeInsightFixture.enableInspections(GradleAvoidDependencyNamedArgumentsNotationInspection::class.java)
-            testHighlighting("build.gradle.kts", textForHighlighting)
+            testHighlighting(textForHighlighting)
 
             // if there is a warning, check that an intention exists and can be applied
             if (textForHighlighting.contains(WARNING_START)) {
@@ -40,7 +39,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
                     "Internal assert failure: textForHighlighting and textBeforeIntention should be similar"
                 }
 
-                testIntention("build.gradle.kts", textBeforeIntention, textAfterIntention, "Simplify")
+                testIntention(textBeforeIntention, textAfterIntention, "Simplify")
             }
         }
     }
@@ -101,18 +100,67 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
         runTest(
             gradleVersion,
             """
+            val customConf by configurations.creating {}
             dependencies { 
-                "customConfImplementation"$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END
+                customConf$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END
+            }
+            """.trimIndent(),
+            """
+            val customConf by configurations.creating {}
+            dependencies { 
+                customConf(group = "org.gradle",<caret> name = "gradle-core", version = "1.0")
+            }
+            """.trimIndent(),
+            """
+            val customConf by configurations.creating {}
+            dependencies { 
+                customConf("org.gradle:gradle-core:1.0")
+            }
+            """.trimIndent()
+        )
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testCustomConfigurationString(gradleVersion: GradleVersion) {
+        runTest(
+            gradleVersion,
+            """
+            dependencies { 
+                "customConf"$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END
             }
             """.trimIndent(),
             """
             dependencies { 
-                "customConfImplementation"(group = "org.gradle",<caret> name = "gradle-core", version = "1.0")
+                "customConf"(group = "org.gradle",<caret> name = "gradle-core", version = "1.0")
             }
             """.trimIndent(),
             """
             dependencies { 
-                "customConfImplementation"("org.gradle:gradle-core:1.0")
+                "customConf"("org.gradle:gradle-core:1.0")
+            }
+            """.trimIndent()
+        )
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testCustomSourceSet(gradleVersion: GradleVersion) {
+        runTest(
+            gradleVersion,
+            """
+            dependencies { 
+                "customSourceSetImplementation"$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END
+            }
+            """.trimIndent(),
+            """
+            dependencies { 
+                "customSourceSetImplementation"(group = "org.gradle",<caret> name = "gradle-core", version = "1.0")
+            }
+            """.trimIndent(),
+            """
+            dependencies { 
+                "customSourceSetImplementation"("org.gradle:gradle-core:1.0")
             }
             """.trimIndent()
         )
@@ -298,7 +346,8 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
             withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 withJavaPlugin()
                 withPrefix {
-                    code("val customConf by sourceSets.creating {}")
+                    code("val customSourceSet by sourceSets.creating {}")
+                    code("val customConf by configurations.creating {}")
                 }
             }
         }
