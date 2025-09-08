@@ -154,6 +154,8 @@ object TestKotlinArtifacts {
         val target = Path.of(PathManager.getCommunityHomePath())
             .resolve("out")
             .resolve("kotlin-from-sources-deps")
+            .resolve(label.repo)
+            .resolve(label.packageName)
             .resolve(label.target)
 
         // we could have a file from some previous launch, but with different content
@@ -263,6 +265,8 @@ object TestKotlinArtifacts {
 
     @JvmStatic
     val kotlinJvmDebuggerTestData: Path by lazy { getKotlinDepsByLabel("@community//plugins/kotlin/jvm-debugger/test:testData") }
+    @JvmStatic
+    val kotlinIdeaTestData: Path by lazy { getKotlinDepsByLabel("@community//plugins/kotlin/idea/tests:testData") }
 
     @Suppress("NO_REFLECTION_IN_CLASS_PATH")
     @JvmStatic
