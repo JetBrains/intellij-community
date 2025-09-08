@@ -21,6 +21,8 @@ interface WelcomeRightTabContentProvider {
   val title: Supplier<@Nls String>
   val secondaryTitle: Supplier<@Nls String>
 
+  fun shouldBeFocused(project: Project): Boolean = true
+
   @Composable
   fun getFeatureButtonModels(project: Project): List<FeatureButtonModel>
 
