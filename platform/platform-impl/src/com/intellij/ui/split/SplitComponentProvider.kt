@@ -4,6 +4,7 @@ package com.intellij.ui.split
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.RequiredElement
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.KeyedExtensionCollector
@@ -25,10 +26,10 @@ interface SplitComponentProvider {
     private val EP = KeyedExtensionCollector<SplitComponentProvider, String>("com.intellij.frontend.splitComponentProvider")
 
     @ApiStatus.Internal
-    fun createComponent(cs: CoroutineScope, id: SplitComponentIdWithProvider): ComponentContainer {
+    fun createComponent(project: Project, cs: CoroutineScope, id: SplitComponentIdWithProvider): ComponentContainer {
       val provider = EP.findSingle(id.providerId)
       if (provider != null) {
-        val container = provider.createComponent(cs, id.componentId)
+        val container = provider.createComponent(project, cs, id.componentId)
         if (container != null) {
           return container
         }
@@ -57,7 +58,7 @@ interface SplitComponentProvider {
    * @param scope that is going to be canceled when [CoroutineScope] passed to [SplitComponentFactory.createComponent] is canceled.
    */
   @RequiresEdt
-  fun createComponent(scope: CoroutineScope, id: SplitComponentId): ComponentContainer?
+  fun createComponent(project: Project, scope: CoroutineScope, id: SplitComponentId): ComponentContainer?
 }
 
 private class SplitComponentProviderBean : BaseKeyedLazyInstance<SplitComponentProvider>(), KeyedLazyInstance<SplitComponentProvider> {

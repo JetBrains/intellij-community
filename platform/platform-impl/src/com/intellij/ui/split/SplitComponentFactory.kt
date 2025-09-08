@@ -6,6 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.findValueById
@@ -50,14 +51,14 @@ class SplitComponentFactory private constructor() {
    * The scope passed in [SplitComponentProvider.createComponent] will be canceled when this [scope] is canceled.
    */
   @RequiresEdt
-  fun createComponent(scope: CoroutineScope, model: SplitComponentModel): ComponentContainer {
+  fun createComponent(project: Project, scope: CoroutineScope, model: SplitComponentModel): ComponentContainer {
     val providerId = model.providerId
     val componentId = storeValueGlobally(scope, model, SplitComponentModelIdType)
     val id = SplitComponentIdWithProvider(providerId, componentId)
     logger.debug { "Registered model with id=$id : $model" }
     if (AppMode.isRemoteDevHost()) {
       logger.debug("Creating component placeholder")
-      val placeholder = SplitComponentPlaceholder(scope, id)
+      val placeholder = SplitComponentPlaceholder(project, scope, id)
       return object : ComponentContainer {
         override fun getComponent() = placeholder
         override fun getPreferredFocusableComponent() = null
@@ -66,7 +67,7 @@ class SplitComponentFactory private constructor() {
     }
     else {
       logger.debug("Creating component in-place")
-      return SplitComponentProvider.createComponent(scope, id)
+      return SplitComponentProvider.createComponent(project, scope, id)
     }
   }
 
@@ -96,7 +97,11 @@ data class SplitComponentIdWithProvider(val providerId: String, val componentId:
 }
 
 @ApiStatus.Internal
-class SplitComponentPlaceholder(val scope: CoroutineScope, val id: SplitComponentIdWithProvider) : JPanel() {
+class SplitComponentPlaceholder(
+  val project: Project,
+  val scope: CoroutineScope,
+  val id: SplitComponentIdWithProvider,
+) : JPanel() {
   init {
     RemoteTransferUIManager.setWellBeControlizableAndPaintedQuickly(this)
   }

@@ -23,6 +23,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -56,7 +57,7 @@ import javax.swing.tree.*
 
 private val LOG = fileLogger()
 
-internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewId: SplitComponentId)
+internal class BuildTreeView(private val project: Project, parentScope: CoroutineScope, private val buildViewId: SplitComponentId)
   : JPanel(), UiDataProvider, ComponentContainer {
   private val uiScope = parentScope.childScope("BuildTreeView", Dispatchers.UI + ModalityState.any().asContextElement())
   private val model = BuildTreeViewModelProxy.getInstance(buildViewId)
@@ -263,13 +264,7 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
         LOG.debug { "Navigation target not available: $navigatable" }
       }
 
-      val project = ProjectUtil.getProjectForComponent(this)
-      if (project == null) {
-        LOG.warn("Project not found for BuildTreeView(id=$buildViewId)")
-      }
-      else {
-        OccurenceNavigatorActionBase.displayOccurrencesInfoInStatusBar(project, info.occurenceNumber, info.occurencesCount)
-      }
+      OccurenceNavigatorActionBase.displayOccurrencesInfoInStatusBar(project, info.occurenceNumber, info.occurencesCount)
     }
   }
 
