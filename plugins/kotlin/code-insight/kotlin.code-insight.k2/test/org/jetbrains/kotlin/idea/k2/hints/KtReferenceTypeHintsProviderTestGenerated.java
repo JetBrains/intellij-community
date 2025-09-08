@@ -225,6 +225,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
         runTest("../../idea/tests/testData/codeInsight/hints/types/SAMConstructor.kt");
     }
 
+    @TestMetadata("SmartCast.kt")
+    public void testSmartCast() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/SmartCast.kt");
+    }
+
     @TestMetadata("SuspendFunctionalType.kt")
     public void testSuspendFunctionalType() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/SuspendFunctionalType.kt");

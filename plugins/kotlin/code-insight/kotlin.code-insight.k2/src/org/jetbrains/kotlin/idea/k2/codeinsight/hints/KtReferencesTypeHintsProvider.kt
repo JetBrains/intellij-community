@@ -10,10 +10,7 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.isAnyType
-import org.jetbrains.kotlin.analysis.api.components.isUnitType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -296,7 +293,7 @@ private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalPrope
             else -> declarationType
         }
 
-        if (ktType?.isAnyType == false && isUnclearType(ktType, element)) {
+        if (ktType != null && isUnclearType(ktType, element)) {
             ktType
         } else {
             null
@@ -310,6 +307,7 @@ private fun isUnclearType(type: KaType, element: KtCallableDeclaration): Boolean
     val initializer = element.initializer ?: return true
     if (initializer is KtConstantExpression || initializer is KtStringTemplateExpression) return false
     if (initializer is KtUnaryExpression && initializer.baseExpression is KtConstantExpression) return false
+    if (initializer.smartCastInfo != null) return true
 
     if (isConstructorCall(initializer)) {
         return false
@@ -330,7 +328,7 @@ private fun isUnclearType(type: KaType, element: KtCallableDeclaration): Boolean
         }
     }
 
-    return true
+    return !type.isAnyType
 }
 
 internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTreeSink) {
