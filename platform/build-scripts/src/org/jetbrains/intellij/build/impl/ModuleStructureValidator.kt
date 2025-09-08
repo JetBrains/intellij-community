@@ -308,6 +308,10 @@ class ModuleStructureValidator(private val context: BuildContext, private val al
     if (value.isNullOrEmpty() || classes.contains(value)) {
       return
     }
+    if (value.startsWith("com.intellij.testFramework.fixtures.")) {
+      //todo test-only services should be registered in test resources, see IJPL-206480
+      return
+    }
     errors.add(AssertionError("Unresolved registration '$value' in $source"))
   }
 }
