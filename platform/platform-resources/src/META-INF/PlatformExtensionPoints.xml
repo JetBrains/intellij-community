@@ -702,5 +702,9 @@
     <extensionPoint qualifiedName="com.intellij.ide.gdpr.traceConsentManager"
                     interface="com.intellij.ide.gdpr.trace.TraceConsentManager"
                     dynamic="true"/>
+
+    <extensionPoint name="projectStorePathCustomizer"
+                    interface="com.intellij.openapi.project.ProjectStorePathCustomizer"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
