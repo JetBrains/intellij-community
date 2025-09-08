@@ -7,7 +7,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -32,10 +31,6 @@ class AddBracesIntention : KotlinPsiUpdateModCommandAction.Contextless<KtElement
             is KtWhenEntry -> true
             else -> false
         }
-    }
-
-    override fun stopSearchAt(element: PsiElement, context: ActionContext): Boolean {
-        return super.stopSearchAt(element, context)
     }
 
     override fun getPresentation(context: ActionContext, element: KtElement): Presentation? {

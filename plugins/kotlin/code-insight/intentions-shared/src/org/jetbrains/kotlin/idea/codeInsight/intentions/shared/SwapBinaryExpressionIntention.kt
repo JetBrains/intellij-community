@@ -7,9 +7,10 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.util.PsiPrecedences
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens.*
@@ -19,19 +20,19 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
-internal class SwapBinaryExpressionIntention : KotlinPsiUpdateModCommandAction.Contextless<KtBinaryExpression>(KtBinaryExpression::class) {
+internal class SwapBinaryExpressionIntention : KotlinApplicableModCommandAction.Simple<KtBinaryExpression>(KtBinaryExpression::class) {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("flip.binary.expression")
 
-    override fun getPresentation(context: ActionContext, element: KtBinaryExpression): Presentation? {
-        val opRef = element.operationReference
-        if (!opRef.textRange.containsOffset(context.offset)) return null
+    override fun getApplicableRanges(element: KtBinaryExpression): List<TextRange> =
+        listOf(element.operationReference.textRangeInParent)
 
+    override fun getPresentation(context: ActionContext, element: KtBinaryExpression): Presentation? {
         if (leftSubject(element) == null || rightSubject(element) == null) {
             return null
         }
 
         val operationToken = element.operationToken
-        val operationTokenText = opRef.text
+        val operationTokenText = element.operationReference.text
         return if (operationToken in SUPPORTED_OPERATIONS
             || operationToken == IDENTIFIER && operationTokenText in SUPPORTED_OPERATION_NAMES
         ) {

@@ -24,44 +24,7 @@ internal class AddJvmOverloadsIntention : KotlinPsiUpdateModCommandAction.Contex
         KotlinBundle.message("add.jvmoverloads.annotation")
 
     override fun isElementApplicable(element: KtModifierListOwner, context: ActionContext): Boolean {
-        val caretOffset = context.offset
-        val parameters = when (element) {
-            is KtNamedFunction -> {
-                val funKeyword = element.funKeyword ?: return true
-                val valueParameterList = element.valueParameterList ?: return true
-                if (caretOffset !in funKeyword.startOffset..valueParameterList.endOffset) {
-                    return true
-                }
-
-                valueParameterList.parameters
-            }
-            is KtSecondaryConstructor -> {
-                val constructorKeyword = element.getConstructorKeyword()
-                val valueParameterList = element.valueParameterList ?: return true
-                if (caretOffset !in constructorKeyword.startOffset..valueParameterList.endOffset) {
-                    return true
-                }
-
-                valueParameterList.parameters
-            }
-            is KtPrimaryConstructor -> {
-                if (element.parent.safeAs<KtClass>()?.isAnnotation() == true) return true
-                val parameters = (element.valueParameterList ?: return true).parameters
-
-                // For primary constructors with all default values, a zero-arg constructor is generated anyway. If there's only one
-                // parameter and it has a default value, the bytecode with and without @JvmOverloads is exactly the same.
-                if (parameters.singleOrNull()?.hasDefaultValue() == true) {
-                    return true
-                }
-
-                parameters
-            }
-            else -> return false
-        }
-
-        return element.containingKtFile.platform.isJvm()
-                && parameters.any { it.hasDefaultValue() }
-                && element.findAnnotation(JvmStandardClassIds.JVM_OVERLOADS_CLASS_ID) == null
+        return getPresentation(context, element) != null
     }
 
     override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation? {
@@ -100,9 +63,9 @@ internal class AddJvmOverloadsIntention : KotlinPsiUpdateModCommandAction.Contex
             else -> return null
         }
 
-        if (element.containingKtFile.platform.isJvm()
-            && parameters.any { it.hasDefaultValue() }
-            && element.findAnnotation(JvmStandardClassIds.JVM_OVERLOADS_CLASS_ID) != null
+        if (!element.containingKtFile.platform.isJvm()
+            || parameters.none { it.hasDefaultValue() }
+            || element.findAnnotation(JvmStandardClassIds.JVM_OVERLOADS_CLASS_ID) != null
         ) {
             return null
         }
