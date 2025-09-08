@@ -1673,17 +1673,17 @@ http_file(
 )
 
 http_file(
-  name = "easymock-5_5_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/easymock/easymock/5.5.0/easymock-5.5.0.jar",
-  sha256 = "bf05b56b102be91c7cd0bbad1684d5809ac2ccd0380e684f9445bfde14418f7f",
-  downloaded_file_path = "easymock-5.5.0.jar"
+  name = "easymock-5_6_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/easymock/easymock/5.6.0/easymock-5.6.0.jar",
+  sha256 = "63efc00da99774fb0253330ef9b5788b261022ba73f36bf76889ce7edf3d2b31",
+  downloaded_file_path = "easymock-5.6.0.jar"
 )
 
 http_file(
-  name = "easymock-5_5_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/easymock/easymock/5.5.0/easymock-5.5.0-sources.jar",
-  sha256 = "8e4f745f7721c9b7f58cdfdc8fe1eb72841710e4899ada0b7affcd764b5fd037",
-  downloaded_file_path = "easymock-5.5.0-sources.jar"
+  name = "easymock-5_6_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/easymock/easymock/5.6.0/easymock-5.6.0-sources.jar",
+  sha256 = "42a5f5b70878719fe17f1d73486a3e11457ba949359890621d008e3472a187b6",
+  downloaded_file_path = "easymock-5.6.0-sources.jar"
 )
 
 http_file(
@@ -2723,17 +2723,17 @@ http_file(
 )
 
 http_file(
-  name = "hash4j-0_25_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/dynatrace/hash4j/hash4j/0.25.0/hash4j-0.25.0.jar",
-  sha256 = "a9f1ebf6dab3fecfb36eed4e084ca587e5cdf9dcdd723b8adb7d17b6fc874862",
-  downloaded_file_path = "hash4j-0.25.0.jar"
+  name = "hash4j-0_26_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/dynatrace/hash4j/hash4j/0.26.0/hash4j-0.26.0.jar",
+  sha256 = "47c319c7015d31df78c17962c4008861f8630f383d12275cf7abd09f6a804c43",
+  downloaded_file_path = "hash4j-0.26.0.jar"
 )
 
 http_file(
-  name = "hash4j-0_25_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/dynatrace/hash4j/hash4j/0.25.0/hash4j-0.25.0-sources.jar",
-  sha256 = "8963022184c1a701ff3437ba782e8583a4c4b4943f59b8e0c17d5511225f20f8",
-  downloaded_file_path = "hash4j-0.25.0-sources.jar"
+  name = "hash4j-0_26_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/dynatrace/hash4j/hash4j/0.26.0/hash4j-0.26.0-sources.jar",
+  sha256 = "c101d3ddb83b3ddac9d20097cfa3df498ea9b77017b3c69c1d40527607e503fe",
+  downloaded_file_path = "hash4j-0.26.0-sources.jar"
 )
 
 http_file(
