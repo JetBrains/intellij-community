@@ -2118,13 +2118,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     private static @Nullable VirtualFileSystemEntry findChild(@NotNull VirtualDirectoryImpl parent,
                                                               int childId) {
       try {
-        VirtualFileSystemEntry child = parent.findChildById(childId);
-        if (child instanceof VirtualDirectoryImpl) {
-          if (child.getId() != childId) {
-            LOG.error("findChildById(" + childId + "): " + child + " doesn't have expected id!");
-          }
-        }
-        return child;
+        return parent.findChildById(childId);
       }
       catch (FileDeletedException e) {
         return null;
