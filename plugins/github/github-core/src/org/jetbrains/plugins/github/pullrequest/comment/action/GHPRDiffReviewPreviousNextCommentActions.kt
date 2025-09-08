@@ -9,7 +9,26 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRReviewDiffEditorModel
 
-internal class GHPRDiffReviewNextCommentAction : AnAction() {
+internal class GHPRDiffReviewPreviousCommentAction : GHPRDiffReviewPreviousNextCommentActionBase(
+  canGotoThreadComment = { canGotoPreviousComment(it) },
+  canGotoLineComment = { canGotoPreviousComment(it) },
+  gotoThreadComment = { gotoPreviousComment(it) },
+  gotoLineComment = { gotoPreviousComment(it) },
+)
+
+internal class GHPRDiffReviewNextCommentAction : GHPRDiffReviewPreviousNextCommentActionBase(
+  canGotoThreadComment = { canGotoNextComment(it) },
+  canGotoLineComment = { canGotoNextComment(it) },
+  gotoThreadComment = { gotoNextComment(it) },
+  gotoLineComment = { gotoNextComment(it) },
+)
+
+internal sealed class GHPRDiffReviewPreviousNextCommentActionBase(
+  private val canGotoThreadComment: CodeReviewNavigableEditorViewModel.(String) -> Boolean,
+  private val canGotoLineComment: CodeReviewNavigableEditorViewModel.(Int) -> Boolean,
+  private val gotoThreadComment: CodeReviewNavigableEditorViewModel.(String) -> Unit,
+  private val gotoLineComment: CodeReviewNavigableEditorViewModel.(Int) -> Unit,
+) : AnAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
@@ -24,11 +43,11 @@ internal class GHPRDiffReviewNextCommentAction : AnAction() {
 
     val focused = findFocusedThreadId(project)
     e.presentation.isEnabled = if (focused != null) {
-      editorModel.canGotoNextComment(focused)
+      editorModel.canGotoThreadComment(focused)
     }
     else {
       val editorLine = editor.caretModel.logicalPosition.line // zero-index
-      editorModel.canGotoNextComment(editorLine)
+      editorModel.canGotoLineComment(editorLine)
     }
   }
 
@@ -42,11 +61,11 @@ internal class GHPRDiffReviewNextCommentAction : AnAction() {
 
     val focused = findFocusedThreadId(project)
     if (focused != null) {
-      editorModel.gotoNextComment(focused)
+      editorModel.gotoThreadComment(focused)
     }
     else {
       val editorLine = editor.caretModel.logicalPosition.line // zero-index
-      editorModel.gotoNextComment(editorLine)
+      editorModel.gotoLineComment(editorLine)
     }
   }
 }
