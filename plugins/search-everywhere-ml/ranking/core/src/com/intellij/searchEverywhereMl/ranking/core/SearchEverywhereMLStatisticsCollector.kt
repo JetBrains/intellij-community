@@ -200,7 +200,17 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   internal val ACTION_ID_KEY = ActionsEventLogGroup.ACTION_ID
 
   @VisibleForTesting
-  val FEATURES_DATA_KEY: ObjectEventField = createFeaturesEventObject()
+  val FEATURES_DATA_KEY: ObjectEventField = ObjectEventField(
+    "features",
+    *buildList {
+      addAll(SearchEverywhereElementFeaturesProvider.getDefaultFields())
+
+      SearchEverywhereElementFeaturesProvider.getFeatureProviders()
+        .forEach { featuresProvider ->
+          addAll(featuresProvider.getFeaturesDeclarations())
+        }
+    }.toTypedArray()
+  )
   internal val ML_WEIGHT_KEY: DoubleEventField = EventFields.Double("ml_weight")
   internal val PRIORITY_KEY: IntEventField = EventFields.Int("priority", "The final priority used for sorting elements")
   internal val CONTRIBUTOR_FEATURES_LIST = ObjectListEventField(
@@ -258,26 +268,4 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                                             SESSION_ID,
                                                             CLASSES_WITHOUT_KEY_PROVIDERS_FIELD)
   // endregion
-
-
-  private fun collectNameFeaturesToFields(): Map<String, EventField<*>> {
-    val nameFeatureToField = hashMapOf<String, EventField<*>>(
-      *SearchEverywhereElementFeaturesProvider.run {
-        listOf(NAME_LENGTH, ML_SCORE_KEY, SIMILARITY_SCORE, IS_SEMANTIC_ONLY, BUFFERED_TIMESTAMP)
-      }.map { it.name to it }.toTypedArray()
-    )
-    nameFeatureToField.putAll(SearchEverywhereElementFeaturesProvider.prefixMatchingNameFeatureToField.values.map { it.name to it })
-    nameFeatureToField.putAll(SearchEverywhereElementFeaturesProvider.wholeMatchingNameFeatureToField.values.map { it.name to it })
-    for (featureProvider in SearchEverywhereElementFeaturesProvider.getFeatureProviders()) {
-      nameFeatureToField.putAll(featureProvider.getFeaturesDeclarations().map {
-        it.name to it
-      })
-    }
-    return nameFeatureToField
-  }
-
-  private fun createFeaturesEventObject(): ObjectEventField {
-    val nameFeatureToField = collectNameFeaturesToFields()
-    return ObjectEventField("features", *nameFeatureToField.values.toTypedArray())
-  }
 }
