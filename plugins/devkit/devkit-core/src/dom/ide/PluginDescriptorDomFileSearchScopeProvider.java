@@ -50,7 +50,9 @@ final class PluginDescriptorDomFileSearchScopeProvider implements SearchScopePro
       if (ApplicationManager.getApplication().isReadAccessAllowed()) {
         return getDomFileCandidates(project);
       }
-      return ReadAction.nonBlocking(() -> getDomFileCandidates(project)).executeSynchronously();
+      return ReadAction.nonBlocking(() -> getDomFileCandidates(project))
+        .expireWhen(() -> project.isDisposed())
+        .executeSynchronously();
     };
   }
 
