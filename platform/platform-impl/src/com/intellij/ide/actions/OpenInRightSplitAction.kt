@@ -48,6 +48,10 @@ class OpenInRightSplitAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecif
   }
 
   override fun update(e: AnActionEvent) {
+    if (e.getData(OpenInRightSplitActionProvider.DATA_KEY)?.canOpenInRightSplit(e) == true) {
+      e.presentation.isEnabledAndVisible = true
+      return
+    }
     val project = e.getData(CommonDataKeys.PROJECT)
     val editor = e.getData(CommonDataKeys.EDITOR)
     val fileEditor = e.getData(PlatformCoreDataKeys.FILE_EDITOR)
@@ -117,5 +121,6 @@ interface OpenInRightSplitActionProvider {
   companion object {
     val DATA_KEY: DataKey<OpenInRightSplitActionProvider> = DataKey.create("OpenInRightSplitActionProvider")
   }
+  fun canOpenInRightSplit(e: AnActionEvent): Boolean
   fun openInRightSplit(e: AnActionEvent): Boolean
 }
