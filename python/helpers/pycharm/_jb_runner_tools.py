@@ -130,12 +130,20 @@ class NewTeamcityServiceMessages(_old_service_messages):
 
             # tests with docstrings are reported in format "test.name (some test here)".
             # text should be part of name, but not location.
-            possible_location = str(full_name)
-            loc = possible_location.find("(")
-            if loc > 0:
-                possible_location = possible_location[:loc].strip()
-            properties["locationHint"] = "python<{0}>://{1}".format(PROJECT_DIR,
-                                                                    possible_location)
+            path = properties.get('path')
+            if not path or path.endswith('.py'):
+                possible_location = str(full_name)
+                loc = possible_location.find("(")
+                if loc > 0:
+                    possible_location = possible_location[:loc].strip()
+                properties["locationHint"] = "python<{0}>://{1}".format(PROJECT_DIR, possible_location)
+            else:
+                # For data-driven tests, we reference the test by file and line number.
+                location_hint = "file:/" + path
+                lineno = properties.get('lineno')
+                if lineno:
+                    location_hint += ":{}".format(lineno)
+                properties["locationHint"] = location_hint
         except KeyError:
             # If message does not have name, then it is not test
             # Simply pass it
@@ -205,13 +213,16 @@ class NewTeamcityServiceMessages(_old_service_messages):
         self.testStarted(".".join(_TREE_MANAGER_HOLDER.manager.current_branch + [name]))
         self._latest_subtest_result = subTestResult
 
-    def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False, metainfo=None):
+    def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False, metainfo=None, path=None, lineno=None):
         test_name_as_list = _jb_utils.test_to_list(testName)
         testName = ".".join(test_name_as_list)
 
         def _write_start_message():
             # testName, captureStandardOutput, flowId
             args = {"name": testName, "captureStandardOutput": captureStandardOutput, "metainfo": metainfo}
+            if path is not None and lineno is not None:
+                args["path"] = path
+                args["lineno"] = str(lineno)
             if is_suite:
                 self.message("testSuiteStarted", **args)
             else:
@@ -220,7 +231,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
         commands = _TREE_MANAGER_HOLDER.manager.level_opened(test_name_as_list, _write_start_message)
         if commands:
             self.do_commands(commands)
-            self.testStarted(testName, captureStandardOutput, is_suite=is_suite, metainfo=metainfo)
+            self.testStarted(testName, captureStandardOutput, is_suite=is_suite, metainfo=metainfo, path=path, lineno=lineno)
 
     def testFailed(self, testName, message='', details='', flowId=None, comparison_failure=None):
         testName = ".".join(_jb_utils.test_to_list(testName))
@@ -343,7 +354,7 @@ def jb_patch_targets(targets, fs_glue, old_python_glue, new_python_glue, fs_to_p
 
 def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
     """
-    Converts python target if format "/path/foo.py::parts.to.python" provided by Java to 
+    Converts python target if format "/path/foo.py::parts.to.python" provided by Java to
     python-specific format
 
     :param targets: list of dot-separated targets

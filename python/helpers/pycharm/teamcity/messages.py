@@ -116,12 +116,12 @@ class TeamcityServiceMessages(object):
         import teamcity.context_managers as cm
         return cm.testSuite(self, name=name)
 
-    def testStarted(self, testName, captureStandardOutput=None, flowId=None, metainfo=None):
+    def testStarted(self, testName, captureStandardOutput=None, flowId=None, metainfo=None, **properties):
         """
 
         :param metainfo: Used to pass any payload from test runner to Intellij. See IDEA-176950
         """
-        self.message('testStarted', name=testName, captureStandardOutput=captureStandardOutput, flowId=flowId, metainfo=metainfo)
+        self.message('testStarted', name=testName, captureStandardOutput=captureStandardOutput, flowId=flowId, metainfo=metainfo, **properties)
 
     def testFinished(self, testName, testDuration=None, flowId=None):
         if testDuration is not None:
