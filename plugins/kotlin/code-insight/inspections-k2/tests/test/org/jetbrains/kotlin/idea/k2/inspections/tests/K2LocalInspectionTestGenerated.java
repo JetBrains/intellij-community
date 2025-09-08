@@ -9242,6 +9242,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/thisReceiverUntil.kt");
         }
 
+        @TestMetadata("typeMismatch.kt")
+        public void testTypeMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/typeMismatch.kt");
+        }
+
         @TestMetadata("usedForOtherArray.kt")
         public void testUsedForOtherArray() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/usedForOtherArray.kt");

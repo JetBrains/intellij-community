@@ -13298,6 +13298,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/thisReceiverUntil.kt");
         }
 
+        @TestMetadata("typeMismatch.kt")
+        public void testTypeMismatch() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/typeMismatch.kt");
+        }
+
         @TestMetadata("usedForOtherArray.kt")
         public void testUsedForOtherArray() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/usedForOtherArray.kt");
