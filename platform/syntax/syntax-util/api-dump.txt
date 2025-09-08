@@ -1,0 +1,19 @@
+c:com.intellij.platform.syntax.util.lexer.LayeredLexer
+- com.intellij.platform.syntax.util.lexer.DelegateLexer
+- sf:Companion:com.intellij.platform.syntax.util.lexer.LayeredLexer$Companion
+- sf:DISABLE_LAYERS_FLAG:com.intellij.util.ThreadLocalKmp
+- sf:IN_LAYER_LEXER_FINISHED_STATE:I
+- sf:IN_LAYER_STATE:I
+- <init>(com.intellij.platform.syntax.lexer.Lexer):V
+- advance():V
+- p:findLayerLexer(com.intellij.platform.syntax.SyntaxElementType):com.intellij.platform.syntax.lexer.Lexer
+- getCurrentPosition():com.intellij.platform.syntax.lexer.LexerPosition
+- getState():I
+- getTokenEnd():I
+- getTokenStart():I
+- getTokenType():com.intellij.platform.syntax.SyntaxElementType
+- pf:isLayerActive():Z
+- f:registerLayer(com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.SyntaxElementType[]):V
+- f:registerSelfStoppingLayer(com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.SyntaxElementType[],com.intellij.platform.syntax.SyntaxElementType[]):V
+- start(java.lang.CharSequence,I,I,I):V
+f:com.intellij.platform.syntax.util.lexer.LayeredLexer$Companion
