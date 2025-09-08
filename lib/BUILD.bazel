@@ -3059,8 +3059,8 @@ jvm_import(
 
 jvm_import(
   name = "jsoup",
-  jar = "@jsoup-1_19_1_http//file",
-  source_jar = "@jsoup-1_19_1-sources_http//file",
+  jar = "@jsoup-1_21_2_http//file",
+  source_jar = "@jsoup-1_21_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
