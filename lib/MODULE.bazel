@@ -3717,31 +3717,31 @@ http_file(
 )
 
 http_file(
-  name = "jediterm-core-3_54_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-core/3.54/jediterm-core-3.54.jar",
-  sha256 = "74c74693a7fd06aab0dafd65d2190a12fbc0846e8d8e0b1a75b4fddf51ca2e98",
-  downloaded_file_path = "jediterm-core-3.54.jar"
+  name = "jediterm-core-3_55_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-core/3.55/jediterm-core-3.55.jar",
+  sha256 = "2b60ac6bc029027764a3fd213dbffae6dfda85a51be0c5cef47fa516915d8231",
+  downloaded_file_path = "jediterm-core-3.55.jar"
 )
 
 http_file(
-  name = "jediterm-core-3_54-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-core/3.54/jediterm-core-3.54-sources.jar",
-  sha256 = "6025379d45dac35bac46d9fc6838ca384766ce9c0b9b0713e80d98e40599b485",
-  downloaded_file_path = "jediterm-core-3.54-sources.jar"
+  name = "jediterm-core-3_55-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-core/3.55/jediterm-core-3.55-sources.jar",
+  sha256 = "0bd507e1246e9d0639b1ffcf9fd4e2d7d14678eeb19243b853ebe8b00863b78f",
+  downloaded_file_path = "jediterm-core-3.55-sources.jar"
 )
 
 http_file(
-  name = "jediterm-ui-3_54_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-ui/3.54/jediterm-ui-3.54.jar",
-  sha256 = "d9bbd2ae193ad946f075cd349ec1aa344cc69cd2f38f37f2729b618ad1a50e3b",
-  downloaded_file_path = "jediterm-ui-3.54.jar"
+  name = "jediterm-ui-3_55_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-ui/3.55/jediterm-ui-3.55.jar",
+  sha256 = "a3913d09654e7f3a4ab01e6b0211b33dcbc71d9f8ce64a24dd368dfea5411830",
+  downloaded_file_path = "jediterm-ui-3.55.jar"
 )
 
 http_file(
-  name = "jediterm-ui-3_54-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-ui/3.54/jediterm-ui-3.54-sources.jar",
-  sha256 = "01f49df0c83b830fa0c56be6b9688d015831a4138e433cfef1f1a9085bf6bcfc",
-  downloaded_file_path = "jediterm-ui-3.54-sources.jar"
+  name = "jediterm-ui-3_55-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jediterm/jediterm-ui/3.55/jediterm-ui-3.55-sources.jar",
+  sha256 = "82d54a7b6bda47d86a8d9eacac9cb4bee7b39cc9e5f0c314219226e40711a85a",
+  downloaded_file_path = "jediterm-ui-3.55-sources.jar"
 )
 
 http_file(
