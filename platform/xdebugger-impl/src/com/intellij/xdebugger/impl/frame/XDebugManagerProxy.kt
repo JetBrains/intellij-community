@@ -24,7 +24,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface XDebugManagerProxy {
   fun isEnabled(): Boolean
-  suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T
+
   suspend fun <T> withId(value: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T
   fun getCurrentSessionProxy(project: Project): XDebugSessionProxy?
   fun getSessionIdByContentDescriptor(project: Project, descriptor: RunContentDescriptor): XDebugSessionId?
@@ -37,9 +37,16 @@ interface XDebugManagerProxy {
    * Returns `true` if the given [xValue] is presented on BE.
    * In monolith mode, this method always returns `true`;
    * in split mode, it returns `true` if the given [xValue]
-   * has an access to ID used to find the relevant backend counterpart.
+   * has access to ID used to find the relevant backend counterpart.
    */
   fun hasBackendCounterpart(xValue: XValue): Boolean
+
+  /**
+   * Invokes the given [block] with the ID of the given [value].
+   *
+   * Use with care, ensure that [hasBackendCounterpart] returns `true` for the given [value].
+   */
+  suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T
 
   fun findSessionProxy(project: Project, sessionId: XDebugSessionId): XDebugSessionProxy? {
     return getSessions(project).firstOrNull { it.id == sessionId }

@@ -13,7 +13,9 @@ import kotlinx.coroutines.launch
 private class CreateRendererAction : AnAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun update(e: AnActionEvent) {
     val values = getSelectedJavaValuesWithDescriptors(e)
-    e.presentation.setEnabledAndVisible(values.size == 1)
+    val value = values.singleOrNull()?.second
+    val enabled = value != null && XDebugManagerProxy.getInstance().hasBackendCounterpart(value)
+    e.presentation.setEnabledAndVisible(enabled)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

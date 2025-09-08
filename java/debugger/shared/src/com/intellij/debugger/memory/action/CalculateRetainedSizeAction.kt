@@ -36,6 +36,7 @@ class CalculateRetainedSizeAction : XDebuggerTreeActionBase(), ActionRemoteBehav
     }
 
     val xValue = node.valueContainer
+    if (!XDebugManagerProxy.getInstance().hasBackendCounterpart(xValue)) return false
     val descriptor = xValue.xValueDescriptorAsync?.getNow(null) as? JavaValueDescriptor ?: return false
     val objectReferenceInfo = descriptor.objectReferenceInfo
     return objectReferenceInfo != null
