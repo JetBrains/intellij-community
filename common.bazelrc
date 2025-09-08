@@ -31,7 +31,7 @@ common --javacopt=-Xlint:-options
 # https://bazel.build/docs/bazel-and-java#hermetic-testing
 # The code is compiled for, executed, and tested on this JVM.
 common --java_language_version=21
-common --java_runtime_version=remotejdk_21
+common --java_runtime_version=remotejbr_21
 
 # see https://bazel.build/external/lockfile
 # use `bazel mod deps --lockfile_mode=refresh` to update lock file
