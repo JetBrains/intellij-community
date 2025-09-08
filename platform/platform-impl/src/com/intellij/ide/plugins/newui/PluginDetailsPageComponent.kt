@@ -537,7 +537,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private suspend fun customizeEnableDisableButton() {
     if (pluginManagerCustomizer == null) return
-    val uiModel = descriptorForActions ?: return
+    val uiModel = plugin ?: return
     if (uiModel.isBundled) return
     val component = gearButton ?: return
     val modalityState = ModalityState.stateForComponent(component)
@@ -891,7 +891,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
 
     mySuggestedIdeBanner.suggestIde(suggestedCommercialIde, plugin!!.pluginId)
-    applyCustomization()
+    if (!this@PluginDetailsPageComponent.pluginModel.isPluginInstallingOrUpdating(pluginUiModel)) {
+      applyCustomization()
+    }
   }
 
   private enum class EmptyState {
@@ -1060,6 +1062,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
                                                     }, ModalityState.any())
 
     if (this@PluginDetailsPageComponent.pluginModel.isPluginInstallingOrUpdating(pluginModel) && indicator == null) {
+      applyCustomization()
       showInstallProgress()
     }
     else {
@@ -1315,7 +1318,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         val bundled = installedDescriptorForMarketplace!!.isBundled
         enableDisableController!!.update()
         gearButton!!.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode != true
-        myUninstallButton?.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode == true
+        myUninstallButton?.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode == true && pluginManagerCustomizer == null
         myEnableDisableButton!!.isVisible = bundled
         /** FIXME duplicated with [ListPluginComponent] */
         myEnableDisableButton!!.isEnabled = plugin?.isDisableAllowed != false && showComponent?.isNotFreeInFreeMode != true

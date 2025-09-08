@@ -225,27 +225,9 @@ public final class PluginManagerConfigurable
     CustomPluginRepositoryService.getInstance().clearCache();
     myPluginUpdatesService =
       UiPluginManager.getInstance().subscribeToUpdatesCount(myPluginModelFacade.getModel().getSessionId(), countValue -> {
-        int count = countValue == null ? 0 : countValue;
-        String text = Integer.toString(count);
-        boolean visible = count > 0;
-
-        String tooltip = PluginUpdatesService.getUpdatesTooltip();
-        myTabHeaderComponent.setTabTooltip(INSTALLED_TAB, tooltip);
-
-        myUpdateAll.setEnabled(true);
-        myUpdateAllBundled.setEnabled(true);
-        myUpdateAll.setVisible(visible && myBundledUpdateGroup.ui == null);
-        myUpdateAllBundled.setVisible(visible);
-
-        myUpdateCounter.setText(text);
-        myUpdateCounter.setToolTipText(tooltip);
-        myUpdateCounterBundled.setText(text);
-        myUpdateCounterBundled.setToolTipText(tooltip);
-        myUpdateCounter.setVisible(visible && myBundledUpdateGroup.ui == null);
-        myUpdateCounterBundled.setVisible(visible);
-
-        myCountIcon.setText(text);
-        myTabHeaderComponent.update();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          onUpdateCountReceived(countValue);
+        });
         return null;
       });
     myPluginModelFacade.getModel().setPluginUpdatesService(myPluginUpdatesService);
@@ -447,6 +429,30 @@ public final class PluginManagerConfigurable
     else {
       myMarketplacePanel.setVisibleRunnable(myMarketplaceRunnable);
     }
+  }
+
+  private void onUpdateCountReceived(Integer countValue) {
+    int count = countValue == null ? 0 : countValue;
+    String text = Integer.toString(count);
+    boolean visible = count > 0;
+
+    String tooltip = PluginUpdatesService.getUpdatesTooltip();
+    myTabHeaderComponent.setTabTooltip(INSTALLED_TAB, tooltip);
+
+    myUpdateAll.setEnabled(true);
+    myUpdateAllBundled.setEnabled(true);
+    myUpdateAll.setVisible(visible && myBundledUpdateGroup.ui == null);
+    myUpdateAllBundled.setVisible(visible);
+
+    myUpdateCounter.setText(text);
+    myUpdateCounter.setToolTipText(tooltip);
+    myUpdateCounterBundled.setText(text);
+    myUpdateCounterBundled.setToolTipText(tooltip);
+    myUpdateCounter.setVisible(visible && myBundledUpdateGroup.ui == null);
+    myUpdateCounterBundled.setVisible(visible);
+
+    myCountIcon.setText(text);
+    myTabHeaderComponent.update();
   }
 
   private static int getStoredSelectionTab() {
@@ -2066,11 +2072,11 @@ public final class PluginManagerConfigurable
       pluginsState.clearShutdownCallback();
     }
 
-    if(myMarketplaceTab != null) {
+    if (myMarketplaceTab != null) {
       myMarketplaceTab.dispose();
     }
 
-    if(myInstalledTab != null) {
+    if (myInstalledTab != null) {
       myInstalledTab.dispose();
     }
 

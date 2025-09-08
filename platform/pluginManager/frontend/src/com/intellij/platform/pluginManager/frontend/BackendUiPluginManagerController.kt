@@ -35,7 +35,9 @@ import com.intellij.platform.project.projectId
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
@@ -162,9 +164,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().loadErrors(sessionId, pluginIds)
   }
 
+  @OptIn(FlowPreview::class)
   override fun connectToUpdateServiceWithCounter(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService {
     service<BackendRpcCoroutineContext>().coroutineScope.launch {
-      PluginManagerApi.getInstance().subscribeToUpdatesCount(sessionId).collectLatest {
+      PluginManagerApi.getInstance().subscribeToUpdatesCount(sessionId).debounce(100).collectLatest {
         callback(it)
       }
     }
