@@ -23,6 +23,8 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyInstantiableType
+import com.jetbrains.python.psi.types.PySelfType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.refactoring.PyDefUseUtil
@@ -299,14 +301,20 @@ class PyFinalInspection : PyInspection() {
 
     private fun checkFinalReassignment(target: PyQualifiedExpression) {
       val qualifierType = target.qualifier?.let { myTypeEvalContext.getType(it) }
-      if (qualifierType is PyClassType && !qualifierType.isDefinition) {
-        checkInstanceFinalReassignment(target, qualifierType.pyClass)
-        return
-      }
-
-      if (qualifierType is PyClassType && qualifierType.isDefinition) {
-        checkClassFinalReassignment(target, qualifierType.pyClass)
-        return
+      if (qualifierType is PyInstantiableType<*>) {
+        val isDefinition = qualifierType.isDefinition
+        val cls = when (qualifierType) {
+          is PySelfType -> qualifierType.scopeClassType.pyClass
+          is PyClassType -> qualifierType.pyClass
+          else -> null
+        }
+        if (cls != null) {
+          if (isDefinition)
+            checkClassFinalReassignment(target, cls)
+          else
+            checkInstanceFinalReassignment(target, cls)
+          return
+        }
       }
 
       // TODO: revert back to PyUtil#multiResolveTopPriority when resolve into global statement is implemented
