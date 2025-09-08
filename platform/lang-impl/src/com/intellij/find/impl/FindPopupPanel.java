@@ -230,7 +230,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     }
 
     boolean isOneFileForPreview = adapters.size() == 1 || adapters.stream().map(UsageInfoAdapter::getPath).distinct().count() == 1;
-    if (FindKey.isLazyPreviewEnabled() && adapters.stream().map(UsageInfoAdapter::getPath).distinct().count() == 1 &&
+    if (FindKey.isLazyPreviewEnabled() && isOneFileForPreview &&
         ContainerUtil.exists(adapters, adapter -> adapter instanceof ItemWithLazyContent &&
                                                   !((ItemWithLazyContent)adapter).isContentComputed())) {
       LOG.debug("Preview will be updated when item will be loaded");
