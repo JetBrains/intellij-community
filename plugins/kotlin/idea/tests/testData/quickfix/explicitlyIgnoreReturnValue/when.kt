@@ -7,7 +7,7 @@ fun returnsNullable(): String? = null
 
 fun mixedTest() {
     when (returnsInt()) {
-        1 -> returnsString()<caret>
+        1 -> <caret>returnsString()
         else -> returnsNullable()
     }
 }
