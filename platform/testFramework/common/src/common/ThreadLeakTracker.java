@@ -243,6 +243,7 @@ public final class ThreadLeakTracker {
 
     return isIdleApplicationPoolThread(stackTrace)
            || isIdleCommonPoolThread(thread, stackTrace)
+           || isIdleDelaySchedulerThread(thread, stackTrace)
            || isFutureTaskAboutToFinish(stackTrace)
            || isIdleDefaultCoroutineExecutorThread(thread, stackTrace)
            || isCoroutineSchedulerPoolThread(thread, stackTrace)
@@ -306,6 +307,14 @@ public final class ThreadLeakTracker {
            && stackTrace[0].getClassName().endsWith(".Unsafe") && stackTrace[0].getMethodName().equals("park")
            && stackTrace[1].getClassName().equals("java.util.concurrent.locks.LockSupport") && stackTrace[1].getMethodName().equals("park")
            && stackTrace[2].getClassName().equals("java.util.concurrent.ForkJoinPool") && stackTrace[2].getMethodName().equals("runWorker");
+  }
+
+  // DelayScheduler is created when calling, for example, java.util.concurrent.CompletableFuture.orTimeout
+  private static boolean isIdleDelaySchedulerThread(Thread thread, StackTraceElement[] stackTrace) {
+    return thread.getClass().getName().equals("java.util.concurrent.DelayScheduler")
+           && stackTrace.length > 1
+           && stackTrace[0].getClassName().endsWith(".Unsafe") && stackTrace[0].getMethodName().equals("park")
+           && stackTrace[1].getClassName().equals("java.util.concurrent.DelayScheduler") && stackTrace[1].getMethodName().equals("loop");
   }
 
   // in newer JDKs strange long hangups observed in Unsafe.unpark:
