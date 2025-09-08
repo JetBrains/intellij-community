@@ -63,10 +63,9 @@ private fun checkFileExists(path: String?, description: String, installationDire
     return
   }
 
-  val pathFromProductJson = path
   if (
-    installationDirectories.none { Files.exists(it.resolve(pathFromProductJson)) } &&
-    installationArchives.none { archiveContainsEntry(it.first, joinPaths(it.second, pathFromProductJson)) }
+    installationDirectories.none { Files.exists(it.resolve(path)) } &&
+    installationArchives.none { archiveContainsEntry(it.first, joinPaths(it.second, path)) }
   ) {
     throw RuntimeException(
       "Incorrect path to ${description} '${path}' in product-info.json:" +

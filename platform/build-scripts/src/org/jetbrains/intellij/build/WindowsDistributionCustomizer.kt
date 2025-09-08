@@ -43,7 +43,6 @@ open class WindowsDistributionCustomizer {
   /**
    * Path to a directory containing images for installer: `logo.bmp`, `headerlogo.bmp`, `install.ico`, `uninstall.ico`.
    */
-  @Suppress("SpellCheckingInspection")
   var installerImagesPath: String? = null
 
   /**
