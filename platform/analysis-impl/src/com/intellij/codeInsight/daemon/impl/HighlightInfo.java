@@ -577,9 +577,9 @@ public class HighlightInfo implements Segment {
     OffsetStore store = offsetStore;
     RangeHighlighterEx highlighter = store.highlighter();
     if (highlighter != null) {
-      s += "; text='" + StringUtil.first(getText(), 40, true) + "'";
+      s += "; text='" + StringUtil.first(getText(), 40, true) + "'; highlighter: " + TextRange.create(highlighter);
       if (!highlighter.isValid()) {
-        s += "; highlighter: " + TextRange.create(highlighter) + " is invalid";
+        s+= " (invalid)";
       }
     }
     if (getDescription() != null) {
