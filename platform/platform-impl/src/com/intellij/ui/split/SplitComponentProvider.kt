@@ -23,7 +23,7 @@ import javax.swing.JComponent
  *
  * @see SplitComponentBinding.createComponent
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface SplitComponentProvider<T : Id> {
   val binding: SplitComponentBinding<T>
 

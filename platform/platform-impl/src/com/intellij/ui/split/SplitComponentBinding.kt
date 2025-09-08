@@ -55,7 +55,7 @@ import javax.swing.JComponent
  * @see SplitComponentBinding.createComponent
  * @see SplitComponentProvider
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 @ApiStatus.NonExtendable
 interface SplitComponentBinding<T : Id> {
   val placeId: String
@@ -69,7 +69,7 @@ interface SplitComponentBinding<T : Id> {
  * @param placeId should be unique through all other bindings.
  * @param modelIdFactory provides a factory for the backend model id. Typically, use just `::SomeBackendModelId`
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 fun <T : Id> SplitComponentBinding(
   placeId: String,
   modelIdFactory: (UID) -> T,
@@ -86,7 +86,7 @@ fun <T : Id> SplitComponentBinding(
  * The scope passed in [SplitComponentProvider.createComponent] will be canceled when this [scope] is canceled.
  */
 @RequiresEdt
-@ApiStatus.Experimental
+@ApiStatus.Internal
 fun <T : Id> SplitComponentBinding<T>.createComponent(project: Project, scope: CoroutineScope, modelId: T): JComponent {
   val id = SplitComponentId(placeId, modelId.uid)
   logger.debug { "Registered model with id=$id : $modelId" }
