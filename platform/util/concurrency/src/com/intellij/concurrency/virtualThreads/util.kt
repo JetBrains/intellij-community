@@ -5,6 +5,7 @@
 package com.intellij.concurrency.virtualThreads
 
 import com.intellij.concurrency.installThreadContext
+import com.intellij.diagnostic.recordVirtualThreadForCoroutine
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.*
@@ -85,6 +86,9 @@ fun <T> CoroutineScope.asyncAsVirtualThread(
           }
         }
       }
+
+      // exposing this mapping for better coroutine dumps
+      recordVirtualThreadForCoroutine(currentJob, thread)
 
       currentJob.invokeOnCompletion(onCancelling = true) {
         thread.interrupt()

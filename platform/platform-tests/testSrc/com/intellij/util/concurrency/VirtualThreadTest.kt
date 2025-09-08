@@ -6,6 +6,7 @@ import com.intellij.concurrency.virtualThreads.IntelliJVirtualThreads
 import com.intellij.concurrency.virtualThreads.asyncAsVirtualThread
 import com.intellij.concurrency.virtualThreads.launchAsVirtualThread
 import com.intellij.concurrency.virtualThreads.virtualThread
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -190,5 +191,23 @@ class VirtualThreadTest {
       launchAsVirtualThread(start = CoroutineStart.UNDISPATCHED) {
       }.join()
     }
+  }
+
+  @Test
+  fun `stacktraces of virtual threads get into coroutine dump`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val eternalSuspension = CompletableFuture<Unit>()
+    asyncAsVirtualThread {
+      interestingStackTrace {
+        eternalSuspension.get()
+      }
+    }
+    delay(100)
+    val dump = dumpCoroutines(this)!!
+    assertContains(dump, "interestingStackTrace")
+    eternalSuspension.complete(Unit)
+  }
+
+  fun interestingStackTrace(action: () -> Unit) {
+    action()
   }
 }
