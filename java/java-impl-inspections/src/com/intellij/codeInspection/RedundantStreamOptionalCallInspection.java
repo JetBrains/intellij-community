@@ -355,9 +355,12 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
     }
     if (expression instanceof PsiLambdaExpression lambda) {
       PsiType functionalInterfaceType = lambda.getFunctionalInterfaceType();
-      if (functionalInterfaceType != null && lambda.getParameterList().getParametersCount() == 1) {
+      PsiParameterList parameterList = lambda.getParameterList();
+      if (functionalInterfaceType != null && parameterList.getParametersCount() == 1) {
         PsiType functionalInterfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
-        PsiType parameterType = lambda.getParameterList().getParameters()[0].getType();
+        PsiParameter parameter = parameterList.getParameter(0);
+        assert parameter != null;
+        PsiType parameterType = parameter.getType();
         if (functionalInterfaceReturnType != null) {
           Nullability returnTypeNullability = functionalInterfaceReturnType.getNullability().nullability();
           Nullability parameterNullability = parameterType.getNullability().nullability();
@@ -369,7 +372,7 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
       if (LambdaUtil.isIdentityLambda(lambda)) return true;
       if (!allowBoxUnbox) return false;
       PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-      PsiParameter[] parameters = lambda.getParameterList().getParameters();
+      PsiParameter[] parameters = parameterList.getParameters();
       if (parameters.length != 1) return false;
       PsiParameter parameter = parameters[0];
       PsiMethodCallExpression call = tryCast(PsiUtil.skipParenthesizedExprDown(body), PsiMethodCallExpression.class);
