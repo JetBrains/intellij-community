@@ -6,12 +6,15 @@ import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme.ENABLE_RUNTIME_SCHEME_COLOR_WRAPPER_OPTION
+import com.intellij.openapi.editor.ex.util.LayeredTextAttributes
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
@@ -20,22 +23,24 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ColorMixture.Companion.ENABLE_RUNTIME_COLOR_MIXTURE_WRAPPER_OPTION
+import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.JBList
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
+import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.*
+import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -48,6 +53,9 @@ import java.lang.ref.WeakReference
 import java.util.*
 import java.util.function.BiFunction
 import javax.swing.*
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeModel
 
 private const val THEME_VIEWER_UI_MARKER_KEY = "ThemeColorPopupIdentity"
 private const val TOOL_WINDOW_ID = "UI Theme Color Picker"
@@ -178,8 +186,12 @@ internal class UiThemeColorPicker(internal val coroutineScope: CoroutineScope) {
     val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(
       panel {
         row {
-          cell(createThemeColorList())
-            .applyToComponent { model = CollectionListModel(colors) }
+          cell(createThemeColorTree())
+            .applyToComponent {
+              val tree = this
+              tree.model = createColorsTreeModel(colors)
+              TreeUtil.expandAll(tree)
+            }
         }
       },
       null
@@ -302,11 +314,13 @@ internal class UiThemeColorPickerToolWindowFactory : ToolWindowFactory, DumbAwar
         comment("Use ${KeymapUtil.getShortcutText(UPDATE_TABLE_SHORTCUT)} to show hovered colors below")
       }
       row {
-        scrollCell(createThemeColorList())
+        scrollCell(createThemeColorTree())
           .applyToComponent {
-            manager.coroutineScope.launch {
+            val tree = this
+            manager.coroutineScope.launch(Dispatchers.EDT) {
               manager.hoverState.collectLatest { colors ->
-                model = CollectionListModel(colors)
+                tree.model = createColorsTreeModel(colors)
+                TreeUtil.expandAll(tree)
               }
             }
           }.align(Align.FILL)
@@ -318,33 +332,160 @@ internal class UiThemeColorPickerToolWindowFactory : ToolWindowFactory, DumbAwar
     content.isCloseable = false
     toolWindow.contentManager.addContent(content)
   }
+
 }
 
-private fun createThemeColorList(): JBList<ThemeColorInfo> {
-  val list = JBList<ThemeColorInfo>()
-  list.cellRenderer = listCellRenderer {
-    val value = this.value
-    when (value) {
-      is ThemeColorInfo.ColorInfo -> {
-        icon(value.color.toIcon())
-        text(getColorId(value.color))
+private fun createColorsTreeModel(allInfos: List<ThemeColorInfo>): TreeModel {
+  val root = DefaultMutableTreeNode("root")
+
+  fun String.shortenLabel(): String {
+    return StringUtil.shortenTextWithEllipsis(this.replace("\n", " "), 20, 5)
+  }
+
+  fun DefaultMutableTreeNode.labelNode(label: String): DefaultMutableTreeNode {
+    val child = DefaultMutableTreeNode(ThemeTreeNode.TextNode(label))
+    this.add(child)
+    return child
+  }
+
+  fun DefaultMutableTreeNode.colorNode(color: Color, label: String): DefaultMutableTreeNode {
+    val child = DefaultMutableTreeNode(ThemeTreeNode.ColorNode(color, label))
+    this.add(child)
+    return child
+  }
+
+  fun DefaultMutableTreeNode.attributesNodes(textAttributes: TextAttributes?, recursiveCall: Boolean = false) {
+    if (textAttributes == null) return
+
+    if (textAttributes === TextAttributes.ERASE_MARKER) {
+      labelNode("ERASE MARKER")
+      return
+    }
+
+    if (textAttributes is LayeredTextAttributes) {
+      val keysGroup = labelNode("LayeredTextAttributes")
+      for (key in textAttributes.keys) {
+        keysGroup.labelNode(key.externalName)
       }
-      is ThemeColorInfo.AttributeInfo -> {
-        text("Attrubute: ")
-        value.value.backgroundColor?.let { text(getColorId(it)) }
-        value.value.foregroundColor?.let { text(getColorId(it)) }
-        value.value.errorStripeColor?.let { text(getColorId(it)) }
-        value.value.effectColor?.let { text(getColorId(it)) }
+
+      val upToDateValue = LayeredTextAttributes.create(EditorColorsManager.getInstance().globalScheme, textAttributes.keys)
+      if (upToDateValue != textAttributes && !recursiveCall) {
+        val upToDate = keysGroup.labelNode("OUTDATED! Up to date value:")
+        upToDate.attributesNodes(upToDateValue, recursiveCall = true)
       }
-      is ThemeColorInfo.AttributeKeyInfo -> {
-        text("AttributeKey: " + value.key.externalName)
+    }
+
+    textAttributes.backgroundColor?.let {
+      colorNode(it, "Background")
+    }
+    textAttributes.foregroundColor?.let {
+      colorNode(it, "Foreground")
+    }
+    textAttributes.errorStripeColor?.let {
+      colorNode(it, "Error Stripe")
+    }
+    textAttributes.effectColor?.let {
+      colorNode(it, "Effect")
+    }
+  }
+
+  val colorInfos = allInfos.filterIsInstance<ThemeColorInfo.ColorInfo>()
+  val highlighterInfos = allInfos.filterIsInstance<ThemeColorInfo.HighlighterInfo>()
+  val syntaxInfos = allInfos.filterIsInstance<ThemeColorInfo.SyntaxInfo>()
+
+  if (colorInfos.isNotEmpty()) {
+    val colorsRoot = if (colorInfos.size != allInfos.size) root.labelNode("Colors") else root
+    for (info in colorInfos) {
+      val label = getColorPresentation(info.color)
+      colorsRoot.colorNode(info.color, label)
+    }
+  }
+
+  for (highlighterInfo in highlighterInfos) {
+    val infoRoot = root.labelNode("Highlighter '${highlighterInfo.text.shortenLabel()}'")
+
+    if (highlighterInfo.forcedAttributes != null) {
+      val forcedNode = infoRoot.labelNode("Forced attributes")
+      forcedNode.attributesNodes(highlighterInfo.forcedAttributes)
+    }
+
+    if (highlighterInfo.key != null) {
+      val label = buildString {
+        append("Attribute Key")
+        if (highlighterInfo.forcedAttributes != null) append(" (overwritten)")
+      }
+      val keysNode = infoRoot.labelNode(label)
+      keysNode.labelNode(highlighterInfo.key.externalName)
+    }
+
+    if (highlighterInfo.forcedAttributes == null && highlighterInfo.key == null && highlighterInfo.attributes != null) {
+      infoRoot.attributesNodes(highlighterInfo.attributes)
+    }
+  }
+
+  for (syntaxInfo in syntaxInfos) {
+    val infoRoot = root.labelNode("Syntax '${syntaxInfo.text.shortenLabel()}'")
+
+    if (syntaxInfo.attributeKeys.isNotEmpty()) {
+      val keysGroup = infoRoot.labelNode("Keys")
+      for (key in syntaxInfo.attributeKeys) {
+        keysGroup.labelNode(key.externalName)
+      }
+    }
+
+    infoRoot.attributesNodes(syntaxInfo.attributes)
+  }
+
+  return DefaultTreeModel(root)
+}
+
+private fun createThemeColorTree(): JTree {
+  val tree = Tree()
+  tree.isRootVisible = false
+  tree.showsRootHandles = true
+  tree.cellRenderer = object : ColoredTreeCellRenderer() {
+    override fun customizeCellRenderer(tree: JTree, node: Any?, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean) {
+      val value = (node as? DefaultMutableTreeNode)?.userObject as? ThemeTreeNode
+      when (value) {
+        is ThemeTreeNode.ColorNode -> {
+          append(getColorPresentation(value.color))
+          icon = value.color.toIcon()
+        }
+        is ThemeTreeNode.TextNode -> {
+          append(value.label)
+          icon = null
+        }
+        null -> {
+          logger<UiThemeColorPickerToolWindowFactory>().error("Unexpected tree node: $node")
+        }
       }
     }
   }
-  return list
+  return tree
 }
 
-private fun getColorId(color: Color): String {
+private sealed interface ThemeTreeNode {
+  class TextNode(val label: String) : ThemeTreeNode {
+    override fun toString(): String = label
+  }
+
+  class ColorNode(val color: Color, val label: String) : ThemeTreeNode {
+    override fun toString(): String = label
+  }
+}
+
+private fun getColorPresentation(color: Color): String {
+  val id = getColorId(color)
+  val hex = UIUtil.colorToHex(color)
+  if (id != null) {
+    return "$id #$hex"
+  }
+  else {
+    return "#$hex"
+  }
+}
+
+private fun getColorId(color: Color): String? {
   if (color is PresentableColor) {
     val name = color.getPresentableName()
     if (name != null) {
@@ -369,13 +510,29 @@ private fun getColorId(color: Color): String {
     }
   }
 
-  return color.toString()
+  return null
 }
 
 internal sealed interface ThemeColorInfo {
   class ColorInfo(val color: Color) : ThemeColorInfo
-  class AttributeKeyInfo(val key: TextAttributesKey) : ThemeColorInfo
-  class AttributeInfo(val value: TextAttributes) : ThemeColorInfo
+
+  class HighlighterInfo(
+    val text: String,
+    val forcedAttributes: TextAttributes?,
+    val key: TextAttributesKey?,
+    val attributes: TextAttributes?,
+  ) : ThemeColorInfo {
+    val isEmpty: Boolean get() = forcedAttributes == null && key == null && attributes == null
+  }
+
+  class SyntaxInfo(
+    val text: String,
+    val attributeKeys: Array<TextAttributesKey>,
+    val attributes: TextAttributes?,
+  ) : ThemeColorInfo {
+    val isEmpty: Boolean get() = attributeKeys.isEmpty() && attributes == null
+  }
+
 }
 
 private fun getRootPane(window: Any): JRootPane? {
