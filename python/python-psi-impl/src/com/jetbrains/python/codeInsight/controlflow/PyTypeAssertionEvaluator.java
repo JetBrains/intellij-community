@@ -392,6 +392,8 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       return null;
     };
   }
+  
+
 
   private static boolean isIfReferenceStatement(@NotNull PyExpression node) {
     return PsiTreeUtil.skipParentsOfType(node, PyParenthesizedExpression.class) instanceof PyIfPart;

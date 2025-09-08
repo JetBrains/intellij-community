@@ -150,6 +150,18 @@ public class Py3TypeTest extends PyTestCase {
              d = {}
              expr = d.pop("abc", None)""");
   }
+  
+  // PY-83348
+  public void testOrExpressionType() {
+    doTest("int | str", """
+             def foo(x: int | None):
+                 expr = x or "foo"
+             """);
+    doTest("str", """
+             def foo(x: None):
+                 expr = x or "foo"
+             """);
+  }
 
   public void testYieldInsideLambda() {
     // Checks that foo is not a generator
