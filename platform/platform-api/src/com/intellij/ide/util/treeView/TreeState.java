@@ -1129,6 +1129,7 @@ public final class TreeState implements JDOMExternalizable {
     }
     else {
       if (myPresentationData == null) {
+        LOG.debug("Restoring the expanded paths");
         return TreeUtil.promiseExpand(tree, myExpandedPaths.stream().map(elements -> new SinglePathVisitor(elements)));
       }
       else {
@@ -1136,6 +1137,7 @@ public final class TreeState implements JDOMExternalizable {
         // and if the user collapses one of those nodes, we don't want to expand it again here,
         // as that looks and feels weird.
         // So instead, only load these nodes so they can replace the cached ones.
+        LOG.debug("Loading the expanded paths to replace the cached presentation");
         var promise = new AsyncPromise<List<TreePath>>();
         var visitor = new MultiplePathsVisitor(myExpandedPaths);
         TreeUtil.promiseVisit(tree, visitor).onProcessed(lastPathFound -> {
@@ -1185,7 +1187,13 @@ public final class TreeState implements JDOMExternalizable {
     @Override
     public @NotNull Action visit(@NotNull TreePath path) {
       if (matcher.tryAdvance(path.getLastPathComponent())) {
-        return matcher.fullyMatched() ? Action.INTERRUPT : Action.CONTINUE;
+        boolean found = matcher.fullyMatched();
+        if (found) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Found a path using a single-path visitor: " + path);
+          }
+        }
+        return found ? Action.INTERRUPT : Action.CONTINUE;
       }
       else {
         return Action.SKIP_CHILDREN;
@@ -1243,6 +1251,9 @@ public final class TreeState implements JDOMExternalizable {
         PathMatchState state = iterator.next();
         switch (state.match(path)) {
           case FULL -> {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Found a path using a multi-path visitor: " + path);
+            }
             pathsFound.add(path);
             iterator.remove();
           }
