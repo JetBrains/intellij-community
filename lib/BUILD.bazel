@@ -945,8 +945,8 @@ jvm_import(
 
 jvm_import(
   name = "commons-lang3",
-  jar = "@commons-lang3-3_17_0_http//file",
-  source_jar = "@commons-lang3-3_17_0-sources_http//file",
+  jar = "@commons-lang3-3_18_0_http//file",
+  source_jar = "@commons-lang3-3_18_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -959,8 +959,8 @@ jvm_import(
 
 jvm_import(
   name = "commons-text",
-  jar = "@commons-text-1_13_0_http//file",
-  source_jar = "@commons-text-1_13_0-sources_http//file",
+  jar = "@commons-text-1_14_0_http//file",
+  source_jar = "@commons-text-1_14_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

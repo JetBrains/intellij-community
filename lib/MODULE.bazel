@@ -917,17 +917,17 @@ http_file(
 )
 
 http_file(
-  name = "commons-lang3-3_17_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/commons/commons-lang3/3.17.0/commons-lang3-3.17.0.jar",
-  sha256 = "6ee731df5c8e5a2976a1ca023b6bb320ea8d3539fbe64c8a1d5cb765127c33b4",
-  downloaded_file_path = "commons-lang3-3.17.0.jar"
+  name = "commons-lang3-3_18_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/commons/commons-lang3/3.18.0/commons-lang3-3.18.0.jar",
+  sha256 = "4eeeae8d20c078abb64b015ec158add383ac581571cddc45c68f0c9ae0230720",
+  downloaded_file_path = "commons-lang3-3.18.0.jar"
 )
 
 http_file(
-  name = "commons-lang3-3_17_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/commons/commons-lang3/3.17.0/commons-lang3-3.17.0-sources.jar",
-  sha256 = "5fdcac21ad329766054a95367d7583dfcdca737d221d5e01a5f2a198c04c6b18",
-  downloaded_file_path = "commons-lang3-3.17.0-sources.jar"
+  name = "commons-lang3-3_18_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/commons/commons-lang3/3.18.0/commons-lang3-3.18.0-sources.jar",
+  sha256 = "b15732a13e40df7f07c30f2cb8572874798e8dde581f1398943d2ad3765bafaa",
+  downloaded_file_path = "commons-lang3-3.18.0-sources.jar"
 )
 
 http_file(
@@ -945,17 +945,17 @@ http_file(
 )
 
 http_file(
-  name = "commons-text-1_13_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/commons/commons-text/1.13.0/commons-text-1.13.0.jar",
-  sha256 = "1e323a501127df78ed0987f345d69d65d0ea7fa3d4fb5b3f84aaeba3a8b20f38",
-  downloaded_file_path = "commons-text-1.13.0.jar"
+  name = "commons-text-1_14_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/commons/commons-text/1.14.0/commons-text-1.14.0.jar",
+  sha256 = "121fce2282910c8f0c3ba793a5436b31beb710423cbe2d574a3fb7a73c508e92",
+  downloaded_file_path = "commons-text-1.14.0.jar"
 )
 
 http_file(
-  name = "commons-text-1_13_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/commons/commons-text/1.13.0/commons-text-1.13.0-sources.jar",
-  sha256 = "ef8983f2336be8ee0aea07175d3f661101142ba233d830c59044dda722c9149c",
-  downloaded_file_path = "commons-text-1.13.0-sources.jar"
+  name = "commons-text-1_14_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/commons/commons-text/1.14.0/commons-text-1.14.0-sources.jar",
+  sha256 = "5330c503e49a845407d48eccfa41bc4ba29eade6f60feb49a6212fb5f57abaa5",
+  downloaded_file_path = "commons-text-1.14.0-sources.jar"
 )
 
 http_file(
