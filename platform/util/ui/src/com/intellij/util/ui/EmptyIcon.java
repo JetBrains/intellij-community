@@ -5,12 +5,16 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.icons.api.DefaultIconState;
+import org.jetbrains.icons.api.IconIdentifier;
+import org.jetbrains.icons.api.IconState;
 import org.jetbrains.icons.api.PaintingApi;
 
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -37,6 +41,16 @@ import java.util.concurrent.ConcurrentHashMap;
 
   static {
     JBUIScale.addUserScaleChangeListener(event -> cache.clear());
+  }
+
+  @Override
+  public @NotNull IconIdentifier getIdentifier() {
+    return new EmptyIconIdentifier(width, height);
+  }
+
+  @Override
+  public @NotNull IconState getState() {
+    return DefaultIconState.INSTANCE;
   }
 
   /**
@@ -161,5 +175,27 @@ import java.util.concurrent.ConcurrentHashMap;
     public @NotNull EmptyIconUIResource copy() {
       return new EmptyIconUIResource(this);
     }
+  }
+}
+
+class EmptyIconIdentifier implements IconIdentifier {
+  int width;
+  int height;
+
+  EmptyIconIdentifier(int width, int height) {
+    this.width = width;
+    this.height = height;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    EmptyIconIdentifier that = (EmptyIconIdentifier)o;
+    return width == that.width && height == that.height;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(width, height);
   }
 }

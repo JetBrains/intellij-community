@@ -4,6 +4,7 @@ package org.jetbrains.icons.api
 interface PaintingApi {
   val bounds: Bounds
   fun drawImage(image: BitmapImageResource, x: Int, y: Int, width: Int? = null, height: Int? = null)
+  fun drawImage(image: RescalableImageResource, x: Int, y: Int, width: Int? = null, height: Int? = null)
 }
 
 class Bounds(
@@ -31,4 +32,6 @@ class Bounds(
   override fun toString(): String {
     return "Bounds(width=$width, height=$height)"
   }
+
+  fun canFit(other: Bounds): Boolean = other.width <= width && other.height <= height
 }

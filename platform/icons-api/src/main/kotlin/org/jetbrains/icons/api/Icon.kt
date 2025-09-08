@@ -2,5 +2,8 @@
 package org.jetbrains.icons.api
 
 interface Icon {
-    fun render(api: PaintingApi)
+  val identifier: IconIdentifier
+  val state: IconState
+
+  fun render(api: PaintingApi)
 }

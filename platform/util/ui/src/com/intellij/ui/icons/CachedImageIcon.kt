@@ -25,8 +25,13 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.icons.api.BitmapImageResource
-import org.jetbrains.icons.api.FitAreaScale
+import org.jetbrains.icons.api.Bounds
+import org.jetbrains.icons.api.CrossApiImageBitmapCache
+import org.jetbrains.icons.api.EmptyBitmapImageResource
+import org.jetbrains.icons.api.IconIdentifier
+import org.jetbrains.icons.api.IconState
 import org.jetbrains.icons.api.ImageResource
+import org.jetbrains.icons.api.ImageResourceWithCrossApiCache
 import org.jetbrains.icons.api.ImageScale
 import org.jetbrains.icons.api.PaintingApi
 import org.jetbrains.icons.api.RescalableImageResource
@@ -64,6 +69,46 @@ internal val pathTransform: AtomicReference<IconTransform> = AtomicReference(
   IconTransform(dark = false, patchers = arrayOf(DeprecatedDuplicatesIconPathPatcher()), filter = null)
 )
 
+class CachedImageIconState(
+  val imageFlags: Int,
+  val flags: Int
+): IconState {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as CachedImageIconState
+
+    if (imageFlags != other.imageFlags) return false
+    if (flags != other.flags) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = imageFlags
+    result = 31 * result + flags
+    return result
+  }
+}
+
+class CachedImageIconIdentifier(
+  val coords: Pair<String, ClassLoader>?
+): IconIdentifier {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as CachedImageIconIdentifier
+
+    return coords == other.coords
+  }
+
+  override fun hashCode(): Int {
+    return coords.hashCode()
+  }
+}
+
 @Internal
 @ApiStatus.NonExtendable
 open class CachedImageIcon private constructor(
@@ -82,6 +127,11 @@ open class CachedImageIcon private constructor(
 ) : CopyableIcon, ScalableIcon, DarkIconProvider, IconPathProvider, IconWithToolTip, SwingIconImpl() {
   private var pathTransformModCount = -1
   private var loaderModCount = -1
+
+  override val identifier: IconIdentifier = CachedImageIconIdentifier(getCoords())
+
+  override val state: IconState
+    get() = CachedImageIconState(imageFlags, attributes.flags)
 
   override val originalPath: String?
     get() = originalLoader.path
@@ -129,38 +179,48 @@ open class CachedImageIcon private constructor(
     if (swing != null) {
       legacyPaintIcon(swing.c, swing.g, swing.x, swing.y)
     } else {
-      val bounds = api.bounds
-      val scaled = imageResource.scale(FitAreaScale(bounds.width, bounds.height))
-      api.drawImage(scaled, 0, 0, bounds.width, bounds.height)
+      api.drawImage(imageResource, 0, 0)
     }
   }
 
   private class CachedImageIconResource(
     val oldIcon: CachedImageIcon
-  ): ImageResource, RescalableImageResource {
+  ): ImageResource, RescalableImageResource, ImageResourceWithCrossApiCache {
     private var cache: BitmapCache? = null
 
-    override fun scale(scale: ImageScale): BitmapImageResource {
-      if (cache?.isSame(scale, oldIcon.imageFlags, oldIcon.attributes.flags) != true) {
-        val awtImage = oldIcon.scaleBy(scale).getRealImage() ?: error("CachedImageIcon returned no image.")
-        val imageResource = ImageResource.fromAwtImage(awtImage)
-        cache = BitmapCache(imageResource, scale, oldIcon.imageFlags, oldIcon.attributes.flags)
-      }
-      return cache!!.image
+    override val crossApiCache: CrossApiImageBitmapCache = CrossApiImageBitmapCacheImpl()
+
+    override fun calculateExpectedDimensions(scale: ImageScale): Bounds {
+      val width = oldIcon.iconWidth
+      val height = oldIcon.iconHeight
+      val factor = scale.calculateScalingFactorByOriginalDimensions(width)
+      return Bounds((width * factor).roundToInt(), (height * factor).roundToInt())
     }
 
-    private fun CachedImageIcon.scaleBy(scale: ImageScale): CachedImageIcon {
-      return scale(scale.calculateScalingFactorByBounds(iconWidth))
+    override fun scale(scale: ImageScale): BitmapImageResource {
+      if (cache?.isSame(scale, oldIcon.state) != true) {
+        val objScale = scale.calculateScalingFactorByOriginalDimensions(oldIcon.iconWidth)
+        val scaleContext = ScaleContext.of(arrayOf(
+          ScaleType.OBJ_SCALE.of(objScale),
+          ScaleType.USR_SCALE.of(1.0),
+          ScaleType.SYS_SCALE.of(1.0),
+        ))
+        val rawImage = oldIcon.resolveImage(scaleContext = scaleContext)
+        val awtImage = (rawImage as? JBHiDPIScaledImage)?.delegate ?: rawImage
+        if (awtImage == null) { return EmptyBitmapImageResource }
+        val imageResource = ImageResource.fromAwtImage(awtImage)
+        cache = BitmapCache(imageResource, scale, oldIcon.state)
+      }
+      return cache!!.image
     }
 
     private class BitmapCache(
       val image: BitmapImageResource,
       val scale: ImageScale,
-      val flags: Int,
-      val attributeFlags: Int
+      val state: IconState
     ) {
-      fun isSame(scale: ImageScale, flags: Int, attributeFlags: Int): Boolean =
-        this.scale == scale && this.flags == flags && this.attributeFlags == attributeFlags
+      fun isSame(scale: ImageScale, state: IconState): Boolean =
+        this.scale == scale && this.state == state
     }
   }
 

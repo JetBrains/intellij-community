@@ -13,6 +13,11 @@ class AwtImageResourceImpl(override val image: Image) : AwtImageResource, ImageR
     } else error("Reading RGB values from non buffered image is not supported yet.")
   }
 
+  override fun getRGBOrNull(x: Int, y: Int): Int? {
+    if (x < 0 || y < 0 || x >= width || y >= height) { return null}
+    return getRGB(x, y)
+  }
+
   override val width: Int = image.getWidth(null)
   override val height: Int = image.getHeight(null)
 

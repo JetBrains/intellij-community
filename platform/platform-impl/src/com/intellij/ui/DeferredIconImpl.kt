@@ -19,16 +19,15 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBScalableIcon
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.icons.api.DynamicIcon
-import org.jetbrains.icons.api.DynamicIconState
+import org.jetbrains.icons.api.DefaultIconState
+import org.jetbrains.icons.api.IconIdentifier
 import org.jetbrains.icons.api.PaintingApi
+import org.jetbrains.icons.api.IconState
 import java.awt.Component
 import java.awt.Graphics
 import java.util.*
@@ -40,7 +39,7 @@ import kotlin.coroutines.resume
 
 private val repaintScheduler = DeferredIconRepaintScheduler()
 
-object DeferredIconState : DynamicIconState
+object DeferredIconState : IconState
 
 class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconWithToolTip, CopyableIcon, DynamicIcon {
   companion object {
@@ -53,7 +52,10 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     }
   }
 
-  override val onUpdate: MutableStateFlow<DynamicIconState?> = MutableStateFlow(null)
+  override val onUpdate: MutableStateFlow<IconState> = MutableStateFlow(DefaultIconState)
+  override val state: IconState
+    get() = onUpdate.value
+  override val identifier: IconIdentifier
 
   private val delegateIcon: Icon
 
@@ -89,6 +91,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     asyncEvaluator = icon.asyncEvaluator
     isScheduled.set(icon.isScheduled.get())
     param = icon.param
+    identifier = icon.identifier
     isNeedReadAction = icon.isNeedReadAction
     isDone = icon.isDone
     evaluatedListener = icon.evaluatedListener
@@ -101,6 +104,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
                        evaluator: (T) -> Icon?,
                        listener: ((DeferredIconImpl<T>, Icon) -> Unit)?) {
     this.param = param
+    identifier = FallbackIconIdentifier(param as Any)
     delegateIcon = baseIcon ?: EMPTY_ICON
     scaledDelegateIcon = delegateIcon
     cachedScaledIcon = null
@@ -117,6 +121,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   @ApiStatus.Internal
   constructor(baseIcon: Icon?, param: T, asyncEvaluator: suspend (T) -> Icon, listener: ((DeferredIconImpl<T>, Icon) -> Unit)?) {
     this.param = param
+    identifier = FallbackIconIdentifier(param as Any)
     delegateIcon = baseIcon ?: EMPTY_ICON
     scaledDelegateIcon = delegateIcon
     cachedScaledIcon = null

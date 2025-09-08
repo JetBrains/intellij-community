@@ -3,7 +3,9 @@ package com.intellij.ui.icons
 
 import org.jetbrains.icons.api.BitmapImageResource
 import org.jetbrains.icons.api.Bounds
+import org.jetbrains.icons.api.FitAreaScale
 import org.jetbrains.icons.api.PaintingApi
+import org.jetbrains.icons.api.RescalableImageResource
 import java.awt.Component
 import java.awt.Graphics
 
@@ -28,6 +30,11 @@ class SwingPaintingApi(
     } else {
       g.drawImage(swingImage.image, x, y, null)
     }
+  }
+
+  override fun drawImage(image: RescalableImageResource, x: Int, y: Int, width: Int?, height: Int?) {
+    val swingImage = image.scale(FitAreaScale(width ?: bounds.width, height ?: bounds.height))
+    drawImage(swingImage, x, y, width, height)
   }
 }
 

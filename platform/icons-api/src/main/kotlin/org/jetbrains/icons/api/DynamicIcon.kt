@@ -4,9 +4,5 @@ package org.jetbrains.icons.api
 import kotlinx.coroutines.flow.StateFlow
 
 interface DynamicIcon : Icon {
-  val onUpdate: StateFlow<DynamicIconState?>
-}
-
-interface DynamicIconState {
-
+  val onUpdate: StateFlow<IconState>
 }

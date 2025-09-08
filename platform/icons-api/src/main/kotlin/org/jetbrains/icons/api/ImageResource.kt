@@ -36,22 +36,29 @@ interface CrossApiImageBitmapCache {
 
 interface BitmapImageResource : ImageResource {
   fun getRGB(x: Int, y: Int): Int
+  fun getRGBOrNull(x: Int, y: Int): Int?
   val width: Int
   val height: Int
+}
 
-  companion object
+object EmptyBitmapImageResource : BitmapImageResource {
+  override fun getRGB(x: Int, y: Int): Int = 0
+  override fun getRGBOrNull(x: Int, y: Int): Int? = 0
+  override val width: Int = 0
+  override val height: Int = 0
 }
 
 interface RescalableImageResource : ImageResource {
   fun scale(scale: ImageScale): BitmapImageResource
+  fun calculateExpectedDimensions(scale: ImageScale): Bounds
 }
 
 sealed interface ImageScale {
-  fun calculateScalingFactorByBounds(width: Int, height: Int? = null): Float
+  fun calculateScalingFactorByOriginalDimensions(width: Int, height: Int? = null): Float
 }
 
 class FixedScale(val scale: Float) : ImageScale {
-  override fun calculateScalingFactorByBounds(width: Int, height: Int?): Float = scale
+  override fun calculateScalingFactorByOriginalDimensions(width: Int, height: Int?): Float = scale
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -68,7 +75,7 @@ class FixedScale(val scale: Float) : ImageScale {
 }
 
 class FitAreaScale(val width: Int, val height: Int) : ImageScale {
-  override fun calculateScalingFactorByBounds(width: Int, height: Int?): Float {
+  override fun calculateScalingFactorByOriginalDimensions(width: Int, height: Int?): Float {
     val scale = this.width / width.toFloat()
     if (height != null) {
       return minOf(scale, this.height / height.toFloat())
