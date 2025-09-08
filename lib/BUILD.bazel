@@ -910,8 +910,8 @@ jvm_import(
 
 jvm_import(
   name = "commons-cli",
-  jar = "@commons-cli-1_9_0_http//file",
-  source_jar = "@commons-cli-1_9_0-sources_http//file",
+  jar = "@commons-cli-1_10_0_http//file",
+  source_jar = "@commons-cli-1_10_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
