@@ -167,7 +167,7 @@ object TestKotlinArtifacts {
         target.createParentDirectories()
         val tempFile = Files.createTempFile(target.parent, target.name, ".tmp")
         try {
-            dependency.copyToRecursively(tempFile, overwrite = true, followLinks = false)
+            dependency.copyToRecursively(tempFile, overwrite = true, followLinks = true)
             // in the case of parallel access target will be overwritten by one of the threads
             tempFile.moveTo(target, StandardCopyOption.ATOMIC_MOVE)
         } finally {
