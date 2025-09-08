@@ -14,6 +14,7 @@ private class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   override fun getBuildTime() = delegate.buildTime
 
   override fun getBuild(): BuildNumber = delegate.build
+  override fun getBuildBranchName(): String? = delegate.buildBranchName
   override fun getApiVersion(): String = delegate.apiVersion
   override fun getMajorVersion(): String? = delegate.majorVersion
   override fun getMinorVersion(): String? = delegate.minorVersion

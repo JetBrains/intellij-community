@@ -240,6 +240,13 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute type="xs:string" name="branchName">
+      <xs:annotation>
+        <xs:documentation>
+          Internal use only! This attribute is used for internal JetBrains builds to document a VCS branch used to build the nightly version.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="logoType">
     <xs:annotation>
@@ -432,7 +439,7 @@
     <xs:attribute type="xs:anyURI" name="check">
       <xs:annotation>
         <xs:documentation>
-          Deprecated: override ExternalProductResourceUrls.updateMetadataUrl instead. 
+          Deprecated: override ExternalProductResourceUrls.updateMetadataUrl instead.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -451,14 +458,14 @@
     <xs:attribute type="xs:anyURI" name="url">
       <xs:annotation>
         <xs:documentation>
-          Deprecated: override ExternalProductResourceUrls.whatIsNewPageUrl instead. 
+          Deprecated: override ExternalProductResourceUrls.whatIsNewPageUrl instead.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute type="xs:boolean" name="show-on-update">
       <xs:annotation>
         <xs:documentation>
-          Deprecated: override UpdateStrategyCustomization.showWhatIsNewPageAfterUpdate instead. 
+          Deprecated: override UpdateStrategyCustomization.showWhatIsNewPageAfterUpdate instead.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -483,7 +490,7 @@
     <xs:attribute type="xs:string" name="builtin-url">
       <xs:annotation>
         <xs:documentation>
-          Deprecated since 2023.3. 
+          Deprecated since 2023.3.
           Use 'intellij.plugins.custom.built.in.repository.url' system property to pass URL of built-in custom plugin repository instead.
         </xs:documentation>
         <xs:documentation>deprecated</xs:documentation>

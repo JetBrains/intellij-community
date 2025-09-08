@@ -32,6 +32,12 @@ public abstract class ApplicationInfo {
 
   public abstract @NotNull BuildNumber getBuild();
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public @Nullable String getBuildBranchName() {
+    return null;
+  }
+
   public abstract @NotNull String getApiVersion();
 
   public abstract String getMajorVersion();
