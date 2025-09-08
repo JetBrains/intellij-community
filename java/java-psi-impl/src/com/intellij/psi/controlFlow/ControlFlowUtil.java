@@ -9,10 +9,7 @@ import com.intellij.openapi.util.Predicates;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.util.FileTypeUtils;
-import com.intellij.psi.util.JavaPsiRecordUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.*;
@@ -101,11 +98,15 @@ public final class ControlFlowUtil {
     else {
       PsiElement codeBlock = PsiUtil.getVariableCodeBlock(variable, context);
       if (codeBlock == null) return true;
-      ControlFlow flow = getControlFlow(codeBlock);
-      if (flow == null) return true;
-      
-      Collection<VariableInfo> initializedTwice = addReassignedInLoopProblems(getInitializedTwice(flow), flow);
-      return !initializedTwice.contains(new VariableInfo(variable, null)) && !variableIsAssigned(variable, scope);
+
+      Collection<VariableInfo> result = CachedValuesManager.getCachedValue(codeBlock, () -> {
+        ControlFlow flow = getControlFlow(codeBlock);
+        Collection<VariableInfo> initializedTwice = flow == null
+                                                    ? Collections.emptyList()
+                                                    : addReassignedInLoopProblems(getInitializedTwice(flow), flow);
+        return new CachedValueProvider.Result<>(initializedTwice, PsiModificationTracker.MODIFICATION_COUNT);
+      });
+      return !result.contains(new VariableInfo(variable, null)) && !variableIsAssigned(variable, scope);
     }
   }
 
