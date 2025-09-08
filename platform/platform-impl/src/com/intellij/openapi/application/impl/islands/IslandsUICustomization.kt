@@ -5,7 +5,6 @@ import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.doPaint
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalUICustomization
@@ -26,12 +25,14 @@ import com.intellij.openapi.wm.impl.content.ContentLayout
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MacToolbarFrameHeader
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.*
+import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.tabs.JBTabPainter
@@ -356,6 +357,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
     override fun paintAfterChildren(component: JComponent, g: Graphics) {
       val window = UIUtil.getWindow(component) ?: return
       if (!window.isActive) {
+        if (component is MainToolbar && component.parent !is JBLayeredPane) {
+          return
+        }
+
         val alphaKey = if (component is IdeStatusBarImpl) "Island.inactiveAlphaInStatusBar" else "Island.inactiveAlpha"
 
         g as Graphics2D
@@ -387,6 +392,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
+  override fun configureMainToolbar(toolbar: MainToolbar) {
+    if (isManyIslandEnabled) {
+      configureMainFrameChildren(toolbar, true)
+    }
+  }
+
   private fun configureMainFrame(frame: IdeFrameImpl, install: Boolean) {
     if (install) {
       frame.addWindowListener(frameActiveListener)
@@ -408,6 +419,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
         component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
       }
       is IdeStatusBarImpl -> {
+        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
+      }
+      is MainToolbar -> {
         component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
       }
     }

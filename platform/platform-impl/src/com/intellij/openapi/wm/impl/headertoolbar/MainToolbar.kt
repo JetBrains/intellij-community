@@ -115,6 +115,8 @@ class MainToolbar(
   private val widthCalculationListeners = mutableSetOf<ToolbarWidthCalculationListener>()
   private val cachedWidths by lazy { ConcurrentHashMap<String, Int>() }
 
+  internal var borderPainter: BorderPainter = DefaultBorderPainter()
+
   init {
     this.background = background
     this.isOpaque = isOpaque
@@ -211,6 +213,8 @@ class MainToolbar(
 
     migratePreviousCustomizations(schema)
     migrateVcsActions(schema)
+
+    InternalUICustomization.getInstance()?.configureMainToolbar(this)
   }
 
   private fun migrateVcsActions(schema: CustomActionsSchema) {
@@ -292,6 +296,11 @@ class MainToolbar(
       ProjectWindowCustomizerService.getInstance().paint(frame, this, g as Graphics2D)
       InternalUICustomization.getInstance()?.paintFrameBackground(frame, this, g)
     }
+  }
+
+  override fun paintChildren(g: Graphics) {
+    super.paintChildren(g)
+    borderPainter.paintAfterChildren(this, g)
   }
 
   private fun installClickListener(popupHandler: PopupHandler, customTitleBar: WindowDecorations.CustomTitleBar?) {
