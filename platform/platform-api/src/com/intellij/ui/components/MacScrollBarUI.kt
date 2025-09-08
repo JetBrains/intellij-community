@@ -36,8 +36,12 @@ internal open class MacScrollBarUI : DefaultScrollBarUI {
   companion object {
     private val CURRENT_STYLE = object : MacScrollbarNative<MacScrollbarStyle>() {
       override fun run() {
+        if (!SystemInfoRt.isMac) {
+          return
+        }
+
         val oldStyle = invoke()
-        if (SystemInfoRt.isMac && !Registry.`is`("ide.mac.disableMacScrollbars", false)) {
+        if (!Registry.`is`("ide.mac.disableMacScrollbars", false)) {
           super.run()
         }
 
@@ -61,6 +65,9 @@ internal open class MacScrollBarUI : DefaultScrollBarUI {
       override fun toString(): String = "scroll bar style"
 
       override fun initialize(): ID {
+        if (!SystemInfoRt.isMac) {
+          return ID.NIL
+        }
         return Foundation.invoke(Foundation.invoke("NSNotificationCenter", "defaultCenter"),
                                  "addObserver:selector:name:object:",
                                  createDelegate("JBScrollBarStyleObserver", Foundation.createSelector("handleScrollerStyleChanged:"),
@@ -143,7 +150,12 @@ internal open class MacScrollBarUI : DefaultScrollBarUI {
 
   override fun installUI(c: JComponent) {
     super.installUI(c)
-    updateStyle(CURRENT_STYLE())
+    if (SystemInfoRt.isMac) {
+      updateStyle(CURRENT_STYLE())
+    }
+    else {
+      updateStyle(MacScrollbarStyle.Overlay)
+    }
     processReferences(toAdd = this, toRemove = null, list = null)
     val listener = MOVEMENT_LISTENER.getAndSet(null)
     if (listener != null) {

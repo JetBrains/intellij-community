@@ -331,6 +331,23 @@
       }
     },
 
+    "ScrollBar": {
+      "hoverThumbBorderColor": "#2626268C",
+      "hoverThumbColor": "#8080808C",
+      "hoverTrackColor": "#80808000",
+      "thumbBorderColor": "#26262659",
+      "thumbColor": "#80808059",
+      "trackColor": "#80808000",
+      "Transparent": {
+        "hoverThumbBorderColor": "#2626268C",
+        "hoverThumbColor": "#8080808C",
+        "hoverTrackColor": "#8080801A",
+        "thumbBorderColor": "#26262600",
+        "thumbColor": "#80808000",
+        "trackColor": "#80808000"
+      }
+    },
+
     "VersionControl.MarkerPopup.borderColor": "Gray4"
   }
 }

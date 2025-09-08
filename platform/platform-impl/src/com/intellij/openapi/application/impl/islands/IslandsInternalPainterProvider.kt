@@ -2,11 +2,15 @@
 package com.intellij.openapi.application.impl.islands
 
 import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.ui.tabs.impl.IslandsPainterProvider
 import com.intellij.ui.tabs.impl.TabPainterAdapter
-import com.intellij.ui.tabs.impl.TabsPainterProvider
 
-internal class IslandsTabsPainterProvider : TabsPainterProvider() {
+internal class IslandsInternalPainterProvider : IslandsPainterProvider() {
   override fun createCommonTabPainter(): TabPainterAdapter? {
     return InternalUICustomization.getInstance()?.commonTabPainterAdapter
+  }
+
+  override fun useMacScrollBar(): Boolean {
+    return InternalUICustomization.getInstance()?.isMacScrollBar == true
   }
 }

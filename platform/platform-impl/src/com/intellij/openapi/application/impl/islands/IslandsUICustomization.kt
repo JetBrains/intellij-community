@@ -5,6 +5,7 @@ import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.doPaint
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalUICustomization
@@ -16,6 +17,7 @@ import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splittable
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
@@ -612,6 +614,11 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
     return graphics
   }
+
+  override val isMacScrollBar: Boolean
+    get() {
+      return !SystemInfoRt.isMac && isManyIslandEnabled
+    }
 
   private fun updateToolStripesVisibility(toolWindowManager: ToolWindowManager) {
     if (toolWindowManager is ToolWindowManagerImpl) {

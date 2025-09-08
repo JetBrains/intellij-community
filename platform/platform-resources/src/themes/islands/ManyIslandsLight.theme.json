@@ -140,6 +140,23 @@
       "borderColor": "Blue6"
     },
 
+    "ScrollBar": {
+      "hoverThumbBorderColor": "#00000080",
+      "hoverThumbColor": "#00000080",
+      "hoverTrackColor": "#80808000",
+      "thumbBorderColor": "#00000033",
+      "thumbColor": "#00000033",
+      "trackColor": "#80808000",
+      "Transparent": {
+        "hoverThumbBorderColor": "#00000080",
+        "hoverThumbColor": "#00000080",
+        "hoverTrackColor": "#8080801A",
+        "thumbBorderColor": "#00000000",
+        "thumbColor": "#00000000",
+        "trackColor": "#80808000"
+      }
+    },
+
     "HelpBrowser.UserMessage.background": "#DFE1E5CC",
 
     "RecentProject.Color1.MainToolbarGradientStart": "#f7d7cb",

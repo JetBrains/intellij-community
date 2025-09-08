@@ -113,6 +113,8 @@ open class InternalUICustomization {
 
   open val isCustomPaintersAllowed: Boolean = false
 
+  open val isMacScrollBar: Boolean = false
+
   open fun attachIdeFrameBackgroundPainter(frame: IdeFrame, glassPane: IdeGlassPane): Unit = Unit
 
   open fun paintFrameBackground(frame: Window, component: Component, g: Graphics2D) {}
