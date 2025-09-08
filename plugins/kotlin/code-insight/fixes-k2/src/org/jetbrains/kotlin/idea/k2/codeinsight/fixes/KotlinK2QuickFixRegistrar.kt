@@ -190,6 +190,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeTypeQuickFixFactories.implicitNothingPropertyTypeFixFactory)
         registerFactory(InapplicableJvmFieldFixFactories.removeAnnotationFixFactory)
         registerFactory(OverridingIgnorableWithMustUseFixFactories.addIgnorableReturnValueAnnotationFixFactory)
+        registerFactory(ConstFixFactories.addConstModifierFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {

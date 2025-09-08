@@ -222,7 +222,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
                 testMethodName = testMethodName,
             )
             model(
-                "$idea/quickfix/modifiers/addOpenToClassDeclaration",
+                "$idea/quickfix/modifiers",
                 pattern = pattern,
                 testMethodName = testMethodName,
             )
