@@ -175,6 +175,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   final SteppingProgressTracker mySteppingProgressTracker = new SteppingProgressTracker(this);
 
+  protected final @NotNull RunToCursorManager myRunToCursorManager;
+
   // These 2 fields are needs to switching from found suspend-thread context to user-friendly suspend-all context.
   // The main related logic is in [SuspendOtherThreadsRequestor].
   volatile ParametersForSuspendAllReplacing myParametersForSuspendAllReplacing = null;
@@ -193,6 +195,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       .childScope(projectScope, "DebugProcessImpl", EmptyCoroutineContext.INSTANCE, true);
     myDebuggerManagerThread = createManagerThread();
     myShowStatusManager = new ShowStatusManager(project, myCoroutineScope);
+    myRunToCursorManager = new RunToCursorManager(this, myCoroutineScope);
+
     requestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(this::reloadRenderers, disposable);
     NodeRenderer.EP_NAME.addChangeListener(this::reloadRenderers, disposable);
@@ -2130,6 +2134,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       final DebugProcessImpl debugProcess = context.getDebugProcess();
 
       if (shouldExecuteRegardlessOfRequestWarnings() || debugProcess.getRequestsManager().getWarning(myRunToCursorBreakpoint) == null) {
+        myRunToCursorManager.onRunToCursorCommandStarted();
         super.contextAction(context);
       }
       else {
