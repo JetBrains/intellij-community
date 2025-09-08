@@ -86,7 +86,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      Collection<PluginUiModel> descriptors = getAllDescriptors();
+      Collection<PluginUiModel> descriptors = getDisableableDescriptors();
       List<PluginEnabledState> states = map(descriptors, myPluginModelFacade::getState);
 
       boolean allEnabled = all(states, PluginEnabledState.ENABLED::equals);
@@ -115,8 +115,14 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myPluginModelFacade.setEnabledState(getAllDescriptors(), myAction);
+      Collection<PluginUiModel> descriptors = getDisableableDescriptors();
+      myPluginModelFacade.setEnabledState(descriptors, myAction);
       myOnFinishAction.run();
+    }
+
+    private @NotNull Collection<PluginUiModel> getDisableableDescriptors() {
+      Collection<PluginUiModel> descriptors = getAllDescriptors().stream().filter(PluginUiModel::isDisableAllowed).toList();
+      return descriptors;
     }
   }
 
