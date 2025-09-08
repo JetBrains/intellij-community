@@ -1,13 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.variablesview.usertyperenderers
 
-import com.intellij.application.options.editor.checkBox
 import com.intellij.ide.util.ElementsChooser
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.fileEditor.impl.createSplitter
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -19,12 +17,9 @@ import com.intellij.psi.util.QualifiedName
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
-import com.intellij.ui.util.minimumHeight
 import com.intellij.ui.util.preferredHeight
-import com.intellij.ui.util.preferredWidth
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerManager
