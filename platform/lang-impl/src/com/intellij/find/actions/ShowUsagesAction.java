@@ -1456,7 +1456,10 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
     if (isCodeWithMeClientInstance(popup)) return;
 
-    Component toolbarComponent = ((BorderLayout)popup.getComponent().getLayout()).getLayoutComponent(BorderLayout.NORTH);
+    BorderLayout popupLayout = (BorderLayout)popup.getComponent().getLayout();
+    Component extendedInfoComponent = popupLayout.getLayoutComponent(BorderLayout.SOUTH);
+    Dimension extendedInfoSize = extendedInfoComponent != null ? extendedInfoComponent.getPreferredSize() : JBUI.emptySize();
+    Component toolbarComponent = popupLayout.getLayoutComponent(BorderLayout.NORTH);
     Dimension toolbarSize = toolbarComponent != null ? toolbarComponent.getPreferredSize() : JBUI.emptySize();
     Dimension headerSize = popup.getHeaderPreferredSize();
 
@@ -1467,7 +1470,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
     minWidth.set(width);
 
-    int minHeight = headerSize.height + toolbarSize.height;
+    int minHeight = headerSize.height + toolbarSize.height + extendedInfoSize.height;
 
     Rectangle rectangle = getPreferredBounds(table, popupPosition.getScreenPoint(), width, minHeight, dataSize, showCodePreview);
     table.setSize(rectangle.width, rectangle.height - minHeight);
