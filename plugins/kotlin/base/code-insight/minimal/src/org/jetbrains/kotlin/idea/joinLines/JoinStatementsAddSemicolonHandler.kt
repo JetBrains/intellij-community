@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -25,11 +24,10 @@ class JoinStatementsAddSemicolonHandler : JoinRawLinesHandlerDelegate {
         val startElement = file.findElementAt(start)
         val endElement = file.findElementAt(end)
         val endElementTextRange = endElement?.textRange
-        val nextElements = startElement
+
+        val linebreak = startElement
             ?.siblings(forward = true, withItself = true)
             ?.takeWhile { endElementTextRange != null && it.startOffset <= endElementTextRange.startOffset }
-
-        val linebreak = nextElements
             ?.firstOrNull { it.textContains('\n') }
             ?: return JoinLinesHandlerDelegate.CANNOT_JOIN
 
@@ -37,8 +35,7 @@ class JoinStatementsAddSemicolonHandler : JoinRawLinesHandlerDelegate {
             ?: return JoinLinesHandlerDelegate.CANNOT_JOIN
         val element1 = linebreak.firstMaterialSiblingSameLine { prevSibling }
             ?: return JoinLinesHandlerDelegate.CANNOT_JOIN
-        val element2 = nextElements.firstOrNull { it !is PsiWhiteSpace }
-            ?: linebreak.firstMaterialSiblingSameLine { nextSibling }
+        val element2 = linebreak.firstMaterialSiblingSameLine { nextSibling }
             ?: return JoinLinesHandlerDelegate.CANNOT_JOIN
 
         if (element2 is PsiComment) return JoinLinesHandlerDelegate.CANNOT_JOIN
