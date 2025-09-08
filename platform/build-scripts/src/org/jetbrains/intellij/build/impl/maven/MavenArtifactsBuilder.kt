@@ -124,6 +124,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     private val FLEET_MODULES_ALLOWED_FOR_PUBLICATION = setOf(
       // region Fleet modules in Community
       "fleet.andel",
+      "fleet.bifurcan",
       "fleet.kernel",
       "fleet.multiplatform.shims",
       "fleet.reporting.api",
@@ -132,9 +133,12 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       "fleet.rpc",
       "fleet.rpc.server",
       "fleet.util.core",
+      "fleet.util.codepoints",
+      "fleet.util.datetime",
       "fleet.util.logging.api",
       "fleet.util.logging.slf4j",
       "fleet.util.multiplatform",
+      "fleet.util.serialization",
       "fleet.fastutil",
       "fleet.lsp.protocol", // Fleet Language Server Protocol modules allowed for publication - https://youtrack.jetbrains.com/issue/IJI-2644
       "fleet.ktor.network.tls",
