@@ -283,7 +283,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
 
   @Deprecated("Implementation details of UsagePreviewPanel")
   fun getCannotPreviewMessage(infos: List<UsageInfo>): String? {
-    return cannotPreviewMessage(infos, false)
+    return cannotPreviewMessage(infos, severalFilesSelected = false)
   }
 
   @RequiresEdt
@@ -338,13 +338,13 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
   }
 
   override fun updateLayoutLater(infos: List<UsageInfo>?) {
-    updateLayoutLater(infos, false)
+    updateLayoutLater(infos, severalFilesSelected = false)
   }
 
   @Internal
-  override fun updateLayoutLater(infos: List<UsageInfo>?, isOneFileForPreview: Boolean) {
+  override fun updateLayoutLater(infos: List<UsageInfo>?, severalFilesSelected: Boolean) {
     cs.launch(ModalityState.current().asContextElement()) {
-      previewUsages(infos, isOneFileForPreview)
+      previewUsages(infos, severalFilesSelected)
     }
   }
 
@@ -395,8 +395,8 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     processIcon.alignmentY = 0.5f
   }
 
-  private suspend fun previewUsages(infos: List<UsageInfo>?, isOneFileForPreview: Boolean) {
-    val cannotPreviewMessage = readAction { cannotPreviewMessage(infos, isOneFileForPreview) }
+  private suspend fun previewUsages(infos: List<UsageInfo>?, severalFilesSelected: Boolean) {
+    val cannotPreviewMessage = readAction { cannotPreviewMessage(infos, severalFilesSelected) }
     if (cannotPreviewMessage == null) {
       resetEditor(infos!!)
     }
@@ -626,15 +626,15 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     val PREVIEW_EDITOR_FLAG = Key.create<UsagePreviewPanel>("PREVIEW_EDITOR_FLAG")
 
     @Contract("null -> !null")
-    private fun cannotPreviewMessage(infos: List<UsageInfo>?, isOneFileForPreview: Boolean): @NlsContexts.StatusText String? {
-      if (!isOneFileForPreview) {
-        return UsageViewBundle.message("several.occurrences.selected")
-      }
+    private fun cannotPreviewMessage(infos: List<UsageInfo>?, severalFilesSelected: Boolean): @NlsContexts.StatusText String? {
       if (infos == null) {
         return UsageViewBundle.message("usage.preview.isnt.available")
       }
       if (ContainerUtil.isEmpty(infos)) {
         return UsageViewBundle.message("select.the.usage.to.preview")
+      }
+      if (severalFilesSelected) {
+        return UsageViewBundle.message("several.occurrences.selected")
       }
       var psiFile: PsiFile? = null
       for (info in infos) {
