@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -124,9 +124,6 @@ public final class GrSplitDeclarationIntention extends GrPsiUpdateIntention {
     if (variables.length > 1 && PsiUtil.isLocalVariable(variables[0])) {
       if (!decl.isTuple() || decl.getTupleInitializer() instanceof GrListOrMap) {
         return GroovyIntentionsBundle.message("split.into.separate.declaration");
-      }
-      else {
-        return GroovyIntentionsBundle.message("split.into.declaration.and.assignment");
       }
     }
     return GroovyIntentionsBundle.message("split.into.declaration.and.assignment");
