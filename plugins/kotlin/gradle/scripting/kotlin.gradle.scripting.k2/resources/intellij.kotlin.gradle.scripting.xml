@@ -21,6 +21,11 @@
     <dslInspectionProvider language="kotlin"
                            implementationClass="org.jetbrains.kotlin.gradle.scripting.k2.inspections.KotlinGradleDslInspectionProvider"/>
   </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
+    <gradleKotlinInspectionProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.gradle.scripting.k2.inspections.KotlinGradleKotlinInspectionProvider"/>
+  </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="org.jetbrains.kotlin.gradle.scripting.shared.roots.AbstractGradleBuildRootDataSerializer"

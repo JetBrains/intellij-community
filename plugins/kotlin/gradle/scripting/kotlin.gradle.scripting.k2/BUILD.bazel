@@ -66,6 +66,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/utils",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/plugin",
     "//platform/core-api:core",
@@ -77,6 +78,8 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/projectModel-impl",
     "//plugins/gradle/java",
+    "//plugins/kotlin/gradle/code-insight-common",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
   ]
 )
 
@@ -126,6 +129,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/utils",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
@@ -162,6 +166,9 @@ jvm_library(
     "//java/testFramework",
     "//plugins/gradle/java",
     "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/gradle/code-insight-common",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting` end
