@@ -13,6 +13,7 @@ class UserTypeRenderer(object):
     def __init__(
             self,
             to_type,
+            heirs,
             type_canonical_import_path,
             type_qualified_name,
             type_src_file,
@@ -24,6 +25,7 @@ class UserTypeRenderer(object):
             children
     ):
         self.to_type = to_type
+        self.heirs = heirs
         self.type_canonical_import_path = type_canonical_import_path
         self.type_qualified_name = type_qualified_name
         self.type_src_file = type_src_file
@@ -92,21 +94,23 @@ def parse_set_type_renderers_message(message_text):
 
         message = sequence[current_index:current_index + message_size]
         to_type = _convert_expression(message[0])
-        type_canonical_import_path = _convert_expression(message[1])
-        type_qualified_name = _convert_expression(message[2])
-        type_src_file = _convert_expression(message[3])
-        module_root_has_one_type_with_same_name = bool(int(message[4]))
-        is_default_value = bool(int(message[5]))
-        expression = _convert_expression(message[6])
-        is_default_children = bool(int(message[7]))
-        append_default_children = bool(int(message[8]))
+        heirs = bool(int(message[1]))
+        type_canonical_import_path = _convert_expression(message[2])
+        type_qualified_name = _convert_expression(message[3])
+        type_src_file = _convert_expression(message[4])
+        module_root_has_one_type_with_same_name = bool(int(message[5]))
+        is_default_value = bool(int(message[6]))
+        expression = _convert_expression(message[7])
+        is_default_children = bool(int(message[8]))
+        append_default_children = bool(int(message[9]))
 
-        message_tail = message[9:]
+        message_tail = message[10:]
         children = [TypeChildInfo(_convert_expression(expr))
                     for expr in message_tail]
 
         renderer = UserTypeRenderer(
             to_type,
+            heirs,
             type_canonical_import_path,
             type_qualified_name,
             type_src_file,
