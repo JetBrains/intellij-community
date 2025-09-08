@@ -10,10 +10,13 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.fs.ChangeAttributesOptionsBuilder
 import com.intellij.platform.eel.fs.DirectoryHashEntryResult
 import com.intellij.platform.eel.fs.DirectoryHashEntry
 import com.intellij.platform.eel.fs.DirectoryHashEntryPosix
 import com.intellij.platform.eel.fs.DirectoryHashEntryWindows
+import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.EelPosixFileInfoImpl
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.fs.createTemporaryFile
 import com.intellij.platform.eel.fs.getPath
@@ -47,6 +50,7 @@ import java.nio.file.attribute.*
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.*
+import kotlin.math.min
 
 @ApiStatus.Internal
 object EelPathUtils {
@@ -651,6 +655,34 @@ object EelPathUtils {
     }
   }
 
+
+  /**
+   * Compare individual parts of two relative paths lexicographically.
+   * Case-insensitive by default.
+   * A shorter component is considered lower compared to a longer component.
+   * Example: "a/b" < "ab/b" == True
+   */
+  private fun compareRelativePathComponents(left: Path, right: Path, ignoreCase: Boolean = true): Int {
+    val left = left
+      .toString()
+      .replace("\\", "/")
+      .split("/")
+
+    val right = right
+      .toString()
+      .replace("\\", "/")
+      .split("/")
+
+    for (i in 0 until min(left.size, right.size)) {
+      val result = left[i].compareTo(right[i], ignoreCase)
+      if (result != 0) {
+        return result
+      }
+    }
+
+    return left.size.compareTo(right.size)
+  }
+
   // NOTE: in the future it could support windows/posix ACLs
   /**
    * Function only checks permissions, and it ignores the owner, group, sticky bit, gid, and uid.
@@ -782,6 +814,7 @@ object EelPathUtils {
     localHashFlow: Flow<DirectoryHashEntryResult>,
     remoteHashFlow: Flow<DirectoryHashEntryResult>,
     fileAttributesStrategy: FileTransferAttributesStrategy,
+    ignoreCase: Boolean,
   ): Flow<DiffOperation> = flow {
     val localHashChan = localHashFlow.produceIn(scope)
     val remoteHashChan = remoteHashFlow.produceIn(scope)
@@ -868,7 +901,7 @@ object EelPathUtils {
       val relativeLocalPath = localEntry.path.asNioPath().relativeTo(localEntryPoint)
       val relativeRemotePath = remoteEntry.path.asNioPath().relativeTo(remoteEntryPoint)
 
-      val pathComparison = relativeLocalPath.compareTo(relativeRemotePath)
+      val pathComparison = compareRelativePathComponents(relativeLocalPath, relativeRemotePath, ignoreCase)
 
       // if the same file is present on both sides, and if the permissions/hash/type is different, sync them
       if (pathComparison == 0) {
@@ -936,15 +969,15 @@ object EelPathUtils {
         remoteEntry = null
         remoteEntryResult = null
       }
-      // if the local path is in higher lexicographical order than the remote path, it means that the local file was created
-      else if (pathComparison > 0) {
+      // if the local path is in lower lexicographical order than the remote path, it means that the local file was created
+      else if (pathComparison < 0) {
         if (localEntry !is DirectoryHashEntry.Type.Symlink.Absolute) { // TODO: IJPL-201078
           emit(DiffOperation.Create(localEntry))
         }
         localEntry = null
         localEntryResult = null
       }
-      // if the local path is lower in lexicographical order than the remote path, it means that the remote file was deleted
+      // if the local path is higher in lexicographical order than the remote path, it means that the remote file was deleted
       else {
         emit(DiffOperation.Delete(remoteEntry))
         remoteEntry = null
@@ -953,31 +986,58 @@ object EelPathUtils {
     }
   }
 
-  private fun setPermissionsAndAttributes(
+  private fun convertPermissionsToMask(permissions: Set<PosixFilePermission>): Int {
+    var mask = 0
+    if (PosixFilePermission.OWNER_READ in permissions) mask = mask or 0b100000000
+    if (PosixFilePermission.OWNER_WRITE in permissions) mask = mask or 0b010000000
+    if (PosixFilePermission.OWNER_EXECUTE in permissions) mask = mask or 0b001000000
+    if (PosixFilePermission.GROUP_READ in permissions) mask = mask or 0b000100000
+    if (PosixFilePermission.GROUP_WRITE in permissions) mask = mask or 0b000010000
+    if (PosixFilePermission.GROUP_EXECUTE in permissions) mask = mask or 0b000001000
+    if (PosixFilePermission.OTHERS_READ in permissions) mask = mask or 0b000000100
+    if (PosixFilePermission.OTHERS_WRITE in permissions) mask = mask or 0b000000010
+    if (PosixFilePermission.OTHERS_EXECUTE in permissions) mask = mask or 0b000000001
+    return mask
+  }
+
+  private suspend fun setPermissionsAndAttributes(
     localEntry: DirectoryHashEntry,
     remoteEntry: Path,
+    remoteEelApi: EelApi,
     fileAttributesStrategy: FileTransferAttributesStrategy,
     setPermissions: Boolean,
     setAttributes: Boolean,
     setTimestamps: Boolean,
   ) {
+    val attributesOptions = ChangeAttributesOptionsBuilder(remoteEntry.asEelPath())
+
     if (setPermissions) {
       remoteEntry.fileAttributesViewOrNull<PosixFileAttributeView>(LinkOption.NOFOLLOW_LINKS)?.let { remoteView ->
+        val perms = mutableSetOf<PosixFilePermission>()
+
         val requiredPerms = if (fileAttributesStrategy is FileTransferAttributesStrategy.RequirePosixPermissions) {
           fileAttributesStrategy.requiredPermissions
         }
         else {
           setOf()
         }
+        perms.addAll(requiredPerms)
+
+        // NOTE: changing attributes through IJent does not change the owner and the group of a file, so it can be left as zero
+        var owner = 0
+        var group = 0
 
         when (localEntry) {
           is DirectoryHashEntryPosix -> {
-            remoteView.setPermissions(localEntry.permissions.permissionsSet + requiredPerms)
+            perms.addAll(localEntry.permissions.permissionsSet)
+            owner = localEntry.permissions.owner
+            group = localEntry.permissions.group
           }
           is DirectoryHashEntryWindows -> {
-            remoteView.setPermissions(remoteView.readAttributes().permissions() + requiredPerms)
+            perms.addAll(remoteView.readAttributes().permissions())
           }
         }
+        attributesOptions.permissions(EelPosixFileInfoImpl.Permissions(owner, group, convertPermissionsToMask(perms)))
       }
     }
 
@@ -996,15 +1056,20 @@ object EelPathUtils {
     }
 
     if (setTimestamps) {
-      remoteEntry.fileAttributesViewOrNull<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS)?.let { remoteView ->
-        remoteView.setTimes(
-          localEntry.lastModifiedTime?.let { time -> FileTime.from(time.toInstant()) },
-          localEntry.lastAccessTime?.let { time -> FileTime.from(time.toInstant()) },
-          // setting createTime silently fails on posix because it is not possible to set the creation timestamp
-          localEntry.creationTime?.let { time -> FileTime.from(time.toInstant()) },
-        )
+      localEntry.lastModifiedTime?.let { time ->
+        val time = time.toInstant()
+        val epoch = EelFileSystemApi.timeSinceEpoch(time.epochSecond.toULong(), time.nano.toUInt())
+        attributesOptions.modificationTime(epoch)
+      }
+
+      localEntry.lastAccessTime?.let { time ->
+        val time = time.toInstant()
+        val epoch = EelFileSystemApi.timeSinceEpoch(time.epochSecond.toULong(), time.nano.toUInt())
+        attributesOptions.accessTime(epoch)
       }
     }
+
+    remoteEelApi.fs.changeAttributes(attributesOptions.build())
   }
 
   /**
@@ -1017,10 +1082,13 @@ object EelPathUtils {
    */
   @RequiresBackgroundThread
   @VisibleForTesting
-  suspend fun directoryOnlySync(sourceRoot: Path, targetRoot: Path, eelApi: EelApi) {
+  suspend fun directoryOnlySync(sourceRoot: Path, targetRoot: Path, eelApi: EelApi, ignoreCase: Boolean) {
     val localQ = ArrayDeque<Path>()
     val remoteQ = ArrayDeque<Path>()
-    localQ.add(sourceRoot)
+
+    if (sourceRoot.isDirectory(LinkOption.NOFOLLOW_LINKS)) {
+      localQ.add(sourceRoot)
+    }
 
     if (targetRoot.isDirectory(LinkOption.NOFOLLOW_LINKS)) {
       remoteQ.add(targetRoot)
@@ -1050,7 +1118,7 @@ object EelPathUtils {
       else {
         val localRelativeDirPath = localQ.first().relativeTo(sourceRoot)
         val remoteRelativeDirPath = remoteQ.first().relativeTo(targetRoot)
-        val comparison = localRelativeDirPath.compareTo(remoteRelativeDirPath)
+        val comparison = compareRelativePathComponents(localRelativeDirPath, remoteRelativeDirPath, ignoreCase)
 
         // new local directory
         if (comparison > 0) {
@@ -1094,22 +1162,25 @@ object EelPathUtils {
   private suspend fun incrementalWalkingTransfer(sourceRoot: Path, targetRoot: Path, fileAttributesStrategy: FileTransferAttributesStrategy) {
     coroutineScope {
       val remoteDescriptor = targetRoot.asEelPath().descriptor
+      val remoteEelApi = remoteDescriptor.toEelApi()
       val localPathEel = sourceRoot.asEelPath()
       val localOsFamily = localPathEel.descriptor.osFamily
       val remoteOsFamily = targetRoot.getEelDescriptor().osFamily
 
-      if (sourceRoot.isDirectory(LinkOption.NOFOLLOW_LINKS)) {
-        withContext(Dispatchers.IO) {
-          directoryOnlySync(sourceRoot, targetRoot, remoteDescriptor.toEelApi())
-        }
+      withContext(Dispatchers.IO) {
+        directoryOnlySync(sourceRoot, targetRoot, remoteDescriptor.toEelApi(), true)
       }
+
       val localHashes = async(Dispatchers.IO) { localPathEel.descriptor.toEelApi().fs.directoryHash(localPathEel) }
       val remoteHashes = async(Dispatchers.IO) { remoteDescriptor.toEelApi().fs.directoryHash(targetRoot.asEelPath()) }
 
       val semaphore = Semaphore(4) // TODO: fine tune
-      // TODO: buffer size was just a guess, performance of this buffer is to be researched
-      val bufferSize = 10 * 1024
-      mergeHashByPath(this, sourceRoot, targetRoot, localHashes.await(), remoteHashes.await(), fileAttributesStrategy).collect { diffOp ->
+
+      // NOTE: The buffer size was chosen based on benchmark results, which showed that performance improvements leveled off at 64 KiB
+      // TODO: different buffer size for larger files
+      val bufferSize = 64 * 1024
+
+      mergeHashByPath(this, sourceRoot, targetRoot, localHashes.await(), remoteHashes.await(), fileAttributesStrategy, true).collect { diffOp ->
         // semaphore is used to limit how many files are being synced at any given moment
         semaphore.acquire()
         launch(Dispatchers.IO) {
@@ -1142,11 +1213,13 @@ object EelPathUtils {
                     try {
                       Files.newInputStream(localFileNioPath, READ).use { localFile ->
                         Files.newOutputStream(remoteAbsoluteTempPath, WRITE, CREATE, TRUNCATE_EXISTING).use { remoteFile ->
-                          localFile.copyToAsync(remoteFile, bufferSize)
+                          localFile.copyTo(remoteFile, bufferSize)
                         }
                       }
                       Files.move(remoteAbsoluteTempPath, remoteAbsolutePath, StandardCopyOption.REPLACE_EXISTING)
-                      setPermissionsAndAttributes(localFile, remoteAbsolutePath, fileAttributesStrategy, true, true, true)
+                      if (fileAttributesStrategy !is FileTransferAttributesStrategy.Skip) {
+                        setPermissionsAndAttributes(localFile, remoteAbsolutePath, remoteEelApi, fileAttributesStrategy, true, true, true)
+                      }
                     }
                     finally {
                       Files.deleteIfExists(remoteAbsoluteTempPath)
@@ -1188,7 +1261,7 @@ object EelPathUtils {
                     }
                   }
                   Files.move(tempRemotePath, remotePathNio, StandardCopyOption.REPLACE_EXISTING)
-                  setPermissionsAndAttributes(diffOp.localFile, remotePathNio, fileAttributesStrategy, diffOp.updatePermissions, diffOp.updateAttributes, diffOp.updateTimestamps)
+                  setPermissionsAndAttributes(diffOp.localFile, remotePathNio, remoteEelApi, fileAttributesStrategy, diffOp.updatePermissions, diffOp.updateAttributes, diffOp.updateTimestamps)
                 }
                 finally {
                   Files.deleteIfExists(tempRemotePath)
@@ -1197,7 +1270,7 @@ object EelPathUtils {
               is DiffOperation.UpdateMetadata -> {
                 // TODO: setting timestamps on a symlink requires using ffi syscall in ijent
                 if (diffOp.localFile.type !is DirectoryHashEntry.Type.Symlink) {
-                  setPermissionsAndAttributes(diffOp.localFile, diffOp.remoteFile.path.asNioPath(), fileAttributesStrategy, diffOp.updatePermissions, diffOp.updateAttributes, diffOp.updateTimestamps)
+                  setPermissionsAndAttributes(diffOp.localFile, diffOp.remoteFile.path.asNioPath(), remoteEelApi, fileAttributesStrategy, diffOp.updatePermissions, diffOp.updateAttributes, diffOp.updateTimestamps)
                 }
               }
             }
