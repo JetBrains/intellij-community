@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.codereview.editor
 
 import com.intellij.codeInsight.documentation.render.DocRenderer
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.THREAD_TOP_MARGIN
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.icons.AllIcons
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -147,7 +149,7 @@ private constructor(
         val lastThread = editor.inlayModel.getBlockElementsForVisualLine(visualLine, false).lastOrNull()
 
         // makes sure that icons don't overlap
-        y = maxOf(y, lastThread?.bounds?.y?.minus(iconPadding) ?: y)
+        y = maxOf(y, lastThread?.bounds?.y?.minus(iconPadding) ?: y) + JBUI.scale(THREAD_TOP_MARGIN)
       }
 
       val range = y + iconPadding..y + iconPadding + iconHeight

@@ -396,6 +396,7 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - f:isCombinedDiffEnabled():Z
 *f:com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+- sf:THREAD_TOP_MARGIN:I
 - f:actionsVisibleOnHover(javax.swing.JComponent,javax.swing.JComponent):V
 - f:build(com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$ComponentType,kotlin.jvm.functions.Function1,javax.swing.JComponent,kotlin.jvm.functions.Function1):javax.swing.JComponent
 - f:buildDynamic(com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$ComponentType,kotlin.jvm.functions.Function1,javax.swing.JComponent,kotlin.jvm.functions.Function1):javax.swing.JComponent
