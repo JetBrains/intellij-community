@@ -454,6 +454,156 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
+    fun testExtractLocalVariableLiteral() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() {
+                val y = "1".<caret>
+            }
+            """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+        myFixture.checkResult(
+            """
+            fun foo() {
+                val string = "1"
+                val y = string
+            }""".trimIndent())
+    }
+
+    fun testExtractLocalVariableManyLiterals() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() {
+                val y = "1" + "2".<caret>
+            }
+            """.trimIndent())
+        val elements = myFixture.completeBasic()
+        selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+        myFixture.checkResult(
+            """
+            fun foo() {
+                val string = "1" + "2"
+                val y = string
+            }""".trimIndent())
+    }
+
+    fun testExtractLocalVariableManyLiteralsPrefix() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() {
+                val y = "1".<caret> + "2"
+            }
+            """.trimIndent())
+        val elements = myFixture.completeBasic()
+        selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+        myFixture.checkResult(
+            """
+            fun foo() {
+                val string = "1"
+                val y = string + "2"
+            }""".trimIndent())
+    }
+
+    fun testExtractLocalVariableInChainCall() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            class A {
+                fun f() : String = ""
+            }
+            
+            fun foo() {
+                A().f().<caret>
+            }
+         """.trimIndent()
+        )
+
+        val elements = myFixture.completeBasic()
+        selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+
+        myFixture.checkResult(
+            """
+            class A {
+                fun f() : String = ""
+            }
+        
+            fun foo() {
+                val f = A().f()
+            }""".trimIndent())
+    }
+
+    fun testExtractLocalVariableInChainCallWithPrefix() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            class A {
+                fun f() : String = ""
+            }
+            
+            fun foo() {
+                A().<caret>.f()
+            }""".trimIndent()
+        )
+
+        val elements = myFixture.completeBasic()
+        selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+
+        myFixture.checkResult(
+            """
+            class A {
+                fun f() : String = ""
+            }
+        
+            fun foo() {
+                val a = A()
+                a.f()
+            }""".trimIndent())
+    }
+
+    fun testExtractMethodInChainCall() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            class A {
+                fun f() : String = ""
+                
+                fun f() {
+                    A().f().<caret>
+                }
+            }
+        """.trimIndent())
+
+        val elements = myFixture.completeBasic()
+        assertTrue(elements.any { element -> element.lookupString.contains("Extract function", ignoreCase = true) })
+    }
+
+    fun testExtractMethodInChainCallWithPrefix() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            class A {
+                fun f() : String = ""
+                
+                fun f() {
+                    A().<caret>.f()
+                }
+            """
+        )
+
+        val elements = myFixture.completeBasic()
+        assertTrue(elements.any { element -> element.lookupString.contains("Extract function", ignoreCase = true) })
+    }
+
     fun testInlineMethod() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(
