@@ -46,8 +46,8 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  final override val jdkIntentProperty = propertyGraph.property<ProjectWizardJdkIntent?>(null)
-  val sdkDownloadTaskProperty = jdkIntentProperty.transform { intent -> intent?.downloadTask }
+  final override val jdkIntentProperty = propertyGraph.property<ProjectWizardJdkIntent>(ProjectWizardJdkIntent.NoJdk)
+  val sdkDownloadTaskProperty = jdkIntentProperty.transform { intent -> intent.downloadTask }
   final override val moduleNameProperty = propertyGraph.lazyProperty(::suggestModuleName)
   final override val contentRootProperty = propertyGraph.lazyProperty(::suggestContentRoot)
   final override val moduleFileLocationProperty = propertyGraph.lazyProperty(::suggestModuleFilePath)
@@ -94,8 +94,8 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   protected fun setupJavaSdkUI(builder: Panel) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
       projectWizardJdkComboBox(this, jdkIntentProperty)
-        .whenItemSelectedFromUi { jdkIntent?.javaVersion?.let { logSdkChanged(it.feature) } }
-        .onApply { jdkIntent?.javaVersion?.let { logSdkFinished(it.feature) } }
+        .whenItemSelectedFromUi { jdkIntent.javaVersion?.let { logSdkChanged(it.feature) } }
+        .onApply { jdkIntent.javaVersion?.let { logSdkFinished(it.feature) } }
     }.bottomGap(BottomGap.SMALL)
   }
 

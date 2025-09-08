@@ -67,7 +67,6 @@ import java.nio.file.Paths
 import javax.accessibility.AccessibleContext
 import javax.swing.Icon
 import javax.swing.JList
-import kotlin.io.path.Path
 
 private val selectedJdkProperty = "jdk.selected.JAVA_MODULE"
 
@@ -77,7 +76,7 @@ private val selectedJdkProperty = "jdk.selected.JAVA_MODULE"
  */
 fun NewProjectWizardStep.projectWizardJdkComboBox(
   row: Row,
-  intentProperty: GraphProperty<ProjectWizardJdkIntent?>?,
+  intentProperty: GraphProperty<ProjectWizardJdkIntent>,
   sdkFilter: (Sdk) -> Boolean = { true },
   jdkPredicate: ProjectWizardJdkPredicate? = ProjectWizardJdkPredicate.IsJdkSupported(),
 ): Cell<ProjectWizardJdkComboBox> {
@@ -93,7 +92,7 @@ fun NewProjectWizardStep.projectWizardJdkComboBox(
     jdkPredicate,
   )
     .onApply {
-      context.projectJdk = intentProperty?.get()?.prepareJdk()
+      context.projectJdk = intentProperty.get().prepareJdk()
     }
 }
 
@@ -105,7 +104,7 @@ fun NewProjectWizardStep.projectWizardJdkComboBox(
 fun projectWizardJdkComboBox(
   row: Row,
   locationProperty: GraphProperty<String>,
-  intentProperty: GraphProperty<ProjectWizardJdkIntent?>?,
+  intentProperty: GraphProperty<ProjectWizardJdkIntent>,
   disposable: Disposable,
   projectJdk: Sdk? = null,
   sdkFilter: (Sdk) -> Boolean = { true },
@@ -118,7 +117,7 @@ fun projectWizardJdkComboBox(
     if (path.isEmpty()) {
       return@afterPropagation
     }
-    val newDescriptor = guardEelDescriptor { Path(locationProperty.get()).getEelDescriptor() } ?: LocalEelDescriptor
+    val newDescriptor = guardEelDescriptor { Path.of(locationProperty.get()).getEelDescriptor() } ?: LocalEelDescriptor
     combo.eelChanged(newDescriptor)
   }
 
@@ -197,9 +196,9 @@ private fun ValidationInfoBuilder.validateJdkAndProjectCompatibility(intent: Any
 
 private fun updateIntentProperty(
   combo: ProjectWizardJdkComboBox,
-  intentProperty: GraphProperty<ProjectWizardJdkIntent?>?,
+  intentProperty: GraphProperty<ProjectWizardJdkIntent>,
 ) {
-  intentProperty?.set(combo.selectedItem as? ProjectWizardJdkIntent)
+  intentProperty.set((combo.selectedItem as? ProjectWizardJdkIntent)!!)
 }
 
 @Service(Service.Level.APP)
@@ -309,11 +308,13 @@ class ProjectWizardJdkComboBox(
         }
       }
 
-      override fun getListCellRendererComponent(list: JList<out ProjectWizardJdkIntent>?,
-                                                value: ProjectWizardJdkIntent,
-                                                index: Int,
-                                                isSelected: Boolean,
-                                                cellHasFocus: Boolean): Component {
+      override fun getListCellRendererComponent(
+        list: JList<out ProjectWizardJdkIntent>?,
+        value: ProjectWizardJdkIntent,
+        index: Int,
+        isSelected: Boolean,
+        cellHasFocus: Boolean,
+      ): Component {
         val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
         if (index == -1 && (isLoadingDetectedJdks || isLoadingDownloadItem) && selectedItem !is DownloadJdk) {
           val panel = object : CellRendererPanel(BorderLayout()) {

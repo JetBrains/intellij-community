@@ -8,8 +8,8 @@ import org.jetbrains.idea.maven.project.MavenProject
 
 interface MavenNewProjectWizardData : MavenizedNewProjectWizardData<MavenProject> {
 
-  val jdkIntentProperty: GraphProperty<ProjectWizardJdkIntent?>
+  val jdkIntentProperty: GraphProperty<ProjectWizardJdkIntent>
 
-  var jdkIntent: ProjectWizardJdkIntent?
+  var jdkIntent: ProjectWizardJdkIntent
 
 }

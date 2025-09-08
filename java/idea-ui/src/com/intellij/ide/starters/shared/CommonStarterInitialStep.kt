@@ -62,7 +62,7 @@ abstract class CommonStarterInitialStep(
     .bindStorage(GROUP_ID_PROPERTY_NAME)
 
   protected val artifactIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { entityName }
-  protected val jdkIntentProperty: GraphProperty<ProjectWizardJdkIntent?> = propertyGraph.lazyProperty { null }
+  protected val jdkIntentProperty: GraphProperty<ProjectWizardJdkIntent> = propertyGraph.lazyProperty { ProjectWizardJdkIntent.NoJdk }
   @Deprecated("Use jdkIntentProperty instead")
   protected val sdkProperty: GraphProperty<Sdk?> = SdkPropertyBridge(propertyGraph, jdkIntentProperty)
 
@@ -154,7 +154,7 @@ abstract class CommonStarterInitialStep(
 
       moduleBuilder.addListener(object : ModuleBuilderListener {
         override fun moduleCreated(module: Module) {
-          val downloadTask = jdkIntentProperty.get()?.downloadTask ?: return
+          val downloadTask = jdkIntentProperty.get().downloadTask ?: return
           val downloadService = module.project.service<JdkDownloadService>()
           val jdk = downloadService.setupInstallableSdk(downloadTask)
           if (wizardContext.isCreatingNewProject) {
