@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.metadata.deserialization.Flags
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.stubs.KotlinClassStub
-import org.jetbrains.kotlin.psi.stubs.elements.KtClassElementType
+import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInSerializerProtocol
 import org.jetbrains.kotlin.serialization.deserialization.getClassId
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -92,7 +92,7 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
             val file = fileContent.file
             if (ClsKotlinBinaryClassCache.getInstance().getKotlinBinaryClassHeaderData(file) == null) continue
             val fileStub = classFileDecompiler.stubBuilder.buildFileStub(fileContent) ?: continue
-            val classStub = fileStub.findChildStubByType(KtClassElementType.getStubType(false)) ?: continue
+            val classStub = fileStub.findChildStubByType(KtStubElementTypes.CLASS) ?: continue
             val classFqName = classStub.fqName!!
             val builtInClassStub = builtInFileStub.childrenStubs.firstOrNull {
                 it is KotlinClassStub && it.fqName == classFqName
