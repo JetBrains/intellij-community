@@ -25,7 +25,6 @@ internal class JavaScriptPromoProjectGenerator : PromoProjectGenerator(isPython 
     return AllIcons.Ultimate.PycharmLock
   }
 
-
   override fun createPromoPanel(): JPanel {
     return PromoPages.buildWithTryUltimate(
       PromoFeaturePage(
@@ -33,7 +32,6 @@ internal class JavaScriptPromoProjectGenerator : PromoProjectGenerator(isPython 
         PluginAdvertiserService.pyCharmProfessional,
         FeaturePromoBundle.message("feature.javascript.description.html",
                                    "https://www.jetbrains.com/help/idea/javascript-specific-guidelines.html"),
-
         javaScriptPromoFeatureList,
         FeaturePromoBundle.message("free.trial.hint"),
         null,
