@@ -81,7 +81,6 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
     private val thrownExceptions = mutableListOf<Throwable>()
 
-    protected val agentListJpsDesc = mutableListOf<JpsMavenRepositoryLibraryDescriptor>()
     protected val agentList = mutableListOf<BazelDependencyLabelDescriptor>()
 
     private fun initContexts(suspendContext: SuspendContextImpl) {
@@ -372,12 +371,6 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     protected fun countBreakpointsNumber(file: KotlinBaseTest.TestFile) =
         InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.content, "//Breakpoint!").size
 
-    @Deprecated("Use org.jetbrains.kotlin.idea.debugger.test.KotlinDescriptorTestCase.addLabelDependency instead")
-    override fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
-        addMavenDependency(compilerFacility, library, module)
-        processAgentDependencies(library, compilerFacility)
-    }
-
     override fun addDependenciesByLabels(compilerFacility: DebuggerTestCompilerFacility, libraryLabels: List<String>, agentLabels: List<String>) {
         val dependencies = mutableListOf<OrderRoot>()
         for (libraryLabel in libraryLabels) {
@@ -393,45 +386,12 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         addLibraries(dependencies, module)
     }
 
-    private fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String, module: Module) {
-        val regex = Regex(MAVEN_DEPENDENCY_REGEX)
-        val result = regex.matchEntire(library) ?: return
-        val (_, groupId: String, artifactId: String, version: String) = result.groupValues
-        addMavenDependency(compilerFacility, groupId, artifactId, version, module)
-    }
-
-    private fun processAgentDependencies(library: String, compilerFacility: DebuggerTestCompilerFacility) {
-        val regex = Regex(pattern = "$MAVEN_DEPENDENCY_REGEX(-javaagent)?")
-        val result = regex.matchEntire(library) ?: return
-        val (_, groupId: String, artifactId: String, version: String, agent: String) = result.groupValues
-        if ("-javaagent" == agent)
-            agentListJpsDesc.add(JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version, false))
-        addMavenDependency(compilerFacility, groupId, artifactId, version, module)
-    }
-
     override fun createJavaParameters(mainClass: String?): JavaParameters {
         val params = super.createJavaParameters(mainClass)
         for (entry in classPath) {
             params.classPath.add(entry)
         }
 
-        if (agentList.isNotEmpty() && agentListJpsDesc.isNotEmpty()) {
-            // temporary, attach javaagents only by new notation // ATTACH_JAVA_AGENT_BY_LABEL:
-            error(
-                "Attach the agent using exactly one directive: either \"// ATTACH_LIBRARY:\" " +
-                "or \"// ATTACH_JAVA_AGENT_BY_LABEL:\". Do not use both."
-            )
-        }
-
-        // temporary as well
-        for (agent in agentListJpsDesc) {
-            val dependencies = loadDependencies(agent)
-            for (dependency in dependencies) {
-                if (dependency.type == OrderRootType.CLASSES) {
-                    params.vmParametersList.add("-javaagent:${dependency.file.presentableUrl}")
-                }
-            }
-        }
         for (dependencyDescriptor in agentList) {
             val dependency = loadDependency(dependencyDescriptor)
             if (dependency.type == OrderRootType.CLASSES) {
@@ -439,18 +399,6 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             }
         }
         return params
-    }
-
-    protected fun addMavenDependency(
-        compilerFacility: DebuggerTestCompilerFacility,
-        groupId: String, artifactId: String,
-        version: String,
-        module: Module
-    ) {
-        val description = JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version)
-        val artifacts = loadDependencies(description)
-        compilerFacility.addDependencies(artifacts.map { it.file.presentableUrl })
-        addLibraries(artifacts, module)
     }
 
     protected fun addLibraries(compilerFacility: DebuggerTestCompilerFacility, libraries: List<Path>) {
