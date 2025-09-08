@@ -40,22 +40,6 @@ open class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data)
     invokeActionWithShortcut("[pressed ENTER]")
   }
 
-  fun invokeOpenInRightSplitAction() {
-    invokeActionWithShortcut("[shift pressed ENTER]")
-  }
-
-  fun invokeSwitchToNextTabAction() {
-    invokeActionWithShortcut("[pressed TAB]") { it.getOrNull(1) } // there are two actions with [tab] shortcut
-  }
-
-  fun invokeSwitchToPrevTabAction() {
-    invokeActionWithShortcut("[shift pressed TAB]")
-  }
-
-  fun invokeAssignShortcutAction() {
-    invokeActionWithShortcut("[alt pressed ENTER]")
-  }
-
   fun getSelectedTab(): SearchEverywhereTab = SearchEverywhereTab.entries.single { it.id == searchEverywhereUi.getSelectedTabID() }
 
   fun search(text: String) {
@@ -140,7 +124,7 @@ class SearchEverywhereTypeFilterUI(data: ComponentData) : UiComponent(data) {
 
 private class SEJListUiComponent(data: ComponentData) : JListUiComponent(data) {
   override val items: List<String>
-    get() = super.items.map {it -> it.substringBeforeLast(",")}
+    get() = super.items.map { it.substringBeforeLast(",")}
 
   override val selectedItems: List<String>
     get() = super.selectedItems.map { it.substringBeforeLast(",") }
