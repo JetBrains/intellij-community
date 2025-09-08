@@ -24,7 +24,6 @@ class PythonExistingEnvironmentSelector(model: PythonAddInterpreterModel, privat
       comboBox = pythonInterpreterComboBox(
         title = message("sdk.create.custom.python.path"),
         selectedSdkProperty = model.state.selectedInterpreter,
-        model = model,
         validationRequestor = validationRequestor,
         onPathSelected = model::addInterpreter,
       )
@@ -32,7 +31,7 @@ class PythonExistingEnvironmentSelector(model: PythonAddInterpreterModel, privat
   }
 
   override fun onShown(scope: CoroutineScope) {
-    val interpretersFlow = model.allInterpreters.map { sortForExistingEnvironment(it, module) }
+    val interpretersFlow = model.allInterpreters.map { it?.let { sortForExistingEnvironment(it, module) } }
     comboBox.initialize(scope, interpretersFlow)
   }
 

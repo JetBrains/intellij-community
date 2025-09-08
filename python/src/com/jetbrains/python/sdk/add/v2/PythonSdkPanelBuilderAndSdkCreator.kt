@@ -112,7 +112,6 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
       pythonBaseVersionComboBox = pythonInterpreterComboBox(
         title = message("sdk.create.python.version"),
         selectedSdkProperty = model.state.baseInterpreter,
-        model = model,
         validationRequestor = validationRequestor,
         onPathSelected = model::addInterpreter
       ) {
