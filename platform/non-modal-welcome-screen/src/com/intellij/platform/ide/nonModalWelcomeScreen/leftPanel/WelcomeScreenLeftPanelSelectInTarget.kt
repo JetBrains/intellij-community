@@ -5,7 +5,7 @@ import com.intellij.ide.SelectInTarget
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 
-class WelcomeScreenLeftPanelSelectInTarget : SelectInTarget {
+internal class WelcomeScreenLeftPanelSelectInTarget : SelectInTarget {
   override fun isAvailable(project: Project): Boolean = false
 
   override fun canSelect(context: SelectInContext?): Boolean = false

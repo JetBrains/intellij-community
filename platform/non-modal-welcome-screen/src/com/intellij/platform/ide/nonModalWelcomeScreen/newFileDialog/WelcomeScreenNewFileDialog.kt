@@ -19,6 +19,7 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.PathUtilRt
 import com.intellij.util.asSafely
 import com.intellij.util.ui.FormBuilder
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.nio.file.Path
@@ -26,6 +27,7 @@ import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.event.DocumentEvent
 
+@ApiStatus.Internal
 class WelcomeScreenNewFileDialog private constructor(
   internal val project: Project,
   private val builder: Builder,

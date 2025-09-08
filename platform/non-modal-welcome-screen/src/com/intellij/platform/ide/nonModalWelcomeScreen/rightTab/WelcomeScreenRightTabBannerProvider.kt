@@ -7,7 +7,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface WelcomeScreenRightTabBannerProvider {
   companion object {
     private val EP_NAME = ExtensionPointName<WelcomeScreenRightTabBannerProvider>("com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenRightTabBannerProvider")

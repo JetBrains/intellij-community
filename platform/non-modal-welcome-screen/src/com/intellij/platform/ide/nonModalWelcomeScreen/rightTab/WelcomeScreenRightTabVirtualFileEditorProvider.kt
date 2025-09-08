@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.NonNls
 
-class WelcomeScreenRightTabVirtualFileEditorProvider : FileEditorProvider, DumbAware {
+internal class WelcomeScreenRightTabVirtualFileEditorProvider : FileEditorProvider, DumbAware {
   companion object {
     const val ID: String = "NewProjectWindowFileEditor"
   }

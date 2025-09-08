@@ -2,8 +2,10 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog
 
 import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+@ApiStatus.Internal
 data class WelcomeScreenNewFileTemplateOption(
   val templateName: String,
   @NlsContexts.Label val displayName: String,

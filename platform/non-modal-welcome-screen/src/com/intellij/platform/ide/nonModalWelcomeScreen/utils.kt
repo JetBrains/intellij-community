@@ -7,5 +7,5 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 const val NON_MODAL_WELCOME_SCREEN_SETTING_ID: String = "welcome.screen.non.modal.enabled"
 
-val isNonModalWelcomeScreenEnabled: Boolean
+internal val isNonModalWelcomeScreenEnabled: Boolean
   get() = AdvancedSettings.getBoolean(NON_MODAL_WELCOME_SCREEN_SETTING_ID)

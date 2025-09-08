@@ -3,6 +3,7 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.ui.icon.IconKey
 
 /**
@@ -14,6 +15,7 @@ import org.jetbrains.jewel.ui.icon.IconKey
  * Should either not depend on any other plugin
  * or be registered in a corresponding customization plugin which is not required for the main plugin.
  */
+@ApiStatus.Internal
 abstract class WelcomeScreenFeature {
   companion object {
     private val EP_NAME: ExtensionPointName<WelcomeScreenFeature> =
@@ -31,6 +33,7 @@ abstract class WelcomeScreenFeature {
   abstract fun onClick(project: Project)
 }
 
+@ApiStatus.Internal
 abstract class WelcomeScreenToolwindowFeature : WelcomeScreenFeature() {
   protected abstract val toolWindowId: String
 

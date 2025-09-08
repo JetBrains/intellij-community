@@ -12,7 +12,7 @@ import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
-class WelcomeScreenRightTabVirtualFile(val window: WelcomeScreenRightTab, val project: Project) :
+internal class WelcomeScreenRightTabVirtualFile(val window: WelcomeScreenRightTab, val project: Project) :
   LightVirtualFile(window.contentProvider.title, NewProjectWindowFileType(window.contentProvider), "") {
 
   init {

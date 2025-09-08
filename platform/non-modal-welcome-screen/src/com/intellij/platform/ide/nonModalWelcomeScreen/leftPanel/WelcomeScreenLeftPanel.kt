@@ -29,7 +29,7 @@ import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
-class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(project) {
+internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(project) {
   private var recentProjectTreeComponent: JComponent? = null
 
   override fun getTitle(): String = NonModalWelcomeScreenBundle.message("welcome.screen.project.view.title")

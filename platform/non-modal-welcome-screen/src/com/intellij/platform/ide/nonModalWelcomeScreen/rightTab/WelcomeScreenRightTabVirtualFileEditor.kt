@@ -8,12 +8,10 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
-@ApiStatus.Internal
 internal class WelcomeScreenRightTabVirtualFileEditor(private val newProjectFile: WelcomeScreenRightTabVirtualFile) : FileEditor {
   private val userDataHolder: UserDataHolder = UserDataHolderBase()
 

@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.theme.LocalTextStyle
@@ -25,6 +26,7 @@ import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.theme.defaultButtonStyle
 
 @Composable
+@ApiStatus.Internal
 fun WelcomeScreenCustomButton(
   onClick: () -> Unit,
   modifier: Modifier = Modifier,

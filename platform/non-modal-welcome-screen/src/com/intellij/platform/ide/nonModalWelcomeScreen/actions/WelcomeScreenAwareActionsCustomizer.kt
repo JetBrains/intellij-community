@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject
 import org.intellij.lang.annotations.Language
 
-class WelcomeScreenAwareActionsCustomizer : ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
+internal class WelcomeScreenAwareActionsCustomizer : ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
   override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
     replaceActionCopyPresentation("CloseProject", WelcomeScreenAwareCloseProjectAction(), actionRegistrar)
     wrapExistingActionAndReplace("RenameProject", isFrontendAction = false, actionRegistrar)
