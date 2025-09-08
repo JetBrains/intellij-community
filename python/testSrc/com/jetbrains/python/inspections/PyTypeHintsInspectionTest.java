@@ -2976,6 +2976,23 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-81439
+  public void testImplicitTypeAliasUsingLiteral() {
+    doTestByText("""
+                   from typing import Literal, TypeAlias, reveal_type
+                   
+                   A = Literal[1, 2]
+                   A1: TypeAlias = Literal[6, 7]
+                   type A2 = Literal[6, 7]
+                   A3 = Literal[666]
+                   B = Literal[False, True]
+                   C = Literal['A', 'B']
+                   
+                   def f(a: A, a1: A1, a2: A2, a3: A3, b: B, c: C) -> None:
+                       print(a, a1, a2, a3, b, c)
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
