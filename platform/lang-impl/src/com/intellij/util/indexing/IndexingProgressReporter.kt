@@ -122,7 +122,8 @@ internal class IndexingProgressReporter {
 
   @Internal
   interface CheckPauseOnlyProgressIndicator {
-    fun freezeIfPaused()
+    fun isPaused(): Boolean
+    suspend fun suspendIfPaused()
     fun onPausedStateChanged(action: Consumer<Boolean>)
   }
 
@@ -133,10 +134,6 @@ internal class IndexingProgressReporter {
     private var paused = getPauseReason().mapStateIn(taskScope) { it != null }
     internal fun getPauseReason(): StateFlow<@ProgressText String?> = pauseReason.mapStateIn(taskScope) { it.firstOrNull() }
 
-    internal fun launchListeners() {
-
-    }
-
     override fun onPausedStateChanged(action: Consumer<Boolean>) {
       taskScope.launch {
         paused.collect {
@@ -145,35 +142,12 @@ internal class IndexingProgressReporter {
       }
     }
 
-    override fun freezeIfPaused() {
-      ProgressManager.checkCanceled()
-      if (!paused.value) return
-      if (application.isUnitTestMode) return // do not pause in unit tests, because some tests do not expect pausing
-      if (application.isDispatchThread) {
-        thisLogger().error("Ignore pause, because freezeIfPaused invoked on EDT")
-      }
-      else {
-        runBlockingCancellable {
-          coroutineScope {
-            async(taskScope.coroutineContext) {
-              // we don't expect that taskScope may cancel, because it will be canceled after the task has finished, but
-              // the task will not be finished, because it is paused. This line here is just in case, if the logic changes in the future.
-              while (true) {
-                checkCanceled()
-                delay(100) // will throw if taskScope has canceled
-              }
-            }
-            async {
-              while (true) {
-                checkCanceled()
-                delay(100) // will throw if progress indicator has canceled
-              }
-            }
-            paused.first { !it } // wait until paused==false, or taskScope is canceled, or progress indicator is canceled
-            coroutineContext.cancelChildren()
-          }
-        }
-      }
+    override fun isPaused(): Boolean {
+      return pauseReason.value.isNotEmpty()
+    }
+
+    override suspend fun suspendIfPaused() {
+      pauseReason.first { it.isEmpty() }
     }
   }
 }
