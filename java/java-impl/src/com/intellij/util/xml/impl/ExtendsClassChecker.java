@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.java.JavaBundle;
@@ -25,6 +25,7 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -78,7 +79,7 @@ public final class ExtendsClassChecker extends DomCustomAnnotationChecker<Extend
     Set<PsiClass> toExtend =
       Arrays.stream(names)
         .filter(Objects::nonNull)
-        .map(s -> JavaPsiFacade.getInstance(project).findClass(s, GlobalSearchScope.allScope(project)))
+        .map(name -> findClass(project, name))
         .filter(Objects::nonNull)
         .collect(Collectors.toSet());
 
@@ -138,6 +139,15 @@ public final class ExtendsClassChecker extends DomCustomAnnotationChecker<Extend
       list.add(holder.createProblem(element, JavaBundle.message("abstract.class.not.allowed", value.getQualifiedName())));
     }
     return list;
+  }
+
+  private static @Nullable PsiClass findClass(Project project, String qualifiedName) {
+    JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+    // prioritize project scope:
+    PsiClass aClass = javaPsiFacade.findClass(qualifiedName, GlobalSearchScope.projectScope(project));
+    if (aClass != null) return aClass;
+    // fall back to all scope:
+    return javaPsiFacade.findClass(qualifiedName, GlobalSearchScope.allScope(project));
   }
 
   public static List<DomElementProblemDescriptor> checkExtendsClassInReferences(final GenericDomValue element,
