@@ -288,7 +288,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
     private lateinit var myRbDefaultChildrenRenderer: JRadioButton
     private lateinit var myRbListChildrenRenderer: JRadioButton
 
-    private lateinit var myTypeNamePanel: JPanel
+    private var myTypeNamePanel: JPanel
     private val myTypeNameTextField = TextFieldWithCompletion(
       myProject,
       TypeNameCompletionProvider(myProject),
@@ -297,7 +297,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       true,
       true
     )
-    private lateinit var myEnableSubclassMatching: JCheckBox
+    private var myEnableSubclassMatching: JCheckBox
 
     private val myNodeValueExpressionEditor = XDebuggerExpressionEditor(
       myProject,
