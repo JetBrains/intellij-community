@@ -151,6 +151,32 @@ public class Py3TypeTest extends PyTestCase {
              expr = d.pop("abc", None)""");
   }
   
+  // PY-83351
+  public void testWhileStatementNarrowing() {
+    doTest("int",
+           """
+             def foo(x: int | None):
+                 while x:
+                     expr = x
+                     x = None
+             """);
+    doTest("int",
+           """
+             def foo(x: int | None):
+                 while not (not (((not (not x))))):
+                     expr = x
+                     x = None
+             """);
+  }
+  
+  // PY-83597
+  public void testAndExpressionNarrowing() {
+    doTest("int", """
+             def foo(x: int | None):
+                 x and (expr := x)
+             """);
+  }
+  
   // PY-83348
   public void testOrExpressionType() {
     doTest("int | str", """
