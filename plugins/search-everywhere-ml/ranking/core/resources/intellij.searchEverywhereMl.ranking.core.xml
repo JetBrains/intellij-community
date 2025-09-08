@@ -49,8 +49,6 @@
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRunConfigurationTypeValidator"/>
-    <statistics.validation.customValidationRule
-      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereMlElementFeatureValidationRule"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector"/>
 

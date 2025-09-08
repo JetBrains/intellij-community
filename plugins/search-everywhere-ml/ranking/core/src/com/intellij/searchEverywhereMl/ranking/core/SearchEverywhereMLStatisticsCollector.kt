@@ -276,10 +276,6 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     return nameFeatureToField
   }
 
-  internal fun findElementFeatureByName(name: String): EventField<*>? {
-    return collectNameFeaturesToFields()[name]
-  }
-
   private fun createFeaturesEventObject(): ObjectEventField {
     val nameFeatureToField = collectNameFeaturesToFields()
     return ObjectEventField("features", *nameFeatureToField.values.toTypedArray())
