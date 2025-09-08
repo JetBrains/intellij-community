@@ -13,8 +13,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.fix.GradleWrapperVersionFix
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 
-const val DISTRIBUTION_URL_KEY: String = "distributionUrl"
-
 class GradleLatestMinorVersionInspection : LocalInspectionTool() {
   override fun isAvailableForFile(file: PsiFile): Boolean {
     // TODO not sure if this should be limited to "gradle-wrapper.properties" file
@@ -25,7 +23,7 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
         if (element !is Property) return
-        if (element.key != DISTRIBUTION_URL_KEY) return
+        if (element.key != "distributionUrl") return
 
         // extract the current Gradle version from the wrapper properties file
         val regex = "gradle-(.+)-bin\\.zip$".toRegex()
@@ -47,10 +45,9 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
           GradleInspectionBundle.message("inspection.message.outdated.gradle.minor.version.descriptor"),
           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
           versionTextRange,
-          GradleWrapperVersionFix(element, latestMinorGradleVersion)
+          GradleWrapperVersionFix(latestMinorGradleVersion)
         )
       }
     }
   }
-
 }
