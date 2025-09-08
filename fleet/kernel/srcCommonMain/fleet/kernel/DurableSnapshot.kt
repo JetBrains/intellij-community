@@ -23,6 +23,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonElement
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
@@ -126,7 +127,7 @@ fun DbContext<Q>.buildDurableSnapshot(
       .filterNot {
         val optional = !it.attr.schema.required
         val scalar = !it.attr.schema.isRef
-        val transient = attributeSerializer(it.attr) == null
+        val transient = it.value !is JsonElement && attributeSerializer(it.attr) == null
         scalar && optional && transient
       }
       .forEach { datom ->
