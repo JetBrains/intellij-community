@@ -3,6 +3,7 @@ package com.intellij.execution.application;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
@@ -11,8 +12,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Predicates;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.ui.TextFieldWithAutoCompletion.StringsCompletionProvider;
@@ -91,7 +95,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
 
       ConfigurationModuleSelector moduleSelector = new ConfigurationModuleSelector(getProject(), classpathCombo);
       myClassEditorField = ClassEditorField.createClassField(getProject(), () -> classpathCombo.getSelectedModule(),
-                                                             ApplicationConfigurable.getVisibilityChecker(moduleSelector), null);
+                                                             getVisibilityChecker(moduleSelector), null);
       myClassEditorField.setBackground(UIUtil.getTextFieldBackground());
       myClassEditorField.setShowPlaceholderWhenFocused(true);
       CommonParameterFragments.setMonospaced(myClassEditorField);
@@ -212,5 +216,17 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     else {
       myMainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.hint"));
     }
+  }
+
+  static @NotNull JavaCodeFragment.VisibilityChecker getVisibilityChecker(@NotNull ConfigurationModuleSelector selector) {
+    return (declaration, place) -> {
+      if (declaration instanceof PsiClass aClass) {
+        if (ConfigurationUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.findMainMethod(aClass) != null ||
+            place != null && place.getParent() != null && selector.findClass(aClass.getQualifiedName()) != null) {
+          return JavaCodeFragment.VisibilityChecker.Visibility.VISIBLE;
+        }
+      }
+      return JavaCodeFragment.VisibilityChecker.Visibility.NOT_VISIBLE;
+    };
   }
 }

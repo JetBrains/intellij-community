@@ -123,15 +123,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   }
 
   static @NotNull JavaCodeFragment.VisibilityChecker getVisibilityChecker(@NotNull ConfigurationModuleSelector selector) {
-    return (declaration, place) -> {
-      if (declaration instanceof PsiClass aClass) {
-        if (ConfigurationUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.findMainMethod(aClass) != null ||
-            place != null && place.getParent() != null && selector.findClass(aClass.getQualifiedName()) != null) {
-          return JavaCodeFragment.VisibilityChecker.Visibility.VISIBLE;
-        }
-      }
-      return JavaCodeFragment.VisibilityChecker.Visibility.NOT_VISIBLE;
-    };
+    return JavaApplicationSettingsEditor.getVisibilityChecker(selector);
   }
 
   @Override
