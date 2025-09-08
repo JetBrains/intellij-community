@@ -7720,8 +7720,8 @@ java_library(
 
 jvm_import(
   name = "org-codehaus-groovy-groovy",
-  jar = "@groovy-3_0_19_http//file",
-  source_jar = "@groovy-3_0_19-sources_http//file",
+  jar = "@groovy-3_0_25_http//file",
+  source_jar = "@groovy-3_0_25-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -7734,8 +7734,8 @@ java_library(
 
 jvm_import(
   name = "org-codehaus-groovy-groovy-ant",
-  jar = "@groovy-ant-3_0_19_http//file",
-  source_jar = "@groovy-ant-3_0_19-sources_http//file",
+  jar = "@groovy-ant-3_0_25_http//file",
+  source_jar = "@groovy-ant-3_0_25-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -7748,29 +7748,29 @@ java_library(
 
 jvm_import(
   name = "org-codehaus-groovy-groovy-json",
-  jar = "@groovy-json-3_0_19_http//file",
-  source_jar = "@groovy-json-3_0_19-sources_http//file",
+  jar = "@groovy-json-3_0_25_http//file",
+  source_jar = "@groovy-json-3_0_25-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "org-codehaus-groovy-groovy-jsr223",
-  jar = "@groovy-jsr223-3_0_19_http//file",
-  source_jar = "@groovy-jsr223-3_0_19-sources_http//file",
+  jar = "@groovy-jsr223-3_0_25_http//file",
+  source_jar = "@groovy-jsr223-3_0_25-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "org-codehaus-groovy-groovy-templates",
-  jar = "@groovy-templates-3_0_19_http//file",
-  source_jar = "@groovy-templates-3_0_19-sources_http//file",
+  jar = "@groovy-templates-3_0_25_http//file",
+  source_jar = "@groovy-templates-3_0_25-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "org-codehaus-groovy-groovy-xml",
-  jar = "@groovy-xml-3_0_19_http//file",
-  source_jar = "@groovy-xml-3_0_19-sources_http//file",
+  jar = "@groovy-xml-3_0_25_http//file",
+  source_jar = "@groovy-xml-3_0_25-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

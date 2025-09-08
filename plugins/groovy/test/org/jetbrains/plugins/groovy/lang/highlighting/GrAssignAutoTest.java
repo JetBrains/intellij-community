@@ -146,7 +146,7 @@ public class GrAssignAutoTest extends GrHighlightingTestBase {
              """,
            typesXTypes,
            List.of("int -> double[]", "short -> int[]", "short -> double[]", "byte -> int[]", "byte -> double[]", "short -> Integer[]", "byte -> Integer[]"),
-           List.of());
+           List.of("BigDecimal -> double", "BigDecimal -> double[]"));
   }
 
   public void testReturnAssignValue() {
@@ -165,7 +165,9 @@ public class GrAssignAutoTest extends GrHighlightingTestBase {
                    "(Void)null -> boolean[]", "(Void)null -> int[]", "(Void)null -> double[]", "(Void)null -> String[]",
                    "(Void)null -> Integer[]", "(Void)null -> List[]", "(Void)null -> Object[]", "(Void)null -> Thread[]",
                    "(Void)null -> short", "(Void)null -> byte", "(Void)null -> Set", "(Void)null -> Set<String>",
-                   "(Void)null -> Set<Integer>", "(Void)null -> Set<Object>", "(Void)null -> Set<Thread>"));
+                   "(Void)null -> Set<Integer>", "(Void)null -> Set<Object>", "(Void)null -> Set<Thread>",
+                   "[1] -> List<Object>", "[0L] -> List<Object>", "[1.1] -> List<Object>", "[1.2f] -> List<Object>", "[\"str\"] -> List<Object>",
+                   "[new Thread()] -> List<Object>"));
   }
 
   public void testLocalAssignValue() {
@@ -186,7 +188,8 @@ public class GrAssignAutoTest extends GrHighlightingTestBase {
              "[1.2f] -> List<Object>", "[1.2f] -> Set", "[1.2f] -> Set<Object>",
              "[\"str\"] -> List<Object>", "[\"str\"] -> Set", "[\"str\"] -> Set<String>", "[\"str\"] -> Set<Object>",
              "[new Object()] -> Set", "[new Object()] -> Set<Object>",
-             "[new Thread()] -> List<Object>", "[new Thread()] -> Set", "[new Thread()] -> Set<Object>", "[new Thread()] -> Set<Thread>"));
+             "[new Thread()] -> List<Object>", "[new Thread()] -> Set", "[new Thread()] -> Set<Object>", "[new Thread()] -> Set<Thread>",
+             "[1.1] -> BigDecimal"));
   }
 
   private void doTest(String body, List<List<String>> arguments, List<String> wrongFalseByIdea, List<String> wrongTrueByIdea) {

@@ -11011,87 +11011,87 @@ http_file(
 )
 
 http_file(
-  name = "groovy-3_0_19_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy/3.0.19/groovy-3.0.19.jar",
-  sha256 = "7ad326b0a7e49791f552313e35df7406c1a46bb6faf7908c2ecbb74daeff23fb",
-  downloaded_file_path = "groovy-3.0.19.jar"
+  name = "groovy-3_0_25_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy/3.0.25/groovy-3.0.25.jar",
+  sha256 = "ad009e985dd84e4f524f4ed1751866da5bef816b691851bfbcefa48a01180a07",
+  downloaded_file_path = "groovy-3.0.25.jar"
 )
 
 http_file(
-  name = "groovy-3_0_19-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy/3.0.19/groovy-3.0.19-sources.jar",
-  sha256 = "4d57a0bb55105fcf4bd2d621e920b82ea4b9028d30e8f1e94a7f398c8069cfcc",
-  downloaded_file_path = "groovy-3.0.19-sources.jar"
+  name = "groovy-3_0_25-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy/3.0.25/groovy-3.0.25-sources.jar",
+  sha256 = "67e2e1e4bddaa943847d2cc61b9aa8d5ea53e25bb5e9661d01120c28869ef098",
+  downloaded_file_path = "groovy-3.0.25-sources.jar"
 )
 
 http_file(
-  name = "groovy-ant-3_0_19_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-ant/3.0.19/groovy-ant-3.0.19.jar",
-  sha256 = "4bb1ef7f1dc01950e910b7dbc04010a999fc11f41a6dda02a7228036dd0a2379",
-  downloaded_file_path = "groovy-ant-3.0.19.jar"
+  name = "groovy-ant-3_0_25_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-ant/3.0.25/groovy-ant-3.0.25.jar",
+  sha256 = "fd65c1a0cd1c60272b6ed0f45025d7afae8de20b5c11e2a131a7ccb4b0f1f1b2",
+  downloaded_file_path = "groovy-ant-3.0.25.jar"
 )
 
 http_file(
-  name = "groovy-ant-3_0_19-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-ant/3.0.19/groovy-ant-3.0.19-sources.jar",
-  sha256 = "c415cf7fef91195dbfc1fbcac20bf5cf16f786a30960b2b78d6121fd170efe71",
-  downloaded_file_path = "groovy-ant-3.0.19-sources.jar"
+  name = "groovy-ant-3_0_25-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-ant/3.0.25/groovy-ant-3.0.25-sources.jar",
+  sha256 = "765c5cc21e387e760a68ef873c1790290131080e8525551a84ea0360284d8d39",
+  downloaded_file_path = "groovy-ant-3.0.25-sources.jar"
 )
 
 http_file(
-  name = "groovy-json-3_0_19_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-json/3.0.19/groovy-json-3.0.19.jar",
-  sha256 = "6f4b1f79e8745b1546b96d248f50f1122e0697b6d33bbdd3af362ebc8fd19df3",
-  downloaded_file_path = "groovy-json-3.0.19.jar"
+  name = "groovy-json-3_0_25_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-json/3.0.25/groovy-json-3.0.25.jar",
+  sha256 = "511cea72a464809d7e376968910fa704f9fa5afa8f2a94b53672a061b45475bb",
+  downloaded_file_path = "groovy-json-3.0.25.jar"
 )
 
 http_file(
-  name = "groovy-json-3_0_19-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-json/3.0.19/groovy-json-3.0.19-sources.jar",
-  sha256 = "2ab4542db530d3270b92c80bedc578d494ac8b9e4fe1d370fb9bb79b260dac83",
-  downloaded_file_path = "groovy-json-3.0.19-sources.jar"
+  name = "groovy-json-3_0_25-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-json/3.0.25/groovy-json-3.0.25-sources.jar",
+  sha256 = "bf0b631c717212a195c28ee35f8389fa8d752cf38548abc37babff5c822b42af",
+  downloaded_file_path = "groovy-json-3.0.25-sources.jar"
 )
 
 http_file(
-  name = "groovy-jsr223-3_0_19_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-jsr223/3.0.19/groovy-jsr223-3.0.19.jar",
-  sha256 = "3a01fc77e1813aa032fd1db371d6f436e5c6fa6ee78f0f538002522e584fd522",
-  downloaded_file_path = "groovy-jsr223-3.0.19.jar"
+  name = "groovy-jsr223-3_0_25_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-jsr223/3.0.25/groovy-jsr223-3.0.25.jar",
+  sha256 = "7d703a1d484ac1135b78b24a4880f5653161cda83454c0f484fa09e29311d3bd",
+  downloaded_file_path = "groovy-jsr223-3.0.25.jar"
 )
 
 http_file(
-  name = "groovy-jsr223-3_0_19-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-jsr223/3.0.19/groovy-jsr223-3.0.19-sources.jar",
-  sha256 = "50cfba20b21fa959f7440205070b0fc8c9d3cb959bc8837528c4f5d980a874a8",
-  downloaded_file_path = "groovy-jsr223-3.0.19-sources.jar"
+  name = "groovy-jsr223-3_0_25-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-jsr223/3.0.25/groovy-jsr223-3.0.25-sources.jar",
+  sha256 = "c316979d01a5e15a95b405ab55b32a2b08142bcab1fe745210afc55db0d8ea15",
+  downloaded_file_path = "groovy-jsr223-3.0.25-sources.jar"
 )
 
 http_file(
-  name = "groovy-templates-3_0_19_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-templates/3.0.19/groovy-templates-3.0.19.jar",
-  sha256 = "5d094c043aa9beaa090b75c6ab4e9bbb07de0d7b3e39f292f12c50ddae0f8f3d",
-  downloaded_file_path = "groovy-templates-3.0.19.jar"
+  name = "groovy-templates-3_0_25_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-templates/3.0.25/groovy-templates-3.0.25.jar",
+  sha256 = "fd0e111cae80bd6285677759b72cb67e7da68ee779a90e51bee12a7011c28436",
+  downloaded_file_path = "groovy-templates-3.0.25.jar"
 )
 
 http_file(
-  name = "groovy-templates-3_0_19-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-templates/3.0.19/groovy-templates-3.0.19-sources.jar",
-  sha256 = "3b88d7a85757c1b6e0d16465f7d69d962e422ff5e9fa50d714e7d935fff66da5",
-  downloaded_file_path = "groovy-templates-3.0.19-sources.jar"
+  name = "groovy-templates-3_0_25-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-templates/3.0.25/groovy-templates-3.0.25-sources.jar",
+  sha256 = "4930906349942d04b0b7411298fd7ea2c3c91e9b51df1ba6b49f9d37b17dd235",
+  downloaded_file_path = "groovy-templates-3.0.25-sources.jar"
 )
 
 http_file(
-  name = "groovy-xml-3_0_19_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-xml/3.0.19/groovy-xml-3.0.19.jar",
-  sha256 = "1527f7c7778dda9c87c8c905b81aba865e5dc7b92932bf2d04b85e96b3f8ad9e",
-  downloaded_file_path = "groovy-xml-3.0.19.jar"
+  name = "groovy-xml-3_0_25_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-xml/3.0.25/groovy-xml-3.0.25.jar",
+  sha256 = "d94e6ba5de99225d3d3fc8759d4480721402c7121d130d73d99d838e913500dd",
+  downloaded_file_path = "groovy-xml-3.0.25.jar"
 )
 
 http_file(
-  name = "groovy-xml-3_0_19-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-xml/3.0.19/groovy-xml-3.0.19-sources.jar",
-  sha256 = "d2083d3877176ac3434f5e31905cdaae8fb26599a1db8df86eae8a7bbde64d4e",
-  downloaded_file_path = "groovy-xml-3.0.19-sources.jar"
+  name = "groovy-xml-3_0_25-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/groovy/groovy-xml/3.0.25/groovy-xml-3.0.25-sources.jar",
+  sha256 = "ee46401c496777d432bce20b2747fdfd7d4b1a3fbd856366253721bd4b99afbb",
+  downloaded_file_path = "groovy-xml-3.0.25-sources.jar"
 )
 
 http_file(
