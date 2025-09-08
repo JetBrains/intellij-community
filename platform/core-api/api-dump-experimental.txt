@@ -265,6 +265,11 @@ c:com.intellij.openapi.editor.markup.TextAttributes
 - *:hasEffects():Z
 - *:setAdditionalEffects(java.util.Map):V
 - *:withAdditionalEffect(com.intellij.openapi.editor.markup.EffectType,java.awt.Color):V
+*:com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable
+- com.intellij.openapi.fileEditor.FileDocumentManagerListener
+- *sf:Companion:com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable$Companion
+- sf:TOPIC:com.intellij.util.messages.Topic
+*f:com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable$Companion
 *:com.intellij.openapi.module.LoadedModuleDescription
 - com.intellij.openapi.module.ModuleDescription
 - a:getModule():com.intellij.openapi.module.Module
