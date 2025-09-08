@@ -257,11 +257,7 @@ internal class  FirAnnotationCompletionContributor(
         is KaTypeParameterSymbol -> false
         is KaNamedClassSymbol -> when (classifierSymbol.classKind) {
             KaClassKind.ANNOTATION_CLASS -> true
-            KaClassKind.ENUM_CLASS -> false
-            KaClassKind.ANONYMOUS_OBJECT -> false
-            KaClassKind.CLASS, KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT, KaClassKind.INTERFACE -> {
-                classifierSymbol.staticDeclaredMemberScope.classifiers.any { filterClassifiers(it) }
-            }
+            else -> false
         }
 
         is KaTypeAliasSymbol -> {
