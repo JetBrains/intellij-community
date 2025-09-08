@@ -830,9 +830,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
    *  - followed by all other elements
    */
   @ApiStatus.Internal
-  public synchronized @NotNull @Unmodifiable List<? extends PsiElement> sortByPsiElementFertility(@NotNull PsiFile psiFile,
-                                                                                                  @NotNull LocalInspectionToolWrapper toolWrapper,
-                                                                                                  @NotNull List<? extends PsiElement> elements) {
+  public @NotNull @Unmodifiable List<? extends PsiElement> sortByPsiElementFertility(@NotNull PsiFile psiFile,
+                                                                                     @NotNull LocalInspectionToolWrapper toolWrapper,
+                                                                                     @NotNull List<? extends PsiElement> elements) {
     String toolId = toolWrapper.getShortName();
     Map<Object, ToolHighlights> map = getData(psiFile);
     if (map.isEmpty()) return elements;
