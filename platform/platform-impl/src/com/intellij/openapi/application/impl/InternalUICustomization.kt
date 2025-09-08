@@ -72,6 +72,8 @@ open class InternalUICustomization {
       return isProjectCustomDecorationActive
     }
 
+  open val isMainMenuBottomBorder: Boolean = true
+
   internal open fun configureToolWindowPane(toolWindowPaneParent: JComponent, buttonManager: ToolWindowButtonManager) {}
 
   /**
