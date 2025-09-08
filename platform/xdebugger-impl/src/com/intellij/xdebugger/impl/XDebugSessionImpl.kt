@@ -72,11 +72,7 @@ import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.XDebugSessionValueIdType
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
-import com.intellij.xdebugger.impl.ui.XDebugSessionData
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab
-import com.intellij.xdebugger.impl.ui.allowFramesViewCustomization
-import com.intellij.xdebugger.impl.ui.getDefaultFramesViewKey
-import com.intellij.xdebugger.impl.ui.forceShowNewDebuggerUi
+import com.intellij.xdebugger.impl.ui.*
 import com.intellij.xdebugger.impl.util.start
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
@@ -450,7 +446,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     if (useFeProxy()) {
       val tabCoroutineScope = debuggerManager.coroutineScope.childScope("ExecutionEnvironmentDto")
       val tabClosedChannel = Channel<Unit>(capacity = 1)
-      val additionalTabComponentManager = XDebugSessionAdditionalTabComponentManager(project, tabCoroutineScope)
+      val additionalTabComponentManager = XDebugSessionAdditionalTabComponentManager(tabCoroutineScope)
       val runContentDescriptorId = CompletableDeferred<RunContentDescriptorId>()
       val executionEnvironmentId = executionEnvironment?.storeGlobally(tabCoroutineScope)
       val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization, defaultFramesViewKey,

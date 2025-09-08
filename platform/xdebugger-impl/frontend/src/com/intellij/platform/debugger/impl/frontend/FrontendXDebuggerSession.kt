@@ -290,7 +290,7 @@ class FrontendXDebuggerSession private constructor(
           val descriptorScope = runContentDescriptor?.coroutineScope
           // don't subscribe on additional tabs if we have [ExecutionEnvironment] (it means this is Monolith)
           if (descriptorScope != null && tabInfo.executionEnvironmentProxyDto?.executionEnvironment == null) {
-            subscribeOnAdditionalTabs(descriptorScope, project, this@apply, tabInfo.additionalTabsComponentManagerId)
+            subscribeOnAdditionalTabs(descriptorScope, this@apply, tabInfo.additionalTabsComponentManagerId)
           }
           descriptorScope?.awaitCancellationAndInvoke {
             tabInfo.tabClosedCallback.send(Unit)
