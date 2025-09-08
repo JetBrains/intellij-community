@@ -275,9 +275,9 @@ public final class TreeState implements JDOMExternalizable {
     }
 
     @Nullable Match tryAdvanceWithParent(@Nullable Object parent, @NotNull Object node, int index) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Trying to advance a matcher using " + node);
-        LOG.debug("The node's parent is " + parent);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Trying to advance a matcher using " + node);
+        LOG.trace("The node's parent is " + parent);
         logCurrentMatchedPath();
       }
       assert matchedSoFar <= serializedPath.length;
@@ -310,16 +310,16 @@ public final class TreeState implements JDOMExternalizable {
           }
         }
         if (flattened != null && flattened.size() > 1 && matchedSoFar + flattened.size() <= serializedPath.length) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Unflattened elements: " + flattened);
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("Unflattened elements: " + flattened);
           }
           var allMatch = true;
           for (int i = 0; i < flattened.size(); ++i) {
             var actualElement = flattened.get(i);
             var serializedElement = serializedPath[matchedSoFar + i];
             if (!serializedElement.id.equals(actualElement.id()) || !serializedElement.type.equals(actualElement.type())) {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Mismatched element at " + i + ": " + actualElement + " != " + serializedElement);
+              if (LOG.isTraceEnabled()) {
+                LOG.trace("Mismatched element at " + i + ": " + actualElement + " != " + serializedElement);
               }
               allMatch = false;
               break;
@@ -356,22 +356,22 @@ public final class TreeState implements JDOMExternalizable {
       }
       if (userObjectSucceeded || flattenedSucceeded || plainSucceeded) {
         matchedPath = matchedPath == null ? new CachingTreePath(node) : matchedPath.pathByAddingChild(node);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Advanced successfully to " + matchedSoFar + " elements corresponding to " + matchedPath);
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Advanced successfully to " + matchedSoFar + " elements corresponding to " + matchedPath);
         }
         return userObjectSucceeded ? Match.OBJECT : Match.ID_TYPE;
       }
       else {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Failed to advance");
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Failed to advance");
         }
         return null;
       }
     }
 
     @Nullable Match tryAdvanceUsingCache(@NotNull TreeState.PathMatcherCache.Node cacheNode) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Trying to advance a matcher using the cache");
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Trying to advance a matcher using the cache");
         logCurrentMatchedPath();
       }
       assert matchedSoFar <= serializedPath.length;
@@ -379,26 +379,26 @@ public final class TreeState implements JDOMExternalizable {
       @Nullable TreeState.PathMatcherCache.CachedMatch match = null;
       var cachedUserObjectMatch = cacheNode.getUserObjectMatch(serializedPath[matchedSoFar]);
       if (cachedUserObjectMatch != null) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Advancing using the user object match: " + cachedUserObjectMatch);
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Advancing using the user object match: " + cachedUserObjectMatch);
         }
         match = cachedUserObjectMatch;
       }
       if (match == null) {
-        LOG.debug("Failed to advance using the cached user object match");
+        LOG.trace("Failed to advance using the cached user object match");
         var serializedMatch = cacheNode.getSerializedMatch(serializedPath[matchedSoFar]);
         if (serializedMatch != null) {
           var cachedElements = serializedMatch.matchedElements();
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Trying to use the cached serialized elements: " + cachedElements);
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("Trying to use the cached serialized elements: " + cachedElements);
           }
           if (matchedSoFar + cachedElements.size() <= serializedPath.length) {
             for (var i = 0; i < cachedElements.size(); ++i) {
               var cachedElement = cachedElements.get(i);
               var serializedElement = serializedPath[matchedSoFar + i];
               if (!serializedElement.id.equals(cachedElement.id()) || !serializedElement.type.equals(cachedElement.type())) {
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug("Mismatched cached element at " + i + ": " + cachedElement + " != " + serializedElement);
+                if (LOG.isTraceEnabled()) {
+                  LOG.trace("Mismatched cached element at " + i + ": " + cachedElement + " != " + serializedElement);
                 }
                 break;
               }
@@ -411,8 +411,8 @@ public final class TreeState implements JDOMExternalizable {
         var node = match.getNode();
         matchedPath = matchedPath == null ? new CachingTreePath(node) : matchedPath.pathByAddingChild(node);
         matchedSoFar += match.getLength();
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Advanced successfully to " + matchedSoFar + " elements corresponding to " + matchedPath + " using " + match);
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Advanced successfully to " + matchedSoFar + " elements corresponding to " + matchedPath + " using " + match);
         }
         return match.getType();
       }
@@ -420,8 +420,8 @@ public final class TreeState implements JDOMExternalizable {
     }
 
     private void logCurrentMatchedPath() {
-      LOG.debug("The serialized path: " + Arrays.toString(serializedPath));
-      LOG.debug("Matched so far: " + matchedSoFar + " elements corresponding to " + matchedPath);
+      LOG.trace("The serialized path: " + Arrays.toString(serializedPath));
+      LOG.trace("Matched so far: " + matchedSoFar + " elements corresponding to " + matchedPath);
     }
   }
 
