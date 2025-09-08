@@ -3689,17 +3689,17 @@ http_file(
 )
 
 http_file(
-  name = "jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_20-253-b12_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b12/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b12.jar",
-  sha256 = "ea1f2107955815765e96e4db5c2f0772c4779724dedff357bfba4c112e96aeb8",
-  downloaded_file_path = "jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b12.jar"
+  name = "jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_20-253-b13_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13.jar",
+  sha256 = "7ff53ee6af9a9b3dcf9ce5366b9e803398d61460840a4232fa7bf3b9ef1388e5",
+  downloaded_file_path = "jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13.jar"
 )
 
 http_file(
-  name = "jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_20-253-b12-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b12/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b12-sources.jar",
-  sha256 = "d0cd4a95966bc10496a632b0448d503e338868cda369895e22ad841fa30f20ff",
-  downloaded_file_path = "jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b12-sources.jar"
+  name = "jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_20-253-b13-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13-sources.jar",
+  sha256 = "8354fc6df3124878f3c2af12ae1d050e919cf8b6e83fdd7a8e6fb26368456745",
+  downloaded_file_path = "jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.20-253-b13-sources.jar"
 )
 
 http_file(
