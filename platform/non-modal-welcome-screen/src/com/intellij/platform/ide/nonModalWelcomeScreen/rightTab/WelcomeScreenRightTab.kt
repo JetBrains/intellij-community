@@ -80,10 +80,10 @@ class WelcomeScreenRightTab(
           verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-              Text(contentProvider.title,
+              Text(contentProvider.title.get(),
                    fontSize = 20.sp, lineHeight = 24.sp, color = fontColor)
               Spacer(modifier = Modifier.height(8.dp))
-              Text(contentProvider.secondaryTitle,
+              Text(contentProvider.secondaryTitle.get(),
                    fontSize = 13.sp, lineHeight = 16.sp, color = secondaryFontColor)
             }
             Spacer(modifier = Modifier.height(32.dp))

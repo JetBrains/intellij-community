@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
 internal class WelcomeScreenRightTabVirtualFile(val window: WelcomeScreenRightTab, val project: Project) :
-  LightVirtualFile(window.contentProvider.title, NewProjectWindowFileType(window.contentProvider), "") {
+  LightVirtualFile(window.contentProvider.title.get(), NewProjectWindowFileType(window.contentProvider), "") {
 
   init {
     putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
@@ -26,7 +26,7 @@ internal class WelcomeScreenRightTabVirtualFile(val window: WelcomeScreenRightTa
   private class NewProjectWindowFileType(
     private val contentProvider: WelcomeRightTabContentProvider
   ) : FakeFileType() {
-    override fun getName(): @NonNls String = contentProvider.title
+    override fun getName(): @NonNls String = contentProvider.title.get()
 
     override fun getDescription(): @NlsContexts.Label String =
       NonModalWelcomeScreenBundle.message("welcome.screen.virtual.file.type.description")

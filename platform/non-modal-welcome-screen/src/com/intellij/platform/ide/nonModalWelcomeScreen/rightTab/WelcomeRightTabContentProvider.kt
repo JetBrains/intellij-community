@@ -8,7 +8,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.ui.icon.IconKey
+import java.util.function.Supplier
 
 @ApiStatus.Internal
 interface WelcomeRightTabContentProvider {
@@ -16,8 +18,8 @@ interface WelcomeRightTabContentProvider {
   val backgroundImageVectorLight: ImageVector
   val backgroundImageVectorDark: ImageVector
 
-  val title: String
-  val secondaryTitle: String
+  val title: Supplier<@Nls String>
+  val secondaryTitle: Supplier<@Nls String>
 
   @Composable
   fun getFeatureButtonModels(project: Project): List<FeatureButtonModel>
