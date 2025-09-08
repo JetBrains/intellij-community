@@ -259,6 +259,9 @@ object PyNames {
   const val UNKNOWN_TYPE: @NlsSafe String = "Unknown"
 
   @NlsSafe
+  const val OVERLOAD_TYPE: @NlsSafe String = "Overload"
+
+  @NlsSafe
   const val UNNAMED_ELEMENT: @NlsSafe String = "<unnamed>"
 
   const val UNDERSCORE: String = "_"

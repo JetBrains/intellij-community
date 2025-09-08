@@ -5304,6 +5304,42 @@ public class Py3TypeTest extends PyTestCase {
     """);
   }
 
+  public void testOverloadImpl() {
+    doTest("Overload[(x: int) -> str, (x: str) -> int]", """
+      from typing import overload
+      
+      @overload
+      def foo(x: int) -> str: ...
+      
+      @overload
+      def foo(x: str) -> int: ...
+      
+      def foo(x): ...
+      
+      expr = foo
+      """);
+  }
+
+  public void testOverloadStub() {
+    runWithAdditionalFileInLibDir(
+      "stub.pyi", """
+        from typing import overload
+        
+        @overload
+        def foo(x: int) -> str: ...
+        
+        @overload
+        def foo(x: str) -> int: ...
+        """, (x) -> {
+        doTest("Overload[(x: int) -> str, (x: str) -> int]", """
+          from stub import foo
+          
+          expr = foo
+          """);
+      }
+    );
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

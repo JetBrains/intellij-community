@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.types.PyIntersectionType;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyNarrowedType;
 import com.jetbrains.python.psi.types.PyNeverType;
+import com.jetbrains.python.psi.types.PyOverloadType;
 import com.jetbrains.python.psi.types.PyParamSpecType;
 import com.jetbrains.python.psi.types.PySelfType;
 import com.jetbrains.python.psi.types.PyTupleType;
@@ -230,6 +231,11 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     public @NotNull HtmlChunk visitPySelfType(@NotNull PySelfType selfType) {
       HtmlChunk selfTypeRender = className(isRenderingFqn() ? "typing.Self" : "Self"); //NON-NLS
       return selfType.isDefinition() ? wrapInTypingType(selfTypeRender) : selfTypeRender;
+    }
+
+    @Override
+    public @NotNull HtmlChunk visitPyOverloadType(@NotNull PyOverloadType overloadType) {
+      return escaped("Callable[..., object]"); //NON-NLS
     }
   }
 
@@ -608,6 +614,16 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       String enumOrLiteral = StringUtil.notNullize(literalType.getExpression().getText()).trim();
       result.appendRaw(enumOrLiteral); // append raw since the literal can include quotes: Literal["foo"]
     }
+    result.append("]");
+    return result.toFragment();
+  }
+
+  @Override
+  public @NotNull HtmlChunk visitPyOverloadType(@NotNull PyOverloadType overloadType) {
+    var result = new HtmlBuilder();
+    result.append(overloadType.getName());
+    result.append("[");
+    result.append(renderList(ContainerUtil.map(overloadType.getItems(), this::render)));
     result.append("]");
     return result.toFragment();
   }

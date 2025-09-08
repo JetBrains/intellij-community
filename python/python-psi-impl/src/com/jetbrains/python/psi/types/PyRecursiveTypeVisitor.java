@@ -145,6 +145,11 @@ public final class PyRecursiveTypeVisitor extends PyTypeVisitorExt<PyRecursiveTy
     }
 
     @Override
+    public @NotNull List<@Nullable PyType> visitPyOverloadType(@NotNull PyOverloadType overloadType) {
+      return Collections.unmodifiableList(new ArrayList<>(overloadType.getItems()));
+    }
+
+    @Override
     public @NotNull List<@Nullable PyType> visitPyGenericType(@NotNull PyCollectionType genericType) {
       return genericType.getElementTypes();
     }
