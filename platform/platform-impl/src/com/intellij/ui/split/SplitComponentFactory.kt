@@ -47,7 +47,7 @@ class SplitComponentFactory private constructor() {
    * In monolith case this will create the associated UI component in place. On a remote development backend, a placeholder component
    * is created instead with the real component created on the frontend side.
    *
-   * @param scope the scope of the model.
+   * @param scope the scope of the SplitComponent.
    * The scope passed in [SplitComponentProvider.createComponent] will be canceled when this [scope] is canceled.
    */
   @RequiresEdt
