@@ -563,6 +563,10 @@ f:com.intellij.codeInsight.hints.declarative.InlayProviderOption
 - p:<init>(java.lang.String):V
 - f:render(com.intellij.codeInspection.options.OptCustom,com.intellij.openapi.project.Project):javax.swing.JComponent
 - a:render(java.lang.Object,com.intellij.openapi.project.Project):javax.swing.JComponent
+*:com.intellij.execution.RunConfigurationProducerSuppressor
+- *sf:Companion:com.intellij.execution.RunConfigurationProducerSuppressor$Companion
+- a:shouldSuppress(com.intellij.execution.actions.RunConfigurationProducer):Z
+*f:com.intellij.execution.RunConfigurationProducerSuppressor$Companion
 *:com.intellij.execution.dashboard.RunDashboardChecker
 - a:countUniqueConfigurations(com.intellij.openapi.project.Project):I
 - a:getTypeId():java.lang.String
