@@ -23,14 +23,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.mapToLocation
-import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestEditorCommentsUtil
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestDiscussionUtil
 import org.jetbrains.plugins.gitlab.mergerequest.util.toLines
 
 interface GitLabMergeRequestEditorReviewFileViewModel {
@@ -96,7 +95,7 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
       it.map { GitLabMergeRequestEditorDraftNoteViewModel(it, diffData, discussionsViewOption) }
     }.stateInNow(cs, emptyList())
   override val linesWithDiscussions: StateFlow<Set<Int>> =
-    GitLabMergeRequestEditorCommentsUtil
+    GitLabMergeRequestDiscussionUtil
       .createDiscussionsPositionsFlow(mergeRequest, discussionsViewOption).toLines {
         it.mapToLocation(diffData, Side.RIGHT)?.takeIf { it.first == Side.RIGHT }?.second
       }.stateInNow(cs, emptySet())

@@ -366,6 +366,23 @@ fun <T, R> Flow<Iterable<T>>.mapDataToModel(
 fun <T, R> Flow<Iterable<T>>.mapModelsToViewModels(mapper: CoroutineScope.(T) -> R): Flow<List<R>> =
   associateCaching(HashingStrategy.identity(), mapper).map { it.values.toList() }
 
+/**
+ * Maps each item in the collection from the source flow to a flow and emits the array of the latest values of each mapped flow.
+ * Each new emission of the source flow triggers re-subscription to the mapped flows.
+ */
+inline fun <T, reified R> Flow<Iterable<T>>.flatMapLatestEach(crossinline transform: (T) -> Flow<R>): Flow<Array<R>> =
+  flatMapLatest {
+    it.mapEach(transform)
+  }
+
+/**
+ * Maps each item in the collection to a flow and emits the array of the values from each mapped flow.
+ */
+inline fun <T, reified R> Iterable<T>.mapEach(crossinline transform: (T) -> Flow<R>): Flow<Array<R>> {
+  val nestedFlows = map(transform)
+  return combine(nestedFlows) { it }
+}
+
 fun <T> Flow<Collection<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }
 
 /**

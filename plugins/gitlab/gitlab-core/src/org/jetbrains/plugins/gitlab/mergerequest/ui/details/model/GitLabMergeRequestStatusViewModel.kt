@@ -19,6 +19,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabCiJobDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabPipelineDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCiJobStatus
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestDiscussionUtil.createAllDiscussionsResolvedFlow
 
 interface GitLabMergeRequestStatusViewModel : CodeReviewStatusViewModel {
   val resolveConflictsVm: GitLabResolveConflictsLocallyViewModel
@@ -43,13 +44,7 @@ class GitLabMergeRequestStatusViewModelImpl(
     it.onlyAllowMergeIfAllDiscussionsAreResolved
   }.distinctUntilChanged().flatMapLatest { resolveRequired ->
     if (resolveRequired) {
-      mergeRequest.nonEmptyDiscussionsData.map { result ->
-        result.getOrNull().orEmpty().any { disc ->
-          disc.notes.firstOrNull()?.let {
-            !it.system && it.resolvable && !it.resolved
-          } ?: false
-        }
-      }
+      createAllDiscussionsResolvedFlow(mergeRequest)
     }
     else {
       flowOf(false)

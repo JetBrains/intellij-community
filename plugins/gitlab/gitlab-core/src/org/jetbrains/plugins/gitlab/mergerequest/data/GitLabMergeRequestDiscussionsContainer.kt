@@ -21,9 +21,6 @@ import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 interface GitLabMergeRequestDiscussionsContainer {
-  val nonEmptyDiscussionsData: SharedFlow<Result<List<GitLabDiscussionDTO>>>
-  val draftNotesData: SharedFlow<Result<List<GitLabMergeRequestDraftNoteRestDTO>>>
-
   val discussions: Flow<Result<Collection<GitLabMergeRequestDiscussion>>>
   val systemNotes: Flow<Result<Collection<GitLabNote>>>
   val draftNotes: Flow<Result<Collection<GitLabMergeRequestDraftNote>>>
@@ -84,7 +81,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       api.graphQL.loadMergeRequestDiscussions(glProject, mr.iid, GraphQLRequestPagination(cursor))
     }
 
-  override val nonEmptyDiscussionsData: SharedFlow<Result<List<GitLabDiscussionDTO>>> =
+  private val nonEmptyDiscussionsData: SharedFlow<Result<List<GitLabDiscussionDTO>>> =
     discussionsDataHolder.resultOrErrorFlow
       .mapCatching { discussions -> discussions.filter { it.notes.isNotEmpty() } }
       .modelFlow(cs, LOG)
@@ -142,7 +139,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       }
     }
 
-  override val draftNotesData =
+  private val draftNotesData =
     (draftNotesDataHolder?.resultOrErrorFlow ?: flowOf(Result.success(emptyList())))
       .mapCatching { draftNotes ->
         if (draftNotes.isEmpty()) return@mapCatching emptyList()
