@@ -32,7 +32,6 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
 
   private val navigationFlow = MutableSharedFlow<BuildTreeNavigationRequest>(extraBufferCapacity = Int.MAX_VALUE)
   private val filteringStateFlow = MutableStateFlow(BuildTreeFilteringState(false, false))
-  private val isDisposed = MutableStateFlow(false)
 
   @Volatile
   private var hasSelection = false
@@ -234,10 +233,6 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
     return filteringStateFlow.asStateFlow()
   }
 
-  fun getShutdownStateFlow(): Flow<Boolean> {
-    return isDisposed.asStateFlow()
-  }
-
   fun canNavigate(forward: Boolean): Boolean {
     return if (clearingSelection) forward && hasAnyNode else if (forward) hasNextNode else hasPrevNode
   }
@@ -260,8 +255,4 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
       LOG.debug { "Showing warnings set to $value" }
       filteringStateFlow.value = filteringStateFlow.value.copy(showWarnings = value)
     }
-
-   override fun dispose() {
-    isDisposed.value = true
-  }
 }

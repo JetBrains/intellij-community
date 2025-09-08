@@ -6,11 +6,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.ui.ComponentContainer
-import com.intellij.openapi.util.Disposer
 import com.intellij.platform.kernel.ids.BackendValueIdType
-import com.intellij.platform.kernel.ids.deleteValueById
 import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.rpc.Id
@@ -18,6 +15,7 @@ import com.intellij.platform.rpc.UID
 import com.intellij.ui.RemoteTransferUIManager
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JPanel
@@ -48,33 +46,27 @@ class SplitComponentFactory private constructor() {
    * In monolith case this will create the associated UI component in place. On a remote development backend, a placeholder component
    * is created instead with the real component created on the frontend side.
    *
-   * NOTE. The caller is responsible for the disposal of the model object. [SplitComponentFactory] will keep the reference to the model
-   * until it's disposed.
+   * @param scope the scope of the model.
+   * The scope passed in [SplitComponentProvider.createComponent] will be canceled when this [scope] is canceled.
    */
   @RequiresEdt
-  fun createComponent(model: SplitComponentModel) : ComponentContainer {
+  fun createComponent(scope: CoroutineScope, model: SplitComponentModel): ComponentContainer {
     val providerId = model.providerId
-    val componentId = storeValueGlobally(model, SplitComponentModelIdType)
+    val componentId = storeValueGlobally(scope, model, SplitComponentModelIdType)
     val id = SplitComponentIdWithProvider(providerId, componentId)
     logger.debug { "Registered model with id=$id : $model" }
-    model.whenDisposed {
-      logger.debug { "De-registering model with id=$id : $model" }
-      deleteValueById(componentId, SplitComponentModelIdType)
-    }
     if (AppMode.isRemoteDevHost()) {
       logger.debug("Creating component placeholder")
-      val placeholder = SplitComponentPlaceholder(id)
+      val placeholder = SplitComponentPlaceholder(scope, id)
       return object : ComponentContainer {
         override fun getComponent() = placeholder
         override fun getPreferredFocusableComponent() = null
         override fun dispose() {}
-      }.apply {
-        Disposer.register(model, this)
       }
     }
     else {
       logger.debug("Creating component in-place")
-      return SplitComponentProvider.createComponent(id)
+      return SplitComponentProvider.createComponent(scope, id)
     }
   }
 
@@ -104,7 +96,7 @@ data class SplitComponentIdWithProvider(val providerId: String, val componentId:
 }
 
 @ApiStatus.Internal
-class SplitComponentPlaceholder(val id: SplitComponentIdWithProvider) : JPanel() {
+class SplitComponentPlaceholder(val scope: CoroutineScope, val id: SplitComponentIdWithProvider) : JPanel() {
   init {
     RemoteTransferUIManager.setWellBeControlizableAndPaintedQuickly(this)
   }

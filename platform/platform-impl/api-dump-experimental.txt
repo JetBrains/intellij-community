@@ -503,7 +503,7 @@ f:com.intellij.ui.render.RenderersKt
 - *sf:fontInfoRenderer(Z):javax.swing.ListCellRenderer
 *f:com.intellij.ui.split.SplitComponentFactory
 - *sf:Companion:com.intellij.ui.split.SplitComponentFactory$Companion
-- f:createComponent(com.intellij.ui.split.SplitComponentModel):com.intellij.openapi.ui.ComponentContainer
+- f:createComponent(kotlinx.coroutines.CoroutineScope,com.intellij.ui.split.SplitComponentModel):com.intellij.openapi.ui.ComponentContainer
 - sf:getInstance():com.intellij.ui.split.SplitComponentFactory
 - f:getRegisteredModel(com.intellij.ui.split.SplitComponentId):com.intellij.ui.split.SplitComponentModel
 *f:com.intellij.ui.split.SplitComponentFactory$Companion
@@ -527,11 +527,10 @@ f:com.intellij.ui.render.RenderersKt
 *f:com.intellij.ui.split.SplitComponentId$Companion
 - f:serializer():kotlinx.serialization.KSerializer
 *:com.intellij.ui.split.SplitComponentModel
-- com.intellij.openapi.Disposable
 - a:getProviderId():java.lang.String
 *:com.intellij.ui.split.SplitComponentProvider
 - *sf:Companion:com.intellij.ui.split.SplitComponentProvider$Companion
-- a:createComponent(com.intellij.ui.split.SplitComponentId):com.intellij.openapi.ui.ComponentContainer
+- a:createComponent(kotlinx.coroutines.CoroutineScope,com.intellij.ui.split.SplitComponentId):com.intellij.openapi.ui.ComponentContainer
 *f:com.intellij.ui.split.SplitComponentProvider$Companion
 f:com.intellij.util.SwingBindingsKt
 - *sf:bindSelectedTabIn(javax.swing.JTabbedPane,kotlinx.coroutines.flow.MutableStateFlow,kotlinx.coroutines.CoroutineScope):V

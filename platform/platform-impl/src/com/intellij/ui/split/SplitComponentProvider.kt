@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.xmlb.annotations.Attribute
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -24,10 +25,10 @@ interface SplitComponentProvider {
     private val EP = KeyedExtensionCollector<SplitComponentProvider, String>("com.intellij.frontend.splitComponentProvider")
 
     @ApiStatus.Internal
-    fun createComponent(id: SplitComponentIdWithProvider) : ComponentContainer {
+    fun createComponent(cs: CoroutineScope, id: SplitComponentIdWithProvider): ComponentContainer {
       val provider = EP.findSingle(id.providerId)
       if (provider != null) {
-        val container = provider.createComponent(id.componentId)
+        val container = provider.createComponent(cs, id.componentId)
         if (container != null) {
           return container
         }
@@ -53,11 +54,10 @@ interface SplitComponentProvider {
    * [ComponentContainer.getPreferredFocusableComponent] in the result is not used currently in rem-dev scenarios. It can only be useful
    * in monolith mode now.
    *
-   * NOTE. The returned object should take care about its disposal itself. Frontend will keep the returned component cached until its
-   * disposal. Supposedly, the disposal should happen when the associated modal signals it (e.g. when it's disposed itself).
+   * @param scope that is going to be canceled when [CoroutineScope] passed to [SplitComponentFactory.createComponent] is canceled.
    */
   @RequiresEdt
-  fun createComponent(id: SplitComponentId) : ComponentContainer?
+  fun createComponent(scope: CoroutineScope, id: SplitComponentId): ComponentContainer?
 }
 
 private class SplitComponentProviderBean : BaseKeyedLazyInstance<SplitComponentProvider>(), KeyedLazyInstance<SplitComponentProvider> {

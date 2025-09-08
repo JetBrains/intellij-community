@@ -10,6 +10,6 @@ import org.jetbrains.annotations.ApiStatus
  * @see SplitComponentFactory
  */
 @ApiStatus.Experimental
-interface SplitComponentModel : Disposable {
+interface SplitComponentModel {
   val providerId: String
 }

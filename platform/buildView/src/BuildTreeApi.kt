@@ -19,7 +19,6 @@ interface BuildTreeApi : RemoteApi<Unit> {
   suspend fun getTreeEventsFlow(buildViewId: SplitComponentId): Flow<BuildTreeEvent>
   suspend fun getFilteringStateFlow(buildViewId: SplitComponentId): Flow<BuildTreeFilteringState>
   suspend fun getNavigationFlow(buildViewId: SplitComponentId): Flow<BuildTreeNavigationRequest>
-  suspend fun getShutdownStateFlow(buildViewId: SplitComponentId): Flow<Boolean>
 
   suspend fun onSelectionChange(buildViewId: SplitComponentId, selectedNodeId: Int?)
   suspend fun onNavigationContextChange(buildViewId: SplitComponentId, context: BuildTreeNavigationContext)

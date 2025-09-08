@@ -177,8 +177,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     if (mySplitImplementation) {
       myScope = CoroutineScopeKt.childScope(ScopeHolder.getScope(project), "BuildTreeConsoleView", EmptyCoroutineContext.INSTANCE, true);
       myTreeVm = new BuildTreeViewModel(this, myScope);
-      Disposer.register(this, myTreeVm);
-      mySplitComponent = SplitComponentFactory.getInstance().createComponent(myTreeVm);
+      mySplitComponent = SplitComponentFactory.getInstance().createComponent(myScope, myTreeVm);
 
       treeComponent = mySplitComponent.getComponent();
 

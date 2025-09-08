@@ -36,11 +36,6 @@ private class BuildTreeApiImpl : BuildTreeApi {
     return model.getNavigationFlow()
   }
 
-  override suspend fun getShutdownStateFlow(buildViewId: SplitComponentId): Flow<Boolean> {
-    val model = getModel(buildViewId) ?: return emptyFlow()
-    return model.getShutdownStateFlow()
-  }
-
   override suspend fun onSelectionChange(buildViewId: SplitComponentId, selectedNodeId: Int?) {
     val model = getModel(buildViewId) ?: return
     model.onSelectionChange(selectedNodeId)
