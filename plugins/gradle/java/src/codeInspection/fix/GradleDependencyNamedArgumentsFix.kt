@@ -2,15 +2,15 @@
 package org.jetbrains.plugins.gradle.codeInspection.fix
 
 import com.intellij.codeInspection.CommonQuickFixBundle
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
 /**
@@ -18,18 +18,20 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
  * by transforming named arguments into a colon-separated string representation.
  *
  * Assumes the named arguments are string literals.
- *
- * @param element The dependency GrMethodCall PSI element.
  */
-class GradleDependencyNamedArgumentsFix(element: PsiElement) : LocalQuickFixOnPsiElement(element) {
-  override fun getText(): @IntentionName String {
+class GradleDependencyNamedArgumentsFix() : PsiUpdateModCommandQuickFix() {
+  override fun getName(): @IntentionName String {
     return CommonQuickFixBundle.message("fix.simplify")
   }
 
-  override fun invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-    val namedArguments = when (startElement) {
-      is GrMethodCall -> startElement.namedArguments
-      is GrListOrMap -> startElement.namedArguments
+  override fun getFamilyName(): @IntentionFamilyName String {
+    return name
+  }
+
+  override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+    val namedArguments = when (element) {
+      is GrArgumentList -> element.namedArguments
+      is GrListOrMap -> element.namedArguments
       else -> return
     }
     val group = namedArguments.find {
@@ -52,17 +54,13 @@ class GradleDependencyNamedArgumentsFix(element: PsiElement) : LocalQuickFixOnPs
       GroovyPsiElementFactory.getInstance(project).createLiteralFromValue(dependency)
     }
 
-    when (startElement) {
-      is GrMethodCall -> {
+    when (element) {
+      is GrArgumentList -> {
         namedArguments.forEach { it.delete() }
-        startElement.argumentList.add(newArgument)
+        element.add(newArgument)
       }
-      is GrListOrMap -> startElement.replace(newArgument)
+      is GrListOrMap -> element.replace(newArgument)
       else -> return
     }
-  }
-
-  override fun getFamilyName(): @IntentionFamilyName String {
-    return text
   }
 }
