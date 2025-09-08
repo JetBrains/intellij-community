@@ -51,30 +51,23 @@ internal object CoroutineAgentConnector {
     }
 
     private fun getKotlinxCoroutinesJarsFromClasspath(project: Project, configuration: RunConfigurationBase<*>?): List<String> {
+        // This logic of attaching coroutine debug agent is only applicable to ModuleBasedConfigurations, see IDEA-378969
+        if (configuration !is ModuleBasedConfiguration<*, *>) return emptyList()
         // First, check if any modules corresponding to the given run configuration have loaded the kotlinx.coroutines.debug.internal package,
         // if none, then the coroutines debug agent should not be applied.
         // This is important for a case when a project contains both Kotlin and Java modules, Kotlin modules may contain coroutines dependency,
         // though when a Java run configuration is chosen, the coroutine agent should not be applied.
-        // In case no run configuration is provided or if it's not module-based, then search the whole project for the package.
         val coroutinesPsiPackage = JavaPsiFacade.getInstance(project).findPackage(KOTLINX_COROUTINES_DEBUG_INTERNAL_PACKAGE) ?: return emptyList()
-
-        return if (configuration != null && configuration is ModuleBasedConfiguration<*, *>) {
-            configuration.modules.flatMap { module ->
-                val moduleScope = GlobalSearchScope.union(
-                    listOf(
-                        GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module),
-                        module.getModuleRuntimeScope(true),
-                    )
+        return configuration.modules.flatMap { module ->
+            val moduleScope = GlobalSearchScope.union(
+                listOf(
+                    GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module),
+                    module.getModuleRuntimeScope(true),
                 )
-                coroutinesPsiPackage.getDirectories(moduleScope).mapNotNull {
-                    JarFileSystem.getInstance().getVirtualFileForJar(it.virtualFile)?.path
-                }
+            )
+            coroutinesPsiPackage.getDirectories(moduleScope).mapNotNull {
+                JarFileSystem.getInstance().getVirtualFileForJar(it.virtualFile)?.path
             }
-        } else {
-            coroutinesPsiPackage.getDirectories()
-                .mapNotNull {
-                    JarFileSystem.getInstance().getVirtualFileForJar(it.virtualFile)?.path
-                }
         }
     }
 
