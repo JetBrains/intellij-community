@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeInsight.utils
+package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -26,7 +26,7 @@ object LoopToCollectionTransformUtils {
 
     /**
      * Finds the usage pattern for a loop parameter where it's used as an array index exactly once.
-     *
+     * 
      * @param loopParameter the loop parameter (e.g., `i` in `for (i in 0..<size)`)
      * @return LoopUsageInfo if the parameter is used exactly once as an array index, null otherwise
      */
@@ -34,16 +34,16 @@ object LoopToCollectionTransformUtils {
         val paramElement = loopParameter.originalElement ?: return null
         val usageElement = ReferencesSearch.search(paramElement).findAll().singleOrNull()?.element ?: return null
         val arrayAccessElement = usageElement.parents.match(KtContainerNode::class, last = KtArrayAccessExpression::class) ?: return null
-
+        
         return LoopUsageInfo(paramElement as KtParameter, usageElement, arrayAccessElement)
     }
 
     /**
      * Transforms an index-based loop to a collection-based loop by:
-     * 1. Replacing the loop parameter with "element"
+     * 1. Replacing the loop parameter with "element" 
      * 2. Replacing array access expressions with direct element references
      * 3. Replacing the loop range with the collection expression
-     *
+     * 
      * @param project the current project
      * @param usageInfo information about the loop usage pattern
      * @param loopParameter the original loop parameter
@@ -60,7 +60,7 @@ object LoopToCollectionTransformUtils {
         val factory = KtPsiFactory(project)
         val newParameter = factory.createLoopParameter("element")
         val newReferenceExpression = factory.createExpression("element")
-
+        
         usageInfo.arrayAccessElement.replace(newReferenceExpression)
         loopParameter.replace(newParameter)
         loopRange.replace(newLoopRange)

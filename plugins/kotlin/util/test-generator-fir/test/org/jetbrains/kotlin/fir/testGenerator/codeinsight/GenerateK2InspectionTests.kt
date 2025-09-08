@@ -83,6 +83,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/replaceArrayOfWithLiteral")
             model("${idea}/inspectionsLocal/selfAssignment")
             model("${idea}/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog")
+            model("${idea}/inspectionsLocal/replaceManualRangeWithIndicesCalls")
             // unusedSymbol is covered with K2UnusedSymbolHighlightingTestGenerated
             //model("${idea}/inspectionsLocal/unusedSymbol", pattern = pattern)
             model("${idea}/inspectionsLocal/branched/introduceWhenSubject")

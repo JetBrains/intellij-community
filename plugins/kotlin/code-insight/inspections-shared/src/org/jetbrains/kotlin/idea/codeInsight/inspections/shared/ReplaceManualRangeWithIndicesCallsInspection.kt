@@ -1,6 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.idea.inspections
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
@@ -14,7 +13,7 @@ import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.ImplicitReceiverInfo
-import org.jetbrains.kotlin.idea.codeInsight.utils.LoopToCollectionTransformUtils
+import org.jetbrains.kotlin.idea.codeinsight.utils.LoopToCollectionTransformUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.getImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -24,7 +23,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.util.match
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractRangeInspection
 
 /**
  * Inspection that suggests replacing manual ranges like `0..<arr.size` with `arr.indices` calls.

@@ -9120,6 +9120,135 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls")
+    public static class ReplaceManualRangeWithIndicesCalls extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("asReceiver.kt")
+        public void testAsReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/asReceiver.kt");
+        }
+
+        @TestMetadata("forNotTarget.kt")
+        public void testForNotTarget() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/forNotTarget.kt");
+        }
+
+        @TestMetadata("implicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiver.kt");
+        }
+
+        @TestMetadata("implicitReceiverFor.kt")
+        public void testImplicitReceiverFor() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiverFor.kt");
+        }
+
+        @TestMetadata("implicitReceiverRangeUntil.kt")
+        public void testImplicitReceiverRangeUntil() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiverRangeUntil.kt");
+        }
+
+        @TestMetadata("implicitReceiverUntil.kt")
+        public void testImplicitReceiverUntil() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiverUntil.kt");
+        }
+
+        @TestMetadata("indexInLvalue.kt")
+        public void testIndexInLvalue() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/indexInLvalue.kt");
+        }
+
+        @TestMetadata("map.kt")
+        public void testMap() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/map.kt");
+        }
+
+        @TestMetadata("multidimensionalArray.kt")
+        public void testMultidimensionalArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/multidimensionalArray.kt");
+        }
+
+        @TestMetadata("multidimensionalArray2.kt")
+        public void testMultidimensionalArray2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/multidimensionalArray2.kt");
+        }
+
+        @TestMetadata("multipleImplicitReceivers.kt")
+        public void testMultipleImplicitReceivers() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/multipleImplicitReceivers.kt");
+        }
+
+        @TestMetadata("multipleImplicitReceivers2.kt")
+        public void testMultipleImplicitReceivers2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/multipleImplicitReceivers2.kt");
+        }
+
+        @TestMetadata("notUsedAsIndex.kt")
+        public void testNotUsedAsIndex() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/notUsedAsIndex.kt");
+        }
+
+        @TestMetadata("rangeTo.kt")
+        public void testRangeTo() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/rangeTo.kt");
+        }
+
+        @TestMetadata("simpleExpression.kt")
+        public void testSimpleExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/simpleExpression.kt");
+        }
+
+        @TestMetadata("simpleExpressionRangeUntil.kt")
+        public void testSimpleExpressionRangeUntil() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/simpleExpressionRangeUntil.kt");
+        }
+
+        @TestMetadata("simpleExpressionUntil.kt")
+        public void testSimpleExpressionUntil() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/simpleExpressionUntil.kt");
+        }
+
+        @TestMetadata("simpleFor.kt")
+        public void testSimpleFor() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/simpleFor.kt");
+        }
+
+        @TestMetadata("thisReceiver.kt")
+        public void testThisReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/thisReceiver.kt");
+        }
+
+        @TestMetadata("thisReceiverFor.kt")
+        public void testThisReceiverFor() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/thisReceiverFor.kt");
+        }
+
+        @TestMetadata("thisReceiverRangeUntil.kt")
+        public void testThisReceiverRangeUntil() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/thisReceiverRangeUntil.kt");
+        }
+
+        @TestMetadata("thisReceiverUntil.kt")
+        public void testThisReceiverUntil() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/thisReceiverUntil.kt");
+        }
+
+        @TestMetadata("usedForOtherArray.kt")
+        public void testUsedForOtherArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/usedForOtherArray.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject")
     public abstract static class IntroduceWhenSubject extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
