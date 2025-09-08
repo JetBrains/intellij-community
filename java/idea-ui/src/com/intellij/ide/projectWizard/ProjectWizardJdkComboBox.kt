@@ -19,6 +19,9 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.util.bind
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DefaultProjectFactory
@@ -39,6 +42,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
@@ -110,30 +114,22 @@ fun projectWizardJdkComboBox(
   sdkFilter: (Sdk) -> Boolean = { true },
   jdkPredicate: ProjectWizardJdkPredicate? = ProjectWizardJdkPredicate.IsJdkSupported(),
 ): Cell<ProjectWizardJdkComboBox> {
-  val combo = ProjectWizardJdkComboBox(projectJdk, disposable, sdkFilter)
-
-  locationProperty.afterPropagation {
-    val path = locationProperty.get()
-    if (path.isEmpty()) {
-      return@afterPropagation
-    }
-    val newDescriptor = guardEelDescriptor { Path.of(locationProperty.get()).getEelDescriptor() } ?: LocalEelDescriptor
-    combo.eelChanged(newDescriptor)
-  }
-
-  combo.filterItems { sdkFilter(it) }
-
-  return row.cell(combo)
+  val eelDescriptorProperty = locationProperty.transform { Path.of(it).getEelDescriptor() }
+  return row.cell(ProjectWizardJdkComboBox(projectJdk, disposable, sdkFilter))
     .columns(COLUMNS_LARGE)
     .apply {
       val commentCell = comment(component.comment, 50)
       component.addItemListener {
         commentCell.comment?.let { it.text = component.comment }
       }
-      updateIntentProperty(combo, intentProperty)
+    }
+    .applyToComponent {
+      filterItems { sdkFilter(it) }
+      bind(intentProperty)
+      bindEelDescriptor(eelDescriptorProperty)
     }
     .validationInfo {
-      val intent = combo.selectedItem as? ProjectWizardJdkIntent ?: return@validationInfo null
+      val intent = intentProperty.get()
       val version = intent.versionString ?: return@validationInfo null
       val name = intent.name
       val error = jdkPredicate?.getError(version, name ?: version) ?: return@validationInfo null
@@ -144,7 +140,7 @@ fun projectWizardJdkComboBox(
 
       if (isWindows) {
         // todo: remove this when JDK over Eel is enabled by default
-        val wslJDKValidation = validateJdkAndProjectCompatibility(intent, locationProperty::get)
+        val wslJDKValidation = validateJdkAndProjectCompatibility(intent, eelDescriptorProperty.get())
         if (wslJDKValidation != null) return@validationOnApply wslJDKValidation
       }
 
@@ -154,11 +150,8 @@ fun projectWizardJdkComboBox(
 
       null
     }
-    .onChanged {
-      updateIntentProperty(combo, intentProperty)
-    }
     .onApply {
-      val intent = combo.selectedItem as? ProjectWizardJdkIntent ?: return@onApply
+      val intent = intentProperty.get()
       when (intent) {
         is NoJdk -> JdkComboBoxCollector.noJdkSelected()
         is DownloadJdk -> JdkComboBoxCollector.jdkDownloaded((intent.task as JdkDownloadTask).jdkItem)
@@ -175,7 +168,7 @@ private fun ValidationInfoBuilder.validateInstallDir(intent: DownloadJdk): Valid
   }
 }
 
-private fun ValidationInfoBuilder.validateJdkAndProjectCompatibility(intent: Any?, location: () -> String): ValidationInfo? {
+private fun ValidationInfoBuilder.validateJdkAndProjectCompatibility(intent: Any?, eelDescriptor: EelDescriptor): ValidationInfo? {
   val path = when (intent) {
     is DownloadJdk -> intent.task.plannedHomeDir
     is ExistingJdk -> intent.jdk.homePath
@@ -183,7 +176,8 @@ private fun ValidationInfoBuilder.validateJdkAndProjectCompatibility(intent: Any
     else -> null
   }
 
-  val isProjectWSL = WslPath.isWslUncPath(location.invoke())
+  //todo this code is temporary and should be removed together with the java.home.finder.use.eel flag
+  val isProjectWSL = eelDescriptor.osFamily != EelOsFamily.Windows && isWindows
 
   if (path != null && WslPath.isWslUncPath(path) != isProjectWSL) {
     return when (isProjectWSL) {
@@ -192,13 +186,6 @@ private fun ValidationInfoBuilder.validateJdkAndProjectCompatibility(intent: Any
     }
   }
   return null
-}
-
-private fun updateIntentProperty(
-  combo: ProjectWizardJdkComboBox,
-  intentProperty: GraphProperty<ProjectWizardJdkIntent>,
-) {
-  intentProperty.set((combo.selectedItem as? ProjectWizardJdkIntent)!!)
 }
 
 @Service(Service.Level.APP)
@@ -333,11 +320,9 @@ class ProjectWizardJdkComboBox(
   }
 
   @RequiresEdt
-  fun eelChanged(descriptor: EelDescriptor) {
-    if (descriptor != currentEelDescriptor) {
-      currentEelDescriptor = descriptor
-      reloadJdks(descriptor)
-    }
+  fun refreshJdks(descriptor: EelDescriptor) {
+    currentEelDescriptor = descriptor
+    reloadJdks(descriptor)
   }
 
   @RequiresEdt
@@ -639,4 +624,12 @@ private fun addDownloadItem(extension: SdkDownload, combo: ComboBox<ProjectWizar
   } ?: 0
   combo.insertItemAt(DownloadJdk(task), index)
   combo.selectedIndex = index
+}
+
+internal fun ProjectWizardJdkComboBox.bindEelDescriptor(eelDescriptorProperty: ObservableProperty<EelDescriptor>) {
+  // initial setup
+  refreshJdks(eelDescriptorProperty.get())
+  eelDescriptorProperty.afterChange { eelDescriptor ->
+    refreshJdks(eelDescriptor)
+  }
 }

@@ -10,7 +10,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.testFramework.junit5.eel.fixture.eelFixture
@@ -34,11 +33,11 @@ class ProjectWizardJdkComboBoxTest {
 
     val comboBox = ProjectWizardJdkComboBox(null, disposable)
 
-    comboBox.eelChanged(LocalEelDescriptor)
+    comboBox.refreshJdks(LocalEelDescriptor)
     Assertions.assertTrue(comboBox.contains(localSdk))
     Assertions.assertFalse(comboBox.contains(eelSdk))
 
-    comboBox.eelChanged(eelFixture.get().eelDescriptor)
+    comboBox.refreshJdks(eelFixture.get().eelDescriptor)
     Assertions.assertFalse(comboBox.contains(localSdk))
     Assertions.assertTrue(comboBox.contains(eelSdk))
   }
