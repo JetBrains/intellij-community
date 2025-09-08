@@ -41,6 +41,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -62,6 +63,8 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import kotlin.Unit;
@@ -220,16 +223,25 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   private void saveDocuments(@Nullable Predicate<? super Document> filter, boolean isExplicit) {
-    ThreadingAssertions.assertEventDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
       .beforeAllDocumentsSaving();
     if (myUnsavedDocuments.isEmpty()) return;
 
+    if (EDT.isCurrentThreadEdt()) {
+      saveDocumentsOnEdt(isExplicit, filter);
+    }
+    else {
+      runWithBackgroundWriteActionAllowed(() -> doSave(null, isExplicit, filter));
+    }
+  }
+
+  @RequiresEdt
+  private void saveDocumentsOnEdt(boolean isExplicit, @Nullable Predicate<? super Document> filter) {
     ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
     PotemkinProgress myProgress = current instanceof PotemkinProgress p ? p :
-      new PotemkinProgress("", null, null, null);
+                                  new PotemkinProgress("", null, null, null);
     myProgress.pushState();
     myProgress.setTitle(UIBundle.message("file.save.all.document.dialog.title"));
     try {
@@ -246,17 +258,30 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     }
   }
 
-  private void doSave(@NotNull PotemkinProgress myProgress, boolean isExplicit, @Nullable Predicate<? super Document> filter) {
+  @RequiresBackgroundThread
+  private static void runWithBackgroundWriteActionAllowed(Runnable runnable) {
+    ThreadContext.installThreadContext(
+      ThreadContext.currentThreadContext().plus(InternalThreading.RunInBackgroundWriteActionMarker.INSTANCE), true, () -> {
+        runnable.run();
+        return Unit.INSTANCE;
+      });
+  }
+
+  private void doSave(@Nullable PotemkinProgress myProgress, boolean isExplicit, @Nullable Predicate<? super Document> filter) {
     Map<Document, IOException> failedToSave = new HashMap<>();
     Set<Document> vetoed = new HashSet<>();
     while (true) {
       int count = 0;
-      myProgress.setIndeterminate(false);
+      if (myProgress != null) {
+        myProgress.setIndeterminate(false);
+      }
       int size = myUnsavedDocuments.size();
       for (Document document : myUnsavedDocuments) {
-        myProgress.setFraction(1.0 * count / size);
+        if (myProgress != null) {
+          myProgress.setFraction(1.0 * count / size);
+        }
         VirtualFile virtualFile = getFile(document);
-        if (virtualFile != null) {
+        if (virtualFile != null && myProgress != null) {
           myProgress.setText2(virtualFile.getPresentableUrl());
         }
         if (filter != null && !filter.test(document)) continue;
@@ -287,13 +312,23 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   public void saveDocument(@NotNull Document document, boolean explicit) {
-    ThreadingAssertions.assertEventDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
       .beforeAnyDocumentSaving(document, explicit);
     if (!myUnsavedDocuments.contains(document)) return;
 
+    if (EDT.isCurrentThreadEdt()) {
+      saveDocumentInWriteSafeEnvironment(document, explicit);
+    }
+    else {
+      runWithBackgroundWriteActionAllowed(() -> {
+        saveDocumentInWriteSafeEnvironment(document, explicit);
+      });
+    }
+  }
+
+  private void saveDocumentInWriteSafeEnvironment(@NotNull Document document, boolean explicit) {
     try {
       doSaveDocument(document, explicit);
     }
@@ -346,7 +381,10 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     }
 
     LOG.trace("  writing...");
-    WriteAction.run(() -> doSaveDocumentInWriteAction(document, file));
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Void, IOException>)() -> {
+      doSaveDocumentInWriteAction(document, file);
+      return null;
+    });
     LOG.trace("  done");
     ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
       .afterDocumentSaved(document);

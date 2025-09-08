@@ -228,8 +228,13 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
 
           if (settings.isSaveOnFrameDeactivation && canSyncOrSave()) {
             // for many tasks (compilation, web development, etc.), it is important to save documents on frame deactivation ASAP
-            WriteIntentReadAction.run {
-              (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+            if (Registry.`is`("document.save.in.background.allowed")) {
+              saveDocumentsInBackgroundWriteAction()
+            }
+            else {
+              WriteIntentReadAction.run {
+                (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+              }
             }
             if (addToSaveQueue(saveAppAndProjectsSettingsTask)) {
               requestSave()
@@ -265,6 +270,14 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
       .collect {
         executeOnIdle()
       }
+  }
+
+  private fun saveDocumentsInBackgroundWriteAction() {
+    coroutineScope.launch(CoroutineName("Saving documents on frame deactivation")) {
+      backgroundWriteAction {
+        (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+      }
+    }
   }
 
   private suspend fun executeOnIdle() {
