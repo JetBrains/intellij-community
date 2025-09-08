@@ -208,6 +208,11 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   }
 
   @Override
+  public PyType visitPyOverloadType(@NotNull PyOverloadType overloadType) {
+    return new PyOverloadType(ContainerUtil.map(overloadType.getItems(), this::clone), overloadType.getImpl());
+  }
+
+  @Override
   public PyType visitPyTypeVarType(@NotNull PyTypeVarType typeVarType) {
     return typeVarType;
   }

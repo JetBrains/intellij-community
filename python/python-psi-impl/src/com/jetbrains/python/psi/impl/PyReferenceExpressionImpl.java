@@ -68,12 +68,14 @@ import com.jetbrains.python.psi.types.PyDescriptorTypeUtil;
 import com.jetbrains.python.psi.types.PyImportedModuleType;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyNarrowedType;
+import com.jetbrains.python.psi.types.PyOverloadType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnsafeUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.psi.types.TypeEvalContextImpl;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import one.util.streamex.StreamEx;
@@ -345,8 +347,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     final PsiFile realFile = FileContextUtil.getContextFile(this);
     if (!(getContainingFile() instanceof PyExpressionCodeFragment) || (realFile != null && context.maySwitchToAST(realFile))) {
+      final var overloadMembers = new ArrayList<>();
       for (PsiElement target : PyUtil.multiResolveTopPriority(getReference(resolveContext))) {
         if (target == this) {
+          continue;
+        }
+
+        if (overloadMembers.contains(target)) {
           continue;
         }
 
@@ -354,7 +361,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           throw new PsiInvalidElementAccessException(this);
         }
 
-        members.add(getTypeFromTarget(target, context, this));
+        var member = getTypeFromTarget(target, context, this);
+        if (Ref.deref(member) instanceof PyOverloadType && target instanceof PyFunction function) {
+          overloadMembers.addAll(PyiUtil.getOverloads(function, context));
+        }
+        members.add(member);
       }
     }
 
@@ -498,8 +509,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         }
       }
     }
-    if (target instanceof PyFunction) {
-      final PyDecoratorList decoratorList = ((PyFunction)target).getDecoratorList();
+    if (target instanceof PyFunction function) {
+      final PyDecoratorList decoratorList = function.getDecoratorList();
       if (decoratorList != null) {
         final PyDecorator propertyDecorator = decoratorList.findDecorator(PyNames.PROPERTY);
         if (propertyDecorator != null) {
@@ -511,6 +522,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
             return Ref.create(PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY));
           }
         }
+      }
+      var overloads = PyiUtil.getOverloads(function, context);
+      if (!overloads.isEmpty()) {
+        return Ref.create(new PyOverloadType(
+          ContainerUtil.map(overloads, overload -> (PyCallableType)context.getType(overload)),
+          PyiUtil.isOverload(function, context) ? null : Ref.create(context.getType(function))
+        ));
       }
     }
     if (target instanceof PyTypedElement) {

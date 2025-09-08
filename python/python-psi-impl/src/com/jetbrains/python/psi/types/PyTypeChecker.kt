@@ -252,6 +252,39 @@ object PyTypeChecker {
       return match(expected, actual.moduleClassType, context)
     }
 
+    // Handle PyOverloadType matching
+    if (expected is PyOverloadType) {
+      if (actual is PyOverloadType) {
+        // When both are overload types, check if all overloads in expected have a match in actual (subset matching)
+        return Optional.of(
+          expected.items.all { expectedItem ->
+            actual.items.any { actualItem ->
+              match(expectedItem, actualItem, context).orElse(false)!!
+            }
+          }
+        )
+      }
+      // If expected is overload but actual is not, check if actual is a callable class/protocol
+      // Extract the __call__ type and compare with the overload
+      if (actual is PyClassLikeType && actual.isCallable) {
+        return Optional.of(matchOverloadWithCallable(expected, actual, context, true))
+      }
+      return Optional.of(false)
+    }
+
+    if (actual is PyOverloadType) {
+      // If actual is overload but expected is not, first check if expected is a callable protocol
+      if (expected is PyClassLikeType && expected.isCallable) {
+        return Optional.of(matchOverloadWithCallable(actual, expected, context, false))
+      }
+      // Otherwise, check if any overload in actual matches expected
+      return Optional.of(
+        actual.items.any { item ->
+          match(expected, item, context).orElse(false)!!
+        }
+      )
+    }
+
     if (PyNumericTowerUtil.isEnabled) {
       return Optional.of(false);
     }
@@ -1266,6 +1299,54 @@ object PyTypeChecker {
       }
     }
     return false
+  }
+
+  /**
+   * Compares an overload type against a callable class/protocol's __call__ type.
+   * Returns true if all expected overload items have a match in the actual overload items.
+   */
+  private fun matchOverloadWithCallable(
+    overloadType: PyOverloadType,
+    callableType: PyClassLikeType,
+    context: MatchContext,
+    expectedIsOverload: Boolean,
+  ): Boolean {
+    val resolveContext = PyResolveContext.defaultContext(context.context)
+    val resolveResults = callableType.resolveMember(PyNames.CALL, null, AccessDirection.READ, resolveContext)
+    if (resolveResults.isNullOrEmpty()) {
+      return false
+    }
+
+    val element = resolveResults[0].element
+    var callType = if (element is PyTypedElement) context.context.getType(element) else null
+
+    if (callableType is PyClassType) {
+      callType = dropSelfInProtocolMember(callableType, callType, context.context)
+    }
+
+    when (callType) {
+      is PyOverloadType -> {
+        // If the __call__ is overloaded, compare overload types (subset matching)
+        return overloadType.items.all { expectedItem ->
+          callType.items.any { actualItem ->
+            match(expectedItem, actualItem, context).orElse(false)!!
+          }
+        }
+      }
+      is PyCallableType -> {
+        // If __call__ is not overloaded, check if any overload matches the single callable
+        return overloadType.items.any { item ->
+          // Match with correct argument order based on which is expected
+          if (expectedIsOverload) {
+            match(item, callType, context).orElse(false)!!
+          }
+          else {
+            match(callType, item, context).orElse(false)!!
+          }
+        }
+      }
+      else -> return false
+    }
   }
 
   @JvmStatic
