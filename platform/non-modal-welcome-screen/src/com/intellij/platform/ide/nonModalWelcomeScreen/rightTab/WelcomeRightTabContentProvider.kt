@@ -30,7 +30,7 @@ interface WelcomeRightTabContentProvider {
   )
 
   companion object {
-    private val EP_NAME: ExtensionPointName<WelcomeRightTabContentProvider> = ExtensionPointName("com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenContentProvider")
+    private val EP_NAME: ExtensionPointName<WelcomeRightTabContentProvider> = ExtensionPointName("com.intellij.platform.ide.welcomeScreenContentProvider")
 
     fun getSingleExtension(): WelcomeRightTabContentProvider? {
       val providers = EP_NAME.extensionList

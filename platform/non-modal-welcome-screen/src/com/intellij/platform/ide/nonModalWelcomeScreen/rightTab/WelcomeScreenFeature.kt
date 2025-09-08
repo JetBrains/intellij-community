@@ -19,7 +19,7 @@ import org.jetbrains.jewel.ui.icon.IconKey
 abstract class WelcomeScreenFeature {
   companion object {
     private val EP_NAME: ExtensionPointName<WelcomeScreenFeature> =
-      ExtensionPointName.create("com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenFeature")
+      ExtensionPointName.create("com.intellij.platform.ide.welcomeScreenFeature")
 
     fun getForFeatureKey(featureKey: String): WelcomeScreenFeature? {
       return EP_NAME.lazySequence().firstOrNull { it.featureKey == featureKey }
