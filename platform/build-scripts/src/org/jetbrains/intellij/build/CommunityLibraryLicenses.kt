@@ -1143,6 +1143,9 @@ object CommunityLibraryLicenses {
     LibraryLicense("six.py", version = "1.9.0", attachedTo = "intellij.python", url = "https://six.readthedocs.io/")
       .mit("https://github.com/benjaminp/six/blob/master/LICENSE"),
 
+    LibraryLicense("Ehcache SizeOf", libraryName = "ehcache.sizeof", url = "https://github.com/ehcache/sizeof")
+      .apache("https://github.com/ehcache/sizeof/blob/master/LICENSE"),
+
     LibraryLicense("Skiko", libraryName = "jetbrains.skiko.awt.compose", url = "https://github.com/JetBrains/skiko/")
       .apache("https://github.com/JetBrains/skiko/blob/master/LICENSE"),
 

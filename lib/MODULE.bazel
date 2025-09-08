@@ -4676,6 +4676,20 @@ http_file(
 )
 
 http_file(
+  name = "sizeof-0_4_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ehcache/sizeof/0.4.0/sizeof-0.4.0.jar",
+  sha256 = "0429cb1f5cda94180007874ea926a88149fca2028e92b4556d35f0cfce310c53",
+  downloaded_file_path = "sizeof-0.4.0.jar"
+)
+
+http_file(
+  name = "sizeof-0_4_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ehcache/sizeof/0.4.0/sizeof-0.4.0-sources.jar",
+  sha256 = "2daa945138f5046578512cd230f9ff2203379416b24510f44aabcdd98c267b5b",
+  downloaded_file_path = "sizeof-0.4.0-sources.jar"
+)
+
+http_file(
   name = "kotlin-gradle-plugin-idea-1_9_20-dev-8162_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-plugin-idea/1.9.20-dev-8162/kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar",
   sha256 = "8d1af87632d95148f122a9fa0ae2903c19ee6fab7d01e017f76e0d2c9a022c20",
