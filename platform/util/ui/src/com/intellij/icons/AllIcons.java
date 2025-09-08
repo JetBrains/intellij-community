@@ -1164,6 +1164,7 @@ public class AllIcons {
 
   public static final class Providers {
     /** 16x16 */ public static final @NotNull Icon ActiveMQ = load("providers/activeMQ.svg", -1202590345, 0);
+    /** 16x16 */ public static final @NotNull Icon AmazonWebServices = load("providers/amazonWebServices.svg", -1722782738, 2);
     /** 16x16 */ public static final @NotNull Icon Apache = load("providers/apache.svg", 1920166272, 2);
     /** 16x16 */ public static final @NotNull Icon ApacheDerby = load("providers/apacheDerby.svg", -1039281205, 2);
     /** 16x16 */ public static final @NotNull Icon ApacheIgnite = load("providers/apacheIgnite.svg", 550257054, 2);
@@ -1188,6 +1189,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Firebird = load("providers/firebird.svg", 1881709539, 0);
     /** 16x16 */ public static final @NotNull Icon GaussDB = load("providers/gaussDB.svg", -650009525, 2);
     /** 16x16 */ public static final @NotNull Icon GeminiDb = load("providers/geminiDb.svg", 1146970231, 2);
+    /** 16x16 */ public static final @NotNull Icon GoogleCloud = load("providers/googleCloud.svg", -1785343781, 0);
     /** 16x16 */ public static final @NotNull Icon GoogleCloudSpanner = load("providers/googleCloudSpanner.svg", 2080603813, 0);
     /** 16x16 */ public static final @NotNull Icon Greenplum = load("providers/greenplum.svg", -2098154949, 0);
     /** 16x16 */ public static final @NotNull Icon H2 = load("providers/h2.svg", 1284289147, 2);

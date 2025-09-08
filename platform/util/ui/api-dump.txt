@@ -1083,6 +1083,7 @@ f:com.intellij.icons.AllIcons$Profiler
 - <init>():V
 f:com.intellij.icons.AllIcons$Providers
 - sf:ActiveMQ:javax.swing.Icon
+- sf:AmazonWebServices:javax.swing.Icon
 - sf:Apache:javax.swing.Icon
 - sf:ApacheDerby:javax.swing.Icon
 - sf:ApacheIgnite:javax.swing.Icon
@@ -1107,6 +1108,7 @@ f:com.intellij.icons.AllIcons$Providers
 - sf:Firebird:javax.swing.Icon
 - sf:GaussDB:javax.swing.Icon
 - sf:GeminiDb:javax.swing.Icon
+- sf:GoogleCloud:javax.swing.Icon
 - sf:GoogleCloudSpanner:javax.swing.Icon
 - sf:Greenplum:javax.swing.Icon
 - sf:H2:javax.swing.Icon

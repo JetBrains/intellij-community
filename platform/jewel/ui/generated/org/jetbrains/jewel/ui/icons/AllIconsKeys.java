@@ -3214,6 +3214,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey ActiveMQ = new IntelliJIconKey("providers/activeMQ.svg", "providers/activeMQ.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey AmazonWebServices = new IntelliJIconKey("providers/amazonWebServices.svg", "providers/amazonWebServices.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Apache = new IntelliJIconKey("providers/apache.svg", "providers/apache.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
@@ -3284,6 +3287,9 @@ public final class AllIconsKeys {
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey GeminiDb = new IntelliJIconKey("providers/geminiDb.svg", "providers/geminiDb.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey GoogleCloud = new IntelliJIconKey("providers/googleCloud.svg", "providers/googleCloud.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey GoogleCloudSpanner = new IntelliJIconKey("providers/googleCloudSpanner.svg", "providers/googleCloudSpanner.svg", AllIconsKeys.class);

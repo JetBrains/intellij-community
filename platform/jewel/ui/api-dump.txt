@@ -3342,6 +3342,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Profiler
 - <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Providers
 - sf:ActiveMQ:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:AmazonWebServices:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Apache:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ApacheDerby:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ApacheIgnite:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3366,6 +3367,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Providers
 - sf:Firebird:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:GaussDB:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:GeminiDb:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:GoogleCloud:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:GoogleCloudSpanner:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Greenplum:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:H2:org.jetbrains.jewel.ui.icon.IntelliJIconKey
