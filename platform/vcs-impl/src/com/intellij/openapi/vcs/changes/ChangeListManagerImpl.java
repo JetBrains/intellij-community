@@ -770,7 +770,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  public @NotNull List<File> getAffectedPaths() {
+  public @NotNull @Unmodifiable List<File> getAffectedPaths() {
     List<FilePath> filePaths;
     synchronized (myDataLock) {
       filePaths = myWorker.getAffectedPaths();
@@ -779,7 +779,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  public @NotNull List<VirtualFile> getAffectedFiles() {
+  public @NotNull @Unmodifiable List<VirtualFile> getAffectedFiles() {
     List<FilePath> filePaths;
     synchronized (myDataLock) {
       filePaths = myWorker.getAffectedPaths();
@@ -841,7 +841,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  public @NotNull List<VirtualFile> getModifiedWithoutEditing() {
+  public @NotNull @Unmodifiable List<VirtualFile> getModifiedWithoutEditing() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         return myComposite.getModifiedWithoutEditingFileHolder().getFiles();
@@ -1133,19 +1133,19 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  public @NotNull List<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes) {
+  public @NotNull @Unmodifiable List<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes) {
     synchronized (myDataLock) {
       return myWorker.getAffectedLists(changes);
     }
   }
 
   @Override
-  public @NotNull List<LocalChangeList> getChangeLists(@NotNull Change change) {
+  public @NotNull @Unmodifiable List<LocalChangeList> getChangeLists(@NotNull Change change) {
     return getAffectedLists(Collections.singletonList(change));
   }
 
   @Override
-  public @NotNull List<LocalChangeList> getChangeLists(@NotNull VirtualFile file) {
+  public @NotNull @Unmodifiable List<LocalChangeList> getChangeLists(@NotNull VirtualFile file) {
     if (!file.isInLocalFileSystem()) return Collections.emptyList();
     synchronized (myDataLock) {
       Change change = myWorker.getChangeForPath(VcsUtil.getFilePath(file));
@@ -1223,7 +1223,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  public @NotNull Collection<Change> getChangesIn(@NotNull VirtualFile dir) {
+  public @NotNull @Unmodifiable Collection<Change> getChangesIn(@NotNull VirtualFile dir) {
     if (!dir.isInLocalFileSystem()) return Collections.emptySet();
     return getChangesIn(VcsUtil.getFilePath(dir));
   }
@@ -1237,7 +1237,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  public @NotNull Collection<Change> getChangesIn(@NotNull FilePath dirPath) {
+  public @NotNull @Unmodifiable Collection<Change> getChangesIn(@NotNull FilePath dirPath) {
     return getAllChanges().stream().filter(change -> isChangeUnder(dirPath, change)).collect(toSet());
   }
 
@@ -1275,11 +1275,11 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  public void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<? extends Change> changes) {
+  public void commitChanges(@NotNull LocalChangeList changeList, @NotNull @Unmodifiable List<? extends Change> changes) {
     doCommit(changeList, changes, false);
   }
 
-  private void doCommit(final LocalChangeList changeList, final List<? extends Change> changes, final boolean synchronously) {
+  private void doCommit(final LocalChangeList changeList, final @Unmodifiable List<? extends Change> changes, final boolean synchronously) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     String commitMessage = StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment();
@@ -1336,7 +1336,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   // used in TeamCity
   @SuppressWarnings("removal")
   @Override
-  public void reopenFiles(@NotNull List<? extends FilePath> paths) {
+  public void reopenFiles(@NotNull @Unmodifiable List<? extends FilePath> paths) {
     final ReadonlyStatusHandlerImpl readonlyStatusHandler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(project);
     final boolean savedOption = readonlyStatusHandler.getState().SHOW_DIALOG;
     readonlyStatusHandler.getState().SHOW_DIALOG = false;
@@ -1349,7 +1349,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  public @NotNull List<CommitExecutor> getRegisteredExecutors() {
+  public @NotNull @Unmodifiable List<CommitExecutor> getRegisteredExecutors() {
     return Collections.unmodifiableList(myRegisteredCommitExecutors);
   }
 
