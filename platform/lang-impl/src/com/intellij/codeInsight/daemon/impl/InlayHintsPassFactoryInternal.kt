@@ -13,6 +13,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -42,6 +44,12 @@ class InlayHintsPassFactoryInternal : TextEditorHighlightingPassFactory, TextEdi
 
   @Suppress("CompanionObjectInExtension") // used in external plugins (https://youtrack.jetbrains.com/issue/IDEA-333164/Breaking-change-with-InlayHintsPassFactory-class-moved-in-another-package)
   companion object {
+
+    /**
+     * NOTE: Consider running [com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.restart]
+     * in the same EDT transaction as the one that calls this method to avoid race conditions in modification stamp setting
+     */
+    @RequiresEdt
     fun forceHintsUpdateOnNextPass() {
       for (editor in EditorFactory.getInstance().allEditors) {
         clearModificationStamp(editor)
@@ -54,6 +62,7 @@ class InlayHintsPassFactoryInternal : TextEditorHighlightingPassFactory, TextEdi
       DaemonCodeAnalyzerEx.getInstanceEx(project).restart("InlayHintsPassFactoryInternal.restartDaemonUpdatingHints")
     }
     @ApiStatus.Internal
+    @RequiresEdt
     fun restartDaemonUpdatingHints(project: Project, reason: String) {
       forceHintsUpdateOnNextPass()
       DaemonCodeAnalyzerEx.getInstanceEx(project).restart(reason)
@@ -63,7 +72,14 @@ class InlayHintsPassFactoryInternal : TextEditorHighlightingPassFactory, TextEdi
       editor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationStamp(file))
     }
 
-    fun clearModificationStamp(editor: Editor): Unit = editor.putUserData(PSI_MODIFICATION_STAMP, null)
+    /**
+     * NOTE: Consider running [com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.restart]
+     * in the same EDT transaction as the one that calls this method to avoid race conditions in modification stamp setting
+     */
+    fun clearModificationStamp(editor: Editor) {
+      ThreadingAssertions.softAssertEventDispatchThread()
+      editor.putUserData(PSI_MODIFICATION_STAMP, null)
+    }
 
     private fun getCurrentModificationStamp(file: PsiFile): Long {
       return file.manager.modificationTracker.modificationCount
