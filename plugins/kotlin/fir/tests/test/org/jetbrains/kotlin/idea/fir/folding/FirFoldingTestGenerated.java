@@ -91,6 +91,11 @@ public abstract class FirFoldingTestGenerated extends AbstractFirFoldingTest {
             KotlinTestUtils.runTest(this::doSettingsFoldingTest, this, testDataFilePath);
         }
 
+        @TestMetadata("annotations.kt")
+        public void testAnnotations() throws Exception {
+            runTest("../../idea/tests/testData/folding/checkCollapse/annotations.kt");
+        }
+
         @TestMetadata("collectionFactoryFunctions.kt")
         public void testCollectionFactoryFunctions() throws Exception {
             runTest("../../idea/tests/testData/folding/checkCollapse/collectionFactoryFunctions.kt");
