@@ -3146,18 +3146,20 @@ public final class UIUtil {
     if (document instanceof HTMLDocument) {
       Element elementById = ((HTMLDocument)document).getElement(reference);
       if (elementById != null) {
-        try {
-          int pos = elementById.getStartOffset();
-          Rectangle r = editor.modelToView(pos);
-          if (r != null) {
-            r.height = editor.getVisibleRect().height;
-            editor.scrollRectToVisible(r);
-            editor.setCaretPosition(pos);
+        SwingUtilities.invokeLater(() -> {
+          try {
+            int pos = elementById.getStartOffset();
+            Rectangle r = editor.modelToView2D(pos).getBounds();
+            if (r != null) {
+              r.height = editor.getVisibleRect().height;
+              editor.scrollRectToVisible(r);
+              editor.setCaretPosition(pos);
+            }
           }
-        }
-        catch (BadLocationException e) {
-          getLogger().error(e);
-        }
+          catch (BadLocationException e) {
+            getLogger().error(e);
+          }
+        });
         return;
       }
     }

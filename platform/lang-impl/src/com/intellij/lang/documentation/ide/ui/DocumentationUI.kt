@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION")
 
 package com.intellij.lang.documentation.ide.ui
@@ -224,8 +224,8 @@ internal class DocumentationUI(
     editorPane.border =
       if (forceTopMarginDisabled) JBUI.Borders.empty(0, 0, 2, JBUI.scale(20))
       else JBUI.Borders.emptyTop(
-      if (visible) 0 else DocumentationHtmlUtil.contentOuterPadding - DocumentationHtmlUtil.spaceBeforeParagraph
-    )
+        if (visible) 0 else DocumentationHtmlUtil.contentOuterPadding - DocumentationHtmlUtil.spaceBeforeParagraph
+      )
   }
 
   private suspend fun handleContent(presentation: TargetPresentation, pageContent: DocumentationPageContent?) {
@@ -268,6 +268,7 @@ internal class DocumentationUI(
   private data class DecoratedData(@NlsSafe val html: String, val decoratedStyle: DecoratedStyle?)
   private data class DecoratedStyle(val fontSize: Float, val backgroundColor: Color)
   private data class PreviousDecoratedStyle(val fontSize: FontSize, val backgroundColor: Color)
+
   private fun extractAdditionalData(@NlsSafe html: String): DecoratedData? {
     if (!html.startsWith("<" + DocumentationHtmlUtil.codePreviewFloatingKey)) return null
     val document: Document = Jsoup.parse(html)
@@ -280,7 +281,7 @@ internal class DocumentationUI(
     }
     val backgroundColor = element.attribute("background-color")?.value ?: return null
     val fontSize = element.attribute("font-size")?.value?.toFloat() ?: return null
-    if(element.children().size!=1) return null
+    if (element.children().size != 1) return null
     return DecoratedData(element.children()[0].html(), DecoratedStyle(fontSize, Color.decode(backgroundColor)))
   }
 
