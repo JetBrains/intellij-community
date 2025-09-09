@@ -10,6 +10,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.use
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.nio.file.spi.FileSystemProvider
+import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
@@ -127,17 +128,36 @@ object Measurer {
     seekableByteChannelWrite,
     supportedFileAttributeViews;
   }
-}
 
-fun Measurer.reportFsEvent(delegate: FileSystemProvider, path1: Path?, path2: Path?, operation: Measurer.Operation, startTime: Instant, endTime: Instant, success: Boolean) {
-  val key = Measurer.FsEventKey(
-    delegateType = Measurer.DelegateType.fromDelegateClass(delegate.javaClass),
-    operation = operation,
-    success = success,
-    repeated = null
-  )
-  extendedFsEventsCounter[key]!!.incrementAndGet()
-  extendedFsEventsDurationNanos[key]!!.addAndGet(java.time.Duration.between(startTime, endTime).toNanos())
+  val fsQueryStatCounter: FsQueryStatCounter? = if (System.getProperty("nio.mrfs.telemetry.count.unique.paths", "false").toBoolean()) {
+    FsQueryStatCounter()
+  }
+  else null
+
+  fun reportFsEvent(delegate: FileSystemProvider, path1: Path?, path2: Path?, operation: Operation, startTime: Instant, endTime: Instant, success: Boolean) {
+    val delegateType = DelegateType.fromDelegateClass(delegate.javaClass)
+    val (repeated, repeatInterval) = if (fsQueryStatCounter != null) {
+      val repeatInterval = fsQueryStatCounter.repeatedTime(delegateType, path1, path2, operation, startTime, endTime, success)
+      (repeatInterval != null) to repeatInterval
+    }
+    else null to null
+    val key = FsEventKey(
+      delegateType = delegateType,
+      operation = operation,
+      success = success,
+      repeated = repeated
+    )
+    extendedFsEventsCounter[key]!!.incrementAndGet()
+    extendedFsEventsDurationNanos[key]!!.addAndGet(Duration.between(startTime, endTime).toNanos())
+    if (repeated != null) {
+      extendedFsEventsCounter[key.copy(repeated = null)]!!.incrementAndGet()
+      extendedFsEventsDurationNanos[key.copy(repeated = null)]!!.addAndGet(Duration.between(startTime, endTime).toNanos())
+    }
+    if (repeated == true) {
+      extendedFsEventsRepeatIntervalNanos[key]!!.addAndGet(repeatInterval!!.toNanos())
+    }
+  }
+
 }
 
 internal inline fun <T> Measurer.measure(operation: Measurer.Operation, spanNamePrefix: String = "", body: () -> T): T {
