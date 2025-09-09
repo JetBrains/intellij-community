@@ -124,7 +124,7 @@
     },
 
     "Editor": {
-      "SearchField.background": "BackgroundMid",
+      "SearchField.background": "BackgroundDark",
       "Toolbar.borderColor": "BorderDark",
       "ToolTip": {
         "background": "BackgroundLight",
