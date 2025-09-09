@@ -264,6 +264,9 @@
                     beanClass="com.intellij.ui.viewModel.extraction.ToolWindowExtractorEP"
                     dynamic="true"/>
 
+    <extensionPoint name="projectViewPaneExtractor" interface="com.intellij.ui.viewModel.extraction.ProjectViewPaneModelExtractor"
+                    dynamic="true"/>
+
     <extensionPoint name="editorNavigation" interface="com.intellij.openapi.editor.EditorNavigationDelegate" dynamic="true"/>
 
     <extensionPoint name="statistics.applicationUsagesCollector"

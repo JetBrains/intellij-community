@@ -23,6 +23,7 @@
 
     <fileEditorProvider id="settingsWindow" implementation="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFileEditorProvider"/>
     <projectViewPane implementation="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel"/>
+    <projectViewPaneExtractor implementation="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelModelExtractor"/>
 
     <advancedSetting id="welcome.screen.non.modal.enabled" default="true"
                      groupKey="group.advanced.settings.welcome.screen"/>
