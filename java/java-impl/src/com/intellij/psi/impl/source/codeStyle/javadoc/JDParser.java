@@ -648,7 +648,7 @@ public class JDParser {
   @Contract("null, _ -> null")
   private List<Pair<String, Boolean>> splitToParagraphs(@Nullable String s, boolean markdownComment) {
     if (s == null) return null;
-    s = markdownComment ? s : s.trim();
+    s = trimIfNecessary(s, markdownComment);
     if (s.isEmpty()) return null;
 
     List<Pair<String, Boolean>> result = new ArrayList<>();
@@ -690,6 +690,19 @@ public class JDParser {
       result.add(new Pair<>(sb.toString(), false));
     }
     return result;
+  }
+
+  private static @NotNull String trimIfNecessary(@NotNull String text, boolean markdownComment) {
+    if (markdownComment) {
+      boolean shouldTrim = true;
+      for (char c : text.toCharArray()) {
+        if (c == ' ') continue;
+        shouldTrim = c != '|';
+        break;
+      }
+      if (!shouldTrim) { return text; }
+    }
+    return text.trim();
   }
 
   private boolean isKeepLineFeedsIn(@NotNull String line) {

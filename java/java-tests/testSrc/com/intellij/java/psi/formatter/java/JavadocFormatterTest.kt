@@ -2284,4 +2284,27 @@ public class Test {
           }
       }""".trimIndent())
   }
+
+  fun testMarkdownSplitToParagraphs() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 40
+    }
+
+    doTextTest("""
+    class Main {
+        /// @return Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+        public int foo() { return 0; }
+    }
+    """.trimIndent(), """
+    class Main {
+        /// @return Lorem ipsum dolor sit
+        /// amet, consectetur adipiscing
+        /// elit, sed do eiusmod tempor
+        public int foo() {
+            return 0;
+        }
+    }
+    """.trimIndent())
+  }
 }
