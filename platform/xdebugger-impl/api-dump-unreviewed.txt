@@ -115,13 +115,6 @@ com.intellij.xdebugger.impl.XWatch
 - a:getExpression():com.intellij.xdebugger.XExpression
 - a:isPaused():Z
 - a:setPaused(Z):V
-a:com.intellij.xdebugger.impl.actions.AllButThisBreakpointAction
-- com.intellij.openapi.actionSystem.AnAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- pa:performAction(com.intellij.xdebugger.breakpoints.XBreakpointManager,com.intellij.xdebugger.breakpoints.XBreakpoint):V
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.xdebugger.impl.actions.AttachToProcessAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
@@ -136,9 +129,6 @@ a:com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler
 - a:isEnabled(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
 - a:isSelected(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
 - a:setSelected(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent,Z):V
-f:com.intellij.xdebugger.impl.actions.DisableAllButThisBreakpointAction
-- com.intellij.xdebugger.impl.actions.AllButThisBreakpointAction
-- <init>():V
 c:com.intellij.xdebugger.impl.actions.ForceRunToCursorAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
@@ -168,9 +158,6 @@ c:com.intellij.xdebugger.impl.actions.PauseAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.xdebugger.impl.actions.RemoveAllButThisBreakpointAction
-- com.intellij.xdebugger.impl.actions.AllButThisBreakpointAction
-- <init>():V
 c:com.intellij.xdebugger.impl.actions.ResumeAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V

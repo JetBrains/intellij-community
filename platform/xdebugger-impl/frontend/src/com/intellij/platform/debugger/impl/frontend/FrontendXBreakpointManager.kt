@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
@@ -271,6 +270,10 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     return breakpoints.values.map { proxy ->
       XBreakpointItem(proxy, this)
     }
+  }
+
+  override fun getAllBreakpoints(): List<XBreakpointProxy> {
+    return breakpoints.values.toList()
   }
 
   override fun getLineBreakpointManager(): XLineBreakpointManager {

@@ -31,6 +31,7 @@ interface XBreakpointManagerProxy {
   suspend fun awaitBreakpointCreation(breakpointId: XBreakpointId): XBreakpointProxy?
 
   fun getAllBreakpointItems(): List<BreakpointItem>
+  fun getAllBreakpoints(): List<XBreakpointProxy>
 
   fun getLineBreakpointManager(): XLineBreakpointManager
 
@@ -83,6 +84,10 @@ interface XBreakpointManagerProxy {
       return breakpointManager.allBreakpoints.map {
         XBreakpointItem(it, this)
       }
+    }
+
+    override fun getAllBreakpoints(): List<XBreakpointProxy> {
+      return breakpointManager.allBreakpoints.map { it.asProxy() }
     }
 
     override fun getLineBreakpointManager(): XLineBreakpointManager {
