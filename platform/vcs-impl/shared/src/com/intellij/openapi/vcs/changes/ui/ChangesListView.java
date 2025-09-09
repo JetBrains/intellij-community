@@ -152,15 +152,11 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
     sink.set(VcsSharedDataKeys.CHANGE_LISTS, VcsTreeModelData.exactlySelected(this)
       .iterateRawUserObjects(ChangeList.class)
       .toList().toArray(ChangeList[]::new));
-    sink.set(VcsSharedDataKeys.FILE_PATHS, VcsTreeModelData.mapToFilePath(VcsTreeModelData.selected(this)));
-    // don't try to delete files when only a changelist node is selected
-    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER,
-             VcsTreeModelData.exactlySelected(this)
-               .iterateRawUserObjects()
-               .filter(userObject -> !(userObject instanceof ChangeList))
-               .isNotEmpty()
-             ? new VirtualFileDeleteProvider()
-             : null);
+    JBIterable<FilePath> filePaths = VcsTreeModelData.mapToFilePath(VcsTreeModelData.selected(this));
+    sink.set(VcsSharedDataKeys.FILE_PATHS, filePaths);
+    if (filePaths.isNotEmpty()) {
+      sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new VirtualFileDeleteProvider());
+    }
     sink.set(UNVERSIONED_FILE_PATHS_DATA_KEY, getSelectedUnversionedFiles());
     sink.set(IGNORED_FILE_PATHS_DATA_KEY, getSelectedIgnoredFiles());
     sink.set(MODIFIED_WITHOUT_EDITING_DATA_KEY, getSelectedModifiedWithoutEditing());
