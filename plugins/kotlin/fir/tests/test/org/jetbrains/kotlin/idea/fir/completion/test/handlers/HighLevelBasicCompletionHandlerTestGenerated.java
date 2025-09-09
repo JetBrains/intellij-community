@@ -2466,5 +2466,15 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         public void testTypeArgOfSuper() throws Exception {
             runTest("../../completion/testData/handlers/TypeArgOfSuper.kt");
         }
+
+        @TestMetadata("TypeArgumentInClassLambda.kt")
+        public void testTypeArgumentInClassLambda() throws Exception {
+            runTest("../../completion/testData/handlers/TypeArgumentInClassLambda.kt");
+        }
+
+        @TestMetadata("TypeArgumentInClassLambdaBeforeLambda.kt")
+        public void testTypeArgumentInClassLambdaBeforeLambda() throws Exception {
+            runTest("../../completion/testData/handlers/TypeArgumentInClassLambdaBeforeLambda.kt");
+        }
     }
 }
