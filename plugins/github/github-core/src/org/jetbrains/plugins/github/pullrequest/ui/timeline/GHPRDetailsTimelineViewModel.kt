@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingViewModel
@@ -9,7 +10,6 @@ import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.collaboration.util.map
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.*
@@ -30,7 +30,7 @@ class GHPRDetailsTimelineViewModel internal constructor(private val project: Pro
                                                         parentCs: CoroutineScope,
                                                         private val dataContext: GHPRDataContext,
                                                         private val dataProvider: GHPRDataProvider) {
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(this::class)
 
   private val currentUser: GHUser = dataContext.securityService.currentUser
   private val reactionsService: GHReactionsService = dataContext.reactionsService

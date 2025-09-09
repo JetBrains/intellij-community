@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
@@ -8,7 +9,6 @@ import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobStat
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.URLUtil
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
@@ -32,7 +32,7 @@ class GitLabMergeRequestStatusViewModelImpl(
   private val serverPath: GitLabServerPath,
   mergeRequest: GitLabMergeRequest,
 ) : GitLabMergeRequestStatusViewModel {
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(this::class)
 
   private val pipeline: SharedFlow<GitLabPipelineDTO?> = mergeRequest.details.map { it.headPipeline }.modelFlow(cs, thisLogger())
 

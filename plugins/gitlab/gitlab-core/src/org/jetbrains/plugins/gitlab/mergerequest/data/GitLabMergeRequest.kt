@@ -1,14 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
-import com.intellij.collaboration.async.mapScoped
-import com.intellij.collaboration.async.modelFlow
-import com.intellij.collaboration.async.resultOrErrorFlow
-import com.intellij.collaboration.async.withInitial
+import com.intellij.collaboration.async.*
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import git4idea.GitStandardRemoteBranch
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.changesSignalFlow
@@ -102,7 +98,7 @@ internal class LoadedGitLabMergeRequest(
   private val currentUser: GitLabUserDTO,
   mergeRequest: GitLabMergeRequestDTO
 ) : GitLabMergeRequest {
-  private val cs = parentCs.childScope(Dispatchers.Default + CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class, Dispatchers.Default)
 
   override val glProject: GitLabProjectCoordinates = projectMapping.repository
   override val gitRepository: GitRepository = projectMapping.gitRepository

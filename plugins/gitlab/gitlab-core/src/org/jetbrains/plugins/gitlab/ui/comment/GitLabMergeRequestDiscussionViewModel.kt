@@ -6,9 +6,7 @@ import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolv
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -45,7 +43,7 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
   private val discussion: GitLabMergeRequestDiscussion
 ) : GitLabMergeRequestDiscussionViewModel {
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class)
   private val taskLauncher = SingleCoroutineLauncher(cs)
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy
 
@@ -106,7 +104,7 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   mr: GitLabMergeRequest
 ) : GitLabNoteViewModel {
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class)
 
   override val id: GitLabId = note.id
   override val author: GitLabUserDTO = note.author

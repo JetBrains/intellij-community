@@ -2,8 +2,6 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.async.*
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
@@ -43,8 +41,6 @@ interface GitLabMergeRequestDiscussion : GitLabDiscussion {
   override val notes: StateFlow<List<GitLabMergeRequestNote>>
 }
 
-private val LOG = logger<GitLabDiscussion>()
-
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoadedGitLabDiscussion(
   parentCs: CoroutineScope,
@@ -67,7 +63,7 @@ class LoadedGitLabDiscussion(
   override val id: GitLabGid = discussionData.id
   override val createdAt: Date = discussionData.createdAt
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class)
 
   private val operationsGuard = Mutex()
 

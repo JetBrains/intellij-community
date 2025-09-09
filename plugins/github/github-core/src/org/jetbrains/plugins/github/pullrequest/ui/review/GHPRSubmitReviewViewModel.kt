@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.review
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.ui.codereview.review.CodeReviewSubmitViewModel
 import com.intellij.collaboration.util.SingleCoroutineLauncher
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,7 +42,7 @@ internal class GHPRSubmitReviewViewModelImpl(parentCs: CoroutineScope,
                                              private val pendingReview: GHPullRequestPendingReview?,
                                              private val onDone: suspend () -> Unit)
   : GHPRSubmitReviewViewModel {
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(this::class)
 
   private val taskLauncher = SingleCoroutineLauncher(cs)
 

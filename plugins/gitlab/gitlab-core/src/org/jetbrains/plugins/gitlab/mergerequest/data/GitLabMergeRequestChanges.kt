@@ -3,12 +3,11 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.api.page.foldToList
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.collaboration.async.childScope
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitCommitShaWithPatches
@@ -46,8 +45,6 @@ fun GitBranchComparisonResult.findLatestCommitWithChangesTo(gitRepository: GitRe
   return commits.lastOrNull { commit -> commit.patches.any { it.filePath == relativePath } }?.sha
 }
 
-private val LOG = logger<GitLabMergeRequestChanges>()
-
 class GitLabMergeRequestChangesImpl(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
@@ -56,7 +53,7 @@ class GitLabMergeRequestChangesImpl(
   private val mergeRequestDetails: GitLabMergeRequestFullDetails
 ) : GitLabMergeRequestChanges {
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class)
 
   private val glProject = projectMapping.repository
 

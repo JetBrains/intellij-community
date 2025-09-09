@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.util.ChangesSelection
@@ -9,8 +10,6 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
-import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
@@ -45,7 +44,7 @@ class GitLabDiscussionDiffViewModelImpl(
   override val position: GitLabNotePosition
 ) : GitLabDiscussionDiffViewModel {
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class)
 
   override val mapping: Flow<GitLabMergeRequestNotePositionMapping> = mr.changes.mapLatest {
     try {

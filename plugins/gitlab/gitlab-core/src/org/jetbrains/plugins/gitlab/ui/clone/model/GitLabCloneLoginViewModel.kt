@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.clone.model
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.auth.ui.login.LoginModel
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -21,7 +21,7 @@ internal class GitLabCloneLoginViewModelImpl(
   parentCs: CoroutineScope,
   private val accountManager: GitLabAccountManager
 ) : GitLabCloneLoginViewModel {
-  private val cs: CoroutineScope = parentCs.childScope()
+  private val cs: CoroutineScope = parentCs.childScope(this::class)
 
   private var selectedAccount: GitLabAccount? = null
   override val accounts: SharedFlow<Set<GitLabAccount>> = accountManager.accountsState

@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.toArray
@@ -22,6 +23,18 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.reflect.KClass
+
+/**
+ * @see com.intellij.platform.util.coroutines.childScope(kotlinx.coroutines.CoroutineScope, java.lang.String, kotlin.coroutines.CoroutineContext, boolean)
+ */
+fun CoroutineScope.childScope(
+  owner: KClass<*>,
+  context: CoroutineContext = EmptyCoroutineContext,
+  supervisor: Boolean = true,
+): CoroutineScope {
+  return childScope(owner.qualifiedName ?: owner.toString(), context, supervisor)
+}
 
 /**
  * Prefer creating a service to supply a parent scope
@@ -130,7 +143,7 @@ suspend fun <T1, T2, T3> combineAndCollect(
   }
 }
 
-fun Flow<Boolean>.inverted() = map { !it }
+fun Flow<Boolean>.inverted(): Flow<Boolean> = map { !it }
 
 @ApiStatus.Experimental
 fun <T, M> StateFlow<T>.mapState(
@@ -256,7 +269,7 @@ private fun <T, R> Flow<T>.mapScoped2(mapper: suspend CoroutineScope.(T) -> R): 
 fun <T, R> Flow<T?>.mapNullableScoped(mapper: CoroutineScope.(T) -> R): Flow<R?> = mapScoped2 { if (it == null) null else mapper(it) }
 
 @ApiStatus.Experimental
-suspend fun <T> Flow<T>.collectScoped(block: suspend CoroutineScope.(T) -> Unit) = mapScoped2(block).collect()
+suspend fun <T> Flow<T>.collectScoped(block: suspend CoroutineScope.(T) -> Unit): Unit = mapScoped2(block).collect()
 
 @ApiStatus.Experimental
 suspend fun <T> Flow<T>.collectWithPrevious(initial: T, collector: suspend (prev: T, current: T) -> Unit) {

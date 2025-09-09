@@ -8,9 +8,7 @@ import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolv
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -53,7 +51,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   private val discussion: GitLabMergeRequestDiscussion
 ) : GitLabMergeRequestTimelineDiscussionViewModel {
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class)
   private val taskLauncher = SingleCoroutineLauncher(cs)
 
   override val mainNote: Flow<GitLabNoteViewModel> = discussion.notes

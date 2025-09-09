@@ -1,12 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.mapStateInNow
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -101,7 +100,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     mr: GitLabMergeRequest,
     note: GitLabMergeRequestNote
   ) : GitLabMergeRequestTimelineItemViewModel, GitLabNoteViewModel {
-    private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+    private val cs = parentCs.childScope(this::class)
 
     override val id: GitLabId = note.id
     override val author: GitLabUserDTO = note.author

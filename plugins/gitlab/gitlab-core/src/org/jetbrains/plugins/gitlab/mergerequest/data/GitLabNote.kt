@@ -1,16 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
-import com.intellij.collaboration.async.Change
-import com.intellij.collaboration.async.Deleted
-import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.*
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabAwardEmojiDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
@@ -80,7 +79,7 @@ class MutableGitLabMergeRequestNote(
   noteData: GitLabNoteDTO
 ) : GitLabMergeRequestNote, MutableGitLabNote {
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class)
 
   private val operationsGuard = Mutex()
 
@@ -169,7 +168,7 @@ class GitLabMergeRequestDraftNoteImpl(
   override val author: GitLabUserDTO
 ) : GitLabMergeRequestDraftNote, MutableGitLabNote {
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class)
 
   private val operationsGuard = Mutex()
 

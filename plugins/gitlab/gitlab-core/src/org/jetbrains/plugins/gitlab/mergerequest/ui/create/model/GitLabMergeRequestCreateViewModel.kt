@@ -11,7 +11,6 @@ import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -78,7 +77,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
   override val openReviewTabAction: suspend (mrIid: String) -> Unit,
   private val onReviewCreated: () -> Unit,
 ) : GitLabMergeRequestCreateViewModel {
-  private val cs: CoroutineScope = parentCs.childScope()
+  private val cs: CoroutineScope = parentCs.childScope(this::class)
   private val taskLauncher = SingleCoroutineLauncher(cs)
 
   override val isBusy: Flow<Boolean> = taskLauncher.busy
