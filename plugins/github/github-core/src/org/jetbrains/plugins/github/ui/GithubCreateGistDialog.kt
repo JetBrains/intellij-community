@@ -33,7 +33,6 @@ class GithubCreateGistDialog(
   private val descriptionField = JBTextArea().apply { lineWrap = true }
   private val secretCheckBox = JBCheckBox(message("create.gist.dialog.secret"), secret)
   private val browserCheckBox = JBCheckBox(message("create.gist.dialog.open.browser"), openInBrowser)
-  private val copyLinkCheckBox = JBCheckBox(message("create.gist.dialog.copy.url"), copyLink)
 
   private val accounts = GHAccountsUtil.accounts
 
@@ -46,7 +45,7 @@ class GithubCreateGistDialog(
   val description: String get() = descriptionField.text
   val isSecret: Boolean get() = secretCheckBox.isSelected
   val isOpenInBrowser: Boolean get() = browserCheckBox.isSelected
-  val isCopyURL: Boolean get() = copyLinkCheckBox.isSelected
+  var isCopyURL: Boolean = copyLink
   val account: GithubAccount? get() = accountsModel.selected
   var pathMode: PathHandlingMode? = PathHandlingMode.RelativePaths
 
@@ -65,10 +64,9 @@ class GithubCreateGistDialog(
     row {
       label(message("create.gist.dialog.description.field"))
         .align(AlignY.TOP)
-      scrollCell(descriptionField)
+      textArea()
+        .rows(4)
         .align(Align.FILL)
-        .columns(60)
-        .resizableColumn()
     }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
 
     row(CollaborationToolsBundle.message("snippet.create.path-mode")) {
@@ -93,7 +91,7 @@ class GithubCreateGistDialog(
     row("") {
       cell(secretCheckBox)
       cell(browserCheckBox)
-      cell(copyLinkCheckBox)
+      checkBox(message("create.gist.dialog.copy.url")).bindSelected(::isCopyURL)
     }
 
     if (accountsModel.size != 1) {
