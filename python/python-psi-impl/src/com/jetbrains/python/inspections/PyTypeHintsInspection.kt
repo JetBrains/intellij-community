@@ -1747,7 +1747,7 @@ class PyTypeHintsInspection : PyInspection() {
       val resolveContext = PyResolveContext.defaultContext(context)
       val resolvedElement = PyResolveUtil.resolveDeclaration(referenceExpression.reference, resolveContext)
       if (resolvedElement == null) return true // We cannot be sure, let it better be false-negative
-      return when (resolvedElement) {
+      when (resolvedElement) {
         is PyTargetExpression -> {
           val qName = resolvedElement.qualifiedName ?: return true
           if (PyTypingTypeProvider.OPAQUE_NAMES.contains(qName)) return true
@@ -1760,11 +1760,14 @@ class PyTypeHintsInspection : PyInspection() {
             return type is PyClassLikeType
           }
         }
-        is PyTypeParameter, is PyClass, is PyTypeAliasStatement -> true
-        is PyFunction -> resolvedElement.qualifiedName?.let {
-          it.endsWith("ParamSpec.args") || it.endsWith("ParamSpec.kwargs")
-        } == true
-        else -> false
+        is PyTypeParameter, is PyClass, is PyTypeAliasStatement -> return true
+        is PyFunction -> {
+          if (PyTypingTypeProvider.OPAQUE_NAMES.contains(resolvedElement.qualifiedName)) return true
+          return resolvedElement.qualifiedName?.let {
+            it.endsWith("ParamSpec.args") || it.endsWith("ParamSpec.kwargs")
+          } == true
+        }
+        else -> return false
       }
     }
   }
