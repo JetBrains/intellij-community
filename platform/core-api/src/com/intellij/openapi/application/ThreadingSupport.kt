@@ -24,6 +24,15 @@ interface ThreadingSupport {
   fun <T> runWriteIntentReadAction(computation: () -> T): T
 
   /**
+   * Runs the specified [action] synchronously with a write-intent lock. The action is executed
+   * immediately if no write action is currently running.
+   *
+   * @param action the computation to perform.
+   * @return `true` if the action was executed, `false` if another write-intent lock could not be acquired.
+   */
+  fun tryRunWriteIntentReadAction(action: () -> Unit): Boolean
+
+  /**
    * Executes a runnable with a write-intent lock only if locking is permitted on this thread
    * We hope that if locking is forbidden, then preventive acquisition of write-intent lock in top-level places (such as event dispatch)
    * may be not needed.
