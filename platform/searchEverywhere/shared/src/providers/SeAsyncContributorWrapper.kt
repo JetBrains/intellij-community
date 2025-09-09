@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.providers
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Disposer
@@ -40,6 +41,12 @@ fun SearchEverywhereContributor<*>.getExtendedInfo(item: Any): SeExtendedInfo {
   val extendedInfo = (this as? SearchEverywhereExtendedInfoProvider)?.createExtendedInfo()
   val leftText = extendedInfo?.leftText?.invoke(item)
   val rightAction = extendedInfo?.rightAction?.invoke(item)
+  val keyStroke = rightAction?.shortcutSet?.shortcuts
+    ?.filterIsInstance<KeyboardShortcut>()
+    ?.firstOrNull()
+    ?.firstKeyStroke
+
   return SeExtendedInfoImpl(leftText, rightAction?.templatePresentation?.text,
-                            rightAction?.templatePresentation?.description)
+                            rightAction?.templatePresentation?.description,
+                            keyStroke?.keyCode, keyStroke?.modifiers)
 }

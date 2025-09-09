@@ -9,8 +9,12 @@ import org.jetbrains.annotations.ApiStatus
 @Serializable
 sealed interface SeExtendedInfo {
   val text: String?
-  @get:NlsActions.ActionText val actionText: String?
-  @get:NlsActions.ActionDescription val actionDescription: String?
+  @get:NlsActions.ActionText
+  val actionText: String?
+  @get:NlsActions.ActionDescription
+  val actionDescription: String?
+  val keyCode: Int?
+  val modifiers: Int?
 }
 
 @ApiStatus.Experimental
@@ -20,4 +24,6 @@ class SeExtendedInfoImpl(
   override val text: String?,
   @NlsActions.ActionText override val actionText: String?,
   @NlsActions.ActionDescription override val actionDescription: String?,
+  override val keyCode: Int? = null,
+  override val modifiers: Int? = null,
 ) : SeExtendedInfo

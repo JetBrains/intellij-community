@@ -700,6 +700,11 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
               }
             }
           }
+        }.apply {
+          if (extendedInfo?.keyCode != null && extendedInfo.modifiers != null ) {
+            val shortcutSet = CustomShortcutSet(KeyStroke.getKeyStroke(extendedInfo.keyCode!!, extendedInfo.modifiers!!))
+            registerCustomShortcutSet(shortcutSet, resultList, this@SePopupContentPane)
+          }
         }
       }
 
