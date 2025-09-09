@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -83,6 +83,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testLinkToObjectMethods() { doTest(); }
   public void testSeeConstants() { doTest(); }
   public void testSeeNonRefs() { doTest(); }
+  public void testFragments() { doTest(); }
   public void testReturn0() { doTest(); }
   public void testReturn1() { doTest(); }
   public void testException0() { doTest(); }
