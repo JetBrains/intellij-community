@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.MacToolbarFram
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
+import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
@@ -365,6 +366,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
         if (component is MainToolbar && component.parent !is JBLayeredPane) {
           return
         }
+        if (component is ToolWindowPane && JBColor.isBright()) {
+          return
+        }
 
         val alphaKey = if (component is IdeStatusBarImpl) "Island.inactiveAlphaInStatusBar" else "Island.inactiveAlpha"
 
@@ -372,7 +376,14 @@ internal class IslandsUICustomization : InternalUICustomization() {
         g.color = getMainBackgroundColor()
         g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, JBUI.getFloat(alphaKey, 0.5f))
 
-        g.fillRect(0, 0, component.width, component.height)
+        if (component is ToolWindowPane) {
+          val extraBorder = JBUI.scale(4)
+          g.fillRect(0, 0, component.width, extraBorder)
+          g.fillRect(0, extraBorder, extraBorder, component.height)
+        }
+        else {
+          g.fillRect(0, 0, component.width, component.height)
+        }
       }
     }
   }
@@ -427,6 +438,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
         component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
       }
       is MainToolbar -> {
+        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
+      }
+      is ToolWindowPane -> {
         component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
       }
     }
