@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.async.*
+import com.intellij.collaboration.util.CodeReviewDomainEntity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
@@ -16,6 +17,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.changeMergeRequestD
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.createReplyNote
 import java.util.*
 
+@CodeReviewDomainEntity
 interface GitLabDiscussion {
   val id: GitLabId
 

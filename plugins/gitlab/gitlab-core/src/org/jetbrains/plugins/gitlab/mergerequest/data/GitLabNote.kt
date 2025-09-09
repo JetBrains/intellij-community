@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.Change
 import com.intellij.collaboration.async.Deleted
 import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.util.CodeReviewDomainEntity
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.map
 import kotlinx.coroutines.*
@@ -19,6 +20,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import java.util.*
 
+@CodeReviewDomainEntity
 interface GitLabNote {
   val id: GitLabId
   val author: GitLabUserDTO
@@ -28,6 +30,7 @@ interface GitLabNote {
   val resolved: StateFlow<Boolean>
 }
 
+@CodeReviewDomainEntity
 interface MutableGitLabNote : GitLabNote {
   val canAdmin: Boolean
 
@@ -51,6 +54,7 @@ interface MutableGitLabNote : GitLabNote {
   suspend fun submit()
 }
 
+@CodeReviewDomainEntity
 interface GitLabMergeRequestNote : GitLabNote {
   val canReact: Boolean
   val position: StateFlow<GitLabNotePosition?>
@@ -61,6 +65,7 @@ interface GitLabMergeRequestNote : GitLabNote {
   suspend fun toggleReaction(reaction: GitLabReaction)
 }
 
+@CodeReviewDomainEntity
 interface GitLabMergeRequestDraftNote : GitLabMergeRequestNote, MutableGitLabNote {
   val discussionId: GitLabId?
   override val createdAt: Date? get() = null
@@ -157,6 +162,7 @@ class MutableGitLabMergeRequestNote(
     "MutableGitLabNote(id='$id', author=$author, createdAt=$createdAt, canAdmin=$canAdmin, body=${body.value}, resolved=${resolved.value}, position=${position.value})"
 }
 
+@CodeReviewDomainEntity
 class GitLabMergeRequestDraftNoteImpl(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
