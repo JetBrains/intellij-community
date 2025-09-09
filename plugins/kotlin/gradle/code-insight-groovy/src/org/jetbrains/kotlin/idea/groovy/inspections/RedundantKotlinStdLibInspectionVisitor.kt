@@ -38,17 +38,12 @@ private val LOG = logger<RedundantKotlinStdLibInspectionVisitor>()
 
 class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : KotlinGradleInspectionVisitor() {
     override fun visitCallExpression(callExpression: GrCallExpression) {
+        if (!apiDependencyPattern.accepts(callExpression)) return
+        if (callExpression.hasClosureArguments()) return // dependency declaration with a closure probably has a custom configuration
+
         val kotlinJvmPluginVersion = findResolvedKotlinJvmVersion(holder.file)
         val kotlinStdLibVersion = getResolvedLibVersion(holder.file, KOTLIN_GROUP_ID, listOf(KOTLIN_JAVA_STDLIB_NAME))
         if (kotlinJvmPluginVersion == null || kotlinStdLibVersion == null || kotlinJvmPluginVersion != kotlinStdLibVersion) return
-        val dependencyPattern = GroovyMethodCallPattern.resolvesTo(
-            psiMethod(GRADLE_API_DEPENDENCY_HANDLER).withKind(dependencyMethodKind)
-        )
-        if (!dependencyPattern.accepts(callExpression)) { // proceed recursively if it's not a dependency declaration
-            visitElement(callExpression)
-            return
-        }
-        if (callExpression.hasClosureArguments()) return // dependency declaration with a closure probably has a custom configuration
 
         if (callExpression.namedArguments.size >= 2 && isKotlinStdLibNamedArguments(callExpression.namedArguments.asList())) {
             registerProblem(callExpression)
@@ -131,6 +126,11 @@ class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : Kotli
         val catalogReference = expression as? GrReferenceElement<*> ?: return false
         val resolved = catalogReference.resolve() as? PsiMethod ?: return false
         return isKotlinStdLibDependency(resolved, expression)
+    }
+
+    companion object {
+        private val apiDependencyPattern = GroovyMethodCallPattern
+            .resolvesTo(psiMethod(GRADLE_API_DEPENDENCY_HANDLER).withKind(dependencyMethodKind))
     }
 }
 

@@ -46,9 +46,9 @@ private class GradleDependencyNamedArgumentsFix() : KotlinModCommandQuickFix<KtV
     }
 
     override fun applyFix(project: Project, element: KtValueArgumentList, updater: ModPsiUpdater) {
-        val group = findArgumentInDependency(element, "group", 0)?.text?.removeSurrounding("\"") ?: return
-        val name = findArgumentInDependency(element, "name", 1)?.text?.removeSurrounding("\"") ?: return
-        val version = findArgumentInDependency(element, "version", 2)?.text?.removeSurrounding("\"")
+        val group = findNamedOrPositionalArgument(element, "group", 0)?.text?.removeSurrounding("\"") ?: return
+        val name = findNamedOrPositionalArgument(element, "name", 1)?.text?.removeSurrounding("\"") ?: return
+        val version = findNamedOrPositionalArgument(element, "version", 2)?.text?.removeSurrounding("\"")
         element.arguments.forEach { element.removeArgument(it) }
         val stringNotationArgument = if (version != null) "\"$group:$name:$version\"" else "\"$group:$name\""
         element.addArgument(KtPsiFactory(project, true).createArgument(stringNotationArgument))

@@ -12,11 +12,10 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_DEPENDENCY
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY
 
-internal val GRADLE_DSL_PACKAGE = FqName("org.gradle.kotlin.dsl")
 internal const val KOTLIN_GROUP_ID: String = "org.jetbrains.kotlin"
 
 internal enum class DependencyType {
-    SINGLE_ITEM, NAMED_ARGUMENTS, OTHER
+    SINGLE_ARGUMENT, NAMED_ARGUMENTS, OTHER
 }
 
 /**
@@ -24,9 +23,8 @@ internal enum class DependencyType {
  */
 internal fun findDependencyType(expression: KtCallExpression): DependencyType? {
     analyze(expression) {
-        val singleFunctionCallOrNull = expression.resolveToCall()?.singleFunctionCallOrNull()
-        val symbol = singleFunctionCallOrNull?.symbol ?: return DependencyType.OTHER
-        if (symbol.callableId?.packageName != GRADLE_DSL_PACKAGE
+        val symbol = expression.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null
+        if (symbol.callableId?.packageName != FqName("org.gradle.kotlin.dsl")
             || (symbol.returnType.symbol?.classId?.asSingleFqName() != FqName(GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY)
                     && symbol.returnType.symbol?.classId?.asSingleFqName() != FqName(GRADLE_API_ARTIFACTS_DEPENDENCY))
         ) {
@@ -37,13 +35,17 @@ internal fun findDependencyType(expression: KtCallExpression): DependencyType? {
         val firstParameter = parameters.first()
         when (firstParameter.name.identifier) {
             "group" -> return DependencyType.NAMED_ARGUMENTS
-            "dependencyNotation" -> return DependencyType.SINGLE_ITEM
+            "dependencyNotation" -> return DependencyType.SINGLE_ARGUMENT
             else -> return DependencyType.OTHER
         }
     }
 }
 
-internal fun findArgumentInDependency(element: KtValueArgumentList, parameterName: String, expectedIndex: Int): KtExpression? {
+/**
+ * Find an argument expression by its parameter name and index.
+ * Works with any legal mix/order of named and positional arguments since positional arguments have a strict order.
+ */
+internal fun findNamedOrPositionalArgument(element: KtValueArgumentList, parameterName: String, expectedIndex: Int): KtExpression? {
     val argument = element.arguments.find {
         it.getArgumentName()?.asName?.identifier == parameterName
     } ?: element.arguments.getOrNull(expectedIndex)

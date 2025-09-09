@@ -23,35 +23,32 @@ import org.jetbrains.kotlin.utils.PathUtil.KOTLIN_JAVA_STDLIB_NAME
 
 class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : KtVisitorVoid() {
     override fun visitCallExpression(expression: KtCallExpression) {
+        val dependencyType = findDependencyType(expression) ?: return
+        if (dependencyType == DependencyType.OTHER) return
+
         val kotlinJvmPluginVersion = findResolvedKotlinJvmVersion(holder.file)
         val kotlinStdLibVersion = getResolvedLibVersion(holder.file, KOTLIN_GROUP_ID, listOf(KOTLIN_JAVA_STDLIB_NAME))
-
         if (kotlinJvmPluginVersion == null || kotlinStdLibVersion == null || kotlinJvmPluginVersion != kotlinStdLibVersion) return
-        val dependencyType = findDependencyType(expression) ?: return
 
-        if (dependencyType == DependencyType.OTHER) return
         if (!expression.lambdaArguments.isEmpty()) return
-
         val argList = expression.valueArgumentList ?: return
         if (!argList.isPhysical) return
 
         val args = argList.arguments
 
         when (dependencyType) {
-            DependencyType.SINGLE_ITEM -> {
+            DependencyType.SINGLE_ARGUMENT -> {
                 val arg = args.singleOrNull()?.getArgumentExpression() ?: return
                 val string = KotlinFirConstantExpressionEvaluator().computeConstantExpression(arg, false) as? String
                 if (string != null) {
-                    if (!string.startsWith("$KOTLIN_GROUP_ID:$KOTLIN_JAVA_STDLIB_NAME")) return
+                    if (string.startsWith("$KOTLIN_GROUP_ID:$KOTLIN_JAVA_STDLIB_NAME")) registerProblem(expression)
                 } else if (arg is KtCallExpression && arg.calleeExpression?.text == "kotlin") {
-                    val kotlinId = arg.valueArgumentList?.arguments?.singleOrNull()?.getArgumentExpression()
+                    val kotlinId = arg.valueArgumentList?.arguments?.firstOrNull()?.getArgumentExpression()
                         ?.let { KotlinFirConstantExpressionEvaluator().computeConstantExpression(it, false) as? String }
-                    if (kotlinId != "stdlib") return
+                    if (kotlinId == "stdlib") registerProblem(expression)
                 } else if (arg is KtDotQualifiedExpression) {
                     val resolved = arg.selectorExpression?.mainReference?.resolve() as? PsiMethod ?: return
-                    if (!isKotlinStdLibDependency(resolved, expression)) return
-                } else {
-                    return
+                    if (isKotlinStdLibDependency(resolved, expression)) registerProblem(expression)
                 }
             }
 
@@ -61,21 +58,17 @@ class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : KtVis
                 val ids = args.mapNotNull { it.getArgumentName()?.asName?.identifier }
                 if (!setOf("group", "name", "version").containsAll(ids)) return
 
-                val group = findArgumentInDependency(argList, "group", 0)
+                val group = findNamedOrPositionalArgument(argList, "group", 0)
                     ?.let { KotlinFirConstantExpressionEvaluator().computeConstantExpression(it, false) as? String }
                     ?: return
-                val name = findArgumentInDependency(argList, "name", 1)
+                val name = findNamedOrPositionalArgument(argList, "name", 1)
                     ?.let { KotlinFirConstantExpressionEvaluator().computeConstantExpression(it, false) as? String }
                     ?: return
 
-                if (group != KOTLIN_GROUP_ID || name != KOTLIN_JAVA_STDLIB_NAME) return
+                if (group == KOTLIN_GROUP_ID && name == KOTLIN_JAVA_STDLIB_NAME) registerProblem(expression)
             }
 
             else -> return
-        }
-
-        if (kotlinStdLibVersion == kotlinJvmPluginVersion) {
-            registerProblem(expression)
         }
     }
 

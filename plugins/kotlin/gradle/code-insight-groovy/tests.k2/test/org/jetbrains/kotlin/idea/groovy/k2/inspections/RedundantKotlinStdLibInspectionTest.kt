@@ -553,7 +553,7 @@ class RedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
         private val JAVA_PLUGIN_WITH_KOTLIN_STDLIB_FIXTURE = GradleTestFixtureBuilder.create("just_kotlin_stdlib") { gradleVersion ->
             withBuildFile(gradleVersion) {
                 withJavaPlugin()
-                addImplementationDependency("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                addApiDependency("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
                 withPrefix {
                     call("configurations") {
                         code("api")

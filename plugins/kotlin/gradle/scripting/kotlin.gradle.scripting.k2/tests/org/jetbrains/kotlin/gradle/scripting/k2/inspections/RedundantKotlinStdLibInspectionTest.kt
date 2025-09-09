@@ -60,7 +60,37 @@ class RedundantKotlinStdLibInspectionTest : K2GradleCodeInsightTestCase() {
                 """
                 plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
                 dependencies { 
+                    <warning>api(kotlin("stdlib", "2.2.0"))</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testKotlinMethodNoVersion(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                dependencies { 
                     <warning>api(kotlin("stdlib"))</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testKotlinMethodDifferentVersion(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                dependencies { 
+                    api(kotlin("stdlib", "2.1.0"))
                 }
                 """.trimIndent()
             )
@@ -146,7 +176,6 @@ class RedundantKotlinStdLibInspectionTest : K2GradleCodeInsightTestCase() {
     @BaseGradleVersionSource
     fun testDifferentConfiguration(gradleVersion: GradleVersion) {
         runTest(gradleVersion, SAME_VERSION_FIXTURE) {
-            // TODO should this be highlighted?
             testHighlighting(
                 """
                 plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
@@ -486,9 +515,7 @@ class RedundantKotlinStdLibInspectionTest : K2GradleCodeInsightTestCase() {
             )
             withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 withKotlinJvmPlugin("2.2.0")
-                withPrefix {
-                    code("val customConf by configurations.creating {}")
-                }
+                withPrefix { code("val customConf by configurations.creating {}") }
             }
         }
         private val DIFFERENT_VERSION_FIXTURE = GradleTestFixtureBuilder.create("different_kotlin_stdlib") { gradleVersion ->
@@ -501,9 +528,7 @@ class RedundantKotlinStdLibInspectionTest : K2GradleCodeInsightTestCase() {
             withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 withJavaPlugin()
                 addApiDependency("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
-                withPrefix {
-                    code("val api by configurations.creating {}")
-                }
+                withPrefix { code("val api by configurations.creating {}") }
             }
         }
         private val DISABLED_DEFAULT_STDLIB_FIXTURE = GradleTestFixtureBuilder.create("disabled_default_stdlib") { gradleVersion ->
@@ -515,7 +540,17 @@ class RedundantKotlinStdLibInspectionTest : K2GradleCodeInsightTestCase() {
         }
         private val NOT_APPLIED_FIXTURE = GradleTestFixtureBuilder.create("not_applied_kotlin_jvm") { gradleVersion ->
             withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
-                withPlugin { code("id(\"org.jetbrains.kotlin.jvm\").version(\"2.2.0\").apply(false)") }
+                withPlugin {
+                    infixCall(
+                        infixCall(
+                            call("kotlin", "jvm"),
+                            "version",
+                            string("2.2.0")
+                        ),
+                        "apply",
+                        boolean(false)
+                    )
+                }
                 withJavaPlugin()
                 withPrefix { code("val api by configurations.creating {}") }
                 addApiDependency("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
