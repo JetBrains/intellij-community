@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.impl.indexing.ProjectStructureDslKt;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
@@ -628,6 +629,9 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Test
     public void checkExcludingModuleLibraryPart() {
+      if (Registry.is("use.workspace.file.index.for.partial.scanning")) {
+        return;
+      }
       doTestLibraryExcluding(libRootPair -> {
         Module module = ProjectStructureDslKt.createJavaModule(projectModelRule, "module", moduleContentBuilder -> {
           return Unit.INSTANCE;
@@ -641,6 +645,9 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Test
     public void checkExcludingProjectLibraryPart() {
+      if (Registry.is("use.workspace.file.index.for.partial.scanning")) {
+        return;
+      }
       doTestLibraryExcluding(libRootPair -> {
         Module module = ProjectStructureDslKt.createJavaModule(projectModelRule, "module", moduleContentBuilder -> {
           return Unit.INSTANCE;
@@ -657,6 +664,9 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
 
     @Test
     public void checkExcludingGlobalLibraryPart() {
+      if (Registry.is("use.workspace.file.index.for.partial.scanning")) {
+        return;
+      }
       doTestLibraryExcluding(libRootPair -> {
         Module module = ProjectStructureDslKt.createJavaModule(projectModelRule, "module", moduleContentBuilder -> {
           return Unit.INSTANCE;
