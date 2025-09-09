@@ -2,10 +2,12 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.async.*
+import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import git4idea.GitStandardRemoteBranch
+import git4idea.changes.GitBranchComparisonResult
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.changesSignalFlow
 import git4idea.repo.GitRepository
@@ -88,6 +90,9 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
 
   suspend fun reviewerRereview(reviewers: Collection<GitLabReviewerDTO>)
 }
+
+internal fun GitLabMergeRequest.changesComputationState(): Flow<ComputedResult<GitBranchComparisonResult>> =
+  computationStateFlow(changes) { it.getParsedChanges() }
 
 internal class LoadedGitLabMergeRequest(
   private val project: Project,

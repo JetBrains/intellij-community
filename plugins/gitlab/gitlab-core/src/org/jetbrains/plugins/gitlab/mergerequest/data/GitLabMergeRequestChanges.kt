@@ -25,9 +25,9 @@ import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 interface GitLabMergeRequestChanges {
   /**
-   * List of merge request commits
+   * Load the list of merge request commits
    */
-  val commits: Deferred<List<GitLabCommit>>
+  suspend fun getCommits(): List<GitLabCommit>
 
   /**
    * Load and parse changes diffs
@@ -57,7 +57,7 @@ class GitLabMergeRequestChangesImpl(
 
   private val glProject = projectMapping.repository
 
-  override val commits: Deferred<List<GitLabCommit>> = cs.async {
+  private val commits: Deferred<List<GitLabCommit>> = cs.async {
     if (glMetadata != null && glMetadata.version < GitLabVersion(14, 7)) {
       val initialURI = api.getMergeRequestCommitsURI(glProject, mergeRequestDetails.iid)
       return@async ApiPageUtil.createPagesFlowByLinkHeader(initialURI) { uri -> api.rest.loadMergeRequestCommits(uri) }
@@ -71,6 +71,8 @@ class GitLabMergeRequestChangesImpl(
       .foldToList(GitLabCommit.Companion::fromGraphQLDTO)
       .asReversed()
   }
+
+  override suspend fun getCommits(): List<GitLabCommit> = commits.await()
 
   private val parsedChanges = cs.async(start = CoroutineStart.LAZY) {
     loadChanges(commits.await())

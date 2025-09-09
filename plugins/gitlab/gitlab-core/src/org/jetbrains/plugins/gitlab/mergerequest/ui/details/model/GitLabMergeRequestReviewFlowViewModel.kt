@@ -222,7 +222,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     val details = mergeRequest.details.first()
     val sourceBranch = details.sourceBranch
     val targetBranch = details.targetBranch
-    val commits = mergeRequest.changes.first().commits.await()
+    val commits = mergeRequest.changes.first().getCommits()
     val commitMessage: String? = withContext(scope.coroutineContext + Dispatchers.EDT) {
       val body = "* " + StringUtil.join(commits, { it.fullTitle }, "\n\n* ")
       val dialog = ReviewMergeCommitMessageDialog(
