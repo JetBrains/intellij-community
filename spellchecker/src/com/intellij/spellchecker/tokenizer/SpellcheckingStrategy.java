@@ -44,6 +44,7 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
   protected static final Pattern CODE_IDENTIFIER_LIKE = Pattern.compile("([a-zA-Z][a-zA-Z0-9_]*)");
 
   protected final Tokenizer<PsiComment> myCommentTokenizer = new CommentTokenizer();
+  private static final int SCOPE_COUNT = SpellCheckingInspection.SpellCheckingScope.values().length;
 
   public static final ExtensionPointName<KeyedLazyInstance<SpellcheckingStrategy>> EP_NAME =
     new ExtensionPointName<>("com.intellij.spellchecker.support");
@@ -100,6 +101,7 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
   }
 
   public boolean elementFitsScope(@NotNull PsiElement element, Set<SpellCheckingInspection.SpellCheckingScope> scope) {
+    if (scope.size() == SCOPE_COUNT) return true;
     Language language = element.getLanguage();
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
 

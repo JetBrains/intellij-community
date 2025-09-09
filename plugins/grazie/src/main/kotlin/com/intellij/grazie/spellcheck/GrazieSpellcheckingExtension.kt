@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
 import com.intellij.spellchecker.inspections.IdentifierSplitter.MINIMAL_TYPO_LENGTH
@@ -42,8 +41,6 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
   private val knownPhrases = ContainerUtil.createConcurrentSoftValueMap<Language, KnownPhrases>()
 
   override fun spellcheck(element: PsiElement, strategy: SpellcheckingStrategy, session: LocalInspectionToolSession, consumer: Consumer<SpellingTypo>): SpellCheckingResult {
-    if (element is PsiWhiteSpace) return SpellCheckingResult.Checked
-
     if (!strategy.useTextLevelSpellchecking()) return SpellCheckingResult.Ignored
     ProgressManager.checkCanceled()
 
