@@ -379,6 +379,11 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
   }
   
   public void testFBoundResolveUnderNotNull() {
+    myFixture.addClass("""
+      package org.jetbrains.annotations;
+      
+      public @interface NotNullByDefault {}
+      """);
     myFixture.configureByText("Test.java", """
       import org.jetbrains.annotations.NotNullByDefault;
       
