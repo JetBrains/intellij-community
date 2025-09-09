@@ -17,6 +17,7 @@ from behave.formatter.base import Formatter
 from behave.model import Step, ScenarioOutline, Feature, Scenario
 from behave.formatter import _registry
 from behave.tag_expression import TagExpression
+from behave.step_registry import registry as the_step_registry
 from _jb_django_behave import run_as_django_behave
 import _bdd_utils
 import tcmessages
@@ -120,6 +121,10 @@ class _RunnerWrapper(runner.Runner):
         self.dry_run = False
         self.hooks.clear()
         self.features = []
+        if self.step_registry is None:
+            the_step_registry.clear()
+        else:
+            self.step_registry.clear()
 
 
 class _BehaveRunner(_bdd_utils.BddRunner):
