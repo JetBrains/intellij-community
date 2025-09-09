@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -186,6 +187,9 @@ public final class AsyncEventSupport {
       ((PersistentFSImpl)PersistentFS.getInstance()).processEventsImpl(events, asyncProcessing);
     }
     catch (Throwable e) {
+      if (e instanceof ControlFlowException) {
+        throw e;
+      }
       LOG.error(e);
     }
     finally {
