@@ -1071,7 +1071,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public @NotNull Collection<UsageInfo> findUsages(@NotNull PsiElement targetElement) {
+  public @NotNull @Unmodifiable Collection<UsageInfo> findUsages(@NotNull PsiElement targetElement) {
     return findUsages(targetElement, null);
   }
 
@@ -1087,7 +1087,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public @NotNull String getUsageViewTreeTextRepresentation(@NotNull List<UsageTarget> usageTargets,
+  public @NotNull String getUsageViewTreeTextRepresentation(@NotNull @Unmodifiable List<? extends UsageTarget> usageTargets,
                                                             @NotNull Collection<? extends Usage> usages) {
     UsageViewImpl usageView = (UsageViewImpl)UsageViewManager.getInstance(getProject())
       .createUsageView(usageTargets.toArray(UsageTarget.EMPTY_ARRAY), usages.toArray(Usage.EMPTY_ARRAY), new UsageViewPresentation(), null);
@@ -1125,7 +1125,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return getUsageViewTreeTextRepresentation(usageTargets, usages);
   }
 
-  public @NotNull Collection<UsageInfo> findUsages(@NotNull PsiElement targetElement, @Nullable SearchScope scope) {
+  public @NotNull @Unmodifiable Collection<UsageInfo> findUsages(@NotNull PsiElement targetElement, @Nullable SearchScope scope) {
     Project project = getProject();
     FindUsagesHandler handler =
       ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().getFindUsagesHandler(targetElement, false);
