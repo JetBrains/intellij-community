@@ -250,6 +250,42 @@ fun Driver.createNewNotebook(name: String = "New Notebook", type: NotebookType) 
   }
 }
 
+fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: NotebookType) {
+  ideFrame {
+    projectView {
+      projectViewTree.run {
+        waitFor("wait for project tree to load", 30.seconds) {
+          getAllTexts().isNotEmpty()
+        }
+        getAllTexts().first().moveMouse()
+      }
+    }
+
+    val newFileButton = x { byAccessibleName("New File or Directory…") }
+
+    waitFor {
+      newFileButton.present()
+    }
+    newFileButton.click()
+
+    popup().run {
+      waitOneText("${type.typeName} Notebook").click()
+
+      keyboard {
+        driver.ui.pasteText(name)
+        should("expect $name in the popup") {
+          getAllTexts().any { it.text == name }
+        }
+        enter() // submit the popup
+      }
+    }
+
+    waitFor("the editor is present") {
+      notebookEditor().present()
+    }
+  }
+}
+
 fun Driver.closeRightToolWindow(stripeButtonName: String) {
   ideFrame {
     val rightToolbar = xx(ToolWindowRightToolbarUi::class.java) { byClass("ToolWindowRightToolbar") }.list().firstOrNull()
