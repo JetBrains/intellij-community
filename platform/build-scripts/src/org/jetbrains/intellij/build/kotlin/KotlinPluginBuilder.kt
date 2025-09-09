@@ -390,7 +390,8 @@ object KotlinPluginBuilder {
 
             // Use 'DownloadAppCodeDependencies' run configuration to download LLDBFrontend
             spec.withBin("../CIDR/cidr-debugger/bin/lldb/linux/bin/LLDBFrontend", "bin/linux", skipIfDoesntExist)
-            spec.withBin("../CIDR/cidr-debugger/bin/lldb/mac/LLDBFrontend", "bin/macos", skipIfDoesntExist)
+            spec.withBin("../CIDR/cidr-debugger/bin/lldb/mac/aarch64/LLDBFrontend", "bin/macos/aarch64", skipIfDoesntExist)
+            spec.withBin("../CIDR/cidr-debugger/bin/lldb/mac/x64/LLDBFrontend", "bin/macos/x64", skipIfDoesntExist)
             spec.withBin("../CIDR/cidr-debugger/bin/lldb/win/x64/bin/LLDBFrontend.exe", "bin/windows", skipIfDoesntExist)
             spec.withBin("../CIDR/cidr-debugger/bin/lldb/renderers", "bin/lldb/renderers")
 
