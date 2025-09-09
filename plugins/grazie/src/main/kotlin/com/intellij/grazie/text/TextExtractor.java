@@ -139,7 +139,7 @@ public abstract class TextExtractor {
       }
     }
 
-    for (PsiElement each = psi; each != null; each = each.getParent()) {
+    for (PsiElement each = psi; each != null && each != file; each = each.getParent()) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
       List<TextContent> contents = obtainContents(allowedDomains, file != null ? file : psi.getContainingFile(), each);
