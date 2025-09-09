@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.psi.stubs.KotlinFunctionStub
 import org.jetbrains.kotlin.psi.stubs.KotlinObjectStub
 import org.jetbrains.kotlin.psi.stubs.KotlinPlaceHolderStub
 import org.jetbrains.kotlin.psi.stubs.elements.KtFileStubBuilder
+import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementType
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -198,7 +199,11 @@ class DebugTextByStubTest : LightJavaCodeInsightFixtureTestCase() {
     fun testEnumEntry() {
         val tree = createStubTree("enum class Enum { E1, E2(), E3(1, 2)}")
         val enumClass = tree.findChildStubByType(KtStubElementTypes.CLASS)!!.findChildStubByType(KtStubElementTypes.CLASS_BODY)!!
-        val entries = enumClass.getChildrenByType(KtStubElementTypes.ENUM_ENTRY, KtStubElementTypes.ENUM_ENTRY.arrayFactory)
+        val entries = enumClass.getChildrenByType(
+            KtStubElementTypes.ENUM_ENTRY,
+            (KtStubElementTypes.ENUM_ENTRY as KtStubElementType<*, *>).arrayFactory,
+        )
+
         assertEquals("STUB: enum entry E1", entries[0].getDebugText())
         assertEquals("STUB: enum entry E2 : Enum", entries[1].getDebugText())
         assertEquals("STUB: enum entry E3 : Enum", entries[2].getDebugText())
