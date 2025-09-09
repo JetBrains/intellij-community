@@ -27,6 +27,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/statistics",
+    "//plugins/ide-startup/importSettings",
   ],
   runtime_deps = [":non-modal-welcome-screen_resources"],
   plugins = ["@lib//:compose-plugin"]
