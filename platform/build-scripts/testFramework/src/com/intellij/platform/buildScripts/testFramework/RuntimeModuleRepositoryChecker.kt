@@ -243,10 +243,6 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     for (mainModuleId in rawProductModules.bundledPluginMainModules) {
       val mainModule = repository.resolveModule(mainModuleId)
       if (mainModule.resolvedModule == null) {
-        if (mainModuleId.stringId == "intellij.microservices.ui") {
-          //todo remove this after IJPL-194897 is fixed: currently 'Microservices Endpoints' plugin cannot be loaded because its main module depends on the backend 
-          continue
-        }
         val problematicModule = if (mainModule.failedDependencyPath.size == 1) "it" else "its dependency ${mainModule.failedDependencyPath.reversed().joinToString(" <- ") { it.stringId }}"
         softly.collectAssertionErrorIfNotRegisteredYet(
           AssertionError(
