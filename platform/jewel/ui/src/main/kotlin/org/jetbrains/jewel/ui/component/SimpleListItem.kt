@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -210,7 +211,10 @@ public fun SimpleListItem(
     Row(
         modifier =
             modifier
-                .semantics { selected = state.isSelected }
+                .semantics(mergeDescendants = true) {
+                    selected = state.isSelected
+                    isTraversalGroup = false
+                }
                 .fillMaxWidth()
                 .height(height)
                 .padding(style.metrics.outerPadding)
@@ -337,7 +341,10 @@ public fun SimpleListItem(
     Row(
         modifier =
             modifier
-                .semantics { selected = state.isSelected }
+                .semantics(mergeDescendants = true) {
+                    selected = state.isSelected
+                    isTraversalGroup = false
+                }
                 .fillMaxWidth()
                 .height(height)
                 .padding(style.metrics.outerPadding)

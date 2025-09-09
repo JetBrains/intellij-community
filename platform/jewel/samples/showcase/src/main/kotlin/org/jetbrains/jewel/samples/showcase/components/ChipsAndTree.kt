@@ -2,7 +2,6 @@
 // Apache 2.0 license.
 package org.jetbrains.jewel.samples.showcase.components
 
-import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollbarAdapter
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +45,7 @@ import org.jetbrains.jewel.ui.component.RadioButtonChip
 import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.ToggleableChip
+import org.jetbrains.jewel.ui.component.VerticalScrollbar
 import org.jetbrains.jewel.ui.theme.colorPalette
 
 @Composable
@@ -177,27 +175,27 @@ public fun SelectableLazyColumnSample(modifier: Modifier = Modifier) {
     }
 
     val state = rememberSelectableLazyListState()
-    Box(modifier = modifier.size(200.dp, 200.dp)) {
+    Box(modifier = modifier.size(200.dp)) {
         if (listOfItems.isEmpty()) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
         } else {
             SelectableLazyColumn(modifier = Modifier.focusable(), state = state) {
                 items(listOfItems, key = { item -> item }) { item ->
+                    LaunchedEffect(isSelected) {
+                        if (isSelected) {
+                            JewelLogger.getInstance("ChipsAndTree").info("Item $item got selected")
+                        }
+                    }
+
                     SimpleListItem(
                         text = item,
                         selected = isSelected,
                         active = isActive,
-                        modifier =
-                            Modifier.fillMaxWidth().selectable(isSelected) {
-                                JewelLogger.getInstance("ChipsAndTree").info("Click on $item")
-                            },
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
-            VerticalScrollbar(
-                rememberScrollbarAdapter(state.lazyListState),
-                modifier = Modifier.align(Alignment.CenterEnd),
-            )
+            VerticalScrollbar(state.lazyListState, modifier = Modifier.align(Alignment.CenterEnd))
         }
     }
 }

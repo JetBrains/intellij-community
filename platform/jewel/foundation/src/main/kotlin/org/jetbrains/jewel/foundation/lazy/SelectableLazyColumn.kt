@@ -30,6 +30,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.focused
+import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -232,6 +233,7 @@ private fun Modifier.selectable(
             selected = itemKey in selectableState.selectedKeys
             focused = selectableState.lastActiveItemIndex == allKeys.indexOfFirst { it.key == itemKey }
             stateDescription = ""
+            isTraversalGroup = false
         }
         // Handle pointer input but ensure Tab keys aren't intercepted
         .pointerInput(allKeys, itemKey) {
@@ -240,7 +242,6 @@ private fun Modifier.selectable(
                     val event = awaitPointerEvent()
                     when (event.type) {
                         PointerEventType.Press -> {
-                            requester?.requestFocus()
                             actionHandler.handlePointerEventPress(
                                 pointerEvent = event,
                                 keybindings = keybindings,
@@ -249,6 +250,7 @@ private fun Modifier.selectable(
                                 allKeys = allKeys,
                                 key = itemKey,
                             )
+                            requester?.requestFocus()
                         }
                     }
                 }
