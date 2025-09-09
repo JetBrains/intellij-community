@@ -42,7 +42,7 @@ public class JulLogger extends Logger {
     myLogger = delegate;
   }
 
-  protected final @NotNull String getLoggerName() {
+  public final @NotNull String getLoggerName() {
     return myLogger.getName();
   }
 

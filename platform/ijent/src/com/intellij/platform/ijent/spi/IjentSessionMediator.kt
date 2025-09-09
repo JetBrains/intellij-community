@@ -224,19 +224,11 @@ private val ijentLogMessageRegex = Regex(
   RegexOption.COMMENTS,
 )
 
-private val logTargets: Map<String, Logger> =
+private val logTargets: Map<String, Logger> by lazy {
   IjentLogger.ALL_LOGGERS.associateByTo(hashMapOf()) { logger ->
-    val getter = JulLogger::class.java.getDeclaredMethod("getLoggerName")
-    val oldIsAccessible = getter.isAccessible
-    val loggerName = try {
-      getter.isAccessible = true
-      getter.invoke(logger) as String
-    }
-    finally {
-      getter.isAccessible = oldIsAccessible
-    }
-    loggerName.removePrefix("#com.intellij.platform.ijent.")
+    (logger as JulLogger).loggerName.removePrefix("#com.intellij.platform.ijent.")
   }
+}
 
 private class LogIjentStderr {
   private var lastLoggingHandler: ((String) -> Unit)? = null
@@ -268,7 +260,7 @@ private class LogIjentStderr {
     val logger: ((String) -> Unit)? = run {
       val logTargetPrefix = message
         .take(256)  // I hope that there will never be a span/target name longer than 256 characters.
-        .split("ijent::#", limit = 2)
+        .split("ijent::-", limit = 2)
         .getOrNull(1)
         ?.substringBefore("::")
         ?.takeWhile { it.isLetter() || it == '_' }
