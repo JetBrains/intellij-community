@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
  */
 @ApiStatus.Internal
 public class PluginUpdateDialog extends DialogWrapper {
-  private final @NotNull Collection<PluginDownloader> myDownloaders;
+  private final @NotNull Collection<IdeaPluginDescriptor> myPluginDescriptors;
   private final boolean myPlatformUpdate;
   private final MyPluginModel myPluginModel;
   private final PluginsGroupComponent myPluginsPanel;
@@ -69,28 +69,61 @@ public class PluginUpdateDialog extends DialogWrapper {
                             @NotNull Collection<PluginDownloader> downloaders,
                             @Nullable Collection<PluginUiModel> customRepositoryPlugins,
                             Map<PluginId, PluginUiModel> installedPlugins) {
-    this(project, downloaders, customRepositoryPlugins, installedPlugins, false);
+    this(project, ContainerUtil.map(downloaders, PluginDownloader::getDescriptor), customRepositoryPlugins, installedPlugins, false);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
 
   public PluginUpdateDialog(@Nullable Project project,
                             @NotNull Collection<PluginDownloader> updatesForPlugins,
                             Map<PluginId, PluginUiModel> installedPlugins) {
-    this(project, updatesForPlugins, null, Collections.emptyMap(), true);
+    this(project, ContainerUtil.map(updatesForPlugins, PluginDownloader::getDescriptor), null, Collections.emptyMap(), true);
     setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
+
+  public static boolean showAndUpdate(@Nullable Project project,
+                                      @NotNull Collection<PluginDownloader> downloaders,
+                                      @Nullable Collection<PluginUiModel> customRepositoryPlugins,
+                                      Map<PluginId, PluginUiModel> installedPlugins) {
+    PluginUpdateDialog dialog = new PluginUpdateDialog(project, downloaders, customRepositoryPlugins, installedPlugins);
+    return showDialogAndUpdate(downloaders, dialog);
+  }
+
+  public static boolean showDialogAndUpdate(@NotNull Collection<PluginDownloader> downloaders, PluginUpdateDialog dialog) {
+    if (dialog.showAndGet()) {
+      List<IdeaPluginDescriptor> selectedPlugins = dialog.getSelectedPluginDescriptors();
+      List<PluginDownloader> selectedDownloaders = findDownloadersForPlugins(downloaders, selectedPlugins);
+      runUpdateAll(selectedDownloaders, dialog.getContentPanel(), dialog.myFinishCallback, null);
+      return true;
+    }
+    return false;
+  }
+
+  private static @NotNull List<PluginDownloader> findDownloadersForPlugins(@NotNull Collection<PluginDownloader> downloaders,
+                                                                           @NotNull List<IdeaPluginDescriptor> selectedPlugins) {
+    List<PluginDownloader> selectedDownloaders = new ArrayList<>();
+    Set<PluginId> selectedPluginIds = ContainerUtil.map2Set(selectedPlugins, IdeaPluginDescriptor::getPluginId);
+
+    for (PluginDownloader downloader : downloaders) {
+      if (selectedPluginIds.contains(downloader.getDescriptor().getPluginId())) {
+        selectedDownloaders.add(downloader);
+      }
+    }
+
+    return selectedDownloaders;
+  }
+
   private PluginUpdateDialog(@Nullable Project project,
-                             Collection<PluginDownloader> downloaders,
+                             Collection<IdeaPluginDescriptor> pluginDescriptors,
                              @Nullable Collection<PluginUiModel> customRepositoryPlugins,
                              Map<PluginId, PluginUiModel> installedPlugins,
                              boolean platformUpdate) {
     super(project, true);
 
-    myDownloaders = downloaders;
+    myPluginDescriptors = pluginDescriptors;
     myPlatformUpdate = platformUpdate;
 
-    myIgnoreAction = new ActionLink(IdeBundle.message("updates.ignore.updates.button", downloaders.size()), e -> {
+    myIgnoreAction = new ActionLink(IdeBundle.message("updates.ignore.updates.button", pluginDescriptors.size()), e -> {
       doIgnoreUpdateAction(e);
     });
 
@@ -150,8 +183,8 @@ public class PluginUpdateDialog extends DialogWrapper {
     PluginManagerConfigurablePanel.registerCopyProvider(myPluginsPanel);
     myPluginsPanel.setSelectionListener(__ -> myDetailsPage.showPlugins(myPluginsPanel.getSelection()));
 
-    for (PluginDownloader plugin : downloaders) {
-      myGroup.addDescriptor(plugin.getDescriptor());
+    for (IdeaPluginDescriptor descriptor : pluginDescriptors) {
+      myGroup.addDescriptor(descriptor);
     }
     myGroup.sortByName();
     myPluginsPanel.addGroup(myGroup);
@@ -197,6 +230,16 @@ public class PluginUpdateDialog extends DialogWrapper {
     myFinishCallback = finishCallback;
   }
 
+  public @NotNull List<IdeaPluginDescriptor> getSelectedPluginDescriptors() {
+    List<IdeaPluginDescriptor> selectedPlugins = new ArrayList<>();
+    for (ListPluginComponent plugin : myGroup.ui.plugins) {
+      if (plugin.getChooseUpdateButton().isSelected()) {
+        selectedPlugins.add(plugin.getPluginDescriptor());
+      }
+    }
+    return selectedPlugins;
+  }
+
   @Override
   protected void doOKAction() {
     super.doOKAction();
@@ -211,17 +254,6 @@ public class PluginUpdateDialog extends DialogWrapper {
     }
 
     if (myPlatformUpdate) return;
-
-    List<PluginDownloader> toDownloads = new ArrayList<>();
-
-    for (PluginDownloader downloader : myDownloaders) {
-      ListPluginComponent component = Objects.requireNonNull(myGroup.ui.findComponent(downloader.getDescriptor()));
-      if (component.getChooseUpdateButton().isSelected()) {
-        toDownloads.add(downloader);
-      }
-    }
-
-    runUpdateAll(toDownloads, getContentPanel(), myFinishCallback, null);
   }
 
   public static void runUpdateAll(@NotNull Collection<PluginDownloader> toDownload,

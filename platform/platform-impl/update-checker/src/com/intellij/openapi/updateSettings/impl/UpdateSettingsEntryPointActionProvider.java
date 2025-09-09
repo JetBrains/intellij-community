@@ -339,7 +339,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
             dialog.setFinishCallback(() -> setEnableUpdateAction(true));
             setEnableUpdateAction(false);
 
-            if (!dialog.showAndGet()) {
+            if (!PluginUpdateDialog.showDialogAndUpdate(myUpdatesForPlugins, dialog)) {
               setEnableUpdateAction(true);
             }
             return null;

@@ -831,16 +831,12 @@ private suspend fun showResults(
     if (userInitiated) {
       shownNotifications.remove(NotificationKind.PLUGINS)?.forEach { it.expire() }
     }
-    val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope
-    coroutineScope.launch(Dispatchers.EDT) {
-
-    }
     val plugins = withContext(Dispatchers.IO) {
       UiPluginManager.getInstance().findInstalledPlugins(updatesForPlugins.map { it.id }.toSet())
     }
     // offer all updates in a dialog
-    val showUpdateDialog = {
-      PluginUpdateDialog(project, updatesForPlugins, customRepoPlugins, plugins).show()
+    val showUpdateDialog: () -> Unit = {
+      PluginUpdateDialog.showAndUpdate(project, updatesForPlugins, customRepoPlugins, plugins)
     }
 
     if (forceDialog) {
