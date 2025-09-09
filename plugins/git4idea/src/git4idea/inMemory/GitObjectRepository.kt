@@ -18,10 +18,10 @@ import git4idea.repo.GitRepository
 import java.io.IOException
 
 /**
- * In-memory representation of a git repository.
- * Objects are cached and created in memory and persisted to disk on request
+ * Manages Git objects with in-memory caching.
+ * Interacts with the repository using Git plumbing commands.
  *
- * Lifetime is a single in-memory operation
+ * Each instance is intended for a single operation.
  */
 internal class GitObjectRepository(val repository: GitRepository) {
   companion object {
@@ -104,8 +104,9 @@ internal class GitObjectRepository(val repository: GitRepository) {
     }
   }
 
-  /*
-  All dependencies should be persisted on disk
+  /**
+   * All dependent objects should be already persisted to the Git repository
+   * Creates commit in Git and returns its OID but doesn't construct it in memory
    */
   @RequiresBackgroundThread
   fun commitTree(
@@ -166,6 +167,10 @@ internal class GitObjectRepository(val repository: GitRepository) {
     return commitTree(newTree, newParents, newMessage, newAuthor)
   }
 
+  /**
+   * Computes the OID that Git would assign to the corresponding object.
+   * Does not persist the object to the repository
+   */
   @RequiresBackgroundThread
   fun fetchOid(type: GitObjectType, body: ByteArray): Oid {
     val handler = GitLineHandler(repository.project, repository.root, GitCommand.HASH_OBJECT).apply {
@@ -211,7 +216,7 @@ internal class GitObjectRepository(val repository: GitRepository) {
   }
 
   /**
-   * Object should be persisted on disk
+   * Object should be persisted to the repository
    */
   @RequiresBackgroundThread
   private fun fetchObjectType(oid: Oid): GitObjectType {

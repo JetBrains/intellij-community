@@ -4,6 +4,9 @@ package git4idea.inMemory.objects
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 
+/**
+ * Represents a 20-byte SHA-1 hash of a Git object.
+ */
 internal class Oid private constructor(private val bytes: ByteArray) {
   init {
     require(bytes.size == HASH_LENGTH) { "Expected 160-bit SHA1 hash, got ${bytes.size * 8} bits" }
@@ -24,10 +27,6 @@ internal class Oid private constructor(private val bytes: ByteArray) {
         hexString.substring(i * 2, i * 2 + 2).toInt(16).toByte()
       }
       return Oid(bytes)
-    }
-
-    fun fromHash(hash: Hash): Oid {
-      return fromHex(hash.asString())
     }
   }
 

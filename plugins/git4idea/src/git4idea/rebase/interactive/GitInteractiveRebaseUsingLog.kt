@@ -41,8 +41,8 @@ internal fun getEntriesUsingLog(
   commit: VcsShortCommitDetails,
   logData: VcsLogData,
 ): List<GitRebaseEntryGeneratedUsingLog> {
-  Disposer.newDisposable().use {
-    val traverser: GitHistoryTraverser = GitHistoryTraverserImpl(repository.project, logData, it)
+  Disposer.newDisposable().use { parentDisposable ->
+    val traverser: GitHistoryTraverser = GitHistoryTraverserImpl(repository.project, logData, parentDisposable)
     val details = mutableListOf<VcsCommitMetadata>()
     try {
       traverser.traverse(repository.root) { (commitId, parents) ->
@@ -59,7 +59,7 @@ internal fun getEntriesUsingLog(
         }
       }
     }
-    catch (e: VcsException) {
+    catch (_: VcsException) {
       throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.UNRESOLVED_HASH)
     }
 
@@ -101,6 +101,16 @@ internal suspend fun tryGetEntriesUsingLog(
   return generatedEntries
 }
 
+/**
+ * The process:
+ * 1. Generate rebase entries from VCS log data
+ * 2. Show a dialog for user to modify the rebase plan
+ * 3. Attempt in-memory rebase if we don't have EDIT entries (faster, no working directory and index changes)
+ * 4. Fall back to traditional Git rebase if in-memory rebase had to stop (merge conflict).
+ *    We lose all our in-memory progress
+ *
+ * If log-based entry generation fails, falls back to traditional Git interactive rebase that gets entries from the editor.
+ */
 internal suspend fun interactivelyRebaseUsingLog(repository: GitRepository, commit: VcsCommitMetadata, logData: VcsLogData? = null) {
   val project = repository.project
   val root = repository.root
@@ -136,6 +146,9 @@ internal suspend fun interactivelyRebaseUsingLog(repository: GitRepository, comm
   }
 }
 
+/**
+ * Starts a traditional Git interactive rebase process.
+ */
 internal suspend fun startInteractiveRebase(
   repository: GitRepository,
   commit: VcsShortCommitDetails,
