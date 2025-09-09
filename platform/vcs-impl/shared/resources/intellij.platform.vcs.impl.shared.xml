@@ -22,6 +22,9 @@
     <projectSettings service="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
     <rdct.remoteSettingProvider implementation="com.intellij.platform.vcs.impl.shared.VcsRemoteSettingsInfoProvider"/>
 
+    <remote.customDataContextSerializer
+      implementation="com.intellij.platform.vcs.impl.shared.actions.ChangesViewSelectionDataContextSerializer"/>
+
     <changesGroupingPolicy key="directory" id="directory" weight="10"
                            implementationClass="com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy$Factory"/>
   </extensions>

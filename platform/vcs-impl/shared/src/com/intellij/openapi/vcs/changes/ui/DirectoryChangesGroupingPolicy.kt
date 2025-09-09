@@ -54,7 +54,8 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
     return node
   }
 
-  internal class Factory : ChangesGroupingPolicyFactory() {
+  @ApiStatus.Internal
+  class Factory : ChangesGroupingPolicyFactory() {
     override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): DirectoryChangesGroupingPolicy =
       DirectoryChangesGroupingPolicy(project, model)
   }

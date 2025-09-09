@@ -14,7 +14,10 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.vcs.VcsSharedDataKeys;
+import com.intellij.platform.vcs.impl.shared.RdLocalChanges;
+import com.intellij.platform.vcs.impl.shared.actions.VcsTransferableDataKeys;
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel;
+import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSelection;
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitNode;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.containers.JBIterable;
@@ -195,6 +198,11 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
     sink.lazy(EXACTLY_SELECTED_FILES_DATA_KEY, () -> {
       return VcsTreeModelData.mapToExactVirtualFile(exactSelection);
     });
+
+    if (RdLocalChanges.isEnabled()) {
+      sink.set(VcsTransferableDataKeys.CHANGES_VIEW_SELECTION,
+               ChangesViewSelection.create(VcsTreeModelData.selected(this).iterateRawNodes(), this));
+    }
   }
 
   public @NotNull JBIterable<FilePath> getUnversionedFiles() {
