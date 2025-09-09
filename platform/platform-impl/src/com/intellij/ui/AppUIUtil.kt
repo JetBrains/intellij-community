@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.IconLoader.setUseDarkIcons
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.AppIcon.MacAppIcon
 import com.intellij.ui.Color16.Companion.toColor16
@@ -339,6 +340,9 @@ object AppUIUtil {
     }
     val isLegacyAiDataCollectionConsent = ConsentOptions.condAiDataCollectionConsent()
     result.removeIf(isLegacyAiDataCollectionConsent) // IJPL-195651; AI data collection (LLMC) consent should not be present on UI while it's staying a default consent as a part of migration from LLMC to TRACE consent
+    if (!Registry.`is`("ide.enable.notification.trace.data.sharing")) {
+      result.removeIf(ConsentOptions.condTraceDataCollectionConsent())
+    }
     return result
   }
 
