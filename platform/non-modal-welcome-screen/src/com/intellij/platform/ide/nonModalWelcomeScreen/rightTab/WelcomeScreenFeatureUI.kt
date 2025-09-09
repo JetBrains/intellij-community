@@ -1,6 +1,7 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.rightTab
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.ui.icon.IconKey
 
 /**
@@ -10,6 +11,7 @@ import org.jetbrains.jewel.ui.icon.IconKey
  * Only one implementation of this interface should be registered per `featureKey`,
  * while multiple backends may be registered for the same feature.
  */
+@ApiStatus.Internal
 abstract class WelcomeScreenFeatureUI {
   companion object {
     private val EP_NAME: ExtensionPointName<WelcomeScreenFeatureUI> =

@@ -8,7 +8,7 @@ import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 @Rpc
 interface WelcomeScreenFeatureApi : RemoteApi<Unit> {
   suspend fun onClick(projectId: ProjectId, featureKey: String)

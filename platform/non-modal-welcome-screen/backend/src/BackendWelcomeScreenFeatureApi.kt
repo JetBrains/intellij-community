@@ -11,7 +11,7 @@ import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class BackendWelcomeScreenFeatureApi : WelcomeScreenFeatureApi {
+internal class BackendWelcomeScreenFeatureApi : WelcomeScreenFeatureApi {
   override suspend fun onClick(projectId: ProjectId, featureKey: String) {
     val project = projectId.findProject()
     val feature = WelcomeScreenFeatureBackend.getForFeatureKey(featureKey) ?: run {
@@ -24,7 +24,7 @@ class BackendWelcomeScreenFeatureApi : WelcomeScreenFeatureApi {
   }
 }
 
-class BackendWelcomeScreenFeatureApiProvider : RemoteApiProvider {
+internal class BackendWelcomeScreenFeatureApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<WelcomeScreenFeatureApi>()) {
       BackendWelcomeScreenFeatureApi()
