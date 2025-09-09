@@ -3,6 +3,7 @@ package com.intellij.platform.recentFiles.backend
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.HighlightingPassesCache
+import com.intellij.ide.actions.shouldUseFallbackSwitcher
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
@@ -62,7 +63,9 @@ internal class BackendRecentFileEventsModel(private val project: Project, privat
     // The active subscription leads to coroutine A launched during test A being executed during test B or in between (!) and producing various
     // `already disposed` and alike exceptions. It needs to be fixed on the platform side,
     // maybe by cancelling project service scope' children during temporary dispose phase
-    if (!ApplicationManager.getApplication().isUnitTestMode && project is ProjectEx) {
+    if (!ApplicationManager.getApplication().isUnitTestMode
+        && project is ProjectEx
+        && !shouldUseFallbackSwitcher()) {
       project.messageBus.connect(coroutineScope).apply {
         subscribe(RecentFileHistoryOrderListener.TOPIC, ChangedIdeHistoryFileHistoryOrderListener(project))
         subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, RecentFilesDaemonAnalyserListener(project))
