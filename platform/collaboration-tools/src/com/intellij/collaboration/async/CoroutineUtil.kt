@@ -4,7 +4,6 @@
 package com.intellij.collaboration.async
 
 import com.intellij.collaboration.util.ComputedResult
-import com.intellij.collaboration.util.HashingUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -13,7 +12,6 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
-import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.toArray
 import com.intellij.util.diff.Diff
 import kotlinx.coroutines.*
@@ -305,81 +303,6 @@ fun <T> Flow<T>.modelFlow(cs: CoroutineScope, log: Logger): SharedFlow<T> =
   catch { log.error(it) }.shareIn(cs, SharingStarted.Lazily, 1)
 
 /**
- * The destructor is never necessary because cleanup can be performed on scope cancellation
- * @see associateCachingBy
- */
-@ApiStatus.Obsolete
-fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(
-  keyExtractor: (T) -> K,
-  hashingStrategy: HashingStrategy<K>,
-  valueExtractor: CoroutineScope.(T) -> V,
-  destroy: suspend V.() -> Unit,
-  update: (suspend V.(T) -> Unit)? = null,
-)
-  : Flow<Map<K, V>> = flow {
-  coroutineScope {
-    val container = MappingScopedItemsContainer(this, keyExtractor, hashingStrategy, valueExtractor, destroy, update)
-    collect {
-      container.update(it)
-      emit(container.mappingState.value)
-    }
-    awaitCancellation()
-  }
-}
-
-/**
- * Associate each *item* [T] *key* [K] in the iterable from the receiver flow (source list) with a *value* [V]
- *
- * Keys are distinguished by a [hashingStrategy]
- *
- * When a new iterable is received:
- * * a new [CoroutineScope] and a new value is created via [valueExtractor] for new items
- * * existing values are updated via [update] if it was supplied
- * * values for missing items are removed and their scope is cancelled
- *
- * Order of the values in the resulting map is the same as in the source iterable
- * All [CoroutineScope]'s of values are only active while the resulting flow is being collected
- *
- * **Returned flow never completes**
- */
-fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(
-  keyExtractor: (T) -> K,
-  hashingStrategy: HashingStrategy<K>,
-  valueExtractor: CoroutineScope.(T) -> V,
-  update: (suspend V.(T) -> Unit)? = null,
-)
-  : Flow<Map<K, V>> = associateCachingBy(keyExtractor, hashingStrategy, valueExtractor, { }, update)
-
-/**
- * @see associateCachingBy
- *
- * Shorthand for cases where key is the same as item destructor simply cancels the value scope
- */
-private fun <T, R> Flow<Iterable<T>>.associateCaching(
-  hashingStrategy: HashingStrategy<T>,
-  mapper: CoroutineScope.(T) -> R,
-  update: (suspend R.(T) -> Unit)? = null,
-): Flow<Map<T, R>> {
-  return associateCachingBy({ it }, hashingStrategy, { mapper(it) }, { }, update)
-}
-
-/**
- * Creates a list of model objects from DTOs
- */
-fun <T, R> Flow<Iterable<T>>.mapDataToModel(
-  sourceIdentifier: (T) -> Any,
-  mapper: CoroutineScope.(T) -> R,
-  update: (suspend R.(T) -> Unit),
-): Flow<List<R>> =
-  associateCaching(HashingUtil.mappingStrategy(sourceIdentifier), mapper, update).map { it.values.toList() }
-
-/**
- * Create a list of view models from models
- */
-fun <T, R> Flow<Iterable<T>>.mapModelsToViewModels(mapper: CoroutineScope.(T) -> R): Flow<List<R>> =
-  associateCaching(HashingStrategy.identity(), mapper).map { it.values.toList() }
-
-/**
  * Maps each item in the collection from the source flow to a flow and emits the array of the latest values of each mapped flow.
  * Each new emission of the source flow triggers re-subscription to the mapped flows.
  */
@@ -497,29 +420,6 @@ fun <T, R> Flow<ComputedResult<T>>.transformConsecutiveSuccesses(
       )
     }
   }
-
-/**
- * Transforms the flow of some computation requests to a flow of computation states of this request
- * Will not emit "loading" state if the computation was completed before handling its state
- */
-@OptIn(ExperimentalCoroutinesApi::class)
-@ApiStatus.Internal
-fun <T> Flow<Deferred<T>>.computationState(): Flow<ComputedResult<T>> =
-  transformLatest { request ->
-    if (!request.isCompleted) {
-      emit(ComputedResult.loading())
-    }
-    try {
-      val value = request.await()
-      emit(ComputedResult.success(value))
-    }
-    catch (e: Exception) {
-      if (e !is CancellationException) {
-        emit(ComputedResult.failure(e))
-      }
-    }
-  }
-
 
 @OptIn(ExperimentalCoroutinesApi::class)
 inline fun <A, T> computationStateFlow(arguments: Flow<A>, crossinline computer: suspend (A) -> T): Flow<ComputedResult<T>> =

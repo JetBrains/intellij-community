@@ -152,7 +152,7 @@ internal class GHPRDiffViewModelImpl(
       }.map { it.getOrNull().orEmpty() }.stateInNow(cs, emptyMap())
 
   private val mappedThreads: StateFlow<List<MappedGHPRReviewThreadDiffViewModel>> =
-    threadsVm.compactThreads.mapModelsToViewModels { sharedVm ->
+    threadsVm.compactThreads.mapStatefulToStateful { sharedVm ->
       MappedGHPRReviewThreadDiffViewModel(this, sharedVm, threadMappings.mapNotNull { it[sharedVm.id] })
     }.stateInNow(cs, emptyList())
 

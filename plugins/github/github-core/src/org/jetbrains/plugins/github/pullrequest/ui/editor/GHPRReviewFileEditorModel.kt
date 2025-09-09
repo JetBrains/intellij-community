@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
 import com.intellij.collaboration.async.combineState
-import com.intellij.collaboration.async.mapModelsToViewModels
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
@@ -58,8 +58,8 @@ internal class GHPRReviewFileEditorModel internal constructor(
     }.stateInNow(cs, null)
 
   override val inlays: StateFlow<Collection<GHPREditorMappedComponentModel>> = combine(
-    fileVm.threads.mapModelsToViewModels { ShiftedThread(it) },
-    fileVm.newComments.mapModelsToViewModels { ShiftedNewComment(it) },
+    fileVm.threads.mapStatefulToStateful { ShiftedThread(it) },
+    fileVm.newComments.mapStatefulToStateful { ShiftedNewComment(it) },
   ) { threads, new ->
     // very explicit ordering: if we order back to front, loading of editor appears smoother (most initial loading happens off-screen)
     threads.sortedByDescending { it.line.value ?: -1 } + new

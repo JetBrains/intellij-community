@@ -126,7 +126,7 @@ internal class GHPRReviewFileEditorViewModelImpl(
     allMappedThreads.mapState { map -> map.filterValues { it.change == change } }
 
   override val threads: StateFlow<Collection<GHPRReviewFileEditorThreadViewModel>> =
-    threadsVm.compactThreads.mapModelsToViewModels { sharedVm ->
+    threadsVm.compactThreads.mapStatefulToStateful { sharedVm ->
       MappedGHPRReviewEditorThreadViewModel(this, sharedVm, mappedThreads.mapNotNull { it[sharedVm.id] })
     }.stateInNow(cs, emptyList())
 

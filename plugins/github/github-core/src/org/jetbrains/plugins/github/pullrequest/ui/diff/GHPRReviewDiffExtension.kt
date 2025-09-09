@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.HashingStrategy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -104,11 +103,9 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
           GHPRReviewUnifiedPosition(change, leftLine, rightLine)
         }.apply {
           cs.launchNow {
-            inlays.associateCachingBy(
-              keyExtractor = { it },
-              hashingStrategy = HashingStrategy.identity(),
-              valueExtractor = { inlay -> GHPRInlayUtils.installInlayHoverOutline(this, editor, side, locationToLine, inlay) }
-            ).collect()
+            inlays
+              .mapStatefulToStateful { inlayModel -> GHPRInlayUtils.installInlayHoverOutline(this, editor, side, locationToLine, inlayModel) }
+              .collect()
           }
         }
       }
@@ -132,9 +129,9 @@ private class DiffEditorModel(
   @RequiresEdt private val lineToUnified: (Int) -> GHPRReviewUnifiedPosition,
 ) : GHPRReviewDiffEditorModel {
 
-  private val threads = diffVm.threads.mapModelsToViewModels { MappedThread(cs, it) }.stateInNow(cs, emptyList())
-  private val newComments = diffVm.newComments.mapModelsToViewModels { MappedNewComment(it) }.stateInNow(cs, emptyList())
-  private val aiComments = diffVm.aiComments.mapModelsToViewModels { MappedAIComment(it) }.stateInNow(cs, emptyList())
+  private val threads = diffVm.threads.mapStatefulToStateful { MappedThread(cs, it) }.stateInNow(cs, emptyList())
+  private val newComments = diffVm.newComments.mapStatefulToStateful { MappedNewComment(it) }.stateInNow(cs, emptyList())
+  private val aiComments = diffVm.aiComments.mapStatefulToStateful { MappedAIComment(it) }.stateInNow(cs, emptyList())
 
   override val inlays: StateFlow<Collection<GHPREditorMappedComponentModel>> =
     combineStateIn(cs, threads, newComments, aiComments) { threads, new, ai -> threads + new + ai }

@@ -61,7 +61,7 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
     }.stateInNow(cs, null)
 
   private val initialNotesSize: Int = discussion.notes.value.size
-  private val notesVms = discussion.notes.mapModelsToViewModels { note ->
+  private val notesVms = discussion.notes.mapStatefulToStateful { note ->
     GitLabNoteViewModelImpl(project, this, projectData, note, discussion.notes.map { it.firstOrNull()?.id == note.id }, currentUser)
   }.stateInNow(cs, emptyList())
   override val notes: StateFlow<List<NoteItem>> =

@@ -78,7 +78,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
 
   override val replies: StateFlow<List<GitLabNoteViewModel>> = discussion.notes
     .map { it.drop(1) }
-    .mapModelsToViewModels { GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(false), currentUser) }
+    .mapStatefulToStateful { GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(false), currentUser) }
     .stateIn(cs, SharingStarted.Lazily, listOf())
 
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy
