@@ -34,6 +34,7 @@ jvm_library(
     "//platform/core-api:core",
     "@lib//:kotlin-reflect",
     "//plugins/kotlin/tests-from-compiler:tests-from-compiler_test_lib",
+    "@lib//:kotlin-tooling-core",
   ],
   runtime_deps = ["//platform/util/trove"]
 )
