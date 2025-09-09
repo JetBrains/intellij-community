@@ -7,6 +7,7 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.ide.projectWizard.generators.JdkDownloadService
 import com.intellij.ide.projectWizard.projectWizardJdkComboBox
+import com.intellij.ide.projectWizard.toEelDescriptorProperty
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.local.StarterModuleBuilder
 import com.intellij.ide.starters.shared.ValidationFunctions.*
@@ -145,7 +146,7 @@ abstract class CommonStarterInitialStep(
     row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
       projectWizardJdkComboBox(
         this,
-        locationProperty,
+        locationProperty.toEelDescriptorProperty(),
         jdkIntentProperty,
         wizardContext.disposable,
         wizardContext.projectJdk,

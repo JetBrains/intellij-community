@@ -19,6 +19,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.observable.util.transform
@@ -88,7 +89,7 @@ fun NewProjectWizardStep.projectWizardJdkComboBox(
     row,
     requireNotNull(baseData) {
       "Expected ${NewProjectWizardBaseStep::class.java.simpleName} in the new project wizard step tree."
-    }.pathProperty,
+    }.pathProperty.toEelDescriptorProperty(),
     intentProperty,
     context.disposable,
     context.projectJdk,
@@ -107,15 +108,26 @@ fun NewProjectWizardStep.projectWizardJdkComboBox(
  */
 fun projectWizardJdkComboBox(
   row: Row,
-  locationProperty: GraphProperty<String>,
-  intentProperty: GraphProperty<ProjectWizardJdkIntent>,
+  eelDescriptorProperty: ObservableProperty<EelDescriptor>,
+  intentProperty: ObservableMutableProperty<ProjectWizardJdkIntent>,
   disposable: Disposable,
   projectJdk: Sdk? = null,
   sdkFilter: (Sdk) -> Boolean = { true },
   jdkPredicate: ProjectWizardJdkPredicate? = ProjectWizardJdkPredicate.IsJdkSupported(),
 ): Cell<ProjectWizardJdkComboBox> {
-  val eelDescriptorProperty = locationProperty.transform { Path.of(it).getEelDescriptor() }
-  return row.cell(ProjectWizardJdkComboBox(projectJdk, disposable, sdkFilter))
+  val comboBox = ProjectWizardJdkComboBox(projectJdk, disposable, sdkFilter)
+
+  val intentValue = intentProperty.get()
+  require(intentValue == NoJdk) {
+    """
+      The default value of intentProperty is controlled by ${ProjectWizardJdkComboBox::class.java.simpleName}. 
+      All external default values of intentProperty will be ignored.
+      External default value = '$intentValue', expected value = '$NoJdk'.
+    """.trimIndent()
+  }
+  intentProperty.set(comboBox.item)
+
+  return row.cell(comboBox)
     .columns(COLUMNS_LARGE)
     .apply {
       val commentCell = comment(component.comment, 50)
@@ -632,4 +644,8 @@ internal fun ProjectWizardJdkComboBox.bindEelDescriptor(eelDescriptorProperty: O
   eelDescriptorProperty.afterChange { eelDescriptor ->
     refreshJdks(eelDescriptor)
   }
+}
+
+internal fun ObservableProperty<String>.toEelDescriptorProperty(): ObservableProperty<EelDescriptor> {
+  return transform { Path.of(it).getEelDescriptor() }
 }
