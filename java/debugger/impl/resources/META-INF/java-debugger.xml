@@ -221,32 +221,27 @@
       <action id="Debugger.NewCustomField" class="com.intellij.debugger.actions.NewCustomFieldAction">
         <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
         <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.NewWatch"/>
-        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Watches.Frontend" anchor="after" relative-to-action="XDebugger.NewWatch"/>
       </action>
       <action id="Debugger.EditCustomField" class="com.intellij.debugger.actions.EditCustomFieldAction"
               use-shortcut-of="XDebugger.SetValue">
         <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
         <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.EditWatch"/>
-        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Watches.Frontend" anchor="after" relative-to-action="XDebugger.EditWatch"/>
 
       </action>
       <action id="Debugger.RemoveCustomField" class="com.intellij.debugger.actions.RemoveCustomFieldAction"
               use-shortcut-of="XDebugger.RemoveWatch">
         <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
         <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.RemoveWatch"/>
-        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Watches.Frontend" anchor="after" relative-to-action="XDebugger.RemoveWatch"/>
       </action>
       <action id="Debugger.EditArrayFilter" class="com.intellij.debugger.actions.ArrayFilterAction$Edit"
               use-shortcut-of="XDebugger.SetValue">
         <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
         <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.EditWatch"/>
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend" anchor="first"/>
       </action>
       <action id="Debugger.RemoveArrayFilter" class="com.intellij.debugger.actions.ArrayFilterAction$Delete"
               use-shortcut-of="XDebugger.RemoveWatch">
         <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
         <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.RemoveWatch"/>
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend" anchor="first"/>
       </action>
 
       <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction">
@@ -256,11 +251,9 @@
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
       <action id="Debugger.FilterArray" class="com.intellij.debugger.actions.ArrayAction$FilterArrayAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="last"/>
       </action>
       <action id="Debugger.AdjustArrayRange" class="com.intellij.debugger.actions.ArrayAction$AdjustArrayRangeAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="last"/>
       </action>
       <action id="Debugger.ShowRelatedStack" class="com.intellij.debugger.actions.ShowRelatedStackAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="first"/>
@@ -271,21 +264,18 @@
 
       <action id="Debugger.ForceEarlyReturn" class="com.intellij.debugger.actions.ForceEarlyReturnAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend" anchor="after" relative-to-action="Debugger.PopFrame"/>
         <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.PopFrame"/>
         <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
       </action>
 
       <action id="Debugger.ThrowException" class="com.intellij.debugger.actions.ThrowExceptionAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend" anchor="after" relative-to-action="Debugger.PopFrame"/>
         <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.ForceEarlyReturn"/>
         <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
       </action>
 
       <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend"/>
       </action>
 
       <action id="Debugger.SwitchToTheNextContext" class="com.intellij.debugger.actions.SwitchToTheNextContextAction"/>

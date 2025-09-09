@@ -42,24 +42,19 @@
             id="MemoryView.ShowInstancesFromDebuggerTree">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
                     relative-to-action="Debugger.ShowReferring"/>
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="last"/>
     </action>
     <action class="com.intellij.debugger.memory.action.CalculateRetainedSizeAction"
             id="Memory.CalculateRetainedSize">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
-                    relative-to-action="MemoryView.ShowInstancesFromDebuggerTree"/>
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="after"
                     relative-to-action="MemoryView.ShowInstancesFromDebuggerTree"/>
     </action>
   </actions>
   <actions resource-bundle="messages.ActionsBundle">
     <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="last"/>
     </action>
     <group id="Debugger.ViewAsGroup" class="com.intellij.java.debugger.impl.shared.actions.ViewAsGroup">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="last"/>
     </group>
     <action id="Debugger.CreateRenderer" class="com.intellij.java.debugger.impl.shared.actions.CreateRendererAction">
       <add-to-group group-id="XDebugger.Watches.Inline.Popup" anchor="last"/>
@@ -68,17 +63,13 @@
     <action id="Debugger.AutoRenderer" class="com.intellij.java.debugger.impl.shared.actions.AutoRendererAction"/>
     <action id="Debugger.ShowTypes" class="com.intellij.java.debugger.impl.shared.actions.ShowTypesAction">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.ViewAsGroup"/>
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="after"
-                    relative-to-action="Debugger.ViewAsGroup"/>
     </action>
     <action id="Debugger.MuteRenderers" class="com.intellij.java.debugger.impl.shared.actions.MuteRenderersAction">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.ShowTypes"/>
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="after" relative-to-action="Debugger.ShowTypes"/>
     </action>
     <action id="Debugger.CustomizeContextView" class="com.intellij.java.debugger.impl.shared.actions.CustomizeContextViewAction">
       <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="last"/>
       <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="last"/>
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="last"/>
     </action>
   </actions>
 </idea-plugin>
