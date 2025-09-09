@@ -46,8 +46,8 @@ interface WelcomeRightTabContentProvider {
       return providers.first()
     }
 
-    fun getPluginProvidedFeature(featureKey: String): WelcomeScreenFeature? {
-      val feature = WelcomeScreenFeature.getForFeatureKey(featureKey)
+    fun getPluginProvidedFeature(featureKey: String): WelcomeScreenFeatureUI? {
+      val feature = WelcomeScreenFeatureUI.getForFeatureKey(featureKey)
       if (feature == null) {
         thisLogger().warn("Feature for the feature key $featureKey not found")
       }

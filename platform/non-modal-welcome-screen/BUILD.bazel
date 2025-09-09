@@ -28,6 +28,10 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/statistics",
     "//plugins/ide-startup/importSettings",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/kernel/shared:kernel",
+    "//platform/platform-impl/rpc",
+    "//platform/project/shared:project",
   ],
   runtime_deps = [":non-modal-welcome-screen_resources"],
   plugins = ["@lib//:compose-plugin"]
