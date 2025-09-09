@@ -29,6 +29,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
@@ -227,12 +228,11 @@ public final class PyPIPackageUtil {
   /**
    * Fetches available package versions using JSON API of PyPI.
    */
-  private @NotNull List<String> getPackageVersionsFromPyPI(@NotNull String packageName,
-                                                           boolean force) throws IOException {
+  private @NotNull @Unmodifiable List<String> getPackageVersionsFromPyPI(@NotNull String packageName,
+                                                                         boolean force) throws IOException {
     final PackageDetails details = refreshAndGetPackageDetailsFromPyPI(packageName, force);
-    final List<String> result = details.getReleases();
-    result.sort(PyPackageVersionComparator.getSTR_COMPARATOR().reversed());
-    return Collections.unmodifiableList(result);
+    return ContainerUtil.sorted(details.getReleases(),
+                                PyPackageVersionComparator.getSTR_COMPARATOR().reversed());
   }
 
   private @Nullable String getLatestPackageVersionFromPyPI(@NotNull Project project, @NotNull String packageName) throws IOException {
