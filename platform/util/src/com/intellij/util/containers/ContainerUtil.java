@@ -1820,7 +1820,7 @@ public final class ContainerUtil {
   }
 
   @Contract(pure=true)
-  public static <T> T @NotNull [] toArray(@NotNull Collection<T> c, @NotNull ArrayFactory<? extends T> factory) {
+  public static <T> T @NotNull [] toArray(@NotNull Collection<? extends T> c, @NotNull ArrayFactory<? extends T> factory) {
     T[] a = factory.create(c.size());
     return c.toArray(a);
   }

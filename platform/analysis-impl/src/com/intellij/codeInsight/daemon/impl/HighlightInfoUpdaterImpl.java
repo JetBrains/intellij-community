@@ -840,8 +840,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     if (toolHighlights == null) return elements;
     Map<PsiElement, List<? extends HighlightInfo>> highlights = toolHighlights.elementHighlights;
     if (highlights.isEmpty()) return elements;
-    List<PsiElement> sorted = new ArrayList<>(elements);
-    sorted.sort((e1, e2) -> {
+    return ContainerUtil.sorted(elements,
+    (e1, e2) -> {
       List<? extends HighlightInfo> infos1 = highlights.get(e1);
       List<? extends HighlightInfo> infos2 = highlights.get(e2);
       if ((infos1 == null) != (infos2 == null)) {
@@ -853,7 +853,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       // put error-generating element first
       return maxSeverity(infos2).compareTo(maxSeverity(infos1));
     });
-    return sorted;
   }
 
   private static @NotNull HighlightSeverity maxSeverity(@NotNull List<? extends HighlightInfo> infos) {
