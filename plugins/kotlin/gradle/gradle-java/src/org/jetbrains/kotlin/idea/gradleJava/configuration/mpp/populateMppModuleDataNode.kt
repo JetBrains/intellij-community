@@ -76,9 +76,11 @@ internal fun doCreateSourceSetInfo(
         info.gradleModuleId = GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule)
         info.actualPlatforms.pushPlatforms(sourceSet.actualPlatforms)
         info.isTestModule = sourceSet.isTestComponent
-        info.dependsOn = mppModel.resolveAllDependsOnSourceSets(sourceSet).map { dependsOnSourceSet ->
-            KotlinModuleUtils.getGradleModuleQualifiedName(resolverCtx, gradleModule, dependsOnSourceSet.name)
-        }.toSet()
+        info.dependsOn = mppModel.resolveAllDependsOnSourceSets(sourceSet)
+            .sortedWith(sourceSetOrderComparator(mppModel))
+            .map { dependsOnSourceSet ->
+                KotlinModuleUtils.getGradleModuleQualifiedName(resolverCtx, gradleModule, dependsOnSourceSet.name)
+            }.toSet()
         info.additionalVisible = sourceSet.additionalVisibleSourceSets.map { additionalVisibleSourceSetName ->
             KotlinModuleUtils.getGradleModuleQualifiedName(resolverCtx, gradleModule, additionalVisibleSourceSetName)
         }.toSet()
@@ -143,6 +145,7 @@ internal fun doCreateSourceSetInfo(
         sourceSetInfo.actualPlatforms.pushPlatforms(compilation.platform)
         sourceSetInfo.isTestModule = compilation.isTestComponent
         sourceSetInfo.dependsOn = model.resolveAllDependsOnSourceSets(compilation.declaredSourceSets)
+            .sortedWith(sourceSetOrderComparator(model))
             .map { dependsOnSourceSet ->
                 KotlinModuleUtils.getGradleModuleQualifiedName(
                     resolverCtx,
@@ -183,7 +186,7 @@ private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
 
 
             allSourceSetOfCompilation
-                .sortedWith(sourceSetComparator(mppModel))
+                .sortedWith(sourceSetOrderComparator(mppModel))
                 .forEach { sourceSet ->
                     resolverCtx.artifactsMap.storeModuleId(
                         artifactPath = path,
@@ -207,7 +210,7 @@ private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
             val path = ExternalSystemApiUtil.toCanonicalPath(archiveFile.absolutePath)
 
             compilation.allSourceSets
-                .sortedWith(sourceSetComparator(mppModel))
+                .sortedWith(sourceSetOrderComparator(mppModel))
                 .forEach { sourceSet ->
                     resolverCtx.artifactsMap.storeModuleId(
                         artifactPath = path,
@@ -238,7 +241,7 @@ private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
     }
 }
 
-private fun sourceSetComparator(mppModel: KotlinMPPGradleModel): Comparator<KotlinSourceSet> =
+internal fun sourceSetOrderComparator(mppModel: KotlinMPPGradleModel): Comparator<KotlinSourceSet> =
     // Sort source sets: platform-specific (most dependent) first, then common (less dependent)
     Comparator<KotlinSourceSet> { a, b ->
         // If A depends on B, then B should come after A
