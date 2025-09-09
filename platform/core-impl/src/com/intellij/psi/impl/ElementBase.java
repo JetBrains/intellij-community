@@ -74,7 +74,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     PsiElement psiElement = (PsiElement)this;
     if (!psiElement.isValid()) return null;
 
-    if (Registry.is("psi.deferIconLoading", true) && EDT.isCurrentThreadEdt()) {
+    if (Registry.is("psi.deferIconLoading", true)) {
       Icon baseIcon = LastComputedIconCache.get(psiElement, flags);
       if (baseIcon == null) {
         baseIcon = AstLoadingFilter.disallowTreeLoading(() -> computeBaseIcon(flags));
