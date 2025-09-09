@@ -130,7 +130,7 @@ class PyDataViewerPanel(
       return true
     }
 
-    private fun savePreferencesIfNeeded(newValue: Boolean): Unit {
+    private fun savePreferencesIfNeeded(newValue: Boolean) {
       if (Registry.`is`("python.data.view.allow.save.preferences.community.vs.powerful.data.view", false)) {
         setUsingCommunityPanel(newValue)
       }
