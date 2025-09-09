@@ -51,7 +51,7 @@ public class EntityIndexingServiceTest extends EntityIndexingServiceTestBase {
   }
 
   public void testIndexingProjectLibrary() throws Exception {
-    if (!Registry.is("use.workspace.file.index.for.partial.scanning", false)) {
+    if (!Registry.is("use.workspace.file.index.for.partial.scanning")) {
       doTest(this::createProjectLibrary, this::removeProjectLibrary, LibraryIndexableFilesIteratorImpl::createIteratorList);
     }
   }
@@ -87,7 +87,7 @@ public class EntityIndexingServiceTest extends EntityIndexingServiceTestBase {
   }
 
   public void testIndexingGlobalLibrary() throws Exception {
-    if (!Registry.is("use.workspace.file.index.for.partial.scanning", false)) {
+    if (!Registry.is("use.workspace.file.index.for.partial.scanning")) {
       doTest(this::createGlobalLibrary, this::removeGlobalLibrary,
              pair -> LibraryIndexableFilesIteratorImpl.createIteratorList(pair.getFirst()));
     }
@@ -105,7 +105,7 @@ public class EntityIndexingServiceTest extends EntityIndexingServiceTestBase {
   }
 
   public void testIndexingModuleLibrary() throws Exception {
-    if (!Registry.is("use.workspace.file.index.for.partial.scanning", false)) {
+    if (!Registry.is("use.workspace.file.index.for.partial.scanning")) {
       doTest(this::createModuleLibrary, this::removeModuleLibrary, LibraryIndexableFilesIteratorImpl::createIteratorList);
     }
   }
@@ -129,7 +129,9 @@ public class EntityIndexingServiceTest extends EntityIndexingServiceTestBase {
   }
 
   public void testIndexingSdk() throws Exception {
-    doTest(this::createSdk, this::removeSdk, sdk -> IndexableEntityProviderMethods.INSTANCE.createIterators(sdk));
+    if (!Registry.is("use.workspace.file.index.for.partial.scanning")) {
+      doTest(this::createSdk, this::removeSdk, sdk -> IndexableEntityProviderMethods.INSTANCE.createIterators(sdk));
+    }
   }
 
   @NotNull

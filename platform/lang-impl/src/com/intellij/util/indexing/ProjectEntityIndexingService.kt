@@ -11,10 +11,12 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
+import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -152,6 +154,13 @@ class ProjectEntityIndexingService(
         if (libraryOrigins.add(origin)) {
           iterators.add(iterator)
         }
+      } else if (entity is SdkEntity) {
+        iterators.add(GenericDependencyIterator.forSdkEntity(
+          sdkName = entity.name,
+          sdkType = SdkType.findByName(entity.type),
+          sdkHome = entity.homePath?.url,
+          root = fileSet.root
+        ))
       }
     }
   }

@@ -136,9 +136,11 @@ public final class ReincludedRootsUtil {
           continue;
         }
 
-        if (WorkspaceFileSetRecognizer.INSTANCE.isFromAdditionalLibraryRootsProvider(fileSet)) {
-          filesFromAdditionalLibraryRootsProviders.add(file);
-          continue;
+        if (!Registry.is("use.workspace.file.index.for.partial.scanning")) {
+          if (WorkspaceFileSetRecognizer.INSTANCE.isFromAdditionalLibraryRootsProvider(fileSet)) {
+            filesFromAdditionalLibraryRootsProviders.add(file);
+            continue;
+          }
         }
 
         if (!Registry.is("use.workspace.file.index.for.partial.scanning")) {

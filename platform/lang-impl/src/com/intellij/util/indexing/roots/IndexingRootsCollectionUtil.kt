@@ -42,7 +42,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBrid
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
-import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Function
@@ -277,7 +276,9 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
       descriptions.add(EntityCustomKindRootsDescription(entityReference, roots))
     }
     for ((sdkEntity, roots) in rootData.sdkRoots.entries) {
-      descriptions.add(SdkRootsDescription(sdkEntity, roots))
+      if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) {
+        descriptions.add(SdkRootsDescription(sdkEntity, roots))
+      }
     }
     reincludedRoots.addAll(rootData.excludedRoots)
   }
