@@ -15,7 +15,7 @@ import com.intellij.util.asSafely
 import org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionProperty
-import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor.Companion.StaticVersionCatalogProperty
+import org.jetbrains.plugins.gradle.service.resolve.GradlePropertyExtensionsContributor.Companion.StaticVersionCatalogProperty
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getCapitalizedAccessorName
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve

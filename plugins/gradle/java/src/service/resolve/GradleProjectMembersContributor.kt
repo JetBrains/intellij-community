@@ -26,7 +26,7 @@ class GradleProjectMembersContributor : NonCodeMembersContributor() {
 
     if (qualifierType !is GradleProjectAwareType) return
     val file = place.containingFile ?: return
-    val extensionsData = GradleExtensionsContributor.getExtensionsFor(file) ?: return
+    val extensionsData = GradlePropertyExtensionsContributor.getExtensionsFor(file) ?: return
     for (convention in extensionsData.conventions) {
       if (!createType(convention.typeFqn, file).processReceiverType(processor, state, place)) {
         return
