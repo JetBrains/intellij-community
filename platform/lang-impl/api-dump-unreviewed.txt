@@ -4108,17 +4108,7 @@ f:com.intellij.codeInsight.intention.impl.QuickEditHandlerUtils
 c:com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 - com.intellij.codeInsight.CodeInsightActionHandler
 - <init>():V
-- s:availableFor(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.codeInsight.intention.IntentionAction):Z
-- s:availableFor(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction):Z
-- s:chooseActionAndInvoke(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction,java.lang.String):Z
-- s:chooseActionAndInvoke(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction,java.lang.String,I):Z
-- s:chooseActionAndInvoke(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction,java.lang.String,I,com.intellij.codeInsight.intention.IntentionSource):Z
-- s:chooseActionAndInvoke(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction,java.lang.String,com.intellij.codeInsight.intention.IntentionSource):Z
-- s:chooseBetweenHostAndInjected(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.util.TripleFunction):com.intellij.openapi.util.Pair
-- s:chooseBetweenHostAndInjected(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.util.TripleFunction):com.intellij.openapi.util.Pair
-- s:chooseFileForAction(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction):com.intellij.openapi.util.Pair
 - invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
-- invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,Z):V
 - p:showIntentionHint(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,Z):V
 - startInWriteAction():Z
 f:com.intellij.codeInsight.intention.impl.config.IntentionActionMetaData

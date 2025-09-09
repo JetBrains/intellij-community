@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.Segment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -161,10 +160,6 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
         outList.add(emptyActionDescriptor);
       }
     }
-  }
-
-  private static boolean isEmpty(@NotNull Segment segment) {
-    return segment.getEndOffset() <= segment.getStartOffset();
   }
 
   public static final class IntentionsInfo {
@@ -364,7 +359,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
                                                     int passIdToShowIntentionsFor,
                                                     int offset,
                                                     @Nullable PsiElement psiElement,
-                                                    @NotNull List<? extends HighlightInfo.IntentionActionDescriptor> currentFixes) {
+                                                    @NotNull List<HighlightInfo.IntentionActionDescriptor> currentFixes) {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     PsiFile injectedFile = InjectedLanguageUtilBase.findInjectedPsiNoCommit(hostFile, offset);
 
