@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.FileStatusFactory
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeList
+import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.LocalChangeListImpl
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -39,7 +40,7 @@ data class ChangeListDto(
       }
       setDefault(isDefault)
       setId(id)
-    }.setChanges(changes.map { it.change }).build()
+    }.setChanges(changes.map { ChangeListChange(it.change, name, id) }).build()
   }
 }
 
