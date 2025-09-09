@@ -63,6 +63,7 @@ class PluginVerifier internal constructor(
     runProcess(
       args = listOf(
         java.pathString,
+        "-Xmx4g",
         "-Dplugin.verifier.home.dir=${homeDir.pathString}",
         "-jar",
         verifierJar.pathString,
