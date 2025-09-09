@@ -439,8 +439,33 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @ApiStatus.Internal
   @Override
-  public void dispatchCoroutineOnEDT(Runnable runnable, ModalityState state) {
-    LaterInvocator.invokeLater(state, Conditions.alwaysFalse(), myTransactionGuard.wrapCoroutineInvocation(runnable, state));
+  public void dispatchCoroutineOnEDT(Runnable runnable, ModalityState state, boolean acquireWriteIntentLockInNonBlockingWay) {
+    Runnable wrapped = myTransactionGuard.wrapCoroutineInvocation(runnable, state);
+    if (acquireWriteIntentLockInNonBlockingWay) {
+      scheduleWithWeakWriteIntentReadAction(wrapped, state);
+    }
+    else {
+      LaterInvocator.invokeLater(state, Conditions.alwaysFalse(), wrapped);
+    }
+  }
+
+  private void scheduleWithWeakWriteIntentReadAction(@NotNull Runnable runnable, @NotNull ModalityState state) {
+    LaterInvocator.invokeLater(state, Conditions.alwaysFalse(), () -> {
+      boolean executedSuccessfully = lock.tryRunWriteIntentReadAction(() -> {
+        runnable.run();
+        return Unit.INSTANCE;
+      });
+      // we managed to acquire the write-intent lock
+      if (executedSuccessfully) {
+        return;
+      }
+      // if this computation failed to run on EDT, then it means that we have an alive write action
+      // let's reschedule this computation after the write action finishes.
+      lock.runWhenWriteActionIsCompleted(() -> {
+        scheduleWithWeakWriteIntentReadAction(runnable, state);
+        return Unit.INSTANCE;
+      });
+    });
   }
 
   @Override
@@ -1532,6 +1557,4 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   public @NotNull ThreadingSupport getThreadingSupport() {
     return lock;
   }
-
-
 }
