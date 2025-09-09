@@ -770,6 +770,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitVariable(@NotNull GrVariable variable) {
+    if (variable.isUnnamed()) return;
     checkName(variable);
 
     PsiElement parent = variable.getParent();

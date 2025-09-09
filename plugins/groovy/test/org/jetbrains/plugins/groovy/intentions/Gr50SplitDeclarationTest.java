@@ -15,10 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+
 /**
  * @author Max Medvedev
  */
-public class GrSplitDeclarationTest extends GrIntentionTestCase {
+public class Gr50SplitDeclarationTest extends GrIntentionTestCase {
   public void testSingleVar() {
     doTextTest("""
                  def abc = 5
@@ -62,5 +66,16 @@ public class GrSplitDeclarationTest extends GrIntentionTestCase {
                  int abc = 1
                  int cde = 2
                  """);
+  }
+
+  public void testUnnamedVariable() {
+    doAntiTest("""
+                 def (<caret>_, a) = [1, 2]
+                 """, GroovyIntentionsBundle.message("split.into.separate.declaration"));
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_5_0;
   }
 }

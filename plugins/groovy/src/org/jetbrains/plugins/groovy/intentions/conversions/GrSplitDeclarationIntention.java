@@ -6,6 +6,7 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
@@ -136,8 +137,10 @@ public final class GrSplitDeclarationIntention extends GrPsiUpdateIntention {
       public boolean satisfiedBy(@NotNull PsiElement element) {
         if (element instanceof GrVariableDeclaration decl) {
           GrVariable[] variables = decl.getVariables();
-          return variables.length > 1 && PsiUtil.isLocalVariable(variables[0]) || 
-                 variables.length == 1 && PsiUtil.isLocalVariable(variables[0]) && variables[0].getInitializerGroovy() != null;
+
+          return !ContainerUtil.exists(variables, v -> v.isUnnamed()) &&
+                 (variables.length > 1 && PsiUtil.isLocalVariable(variables[0]) ||
+                 variables.length == 1 && PsiUtil.isLocalVariable(variables[0]) && variables[0].getInitializerGroovy() != null);
         }
         return false;
       }
