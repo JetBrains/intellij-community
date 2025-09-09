@@ -16,16 +16,16 @@ import org.jetbrains.annotations.CheckReturnValue
 
 /**
  * Executes the process, returning either an [EelProcess] or an error provided by the remote operating system.
- *
+ * 
  * stdin, stdout and stderr of the process are always forwarded, if there are.
- *
+ * 
  * The method may throw a RuntimeException only in critical cases like connection loss or a bug.
- *
+ * 
  * See [executeProcessBuilder]
- *
+ * 
  * @param exe An **absolute** path to the executable.
  *  TODO Or do relative paths also work?
- *
+ *  
  *  All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
  *  [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
  */
@@ -43,7 +43,7 @@ fun EelExecApi.execute(
 /**
  * @param exe An **absolute** path to the executable.
  *  TODO Or do relative paths also work?
- *
+ *  
  *  All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
  *  [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
  */
