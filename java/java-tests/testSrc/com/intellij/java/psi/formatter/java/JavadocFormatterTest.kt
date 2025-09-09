@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.formatter.java
 
 import com.intellij.ide.highlighter.JavaFileType
@@ -2258,5 +2258,30 @@ public class Test {
        * for a game of Minecraft ?
        */  
     """.trimIndent())
+  }
+
+  fun testMarkdownTags() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 120
+    }
+
+    doTextTest("""
+      class Test {
+          ///  @param  arg  description
+          ///     @return   description
+          ///@throws AssertionError description
+          public boolean foo(Boolean arg) {
+              return !arg;
+          }
+      }""".trimIndent(), """
+      class Test {
+          /// @param arg description
+          /// @return description
+          /// @throws AssertionError description
+          public boolean foo(Boolean arg) {
+              return !arg;
+          }
+      }""".trimIndent())
   }
 }
