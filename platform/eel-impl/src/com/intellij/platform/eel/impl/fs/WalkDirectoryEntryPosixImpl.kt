@@ -1,35 +1,35 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.fs
 
-import com.intellij.platform.eel.fs.DirectoryHashEntry
-import com.intellij.platform.eel.fs.DirectoryHashEntryPosix
+import com.intellij.platform.eel.fs.WalkDirectoryEntry
+import com.intellij.platform.eel.fs.WalkDirectoryEntryPosix
 import com.intellij.platform.eel.path.EelPath
 import java.nio.file.attribute.PosixFilePermission
 import java.time.ZonedDateTime
 
-data class DirectoryHashEntryPosixImpl(
+data class WalkDirectoryEntryPosixImpl(
   override val path: EelPath,
-  override val type: DirectoryHashEntry.Type,
-  override val permissions: DirectoryHashEntryPosix.Permissions,
-  override val attributes: DirectoryHashEntryPosix.Attributes,
+  override val type: WalkDirectoryEntry.Type,
+  override val permissions: WalkDirectoryEntryPosix.Permissions?,
+  override val attributes: WalkDirectoryEntryPosix.Attributes?,
   override val creationTime: ZonedDateTime?,
   override val lastModifiedTime: ZonedDateTime?,
   override val lastAccessTime: ZonedDateTime?,
-) : DirectoryHashEntryPosix {
-  object Directory : DirectoryHashEntry.Type.Directory
-  data class Regular(override val hash: Long) : DirectoryHashEntry.Type.Regular
-  data class SymlinkAbsolute(override val symlinkAbsolutePath: EelPath) : DirectoryHashEntry.Type.Symlink.Absolute
-  data class SymlinkRelative(override val symlinkRelativePath: String) : DirectoryHashEntry.Type.Symlink.Relative
-  object Other : DirectoryHashEntry.Type.Other
+) : WalkDirectoryEntryPosix {
+  object Directory : WalkDirectoryEntry.Type.Directory
+  data class Regular(override val hash: Long?) : WalkDirectoryEntry.Type.Regular
+  data class SymlinkAbsolute(override val symlinkAbsolutePath: EelPath) : WalkDirectoryEntry.Type.Symlink.Absolute
+  data class SymlinkRelative(override val symlinkRelativePath: String) : WalkDirectoryEntry.Type.Symlink.Relative
+  object Other : WalkDirectoryEntry.Type.Other
 
-  object Attributes : DirectoryHashEntryPosix.Attributes
+  object Attributes : WalkDirectoryEntryPosix.Attributes
 
   data class Permissions(
     override val owner: Int,
     override val group: Int,
     override val mask: Int,
     override val permissionsSet: Set<PosixFilePermission>,
-  ) : DirectoryHashEntryPosix.Permissions {
+  ) : WalkDirectoryEntryPosix.Permissions {
     override val otherCanExecute: Boolean get() = (mask and 0x1) != 0 // (00001) execute/search by others
     override val otherCanWrite: Boolean get() = (mask and 0x2) != 0 // (00002) write by others
     override val otherCanRead: Boolean get() = (mask and 0x4) != 0 // (00004) read by others

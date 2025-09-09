@@ -33,6 +33,7 @@ import java.time.ZonedDateTime
 import kotlin.io.path.exists
 import kotlin.io.path.fileAttributesView
 import kotlin.io.path.fileStore
+import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
 import kotlin.streams.asSequence
@@ -427,66 +428,163 @@ abstract class PosixNioBasedEelFileSystemApi(
     TODO("Not yet implemented")
   }
 
-  override suspend fun directoryHash(path: EelPath): Flow<DirectoryHashEntryResult> = flow {
-    if (!path.asNioPath().exists()) {
+  override suspend fun walkDirectory(options: EelFileSystemApi.WalkDirectoryOptions): Flow<WalkDirectoryEntryResult> = flow {
+    val rootDir = options.path.asNioPath()
+
+    // the target path has to be a directory and needs to exist
+    if (!rootDir.exists(LinkOption.NOFOLLOW_LINKS)) {
+      val e = WalkDirectoryEntryResultImpl.Error(EelFsResultImpl.DoesNotExist(options.path, "provided path does not exist"))
+      emit(e)
+      return@flow
+    }
+    if (!rootDir.isDirectory(LinkOption.NOFOLLOW_LINKS)) {
+      val e = WalkDirectoryEntryResultImpl.Error(EelFsResultImpl.Other(options.path, "provided path is not a directory"))
+      emit(e)
       return@flow
     }
 
     val emptyFileHash = Hashing.xxh3_64().hashStream().asLong
-    val q = mutableListOf(path.toNioPath())
+    val maxDepth = options.maxDepth.toInt()
 
-    while (q.isNotEmpty()) {
-      val currentItem = q.removeLast()
+    when (options.traversalOrder) {
+      EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder.BFS -> {
+        val q = ArrayDeque<Path>()
+        q.addLast(rootDir)
 
-      val sourceAttrs = currentItem.fileAttributesView<PosixFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
+        var currentDepth = 0
+        while (q.isNotEmpty()) {
+          val n = q.size
+          repeat(n) {
+            val currentItem = q.removeFirst()
 
-      val creationTime = sourceAttrs.creationTime()?.let { ZonedDateTime.ofInstant(it.toInstant(), ZoneId.of("UTC")) }
-      val lastModifiedTime = sourceAttrs.lastModifiedTime()?.let { ZonedDateTime.ofInstant(it.toInstant(), ZoneId.of("UTC")) }
-      val lastAccessTime = sourceAttrs.lastAccessTime()?.let { ZonedDateTime.ofInstant(it.toInstant(), ZoneId.of("UTC")) }
+            val sourceAttrs = currentItem.fileAttributesView<PosixFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
+            walkDirectoryProcessFilePosix(currentItem, sourceAttrs, emptyFileHash, options)?.let { res -> emit(res) }
 
-      val entryPosixPermissions = DirectoryHashEntryPosixImpl.Permissions(
+            // maxDepth == 0 means that there is not limit on the depth
+            if (sourceAttrs.isDirectory && (maxDepth == 0 || currentDepth < maxDepth)) {
+              var children = currentItem.listDirectoryEntries()
+              children = when (options.entryOrder) {
+                EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder.RANDOM -> {
+                  children
+                }
+                EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder.ALPHABETICAL -> {
+                  children.sortedBy { it.pathString }
+                }
+              }
+              q.addAll(children)
+            }
+          }
+          currentDepth += 1
+        }
+      }
+
+      EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder.DFS -> {
+        when (options.entryOrder) {
+          EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder.RANDOM -> {
+            // maxDepth == 0 means that there is not limit on the depth
+            val maxDepth = if (maxDepth == 0) Integer.MAX_VALUE else maxDepth
+            Files.walk(rootDir, maxDepth).use { pathStream ->
+              for (path in pathStream) {
+                val sourceAttrs = path.fileAttributesView<PosixFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
+                walkDirectoryProcessFilePosix(path, sourceAttrs, emptyFileHash, options)?.let { res -> emit(res) }
+              }
+            }
+          }
+          EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder.ALPHABETICAL -> {
+            val q = mutableListOf<Pair<Path, Int>>()
+            q.addLast(Pair(rootDir, 0))
+
+            while (q.isNotEmpty()) {
+              val (currentItem, currDepth) = q.removeLast()
+
+              val sourceAttrs = currentItem.fileAttributesView<PosixFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
+              walkDirectoryProcessFilePosix(currentItem, sourceAttrs, emptyFileHash, options)?.let { res -> emit(res) }
+
+              // maxDepth == 0 means that there is not limit on the depth
+              if (sourceAttrs.isDirectory && (maxDepth == 0 || currDepth < maxDepth)) {
+                val children = currentItem
+                  .listDirectoryEntries()
+                  .sortedByDescending { it.pathString }
+                  .map { path -> Pair(path, currDepth + 1) }
+                q.addAll(children)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private fun walkDirectoryProcessFilePosix(
+    currentItem: Path,
+    sourceAttrs: PosixFileAttributes,
+    emptyFileHash: Long,
+    options: EelFileSystemApi.WalkDirectoryOptions
+  ): WalkDirectoryEntryResult? {
+    var creationTime: ZonedDateTime? = null
+    var lastModifiedTime: ZonedDateTime? = null
+    var lastAccessTime: ZonedDateTime? = null
+    if (options.readMetadata) {
+      creationTime = sourceAttrs.creationTime()?.let { ZonedDateTime.ofInstant(it.toInstant(), ZoneId.of("UTC")) }
+      lastModifiedTime = sourceAttrs.lastModifiedTime()?.let { ZonedDateTime.ofInstant(it.toInstant(), ZoneId.of("UTC")) }
+      lastAccessTime = sourceAttrs.lastAccessTime()?.let { ZonedDateTime.ofInstant(it.toInstant(), ZoneId.of("UTC")) }
+    }
+
+    val entryPosixPermissions = if (options.readMetadata) {
+      WalkDirectoryEntryPosixImpl.Permissions(
         owner = Files.getAttribute(currentItem, "unix:uid", LinkOption.NOFOLLOW_LINKS) as Int,
         group = Files.getAttribute(currentItem, "unix:gid", LinkOption.NOFOLLOW_LINKS) as Int,
         mask = convertPermissionsToMask(sourceAttrs.permissions()),
         permissionsSet = sourceAttrs.permissions()
       )
+    }
+    else {
+      null
+    }
 
-      val currentPathAsEel = EelPath.parse(currentItem.toString(), descriptor)
+    val currentPathAsEel = EelPath.parse(currentItem.toString(), descriptor)
 
-      if (sourceAttrs.isSymbolicLink) {
+    if (sourceAttrs.isSymbolicLink) {
+      if (options.yieldSymlinks) {
         val symlinkTarget = Files.readSymbolicLink(currentItem)
         val symlinkType = if (symlinkTarget.isAbsolute) {
-          DirectoryHashEntryPosixImpl.SymlinkAbsolute(EelPath.parse(symlinkTarget.toString(), descriptor))
+          WalkDirectoryEntryPosixImpl.SymlinkAbsolute(EelPath.parse(symlinkTarget.toString(), descriptor))
         }
         else {
-          DirectoryHashEntryPosixImpl.SymlinkRelative(symlinkTarget.toString())
+          WalkDirectoryEntryPosixImpl.SymlinkRelative(symlinkTarget.toString())
         }
-        val entry = DirectoryHashEntryPosixImpl(
+        val entry = WalkDirectoryEntryPosixImpl(
           path = currentPathAsEel,
           type = symlinkType,
           permissions = entryPosixPermissions,
           lastModifiedTime = lastModifiedTime,
           lastAccessTime = lastAccessTime,
           creationTime = creationTime,
-          attributes = DirectoryHashEntryPosixImpl.Attributes
+          attributes = WalkDirectoryEntryPosixImpl.Attributes
         )
-        emit(DirectoryHashEntryResultImpl.Ok(entry))
+        return WalkDirectoryEntryResultImpl.Ok(entry)
       }
-      else if (sourceAttrs.isDirectory) {
-        val entry = DirectoryHashEntryPosixImpl(
+    }
+    else if (sourceAttrs.isDirectory) {
+      if (options.yieldDirectories) {
+        val entry = WalkDirectoryEntryPosixImpl(
           path = currentPathAsEel,
-          type = DirectoryHashEntryPosixImpl.Directory,
+          type = WalkDirectoryEntryPosixImpl.Directory,
           permissions = entryPosixPermissions,
           lastModifiedTime = lastModifiedTime,
           lastAccessTime = lastAccessTime,
           creationTime = creationTime,
-          attributes = DirectoryHashEntryPosixImpl.Attributes
+          attributes = WalkDirectoryEntryPosixImpl.Attributes
         )
-        q.addAll(currentItem.listDirectoryEntries().sortedByDescending { it.pathString.lowercase() })
-        emit(DirectoryHashEntryResultImpl.Ok(entry))
+        return WalkDirectoryEntryResultImpl.Ok(entry)
       }
-      else if (sourceAttrs.isRegularFile) {
-        val hash = if (sourceAttrs.size() > 0) {
+    }
+    else if (sourceAttrs.isRegularFile) {
+      if (options.yieldRegularFiles) {
+        val hash = if (!options.fileContentsHash) {
+          null
+        }
+        else if (sourceAttrs.size() > 0) {
           FileChannel.open(currentItem, StandardOpenOption.READ).use { fileChannel ->
             val buffer = fileChannel.map(
               FileChannel.MapMode.READ_ONLY,
@@ -500,30 +598,33 @@ abstract class PosixNioBasedEelFileSystemApi(
           emptyFileHash
         }
 
-        val entry = DirectoryHashEntryPosixImpl(
+        val entry = WalkDirectoryEntryPosixImpl(
           path = currentPathAsEel,
-          type = DirectoryHashEntryPosixImpl.Regular(hash),
+          type = WalkDirectoryEntryPosixImpl.Regular(hash),
           permissions = entryPosixPermissions,
           lastModifiedTime = lastModifiedTime,
           lastAccessTime = lastAccessTime,
           creationTime = creationTime,
-          attributes = DirectoryHashEntryPosixImpl.Attributes
+          attributes = WalkDirectoryEntryPosixImpl.Attributes
         )
-        emit(DirectoryHashEntryResultImpl.Ok(entry))
-      }
-      else {
-        val entry = DirectoryHashEntryPosixImpl(
-          path = currentPathAsEel,
-          type = DirectoryHashEntryPosixImpl.Other,
-          permissions = entryPosixPermissions,
-          lastModifiedTime = lastModifiedTime,
-          lastAccessTime = lastAccessTime,
-          creationTime = creationTime,
-          attributes = DirectoryHashEntryPosixImpl.Attributes
-        )
-        emit(DirectoryHashEntryResultImpl.Ok(entry))
+        return WalkDirectoryEntryResultImpl.Ok(entry)
       }
     }
+    else {
+      if (options.yieldOtherFileTypes) {
+        val entry = WalkDirectoryEntryPosixImpl(
+          path = currentPathAsEel,
+          type = WalkDirectoryEntryPosixImpl.Other,
+          permissions = entryPosixPermissions,
+          lastModifiedTime = lastModifiedTime,
+          lastAccessTime = lastAccessTime,
+          creationTime = creationTime,
+          attributes = WalkDirectoryEntryPosixImpl.Attributes
+        )
+        return WalkDirectoryEntryResultImpl.Ok(entry)
+      }
+    }
+    return null
   }
 }
 
@@ -564,66 +665,163 @@ abstract class WindowsNioBasedEelFileSystemApi(
     TODO("Not yet implemented")
   }
 
-  override suspend fun directoryHash(path: EelPath): Flow<DirectoryHashEntryResult> = flow {
-    if (!path.asNioPath().exists()) {
+  override suspend fun walkDirectory(options: EelFileSystemApi.WalkDirectoryOptions): Flow<WalkDirectoryEntryResult> = flow {
+    val rootDir = options.path.asNioPath()
+
+    // the target path has to be a directory and needs to exist
+    if (!rootDir.exists(LinkOption.NOFOLLOW_LINKS)) {
+      val e = WalkDirectoryEntryResultImpl.Error(EelFsResultImpl.DoesNotExist(options.path, "provided path does not exist"))
+      emit(e)
+      return@flow
+    }
+    if (!rootDir.isDirectory(LinkOption.NOFOLLOW_LINKS)) {
+      val e = WalkDirectoryEntryResultImpl.Error(EelFsResultImpl.Other(options.path, "provided path is not a directory"))
+      emit(e)
       return@flow
     }
 
     val emptyFileHash = Hashing.xxh3_64().hashStream().asLong
-    val q = mutableListOf(path.toNioPath())
+    val maxDepth = options.maxDepth.toInt()
 
-    while (q.isNotEmpty()) {
-      val currentItem = q.removeLast()
+    when (options.traversalOrder) {
+      EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder.BFS -> {
+        val q = ArrayDeque<Path>()
+        q.addLast(rootDir)
 
-      val sourceAttrs = currentItem.fileAttributesView<DosFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
+        var currentDepth = 0
+        while (q.isNotEmpty()) {
+          val n = q.size
+          repeat(n) {
+            val currentItem = q.removeFirst()
 
-      val lastModifiedTime = sourceAttrs.lastModifiedTime()?.let { ZonedDateTime.ofInstant(it.toInstant(), ZoneId.of("UTC")) }
-      val lastAccessTime = sourceAttrs.lastAccessTime()?.let { ZonedDateTime.ofInstant(it.toInstant(), ZoneId.of("UTC")) }
-      val creationTime = sourceAttrs.creationTime()?.let { ZonedDateTime.ofInstant(it.toInstant(), ZoneId.of("UTC")) }
+            val sourceAttrs = currentItem.fileAttributesView<DosFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
+            walkDirectoryProcessFileWindows(currentItem, sourceAttrs, emptyFileHash, options)?.let { res -> emit(res) }
 
-      val windowsFileAttributes = DirectoryHashEntryWindowsImpl.Attributes(
+            // maxDepth == 0 means that there is not limit on the depth
+            if (sourceAttrs.isDirectory && (maxDepth == 0 || currentDepth < maxDepth)) {
+              var children = currentItem.listDirectoryEntries()
+              children = when (options.entryOrder) {
+                EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder.RANDOM -> {
+                  children
+                }
+                EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder.ALPHABETICAL -> {
+                  children.sortedBy { it.pathString }
+                }
+              }
+              q.addAll(children)
+            }
+          }
+          currentDepth += 1
+        }
+      }
+
+      EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder.DFS -> {
+        when (options.entryOrder) {
+          EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder.RANDOM -> {
+            // maxDepth == 0 means that there is not limit on the depth
+            val maxDepth = if (maxDepth == 0) Integer.MAX_VALUE else maxDepth
+            Files.walk(rootDir, maxDepth).use { pathStream ->
+              for (path in pathStream) {
+                val sourceAttrs = path.fileAttributesView<DosFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
+                walkDirectoryProcessFileWindows(path, sourceAttrs, emptyFileHash, options)?.let { res -> emit(res) }
+              }
+            }
+          }
+          EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder.ALPHABETICAL -> {
+            val q = mutableListOf<Pair<Path, Int>>()
+            q.addLast(Pair(rootDir, 0))
+
+            while (q.isNotEmpty()) {
+              val (currentItem, currDepth) = q.removeLast()
+
+              val sourceAttrs = currentItem.fileAttributesView<DosFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
+              walkDirectoryProcessFileWindows(currentItem, sourceAttrs, emptyFileHash, options)?.let { res -> emit(res) }
+
+              // maxDepth == 0 means that there is not limit on the depth
+              if (sourceAttrs.isDirectory && (maxDepth == 0 || currDepth < maxDepth)) {
+                val children = currentItem
+                  .listDirectoryEntries()
+                  .sortedByDescending { it.pathString }
+                  .map { path -> Pair(path, currDepth + 1) }
+                q.addAll(children)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private fun walkDirectoryProcessFileWindows(
+    currentItem: Path,
+    sourceAttrs: DosFileAttributes,
+    emptyFileHash: Long,
+    options: EelFileSystemApi.WalkDirectoryOptions
+  ): WalkDirectoryEntryResult? {
+    var creationTime: ZonedDateTime? = null
+    var lastModifiedTime: ZonedDateTime? = null
+    var lastAccessTime: ZonedDateTime? = null
+    if (options.readMetadata) {
+      lastModifiedTime = sourceAttrs.lastModifiedTime()?.let { ZonedDateTime.ofInstant(it.toInstant(), ZoneId.of("UTC")) }
+      lastAccessTime = sourceAttrs.lastAccessTime()?.let { ZonedDateTime.ofInstant(it.toInstant(), ZoneId.of("UTC")) }
+      creationTime = sourceAttrs.creationTime()?.let { ZonedDateTime.ofInstant(it.toInstant(), ZoneId.of("UTC")) }
+    }
+
+    val windowsFileAttributes = if (options.readMetadata) {
+      WalkDirectoryEntryWindowsImpl.Attributes(
         isReadOnly = sourceAttrs.isReadOnly,
         isHidden = sourceAttrs.isHidden,
         isArchive = sourceAttrs.isArchive,
         isSystem = sourceAttrs.isSystem,
       )
+    }
+    else {
+      null
+    }
 
-      val currentPathAsEel = EelPath.parse(currentItem.toString(), descriptor)
+    val currentPathAsEel = EelPath.parse(currentItem.toString(), descriptor)
 
-      if (sourceAttrs.isSymbolicLink) {
+    if (sourceAttrs.isSymbolicLink) {
+      if (options.yieldSymlinks) {
         val symlinkTarget = Files.readSymbolicLink(currentItem)
         val symlinkType = if (symlinkTarget.isAbsolute) {
-          DirectoryHashEntryWindowsImpl.SymlinkAbsolute(EelPath.parse(symlinkTarget.toString(), descriptor))
+          WalkDirectoryEntryWindowsImpl.SymlinkAbsolute(EelPath.parse(symlinkTarget.toString(), descriptor))
         }
         else {
-          DirectoryHashEntryWindowsImpl.SymlinkRelative(symlinkTarget.toString())
+          WalkDirectoryEntryWindowsImpl.SymlinkRelative(symlinkTarget.toString())
         }
-        val entry = DirectoryHashEntryWindowsImpl(
+        val entry = WalkDirectoryEntryWindowsImpl(
           path = currentPathAsEel,
           type = symlinkType,
           attributes = windowsFileAttributes,
           lastModifiedTime = lastModifiedTime,
           lastAccessTime = lastAccessTime,
           creationTime = creationTime,
-          permissions = DirectoryHashEntryWindowsImpl.Permissions
+          permissions = WalkDirectoryEntryWindowsImpl.Permissions
         )
-        emit(DirectoryHashEntryResultImpl.Ok(entry))
+        return WalkDirectoryEntryResultImpl.Ok(entry)
       }
-      else if (sourceAttrs.isDirectory) {
-        val entry = DirectoryHashEntryWindowsImpl(
+    }
+    else if (sourceAttrs.isDirectory) {
+      if (options.yieldDirectories) {
+        val entry = WalkDirectoryEntryWindowsImpl(
           path = currentPathAsEel,
-          type = DirectoryHashEntryWindowsImpl.Directory,
+          type = WalkDirectoryEntryWindowsImpl.Directory,
           attributes = windowsFileAttributes,
           lastModifiedTime = lastModifiedTime,
           lastAccessTime = lastAccessTime,
           creationTime = creationTime,
-          permissions = DirectoryHashEntryWindowsImpl.Permissions
+          permissions = WalkDirectoryEntryWindowsImpl.Permissions
         )
-        q.addAll(currentItem.listDirectoryEntries().sortedByDescending { it.pathString.lowercase() })
-        emit(DirectoryHashEntryResultImpl.Ok(entry))
+        return WalkDirectoryEntryResultImpl.Ok(entry)
       }
-      else if (sourceAttrs.isRegularFile) {
-        val hash = if (sourceAttrs.size() > 0) {
+    }
+    else if (sourceAttrs.isRegularFile) {
+      if (options.yieldRegularFiles) {
+        val hash = if (options.fileContentsHash) {
+          null
+        }
+        else if (sourceAttrs.size() > 0) {
           FileChannel.open(currentItem, StandardOpenOption.READ).use { fileChannel ->
             val buffer = fileChannel.map(
               FileChannel.MapMode.READ_ONLY,
@@ -631,7 +829,7 @@ abstract class WindowsNioBasedEelFileSystemApi(
               sourceAttrs.size(),
             )
             val hash = Hashing.xxh3_64().hashBytesToLong(buffer.toByteArray())
-            // NOTE: windows requires explicit buffer cleaning
+            // NOTE: Windows requires explicit buffer cleaning
             ByteBufferUtil.cleanBuffer(buffer)
             hash
           }
@@ -640,30 +838,33 @@ abstract class WindowsNioBasedEelFileSystemApi(
           emptyFileHash
         }
 
-        val entry = DirectoryHashEntryWindowsImpl(
+        val entry = WalkDirectoryEntryWindowsImpl(
           path = currentPathAsEel,
-          type = DirectoryHashEntryWindowsImpl.Regular(hash),
+          type = WalkDirectoryEntryWindowsImpl.Regular(hash),
           attributes = windowsFileAttributes,
           lastModifiedTime = lastModifiedTime,
           lastAccessTime = lastAccessTime,
           creationTime = creationTime,
-          permissions = DirectoryHashEntryWindowsImpl.Permissions
+          permissions = WalkDirectoryEntryWindowsImpl.Permissions
         )
-        emit(DirectoryHashEntryResultImpl.Ok(entry))
-      }
-      else {
-        val entry = DirectoryHashEntryWindowsImpl(
-          path = currentPathAsEel,
-          type = DirectoryHashEntryWindowsImpl.Other,
-          attributes = windowsFileAttributes,
-          lastModifiedTime = lastModifiedTime,
-          lastAccessTime = lastAccessTime,
-          creationTime = creationTime,
-          permissions = DirectoryHashEntryWindowsImpl.Permissions
-        )
-        emit(DirectoryHashEntryResultImpl.Ok(entry))
+        return WalkDirectoryEntryResultImpl.Ok(entry)
       }
     }
+    else {
+      if (options.yieldOtherFileTypes) {
+        val entry = WalkDirectoryEntryWindowsImpl(
+          path = currentPathAsEel,
+          type = WalkDirectoryEntryWindowsImpl.Other,
+          attributes = windowsFileAttributes,
+          lastModifiedTime = lastModifiedTime,
+          lastAccessTime = lastAccessTime,
+          creationTime = creationTime,
+          permissions = WalkDirectoryEntryWindowsImpl.Permissions
+        )
+        return WalkDirectoryEntryResultImpl.Ok(entry)
+      }
+    }
+    return null
   }
 }
 

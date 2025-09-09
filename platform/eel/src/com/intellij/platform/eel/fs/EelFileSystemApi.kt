@@ -220,19 +220,147 @@ interface EelFileSystemApi {
     interface Other : FullReadError, EelFsError.Other
   }
 
+  interface WalkDirectoryOptions {
+    /**
+     * Path to the directory that is to be traversed. The path must be a directory (not a symlink) and must exist.
+     */
+    val path: EelPath
+
+    /**
+     * maxDepth parameter specifies how many levels deep to traverse within the given directory. A value of 0 (the default) means
+     * the entire directory will be traversed without any depth limit.
+     *
+     * Example for depth = 1:
+     * ```
+     * a/
+     * |- b/
+     * |  |- c
+     * |  |- d
+     * |- e
+     * ```
+     * Returned:
+     * ```
+     * a
+     * a/b
+     * a/e
+     * ```
+     */
+    val maxDepth: UInt get() = 0U
+
+    /**
+     * The default is DFS.
+     */
+    val traversalOrder: WalkDirectoryTraversalOrder get() = WalkDirectoryTraversalOrder.DFS
+
+    /**
+     * The default is RANDOM.
+     */
+    val entryOrder: WalkDirectoryEntryOrder get() = WalkDirectoryEntryOrder.RANDOM
+
+    /**
+     * Yield permissions and timestamps. Default is false.
+     */
+    val readMetadata: Boolean get() = false
+
+    /**
+     * Default is true.
+     */
+    val yieldRegularFiles: Boolean get() = true
+
+    /**
+     * Default is true.
+     */
+    val yieldSymlinks: Boolean get() = true
+
+    /**
+     * Default is true.
+     */
+    val yieldDirectories: Boolean get() = true
+
+    /**
+     * Default is true.
+     */
+    val yieldOtherFileTypes: Boolean get() = true
+
+    /**
+     * Yield hash of the regular file's contents. Contents are hashed using xxHash. Default is false.
+     */
+    val fileContentsHash: Boolean get() = false
+
+    enum class WalkDirectoryTraversalOrder {
+      /**
+       * Breadth-first traversal.
+       * ```
+       * a/
+       * |- b/
+       * |  |- c
+       * |  |- d
+       * |- e
+       * ```
+       * Returned:
+       * ```
+       * a
+       * a/b
+       * a/e
+       * a/b/c
+       * a/b/d
+       * ```
+       */
+      BFS,
+
+      /**
+       * Depth-first traversal, where directory entries are yielded in order they are encountered.
+       * If you do not care for the manner of traversal, this is the preferable option.
+       * ```
+       * a/
+       * |- b/
+       * |  |- c
+       * |  |- d
+       * |- e
+       * ```
+       * Returned:
+       * ```
+       * a
+       * a/b
+       * a/b/c
+       * a/b/d
+       * a/e
+       * ```
+       */
+      DFS
+    }
+
+    enum class WalkDirectoryEntryOrder {
+      /**
+       * Yield directory entries in order in which they appear on the file system.
+       * If you do not care for the order of the files, this is the preferable option.
+       */
+      RANDOM,
+
+      /**
+       * Yield directory entries in alphabetical order.
+       */
+      ALPHABETICAL
+    }
+
+    interface Builder {
+      fun build(): WalkDirectoryOptions
+    }
+  }
+
   /**
-   * Calculates a xxHash3 hash for each file in the given directory in a DFS manner. The provided path can point to a nonexistent file or\
-   * directory when the target EelPath is on the remote side (this would indicate that the file/directory has been created locally).\
-   * EelPath pointing to a local file/directory has to be valid. Directory hash supports directories, files, and symlinks.
+   * Traverses given directory, yielding directory entries, including the target directory.
    *
-   * @param path is the target directory through which will be recursed.
-   * @return a flow which emits a tuple of file EelPath and its hash.
+   * Default walkDirectory options are to traverse in a DFS manner, yield entries in a random order, yielding all file types, and to not
+   * yield metadata and file hash.
    */
   @CheckReturnValue
-  suspend fun directoryHash(path: EelPath): Flow<DirectoryHashEntryResult>
+  suspend fun walkDirectory(@GeneratedBuilder options: WalkDirectoryOptions): Flow<WalkDirectoryEntryResult>
 
-  sealed interface DirectoryHashError : EelFsError {
-    interface Other : DirectoryHashError, EelFsError.Other
+  sealed interface WalkDirectoryError : EelFsError {
+    interface Other : WalkDirectoryError, EelFsError.Other
+    interface DoesNotExist : WalkDirectoryError, EelFsError.DoesNotExist
+    interface PermissionDenied : WalkDirectoryError, EelFsError.PermissionDenied
   }
 
   /**

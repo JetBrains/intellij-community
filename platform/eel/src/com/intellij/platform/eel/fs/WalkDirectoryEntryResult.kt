@@ -4,12 +4,12 @@ package com.intellij.platform.eel.fs
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-sealed interface DirectoryHashEntryResult {
-  interface Ok : DirectoryHashEntryResult {
-    val value: DirectoryHashEntry
+sealed interface WalkDirectoryEntryResult {
+  interface Ok : WalkDirectoryEntryResult {
+    val value: WalkDirectoryEntry
   }
 
-  interface Error : DirectoryHashEntryResult {
-    val error: EelFileSystemApi.DirectoryHashError
+  interface Error : WalkDirectoryEntryResult {
+    val error: EelFileSystemApi.WalkDirectoryError
   }
 }
