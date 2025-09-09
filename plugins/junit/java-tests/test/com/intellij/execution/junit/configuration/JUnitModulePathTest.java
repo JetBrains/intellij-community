@@ -25,10 +25,12 @@ import com.intellij.rt.junit.JUnitStarter;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -152,7 +154,7 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
 
     PathsList classPath = params4Tests.getClassPath();
     assertContainsElements(classPath.getPathList(), PathUtil.getJarPathForClass(JUnitStarter.class));
-    assertContainsElements(classPath.getPathList(), TestObject.getJUnit5RtFile().getPath());
+    assertContainsElements(classPath.getPathList(), ContainerUtil.map(TestObject.getJUnit5RtFiles(), File::getPath));
 
     PathsList modulePath = params4Tests.getModulePath();
     checkLibrariesOnPathList(module, modulePath);
@@ -184,7 +186,7 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
 
     PathsList classPath = params4Tests.getClassPath();
     assertContainsElements(classPath.getPathList(), PathUtil.getJarPathForClass(JUnitStarter.class));
-    assertContainsElements(classPath.getPathList(), TestObject.getJUnit5RtFile().getPath());
+    assertContainsElements(classPath.getPathList(), ContainerUtil.map(TestObject.getJUnit5RtFiles(), File::getPath));
 
     PathsList modulePath = params4Tests.getModulePath();
     checkLibrariesOnPathList(module, modulePath);

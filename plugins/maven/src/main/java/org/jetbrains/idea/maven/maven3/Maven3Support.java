@@ -27,9 +27,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
-import static org.jetbrains.idea.maven.utils.MavenUtil.locateModuleOutput;
+import static org.jetbrains.idea.maven.utils.MavenUtil.locateModuleOutputs;
 
 public class Maven3Support implements MavenVersionAwareSupportExtension {
   private static final @NonNls String MAIN_CLASS36 = "org.jetbrains.idea.maven.server.RemoteMavenServer36";
@@ -99,18 +100,18 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
     BundledMavenDownloader.INSTANCE.downloadMaven3LibsSync(communityRoot);
 
     classpath.add(PathManager.getJarForClass(MavenId.class));
-    classpath.add(locateModuleOutput("intellij.maven.server"));
+    classpath.addAll(Objects.requireNonNull(locateModuleOutputs("intellij.maven.server")));
 
-    classpath.add(locateModuleOutput("intellij.maven.server.telemetry"));
+    classpath.addAll(Objects.requireNonNull(locateModuleOutputs("intellij.maven.server.telemetry")));
     classpath.addAll(MavenUtil.collectClasspath(MavenServerTelemetryClasspathUtil.TELEMETRY_CLASSES));
 
     Path parentFile = MavenUtil.getMavenPluginParentFile();
-    classpath.add(locateModuleOutput("intellij.maven.server.m3.common"));
+    classpath.addAll(Objects.requireNonNull(locateModuleOutputs("intellij.maven.server.m3.common")));
     addDir(classpath, parentFile.resolve("maven3-server-common/lib"), f -> true);
 
-    classpath.add(locateModuleOutput("intellij.maven.server.m3.impl"));
+    classpath.addAll(Objects.requireNonNull(locateModuleOutputs("intellij.maven.server.m3.impl")));
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
-      classpath.add(locateModuleOutput("intellij.maven.server.m36.impl"));
+      classpath.addAll(Objects.requireNonNull(locateModuleOutputs("intellij.maven.server.m36.impl")));
     }
   }
 

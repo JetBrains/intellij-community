@@ -136,21 +136,21 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
 
 private val LOG = logger<BuildProcessClasspathManager>()
 
-private fun findClassesRoot(relativePath: String, plugin: IdeaPluginDescriptor, baseFile: Path): String? {
+private fun findClassesRoots(relativePath: String, plugin: IdeaPluginDescriptor, baseFile: Path): List<String> {
   val jarFile = baseFile.resolve("lib/$relativePath")
   if (Files.exists(jarFile)) {
-    return jarFile.toString()
+    return listOf(jarFile.toString())
   }
 
   if (AppMode.isDevServer()) {
     check(Files.isDirectory(baseFile))
-    return baseFile.toString()
+    return listOf(baseFile.toString())
   }
 
   // ... 'plugin run configuration': all module outputs are copied to 'classes' folder
   val classesDir = baseFile.resolve("classes")
   if (Files.isDirectory(classesDir)) {
-    return classesDir.toString()
+    return listOf(classesDir.toString())
   }
 
   // development mode
@@ -162,10 +162,9 @@ private fun findClassesRoot(relativePath: String, plugin: IdeaPluginDescriptor, 
     if (mapping != null) {
       // baseFile is ".../idea-compile-parts-v2/production/<module-name>/"
       // We should take ".../idea-compile-parts-v2/production/<module-name-2>/<hash>.jar"
-      val moduleJar = mapping["production/$moduleName"]?.let(Path::of)
-      if (moduleJar != null) {
-        if (Files.exists(moduleJar)) {
-          return moduleJar.toString()
+      mapping["production/$moduleName"]?.let {
+        if (it.map(Path::of).all(Files::exists)) {
+          return it
         }
       }
     }
@@ -177,7 +176,7 @@ private fun findClassesRoot(relativePath: String, plugin: IdeaPluginDescriptor, 
       }
       val moduleDir = baseOutputDir.resolve(moduleName)
       if (Files.isDirectory(moduleDir)) {
-        return moduleDir.toString()
+        return listOf(moduleDir.toString())
       }
     }
     // ... try "<plugin-dir>/lib/<jar-name>", assuming that <jar-name> is a module library committed to VCS
@@ -185,7 +184,7 @@ private fun findClassesRoot(relativePath: String, plugin: IdeaPluginDescriptor, 
     if (pluginDir != null) {
       val libraryFile = File(pluginDir, "lib/" + PathUtilRt.getFileName(relativePath))
       if (libraryFile.exists()) {
-        return libraryFile.path
+        return listOf(libraryFile.path)
       }
     }
     // ... look for <jar-name> on the classpath, assuming that <jar-name> is an external (read: Maven) library
@@ -193,7 +192,7 @@ private fun findClassesRoot(relativePath: String, plugin: IdeaPluginDescriptor, 
       val urls = BuildProcessClasspathManager::class.java.classLoader.getResources(JarFile.MANIFEST_NAME).asSequence()
       val jarPath = urls.mapNotNull { URLUtil.splitJarUrl(it.file)?.first }.firstOrNull { PathUtilRt.getFileName(it) == relativePath }
       if (jarPath != null) {
-        return jarPath
+        return listOf(jarPath)
       }
     }
     catch (ignored: IOException) {
@@ -201,7 +200,7 @@ private fun findClassesRoot(relativePath: String, plugin: IdeaPluginDescriptor, 
   }
   LOG.error(PluginException("Cannot add '$relativePath' from '${plugin.name} ${plugin.version}'" +
                             " (plugin path: $baseFile) to compiler classpath", plugin.pluginId))
-  return null
+  return emptyList()
 }
 
 private fun computeCompileServerPluginsClasspath(): List<String> {
@@ -216,12 +215,12 @@ private fun computeCompileServerPluginsClasspath(): List<String> {
       LOG.trace { "$baseFile added to process classpath from $pluginId" }
     }
     else {
-      serverPlugin.classpath.splitToSequence(';').mapNotNullTo(classpath) {
-        val classesRoot = findClassesRoot(relativePath = it, plugin = plugin, baseFile = baseFile)
-        if (classesRoot != null) {
+      serverPlugin.classpath.splitToSequence(';').flatMapTo(classpath) {
+        val classesRoots = findClassesRoots(relativePath = it, plugin = plugin, baseFile = baseFile)
+        for (classesRoot in classesRoots) {
           LOG.trace { "$classesRoot added to process classpath from $pluginId" }
         }
-        classesRoot
+        classesRoots
       }
     }
   }

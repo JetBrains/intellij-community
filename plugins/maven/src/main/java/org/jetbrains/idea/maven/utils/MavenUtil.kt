@@ -43,7 +43,6 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
@@ -1961,18 +1960,18 @@ object MavenUtil {
   private val path = PathManager.getJarForClass(MavenServerManager::class.java)?.parent
 
   /**
-   * Locate output of an IDEA module if running from sources.
-   * @return path to the module output: can point to a directory or a jar file.
+   * Locate outputs of an IDEA module if running from sources.
+   * @return module output paths: can point to a directory or jar files.
    * `null` if not running from sources or if module cannot be located
    */
   @JvmStatic
-  fun locateModuleOutput(moduleName: String): Path? {
+  fun locateModuleOutputs(moduleName: String): List<Path>? {
     if (!isRunningFromSources()) return null
     if (archivedClassesLocation != null && mapping != null) {
-      return mapping["production/$moduleName"]?.toNioPathOrNull()
+      return mapping["production/$moduleName"]?.map(Path::of)
     }
     else {
-      return path?.resolve(moduleName)
+      return path?.resolve(moduleName)?.toList()
     }
   }
 

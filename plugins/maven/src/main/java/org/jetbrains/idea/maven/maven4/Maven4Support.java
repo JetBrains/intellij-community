@@ -27,9 +27,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
-import static org.jetbrains.idea.maven.utils.MavenUtil.locateModuleOutput;
+import static org.jetbrains.idea.maven.utils.MavenUtil.locateModuleOutputs;
 
 
 final class Maven4Support implements MavenVersionAwareSupportExtension {
@@ -95,15 +96,15 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
     BundledMavenDownloader.INSTANCE.downloadMaven4LibsSync(communityRoot);
     
     classpath.add(PathManager.getJarForClass(MavenId.class));
-    classpath.add(locateModuleOutput("intellij.maven.server"));
+    classpath.addAll(Objects.requireNonNull(locateModuleOutputs("intellij.maven.server")));
 
-    classpath.add(locateModuleOutput("intellij.maven.server.telemetry"));
+    classpath.addAll(Objects.requireNonNull(locateModuleOutputs("intellij.maven.server.telemetry")));
     classpath.addAll(MavenUtil.collectClasspath(MavenServerTelemetryClasspathUtil.TELEMETRY_CLASSES));
 
     Path parentPath = MavenUtil.getMavenPluginParentFile();
     addDir(classpath, parentPath.resolve("maven40-server-impl/lib"), f -> true);
 
-    classpath.add(locateModuleOutput("intellij.maven.server.m40"));
+    classpath.addAll(Objects.requireNonNull(locateModuleOutputs("intellij.maven.server.m40")));
   }
 
   private static void addMavenLibs(List<Path> classpath, Path mavenHome) {

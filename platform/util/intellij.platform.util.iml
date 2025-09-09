@@ -47,6 +47,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.troveCompileOnly" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.util.multiplatform" exported="" />
+    <orderEntry type="library" name="gson" level="project" />
   </component>
   <component name="copyright">
     <Base>

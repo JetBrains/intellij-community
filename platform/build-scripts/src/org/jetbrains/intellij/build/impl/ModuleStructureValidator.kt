@@ -14,6 +14,7 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.util.JpsPathUtil
+import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
@@ -238,9 +239,9 @@ class ModuleStructureValidator(private val context: BuildContext, private val al
       }
 
       var hasOutput = false
-      jpsModule.processProductionOutput { outputRoot ->
-        hasOutput = outputRoot.exists()
-        outputRoot
+      jpsModule.processProductionOutput { outputRoots ->
+        hasOutput = outputRoots.all(Path::exists)
+        outputRoots.forEach { outputRoot -> outputRoot
           .walk()
           .filter { path ->
             path.isRegularFile() && path.name.endsWith(".class") && !path.name.endsWith("Kt.class")
@@ -249,6 +250,7 @@ class ModuleStructureValidator(private val context: BuildContext, private val al
             val className = removeSuffixStrict(normalizedPath, ".class").replace('/', '.')
             classes.add(className)
           }
+        }
       }
       if (!hasOutput) {
         throw IllegalStateException("Module '$moduleName' output is missing while module has source roots")
@@ -320,17 +322,22 @@ class ModuleStructureValidator(private val context: BuildContext, private val al
  * Calls [processor] for the path containing the production output of [this@processModuleProductionOutput].
  * Works both when module output is located in a directory and when it's packed in a JAR.
  */
-private fun <T> JpsModule.processProductionOutput(processor: (outputRoot: Path) -> T): T {
+private fun <T> JpsModule.processProductionOutput(processor: (outputRoots: List<Path>) -> T): T {
   val archivedCompiledClassesMapping = PathManager.getArchivedCompiledClassesMapping()
-  val outputJarPath = archivedCompiledClassesMapping?.get("production/$name")
-  if (outputJarPath == null) {
+  val outputJarPaths = archivedCompiledClassesMapping?.get("production/$name")
+  if (outputJarPaths == null) {
     val outputDirectoryPath = JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, false)
                               ?: error("Output directory is not specified for '$name'")
-    return processor(outputDirectoryPath)
+    return processor(listOf(outputDirectoryPath))
   }
   else {
-    return FileSystems.newFileSystem(Path(outputJarPath)).use {
-      processor(it.rootDirectories.single())
+    outputJarPaths.map(Path::of).map(FileSystems::newFileSystem).let {
+      try {
+        return processor(it.map { it.rootDirectories.single() })
+      }
+      finally {
+        it.forEach(FileSystem::close)
+      }
     }
   }
 }

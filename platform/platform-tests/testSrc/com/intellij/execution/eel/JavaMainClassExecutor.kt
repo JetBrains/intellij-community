@@ -89,7 +89,7 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
         // archived compilation output
         val mapping = PathManager.getArchivedCompiledClassesMapping()
         checkNotNull(mapping) { "Mapping cannot be null at this point" }
-        val key = mapping.entries.firstOrNull { (_, value) -> value == jarPathForClass }?.key
+        val key = mapping.entries.firstOrNull { (_, value) -> value.contains(jarPathForClass) }?.key
         if (key == null) {
           throw IllegalStateException("Cannot find path '$jarPathForClass' in mapping values:'$mapping'")
         }
@@ -114,11 +114,11 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
         // archived compilation output, assume we need 'production' output
         val mapping = PathManager.getArchivedCompiledClassesMapping()
         checkNotNull(mapping) { "Mapping cannot be null at this point" }
-        return moduleNames.mapNotNull {
+        return moduleNames.flatMap {
           val key = "production/$it"
           val value = mapping[key]
-          if (value == null) logger.value.warn("Not found jar mapping for '$key'")
-          value?.let { Path(value) }
+          if (value == null) logger.value.warn("Not found jars mapping for '$key'")
+          value?.map(Path::of) ?: emptyList()
         }
       }
       else {

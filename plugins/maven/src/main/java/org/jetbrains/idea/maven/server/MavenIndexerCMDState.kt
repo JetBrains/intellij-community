@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.MavenUtil.locateModuleOutput
+import org.jetbrains.idea.maven.utils.MavenUtil.locateModuleOutputs
 import java.io.IOException
 import java.io.InputStreamReader
 import java.net.URI
@@ -194,8 +194,8 @@ class MavenIndexerCMDState(
 
     private fun prepareClassPathForLocalRunAndUnitTests(classpath: MutableList<Path>) {
       classpath.add(PathManager.getJarForClass(MavenId::class.java)!!)
-      classpath.add(locateModuleOutput("intellij.maven.server")!!)
-      classpath.add(locateModuleOutput("intellij.maven.server.indexer")!!)
+      classpath.addAll(locateModuleOutputs("intellij.maven.server")!!)
+      classpath.addAll(locateModuleOutputs("intellij.maven.server.indexer")!!)
     }
 
     private fun addMavenLibs(classpath: MutableList<Path>, mavenHome: Path) {

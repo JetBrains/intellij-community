@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.ModulePath;
 import com.intellij.testFramework.Parameterized;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestFrameworkUtil;
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -24,10 +25,7 @@ import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -327,10 +325,19 @@ public final class PathManagerEx {
     }
     if (!root.isDirectory()) {
       String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
-      if (relevantJarsRoot != null && root.toPath().toAbsolutePath().startsWith(relevantJarsRoot)) {
+      Map<String, List<String>> mapping = PathManager.getArchivedCompiledClassesMapping();
+      if (relevantJarsRoot != null && mapping != null && root.toPath().toAbsolutePath().startsWith(relevantJarsRoot)) {
         // .../idea-compile-parts-v2/test/intellij.java.compiler.tests/$sha256.jar
         String moduleName = root.getParentFile().getName();
-        return getCommunityModules().contains(moduleName) ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
+        if (mapping.containsKey(moduleName)) {
+          return getCommunityModules().contains(moduleName) ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
+        }
+
+        // .../out/bazel-out/jvm-fastbuild/bin/external/community+/java/compiler/compiler-tests_test_lib.jar
+        return ContainerUtil.exists(getCommunityModules(),
+                                    s -> mapping.getOrDefault("production/" + s, Collections.emptyList()).contains(classRootPath) ||
+                                         mapping.getOrDefault("test/" + s, Collections.emptyList()).contains(classRootPath))
+               ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
       }
       //this means that clazz is located in a library; perhaps we should throw exception here
       return FileSystemLocation.ULTIMATE;

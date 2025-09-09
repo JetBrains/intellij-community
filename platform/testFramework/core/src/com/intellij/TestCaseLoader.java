@@ -621,7 +621,7 @@ public class TestCaseLoader {
       throw new IllegalStateException("Cannot fill more classes after 'getClasses' was already called");
     }
 
-    String relevantJarsRoot = System.getProperty("intellij.test.jars.location");
+    String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
 
     Path currentJarPath = PathManager.getJarForClass(getClass());
     if (relevantJarsRoot == null && currentJarPath != null) {
