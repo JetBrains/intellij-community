@@ -2389,8 +2389,12 @@ public final class ControlFlowUtil {
     }
 
     public @NotNull CopyOnWriteSet add(@NotNull VariableInfo value) {
-      //if (set.contains(value)) return this;
       CopyOnWriteSet newList = new CopyOnWriteSet(set);
+      // need to remove and add because VariableInfo's equality checks only the variable,
+      // but we need the correct variable access, which is stored inside the VariableInfo as well.
+      // i.e. a VariableInfo with a different identity is removed, the method argument is added.
+      // as an example, the following test will fail without this:
+      // com.intellij.java.codeInsight.daemon.LightAdvHighlightingJdk9Test.testTryWithResources()
       newList.set.remove(value);
       newList.set.add(value);
       return newList;
