@@ -15,7 +15,10 @@ import com.intellij.openapi.observable.util.isNotNull
 import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
@@ -52,16 +55,17 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
     get() = message("python.toolwindow.packages.latest.version.label")
 
   val service: PyPackagingToolWindowService = project.service<PyPackagingToolWindowService>()
-
-  internal val selectedPackage = AtomicProperty<DisplayablePackage?>(null)
   private val isManagement = AtomicBooleanProperty(false)
 
+  internal val selectedPackage = AtomicProperty<DisplayablePackage?>(null)
   private val selectedPackageDetails = AtomicProperty<PythonPackageDetails?>(null)
 
   private val packageNameProperty = selectedPackage.transform { it?.name ?: "" }
   private val packageVersionProperty: ObservableMutableProperty<@NlsSafe String> = AtomicProperty(latestText)
-
   private val packageDocumentationProperty = selectedPackageDetails.transform { it?.documentationUrl }
+
+  private var suppressClearOnFocusLoss: Boolean = false
+  private var currentPackageKey: String? = null
 
   private val installActionButton = JBOptionButton(null, emptyArray())
 
@@ -89,16 +93,15 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
 
     selectedPackageDetails.afterChange { packageDetails ->
       packageDetails ?: return@afterChange
-
       PyPackageCoroutine.launch(project, Dispatchers.Default) {
         val render = PyPackageDetailsHtmlRender(project, service.currentSdk)
         val html = render.getHtml(packageDetails)
-        panel.setHtml(html)
+            panel.setHtml(html)
       }
     }
   }
 
-  private val leftPanel = panel {
+  private val leftPanel: DialogPanel = panel {
     row {
       val packageNameLabel = label("").bindText(packageNameProperty).component
       packageNameLabel.verticalAlignment = SwingConstants.CENTER
@@ -112,7 +115,7 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
     }.topGap(TopGap.SMALL).bottomGap(BottomGap.NONE).resizableRow()
   }
 
-  private val rightPanel = panel {
+  private val rightPanel: DialogPanel = panel {
     row {
       cell(progressIndicatorComponent).gap(RightGap.SMALL).visibleIf(progressEnabledProperty)
       versionSelector.apply {
@@ -122,9 +125,10 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
             if (!isManagement.get())
               return
             val availableVersions = selectedPackageDetails.get()?.availableVersions ?: emptyList()
-            val latestVersion = availableVersions.first()
+            val latestVersion = availableVersions.firstOrNull() ?: return
             val versions = listOf(latestText) + availableVersions
-            JBPopupFactory.getInstance().createListPopup(
+            suppressClearOnFocusLoss = true
+            val popup = JBPopupFactory.getInstance().createListPopup(
               object : BaseListPopupStep<String>(null, versions) {
                 override fun onChosen(@NlsContexts.Label selectedValue: String, finalChoice: Boolean): PopupStep<*>? {
                   packageVersionProperty.set(selectedValue)
@@ -133,7 +137,13 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
                     suggestInstallPackage(effectiveVersion)
                   return FINAL_CHOICE
                 }
-              }, 8).showUnderneathOf(this@apply)
+              }, 8)
+            popup.addListener(object : JBPopupListener {
+              override fun onClosed(event: LightweightWindowEvent) {
+                suppressClearOnFocusLoss = false
+              }
+            })
+            popup.showUnderneathOf(this@apply)
           }
         })
       }
@@ -156,7 +166,6 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
       installActionButton.options = arrayOf(installWithOptionAction)
       cell(installActionButton).visibleIf(selectedPackage.transform { it is InstallablePackage }.and(isManagement).and(progressEnabledProperty.not()))
         .gap(RightGap.SMALL)
-
 
       button(message("action.PyDeletePackage.text")) {
         wrapInvokeOp(progressText = message("python.toolwindow.packages.deleting.text")) {
@@ -182,16 +191,21 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
 
   val wrappedComponent: JComponent = UiDataProvider.wrapComponent(component, UiDataProvider {})
 
-  override fun dispose() {}
-
   fun setPackage(pyPackage: DisplayablePackage) {
+    val newKey = pyPackage.name
     selectedPackage.set(pyPackage)
-    packageVersionProperty.set(calculateVersionText())
+    if (currentPackageKey != newKey) {
+      packageVersionProperty.set(calculateVersionText())
+      currentPackageKey = newKey
+    }
     isManagement.set(service.currentSdk?.isReadOnly == false && PyPackageUtil.packageManagementEnabled(service.currentSdk, true, false))
   }
 
   fun setPackageDetails(packageDetails: PythonPackageDetails) {
     selectedPackageDetails.set(packageDetails)
+    if (packageVersionProperty.get().isEmpty()) {
+      packageVersionProperty.set(calculateVersionText())
+    }
   }
 
   private fun updatePackageVersion(newVersion: String) {
@@ -244,4 +258,6 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
       job.cancel()
     }
   }
+
+  override fun dispose() {}
 }

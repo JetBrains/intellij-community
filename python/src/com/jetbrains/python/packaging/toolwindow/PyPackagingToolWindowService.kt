@@ -204,6 +204,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
         displayId = PYTHON_PACKAGE_INSTALLED
       )
     }
+    toolWindowPanel?.clearFocus()
   }
 
   suspend fun installPackage(pkg: PythonPackage, options: List<String> = emptyList()) {
@@ -215,6 +216,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
         displayId = PYTHON_PACKAGE_INSTALLED
       )
     }
+    toolWindowPanel?.clearFocus()
   }
 
   suspend fun deletePackage(vararg selectedPackages: InstalledPackage) {
@@ -224,6 +226,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       text = message("python.packaging.notification.deleted", selectedPackages.joinToString(", ") { it.name }),
       displayId = PYTHON_PACKAGE_DELETED
     )
+    toolWindowPanel?.clearFocus()
   }
 
   @ApiStatus.Internal
@@ -499,13 +502,12 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   }
 
   fun showErrorNode(@Nls description: String, @Nls fixName: String, quickFixAction: (suspend () -> PyResult<*>)) {
-    val panel = toolWindowPanel ?: return
     val quickFix = PackageQuickFix(fixName, quickFixAction)
     val errorNode = ErrorNode(description, quickFix)
     serviceScope.launch(Dispatchers.Main) {
       installedPackages = emptyMap()
       handleSearch("")
-      panel.showErrorResult(errorNode)
+      toolWindowPanel?.showErrorResult(errorNode)
     }
   }
 
