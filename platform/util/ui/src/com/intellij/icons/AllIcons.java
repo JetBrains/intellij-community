@@ -586,6 +586,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon LayoutEditorOnly = load("expui/general/editorOnly.svg", "general/layoutEditorOnly.svg", -570440550, 2);
     /** 16x16 */ public static final @NotNull Icon LayoutEditorPreview = load("expui/general/editorPreview.svg", "general/layoutEditorPreview.svg", 1995065496, 2);
     /** 16x16 */ public static final @NotNull Icon LayoutPreviewOnly = load("expui/general/previewOnly.svg", "general/layoutPreviewOnly.svg", 1323537588, 2);
+    /** 16x16 */ public static final @NotNull Icon Learn = load("expui/general/learn.svg", 735868097, 2);
     /** 14x14 */ public static final @NotNull Icon LinkDropTriangle = load("expui/general/chevronDown.svg", "general/linkDropTriangle.svg", -2144062286, 2);
     /** 16x16 */ public static final @NotNull Icon Locate = load("expui/general/locate.svg", "general/locate.svg", 1990903521, 2);
     /** 16x16 */ public static final @NotNull Icon Menu = load("expui/general/menu.svg", -687974999, 2);

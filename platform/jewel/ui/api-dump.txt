@@ -2880,6 +2880,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
 - sf:LayoutEditorOnly:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:LayoutEditorPreview:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:LayoutPreviewOnly:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Learn:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:LinkDropTriangle:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:LocalizationSettings:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Locate:org.jetbrains.jewel.ui.icon.IntelliJIconKey

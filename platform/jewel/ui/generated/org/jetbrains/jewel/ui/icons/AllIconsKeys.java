@@ -1655,6 +1655,9 @@ public final class AllIconsKeys {
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey LayoutPreviewOnly = new IntelliJIconKey("general/layoutPreviewOnly.svg", "expui/general/previewOnly.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Learn = new IntelliJIconKey("expui/general/learn.svg", "expui/general/learn.svg", AllIconsKeys.class);
     /** 14x14 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey LinkDropTriangle = new IntelliJIconKey("general/linkDropTriangle.svg", "expui/general/chevronDown.svg", AllIconsKeys.class);

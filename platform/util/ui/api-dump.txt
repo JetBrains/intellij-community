@@ -551,6 +551,7 @@ f:com.intellij.icons.AllIcons$General
 - sf:LayoutEditorOnly:javax.swing.Icon
 - sf:LayoutEditorPreview:javax.swing.Icon
 - sf:LayoutPreviewOnly:javax.swing.Icon
+- sf:Learn:javax.swing.Icon
 - sf:LinkDropTriangle:javax.swing.Icon
 - sf:LocalizationSettings:javax.swing.Icon
 - sf:Locate:javax.swing.Icon
