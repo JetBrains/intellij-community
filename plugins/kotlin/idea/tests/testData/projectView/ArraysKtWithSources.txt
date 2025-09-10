@@ -146,7 +146,7 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt.class
      Lazy
      LazyThreadSafetyMode
      Metadata
-     MustUseReturnValue
+     MustUseReturnValues
      NotImplementedError
      NoWhenBranchMatchedException
      OptIn
