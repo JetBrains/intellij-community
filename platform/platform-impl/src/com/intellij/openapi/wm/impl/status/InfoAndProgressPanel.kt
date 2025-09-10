@@ -1232,7 +1232,10 @@ private class ScalableCounterIconComponent : JComponent(), UISettingsListener {
   override fun getPreferredSize(): Dimension {
     val iconSize = JBUI.scale(16) //icon size
     if (icon.number < 10) {
-      return Dimension(iconSize, iconSize)
+      icon.setInsets(0)
+      //added to have equal right and left insets for the resulting [icon]
+      val symmetryBit = (iconSize + icon.iconWidth) % 2
+      return Dimension(iconSize + symmetryBit, iconSize)
     }
     val sensibleDefaultInset = JBUI.scale(3)
     icon.setInsets(0, sensibleDefaultInset)

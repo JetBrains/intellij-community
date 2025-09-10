@@ -102,7 +102,7 @@ suspend fun withLsp(
                             val request = LSP.json.decodeFromJsonElement(RequestMessage.serializer(), jsonMessage)
                             supervisor.launch(start = CoroutineStart.ATOMIC) {
                                 val maybeHandler = handlers.requestHandler(request.method)
-                                    ?.let { handler -> middleware.requestHandler(handler)}
+                                    ?.let { handler -> middleware.requestHandler(handler) }
                                 runCatching {
                                     val handler = requireNotNull(maybeHandler) {
                                         "no handler for request: ${request.method}"

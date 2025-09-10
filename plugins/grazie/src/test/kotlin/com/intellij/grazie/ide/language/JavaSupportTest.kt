@@ -5,10 +5,13 @@ import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.openapi.util.Disposer
 import com.intellij.spellchecker.ProjectDictionaryLayer
+import com.intellij.spellchecker.SpellCheckerManager
+import com.intellij.spellchecker.dictionary.Loader
 import com.intellij.spellchecker.settings.SpellCheckerSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import java.util.function.Consumer
 
 
 class JavaSupportTest : GrazieTestBase() {
@@ -165,6 +168,18 @@ class JavaSupportTest : GrazieTestBase() {
     val intention = myFixture.findSingleIntention("Save 'Qdrant' to dictionary")
     myFixture.launchAction(intention)
     myFixture.configureByText("a.java", "// Qdrant")
+    myFixture.checkHighlighting()
+  }
+
+  fun `test capitalized and uppercases words are not treated as typo if lowercase version is in the custom dictionary`() {
+    SpellCheckerManager.getInstance(project).spellChecker!!.loadDictionary(object: Loader {
+      override fun load(consumer: Consumer<String>) {
+        consumer.accept("wexwex")
+      }
+      override fun getName(): String = "TestLoader"
+    })
+
+    myFixture.configureByText("a.java", "// wexwex, Wexwex, WEXWEX")
     myFixture.checkHighlighting()
   }
 
