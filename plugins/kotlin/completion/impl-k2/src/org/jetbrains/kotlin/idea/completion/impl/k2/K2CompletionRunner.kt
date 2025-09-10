@@ -61,7 +61,7 @@ internal interface K2CompletionRunner {
          * Chooses the preferred [K2CompletionRunner] implementation based on registry settings and the [sectionCount].
          */
         fun getInstance(sectionCount: Int): K2CompletionRunner {
-            if (Registry.`is`("kotlin.k2.parallel.completion.enabled") && sectionCount > 1) {
+            if (Registry.`is`("kotlin.k2.parallel.completion.enabled", false) && sectionCount > 1) {
                 return ParallelCompletionRunner()
             } else {
                 return SequentialCompletionRunner()
