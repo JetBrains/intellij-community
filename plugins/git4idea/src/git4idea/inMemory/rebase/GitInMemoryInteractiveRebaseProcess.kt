@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.GitNotificationIdsHolder
@@ -55,10 +55,10 @@ internal class GitInMemoryInteractiveRebaseProcess(
       entry to commit
     }
 
-    reportRawProgress { reporter ->
+    reportSequentialProgress(entriesWithCommits.size) { reporter ->
       entriesWithCommits.forEachIndexed { index, (entry, commitToRebase) ->
-        reporter.fraction(index.toDouble() / rebaseData.entries.size)
         baseCommit = processEntry(baseCommit, entry, commitToRebase)
+        reporter.itemStep()
       }
     }
 

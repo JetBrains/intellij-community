@@ -2,7 +2,8 @@
 package git4idea.inMemory
 
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.platform.util.progress.reportRawProgress
+
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -43,11 +44,11 @@ internal fun GitObjectRepository.findCommitsRange(
  */
 internal suspend fun GitObjectRepository.chainCommits(base: Oid, commits: List<GitObject.Commit>): Oid {
   var currentNewCommit = base
-  reportRawProgress { reporter ->
+  reportSequentialProgress(commits.size) { reporter ->
     for ((i, commit) in commits.withIndex()) {
       currentNewCommit = commitTreeWithOverrides(commit, parentsOids = listOf(currentNewCommit))
 
-      reporter.fraction((i + 1) / commits.size.toDouble())
+      reporter.itemStep()
     }
   }
   return currentNewCommit
