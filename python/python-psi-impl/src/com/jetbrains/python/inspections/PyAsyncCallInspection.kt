@@ -67,7 +67,11 @@ class PyAsyncCallInspection : PyInspection() {
       AWAITABLE, COROUTINE
     }
 
-    val ignoreReturnedType = listOf("asyncio.tasks.Task")
+    val ignoreReturnedType = listOf(
+      "asyncio.tasks.Task",
+      "asyncio.Task",
+      "_asyncio.Task"
+    )
     val ignoreBuiltinFunctions = listOf("asyncio.events.AbstractEventLoop.run_in_executor",
                                         "asyncio.tasks.ensure_future",
                                         "asyncio.ensure_future")
