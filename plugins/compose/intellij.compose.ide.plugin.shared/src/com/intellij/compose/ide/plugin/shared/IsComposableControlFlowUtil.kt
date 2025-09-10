@@ -2,9 +2,11 @@
 package com.intellij.compose.ide.plugin.shared
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -37,20 +39,21 @@ internal fun PsiElement?.isInsideComposableControlFlow(): Boolean = when (this) 
   else -> parent.isInsideComposableControlFlow()
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KtLambdaExpression.ownsComposableControlFlow(): Boolean =
   (parent as? KtLambdaArgument)?.ownsComposableControlFlow() // Only check lambda that is NOT an argument
   // One would simply expect us to infer the type and then check whether the type has a `@Composable` annotation.
   // But currently, annotations are not inferred. See https://jetbrains.slack.com/archives/C061DS4G41J/p1738180610032509
   ?: getAnnotationEntries().containsAnnotationNamed(COMPOSABLE_ANNOTATION_FQ_NAME)
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 private fun KtLambdaArgument.ownsComposableControlFlow(): Boolean =
   (parent as? KtCallExpression)
     ?.resolveToCall()
     .let { functionCall -> functionCall != null && this.ownsComposableControlFlowWhenArgumentOf(functionCall) }
 
-context(KaSession)
+context(_: KaSession)
 private fun KtLambdaArgument.ownsComposableControlFlowWhenArgumentOf(functionCall: KaCallInfo): Boolean =
   this.hasAnnotationIn(functionCall, COMPOSABLE_ANNOTATION_FQ_NAME) || // We are explicitly in Composable flow!
   (
@@ -69,7 +72,7 @@ private fun KtLambdaArgument.hasAnnotationIn(function: KaCallInfo, fqName: FqNam
 private fun KaAnnotated.isAnnotatedWith(fqName: FqName): Boolean =
   annotations.any { it.classId?.asSingleFqName() == fqName }
 
-context(KaSession)
+context(_: KaSession)
 private fun KtLambdaArgument.isInlinedInside(function: KaCallInfo): Boolean =
   function.isInline() &&
     function.parameterSymbolOf(this@isInlinedInside)
@@ -92,6 +95,7 @@ private fun KaCallInfo.isInline(): Boolean =
     ?: false
 
 /** Not cached, but doesn't matter for this infrequently triggered extension */
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 private fun Iterable<KtAnnotationEntry>.containsAnnotationNamed(fqName: FqName): Boolean =
   any { it.resolveToCall()?.singleConstructorCallOrNull()?.symbol?.containingClassId?.asSingleFqName() == fqName }
