@@ -1088,7 +1088,7 @@ abstract class ComponentManagerImpl(
   protected open suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
     serviceContainer.getInstanceHolder(keyClassName = serviceInterface)
       ?.takeIf(InstanceHolder::isStatic)
-      ?.getInstance(keyClass = null)
+      ?.getInstanceInCallerContext(keyClass = null)
   }
 
   override fun isDisposed(): Boolean {
