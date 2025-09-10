@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 import com.intellij.debugger.engine.JavaDebuggerCodeFragmentFactory
 import com.intellij.debugger.engine.evaluation.TextWithImports
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -42,7 +42,7 @@ abstract class KotlinCodeFragmentFactoryBase : JavaDebuggerCodeFragmentFactory()
         }
         val convertedFragment = try {
             val converter = NewJavaToKotlinConverter(project, javaExpression?.module, ConverterSettings.defaultSettings)
-            val convertedExpression = runReadAction {
+            val convertedExpression = ActionUtil.underModalProgress(project, KotlinDebuggerEvaluationBundle.message("progress.title.converting.java.expression.to.kotlin")) {
                 converter.elementsToKotlin(listOfNotNull(javaExpression))
             }
             val newText = convertedExpression.results.singleOrNull()?.text
