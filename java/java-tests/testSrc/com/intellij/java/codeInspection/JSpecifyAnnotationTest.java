@@ -75,11 +75,11 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
   @Parameterized.Parameter
   public String myFileName;
 
-  private static final Statistic statics = new Statistic(new LongAdder(), new LongAdder(), new LongAdder(), MultiMap.create());
+  private static final Statistic STATISTIC = new Statistic(new LongAdder(), new LongAdder(), new LongAdder(), MultiMap.create());
 
   @AfterClass
   public static void afterClass() {
-    System.out.println(statics);
+    System.out.println(STATISTIC);
   }
 
   @Parameterized.Parameters(name = "{0}")
@@ -171,11 +171,11 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
                                         @NotNull List<ErrorFilter> modificators) {
     ErrorContainer container = data.errorContainer;
     List<ErrorInfo> errors = new ArrayList<>(container.errors());
-    statics.total.add(errors.size());
+    STATISTIC.total.add(errors.size());
     errors.removeIf(er ->
                                   ContainerUtil.exists(modificators,
                                                        m -> !m.shouldCount() && m.filterActual(data.psiFile, data.stripped, er.lineNumber, er.startLineOffset, er.message)));
-    statics.valuable.add(errors.size());
+    STATISTIC.valuable.add(errors.size());
     errors.removeIf(er -> {
       return ContainerUtil.exists(modificators,
                                   m -> {
@@ -183,12 +183,12 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
                                                       m.filterActual(data.psiFile, data.stripped, er.lineNumber, er.startLineOffset,
                                                                      er.message);
                                     if (matched) {
-                                      statics.skipped.putValue(m.getClass().getName(), new Place(data.path.toString(), er.lineNumber));
+                                      STATISTIC.skipped.putValue(m.getClass().getName(), new Place(data.path.toString(), er.lineNumber));
                                     }
                                     return matched;
                                   });
     });
-    statics.checked.add(errors.size());
+    STATISTIC.checked.add(errors.size());
     String restoredText = restoreWithErrors(data.stripped, new ErrorContainer(errors));
     if (modificators.isEmpty()) {
       assertEquals("incorrect restored file", data.fileText, restoredText);
