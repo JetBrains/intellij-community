@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="expects-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="jetbrains.fleet:expects-compiler-plugin:2.2.20-RC-0.1">
+    <properties include-transitive-deps="false" maven-id="jetbrains.fleet:expects-compiler-plugin:2.2.20-0.1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.2.20-RC-0.1/expects-compiler-plugin-2.2.20-RC-0.1.jar">
-          <sha256sum>ae6582fa9f26f58f2fdbdc4b8f247cb0e840421a471219f12baba9c6392f5194</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.2.20-0.1/expects-compiler-plugin-2.2.20-0.1.jar">
+          <sha256sum>ce4dc5b9232e9467373ef2e79cab9e3404db898ab45020ce14ef893944745331</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.2.20-RC-0.1/expects-compiler-plugin-2.2.20-RC-0.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.2.20-0.1/expects-compiler-plugin-2.2.20-0.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.2.20-RC-0.1/expects-compiler-plugin-2.2.20-RC-0.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.2.20-0.1/expects-compiler-plugin-2.2.20-0.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
