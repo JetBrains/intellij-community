@@ -4,11 +4,10 @@ import inspect
 from _pydevd_bundle import pydevd_utils
 
 try:
-    # Prefer the IDE's own importer if available (handles namespace packages, zip, etc.)
+    # IDE's own module importer (handles namespace packages, zip, etc.)
     from _pydevd_bundle import pydevd_import_class as _pydevd_import_class
 except Exception:
     _pydevd_import_class = None
-
 
 def _resolve_type(path):
     """Resolve 'pkg.mod.Class' -> class object, or None."""
