@@ -47,12 +47,10 @@ final class ModuleChecker {
     PsiJavaModule javaModule = myVisitor.javaModule();
     if (javaModule != null) {
       String packageName = statement.getPackageName();
-      if (packageName != null) {
-        PsiJavaModule origin = JavaPsiModuleUtil.findOrigin(javaModule, packageName);
-        if (origin != null) {
-          PsiJavaCodeReferenceElement reference = statement.getPackageReference();
-          myVisitor.report(JavaErrorKinds.MODULE_CONFLICTING_PACKAGES.create(reference, origin));
-        }
+      PsiJavaModule origin = JavaPsiModuleUtil.findOrigin(javaModule, packageName);
+      if (origin != null) {
+        PsiJavaCodeReferenceElement reference = statement.getPackageReference();
+        myVisitor.report(JavaErrorKinds.MODULE_CONFLICTING_PACKAGES.create(reference, origin));
       }
     }
     else {
@@ -233,7 +231,7 @@ final class ModuleChecker {
                        : JavaErrorKinds.MODULE_NOT_FOUND.create(refElement));
       case 1 -> myVisitor.report(JavaErrorKinds.MODULE_NOT_ON_PATH.create(refElement));
       default -> {
-        // ambiguous module is reported as warning
+        // an ambiguous module is reported as a warning
       }
     }
   }

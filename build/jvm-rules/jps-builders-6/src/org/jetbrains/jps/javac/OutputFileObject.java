@@ -7,7 +7,7 @@ import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.util.Iterators;
 import org.jetbrains.jps.util.Iterators.Function;
 
-import javax.tools.JavaFileManager;
+import javax.tools.*;
 import java.io.*;
 import java.net.URI;
 
@@ -78,7 +78,7 @@ public final class OutputFileObject extends JpsFileObject {
       public File fun(URI uri) {
         return "file".equalsIgnoreCase(uri.getScheme())? new File(uri) : null;
       }
-    }), Iterators.<File>notNullFilter());
+    }), Iterators.notNullFilter());
   }
 
   @NotNull

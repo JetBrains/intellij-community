@@ -317,13 +317,11 @@ public abstract class AbstractVcs extends StartedActivated {
   @RequiresEdt
   public void enableIntegration(@Nullable VirtualFile targetDirectory) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    if (vcsManager != null) {
-      if (targetDirectory != null) {
-        vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(targetDirectory.getPath(), getName())));
-      }
-      else {
-        vcsManager.setDirectoryMappings(Collections.singletonList(VcsDirectoryMapping.createDefault(getName())));
-      }
+    if (targetDirectory != null) {
+      vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(targetDirectory.getPath(), getName())));
+    }
+    else {
+      vcsManager.setDirectoryMappings(Collections.singletonList(VcsDirectoryMapping.createDefault(getName())));
     }
   }
 

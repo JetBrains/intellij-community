@@ -40,7 +40,7 @@ final class Hash {
   }
 
   public static int long2int(final long l) {
-    return (int)(l ^ (l >>> 32));
+    return Long.hashCode(l);
   }
 
   @SuppressWarnings("DuplicatedCode")

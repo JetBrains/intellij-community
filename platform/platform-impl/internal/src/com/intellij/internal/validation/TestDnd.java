@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -36,8 +35,8 @@ final class TestDnd extends AnAction {
       }
 
       @Override
-      protected @Nullable JComponent createCenterPanel() {
-        JBList list = new JBList(new String[]{"1111111", "222222", "333333", "44444", "555555555555555555555555"});
+      protected @NotNull JComponent createCenterPanel() {
+        JBList<String> list = new JBList<>("1111111", "222222", "333333", "44444", "555555555555555555555555");
         DnDSupport.createBuilder(list)
           .setBeanProvider(info -> new DnDDragStartBean("something"))
           .setImageProvider(info -> new DnDImage(IconUtil.toImage(AllIcons.FileTypes.Text)))

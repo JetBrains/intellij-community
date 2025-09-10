@@ -122,8 +122,8 @@ public final class CoroutinesDebugHelper {
         variableNames.add(names);
         fieldNames.add(fields);
       } else {
-        variableNames.add(Collections.<String>emptyList());
-        fieldNames.add(Collections.<String>emptyList());
+        variableNames.add(Collections.emptyList());
+        fieldNames.add(Collections.emptyList());
       }
 
       continuationStack.add(current);

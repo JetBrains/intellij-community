@@ -449,8 +449,7 @@ public class VirtualMachineProxyImpl extends UserDataHolderBase implements JdiTi
     }
     ThreadReferenceProxyImpl proxy = myAllThreads.computeIfAbsent(thread, t -> {
       // do not cache virtual threads
-      //noinspection ConstantValue
-      if (!forceCache && thread instanceof ThreadReferenceImpl && ((ThreadReferenceImpl)thread).isVirtual()) {
+      if (!forceCache && thread instanceof ThreadReferenceImpl && thread.isVirtual()) {
         return null;
       }
       return new ThreadReferenceProxyImpl(this, t);

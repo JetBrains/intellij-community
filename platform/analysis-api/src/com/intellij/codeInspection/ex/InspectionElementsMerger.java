@@ -64,8 +64,7 @@ public abstract class InspectionElementsMerger {
 
   /**
    * @param id suppress id in code
-   * @return new merged tool name
-   *         null if merger is not found
+   * @return list of merged tool names
    */
   public static @Unmodifiable List<String> getMergedToolNames(@NotNull String id) {
     return EP_NAME.getExtensionList().stream()
