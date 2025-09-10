@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.UnmodifiableHashMap;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public final class ControlFlowUtil {
   private static final Logger LOG = Logger.getInstance(ControlFlowUtil.class);
@@ -2377,53 +2379,6 @@ public final class ControlFlowUtil {
     return element instanceof PsiReturnStatement;
   }
 
-  private static class CopyOnWriteSet {
-    private final Set<VariableInfo> set;
-
-    CopyOnWriteSet(@NotNull VariableInfo info) {
-      this(Collections.singletonList(info));
-    }
-
-    CopyOnWriteSet(@NotNull Collection<? extends VariableInfo> infos) {
-      set = new HashSet<>(infos);
-    }
-
-    public @NotNull CopyOnWriteSet add(@NotNull VariableInfo value) {
-      CopyOnWriteSet newList = new CopyOnWriteSet(set);
-      // need to remove and add because VariableInfo's equality checks only the variable,
-      // but we need the correct variable access, which is stored inside the VariableInfo as well.
-      // i.e. a VariableInfo with a different identity is removed, the method argument is added.
-      // as an example, the following test will fail without this:
-      // com.intellij.java.codeInsight.daemon.LightAdvHighlightingJdk9Test.testTryWithResources()
-      newList.set.remove(value);
-      newList.set.add(value);
-      return newList;
-    }
-
-    public @NotNull CopyOnWriteSet remove(@NotNull VariableInfo value) {
-      if (!set.contains(value)) return this;
-      CopyOnWriteSet newList = new CopyOnWriteSet(set);
-      newList.set.remove(value);
-      return newList;
-    }
-
-    public @NotNull Set<VariableInfo> getSet() {
-      return set;
-    }
-
-    public @NotNull CopyOnWriteSet addAll(@NotNull CopyOnWriteSet addList) {
-      Set<VariableInfo> toAdd = addList.getSet();
-      if (set.containsAll(toAdd)) return this;
-      CopyOnWriteSet newList = new CopyOnWriteSet(set);
-      newList.set.addAll(toAdd);
-      return newList;
-    }
-
-    public static @NotNull CopyOnWriteSet add(@Nullable CopyOnWriteSet list, @NotNull VariableInfo value) {
-      return list == null ? new CopyOnWriteSet(value) : list.add(value);
-    }
-  }
-
   public static class VariableInfo {
     private final PsiVariable variable;
     public final PsiElement expression;
@@ -2454,11 +2409,9 @@ public final class ControlFlowUtil {
     }
   }
 
-  private static void merge(int offset, CopyOnWriteSet source, CopyOnWriteSet @NotNull [] target) {
-    if (source != null) {
-      CopyOnWriteSet existing = target[offset];
-      target[offset] = existing == null ? source : existing.addAll(source);
-    }
+  private static void merge(int offset, @NotNull UnmodifiableHashMap<PsiVariable, PsiReferenceExpression> source,
+                            @NotNull UnmodifiableHashMap<PsiVariable, PsiReferenceExpression> @NotNull [] target) {
+    target[offset] = target[offset].withAll(source);
   }
 
   /**
@@ -2481,24 +2434,26 @@ public final class ControlFlowUtil {
 
   private static class ReadBeforeWriteClientVisitor extends InstructionClientVisitor<List<PsiReferenceExpression>> {
     // map of variable->PsiReferenceExpressions for all read before written variables for this point and below in control flow
-    private final CopyOnWriteSet[] readVariables;
+    private final UnmodifiableHashMap<PsiVariable, PsiReferenceExpression>[] readVariables;
     private final ControlFlow myFlow;
     private final boolean localVariablesOnly;
 
     ReadBeforeWriteClientVisitor(@NotNull ControlFlow flow, boolean localVariablesOnly) {
       myFlow = flow;
       this.localVariablesOnly = localVariablesOnly;
-      readVariables = new CopyOnWriteSet[myFlow.getSize() + 1];
+      //noinspection unchecked
+      readVariables = new UnmodifiableHashMap[myFlow.getSize() + 1];
+      Arrays.fill(readVariables, UnmodifiableHashMap.empty());
     }
 
     @Override
     public void visitReadVariableInstruction(ReadVariableInstruction instruction, int offset, int nextOffset) {
-      CopyOnWriteSet readVars = readVariables[Math.min(nextOffset, myFlow.getSize())];
+      UnmodifiableHashMap<PsiVariable, PsiReferenceExpression> readVars = readVariables[Math.min(nextOffset, myFlow.getSize())];
       final PsiVariable variable = instruction.variable;
       if (!localVariablesOnly || !isImplicitlyInitialized(variable)) {
         final PsiReferenceExpression expression = getEnclosingReferenceExpression(myFlow.getElement(offset), variable);
         if (expression != null) {
-          readVars = CopyOnWriteSet.add(readVars, new VariableInfo(variable, expression));
+          readVars = readVars.with(variable, expression);
         }
       }
       merge(offset, readVars, readVariables);
@@ -2506,12 +2461,12 @@ public final class ControlFlowUtil {
 
     @Override
     public void visitWriteVariableInstruction(WriteVariableInstruction instruction, int offset, int nextOffset) {
-      CopyOnWriteSet readVars = readVariables[Math.min(nextOffset, myFlow.getSize())];
-      if (readVars == null) return;
+      UnmodifiableHashMap<PsiVariable, PsiReferenceExpression> readVars = readVariables[Math.min(nextOffset, myFlow.getSize())];
+      if (readVars.isEmpty()) return;
 
       final PsiVariable variable = instruction.variable;
       if (!localVariablesOnly || !isImplicitlyInitialized(variable)) {
-        readVars = readVars.remove(new VariableInfo(variable, null));
+        readVars = readVars.without(variable);
       }
       merge(offset, readVars, readVariables);
     }
@@ -2533,22 +2488,14 @@ public final class ControlFlowUtil {
     @Override
     public void visitCallInstruction(CallInstruction instruction, int offset, int nextOffset) {
       visitInstruction(instruction, offset, nextOffset);
-      for (int i = instruction.procBegin; i <= instruction.procEnd; i++) {
-        readVariables[i] = null;
-      }
+      Arrays.fill(readVariables, instruction.procBegin, instruction.procEnd + 1, UnmodifiableHashMap.empty());
     }
 
     @Override
     public @NotNull List<PsiReferenceExpression> getResult() {
-      final CopyOnWriteSet topReadVariables = readVariables[0];
-      if (topReadVariables == null) return Collections.emptyList();
-
-      final List<PsiReferenceExpression> result = new ArrayList<>();
-      for (VariableInfo info : topReadVariables.getSet()) {
-        result.add((PsiReferenceExpression)info.expression);
-      }
-      Collections.sort(result, PsiUtil.BY_POSITION);
-      return result;
+      final UnmodifiableHashMap<PsiVariable, PsiReferenceExpression> topReadVariables = readVariables[0];
+      if (topReadVariables.isEmpty()) return Collections.emptyList();
+      return topReadVariables.values().stream().sorted(PsiUtil.BY_POSITION).collect(Collectors.toList());
     }
   }
 
@@ -2614,42 +2561,44 @@ public final class ControlFlowUtil {
 
   private static class InitializedTwiceClientVisitor extends InstructionClientVisitor<Collection<VariableInfo>> {
     // map of variable->PsiReferenceExpressions for all read and not written variables for this point and below in control flow
-    private final CopyOnWriteSet[] writtenVariables;
-    private final CopyOnWriteSet[] writtenTwiceVariables;
+    private final @NotNull UnmodifiableHashMap<PsiVariable, PsiReferenceExpression> @NotNull [] writtenVariables;
+    private final @NotNull UnmodifiableHashMap<PsiVariable, PsiReferenceExpression> @NotNull [] writtenTwiceVariables;
     private final ControlFlow myFlow;
     private final int myStartOffset;
 
+    @SuppressWarnings("unchecked")
     InitializedTwiceClientVisitor(@NotNull ControlFlow flow, int startOffset) {
       myFlow = flow;
       myStartOffset = startOffset;
-      writtenVariables = new CopyOnWriteSet[myFlow.getSize() + 1];
-      writtenTwiceVariables = new CopyOnWriteSet[myFlow.getSize() + 1];
+      writtenVariables = new UnmodifiableHashMap[myFlow.getSize() + 1];
+      Arrays.fill(writtenVariables, UnmodifiableHashMap.empty());
+      writtenTwiceVariables = writtenVariables.clone();
     }
 
     @Override
     public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
       final int safeNextOffset = Math.min(nextOffset, myFlow.getSize());
 
-      CopyOnWriteSet writeVars = writtenVariables[safeNextOffset];
-      CopyOnWriteSet writeTwiceVars = writtenTwiceVariables[safeNextOffset];
+      UnmodifiableHashMap<PsiVariable, PsiReferenceExpression> writeVars = writtenVariables[safeNextOffset];
+      UnmodifiableHashMap<PsiVariable, PsiReferenceExpression> writeTwiceVars = writtenTwiceVariables[safeNextOffset];
       if (instruction instanceof WriteVariableInstruction) {
         final PsiVariable variable = ((WriteVariableInstruction)instruction).variable;
 
-        final PsiElement latestWriteVarExpression = getLatestWriteVarExpression(writeVars, variable);
+        final PsiReferenceExpression latestWriteVarExpression = getLatestWriteVarExpression(writeVars, variable);
 
         if (latestWriteVarExpression == null) {
-          final PsiElement expression = getExpression(myFlow.getElement(offset));
-          writeVars = CopyOnWriteSet.add(writeVars, new VariableInfo(variable, expression));
+          final PsiReferenceExpression expression = getExpression(myFlow.getElement(offset));
+          writeVars = writeVars.with(variable, expression);
         }
         else {
-          writeTwiceVars = CopyOnWriteSet.add(writeTwiceVars, new VariableInfo(variable, latestWriteVarExpression));
+          writeTwiceVars = writeTwiceVars.with(variable, latestWriteVarExpression);
         }
       }
       merge(offset, writeVars, writtenVariables);
       merge(offset, writeTwiceVars, writtenTwiceVariables);
     }
 
-    private static @Nullable PsiElement getExpression(@NotNull PsiElement element) {
+    private static @Nullable PsiReferenceExpression getExpression(@NotNull PsiElement element) {
       if (element instanceof PsiAssignmentExpression) {
         PsiExpression target = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)element).getLExpression());
         return ObjectUtils.tryCast(target, PsiReferenceExpression.class);
@@ -2658,20 +2607,17 @@ public final class ControlFlowUtil {
         PsiExpression target = PsiUtil.skipParenthesizedExprDown(((PsiUnaryExpression)element).getOperand());
         return ObjectUtils.tryCast(target, PsiReferenceExpression.class);
       }
-      if (element instanceof PsiDeclarationStatement) {
-        //should not happen
-        return element;
-      }
       return null;
     }
 
-    private static @Nullable PsiElement getLatestWriteVarExpression(@Nullable CopyOnWriteSet writeVars, @NotNull PsiVariable variable) {
-      if (writeVars == null) return null;
+    private static @Nullable PsiReferenceExpression getLatestWriteVarExpression(
+      @NotNull UnmodifiableHashMap<PsiVariable, PsiReferenceExpression> writeVars, @NotNull PsiVariable variable) {
+      if (writeVars.isEmpty()) return null;
 
       PsiManager psiManager = variable.getManager();
-      for (VariableInfo variableInfo : writeVars.getSet()) {
-        if (psiManager.areElementsEquivalent(variableInfo.variable, variable)) {
-          return variableInfo.expression;
+      for (Map.Entry<PsiVariable, PsiReferenceExpression> variableInfo : writeVars.entrySet()) {
+        if (psiManager.areElementsEquivalent(variableInfo.getKey(), variable)) {
+          return variableInfo.getValue();
         }
       }
       return null;
@@ -2679,9 +2625,8 @@ public final class ControlFlowUtil {
 
     @Override
     public @NotNull Collection<VariableInfo> getResult() {
-      final CopyOnWriteSet writtenTwiceVariable = writtenTwiceVariables[myStartOffset];
-      if (writtenTwiceVariable == null) return Collections.emptyList();
-      return writtenTwiceVariable.getSet();
+      return ContainerUtil.map(writtenTwiceVariables[myStartOffset].entrySet(),
+        entry -> new VariableInfo(entry.getKey(), entry.getValue()));
     }
   }
 
