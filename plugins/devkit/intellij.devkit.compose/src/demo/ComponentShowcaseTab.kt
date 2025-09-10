@@ -12,7 +12,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onFirstVisible
 import androidx.compose.ui.unit.dp
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.project.Project
@@ -63,7 +66,7 @@ internal fun ComponentShowcaseTab(project: Project) {
 
 @Composable
 private fun RowScope.ColumnOne() {
-  Column(Modifier.trackActivation().weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+  Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
     var activated by remember { mutableStateOf(false) }
     Text(
       "Here is a selection of our finest components(activated: $activated):",
@@ -72,10 +75,16 @@ private fun RowScope.ColumnOne() {
     )
 
     var selectedItem by remember { mutableIntStateOf(-1) }
+    val focusRequester = remember { FocusRequester() }
+
     ListComboBox(
       items = remember { listOf("Hello", "World") },
       selectedIndex = selectedItem,
       onSelectedItemChange = { selectedItem = it },
+      modifier =
+        Modifier
+          .focusRequester(focusRequester)
+          .onFirstVisible { focusRequester.requestFocus() },
     )
     ListComboBox(
       items = remember { listOf("Hello", "World") },
