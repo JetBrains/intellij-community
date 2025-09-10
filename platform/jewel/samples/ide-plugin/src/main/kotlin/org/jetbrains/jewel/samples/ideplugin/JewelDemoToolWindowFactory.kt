@@ -18,13 +18,22 @@ internal class JewelDemoToolWindowFactory : ToolWindowFactory, DumbAware {
         // Enable custom popup rendering to use JBPopup instead of default Compose implementation
         JewelFlags.useCustomPopupRenderer = true
 
-        toolWindow.addComposeTab("Components") { ComponentShowcaseTab(project) }
+        toolWindow.addComposeTab(
+            "Components",
+            focusOnClickInside = true,
+        ) { ComponentShowcaseTab(project) }
 
-        toolWindow.addComposeTab("Releases Demo") { ReleasesSampleCompose(project) }
+        toolWindow.addComposeTab(
+            "Releases Demo",
+            focusOnClickInside = true,
+        ) { ReleasesSampleCompose(project) }
 
         toolWindow.addSwingTab(SwingComparisonTabPanel(), "Swing Comparison")
 
-        toolWindow.addComposeTab("Scrollbars Sample") { ScrollbarsShowcaseTab() }
+        toolWindow.addComposeTab(
+            "Scrollbars Sample",
+            focusOnClickInside = true,
+        ) { ScrollbarsShowcaseTab() }
     }
 
     private fun ToolWindow.addSwingTab(component: JComponent, @TabTitle title: String) {

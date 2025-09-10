@@ -30,7 +30,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onFirstVisible
 import androidx.compose.ui.unit.dp
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.project.Project
@@ -120,10 +123,16 @@ private fun RowScope.ColumnOne() {
         )
 
         var selectedItem by remember { mutableIntStateOf(-1) }
+        val focusRequester = remember { FocusRequester() }
+
         ListComboBox(
             items = remember { listOf("Hello", "World") },
             selectedIndex = selectedItem,
             onSelectedItemChange = { selectedItem = it },
+            modifier =
+                Modifier
+                    .focusRequester(focusRequester)
+                    .onFirstVisible { focusRequester.requestFocus() },
         )
         ListComboBox(
             items = remember { listOf("Hello", "World") },
