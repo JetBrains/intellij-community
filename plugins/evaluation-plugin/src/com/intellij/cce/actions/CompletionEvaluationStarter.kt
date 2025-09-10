@@ -18,6 +18,7 @@ import com.intellij.cce.evaluation.BackgroundStepFactory
 import com.intellij.cce.evaluation.EvaluationProcess
 import com.intellij.cce.evaluation.FinishEvaluationStep
 import com.intellij.cce.evaluation.allPreliminarySteps
+import com.intellij.cce.evaluation.step.ReportGenerationStep
 import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
 import com.intellij.cce.evaluation.step.runInIntellij
 import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
@@ -216,7 +217,6 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         feature.getStrategySerializer()
       )
       val outputWorkspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
-      val datasetContext = DatasetContext(outputWorkspace, null, null)
       for (workspacePath in workspacesToMerge) {
         val workspace = EvaluationWorkspace.open(workspacePath, SetupStatsCollectorStep.statsCollectorLogsDirectory)
         workspace.readAdditionalStats(LAYOUT_NAME)?.let {
@@ -228,13 +228,16 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         }
       }
       outputWorkspace.saveMetadata()
-      feature.prepareEnvironment(config, outputWorkspace).use { environment ->
-        val stepFactory = BackgroundStepFactory(feature, config, environment, null, datasetContext)
-        val process = EvaluationProcess.build(environment, stepFactory) {
-          shouldGenerateReports = true
-        }
-        process.start(outputWorkspace)
-      }
+
+      val step = ReportGenerationStep(
+        null,
+        config.reports.sessionsFilters,
+        config.reports.comparisonFilters,
+        config.reports.lookupFilters,
+        feature,
+      )
+
+      step.runInIntellij(null, outputWorkspace)
     }
 
     /**
