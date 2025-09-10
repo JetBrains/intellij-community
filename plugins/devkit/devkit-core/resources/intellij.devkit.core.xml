@@ -697,7 +697,7 @@
     <registryKey key="devkit.inlay.threading" defaultValue="false"
                  description="Experimental inlays for Threading Annotations"/>
 
-    <registryKey key="intellij.platform.commit.message.validation.enabled" defaultValue="false"
+    <registryKey key="intellij.platform.commit.message.validation.enabled" defaultValue="true"
                  description="Enables commit messages validation for IntelliJ Platform"/>
     <registryKey key="aia.commit.message.validation.enabled" defaultValue="true"
                  description="Enables commit messages validation for AI Assistant project"/>
