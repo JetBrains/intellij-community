@@ -382,8 +382,8 @@ class EdtCoroutineDispatcherTest {
         }
       }
       finally {
-        assertThat(application.isReadAccessAllowed).isTrue
-        assertThat(application.isWriteIntentLockAcquired).isTrue
+        assertThat(application.isReadAccessAllowed).isEqualTo(!useNonBlockingIntentLockForEdtCoroutines)
+        assertThat(application.isWriteIntentLockAcquired).isEqualTo(!useNonBlockingIntentLockForEdtCoroutines)
         assertThat(application.isWriteAccessAllowed).isFalse
       }
     }
