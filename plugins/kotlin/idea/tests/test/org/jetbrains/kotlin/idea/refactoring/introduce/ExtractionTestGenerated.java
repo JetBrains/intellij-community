@@ -3850,6 +3850,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceProperty/extractExtensionWithInitializer.kt");
             }
 
+            @TestMetadata("extractFromAnnotationArg.kt")
+            public void testExtractFromAnnotationArg() throws Exception {
+                runTest("testData/refactoring/introduceProperty/extractFromAnnotationArg.kt");
+            }
+
             @TestMetadata("extractFromDefaultValueInConstructor.kt")
             public void testExtractFromDefaultValueInConstructor() throws Exception {
                 runTest("testData/refactoring/introduceProperty/extractFromDefaultValueInConstructor.kt");
@@ -5335,6 +5340,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceConstantTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("extractFromAnnotationArg.kt")
+            public void testExtractFromAnnotationArg() throws Exception {
+                runTest("testData/refactoring/introduceConstant/extractFromAnnotationArg.kt");
             }
 
             @TestMetadata("extractInteger.kt")

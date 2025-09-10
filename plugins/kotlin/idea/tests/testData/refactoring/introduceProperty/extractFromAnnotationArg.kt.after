@@ -1,0 +1,8 @@
+// EXTRACTION_TARGET: property with initializer
+
+private val string = "Deprecated. Please use method X instead"
+
+@Deprecated(string)
+fun foo() { }
+
+// IGNORE_K1
