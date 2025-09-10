@@ -4,17 +4,16 @@ import inspect
 from _pydevd_bundle import pydevd_utils
 
 try:
-    # Prefer the IDE's own importer if available (handles namespace packages, zip, etc.)
+    # IDE's own module importer (handles namespace packages, zip, etc.)
     from _pydevd_bundle import pydevd_import_class as _pydevd_import_class
 except Exception:
     _pydevd_import_class = None
 
-class Dmmy:...
 
 def _resolve_type(path):
     """Resolve 'pkg.mod.Class' -> class object, or None."""
     if not path:
-        return Dmmy
+        return object
     # Prefer pydevd's own importer so future understandings
     # over runtime module imports may propagate seamlessly
     if _pydevd_import_class is not None:
@@ -25,7 +24,7 @@ def _resolve_type(path):
                     return fn(path)
                 except:
                     pass
-    return Dmmy
+    return object
 
 def _by_type_entities(cls, renderers_dict):
     """
@@ -35,7 +34,7 @@ def _by_type_entities(cls, renderers_dict):
     for render in [render for renders in renderers_dict.values() for render in renders]:
         try:
             for name_type in ('type_canonical_import_path','type_qualified_name'):
-                target = _resolve_type(getattr(render, name_type, Dmmy))
+                target = _resolve_type(getattr(render, name_type, object))
                 if cls is target or (getattr(render, 'heirs', False) and issubclass(cls, target)):
                     return render
         except:
