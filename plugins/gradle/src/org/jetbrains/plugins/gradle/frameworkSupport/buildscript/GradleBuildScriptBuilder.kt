@@ -16,10 +16,10 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
   fun addGroup(group: String): Self
   fun addVersion(version: String): Self
 
-  fun registerTask(name: String, type: String?, configure: Consumer<GradleScriptTreeBuilder>): Self = registerTask(name, type) { configure.accept(this) }
+  fun registerTask(name: String, type: String?, configure: Consumer<GradleScriptTreeBuilder>): Self = registerTask(name, type, configure::accept)
   fun registerTask(name: String, type: String? = null, configure: GradleScriptTreeBuilder.() -> Unit = {}): Self
 
-  fun configureTask(name: String, type: String, configure: Consumer<GradleScriptTreeBuilder>): Self = configureTask(name, type) { configure.accept(this) }
+  fun configureTask(name: String, type: String, configure: Consumer<GradleScriptTreeBuilder>): Self = configureTask(name, type, configure::accept)
   fun configureTask(name: String, type: String, configure: GradleScriptTreeBuilder.() -> Unit): Self
   fun configureTestTask(configure: GradleScriptTreeBuilder.() -> Unit): Self
 
@@ -66,21 +66,29 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
   fun withPlugin(id: String): Self = withPlugin(id, null)
   fun withPlugin(id: String, version: String?): Self
 
+  fun withJava(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun withJava(configure: Consumer<GradleScriptTreeBuilder>): Self = withJava(configure::accept)
   fun withJavaPlugin(): Self
   fun withJavaLibraryPlugin(): Self
-  fun withIdeaPlugin(): Self
-  fun withKotlinJvmPlugin(): Self
 
-  /**
-   * Adds the Kotlin JVM plugin using the [version], or omitting the version call if [version] is null.
-   */
+  fun withIdeaPlugin(): Self
+
+  fun withKotlin(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun withKotlin(configure: Consumer<GradleScriptTreeBuilder>): Self = withKotlin(configure::accept)
+  fun withKotlinJvmPlugin(): Self
   fun withKotlinJvmPlugin(version: String?): Self
   fun withKotlinJsPlugin(): Self
   fun withKotlinMultiplatformPlugin(): Self
   fun withKotlinJvmToolchain(jvmTarget: Int): Self
+
   fun withKotlinDsl(): Self
+
   fun withGroovyPlugin(): Self
   fun withGroovyPlugin(version: String): Self
+
+  fun withApplication(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun withApplication(configure: Consumer<GradleScriptTreeBuilder>): Self = withApplication(configure::accept)
+  fun withApplicationPlugin(): Self
   fun withApplicationPlugin(
     mainClass: String? = null,
     mainModule: String? = null,

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
@@ -23,12 +24,11 @@ abstract class AbstractGradleBuildScriptBuilderCore<Self : GradleBuildScriptBuil
   private val buildScriptRepositories = GradleScriptTreeBuilder.create()
   private val buildScriptPostfixes = GradleScriptTreeBuilder.create()
   private val plugins = GradleScriptTreeBuilder.create()
-  private val java = GradleScriptTreeBuilder.create()
   private val prefixes = GradleScriptTreeBuilder.create()
   private val dependencies = GradleScriptTreeBuilder.create()
   private val repositories = GradleScriptTreeBuilder.create()
+  private val extensions = LinkedHashMap<String, GradleScriptTreeBuilder>()
   private val postfixes = GradleScriptTreeBuilder.create()
-  private val kotlin = GradleScriptTreeBuilder.create()
 
   protected abstract fun apply(action: Self.() -> Unit): Self
 
@@ -68,15 +68,20 @@ abstract class AbstractGradleBuildScriptBuilderCore<Self : GradleBuildScriptBuil
   override fun withRepository(configure: GradleScriptTreeBuilder.() -> Unit): Self = applyAndMerge(repositories, configure)
   override fun withRepository(configure: Consumer<GradleScriptTreeBuilder>): Self = withRepository(configure::accept)
 
+  override fun withExtension(name: String, configure: GradleScriptTreeBuilder.() -> Unit): Self = apply {
+    val extensionBlock = GradleScriptTreeBuilder.tree(configure)
+    if (!extensionBlock.isEmpty()) {
+      assert(GradleVersionSpecificsUtil.isPluginExtensionSupported(gradleVersion)) {
+        "$gradleVersion doesn't support plugin extensions."
+      }
+      val extension = extensions.getOrPut(name) { GradleScriptTreeBuilder.create() }
+      extension.addNonExistedElements(extensionBlock)
+    }
+  }
+
   override fun addPostfix(vararg postfix: String): Self = withPostfix { code(*postfix) }
   override fun withPostfix(configure: GradleScriptTreeBuilder.() -> Unit): Self = applyAndMerge(postfixes, configure)
   override fun withPostfix(configure: Consumer<GradleScriptTreeBuilder>): Self = withPostfix(configure::accept)
-
-  override fun withJava(configure: GradleScriptTreeBuilder.() -> Unit): Self = applyAndMerge(java, configure)
-  override fun withJava(configure: Consumer<GradleScriptTreeBuilder>): Self = withPostfix(configure::accept)
-
-  override fun withKotlin(configure: GradleScriptTreeBuilder.() -> Unit): Self = applyAndMerge(kotlin, configure)
-  override fun withKotlin(configure: Consumer<GradleScriptTreeBuilder>): Self = withPostfix(configure::accept)
 
   override fun generateTree(): BlockElement = GradleScriptTreeBuilder.tree {
     join(imports).ln()
@@ -90,8 +95,9 @@ abstract class AbstractGradleBuildScriptBuilderCore<Self : GradleBuildScriptBuil
     join(prefixes).ln()
     callIfNotEmpty("repositories", repositories).ln()
     callIfNotEmpty("dependencies", dependencies).ln()
-    callIfNotEmpty("java", java).ln()
-    callIfNotEmpty("kotlin", kotlin).ln()
+    for ((name, builder) in extensions) {
+      callIfNotEmpty(name, builder).ln()
+    }
     join(postfixes).ln()
   }
 

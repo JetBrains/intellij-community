@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJavaConventionsBlockSupported
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 
@@ -33,8 +33,9 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
     return createBuildFile(relativePath) {
       withJavaPlugin()
       withPrefix {
-        if (isJavaConventionsBlockSupported(gradleVersion)) {
-          callIfNotEmpty("java") {
+        // Since Gradle 7.1, the source and target compatiblity can be defined by string value
+        if (GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.1")) {
+          withJava {
             assignIfNotNull("sourceCompatibility", projectSourceCompatibility)
             assignIfNotNull("targetCompatibility", projectTargetCompatibility)
           }

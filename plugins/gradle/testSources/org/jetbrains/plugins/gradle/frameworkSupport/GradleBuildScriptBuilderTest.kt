@@ -5,6 +5,7 @@ import com.intellij.testFramework.junit5.SystemProperty
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit4Version
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit5Version
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 @SystemProperty("idea.gradle.mavenRepositoryUrl", "")
@@ -193,66 +194,83 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
     }
   }
 
-  @Test
-  fun `test application plugin building`() {
-    assertBuildScript("""
-      plugins {
-          id 'application'
+  @Nested
+  inner class ApplicationPlugin {
+
+    @Test
+    fun `test apply`() {
+      assertBuildScript("""
+          |plugins {
+          |    id 'application'
+          |}
+        """.trimMargin(), """
+          |plugins {
+          |    id("application")
+          |}
+        """.trimMargin()
+      ) {
+        withApplicationPlugin()
       }
-    """.trimIndent(), """
-      plugins {
-          id("application")
-      }
-    """.trimIndent()) {
-      withApplicationPlugin()
     }
-    assertBuildScript("""
-      plugins {
-          id 'application'
+
+    @Test
+    fun `test main class configuration`() {
+      assertBuildScript(
+        GradleVersion.version("4.10") to ("""
+          |plugins {
+          |    id 'application'
+          |}
+          |
+          |application {
+          |    mainClass = 'MyMain'
+          |}
+        """.trimMargin() to """
+          |plugins {
+          |    id("application")
+          |}
+          |
+          |application {
+          |    mainClass = "MyMain"
+          |}
+        """.trimMargin())
+      ) {
+        withApplicationPlugin("MyMain")
       }
-      
-      application {
-          mainClass = 'MyMain'
-      }
-    """.trimIndent(), """
-      plugins {
-          id("application")
-      }
-      
-      application {
-          mainClass = "MyMain"
-      }
-    """.trimIndent()) {
-      withApplicationPlugin("MyMain")
     }
-    assertBuildScript("""
-      plugins {
-          id 'application'
+
+    @Test
+    fun `test all properties configuration`() {
+      assertBuildScript(
+        GradleVersion.version("4.10") to ("""
+          |plugins {
+          |    id 'application'
+          |}
+          |
+          |application {
+          |    mainModule = 'org.gradle.sample.app'
+          |    mainClass = 'org.gradle.sample.Main'
+          |    executableDir = 'custom_bin_dir'
+          |    applicationDefaultJvmArgs = ['-Dgreeting.language=en']
+          |}
+        """.trimMargin() to """
+          |plugins {
+          |    id("application")
+          |}
+          |
+          |application {
+          |    mainModule = "org.gradle.sample.app"
+          |    mainClass = "org.gradle.sample.Main"
+          |    executableDir = "custom_bin_dir"
+          |    applicationDefaultJvmArgs = listOf("-Dgreeting.language=en")
+          |}
+        """.trimMargin())
+      ) {
+        withApplicationPlugin(
+          mainClass = "org.gradle.sample.Main",
+          mainModule = "org.gradle.sample.app",
+          executableDir = "custom_bin_dir",
+          defaultJvmArgs = listOf("-Dgreeting.language=en"))
       }
-      
-      application {
-          mainModule = 'org.gradle.sample.app'
-          mainClass = 'org.gradle.sample.Main'
-          executableDir = 'custom_bin_dir'
-          applicationDefaultJvmArgs = ['-Dgreeting.language=en']
-      }
-    """.trimIndent(), """
-      plugins {
-          id("application")
-      }
-      
-      application {
-          mainModule = "org.gradle.sample.app"
-          mainClass = "org.gradle.sample.Main"
-          executableDir = "custom_bin_dir"
-          applicationDefaultJvmArgs = listOf("-Dgreeting.language=en")
-      }
-    """.trimIndent()) {
-      withApplicationPlugin(
-        mainClass = "org.gradle.sample.Main",
-        mainModule = "org.gradle.sample.app",
-        executableDir = "custom_bin_dir",
-        defaultJvmArgs = listOf("-Dgreeting.language=en"))
     }
   }
 
@@ -530,41 +548,145 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
     }
   }
 
-  @Test
-  fun `test build script with kotlin java block`() {
-    assertBuildScript("""
-      group = 'testing'
-      version = '1.0'
-      
-      java {
-          withSourcesJar()
+  @Nested
+  inner class PluginExtension {
+
+    @Test
+    fun `test simple plugin extension`() {
+      assertBuildScript(
+        GradleVersion.version("4.10") to("""
+          |extension {
+          |    myConfiguration()
+          |}
+        """.trimMargin() to """
+          |extension {
+          |    myConfiguration()
+          |}
+        """.trimMargin())
+      ) {
+        withExtension("extension") {
+          call("myConfiguration")
+        }
       }
-      
-      kotlin {
-          jvmToolchain(21)
-          jvm()
+    }
+
+    @Test
+    fun `test empty plugin extension`() {
+      assertBuildScript("", "") {
+        withExtension("extension") {
+          // no configuration
+        }
       }
-    """.trimIndent(), """
-      group = "testing"
-      version = "1.0"
-      
-      java {
-          withSourcesJar()
+    }
+
+    @Test
+    fun `test line breaks between plugin extensions`() {
+      assertBuildScript(
+        GradleVersion.version("4.10") to("""
+          |group = 'testing'
+          |version = '1.0'
+          |
+          |configuration1 {
+          |    myConfiguration()
+          |}
+          |
+          |configuration2 {
+          |    myConfiguration()
+          |}
+        """.trimMargin() to """
+          |group = "testing"
+          |version = "1.0"
+          |
+          |configuration1 {
+          |    myConfiguration()
+          |}
+          |
+          |configuration2 {
+          |    myConfiguration()
+          |}
+        """.trimMargin())
+      ) {
+        addGroup("testing")
+        addVersion("1.0")
+        withExtension("configuration1") {
+          call("myConfiguration")
+        }
+        withExtension("configuration2") {
+          call("myConfiguration")
+        }
       }
-      
-      kotlin {
-          jvmToolchain(21)
-          jvm()
+    }
+
+    @Test
+    fun `test deduplication inside plugin extension`() {
+      assertBuildScript(
+        GradleVersion.version("4.10") to("""
+          |extension {
+          |    myConfiguration()
+          |}
+        """.trimMargin() to """
+          |extension {
+          |    myConfiguration()
+          |}
+        """.trimMargin())
+      ) {
+        repeat(10) {
+          withExtension("extension") {
+            call("myConfiguration")
+          }
+        }
       }
-    """.trimIndent()) {
-      addGroup("testing")
-      addVersion("1.0")
-      withKotlinJvmToolchain(21)
-      withKotlin {
-        call("jvm")
-      }
-      withJava {
-        call("withSourcesJar")
+    }
+
+    @Test
+    fun `test java, kotlin, application and custom plugin extensions`() {
+      assertBuildScript(
+        GradleVersion.version("4.10") to ("""
+          |java {
+          |    myConfiguration()
+          |}
+          |
+          |kotlin {
+          |    myConfiguration()
+          |}
+          |
+          |application {
+          |    myConfiguration()
+          |}
+          |
+          |custom {
+          |    myConfiguration()
+          |}
+        """.trimMargin() to """
+          |java {
+          |    myConfiguration()
+          |}
+          |
+          |kotlin {
+          |    myConfiguration()
+          |}
+          |
+          |application {
+          |    myConfiguration()
+          |}
+          |
+          |custom {
+          |    myConfiguration()
+          |}
+        """.trimMargin())
+      ) {
+        withJava {
+          call("myConfiguration")
+        }
+        withKotlin {
+          call("myConfiguration")
+        }
+        withApplication {
+          call("myConfiguration")
+        }
+        withExtension("custom") {
+          call("myConfiguration")
+        }
       }
     }
   }

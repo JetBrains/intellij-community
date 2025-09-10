@@ -150,6 +150,9 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
       }
     }
 
+  override fun withJava(configure: GradleScriptTreeBuilder.() -> Unit): Self =
+    withExtension("java", configure)
+
   override fun withJavaPlugin(): Self =
     withPlugin("java")
 
@@ -181,6 +184,9 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
   override fun withKotlinMultiplatformPlugin(): Self =
     withPlugin("org.jetbrains.kotlin.multiplatform", kotlinVersion)
 
+  override fun withKotlin(configure: GradleScriptTreeBuilder.() -> Unit): Self =
+    withExtension("kotlin", configure)
+
   override fun withKotlinJvmToolchain(jvmTarget: Int): Self =
     withKotlin {
       // We use a code here to force the generator to use parenthesis in Groovy, to be in-line with the documentation
@@ -208,20 +214,24 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
     }
   }
 
+  override fun withApplicationPlugin(): Self =
+    withPlugin("application")
+
+  override fun withApplication(configure: GradleScriptTreeBuilder.() -> Unit): Self =
+    withExtension("application", configure)
+
   override fun withApplicationPlugin(
     mainClass: String?,
     mainModule: String?,
     executableDir: String?,
     defaultJvmArgs: List<String>?,
   ): Self = apply {
-    withPlugin("application")
-    withPostfix {
-      callIfNotEmpty("application") {
-        assignIfNotNull("mainModule", mainModule)
-        assignIfNotNull("mainClass", mainClass)
-        assignIfNotNull("executableDir", executableDir)
-        assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let { list(*it) })
-      }
+    withApplicationPlugin()
+    withApplication {
+      assignIfNotNull("mainModule", mainModule)
+      assignIfNotNull("mainClass", mainClass)
+      assignIfNotNull("executableDir", executableDir)
+      assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let { list(*it) })
     }
   }
 
@@ -350,7 +360,6 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
         }
       }
       GradleDsl.KOTLIN -> {
-
         call("mavenLocal") {
           assign("url", call("uri", url))
         }
