@@ -166,18 +166,14 @@ object MultiplatformLibraryProjectTemplate : ProjectTemplate() {
                     targets = buildList {
                         +ModuleType.common.createDefaultTarget()
                         +ModuleType.jvm.createDefaultTarget(permittedTemplateIds = emptySet())
-
-                        if (AdvancedSettings.getBoolean("kotlin.mpp.experimental")) {
-                            +MultiplatformTargetModule(
-                                "js",
-                                MppLibJsBrowserTargetConfigurator,
-                                createDefaultSourceSets(),
-                                permittedTemplateIds = emptySet()
-                            ).withConfiguratorSettings<MppLibJsBrowserTargetConfigurator> {
-                                JSConfigurator.kind withValue JsTargetKind.LIBRARY
-                            }
+                        +MultiplatformTargetModule(
+                            "js",
+                            MppLibJsBrowserTargetConfigurator,
+                            createDefaultSourceSets(),
+                            permittedTemplateIds = emptySet()
+                        ).withConfiguratorSettings<MppLibJsBrowserTargetConfigurator> {
+                            JSConfigurator.kind withValue JsTargetKind.LIBRARY
                         }
-
                         +ModuleType.native.createDefaultTarget(permittedTemplateIds = emptySet())
                     }
                 )
@@ -191,9 +187,6 @@ object FullStackWebApplicationProjectTemplate : ProjectTemplate() {
     override val id = "fullStackWebApplication"
     override val icon: Icon
         get() = KotlinIcons.Wizard.WEB
-
-    override fun isVisible(): Boolean =
-        AdvancedSettings.getBoolean("kotlin.mpp.experimental")
 
     @NonNls
     override val suggestedProjectName: String = "myFullStackApplication"
@@ -283,9 +276,6 @@ object FrontendApplicationProjectTemplate : ProjectTemplate() {
     override val id = "frontendApplication"
     override val icon: Icon
         get() = KotlinIcons.Wizard.JS
-
-    override fun isVisible(): Boolean =
-        Registry.`is`("kotlin.js.wizard", false)
 
     @NonNls
     override val suggestedProjectName = "myKotlinJsApplication"
