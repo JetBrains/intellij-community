@@ -2,9 +2,7 @@ package com.intellij.grazie.ide.ui.proofreading
 
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.ide.ui.components.dsl.border
 import com.intellij.grazie.ide.ui.components.dsl.msg
-import com.intellij.grazie.ide.ui.components.dsl.panel
 import com.intellij.grazie.ide.ui.proofreading.component.GrazieLanguagesComponent
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.GrazieRemote
@@ -23,22 +21,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessCurrentProject
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable
-import com.intellij.ui.HyperlinkLabel
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.layout.migLayout.createLayoutConstraints
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.AsyncProcessIcon
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBDimension
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import net.miginfocom.layout.CC
-import net.miginfocom.swing.MigLayout
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.event.HyperlinkEvent
 
 class ProofreadSettingsPanel : BoundConfigurable(
   GrazieBundle.message("grazie.settings.configurable.name"),
@@ -88,39 +79,49 @@ class ProofreadSettingsPanel : BoundConfigurable(
     disposeUIResources()
   }
 
-  override fun getComponent(): JPanel = panel(MigLayout(createLayoutConstraints().hideMode(3))) {
-    val downloadPanel = JPanel(MigLayout("insets 0, gap 5, hidemode 3"))
-    downloadPanel.add(JLabel(msg("grazie.settings.proofreading.languages.text")))
-    downloadPanel.add(asyncDownloadingIcon)
-    downloadPanel.add(downloadLabel)
-
-    panel(MigLayout(createLayoutConstraints().hideMode(3)), constraint = CC().growX().wrap()) {
-      border = border("", false, JBUI.insetsBottom(10), false)
-      add(downloadPanel, CC().growX().wrap())
-      add(languages.component, CC().width("350px").height("150px"))
-    }
-
-    languages.reset(GrazieConfig.get())
-
-    val link = HyperlinkLabel(msg("grazie.settings.proofreading.link-to-inspection"))
-    link.addHyperlinkListener { e: HyperlinkEvent ->
-      if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-        Settings.KEY.getData(DataManager.getInstance().getDataContext(this))?.let { settings ->
-          settings.find(ErrorsConfigurable::class.java)?.let {
-            settings.select(it).doWhenDone {
-              it.selectInspectionGroup(arrayOf(msg("grazie.group.name")))
+  override fun getComponent(): JPanel {
+    lateinit var result: DialogPanel
+    result = panel {
+      lateinit var lbLanguage: JLabel
+      row {
+        lbLanguage = label(msg("grazie.settings.proofreading.languages.text"))
+          .gap(RightGap.SMALL)
+          .component
+        cell(asyncDownloadingIcon).gap(RightGap.SMALL)
+        cell(downloadLabel)
+      }
+      row {
+        cell(languages.component)
+          .applyToComponent {
+            preferredSize = JBDimension(350, 150)
+            putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(top = false, bottom = true))
+            lbLanguage.labelFor = this
+          }
+      }
+      row {
+        link(msg("grazie.settings.proofreading.link-to-inspection")) {
+          Settings.KEY.getData(DataManager.getInstance().getDataContext(result))?.let { settings ->
+            settings.find(ErrorsConfigurable::class.java)?.let {
+              settings.select(it).doWhenDone {
+                it.selectInspectionGroup(arrayOf(msg("grazie.group.name")))
+              }
             }
           }
         }
       }
+
+      row {
+        cell(super.createComponent())
+          .align(AlignX.FILL)
+      }
     }
 
-    add(link, CC().wrap())
-    add(super.createComponent(), CC().wrap())
+    languages.reset(GrazieConfig.get())
+    return result
   }
 
   private val component: DialogPanel by lazy {
-    com.intellij.ui.dsl.builder.panel {
+    panel {
       generalSettings()
     }
   }
