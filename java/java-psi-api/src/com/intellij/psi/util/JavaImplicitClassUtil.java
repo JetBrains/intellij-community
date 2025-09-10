@@ -9,7 +9,18 @@ import com.intellij.psi.PsiJavaFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Utility class providing methods to handle implicit classes in Java-related PSI structures.
+ */
 public final class JavaImplicitClassUtil {
+
+  /**
+   * Checks whether the given PSI element represents a file that contains an implicit class and
+   * a file is a compact source file.
+   *
+   * @param file the PSI element to be checked, typically a PsiFile or its derivative.
+   * @return {@code true} if the file contains an implicit class, {@code false} otherwise.
+   */
   public static boolean isFileWithImplicitClass(@NotNull PsiElement file) {
     return getImplicitClassFor(file) != null;
   }
