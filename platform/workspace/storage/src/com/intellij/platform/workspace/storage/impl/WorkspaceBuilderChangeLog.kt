@@ -473,16 +473,24 @@ internal class WorkspaceBuilderChangeLog {
 
   internal fun addAddedIds(entityInterface: Class<*>, addedIds: Set<SymbolicEntityId<*>>) {
     if (addedIds.isEmpty()) return
-    removedSymbolicIds[entityInterface]?.removeAll(addedIds)
-    if (removedSymbolicIds[entityInterface]?.isEmpty() == true) removedSymbolicIds.remove(entityInterface)
-    addedSymbolicIds.computeIfAbsent(entityInterface) { CollectionFactory.createSmallMemoryFootprintSet() }.addAll(addedIds)
+    val removedIdsSet = removedSymbolicIds[entityInterface]
+    val addedIdsSet = addedSymbolicIds.computeIfAbsent(entityInterface) { CollectionFactory.createSmallMemoryFootprintSet() }
+    addedIds.forEach { addedId ->
+      addedIdsSet.add(addedId)
+      removedIdsSet?.remove(addedId)
+    }
+    if (removedIdsSet?.isEmpty() == true) removedSymbolicIds.remove(entityInterface)
   }
 
   internal fun addRemovedIds(entityInterface: Class<*>, removedIds: Set<SymbolicEntityId<*>>) {
     if (removedIds.isEmpty()) return
-    addedSymbolicIds[entityInterface]?.removeAll(removedIds)
-    if (addedSymbolicIds[entityInterface]?.isEmpty() == true) addedSymbolicIds.remove(entityInterface)
-    removedSymbolicIds.computeIfAbsent(entityInterface) { CollectionFactory.createSmallMemoryFootprintSet() }.addAll(removedIds)
+    val addedIdsSet = addedSymbolicIds[entityInterface]
+    val removedIdsSet = removedSymbolicIds.computeIfAbsent(entityInterface) { CollectionFactory.createSmallMemoryFootprintSet() }
+    removedIds.forEach { removedId ->
+      removedIdsSet.add(removedId)
+      addedIdsSet?.remove(removedId)
+    }
+    if (addedIdsSet?.isEmpty() == true) addedSymbolicIds.remove(entityInterface)
   }
 
   companion object {
