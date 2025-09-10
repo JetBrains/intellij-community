@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.coroutines.CoroutineScope
-import kotlin.coroutines.cancellation.CancellationException
 
 internal val LOG: Logger = Logger.getInstance("#com.intellij.platform.instanceContainer")
 
@@ -36,21 +35,6 @@ fun InstanceContainerInternal.initializedInstances(): Sequence<Any> {
       catch (t: Throwable) {
         LOG.warn(t)
       }
-    }
-  }
-}
-
-suspend fun InstanceContainerInternal.preloadAllInstances() {
-  val holders = instanceHolders()
-  for (holder in holders) {
-    try {
-      holder.getInstanceInCallerContext(keyClass = null)
-    }
-    catch (ce: CancellationException) {
-      throw ce
-    }
-    catch (t: Throwable) {
-      LOG.error("Cannot create ${holder.instanceClassName()}", t)
     }
   }
 }

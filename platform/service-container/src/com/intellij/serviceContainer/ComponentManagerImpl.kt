@@ -469,7 +469,7 @@ abstract class ComponentManagerImpl(
       return null
     }
     return {
-      componentContainer.preloadAllInstances()
+      preloadAllInstances(componentContainer)
       containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED)
     }
   }
@@ -484,7 +484,7 @@ abstract class ComponentManagerImpl(
   protected fun doCreateComponents() {
     LOG.assertTrue(containerState.get() == ContainerState.PRE_INIT)
     runBlockingInitialization {
-      componentContainer.preloadAllInstances()
+      preloadAllInstances(componentContainer)
     }
     LOG.assertTrue(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }
@@ -499,7 +499,7 @@ abstract class ComponentManagerImpl(
       else -> StartUpMeasurer.startActivity("$activityNamePrefix${StartUpMeasurer.Activities.CREATE_COMPONENTS_SUFFIX}")
     }
 
-    componentContainer.preloadAllInstances()
+    preloadAllInstances(componentContainer)
 
     activity?.end()
 
@@ -1708,5 +1708,20 @@ private class StartUpMessageDeliveryListener(
       return
     }
     logMessageBusDeliveryFunction(topic, messageName, handler, durationNanos)
+  }
+}
+
+private suspend fun preloadAllInstances(container: InstanceContainerInternal) {
+  val holders = container.instanceHolders()
+  for (holder in holders) {
+    try {
+      holder.getInstanceInCallerContext(keyClass = null)
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error("Cannot create ${holder.instanceClassName()}", e)
+    }
   }
 }
