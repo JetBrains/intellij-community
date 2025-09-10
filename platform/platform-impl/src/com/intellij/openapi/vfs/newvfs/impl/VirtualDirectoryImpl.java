@@ -733,7 +733,17 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       //   unlikely to be done soon.
       //   A more conservative solution would be to move the InvertedFilenameIndex updates out from FSRecords: be InvertedFilenameIndex
       //   updated in the same way other indexes are, unfinished VFS records would not appear in it, and the 'legit' issue
-      //   would disappear too.
+      //   would disappear too -- but it seems like the same 'local refresh' would then lead to some filenames being absent
+      //   in the filename index...
+
+      //   ...Until the good solution is found, here is dirty but workable 'solution': just yield for a while, leaving another
+      //   thread a chance to finish child record initialization -- and if it does (judging by isInPersistentChildren() changed
+      //   it's return value) then re-try:
+      Thread.yield();
+      boolean isInPersistentChildren = isInPersistentChildren(pFS, getId(), childId);
+      if (isInPersistentChildren && Boolean.FALSE.equals(wasInPersistentChildren)) {
+        return findChildById(childId);
+      }
 
       int parentId = pFS.peer().getParent(childId);
       VirtualDirectoryImpl parent = child.getParent();
@@ -741,7 +751,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         "[" + child + ", id: " + child.getId() + ", parentId: " + parentId + ", parent.id: " + parent.getId() + "] " +
         "expected to be in " +
         "[" + this + ", id: " + getId() + ", this == parent?: " + (this == parent) + "].children=" + children + " -- but absent. " +
-        "childId in persistent children: " + isInPersistentChildren(pFS, getId(), childId) + ", " +
+        "childId in persistent children: " + isInPersistentChildren + ", " +
         "was in persistent children: " + wasInPersistentChildren +
         " -> refresh race or VFS inconsistency?"
       );
