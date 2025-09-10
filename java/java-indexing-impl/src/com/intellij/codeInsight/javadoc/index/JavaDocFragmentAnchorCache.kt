@@ -13,11 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.util.indexing.ID
 import java.util.regex.Pattern
-
-@JvmField
-val NAME: ID<String, LinkedHashSet<JavaDocFragmentData>> = ID.create("java.javadoc.fragment.anchors")
 
 /**
  * Data associated with a JavaDoc fragment (e.g. `<p id=my-fragment-id></p>`).
