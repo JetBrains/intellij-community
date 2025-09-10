@@ -12,7 +12,8 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePos
 internal class K2OperatorNameCompletionContributor : K2SimpleCompletionContributor<KotlinTypeNameReferencePositionContext>(
     KotlinTypeNameReferencePositionContext::class
 ) {
-    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinTypeNameReferencePositionContext>) {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinTypeNameReferencePositionContext>)
+    override fun complete() {
         val positionContext = context.positionContext
         val isApplicable = OperatorNameCompletion.isPositionApplicable(
             nameExpression = positionContext.nameExpression,

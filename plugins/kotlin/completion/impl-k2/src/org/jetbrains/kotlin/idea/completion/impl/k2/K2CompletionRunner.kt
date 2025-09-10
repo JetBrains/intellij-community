@@ -143,7 +143,9 @@ internal interface K2CompletionRunner {
                                     error("Chain completion sections cannot add later sections yet")
                                 }
                             )
-                            contributor.createChainedLookupElements(sectionContext, receiverExpression, importingStrategy)
+                            context(sectionContext) {
+                                contributor.createChainedLookupElements(receiverExpression, importingStrategy)
+                            }
                         }.asIterable()
                     completionResultSet.addAllElements(lookupElements)
                 }
@@ -301,12 +303,10 @@ private class SharedPriorityQueue<P : Any, C : Comparable<C>>(
     fun createLocalInstance(): LocalInstance = LocalInstance()
 }
 
-context(session: KaSession)
-private fun <P : KotlinRawPositionContext> K2CompletionSection<P>.executeIfAllowed(context: K2CompletionSectionContext<P>) {
-    with(contributor) {
-        if (!session.shouldExecute(context)) return
-    }
-    runnable(session, context)
+context(_: KaSession, context: K2CompletionSectionContext<P>)
+private fun <P : KotlinRawPositionContext> K2CompletionSection<P>.executeIfAllowed() {
+    if (!contributor.shouldExecute()) return
+    runnable()
 }
 
 /**
@@ -345,7 +345,9 @@ private class SequentialCompletionRunner : K2CompletionRunner {
                 )
 
                 // We make sure we have the correct position before running the completion section.
-                section.executeIfAllowed(sectionContext)
+                context(sectionContext) {
+                    section.executeIfAllowed()
+                }
             }
         }
 
@@ -432,7 +434,9 @@ private class ParallelCompletionRunner : K2CompletionRunner {
             )
 
             try {
-                currentSection.executeIfAllowed(sectionContext)
+                context(sectionContext) {
+                    currentSection.executeIfAllowed()
+                }
             } finally {
                 sectionSink.close()
             }

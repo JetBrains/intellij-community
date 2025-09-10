@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.packageScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerScopeKinds
@@ -20,12 +21,14 @@ import org.jetbrains.kotlin.idea.util.positionContext.*
 internal class K2PackageCompletionContributor : K2SimpleCompletionContributor<KotlinRawPositionContext>(
     KotlinRawPositionContext::class
 ) {
-    override fun KaSession.shouldExecute(context: K2CompletionSectionContext<KotlinRawPositionContext>): Boolean {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinRawPositionContext>)
+    override fun shouldExecute(): Boolean {
         return !context.positionContext.isAfterRangeOperator() && !context.positionContext.allowsOnlyNamedArguments()
     }
 
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinRawPositionContext>) {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinRawPositionContext>)
+    override fun complete() {
         val rootSymbol = context.positionContext.resolveReceiverToSymbols()
             .filterIsInstance<KaPackageSymbol>()
             .singleOrNull()

@@ -35,7 +35,8 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 internal class K2DeclarationFromUnresolvedNameContributor : K2SimpleCompletionContributor<KotlinRawPositionContext>(
     KotlinRawPositionContext::class
 ) {
-    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinRawPositionContext>) {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinRawPositionContext>)
+    override fun complete() {
         val declaration = context.positionContext.position.getCurrentDeclarationAtCaret() ?: return
         val referenceScope = referenceScope(declaration) ?: return
 
@@ -43,13 +44,12 @@ internal class K2DeclarationFromUnresolvedNameContributor : K2SimpleCompletionCo
             canGoInside = { it !is KtPackageDirective && it !is KtImportDirective }
         ) { refExpr ->
             ProgressManager.checkCanceled()
-            processReference(context, referenceScope, declaration, refExpr)
+            processReference(referenceScope, declaration, refExpr)
         }
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinRawPositionContext>)
     private fun processReference(
-        context: K2CompletionSectionContext<KotlinRawPositionContext>,
         referenceScope: KtElement,
         currentDeclarationInFakeFile: KtNamedDeclaration,
         unresolvedRef: KtNameReferenceExpression
@@ -122,7 +122,7 @@ internal class K2DeclarationFromUnresolvedNameContributor : K2SimpleCompletionCo
 
     context(_: KaSession)
     private fun getReceiverType(symbol: KaCallableSymbol): KaType? {
-        return symbol.receiverType ?: (symbol as? KaCallableSymbol)?.dispatchReceiverType
+        return symbol.receiverType ?: symbol.dispatchReceiverType
     }
 
     private fun PsiElement.getCurrentDeclarationAtCaret(): KtNamedDeclaration? {

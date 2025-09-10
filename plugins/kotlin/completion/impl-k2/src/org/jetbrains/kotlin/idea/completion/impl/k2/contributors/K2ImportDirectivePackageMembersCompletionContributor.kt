@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.asSignature
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveReceiverToSymbols
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
@@ -19,7 +20,8 @@ internal class K2ImportDirectivePackageMembersCompletionContributor : K2SimpleCo
     KotlinImportDirectivePositionContext::class
 ) {
     @OptIn(KaExperimentalApi::class)
-    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinImportDirectivePositionContext>) {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinImportDirectivePositionContext>)
+    override fun complete() {
         val positionContext = context.positionContext
         val weighingContext = context.weighingContext
         positionContext.resolveReceiverToSymbols()

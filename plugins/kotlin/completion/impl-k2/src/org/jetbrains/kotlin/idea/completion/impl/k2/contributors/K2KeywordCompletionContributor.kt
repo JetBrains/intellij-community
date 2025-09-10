@@ -43,11 +43,13 @@ internal class K2KeywordCompletionContributor : K2SimpleCompletionContributor<Ko
             )
         }
 
-    override fun KaSession.shouldExecute(context: K2CompletionSectionContext<KotlinRawPositionContext>): Boolean {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinRawPositionContext>)
+    override fun shouldExecute(): Boolean {
         return !context.positionContext.isAfterRangeOperator() && !context.positionContext.allowsOnlyNamedArguments()
     }
 
-    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinRawPositionContext>) {
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinRawPositionContext>)
+    override fun complete() {
         val positionContext = context.positionContext
         val expression = when (positionContext) {
             is KotlinLabelReferencePositionContext -> positionContext.nameExpression.let { label -> getExpressionWithLabel(label) ?: label }

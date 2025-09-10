@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtOutsideTowerScopeKinds
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
@@ -30,7 +31,8 @@ import kotlin.sequences.forEach
 internal class K2KDocParameterNameContributor : K2SimpleCompletionContributor<KDocNameReferencePositionContext>(
     KDocNameReferencePositionContext::class
 ) {
-    override fun KaSession.complete(context: K2CompletionSectionContext<KDocNameReferencePositionContext>) {
+    context(_: KaSession, context: K2CompletionSectionContext<KDocNameReferencePositionContext>)
+    override fun complete() {
         val positionContext = context.positionContext
         val weighingContext = context.weighingContext
         if (positionContext.explicitReceiver != null) return
@@ -42,13 +44,12 @@ internal class K2KDocParameterNameContributor : K2SimpleCompletionContributor<KD
 
         getParametersForKDoc(ownerDeclaration.symbol)
             .filter { (it as KaNamedSymbol).name.asString() !in alreadyDocumentedParameters }
-            .flatMap { createLookupElements(context, it,  weighingContext) }
+            .flatMap { createLookupElements(it,  weighingContext) }
             .forEach { context.addElement(it) }
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<KDocNameReferencePositionContext>)
     private fun createLookupElements(
-        context: K2CompletionSectionContext<KDocNameReferencePositionContext>,
         declarationSymbol: KaDeclarationSymbol,
         weighingContext: WeighingContext,
     ): Sequence<LookupElement> = when (declarationSymbol) {

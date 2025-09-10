@@ -9,9 +9,8 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameRefere
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 
 internal interface K2ChainCompletionContributor {
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>)
     fun createChainedLookupElements(
-        context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>,
         receiverExpression: KtDotQualifiedExpression,
         importingStrategy: ImportStrategy,
     ): Sequence<LookupElement>
