@@ -108,7 +108,7 @@ public final class GroovycRunner {
     }
 
     try {
-      Class<?> classLoaderClass = Class.forName("com.intellij.util.lang.java6.UrlClassLoader");
+      Class<?> classLoaderClass = Class.forName("com.intellij.groovy.rt.classLoader.util.java8.UrlClassLoader");
       return (ClassLoader)classLoaderClass.getMethod("create", List.class).invoke(null, urls);
     }
     catch (Throwable t) {

@@ -1,12 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.lang.java6;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.groovy.rt.classLoader.util.java8;
 
+import com.intellij.groovy.rt.classLoader.util.java8.fastutil.StrippedIntOpenHashSet;
+import com.intellij.groovy.rt.classLoader.util.java8.fastutil.StrippedLongOpenHashSet;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.IntObjectHashMap;
-import com.intellij.util.lang.java6.fastutil.StrippedIntOpenHashSet;
-import com.intellij.util.lang.java6.fastutil.StrippedLongOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

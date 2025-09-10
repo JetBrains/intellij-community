@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.lang.java6.fastutil;
+package com.intellij.groovy.rt.classLoader.util.java8.fastutil;
 
 final class Hash {
   static final float DEFAULT_LOAD_FACTOR = .75f;
