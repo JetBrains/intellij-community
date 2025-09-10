@@ -472,6 +472,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
                                                            sessionName, myIcon, null) {
           override fun isHiddenContent(): Boolean = true
         }
+        Disposer.register(mockDescriptor, runTab)
         val descriptorId = mockDescriptor.storeGlobally(tabCoroutineScope)
         runContentDescriptorId.complete(descriptorId)
         debuggerManager.coroutineScope.launch(Dispatchers.EDT) {
