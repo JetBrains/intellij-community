@@ -338,9 +338,10 @@ object AppUIUtil {
         result.addAll(consents)
       }
     }
-    val isLegacyAiDataCollectionConsent = ConsentOptions.condAiDataCollectionConsent()
-    result.removeIf(isLegacyAiDataCollectionConsent) // IJPL-195651; AI data collection (LLMC) consent should not be present on UI while it's staying a default consent as a part of migration from LLMC to TRACE consent
-    if (!Registry.`is`("ide.enable.notification.trace.data.sharing")) {
+    if (Registry.`is`("ide.enable.notification.trace.data.sharing")) {
+      val isLegacyAiDataCollectionConsent = ConsentOptions.condAiDataCollectionConsent()
+      result.removeIf(isLegacyAiDataCollectionConsent) // IJPL-195651; AI data collection (LLMC) consent should not be present on UI while it's staying a default consent as a part of migration from LLMC to TRACE consent
+    } else {
       result.removeIf(ConsentOptions.condTraceDataCollectionConsent())
     }
     return result
