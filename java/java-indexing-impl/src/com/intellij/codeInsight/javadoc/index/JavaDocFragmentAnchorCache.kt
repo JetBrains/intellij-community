@@ -10,8 +10,10 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.impl.source.javadoc.PsiDocFragmentName
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.CachedValueProvider.Result
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.indexing.ID
-import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
 
 @JvmField
@@ -27,26 +29,22 @@ data class JavaDocFragmentData(val name: String, val offset: Int)
 
 @Service(Service.Level.PROJECT)
 private class JavaDocFragmentCacheService {
-  private data class Entry(val stamp: Long, val data: LinkedHashSet<JavaDocFragmentData>)
-  private val cache: ConcurrentHashMap<String, Entry> = ConcurrentHashMap()
-
   // Matches any HTML opening tag with an id attribute
   private val ID_PATTERN: Pattern = Pattern.compile("<[a-zA-Z0-9\\-]*[^>] id=[\"']?([^\"'> ]+)[\"']?[^>]*>", Pattern.CASE_INSENSITIVE)
 
   fun getAnchors(project: Project, fqn: String): LinkedHashSet<JavaDocFragmentData> {
-    val entry = cache[fqn]
     val psiClass = JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.projectScope(project))
-    val file = psiClass?.containingFile ?: return LinkedHashSet()
-    if (entry != null && file.modificationStamp == entry.stamp) return entry.data
+                    ?: return LinkedHashSet()
 
-    val result = LinkedHashSet<JavaDocFragmentData>().apply {
-      addAll(findIdsFromComment(psiClass.docComment))
-      for (method in psiClass.methods) addAll(findIdsFromComment(method.docComment))
-      for (field in psiClass.fields) addAll(findIdsFromComment(field.docComment))
+    val manager = CachedValuesManager.getManager(project)
+    return manager.getCachedValue(psiClass) {
+      val result = LinkedHashSet<JavaDocFragmentData>().apply {
+        addAll(findIdsFromComment(psiClass.docComment))
+        for (method in psiClass.methods) addAll(findIdsFromComment(method.docComment))
+        for (field in psiClass.fields) addAll(findIdsFromComment(field.docComment))
+      }
+      Result.create(result, PsiModificationTracker.MODIFICATION_COUNT)
     }
-
-    cache[fqn] = Entry(file.modificationStamp, result)
-    return result
   }
 
   private fun findIdsFromComment(docComment: PsiDocComment?): List<JavaDocFragmentData> {

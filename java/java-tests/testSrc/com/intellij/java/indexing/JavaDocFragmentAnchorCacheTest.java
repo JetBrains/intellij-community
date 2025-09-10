@@ -5,14 +5,12 @@ import com.intellij.codeInsight.javadoc.index.JavaDocFragmentAnchorCacheKt;
 import com.intellij.codeInsight.javadoc.index.JavaDocFragmentData;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
-import com.intellij.testFramework.NeedsIndex;
 import org.intellij.lang.annotations.Language;
 
 import java.util.Collection;
 
 public class JavaDocFragmentAnchorCacheTest extends LightJavaCodeInsightTestCase {
 
-  @NeedsIndex.ForStandardLibrary
   public void testIndexesExplicitId() {
     @Language("JAVA") String text = """
       package p;
