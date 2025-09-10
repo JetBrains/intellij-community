@@ -532,8 +532,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
       val shape = Area(Rectangle(0, 0, width, height))
       val cornerRadius = JBUI.getInt("Island.arc", 10).toFloat()
-      val offset = JBUIScale.scale(2f)
-      val offsetWidth = offset * 2 + 0.5f
+      val borderWith = JBUI.getInt("Island.borderWidth", 4)
+      val offset = borderWith / 2f
+      val offsetWidth = borderWith + 0.5f
       val border = Area(RoundRectangle2D.Float(offset, offset, width.toFloat() - offsetWidth, height.toFloat() - offsetWidth, cornerRadius, cornerRadius))
 
       shape.subtract(border)
