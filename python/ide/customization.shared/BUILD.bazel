@@ -9,11 +9,15 @@ jvm_resources(
 
 jvm_library(
   name = "customization.shared",
+  module_name = "intellij.pycharm.community.customization.shared",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//python/ide/impl",
+    "//platform/platform-impl:ide-impl",
+  ],
   runtime_deps = [
     ":customization.shared_resources",
-    "//python/ide/impl",
     "//python/ide/implTraining/intellij.pycharm.community.ide.implTraining:pycharm-community-ide-implTraining",
     "//platform/whatsNew",
   ]

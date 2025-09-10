@@ -61,7 +61,7 @@ class PluginsAdvertiserTest {
   fun suggestedIdeInPyCharmCommunity() = runBlocking {
     preparePluginCache("*.js" to PluginData("JavaScript"))
     val suggestion = getSuggestionData(projectRule.project, "PC", "foo.js", PlainTextFileType.INSTANCE)
-    assertEquals(listOf("PyCharm"), suggestion!!.suggestedIdes.map { it.name })
+    assertEquals(listOf("PyCharm Pro"), suggestion!!.suggestedIdes.map { it.name })
   }
 
   @Test
