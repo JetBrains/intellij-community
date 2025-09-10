@@ -27,7 +27,6 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/statistics",
-    "//plugins/ide-startup/importSettings",
     "@lib//:kotlinx-serialization-core",
     "//platform/kernel/shared:kernel",
     "//platform/platform-impl/rpc",
