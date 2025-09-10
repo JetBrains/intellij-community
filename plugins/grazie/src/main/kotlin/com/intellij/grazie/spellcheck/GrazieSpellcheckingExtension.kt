@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
@@ -62,6 +63,7 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
   private fun getTextSpeller(project: Project): TextSpeller? {
     val speller = project.service<GrazieSpellCheckerEngine>().getSpeller() ?: return null
     val enabledLanguages = GrazieConfig.get().enabledLanguages.mapNotNull { it.withVariant }
+    val validPhrasesTexts = ConcurrentHashMap<CharSequence, List<ai.grazie.rules.tree.TextRange>>()
 
     return object : TextSpeller(listOf(object : Speller by speller {
       override fun languages(): List<LanguageWithVariant> = enabledLanguages
@@ -71,15 +73,21 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
       }
 
       private fun isRangeCoveredByValidPhrase(word: Tokenizer.Token, text: CharSequence): Boolean {
+        val textRanges = validPhrasesTexts.getOrPut(text) { getValidPhraseRanges(text) }
+        return textRanges.any { it.start <= word.range.first && it.end <= word.range.checkedEndExclusive }
+      }
+
+      private fun getValidPhraseRanges(text: CharSequence): List<ai.grazie.rules.tree.TextRange> {
         return enabledLanguages
           .asSequence()
           .map { it.base }
           .filter { it in KnownPhrases.SUPPORTED_LANGUAGES }
           .map { lang -> knownPhrases.computeIfAbsent(lang) { KnownPhrases.forLanguage(lang) } }
-          .any {
+          .flatMap {
             ProgressManager.checkCanceled()
-            it.isRangeCoveredByValidPhrase(text, word.range.first, word.range.checkedEndExclusive)
+            it.validPhrases(text)
           }
+          .toList()
       }
     }
   }
@@ -96,11 +104,7 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
   private fun mapRange(range: ai.grazie.text.TextRange): TextRange = TextRange(range.start, range.endExclusive)
 
   private fun findTypos(text: TextContent, session: LocalInspectionToolSession, textSpeller: TextSpeller): List<Typo> {
-    var typos = session.getUserData(KEY_TYPO_CACHE)
-    if (typos == null) {
-      typos = ConcurrentHashMap()
-      session.putUserData(KEY_TYPO_CACHE, typos)
-    }
+    val typos = session.getOrCreateUserData(KEY_TYPO_CACHE) { ConcurrentHashMap() }
     return typos.computeIfAbsent(text) {
       textSpeller.checkText(object : BombedCharSequence(text) {
         override fun checkCanceled() {
