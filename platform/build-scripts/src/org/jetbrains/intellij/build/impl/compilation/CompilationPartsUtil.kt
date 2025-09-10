@@ -5,6 +5,8 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
+import com.intellij.util.lang.EmptyZipFile
+import com.intellij.util.lang.ImmutableZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -62,6 +64,7 @@ class CompilationCacheUploadConfiguration(
   serverUrl: String? = null,
   val checkFiles: Boolean = true,
   val uploadOnly: Boolean = false,
+  val saveMetadata: Boolean = true,
   branch: String? = null,
   uploadPredix: String? = null,
 ) {
@@ -112,7 +115,25 @@ internal val COMPILATION_PARTS_SPECIAL_FILES: Collection<String> = setOf(
 )
 
 suspend fun packAndUploadToServer(context: CompilationContext, zipDir: Path, config: CompilationCacheUploadConfiguration) {
-  val items = if (config.uploadOnly) {
+  val items = if (config.uploadOnly && config.saveMetadata) {  // no metadata.json
+    context.project.modules.flatMap { module ->
+      listOf(
+        "production/${module.name}" to context.getModuleOutputRoots(module, forTests = false).singleOrNull(),
+        "test/${module.name}" to context.getModuleOutputRoots(module, forTests = true).singleOrNull(),
+      )
+    }.filter { (_, output) ->
+      output != null && ImmutableZipFile.load(output) !is EmptyZipFile  // ignore empty
+    }.map { (name, output) ->
+      PackAndUploadItem(output = Path.of(""), name = name, archive = output!!)
+    }.apply {
+      forEachConcurrent { item ->
+        spanBuilder("compute hash").setAttribute("name", item.name).blockingUse {
+          item.hash = computeHash(item.archive)
+        }
+      }
+    }
+  }
+  else if (config.uploadOnly) {
     Json.decodeFromString<CompilationPartsMetadata>(Files.readString(zipDir.resolve(COMPILATION_CACHE_METADATA_JSON))).files.map {
       val item = PackAndUploadItem(output = Path.of(""), name = it.key, archive = zipDir.resolve(it.key + ".jar"))
       item.hash = it.value
@@ -250,7 +271,7 @@ private suspend fun upload(
   )
 
   // save a metadata file
-  if (!config.uploadOnly) {
+  if (config.saveMetadata) {
     val metadataFile = zipDir.resolve(COMPILATION_CACHE_METADATA_JSON)
     val gzippedMetadataFile = zipDir.resolve("$COMPILATION_CACHE_METADATA_JSON.gz")
     Files.createDirectories(metadataFile.parent)
