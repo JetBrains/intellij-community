@@ -152,6 +152,7 @@ class GrazieSpellCheckerEngine(
   }
 
   override fun isCorrect(word: String): Boolean {
+    if (word.isEmpty()) return true
     val speller = speller ?: return true
     if (word.length > MAX_WORD_LENGTH) {
       return true

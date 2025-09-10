@@ -3,7 +3,9 @@ package com.intellij.spellchecker.grazie.dictionary
 
 import ai.grazie.nlp.similarity.Levenshtein
 import ai.grazie.spell.lists.WordList
+import ai.grazie.utils.isUppercase
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.text.StringUtil.decapitalize
 import com.intellij.util.containers.CollectionFactory
 
 internal class SimpleWordList(private val container: Set<String>) : WordList {
@@ -23,10 +25,17 @@ internal class SimpleWordList(private val container: Set<String>) : WordList {
   }
 
   override fun contains(word: String, caseSensitive: Boolean): Boolean {
-    return if (caseSensitive) container.contains(word) else invariants.contains(word.lowercase())
+    return if (caseSensitive) contains(word) else invariants.contains(word.lowercase())
   }
 
-  override fun suggest(word: String) = container.filterTo(LinkedHashSet()) {
+  private fun contains(word: String): Boolean {
+    if (word in container) return true
+    if (word.isUppercase()) return word.lowercase() in container
+    if (word.first().isUpperCase()) return decapitalize(word) in container
+    return false
+  }
+
+override fun suggest(word: String) = container.filterTo(LinkedHashSet()) {
     Levenshtein.distance(it, word, MAX_LEVENSHTEIN_DISTANCE + 1) <= MAX_LEVENSHTEIN_DISTANCE
   }
 }
