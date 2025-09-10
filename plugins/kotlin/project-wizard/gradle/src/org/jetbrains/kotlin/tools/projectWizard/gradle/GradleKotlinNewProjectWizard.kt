@@ -310,6 +310,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
     private class AssetsStep(parent: Step) : GradleAssetsNewProjectWizardStep<Step>(parent) {
 
         override fun setupAssets(project: Project) {
+            setupCommonProjectAssets()
+
             if (parent.shouldGenerateMultipleModules) {
                 setupMultiModuleProjectAssets(project)
             } else {
@@ -317,11 +319,16 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             }
         }
 
-        private fun setupSingleModuleProjectAssets(project: Project) {
+        private fun setupCommonProjectAssets() {
             if (context.isCreatingNewProject) {
                 addAssets(KotlinAssetsProvider.getKotlinGradleIgnoreAssets())
-                addTemplateAsset("gradle.properties", "KotlinCodeStyleProperties")
                 addGradleWrapperAsset(parent.gradleVersionToUse)
+            }
+        }
+
+        private fun setupSingleModuleProjectAssets(project: Project) {
+            if (context.isCreatingNewProject) {
+                addTemplateAsset("gradle.properties", "KotlinCodeStyleProperties")
             }
 
             addEmptyDirectoryAsset(SRC_MAIN_KOTLIN_PATH)
@@ -377,8 +384,6 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                 "KOTLINX_SERIALIZATION_JSON_VERSION" to serializationJsonVersion,
                 "KOTLINX_COROUTINES_VERSION" to coroutinesVersion,
             )
-
-            addAssets(KotlinAssetsProvider.getKotlinGradleIgnoreAssets())
 
             addTemplateAsset("gradle.properties", "KotlinSampleProperties", templateParameters)
             addTemplateAsset("gradle/libs.versions.toml", "KotlinSampleGradleToml", templateParameters)

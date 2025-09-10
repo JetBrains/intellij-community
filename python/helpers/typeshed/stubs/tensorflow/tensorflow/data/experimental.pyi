@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from collections.abc import Callable, Sequence
 from typing import Final, TypeVar
 
@@ -30,4 +29,4 @@ def sample_from_datasets(
     seed: int | None = None,
     stop_on_empty_dataset: bool = False,
 ) -> Dataset[_T1]: ...
-def __getattr__(name: str) -> Incomplete: ...
+def __getattr__(name: str): ...  # incomplete module

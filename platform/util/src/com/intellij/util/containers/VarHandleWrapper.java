@@ -45,6 +45,7 @@ public abstract class VarHandleWrapper {
   public abstract boolean compareAndSet(Object thisObject, Object expected, Object actual);
   public abstract boolean compareAndSetInt(Object thisObject, int expected, int actual);
   public abstract boolean compareAndSetLong(Object thisObject, long expected, long actual);
+  public abstract boolean compareAndSetByte(Object thisObject, byte expected, byte actual);
   public abstract int getAndAdd(Object thisObject, int value);
 
   public abstract Object getVolatileArrayElement(Object thisObject, int index);

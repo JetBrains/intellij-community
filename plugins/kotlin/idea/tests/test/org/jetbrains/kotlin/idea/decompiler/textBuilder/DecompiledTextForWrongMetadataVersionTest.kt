@@ -14,12 +14,11 @@ import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
-import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
 class DecompiledTextForWrongMetadataVersionTest : AbstractInternalCompiledClassesTest() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinJdkAndLibraryProjectDescriptor(File(IDEA_TEST_DATA_DIR.absolutePath + "/wrongMetadataVersionLib/bin"))
+        return KotlinJdkAndLibraryProjectDescriptor(IDEA_TEST_DATA_DIR.toPath().resolve("wrongMetadataVersionLib/bin"))
     }
 
     fun testSyntheticClassIsInvisibleWrongMetadataVersion() = doTestNoPsiFilesAreBuiltForSyntheticClasses()

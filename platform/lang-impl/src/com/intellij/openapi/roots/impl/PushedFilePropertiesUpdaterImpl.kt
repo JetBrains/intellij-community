@@ -10,7 +10,10 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.checkCanceled
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.DumbServiceImpl.Companion.isSynchronousTaskExecution
 import com.intellij.openapi.roots.ContentIteratorEx
@@ -397,10 +400,10 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
         try {
           session.visitFile(fileOrDir)
         }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
         catch (e: Exception) {
+          if (Logger.shouldRethrow(e)) {
+            throw e
+          }
           LOG.error("Failed to visit file", e, Attachment("filePath.txt", fileOrDir.path))
         }
       }

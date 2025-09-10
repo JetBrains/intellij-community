@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 class AddJvmStaticIntention : SelfTargetingRangeIntention<KtNamedDeclaration>(
     KtNamedDeclaration::class.java,
-    KotlinBundle.lazyMessage("add.jvmstatic.annotation")
+    KotlinBundle.messagePointer("add.jvmstatic.annotation")
 ), LowPriorityAction {
 
     override fun startInWriteAction(): Boolean = false

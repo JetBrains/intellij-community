@@ -17,7 +17,7 @@ jvm_library(
   name = "k1",
   module_name = "kotlin.injection.k1",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_k1",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -34,6 +34,7 @@ jvm_library(
     "//plugins/kotlin/idea",
     "//plugins/IntelliLang:langInjection",
     "//platform/lang-impl",
+    "//java/java-psi-api:psi",
   ],
   runtime_deps = [":k1_resources"]
 )

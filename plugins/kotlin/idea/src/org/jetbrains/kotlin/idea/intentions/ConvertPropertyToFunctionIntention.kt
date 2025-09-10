@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findFunction
 
 class ConvertPropertyToFunctionIntention : SelfTargetingIntention<KtProperty>(
     KtProperty::class.java,
-    KotlinBundle.lazyMessage("convert.property.to.function")
+    KotlinBundle.messagePointer("convert.property.to.function")
 ), LowPriorityAction {
     private inner class Converter(
         project: Project,

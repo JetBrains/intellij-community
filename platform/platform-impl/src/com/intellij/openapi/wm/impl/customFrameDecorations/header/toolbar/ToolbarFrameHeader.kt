@@ -120,7 +120,7 @@ internal class ToolbarFrameHeader(
       }
     }
 
-    setCustomFrameTopBorder(isTopNeeded = { false }, isBottomNeeded = { mode == ShowMode.MENU })
+    setCustomFrameTopBorder(isTopNeeded = { false }, isBottomNeeded = ::isMainMenuBottomBorder)
 
     updateMenuBar()
     customTitleBar?.let {
@@ -178,6 +178,14 @@ internal class ToolbarFrameHeader(
       }
     }
     repaintWhenProjectGradientOffsetChanged(this)
+  }
+
+  private fun isMainMenuBottomBorder(): Boolean {
+    if (mode == ShowMode.MENU) {
+      val customization = InternalUICustomization.getInstance()
+      return customization == null || customization.isMainMenuBottomBorder
+    }
+    return false
   }
 
   override fun doLayout() {

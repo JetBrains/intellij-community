@@ -1,4 +1,5 @@
 from _typeshed import Incomplete
+from typing import Literal
 
 from braintree.credit_card_verification import CreditCardVerification
 from braintree.errors import Errors
@@ -14,6 +15,6 @@ class ErrorResult:
     transaction: Transaction
     subscription: Subscription
     merchant_account: Plan
-    def __init__(self, gateway, attributes) -> None: ...
+    def __init__(self, gateway, attributes: dict[str, Incomplete]) -> None: ...
     @property
-    def is_success(self): ...
+    def is_success(self) -> Literal[False]: ...

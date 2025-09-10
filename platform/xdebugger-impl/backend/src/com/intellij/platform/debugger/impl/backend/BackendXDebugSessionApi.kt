@@ -42,37 +42,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.await
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
-  override suspend fun currentSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?> {
-    val session = sessionId.findValue() ?: return emptyFlow()
-    return session.getCurrentPositionFlow().map { sourcePosition ->
-      sourcePosition?.toRpc()
-    }
-  }
-
-  override suspend fun topSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?> {
-    val session = sessionId.findValue() ?: return emptyFlow()
-    return session.topFrameFlow.map {
-      session.topFramePosition?.toRpc()
-    }
-  }
-
-  override suspend fun currentSessionState(sessionId: XDebugSessionId): Flow<XDebugSessionState> {
-    val session = sessionId.findValue() ?: return emptyFlow()
-
-    return combine(
-      session.isPausedState, session.isStoppedState, session.isReadOnlyState, session.isPauseActionSupportedState, session.isSuspendedState
-    ) { isPaused, isStopped, isReadOnly, isPauseActionSupported, isSuspended ->
-      XDebugSessionState(isPaused, isStopped, isReadOnly, isPauseActionSupported, isSuspended)
-    }
-  }
-
   override suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto? {
     val session = sessionId.findValue() ?: return null
     val project = session.project
@@ -288,25 +266,28 @@ internal suspend fun createBackendDocument(
   }
 }
 
-internal suspend fun XDebugSessionImpl.suspendData(): SuspendData? {
+internal fun XDebugSessionImpl.suspendData(): SuspendData? {
   val suspendContext = suspendContext ?: return null
   val suspendScope = currentSuspendCoroutineScope ?: return null
-  val suspendContextId = coroutineScope {
-    suspendContext.getOrStoreGlobally(suspendScope, this@suspendData)
-  }
+  val suspendContextId = suspendContext.getOrStoreGlobally(suspendScope, this)
   val suspendContextDto = XSuspendContextDto(suspendContextId, suspendContext is XSteppingSuspendContext)
-  val executionStackDto = suspendContext.activeExecutionStack?.toRpc(suspendScope, this@suspendData)
-  val stackTraceDto = currentStackFrame?.toRpc(suspendScope, this@suspendData)
+  val executionStackDto = suspendContext.activeExecutionStack?.toRpc(suspendScope, this)
+  val stackFrameDto = currentStackFrame?.toRpc(suspendScope, this)
+  val sourcePositionDto = currentPosition?.toRpc()
+  val topSourcePositionDto = topFramePosition?.toRpc()
 
-  return SuspendData(suspendContextDto,
-                     executionStackDto,
-                     stackTraceDto)
+  return SuspendData(
+    suspendContextDto,
+    executionStackDto,
+    stackFrameDto,
+    sourcePositionDto,
+    topSourcePositionDto,
+  )
 }
 
 internal fun XStackFrame.toRpc(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XStackFrameDto {
   val id = getOrStoreGlobally(coroutineScope, session)
-  val equalityObject = equalityObject
-  val serializedEqualityObject = when (equalityObject) {
+  val serializedEqualityObject = when (val equalityObject = equalityObject) {
     is String -> XStackFrameStringEqualityObject(equalityObject)
     else -> null // TODO support other types
   }

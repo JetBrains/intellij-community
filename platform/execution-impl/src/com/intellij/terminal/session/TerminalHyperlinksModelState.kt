@@ -2,7 +2,7 @@
 package com.intellij.terminal.session
 
 import com.intellij.execution.filters.HyperlinkInfo
-import com.intellij.execution.impl.EditorDecorationId
+import com.intellij.execution.impl.EditorTextDecorationId
 import com.intellij.execution.impl.InlayProvider
 import com.intellij.execution.impl.createTextDecorationId
 import com.intellij.openapi.actionSystem.DataKey
@@ -66,6 +66,6 @@ data class TerminalHyperlinkId(val value: Long) {
 }
 
 @ApiStatus.Internal
-fun TerminalHyperlinkId.toPlatformId(): EditorDecorationId = createTextDecorationId(value)
+fun TerminalHyperlinkId.toPlatformId(): EditorTextDecorationId = createTextDecorationId(value)
 @ApiStatus.Internal
-fun EditorDecorationId.toTerminalId(): TerminalHyperlinkId = TerminalHyperlinkId(value)
+fun EditorTextDecorationId.toTerminalId(): TerminalHyperlinkId = TerminalHyperlinkId(value)

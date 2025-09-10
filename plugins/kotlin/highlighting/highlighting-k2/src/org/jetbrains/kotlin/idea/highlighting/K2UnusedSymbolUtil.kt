@@ -3,7 +3,8 @@ package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.analysis.api.components.importableFqName
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
@@ -86,15 +88,18 @@ object K2UnusedSymbolUtil {
             // functional type params like `fun foo(u: (usedParam: Type) -> Unit)` shouldn't be highlighted because they could be implicitly used by lambda arguments
             if (declaration.isFunctionTypeParameter) return false
             val ownerFunction = declaration.ownerDeclaration
+            if (ownerFunction?.hasModifier(KtTokens.EXTERNAL_KEYWORD) == true) return false
+            var containingClass = ownerFunction?.containingClassOrObject
             if (ownerFunction is KtConstructor<*>) {
                 // constructor parameters of data class are considered used because they are implicitly used in equals() (???)
-                val containingClass = declaration.containingClass()
                 if (containingClass != null) {
                     if (containingClass.isData()) return false
                     // constructor parameters-fields of value class are considered used because they are implicitly used in equals() (???)
-                    if (containingClass.isValue() && declaration.hasValOrVar()) return false
-                    // constructor parameters-fields of inline class are considered used because they are implicitly used in equals() (???)
-                    if (containingClass.isInline() && declaration.hasValOrVar()) return false
+                    if (containingClass is KtClass) {
+                        if (containingClass.isValue() && declaration.hasValOrVar()) return false
+                        // constructor parameters-fields of inline class are considered used because they are implicitly used in equals() (???)
+                        if (containingClass.isInline() && declaration.hasValOrVar()) return false
+                    }
                     if (isExpectedOrActual(containingClass)) return false
                 }
             } else if (ownerFunction is KtFunction) {
@@ -106,10 +111,16 @@ object K2UnusedSymbolUtil {
                     return false
                 }
 
-                val containingClass = ownerFunction.containingClassOrObject
                 if (containingClass != null && isExpectedOrActual(containingClass)) {
                     return false
                 }
+            }
+
+            while (containingClass != null) {
+                if (containingClass.hasModifier(KtTokens.EXTERNAL_KEYWORD)) {
+                    return false
+                }
+                containingClass = containingClass.containingClassOrObject
             }
         }
         val owner: KtNamedDeclaration
@@ -167,9 +178,6 @@ object K2UnusedSymbolUtil {
     context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getPsiToReportProblem(declaration: KtNamedDeclaration, isJavaEntryPointInspection: UnusedDeclarationInspectionBase): PsiElement? {
-        if (((declaration as? KtParameter)?.parent?.parent as? KtModifierListOwner)?.hasModifier(KtTokens.EXTERNAL_KEYWORD) == true) {
-            return null
-        }
         val symbol = declaration.symbol
         if (declaration.languageVersionSettings.getFlag(
                 AnalysisFlags.explicitApiMode
@@ -735,28 +743,48 @@ object K2UnusedSymbolUtil {
         return hasTextUsages
     }
 
-    fun createQuickFixes(declaration: KtNamedDeclaration): Array<LocalQuickFixAndIntentionActionOnPsiElement> {
+    context(_: KaSession)
+    fun createQuickFixes(declaration: KtNamedDeclaration): List<IntentionAction> {
         if (declaration is KtParameter) {
             if (declaration.isLoopParameter) {
-                return emptyArray()
+                return emptyList()
             }
             if (declaration.isCatchParameter) {
                 return if (declaration.name == "_") {
-                    emptyArray()
+                    emptyList()
                 } else {
-                    arrayOf(RenameElementFix(declaration, "_"))
+                    listOf(RenameElementFix(declaration, "_"))
                 }
             }
             val ownerFunction = declaration.ownerFunction
             if (ownerFunction is KtPropertyAccessor && ownerFunction.isSetter) {
-                return emptyArray()
+                return emptyList()
             }
             if (ownerFunction is KtFunctionLiteral) {
-                return arrayOf(RenameElementFix(declaration, "_"))
+                return listOf(RenameElementFix(declaration, "_"))
             }
         }
-        // TODO: Implement K2 counterpart of `createAddToDependencyInjectionAnnotationsFix` and use it for `element` with annotations here.
-        return arrayOf(SafeDeleteFix(declaration))
+
+        val fixes = mutableListOf<IntentionAction>()
+        
+        fixes += SafeDeleteFix(declaration)
+
+        for (annotationEntry in declaration.annotationEntries) {
+            val annotationClassId = annotationEntry.resolveToCall()?.singleConstructorCallOrNull()?.symbol?.containingClassId ?: continue
+            val fqName = annotationClassId.asSingleFqName().asString()
+
+            // checks taken from com.intellij.codeInspection.util.SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes
+            if (
+                fqName.startsWith("kotlin.") || 
+                fqName.startsWith("java.") || 
+                fqName.startsWith("javax.") || 
+                fqName.startsWith("org.jetbrains.annotations.")
+            ) continue
+
+            fixes += QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(declaration.project, fqName)
+        }
+
+        return fixes
     }
 
     context(_: KaSession)

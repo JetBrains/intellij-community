@@ -17,8 +17,10 @@ import java.lang.ref.WeakReference
 import java.util.function.Predicate
 import java.util.function.Supplier
 
-internal val SUCCESSFUL_STEPS_FILTER = Predicate { node: ExecutionNode -> !node.isFailed && !node.hasWarnings() }
-internal val WARNINGS_FILTER = Predicate { node: ExecutionNode -> node.hasWarnings() || node.hasInfos() }
+@ApiStatus.Internal
+val SUCCESSFUL_STEPS_FILTER: Predicate<ExecutionNode> = Predicate { node: ExecutionNode -> !node.isFailed && !node.hasWarnings() }
+@ApiStatus.Internal
+val WARNINGS_FILTER: Predicate<ExecutionNode> = Predicate { node: ExecutionNode -> node.hasWarnings() || node.hasInfos() }
 
 @ApiStatus.Internal
 class WeakFilterableSupplier<T>(t: T) : Supplier<T?> {

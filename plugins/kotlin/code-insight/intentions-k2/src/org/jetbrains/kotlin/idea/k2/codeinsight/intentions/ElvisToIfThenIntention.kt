@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.psi.*
 
 class ElvisToIfThenIntention : SelfTargetingRangeIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
-    KotlinBundle.lazyMessage("replace.elvis.expression.with.if.expression")
+    KotlinBundle.messagePointer("replace.elvis.expression.with.if.expression")
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtBinaryExpression): TextRange? =
         if (element.operationToken == KtTokens.ELVIS && element.left != null && element.right != null)

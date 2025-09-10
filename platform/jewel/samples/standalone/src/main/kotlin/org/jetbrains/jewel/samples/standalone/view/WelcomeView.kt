@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.foundation.JewelFlags
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.samples.showcase.ShowcaseIcons
@@ -64,6 +65,18 @@ internal fun WelcomeView() {
                 text = "Swing compatibility",
                 checked = MainViewModel.swingCompat,
                 onCheckedChange = { MainViewModel.swingCompat = it },
+                colors = LocalCheckboxStyle.current.colors,
+                metrics = LocalCheckboxStyle.current.metrics,
+                icons = LocalCheckboxStyle.current.icons,
+            )
+
+            CheckboxRow(
+                text = "Custom Popup Renderer",
+                checked = MainViewModel.useCustomPopupRenderer,
+                onCheckedChange = {
+                    MainViewModel.useCustomPopupRenderer = it
+                    JewelFlags.useCustomPopupRenderer = it
+                },
                 colors = LocalCheckboxStyle.current.colors,
                 metrics = LocalCheckboxStyle.current.metrics,
                 icons = LocalCheckboxStyle.current.icons,

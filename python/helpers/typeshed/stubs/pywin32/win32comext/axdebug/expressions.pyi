@@ -1,9 +1,7 @@
 from _typeshed import Incomplete
 
-from win32com.server.exception import COMException as COMException
 from win32com.server.util import ListEnumeratorGateway
 from win32comext.axdebug import gateways
-from win32comext.axdebug.util import RaiseNotImpl as RaiseNotImpl
 
 def MakeNiceString(ob): ...
 

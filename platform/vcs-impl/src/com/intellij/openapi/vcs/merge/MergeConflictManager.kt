@@ -10,13 +10,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.vcs.changes.ChangesUtil
 import com.intellij.vcs.commit.CommitMode.NonModalCommitMode
 import com.intellij.vcs.commit.CommitModeManager
 import kotlinx.coroutines.CoroutineScope
@@ -54,7 +53,7 @@ class MergeConflictManager(private val project: Project, private val cs: Corouti
     ChangeListManager.getInstance(project).getResolvedConflictPaths()
 
   fun isMergeConflict(): Boolean =
-    ChangeListManager.getInstance(project).allChanges.any { isMergeConflict(it.fileStatus) }
+    ChangeListManager.getInstance(project).allChanges.any { ChangesUtil.isMergeConflict(it) }
 
   fun showMergeConflicts(files: Collection<VirtualFile>) {
     VcsDirtyScopeManager.getInstance(project).filesDirty(files, emptyList())
@@ -86,12 +85,5 @@ class MergeConflictManager(private val project: Project, private val cs: Corouti
 
     @JvmStatic
     fun getInstance(project: Project): MergeConflictManager = project.service<MergeConflictManager>()
-
-    @JvmStatic
-    fun isMergeConflict(status: FileStatus): Boolean {
-      return status === FileStatus.MERGED_WITH_CONFLICTS ||
-             status === FileStatus.MERGED_WITH_BOTH_CONFLICTS ||
-             status === FileStatus.MERGED_WITH_PROPERTY_CONFLICTS
-    }
   }
 }

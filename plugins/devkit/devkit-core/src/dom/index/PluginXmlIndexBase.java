@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -6,25 +6,19 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.impl.AbstractCollectionChildDescription;
-import com.intellij.util.xml.impl.DomInvocationHandler;
-import com.intellij.util.xml.impl.DomManagerImpl;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 @ApiStatus.Internal
 public abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
 
-  protected static final int BASE_INDEX_VERSION = 10;
+  protected static final int BASE_INDEX_VERSION = 11;
 
   protected abstract Map<K, V> performIndexing(IdeaPlugin plugin);
 
@@ -49,15 +43,6 @@ public abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K
         return performIndexing(plugin);
       }
     };
-  }
-
-  // skip any xi:include
-  protected static List<? extends DomElement> getChildrenWithoutIncludes(DomElement parent, @NonNls String tagName) {
-    AbstractCollectionChildDescription collectionChildDescription =
-      (AbstractCollectionChildDescription)parent.getGenericInfo().getCollectionChildDescription(tagName);
-    DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(parent);
-    assert handler != null : parent;
-    return handler.getCollectionChildren(collectionChildDescription, false);
   }
 
   private static @Nullable IdeaPlugin obtainIdeaPlugin(@NotNull FileContent content) {

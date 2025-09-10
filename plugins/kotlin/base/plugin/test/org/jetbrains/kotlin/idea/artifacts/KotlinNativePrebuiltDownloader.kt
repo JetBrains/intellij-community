@@ -4,35 +4,30 @@
  */
 package org.jetbrains.kotlin.idea.artifacts
 
-import org.jetbrains.kotlin.konan.file.unzipTo
-import java.io.IOException
-import java.net.URL
-import java.nio.file.Files
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.dependencies.extractFileToCacheLocation
+import org.jetbrains.intellij.build.downloadFileToCacheLocationSync
+import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.konan.target.TargetSupportException
 import java.nio.file.Path
-import kotlin.io.path.absolute
 
 const val NATIVE_PREBUILT_DEV_CDN_URL = "https://download-cdn.jetbrains.com/kotlin/native/builds/dev"
 const val NATIVE_PREBUILT_RELEASE_CDN_URL = "https://download-cdn.jetbrains.com/kotlin/native/builds/releases"
 
-object KotlinNativePrebuiltDownloader {
-    fun downloadFile(downloadURL: String, downloadOut: Path) {
-        val url = URL(downloadURL)
+@Throws(TargetSupportException::class)
+fun getNativePrebuilt(version: String, platform: String, communityRoot: BuildDependenciesCommunityRoot): Path {
+    if (!KotlinNativeHostSupportDetector.isNativeHostSupported() && platform == HostManager.platformName())
+        throw TargetSupportException("kotlin-native-prebuilt can't be downloaded as it doesn't exist for the host: ${platform}")
 
-        url.openStream().use {
-            Files.copy(it, downloadOut)
-        }
-    }
+    val prebuilt = "kotlin-native-prebuilt-$platform-$version"
+    val archiveName = if (HostManager.hostIsMingw) "$prebuilt.zip" else "$prebuilt.tar.gz"
+    val cdnUrl = if ("dev" in version) NATIVE_PREBUILT_DEV_CDN_URL else NATIVE_PREBUILT_RELEASE_CDN_URL
+    val downloadUrl = "$cdnUrl/$version/$platform/$archiveName"
 
-    @Throws(IOException::class)
-    fun unpackPrebuildArchive(source: Path, target: Path) {
-        if (source.toString().endsWith(".tar.gz")) {
-            TarGzipUnpacker.decompressTarGzipFile(source, target)
-        }
-        else if (source.toString().endsWith(".zip")) {
-            source.unzipTo(target)
-        }
-        else {
-            throw IOException("Can't unpack ${source.absolute()}. Support only .tar.gz and .zip files.")
-        }
+    val archiveFilePath = downloadFileToCacheLocationSync(downloadUrl, communityRoot)
+    return runBlocking(Dispatchers.IO) {
+        return@runBlocking extractFileToCacheLocation(archiveFilePath, communityRoot, stripRoot = true)
     }
 }

@@ -11,8 +11,12 @@ import org.jetbrains.annotations.PropertyKey
 private const val BUNDLE = "messages.FeaturePromoBundle"
 
 @ApiStatus.Internal
-object FeaturePromoBundle : DynamicBundle(BUNDLE) {
+object FeaturePromoBundle {
+  private val instance = DynamicBundle(FeaturePromoBundle::class.java, BUNDLE)
+
   @Nls
   @JvmStatic
-  fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
+  fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String {
+    return instance.getMessage(key, *params)
+  }
 }

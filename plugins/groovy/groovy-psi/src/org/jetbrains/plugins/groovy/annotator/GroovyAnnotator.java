@@ -262,21 +262,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitVariableDeclaration(@NotNull GrVariableDeclaration variableDeclaration) {
-    if (variableDeclaration.isTuple()) {
-      final GrModifierList list = variableDeclaration.getModifierList();
-
-      final PsiElement last = PsiUtil.skipWhitespacesAndComments(list.getLastChild(), false);
-      if (last != null) {
-        final IElementType type = last.getNode().getElementType();
-        if (type != GroovyTokenTypes.kDEF && type != GroovyTokenTypes.kVAR) {
-          myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("tuple.declaration.should.end.with.def.modifier")).range(list).create();
-        }
-      }
-      else {
-        myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("tuple.declaration.should.end.with.def.modifier")).range(list).create();
-      }
-    }
-    else {
+    if (!variableDeclaration.isTuple()) {
       GrTypeParameterList typeParameterList = findChildOfType(variableDeclaration, GrTypeParameterList.class);
       if (typeParameterList != null) {
         myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("type.parameters.are.unexpected")).range(typeParameterList).create();
@@ -784,6 +770,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitVariable(@NotNull GrVariable variable) {
+    if (variable.isUnnamed()) return;
     checkName(variable);
 
     PsiElement parent = variable.getParent();
@@ -2082,7 +2069,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(typeDefinition.getProject());
       GlobalSearchScope scope = inferClassScopeForSearchingDuplicates(typeDefinition);
       final PsiClass[] classes = facade.findClasses(qName, scope);
-      if (classes.length > 1) {
+      if (classes.length > 1 && (!GroovyConfigUtils.isAtLeastGroovy50(typeDefinition) || areInTheDifferentFiles(classes))) {
         String packageName = getPackageName(typeDefinition);
 
         if (!isScriptGeneratedClass(classes)) {
@@ -2093,6 +2080,17 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
         }
       }
     }
+  }
+
+  private static boolean areInTheDifferentFiles(PsiClass[] classes) {
+    if (classes.length <= 1) return true;
+
+    List<PsiFile> fileList = ContainerUtil.map(classes, it -> it.getContainingFile());
+    PsiFile file = fileList.getFirst();
+    for (int i = 1; i < fileList.size(); i++) {
+      if(fileList.get(i) != file) return true;
+    }
+    return false;
   }
 
   private static GlobalSearchScope inferClassScopeForSearchingDuplicates(GrTypeDefinition typeDefinition) {

@@ -2,11 +2,13 @@
 package com.jetbrains.python.debugger.containerview
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CompositeDataProvider
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.PyFrameAccessor
 import java.awt.BorderLayout
@@ -24,7 +26,7 @@ class PyDataViewerPanel(
   init {
     val dataViewerModel = PyDataViewerModel(project, frameAccessor)
 
-    var dataViewerPanel = if (isPanelsFromFactoryAvailable()) {
+    var dataViewerPanel = if (isPanelFromFactory()) {
       isPanelFromFactory = true
       createPanelFromFactory(dataViewerModel)
     }
@@ -52,6 +54,7 @@ class PyDataViewerPanel(
 
   fun switchBetweenCommunityAndFactoriesTables() {
     isPanelFromFactory = !isPanelFromFactory
+    savePreferencesIfNeeded(isPanelFromFactory)
 
     val dataViewerModel = getDataViewerModel()
     val debugValue = dataViewerModel.debugValue
@@ -80,10 +83,6 @@ class PyDataViewerPanel(
     }
   }
 
-  private fun isPanelsFromFactoryAvailable(): Boolean {
-    return PyDataViewPanelFactory.EP_NAME.extensionList.isNotEmpty()
-  }
-
   private fun createPanelFromFactory(dataViewerModel: PyDataViewerModel): PyDataViewerAbstractPanel {
     return PyDataViewPanelFactory.EP_NAME.extensionList.first().createDataViewerPanel(dataViewerModel)
   }
@@ -106,7 +105,6 @@ class PyDataViewerPanel(
   override fun dispose() {}
 
   companion object {
-
     val PY_DATA_VIEWER_PANEL_KEY: DataKey<PyDataViewerPanel> = DataKey.create<PyDataViewerPanel>("PY_DATA_VIEWER_PANEL_KEY")
 
     fun addDataProvider(component: JComponent, provider: DataProvider) {
@@ -119,5 +117,27 @@ class PyDataViewerPanel(
         DataManager.registerDataProvider(component, provider)
       }
     }
+
+    private fun isPanelsFromFactoryAvailable(): Boolean {
+      return PyDataViewPanelFactory.EP_NAME.extensionList.isNotEmpty()
+    }
+
+    private fun isPanelFromFactory(): Boolean {
+      if (!isPanelsFromFactoryAvailable()) return false
+      if (Registry.`is`("python.data.view.allow.save.preferences.community.vs.powerful.data.view", false)) {
+        return isUsingCommunityPanel()
+      }
+      return true
+    }
+
+    private fun savePreferencesIfNeeded(newValue: Boolean) {
+      if (Registry.`is`("python.data.view.allow.save.preferences.community.vs.powerful.data.view", false)) {
+        setUsingCommunityPanel(newValue)
+      }
+    }
+
+    private const val DATA_VIEWER_SHOW_COMMUNITY_PANEL = "py.data.viewer.powerful.table.shown.on.each.data.view.opening"
+    fun isUsingCommunityPanel(): Boolean = PropertiesComponent.getInstance().getBoolean(DATA_VIEWER_SHOW_COMMUNITY_PANEL, true)
+    fun setUsingCommunityPanel(value: Boolean): Unit = PropertiesComponent.getInstance().setValue(DATA_VIEWER_SHOW_COMMUNITY_PANEL, value, true)
   }
 }

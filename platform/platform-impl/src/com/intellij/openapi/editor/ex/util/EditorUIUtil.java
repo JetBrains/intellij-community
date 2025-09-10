@@ -36,7 +36,7 @@ public final class EditorUIUtil {
     }
   }
 
-  public static Icon scaleIcon(Icon icon, EditorImpl editor) {
+  public static Icon scaleIcon(Icon icon, @NotNull EditorImpl editor) {
     float scale = getEditorScaleFactor(editor);
     return scale == 1 ? icon : IconUtil.scale(icon, editor.getComponent(), scale);
   }

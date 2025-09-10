@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
@@ -33,6 +34,7 @@ public final class GitConfigUtil {
   private static final Logger LOG = Logger.getInstance(GitConfigUtil.class);
   private static final Set<String> REPORTED_CUSTOM_ENCODINGS = new CopyOnWriteArraySet<>();
 
+  public static final @NlsSafe String UPDATE_REFS = "rebase.updateRefs";
   public static final @NlsSafe String USER_NAME = "user.name";
   public static final @NlsSafe String USER_EMAIL = "user.email";
   public static final @NlsSafe String CORE_AUTOCRLF = "core.autocrlf";
@@ -154,6 +156,12 @@ public final class GitConfigUtil {
     Charset charset = tryParseEncoding(encoding);
     if (charset != null) return charset;
     return StandardCharsets.UTF_8;
+  }
+
+  @RequiresBackgroundThread
+  public static boolean isRebaseUpdateRefsEnabledCached(@NotNull Project project, @NotNull VirtualFile root) {
+    return Boolean.TRUE.equals(getBooleanValue(GitProjectConfigurationCache.getInstance(project)
+                                                 .readRepositoryConfig(root, UPDATE_REFS)));
   }
 
   /**

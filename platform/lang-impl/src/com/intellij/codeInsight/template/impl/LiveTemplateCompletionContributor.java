@@ -7,6 +7,8 @@ import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateActionContext;
+import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
+import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -164,8 +166,11 @@ public final class LiveTemplateCompletionContributor extends CompletionContribut
   private static void showCustomLiveTemplates(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     TemplateActionContext templateActionContext = TemplateActionContext.expanding(
       parameters.getPosition().getContainingFile(), parameters.getEditor());
+    boolean showPostfixTemplateAsSeparateGroup =
+      PostfixTemplatesSettings.getInstance().isShowAsSeparateGroup();
     for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(templateActionContext)) {
       ProgressManager.checkCanceled();
+      if (showPostfixTemplateAsSeparateGroup && customLiveTemplate instanceof PostfixLiveTemplate) continue;
       if (customLiveTemplate instanceof CustomLiveTemplateBase) {
         ((CustomLiveTemplateBase)customLiveTemplate).addCompletions(parameters, result);
       }

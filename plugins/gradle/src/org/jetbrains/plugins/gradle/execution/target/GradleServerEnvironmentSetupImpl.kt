@@ -106,7 +106,6 @@ internal class GradleServerEnvironmentSetupImpl(
 
     val environmentConfigurationProvider = connection.environmentConfigurationProvider
     this.environmentConfiguration = environmentConfigurationProvider.environmentConfiguration
-    val targetPathMapper = environmentConfigurationProvider.pathMapper
 
     val request = if (environmentConfiguration.typeId == "local") LocalTargetEnvironmentRequest()
     else environmentConfiguration.createEnvironmentRequest(project)
@@ -115,7 +114,7 @@ internal class GradleServerEnvironmentSetupImpl(
       targetBuildParametersBuilder.useInstallation(it)
     }
 
-    configureJdk(javaParameters, request, consumerOperationParameters, targetPathMapper, environmentConfiguration)
+    configureJdk(javaParameters, request, consumerOperationParameters, environmentConfiguration)
     progressIndicator.checkCanceled()
     val targetArguments = prepareTargetEnvironmentRequest(
       request,
@@ -155,6 +154,7 @@ internal class GradleServerEnvironmentSetupImpl(
     targetEnvironmentProvider.uploadVolumes(progressIndicator)
 
     val pathsToMap = extractPathsToMapFromInitScripts(initScripts)
+    val targetPathMapper = environmentConfigurationProvider.pathMapper
     val pathMapperInitScript = createTargetPathMapperInitScript(
       request,
       targetPathMapper,
@@ -277,7 +277,6 @@ internal class GradleServerEnvironmentSetupImpl(
     javaParameters: SimpleJavaParameters,
     request: TargetEnvironmentRequest,
     consumerOperationParameters: ConsumerOperationParameters,
-    targetPathMapper: PathMapper?,
     environmentConfiguration: TargetEnvironmentConfiguration,
   ) {
     if (request is LocalTargetEnvironmentRequest) {
@@ -287,8 +286,7 @@ internal class GradleServerEnvironmentSetupImpl(
     }
     else {
       if (environmentConfiguration.runtimes.findByType(JavaLanguageRuntimeConfiguration::class.java) == null) {
-        val localJavaHomePath = consumerOperationParameters.javaHome.path
-        val targetJavaHomePath = targetPathMapper.maybeConvertToRemote(localJavaHomePath)
+        val targetJavaHomePath = FileUtil.toCanonicalPath(consumerOperationParameters.javaHome.path)
         val javaLanguageRuntimeConfiguration = JavaLanguageRuntimeConfiguration().apply { homePath = targetJavaHomePath }
         environmentConfiguration.addLanguageRuntime(javaLanguageRuntimeConfiguration)
       }

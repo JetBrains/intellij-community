@@ -155,5 +155,8 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.tasks.impl.TaskManagementUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.tasks.impl.TaskManagementConfigurationCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.tasks.core.fus.TasksStateCollector"/>
+
+    <registryKey key="tasks.use.search.jql.api" defaultValue="true"
+                 description="Use /rest/api/[2|3|laters]/search/jql REST API instead of /rest/api/[2|3|laters]/search/, deprecated in https://developer.atlassian.com/changelog/#CHANGE-2046"/>
   </extensions>
 </idea-plugin>

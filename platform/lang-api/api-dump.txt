@@ -32,6 +32,14 @@ com.intellij.build.events.Failure
 com.intellij.build.events.FailureResult
 - com.intellij.build.events.EventResult
 - a:getFailures():java.util.List
+com.intellij.build.events.FileDownloadEvent
+- com.intellij.build.events.ProgressBuildEvent
+- a:getDownloadPath():java.lang.String
+- a:isFirstInGroup():Z
+com.intellij.build.events.FileDownloadedEvent
+- com.intellij.build.events.BuildEvent
+- a:getDownloadPath():java.lang.String
+- a:getDuration():J
 com.intellij.build.events.FileMessageEvent
 - com.intellij.build.events.MessageEvent
 - a:getFilePosition():com.intellij.build.FilePosition
@@ -52,6 +60,7 @@ com.intellij.build.events.MessageEventResult
 - getDetails():java.lang.String
 - a:getKind():com.intellij.build.events.MessageEvent$Kind
 com.intellij.build.events.OutputBuildEvent
+- com.intellij.build.events.BuildEvent
 - a:getMessage():java.lang.String
 - a:getOutputType():com.intellij.execution.process.ProcessOutputType
 - isStdOut():Z

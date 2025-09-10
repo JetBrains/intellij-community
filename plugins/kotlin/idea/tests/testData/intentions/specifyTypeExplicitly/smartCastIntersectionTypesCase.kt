@@ -1,0 +1,10 @@
+interface A1
+interface A2
+fun foo(o: Any) {
+    if (o is A1 && o is A2) {
+        val s<caret> = o
+    }
+}
+// CHOOSE_ELEMENT:1
+// AFTER-WARNING: Variable 's' is never used
+// IGNORE_K1

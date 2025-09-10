@@ -88,8 +88,12 @@ public class VFSChildrenUpdateBenchmark {
           null, null, null
         ));
       }
-      ListResult children = new ListResult(vfs.getModCount(folderId), childrenInfos, folderId);
-      vfs.treeAccessor().doSaveChildren(folderId, children);
+      vfs.treeAccessor().doSaveChildren(
+        folderId,
+        new ListResult(vfs.getModCount(folderId), childrenInfos, folderId)
+      );
+      int flags = vfs.getFlags(folderId);
+      vfs.setFlags(folderId, flags | Flags.CHILDREN_CACHED);
     }
 
     protected int tossFolderId() {

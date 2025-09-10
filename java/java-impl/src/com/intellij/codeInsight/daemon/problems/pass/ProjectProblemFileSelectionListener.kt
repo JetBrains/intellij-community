@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.problems.pass
 
 import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
@@ -10,11 +10,14 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.jvm.JvmLanguage
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.Project
@@ -32,6 +35,7 @@ import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.util.SlowOperations
+import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -41,14 +45,15 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Listener that reacts to user initiated changes and updates current problems state.
+ * Listeners that react to user initiated changes and updates current problems state.
  *
  * Events that are handled by this listener:<br></br>
  * 1. selection change (user opened different file) -> store current timestamp for closed file and restores state for new file<br></br>
  * 2. VFS changes -> remove states for deleted files, remove problems for updated files (in order to recalculate them later)<br></br>
- * 3. hints settings change -> rollback file state, so that there are no reported problems yet (but they can be found using a rolled-back state)<br></br>
- * 4. refactoring done for member -> rollback member file state<br></br>
- * 5. PSI tree changed -> rollback file state for all the editors with this file<br></br>
+ * 3. Editor releases -> removes states for deleted fragments that have PSI events enabled
+ * 4. hints settings change -> rollback file state, so that there are no reported problems yet (but they can be found using a rolled-back state)<br></br>
+ * 5. refactoring done for member -> rollback member file state<br></br>
+ * 6. PSI tree changed -> rollback file state for all the editors with this file<br></br>
  */
 
 private class ProjectProblemFileFileEditorManagerListener : FileEditorManagerListener {
@@ -79,7 +84,7 @@ private class ProjectProblemFileFileEditorManagerListener : FileEditorManagerLis
     setPreviousState(newJavaFile)
     val isInSplitEditorMode = event.manager.selectedEditors.size > 1
     if (isInSplitEditorMode) {
-      InlayHintsPassFactoryInternal.Companion.restartDaemonUpdatingHints(project, "ProjectProblemFileFileEditorManagerListener.selectionChanged")
+      InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project, "ProjectProblemFileFileEditorManagerListener.selectionChanged")
     }
   }
 }
@@ -120,7 +125,7 @@ internal class ProjectProblemFileRefactoringEventListener(private val project: P
 
 @OptIn(FlowPreview::class)
 @Service(Service.Level.PROJECT)
-private class ProjectPsiChangesProcessor(private val scope: CoroutineScope) {
+private class ProjectPsiChangesProcessor(scope: CoroutineScope) {
   private val psiChanges = ConcurrentCollectionFactory.createConcurrentSet<PsiFile>()
   private val psiChangesProcessor = MutableSharedFlow<Unit?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -179,6 +184,20 @@ private class ProjectProblemFileSelectionListenerStartupActivity : ProjectActivi
     }
 
     val parentDisposable = project.serviceAsync<FileStateCache>()
+
+    // Remove fragments from the cache once the editor gets released
+    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+      override fun editorReleased(event: EditorFactoryEvent) {
+        if (event.editor.project != project) return
+        val virtualFile = FileDocumentManager.getInstance().getFile(event.editor.document) ?: return
+        ReadAction.nonBlocking<Any> {
+          if (!virtualFile.isValid) return@nonBlocking null
+          val viewProvider = PsiManager.getInstance(project).findViewProvider(virtualFile) ?: return@nonBlocking null
+          if (viewProvider.isPhysical) return@nonBlocking null // will already be removed by the vfs file listener
+          removeState(viewProvider.getPsi(viewProvider.baseLanguage))
+        }.expireWith(parentDisposable).submit(AppExecutorUtil.getAppExecutorService())
+      }
+    }, parentDisposable)
 
     VirtualFileManager.getInstance().addAsyncFileListener({ events ->
       val fileIndex = ProjectRootManager.getInstance(project).fileIndex

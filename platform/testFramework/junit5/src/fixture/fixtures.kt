@@ -29,8 +29,10 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.common.EditorCaretTestUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import kotlinx.coroutines.Dispatchers
@@ -241,6 +243,13 @@ fun TestFixture<PsiFile>.editorFixture(): TestFixture<Editor> = testFixture { _ 
     writeIntentReadAction {
       val editor = fileEditorManager.openTextEditor(OpenFileDescriptor(project, file), true)
       requireNotNull(editor)
+
+      val caretAndSelection = EditorCaretTestUtil.extractCaretAndSelectionMarkers(editor.document)
+      if (caretAndSelection.hasExplicitCaret()) {
+        EditorCaretTestUtil.setCaretsAndSelection(editor, caretAndSelection)
+        PsiDocumentManager.getInstance(project).commitDocument(editor.document)
+      }
+      editor
     }
   }
   initialized(editor) {

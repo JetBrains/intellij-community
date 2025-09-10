@@ -15,9 +15,8 @@ import org.jetbrains.annotations.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.util.Arrays;
+import java.util.Objects;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 
@@ -50,6 +49,12 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
 public final class TransientVirtualFileImpl extends VirtualFile implements CacheAvoidingVirtualFile {
   private static final Logger LOG = Logger.getInstance(TransientVirtualFileImpl.class);
 
+  /**
+   * Dedicated value to be used in {@link #cachedAttributes} if {@link NewVirtualFileSystem#getAttributes(VirtualFile)} returns null,
+   * to separate this result (='attributes are known to be null') from 'attributes not yet cached'
+   */
+  private static final FileAttributes CACHED_NULL = new FileAttributes(false, false, false, false, 0, -1, false);
+
   private final String name;
   private final transient String path;
 
@@ -57,18 +62,14 @@ public final class TransientVirtualFileImpl extends VirtualFile implements Cache
 
   private final NewVirtualFileSystem fileSystem;
 
-  /**
-   * Cached value for boolean file properties, see {@link CachedFilePropertiesHelper} for a list of cached properties.
-   * So far only exists and isDirectory are cached, because profiling shows them as the hottest.
-   * Feel free to extend the list of cached properties if you think it makes sense.
-   */
-  private transient volatile long cachedFlags = 0;
+  /** {@code fileSystem.getAttributes(this)} cached result */
+  private volatile FileAttributes cachedAttributes = null;
 
   @VisibleForTesting
   public TransientVirtualFileImpl(@NotNull String name,
-                           @NotNull String path,
-                           @NotNull NewVirtualFileSystem fileSystem,
-                           @NotNull VirtualFile parent) {
+                                  @NotNull String path,
+                                  @NotNull NewVirtualFileSystem fileSystem,
+                                  @NotNull VirtualFile parent) {
     this.name = name;
     this.path = path;
     this.fileSystem = fileSystem;
@@ -113,30 +114,39 @@ public final class TransientVirtualFileImpl extends VirtualFile implements Cache
 
   @Override
   public boolean exists() {
-    return CachedFilePropertiesHelper.fetchExists(this);
+    FileAttributes attributes = fetchAttributes();
+    if (attributes != null) {
+      return true;
+    }
+    else {
+      return fileSystem.exists(this);
+    }
   }
 
   @Override
   public boolean isDirectory() {
-    return CachedFilePropertiesHelper.fetchIsDirectory(this);
+    FileAttributes attributes = fetchAttributes();
+    if (attributes == null) {
+      return fileSystem.isDirectory(this);
+    }
+    else {
+      return attributes.isDirectory();
+    }
   }
-
-  //TODO RC: isDirectory, isWriteable, getLength() and hidden/special/symlink are all delegates to .getAttributes()
-  //         in _most_ FS implementations. Even .exists() == (getAttributes() != null) in most FS implementations.
-  //         The only exception is ArchiveFileSystem: without it all those methods could be boiled down to a single
-  //         IO getAttributes() call, with caching it -- and .refresh() could just drop the cache then.
-
 
   @Override
   public boolean is(@NotNull VFileProperty property) {
     return switch (property) {
-      case SYMLINK -> fileSystem.isSymLink(this);
+      case SYMLINK -> {
+        FileAttributes attributes = fetchAttributes();
+        yield attributes != null && attributes.isSymLink();
+      }
       case HIDDEN -> {
-        FileAttributes attributes = fileSystem.getAttributes(this);
+        FileAttributes attributes = fetchAttributes();
         yield attributes != null && attributes.isHidden();
       }
       case SPECIAL -> {
-        FileAttributes attributes = fileSystem.getAttributes(this);
+        FileAttributes attributes = fetchAttributes();
         yield attributes != null && attributes.isSpecial();
       }
     };
@@ -144,7 +154,8 @@ public final class TransientVirtualFileImpl extends VirtualFile implements Cache
 
   @Override
   public boolean isWritable() {
-    return fileSystem.isWritable(this);
+    FileAttributes attributes = fetchAttributes();
+    return attributes != null && attributes.isWritable();
   }
 
   @Override
@@ -175,12 +186,24 @@ public final class TransientVirtualFileImpl extends VirtualFile implements Cache
 
   @Override
   public long getTimeStamp() {
-    return fileSystem.getTimeStamp(this);
+    FileAttributes attributes = fetchAttributes();
+    if (attributes == null) {
+      return fileSystem.getTimeStamp(this);
+    }
+    else {
+      return attributes.lastModified;
+    }
   }
 
   @Override
   public long getLength() {
-    return CachedFilePropertiesHelper.fetchLength(this);
+    FileAttributes attributes = fetchAttributes();
+    if (attributes == null) {
+      return fileSystem.getLength(this);
+    }
+    else {
+      return attributes.length;
+    }
   }
 
   @Override
@@ -191,6 +214,28 @@ public final class TransientVirtualFileImpl extends VirtualFile implements Cache
   @Override
   public long getModificationStamp() {
     return 1;//we do not track modifications for transient files
+  }
+
+  private @Nullable FileAttributes fetchAttributes() {
+    //isDirectory, isWriteable, getLength() and is(hidden/special/symlink) are all delegate to .getAttributes()
+    //in _most_ FS implementations. Even .exists() == (getAttributes() != null) in most FS implementations.
+    //The noticeable exception is ArchiveFileSystem: without it all those methods could be boiled down to a
+    // single IO getAttributes() call, with caching it -- and .refresh() could just drop the cache then.
+    //To avoid the issue with ArchiveFileSystem we do following: request getAttribute(), and fallback to apt
+    // fs.getXXX() if getAttribute() == null
+
+
+    FileAttributes cachedAttributes = this.cachedAttributes;
+    if (cachedAttributes == CACHED_NULL) {
+      return null;
+    }
+    else if (cachedAttributes != null) {
+      return cachedAttributes;
+    }
+
+    FileAttributes attributes = fileSystem.getAttributes(this);
+    this.cachedAttributes = Objects.requireNonNullElse(attributes, CACHED_NULL);
+    return attributes;
   }
 
   //<editor-fold desc="UserDataHolder overrides: prohibit access"> =========================================================================
@@ -297,9 +342,9 @@ public final class TransientVirtualFileImpl extends VirtualFile implements Cache
   public void refresh(boolean asynchronous,
                       boolean recursive,
                       @Nullable Runnable postRunnable) {
-    cachedFlags = 0;
+    cachedAttributes = null;
     //TODO RC: Seems like we don't need real VFS refresh for non-cached?
-    //         Maybe drop cached values, like .flags, or .children -- if will decide to cache them too?
+    //         Maybe dropping the cachedAttributes (and .children, if will decide to cache them too), is enough?
     RefreshQueue.getInstance().refresh(asynchronous, recursive, postRunnable, this);
   }
 
@@ -318,7 +363,7 @@ public final class TransientVirtualFileImpl extends VirtualFile implements Cache
   @Override
   public int hashCode() {
     boolean caseSensitive = fileSystem.isCaseSensitive();
-    int result = caseSensitive? name.hashCode(): Strings.stringHashCodeInsensitive(name);
+    int result = caseSensitive ? name.hashCode() : Strings.stringHashCodeInsensitive(name);
     result = 31 * result + parent.hashCode();
     result = 31 * result + fileSystem.hashCode();
     return result;
@@ -327,111 +372,5 @@ public final class TransientVirtualFileImpl extends VirtualFile implements Cache
   @Override
   public String toString() {
     return "TransientVirtualFileImpl[" + path + "][fileSystem: " + fileSystem + ']';
-  }
-
-  private static final class CachedFilePropertiesHelper {
-    //@formatter:off
-    static final long EXISTS_CACHED_MASK          = 0b0000_0000_0000_0001_0000_0000_0000_0000;
-    static final long EXISTS_MASK                 = 0b0000_0000_0000_0010_0000_0000_0000_0000;
-
-    static final long IS_DIRECTORY_CACHED_MASK    = 0b0000_0000_0000_0100_0000_0000_0000_0000;
-    static final long IS_DIRECTORY_MASK           = 0b0000_0000_0000_1000_0000_0000_0000_0000;
-
-    static final long LENGTH_CACHED_MASK          = 0b0000_0000_0001_0000_0000_0000_0000_0000;
-    /** Cache only length <= 2^32, larger lengths are not cached -- which shouldn't be a problem, because they are rare */
-    static final long LENGTH_MASK                 = 0b0000_0000_0000_0000_1111_1111_1111_1111;
-    //@formatter:on
-
-
-    private static final VarHandle FLAGS_HANDLE;
-
-    static {
-      try {
-        FLAGS_HANDLE = MethodHandles
-          .privateLookupIn(TransientVirtualFileImpl.class, MethodHandles.lookup())
-          .findVarHandle(TransientVirtualFileImpl.class, "cachedFlags", long.class)
-          .withInvokeExactBehavior();
-      }
-      catch (Exception e) {
-        throw new AssertionError("Can't get VarHandle for .cachedFlags field", e);
-      }
-    }
-
-    static boolean isExistsCached(long flags) {
-      return (flags & EXISTS_CACHED_MASK) != 0;
-    }
-
-    static boolean exists(long flags) {
-      return (flags & EXISTS_MASK) != 0;
-    }
-
-    static boolean isIsDirectoryCached(long flags) {
-      return (flags & IS_DIRECTORY_CACHED_MASK) != 0;
-    }
-
-    static boolean isDirectory(long flags) {
-      return (flags & IS_DIRECTORY_MASK) != 0;
-    }
-
-    static boolean isLengthCached(long flags) {
-      return (flags & LENGTH_CACHED_MASK) != 0;
-    }
-
-    static long getLength(long flags) {
-      return flags & LENGTH_MASK;
-    }
-
-    private static boolean fetchExists(TransientVirtualFileImpl file) {
-      long cachedFlags = file.cachedFlags;
-      if (isExistsCached(cachedFlags)) {
-        return exists(cachedFlags);
-      }
-
-      boolean exists = file.fileSystem.exists(file);
-
-      //Return value is important for VarHandle invoke-exact typing. Without it indy-types are resolved as
-      // '(TransientVirtualFileImpl, int) -> void' instead of '(TransientVirtualFileImpl, int) -> int' required
-      // by .getAndBitwiseOr()
-      @SuppressWarnings("unused")
-      long oldFlags = (long)FLAGS_HANDLE.getAndBitwiseOr(file, EXISTS_CACHED_MASK | (exists ? EXISTS_MASK : 0));
-
-      return exists;
-    }
-
-    private static boolean fetchIsDirectory(TransientVirtualFileImpl file) {
-      long cachedFlags = file.cachedFlags;
-      if (isIsDirectoryCached(cachedFlags)) {
-        return isDirectory(cachedFlags);
-      }
-
-      boolean isDirectory = file.fileSystem.isDirectory(file);
-
-      //Return value is important for VarHandle invoke-exact typing. Without it indy-types are resolved as
-      // '(TransientVirtualFileImpl, long) -> void' instead of '(TransientVirtualFileImpl, long) -> long' required
-      // by .getAndBitwiseOr()
-      @SuppressWarnings("unused")
-      long oldFlags = (long)FLAGS_HANDLE.getAndBitwiseOr(file, IS_DIRECTORY_CACHED_MASK | (isDirectory ? IS_DIRECTORY_MASK : 0));
-
-      return isDirectory;
-    }
-
-    private static long fetchLength(TransientVirtualFileImpl file) {
-      long cachedFlags = file.cachedFlags;
-      if (isLengthCached(cachedFlags)) {
-        return getLength(cachedFlags);
-      }
-
-      long length = file.fileSystem.getLength(file);
-
-      //don't cache length >2^32:
-      if ((length & LENGTH_MASK) == length) {
-        //Return value is important for VarHandle invoke-exact typing. Without it indy-types are resolved as
-        // '(TransientVirtualFileImpl, long) -> void' instead of '(TransientVirtualFileImpl, long) -> long' required
-        // by .getAndBitwiseOr()
-        @SuppressWarnings("unused")
-        long oldFlags = (long)FLAGS_HANDLE.getAndBitwiseOr(file, LENGTH_CACHED_MASK | (length & LENGTH_MASK));
-      }
-      return length;
-    }
   }
 }

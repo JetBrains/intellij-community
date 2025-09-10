@@ -14,25 +14,28 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.light.LightFieldBuilder;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.generate.template.TemplateResource;
+import org.jetbrains.java.generate.template.TemplatesManager;
 
 import java.util.Collection;
 import java.util.List;
 
 public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCase {
+
   public void testDoNotStripIsOfNonBooleanFields() {
     myFixture.addClass("class YesNoRAMField {}");
     myFixture.configureByText("a.java", """
       class Foo {
           YesNoRAMField isStateForceMailField;
-
+      
           <caret>
       }
       """);
@@ -40,7 +43,7 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.checkResult("""
                             class Foo {
                                 YesNoRAMField isStateForceMailField;
-
+                            
                                 public YesNoRAMField getIsStateForceMailField() {
                                     return isStateForceMailField;
                                 }
@@ -54,7 +57,7 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
           static final String CONST = "const";
           boolean isStateForceMailField;
           boolean isic;
-
+      
           <caret>
       }
       """);
@@ -64,11 +67,11 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                                 static final String CONST = "const";
                                 boolean isStateForceMailField;
                                 boolean isic;
-
+                            
                                 public boolean isStateForceMailField() {
                                     return isStateForceMailField;
                                 }
-
+                            
                                 public boolean isIsic() {
                                     return isic;
                                 }
@@ -80,7 +83,7 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.configureByText("a.java", """
       class Foo {
           boolean isStateForceMailField;
-
+      
           <caret>
       }
       """);
@@ -88,7 +91,7 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.checkResult("""
                             class Foo {
                                 boolean isStateForceMailField;
-
+                            
                                 public void setStateForceMailField(boolean stateForceMailField) {
                                     isStateForceMailField = stateForceMailField;
                                 }
@@ -110,7 +113,7 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
       myFixture.checkResult("""
                               class X<T extends String> {
                                  T field;
-
+                              
                                   public X<T> setField(T field) {
                                       this.field = field;
                                       return this;
@@ -129,7 +132,7 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.configureByText("a.java", """
        class Foo {
            String myName;
-
+      
            <caret>
        }
       \s""");
@@ -137,7 +140,7 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.checkResult("""
                              class Foo {
                                  String myName;
-
+                            
                                  public String getName() {
                                      return myName;
                                  }
@@ -150,7 +153,7 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.configureByText("a.java", """
       class Foo {
           boolean isStateForceMailField;
-
+      
           <caret>
       }
       """);
@@ -158,7 +161,7 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.checkResult("""
                             class Foo {
                                 boolean isStateForceMailField;
-
+                            
                                 public boolean isStateForceMailField() {
                                     return this.isStateForceMailField;
                                 }
@@ -174,7 +177,7 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
       class Foo {
           @org.jetbrains.annotations.NotNull
           private String myName;
-
+      
           <caret>
       }
       """);
@@ -182,15 +185,15 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
     generateSetter();
     myFixture.checkResult("""
                             import org.jetbrains.annotations.NotNull;
-
+                            
                             class Foo {
                                 @org.jetbrains.annotations.NotNull
                                 private String myName;
-
+                            
                                 public void setMyName(@NotNull String myName) {
                                     this.myName = myName;
                                 }
-
+                            
                                 @NotNull
                                 public String getMyName() {
                                     return myName;
@@ -201,17 +204,17 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
 
   public void testNullableStuffTypeUse() {
     myFixture.addClass("""
-                          package org.jetbrains.annotations;
-                          import java.lang.annotation.ElementType;
-                          import java.lang.annotation.Target;
-                          
-                          @Target(ElementType.TYPE_USE)
-                          public @interface NotNull {}""");
+                         package org.jetbrains.annotations;
+                         import java.lang.annotation.ElementType;
+                         import java.lang.annotation.Target;
+                         
+                         @Target(ElementType.TYPE_USE)
+                         public @interface NotNull {}""");
     myFixture.configureByText("a.java", """
       class Foo {
           @org.jetbrains.annotations.NotNull
           private String myName;
-
+      
           <caret>
       }
       """);
@@ -219,15 +222,15 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
     generateSetter();
     myFixture.checkResult("""
                             import org.jetbrains.annotations.NotNull;
-
+                            
                             class Foo {
                                 @org.jetbrains.annotations.NotNull
                                 private String myName;
-
+                            
                                 public void setMyName(@NotNull String myName) {
                                     this.myName = myName;
                                 }
-
+                            
                                 public @NotNull String getMyName() {
                                     return myName;
                                 }
@@ -341,7 +344,7 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
           @NotNull
           @Size
           private String myName;
-
+      
           private List<@NotNull @Size String> parents;
           private List<? extends @NotNull @Size String> extParents;
           private @NotNull @Size String[] children;
@@ -401,16 +404,16 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
 
   public void testPrimitivesWithTypeUseAnnotations() {
     myFixture.configureByText("a.java", """
-       import java.lang.annotation.ElementType;
-       import java.lang.annotation.Target;
+      import java.lang.annotation.ElementType;
+      import java.lang.annotation.Target;
       
-       class TestField {
-           private @Anno int field<caret>;
-       }
+      class TestField {
+          private @Anno int field<caret>;
+      }
       
-       @Target(ElementType.TYPE_USE)
-       @interface Anno {}
-       """);
+      @Target(ElementType.TYPE_USE)
+      @interface Anno {}
+      """);
     generateGetter();
     generateSetter();
     myFixture.checkResult("""
@@ -450,7 +453,7 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.configureByText("a.java", """
       class A {  \s
           private String myName;
-
+      
           <caret>
       }
       """);
@@ -466,15 +469,15 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
         return members;
       }
     }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     myFixture.checkResult("""
                             class A {  \s
                                 private String myName;
-
+                            
                                 public String getMyName() {
                                     return myName;
                                 }
-
+                            
                                 public int getLombokGenerated() {
                                     return lombokGenerated;
                                 }
@@ -502,7 +505,7 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
         return allAnnotations ? new GetterSetterGenerationOptions(true) : super.getOptions();
       }
     }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 
   public void testStaticOrThisSetterWithSameNameParameter() {
@@ -511,7 +514,7 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
       class Foo {
           static int p;
           int f;
-
+      
           <caret>
       }
       """);
@@ -520,11 +523,11 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                             class Foo {
                                 static int p;
                                 int f;
-
+                            
                                 public static void setP(int p) {
                                     Foo.p = p;
                                 }
-
+                            
                                 public void setF(int f) {
                                     this.f = f;
                                 }
@@ -544,11 +547,11 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.checkResult("""
                             class Foo {
                               int a;
-
+                            
                                 public int getA() {
                                     return this.a;
                                 }
-
+                            
                                 //comment
                               void foo() {}
                             }""");
@@ -557,6 +560,101 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
   public void testRecordAccessor() {
     doRecordAccessorTest(VisibilityUtil.ESCALATE_VISIBILITY);
     doRecordAccessorTest(PsiModifier.PRIVATE);
+  }
+
+  public void testIncorrectParameterMethod() {
+    TemplatesManager setterTemplatesManager = SetterTemplatesManager.getInstance();
+    TemplateResource template = setterTemplatesManager.getDefaultTemplate();
+    Disposer.register(getTestRootDisposable(), () -> {
+      setterTemplatesManager.setDefaultTemplate(template);
+    });
+
+    myFixture.addClass(
+      """
+        package foo;
+        
+        public class CustomClass<ID, T> {
+            public T getValue() {
+                return null;
+            }
+        
+            public void setValue(T value) {
+        
+            }
+        }
+        """);
+
+    myFixture.configureByText("Sample.java",
+                              """
+                                package foo;
+                              
+                                public class Sample<ID, T> {
+                                    private CustomClass<ID, T> fieldName;
+                              
+                                    <caret>
+                                }
+                                """);
+
+    TemplateResource custom = new TemplateResource("Custom",
+                                                   """
+                                                     #set($paramName = $helper.getParamName($field, $project))
+                                                     #if($field.modifierStatic)
+                                                     static ##
+                                                     #end
+                                                     #if ($field.type.contains("CustomClass"))
+                                                         #set($returnType = $StringUtil.trimEnd($StringUtil.substringAfter($field.type, ","), ">"))
+                                                     #else
+                                                         #set($returnType = $field.type)
+                                                     #end
+                                                     $class.name $StringUtil.sanitizeJavaIdentifier($helper.getPropertyName($field, $project))(final $returnType $paramName) {
+                                                     #if ($field.name == $paramName)
+                                                         #if (!$field.modifierStatic)
+                                                         this.##
+                                                         #else
+                                                             $classname.##
+                                                         #end
+                                                     #end
+                                                     #if ($field.type.contains("CustomClass"))
+                                                         ${field.name}.setValue($paramName)##
+                                                     #else
+                                                         $field.name = $paramName##
+                                                     #end
+                                                     ;
+                                                     return this;
+                                                     }
+                                                     """, false);
+    setterTemplatesManager.addTemplate(custom);
+    setterTemplatesManager.setDefaultTemplate(custom);
+    new GenerateSetterHandler() {
+      @Override
+      protected ClassMember[] chooseMembers(ClassMember[] members,
+                                            boolean allowEmptySelection,
+                                            boolean copyJavadocCheckbox,
+                                            Project project,
+                                            @Nullable Editor editor) {
+        return members;
+      }
+
+      @Override
+      protected @NotNull GetterSetterGenerationOptions getOptions() {
+        return super.getOptions();
+      }
+    }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+
+    myFixture.checkResult(
+                            """
+                              package foo;
+                            
+                              public class Sample<ID, T> {
+                                  private CustomClass<ID, T> fieldName;
+                            
+                                  public Sample fieldName(T fieldName) {
+                                      this.fieldName.setValue(fieldName);
+                                      return this;
+                                  }
+                              }
+                              """);
   }
 
   private void doRecordAccessorTest(String visibility) {
@@ -573,7 +671,7 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                                 public int x() {
                                     return x;
                                 }
-
+                            
                                 @Override
                                 public int y() {
                                     return y;
@@ -602,6 +700,6 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
         return allAnnotations ? new GetterSetterGenerationOptions(true) : super.getOptions();
       }
     }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 }

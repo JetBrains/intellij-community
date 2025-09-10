@@ -1,11 +1,15 @@
-from typing import Any
+from _typeshed import Incomplete
+
+from httplib2 import Response
 
 class HttpLib2Error(Exception): ...
 
 class HttpLib2ErrorWithResponse(HttpLib2Error):
-    response: Any
-    content: Any
-    def __init__(self, desc, response, content) -> None: ...
+    response: Response | dict[str, Incomplete] | None
+    content: str | bytes | None
+    def __init__(
+        self, desc: str | None, response: Response | dict[str, Incomplete] | None, content: str | bytes | None
+    ) -> None: ...
 
 class RedirectMissingLocation(HttpLib2ErrorWithResponse): ...
 class RedirectLimit(HttpLib2ErrorWithResponse): ...

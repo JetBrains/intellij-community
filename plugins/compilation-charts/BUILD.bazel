@@ -11,7 +11,7 @@ jvm_library(
   name = "compilation-charts",
   module_name = "intellij.compilation.charts",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//java/compiler/impl",
     "//platform/analysis-api:analysis",

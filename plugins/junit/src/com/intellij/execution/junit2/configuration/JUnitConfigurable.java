@@ -65,6 +65,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+/**
+ * @deprecated Use {@link JUnitSettingsEditor} instead. See IDEA-377975.
+ */
+@Deprecated(forRemoval = true)
 public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEditor<T> implements PanelWithAnchor {
   private static final List<IntArrayList> ourEnabledFields = Arrays.asList(
     new IntArrayList(new int[]{0}),

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -9,7 +8,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -17,7 +15,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
@@ -26,7 +23,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.components.DropDownLink;
-import com.intellij.util.NullableConsumer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
@@ -49,9 +45,8 @@ import java.util.function.Consumer;
 import static com.jetbrains.python.sdk.PySdkRenderingKt.groupModuleSdksByTypes;
 import static com.jetbrains.python.sdk.PythonSdkUtil.isRemote;
 
+@ApiStatus.Internal
 public class PyActiveSdkConfigurable implements UnnamedConfigurable {
-
-  private static final Logger LOG = Logger.getInstance(PyActiveSdkConfigurable.class);
 
   protected final @NotNull Project myProject;
 
@@ -150,13 +145,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     ComboboxSpeedSearch.installOn(result);
     result.setPreferredSize(result.getPreferredSize()); // this line allows making `result` resizable
-    return result;
-  }
-
-  private static @NotNull JButton buildDetailsButton(@NotNull ComboBox<?> sdkComboBox, @NotNull Consumer<JButton> onShowDetails) {
-    final FixedSizeButton result = new FixedSizeButton(sdkComboBox.getPreferredSize().height);
-    result.setIcon(AllIcons.General.GearPlain);
-    result.addActionListener(e -> onShowDetails.accept(result));
     return result;
   }
 
@@ -378,22 +366,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myInterpreterList.disposeModel();
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
-    }
-  }
-
-  private class SdkAddedCallback implements NullableConsumer<Sdk> {
-    @Override
-    public void consume(Sdk sdk) {
-      if (sdk != null && myProjectSdksModel.findSdk(sdk.getName()) == null) {
-        myProjectSdksModel.addSdk(sdk);
-        try {
-          myProjectSdksModel.apply(null, true);
-        }
-        catch (ConfigurationException e) {
-          LOG.error(e);
-        }
-        updateSdkListAndSelect(sdk);
-      }
     }
   }
 

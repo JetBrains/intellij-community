@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.FileTypeUsageSummary
+import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
@@ -19,7 +20,6 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiElement
@@ -98,7 +98,7 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
-    return arrayListOf(
+    return listOf(
       IS_ACCESSIBLE_FROM_MODULE,
       IS_SAME_MODULE_DATA_KEY, DIRECTORY_DEPTH_DATA_KEY,
       IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY,
@@ -122,31 +122,31 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?,
                                   correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
-    val item = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element)
-    val file = getContainingFile(item)
+    return buildList {
+      add(ALL_INITIAL_LETTERS_MATCH_DATA_KEY.with(allInitialLettersMatch(element, searchQuery)))
 
-    val project = ReadAction.compute<Project?, Nothing> {
-      item.takeIf { it.isValid }?.project
-    } ?: return listOf(IS_INVALID_DATA_KEY.with(true))
+      SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(element)?.let { item ->
+        val file = getContainingFile(item)
 
-    val data = ArrayList<EventPair<*>>()
-    if (file != null && cache != null) {
-      getFileFeatures(data, file, project, cache, currentTime)
+        val project = ReadAction.compute<Project?, Nothing> {
+          item.takeIf { it.isValid }?.project
+        } ?: return listOf(IS_INVALID_DATA_KEY.with(true))
+
+        if (file != null && cache != null) {
+          addAll(getFileFeatures(file, project, cache, currentTime))
+        }
+
+        if (item !is PsiFileSystemItem) {
+          addAll(isAccessibleFromModule(item, cache?.currentlyOpenedFile))
+        }
+      }
     }
-
-    if (item !is PsiFileSystemItem) {
-      data.addAll(isAccessibleFromModule(item, cache?.currentlyOpenedFile))
-    }
-
-    data.add(ALL_INITIAL_LETTERS_MATCH_DATA_KEY.with(allInitialLettersMatch(item, searchQuery)))
-
-    return data
   }
 
   private fun isAccessibleFromModule(element: PsiElement, openedFile: VirtualFile?): List<EventPair<*>> {
     return openedFile?.let {
       ReadAction.compute<List<EventPair<*>>, Nothing> {
-        if (!element.isValid) return@compute arrayListOf(IS_INVALID_DATA_KEY.with(true))
+        if (!element.isValid) return@compute listOf(IS_INVALID_DATA_KEY.with(true))
 
         val elementFile = element.containingFile?.virtualFile ?: return@compute emptyList()
         val fileIndex = ProjectRootManager.getInstance(element.project).fileIndex
@@ -156,7 +156,7 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
 
         if (openedFileModule == null || elementModule == null) return@compute emptyList()
 
-        return@compute arrayListOf(
+        return@compute listOf(
           IS_ACCESSIBLE_FROM_MODULE.with(elementModule.name in ModuleRootManager.getInstance(openedFileModule).dependencyModuleNames)
         )
       }
@@ -177,25 +177,27 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
     }
   }
 
-  private fun getFileFeatures(data: MutableList<EventPair<*>>,
-                              file: VirtualFile,
+  private fun getFileFeatures(file: VirtualFile,
                               project: Project,
                               cache: FeaturesProviderCache,
-                              currentTime: Long) {
-    data.addAll(getFileLocationStats(file, project))
-    data.putIfValueNotNull(IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY, isSameFileTypeAsOpenedFile(file, cache.currentlyOpenedFile))
-    data.putIfValueNotNull(IS_SAME_MODULE_DATA_KEY, isSameModuleAsOpenedFile(file, project, cache.currentlyOpenedFile))
-    data.addAll(getFileTypeStats(file, currentTime, cache.fileTypeUsageStatistics))
+                              currentTime: Long): List<EventPair<*>> {
+    return buildList {
+      addAll(getFileLocationStats(file, project))
+      putIfValueNotNull(IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY, isSameFileTypeAsOpenedFile(file, cache.currentlyOpenedFile))
+      putIfValueNotNull(IS_SAME_MODULE_DATA_KEY, isSameModuleAsOpenedFile(file, project, cache.currentlyOpenedFile))
+      addAll(getFileTypeStats(file, currentTime, cache.fileTypeUsageStatistics))
 
-    data.add(RECENT_INDEX_DATA_KEY.with(getRecentFilesIndex(file, project)))
-    data.add(PREDICTION_SCORE_DATA_KEY.with(getPredictionScore(file, project)))
+      add(RECENT_INDEX_DATA_KEY.with(getRecentFilesIndex(file, project)))
+      add(PREDICTION_SCORE_DATA_KEY.with(getPredictionScore(file, project)))
 
-    data.addAll(getModificationTimeStats(file, currentTime))
-    data.add(IS_OPENED_DATA_KEY.with(isOpened(file, project)))
+      addAll(getModificationTimeStats(file, currentTime))
+      add(IS_OPENED_DATA_KEY.with(isOpened(file, project)))
 
-    calculateRootDistance(file, project)?.let {
-      data.add(DIRECTORY_DEPTH_DATA_KEY.with(it))
+      calculateRootDistance(file, project)?.let {
+        add(DIRECTORY_DEPTH_DATA_KEY.with(it))
+      }
     }
+
   }
 
   private fun getFileTypeStats(file: VirtualFile,
@@ -213,7 +215,7 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
     val min = fileTypeStats.minOf { it.value.usageCount }
     val max = fileTypeStats.maxOf { it.value.usageCount }
 
-    return arrayListOf(
+    return listOf(
       FILETYPE_USAGE_RATIO_DATA_KEY.with(usageRatio),
       FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY.with(roundDouble(stats.usageCount.toDouble() / max)),
       FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY.with(roundDouble(stats.usageCount.toDouble() / min)),
@@ -269,7 +271,7 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
     return ReadAction.compute<List<EventPair<*>>, Nothing> {
       val fileIndex = ProjectFileIndex.getInstance(project)
 
-      return@compute arrayListOf(
+      return@compute listOf(
         IS_IN_SOURCE_DATA_KEY.with(fileIndex.isInSource(file)),
         IS_IN_TEST_SOURCES_DATA_KEY.with(fileIndex.isInTestSourceContent(file)),
         IS_IN_LIBRARY_DATA_KEY.with(fileIndex.isInLibrary(file)),
@@ -294,7 +296,7 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
   private fun getModificationTimeStats(virtualFile: VirtualFile, currentTime: Long): List<EventPair<*>> {
     val timeSinceLastMod = currentTime - virtualFile.timeStamp
 
-    return arrayListOf<EventPair<*>>(
+    return listOf(
       TIME_SINCE_LAST_MODIFICATION_DATA_KEY.with(timeSinceLastMod),
       WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY.with((timeSinceLastMod <= Time.MINUTE)),
       WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY.with((timeSinceLastMod <= Time.HOUR)),
@@ -314,21 +316,33 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
     return virtualFile in openedFiles
   }
 
-  private fun allInitialLettersMatch(element: PsiElement, query: String): Boolean {
-    val elementName = when (element) {
-      is PsiFileSystemItem -> element.virtualFile.nameWithoutExtension
-      is PsiNamedElement -> element.name ?: return false
-      else -> return false
-    }
+  private fun allInitialLettersMatch(element: Any, query: String): Boolean {
+    val name = getElementName(element) ?: return false
 
     // Transform the element name, so that the match yields true for the following three cases
     // - PascalCaseNames
     // - camelCaseNames
     // - snake_case_names
-    val transformedElementName = elementName.split("_")
+    val transformedElementName = name.split("_")
       .joinToString { substring -> substring.replaceFirstChar { it.uppercase() } }
       .filter { it.isUpperCase() }
 
     return query.filter { it.isUpperCase() } == transformedElementName
+  }
+
+  private fun getElementName(element: Any): String? {
+    SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(element)?.let { psiElement ->
+      return when (psiElement) {
+        is PsiFileSystemItem -> psiElement.virtualFile.nameWithoutExtension
+        is PsiNamedElement -> psiElement.name
+        else -> null
+      }
+    }
+
+    if (element is NavigationItem) {
+      return element.name
+    }
+
+    return null
   }
 }

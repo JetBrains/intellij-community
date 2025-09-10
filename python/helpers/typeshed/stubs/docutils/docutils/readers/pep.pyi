@@ -1,3 +1,12 @@
-from _typeshed import Incomplete
+from typing import ClassVar, Final, TypeVar
 
-def __getattr__(name: str) -> Incomplete: ...
+from docutils.parsers.rst import states
+from docutils.readers import standalone
+
+__docformat__: Final = "reStructuredText"
+
+_S = TypeVar("_S", bound=str | bytes)
+
+class Reader(standalone.Reader[_S]):
+    settings_default_overrides: ClassVar[dict[str, int]]
+    inliner_class: ClassVar[type[states.Inliner]]

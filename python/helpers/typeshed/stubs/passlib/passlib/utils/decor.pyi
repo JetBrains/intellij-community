@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from typing import Any
 
 class classproperty:
@@ -22,21 +21,18 @@ class memoized_property:
     def __init__(self, func) -> None: ...
     def __get__(self, obj, cls): ...
     def clear_cache(self, obj) -> None: ...
-    def peek_cache(self, obj, default: Incomplete | None = None): ...
+    def peek_cache(self, obj, default=None): ...
 
 def deprecated_function(
-    msg: Incomplete | None = None,
-    deprecated: Incomplete | None = None,
-    removed: Incomplete | None = None,
-    updoc: bool = True,
-    replacement: Incomplete | None = None,
-    _is_method: bool = False,
-    func_module: Incomplete | None = None,
+    msg=None, deprecated=None, removed=None, updoc: bool = True, replacement=None, _is_method: bool = False, func_module=None
 ): ...
-def deprecated_method(
-    msg: Incomplete | None = None,
-    deprecated: Incomplete | None = None,
-    removed: Incomplete | None = None,
-    updoc: bool = True,
-    replacement: Incomplete | None = None,
-): ...
+def deprecated_method(msg=None, deprecated=None, removed=None, updoc: bool = True, replacement=None): ...
+
+__all__ = [
+    "classproperty",
+    "hybrid_method",
+    "memoize_single_value",
+    "memoized_property",
+    "deprecated_function",
+    "deprecated_method",
+]

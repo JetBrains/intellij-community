@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -420,7 +421,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testOpenBinary() {
-    doTest("BufferedReader",
+    doTest("BufferedReader[_BufferedReaderStream]",
            "expr = open('foo', 'rb')\n");
   }
 
@@ -441,7 +442,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testIoOpenBinary() {
-    doTest("BufferedReader",
+    doTest("BufferedReader[_BufferedReaderStream]",
            """
              import io
              expr = io.open('foo', 'rb')
@@ -473,7 +474,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorDunderAnext() {
-    doTest("Awaitable[int]",
+    doTest("Coroutine[Any, Any, int]",
            """
              async def asyncgen():
                  yield 42
@@ -660,7 +661,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testIsEnumMember() {
-    doTest("Literal[Answer.No, Answer.Yes]",
+    doTest("Literal[Answer.Yes, Answer.No]",
            """
              from enum import Enum
              
@@ -672,7 +673,7 @@ public class Py3TypeTest extends PyTestCase {
                  if v is Answer.Yes or v is Answer.No:
                      expr = v
              """);
-    doTest("Literal[Answer.No, Answer.Yes]",
+    doTest("Literal[Answer.Yes, Answer.No]",
            """
              from enum import Enum
              
@@ -685,7 +686,7 @@ public class Py3TypeTest extends PyTestCase {
                      raise ValueError("Invalid value")
                  expr = v
              """);
-    doTest("Literal[Answer.No, Answer.Yes]",
+    doTest("Literal[Answer.Yes, Answer.No]",
            """
              from enum import Enum
 
@@ -735,6 +736,18 @@ public class Py3TypeTest extends PyTestCase {
            """
              def f(a: int):
                  if a in (1, 2, ""):
+                     expr = a
+             """);
+    doTest("Literal[1, 2]",
+           """
+             def f(a: int):
+                 if a in {1, 2, ""}:
+                     expr = a
+             """);
+    doTest("Literal[1, 2]",
+           """
+             def f(a: int):
+                 if a in [1, 2, ""]:
                      expr = a
              """);
     doTest("Literal[-10, \"a\"]",
@@ -3951,6 +3964,29 @@ public class Py3TypeTest extends PyTestCase {
               expr = T
 
           T = -1
+      """);
+  }
+
+  // PY-74257
+  public void testNotProperlyImportedQualifiedNameInTypeHint() {
+    doMultiFileTest("Any", """
+      from lib import f
+      
+      expr = f()
+      """);
+  }
+
+  @TestFor(issues="PY-81651")
+  public void testEqWithAny() {
+    // the actual result is `Any`, but we don't have the technology yet
+    doTest("UnsafeUnion[Any, bool]", """
+      from typing import Any
+      
+      class A:
+          def __eq__(self, other) -> Any:
+            return "hello :)"
+
+      expr = A() == 1
       """);
   }
 

@@ -8,7 +8,7 @@ import java.util.Comparator;
 import java.util.NoSuchElementException;
 
 /**
- * An iterator you must {@link #dispose()} after use.
+ * An iterator which you must {@link #dispose()} after use.
  * Alternatively and more preferably, use try-with-resources, e.g.
  * <pre>
  * {@code try (MarkupIterator<RangeHighlighterEx> it = markupModel.overlappingIterator(0, 1)) {

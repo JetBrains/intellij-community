@@ -23,6 +23,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -437,7 +438,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   }
 
   override fun setActivationTimestamp(project: Project, timestamp: Long) {
+    LOG.trace { "setActivationTimestamp: project=$project, timestamp=$timestamp" }
+
     if (disableUpdatingRecentInfo.get()) {
+      LOG.trace { "setActivationTimestamp: updating recent info is disabled" }
       return
     }
 
@@ -466,7 +470,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   }
 
   internal fun projectOpened(project: Project, openTimestamp: Long) {
+    LOG.trace { "projectOpened: project=$project, openTimestamp=$openTimestamp" }
+
     if (disableUpdatingRecentInfo.get() || LightEdit.owns(project)) {
+      LOG.trace { "projectOpened: updating recent info is disabled" }
       return
     }
 
@@ -576,6 +583,8 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   }
 
   override suspend fun reopenLastProjectsOnStart(): Boolean {
+    LOG.trace { "reopenLastProjectsOnStart" }
+
     // Do not reopen, because previously opened projects will open in new instances
     // TODO alternative behaviour?
     if (ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED) {
@@ -628,6 +637,8 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     index: Int,
     someProjectWasOpened: Boolean,
   ): Boolean {
+    LOG.trace { "openOneByOne: openPaths=$openPaths index=$index someProjectWasOpened=$someProjectWasOpened" }
+
     val (key, value) = openPaths.get(index)
     EelInitialization.runEelInitialization(key)
     val project = openProject(projectFile = Path.of(key), options = OpenProjectTask {
@@ -638,6 +649,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     })
     val nextIndex = index + 1
     if (nextIndex == openPaths.size) {
+      project?.let { fireLastProjectsReopenedEvent(it) }
       return someProjectWasOpened || project != null
     }
     else {
@@ -649,6 +661,8 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
   // toOpen - no non-existent project paths and every info has a frame
   private suspend fun openMultiple(toOpen: List<Pair<Path, RecentProjectMetaInfo>>): Boolean {
+    LOG.trace { "openMultiple: toOpen=$toOpen" }
+
     val activeInfo = (toOpen.maxByOrNull { it.second.activationTimestamp } ?: return false).second
 
     data class Setup(val path: Path, val elementToPass: CoroutineContext?, val task: OpenProjectTask)
@@ -695,14 +709,21 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
     val projectManager = ProjectManagerEx.getInstanceEx()
     try {
+      var activeProject: Project? = null
+
       val iterator = taskList.iterator()
       while (iterator.hasNext()) {
         val (path, coroutineContext, options) = iterator.next()
-        withContext(coroutineContext ?: EmptyCoroutineContext) {
+        val project = withContext(coroutineContext ?: EmptyCoroutineContext) {
           projectManager.openProjectAsync(path, options)
+        }
+        if (activeProject == null) {
+          activeProject = project
         }
         iterator.remove()
       }
+
+      activeProject?.let { fireLastProjectsReopenedEvent(it) }
     }
     finally {
       // cleanup unused pre-allocated frames if the operation failed or was canceled
@@ -968,6 +989,12 @@ int32 "extendedState"
 private fun fireChangeEvent() {
   ApplicationManager.getApplication().invokeLater {
     ApplicationManager.getApplication().messageBus.syncPublisher(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC).change()
+  }
+}
+
+private suspend fun fireLastProjectsReopenedEvent(activeProject: Project) {
+  withContext(Dispatchers.EDT) {
+    application.messageBus.syncPublisher(RecentProjectsManager.LAST_PROJECTS_TOPIC).lastProjectsReopened(activeProject)
   }
 }
 

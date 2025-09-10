@@ -11,7 +11,7 @@ jvm_library(
   name = "model-serialization",
   module_name = "intellij.platform.jps.model.serialization",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k11",
   deps = [
     "//platform/util",
@@ -42,7 +42,7 @@ jvm_library(
   name = "model-serialization-tests_test_lib",
   module_name = "intellij.platform.jps.model.serialization.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//jps/model-api:model",
     "//platform/testFramework/junit5",

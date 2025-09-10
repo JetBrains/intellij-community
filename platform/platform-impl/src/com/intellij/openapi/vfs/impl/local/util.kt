@@ -3,19 +3,28 @@
 
 package com.intellij.openapi.vfs.impl.local
 
+import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.limits.FileSizeLimit
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
+import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.EelPosixFileInfo
+import com.intellij.platform.eel.fs.stat
+import com.intellij.platform.eel.getOr
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 private val map = ContainerUtil.createConcurrentWeakMap<Path, EelApi>();
@@ -52,5 +61,36 @@ internal fun readWholeFileIfNotTooLargeWithEel(path: Path): ByteArray? {
       is EelFileSystemApi.FullReadResult.BytesOverflown -> error("Never returned")
       is EelFileSystemApi.FullReadResult.Overflow -> throw FileTooBigException("File $path is bigger than $limit bytes")
     }
+  }
+}
+
+internal fun toEelPath(parent: VirtualFile, childName: String): EelPath? =
+  try {
+    parent.toNioPath().resolve(childName).asEelPath()
+  }
+  catch (err: Exception) {
+    when (err) {
+      is UnsupportedOperationException, is InvalidPathException, is EelPathException -> null
+      else -> throw err
+    }
+  }
+
+@Suppress("RAW_RUN_BLOCKING")
+internal fun fetchCaseSensitivityUsingEel(eelPath: EelPath): FileAttributes.CaseSensitivity = runBlocking {
+  val eelApi = eelPath.descriptor.toEelApi()
+  val stat = eelApi.fs.stat(eelPath).doNotResolve().eelIt().getOr {
+    return@runBlocking FileAttributes.CaseSensitivity.UNKNOWN
+  }
+
+  when (val type = stat.type) {
+    is EelFileInfo.Type.Directory ->
+      when (type.sensitivity) {
+        EelFileInfo.CaseSensitivity.SENSITIVE -> FileAttributes.CaseSensitivity.SENSITIVE
+        EelFileInfo.CaseSensitivity.INSENSITIVE -> FileAttributes.CaseSensitivity.INSENSITIVE
+        EelFileInfo.CaseSensitivity.UNKNOWN -> FileAttributes.CaseSensitivity.UNKNOWN
+      }
+
+    is EelFileInfo.Type.Other, is EelFileInfo.Type.Regular, is EelPosixFileInfo.Type.Symlink ->
+      FileAttributes.CaseSensitivity.UNKNOWN
   }
 }

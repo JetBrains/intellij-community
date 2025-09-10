@@ -20,6 +20,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.jetbrains.python.PYTHON_FREE_PLUGIN_ID
 import com.jetbrains.python.PYTHON_PROF_PLUGIN_ID
 import com.jetbrains.python.packaging.PyRequirement
@@ -46,10 +47,6 @@ private class SetupPythonInterpreterStep(
   private val project: Project,
   private val preferences: SetupSdkPreferences,
 ) : ForegroundEvaluationStep {
-  companion object {
-
-  }
-
   override val name: String = "Set up Python Interpreter step"
   override val description: String = "Configure project Python Interpreter and install deps from requirements.txt"
 
@@ -129,9 +126,16 @@ private class SetupPythonInterpreterStep(
             }
             sdkTable.addJdk(sdk)
           }
-          for (module in ModuleManager.getInstance(project).modules) {
-            PyProjectSdkConfiguration.setReadyToUseSdkSync(project, module, sdk)
+        }
+
+        for (module in ModuleManager.getInstance(project).modules) {
+          @Suppress("HardCodedStringLiteral")
+          runWithModalProgressBlocking(project, "Set Sdk") {
+            PyProjectSdkConfiguration.setReadyToUseSdk(project, module, sdk)
           }
+        }
+
+        WriteAction.run<Throwable> {
           if (ProjectRootManager.getInstance(project).projectSdk == null) {
             ProjectRootManager.getInstance(project).projectSdk = sdk
           }

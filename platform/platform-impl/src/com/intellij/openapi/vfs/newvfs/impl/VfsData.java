@@ -85,7 +85,7 @@ public final class VfsData implements Closeable {
    * cache size without an eviction is still typically in the range 20-50Mbs for the intellij project -- which is tolerable.
    * I.e., this option definitely _could_ be used in practice)
    */
-  private static final boolean USE_SOFT_REFERENCES = getBooleanProperty("platform.vfs.cache.use-soft-references", false);
+  private static final boolean USE_SOFT_REFERENCES = getBooleanProperty("platform.vfs.cache.use-soft-references", true);
 
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
@@ -101,10 +101,9 @@ public final class VfsData implements Closeable {
   private final Object deadMarker = ObjectUtils.sentinel("dead file");
 
   //TODO RC: FSRecords was quite optimized recently, probably caching is not needed anymore?
-  //         indexingFlag/nameId caching was already removed -- need to think through about remaining (flag+modCount)
-  //         field: on the first sight they look like an additional data, independent from persistent VFS data?
-  //         .children is another thing that could be less cached -- in many cases children could be accessed directly from
-  //         FSRecords?
+  //         1. indexingFlag/nameId caching was already removed
+  //         2. (flag+modCount) field: this is additional data, partially-independent from persistent VFS data
+  //         3. .children: in many cases children could be accessed directly from FSRecords, without need to cache them
 
   /**
    * Map[segmentIndex -> Segment]
@@ -189,7 +188,7 @@ public final class VfsData implements Closeable {
     ObservableDoubleMeasurement cacheSegmentsCount = vfsMeter.gaugeBuilder("VFS.cache.segments").buildObserver();
     ObservableLongMeasurement cacheSegmentsCreated = vfsMeter.counterBuilder("VFS.cache.segmentsCreated").buildObserver();
     ObservableLongMeasurement cacheDirectoriesCreated = vfsMeter.counterBuilder("VFS.cache.directoriesCreated").buildObserver();
-    ObservableLongMeasurement cacheFilesCreated = vfsMeter.counterBuilder("VFS.cache.filesLoaded").buildObserver();
+    ObservableLongMeasurement cacheFilesCreated = vfsMeter.counterBuilder("VFS.cache.filesCreated").buildObserver();
     return vfsMeter.batchCallback(
       () -> {
         cacheSegmentsCount.record(segments.size());
@@ -337,6 +336,11 @@ public final class VfsData implements Closeable {
     synchronized (deadMarker) {
       queueOfFileIdsToBeInvalidated.add(id);
     }
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "{segments: " + segments.size() + ", connected: " + owningPersistentFS.isConnected() + "}";
   }
 
   /** @return offset of fileId's data in {@link Segment#objectFieldsArray} */
@@ -553,22 +557,12 @@ public final class VfsData implements Closeable {
 
         throw new FileAlreadyCreatedException(
           describeAlreadyCreatedFile(fileId)
-          +
-          " data: " +
-          fileData
-          +
-          ", alreadyExistingData: " +
-          existingData
-          +
-          ", parentData: " +
-          parentData
-          +
-          ((parent != null)
-           ? ", parent.data: " + parent.directoryData + " equals: " + (parentData == parent.directoryData)
-           : ", parent = null")
-          +
-          ", synchronized(parentData): " +
-          (parentData != null ? Thread.holdsLock(parentData) : "...")
+          + " data: " + fileData + ", alreadyExistingData: " + existingData + ", parentData: " + parentData +
+          ((parent != null) ?
+           ", parent.data: " + parent.directoryData + " equals: " + (parentData == parent.directoryData) :
+           ", parent = null"
+          )
+          + ", synchronized(parentData): " + (parentData != null ? Thread.holdsLock(parentData) : "...")
         );
       }
     }

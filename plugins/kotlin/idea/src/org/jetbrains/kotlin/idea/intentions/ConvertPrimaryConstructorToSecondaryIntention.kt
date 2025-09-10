@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.parents
 
 class ConvertPrimaryConstructorToSecondaryIntention : SelfTargetingRangeIntention<KtClass>(
     KtClass::class.java,
-    KotlinBundle.lazyMessage("convert.to.secondary.constructor")
+    KotlinBundle.messagePointer("convert.to.secondary.constructor")
 ) {
     override fun applicabilityRange(element: KtClass): TextRange? {
         val primaryCtor = element.primaryConstructor ?: return null

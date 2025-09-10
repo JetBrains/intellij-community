@@ -1,0 +1,9 @@
+<idea-plugin>
+    <dependencies>
+        <module name="intellij.platform.compose"/>
+
+        <module name="intellij.platform.jewel.markdown.core"/>
+        <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
+        <module name="intellij.platform.jewel.markdown.extensions.images"/>
+    </dependencies>
+</idea-plugin>

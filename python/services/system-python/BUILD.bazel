@@ -17,7 +17,7 @@ jvm_library(
   name = "system-python",
   module_name = "intellij.python.community.services.systemPython",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/python-sdk:sdk",
@@ -42,7 +42,7 @@ jvm_library(
 jvm_library(
   name = "system-python_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   associates = [":system-python"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -76,6 +76,10 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//python/python-psi-impl:psi-impl",
+  ],
+  exports = [
+    "//python/services/shared",
+    "//python/services/shared:shared_test_lib",
   ],
   runtime_deps = [
     ":system-python_resources",

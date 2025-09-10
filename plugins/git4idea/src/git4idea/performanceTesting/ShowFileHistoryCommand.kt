@@ -28,7 +28,8 @@ import kotlin.coroutines.resume
 
 class ShowFileHistoryCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   override suspend fun doExecute(context: PlaybackContext) {
-    val logManager = VcsProjectLog.getInstance(context.project).logManager ?: throw RuntimeException("VcsLogManager instance is null")
+    val logManager = VcsProjectLog.awaitLogIsReady(context.project)
+                     ?: throw RuntimeException("VcsLogManager was not initialised")
     withContext(Dispatchers.EDT) {
       if (!logManager.isLogUpToDate) logManager.waitForRefresh()
 

@@ -1,3 +1,11 @@
-from _typeshed import Incomplete
+from typing import ClassVar, Final, TypeVar
 
-def __getattr__(name: str) -> Incomplete: ...
+from docutils import nodes, readers
+
+__docformat__: Final = "reStructuredText"
+
+_S = TypeVar("_S", bound=str | bytes)
+
+class Reader(readers.Reader[_S]):
+    document: nodes.document | None  # type: ignore[assignment]
+    config_section_dependencies: ClassVar[tuple[str, ...]]

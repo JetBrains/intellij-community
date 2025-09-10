@@ -286,6 +286,7 @@ com.intellij.openapi.vcs.ProcessEventListener
 - processTerminated(I):V
 - startFailed(java.lang.Throwable):V
 a:com.intellij.openapi.vcs.ProjectLevelVcsManager
+- sf:Companion:com.intellij.openapi.vcs.ProjectLevelVcsManager$Companion
 - sf:VCS_CONFIGURATION_CHANGED:com.intellij.util.messages.Topic
 - sf:VCS_CONFIGURATION_CHANGED_IN_PLUGIN:com.intellij.util.messages.Topic
 - <init>():V
@@ -293,30 +294,37 @@ a:com.intellij.openapi.vcs.ProjectLevelVcsManager
 - a:addMessageToConsoleWindow(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V
 - a:addMessageToConsoleWindow(java.lang.String,com.intellij.openapi.editor.markup.TextAttributes):V
 - areVcsesActivated():Z
+- a:awaitInitialization(kotlin.coroutines.Continuation):java.lang.Object
 - a:checkAllFilesAreUnder(com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.vfs.VirtualFile[]):Z
 - a:checkVcsIsActive(com.intellij.openapi.vcs.AbstractVcs):Z
 - a:checkVcsIsActive(java.lang.String):Z
 - a:findVcsByName(java.lang.String):com.intellij.openapi.vcs.AbstractVcs
 - a:findVersioningVcs(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.AbstractVcs
 - a:getAllActiveVcss():com.intellij.openapi.vcs.AbstractVcs[]
+- bf:getAllActiveVcssDoNotUse():com.intellij.openapi.vcs.AbstractVcs[]
 - a:getAllSupportedVcss():com.intellij.openapi.vcs.AbstractVcs[]
+- bf:getAllSupportedVcssDoNotUse():com.intellij.openapi.vcs.AbstractVcs[]
 - a:getAllVcsRoots():com.intellij.openapi.vcs.VcsRoot[]
+- bf:getAllVcsRootsDoNotUse():com.intellij.openapi.vcs.VcsRoot[]
 - a:getAllVcss():com.intellij.openapi.vcs.impl.VcsDescriptor[]
+- bf:getAllVcssDoNotUse():com.intellij.openapi.vcs.impl.VcsDescriptor[]
 - a:getAllVersionedRoots():com.intellij.openapi.vfs.VirtualFile[]
+- bf:getAllVersionedRootsDoNotUse():com.intellij.openapi.vfs.VirtualFile[]
 - a:getAnnotationLocalChangesListener():com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener
 - a:getCompositeCheckoutListener():com.intellij.openapi.vcs.CheckoutProvider$Listener
 - a:getConsolidatedVcsName():java.lang.String
 - a:getContentRevisionCache():com.intellij.openapi.vcs.impl.ContentRevisionCache
-- a:getDescriptor(java.lang.String):com.intellij.openapi.vcs.impl.VcsDescriptor
 - a:getDirectoryMappingFor(com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vcs.VcsDirectoryMapping
 - a:getDirectoryMappings():java.util.List
 - a:getDirectoryMappings(com.intellij.openapi.vcs.AbstractVcs):java.util.List
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.ProjectLevelVcsManager
+- bf:getDirectoryMappingsDoNotUse():java.util.List
+- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.ProjectLevelVcsManager
 - a:getRootChecker(com.intellij.openapi.vcs.AbstractVcs):com.intellij.openapi.vcs.VcsRootChecker
 - a:getRootsUnderVcs(com.intellij.openapi.vcs.AbstractVcs):com.intellij.openapi.vfs.VirtualFile[]
 - a:getRootsUnderVcsWithoutFiltering(com.intellij.openapi.vcs.AbstractVcs):java.util.List
 - a:getShortNameForVcsRoot(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - a:getSingleVCS():com.intellij.openapi.vcs.AbstractVcs
+- bf:getSingleVcssDoNotUse():com.intellij.openapi.vcs.AbstractVcs
 - a:getStandardConfirmation(com.intellij.openapi.vcs.VcsConfiguration$StandardConfirmation,com.intellij.openapi.vcs.AbstractVcs):com.intellij.openapi.vcs.VcsShowConfirmationOption
 - a:getStandardOption(com.intellij.openapi.vcs.VcsConfiguration$StandardOption,com.intellij.openapi.vcs.AbstractVcs):com.intellij.openapi.vcs.VcsShowSettingOption
 - a:getVcsFor(com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vcs.AbstractVcs
@@ -339,11 +347,13 @@ a:com.intellij.openapi.vcs.ProjectLevelVcsManager
 - a:scrollConsoleToTheEnd():V
 - a:setDirectoryMapping(java.lang.String,java.lang.String):V
 - a:setDirectoryMappings(java.util.List):V
+- bf:setDirectoryMappingsDoNotUse(java.util.List):V
 - a:showConsole(java.lang.Runnable):V
-- a:showProjectOperationInfo(com.intellij.openapi.vcs.update.UpdatedFiles,java.lang.String):V
 - a:startBackgroundVcsOperation():V
 - a:stopBackgroundVcsOperation():V
-- updateActiveVcss():V
+- f:updateActiveVcss():V
+f:com.intellij.openapi.vcs.ProjectLevelVcsManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.ProjectLevelVcsManager
 f:com.intellij.openapi.vcs.ReadonlyStatusIsVisibleActivationCheck
 - <init>():V
 - s:check(com.intellij.openapi.project.Project,java.lang.String):V
@@ -903,10 +913,6 @@ c:com.intellij.openapi.vcs.changes.ChangeListAdapter
 - changesMoved(java.util.Collection,com.intellij.openapi.vcs.changes.ChangeList,com.intellij.openapi.vcs.changes.ChangeList):V
 - changesRemoved(java.util.Collection,com.intellij.openapi.vcs.changes.ChangeList):V
 - defaultListChanged(com.intellij.openapi.vcs.changes.ChangeList,com.intellij.openapi.vcs.changes.ChangeList):V
-com.intellij.openapi.vcs.changes.ChangeListDecorator
-- sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
-- a:decorateChangeList(com.intellij.openapi.vcs.changes.LocalChangeList,com.intellij.ui.ColoredTreeCellRenderer,Z,Z,Z):V
-- s:getDecorators(com.intellij.openapi.project.Project):java.util.List
 com.intellij.openapi.vcs.changes.ChangeListListener
 - java.util.EventListener
 - sf:TOPIC:com.intellij.util.messages.Topic
@@ -1139,10 +1145,6 @@ c:com.intellij.openapi.vcs.changes.ExternallyRenamedChange
 - isCopied():Z
 - setCopied(Z):V
 - setRenamedOrMovedTarget(com.intellij.openapi.vcs.FilePath):V
-com.intellij.openapi.vcs.changes.FilePathIconProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- getIcon(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.project.Project):javax.swing.Icon
-- getIcon(com.intellij.openapi.vcs.FilePath,Z,com.intellij.openapi.project.Project):javax.swing.Icon
 e:com.intellij.openapi.vcs.changes.IgnoreSettingsType
 - java.lang.Enum
 - sf:FILE:com.intellij.openapi.vcs.changes.IgnoreSettingsType
@@ -1209,15 +1211,6 @@ a:com.intellij.openapi.vcs.changes.LocalCommitExecutor
 - com.intellij.ide.HelpIdProvider
 - com.intellij.openapi.vcs.changes.CommitExecutor
 - <init>():V
-f:com.intellij.openapi.vcs.changes.TextRevisionNumber
-- com.intellij.openapi.vcs.history.ShortVcsRevisionNumber
-- <init>(java.lang.String):V
-- <init>(java.lang.String,java.lang.String):V
-- asString():java.lang.String
-- compareTo(com.intellij.openapi.vcs.history.VcsRevisionNumber):I
-- equals(java.lang.Object):Z
-- hashCode():I
-- toShortString():java.lang.String
 com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener
 - a:invalidateAnnotationsFor(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.VcsKey):V
 - a:registerAnnotation(com.intellij.openapi.vcs.annotate.FileAnnotation):V
@@ -1548,9 +1541,6 @@ f:com.intellij.openapi.vcs.history.HistoryCacheWithRevisionKey
 - equals(java.lang.Object):Z
 - getRevisionNumber():com.intellij.openapi.vcs.history.VcsRevisionNumber
 - hashCode():I
-com.intellij.openapi.vcs.history.ShortVcsRevisionNumber
-- com.intellij.openapi.vcs.history.VcsRevisionNumber
-- a:toShortString():java.lang.String
 a:com.intellij.openapi.vcs.history.VcsAbstractHistorySession
 - com.intellij.openapi.vcs.history.VcsHistorySession
 - <init>(java.util.List):V
@@ -2202,9 +2192,6 @@ com.intellij.vcs.history.VcsHistoryProviderEx
 - com.intellij.openapi.vcs.history.VcsHistoryProvider
 - a:getLastRevision(com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vcs.history.VcsFileRevision
 - a:reportAppendableHistory(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.history.VcsRevisionNumber,com.intellij.openapi.vcs.history.VcsAppendableHistorySessionPartner):V
-com.intellij.vcs.log.VcsUser
-- a:getEmail():java.lang.String
-- a:getName():java.lang.String
 a:com.intellij.vcsUtil.ActionWithTempFile
 - <init>(java.io.File):V
 - execute():V

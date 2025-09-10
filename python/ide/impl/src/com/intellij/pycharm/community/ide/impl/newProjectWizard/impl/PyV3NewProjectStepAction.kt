@@ -5,6 +5,7 @@ import com.intellij.ide.util.projectWizard.AbstractNewProjectStep
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.wm.impl.welcomeScreen.collapsedActionGroup.CollapsedActionGroup
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.impl.emptyProject.PyV3EmptyProjectGenerator
@@ -31,18 +32,18 @@ internal class PyV3NewProjectStepAction : AbstractNewProjectStep<PyV3BaseProject
         else -> ProjectSettingsStepBase(projectGenerator, callback)
       }
 
-
     override fun getActions(
       generators: List<DirectoryProjectGenerator<*>>,
       callback: AbstractCallback<PyV3BaseProjectSettings>,
     ): Array<out AnAction> {
-      // Show non-python actions as a collapsed group
+      // Show non python actions as a collapsed group
       val actions = super.getActions(generators, callback)
-      val pythonActions = actions.filter {
-        it is PyV3ProjectSpecificStep ||
-        it is PromoStep && it.generator.isPython
-      }
-      return arrayOf<AnAction>(DefaultActionGroup(PyCharmCommunityCustomizationBundle.message("new.project.python.group.name"), pythonActions))
+      val (pythonActions, nonPythonActions) = actions
+        .partition { it is PyV3ProjectSpecificStep || it is PromoStep && it.generator.isPython }
+      return arrayOf<AnAction>(
+        DefaultActionGroup(PyCharmCommunityCustomizationBundle.message("new.project.python.group.name"), pythonActions),
+        CollapsedActionGroup(PyCharmCommunityCustomizationBundle.message("new.project.other.group.name"), nonPythonActions)
+      )
     }
   }
 }

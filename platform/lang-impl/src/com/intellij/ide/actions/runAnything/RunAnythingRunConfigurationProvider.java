@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
-import com.intellij.execution.actions.ChooseRunConfigurationPopup;
+import com.intellij.execution.actions.ChooseRunConfigurationManager;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup.ItemWrapper;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -40,9 +40,9 @@ public final class RunAnythingRunConfigurationProvider extends com.intellij.ide.
 
   private static Collection<ItemWrapper> sort(@NotNull Project project, @NotNull String pattern) {
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
-    List<ItemWrapper<?>> list = ChooseRunConfigurationPopup.createFlatSettingsList(project);
+    List<ItemWrapper<?>> list = ChooseRunConfigurationManager.createFlatSettingsList(project);
     TreeMap<Integer, ItemWrapper> map = new TreeMap<>(Comparator.reverseOrder());
-    for (ItemWrapper wrapper : list) {
+    for (ItemWrapper<?> wrapper : list) {
       String name = wrapper.getText();
       FList<TextRange> fragments = matcher.matchingFragments(name);
       if (fragments != null) {

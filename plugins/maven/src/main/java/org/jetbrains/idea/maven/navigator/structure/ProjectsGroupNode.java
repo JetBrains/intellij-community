@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.navigator.structure;
 import icons.MavenIcons;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -27,7 +28,8 @@ public abstract class ProjectsGroupNode extends GroupNode {
     return myProjectNodes;
   }
 
-  protected void add(ProjectNode projectNode) {
+  @VisibleForTesting
+  public void add(ProjectNode projectNode) {
     projectNode.setParent(this);
     insertSorted(myProjectNodes, projectNode);
 

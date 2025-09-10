@@ -64,6 +64,22 @@ class RPCOptions(google.protobuf.message.Message):
         disable_session_connection_sharing: builtins.bool | None = ...,
         num_channels_per_target: builtins.int | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["cache_rpc_response", b"cache_rpc_response", "compression_algorithm", b"compression_algorithm", "compression_level", b"compression_level", "disable_session_connection_sharing", b"disable_session_connection_sharing", "num_channels_per_target", b"num_channels_per_target", "use_rpc_for_inprocess_master", b"use_rpc_for_inprocess_master"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "cache_rpc_response",
+            b"cache_rpc_response",
+            "compression_algorithm",
+            b"compression_algorithm",
+            "compression_level",
+            b"compression_level",
+            "disable_session_connection_sharing",
+            b"disable_session_connection_sharing",
+            "num_channels_per_target",
+            b"num_channels_per_target",
+            "use_rpc_for_inprocess_master",
+            b"use_rpc_for_inprocess_master",
+        ],
+    ) -> None: ...
 
 global___RPCOptions = RPCOptions

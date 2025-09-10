@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmJsLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmWasiLibraryKind
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -66,7 +66,7 @@ fun AbstractMultiModuleTest.setupMppProjectFromTextFile(testRoot: File) {
 private fun dependenciesFile(testRoot: File) = File(testRoot, "dependencies.txt")
 
 fun AbstractMultiModuleTest.setupMppProjectFromDependenciesFile(dependencies: File, testRoot: File) {
-    val projectModel = ProjectStructureParser(testRoot).parse(FileUtil.loadFile(dependencies))
+    val projectModel = ProjectStructureParser(testRoot.toPath()).parse(FileUtil.loadFile(dependencies))
 
     check(projectModel.modules.isNotEmpty()) { "No modules were parsed from dependencies.txt" }
 
@@ -79,7 +79,7 @@ fun AbstractMultiModuleTest.doSetup(projectModel: ProjectResolveModel) {
 
         addRoot(
             ideaModule,
-            resolveModule.root,
+            resolveModule.root.toFile(),
             isTestRoot = false,
             transformContainedFiles = { if (it.extension == "kt") clearFileFromDiagnosticMarkup(it) }
         )
@@ -87,7 +87,7 @@ fun AbstractMultiModuleTest.doSetup(projectModel: ProjectResolveModel) {
         resolveModule.testRoot?.let { testRoot ->
             addRoot(
                 ideaModule,
-                testRoot,
+                testRoot.toFile(),
                 isTestRoot = true,
                 transformContainedFiles = { if (it.extension == "kt") clearFileFromDiagnosticMarkup(it) }
             )
@@ -110,10 +110,10 @@ fun AbstractMultiModuleTest.doSetup(projectModel: ProjectResolveModel) {
                 }
 
                 is ResolveLibrary -> ideaModule.addLibrary(
-                    jar = dependency.root,
+                    jar = dependency.root.toFile(),
                     name = dependency.name,
                     kind = dependency.kind,
-                    sourceJar = dependency.sourceRoot
+                    sourceJar = dependency.sourceRoot?.toFile(),
                 )
 
                 else -> ideaModule.addDependency(resolveModulesToIdeaModules[dependency]!!)
@@ -184,12 +184,12 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                 is ModuleDependency -> module.addDependency(modulesById[it.moduleId]!!)
                 is StdlibDependency -> {
                     when {
-                        platform.isCommon() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibCommon, kind = KotlinCommonLibraryKind)
-                        platform.isJvm() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlib)
-                        platform.isJs() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibJs, kind = KotlinJavaScriptLibraryKind)
-                        platform.isWasmJs() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibWasmJs, kind = KotlinWasmJsLibraryKind)
+                        platform.isCommon() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibCommon.toFile(), kind = KotlinCommonLibraryKind)
+                        platform.isJvm() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlib.toFile())
+                        platform.isJs() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibJs.toFile(), kind = KotlinJavaScriptLibraryKind)
+                        platform.isWasmJs() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibWasmJs.toFile(), kind = KotlinWasmJsLibraryKind)
                         platform.isWasmWasi() -> module.addLibrary(
-                            TestKotlinArtifacts.kotlinStdlibWasmWasi,
+                            TestKotlinArtifacts.kotlinStdlibWasmWasi.toFile(),
                             kind = KotlinWasmWasiLibraryKind
                         )
 
@@ -205,8 +205,8 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
 
                 is CoroutinesDependency -> module.enableCoroutines()
                 is KotlinTestDependency -> when {
-                    platform.isJvm() -> module.addLibrary(TestKotlinArtifacts.kotlinTestJunit)
-                    platform.isJs() -> module.addLibrary(TestKotlinArtifacts.kotlinTestJs, kind = KotlinJavaScriptLibraryKind)
+                    platform.isJvm() -> module.addLibrary(TestKotlinArtifacts.kotlinTestJunit.toFile())
+                    platform.isJs() -> module.addLibrary(TestKotlinArtifacts.kotlinTestJs.toFile(), kind = KotlinJavaScriptLibraryKind)
                 }
             }
         }

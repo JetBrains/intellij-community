@@ -14,6 +14,7 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingTreeView
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
+import com.jetbrains.python.packaging.toolwindow.model.ErrorNode
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
 import java.awt.BorderLayout
@@ -74,6 +75,10 @@ internal class PyPackagesListController(val project: Project, val controller: Py
 
   fun collapseAll() {
     tablesView.collapseAll()
+  }
+
+  fun showErrorResult(errorNode: ErrorNode) {
+    tablesView.showErrorResult(errorNode)
   }
 
   internal fun setLoadingState(isLoading: Boolean) {

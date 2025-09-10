@@ -24,11 +24,11 @@ import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 
 class ConvertToBlockBodyIntention : SelfTargetingIntention<KtDeclarationWithBody>(
     KtDeclarationWithBody::class.java,
-    KotlinBundle.lazyMessage("convert.to.block.body")
+    KotlinBundle.messagePointer("convert.to.block.body")
 ) {
-    override fun isApplicableTo(element: KtDeclarationWithBody, caretOffset: Int) = createContext(element) != null
+    override fun isApplicableTo(element: KtDeclarationWithBody, caretOffset: Int): Boolean = createContext(element) != null
 
-    override fun skipProcessingFurtherElementsAfter(element: PsiElement) =
+    override fun skipProcessingFurtherElementsAfter(element: PsiElement): Boolean =
         element is KtDeclaration || super.skipProcessingFurtherElementsAfter(element)
 
     override fun applyTo(element: KtDeclarationWithBody, editor: Editor?) {

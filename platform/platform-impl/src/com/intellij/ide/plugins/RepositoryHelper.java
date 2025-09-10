@@ -5,6 +5,7 @@ import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService;
+import com.intellij.ide.plugins.newui.PluginNodeModelBuilderFactory;
 import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter;
 import com.intellij.ide.plugins.newui.PluginUiModelBuilderFactory;
@@ -106,7 +107,8 @@ public final class RepositoryHelper {
     @Nullable BuildNumber build,
     @Nullable ProgressIndicator indicator
   ) throws IOException {
-    return ContainerUtil.map(loadPluginModels(repositoryUrl, build, indicator), it -> (PluginNode)it.getDescriptor());
+    return ContainerUtil.map(loadPluginModels(repositoryUrl, build, indicator, PluginNodeModelBuilderFactory.INSTANCE),
+                             it -> (PluginNode)it.getDescriptor());
   }
 
   @Deprecated(forRemoval = true)

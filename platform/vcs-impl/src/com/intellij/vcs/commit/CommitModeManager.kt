@@ -18,7 +18,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
+import com.intellij.openapi.vcs.ProjectLevelVcsManager.Companion.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.VcsType
 import com.intellij.openapi.vcs.impl.VcsEP
@@ -83,7 +83,7 @@ class CommitModeManager(private val project: Project, private val coroutineScope
   }
 
   private fun getNewCommitMode(): CommitMode {
-    val activeVcses = ProjectLevelVcsManager.getInstance(project).allActiveVcss
+    val activeVcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()
     val singleVcs = activeVcses.singleOrNull()
 
     if (activeVcses.isEmpty()) return CommitMode.PendingCommitMode
@@ -109,7 +109,7 @@ class CommitModeManager(private val project: Project, private val coroutineScope
 
   private fun canSetNonModal(): Boolean {
     if (isForceNonModalCommit.asBoolean()) return true
-    val activeVcses = ProjectLevelVcsManager.getInstance(project).allActiveVcss
+    val activeVcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()
     return activeVcses.isNotEmpty() && activeVcses.all { it.type == VcsType.distributed }
   }
 

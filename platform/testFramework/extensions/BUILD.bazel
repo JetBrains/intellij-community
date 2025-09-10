@@ -11,7 +11,7 @@ jvm_library(
   name = "testExtensions",
   module_name = "intellij.platform.testExtensions",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util/concurrency",
@@ -33,6 +33,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/core-ui",
     "@lib//:junit5",
+    "//java/java-runtime:rt",
   ],
   runtime_deps = [":testExtensions_resources"]
 )

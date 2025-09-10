@@ -46,8 +46,8 @@ internal object KotlinTypedHandlerHelper {
         AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null)
     }
 
-    internal fun autoPopupMemberLookup(project: Project, editor: Editor): Unit =
-        AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, fun(file: PsiFile): Boolean {
+    internal fun scheduleAutoPopup(project: Project, editor: Editor): Unit =
+        AutoPopupController.getInstance(project).scheduleAutoPopup(editor, fun(file: PsiFile): Boolean {
             val offset = editor.caretModel.offset
             val lastToken = file.findElementAt(offset - 1) ?: return false
             val elementType = lastToken.node.elementType
@@ -75,11 +75,11 @@ internal object KotlinTypedHandlerHelper {
     }
 
     internal fun autoPopupAt(project: Project, editor: Editor) {
-        AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->
+        AutoPopupController.getInstance(project).scheduleAutoPopup(editor) { file: PsiFile ->
             val offset = editor.caretModel.offset
             val chars = editor.document.charsSequence
             val elementAtCaret = file.findElementAt(offset - 1)
-            val lastNodeType = elementAtCaret?.node?.elementType ?: return@autoPopupMemberLookup false
+            val lastNodeType = elementAtCaret?.node?.elementType ?: return@scheduleAutoPopup false
 
             lastNodeType === KDocTokens.TEXT ||
                     lastNodeType === KtTokens.AT && (isLabelCompletion(chars, offset) || isAnnotationCompletion(elementAtCaret))
@@ -87,9 +87,9 @@ internal object KotlinTypedHandlerHelper {
     }
 
     internal fun autoPopupColon(project: Project, editor: Editor): Unit =
-        AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->
+        AutoPopupController.getInstance(project).scheduleAutoPopup(editor) { file: PsiFile ->
             val offset = editor.caretModel.offset
-            val lastElement = file.findElementAt(offset - 1) ?: return@autoPopupMemberLookup false
+            val lastElement = file.findElementAt(offset - 1) ?: return@scheduleAutoPopup false
             lastElement.node.elementType === KtTokens.COLONCOLON || isAnnotationAfterUseSiteTargetCompletion(lastElement)
         }
 
@@ -248,7 +248,7 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
                 }
             }
 
-            '.' -> KotlinTypedHandlerHelper.autoPopupMemberLookup(project, editor)
+            '.' -> KotlinTypedHandlerHelper.scheduleAutoPopup(project, editor)
             ':' -> KotlinTypedHandlerHelper.autoPopupColon(project, editor)
             '[' -> KotlinTypedHandlerHelper.autoPopupParameterInfo(project, editor)
             '@' -> KotlinTypedHandlerHelper.autoPopupAt(project, editor)

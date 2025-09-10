@@ -10,40 +10,53 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 
+@ApiStatus.Obsolete
 @ApiStatus.Internal
 public final class Unsafe {
   private static final MethodHandle putObjectVolatile;
   private static final MethodHandle getObjectVolatile;
   private static final MethodHandle compareAndSwapObject;
   private static final MethodHandle compareAndSwapInt;
+  private static final MethodHandle getIntVolatile;
   private static final MethodHandle compareAndSwapLong;
   private static final MethodHandle getAndAddInt;
   private static final MethodHandle objectFieldOffset;
   private static final MethodHandle arrayIndexScale;
   private static final MethodHandle arrayBaseOffset;
-  private static final MethodHandle copyMemory;
+
+  private static final Object unsafe;
 
   static {
     try {
+      Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+      unsafe = ReflectionUtil.getStaticFieldValue(unsafeClass, unsafeClass, "theUnsafe");
+      if (unsafe == null) {
+        throw new RuntimeException("Could not find 'theUnsafe' field in the Unsafe class");
+      }
       putObjectVolatile = find("putObjectVolatile", void.class, Object.class, long.class, Object.class);
       getObjectVolatile = find("getObjectVolatile", Object.class, Object.class, long.class);
       compareAndSwapObject = find("compareAndSwapObject", boolean.class, Object.class, long.class, Object.class, Object.class);
       compareAndSwapInt = find("compareAndSwapInt", boolean.class, Object.class, long.class, int.class, int.class);
+      getIntVolatile = find("getIntVolatile", int.class, Object.class, long.class);
       compareAndSwapLong = find("compareAndSwapLong", boolean.class, Object.class, long.class, long.class, long.class);
       getAndAddInt = find("getAndAddInt", int.class, Object.class, long.class, int.class);
       objectFieldOffset = find("objectFieldOffset", long.class, Field.class);
       arrayBaseOffset = find("arrayBaseOffset", int.class, Class.class);
       arrayIndexScale = find("arrayIndexScale", int.class, Class.class);
-      copyMemory = find("copyMemory", void.class, Object.class, long.class, Object.class, long.class, long.class);
     }
     catch (Throwable t) {
       throw new Error(t);
     }
   }
 
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static @NotNull Object getUnsafeImplDeprecated() {
+    return unsafe;
+  }
+
   private static @NotNull MethodHandle find(String name, Class<?> returnType, Class<?>... params) throws Exception {
     MethodHandles.Lookup publicLookup = MethodHandles.publicLookup();
-    Object unsafe = ReflectionUtil.getUnsafe();
     return publicLookup
       .findVirtual(unsafe.getClass(), name, MethodType.methodType(returnType, params))
       .bindTo(unsafe);
@@ -58,6 +71,15 @@ public final class Unsafe {
     }
   }
 
+  static int getIntVolatile(Object object, long offset) {
+    try {
+      return (int)getIntVolatile.invokeExact(object, offset);
+    }
+    catch (Throwable throwable) {
+      throw new RuntimeException(throwable);
+    }
+  }
+
   static boolean compareAndSwapLong(@NotNull Object object, long offset, long expected, long value) {
     try {
       return (boolean)compareAndSwapLong.invokeExact(object, offset, expected, value);
@@ -66,6 +88,7 @@ public final class Unsafe {
       throw new RuntimeException(throwable);
     }
   }
+
   static int getAndAddInt(@NotNull Object object, long offset, int value) {
     try {
       return (int)getAndAddInt.invokeExact(object, offset, value);
@@ -103,6 +126,7 @@ public final class Unsafe {
       throw new RuntimeException(throwable);
     }
   }
+
   static long objectFieldOffset(Field f) {
     try {
       return (long)objectFieldOffset.invokeExact(f);
@@ -120,19 +144,10 @@ public final class Unsafe {
       throw new RuntimeException(throwable);
     }
   }
+
   public static int arrayBaseOffset(Class<?> arrayClass) {
     try {
       return (int)arrayBaseOffset.invokeExact(arrayClass);
-    }
-    catch (Throwable throwable) {
-      throw new RuntimeException(throwable);
-    }
-  }
-  public static void copyMemory(Object srcBase, long srcOffset,
-                                Object destBase, long destOffset,
-                                long bytes) {
-    try {
-      copyMemory.invokeExact(srcBase, srcOffset, destBase, destOffset, bytes);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);

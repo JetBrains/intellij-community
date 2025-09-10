@@ -3665,10 +3665,6 @@
     <option name="jspx" path="ActionManager" hit="Creates new JSP/JSPX page" />
     <option name="new" path="ActionManager" hit="Creates new JSP/JSPX page" />
     <option name="page" path="ActionManager" hit="Creates new JSP/JSPX page" />
-    <option name="creates" path="ActionManager" hit="Creates new Kotlin Worksheet" />
-    <option name="kotlin" path="ActionManager" hit="Creates new Kotlin Worksheet" />
-    <option name="new" path="ActionManager" hit="Creates new Kotlin Worksheet" />
-    <option name="worksheet" path="ActionManager" hit="Creates new Kotlin Worksheet" />
     <option name="class" path="ActionManager" hit="Creates new Kotlin class or file" />
     <option name="creates" path="ActionManager" hit="Creates new Kotlin class or file" />
     <option name="file" path="ActionManager" hit="Creates new Kotlin class or file" />
@@ -6468,8 +6464,6 @@
     <option name="testing" path="ActionManager" hit="Kotlin Refactoring Testing" />
     <option name="kotlin" path="ActionManager" hit="Kotlin Script" />
     <option name="script" path="ActionManager" hit="Kotlin Script" />
-    <option name="kotlin" path="ActionManager" hit="Kotlin Worksheet" />
-    <option name="worksheet" path="ActionManager" hit="Kotlin Worksheet" />
     <option name="-" path="ActionManager" hit="LF - Unix and macOS (\n)" />
     <option name="and" path="ActionManager" hit="LF - Unix and macOS (\n)" />
     <option name="lf" path="ActionManager" hit="LF - Unix and macOS (\n)" />

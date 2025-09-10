@@ -86,12 +86,20 @@
         "hoverBorderColor": "Orange4"
       },
       "Expiring": {
-        "foreground": "Red12",
-        "background": "Red4",
+        "foreground": "Red3",
+        "background": "Gray13",
         "borderColor": "Red4",
-        "hoverForeground": "Red12",
-        "hoverBackground": "Red5",
-        "hoverBorderColor": "Red5"
+        "hoverForeground": "Red3",
+        "hoverBackground": "Red12",
+        "hoverBorderColor": "Red4"
+      },
+      "Progress" : {
+        "foreground": "Gray7",
+        "background": "Gray13",
+        "borderColor": "Gray8",
+        "hoverForeground": "Gray7",
+        "hoverBackground": "Gray13",
+        "hoverBorderColor": "Gray8"
       }
     },
 

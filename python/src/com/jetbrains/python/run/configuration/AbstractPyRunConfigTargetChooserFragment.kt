@@ -20,6 +20,7 @@ import com.jetbrains.python.extensions.ProjectSdkContextAnchor
 import com.jetbrains.python.isPythonModule
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
+import org.jetbrains.annotations.ApiStatus
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.ItemEvent
@@ -28,6 +29,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 
+@ApiStatus.Internal
 abstract class AbstractPyRunConfigTargetChooserFragment<T: AbstractPythonRunConfiguration<T>> :
   SettingsEditorFragment<T, JPanel>(
     "python.config.target.field",

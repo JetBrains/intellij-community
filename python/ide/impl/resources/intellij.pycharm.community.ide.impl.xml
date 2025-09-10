@@ -77,8 +77,7 @@
                             implementation="com.intellij.pycharm.community.ide.impl.configuration.PySdkStatusBarWidgetFactory"
                             order="after CodeStyleStatusBarWidget, before git, before hg, before Notifications"/>
 
-    <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.PythonSdkConfigurator" id="sdk"
-                                  order="after PlatformProjectConfigurator"/>
+    <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.PythonSdkConfigurator" id="sdk"/>
     <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.PythonSourceRootConfigurator" id="sourceRoot"
                                   order="after sdk"/>
     <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.PlatformInspectionProfileConfigurator"/>
@@ -128,8 +127,7 @@
   <extensions defaultExtensionNs="Pythonid">
     <projectSdkConfigurationExtension
       implementation="com.intellij.pycharm.community.ide.impl.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
-      id="
-      requirementsTxtOrSetupPy"/>
+      id="requirementsTxtOrSetupPy" order="last"/>
     <projectSdkConfigurationExtension
       implementation="com.intellij.pycharm.community.ide.impl.conda.PyEnvironmentYmlSdkConfiguration"
       id="environmentYml"/>
@@ -141,6 +139,8 @@
                                       id="hatch" order="after poetry"/>
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyUvSdkConfiguration"
                                       id="uv" order="after hatch"/>
+    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyVenvSdkConfiguration"
+                                      id="venv" order="before requirementsTxtOrSetupPy"/>
   </extensions>
 
   <actions resource-bundle="messages.ActionsBundle">

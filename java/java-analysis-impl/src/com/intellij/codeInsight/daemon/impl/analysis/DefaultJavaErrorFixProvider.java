@@ -14,7 +14,6 @@ import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.java.codeserver.core.JavaPsiMethodUtil;
 import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.codeserver.core.JpmsModuleAccessInfo;
@@ -249,6 +248,9 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
         return myFactory.createDeleteDefaultFix(null, error.psi());
       }
       return null;
+    });
+    fix(SWITCH_EXPRESSION_NO_RESULT, error -> {
+      return myFactory.createLiftThrowOutOfSwitchExpression(error.psi());
     });
     fix(SYNTAX_ERROR, error -> error.psi().getParent() instanceof PsiSwitchLabeledRuleStatement rule &&
                                error.psi().getErrorDescription().equals(JavaPsiBundle.message("expected.switch.rule"))

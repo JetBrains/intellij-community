@@ -11,7 +11,7 @@ jvm_library(
   name = "tests.shared_test_lib",
   module_name = "kotlin.gradle.gradle-java.tests.shared",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/gradle:gradle-tests_test_lib",
@@ -94,7 +94,9 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/openapi:java",
     "//plugins/kotlin/jvm-debugger/coroutines",
-  ]
+    "//java/java-runtime:rt",
+  ],
+  exports = ["@lib//:kotlin-gradle-plugin-idea"]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java.tests.shared` end
 

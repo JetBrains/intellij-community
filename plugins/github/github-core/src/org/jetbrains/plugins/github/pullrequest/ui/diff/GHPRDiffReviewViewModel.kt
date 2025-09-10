@@ -31,10 +31,8 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.viewedStateComputa
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
-import org.jetbrains.plugins.github.pullrequest.ui.comment.lineLocation
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.ranges
-import kotlin.collections.emptyList
 
 interface GHPRDiffReviewViewModel {
   val commentableRanges: List<Range>
@@ -98,7 +96,7 @@ internal class GHPRDiffReviewViewModelImpl(
 
   private val newCommentsContainer =
     MappingScopedItemsContainer.byIdentity<GHPRReviewNewCommentEditorViewModel, GHPRNewCommentDiffViewModelImpl>(cs) {
-      GHPRNewCommentDiffViewModelImpl(it.position.location.lineLocation, it)
+      GHPRNewCommentDiffViewModelImpl(it.position.location, it)
     }
   override val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>> =
     newCommentsContainer.mappingState.mapState { it.values }

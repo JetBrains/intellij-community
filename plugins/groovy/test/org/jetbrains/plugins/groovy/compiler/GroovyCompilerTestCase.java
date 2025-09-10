@@ -112,7 +112,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder<?> moduleBuilder) throws Exception {
-    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
+    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_11);
     super.tuneFixture(moduleBuilder);
   }
 

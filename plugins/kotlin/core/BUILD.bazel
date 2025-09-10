@@ -5,7 +5,7 @@ jvm_library(
   name = "core",
   module_name = "kotlin.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -54,7 +54,6 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",
-    "//platform/diff-impl",
     "//java/java-impl:impl",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/core-ui",

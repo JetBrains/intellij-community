@@ -1,3 +1,5 @@
+from typing import Final
+
 from .ElementTree import (
     XML as XML,
     ParseError as ParseError,
@@ -10,4 +12,5 @@ from .ElementTree import (
     tostring as tostring,
 )
 
+__origin__: Final = "xml.etree.cElementTree"
 __all__ = ["ParseError", "XML", "XMLParse", "XMLParser", "XMLTreeBuilder", "fromstring", "iterparse", "parse", "tostring"]

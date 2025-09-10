@@ -11,11 +11,13 @@ import com.intellij.diagnostic.logs.LogCategory
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleId.Companion.asPluginModuleId
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.adviseSuspend
@@ -160,7 +162,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           // Create test class
           val testPluginId = System.getProperty("distributed.test.module", TEST_PLUGIN_ID)
-          val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule(testPluginId)
+          val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule(PluginId(testPluginId).asPluginModuleId())
                            ?: error("Test plugin '$testPluginId' is not found")
 
           LOG.info("Test class will be loaded from '${testPlugin.pluginId}' plugin")
@@ -264,35 +266,33 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        suspend fun leaveAllModals(throwErrorIfModal: Boolean) {
+        suspend fun makeSureNoModals(): Boolean =
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
             repeat(10) {
               if (ModalityState.current() == ModalityState.nonModal()) {
-                return@withContext
+                return@withContext true
               }
               delay(1.seconds)
             }
-            if (throwErrorIfModal) {
-              LOG.error("Unexpected modality: " + ModalityState.current())
-            }
+            LOG.warn("Unexpected modality: " + ModalityState.current())
             LaterInvocator.forceLeaveAllModals("DistributedTestHost - leaveAllModals")
             repeat(10) {
               if (ModalityState.current() == ModalityState.nonModal()) {
-                return@withContext
+                return@withContext true
               }
               delay(1.seconds)
             }
             LOG.error("Failed to close modal dialog: " + ModalityState.current())
+            return@withContext false
           }
-        }
 
-        session.forceLeaveAllModals.setSuspend(sessionBgtDispatcher) { _, throwErrorIfModal ->
-          leaveAllModals(throwErrorIfModal)
+        session.forceLeaveAllModals.setSuspend(sessionBgtDispatcher) { _, _ ->
+          makeSureNoModals()
         }
 
         session.closeAllOpenedProjects.setSuspend(sessionBgtDispatcher) { _, _ ->
           try {
-            leaveAllModals(throwErrorIfModal = true)
+            makeSureNoModals()
 
             ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
             withContext(Dispatchers.EDT + NonCancellable) {
@@ -318,6 +318,12 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
         session.requestFocus.setSuspend(Dispatchers.EDT + ModalityState.any().asContextElement()) { _, reportFailures ->
           requestFocus(reportFailures)
+        }
+
+        session.isFocused.setSuspend(Dispatchers.IO) { _, _ ->
+          Window.getWindows().filter { it.isShowing }.any {
+            it.isFocused || it.isFocusAncestor()
+          }
         }
 
         session.makeScreenshot.setSuspend(sessionBgtDispatcher) { _, fileName ->
@@ -369,14 +375,14 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
   private suspend fun requestFocusWithProjectIfNeeded(project: Project, reportFailures: Boolean): Boolean {
     val projectIdeFrame = WindowManager.getInstance().getFrame(project)
-    if (projectIdeFrame == null) {
-      LOG.info("No frame yet, nothing to focus")
+    if (projectIdeFrame == null || !projectIdeFrame.isVisible) { // it really does happen that only one is true
+      LOG.info("No visible frame yet, nothing to focus")
       return false
     }
     else {
       val frameName = "frame '${projectIdeFrame.name}'"
 
-      return if ((projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused)) {
+      return if ((projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused)) { // it really does happen that only one is true
         LOG.info("Frame '$frameName' is already focused")
         true
       }
@@ -405,7 +411,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           LOG.info(message)
         }
       }) {
-        projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused
+        projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused // it really does happen that only one is true
       }
     }
   }

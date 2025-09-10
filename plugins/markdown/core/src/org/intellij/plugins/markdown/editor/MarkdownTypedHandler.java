@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -24,11 +24,11 @@ public final class MarkdownTypedHandler extends TypedHandlerDelegate {
         }
       }
 
-      AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
       return Result.STOP;
     }
     if (charTyped == '<') {
-      AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
       return Result.STOP;
     }
     return Result.CONTINUE;

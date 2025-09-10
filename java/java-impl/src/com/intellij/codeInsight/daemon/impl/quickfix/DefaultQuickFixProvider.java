@@ -29,6 +29,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     if (containingFile instanceof PsiJavaCodeReferenceCodeFragment fragment && !fragment.isClassesAccepted()) {
       return;
     }
+    if (tryRegisterReimportFix(ref, registrar)) return;
     List<IntentionAction> fixes = new ArrayList<>();
     OrderEntryFix.registerFixes(ref, fixes);
     for (IntentionAction fix : fixes) {
@@ -75,6 +76,20 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     if (PsiUtil.isAvailable(JavaFeature.GENERICS, ref)) {
       registrar.register(new CreateTypeParameterFromUsageFix(ref).asIntention());
     }
+  }
+
+  private static boolean tryRegisterReimportFix(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
+    PsiElement resolved = ref.resolve();
+    if (!(resolved instanceof PsiClass psiClass &&
+          PsiUtil.isAccessible(psiClass, ref, null))) {
+      return false;
+    }
+
+    List<ReplaceTypeWithWrongImportFix> fixes = ReplaceTypeWithWrongImportFix.create(ref);
+    for (ReplaceTypeWithWrongImportFix fix : fixes) {
+      registrar.register(fix.asIntention());
+    }
+    return true;
   }
 
   private static @NotNull Collection<IntentionAction> createClassActions(@NotNull PsiJavaCodeReferenceElement ref) {

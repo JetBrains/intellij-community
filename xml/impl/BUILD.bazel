@@ -52,6 +52,7 @@ jvm_library(
     "@lib//:aalto-xml",
     "//platform/polySymbols/backend",
     "//libraries/xerces",
+    "//xml/xml-syntax:syntax",
   ],
   exports = [
     "//xml/xml-psi-impl:psi-impl",

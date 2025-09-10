@@ -11,7 +11,7 @@ jvm_library(
   name = "uploader",
   module_name = "intellij.platform.statistics.uploader",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
@@ -23,6 +23,7 @@ jvm_library(
     "@lib//:com-jetbrains-fus-reporting-serialization-kotlin",
     "@lib//:com-jetbrains-fus-reporting-configuration",
     "@lib//:com-jetbrains-fus-reporting-ap-validation",
+    "@lib//:com-jetbrains-fus-reporting-connection-client",
   ],
   exports = ["//platform/statistics/config"],
   runtime_deps = [":uploader_resources"]

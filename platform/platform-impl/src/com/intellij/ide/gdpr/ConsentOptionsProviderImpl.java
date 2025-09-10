@@ -7,7 +7,7 @@ import com.intellij.ui.LicensingFacade;
 import java.util.Set;
 
 final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
-  private static final Set<String> productsSupportingForcedConsent = Set.of("QA", "RR", "WS", "RD", "CL");
+  private static final Set<String> productsSupportingForcedConsent = Set.of("QA", "RR", "WS", "RD", "CL", "RM");
 
   private volatile long myLastModificationCount = -1;
   private volatile boolean mySendingAllowed = false;
@@ -45,5 +45,10 @@ final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
     myLastModificationCount = modificationCount;
 
     return allowedNow;
+  }
+
+  @Override
+  public boolean isTraceDataCollectionAllowed() {
+    return ConsentOptions.getInstance().getTraceDataCollectionPermission() == ConsentOptions.Permission.YES;
   }
 }

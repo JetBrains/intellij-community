@@ -59,7 +59,7 @@ internal class SpecifyTypeExplicitlyIntention:
         if (skip(element)) {
             null
         } else {
-            getTypeInfo(element).takeUnless { it.defaultType.isError }
+            getTypeInfo(element, useSmartCastType = true).takeUnless { it.defaultType.isError }
         }
 
     override fun invoke(

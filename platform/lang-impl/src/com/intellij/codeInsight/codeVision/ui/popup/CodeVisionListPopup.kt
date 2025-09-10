@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.codeVision.ui.popup
 
-import com.intellij.codeInsight.codeVision.CodeVisionBundle
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionHost
+import com.intellij.codeInsight.codeVision.CodeVisionMessageBundle
 import com.intellij.codeInsight.codeVision.ui.model.AdditionalCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
 import com.intellij.codeInsight.codeVision.ui.model.contextAvailable
@@ -20,8 +20,8 @@ import javax.swing.Icon
 class CodeVisionListPopup private constructor(project: Project, aStep: ListPopupStep<CodeVisionEntry>) : ListPopupImpl(project, aStep) {
   companion object {
 
-    private val settingButton = AdditionalCodeVisionEntry(CodeVisionHost.settingsLensProviderId, CodeVisionBundle.message("LensListPopup.tooltip.settings.settings"),
-                                                          CodeVisionBundle.message("LensListPopup.tooltip.settings"))
+    private val settingButton = AdditionalCodeVisionEntry(CodeVisionHost.settingsLensProviderId, CodeVisionMessageBundle.message("LensListPopup.tooltip.settings.settings"),
+                                                          CodeVisionMessageBundle.message("LensListPopup.tooltip.settings"))
 
     fun createLensList(model: RangeCodeVisionModel, project: Project, inlay: Inlay<*>): CodeVisionListPopup {
       val lst: ArrayList<CodeVisionEntry> = ArrayList(model.sortedLensesMorePopup())

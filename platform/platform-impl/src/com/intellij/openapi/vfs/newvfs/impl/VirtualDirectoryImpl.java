@@ -18,11 +18,8 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.*;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Attributes;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor;
 import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -494,26 +491,28 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return Arrays.asList(getChildren()); // may load VFS from other projects
     }
 
-    loadPersistedChildren();
+    loadAllPersistedChildren();
 
     return getCachedChildren();
   }
 
   @Override
   public @NotNull @Unmodifiable Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
-    if (!owningPersistentFS().wereChildrenAccessed(this)) {
+    PersistentFSImpl pFS = owningPersistentFS();
+    if (!pFS.wereChildrenAccessed(this)) {
       return Collections.emptyList();
     }
-    if (!owningPersistentFS().areChildrenLoaded(this)) {
-      loadPersistedChildren();
+    if (!pFS.areChildrenLoaded(this)) {
+      loadAllPersistedChildren();
     }
     return getCachedChildren();
   }
 
-  private void loadPersistedChildren() {
-    String[] names = owningPersistentFS().listPersisted(this);
-    for (String name : names) {
-      findChild(name, /*doRefresh: */ false, /*canonicalizeName: */ false);
+  /** Loads into memory all the children cached in VFS persistent storage so far. This could be _not all_ the actual directory children */
+  private void loadAllPersistedChildren() {
+    ListResult childrenInPersistence = owningPersistentFS().peer().list(getId());
+    for (ChildInfo childInfo : childrenInPersistence.children) {
+      findChildById(childInfo.getId());
     }
   }
 
@@ -521,21 +520,29 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     VfsData vfsData = getVfsData();
     PersistentFSImpl pFS = vfsData.owningPersistentFS();
 
-    List<? extends ChildInfo> childrenInfo = pFS.listAll(this);
-
-    boolean reallyNeedsSorting = sortChildrenOnLoading && (childrenInfo.size() > 1);
-    if (reallyNeedsSorting) {
-      String someChildName = childrenInfo.get(0).getName().toString();
-      updateCaseSensitivityIfUnknown(someChildName);
-    }
-    boolean isCaseSensitive = isCaseSensitive();
+    //.listAll() could involve underlying FS access, i.e. IO, which is freeze-producing if done under the lock.
+    // But we need it under the .directoryData lock for consistency: to ensure no children list's changes could
+    // sneak in between .listAll() and children processing under the lock below -- see comments in .logDisappearedChildren()
+    // for possible inconsistency.
+    // So the trick: execute .listAll() outside the lock, to trigger FS access, if needed, outside the lock, with
+    // its results being cached. Then repeat .listAll() under the lock to ensure consistency -- that second
+    // .listAll() call 99.99% returns cached data without FS access:
+    pFS.listAll(this);
 
     synchronized (directoryData) {
+      List<? extends ChildInfo> childrenInfo = pFS.listAll(this);
       if (childrenInfo.isEmpty()) {
         directoryData.clearAdoptedNames();
         directoryData.children = VfsData.ChildrenIds.EMPTY.withAllChildrenLoaded(true);
         return VirtualFile.EMPTY_ARRAY;
       }
+
+      boolean reallyNeedsSorting = sortChildrenOnLoading && (childrenInfo.size() > 1);
+      if (reallyNeedsSorting) {
+        String someChildName = childrenInfo.get(0).getName().toString();
+        updateCaseSensitivityIfUnknown(someChildName);
+      }
+      boolean isCaseSensitive = isCaseSensitive();
 
       //We could load children unsorted, and delay the sorting until someone really asks for it:
       if (reallyNeedsSorting) {
@@ -595,9 +602,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       directoryData.clearAdoptedNames();
       directoryData.children = new VfsData.ChildrenIds(newChildrenIds, sortChildrenOnLoading, /*allChildren: */ true);
-      if (CHECK_CONSISTENCY) {
-        assertConsistency(isCaseSensitive, childrenInfo);
-      }
+      assertConsistency(isCaseSensitive, childrenInfo);
 
       return newChildren;
     }
@@ -667,6 +672,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       //MAYBE RC: the code below is similar to addChild(child) -- how to reduce code duplication?
 
       boolean allChildrenLoaded = children.areAllChildrenLoaded();
+      Boolean wasInPersistentChildren = null; //for diagnostics only
       if (children.isSorted() && worthBinarySearch(children)) {
         String childName = child.getName();
         //If children are sorted => 99% caseSensitivity _is_ known; otherwise how could children be sorted?
@@ -679,7 +685,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           return child;//childId is in cached children: OK
         }
         else if (!allChildrenLoaded
-                 && (TRUST_FIND_CHILD_BY_ID_CALLERS || isInPersistentChildren(pFS, getId(), childId))) {
+                 && (TRUST_FIND_CHILD_BY_ID_CALLERS || (wasInPersistentChildren = isInPersistentChildren(pFS, getId(), childId)))) {
           // Assume (either by 'trust' or because we checked) that childId is indeed a child of this directory
           // => we add it to the children list, once it is not there yet:
           int insertionIndex = -indexOfName - 1;
@@ -693,21 +699,51 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           return child;//childId is in cached children: OK
         }
         else if (!allChildrenLoaded
-                 && (TRUST_FIND_CHILD_BY_ID_CALLERS || isInPersistentChildren(pFS, getId(), childId))) {
+                 && (TRUST_FIND_CHILD_BY_ID_CALLERS || (wasInPersistentChildren = isInPersistentChildren(pFS, getId(), childId)))) {
           // Assume (either by 'trust' or because we checked) that childId is indeed a child of this directory
           // => we add it to the children list, once it is not there yet:
-          //Here we 'trust' that childId is indeed a child of this directory -- so we add it to the children list, if it
-          // is not there yet -- we do not check childId really belongs to the children list
           directoryData.children = children.appendId(childId);
           return child;
         }
       }
 
-      //childId not really belong to children:
+      //childId not really belong to children. It could be because:
+      // 1. 'Orphan' file: child indeed has 'this' as it's parent, but 'this' doesn't count child as its child -- i.e. it
+      //    is a VFS inconsistency, should be detected by VFSHealthCheck -- and indeed we have some small number of reports
+      //    about it
+      // 2. Race condition #1: someone has removed the child from 'this' children while we climb up and down the hierarchy
+      //    in PersistentFSImpl.findFileById(). This is possible because in VFS we don't protect hierarchy walking with a
+      //    single lock. But WA/RA _should_ be used to access VFS from the outside, which prohibits the race -- so if such
+      //    a race exists, it is a client error of using VFS without proper RA/WA wrapping
+      // 3. Race condition #2: someone _is adding_ the child to 'this' children, but not yet finished the addition. Same as
+      //    in previous item, this is possible because in VFS we don't protect hierarchy walking with a single lock. The
+      //    difference is that _there is_ a known case there addition is done without WA around: 'local refresh'.
+      //
+      //   'Local refresh' (see comments in PersistentFSImpl.findChildInfo() for details about it) adds a new record into
+      //   the VFS during _read_ -- usually, during resolution of some path. Since it is a 'read' operation, it is usually
+      //   wrapped in RA, not in WA, and RA doesn't prohibit parallel RA with .findFileById() in it. It makes possible the
+      //   scenario there one thread is inserting a new record to VFS during the local refresh, under RA, and already inserted
+      //   the record into FSRecords and InvertedFilenameIndex -- but not yet updated parent.children list. Another RA with
+      //   FilenameIndex lookup runs in parallel, sees the just added fileId in invertedFilenameIndex, tries resolving it
+      //   via .findFileById(), and falls through here, since the fileId is not yet added into parent.children.
+      //
+      //   So far I have no good ideas about what to do with that case: some reasons for it are 'errors' while others are
+      //   legit ones. Without 'local refresh' that would be an 100% error, so abandoning local refresh would be a solution
+      //   -- and we would like to abandon local refresh by other reasons too, but because of backward compatibility it is
+      //   unlikely to be done soon.
+      //   A more conservative solution would be to move the InvertedFilenameIndex updates out from FSRecords: be InvertedFilenameIndex
+      //   updated in the same way other indexes are, unfinished VFS records would not appear in it, and the 'legit' issue
+      //   would disappear too.
+
+      int parentId = pFS.peer().getParent(childId);
+      VirtualDirectoryImpl parent = child.getParent();
       LOG.error(
-        "[" + child + ", id: " + child.getId() + "] expected to be in [" + this + "].children=" + children + ", but absent. " +
-        "childId in persistent children: " + isInPersistentChildren(pFS, getId(), childId) + " " +
-        "-> refresh race or VFS inconsistency?"
+        "[" + child + ", id: " + child.getId() + ", parentId: " + parentId + ", parent.id: " + parent.getId() + "] " +
+        "expected to be in " +
+        "[" + this + ", id: " + getId() + ", this == parent?: " + (this == parent) + "].children=" + children + " -- but absent. " +
+        "childId in persistent children: " + isInPersistentChildren(pFS, getId(), childId) + ", " +
+        "was in persistent children: " + wasInPersistentChildren +
+        " -> refresh race or VFS inconsistency?"
       );
       return null;
     }
@@ -785,8 +821,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           @Attributes int attributes = nextInfo.getFileAttributeFlags();
           boolean isEmptyDirectory = nextInfo.getChildren() != null && nextInfo.getChildren().length == 0;
           directoryData.removeAdoptedName(nextInfo.getName());
-          VirtualFileSystemEntry file = initializeChildData(nextInfo.getId(), nextInfo.getNameId(), attributes, isEmptyDirectory);
-          callback.accept(file, nextInfo);
+          VirtualFileSystemEntry child = initializeChildData(nextInfo.getId(), nextInfo.getNameId(), attributes, isEmptyDirectory);
+          callback.accept(child, nextInfo);
         }
         mergedIds.add(nextInfo.getId());
       });
@@ -901,7 +937,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         existingNames.add(vfsData.getNameByFileId(id));
       }
       int parentId = getId();
-      existingNames.addAll(peer.listNames(parentId));
+      existingNames.addAll(ContainerUtil.map(peer.list(parentId).children, ChildInfo::getName));
 
       validateAgainst(childrenToCreate, existingNames);
 
@@ -1045,15 +1081,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static boolean isInPersistentChildren(@NotNull PersistentFSImpl pFS,
                                                 int parentId,
                                                 int childId) {
-    //MAYBE RC: better to check childId is in children _without_ loading _all_ the children (which could be quite large)
-    //          Maybe create FSRecordsImpl.isInChildren(parentId, childId) method?
-    int[] childrenFromPersistence = pFS.peer().listIds(parentId);
-    for (int id : childrenFromPersistence) {
-      if (id == childId) {
-        return true;
-      }
-    }
-    return false;
+    return pFS.peer().forEachChildOf(
+      parentId,
+      _childId -> (_childId == childId)
+    );
   }
 
   /**
@@ -1206,12 +1237,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                       @NotNull IntSet prevChildren,
                                       @NotNull VirtualFile @NotNull [] newChildren,
                                       @NotNull List<? extends ChildInfo> childrenInfo) {
-    //RC: why it is suspicious: because we _never remove_ the child(ren) from the directory on reading path -- even if
-    //    the FS reports some children are not there anymore (see comments in PersistentFSImpl.persistAllChildren()).
+    //IJPL-199690:
+    //RC: why it is suspicious: because we _never remove_ the child(ren) from the directory on the reading path -- even
+    //    if the FS reports some children are not there anymore (see comments in PersistentFSImpl.persistAllChildren()).
     //    We only _add_ new child(ren), if any -- but all previously existing children remain intact.
-    //    Hence it is unclear: how PersistentFSImpl.listAll() could return a children list there some of previously existing
-    //    children are absent? PersistentFSImpl.listAll() is either returns already cached children, or the previously cached
-    //    children with merged in FS data -- in both cases previous children must be there.
+    //    Hence, it is unclear: how PersistentFSImpl.listAll() could return a children list there some of the previously
+    //    existing children are absent? PersistentFSImpl.listAll() is either returns already cached children, or the
+    //    previously cached children with merged in FS data -- in both cases previous children must be there.
     //    But it seems there is some path to that -- the goal is to trace it, and verify is it benign or not.
     StringBuilder sb = new StringBuilder("Loaded child(ren) disappeared: \n" +
                                          "parent: " + verboseToString(this) + "\n" +
@@ -1222,7 +1254,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     sb.append("\nexisting children:");
     for (VirtualFile existingChild : newChildren) {
-      sb.append("\n\t[" + existingChild + "] ").append(verboseToString((VirtualFileSystemEntry)existingChild));
+      VirtualFileSystemEntry child = (VirtualFileSystemEntry)existingChild;
+      sb.append("\n\t[" + child.getId() + "] ").append(verboseToString(child));
     }
     sb.append("\nchildren infos:");
     for (final ChildInfo childInfo : childrenInfo) {

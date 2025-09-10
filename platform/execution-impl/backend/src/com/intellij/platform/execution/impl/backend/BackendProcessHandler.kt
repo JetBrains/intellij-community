@@ -16,6 +16,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -79,7 +80,13 @@ suspend fun createProcessHandlerDto(coroutineScope: CoroutineScope, processHandl
     null
   }
 
-  return ProcessHandlerDto(processHandlerId, processHandler.detachIsDefault(), flow.toRpc(), killableProcessInfo)
+  return ProcessHandlerDto(
+    processHandlerId,
+    processHandler.detachIsDefault(),
+    flow.toRpc(),
+    processHandler.nativePid?.asDeferred(),
+    killableProcessInfo,
+  )
 }
 
 private fun ProcessEvent.toRpc(): ProcessHandlerEventData {

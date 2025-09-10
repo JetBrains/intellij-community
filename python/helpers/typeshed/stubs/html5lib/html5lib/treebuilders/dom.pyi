@@ -1,5 +1,7 @@
-from typing import Any
+from _typeshed import Incomplete
+from collections.abc import Callable
+from types import ModuleType
 
-def getDomBuilder(DomImplementation): ...
+def getDomBuilder(DomImplementation) -> dict[str, Incomplete]: ...
 
-getDomModule: Any
+getDomModule: Callable[..., ModuleType]

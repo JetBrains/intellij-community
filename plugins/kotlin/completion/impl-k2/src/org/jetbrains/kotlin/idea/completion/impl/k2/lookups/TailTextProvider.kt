@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.renderer.render
 @ApiStatus.Internal
 object TailTextProvider {
 
-    context(KaSession)
+    context(_: KaSession)
     fun getTailText(
         signature: KaCallableSignature<*>,
         useFqName: Boolean = false,
@@ -32,7 +32,7 @@ object TailTextProvider {
         return getTailText(symbol, useFqName = useFqName)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun getTailText(
         symbol: KaCallableSymbol,
         useFqName: Boolean = false,
@@ -42,7 +42,7 @@ object TailTextProvider {
         symbol.getContainerOrAliasPresentation(useFqName = useFqName)?.let { append(it) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaCallableSymbol.getContainerOrAliasPresentation(isFunctionalVariableCall: Boolean = false, useFqName: Boolean = false): String? {
         return if (useFqName) {
             val callableId = callableId ?: return null
@@ -53,7 +53,7 @@ object TailTextProvider {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun getTailTextForVariableCall(
         functionalType: KaFunctionType,
         signature: KaVariableSignature<*>,
@@ -70,7 +70,7 @@ object TailTextProvider {
         signature.symbol.getContainerOrAliasPresentation(useFqName = useFqName, isFunctionalVariableCall = true)?.let { append(it) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getTailText(
         symbol: KaClassLikeSymbol,
@@ -98,14 +98,14 @@ object TailTextProvider {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun StringBuilder.renderReceiverType(receiverType: KaType) {
         val renderedType = receiverType.renderVerbose()
         append(KotlinCompletionImplK2Bundle.message("presentation.tail.for.0", renderedType))
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaCallableSymbol.getContainerPresentation(isFunctionalVariableCall: Boolean): String? {
         val callableId = callableId ?: return null
         val className = callableId.className
@@ -126,7 +126,7 @@ object TailTextProvider {
     private fun FqName.asStringForTailText(): String =
         if (isRoot) "<root>" else render()
 
-    context(KaSession)
+    context(_: KaSession)
     fun insertLambdaBraces(symbol: KaFunctionType): Boolean {
         val singleParam = symbol.parameterTypes.singleOrNull()
         return singleParam != null && singleParam is KaFunctionType

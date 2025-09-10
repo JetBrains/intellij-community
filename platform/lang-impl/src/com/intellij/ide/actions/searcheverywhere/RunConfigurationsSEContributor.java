@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.actions.ChooseRunConfigurationManager;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -27,6 +28,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +41,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class RunConfigurationsSEContributor implements SearchEverywhereContributor<ChooseRunConfigurationPopup.ItemWrapper> {
 
   private final SearchEverywhereCommandInfo RUN_COMMAND =
@@ -113,7 +116,7 @@ public final class RunConfigurationsSEContributor implements SearchEverywhereCon
 
     pattern = filterString(pattern);
     MinusculeMatcher matcher = NameUtil.buildMatcher(pattern).build();
-    for (ChooseRunConfigurationPopup.ItemWrapper wrapper : ChooseRunConfigurationPopup.createFlatSettingsList(myProject)) {
+    for (ChooseRunConfigurationPopup.ItemWrapper<?> wrapper : ChooseRunConfigurationManager.createFlatSettingsList(myProject)) {
       if (matcher.matches(wrapper.getText()) && !consumer.process(wrapper)) {
         return;
       }

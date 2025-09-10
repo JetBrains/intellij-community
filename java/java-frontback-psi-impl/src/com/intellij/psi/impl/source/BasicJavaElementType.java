@@ -368,7 +368,7 @@ public interface BasicJavaElementType {
 
     @Override
     public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
-      return BasicJavaParserUtil.parseFragmentWithHighestLanguageLevel(chameleon, myParser);
+      return BasicJavaParserUtil.parseFragmentWithHighestLanguageLevel(chameleon, myParser, JavaLexer::new);
     }
 
     @Override
@@ -423,7 +423,7 @@ public interface BasicJavaElementType {
 
     @Override
     public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
-      return BasicJavaParserUtil.parseFragmentWithHighestLanguageLevel(chameleon, myParser);
+      return BasicJavaParserUtil.parseFragmentWithHighestLanguageLevel(chameleon, myParser, JavaLexer::new);
     }
 
     @Override

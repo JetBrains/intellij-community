@@ -174,6 +174,9 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
         line = value == null ? null : value.toString();
       }
       if (line == null) return null;
+      if (line.equals("\"")) {
+        line = StringUtil.escapeStringCharacters(line);
+      }
       lines[i] = line;
     }
     // IDEA-226395

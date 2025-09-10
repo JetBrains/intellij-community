@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface VirtualFileAccessor : RemoteApi<Unit> {
-  suspend fun getFileByResourceName(resourceName: String, virtualFileId: VirtualFileId, projectId: ProjectId): VirtualFileId?
+  suspend fun tryToLoadFileContent(resourceName: String, virtualFileId: VirtualFileId, projectId: ProjectId): ByteArray?
 
   companion object {
     @JvmStatic

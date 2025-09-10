@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.renderer.render
 
 internal object NamedArgumentLookupElementFactory {
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun createLookup(name: Name, types: List<KaType>): LookupElement {
         val typeText = types.singleOrNull()?.renderVerbose() ?: "..."

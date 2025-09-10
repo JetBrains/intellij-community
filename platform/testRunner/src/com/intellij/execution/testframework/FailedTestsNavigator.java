@@ -175,10 +175,10 @@ class FailedTestsNavigator implements OccurenceNavigator {
   }
 
   static @NlsActions.ActionText String getNextName() {
-    return ExecutionBundle.message("next.faled.test.action.name");
+    return ExecutionBundle.message("next.failed.test.action.name");
   }
 
   static @NlsActions.ActionText String getPreviousName() {
-    return ExecutionBundle.message("prev.faled.test.action.name");
+    return ExecutionBundle.message("prev.failed.test.action.name");
   }
 }

@@ -1,0 +1,9 @@
+open class X : A.B()
+
+// NAME: X
+// SIBLING:
+class A {
+    private open class B
+
+    private class C : X()
+}

@@ -5,4 +5,7 @@
   </dependencies>
   <actions resource-bundle="messages.JavaDebuggerImplFrontendBundle">
   </actions>
+  <extensions defaultExtensionNs="com.intellij">
+    <xdebugger.descriptorStateManager implementation="com.intellij.java.debugger.impl.frontend.JavaValueDescriptorStateExtension"/>
+  </extensions>
 </idea-plugin>

@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -177,9 +178,10 @@ class NotPropertiesServiceImpl(private val project: Project) : NotPropertiesServ
  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.UsePropertyAccessSyntax]
  * [org.jetbrains.kotlin.idea.inspections.MultiFileLocalInspectionTestGenerated]
  */
+@ApiStatus.Internal
 class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention<KtExpression>(
     KtExpression::class.java,
-    KotlinBundle.lazyMessage("use.property.access.syntax")
+    KotlinBundle.messagePointer("use.property.access.syntax")
 ) {
     override fun isApplicableTo(element: KtExpression): Boolean =
         element.callOrReferenceOrNull(::detectPropertyNameToUseForCall, ::detectPropertyNameToUseForReference) != null

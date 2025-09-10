@@ -18,7 +18,7 @@ jvm_library(
   name = "extensions",
   module_name = "intellij.platform.syntax.extensions",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_extensions",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -31,7 +31,7 @@ jvm_library(
 jvm_library(
   name = "extensions_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testJvm/**/*.kt", "testJvm/**/*.java"], allow_empty = True),
+  srcs = glob(["testJvm/**/*.kt", "testJvm/**/*.java", "testJvm/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_extensions",
   associates = [":extensions"],
   deps = [

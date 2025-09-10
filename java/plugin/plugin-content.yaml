@@ -79,7 +79,6 @@
   - name: intellij.java.performancePlugin
   - name: intellij.java.terminal
   - name: intellij.java.debugger.impl.backend
-  - name: intellij.debugger.collections.visualizer.jvm
   - name: intellij.jvm.dfa.analysis.ui
 - name: lib/javac2.jar
   modules:
@@ -155,6 +154,12 @@
 - name: lib/modules/intellij.java.featuresTrainer.jar
   contentModules:
   - name: intellij.java.featuresTrainer
+- name: lib/modules/intellij.java.langInjection.jar
+  contentModules:
+  - name: intellij.java.langInjection
+- name: lib/modules/intellij.java.langInjection.jps.jar
+  contentModules:
+  - name: intellij.java.langInjection.jps
 - name: lib/modules/intellij.java.structuralSearch.jar
   contentModules:
   - name: intellij.java.structuralSearch

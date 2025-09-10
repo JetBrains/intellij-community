@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.OptionalUtil;
@@ -353,10 +354,25 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
       return true;
     }
     if (expression instanceof PsiLambdaExpression lambda) {
+      PsiType functionalInterfaceType = lambda.getFunctionalInterfaceType();
+      PsiParameterList parameterList = lambda.getParameterList();
+      if (functionalInterfaceType != null && parameterList.getParametersCount() == 1) {
+        PsiType functionalInterfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+        PsiParameter parameter = parameterList.getParameter(0);
+        assert parameter != null;
+        PsiType parameterType = parameter.getType();
+        if (functionalInterfaceReturnType != null) {
+          Nullability returnTypeNullability = functionalInterfaceReturnType.getNullability().nullability();
+          Nullability parameterNullability = parameterType.getNullability().nullability();
+          if (!returnTypeNullability.equals(Nullability.UNKNOWN) && !returnTypeNullability.equals(parameterNullability)) {
+            return false;
+          }
+        }
+      }
       if (LambdaUtil.isIdentityLambda(lambda)) return true;
       if (!allowBoxUnbox) return false;
       PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-      PsiParameter[] parameters = lambda.getParameterList().getParameters();
+      PsiParameter[] parameters = parameterList.getParameters();
       if (parameters.length != 1) return false;
       PsiParameter parameter = parameters[0];
       PsiMethodCallExpression call = tryCast(PsiUtil.skipParenthesizedExprDown(body), PsiMethodCallExpression.class);

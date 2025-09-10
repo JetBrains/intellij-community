@@ -52,6 +52,11 @@ internal class PyPackagingTreeView(
     }
   }
 
+  fun showErrorResult(errorNode: ErrorNode) {
+    installedPackages.tree.items = listOf(errorNode)
+    synchronizeScrollPaneSize()
+  }
+
   fun showSearchResult(installed: List<DisplayablePackage>, repoData: List<PyPackagesViewData>) {
     updatePackages(installed, repoData)
 
@@ -106,7 +111,6 @@ internal class PyPackagingTreeView(
 
     val invalidRepoData = invalidData.filterIsInstance<PyInvalidRepositoryViewData>()
     refreshInvalidRepositories(invalidRepoData)
-
   }
 
   private fun synchronizeScrollPaneSize() {
@@ -158,8 +162,8 @@ internal class PyPackagingTreeView(
     repositories.add(newTableGroup)
     newTableGroup.addTo(container)
     newTable.tree.addTreeSelectionListener {
-        syncTreeSelection(newTable)
-      }
+      syncTreeSelection(newTable)
+    }
     synchronizeScrollPaneSize()
   }
 
@@ -221,7 +225,8 @@ internal class PyPackagingTreeView(
         it.tree.clearSelection()
         it.table.clearSelection()
       }
-    } finally {
+    }
+    finally {
       isSyncingTreeSelection = false
     }
   }

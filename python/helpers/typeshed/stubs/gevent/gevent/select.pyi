@@ -1,4 +1,5 @@
 import sys
+from _typeshed import FileDescriptorLike
 from collections.abc import Iterable
 from select import error as error
 from typing import Any
@@ -8,8 +9,12 @@ def select(
 ) -> tuple[list[Any], list[Any], list[Any]]: ...
 
 if sys.platform != "win32":
-    from select import poll as poll
-
     __all__ = ["error", "poll", "select"]
 else:
     __all__ = ["error", "select"]
+
+class poll:
+    def register(self, fd: FileDescriptorLike, eventmask: int = ...) -> None: ...
+    def modify(self, fd: FileDescriptorLike, eventmask: int) -> None: ...
+    def poll(self, timeout: float | None = None) -> list[tuple[int, int]]: ...
+    def unregister(self, fd: FileDescriptorLike) -> None: ...

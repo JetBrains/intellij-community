@@ -3,6 +3,7 @@
 
 package com.intellij.spellchecker
 
+import ai.grazie.utils.isLowercase
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
@@ -26,6 +27,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.FileUtilRt.extensionEquals
 import com.intellij.openapi.util.io.FileUtilRt.getExtension
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.project.stateStore
 import com.intellij.spellchecker.SpellCheckerManager.Companion.restartInspections
@@ -240,7 +242,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
       return
     }
 
-    val transformed = spellChecker!!.transformation.transform(word) ?: return
+    val transformed = transform(word) ?: return
     val dictionary = dictionaryLayer.dictionary
     if (file != null) {
       WriteCommandAction.writeCommandAction(project)
@@ -257,6 +259,11 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
         }
     }
     addWordToDictionary(dictionary = dictionary, word = transformed)
+  }
+  
+  private fun transform(word: String): String? {
+    if (StringUtil.decapitalize(word).isLowercase()) return word
+    return spellChecker!!.transformation.transform(word)
   }
 
   private fun addWordToDictionary(dictionary: EditableDictionary, word: String) {

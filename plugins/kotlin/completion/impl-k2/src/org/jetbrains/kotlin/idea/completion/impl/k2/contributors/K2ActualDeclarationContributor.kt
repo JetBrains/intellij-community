@@ -2,9 +2,12 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords.ActualKeywordHandler
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -27,28 +30,18 @@ import org.jetbrains.kotlin.psi.KtTypeReference
  *
  * @see ActualKeywordHandler
  */
-internal class K2ActualDeclarationContributor(
-    sink: LookupElementSink,
-    priority: Int,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(sink, priority) {
-
-    context(KaSession)
-    override fun complete(
-        positionContext: KotlinRawPositionContext,
-        weighingContext: WeighingContext,
-    ) {
-        val declaration = when (positionContext) {
-            is KotlinTypeNameReferencePositionContext -> positionContext.typeReference?.getDeclaration()
-            else -> null
-        } ?: return
-
+internal class K2ActualDeclarationContributor : K2SimpleCompletionContributor<KotlinTypeNameReferencePositionContext>(
+    KotlinTypeNameReferencePositionContext::class
+) {
+    override fun KaSession.complete(context: K2CompletionSectionContext<KotlinTypeNameReferencePositionContext>) {
+        val declaration = context.positionContext.typeReference?.getDeclaration() ?: return
         if (!declaration.hasModifier(KtTokens.ACTUAL_KEYWORD)) return
 
         val elements = ActualKeywordHandler(
-            importStrategyDetector = importStrategyDetector,
+            importStrategyDetector = context.importStrategyDetector,
             declaration = declaration,
-        ).createActualLookups(parameters, project)
-        sink.addAllElements(elements)
+        ).createActualLookups(context.parameters, context.project)
+        context.addElements(elements)
     }
 
     private fun KtTypeReference.getDeclaration(): KtCallableDeclaration? {
@@ -58,5 +51,9 @@ internal class K2ActualDeclarationContributor(
         if (declaration.receiverTypeReference == typeReference) return declaration
 
         return null
+    }
+
+    override fun K2CompletionSectionContext<KotlinTypeNameReferencePositionContext>.getGroupPriority(): Int {
+        return 1
     }
 }

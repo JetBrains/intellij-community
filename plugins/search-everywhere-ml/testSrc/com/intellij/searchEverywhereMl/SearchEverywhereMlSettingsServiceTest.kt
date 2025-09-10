@@ -6,9 +6,9 @@ import com.intellij.testFramework.junit5.TestApplication
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
-import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.parallel.ResourceLock
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -259,28 +259,26 @@ internal class SearchEverywhereMlSettingsServiceTest {
     override fun toString(): String = tab.tabId
   }
 
+  @BeforeEach
+  fun setUp() {
+    mockkObject(SearchEverywhereMlRegistry)
+    every { SearchEverywhereMlRegistry.isExperimentDisabled(any()) } returns false
+
+    SearchEverywhereTab.allTabs
+      .filterIsInstance<SearchEverywhereTab.TabWithMlRanking>()
+      .forEach {
+        mockkObject(it)
+        every { it.currentExperimentType } returns SearchEverywhereMlExperiment.ExperimentType.NoExperiment
+        every { it.isMlRankingEnabledByDefault } returns false
+      }
+  }
+
+  @AfterEach
+  fun tearDown() {
+    unmockkAll()
+  }
+
   companion object {
-    @JvmStatic
-    @BeforeAll
-    fun setUp() {
-      mockkObject(SearchEverywhereMlRegistry)
-      every { SearchEverywhereMlRegistry.isExperimentDisabled(any()) } returns false
-
-      SearchEverywhereTab.allTabs
-        .filterIsInstance<SearchEverywhereTab.TabWithMlRanking>()
-        .forEach {
-          mockkObject(it)
-          every { it.currentExperimentType } returns SearchEverywhereMlExperiment.ExperimentType.NoExperiment
-          every { it.isMlRankingEnabledByDefault } returns false
-        }
-    }
-
-    @JvmStatic
-    @AfterAll
-    fun tearDown() {
-      unmockkAll()
-    }
-
     @JvmStatic
     fun allTabs(): List<Arguments> {
       return SearchEverywhereTab.allTabs

@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff;
 
-import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
+import com.intellij.codeInsight.daemon.SyntheticPsiFileSupport;
 import com.intellij.diff.actions.DocumentFragmentContent;
 import com.intellij.diff.actions.ImmutableDocumentFragmentContent;
 import com.intellij.diff.contents.*;
@@ -641,7 +641,7 @@ public final class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       if (file != null && !file.isInLocalFileSystem()) {
-        OutsidersPsiFileSupport.markFile(file, originalFilePath);
+        SyntheticPsiFileSupport.markFile(file, originalFilePath);
       }
 
       if (fileName != null) {

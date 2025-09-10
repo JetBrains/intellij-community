@@ -33,7 +33,7 @@ jvm_library(
   name = "testFramework",
   module_name = "intellij.platform.testFramework",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:jet_check",
     "@lib//:junit5-provided",
@@ -78,6 +78,7 @@ jvm_library(
     "//platform/structure-view-impl:structureView-impl",
     "//platform/syntax/syntax-api:syntax",
     "//platform/syntax/syntax-psi:psi",
+    "//platform/syntax/syntax-util:util",
     "//platform/testFramework/common",
     "//platform/testFramework/core",
     "//platform/todo",
@@ -115,7 +116,7 @@ jvm_library(
 jvm_library(
   name = "testFramework_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":testFramework"],
   deps = [
     "@lib//:jet_check",
@@ -174,6 +175,7 @@ jvm_library(
     "//platform/syntax/syntax-api:syntax",
     "//platform/syntax/syntax-api:syntax_test_lib",
     "//platform/syntax/syntax-psi:psi",
+    "//platform/syntax/syntax-util:util",
     "//platform/testFramework/common",
     "//platform/testFramework/core",
     "//platform/testFramework/junit5",
@@ -189,6 +191,16 @@ jvm_library(
     "//platform/testFramework/bootstrap:tools-testsBootstrap",
     "@lib//:platform-test_framework-okhttp3-mockwebserver",
     "//platform/runtime/product",
+  ],
+  exports = [
+    "@lib//:jet_check",
+    "@lib//:junit5-provided",
+    "@lib//:junit5Params-provided",
+    "//libraries/junit4",
+    "//platform/ide-core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/testFramework/common",
+    "//platform/testFramework/core",
   ],
   runtime_deps = [
     ":testFramework_resources",

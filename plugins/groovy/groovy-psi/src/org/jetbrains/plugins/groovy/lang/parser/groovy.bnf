@@ -982,7 +982,7 @@ anonymous_type_definition ::= <<annotated code_reference>> call_argument_list mb
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnonymousElementType'
 }
 
-new_expression ::= 'new' type_argument_list? new_expression_creator { pin = 1 }
+new_expression ::= 'new' type_argument_list? mb_nl new_expression_creator { pin = 1 }
 private new_expression_creator ::= <<annotated new_expression_type>> (l_paren_variant | new_expression_tail) { pin = 1 }
 private new_expression_type ::= primitive_type_element | <<allowDiamond code_reference>>
 private l_paren_variant ::= &'(' fail // adds a variant, to achieve "'(' expected" generated message
@@ -990,7 +990,7 @@ private new_expression_tail ::= array_initializer_tail | array_declaration | (mb
 
 private array_initializer_tail ::= array_initializer_declaration mb_nl array_initializer
 array_initializer_declaration ::= array_dimensions+ { elementType = array_declaration }
-private array_dimensions ::= non_empty_annotation_list? '['(']') { consumeTokenMethod = 'consumeTokenFast' }
+private array_dimensions ::= non_empty_annotation_list? '[' mb_nl (']') { consumeTokenMethod = 'consumeTokenFast' }
 array_initializer ::= '{' mb_nl '}' | array_initializer_pin
 nested_array_initializer ::= '{' mb_nl '}' | array_initializer_no_pin { elementType = array_initializer }
 private array_initializer_no_pin ::= '{' <<a_b_a array_initializer_item array_initializer_separator>> array_initializer_separator? mb_nl '}'
@@ -1000,9 +1000,9 @@ array_initializer_closable_item ::= non_empty_closure | (non_empty_lamda) { elem
 private array_initializer_separator ::= mb_nl ','
 
 array_declaration ::= mandatory_expression optional_expression* { consumeTokenMethod = 'consumeTokenFast' }
-private mandatory_expression ::= non_empty_annotation_list? '[' expression ']' { pin = 2 consumeTokenMethod = 'consumeTokenFast' }
-private optional_expression ::= non_empty_annotation_list? '[' expression? ']' { pin = 2 consumeTokenMethod = 'consumeTokenFast' }
-
+private mandatory_expression ::= non_empty_annotation_list? '[' expression_with_mb_nl ']' { pin = 2 consumeTokenMethod = 'consumeTokenFast' }
+private optional_expression ::= non_empty_annotation_list? '[' expression_with_mb_nl? ']' { pin = 2 consumeTokenMethod = 'consumeTokenFast' }
+private expression_with_mb_nl ::= mb_nl expression mb_nl
 private priority1_2 ::= method_call_expression | lazy_closure | lambda_expression | single_parameter_lambda_expression | list_or_map
 constructor_call_expression ::= &('this' | 'super') unqualified_reference_expression call_tail
 method_call_expression ::= expression <<callTail call_tail_with_nl_before_closure call_tail>>

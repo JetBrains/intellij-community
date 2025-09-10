@@ -45,6 +45,35 @@ class DescriptorsIncludingContentModuleLineMarkerProviderTest : JavaCodeInsightF
     )
   }
 
+  fun testSingleContentModuleTargetWhenMultipleContentExistInAFile() {
+    createModuleWithModuleDescriptor("declaring.module", "declaring.module.xml", """
+      <idea-plugin>
+        <content>
+          <module name="test.module.extra"/>
+        </content>
+        <content>
+          <module name="test.module"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    createModuleWithModuleDescriptor("test.module", "test.module.xml", """
+      <idea<caret>-plugin>
+        <!-- any -->
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    testGutterTargets(
+      testFileRelPath = "test.module/test.module.xml",
+      popupTitle = "'test.module' content module is included in 1 plugin XML descriptors",
+      expectedTargets = listOf(
+        "declaring.module.xml | <module name=\"test.module\"/>"
+      )
+    )
+  }
+
   fun testMultipleContentModuleTargets() {
     createModuleWithModuleDescriptor("declaring.module.1", "declaring.module.1.xml", """
       <idea-plugin>

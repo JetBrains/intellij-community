@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -32,15 +33,6 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, 
     myMap = new MyMap(initialCapacity, loadFactor);
     myEvictionListener = evictionListener;
   }
-
-  private RefHashMap(int initialCapacity, float loadFactor) {
-    this(initialCapacity, loadFactor, HashingStrategy.canonical());
-  }
-
-  RefHashMap(int initialCapacity) {
-    this(initialCapacity, 0.8f);
-  }
-
   RefHashMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
     this(4, 0.8f, hashingStrategy);
   }
@@ -108,29 +100,34 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, 
 
   protected abstract @NotNull <T> Key<T> createKey(@NotNull T k, @NotNull HashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q);
 
-  private class HardKey implements Key<K> {
-    private K myObject;
+  private class HardKey extends PhantomReference<K> implements Key<K> {
+    private K referent;
     private int myHash;
+
+    HardKey() {
+      super(null, null);
+    }
 
     @Override
     public K get() {
-      return myObject;
+      return referent;
     }
 
     private void set(@NotNull K object) {
-      myObject = object;
+      referent = object;
       myHash = myStrategy.hashCode(object);
     }
 
-    private void clear() {
-      myObject = null;
+    @Override
+    public void clear() {
+      referent = null;
     }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof Key)) return false;
-      K t = myObject;
+      K t = referent;
       //noinspection unchecked
       K u = ((Key<K>)o).get();
       return keysEqual(t, u, myStrategy);

@@ -6,6 +6,7 @@ import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.hover.TreeHoverListener
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageVersion
+import com.jetbrains.python.packaging.toolwindow.model.ErrorNode
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.packaging.toolwindow.packages.tree.PyPackagesTreeTable
@@ -56,6 +57,15 @@ internal fun requirementPackageStrategy(
   versionLabel.text = version
   versionLabel.icon = pkg.sourceRepoIcon
   versionPanel.add(versionLabel, BorderLayout.WEST)
+}
+
+internal fun errorNodeStrategy(
+  versionPanel: JPanel,
+  node: ErrorNode,
+  linkLabel: JLabel,
+) {
+  linkLabel.text = node.quickFix.name
+  versionPanel.add(linkLabel, BorderLayout.WEST)
 }
 
 internal fun defaultPackageStrategy(

@@ -29,6 +29,9 @@ final class MarkdownSpellcheckingStrategy extends SpellcheckingStrategy implemen
     if (TreeUtil.findParent(node, NO_SPELLCHECKING_TYPES) != null) {
       return EMPTY_TOKENIZER;
     }
+    if (useTextLevelSpellchecking()) {
+      return EMPTY_TOKENIZER;
+    }
 
     return TEXT_TOKENIZER;
   }

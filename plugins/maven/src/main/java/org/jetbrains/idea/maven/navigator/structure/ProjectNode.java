@@ -79,8 +79,9 @@ public final class ProjectNode extends ProjectsGroupNode implements MavenProject
     return myMavenProjectsStructure.getProjectsNavigator();
   }
 
+  @VisibleForTesting
   @Override
-  protected List<? extends MavenSimpleNode> doGetChildren() {
+  public List<? extends MavenSimpleNode> doGetChildren() {
     var children =
       new CopyOnWriteArrayList<MavenSimpleNode>(List.of(myLifecycleNode, myPluginsNode, myRunConfigurationsNode, myDependenciesNode));
     if (isRoot()) {

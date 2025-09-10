@@ -16,16 +16,16 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class AddAnnotationUseSiteTargetIntention : SelfTargetingIntention<KtAnnotationEntry>(
     KtAnnotationEntry::class.java,
-    KotlinBundle.lazyMessage("add.use.site.target")
+    KotlinBundle.messagePointer("add.use.site.target")
 ) {
 
     override fun isApplicableTo(element: KtAnnotationEntry, caretOffset: Int): Boolean {
         val useSiteTargets = element.getApplicableUseSiteTargets()
         if (useSiteTargets.isEmpty()) return false
         if (useSiteTargets.size == 1) {
-            setTextGetter(KotlinBundle.lazyMessage("text.add.use.site.target.0", useSiteTargets.first().renderName))
+            setTextGetter(KotlinBundle.messagePointer("text.add.use.site.target.0", useSiteTargets.first().renderName))
         } else {
-            setTextGetter(KotlinBundle.lazyMessage("add.use.site.target"))
+            setTextGetter(KotlinBundle.messagePointer("add.use.site.target"))
         }
         return true
     }

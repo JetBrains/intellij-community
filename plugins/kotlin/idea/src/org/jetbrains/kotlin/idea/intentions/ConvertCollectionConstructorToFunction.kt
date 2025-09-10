@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
 class ConvertCollectionConstructorToFunction : SelfTargetingIntention<KtCallExpression>(
-    KtCallExpression::class.java, KotlinBundle.lazyMessage("convert.collection.constructor.to.function")
+    KtCallExpression::class.java, KotlinBundle.messagePointer("convert.collection.constructor.to.function")
 ) {
 
     @SafeFieldForPreview

@@ -55,6 +55,8 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       INIT_FAILED,
       INIT_STAGE_FAILED,
       IN_MEMORY_OPERATION_FAILED,
+      IN_MEMORY_REBASE_MERGE_CONFLICT,
+      IN_MEMORY_REBASE_VALIDATION_FAILED,
       LOCAL_CHANGES_NOT_RESTORED,
       MERGE_ABORT_FAILED,
       MERGE_ABORT_SUCCESS,
@@ -179,6 +181,8 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val INIT_FAILED = "git.init.failed"
     const val INIT_STAGE_FAILED = "git.init.stage.failed"
     const val IN_MEMORY_OPERATION_FAILED = "git.in.memory.operation.failed"
+    const val IN_MEMORY_REBASE_MERGE_CONFLICT = "git.in.memory.rebase.merge.conflict"
+    const val IN_MEMORY_REBASE_VALIDATION_FAILED = "git.in.memory.rebase.validation.failed"
     const val LOCAL_CHANGES_NOT_RESTORED = "git.local.changes.not.restored"
     const val MERGE_ABORT_FAILED = "git.merge.abort.failed"
     const val MERGE_ABORT_SUCCESS = "git.merge.abort.success"

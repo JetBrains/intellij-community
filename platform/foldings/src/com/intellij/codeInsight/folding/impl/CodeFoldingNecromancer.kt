@@ -66,7 +66,7 @@ private class CodeFoldingNecromancer(
           if (recipe.isValid(editor) &&
               editor.foldingModel.isFoldingEnabled &&
               !CodeFoldingManagerImpl.isFoldingsInitializedInEditor(editor)) {
-            zombie.applyState(document, editor.foldingModel)
+            zombie.applyState(document, editor)
             FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.CODE_FOLDING)
           }
         }

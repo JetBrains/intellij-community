@@ -18,14 +18,20 @@ class JpsCompilationData(
   val compiledModules: MutableSet<String> = LinkedHashSet()
   @JvmField
   val compiledModuleTests: MutableSet<String> = LinkedHashSet()
+
+  /**
+   * If `true`, it means that production and test parts of all modules were either compiled, or downloaded from somewhere during this build session, so there is no need to run 
+   * the compilation again.
+   */
+  @JvmField
+  var outputForAllModulesIsAvailable: Boolean = false
+  
   @JvmField
   val builtArtifacts: MutableSet<String> = LinkedHashSet()
   @JvmField
   var statisticsReported: Boolean = false
   @JvmField
   var projectDependenciesResolved: Boolean = false
-  @JvmField
-  var runtimeModuleRepositoryGenerated: Boolean = false
 
   internal fun isIncrementalCompilationDataAvailable(): Boolean {
     val productionClasses = classesOutputDirectory.resolve("production")
@@ -35,6 +41,7 @@ class JpsCompilationData(
   internal fun reset() {
     compiledModules.clear()
     compiledModuleTests.clear()
+    outputForAllModulesIsAvailable = false
     statisticsReported = false
   }
 }

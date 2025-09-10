@@ -1,13 +1,15 @@
 from _typeshed import Incomplete
+from collections.abc import Callable
 
 unicode = str
 long = int
 xrange = range
-bytechr: Incomplete
+bytechr: Callable[[float], bytes]
 
 class CTypesType(type): ...
 
 class CTypesData:
+    __slots__ = ["__weakref__"]
     __metaclass__: Incomplete
     __name__: str
     def __init__(self, *args) -> None: ...
@@ -22,17 +24,21 @@ class CTypesData:
     def __repr__(self, c_name: str | None = None): ...
 
 class CTypesGenericPrimitive(CTypesData):
+    __slots__: list[str] = []
     def __hash__(self) -> int: ...
 
 class CTypesGenericArray(CTypesData):
+    __slots__: list[str] = []
     def __iter__(self): ...
 
 class CTypesGenericPtr(CTypesData):
+    __slots__ = ["_address", "_as_ctype_ptr"]
     kind: str
     def __nonzero__(self) -> bool: ...
     def __bool__(self) -> bool: ...
 
-class CTypesBaseStructOrUnion(CTypesData): ...
+class CTypesBaseStructOrUnion(CTypesData):
+    __slots__ = ["_blob"]
 
 class CTypesBackend:
     PRIMITIVE_TYPES: Incomplete
@@ -68,7 +74,7 @@ class CTypesBackend:
     typeof: Incomplete
     def getcname(self, BType, replace_with): ...
     def typeoffsetof(self, BType, fieldname, num: int = 0): ...
-    def rawaddressof(self, BTypePtr, cdata, offset: Incomplete | None = None): ...
+    def rawaddressof(self, BTypePtr, cdata, offset=None): ...
 
 class CTypesLibrary:
     backend: Incomplete

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.KtNodeTypes
@@ -99,14 +100,14 @@ internal class ReplaceIsEmptyWithIfEmptyInspection : KotlinApplicableInspectionB
         context: Replacement
     ): KotlinModCommandQuickFix<KtIfExpression> = ReplaceFix(context)
 
-    override fun KaSession.prepareContext(ifExpression: KtIfExpression): Replacement? {
-        if (ifExpression.languageVersionSettings.languageVersion < LanguageVersion.KOTLIN_1_3) return null
-        if (ifExpression.node.elementType == KtNodeTypes.ELSE) return null
-        val thenExpression = ifExpression.then ?: return null
-        val elseExpression = ifExpression.`else` ?: return null
+    override fun KaSession.prepareContext(element: KtIfExpression): Replacement? {
+        if (element.languageVersionSettings.languageVersion < LanguageVersion.KOTLIN_1_3) return null
+        if (element.node.elementType == KtNodeTypes.ELSE) return null
+        val thenExpression = element.then ?: return null
+        val elseExpression = element.`else` ?: return null
         if (elseExpression is KtIfExpression) return null
 
-        val condition = ifExpression.condition ?: return null
+        val condition = element.condition ?: return null
         val conditionCallExpression = condition.getPossiblyQualifiedCallExpression() ?: return null
         val conditionCalleeExpression = conditionCallExpression.calleeExpression ?: return null
         if (conditionCalleeExpression.text !in conditionFunctionShortNames) return null
@@ -129,7 +130,7 @@ internal class ReplaceIsEmptyWithIfEmptyInspection : KotlinApplicableInspectionB
             if (selfValueExpression !is KtThisExpression) return null
         }
 
-        val loop = ifExpression.getStrictParentOfType<KtLoopExpression>()
+        val loop = element.getStrictParentOfType<KtLoopExpression>()
         if (loop != null) {
             val defaultValueExpression = if (replacement.negativeCondition) elseExpression else thenExpression
             if (defaultValueExpression.anyDescendantOfType<KtExpressionWithLabel> {
@@ -144,13 +145,17 @@ internal class ReplaceIsEmptyWithIfEmptyInspection : KotlinApplicableInspectionB
     private fun KtExpressionWithLabel.isTargeting(loop: KtLoopExpression): Boolean {
         val label = getTargetLabel()
 
-        return if (label == null) parents.firstIsInstanceOrNull<KtLoopExpression>() == loop
-        else if (loop.parent !is KtLabeledExpression) false
-        else label.mainReference.isReferenceTo(loop) == true
+        return if (label == null) {
+            parents.firstIsInstanceOrNull<KtLoopExpression>() == loop
+        } else if (loop.parent !is KtLabeledExpression) {
+            false
+        } else {
+            label.mainReference.isReferenceTo(loop)
+        }
     }
 
     private class ReplaceFix(@SafeFieldForPreview private val replacement: Replacement) : KotlinModCommandQuickFix<KtIfExpression>() {
-        override fun getName() = KotlinBundle.message("replace.with.0", "${replacement.replacementFunctionName} {...}")
+        override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with.0", "${replacement.replacementFunctionName} {...}")
 
         override fun applyFix(
             project: Project,
@@ -172,7 +177,5 @@ internal class ReplaceIsEmptyWithIfEmptyInspection : KotlinApplicableInspectionB
             }
             element.replace(newExpression)
         }
-
-        override fun getFamilyName() = name
     }
 }

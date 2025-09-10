@@ -24,10 +24,6 @@ import javax.swing.Icon
 @TestMetadata("multiplatform/core/features/runConfigurations")
 class KotlinMppRunConfigurationsTest : AbstractKotlinMppGradleImportingTest() {
 
-    override val pluginMode: KotlinPluginMode
-        get() = if (kotlinPluginVersion >= "2.0.20-dev-0") KotlinPluginMode.K2
-        else KotlinPluginMode.K1
-
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         onlyCheckers(RunConfigurationsChecker, ExecuteRunConfigurationsChecker, CustomGradlePropertiesTestFeature, KotlinMppTestHooks)
         disableCheckers(HighlightingChecker)
@@ -45,7 +41,7 @@ class KotlinMppRunConfigurationsTest : AbstractKotlinMppGradleImportingTest() {
         }
     }
 
-    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+", gradleVersion = "8.4+")
     @Test
     fun testKmmTests() {
         /*

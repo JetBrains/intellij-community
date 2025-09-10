@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization
 
 import com.intellij.openapi.application.ReadAction
@@ -6,6 +7,12 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import kotlin.math.min
+
+
+class PythonCellSelectionModelProvider : NotebookCellSelectionModelProvider {
+  override fun create(editor: Editor): NotebookCellSelectionModel =
+    CaretBasedCellSelectionModel(editor)
+}
 
 class CaretBasedCellSelectionModel(private val editor: Editor) : NotebookCellSelectionModel {
   override val primarySelectedCell: NotebookCellLines.Interval

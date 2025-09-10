@@ -13,6 +13,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.util.treeView.NodeRenderer
+import com.intellij.ide.util.treeView.PathElementIdProvider
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -25,7 +26,6 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.buildView.BuildTreeApi
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.ui.*
@@ -59,10 +59,11 @@ private val LOG = fileLogger()
 internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewId: SplitComponentId)
   : JPanel(), UiDataProvider, ComponentContainer {
   private val uiScope = parentScope.childScope("BuildTreeView", Dispatchers.UI + ModalityState.any().asContextElement())
+  private val model = BuildTreeViewModelProxy.getInstance(buildViewId)
 
   private val rootNode = MyNode(
     BuildTreeNode(BuildTreeNode.ROOT_ID, BuildTreeNode.NO_ID,
-                  null, null, null, null, null, emptyList(), false, false, false, false, false))
+                  null, null, "", null, null, emptyList(), false, false, false, false, false))
   private val buildProgressRootNode = MyNode(
     BuildTreeNode(BuildTreeNode.BUILD_PROGRESS_ROOT_ID, BuildTreeNode.ROOT_ID,
                   AnimatedIcon.Default.INSTANCE.rpcId(), null, "", null, null, emptyList(), true, false, true, false, false))
@@ -92,32 +93,39 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
     LOG.debug { "Creating BuildTreeView(id=$buildViewId)" }
     uiScope.launch {
       val nodeMap = mutableMapOf(buildProgressRootNode.id to buildProgressRootNode)
-      BuildTreeApi.getInstance().getTreeEventsFlow(buildViewId).collect { event ->
+      model.getTreeEventsFlow().collect { event ->
         handleTreeEvent(event, nodeMap)
       }
     }
     uiScope.launch {
-      BuildTreeApi.getInstance().getFilteringStateFlow(buildViewId).collect {
+      model.getFilteringStateFlow().collect {
         handleFilteringStateChange(it)
       }
     }
     uiScope.launch(Dispatchers.EDT /* Navigatable-s might expect WIL to be taken */) {
-      BuildTreeApi.getInstance().getNavigationFlow(buildViewId).collect {
+      model.getNavigationFlow().collect {
         handleNavigation(it.forward)
       }
     }
     uiScope.launch {
       navigationContext.collect {
         LOG.debug { "Navigation context: $it" }
-        BuildTreeApi.getInstance().onNavigationContextChange(buildViewId, it)
+        model.onNavigationContextChange(it)
       }
     }
     uiScope.launch {
-      BuildTreeApi.getInstance().getShutdownStateFlow(buildViewId).collect {
-        if (it) {
-          LOG.debug { "Disposing BuildTreeView(id=$buildViewId)" }
-          Disposer.dispose(this@BuildTreeView)
+      try {
+        model.getShutdownStateFlow().collect {
+          if (it) {
+            LOG.debug { "Disposing BuildTreeView(id=$buildViewId)" }
+            Disposer.dispose(this@BuildTreeView)
+          }
         }
+      }
+      finally {
+        // on application shutdown the scope is canceled before we receive the shutdown event
+        LOG.debug { "Disposing BuildTreeView(id=$buildViewId) on shutdown" }
+        Disposer.dispose(this@BuildTreeView)
       }
     }
   }
@@ -244,10 +252,15 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
   }
 
   private fun handleFilteringStateChange(filteringState: BuildTreeFilteringState) {
-    LOG.debug { "Filtering state update: $filteringState" }
-    this.filteringState = filteringState
-    rootNode.reload()
-    updateNavigationContext()
+    if (filteringState == this.filteringState) {
+      LOG.debug { "No-op filtering state update, already set to $filteringState" }
+    }
+    else {
+      LOG.debug { "Filtering state update: $filteringState" }
+      this.filteringState = filteringState
+      rootNode.reload()
+      updateNavigationContext()
+    }
   }
 
   private fun handleNavigation(forward: Boolean) {
@@ -281,7 +294,7 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
       val selectedNodeId = selectedNode?.id
       uiScope.launch {
         LOG.debug { "Selection change: $selectedNodeId" }
-        BuildTreeApi.getInstance().onSelectionChange(buildViewId, selectedNodeId)
+        model.onSelectionChange(selectedNodeId)
       }
       updateNavigationContext()
     }
@@ -342,9 +355,9 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
     override fun getPreviousOccurenceActionName() = ""
   }
 
-  private inner class MyNode(content: BuildTreeNode) : DefaultMutableTreeNode(content) {
-    private var cachedVisibleChildren: MutableList<MyNode>? = null
-    private var cachedFilteringState: BuildTreeFilteringState? = null
+  private inner class MyNode(content: BuildTreeNode) : DefaultMutableTreeNode(content), PathElementIdProvider {
+    val id = content.id
+    val elementId = content.id.toString()
 
     var content: BuildTreeNode
       get() = userObject as BuildTreeNode
@@ -352,8 +365,8 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
         updateContent(newContent)
       }
 
-    val id: Int
-      get() = content.id
+    private var cachedVisibleChildren: MutableList<MyNode>? = null
+    private var cachedFilteringState: BuildTreeFilteringState? = null
 
     val occurrenceNavigatable: NavigatableId?
       get() = if (content.hasProblems && childCount == 0) content.navigatables.firstOrNull() else null
@@ -406,7 +419,7 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
     }
 
     fun reload() {
-      val state = TreeState.createOn(tree)
+      val state = TreeState.createOn(tree, true, true)
       treeModel.nodeStructureChanged(this)
       state.applyTo(tree)
     }
@@ -502,6 +515,11 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
       return with(content) {
         name ?: ((if (title.isNullOrEmpty()) "" else "${title}: ") + (hint ?: ""))
       }
+    }
+
+    // required for correct TreeState operation in case there are nodes with identical presentation
+    override fun getPathElementId(): String {
+      return elementId
     }
   }
 

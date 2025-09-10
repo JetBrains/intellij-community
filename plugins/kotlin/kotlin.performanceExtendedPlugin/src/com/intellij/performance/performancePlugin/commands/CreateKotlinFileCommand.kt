@@ -30,7 +30,6 @@ internal class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCom
         val POSSIBLE_FILE_TYPES = mapOf(
             Pair("class", "Kotlin Class"),
             Pair("script", "Kotlin script"),
-            Pair("worksheet", "Kotlin worksheet"),
             Pair("data", "Kotlin Data Class"),
             Pair("enum", "Kotlin Enum"),
             Pair("annotation", "Kotlin Annotation"),

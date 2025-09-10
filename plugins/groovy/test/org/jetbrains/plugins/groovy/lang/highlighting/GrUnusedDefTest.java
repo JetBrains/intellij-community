@@ -160,4 +160,19 @@ public class GrUnusedDefTest extends GrHighlightingTestBase {
 
     TestCase.assertEquals("", actualPreview);
   }
+
+  public void testUnusedDefForFieldsWithUnderscores() {
+    doTestHighlighting("""
+                         class B {
+                             int <warning descr="Property _ is unused">_</warning>
+                         }
+                         
+                         class C {
+                             static int <warning descr="Property _ is unused">_</warning>
+                         }
+                         
+                         new B()
+                         new C()
+                         """);
+  }
 }

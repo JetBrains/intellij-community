@@ -3,12 +3,15 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
+import com.intellij.ide.plugins.marketplace.InstallPluginResult
 import javax.swing.JComponent
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -44,8 +47,8 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 
   @JvmOverloads
-  fun installOrUpdatePlugin(component: JComponent?, model: PluginUiModel, updateDescriptor: PluginUiModel?, modalityState: ModalityState, controller: UiPluginManagerController = UiPluginManager.getInstance().getController(), callback: (Boolean) -> Unit = {}) {
-    pluginModel.installOrUpdatePlugin(component, model, updateDescriptor, modalityState, controller, callback)
+  suspend fun installOrUpdatePlugin(component: JComponent?, model: PluginUiModel, updateDescriptor: PluginUiModel?, modalityState: ModalityState, controller: UiPluginManagerController = UiPluginManager.getInstance().getController()): InstallPluginResult? {
+    return pluginModel.installOrUpdatePlugin(component, model, updateDescriptor, modalityState, controller)
   }
 
   fun addUninstalled(pluginId: PluginId) {
@@ -57,11 +60,17 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 
   fun getErrors(model: PluginUiModel): List<HtmlChunk> {
-    return pluginModel.getErrors(model.getDescriptor())
+    return pluginModel.getErrorsSync(model.getDescriptor())
   }
 
-  fun enableRequiredPlugins(model: PluginUiModel) {
+  suspend fun enableRequiredPlugins(model: PluginUiModel) {
     pluginModel.enableRequiredPlugins(model.getDescriptor())
+  }
+
+  fun enableRequiredPluginsAsync(model: PluginUiModel) {
+    pluginModel.coroutineScope.launch(Dispatchers.IO) {
+      enableRequiredPlugins(model)
+    }
   }
 
   fun isUninstalled(pluginId: PluginId): Boolean {
@@ -72,7 +81,7 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return pluginModel.isEnabled(model.getDescriptor())
   }
 
-  fun finishInstall(model: PluginUiModel, installedModel: PluginUiModel?, success: Boolean, showErrors: Boolean, restartRequired: Boolean, errors: Map<PluginId, List<HtmlChunk>>) {
+  suspend fun finishInstall(model: PluginUiModel, installedModel: PluginUiModel?, success: Boolean, showErrors: Boolean, restartRequired: Boolean, errors: Map<PluginId, List<HtmlChunk>>) {
     pluginModel.finishInstall(model, installedModel, errors, success, showErrors, restartRequired)
   }
 
@@ -93,8 +102,8 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 
   @JvmOverloads
-  fun uninstallAndUpdateUi(descriptor: PluginUiModel, controller: UiPluginManagerController = UiPluginManager.getInstance().getController()) {
-    pluginModel.uninstallAndUpdateUi(descriptor, controller)
+  suspend fun uninstallAndUpdateUi(descriptor: PluginUiModel, controller: UiPluginManagerController = UiPluginManager.getInstance().getController(), callback: () -> Unit = {}) {
+    pluginModel.uninstallAndUpdateUi(descriptor, controller, callback)
   }
 
   suspend fun isDisabledInDiff(model: PluginUiModel): Boolean {

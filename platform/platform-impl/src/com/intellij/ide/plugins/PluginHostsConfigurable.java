@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.newui.PluginManagerCustomizer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -272,6 +273,11 @@ public final class PluginHostsConfigurable implements Configurable.NoScroll, Con
     list.clear();
     for (UrlInfo item : myModel.getItems()) {
       list.add(item.name);
+    }
+
+    PluginManagerCustomizer customizer = PluginManagerCustomizer.getInstance();
+    if (customizer != null) {
+      customizer.customRepositoriesUpdated(new ArrayList<>(list));
     }
   }
 

@@ -36,7 +36,10 @@ class OptimizedFunctionGraph(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _OptimizationSourceEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[OptimizedFunctionGraph._OptimizationSource.ValueType], builtins.type):
+    class _OptimizationSourceEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[OptimizedFunctionGraph._OptimizationSource.ValueType],
+        builtins.type,
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         SOURCE_UNSPECIFIED: OptimizedFunctionGraph._OptimizationSource.ValueType  # 0
         AOT: OptimizedFunctionGraph._OptimizationSource.ValueType  # 1
@@ -64,12 +67,7 @@ class OptimizedFunctionGraph(google.protobuf.message.Message):
         VALUE_FIELD_NUMBER: builtins.int
         key: builtins.str
         value: builtins.str
-        def __init__(
-            self,
-            *,
-            key: builtins.str | None = ...,
-            value: builtins.str | None = ...,
-        ) -> None: ...
+        def __init__(self, *, key: builtins.str | None = ..., value: builtins.str | None = ...) -> None: ...
         def ClearField(self, field_name: typing.Literal["key", b"key", "value", b"value"]) -> None: ...
 
     NAME_FIELD_NUMBER: builtins.int
@@ -102,7 +100,9 @@ class OptimizedFunctionGraph(google.protobuf.message.Message):
         """
 
     @property
-    def ret_types(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[tensorflow.core.framework.types_pb2.DataType.ValueType]:
+    def ret_types(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[tensorflow.core.framework.types_pb2.DataType.ValueType]:
         """Return node types of the function. This is an output of graph
         preprocessing.
         """
@@ -118,10 +118,48 @@ class OptimizedFunctionGraph(google.protobuf.message.Message):
         source: global___OptimizedFunctionGraph.OptimizationSource.ValueType | None = ...,
         optimization_time_usecs: builtins.int | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["_optimization_time_usecs", b"_optimization_time_usecs", "_source", b"_source", "function_graph", b"function_graph", "optimization_time_usecs", b"optimization_time_usecs", "source", b"source"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["_optimization_time_usecs", b"_optimization_time_usecs", "_source", b"_source", "function_graph", b"function_graph", "name", b"name", "node_name_to_control_ret", b"node_name_to_control_ret", "num_return_nodes", b"num_return_nodes", "optimization_time_usecs", b"optimization_time_usecs", "ret_types", b"ret_types", "source", b"source"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "_optimization_time_usecs",
+            b"_optimization_time_usecs",
+            "_source",
+            b"_source",
+            "function_graph",
+            b"function_graph",
+            "optimization_time_usecs",
+            b"optimization_time_usecs",
+            "source",
+            b"source",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "_optimization_time_usecs",
+            b"_optimization_time_usecs",
+            "_source",
+            b"_source",
+            "function_graph",
+            b"function_graph",
+            "name",
+            b"name",
+            "node_name_to_control_ret",
+            b"node_name_to_control_ret",
+            "num_return_nodes",
+            b"num_return_nodes",
+            "optimization_time_usecs",
+            b"optimization_time_usecs",
+            "ret_types",
+            b"ret_types",
+            "source",
+            b"source",
+        ],
+    ) -> None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["_optimization_time_usecs", b"_optimization_time_usecs"]) -> typing.Literal["optimization_time_usecs"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["_optimization_time_usecs", b"_optimization_time_usecs"]
+    ) -> typing.Literal["optimization_time_usecs"] | None: ...
     @typing.overload
     def WhichOneof(self, oneof_group: typing.Literal["_source", b"_source"]) -> typing.Literal["source"] | None: ...
 

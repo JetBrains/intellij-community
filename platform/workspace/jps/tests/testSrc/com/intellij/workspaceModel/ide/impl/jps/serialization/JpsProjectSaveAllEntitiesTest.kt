@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
@@ -111,9 +112,15 @@ class JpsProjectSaveAllEntitiesTest {
     val projectData = copyAndLoadProject(originalProjectFile, virtualFileManager)
     FileUtil.delete(projectData.projectDir)
     projectData.serializers.saveAllEntities(projectData.storage, projectData.configLocation)
+    val componentsToIgnore = mutableListOf("CompilerConfiguration", "Encoding")
+    val filesToIgnore = mutableSetOf(".idea/encodings.xml", ".idea/compiler.xml", ".idea/.name")
+    if (!Registry.`is`("project.root.manager.over.wsm")) {
+      componentsToIgnore.add("ProjectRootManager")
+      filesToIgnore.add(".idea/misc.xml")
+    }
     assertDirectoryMatches(projectData.projectDir, projectData.originalProjectDir,
-                           setOf(".idea/misc.xml", ".idea/encodings.xml", ".idea/compiler.xml", ".idea/.name"),
-                           listOf("CompilerConfiguration", "Encoding", "ProjectRootManager"))
+                           filesToIgnore,
+                           componentsToIgnore)
   }
 
   companion object {

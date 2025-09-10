@@ -1,7 +1,6 @@
 from _typeshed import Incomplete
 
-from win32comext.axdebug import adb as adb, gateways
-from win32comext.axdebug.util import trace as trace
+from win32comext.axdebug import gateways
 
 class DebugCodeContext(gateways.DebugCodeContext, gateways.DebugDocumentContext):
     debugSite: Incomplete

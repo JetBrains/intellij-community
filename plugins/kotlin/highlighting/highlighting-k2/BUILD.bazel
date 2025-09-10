@@ -23,7 +23,7 @@ jvm_library(
   name = "kotlin-highlighting-k2",
   module_name = "kotlin.highlighting.k2",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_kotlin-highlighting-k2",
   deps = [
     "//java/java-indexing-api:indexing",
@@ -70,7 +70,7 @@ jvm_library(
 jvm_library(
   name = "kotlin-highlighting-k2_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_kotlin-highlighting-k2",
   associates = [":kotlin-highlighting-k2"],
   deps = [

@@ -500,8 +500,8 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
 
   private inner class InlaySettingsTreeRenderer : CheckboxTree.CheckboxTreeCellRenderer(true, true),
                                                   UiInspectorTreeRendererContextProvider {
-    override fun customizeRenderer(tree: JTree?,
-                                   value: Any?,
+    override fun customizeRenderer(tree: JTree,
+                                   value: Any,
                                    selected: Boolean,
                                    expanded: Boolean,
                                    leaf: Boolean,

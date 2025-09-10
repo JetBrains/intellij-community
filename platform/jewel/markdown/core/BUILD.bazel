@@ -10,7 +10,7 @@ create_kotlinc_options(
     "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
     "org.jetbrains.jewel.foundation.InternalJewelApi",
   ],
-  x_context_receivers = True,
+  x_context_parameters = True,
   x_explicit_api_mode = "strict"
 )
 
@@ -20,19 +20,25 @@ jvm_resources(
   strip_prefix = "src/main/resources"
 )
 
+jvm_resources(
+  name = "core_test_resources",
+  files = glob(["src/test/resources/**/*"]),
+  strip_prefix = "src/test/resources"
+)
+
 jvm_library(
   name = "core",
   module_name = "intellij.platform.jewel.markdown.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_core",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
     "//platform/jewel/ui",
-    "//platform/jewel/foundation",
     "@lib//:platform-jewel-markdown-core-org-commonmark-commonmark",
+    "//platform/jewel/foundation",
     "//libraries/compose-foundation-desktop",
   ],
   exports = ["@lib//:platform-jewel-markdown-core-org-commonmark-commonmark"],
@@ -43,7 +49,7 @@ jvm_library(
 jvm_library(
   name = "core_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_core",
   associates = [":core"],
   deps = [
@@ -52,13 +58,17 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/jewel/ui",
     "//platform/jewel/ui:ui_test_lib",
+    "@lib//:platform-jewel-markdown-core-org-commonmark-commonmark",
     "//platform/jewel/foundation",
     "//platform/jewel/foundation:foundation_test_lib",
-    "@lib//:platform-jewel-markdown-core-org-commonmark-commonmark",
     "//libraries/compose-foundation-desktop",
     "//libraries/compose-foundation-desktop-junit",
   ],
-  runtime_deps = [":core_resources"],
+  exports = ["@lib//:platform-jewel-markdown-core-org-commonmark-commonmark"],
+  runtime_deps = [
+    ":core_resources",
+    ":core_test_resources",
+  ],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.core` end

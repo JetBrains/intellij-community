@@ -24,7 +24,7 @@ class MarkdownSupportTest : GrazieTestBase() {
   }
 
   fun `test replacement with markup inside`() {
-    myFixture.configureByText("a.md", "Please, <caret><GRAMMAR_ERROR descr=\"GATHER_UP\">gather </GRAMMAR_ERROR>[<GRAMMAR_ERROR descr=\"GATHER_UP\">up</GRAMMAR_ERROR> the](url) documentation.")
+    myFixture.configureByText("a.md", "Please, <STYLE_SUGGESTION descr=\"GATHER_UP\">gather<caret> </STYLE_SUGGESTION>[<STYLE_SUGGESTION descr=\"GATHER_UP\">up</STYLE_SUGGESTION> the](url) documentation.")
     myFixture.checkHighlighting()
     myFixture.launchAction(myFixture.findSingleIntention("gather"))
     myFixture.checkResult("Please, gather[ the](url) documentation.") // the result could be different, but the markup should still be preserved

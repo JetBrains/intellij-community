@@ -79,6 +79,7 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/platform-impl:ide-impl",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//platform/indexing-api:indexing",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",

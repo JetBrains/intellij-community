@@ -10,7 +10,7 @@ import org.jetbrains.annotations.*;
 
 import java.io.Serializable;
 import java.util.Objects;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 @ReviseWhenPortedToJDK("11") // rewrite to real VarHandles
 @Transient
@@ -18,17 +18,18 @@ public class UserDataHolderBase implements UserDataHolderEx, Serializable {
   private static final Key<KeyFMap> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
 
   @Nullable
-  private static Supplier<ExternalUserDataStorage> ourExternalUserDataStorage = null;
+  private static Function<@NotNull UserDataHolderBase, @Nullable ExternalUserDataStorage> ourExternalUserDataStorage = null;
 
   @ApiStatus.Internal
-  public static void setExternalUserDataStorage(@Nullable Supplier<ExternalUserDataStorage> supplier) {
-    ourExternalUserDataStorage = supplier;
+  public static void setExternalUserDataStorage(@Nullable Function<@NotNull UserDataHolderBase, @Nullable ExternalUserDataStorage> provider) {
+    ourExternalUserDataStorage = provider;
   }
 
-  private static @Nullable ExternalUserDataStorage externalStorage() {
-    Supplier<ExternalUserDataStorage> supplier = ourExternalUserDataStorage;
-    return supplier == null ? null : supplier.get();
+  private @Nullable ExternalUserDataStorage externalStorage() {
+    Function<@NotNull UserDataHolderBase, @Nullable ExternalUserDataStorage> provider = ourExternalUserDataStorage;
+    return provider == null ? null : provider.apply(this);
   }
+
   private volatile @NotNull KeyFMap value = KeyFMap.EMPTY_MAP;
   private static final VarHandleWrapper VALUE_HANDLE = VarHandleWrapper.getFactory().create(UserDataHolderBase.class, "value", KeyFMap.class);
 

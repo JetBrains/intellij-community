@@ -5,7 +5,6 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.containers.Java11Shim
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
@@ -41,7 +40,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
     modules.add(module)
     for (subModule in module.contentModules) {
       modules.add(subModule)
-      moduleMap.put(subModule.moduleName, subModule)
+      moduleMap.put(subModule.moduleId.id, subModule) // FIXME module and plugin id namespaces should be separate
       for (pluginAlias in subModule.pluginAliases) {
         moduleMap.put(pluginAlias.idString, subModule)
       }
@@ -151,7 +150,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
 
 // alias in most cases points to Core plugin, so, we cannot use computed dependencies to check
 private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, @Suppress("SameParameterValue") aliasId: PluginId): Boolean {
-  return plugin.dependencies.any { it.pluginId == aliasId } || plugin.moduleDependencies.plugins.any { it.id == aliasId }
+  return plugin.dependencies.any { it.pluginId == aliasId } || plugin.moduleDependencies.plugins.any { it == aliasId }
 }
 
 internal fun toCoreAwareComparator(comparator: Comparator<PluginModuleDescriptor>): Comparator<PluginModuleDescriptor> {
@@ -168,15 +167,6 @@ internal fun toCoreAwareComparator(comparator: Comparator<PluginModuleDescriptor
     }
   }
 }
-
-/**
- * No new entries should be added to this set; if a plugin modules depends on content modules extracted from the core plugin, explicit dependencies on them should be added.
- * There is no need to fully convert the plugin to v2 for that.
- */
-@ApiStatus.Obsolete
-private val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
-  "com.jetbrains.pycharm.ds.customization", //todo remove this: DS-7102
-)
 
 /**
  * Specifies the list of content modules which was recently extracted from the main module of the core plugin and may have external usages.
@@ -224,8 +214,8 @@ private fun collectDirectDependenciesInOldFormat(
       }
     }
     if (dependencyPluginId == "com.intellij.modules.platform" || dependencyPluginId == "com.intellij.modules.lang") {
-      for (contentModuleName in contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins) {
-        idMap.get(contentModuleName)?.let {
+      for (contentModuleId in contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins) {
+        idMap.get(contentModuleId)?.let {
           dependenciesCollector.add(it)
         }
       }
@@ -236,10 +226,6 @@ private fun collectDirectDependenciesInOldFormat(
         // Add an edge to the main module of the plugin. This is needed to ensure that this plugin is processed after it's decided whether to enable the referenced plugin or not.
         additionalEdges.add(dependencyPluginDescriptor)
       }
-    }
-
-    if (knownNotFullyMigratedPluginIds.contains(rootDescriptor.pluginId.idString)) {
-      dependenciesCollector.addAll(idMap.get(PluginManagerCore.CORE_ID.idString)!!.contentModules)
     }
 
     dependency.subDescriptor?.let {
@@ -261,7 +247,7 @@ private fun collectDirectDependenciesInNewFormat(
   additionalEdges: MutableSet<PluginModuleDescriptor>
 ) {
   for (item in module.moduleDependencies.modules) {
-    val dependency = idMap.get(item.name)
+    val dependency = idMap.get(item.id)
     if (dependency != null) {
       dependenciesCollector.add(dependency)
       if (dependency.isRequiredContentModule) {
@@ -275,7 +261,7 @@ private fun collectDirectDependenciesInNewFormat(
     }
   }
   for (item in module.moduleDependencies.plugins) {
-    val targetModule = idMap.get(item.id.idString)
+    val targetModule = idMap.get(item.idString)
     // fake v1 module maybe located in a core plugin
     if (targetModule != null && (targetModule is ContentModuleDescriptor || targetModule.pluginId != PluginManagerCore.CORE_ID)) {
       dependenciesCollector.add(targetModule)
@@ -288,7 +274,7 @@ private fun collectDirectDependenciesInNewFormat(
        can be loaded or not. */
     for (item in module.contentModules) {
       if (item.moduleLoadingRule.required) {
-        val descriptor = idMap.get(item.moduleName)
+        val descriptor = idMap.get(item.moduleId.id) // FIXME module and plugin id namespaces should be separate
         if (descriptor != null) {
           additionalEdges.add(descriptor)
         }

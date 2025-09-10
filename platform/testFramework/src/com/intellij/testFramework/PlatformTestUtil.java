@@ -66,6 +66,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
@@ -253,15 +254,15 @@ public final class PlatformTestUtil {
     }
   }
 
-  public static void assertTreeEqual(@NotNull JTree tree, @NonNls String expected) {
+  public static void assertTreeEqual(@NotNull JTree tree, @NotNull @NonNls String expected) {
     assertTreeEqual(tree, expected, false);
   }
 
-  public static void assertTreeEqual(@NotNull JTree tree, String expected, boolean checkSelected) {
+  public static void assertTreeEqual(@NotNull JTree tree, @NotNull @NonNls String expected, boolean checkSelected) {
     assertTreeEqual(tree, expected, checkSelected, false);
   }
 
-  public static void assertTreeEqual(@NotNull JTree tree, @NotNull String expected, boolean checkSelected, boolean ignoreOrder) {
+  public static void assertTreeEqual(@NotNull JTree tree, @NotNull @NonNls String expected, boolean checkSelected, boolean ignoreOrder) {
     String treeStringPresentation = print(tree, checkSelected);
     if (ignoreOrder) {
       List<String> actualLines = sorted(ContainerUtil.map(splitByLines(treeStringPresentation), String::trim));
@@ -459,7 +460,7 @@ public final class PlatformTestUtil {
     }, delay);
     pooledAlarm.addRequest(() -> pooledRunnableInvoked.set(true), delay);
 
-    UIUtil.dispatchAllInvocationEvents();
+    dispatchAllInvocationEventsInIdeEventQueue();
 
     long start = System.currentTimeMillis();
     try {
@@ -467,7 +468,7 @@ public final class PlatformTestUtil {
       while (!alarmInvoked2.get()) {
         AtomicBoolean laterInvoked = new AtomicBoolean();
         app.invokeLater(() -> laterInvoked.set(true));
-        UIUtil.dispatchAllInvocationEvents();
+        dispatchAllInvocationEventsInIdeEventQueue();
         assertTrue(laterInvoked.get());
 
         TimeoutUtil.sleep(sleptAlready ? 10 : delay);
@@ -493,7 +494,7 @@ public final class PlatformTestUtil {
     finally {
       Disposer.dispose(tempDisposable);
     }
-    UIUtil.dispatchAllInvocationEvents();
+    dispatchAllInvocationEventsInIdeEventQueue();
   }
 
   /**
@@ -1354,5 +1355,16 @@ public final class PlatformTestUtil {
         "; FJP configured parallelism=" + ForkJoinPool.getCommonPoolParallelism() +
         "; FJP actual common pool parallelism=" + ForkJoinPool.commonPool().getParallelism());
     }
+  }
+
+  @TestOnly
+  public static void waitForAllDocumentsCommitted(long timeout, @NotNull TimeUnit timeUnit) {
+    DocumentCommitThread documentCommitThread = DocumentCommitThread.getInstance();
+    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+      documentCommitThread.waitForAllCommits(timeout, timeUnit);
+      return Unit.INSTANCE;
+    });
+    // some callbacks on document commit might require EDT. So we forcibly dispatch pending events to run these callbacks
+    dispatchAllInvocationEventsInIdeEventQueue();
   }
 }

@@ -15,6 +15,9 @@
  */
 package com.intellij.build.events;
 
+import com.intellij.build.events.BuildEventsNls.Description;
+import com.intellij.build.events.BuildEventsNls.Hint;
+import com.intellij.build.events.BuildEventsNls.Message;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,42 +26,30 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface BuildEvent {
   /**
-   * Returns an id that uniquely identifies the event.
-   *
-   * @return The event id.
+   * Returns an ID that uniquely identifies the event.
+   * The events with equal IDs replaces each other.
    */
-  @NotNull
-  Object getId();
+  @NotNull Object getId();
 
   /**
    * Returns the parent event id, if any.
-   *
-   * @return The parent event id.
    */
-  @Nullable
-  Object getParentId();
+  @Nullable Object getParentId();
 
   /**
-   * Returns the time this event was triggered.
-   *
-   * @return The event time, in milliseconds since the epoch.
+   * Returns the time, in milliseconds since the epoch, this event was triggered.
    */
   long getEventTime();
 
   /**
    * Returns textual representation of the event.
-   *
-   * @return The event text message.
    */
-  @NotNull
-  @BuildEventsNls.Message
-  String getMessage();
+  @Message
+  @NotNull String getMessage();
 
-  @Nullable
-  @BuildEventsNls.Hint
-  String getHint();
+  @Hint
+  @Nullable String getHint();
 
-  @Nullable
-  @BuildEventsNls.Description
-  String getDescription();
+  @Description
+  @Nullable String getDescription();
 }

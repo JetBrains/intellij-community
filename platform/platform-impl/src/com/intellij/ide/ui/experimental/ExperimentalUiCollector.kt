@@ -26,7 +26,7 @@ object ExperimentalUiCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("experimental.ui.interactions", 6)
+  private val GROUP = EventLogGroup("experimental.ui.interactions", 7)
 
   private val switchSourceField = EventFields.Enum<SwitchSource>("switch_source")
   private val expUiField = EventFields.Boolean("exp_ui")
@@ -42,6 +42,12 @@ object ExperimentalUiCollector : CounterUsagesCollector() {
 
   @JvmStatic
   val inviteBannerClosed = GROUP.registerEvent("invite.banner.closed")
+
+  @JvmStatic
+  val islandsThemeOn = GROUP.registerEvent("islands.theme.on")
+
+  @JvmStatic
+  val islandsThemeOff = GROUP.registerEvent("islands.theme.off")
 
   private val meetNewUiActionField = EventFields.Enum<MeetNewUiAction>("action")
   private val meetNewUiAction = GROUP.registerVarargEvent("meet.new.ui.action", meetNewUiActionField)

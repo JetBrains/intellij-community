@@ -1,0 +1,63 @@
+import hashlib
+from _typeshed import Incomplete
+
+from authlib.jose.rfc7515 import JWSAlgorithm
+
+class NoneAlgorithm(JWSAlgorithm):
+    name: str
+    description: str
+    def prepare_key(self, raw_data) -> None: ...
+    def sign(self, msg, key): ...
+    def verify(self, msg, sig, key) -> bool: ...
+
+class HMACAlgorithm(JWSAlgorithm):
+    SHA256 = hashlib.sha256
+    SHA384 = hashlib.sha384
+    SHA512 = hashlib.sha512
+    name: Incomplete
+    description: Incomplete
+    hash_alg: Incomplete
+    def __init__(self, sha_type) -> None: ...
+    def prepare_key(self, raw_data): ...
+    def sign(self, msg, key): ...
+    def verify(self, msg, sig, key) -> bool: ...
+
+class RSAAlgorithm(JWSAlgorithm):
+    SHA256: Incomplete
+    SHA384: Incomplete
+    SHA512: Incomplete
+    name: Incomplete
+    description: Incomplete
+    hash_alg: Incomplete
+    padding: Incomplete
+    def __init__(self, sha_type) -> None: ...
+    def prepare_key(self, raw_data): ...
+    def sign(self, msg, key): ...
+    def verify(self, msg, sig, key) -> bool: ...
+
+class ECAlgorithm(JWSAlgorithm):
+    SHA256: Incomplete
+    SHA384: Incomplete
+    SHA512: Incomplete
+    name: Incomplete
+    curve: Incomplete
+    description: Incomplete
+    hash_alg: Incomplete
+    def __init__(self, name, curve, sha_type) -> None: ...
+    def prepare_key(self, raw_data): ...
+    def sign(self, msg, key): ...
+    def verify(self, msg, sig, key) -> bool: ...
+
+class RSAPSSAlgorithm(JWSAlgorithm):
+    SHA256: Incomplete
+    SHA384: Incomplete
+    SHA512: Incomplete
+    name: Incomplete
+    description: Incomplete
+    hash_alg: Incomplete
+    def __init__(self, sha_type) -> None: ...
+    def prepare_key(self, raw_data): ...
+    def sign(self, msg, key): ...
+    def verify(self, msg, sig, key) -> bool: ...
+
+JWS_ALGORITHMS: list[JWSAlgorithm]

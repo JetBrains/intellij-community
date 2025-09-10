@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 
 class ConvertUnsafeCastCallToUnsafeCastIntention : SelfTargetingIntention<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java,
-    KotlinBundle.lazyMessage("convert.to.unsafe.cast"),
+    KotlinBundle.messagePointer("convert.to.unsafe.cast"),
 ) {
 
     override fun isApplicableTo(element: KtDotQualifiedExpression, caretOffset: Int): Boolean {
@@ -28,7 +28,7 @@ class ConvertUnsafeCastCallToUnsafeCastIntention : SelfTargetingIntention<KtDotQ
 
         val type = element.callExpression?.typeArguments?.singleOrNull() ?: return false
 
-        setTextGetter(KotlinBundle.lazyMessage("convert.to.0.as.1", element.receiverExpression.text, type.text))
+        setTextGetter(KotlinBundle.messagePointer("convert.to.0.as.1", element.receiverExpression.text, type.text))
         return true
     }
 

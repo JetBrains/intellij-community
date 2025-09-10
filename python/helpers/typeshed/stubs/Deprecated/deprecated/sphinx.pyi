@@ -18,6 +18,7 @@ class SphinxAdapter(ClassicAdapter):
         version: str = "",
         action: _Actions | None = None,
         category: type[Warning] = ...,
+        extra_stacklevel: int = 0,
         line_length: int = 70,
     ) -> None: ...
     def __call__(self, wrapped: _F) -> Callable[[_F], _F]: ...
@@ -31,4 +32,5 @@ def deprecated(
     *,
     action: _Actions | None = ...,
     category: type[Warning] | None = ...,
+    extra_stacklevel: int = 0,
 ) -> Callable[[_F], _F]: ...

@@ -84,7 +84,12 @@ class TeamCityReporter(reporters.BaseReporter):
     def display_reports(self, layout):
         """Issues the final PyLint score as a TeamCity build statistic value"""
         try:
-            score = self.linter.stats['global_note']
+            stats = self.linter.stats
+            score = getattr(stats, 'global_note', None)
+
+            # Backwards compatibility for pylint version <2.12
+            if score is None:
+                score = stats['global_note']
         except (AttributeError, KeyError):
             pass
         else:

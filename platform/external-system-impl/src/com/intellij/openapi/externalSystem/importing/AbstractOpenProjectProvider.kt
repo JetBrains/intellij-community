@@ -80,6 +80,7 @@ abstract class AbstractOpenProjectProvider {
       this.forceOpenInNewFrame = forceOpenInNewFrame
       this.projectToClose = projectToClose
       runConfigurators = false
+      projectRootDir = nioPath
       beforeOpen = { project ->
         if (isValidIdeaProject) {
           UnlinkedProjectNotificationAware.enableNotifications(project, systemId)

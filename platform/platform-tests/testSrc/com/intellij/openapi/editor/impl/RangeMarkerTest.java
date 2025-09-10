@@ -1391,9 +1391,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }
   }
 
-  public void testRMInsertPerformance() {
+  public void testRMInsertDisposePerformance() {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
-    int N = 100_000;
+    int N = 1_000_000;
     List<RangeMarker> markers = new ArrayList<>(N);
     Benchmark.newBenchmark("createRM", ()->{
       for (int i = 0; i < N; i++) {
@@ -1463,7 +1463,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     document = null;
     TestTimeOut t = TestTimeOut.setTimeout(100, TimeUnit.SECONDS);
     GCUtil.tryGcSoftlyReachableObjects(() -> {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       return ref.get() == null || t.isTimedOut();
     });
     Document d = ref.get();

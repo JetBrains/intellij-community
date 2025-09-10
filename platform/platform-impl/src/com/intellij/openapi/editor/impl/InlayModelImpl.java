@@ -57,7 +57,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     .thenComparingInt(i -> -i.myPriority)
     .thenComparingInt(i -> i.myOrder);
 
-  private static final Processor<InlayImpl> UPDATE_PROCESSOR = inlay -> {
+  private static final Processor<InlayImpl<?,?>> UPDATE_PROCESSOR = inlay -> {
     inlay.update();
     return true;
   };
@@ -65,7 +65,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   private final EditorImpl myEditor;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
-  private final List<InlayImpl> myInlaysInvalidatedOnMove = new ArrayList<>();
+  private final List<InlayImpl<?,?>> myInlaysInvalidatedOnMove = new ArrayList<>();
   final RangeMarkerTree<InlineInlayImpl<?>> myInlineElementsTree;
   final MarkerTreeWithPartialSums<BlockInlayImpl<?>> myBlockElementsTree;
   final RangeMarkerTree<AfterLineEndInlayImpl<?>> myAfterLineEndElementsTree;
@@ -236,16 +236,16 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   public @NotNull List<Inlay<?>> getInlineElementsInRange(int startOffset, int endOffset) {
     List<InlineInlayImpl<?>> range = getElementsInRange(myInlineElementsTree, startOffset, endOffset, Predicates.alwaysTrue(),
                                                         INLINE_ELEMENTS_COMPARATOR);
-    //noinspection unchecked
+    //noinspection unchecked,rawtypes
     return (List)range;
   }
 
   @Override
   public @NotNull <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
-    List<InlineInlayImpl<?>> range =
-      getElementsInRange(myInlineElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),
-                         INLINE_ELEMENTS_COMPARATOR);
-    //noinspection unchecked
+    List<InlineInlayImpl<?>> range = getElementsInRange(myInlineElementsTree, startOffset, endOffset,
+                                                        inlay -> type.isInstance(inlay.myRenderer),
+                                                        INLINE_ELEMENTS_COMPARATOR);
+    //noinspection unchecked,rawtypes
     return (List)range;
   }
 
@@ -253,7 +253,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   public @NotNull List<Inlay<?>> getBlockElementsInRange(int startOffset, int endOffset) {
     List<BlockInlayImpl<?>> range =
       getElementsInRange(myBlockElementsTree, startOffset, endOffset, Predicates.alwaysTrue(), BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
-    //noinspection unchecked
+    //noinspection unchecked,rawtypes
     return (List)range;
   }
 
@@ -261,15 +261,15 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   public @NotNull <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     List<BlockInlayImpl<?>> range = getElementsInRange(myBlockElementsTree, startOffset, endOffset,
                                                        inlay -> type.isInstance(inlay.myRenderer), BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
-    //noinspection unchecked
+    //noinspection unchecked,rawtypes
     return (List)range;
   }
 
   private static <T extends Inlay<?>> List<T> getElementsInRange(@NotNull IntervalTree<? extends T> tree,
                                                                  int startOffset,
                                                                  int endOffset,
-                                                                 Predicate<? super T> predicate,
-                                                                 Comparator<? super T> comparator) {
+                                                                 @NotNull Predicate<? super T> predicate,
+                                                                 @NotNull Comparator<? super T> comparator) {
     List<T> result = new ArrayList<>();
     tree.processOverlappingWith(startOffset, endOffset, inlay -> {
       if (predicate.test(inlay)) result.add(inlay);
@@ -298,7 +298,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
       Collections.reverse(result);
     }
     result.sort(BLOCK_ELEMENTS_COMPARATOR);
-    //noinspection unchecked
+    //noinspection unchecked,rawtypes
     return (List)result;
   }
 
@@ -378,7 +378,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   }
 
   @Override
-  public @Nullable Inlay getInlineElementAt(@NotNull VisualPosition visualPosition) {
+  public @Nullable Inlay<?> getInlineElementAt(@NotNull VisualPosition visualPosition) {
     int offset = myEditor.visualPositionToOffset(visualPosition);
     List<Inlay<?>> inlays = getInlineElementsInRange(offset, offset);
     if (inlays.isEmpty()) return null;
@@ -389,11 +389,11 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   }
 
   @Override
-  public @Nullable Inlay getElementAt(@NotNull Point point) {
+  public @Nullable Inlay<?> getElementAt(@NotNull Point point) {
     return getElementAt(new EditorLocation(myEditor, point), false);
   }
 
-  Inlay getElementAt(@NotNull EditorLocation location, boolean ignoreBlockElementWidth) {
+  Inlay<?> getElementAt(@NotNull EditorLocation location, boolean ignoreBlockElementWidth) {
     return ReadAction.compute(() -> {
       Insets insets = myEditor.getContentComponent().getInsets();
       Point point = location.getPoint();
@@ -414,7 +414,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
           List<Inlay<?>> inlays = getBlockElementsForVisualLine(visualLine, true);
           int yDiff = baseY - point.y;
           for (int i = inlays.size() - 1; i >= 0; i--) {
-            Inlay inlay = inlays.get(i);
+            Inlay<?> inlay = inlays.get(i);
             yDiff -= inlay.getHeightInPixels();
             if (yDiff <= 0) {
               return ignoreBlockElementWidth || relX < inlay.getWidthInPixels() ? inlay : null;
@@ -429,7 +429,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
           if (point.y >= lineBottom) {
             List<Inlay<?>> inlays = getBlockElementsForVisualLine(visualLine, false);
             int yDiff = point.y - lineBottom;
-            for (Inlay inlay : inlays) {
+            for (Inlay<?> inlay : inlays) {
               yDiff -= inlay.getHeightInPixels();
               if (yDiff < 0) {
                 return relX < inlay.getWidthInPixels() ? inlay : null;
@@ -473,7 +473,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   }
 
   private static Inlay<?> findInlay(List<? extends Inlay<?>> inlays, int x, int startX) {
-    for (Inlay inlay : inlays) {
+    for (Inlay<?> inlay : inlays) {
       int endX = startX + inlay.getWidthInPixels();
       if (x >= startX && x < endX) return inlay;
       startX = endX;
@@ -488,7 +488,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     }
     List<AfterLineEndInlayImpl<?>> range =
       getElementsInRange(myAfterLineEndElementsTree, startOffset, endOffset, Predicates.alwaysTrue(), AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR);
-    //noinspection unchecked
+    //noinspection unchecked,rawtypes
     return (List)range;
   }
 
@@ -501,7 +501,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     List<AfterLineEndInlayImpl<?>> range =
       getElementsInRange(myAfterLineEndElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),
                          AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR);
-    //noinspection unchecked
+    //noinspection unchecked,rawtypes
     return (List)range;
   }
 
@@ -519,7 +519,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
       return true;
     });
     result.sort(AFTER_LINE_END_ELEMENTS_COMPARATOR);
-    //noinspection unchecked
+    //noinspection unchecked,rawtypes
     return (List)result;
   }
 
@@ -571,7 +571,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     myDispatcher.getMulticaster().onUpdated(inlay, changeFlags);
   }
 
-  void notifyRemoved(InlayImpl inlay) {
+  void notifyRemoved(InlayImpl<?,?> inlay) {
     myDispatcher.getMulticaster().onRemoved(inlay);
   }
 
@@ -588,7 +588,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
 
   @TestOnly
   public void validateState() {
-    for (Inlay inlay : getInlineElementsInRange(0, myEditor.getDocument().getTextLength())) {
+    for (Inlay<?> inlay : getInlineElementsInRange(0, myEditor.getDocument().getTextLength())) {
       LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), inlay.getOffset()));
     }
   }
@@ -601,7 +601,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   }
 
 
-  private static String dumpInlays(RangeMarkerTree<? extends InlayImpl> tree) {
+  private static String dumpInlays(RangeMarkerTree<? extends InlayImpl<?,?>> tree) {
     StringJoiner joiner = new StringJoiner(",", "[", "]");
     tree.processAll(o -> {
       joiner.add(Integer.toString(o.getOffset()));
@@ -620,14 +620,15 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     }
 
     @Override
-    protected @NotNull RMNode<InlineInlayImpl<?>> createNewNode(@NotNull InlineInlayImpl key, int start, int end,
+    protected @NotNull RMNode<InlineInlayImpl<?>> createNewNode(@NotNull InlineInlayImpl<?> key, int start, int end,
                                                                 boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
-      return new RMNode<InlineInlayImpl<?>>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
+      return new RMNode<>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
         @Override
         protected void addIntervalsFrom(@NotNull IntervalNode<InlineInlayImpl<?>> otherNode) {
           super.addIntervalsFrom(otherNode);
           if (myPutMergedIntervalsAtBeginning) {
-            List<Supplier<? extends InlineInlayImpl<?>>> added = ContainerUtil.subList(intervals, intervals.size() - otherNode.intervals.size());
+            List<Supplier<? extends InlineInlayImpl<?>>> added =
+              ContainerUtil.subList(intervals, intervals.size() - otherNode.intervals.size());
             List<Supplier<? extends InlineInlayImpl<?>>> addedCopy = new ArrayList<>(added);
             added.clear();
             intervals.addAll(0, addedCopy);
@@ -637,7 +638,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     }
 
     @Override
-    public void fireBeforeRemoved(@NotNull InlineInlayImpl inlay) {
+    protected void fireBeforeRemoved(@NotNull InlineInlayImpl<?> inlay) {
       if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         if (myMoveInProgress) {
           // delay notification about invalidated inlay - folding model is not consistent at this point
@@ -657,7 +658,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     }
 
     @Override
-    public void fireBeforeRemoved(@NotNull BlockInlayImpl inlay) {
+    protected void fireBeforeRemoved(@NotNull BlockInlayImpl<?> inlay) {
       if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }
@@ -670,7 +671,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     }
 
     @Override
-    public void fireBeforeRemoved(@NotNull AfterLineEndInlayImpl inlay) {
+    protected void fireBeforeRemoved(@NotNull AfterLineEndInlayImpl<?> inlay) {
       if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }

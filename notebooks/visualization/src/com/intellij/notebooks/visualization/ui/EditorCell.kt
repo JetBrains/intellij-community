@@ -19,7 +19,6 @@ import com.intellij.openapi.util.UserDataHolderBase
 import java.time.ZonedDateTime
 import kotlin.reflect.KClass
 
-
 class EditorCell(
   val notebook: EditorNotebook,
   var intervalPointer: NotebookIntervalPointer,
@@ -50,7 +49,6 @@ class EditorCell(
     get() = interval.type
   val view: EditorCellView?
     get() = NotebookCellInlayManager.get(editor)?.views[this]
-
 
   override fun dispose() {
     cleanupExtensions()
@@ -87,7 +85,6 @@ class EditorCell(
   fun updateOutputs(): Unit = editor.updateManager.update {
     outputs.updateOutputs()
   }
-
 
   inline fun <reified T : EditorCellExtension> getExtension(): T? {
     return getExtension(T::class)

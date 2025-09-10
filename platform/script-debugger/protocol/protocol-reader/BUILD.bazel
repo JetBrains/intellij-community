@@ -5,7 +5,7 @@ jvm_library(
   name = "protocol-reader",
   module_name = "intellij.javascript.protocolReader",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:gson",
     "//platform/script-debugger/protocol/protocol-reader-runtime",

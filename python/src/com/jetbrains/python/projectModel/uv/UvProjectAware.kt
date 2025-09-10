@@ -26,7 +26,7 @@ import java.nio.file.Path
  * Tracks changes in pyproject.toml files and suggests syncing their changes with the project model
  * according to the `Settings | Build, Execution, Deployment | Build Tools` settings.
  */
-class UvProjectAware(
+internal class UvProjectAware(
   private val project: Project,
   override val projectId: ExternalSystemProjectId,
 ) : ExternalSystemProjectAware {

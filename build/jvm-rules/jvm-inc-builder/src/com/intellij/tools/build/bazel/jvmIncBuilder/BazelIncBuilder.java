@@ -113,8 +113,11 @@ public class BazelIncBuilder {
 
             // for all modified forms ensure sources bound to forms are marked for recompilation
             if (!srcSnapshotDelta.isRecompileAll()) {
-              for (NodeSource source : FormsCompiler.findBoundSources(storageManager, filter(srcSnapshotDelta.getModified(), FormBinding::isForm))) {
-                srcSnapshotDelta.markRecompile(source);
+              Iterator<@NotNull NodeSource> modifiedForms = filter(srcSnapshotDelta.getModified(), FormBinding::isForm).iterator();
+              if (modifiedForms.hasNext()) {
+                for (NodeSource source : FormsCompiler.findBoundSources(storageManager, collect(modifiedForms, new ArrayList<>()))) {
+                  srcSnapshotDelta.markRecompile(source);
+                }
               }
             }
 

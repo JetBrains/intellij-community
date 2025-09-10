@@ -11,7 +11,7 @@ jvm_library(
   name = "smRunner",
   module_name = "intellij.platform.smRunner",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -44,7 +44,7 @@ jvm_library(
 jvm_library(
   name = "smRunner_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":smRunner"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -77,6 +77,11 @@ jvm_library(
     "//platform/diff-api:diff",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+  ],
+  exports = [
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
+    "@lib//:tc_service_messages",
   ],
   runtime_deps = [":smRunner_resources"]
 )

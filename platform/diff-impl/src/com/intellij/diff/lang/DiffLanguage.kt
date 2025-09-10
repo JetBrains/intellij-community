@@ -9,10 +9,18 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.CalledInAny
 
 internal object DiffLanguage {
+
+  /**
+   * Not to be confused with [DiffUserDataKeys.LANGUAGE]
+   * to avoid affecting [com.intellij.diff.util.DiffUtil.createEditorHighlighter] logic
+   */
+  private val LANGUAGE_KEY: Key<Language> = Key.create("DiffLanguage.Computed")
+
   /**
    * Note that unlike [getLanguageOrCompute] this method ignores [com.intellij.psi.LanguageSubstitutors] as their
    * calculation might require a background thread.
@@ -37,7 +45,7 @@ internal object DiffLanguage {
   fun computeAndCacheLanguage(content: DiffContent, project: Project?) {
     val language = computeLanguage(content, project)
     if (language != null) {
-      content.putUserData(DiffUserDataKeys.LANGUAGE, language)
+      content.putUserData(LANGUAGE_KEY, language)
     }
   }
 
@@ -52,7 +60,7 @@ internal object DiffLanguage {
     return languageForPsi ?: getLanguageByFileType(content)
   }
 
-  private fun getLanguageByDataKey(content: DiffContent): Language? = content.getUserData(DiffUserDataKeys.LANGUAGE)
+  private fun getLanguageByDataKey(content: DiffContent): Language? = content.getUserData(LANGUAGE_KEY)
 
   private fun getLanguageByFileType(content: DiffContent): Language? = content.getContentType()?.let(LanguageUtil::getFileTypeLanguage)
 }

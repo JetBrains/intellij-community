@@ -4,9 +4,6 @@ f:com.intellij.vcs.log.CommitId
 - getHash():com.intellij.vcs.log.Hash
 - getRoot():com.intellij.openapi.vfs.VirtualFile
 - hashCode():I
-com.intellij.vcs.log.Hash
-- a:asString():java.lang.String
-- a:toShortString():java.lang.String
 com.intellij.vcs.log.RefGroup
 - a:getColors():java.util.List
 - a:getName():java.lang.String

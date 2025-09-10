@@ -12,9 +12,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import java.nio.file.Path
 
-class PoetryUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
+internal class PoetryUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
   private val openProvider = PoetryProjectOpenProvider()
-  
+
   override val systemId: ProjectSystemId = PoetryConstants.SYSTEM_ID
 
   override fun isBuildFile(project: Project, buildFile: VirtualFile): Boolean {

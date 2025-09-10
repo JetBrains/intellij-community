@@ -16,9 +16,15 @@ import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Path
 import java.util.TreeSet
+import kotlin.io.path.copyTo
+import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.inputStream
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.readBytes
 import kotlin.io.path.relativeTo
 
 internal data class BazelLabel(
@@ -94,104 +100,197 @@ internal fun generateDeps(
     }
     else if (element is JpsLibraryDependency) {
       val jpsLibrary = element.library ?: error("library dependency '$element' from module ${module.module.name} is not resolved")
+      val files: List<Path> = jpsLibrary.getPaths(JpsOrderRootType.COMPILED)
       val repositoryJpsLibrary = jpsLibrary.asTyped(JpsRepositoryLibraryType.INSTANCE)
+      val isSnapshotOutsideOfTree = files.any { it.name.endsWith("-SNAPSHOT.jar") } &&
+                                    files.all { !it.startsWith(context.communityRoot) &&
+                                                context.ultimateRoot?.let { ultimateRoot -> !it.startsWith(ultimateRoot) } ?: true }
+      val isSnapshotVersion = isSnapshotOutsideOfTree ||
+                              repositoryJpsLibrary?.properties?.data?.version?.endsWith("-SNAPSHOT") == true
       val targetNameSuffix = if (isProvided) PROVIDED_SUFFIX else ""
       val isModuleLibrary = element.libraryReference.parentReference is JpsModuleReference
-      if (repositoryJpsLibrary == null) {
+      when {
+        // Library from .m2 or from any other place with a snapshot version
+        isSnapshotVersion -> {
+          val firstFile = files.first()
+          val libraryContainer = context.getLibraryContainer(module.isCommunity)
+          val libSnapshotsDir = libraryContainer.buildFile.parent.resolve("snapshots").createDirectories()
+          val targetName = camelToSnakeCase(escapeBazelLabel(firstFile.nameWithoutExtension))
+
+          val localFilesWithChecksum = files.map { file ->
+            val checksum = file.inputStream().sha256().take(20)
+            val localFile = libSnapshotsDir.resolve("${file.nameWithoutExtension}-${checksum}.${file.extension}")
+            if (!localFile.exists() || !localFile.readBytes().contentEquals(file.readBytes())) {
+              file.copyTo(localFile, overwrite = true)
+            }
+            localFile
+          }
+
+          val libraryTarget = LibraryTarget(
+            targetName = targetName,
+            container = libraryContainer,
+            jpsName = jpsLibrary.name,
+            isModuleLibrary = false,
+          )
+          context.addLocalLibrary(
+            lib = LocalLibrary(
+              files = localFilesWithChecksum,
+              target = libraryTarget,
+              bazelBuildFileDir = libSnapshotsDir,
+            ),
+            isProvided = isProvided,
+          )
+
+          val prefix = if (module.isCommunity) "@lib//snapshots" else "@ultimate_lib//snapshots"
+
+          addDep(
+            isTest = isTest,
+            scope = scope,
+            deps = deps,
+            dependencyLabel = BazelLabel("$prefix:$targetName$targetNameSuffix", null),
+            runtimeDeps = runtimeDeps,
+            hasSources = hasSources,
+            dependentModule = module,
+            dependencyModuleDescriptor = null,
+            exports = exports,
+            provided = provided,
+            isExported = isExported,
+          )
+        }
+
         // repositoryJpsLibrary == null
         // non-repository library, meaning library files are under VCS
+        // or from -SNAPSHOT versions already resolved to .m2/repo
+        repositoryJpsLibrary == null -> {
+          val firstFile = files.first()
+          val isCommunityLib = firstFile.startsWith(context.communityRoot)
+          val libraryContainer = context.getLibraryContainer(isCommunityLib)
 
-        val files = jpsLibrary.getPaths(JpsOrderRootType.COMPILED)
-        val firstFile = files.first()
-        val isCommunityLib = firstFile.startsWith(context.communityRoot)
-        val libraryContainer = context.getLibraryContainer(isCommunityLib)
-
-        val communityOrUltimateRoot = libraryContainer.moduleFile.parent.parent
-        val libBuildFileDir = firstFile.relativeTo(communityOrUltimateRoot).parent.invariantSeparatorsPathString
-        val targetName = camelToSnakeCase(escapeBazelLabel(firstFile.nameWithoutExtension))
-        val libraryTarget = LibraryTarget(
-          targetName = targetName,
-          container = libraryContainer,
-          jpsName = jpsLibrary.name,
-          isModuleLibrary = isModuleLibrary,
-        )
-        context.addLocalLibrary(
-          lib = LocalLibrary(files = files, target = libraryTarget),
-          isProvided = isProvided,
-        )
-
-        if (!isCommunityLib) {
-          require(!module.isCommunity) {
-            "Module ${module.module.name} must not depend on a non-community libraries because it is a community module" +
-            "(library=${jpsLibrary.name}, files=$files, bazelTargetName=$targetName)"
+          val targetName = if (underKotlinSnapshotLibRoot(firstFile, communityRoot = context.communityRoot)) {
+            // name the same way as maven library, so there will be minimal changes
+            // migrating from kotlin from maven to kotlin from a snapshot
+            escapeBazelLabel(jpsLibrary.name)
           }
+          else {
+            camelToSnakeCase(escapeBazelLabel(firstFile.nameWithoutExtension))
+          }
+
+          val libraryTarget = LibraryTarget(
+            targetName = targetName,
+            container = libraryContainer,
+            jpsName = jpsLibrary.name,
+            isModuleLibrary = isModuleLibrary,
+          )
+
+          val bazelFileDir = getLocalLibBazelFileDir(files, communityRoot = context.communityRoot)
+          check(files.all { file -> file.startsWith(bazelFileDir) }) {
+            "Local (non-maven) library files must be under the same directory as the BUILD.bazel file. " +
+            "Expected: ${bazelFileDir}, " +
+            "got: ${files.map { it.relativeTo(bazelFileDir).invariantSeparatorsPathString }}. " +
+            "Absolute paths:\n${files.joinToString("\n") { it.invariantSeparatorsPathString }}"
+          }
+
+          context.addLocalLibrary(
+            lib = LocalLibrary(files = files, target = libraryTarget, bazelBuildFileDir = bazelFileDir),
+            isProvided = isProvided,
+          )
+
+          if (!isCommunityLib) {
+          require(!module.isCommunity) {
+              "Module ${module.module.name} must not depend on a non-community libraries because it is a community module" +
+              "(library=${jpsLibrary.name}, files=$files, bazelTargetName=$targetName)"
+            }
+          }
+
+          val communityLibsRoot = context.communityRoot.resolve("lib")
+          val ultimateLibsRoot = context.ultimateRoot?.resolve("lib")
+          val prefix = when {
+            // separate Bazel module 'lib'
+            bazelFileDir.startsWith(communityLibsRoot) ->
+              "@lib//${bazelFileDir.relativeTo(communityLibsRoot).invariantSeparatorsPathString}"
+            // separate Bazel module 'ultimate_lib'
+            ultimateLibsRoot != null && bazelFileDir.startsWith(ultimateLibsRoot) ->
+              "@ultimate_lib//${bazelFileDir.relativeTo(ultimateLibsRoot).invariantSeparatorsPathString}"
+            // Bazel module 'community'
+            bazelFileDir.startsWith(context.communityRoot) ->
+              "${if (module.isCommunity) "//" else "@community//"}${bazelFileDir.relativeTo(context.communityRoot).invariantSeparatorsPathString}"
+            // Bazel module 'ultimate'
+            context.ultimateRoot != null && bazelFileDir.startsWith(context.ultimateRoot) ->
+              "//${bazelFileDir.relativeTo(context.ultimateRoot).invariantSeparatorsPathString}"
+            else -> error("Unknown library root location: $bazelFileDir (community=${context.communityRoot}, ultimate=${context.ultimateRoot})")
+          }
+
+          addDep(
+            isTest = isTest,
+            scope = scope,
+            deps = deps,
+            dependencyLabel = BazelLabel("$prefix:$targetName$targetNameSuffix", null),
+            runtimeDeps = runtimeDeps,
+            hasSources = hasSources,
+            dependentModule = module,
+            dependencyModuleDescriptor = null,
+            exports = exports,
+            provided = provided,
+            isExported = isExported,
+          )
         }
 
-        val prefix = when {
-          libBuildFileDir == "lib" -> if (isCommunityLib) "@lib//" else "@ultimate_lib//"
-          libBuildFileDir.startsWith("lib/") -> libBuildFileDir.replace("lib/", if (isCommunityLib) "@lib//" else "@ultimate_lib//")
-          else -> "${if (module.isCommunity || !isCommunityLib) "//" else "@community//"}${libBuildFileDir.removePrefix("community/")}"
-        }
-
-        addDep(
-          isTest = isTest,
-          scope = scope,
-          deps = deps,
-          dependencyLabel = BazelLabel("$prefix:$targetName$targetNameSuffix", null),
-          runtimeDeps = runtimeDeps,
-          hasSources = hasSources,
-          dependentModule = module,
-          dependencyModuleDescriptor = null,
-          exports = exports,
-          provided = provided,
-          isExported = isExported,
-        )
-      }
-      else {
         // Repository library, meaning library files are under .m2 and not under VCS
+        // repositoryJpsLibrary != null
+        else -> {
+          val jpsMavenLibraryDescriptor = repositoryJpsLibrary.properties.data
+          val isModuleLibrary = element.libraryReference.parentReference is JpsModuleReference
 
-        val jpsMavenLibraryDescriptor = repositoryJpsLibrary.properties.data
-        val isModuleLibrary = element.libraryReference.parentReference is JpsModuleReference
+          val rawTargetName = if (isModuleLibrary) {
+            val moduleRef = element.libraryReference.parentReference as JpsModuleReference
+            val name = repositoryJpsLibrary.name.takeIf { !it.startsWith("#") && it.isNotEmpty() } ?: "${jpsMavenLibraryDescriptor.artifactId}-${jpsMavenLibraryDescriptor.version}"
+            "${moduleRef.moduleName.removePrefix("intellij.")}-${name}"
+          }
+          else {
+            repositoryJpsLibrary.name
+          }
+          val targetName = camelToSnakeCase(escapeBazelLabel(name = rawTargetName.removeSuffix("-final").removeSuffix(".Final")))
 
-        val rawTargetName = if (isModuleLibrary) {
-          val moduleRef = element.libraryReference.parentReference as JpsModuleReference
-          val name = repositoryJpsLibrary.name.takeIf { !it.startsWith("#") && it.isNotEmpty() } ?: "${jpsMavenLibraryDescriptor.artifactId}-${jpsMavenLibraryDescriptor.version}"
-          "${moduleRef.moduleName.removePrefix("intellij.")}-${name}"
+          var libraryContainer = context.getLibraryContainer(module.isCommunity)
+
+          // we process community modules first, so, `addOrGet` (library equality ignores `isCommunity` flag)
+          libraryContainer = context.addMavenLibrary(
+            MavenLibrary(
+              mavenCoordinates = "${jpsMavenLibraryDescriptor.groupId}:${jpsMavenLibraryDescriptor.artifactId}:${jpsMavenLibraryDescriptor.version}",
+              jars = repositoryJpsLibrary.getPaths(JpsOrderRootType.COMPILED).map { getFileMavenFileDescription(repositoryJpsLibrary, it) },
+              sourceJars = repositoryJpsLibrary.getPaths(JpsOrderRootType.SOURCES).map { getFileMavenFileDescription(repositoryJpsLibrary, it) },
+              javadocJars = repositoryJpsLibrary.getPaths(JpsOrderRootType.DOCUMENTATION).map { getFileMavenFileDescription(repositoryJpsLibrary, it) },
+              target = LibraryTarget(targetName = targetName, container = libraryContainer, jpsName = jpsLibrary.name, isModuleLibrary = isModuleLibrary),
+            ),
+            isProvided = isProvided,
+          ).target.container
+
+          val containerForLabel = if (isProvided) {
+            // provided libraries for ultimate are defined in ultimate
+            // provided libraries for community are defined in community
+            context.getLibraryContainer(module.isCommunity)
+          }
+          else {
+            // libraries (not provided) used both in ultimate & community are defined in community
+            libraryContainer
+          }
+
+          val libLabel = BazelLabel("${containerForLabel.repoLabel}//:$targetName$targetNameSuffix", module = null)
+
+          addDep(
+            isTest = isTest,
+            scope = scope,
+            deps = deps,
+            dependencyLabel = libLabel,
+            runtimeDeps = runtimeDeps,
+            hasSources = hasSources,
+            dependentModule = module,
+            dependencyModuleDescriptor = null,
+            exports = exports,
+            provided = provided,
+            isExported = isExported,
+          )
         }
-        else {
-          repositoryJpsLibrary.name
-        }
-        val targetName = camelToSnakeCase(escapeBazelLabel(name = rawTargetName.removeSuffix("-final").removeSuffix(".Final")))
-
-        var libraryContainer = context.getLibraryContainer(module.isCommunity)
-
-        // we process community modules first, so, `addOrGet` (library equality ignores `isCommunity` flag)
-        libraryContainer = context.addMavenLibrary(
-          MavenLibrary(
-            mavenCoordinates = "${jpsMavenLibraryDescriptor.groupId}:${jpsMavenLibraryDescriptor.artifactId}:${jpsMavenLibraryDescriptor.version}",
-            jars = repositoryJpsLibrary.getPaths(JpsOrderRootType.COMPILED).map { getFileMavenFileDescription(repositoryJpsLibrary, it) },
-            sourceJars = repositoryJpsLibrary.getPaths(JpsOrderRootType.SOURCES).map { getFileMavenFileDescription(repositoryJpsLibrary, it) },
-            javadocJars = repositoryJpsLibrary.getPaths(JpsOrderRootType.DOCUMENTATION).map { getFileMavenFileDescription(repositoryJpsLibrary, it) },
-            target = LibraryTarget(targetName = targetName, container = libraryContainer, jpsName = jpsLibrary.name, isModuleLibrary = isModuleLibrary),
-          ),
-          isProvided = isProvided,
-        ).target.container
-
-        val libLabel = BazelLabel("${libraryContainer.repoLabel}//:$targetName$targetNameSuffix", module = null)
-
-        addDep(
-          isTest = isTest,
-          scope = scope,
-          deps = deps,
-          dependencyLabel = libLabel,
-          runtimeDeps = runtimeDeps,
-          hasSources = hasSources,
-          dependentModule = module,
-          dependencyModuleDescriptor = null,
-          exports = exports,
-          provided = provided,
-          isExported = isExported,
-        )
       }
     }
   }
@@ -224,6 +323,11 @@ internal fun generateDeps(
     if (it.name.startsWith("kotlin-compose-compiler-plugin-") && it.name.endsWith(".jar")) {
       plugins.add("@lib//:compose-plugin")
     }
+    else if (it.name.startsWith("rpc-compiler-plugin-") && it.name.endsWith(".jar")) {
+      if (module.module.name == "fleet.rpc") {  // other modules use exported_compiler_plugins
+        plugins.add("@lib//:rpc-plugin")
+      }
+    }
   }
 
   checkForDuplicates("bazel deps", deps)
@@ -234,6 +338,21 @@ internal fun generateDeps(
 
   return ModuleDeps(deps = deps, associates = associates, runtimeDeps = runtimeDeps, exports = exports, provided = provided, plugins = plugins.toList())
 }
+
+private fun getLocalLibBazelFileDir(files: List<Path>, communityRoot: Path): Path {
+  val dir = files.first().parent
+
+  // Special case, kt-master development places all snapshot kotlin libraries
+  // as a maven repo under community/lib/kotlin
+  if (underKotlinSnapshotLibRoot(dir, communityRoot)) {
+    return communityRoot.resolve("lib")
+  }
+
+  return dir
+}
+
+private fun underKotlinSnapshotLibRoot(dir: Path, communityRoot: Path) =
+  dir.startsWith(communityRoot.resolve("lib").resolve("kotlin-snapshot"))
 
 private fun getFileMavenFileDescription(lib: JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>, jar: Path): MavenFileDescription {
   require(jar.isAbsolute) {
@@ -281,16 +400,25 @@ private fun addDep(
     when (scope) {
       JpsJavaDependencyScope.COMPILE -> {
         deps.add(dependencyLabel)
+        if (isExported) {  // e.g. //debugger/intellij.java.debugger.rpc.tests:java-debugger-rpc-tests_test_lib
+          exports.add(dependencyLabel)
+        }
 
         if (dependencyModuleDescriptor != null && !dependencyModuleDescriptor.testSources.isEmpty()) {
           if (needsBackwardCompatibleTestDependency(dependencyModuleDescriptor.module.name, dependentModule)) {
             deps.add(getLabelForTest(dependencyLabel))
+            if (isExported) {  // e.g. //CIDR-appcode/appcode-coverage:appcode-coverage_test_lib
+              exports.add(getLabelForTest(dependencyLabel))
+            }
           }
         }
       }
       JpsJavaDependencyScope.TEST, JpsJavaDependencyScope.PROVIDED -> {
         if (dependencyModuleDescriptor == null) {
           deps.add(dependencyLabel)
+          if (isExported) {  // e.g. //python/junit5Tests:junit5Tests_test_lib
+            exports.add(dependencyLabel)
+          }
         }
         else {
           if (hasOnlyTestResources(dependencyModuleDescriptor)) {
@@ -309,9 +437,15 @@ private fun addDep(
 
             if (!dependencyModuleDescriptor.sources.isEmpty() || !hasTestSource) {
               deps.add(dependencyLabel)
+              if (isExported) {  // e.g. @community//python/python-venv:community-impl-venv_test_lib
+                exports.add(dependencyLabel)
+              }
             }
             if (hasTestSource) {
               deps.add(getLabelForTest(dependencyLabel))
+              if (isExported) {  // e.g. //remote-dev/cwm-guest/plugins/java-frontend:java-frontend-split_test_lib
+                exports.add(getLabelForTest(dependencyLabel))
+              }
             }
           }
         }

@@ -21,14 +21,14 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
-    KotlinBundle.lazyMessage("demorgan.law")
+    KotlinBundle.messagePointer("demorgan.law")
 ) {
     override fun isApplicableTo(element: KtBinaryExpression): Boolean {
         val expr = element.topmostBinaryExpression()
         setTextGetter(
             when (expr.operationToken) {
-                KtTokens.ANDAND -> KotlinBundle.lazyMessage("replace.&&.with.||")
-                KtTokens.OROR -> KotlinBundle.lazyMessage("replace.||.with.&&")
+                KtTokens.ANDAND -> KotlinBundle.messagePointer("replace.&&.with.||")
+                KtTokens.OROR -> KotlinBundle.messagePointer("replace.||.with.&&")
                 else -> return false
             }
         )

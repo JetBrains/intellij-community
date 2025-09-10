@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from typing import Any, TypeVar
 
 from pygments.formatter import Formatter
@@ -11,14 +10,7 @@ class EscapeSequence:
     bold: Any
     underline: Any
     italic: Any
-    def __init__(
-        self,
-        fg: Incomplete | None = None,
-        bg: Incomplete | None = None,
-        bold: bool = False,
-        underline: bool = False,
-        italic: bool = False,
-    ) -> None: ...
+    def __init__(self, fg=None, bg=None, bold: bool = False, underline: bool = False, italic: bool = False) -> None: ...
     def escape(self, attrs): ...
     def color_string(self): ...
     def true_color_string(self): ...

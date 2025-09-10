@@ -12,10 +12,8 @@ PADDED_B64_CHARS = PADDED_BASE64_CHARS
 UC_HEX_CHARS = UPPER_HEX_CHARS
 LC_HEX_CHARS = LOWER_HEX_CHARS
 
-def parse_mc2(hash, prefix, sep="$", handler: Incomplete | None = None): ...
-def parse_mc3(
-    hash, prefix, sep="$", rounds_base: int = 10, default_rounds: Incomplete | None = None, handler: Incomplete | None = None
-): ...
+def parse_mc2(hash, prefix, sep="$", handler=None): ...
+def parse_mc3(hash, prefix, sep="$", rounds_base: int = 10, default_rounds=None, handler=None): ...
 def render_mc2(ident, salt, checksum, sep="$"): ...
 def render_mc3(ident, rounds, salt, checksum, sep="$", rounds_base: int = 10): ...
 
@@ -41,7 +39,7 @@ class GenericHandler(MinimalHandler):
     @classmethod
     def identify(cls, hash: str | bytes) -> bool: ...
     @classmethod
-    def from_string(cls, hash: str | bytes, **context: Any) -> Self: ...
+    def from_string(cls, hash: str | bytes, **context: Any) -> Self: ...  # context parameters are passed to constructor
     def to_string(self) -> str: ...
     @classmethod
     def hash(cls, secret: str | bytes, **kwds: Any) -> str: ...
@@ -68,13 +66,13 @@ class HasEncodingContext(GenericHandler):
 
 class HasUserContext(GenericHandler):
     user: Incomplete | None
-    def __init__(self, user: Incomplete | None = None, **kwds) -> None: ...
+    def __init__(self, user=None, **kwds) -> None: ...
     @classmethod
-    def hash(cls, secret, user: Incomplete | None = None, **context): ...
+    def hash(cls, secret, user=None, **context): ...
     @classmethod
-    def verify(cls, secret, hash, user: Incomplete | None = None, **context): ...
+    def verify(cls, secret, hash, user=None, **context): ...
     @classmethod
-    def genhash(cls, secret, config, user: Incomplete | None = None, **context): ...
+    def genhash(cls, secret, config, user=None, **context): ...
 
 class HasRawChecksum(GenericHandler): ...
 
@@ -84,8 +82,8 @@ class HasManyIdents(GenericHandler):
     ident_aliases: ClassVar[dict[str, str] | None]
     ident: str  # type: ignore[misc]
     @classmethod
-    def using(cls, default_ident: Incomplete | None = None, ident: Incomplete | None = None, **kwds): ...  # type: ignore[override]
-    def __init__(self, ident: Incomplete | None = None, **kwds) -> None: ...
+    def using(cls, default_ident=None, ident=None, **kwds): ...  # type: ignore[override]
+    def __init__(self, ident=None, **kwds) -> None: ...
 
 class HasSalt(GenericHandler):
     min_salt_size: ClassVar[int]
@@ -95,7 +93,9 @@ class HasSalt(GenericHandler):
     default_salt_chars: ClassVar[str | None]
     salt: str | bytes | None
     @classmethod
-    def using(cls, default_salt_size: int | None = None, salt_size: int | None = None, salt: str | bytes | None = None, **kwds): ...  # type: ignore[override]
+    def using(  # type: ignore[override]
+        cls, default_salt_size: int | None = None, salt_size: int | None = None, salt: str | bytes | None = None, **kwds
+    ): ...
     def __init__(self, salt: str | bytes | None = None, **kwds) -> None: ...
     @classmethod
     def bitsize(cls, salt_size: int | None = None, **kwds): ...
@@ -116,24 +116,24 @@ class HasRounds(GenericHandler):
     @classmethod
     def using(  # type: ignore[override]
         cls,
-        min_desired_rounds: Incomplete | None = None,
-        max_desired_rounds: Incomplete | None = None,
-        default_rounds: Incomplete | None = None,
-        vary_rounds: Incomplete | None = None,
-        min_rounds: Incomplete | None = None,
-        max_rounds: Incomplete | None = None,
-        rounds: Incomplete | None = None,
+        min_desired_rounds=None,
+        max_desired_rounds=None,
+        default_rounds=None,
+        vary_rounds=None,
+        min_rounds=None,
+        max_rounds=None,
+        rounds=None,
         **kwds,
     ): ...
-    def __init__(self, rounds: Incomplete | None = None, **kwds) -> None: ...
+    def __init__(self, rounds=None, **kwds) -> None: ...
     @classmethod
-    def bitsize(cls, rounds: Incomplete | None = None, vary_rounds: float = 0.1, **kwds): ...
+    def bitsize(cls, rounds=None, vary_rounds: float = 0.1, **kwds): ...
 
 class ParallelismMixin(GenericHandler):
     parallelism: int
     @classmethod
-    def using(cls, parallelism: Incomplete | None = None, **kwds): ...  # type: ignore[override]
-    def __init__(self, parallelism: Incomplete | None = None, **kwds) -> None: ...
+    def using(cls, parallelism=None, **kwds): ...  # type: ignore[override]
+    def __init__(self, parallelism=None, **kwds) -> None: ...
 
 class BackendMixin(PasswordHash, metaclass=abc.ABCMeta):
     backends: ClassVar[tuple[str, ...] | None]
@@ -152,16 +152,7 @@ class PrefixWrapper:
     prefix: Any
     orig_prefix: Any
     __doc__: Any
-    def __init__(
-        self,
-        name,
-        wrapped,
-        prefix="",
-        orig_prefix="",
-        lazy: bool = False,
-        doc: Incomplete | None = None,
-        ident: Incomplete | None = None,
-    ) -> None: ...
+    def __init__(self, name, wrapped, prefix="", orig_prefix="", lazy: bool = False, doc=None, ident=None) -> None: ...
     @property
     def wrapped(self): ...
     @property
@@ -179,3 +170,23 @@ class PrefixWrapper:
     def encrypt(self, secret, **kwds): ...
     def hash(self, secret, **kwds): ...
     def verify(self, secret, hash, **kwds): ...
+
+__all__ = [
+    # helpers for implementing MCF handlers
+    "parse_mc2",
+    "parse_mc3",
+    "render_mc2",
+    "render_mc3",
+    # framework for implementing handlers
+    "GenericHandler",
+    "StaticHandler",
+    "HasUserContext",
+    "HasRawChecksum",
+    "HasManyIdents",
+    "HasSalt",
+    "HasRawSalt",
+    "HasRounds",
+    "HasManyBackends",
+    # other helpers
+    "PrefixWrapper",
+]

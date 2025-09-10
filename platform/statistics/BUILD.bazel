@@ -11,7 +11,7 @@ jvm_library(
   name = "statistics",
   module_name = "intellij.platform.statistics",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/core-impl",
@@ -55,7 +55,7 @@ jvm_library(
 jvm_library(
   name = "statistics_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":statistics"],
   deps = [
     "//platform/core-api:core",
@@ -91,6 +91,10 @@ jvm_library(
     "@lib//:com-jetbrains-fus-reporting-serialization-kotlin",
     "@lib//:com-jetbrains-fus-reporting-connection-client",
     "@lib//:com-jetbrains-fus-reporting-configuration",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation",
+  ],
+  exports = [
+    "@lib//:com-jetbrains-fus-reporting-model",
     "@lib//:com-jetbrains-fus-reporting-ap-validation",
   ],
   runtime_deps = [":statistics_resources"]

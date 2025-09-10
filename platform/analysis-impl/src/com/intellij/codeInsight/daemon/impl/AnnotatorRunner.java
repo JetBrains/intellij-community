@@ -164,7 +164,7 @@ final class AnnotatorRunner {
   private static void addPatchedInfos(@NotNull HighlightInfo injectedInfo,
                                       @NotNull PsiFile injectedPsi,
                                       @NotNull DocumentWindow documentWindow,
-                                      @NotNull Collection<? super HighlightInfo> outHostInfos) {
+                                      @NotNull Collection<? super @NotNull HighlightInfo> outHostInfos) {
     TextRange infoRange = TextRange.create(injectedInfo);
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(injectedPsi.getProject());
     List<TextRange> editables = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, infoRange);
@@ -207,7 +207,7 @@ final class AnnotatorRunner {
     }
   }
 
-  private void addConvertedToHostInfo(@NotNull HighlightInfo info, @NotNull List<? super HighlightInfo> newInfos) {
+  private void addConvertedToHostInfo(@NotNull HighlightInfo info, @NotNull List<? super @NotNull HighlightInfo> newInfos) {
     if (HighlightInfoB.isAcceptedByFilters(info, myPsiFile)) {
       if (info.isFromInjection() && myPsiFile.getFileDocument() instanceof DocumentWindow window) {
         addPatchedInfos(info, myPsiFile, window, newInfos);

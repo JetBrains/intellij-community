@@ -287,6 +287,11 @@ c:com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
 f:com.intellij.openapi.wm.PermissionsKt
 - *sf:getFullToolWindowAccess():com.intellij.platform.ide.core.permissions.Permission
 - *sf:getToolWindowViewAccess():com.intellij.platform.ide.core.permissions.Permission
+com.intellij.openapi.wm.ToolWindowFactory
+- com.intellij.openapi.project.PossiblyDumbAware
+- *:getAnchor():com.intellij.openapi.wm.ToolWindowAnchor
+- *:getIcon():javax.swing.Icon
+- *:manage(com.intellij.openapi.wm.ToolWindow,com.intellij.openapi.wm.ToolWindowManager,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.openapi.wm.WelcomeScreenCustomization
 - sf:WELCOME_SCREEN_CUSTOMIZATION:com.intellij.openapi.extensions.ExtensionPointName
 - createMainPanelToolbar(com.intellij.openapi.Disposable):javax.swing.JComponent

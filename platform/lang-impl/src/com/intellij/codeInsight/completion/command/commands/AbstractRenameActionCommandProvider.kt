@@ -14,6 +14,9 @@ abstract class AbstractRenameActionCommandProvider : ActionCommandProvider(actio
                                                                            presentableName = ActionsBundle.message("action.RenameElement.text"),
                                                                            previewText = ActionsBundle.message("action.RenameElement.description"),
                                                                            synonyms = listOf("Rename", "Change name")) {
+
+  override fun supportsInjected(): Boolean = true
+
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     val offset = findRenameOffset(offset, psiFile) ?: return false
     editor?.caretModel?.moveToOffset(offset)
@@ -37,8 +40,9 @@ abstract class AbstractRenameActionCommandProvider : ActionCommandProvider(actio
                                             icon = super.icon,
                                             priority = super.priority,
                                             previewText = super.previewText,
-                                            highlightInfo = if (element != null && element.textRange != null)
-                                              HighlightInfoLookup(element.textRange, EditorColors.SEARCH_RESULT_ATTRIBUTES, 0)
+                                            highlightInfo = if (element != null && element.textRange != null) {
+                                              HighlightInfoLookup(getOffsetAwareInjection(element, element.textRange), EditorColors.SEARCH_RESULT_ATTRIBUTES, 0)
+                                            }
                                             else null) {
       override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
         val targetOffset = findRenameOffset(offset, psiFile) ?: return

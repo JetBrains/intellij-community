@@ -644,9 +644,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   private void resizePopupIfNeeded() {
-    Dimension size = getSize();
-    if (size == null) return;
-
+    Dimension size = getContentSize();
     Dimension packedSize = calculateSizeForPack(true, true);
     if (packedSize == null) return;
 

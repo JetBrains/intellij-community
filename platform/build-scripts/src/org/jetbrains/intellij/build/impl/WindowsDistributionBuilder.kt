@@ -32,6 +32,7 @@ import org.jetbrains.intellij.build.impl.client.createFrontendContextForLauncher
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.generateEmbeddedFrontendLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
+import org.jetbrains.intellij.build.impl.productInfo.resolveProductInfoJsonSibling
 import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
 import org.jetbrains.intellij.build.impl.productInfo.writeProductInfoJson
 import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
@@ -169,7 +170,7 @@ internal class WindowsDistributionBuilder(
         val installationDirectories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDir)
         validateProductJson(jsonText = productJsonFile.readText(), installationDirectories, installationArchives = emptyList(), context)
         launch(Dispatchers.IO + CoroutineName("build Windows ${arch.dirName} installer")) {
-          exePath = buildNsisInstaller(osAndArchSpecificDistPath, additionalDirectoryToInclude = productJsonDir, suffix(arch), customizer, runtimeDir, context, arch)
+          exePath = buildNsisInstaller(osAndArchSpecificDistPath, productJsonFile, additionalDirectoryToInclude = productJsonDir, suffix(arch), customizer, runtimeDir, context, arch)
         }
       }
 
@@ -273,6 +274,7 @@ internal class WindowsDistributionBuilder(
   ): Path {
     val baseName = context.productProperties.getBaseArtifactName(context)
     val targetFile = context.paths.artifactDir.resolve("${baseName}${zipNameSuffix}.zip")
+    val targetFileProductInfoJson = targetFile.resolveProductInfoJsonSibling()
 
     spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
       .setAttribute("targetFile", targetFile.toString())
@@ -285,8 +287,9 @@ internal class WindowsDistributionBuilder(
         }
 
         val productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip${zipNameSuffix}")
-        writeProductJsonFile(productJsonDir, arch, withRuntime = runtimeDir != null)
+        val productJsonFile = writeProductJsonFile(productJsonDir, arch, withRuntime = runtimeDir != null)
         dirs.add(productJsonDir)
+        copyFile(productJsonFile, targetFileProductInfoJson)
 
         val zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
 
@@ -299,6 +302,7 @@ internal class WindowsDistributionBuilder(
         }
         validateProductJson(targetFile, zipPrefix, context)
         context.notifyArtifactBuilt(targetFile)
+        context.notifyArtifactBuilt(targetFileProductInfoJson)
         targetFile
       }
 

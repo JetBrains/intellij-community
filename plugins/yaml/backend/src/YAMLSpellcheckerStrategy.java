@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLQuotedText;
 import org.jetbrains.yaml.psi.YAMLScalar;
+import org.jetbrains.yaml.psi.impl.YAMLAnchorImpl;
 
 import java.util.regex.Pattern;
 
@@ -39,10 +40,10 @@ public final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implem
   };
 
   @Override
-  public @NotNull Tokenizer<?> getTokenizer(final PsiElement element) {
+  public @NotNull Tokenizer<?> getTokenizer(PsiElement element) {
     final ASTNode node = element.getNode();
-    if (node != null){
-      final IElementType type = node.getElementType();
+    if (node != null) {
+      IElementType type = node.getElementType();
       if (type == YAMLTokenTypes.SCALAR_TEXT ||
           type == YAMLTokenTypes.SCALAR_LIST ||
           type == YAMLTokenTypes.TEXT ||
@@ -57,6 +58,13 @@ public final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implem
           return EMPTY_TOKENIZER;
         }
 
+        if (useTextLevelSpellchecking() &&
+            (type == YAMLTokenTypes.SCALAR_KEY ||
+             type == YAMLTokenTypes.TEXT ||
+             type == YAMLTokenTypes.SCALAR_TEXT ||
+             type == YAMLTokenTypes.SCALAR_LIST)) {
+          return EMPTY_TOKENIZER;
+        }
         return TEXT_TOKENIZER;
       } else if (element instanceof YAMLQuotedText) {
         if (isInjectedLanguageFragment(element)) {
@@ -70,6 +78,10 @@ public final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implem
         return myQuotedTextTokenizer;
       }
     }
+
+    if (shouldBeIgnored(element)) {
+      return EMPTY_TOKENIZER;
+    }
     return super.getTokenizer(element);
   }
 
@@ -81,6 +93,15 @@ public final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implem
   @Override
   public boolean useTextLevelSpellchecking() {
     return Registry.is("spellchecker.grazie.enabled");
+  }
+
+  private boolean shouldBeIgnored(@NotNull PsiElement element) {
+    if (element.getNode() == null) {
+      return false;
+    }
+    IElementType type = element.getNode().getElementType();
+    return useTextLevelSpellchecking() &&
+           (type == YAMLTokenTypes.SCALAR_DSTRING || type == YAMLTokenTypes.ANCHOR || element instanceof YAMLAnchorImpl);
   }
 
   public static class JsonSchemaSpellcheckerClientForYaml extends JsonSchemaSpellcheckerClient {

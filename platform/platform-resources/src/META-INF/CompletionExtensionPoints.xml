@@ -26,6 +26,7 @@
     <extensionPoint name="lookup.displayStrategy" interface="com.intellij.codeInsight.lookup.impl.LookupDisplayStrategy" dynamic="true"/>
     <extensionPoint name="lookup.actionProvider" interface="com.intellij.codeInsight.lookup.LookupActionProvider" dynamic="true"/>
     <extensionPoint name="lookup.vetoPolicy" interface="com.intellij.codeInsight.lookup.impl.LookupImplVetoPolicy" dynamic="true"/>
+    <extensionPoint name="lookup.bottomPanelProvider" interface="com.intellij.codeInsight.lookup.LookupBottomPanelProvider" dynamic="true"/>
 
     <extensionPoint name="lookup.usageDetails" interface="com.intellij.codeInsight.lookup.impl.LookupUsageDescriptor" dynamic="true"/>
 

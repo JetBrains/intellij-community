@@ -128,6 +128,15 @@ internal fun <T> rethrowCheckedExceptions(f: ThrowableComputable<T, *>): () -> T
 @TestOnly
 @ApiStatus.Experimental
 object TestOnlyThreading {
+
+  /**
+   * When called on EDT under write-intent lock, executes [action] with released write-intent lock. After termination, takes write-intent lock back.
+   * This method is needed to help background write action to proceed in tests.
+   * The typical (and expected) use-case is to wrap synchronous event dispatch (like [com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents]) into this function.
+   * The reason is that synchronous dispatch is often used to execute write actions stuck in the Event Queue, so with background write actions we need to release write-intent lock to help them proceed.
+   *
+   * Please note that in tests it is more appropriate to use [com.intellij.testFramework.PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue]
+   */
   @JvmStatic
   fun <T> releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action: () -> T): T {
     val application = ApplicationManager.getApplication()

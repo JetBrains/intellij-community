@@ -1,4 +1,5 @@
 # Using an exact number in the specifier for scripts/sync_protobuf/tensorflow.py
+# When updating, also re-run the script
 version = "~=2.18.0"
 upstream_repository = "https://github.com/tensorflow/tensorflow"
 # requires a version of numpy with a `py.typed` file
@@ -10,3 +11,6 @@ partial_stub = true
 ignore_missing_stub = true
 # TODO: Support/update to keras 3.7
 stubtest_requirements = ["keras==3.6.*"]
+# tensorflow 2.19 doesn't support Python 3.13:
+# https://github.com/tensorflow/tensorflow/issues/78774
+skip = true

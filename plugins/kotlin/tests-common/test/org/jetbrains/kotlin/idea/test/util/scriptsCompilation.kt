@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.test.util
 
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import java.io.File
 
@@ -21,9 +21,9 @@ fun VirtualFile.compileScriptsIntoDirectory(scripts: List<File>, additionalOptio
         scripts,
         target = outputDirectory,
         classpath = listOf(
-            TestKotlinArtifacts.kotlinScriptRuntime,
-            TestKotlinArtifacts.kotlinScriptingJvm,
-            TestKotlinArtifacts.kotlinScriptingCommon
+            TestKotlinArtifacts.kotlinScriptRuntime.toFile(),
+            TestKotlinArtifacts.kotlinScriptingJvm.toFile(),
+            TestKotlinArtifacts.kotlinScriptingCommon.toFile(),
         ),
         options = optionsSet.toList()
     ).compile()

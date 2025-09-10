@@ -190,6 +190,11 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.intellij.java.ultimate.icons",
       )
 
+      "intellij.uiDesigner" -> IntellijIconClassGeneratorModuleConfig(
+        className = "UiDesignerIcons",
+        packageName = "com.intellij.designer",
+      )
+
       else -> super.getConfigForModule(moduleName)
     }
   }

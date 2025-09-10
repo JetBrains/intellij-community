@@ -71,13 +71,9 @@ class CalculatedItem(Serialisable):
     extLst: Typed[ExtensionList, Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
     @overload
-    def __init__(
-        self, field: ConvertibleToInt | None = None, *, formula: str, pivotArea: PivotArea, extLst: Incomplete | None = None
-    ) -> None: ...
+    def __init__(self, field: ConvertibleToInt | None = None, *, formula: str, pivotArea: PivotArea, extLst=None) -> None: ...
     @overload
-    def __init__(
-        self, field: ConvertibleToInt | None, formula: str, pivotArea: PivotArea, extLst: Incomplete | None = None
-    ) -> None: ...
+    def __init__(self, field: ConvertibleToInt | None, formula: str, pivotArea: PivotArea, extLst=None) -> None: ...
 
 class ServerFormat(Serialisable):
     tagname: ClassVar[str]
@@ -107,7 +103,7 @@ class OLAPSet(Serialisable):
         count: ConvertibleToInt,
         maxRank: ConvertibleToInt,
         setDefinition: str,
-        sortType: Incomplete | None = None,
+        sortType=None,
         queryFailed: _ConvertibleToBool = None,
         tpls: TupleList | None = None,
         sortByTuple: TupleList | None = None,
@@ -315,7 +311,7 @@ class GroupItems(Serialisable):
     d: Incomplete
     __elements__: ClassVar[tuple[str, ...]]
     __attrs__: ClassVar[tuple[str, ...]]
-    def __init__(self, count: Incomplete | None = None, m=(), n=(), b=(), e=(), s=(), d=()) -> None: ...
+    def __init__(self, count=None, m=(), n=(), b=(), e=(), s=(), d=()) -> None: ...
     @property
     def count(self) -> int: ...
 
@@ -607,7 +603,7 @@ class CacheDefinition(Serialisable):
         measureGroups=(),
         maps=(),
         extLst: ExtensionList | None = None,
-        id: Incomplete | None = None,
+        id=None,
     ) -> None: ...
     @overload
     def __init__(
@@ -640,7 +636,7 @@ class CacheDefinition(Serialisable):
         measureGroups=(),
         maps=(),
         extLst: ExtensionList | None = None,
-        id: Incomplete | None = None,
+        id=None,
     ) -> None: ...
     def to_tree(self) -> Element: ...  # type: ignore[override]
     @property

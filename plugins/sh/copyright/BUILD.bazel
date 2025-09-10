@@ -11,7 +11,7 @@ jvm_library(
   name = "copyright",
   module_name = "intellij.sh.copyright",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/copyright",
     "//platform/core-api:core",
@@ -20,7 +20,10 @@ jvm_library(
     "//plugins/sh/core",
     "//platform/core-impl",
   ],
-  runtime_deps = [":copyright_resources"]
+  runtime_deps = [
+    ":copyright_resources",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.sh.copyright` end
 
@@ -29,11 +32,11 @@ jvm_library(
   name = "copyright-tests_test_lib",
   module_name = "intellij.sh.copyright.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
-    "//plugins/sh",
+    "//plugins/sh/plugin:plugin-main",
     "//plugins/copyright",
     "//plugins/copyright:copyright_test_lib",
     "//platform/projectModel-impl",

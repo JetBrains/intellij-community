@@ -1,28 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server
 
-import org.jdom.Element
 import org.jetbrains.idea.maven.model.*
 import java.io.File
 
-
 class MavenBuildPathsChange(
   private val transformer: (String) -> String,
-  private val needTransformConfiguration: (String) -> Boolean = { false },
 ) {
-  fun perform(model: MavenModel) = model.transformPaths()
+
+  fun perform(model: MavenModel): Unit = model.transformPaths()
 
   private fun MavenModel.transformPaths() {
     dependencies = dependencies.map { it.transformPaths() }
     dependencyTree = dependencyTree.map { it.transformPaths(null) }
     build.transformPaths()
-    this.plugins
-      .map { it.configurationElement }
-      .forEach { it.transformConfiguration() }
-    this.plugins
-      .flatMap { it.executions }
-      .map { it.configurationElement }
-      .forEach { it.transformConfiguration() }
   }
 
   private fun MavenBuild.transformPaths() {
@@ -52,14 +43,6 @@ class MavenBuildPathsChange(
     )
     result.dependencies = dependencies.map { it.transformPaths(result) }
     return result
-  }
-
-  private fun Element?.transformConfiguration() {
-    if (this == null) return
-    if (needTransformConfiguration(textTrim)) {
-      text = transformer(text)
-    }
-    this.children.forEach { it.transformConfiguration() }
   }
 }
 

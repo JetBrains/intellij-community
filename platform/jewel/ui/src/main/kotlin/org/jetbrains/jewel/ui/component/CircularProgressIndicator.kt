@@ -39,7 +39,9 @@ public fun CircularProgressIndicator(
         iconSize = DpSize(16.dp, 16.dp),
         style = style,
         dispatcher = loadingDispatcher,
-        frameRetriever = { color -> SpinnerProgressIconGenerator.Small.generateSvgFrames(color.toRgbaHexString()) },
+        frameRetriever = { color ->
+            SpinnerProgressIconGenerator.Small.generateSvgFrames(color.toRgbaHexString(omitAlphaWhenFullyOpaque = true))
+        },
     )
 }
 
@@ -54,7 +56,9 @@ public fun CircularProgressIndicatorBig(
         iconSize = DpSize(32.dp, 32.dp),
         style = style,
         dispatcher = loadingDispatcher,
-        frameRetriever = { color -> SpinnerProgressIconGenerator.Big.generateSvgFrames(color.toRgbaHexString()) },
+        frameRetriever = { color ->
+            SpinnerProgressIconGenerator.Big.generateSvgFrames(color.toRgbaHexString(omitAlphaWhenFullyOpaque = true))
+        },
     )
 }
 

@@ -395,6 +395,10 @@ class NotebookCellInlayManager private constructor(
             change.subsequentPointers.reversed().forEach {
               val index = it.interval.ordinal
               removeCell(index)
+              // Next cell becomes first and needs to update the AboveCellDelimiterPanel size.
+              if(index == 0) {
+                getCellOrNull(0)?.checkAndRebuildInlays()
+              }
             }
           }
           is NotebookIntervalPointersEvent.OnSwapped -> {

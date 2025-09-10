@@ -4,6 +4,9 @@ qrcode\.compat\..*
 qrcode\.tests
 qrcode\.tests\..*
 
+# Stub-only module
+qrcode._types
+
 # Parameter "data" has unhelpful default value, which creates a QR code with string "None".
 qrcode\.make
 qrcode\.main\.make
@@ -11,6 +14,14 @@ qrcode\.main\.make
 # Stubtest hiccup: It doesn't recognize that the annotated type is a base
 # class of the default class assigned to the attribute.
 qrcode\.image\..*\.default_drawer_class
+
+# Implementation has marked these methods as abstract without the class
+# or its bases deriving from abc.ABCMeta
+qrcode\.image\.base\.BaseImage\.(drawrect|new_image|save)
+
+# The implementation sets this attribute to None on the class but instances
+# always set this to a PIL image instance.
+qrcode\.image\.styles\.moduledrawers\.(pil\.)?CircleModuleDrawer.circle
 
 # Leaked loop counter
 qrcode.base.i

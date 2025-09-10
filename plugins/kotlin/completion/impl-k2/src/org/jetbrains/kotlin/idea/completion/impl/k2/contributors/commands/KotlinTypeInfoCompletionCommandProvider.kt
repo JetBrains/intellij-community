@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 internal class KotlinTypeInfoCompletionCommandProvider : AbstractTypeInfoCompletionCommandProvider() {
     override fun findElement(offset: Int, psiFile: PsiFile): PsiElement? {
         var context = getCommandContext(offset, psiFile)
-        if (context is PsiWhiteSpace) context = context.prevSibling
+        if (context is PsiWhiteSpace) context = PsiTreeUtil.prevVisibleLeaf(context) ?: return null
         val expression = PsiTreeUtil.getParentOfType(context, KtExpression::class.java, false)
         if (expression != null && expression.shouldShowType() && analyze(expression) { expression.expressionOrReturnType() != null }) {
             return expression

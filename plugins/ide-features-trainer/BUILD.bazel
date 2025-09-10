@@ -11,7 +11,7 @@ jvm_library(
   name = "featuresTrainer",
   module_name = "intellij.featuresTrainer",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:guava",
@@ -27,7 +27,6 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/diff-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/projectModel-api:projectModel",
@@ -57,7 +56,7 @@ jvm_library(
 jvm_library(
   name = "featuresTrainer_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":featuresTrainer"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -76,7 +75,6 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/diff-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-impl:debugger-impl_test_lib",
@@ -103,7 +101,11 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:mockito-kotlin",
-    "@lib//:mockito",
+    "//libraries/mockito",
+  ],
+  exports = [
+    "@lib//:assert_j",
+    "@lib//:assertj-swing",
   ],
   runtime_deps = [":featuresTrainer_resources"]
 )

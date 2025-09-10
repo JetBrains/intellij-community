@@ -144,6 +144,13 @@ public class PyPullUpTest extends PyClassRefactoringTest {
   }
 
   /**
+   * Ensures that pulling async method up as abstract preserves the async keyword
+   */
+  public void testAbstractAsyncMethod() {
+    checkAbstract(".async_method");
+  }
+
+  /**
    * Moves methods fromn Child to Parent and make them abstract
    * @param methodNames methods to check
    */

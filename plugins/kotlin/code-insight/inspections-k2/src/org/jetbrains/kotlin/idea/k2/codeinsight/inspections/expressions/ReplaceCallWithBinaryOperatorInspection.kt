@@ -84,6 +84,12 @@ internal class ReplaceCallWithBinaryOperatorInspection :
             val operationToken = getOperationToken(calleeExpression) ?: return null
             val isFloatingPointEquals =
                 operationToken == KtTokens.EQEQ && receiver.hasDoubleOrFloatType() && argument.hasDoubleOrFloatType()
+
+            if (!isFloatingPointEquals) {
+                if (operationToken in floatUnfriendlyTokens
+                    && (receiver.hasDoubleOrFloatType() || argument.hasDoubleOrFloatType())) return null
+            }
+
             return Context(operationToken, isFloatingPointEquals)
         }
     }
@@ -238,3 +244,5 @@ context(_: KaSession)
 private fun KtExpression.hasUnknownNullabilityType(): Boolean {
     return expressionType?.nullability == KaTypeNullability.UNKNOWN
 }
+
+private val floatUnfriendlyTokens = setOf(KtTokens.EQEQ, KtTokens.LT, KtTokens.LTEQ, KtTokens.GT, KtTokens.GTEQ)

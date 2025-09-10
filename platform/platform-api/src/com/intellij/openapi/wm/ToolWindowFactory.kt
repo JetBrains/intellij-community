@@ -4,7 +4,6 @@ package com.intellij.openapi.wm
 import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.Icon
 
 /**
@@ -38,7 +37,6 @@ interface ToolWindowFactory : PossiblyDumbAware {
 
   // todo it acts like ProjectActivity.execute - we should find a better name for this method
   @Experimental
-  @Internal
   suspend fun manage(toolWindow: ToolWindow, toolWindowManager: ToolWindowManager) {
   }
 
@@ -61,11 +59,11 @@ interface ToolWindowFactory : PossiblyDumbAware {
   /**
    * Return custom anchor or null to use anchor defined in Tool Window Registration or customized by user.
    */
-  @get:Internal
+  @get:Experimental
   val anchor: ToolWindowAnchor?
     get() = null
 
-  @get:Internal
+  @get:Experimental
   val icon: Icon?
     get() = null
 }

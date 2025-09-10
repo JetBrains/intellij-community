@@ -10,14 +10,16 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
     myFixture.assertResolvableReference(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
       import org.junit.jupiter.params.provider.MethodSource;
+      import java.util.Arrays;
+      import java.util.List;
       
       class ParameterizedTestsDemo {
+         @ParameterizedTest
          @MethodSource(value = {"cde", "ab<caret>c"})
          void testWithProvider(String abc) {}
          
-         private static void abc() {}
-         
-         private static void cde() {}
+         private static List<String> abc() { return Arrays.asList("something1", "something2"); }
+         private static List<String> cde() { return Arrays.asList("something1", "something2"); }
       }
     """.trimIndent()) { reference, _ ->
       assertContainsElements(reference.lookupStringVariants(), "abc")
@@ -28,18 +30,21 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
     myFixture.assertMultiresolveReference(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
       import org.junit.jupiter.params.provider.MethodSource;
+      import java.util.Arrays;
+      import java.util.List;
       
       interface MyFirstInterface {
-        static void abc() {}
+        static List<String> abc() {return Arrays.asList("something1", "something2");}
       }
       
       interface MySecondInterface {
-        static void abc() {}
+        static List<String> abc() {return Arrays.asList("something1", "something2");}
       }
       
       abstract class MyAbstractClass implements MyFirstInterface, MySecondInterface {}
       
       class ParameterizedTestsDemo extends MyAbstractClass {
+         @ParameterizedTest
          @MethodSource("ab<caret>c")
          void testWithProvider(String abc) {}
       }
@@ -53,26 +58,123 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
     }
   }
 
+  fun `test filter resolved to source method from first interface`() {
+    myFixture.assertMultiresolveReference(JvmLanguage.JAVA, """
+      import org.junit.jupiter.params.ParameterizedTest;
+      import org.junit.jupiter.params.provider.MethodSource;
+      import java.util.Arrays;
+      import java.util.List;
+      
+      interface MyFirstInterface {
+        static List<String> abc() {return Arrays.asList("something1", "something2");}
+      }
+      
+      interface MySecondInterface {
+        static List<String> abc() {return Arrays.asList("something1", "something2");}
+      }
+      
+      class ParameterizedTestsDemo implements MyFirstInterface, MySecondInterface {
+         @ParameterizedTest
+         @MethodSource("ab<caret>c")
+         void testWithProvider(String abc) {}
+      }
+    """.trimIndent()) { _, results ->
+      assertEquals(1, results.size)
+      val resolved = results.first().element
+      assertTrue(resolved is PsiMethod)
+      if (resolved !is PsiMethod) return@assertMultiresolveReference
+      assertEquals("MyFirstInterface", resolved.containingClass?.name)
+      assertEquals("abc", resolved.name)
+    }
+  }
+
+  fun `test filter resolved to source method from abstract class`() {
+    myFixture.assertMultiresolveReference(JvmLanguage.JAVA, """
+      import org.junit.jupiter.params.ParameterizedTest;
+      import org.junit.jupiter.params.provider.MethodSource;
+      import java.util.Arrays;
+      import java.util.List;
+      
+      interface MyInterface {
+        static List<String> abc() {return Arrays.asList("something1", "something2");}
+      }
+      
+      abstract class MyAbstractClass implements MyInterface {
+        static List<String> abc() {return Arrays.asList("something1", "something2");}
+      }
+            
+      class ParameterizedTestsDemo extends MyAbstractClass {
+         @ParameterizedTest
+         @MethodSource("ab<caret>c")
+         void testWithProvider(String abc) {}
+      }
+    """.trimIndent()) { _, results ->
+      assertEquals(1, results.size)
+      val resolved = results.first().element
+      assertTrue(resolved is PsiMethod)
+      if (resolved !is PsiMethod) return@assertMultiresolveReference
+      assertEquals("MyAbstractClass", resolved.containingClass?.name)
+      assertEquals("abc", resolved.name)
+    }
+  }
+
+  fun `test filter resolved to source method from deep interface hierarchy`() {
+    myFixture.assertMultiresolveReference(JvmLanguage.JAVA, """
+      import org.junit.jupiter.params.ParameterizedTest;
+      import org.junit.jupiter.params.provider.MethodSource;
+      import java.util.Arrays;
+      import java.util.List;
+      
+      interface MyInterface {
+        static List<String> abc() {return Arrays.asList("something1", "something2");}
+      }
+      
+      interface MyFirstInterface extends MyInterface { }
+      
+      interface MySecondInterface {
+        static List<String> abc() {return Arrays.asList("something1", "something2");}
+      }
+      
+      abstract class MyAbstractClass implements MyFirstInterface, MySecondInterface { }
+                  
+      class ParameterizedTestsDemo extends MyAbstractClass {
+         @ParameterizedTest
+         @MethodSource("ab<caret>c")
+         void testWithProvider(String abc) {}
+      }
+    """.trimIndent()) { _, results ->
+      assertEquals(1, results.size)
+      val resolved = results.first().element
+      assertTrue(resolved is PsiMethod)
+      if (resolved !is PsiMethod) return@assertMultiresolveReference
+      assertEquals("MyInterface", resolved.containingClass?.name)
+      assertEquals("abc", resolved.name)
+    }
+  }
+
   fun `test filter resolved to source method with inherited`() {
     myFixture.assertMultiresolveReference(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
       import org.junit.jupiter.params.provider.MethodSource;
-      
+      import java.util.Arrays;
+      import java.util.List;
+
       interface MyFirstInterface {
-        static void abc() {}
+        static List<String> abc() {return Arrays.asList("something1", "something2");}
       }
       
       interface MySecondInterface {
-        static void abc() {}
+        static List<String> abc() {return Arrays.asList("something1", "something2");}
       }
             
       class ParameterizedTestsDemo implements MySecondInterface, MyFirstInterface {
+         @ParameterizedTest
          @MethodSource("ab<caret>c")
          void testWithProvider(String abc) {}
       }
       
       class ChildOfParameterizedTestsDemo extends ParameterizedTestsDemo {
-        static void abc() {}
+        static List<String> abc() {return Arrays.asList("something1", "something2");}
       }
     """.trimIndent()) { _, results ->
       val classes = results.map { (it.element as PsiMethod).containingClass?.name }.toSet()
@@ -84,19 +186,22 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
     myFixture.assertMultiresolveReference(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;
       import org.junit.jupiter.params.provider.MethodSource;
+      import java.util.Arrays;
+      import java.util.List;
       
       interface MyFirstInterface {
-        static void abc() {}
+        static List<String> abc() {return Arrays.asList("something1", "something2");}
       }
       
       interface MySecondInterface {
-        static void abc() {}
+        static List<String> abc() {return Arrays.asList("something1", "something2");}
       }
       
       interface MyThirdInterface {
-        static void abc() {}
+        static List<String> abc() {return Arrays.asList("something1", "something2");}
       }
       
+      @ParameterizedTest
       @MethodSource("ab<caret>c")
       @interface MyAnnotation {}
             
@@ -111,7 +216,7 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
       }
 
       class ChildOfParameterizedTestsDemo extends ParameterizedTestsDemo1 {
-        static void abc() {}
+        static List<String> abc() {return Arrays.asList("something1", "something2");}
       }
     """.trimIndent()) { _, results ->
       val classes = results.map { (it.element as PsiMethod).containingClass?.name }.toSet()

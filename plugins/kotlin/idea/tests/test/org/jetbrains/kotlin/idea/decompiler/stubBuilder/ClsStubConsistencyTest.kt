@@ -27,15 +27,8 @@ class ClsStubConsistencyTest : KotlinLightCodeInsightFixtureTestCase() {
         val stubTreeFromDecompiledText = fileWithDecompiledText.calcStubTree().root
         val expectedText = stubTreeFromDecompiledText.serializeToString()
 
-        val fileStub = KotlinClsStubBuilder().buildFileStub(FileContentImpl.createByFile(packageFile))!!
-        // KT-74547: K1 descriptors do not support MustUseReturnValue feature recorded to metadata
+        val fileStub = KotlinClsStubBuilder.buildFileStub(FileContentImpl.createByFile(packageFile))!!
         val actualText = fileStub.serializeToString()
-            .replace(" MustUseReturnValue", "")
-            // KT-79780: Decompiled MultifileClass treated as Facade
-            .replace(
-                "MultifileClass[packageFqName=kotlin.collections, facadeFqName=kotlin.collections.CollectionsKt, facadePartSimpleNames=[CollectionsKt__CollectionsJVMKt, CollectionsKt__CollectionsKt, CollectionsKt__IterablesKt, CollectionsKt__IteratorsJVMKt, CollectionsKt__IteratorsKt, CollectionsKt__MutableCollectionsJVMKt, CollectionsKt__MutableCollectionsKt, CollectionsKt__ReversedViewsKt, CollectionsKt___CollectionsJvmKt, CollectionsKt___CollectionsKt]]]",
-                "Facade[packageFqName=kotlin.collections, facadeFqName=kotlin.collections.CollectionsKt]]",
-            )
 
         Assert.assertEquals(expectedText, actualText)
     }

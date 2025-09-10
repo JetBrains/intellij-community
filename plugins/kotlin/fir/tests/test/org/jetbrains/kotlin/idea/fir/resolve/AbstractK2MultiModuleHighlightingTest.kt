@@ -12,7 +12,7 @@ import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinAnchorModuleProvider
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.K2IdeKotlinAnchorModuleProvider
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findStringWithPrefixes
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
@@ -34,13 +34,13 @@ abstract class AbstractK2MultiModuleHighlightingTest : AbstractMultiModuleTest()
 
         val stdLibrary = TestKotlinArtifacts.kotlinStdlib
         val dependencyModule = module("dependencyModule")
-        dependencyModule.addLibrary(stdLibrary)
+        dependencyModule.addLibrary(stdLibrary.toFile())
 
         val anchorModule = module("anchor")
-        anchorModule.addLibrary(stdLibrary)
+        anchorModule.addLibrary(stdLibrary.toFile())
 
         val sourceModule = module("sourceModule")
-        sourceModule.addLibrary(stdLibrary)
+        sourceModule.addLibrary(stdLibrary.toFile())
 
         val libraryName = "aLibrary"
         PsiTestUtil.addLibrary(sourceModule, libraryName, "$testDataPath/", arrayOf(), arrayOf("_library"))

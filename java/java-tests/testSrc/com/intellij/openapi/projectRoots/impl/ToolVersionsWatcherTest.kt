@@ -2,7 +2,7 @@
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 
@@ -37,7 +37,7 @@ class ToolVersionsWatcherHeavyTests : ExternalJavaConfigurationTest() {
   }
 }
 
-class ToolVersionsWatcherLightTests : BasePlatformTestCase() {
+class ToolVersionsWatcherLightTests : UsefulTestCase() {
 
   fun `test candidates parsing`() {
     assertEquals(AsdfReleaseData.parse("8"),

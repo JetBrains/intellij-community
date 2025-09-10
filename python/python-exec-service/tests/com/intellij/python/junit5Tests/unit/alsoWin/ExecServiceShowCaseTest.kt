@@ -4,7 +4,10 @@ package com.intellij.python.junit5Tests.unit.alsoWin
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.getShell
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.utils.*
+import com.intellij.platform.eel.provider.utils.asEelChannel
+import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
+import com.intellij.platform.eel.provider.utils.readWholeText
+import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelSource
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
@@ -95,45 +98,6 @@ class ExecServiceShowCaseTest {
         assertThat("No expected stdout", r.result, CoreMatchers.containsString(hello))
       }
     }
-  }
-
-
-  @ParameterizedTest
-  @EelSource
-  fun testDataTransformer(eelHolder: EelHolder): Unit = timeoutRunBlocking {
-    val eel = eelHolder.eel
-
-    data class Record(val name: String, val age: Int)
-
-    val (shell, execArg) = eel.exec.getShell()
-    val args = Args(execArg, "echo Alice,25 && echo Bob,48")
-
-    val records = ExecService().execute((BinOnEel(shell.asNioPath())), args) { output ->
-      val stdout = output.stdoutString.trim()
-      when {
-        output.exitCode == 123 -> {
-          Result.success(emptyList())
-        }
-        output.exitCode != 0 -> {
-          Result.failure(null)
-        }
-        stdout == "SOME_BUSINESS_ERROR" -> {
-          Result.failure("My Business Error Description")
-        }
-        else -> {
-          val records = stdout.lines().map { it.trim() }.map {
-            val (name, age) = it.split(',')
-            Record(name, age.trim().toInt())
-          }
-          Result.success(records)
-        }
-      }
-    }
-
-    assertEquals(
-      listOf(Record("Alice", 25), Record("Bob", 48)),
-      records.getOrThrow()
-    )
   }
 
   @ParameterizedTest

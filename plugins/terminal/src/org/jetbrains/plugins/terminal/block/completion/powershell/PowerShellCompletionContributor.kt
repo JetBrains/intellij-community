@@ -16,8 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.Companion.BLOCK_TERMINAL_AUTOCOMPLETION
 import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalPromptModel
 import org.jetbrains.plugins.terminal.util.ShellType
@@ -29,8 +28,7 @@ import kotlin.math.min
 class PowerShellCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY) ?: return
-    val runtimeContextProvider = parameters.editor.getUserData(ShellRuntimeContextProviderImpl.KEY) ?: return
-    val generatorsExecutor = parameters.editor.getUserData(ShellDataGeneratorsExecutorImpl.KEY) ?: return
+    val completionServices = parameters.editor.getUserData(TerminalCommandCompletionServices.KEY) ?: return
     val promptModel = parameters.editor.terminalPromptModel ?: return
 
     if (session.model.isCommandRunning || parameters.completionType != CompletionType.BASIC) {
@@ -51,10 +49,10 @@ class PowerShellCompletionContributor : CompletionContributor(), DumbAware {
     val command = promptModel.commandText
     val caretPosition = parameters.editor.caretModel.offset - promptModel.commandStartOffset  // relative to command start
     // PowerShell's completion generator receives typed prefix directly, so we can create dummy context
-    val runtimeContext = runtimeContextProvider.getContext("")
+    val runtimeContext = completionServices.runtimeContextProvider.getContext("")
 
     val completionResult: CompletionResult = runBlockingCancellable {
-      generatorsExecutor.execute(runtimeContext, powerShellCompletionGenerator(command, caretPosition))
+      completionServices.dataGeneratorsExecutor.execute(runtimeContext, powerShellCompletionGenerator(command, caretPosition))
     }
 
     if (completionResult.matches.isEmpty()) {

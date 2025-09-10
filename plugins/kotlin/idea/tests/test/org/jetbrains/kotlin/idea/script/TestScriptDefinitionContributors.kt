@@ -17,11 +17,11 @@ class CustomScriptTemplateProvider(val environment: Environment) : ScriptDefinit
     override val definitions: Sequence<ScriptDefinition>
         get() = loadDefinitionsFromTemplates(
             templateClassNames = environment["template-classes-names"] as List<String>,
-            templateClasspath = environment["template-classes"]?.let { it as? List<File> } ?: emptyList(),
+            templateClasspath = (environment["template-classes"]?.let { it as? List<File> } ?: emptyList()).map(File::toPath),
             baseHostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
                 getEnvironment { environment }
             }
-        ).asSequence()
+        )
 
 }
 
@@ -29,7 +29,7 @@ class FromTextTemplateProvider(val environment: Environment) : ScriptDefinitions
     override val definitions: Sequence<ScriptDefinition>
         get() = loadDefinitionsFromTemplates(
             templateClassNames = listOf("org.jetbrains.kotlin.idea.script.Template"),
-            templateClasspath = environment["template-classes"]?.let { it as? List<File> } ?: emptyList(),
+            templateClasspath = (environment["template-classes"]?.let { it as? List<File> } ?: emptyList()).map(File::toPath),
             baseHostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
                 getEnvironment { environment }
             }

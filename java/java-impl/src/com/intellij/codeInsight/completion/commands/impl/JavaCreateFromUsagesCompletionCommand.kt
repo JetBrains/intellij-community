@@ -102,6 +102,6 @@ private class AlwaysMatchingCamelHumpMatcher(
     return prefix == "" || PsiNameHelper.getInstance(project).isIdentifier(prefix) && !predefinedNames.contains(prefix)
   }
 
-  override fun isStartMatch(name: String?) = name == null || prefixMatches(name)
+  override fun isStartMatch(name: String) = prefixMatches(name)
   override fun cloneWithPrefix(prefix: String) = if (prefix == this.prefix) this else AlwaysMatchingCamelHumpMatcher(prefix, project, predefinedNames)
 }

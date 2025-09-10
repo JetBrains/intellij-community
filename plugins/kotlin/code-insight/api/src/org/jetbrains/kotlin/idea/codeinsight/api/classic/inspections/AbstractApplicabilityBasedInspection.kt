@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -20,6 +21,17 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
 ) : AbstractKotlinInspection() {
 
     final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): KtVisitorVoid =
+        object : KtVisitorVoid() {
+            override fun visitKtElement(element: KtElement) {
+                super.visitKtElement(element)
+
+                if (!elementType.isInstance(element) || element.textLength == 0) return
+                @Suppress("UNCHECKED_CAST")
+                visitTargetElement(element as TElement, holder, isOnTheFly)
+            }
+        }
+
+    final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : KtVisitorVoid() {
             override fun visitKtElement(element: KtElement) {
                 super.visitKtElement(element)
@@ -52,7 +64,7 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
             isOnTheFly,
             inspectionHighlightType(element),
             range,
-            createQuickFix(element),
+            LocalFix(this, fixText(element)),
         )
     }
 
@@ -73,10 +85,6 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
     abstract fun applyTo(element: TElement, project: Project = element.project, editor: Editor? = null)
 
     open val startFixInWriteAction: Boolean = true
-
-    open fun createQuickFix(element: TElement): LocalQuickFix {
-        return LocalFix(this, fixText(element))
-    }
 
     private class LocalFix<TElement : KtElement>(
       @FileModifier.SafeFieldForPreview val inspection: AbstractApplicabilityBasedInspection<TElement>,

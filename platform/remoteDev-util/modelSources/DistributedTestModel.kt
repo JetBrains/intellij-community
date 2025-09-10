@@ -93,7 +93,7 @@ object DistributedTestModel : Ext(TestRoot) {
     signal("stopAllureStep", RdAllureStopStepInfo).async
     signal("exitApp", void).async
     signal("showNotification", string)
-    call("forceLeaveAllModals", bool, void).async
+    call("forceLeaveAllModals", void, bool).async
     call("closeAllOpenedProjects", void, bool).async
     call("runNextAction", RdTestActionParameters, string.nullable).async
     call("requestFocus", bool, bool).async

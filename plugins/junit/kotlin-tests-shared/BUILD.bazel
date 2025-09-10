@@ -11,7 +11,7 @@ jvm_library(
   name = "kotlin-tests-shared_test_lib",
   module_name = "intellij.junit.kotlin.tests.shared",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -28,6 +28,13 @@ jvm_library(
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/junit/java-tests:java-tests_test_lib",
+  ],
+  exports = [
+    "//plugins/kotlin/plugin/common",
+    "//plugins/junit/testFramework",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
     "//plugins/junit/java-tests:java-tests_test_lib",
   ]
 )

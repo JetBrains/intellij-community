@@ -28,6 +28,7 @@ interface PyAddSdkView {
    * The creation of the sdk may occur either in this method or in the
    * [complete] method a while back.
    */
+  @RequiresEdt
   fun getOrCreateSdk(): Sdk?
 
   fun onSelected(): Unit = Unit

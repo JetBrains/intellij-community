@@ -25,7 +25,7 @@ jvm_library(
   name = "slf4j",
   module_name = "fleet.util.logging.slf4j",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
   kotlinc_opts = ":custom_slf4j",
   deps = [
     "@lib//:kotlin-stdlib",

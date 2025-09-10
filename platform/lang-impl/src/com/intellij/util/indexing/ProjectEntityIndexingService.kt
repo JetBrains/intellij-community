@@ -4,6 +4,7 @@ package com.intellij.util.indexing
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -13,10 +14,7 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.LibraryRoot
-import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -26,20 +24,25 @@ import com.intellij.util.indexing.EntityIndexingServiceImpl.WorkspaceEntitiesRoo
 import com.intellij.util.indexing.EntityIndexingServiceImpl.WorkspaceEventRescanningInfo
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark
+import com.intellij.util.indexing.roots.GenericDependencyIterator
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableEntityProvider.*
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forLibraryEntity
+import com.intellij.util.indexing.roots.kind.LibraryOrigin
+import com.intellij.util.indexing.roots.origin.LibraryOriginImpl
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription.OnParent
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl.Companion.EP_NAME
+import com.intellij.workspaceModel.core.fileIndex.impl.getEntityPointer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.Callable
 
 
 @ApiStatus.Internal
@@ -48,7 +51,7 @@ import org.jetbrains.annotations.TestOnly
 class ProjectEntityIndexingService(
   private val project: Project,
   private val scope: CoroutineScope,
-): WorkspaceFileIndexListener {
+) : WorkspaceFileIndexListener {
 
   private val tracker = CustomEntitiesCausingReindexTracker()
 
@@ -72,6 +75,37 @@ class ProjectEntityIndexingService(
   }
 
   override fun workspaceFileIndexChanged(event: WorkspaceFileIndexChangedEvent) {
+    if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) return
+    if (FileBasedIndex.getInstance() !is FileBasedIndexImpl) return
+    if (LightEdit.owns(project)) return
+    if (invalidateProjectFilterIfFirstScanningNotRequested(project)) return
+
+    if (ModalityState.defaultModalityState() === ModalityState.any()) {
+      LOG.error("Unexpected modality: should not be ANY. Replace with NON_MODAL (130820241337)")
+    }
+
+    if (event.registeredFileSets.isNotEmpty() || event.removedFileSets.isNotEmpty()) {
+      val parameters =  computeScanningParametersFromWFIEvent(event)
+      UnindexedFilesScanner(project, parameters).queue()
+    }
+  }
+
+  private fun computeScanningParametersFromWFIEvent(event: WorkspaceFileIndexChangedEvent): Deferred<ScanningParameters> {
+    return scope.async {
+      ReadAction.nonBlocking(Callable {
+        val iterators = ArrayList<IndexableFilesIterator>()
+
+        //generateIteratorsFromWFIChangedEvent(event.removedFileSets, event.storageBefore, iterators)
+        generateIteratorsFromWFIChangedEvent(event.registeredFileSets, event.storageAfter, iterators)
+
+        return@Callable if (iterators.isEmpty()) {
+          CancelledScanning
+        }
+        else {
+          ScanningIterators("Changes from WorkspaceFileIndex", predefinedIndexableFilesIterators = iterators)
+        }
+      }).executeSynchronously()
+    }
   }
 
   private enum class Change {
@@ -89,6 +123,37 @@ class ProjectEntityIndexingService(
 
   fun shouldCauseRescan(oldEntity: WorkspaceEntity?, newEntity: WorkspaceEntity?): Boolean {
     return tracker.shouldRescan(oldEntity, newEntity, project)
+  }
+
+  private fun generateIteratorsFromWFIChangedEvent(
+    fileSets: Collection<WorkspaceFileSet>,
+    storage: EntityStorage,
+    iterators: MutableList<IndexableFilesIterator>,
+  ) {
+    val libraryOrigins = HashSet<LibraryOrigin>()
+
+    for (fileSet in fileSets) {
+      fileSet as WorkspaceFileSetWithCustomData<*>
+      val entityPointer = fileSet.getEntityPointer() ?: continue
+      if (!fileSet.kind.isIndexable) continue
+      if (fileSet.data is ModuleRelatedRootData) continue
+      if (fileSet.kind.isContent) continue
+
+      val entity = entityPointer.resolve(storage) ?: continue
+      if (entity is LibraryEntity) {
+        val sourceRoot = fileSet.kind == WorkspaceFileKind.EXTERNAL_SOURCE
+        val origin = if (sourceRoot) {
+          LibraryOriginImpl(emptyList(), listOf(fileSet.root))
+        }
+        else {
+          LibraryOriginImpl(listOf(fileSet.root), emptyList())
+        }
+        val iterator = GenericDependencyIterator.forLibraryEntity(origin, entity.name, fileSet.root, sourceRoot)
+        if (libraryOrigins.add(origin)) {
+          iterators.add(iterator)
+        }
+      }
+    }
   }
 
   private fun computeScanningParameters(changes: List<RootsChangeRescanningInfo>): Deferred<ScanningParameters> {
@@ -315,38 +380,6 @@ class ProjectEntityIndexingService(
       }
 
       collectIEPIteratorsOnChange(change, oldEntity, newEntity, project, builders, entityClass)
-
-      if (change != Change.Removed && isLibraryIgnoredByLibraryRootFileIndexContributor(newEntity!!)) {
-        if (change == Change.Added) {
-          // Sure, we are interested only in libraries used in the project, but in case a registered library is downloaded,
-          // no change in dependencies happens, only Added event on LibraryEntity.
-          // For debug see com.intellij.roots.libraries.LibraryTest
-          builders.addAll(forLibraryEntity((newEntity as LibraryEntity).symbolicId, false))
-        }
-        else if (change == Change.Replaced && hasSomethingToIndex(oldEntity as LibraryEntity, newEntity as LibraryEntity)) {
-          builders.addAll(forLibraryEntity((newEntity as LibraryEntity).symbolicId, false))
-        }
-      }
-    }
-
-    private fun hasSomethingToIndex(oldEntity: LibraryEntity, newEntity: LibraryEntity): Boolean {
-      if (newEntity.roots.size > oldEntity.roots.size) return true
-      if (oldEntity.excludedRoots.size > newEntity.excludedRoots.size) return true
-      val oldEntityRoots = oldEntity.roots
-      for (root: LibraryRoot in newEntity.roots) {
-        if (!oldEntityRoots.contains(root)) return true
-      }
-      val newEntityExcludedRoots: List<ExcludeUrlEntity> = newEntity.excludedRoots
-      for (excludedRoot: ExcludeUrlEntity in oldEntity.excludedRoots) {
-        if (!newEntityExcludedRoots.contains(excludedRoot)) return true
-      }
-      return false
-    }
-
-    private fun <E : WorkspaceEntity> isLibraryIgnoredByLibraryRootFileIndexContributor(newEntity: E): Boolean {
-      return newEntity is LibraryEntity &&
-             (newEntity as LibraryEntity).symbolicId.tableId is LibraryTableId.GlobalLibraryTableId &&
-             !Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")
     }
 
     private fun <E : WorkspaceEntity, C : WorkspaceEntity> handleDependencies(

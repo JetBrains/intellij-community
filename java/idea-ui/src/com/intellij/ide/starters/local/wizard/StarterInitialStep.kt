@@ -71,7 +71,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonS
     wizardContext.projectName = entityName
     wizardContext.setProjectFileDirectory(FileUtil.join(location, entityName))
 
-    val sdk = jdkIntentProperty.get()?.prepareJdk()
+    val sdk = jdkIntentProperty.get().prepareJdk()
     moduleBuilder.moduleJdk = sdk
 
     if (wizardContext.project == null) {

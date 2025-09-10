@@ -11,7 +11,7 @@ jvm_library(
   name = "frontback-impl",
   module_name = "intellij.java.frontback.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//java/java-frontback-psi-api:frontback-psi",
     "//java/java-frontback-psi-impl:frontback-psi-impl",

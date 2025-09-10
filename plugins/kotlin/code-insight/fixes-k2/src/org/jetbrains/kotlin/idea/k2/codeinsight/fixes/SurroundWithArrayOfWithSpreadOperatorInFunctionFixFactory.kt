@@ -37,7 +37,7 @@ internal object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
             element: KtExpression,
         ): Presentation {
             val (_, shortArrayOfCall) = getElementContext(context, element)
-            return Presentation.of(KotlinBundle.getMessage("surround.with.0", shortArrayOfCall))
+            return Presentation.of(KotlinBundle.message("surround.with.0", shortArrayOfCall))
         }
 
         override fun invoke(

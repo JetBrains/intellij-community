@@ -24,7 +24,9 @@ class _FullTypeId:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _FullTypeIdEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_FullTypeId.ValueType], builtins.type):
+class _FullTypeIdEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_FullTypeId.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     TFT_UNSET: _FullTypeId.ValueType  # 0
     """The default represents an uninitialized values."""
@@ -607,7 +609,9 @@ class FullTypeDef(google.protobuf.message.Message):
         i: builtins.int | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["attr", b"attr", "i", b"i", "s", b"s"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["args", b"args", "attr", b"attr", "i", b"i", "s", b"s", "type_id", b"type_id"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["args", b"args", "attr", b"attr", "i", b"i", "s", b"s", "type_id", b"type_id"]
+    ) -> None: ...
     def WhichOneof(self, oneof_group: typing.Literal["attr", b"attr"]) -> typing.Literal["s", "i"] | None: ...
 
 global___FullTypeDef = FullTypeDef

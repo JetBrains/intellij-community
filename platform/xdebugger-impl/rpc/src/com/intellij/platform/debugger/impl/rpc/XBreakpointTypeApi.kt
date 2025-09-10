@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.ide.ui.icons.IconId
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
@@ -42,6 +43,11 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
 
   suspend fun rememberRemovedBreakpoint(breakpointId: XBreakpointId)
   suspend fun restoreRemovedBreakpoint(projectId: ProjectId)
+
+  suspend fun copyLineBreakpoint(breakpointId: XBreakpointId, fileId: VirtualFileId, line: Int)
+
+  suspend fun computeInlineBreakpointVariants(projectId: ProjectId, fileId: VirtualFileId, onlyLine: Int?): List<InlineBreakpointVariantsOnLine>
+  suspend fun createVariantBreakpoint(projectId: ProjectId, fileId: VirtualFileId, line: Int, variantIndex: Int)
 }
 
 @ApiStatus.Internal
@@ -133,4 +139,26 @@ data class XLineBreakpointVariantDto(
 data class VariantSelectedResponse(
   val selectedVariantIndex: Int,
   @Serializable(with = SendChannelSerializer::class) val breakpointCallback: SendChannel<XBreakpointId>,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class InlineBreakpointVariantsOnLine(
+  val line: Int,
+  val variants: List<InlineBreakpointVariantWithMatchingBreakpointDto>,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class InlineBreakpointVariantWithMatchingBreakpointDto(
+  val variant: XInlineBreakpointVariantDto?,
+  val breakpointId: XBreakpointId?,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XInlineBreakpointVariantDto(
+  val highlightRange: XLineBreakpointTextRange?,
+  val icon: IconId,
+  val tooltipDescription: String,
 )

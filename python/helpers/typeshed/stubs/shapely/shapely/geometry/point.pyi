@@ -11,6 +11,7 @@ __all__ = ["Point"]
 _PointLike: TypeAlias = Point | Iterable[float] | ArrayLikeSeq[float]
 
 class Point(BaseGeometry):
+    __slots__: list[str] = []
     @overload  # no args: empty point
     def __new__(self) -> Self: ...
     @overload  # one arg: (x, y[, z]) tuple or a Point instance
@@ -25,6 +26,8 @@ class Point(BaseGeometry):
     def y(self) -> float: ...
     @property
     def z(self) -> float: ...
+    @property
+    def m(self) -> float: ...
     def svg(self, scale_factor: float = 1.0, fill_color: str | None = None, opacity: float | None = None) -> str: ...  # type: ignore[override]
     # more precise base overrides
     @property

@@ -18,7 +18,7 @@ jvm_library(
   name = "i18n",
   module_name = "intellij.platform.syntax.i18n",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_i18n",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -30,7 +30,7 @@ jvm_library(
 jvm_library(
   name = "i18n_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testJvm/**/*.kt", "testJvm/**/*.java"], allow_empty = True),
+  srcs = glob(["testJvm/**/*.kt", "testJvm/**/*.java", "testJvm/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_i18n",
   associates = [":i18n"],
   deps = [

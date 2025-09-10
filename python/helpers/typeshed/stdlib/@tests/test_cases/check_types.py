@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 import types
 from collections import UserDict
@@ -39,3 +41,20 @@ item_3 = mp.get(3, "default")
 assert_type(item_3, Union[int, str])
 # Default isn't accepted as a keyword argument.
 mp.get(4, default="default")  # type: ignore
+
+
+# test: `types.DynamicClassAttribute`
+class DCAtest:
+    _value: int | None = None
+
+    @types.DynamicClassAttribute
+    def foo(self) -> int | None:
+        return self._value
+
+    @foo.setter
+    def foo(self, value: int) -> None:
+        self._value = value
+
+    @foo.deleter
+    def foo(self) -> None:
+        self._value = None

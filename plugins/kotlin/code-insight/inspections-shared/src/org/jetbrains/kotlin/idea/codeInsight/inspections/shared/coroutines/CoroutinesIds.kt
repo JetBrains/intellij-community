@@ -26,4 +26,6 @@ internal object CoroutinesIds {
     val SELECT_BUILDER_CLASS_ID: ClassId = ClassId(COROUTINES_SELECTS_PACKAGE, Name.identifier("SelectBuilder"))
     val SELECT_BUILDER_INVOKE_ID: CallableId = CallableId(SELECT_BUILDER_CLASS_ID, Name.identifier("invoke"))
     val SELECT_BUILDER_ON_TIMEOUT_ID: CallableId = CallableId(COROUTINES_SELECTS_PACKAGE, Name.identifier("onTimeout"))
+
+    val SUSPEND_CANCELLABLE_COROUTINE_ID: CallableId = CallableId(COROUTINES_PACKAGE, Name.identifier("suspendCancellableCoroutine"))
 }

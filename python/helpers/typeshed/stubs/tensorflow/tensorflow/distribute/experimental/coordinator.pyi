@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from typing import Generic, TypeVar
 
 from tensorflow._aliases import AnyArray
@@ -9,4 +8,4 @@ class RemoteValue(Generic[_Value_co]):
     def fetch(self) -> AnyArray: ...
     def get(self) -> _Value_co: ...
 
-def __getattr__(name: str) -> Incomplete: ...
+def __getattr__(name: str): ...  # incomplete module

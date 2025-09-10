@@ -10,12 +10,10 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vcs.changes.committed.LabeledComboBoxAction
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.isKotlinWorksheet
 import javax.swing.JComponent
 
 class ModulesComboBoxAction(private val scratchFile: ScratchFile) :
@@ -52,15 +50,10 @@ class ModulesComboBoxAction(private val scratchFile: ScratchFile) :
             text = selectedModule?.name ?: KotlinJvmBundle.message("list.item.no.module")
         }
 
-        e.presentation.isVisible = isModuleSelectorVisible()
+        e.presentation.isVisible = true
     }
 
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-    @TestOnly
-    fun isModuleSelectorVisible(): Boolean {
-        return !scratchFile.file.isKotlinWorksheet
-    }
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     private inner class ModuleIsNotSelectedAction(@NlsActions.ActionText placeholder: String) : DumbAwareAction(placeholder) {
         override fun actionPerformed(e: AnActionEvent) {

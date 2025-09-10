@@ -1,11 +1,11 @@
 [![official JetBrains project](http://jb.gg/badges/official.svg)](https://github.com/JetBrains/.github/blob/main/profile/README.md) [![Build status](https://github.com/JetBrains/intellij-community/workflows/IntelliJ%20IDEA/badge.svg)](https://github.com/JetBrains/intellij-community/actions/workflows/IntelliJ_IDEA.yml)
 
-# IntelliJ IDEA Open Source
+# IntelliJ Open Source Repository
 
-This repository is the open-source part of the IntelliJ IDEA codebase.
+This repository is the open-source part of the JetBrains IDEs codebase.
 It also serves as the basis for [IntelliJ Platform development](https://www.jetbrains.com/opensource/idea). 
 
-These instructions will help you build IntelliJ IDEA from source code.
+These instructions will help you build and run open source parts of IntelliJ Platform / IntelliJ IDEA / PyCharm.
 
 If you are new to the community and would like to contribute code or help others learn, see [CONTRIBUTING.md](https://github.com/JetBrains/intellij-community/blob/master/CONTRIBUTING.md) to get started.
 
@@ -14,7 +14,7 @@ The following conventions will be used to refer to directories on your machine:
 * `<IDEA_HOME>` is the root directory for the **IntelliJ source code**.
 
 ___
-## Getting the IntelliJ IDEA Source Code
+## Getting the Source Code
 
 This section will guide you through getting the project sources and help avoid common issues in git config and other steps before opening it in the IDE.
 
@@ -30,9 +30,9 @@ This section will guide you through getting the project sources and help avoid c
 
 #### Clone Main Repository
 
-IntelliJ IDEA source code is available from the [GitHub repository](https://github.com/JetBrains/intellij-community), which can be cloned or downloaded as a zip file (based on a branch) into `<IDEA_HOME>`. 
-The **master** (_default_) branch contains the source code which will be used to create the next major version of IntelliJ IDEA. 
-The branch names and build numbers for older releases of IntelliJ IDEA can be found on the
+IntelliJ open source repository is available from the [GitHub repository](https://github.com/JetBrains/intellij-community), which can be cloned or downloaded as a zip file (based on a branch) into `<IDEA_HOME>`. 
+The **master** (_default_) branch contains the source code which will be used to create the next major version of all JetBrains IDEs. 
+The branch names and build numbers for older releases of JetBrains IDEs can be found on the
 [Build Number Ranges](https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html) page.
 
 You can [clone this project](https://www.jetbrains.com/help/idea/manage-projects-hosted-on-github.html#clone-from-GitHub) directly using IntelliJ IDEA. 
@@ -74,16 +74,17 @@ If IntelliJ IDEA displays a message about a missing or out-of-date required plug
 
 ### Build Configuration Steps
 1. **JDK Setup**
-  - Use JetBrains Runtime 17 (without JCEF) to compile
+
+- Use JetBrains Runtime 21 (without JCEF) to compile
   - IDE will prompt to download it on the first build
 > [!IMPORTANT]
 >
-> JetBrains Runtime **without** JCEF is required. If `jbr-17` SDK points to JCEF version, change it to the non-JCEF version:
+> JetBrains Runtime **without** JCEF is required. If `jbr-21` SDK points to JCEF version, change it to the non-JCEF version:
 > - Add `idea.is.internal=true` to `idea.properties` and restart the IDE.
 > - Go to '**Project Structure | SDKs**'
 > - Click 'Browse' → 'Download...'
-> - Select version 17 and vendor 'JetBrains Runtime'
-> - To confirm if the JDK is correct, navigate to the SDK page with jbr-17 selected. Search for `jcef`, it should **_NOT_** yield a result.
+> - Select version 21 and vendor 'JetBrains Runtime'
+> - To confirm if the JDK is correct, navigate to the SDK page with jbr-21 selected. Search for `jcef`, it should **_NOT_** yield a result.
 
 2. **Maven Configuration** : If the **Maven** plugin is disabled, [add the path variable](https://www.jetbrains.com/help/idea/absolute-path-variables.html) "**MAVEN_REPOSITORY**" pointing to `<USER_HOME>/.m2/repository` directory.
 
@@ -111,10 +112,10 @@ Installer build examples:
 ./installers.cmd -Dintellij.build.incremental.compilation=true
 ```
 
->[!TIP]
+> [!TIP]
 > 
 > The `installers.cmd` is used to run [OpenSourceCommunityInstallersBuildTarget](build/src/OpenSourceCommunityInstallersBuildTarget.kt) from the command line.
-You can also call it directly from IDEA, using run configuration `Build IDEA Community Installers (current OS)`.
+> You can also call it directly from IDEA, using run configuration `Build IDEA Community Installers (current OS)`.
 
 
 #### Dockerized Build Environment

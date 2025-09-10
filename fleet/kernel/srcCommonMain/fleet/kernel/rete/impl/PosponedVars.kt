@@ -19,9 +19,11 @@ internal fun postponedVars(lastKnownDb: StateFlow<ReteState>, reteNetwork: ReteN
   fun <T> addTerminal(cmd: Rete.Command.AddObserver<T>) {
     val observerId = cmd.observerId
     val observer = cmd.observer
-    val subscription = reteNetwork.observeQuery(query = cmd.query,
-                                                tracingKey = cmd.tracingKey,
-                                                dependencies = cmd.dependencies) { init ->
+    val subscription = reteNetwork.observeQuery(
+      query = cmd.query,
+      tracingKey = cmd.tracingKey,
+      dependencies = cmd.dependencies,
+    ) { init ->
       onDispose { subs.remove(observerId) }
       observer.run { init(init) }
     }

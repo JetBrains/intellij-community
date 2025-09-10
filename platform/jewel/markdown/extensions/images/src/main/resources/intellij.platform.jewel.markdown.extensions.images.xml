@@ -3,5 +3,6 @@
     <module name="intellij.platform.jewel.markdown.core" />
     <module name="intellij.platform.jewel.ui" />
     <module name="intellij.platform.jewel.foundation" />
+    <module name="intellij.libraries.coil" />
   </dependencies>
 </idea-plugin>

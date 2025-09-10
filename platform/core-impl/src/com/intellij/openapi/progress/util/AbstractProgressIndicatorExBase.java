@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -22,7 +21,7 @@ import java.util.Collection;
  */
 public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
   private final boolean myReusable;
-  private volatile ProgressIndicatorEx @Nullable [] myStateDelegates; // never updated inplace, only the whole array is replaced under getLock()
+  private volatile @NotNull ProgressIndicatorEx @NotNull [] myStateDelegates = EMPTY_ARRAY; // elements never updated, only the whole array is replaced under getLock()
   private volatile WeakList<TaskInfo> myFinished;
   private volatile boolean myWasStarted;
   private TaskInfo myOwnerTask;
@@ -156,32 +155,25 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
     synchronized (getLock()) {
       delegate.initStateFrom(this);
       ProgressIndicatorEx[] stateDelegates = myStateDelegates;
-      if (stateDelegates == null) {
-        myStateDelegates = new ProgressIndicatorEx[]{delegate};
+      // hard throw is essential for avoiding deadlocks
+      if (ArrayUtil.contains(delegate, stateDelegates)) {
+        throw new IllegalArgumentException("Already registered: " + delegate);
       }
-      else {
-        // hard throw is essential for avoiding deadlocks
-        if (ArrayUtil.contains(delegate, stateDelegates)) {
-          throw new IllegalArgumentException("Already registered: " + delegate);
-        }
-        myStateDelegates = ArrayUtil.append(stateDelegates, delegate, ProgressIndicatorEx.class);
-      }
+      myStateDelegates = ArrayUtil.append(stateDelegates, delegate, ProgressIndicatorEx.class);
     }
     onProgressChange();
   }
 
   public final void removeStateDelegate(@NotNull ProgressIndicatorEx delegate) {
     synchronized (getLock()) {
-      ProgressIndicatorEx[] delegates = myStateDelegates;
-      if (delegates == null) return;
-      myStateDelegates = ArrayUtil.remove(delegates, delegate);
+      myStateDelegates = ArrayUtil.remove(myStateDelegates, delegate);
     }
     onProgressChange();
   }
 
   protected final void removeAllStateDelegates() {
     synchronized (getLock()) {
-      myStateDelegates = null;
+      myStateDelegates = EMPTY_ARRAY;
     }
   }
 
@@ -205,11 +197,8 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   }
 
   private void delegate(@NotNull IndicatorAction action) {
-    ProgressIndicatorEx[] list = myStateDelegates;
-    if (list != null) {
-      for (ProgressIndicatorEx each : list) {
-        action.execute(each);
-      }
+    for (ProgressIndicatorEx each : myStateDelegates) {
+      action.execute(each);
     }
   }
 

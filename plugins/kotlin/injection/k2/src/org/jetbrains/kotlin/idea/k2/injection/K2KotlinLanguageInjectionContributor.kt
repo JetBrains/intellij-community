@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.idea.base.injection.InjectionInfo
@@ -76,6 +77,17 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
             val annotationForParameter = parameterSymbol.generatedPrimaryConstructorProperty?.findAnnotation()
                 ?: parameterSymbol.findAnnotation() ?: return null
             injectionInfoByAnnotation(annotationForParameter)
+        }
+    }
+
+    override fun injectionInfoByExtensionReceiverParameter(callableDeclaration: KtCallableDeclaration): InjectionInfo? {
+        if (callableDeclaration.receiverTypeReference == null) return null
+        
+        analyze(callableDeclaration) {
+            val extensionReceiverParameter = (callableDeclaration.symbol as? KaCallableSymbol)?.receiverParameter
+            val annotationForExtensionReceiver = extensionReceiverParameter?.findAnnotation() ?: return null
+            
+            return injectionInfoByAnnotation(annotationForExtensionReceiver)
         }
     }
 

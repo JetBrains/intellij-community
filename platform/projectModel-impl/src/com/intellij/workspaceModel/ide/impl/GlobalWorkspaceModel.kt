@@ -115,7 +115,7 @@ class GlobalWorkspaceModel internal constructor(
       .apply { setVirtualFileUrlManager(virtualFileManager) }
       .loadInitialState(internalEnvironmentName, mutableEntityStorage, entityStorage, loadedFromCache)
     val changes = (mutableEntityStorage as MutableEntityStorageInstrumentation).collectChanges()
-    entityStorage.replace(mutableEntityStorage.toSnapshot(), changes, {}, {})
+    entityStorage.replace(mutableEntityStorage.toSnapshot(), changes, mutableEntityStorage.collectSymbolicEntityIdsChanges(), {}, {})
     callback.invoke()
   }
 
@@ -138,6 +138,7 @@ class GlobalWorkspaceModel internal constructor(
       collectChangesTimeMillis = measureTimeMillis {
         changes = (builder as MutableEntityStorageInstrumentation).collectChanges()
       }
+      val symbolicEntityIdsChanges = (builder as MutableEntityStorageInstrumentation).collectSymbolicEntityIdsChanges()
       initializingTimeMillis = measureTimeMillis {
         this.initializeBridges(changes, builder)
       }
@@ -150,7 +151,7 @@ class GlobalWorkspaceModel internal constructor(
         before.assertConsistency()
         newStorage.assertConsistency()
       }
-      entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged)
+      entityStorage.replace(newStorage, changes, symbolicEntityIdsChanges, this::onBeforeChanged, this::onChanged)
     }.apply {
       updatesCounter.incrementAndGet()
       totalUpdatesTimeMs.duration.addAndGet(this)

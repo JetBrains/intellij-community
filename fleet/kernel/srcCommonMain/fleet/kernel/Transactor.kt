@@ -94,9 +94,9 @@ suspend fun waitForDbSourceToCatchUpWithTimestamp(timestamp: Long) {
  * @return the result of [f]
  * */
 suspend fun <T> change(f: ChangeScope.() -> T): T {
-  val currentCoroutineContext = currentCoroutineContext()
-  val kernel = currentCoroutineContext.transactor
-  val interceptor = currentCoroutineContext[ChangeInterceptor] ?: ChangeInterceptor.Identity
+  val context = currentCoroutineContext()
+  val kernel = context.transactor
+  val interceptor = context[ChangeInterceptor] ?: ChangeInterceptor.Identity
   var res: T? = null
   val change = interceptor.change(
     {
@@ -105,12 +105,13 @@ suspend fun <T> change(f: ChangeScope.() -> T): T {
   ) { changeFn ->
     kernel.changeSuspend(changeFn)
   }
-  waitForDbSourceToCatchUpWithTimestamp(change.dbAfter.timestamp)
+  context.dbSource.catchUp(change.dbAfter.timestamp)
+  @Suppress("UNCHECKED_CAST")
   return res as T
 }
 
 
-suspend fun db(): DB =
+fun db(): DB =
   DbContext.threadBound.impl as DB
 
 suspend fun transactor(): Transactor {
@@ -293,6 +294,7 @@ sealed interface SubscriptionEvent {
  * [middleware] is applied to every change fn synchronously, being able to supply meta to the change, or alter the behavior of fn in other ways
  * Consider adding KernelMiddleware if additional routine has to be performed on every [Transactor.changeAsync]
  */
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 suspend fun <T> withTransactor(
   middleware: TransactorMiddleware = TransactorMiddleware.Identity,
   defaultPart: Int = CommonPart,
@@ -352,6 +354,7 @@ suspend fun <T> withTransactor(
     val transactor = object : Transactor {
       override val middleware: TransactorMiddleware get() = middleware
 
+      @Deprecated("will be removed")
       override val meta: MutableOpenMap<Transactor> = OpenMap<Transactor>().mutable()
 
       override val dbState: StateFlow<DB>
@@ -507,7 +510,7 @@ suspend fun <T> withTransactor(
                 }
               }
             }
-          }  
+          }
         }
       }.apply {
         invokeOnCompletion { x ->
@@ -563,9 +566,6 @@ private fun checkDuration(
     }
   }
 }
-
-@DslMarker
-annotation class KernelDSL
 
 typealias SlowChangeReporter = (CoroutineContext, Long, String) -> Unit
 

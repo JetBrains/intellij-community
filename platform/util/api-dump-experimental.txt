@@ -17,6 +17,13 @@
 - bs:installThreadContext$default(kotlin.coroutines.CoroutineContext,Z,kotlin.jvm.functions.Function0,I,java.lang.Object):java.lang.Object
 - sf:resetThreadContext():com.intellij.openapi.application.AccessToken
 - sf:resetThreadContext(kotlin.jvm.functions.Function0):java.lang.Object
+a:com.intellij.execution.process.BaseProcessHandler
+- com.intellij.execution.process.ProcessHandler
+- com.intellij.execution.TaskExecutor
+- *:getNativePid():java.util.concurrent.CompletableFuture
+a:com.intellij.execution.process.ProcessHandler
+- com.intellij.openapi.util.UserDataHolderBase
+- *:getNativePid():java.util.concurrent.CompletableFuture
 *:com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 - s:getClassToReport(java.lang.Object):java.lang.Class
 - a:getSubstitutedClass():java.lang.Class

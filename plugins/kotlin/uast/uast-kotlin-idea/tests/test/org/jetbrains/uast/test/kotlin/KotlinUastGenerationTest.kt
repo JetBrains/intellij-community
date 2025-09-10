@@ -246,6 +246,7 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
 
     private fun dummyContextFile(): KtFile = myFixture.configureByText("file.kt", "fun foo() {}") as KtFile
 
+    @Suppress("SuspiciousPackagePrivateAccess")//workaround for KTIJ-35504
     fun `test method call generation with generics restoring 1 parameter with 1 existing`() {
         val receiver = myFixture.configureByKotlinExpression("receiver.kt", "A")
         val arg = myFixture.configureByKotlinExpression("arg.kt", "\"a\"")

@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class AddMissingClassKeywordIntention : SelfTargetingIntention<PsiElement>(
     PsiElement::class.java,
-    KotlinBundle.lazyMessage("add.missing.class.keyword")
+    KotlinBundle.messagePointer("add.missing.class.keyword")
 ) {
     override fun isApplicableTo(element: PsiElement, caretOffset: Int): Boolean {
         if (element.node?.elementType != KtTokens.IDENTIFIER) return false

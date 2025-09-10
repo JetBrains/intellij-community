@@ -3,6 +3,7 @@ package com.intellij.ide.util.treeView
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.TreeState.CachedPresentationDataImpl
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.util.SlowOperations
 import com.intellij.util.containers.nullize
@@ -56,7 +57,7 @@ class CachedTreePresentationData(
         val isLeaf = model.isLeaf(node)
         val result = CachedTreePresentationData(
           TreeState.PathElement(TreeState.calcId(node), TreeState.calcType(node), 0, null),
-          CachedPresentationDataImpl(presentation.presentableText ?: "", iconData, isLeaf),
+          CachedPresentationDataImpl(presentation.getCacheableText(), iconData, isLeaf),
           extraAttrs,
           children
         )
@@ -79,6 +80,19 @@ class CachedTreePresentationData(
 
   fun createTree(): CachedTreePresentation = CachedTreePresentation(this)
 
+}
+
+private fun PresentationData.getCacheableText(): String {
+  var result = presentableText
+  if (result?.isNotEmpty() == true) return result
+  result = buildString {
+    for (fragment in coloredText) {
+      // Heuristics like in NodeRenderer: grayed stuff means secondary stuff.
+      if (fragment.attributes.fgColor == SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor) break
+      append(fragment.text)
+    }
+  }
+  return result
 }
 
 @Internal

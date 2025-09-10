@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtPsiUtil
 @ApiStatus.Internal
 @IntellijInternalApi
 class RemoveUnnecessaryParenthesesIntention : SelfTargetingRangeIntention<KtParenthesizedExpression>(
-    KtParenthesizedExpression::class.java, KotlinBundle.lazyMessage("remove.unnecessary.parentheses")
+    KtParenthesizedExpression::class.java, KotlinBundle.messagePointer("remove.unnecessary.parentheses")
 ) {
     override fun applicabilityRange(element: KtParenthesizedExpression): TextRange? {
         element.expression ?: return null

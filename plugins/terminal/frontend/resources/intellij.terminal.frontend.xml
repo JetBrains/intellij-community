@@ -21,6 +21,9 @@
     <editorActionHandler action="Replace" implementationClass="com.intellij.terminal.frontend.action.TerminalReplaceHandler"
                          id="terminalReplace" order="first"/>
 
+    <extendWordSelectionHandler implementation="com.intellij.terminal.frontend.TerminalTextSelectioner"/>
+    <basicWordSelectionFilter implementation="com.intellij.terminal.frontend.TerminalWordSelectionFilter"/>
+
     <toolWindow.splitContentProvider toolWindowId="terminal"
                                      implementationClass="com.intellij.terminal.frontend.TerminalToolWindowSplitContentProvider"/>
 
@@ -35,8 +38,10 @@
       order="first"/>
     <completion.contributor language="any"
                             id="terminalCommandSpecGen2"
-                            implementationClass="com.intellij.terminal.frontend.TerminalCommandSpecCompletionContributorGen2"
+                            implementationClass="com.intellij.terminal.frontend.completion.TerminalCommandSpecCompletionContributorGen2"
                             order="first, before terminalPowerShell, after ml_context"/>
+    <lookup.bottomPanelProvider implementation="com.intellij.terminal.frontend.completion.TerminalLookupBottomPanelProvider"/>
+
     <applicationService
       serviceInterface="org.jetbrains.plugins.terminal.fus.TerminalFocusFusService"
       serviceImplementation="com.intellij.terminal.frontend.fus.TerminalFocusFusServiceImpl"/>
@@ -146,7 +151,7 @@
     </group>
   </actions>
   <projectListeners>
-    <listener class="com.intellij.terminal.frontend.TerminalLookupManagerListener"
+    <listener class="com.intellij.terminal.frontend.completion.TerminalLookupManagerListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
   </projectListeners>
 </idea-plugin>

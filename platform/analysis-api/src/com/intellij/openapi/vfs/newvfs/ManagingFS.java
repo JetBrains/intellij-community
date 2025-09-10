@@ -59,9 +59,13 @@ public abstract class ManagingFS implements FileSystemInterface {
 
   public abstract long getCreationTimestamp();
 
-  /** @return true if VFS already has fetched (and cached) dir's children from apt {@link com.intellij.openapi.vfs.VirtualFileSystem} */
+  /**
+   * @return true if VFS already has fetched (and cached) _all_ dir's children from apt {@link com.intellij.openapi.vfs.VirtualFileSystem}
+   * It is not guaranteed that cached children == actual children at the moment: updates from the underling FS could be applied with delay
+   */
   public abstract boolean areChildrenLoaded(@NotNull VirtualFile dir);
 
+  /** @return true if VFS already fetches and caches at least _some_ children from apt {@link com.intellij.openapi.vfs.VirtualFileSystem} */
   public abstract boolean wereChildrenAccessed(@NotNull VirtualFile dir);
 
   public abstract @Nullable NewVirtualFile findRoot(@NotNull String path, @NotNull NewVirtualFileSystem fs);

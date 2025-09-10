@@ -2,85 +2,74 @@
 package com.intellij.util.indexing
 
 import com.intellij.CacheSwitcher.switchIndexAndVfs
-import com.intellij.idea.IJIgnore
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.impl.cache.impl.id.IdIndex
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.EdtRule
-import com.intellij.testFramework.RunsInEdt
-import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.junit5.RunInEdt
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.util.indexing.dependencies.ReadWriteFileIndexingStampImpl
-import org.junit.Assert.assertTrue
-import org.junit.Ignore
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
-@RunWith(JUnit4::class)
+@TestApplication
+@RunInEdt
 class IndexingFlagTest {
 
   @JvmField
-  @Rule
-  val appRule = ApplicationRule()
-
-  @Rule
-  @JvmField
-  val temp = TempDirectory()
-
-  @Rule
-  @JvmField
-  val edtRule = EdtRule()
+  @RegisterExtension
+  val temp = TempDirectoryExtension()
 
   @Test
-  @RunsInEdt
   fun testTumbler() {
     val fileBasedIndexTumbler = FileBasedIndexTumbler("IndexingFlagTest")
-    val vFile = temp.newVirtualFile("test", "content".toByteArray())
+    WriteIntentReadAction.compute(Computable {
+      val vFile = temp.newVirtualFile("test", "content".toByteArray())
 
-    val fileIndexingStamp = ReadWriteFileIndexingStampImpl(1)
-    IndexingFlag.setFileIndexed(vFile, fileIndexingStamp)
 
-    try {
-      fileBasedIndexTumbler.turnOff()
-    }
-    finally {
-      fileBasedIndexTumbler.turnOn()
-    }
+      val fileIndexingStamp = ReadWriteFileIndexingStampImpl(1)
+      IndexingFlag.setFileIndexed(vFile, fileIndexingStamp)
 
-    // should not throw exceptions, should be marked as indexed
-    val indexed = IndexingFlag.isFileIndexed(vFile, fileIndexingStamp)
-    assertTrue("Should be indexed because explicitly marked as indexed earlier", indexed)
-    IndexingFlag.cleanProcessingFlag(vFile)
+      try {
+        fileBasedIndexTumbler.turnOff()
+      }
+      finally {
+        fileBasedIndexTumbler.turnOn()
+        // should not throw exceptions, should be marked as indexed
+        val indexed = IndexingFlag.isFileIndexed(vFile, fileIndexingStamp)
+        assertTrue(indexed, "Should be indexed because explicitly marked as indexed earlier")
+        IndexingFlag.cleanProcessingFlag(vFile)
+      }
+    })
   }
 
   @Test
-  @Ignore("Triggers `Path conflict. Existing symlink: SymlinkData{} vs. new symlink: SymlinkData{}`")
-  @IJIgnore(issue = "IJPL-149673")
-  @RunsInEdt
   fun indexingFlagIsKeptThroughVFSReload() {
-    val file = temp.newFile("test", "content".toByteArray())
-    val vFileBefore = VfsUtil.findFileByIoFile(file, true) ?: throw AssertionError("File not found: $file")
+    WriteIntentReadAction.compute(Computable {
+      val file = temp.newFile("test", "content".toByteArray())
+      val vFileBefore = VfsUtil.findFileByIoFile(file, true) ?: throw AssertionError("File not found: $file")
 
-    val fileIndexingStamp = ReadWriteFileIndexingStampImpl(1)
-    IndexingFlag.setFileIndexed(vFileBefore, fileIndexingStamp)
+      val fileIndexingStamp = ReadWriteFileIndexingStampImpl(1)
+      IndexingFlag.setFileIndexed(vFileBefore, fileIndexingStamp)
 
-    switchIndexAndVfs(
-      null,
-      null,
-      "resetting vfs"
-    )
+      switchIndexAndVfs(
+        null,
+        null,
+        "resetting vfs"
+      )
 
-    val vFileAfter = VfsUtil.findFileByIoFile(file, true) ?: throw AssertionError("File not found: $file")
+      val vFileAfter = VfsUtil.findFileByIoFile(file, true) ?: throw AssertionError("File not found: $file")
 
-    // should not throw exceptions, should be marked as indexed
-    val indexed = IndexingFlag.isFileIndexed(vFileAfter, fileIndexingStamp)
-    assertTrue("Should be indexed because explicitly marked as indexed earlier",
-                 indexed)
-    IndexingFlag.cleanProcessingFlag(vFileAfter)
+      // should not throw exceptions, should be marked as indexed
+      val indexed = IndexingFlag.isFileIndexed(vFileAfter, fileIndexingStamp)
+      assertTrue(indexed, "Should be indexed because explicitly marked as indexed earlier")
+      IndexingFlag.cleanProcessingFlag(vFileAfter)
 
-    // should not throw exceptions
-    IndexingStamp.getIndexStamp((vFileAfter as VirtualFileWithId).id, IdIndex.NAME)
+      // should not throw exceptions
+      IndexingStamp.getIndexStamp((vFileAfter as VirtualFileWithId).id, IdIndex.NAME)
+    })
   }
 }

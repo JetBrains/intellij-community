@@ -16,6 +16,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -85,8 +87,8 @@ class FixAllHighlightingProblems implements IntentionAction {
     CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ReadAction.run(() -> {
-        DaemonCodeAnalyzerEx.processHighlights(
-          document, project, null, 0, document.getTextLength(), context, processor);
+        MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
+        DaemonCodeAnalyzerEx.processHighlights(model, project, null, 0, document.getTextLength(), context, processor);
       });
     }, AnalysisBundle.message("command.name.gather.fixes"), true, project)) return;
 

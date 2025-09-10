@@ -19,5 +19,5 @@ object KotlinCompletionImplK2Bundle : AbstractKotlinBundle(BUNDLE) {
     fun lazyMessage(
         @NonNls @PropertyKey(resourceBundle = BUNDLE) key: String,
         vararg params: Any,
-    ): Supplier<@Nls String> = getLazyMessage(key, *params)
+    ): Supplier<@Nls String> = instance.getLazyMessage(key, *params)
 }

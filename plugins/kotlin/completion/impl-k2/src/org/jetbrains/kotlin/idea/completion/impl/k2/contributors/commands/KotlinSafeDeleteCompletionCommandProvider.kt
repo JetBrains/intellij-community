@@ -17,6 +17,9 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFunction
 
 internal class KotlinSafeDeleteCompletionCommandProvider : AbstractSafeDeleteCompletionCommandProvider() {
+
+    private val SKIPPED_INSPECTION_IDS = setOf("UnusedVariable", "unused")
+
     override fun findElement(
         offset: Int,
         psiFile: PsiFile,
@@ -51,8 +54,8 @@ internal class KotlinSafeDeleteCompletionCommandProvider : AbstractSafeDeleteCom
         return element
     }
 
-    override fun skipForHighlightCommand(command: CompletionCommand): Boolean {
+    override fun skipCommandFromHighlighting(command: CompletionCommand): Boolean {
         return command is DirectInspectionFixCompletionCommand &&
-                (command.inspectionId == "UnusedVariable" || command.inspectionId == "unused")
+                SKIPPED_INSPECTION_IDS.contains(command.inspectionId)
     }
 }

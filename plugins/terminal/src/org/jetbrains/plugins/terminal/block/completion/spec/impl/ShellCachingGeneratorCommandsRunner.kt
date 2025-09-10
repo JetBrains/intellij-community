@@ -17,9 +17,9 @@ class ShellCachingGeneratorCommandsRunner(private val delegate: ShellCommandExec
     .scheduler(Scheduler.systemScheduler())
     .build()
 
-  override suspend fun runShellCommand(command: String): ShellCommandResult {
+  override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult {
     cache.getIfPresent(command)?.let { return it }
-    val result = delegate.runShellCommand(command)
+    val result = delegate.runShellCommand(directory, command)
     if (result.exitCode == 0) {
       cache.put(command, result)
     }

@@ -24,7 +24,7 @@ jvm_library(
   name = "kotlin-code-insight-fixes-k2",
   module_name = "kotlin.code-insight.fixes.k2",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_kotlin-code-insight-fixes-k2",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -66,6 +66,7 @@ jvm_library(
     "//plugins/kotlin/base/kdoc",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
     "//java/java-impl:impl",
+    "//plugins/kotlin/kotlin.searching:searching-k2",
   ],
   runtime_deps = [":kotlin-code-insight-fixes-k2_resources"]
 )

@@ -160,6 +160,9 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
 
   @Override
   public @NotNull SearchScope getUseScope() {
+    if (isUnnamed()) {
+      return LocalSearchScope.EMPTY;
+    }
     if (!isPhysical()) {
       final PsiFile file = getContainingFile();
       final PsiElement context = file.getContext();

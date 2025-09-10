@@ -11,7 +11,7 @@ jvm_library(
   name = "search-everywhere-ml",
   module_name = "intellij.searchEverywhereMl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -19,6 +19,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/statistics",
     "@lib//:search_everywhere_ml-ai-grazie-emb",
+    "@lib//:search_everywhere_ml-ai-grazie-model-swagger-annotations-jvm",
     "//platform/projectModel-api:projectModel",
   ],
   exports = ["@lib//:search_everywhere_ml-ai-grazie-emb"],
@@ -28,7 +29,7 @@ jvm_library(
 jvm_library(
   name = "search-everywhere-ml_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":search-everywhere-ml"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -40,11 +41,13 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:search_everywhere_ml-ai-grazie-emb",
+    "@lib//:search_everywhere_ml-ai-grazie-model-swagger-annotations-jvm",
     "//platform/projectModel-api:projectModel",
     "@lib//:io-mockk-jvm",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
   ],
+  exports = ["@lib//:search_everywhere_ml-ai-grazie-emb"],
   runtime_deps = [":search-everywhere-ml_resources"]
 )
 ### auto-generated section `build intellij.searchEverywhereMl` end

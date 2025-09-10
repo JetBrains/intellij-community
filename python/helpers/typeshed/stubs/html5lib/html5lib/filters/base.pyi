@@ -1,7 +1,7 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class Filter:
-    source: Any
+    source: Incomplete
     def __init__(self, source) -> None: ...
     def __iter__(self): ...
     def __getattr__(self, name: str): ...

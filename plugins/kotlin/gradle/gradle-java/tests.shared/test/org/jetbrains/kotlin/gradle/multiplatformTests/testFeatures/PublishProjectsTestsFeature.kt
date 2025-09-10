@@ -54,6 +54,7 @@ import java.util.concurrent.TimeUnit
  * ```
  */
 interface GradleProjectsPublishingDsl {
+    // IMPORTANT: Publication will not work if you use onlyCheckers AND if you don't specify GradleProjectsPublishingTestsFeature there
     fun TestConfigurationDslScope.publish(vararg subprojectNames: String) {
         writeAccess.getConfiguration(GradleProjectsPublishingTestsFeature)
             .publishedSubprojectNames.addAll(subprojectNames)

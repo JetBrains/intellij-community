@@ -11,7 +11,7 @@ jvm_library(
   name = "cglib",
   module_name = "intellij.libraries.cglib",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:libraries-cglib-cglib",
     "//platform/util/base",

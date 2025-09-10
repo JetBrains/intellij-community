@@ -62,12 +62,6 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
     return hasDefaultName() && getData() == null;
   }
 
-  /**
-   * @deprecated use {@link ChangeListManager#editComment}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void setComment(@Nullable String comment);
-
   public static @NotNull @NlsSafe String getDefaultName() {
     return VcsBundle.message("changes.default.changelist.name");
   }

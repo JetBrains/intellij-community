@@ -8,6 +8,21 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.approximateToSuperPublicDenotableOrSelf
+import org.jetbrains.kotlin.analysis.api.components.asSignature
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.defaultType
+import org.jetbrains.kotlin.analysis.api.components.directlyOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -76,7 +91,7 @@ internal object CallableMetadataProvider {
             else -> this
         }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getCallableMetadata(
         signature: KaCallableSignature<*>,
@@ -109,7 +124,7 @@ internal object CallableMetadataProvider {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun nonExtensionWeight(
         signature: KaCallableSignature<*>,
         flattenedActualReceiverTypes: List<List<KaType>>,
@@ -140,7 +155,7 @@ internal object CallableMetadataProvider {
             .applyIf(hasOverriddenSymbols) { CallableMetadata(kind.correspondingBaseForThisOrSelf, scopeIndex) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun extensionWeight(
         signature: KaCallableSignature<*>,
@@ -165,7 +180,7 @@ internal object CallableMetadataProvider {
         )
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getExpectedNonExtensionReceiver(symbol: KaCallableSymbol): KaClassSymbol? {
         val containingClass = symbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol
         return if (symbol is KaConstructorSymbol && (containingClass as? KaNamedClassSymbol)?.isInner == true) {
@@ -175,7 +190,7 @@ internal object CallableMetadataProvider {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun receiverTypes(
         receiver: KtElement,
     ): List<KaType>? {
@@ -201,7 +216,7 @@ internal object CallableMetadataProvider {
     }
 
     // todo refactor; move to an appropriate place
-    context(KaSession)
+    context(_: KaSession)
     fun calculateActualReceiverTypes(
         explicitReceiver: KtElement?,
         implicitReceivers: () -> List<KaImplicitReceiver>,
@@ -218,13 +233,13 @@ internal object CallableMetadataProvider {
     private inline val KaClassLikeSymbol.companionObject: KaNamedClassSymbol?
         get() = (this as? KaNamedClassSymbol)?.companionObject
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaType.flatten(): List<KaType> = when (this) {
         is KaIntersectionType -> conjuncts.flatMap { it.flatten() }
         else -> listOf(this)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtExpression.getTypeWithCorrectedNullability(
         referenceClass: KaSymbol? = null,
     ): KaType? {
@@ -237,11 +252,11 @@ internal object CallableMetadataProvider {
             }
 
         return expressionType?.applyIf(parent is KtSafeQualifiedExpression) {
-            withNullability(KaTypeNullability.NON_NULLABLE)
+            withNullability(false)
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private val KaCallableSymbol.isOverride: Boolean
         get() = when (this) {
             is KaNamedFunctionSymbol -> isOverride
@@ -256,16 +271,16 @@ internal object CallableMetadataProvider {
      * val l = String::length
      * ```
      */
-    context(KaSession)
+    context(_: KaSession)
     private fun isInCallableReferenceExpression(explicitReceiver: KtElement): Boolean =
         explicitReceiver.getParentOfType<KtCallableReferenceExpression>(strict = true)
             ?.lhs == explicitReceiver
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaType.replaceTypeArgumentsWithStarProjections(): KaType? =
-        expandedSymbol?.let { buildClassTypeWithStarProjections(it) }?.withNullability(nullability)
+        expandedSymbol?.let { buildClassTypeWithStarProjections(it) }?.withNullability(isMarkedNullable)
 
-    context(KaSession)
+    context(_: KaSession)
     private fun callableWeightByReceiver(
         symbol: KaCallableSymbol,
         actualReceiverTypes: List<List<KaType>>,
@@ -303,7 +318,7 @@ internal object CallableMetadataProvider {
         return CallableMetadata(bestMatchWeightKind, bestMatchIndex)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun callableWeightKindByReceiverType(
         symbol: KaCallableSymbol,
         actualReceiverType: KaType,
@@ -323,7 +338,7 @@ internal object CallableMetadataProvider {
         else -> null
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isExtensionCallOnTypeParameterReceiver(symbol: KaCallableSymbol): Boolean {
         val originalSymbol = symbol.fakeOverrideOriginal
         val receiverParameterType = originalSymbol.receiverType as? KaTypeParameterType ?: return false

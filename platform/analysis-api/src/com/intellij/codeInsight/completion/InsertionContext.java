@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.Lookup;
@@ -22,9 +22,12 @@ public class InsertionContext {
   private Runnable myLaterRunnable;
   private boolean myAddCompletionChar;
 
-  public InsertionContext(final OffsetMap offsetMap, final char completionChar, final LookupElement[] elements,
-                          final @NotNull PsiFile psiFile,
-                          final @NotNull Editor editor, final boolean addCompletionChar) {
+  public InsertionContext(@NotNull OffsetMap offsetMap,
+                          char completionChar,
+                          LookupElement @NotNull [] elements,
+                          @NotNull PsiFile psiFile,
+                          @NotNull Editor editor,
+                          boolean addCompletionChar) {
     myOffsetMap = offsetMap;
     myCompletionChar = completionChar;
     myElements = elements;
@@ -62,11 +65,11 @@ public class InsertionContext {
     return getOffsetMap().getOffset(key);
   }
 
-  public OffsetMap getOffsetMap() {
+  public @NotNull OffsetMap getOffsetMap() {
     return myOffsetMap;
   }
 
-  public OffsetKey trackOffset(int offset, boolean movableToRight) {
+  public @NotNull OffsetKey trackOffset(int offset, boolean movableToRight) {
     final OffsetKey key = OffsetKey.create("tracked", movableToRight);
     getOffsetMap().addOffset(key, offset);
     return key;
@@ -80,7 +83,7 @@ public class InsertionContext {
     return myCompletionChar;
   }
 
-  public LookupElement[] getElements() {
+  public @NotNull LookupElement[] getElements() {
     return myElements;
   }
 
@@ -118,7 +121,7 @@ public class InsertionContext {
            completionChar != Lookup.NORMAL_SELECT_CHAR;
   }
 
-  public InsertionContext forkByOffsetMap() {
+  public @NotNull InsertionContext forkByOffsetMap() {
     return new InsertionContext(myOffsetMap.copyOffsets(myEditor.getDocument()), myCompletionChar, myElements, myPsiFile, myEditor, myAddCompletionChar);
   }
 }

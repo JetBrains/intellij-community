@@ -24,7 +24,7 @@ public final class TextMateSelectorCachingWeigher implements TextMateSelectorWei
   }
 
   @Override
-  public TextMateWeigh weigh(final @NotNull CharSequence scopeSelector, final @NotNull TextMateScope scope) {
+  public @NotNull TextMateWeigh weigh(final @NotNull CharSequence scopeSelector, final @NotNull TextMateScope scope) {
     return myCache.get(new CacheKey(scopeSelector, scope), this::weigh);
   }
 

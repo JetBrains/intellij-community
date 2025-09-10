@@ -1,10 +1,11 @@
 from _typeshed import IdentityFunction, Unused
 from collections.abc import Callable, Iterator, MutableMapping, Sequence
 from contextlib import AbstractContextManager
+from threading import Condition
 from typing import Any, TypeVar, overload
 from typing_extensions import deprecated
 
-__all__ = ("Cache", "FIFOCache", "LFUCache", "LRUCache", "MRUCache", "RRCache", "TLRUCache", "TTLCache", "cached", "cachedmethod")
+__all__ = ("Cache", "FIFOCache", "LFUCache", "LRUCache", "RRCache", "TLRUCache", "TTLCache", "cached", "cachedmethod")
 __version__: str
 
 _KT = TypeVar("_KT")
@@ -37,9 +38,6 @@ class Cache(MutableMapping[_KT, _VT]):
 class FIFOCache(Cache[_KT, _VT]): ...
 class LFUCache(Cache[_KT, _VT]): ...
 class LRUCache(Cache[_KT, _VT]): ...
-
-@deprecated("@mru_cache is deprecated")
-class MRUCache(Cache[_KT, _VT]): ...
 
 class RRCache(Cache[_KT, _VT]):
     @overload
@@ -85,7 +83,7 @@ class TTLCache(_TimedCache[_KT, _VT]):
     ) -> None: ...
     @property
     def ttl(self) -> float: ...
-    def expire(self, time: float | None = None) -> None: ...
+    def expire(self, time: float | None = None) -> list[tuple[_KT, _VT]]: ...
 
 class TLRUCache(_TimedCache[_KT, _VT]):
     def __init__(
@@ -97,16 +95,27 @@ class TLRUCache(_TimedCache[_KT, _VT]):
     ) -> None: ...
     @property
     def ttu(self) -> Callable[[_KT, _VT, float], float]: ...
-    def expire(self, time: float | None = None) -> None: ...
+    def expire(self, time: float | None = None) -> list[tuple[_KT, _VT]]: ...
 
+@overload
 def cached(
     cache: MutableMapping[_KT, Any] | None,
     key: Callable[..., _KT] = ...,
     lock: AbstractContextManager[Any] | None = None,
+    condition: Condition | None = None,
     info: bool = False,
+) -> IdentityFunction: ...
+@overload
+@deprecated("Passing `info` as positional parameter is deprecated.")
+def cached(
+    cache: MutableMapping[_KT, Any] | None,
+    key: Callable[..., _KT] = ...,
+    lock: AbstractContextManager[Any] | None = None,
+    condition: bool | None = None,
 ) -> IdentityFunction: ...
 def cachedmethod(
     cache: Callable[[Any], MutableMapping[_KT, Any] | None],
     key: Callable[..., _KT] = ...,
     lock: Callable[[Any], AbstractContextManager[Any]] | None = None,
+    condition: Condition | None = None,
 ) -> IdentityFunction: ...

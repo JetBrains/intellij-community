@@ -11,7 +11,7 @@ jvm_library(
   name = "vcs-log-graph-impl",
   module_name = "intellij.platform.vcs.log.graph.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/util",
     "//platform/vcs-log/graph-api:vcs-log-graph",
@@ -29,7 +29,7 @@ jvm_library(
 jvm_library(
   name = "vcs-log-graph-impl_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":vcs-log-graph-impl"],
   deps = [
     "//platform/util",
@@ -42,6 +42,10 @@ jvm_library(
     "@lib//:fastutil-min",
     "@lib//:assert_j",
     "@lib//:kotlin-test",
+  ],
+  exports = [
+    "//platform/util",
+    "//platform/vcs-log/graph-api:vcs-log-graph",
   ],
   runtime_deps = [":vcs-log-graph-impl_resources"]
 )

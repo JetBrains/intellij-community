@@ -644,13 +644,11 @@ public final class FileUtilRt {
     return convertLineSeparators ? StringUtilRt.convertLineSeparators(s) : s;
   }
 
-  @NotNull
-  public static char[] loadFileText(@NotNull File file) throws IOException {
+  public static char @NotNull [] loadFileText(@NotNull File file) throws IOException {
     return loadFileText(file, (String)null);
   }
 
-  @NotNull
-  public static char[] loadFileText(@NotNull File file, @Nullable String encoding) throws IOException {
+  public static char @NotNull [] loadFileText(@NotNull File file, @Nullable String encoding) throws IOException {
     InputStream stream = new FileInputStream(file);
     try (Reader reader = encoding == null
                          ? new InputStreamReader(stream, Charset.defaultCharset())
@@ -659,15 +657,13 @@ public final class FileUtilRt {
     }
   }
 
-  @NotNull
-  public static char[] loadFileText(@NotNull File file, @NotNull Charset encoding) throws IOException {
+  public static char @NotNull [] loadFileText(@NotNull File file, @NotNull Charset encoding) throws IOException {
     try (Reader reader = new InputStreamReader(new FileInputStream(file), encoding)) {
       return loadText(reader, (int)file.length());
     }
   }
 
-  @NotNull
-  public static char[] loadText(@NotNull Reader reader, int length) throws IOException {
+  public static char @NotNull [] loadText(@NotNull Reader reader, int length) throws IOException {
     char[] chars = new char[length];
     int count = 0;
     while (count < chars.length) {
@@ -717,8 +713,7 @@ public final class FileUtilRt {
     return lines;
   }
 
-  @NotNull
-  public static byte[] loadBytes(@NotNull InputStream stream) throws IOException {
+  public static byte @NotNull [] loadBytes(@NotNull InputStream stream) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     copy(stream, buffer);
     return buffer.toByteArray();
@@ -733,8 +728,7 @@ public final class FileUtilRt {
     return len > LARGE_FOR_CONTENT_LOADING;
   }
 
-  @NotNull
-  public static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException {
+  public static byte @NotNull [] loadBytes(@NotNull InputStream stream, int length) throws IOException {
     if (length == 0) {
       return ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }

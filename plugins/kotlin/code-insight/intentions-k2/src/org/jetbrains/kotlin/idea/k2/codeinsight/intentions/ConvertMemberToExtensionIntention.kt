@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 private val LOG = Logger.getInstance(ConvertMemberToExtensionIntention::class.java)
 
 class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallableDeclaration>(
-    KtCallableDeclaration::class.java, KotlinBundle.lazyMessage("convert.member.to.extension")
+    KtCallableDeclaration::class.java, KotlinBundle.messagePointer("convert.member.to.extension")
 ), LowPriorityAction {
     private fun isApplicable(element: KtCallableDeclaration): Boolean {
         val classBody = element.parent as? KtClassBody ?: return false

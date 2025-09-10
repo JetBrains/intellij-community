@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -6,6 +6,7 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
@@ -125,9 +126,6 @@ public final class GrSplitDeclarationIntention extends GrPsiUpdateIntention {
       if (!decl.isTuple() || decl.getTupleInitializer() instanceof GrListOrMap) {
         return GroovyIntentionsBundle.message("split.into.separate.declaration");
       }
-      else {
-        return GroovyIntentionsBundle.message("split.into.declaration.and.assignment");
-      }
     }
     return GroovyIntentionsBundle.message("split.into.declaration.and.assignment");
   }
@@ -139,8 +137,10 @@ public final class GrSplitDeclarationIntention extends GrPsiUpdateIntention {
       public boolean satisfiedBy(@NotNull PsiElement element) {
         if (element instanceof GrVariableDeclaration decl) {
           GrVariable[] variables = decl.getVariables();
-          return variables.length > 1 && PsiUtil.isLocalVariable(variables[0]) || 
-                 variables.length == 1 && PsiUtil.isLocalVariable(variables[0]) && variables[0].getInitializerGroovy() != null;
+
+          return !ContainerUtil.exists(variables, v -> v.isUnnamed()) &&
+                 (variables.length > 1 && PsiUtil.isLocalVariable(variables[0]) ||
+                 variables.length == 1 && PsiUtil.isLocalVariable(variables[0]) && variables[0].getInitializerGroovy() != null);
         }
         return false;
       }

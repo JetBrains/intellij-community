@@ -3,7 +3,6 @@ package fleet.rpc.client.proxy
 
 import fleet.reporting.shared.tracing.spannedScope
 import fleet.rpc.RemoteApiDescriptor
-import kotlinx.coroutines.CancellationException
 
 interface InvocationHandlerFactory<T> {
   fun handler(arg: T): SuspendInvocationHandler

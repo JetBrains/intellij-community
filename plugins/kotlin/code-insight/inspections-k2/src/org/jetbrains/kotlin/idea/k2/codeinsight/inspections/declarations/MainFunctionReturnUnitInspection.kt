@@ -40,14 +40,11 @@ internal class MainFunctionReturnUnitInspection : LocalInspectionTool() {
     }
 
     private class ChangeMainFunctionReturnTypeToUnitFix(private val hasExplicitReturnType: Boolean) : LocalQuickFix {
-        override fun getFamilyName() = name
-
-        override fun getName(): String {
-            return if (hasExplicitReturnType)
+        override fun getFamilyName(): String =
+            if (hasExplicitReturnType)
                 KotlinBundle.message("change.main.function.return.type.to.unit.fix.text2")
             else
                 KotlinBundle.message("change.main.function.return.type.to.unit.fix.text")
-        }
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val function = descriptor.psiElement.getNonStrictParentOfType<KtNamedFunction>() ?: return

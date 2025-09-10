@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import java.nio.file.Path
 
-class PoetryProjectOpenProvider() : AbstractOpenProjectProvider() {
+internal class PoetryProjectOpenProvider() : AbstractOpenProjectProvider() {
   override val systemId: ProjectSystemId = PoetryConstants.SYSTEM_ID
 
   override fun isProjectFile(file: VirtualFile): Boolean {
@@ -33,7 +33,7 @@ class PoetryProjectOpenProvider() : AbstractOpenProjectProvider() {
     PoetryProjectModelService.forgetProjectModelRoot(project, Path.of(externalProjectPath))
   }
   
-  companion object {
+  private companion object {
     val POETRY_TOOL_TABLE_HEADER: Regex = """\[tool\.poetry[.\w-]*]""".toRegex()
   }
 }

@@ -45,6 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -66,6 +67,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
   private EnumWhenTrackerImpl enumWhenTracker;
   private ImportTrackerImpl importTracker;
   private final @NotNull Map<@NotNull String, @NotNull String> myPluginIdToPluginClasspath = new HashMap<>();
+  private final @NotNull Map<@NotNull String, List<CliOptionValue>> myInternalPluginIdToOptions = new HashMap<>();
   private final List<String> myJavaSources;
 
   private final @Nullable String myModuleEntryPath;
@@ -81,6 +83,16 @@ public class KotlinCompilerRunner implements CompilerRunner {
     Iterator<String> pluginCp = CLFlags.PLUGIN_CLASSPATH.getValue(flags).iterator();
     for (String pluginId : CLFlags.PLUGIN_ID.getValue(flags)) {
       myPluginIdToPluginClasspath.put(pluginId, pluginCp.hasNext()? pluginCp.next() : "");
+    }
+
+    for (String entry : CLFlags.PLUGIN_OPTIONS.getValue(flags)) {
+      @Nullable CliOptionValue optionValue = parsePluginOptionValue(entry);
+      if (optionValue == null) {
+        context.report(Message.error(this, "Unsupported compiler plugin option flag format: \"" + entry + "\""));
+      }
+      else {
+        myInternalPluginIdToOptions.computeIfAbsent(optionValue.getPluginId(), k -> new ArrayList<>()).add(optionValue);
+      }
     }
 
     myJavaSources = collect(
@@ -292,7 +304,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
     var abiConsumer = createAbiOutputConsumer(myStorageManager.getAbiOutputBuilder());
     return configuration -> {
       configuration.add(CLIConfigurationKeys.CONTENT_ROOTS, new VirtualJvmClasspathRoot(outputRoot, false, true));
-      configurePlugins(myPluginIdToPluginClasspath, myContext.getBaseDir(), abiConsumer, out, myStorageManager, registeredPluginInfo -> {
+      configurePlugins(myPluginIdToPluginClasspath, myInternalPluginIdToOptions, myContext.getBaseDir(), abiConsumer, out, myStorageManager, registeredPluginInfo -> {
         CompilerPluginRegistrar registrar = Objects.requireNonNull(registeredPluginInfo.getCompilerPluginRegistrar());
         configuration.add(CompilerPluginRegistrar.Companion.getCOMPILER_PLUGIN_REGISTRARS(), registrar);
         List<CliOptionValue> pluginOptions = registeredPluginInfo.getPluginOptions();
@@ -439,5 +451,39 @@ public class KotlinCompilerRunner implements CompilerRunner {
         throw new CompilationCanceledException();
       }
     }
+  }
+
+  private static final String PREFIX = "plugin:";
+  private static final String ID_DELIMITER = ":";
+  private static final String NAME_VALUE_DELIMITER = "=";
+  private static final String BASE_DIR_MACRO = "$BASE_DIR$";
+
+  @Nullable
+  private CliOptionValue parsePluginOptionValue(String flagValue) {
+    if (flagValue != null && flagValue.startsWith(PREFIX)) {
+      int pluginIdEnd = flagValue.indexOf(ID_DELIMITER, PREFIX.length());
+      if (pluginIdEnd > 0) {
+        String pluginId = flagValue.substring(PREFIX.length(), pluginIdEnd);
+        int optionNameStart = pluginIdEnd + ID_DELIMITER.length();
+        int optionNameEnd = flagValue.indexOf(NAME_VALUE_DELIMITER, optionNameStart);
+        if (optionNameEnd > 0) {
+          String optionName = flagValue.substring(optionNameStart, optionNameEnd);
+          String optionValue = flagValue.substring(optionNameEnd + NAME_VALUE_DELIMITER.length());
+
+          if (optionValue.contains(BASE_DIR_MACRO)) {
+            Path baseDir = myContext.getBaseDir();
+            String separator = baseDir.getFileSystem().getSeparator();
+            String macroSubst = baseDir.toString();
+            if (macroSubst.endsWith(separator)) {
+              macroSubst = macroSubst.substring(0, macroSubst.length() - separator.length());
+            }
+            optionValue = optionValue.replace(BASE_DIR_MACRO, macroSubst);
+          }
+
+          return new CliOptionValue(pluginId, optionName, optionValue);
+        }
+      }
+    }
+    return null;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup;
 
@@ -34,13 +34,13 @@ public interface Lookup {
   @Nullable
   LookupElement getCurrentItem();
 
-  void addLookupListener(LookupListener listener);
-  void removeLookupListener(LookupListener listener);
+  void addLookupListener(@NotNull LookupListener listener);
+  void removeLookupListener(@NotNull LookupListener listener);
 
   /**
    * @return bounds in layered pane coordinate system
    */
-  Rectangle getBounds();
+  @NotNull Rectangle getBounds();
 
   /**
    * @return bounds of the current item in the layered pane coordinate system.

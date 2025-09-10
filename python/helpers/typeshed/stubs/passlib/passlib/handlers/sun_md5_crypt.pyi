@@ -22,3 +22,5 @@ class sun_md5_crypt(uh.HasRounds, uh.HasSalt, uh.GenericHandler):  # type: ignor
     @classmethod
     def from_string(cls, hash: str | bytes) -> Self: ...  # type: ignore[override]
     def to_string(self, _withchk: bool = True) -> str: ...
+
+__all__ = ["sun_md5_crypt"]

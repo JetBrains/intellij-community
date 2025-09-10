@@ -2,12 +2,11 @@
 package com.intellij.java.debugger.impl.backend
 
 import com.intellij.debugger.actions.*
-import com.intellij.debugger.engine.AsyncStacksUtils
-import com.intellij.debugger.engine.JavaDebugProcess
-import com.intellij.debugger.engine.JavaExecutionStack
-import com.intellij.debugger.engine.executeOnDMT
+import com.intellij.debugger.engine.*
+import com.intellij.debugger.settings.NodeRendererSettings
 import com.intellij.execution.filters.ExceptionFilters
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
 import com.intellij.java.debugger.impl.shared.rpc.*
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.debugger.impl.rpc.toRpc
@@ -15,6 +14,8 @@ import com.intellij.unscramble.CompoundDumpItem
 import com.intellij.unscramble.DumpItem
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XExecutionStackId
+import com.intellij.xdebugger.impl.rpc.XValueId
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import fleet.util.channels.use
 import kotlinx.coroutines.*
@@ -64,6 +65,34 @@ internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
     withContext(Dispatchers.EDT) {
       StepOutOfBlockActionUtils.stepOutOfBlock(xSession)
     }
+  }
+
+  override suspend fun setRenderer(rendererId: NodeRendererId?, xValueIds: List<XValueId>) {
+    val xValueModels = xValueIds.mapNotNull { BackendXValueModel.findById(it) }
+    val javaValues = xValueModels.mapNotNull { it.xValue as? JavaValue }
+    if (javaValues.isEmpty()) return
+    val renderer = if (rendererId != null) {
+      javaValues[0].evaluationContext.debugProcess.getRendererById(rendererId) ?: return
+    }
+    else {
+      null
+    }
+
+    for (javaValue in javaValues) {
+      withDebugContext(javaValue.evaluationContext.suspendContext) {
+        javaValue.setRenderer(renderer, null)
+      }
+    }
+    for (xValueModel in xValueModels) {
+      xValueModel.computeValuePresentation()
+    }
+  }
+
+  override suspend fun muteRenderers(sessionId: XDebugSessionId, state: Boolean) {
+    val xSession = sessionId.findValue() ?: return
+    val renderersFlow = MuteRendererUtils.getFlow(xSession.sessionData)
+    renderersFlow.value = state
+    NodeRendererSettings.getInstance().fireRenderersChanged()
   }
 
   override suspend fun resumeThread(executionStackId: XExecutionStackId) {

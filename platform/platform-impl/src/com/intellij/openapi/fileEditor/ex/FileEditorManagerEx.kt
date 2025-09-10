@@ -1,13 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.ex
 
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorComposite
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.EditorComposite
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
@@ -156,26 +153,35 @@ abstract class FileEditorManagerEx : FileEditorManager() {
   }
 
   @Deprecated(message = "Use openFile()", ReplaceWith("openFile(file, window, options)"), level = DeprecationLevel.ERROR)
-  fun openFileWithProviders(file: VirtualFile,
-                            focusEditor: Boolean,
-                            searchForSplitter: Boolean): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+  fun openFileWithProviders(
+    file: VirtualFile,
+    focusEditor: Boolean,
+    searchForSplitter: Boolean,
+  ): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
     val openOptions = FileEditorOpenOptions(requestFocus = focusEditor, reuseOpen = searchForSplitter)
     return openFile(file = file, window = null, options = openOptions).retrofit()
   }
 
   @Deprecated(message = "Use openFile()", ReplaceWith("openFile(file, window, options)"), level = DeprecationLevel.ERROR)
-  fun openFileWithProviders(file: VirtualFile,
-                            focusEditor: Boolean,
-                            window: EditorWindow): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+  fun openFileWithProviders(
+    file: VirtualFile,
+    focusEditor: Boolean,
+    window: EditorWindow,
+  ): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
     return openFile(file = file, window = window, options = FileEditorOpenOptions(requestFocus = focusEditor)).retrofit()
   }
 
-  abstract fun openFile(file: VirtualFile,
-                        window: EditorWindow?,
-                        options: FileEditorOpenOptions = FileEditorOpenOptions()): FileEditorComposite
+  abstract fun openFile(
+    file: VirtualFile,
+    window: EditorWindow?,
+    options: FileEditorOpenOptions = FileEditorOpenOptions(),
+  ): FileEditorComposite
 
   @Experimental
   abstract suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions = FileEditorOpenOptions()): FileEditorComposite
+
+  @Experimental
+  abstract suspend fun openFileEditorAsync(descriptor: FileEditorNavigatable, focusEditor: Boolean): List<FileEditor>
 
   abstract fun isChanged(editor: EditorComposite): Boolean
 

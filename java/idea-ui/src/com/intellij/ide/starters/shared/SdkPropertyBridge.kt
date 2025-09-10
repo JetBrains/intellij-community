@@ -12,7 +12,7 @@ import com.intellij.openapi.projectRoots.Sdk
 @Deprecated("Use the ProjectWizardJdkIntent property instead")
 class SdkPropertyBridge(
   private val propertyGraph: PropertyGraph,
-  private val sdkIntentProperty: GraphProperty<ProjectWizardJdkIntent?>,
+  private val sdkIntentProperty: GraphProperty<ProjectWizardJdkIntent>,
 ) : GraphProperty<Sdk?>, AbstractObservableProperty<Sdk?>() {
 
   override fun set(value: Sdk?) {

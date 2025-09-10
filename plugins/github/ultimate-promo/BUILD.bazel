@@ -11,7 +11,7 @@ jvm_library(
   name = "ultimate-promo",
   module_name = "intellij.vcs.github.ultimatePromo",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/platform-impl:ide-impl",
     "//plugins/github/github-core:vcs-github",

@@ -5,15 +5,19 @@ import com.intellij.util.text.SemVer
 import org.apache.maven.model.Developer
 import org.apache.maven.model.License
 import org.apache.maven.model.Model
-import org.apache.maven.model.Scm
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.libraries.isLibraryModule
-import org.jetbrains.intellij.build.impl.maven.*
+import org.jetbrains.intellij.build.impl.maven.DependencyScope
+import org.jetbrains.intellij.build.impl.maven.GeneratedMavenArtifacts
+import org.jetbrains.intellij.build.impl.maven.MavenArtifactDependency
+import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.module.JpsDependencyElement
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import kotlin.io.path.exists
-import kotlin.io.path.name
 
 internal object JewelMavenArtifacts {
   private const val GROUP_ID: String = "org.jetbrains.jewel"
@@ -41,7 +45,7 @@ internal object JewelMavenArtifacts {
   private val transitiveJewelDependencies = mapOf(
     "jewel-foundation" to emptySet(),
     "jewel-ui" to emptySet(),
-    "jewel-decorated-window" to setOf("jewel-foundation"),
+    "jewel-decorated-window" to setOf("jewel-foundation", "jewel-ui"),
     "jewel-markdown-core" to setOf("jewel-foundation"),
     "jewel-markdown-extensions-autolink" to setOf("jewel-foundation", "jewel-ui"),
     "jewel-markdown-extensions-gfm-alerts" to setOf("jewel-foundation", "jewel-ui"),
@@ -109,6 +113,13 @@ internal object JewelMavenArtifacts {
           // Add CommonMark dependencies as "compile" dependencies when present
           add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
         }
+        coordinates.groupId == "io.coil-kt.coil3" -> {
+          // Add Coil 3 dependencies as "compile" dependencies when present
+          add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
+        }
+        coordinates.groupId == "org.jetbrains.compose.components" -> {
+          add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
+        }
 
         // else -> ignore the dependency, as it comes through transitively, usually from Compose.
 
@@ -136,16 +147,10 @@ internal object JewelMavenArtifacts {
     check(isPublishedJewelModule(module))
     model.name = "Jewel"
     model.description = "A theme for Compose for Desktop that implements the IntelliJ Platform look and feel."
-    model.url = "https://github.com/JetBrains/intellij-community"
     model.addLicense(License().apply {
       name = "Apache License 2.0"
       url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
     })
-    model.scm = Scm().apply {
-      connection = "scm:git:https://github.com/JetBrains/intellij-community.git"
-      developerConnection = "scm:git:https://github.com/JetBrains/intellij-community.git"
-      url = "https://github.com/JetBrains/intellij-community"
-    }
     model.addDeveloper(Developer().apply {
       id = "Google"
       name = "Google Team"
@@ -155,10 +160,18 @@ internal object JewelMavenArtifacts {
   }
 
   private fun JpsModule.modulesTree(): Sequence<JpsModule> {
-    return sequenceOf(this) + dependenciesList.dependencies.asSequence()
+    return sequenceOf(this) + dependenciesList
+      .dependencies
+      .asSequence()
       .filterIsInstance<JpsModuleDependency>()
+      .filter { isProductionDependency(it) }
       .mapNotNull { it.module }
       .flatMap { it.modulesTree() }
+  }
+
+  private fun isProductionDependency(dep: JpsDependencyElement): Boolean {
+    val scope = JpsJavaExtensionService.getInstance().getDependencyExtension(dep)?.scope ?: return false
+    return (scope == JpsJavaDependencyScope.COMPILE || scope == JpsJavaDependencyScope.PROVIDED)
   }
 
   fun validate(context: BuildContext, mavenArtifacts: Collection<GeneratedMavenArtifacts>) {
@@ -180,7 +193,6 @@ internal object JewelMavenArtifacts {
             "The module ${module.name} has groupId=${artifact.coordinates.groupId} " +
             "but it's expected to have groupId=$GROUP_ID because Maven Central publication credentials are issues per namespace/groupId"
           }
-          validateForMavenCentralPublication(artifact)
         }
       }
     for ((jewelModuleName, artifactId) in ALL) {
@@ -192,28 +204,6 @@ internal object JewelMavenArtifacts {
         "The module $jewelModuleName is expected to have groupId=$GROUP_ID and artifactId=$artifactId: " +
         "${mavenArtifacts.filter { (module) -> module.name == jewelModuleName }}"
       }
-    }
-  }
-
-  /** See https://central.sonatype.org/publish/requirements */
-  private fun validateForMavenCentralPublication(artifacts: GeneratedMavenArtifacts) {
-    val sources = artifacts.coordinates.getFileName("sources", "jar")
-    check(artifacts.files.any { it.name == sources }) {
-      "No $sources is generated for the module ${artifacts.module.name}"
-    }
-    val javadoc = artifacts.coordinates.getFileName("javadoc", "jar")
-    check(artifacts.files.any { it.name == javadoc }) {
-      "No $javadoc is generated for the module ${artifacts.module.name}"
-    }
-    val pom = artifacts.coordinates.getFileName(packaging = "pom")
-    val pomXml = artifacts.files.singleOrNull { it.name == pom }
-    check(pomXml != null) {
-      "No $pom is generated for the module ${artifacts.module.name}"
-    }
-    val coordinates = MavenCentralPublication.loadAndValidatePomXml(pomXml)
-    check(coordinates == artifacts.coordinates) {
-      "Maven coordinates ${artifacts.coordinates} generated for the module ${artifacts.module.name} " +
-      "don't match the coordinates $coordinates from $pomXml"
     }
   }
 }

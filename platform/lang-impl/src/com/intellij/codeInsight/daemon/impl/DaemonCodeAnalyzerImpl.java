@@ -197,15 +197,24 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   private synchronized void clearReferences() {
-    myUpdateProgress.values().forEach(ProgressIndicator::cancel);
+    processIndicators(indicator -> {indicator.cancel(); return true;});
     // avoid leak of highlight session via user data
     myUpdateProgress.clear();
     myUpdateRunnableFuture.cancel(true);
     updateRequests.set(0);
   }
 
+  private boolean processIndicators(@NotNull Processor<? super DaemonProgressIndicator> action) {
+    for (DaemonProgressIndicator indicator : new ArrayList<>(myUpdateProgress.values())) {
+      if (!action.process(indicator)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   synchronized void clearProgressIndicator() {
-    myUpdateProgress.values().forEach(HighlightingSessionImpl::clearAllHighlightingSessions);
+    processIndicators(indicator -> {HighlightingSessionImpl.clearAllHighlightingSessions(indicator); return true;});
   }
 
   @TestOnly
@@ -378,15 +387,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       if (fileEditor instanceof TextEditor textEditor) {
         List<HighlightInfo> fileLevelInfos = getOrCreateFileLevelHighlights(fileEditor);
         // do not dispose highlighter if it needs to be reused
-        fileLevelInfos.removeIf(fileLevelInfo -> {
-          // todo does this check make any sense?
-          if (!fileLevelInfo.attributesEqual(fileLevelInfo)) {
+        fileLevelInfos.removeIf(oldFileLevelInfo -> {
+          if (!oldInfo.attributesEqual(oldFileLevelInfo)) {
             return false;
           }
-          doRemoveFileLevelInfoComponent(fileLevelInfo, fileEditor, getFileEditorManager());
-          RangeHighlighterEx highlighter = fileLevelInfo.getHighlighter();
-          if (highlighter != null && highlighter != toReuse) {
-            highlighter.dispose();
+          doRemoveFileLevelInfoComponent(oldFileLevelInfo, fileEditor, getFileEditorManager());
+          RangeHighlighterEx oldHighlighter = oldFileLevelInfo.getHighlighter();
+          if (oldHighlighter != null && oldHighlighter != toReuse) {
+            oldHighlighter.dispose();
           }
           return true;
         });
@@ -928,12 +936,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   @Override
   public synchronized boolean isRunning() {
-    for (DaemonProgressIndicator indicator : myUpdateProgress.values()) {
-      if (!indicator.isCanceled()) {
-        return true;
-      }
-    }
-    return false;
+    return !processIndicators(indicator -> indicator.isCanceled());
   }
 
   @Override
@@ -1038,10 +1041,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     if (myDisposed || myProject.isDisposed() || myProject.getMessageBus().isDisposed()) {
       return;
     }
-    for (Map.Entry<FileEditor, DaemonProgressIndicator> entry : new ArrayList<>(myUpdateProgress.entrySet())) {
-      DaemonProgressIndicator updateProgress = entry.getValue();
-      cancelIndicator(updateProgress, toRestartAlarm, null, reason);
-    }
+    processIndicators(indicator -> {
+      cancelIndicator(indicator, toRestartAlarm, null, reason);
+      return true;
+    });
     myUpdateProgress.clear();
     myPassExecutorService.cancelAll(false, reason);
     daemonCancelEventCount.incrementAndGet();
@@ -1066,6 +1069,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     myUpdateProgress.remove(fileEditor, indicator);
   }
 
+  /**
+   * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
+   */
   static boolean processHighlightsNearOffset(@NotNull Document document,
                                              @NotNull Project project,
                                              @NotNull HighlightSeverity minSeverity,
@@ -1462,6 +1468,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                                   @NotNull Map<? super Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses) {
     ThreadingAssertions.assertEventDispatchThread();
     BackgroundEditorHighlighter highlighter;
+
+    // since we are running on EDT under write-intent lock, write action can be either absent or pending (if it was invoked on background)
+    // in this case, the progress indicator needs to be canceled.
+    if (ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
+      stopProcess(false, "Background write action is pending");
+      throw new ProcessCanceledException();
+    }
 
     try (AccessToken ignored = ClientId.withExplicitClientId(ClientFileEditorManager.getClientId(fileEditor))) {
       highlighter = fileEditor.getBackgroundHighlighter();

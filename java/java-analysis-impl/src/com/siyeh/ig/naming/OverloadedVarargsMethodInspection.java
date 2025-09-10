@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.options.OptPane;
@@ -58,12 +58,11 @@ public final class OverloadedVarargsMethodInspection extends BaseInspection {
       final PsiMethod[] sameNameMethods = aClass.findMethodsByName(methodName, true);
       for (PsiMethod sameNameMethod : sameNameMethods) {
         PsiClass superClass = sameNameMethod.getContainingClass();
-        PsiSubstitutor substitutor = superClass != null ? TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY)
-                                                        : PsiSubstitutor.EMPTY;
-        if (!MethodSignatureUtil.areSignaturesEqual(sameNameMethod.getSignature(substitutor),
-                                                    method.getSignature(PsiSubstitutor.EMPTY))) {
-          if (ignoreInconvertibleTypes && !areConvertibleTypesWithVarArgs(method.getParameterList(),
-                                                                          sameNameMethod.getParameterList())) {
+        PsiSubstitutor substitutor = superClass != null 
+                                     ? TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY)
+                                     : PsiSubstitutor.EMPTY;
+        if (!MethodSignatureUtil.areSignaturesEqual(sameNameMethod.getSignature(substitutor), method.getSignature(PsiSubstitutor.EMPTY))) {
+          if (ignoreInconvertibleTypes && !areConvertibleTypesWithVarArgs(method.getParameterList(), sameNameMethod.getParameterList())) {
             continue;
           }
           registerMethodError(method, method);
@@ -93,7 +92,7 @@ public final class OverloadedVarargsMethodInspection extends BaseInspection {
 
         PsiType otherType = getTypeForComparison(otherParameters[i]);
 
-        if (!type.isConvertibleFrom(otherType) && !otherType.isConvertibleFrom(type)) {
+        if (!type.isAssignableFrom(otherType) && !otherType.isAssignableFrom(type)) {
           return false;
         }
       }

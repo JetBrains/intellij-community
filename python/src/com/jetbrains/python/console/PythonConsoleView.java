@@ -117,8 +117,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private Dimension commandQueueDimension;
   private boolean isShowQueue;
 
-  private @Nullable OnClearCallback myOnClearCallback;
-
   private ActionToolbar myToolbar;
   private boolean myIsToolwindowHorizontal = true;
 
@@ -396,7 +394,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     if (myTestMode) {
       text = PyTestsSharedKt.processTCMessage(text);
     }
-    detectIPython(text, outputType);
+    detectIPython(text);
     if (PyConsoleUtil.detectIPythonEnd(text)) {
       myIsIPythonOutput = false;
       mySourceHighlighter = null;
@@ -429,9 +427,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
-  public void detectIPython(String text, final ConsoleViewContentType outputType) {
+  public void detectIPython(String text) {
     VirtualFile file = getVirtualFile();
-    if (PyConsoleUtil.detectIPythonImported(text, outputType)) {
+    if (PyConsoleUtil.detectIPythonImported(text)) {
       PyConsoleUtil.markIPython(file);
       PythonConsoleExecuteActionHandler handler = getExecuteActionHandler();
       if (handler != null) {
@@ -506,9 +504,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     if (scrollPane != null) {
       scrollPane.setBorder(JBUI.Borders.empty());
     }
-
-    //((JBScrollPane)mySplitView.getTree().getParent().getParent()).setBorder(JBUI.Borders.empty());
-    //mySplitView.getMainComponent().setBorder(JBUI.Borders.empty());
 
     Disposer.register(this, view);
     splitWindow();
@@ -691,10 +686,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     isShowQueue = showQueue;
   }
 
-  public void whenInitialized(Runnable runnable) {
-    myInitialized.doWhenDone(runnable);
-  }
-
   public void setRunner(PydevConsoleRunner runner) {
     myRunner = runner;
   }
@@ -706,19 +697,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   @TestOnly
   public @Nullable XDebuggerTreeNode getDebuggerTreeRootNode() {
     return mySplitView.getTree().getRoot();
-  }
-
-  public void setOnClearCallback(@Nullable OnClearCallback onClearCallback) {
-    myOnClearCallback = onClearCallback;
-  }
-
-  @Override
-  public void clear() {
-    super.clear();
-    OnClearCallback onClearCallback = myOnClearCallback;
-    if (onClearCallback != null) {
-      onClearCallback.onClear();
-    }
   }
 
   @Override
@@ -760,17 +738,5 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     if (counterMap != null) {
       counterMap.put(counter, lineNumber);
     }
-  }
-
-  public @Nullable Integer getExecutionCounterLineNumber(int counter) {
-    Map<Integer, Integer> counterMap = getHistoryViewer().getUserData(COUNTER_LINE_NUMBER);
-    if (counterMap != null) {
-      return counterMap.getOrDefault(counter, null);
-    }
-    return null;
-  }
-
-  public interface OnClearCallback {
-    void onClear();
   }
 }

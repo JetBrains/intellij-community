@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_LIBRARY
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_SOURCE
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.NOT_IN_PROJECT
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
@@ -26,6 +27,10 @@ import org.junit.jupiter.api.extension.RegisterExtension
 @TestApplication
 @RunInEdt(writeIntent = true)
 class SdkInProjectFileIndexTest {
+
+  private val useWsmForProjectSdk = Registry.`is`("project.root.manager.over.wsm")
+  private val unreferencedProjectSdkScope = if (useWsmForProjectSdk) IN_LIBRARY else NOT_IN_PROJECT
+
   @JvmField
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
@@ -86,13 +91,13 @@ class SdkInProjectFileIndexTest {
     }
     setProjectSdk(sdk)
     ModuleRootModificationUtil.setModuleSdk(module, sdk2)
-    fileIndex.assertScope(sdkRoot, NOT_IN_PROJECT)
+    fileIndex.assertScope(sdkRoot, unreferencedProjectSdkScope)
     
     ModuleRootModificationUtil.setSdkInherited(module)
     fileIndex.assertScope(sdkRoot, IN_LIBRARY)
 
     ModuleRootModificationUtil.setModuleSdk(module, projectModel.addSdk("different"))
-    fileIndex.assertScope(sdkRoot, NOT_IN_PROJECT)
+    fileIndex.assertScope(sdkRoot, unreferencedProjectSdkScope)
   }
 
   @Test
@@ -181,6 +186,12 @@ class SdkInProjectFileIndexTest {
     }
   }
 
+  private fun clearProjectSdk() {
+    runWriteActionAndWait {
+      ProjectRootManager.getInstance(projectModel.project).projectSdk = null
+    }
+  }
+
   private fun doTestSdkModifications(sdk: Sdk) {
     fileIndex.assertScope(sdkRoot, NOT_IN_PROJECT)
 
@@ -200,14 +211,29 @@ class SdkInProjectFileIndexTest {
     val sdk = projectModel.addSdk {
       it.addRoot(sdkRoot, OrderRootType.CLASSES)
     }
+    val sdk2Root = baseSdkDir.newVirtualDirectory("sdk2")
     val sdk2 = projectModel.addSdk("sdk2") {
-      it.addRoot(baseSdkDir.newVirtualDirectory("sdk2"), OrderRootType.CLASSES)
+      it.addRoot(sdk2Root, OrderRootType.CLASSES)
     }
-    setProjectSdk(sdk)
-    ModuleRootModificationUtil.setModuleSdk(module, sdk2)
+
     fileIndex.assertScope(sdkRoot, NOT_IN_PROJECT)
+    fileIndex.assertScope(sdk2Root, NOT_IN_PROJECT)
+
+    setProjectSdk(sdk)
+    fileIndex.assertScope(sdkRoot, IN_LIBRARY)
+    fileIndex.assertScope(sdk2Root, NOT_IN_PROJECT)
+
+    ModuleRootModificationUtil.setModuleSdk(module, sdk2)
+    fileIndex.assertScope(sdkRoot, unreferencedProjectSdkScope)
+    fileIndex.assertScope(sdk2Root, IN_LIBRARY)
 
     projectModel.removeModule(module)
+
     fileIndex.assertScope(sdkRoot, IN_LIBRARY)
+    fileIndex.assertScope(sdk2Root, NOT_IN_PROJECT)
+
+    clearProjectSdk()
+    fileIndex.assertScope(sdkRoot, NOT_IN_PROJECT)
+    fileIndex.assertScope(sdk2Root, NOT_IN_PROJECT)
   }
 }

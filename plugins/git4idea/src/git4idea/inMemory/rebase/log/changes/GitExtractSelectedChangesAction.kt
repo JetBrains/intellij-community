@@ -2,7 +2,6 @@
 package git4idea.inMemory.rebase.log.changes
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.log.util.VcsUserUtil.getShortPresentation
 import git4idea.GitDisposable
@@ -11,7 +10,7 @@ import git4idea.inMemory.GitObjectRepository
 import git4idea.rebase.GitSingleCommitEditingAction
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.rebase.log.GitNewCommitMessageActionDialog
-import git4idea.rebase.log.focusCommitAfterLogUpdate
+import git4idea.rebase.log.focusCommitWhenReady
 import git4idea.rebase.log.getOrLoadSingleCommitDetails
 import git4idea.rebase.log.notifySuccess
 import kotlinx.coroutines.launch
@@ -22,7 +21,7 @@ internal class GitExtractSelectedChangesAction : GitSingleCommitEditingAction() 
   )
 
   override fun update(e: AnActionEvent, commitEditingData: SingleCommitEditingData) {
-    if (!Registry.`is`("git.in.memory.extract.selected.changes.enabled") || commitEditingData.selectedChanges.isEmpty()) {
+    if (commitEditingData.selectedChanges.isEmpty()) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -60,13 +59,14 @@ internal class GitExtractSelectedChangesAction : GitSingleCommitEditingAction() 
           GitExtractSelectedChangesOperation(objectRepo, commit, newMessage, changes).execute()
         }
         if (operationResult is GitCommitEditingOperationResult.Complete) {
-          ui?.focusCommitAfterLogUpdate(repository, operationResult.commitToFocus)
+          ui?.focusCommitWhenReady(repository, operationResult.commitToFocus)
           operationResult.notifySuccess(
-            GitBundle.message("rebase.in.memory.log.changes.extract.action.notification.successful.title"),
+            GitBundle.message("in.memory.rebase.log.changes.extract.action.notification.successful.title"),
             null,
-            GitBundle.message("rebase.in.memory.log.changes.extract.action.progress.indicator.undo.title"),
-            GitBundle.message("rebase.in.memory.log.changes.extract.action.notification.undo.not.allowed.title"),
-            GitBundle.message("rebase.in.memory.log.changes.extract.action.notification.undo.failed.title")
+            GitBundle.message("in.memory.rebase.log.changes.extract.action.progress.indicator.undo.title"),
+            GitBundle.message("in.memory.rebase.log.changes.extract.action.notification.undo.not.allowed.title"),
+            GitBundle.message("in.memory.rebase.log.changes.extract.action.notification.undo.failed.title"),
+            ui
           )
         }
       }

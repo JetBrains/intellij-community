@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -78,7 +78,7 @@ final class DumpVfsInfoForExcludedFilesAction extends DumbAwareAction {
         if (child.isDirectory()) {
           dirs.add(child);
         }
-        else if (PersistentFS.getInstance().getCurrentContentId(child) != 0) {
+        else if (persistentFS.getCurrentContentId(child) != 0) {
           contentInDb++;
         }
       }

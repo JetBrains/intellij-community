@@ -1,19 +1,23 @@
 package com.intellij.grazie.ide.language
 
+import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.jlanguage.Lang
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 
-class CommitSupportTest : BasePlatformTestCase() {
+class CommitSupportTest : GrazieTestBase() {
   fun `test commit message has highlighting with all quick fixes`() {
+    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
     configureCommit(myFixture, """
             
-            This is <caret><TYPO descr="Use an instead of 'a' if the following word starts with a vowel sound, e.g. 'an article', 'an hour'." textAttributesKey="TYPO">a</TYPO> error.
+            This is <caret><GRAMMAR_ERROR descr="EN_A_VS_AN">a</GRAMMAR_ERROR> error.
             
-            This reverts commit abcdef00.
+            This reverts commit 79a9b5d5451e9ba48c238cbe1191743d2f3e09d1.
             
-            (cherry picked from commit cafebabe)
+            (cherry picked from commit 241965151ad2980e583e1629e91537e684a90598)
+            
+            das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <STYLE_SUGGESTION descr="MANNSTUNDE">Mannstunden</STYLE_SUGGESTION>.
           """.trimIndent())
 
     myFixture.checkHighlighting()

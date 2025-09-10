@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configuration;
 
 import com.google.common.collect.ImmutableMap;
@@ -15,6 +15,8 @@ import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -73,7 +75,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
         myEnvFilePaths.add(s);
         updateText();
         fireEnvFilePathsChanged();
-        return null;
+        return Unit.INSTANCE;
       });
     }
     else {
@@ -152,6 +154,11 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
   }
 
   protected @NotNull String stringifyEnvs(@NotNull EnvironmentVariablesData evd) {
+    return stringifyEnvironment(evd);
+  }
+
+  @ApiStatus.Internal
+  public static String stringifyEnvironment(@NotNull EnvironmentVariablesData evd) {
     StringBuilder buf = new StringBuilder();
     for (Map.Entry<String, String> entry : evd.getEnvs().entrySet()) {
       if (!buf.isEmpty()) {

@@ -112,10 +112,8 @@ internal data class RecentProjectItem(
                               BitUtil.isSet(event.modifiers, ActionEvent.SHIFT_MASK) ||
                               event.place == ActionPlaces.WELCOME_SCREEN ||
                               LightEdit.owns(null)
-    val forceReuseFrame = event.place == ActionPlaces.WELCOME_SCREEN_NON_MODAL
     openProjectAndLogRecent(file, OpenProjectTask {
       this.forceOpenInNewFrame = forceOpenInNewFrame
-      this.forceReuseFrame = forceReuseFrame
       runConfigurators = true
     }, projectGroup)
   }

@@ -38,6 +38,7 @@ object GitBranchesTreeUtil {
   internal fun canSelect(project: Project, tree: JTree, node: Any?): Boolean {
     val model = tree.model
     return when (node) {
+      null -> false
       is PopupFactoryImpl.ActionItem -> GitBranchesTreeFilters.byActions(project)
       is GitBranchesTreeModel.RepositoryNode -> {
         if (!node.isLeaf) false else GitBranchesTreeFilters.byRepositoryName(project)

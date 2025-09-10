@@ -31,7 +31,7 @@ jvm_library(
   name = "git",
   module_name = "intellij.devkit.git",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util-ex",
@@ -40,6 +40,7 @@ jvm_library(
     "//platform/util",
     "//platform/ide-core",
     "//plugins/devkit/devkit-core:core",
+    "//platform/vcs-api/shared",
     ":platform_vcs-api_vcs-core_provided",
     ":platform_vcs-log_vcs-log_provided",
     ":platform_vcs-dvcs-impl_provided",
@@ -51,7 +52,7 @@ jvm_library(
 jvm_library(
   name = "git_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":git"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -71,6 +72,7 @@ jvm_library(
     "@lib//:junit4",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/vcs-api/shared",
   ],
   runtime_deps = [":git_resources"]
 )

@@ -1,0 +1,18 @@
+<problems>
+    <problem>
+        <file>classTypeParam.kt</file>
+        <line>3</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/classTypeParam.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant upper bound</problem_class>
+        <description>Redundant upper bound</description>
+    </problem>
+    <problem>
+        <file>functionTypeParam.kt</file>
+        <line>3</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/functionTypeParam.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant upper bound</problem_class>
+        <description>Redundant upper bound</description>
+    </problem>
+</problems>

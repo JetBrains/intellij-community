@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.List;
 
 @ApiStatus.Internal
-public final class CompletionLookupArrangerImpl extends BaseCompletionLookupArranger {
+public class CompletionLookupArrangerImpl extends BaseCompletionLookupArranger {
   public CompletionLookupArrangerImpl(CompletionProcessEx process) {
     super(process);
   }
@@ -39,6 +39,7 @@ public final class CompletionLookupArrangerImpl extends BaseCompletionLookupArra
     List<LookupElement> exactMatches = new SmartList<>();
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
+      if (isCustomElements(item)) continue;
       boolean isSuddenLiveTemplate = isSuddenLiveTemplate(item);
       if (isPrefixItem(item, true) && !isSuddenLiveTemplate || item.getLookupString().equals(selectedText)) {
         if (item instanceof LiveTemplateLookupElement) {

@@ -1214,7 +1214,7 @@ a:com.intellij.openapi.fileTypes.LanguageFileType
 - extractCharsetFromFileContent(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String):java.nio.charset.Charset
 - getDisplayName():java.lang.String
 - f:getLanguage():com.intellij.lang.Language
-- isBinary():Z
+- f:isBinary():Z
 - isJVMDebuggingSupported():Z
 - isSecondary():Z
 e:com.intellij.openapi.fileTypes.OSFileIdeAssociation$ExtensionMode
@@ -1765,13 +1765,6 @@ c:com.intellij.openapi.vfs.ReadonlyStatusHandlerBase
 - ps:createResultStatus(java.util.Collection,java.util.Collection):com.intellij.openapi.vfs.ReadonlyStatusHandler$OperationStatus
 - ensureFilesWritable(java.util.Collection):com.intellij.openapi.vfs.ReadonlyStatusHandler$OperationStatus
 - p:ensureFilesWritable(java.util.Collection,java.util.Collection):com.intellij.openapi.vfs.ReadonlyStatusHandler$OperationStatus
-f:com.intellij.openapi.vfs.ReadonlyStatusHandlerBase$OperationStatusImpl
-- com.intellij.openapi.vfs.ReadonlyStatusHandler$OperationStatus
-- <init>(com.intellij.openapi.vfs.VirtualFile[]):V
-- getHyperlinkListener():javax.swing.event.HyperlinkListener
-- getReadonlyFiles():com.intellij.openapi.vfs.VirtualFile[]
-- getReadonlyFilesMessage():java.lang.String
-- hasReadonlyFiles():Z
 f:com.intellij.openapi.vfs.StandardFileSystems
 - sf:FILE_PROTOCOL:java.lang.String
 - sf:FILE_PROTOCOL_PREFIX:java.lang.String

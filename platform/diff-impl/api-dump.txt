@@ -1,13 +1,8 @@
 f:com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 - <init>():V
 - s:getOriginalFilePath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- s:getOriginalFileUrl(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - s:isOutsiderFile(com.intellij.openapi.vfs.VirtualFile):Z
-- s:isOutsiderFile(com.intellij.psi.PsiFile):Z
-- s:markFile(com.intellij.openapi.vfs.VirtualFile):V
-- s:markFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath):V
 - s:markFile(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
-- s:markFileWithUrl(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
 a:com.intellij.diff.DiffContentFactoryEx
 - com.intellij.diff.DiffContentFactory
 - <init>():V
@@ -331,7 +326,7 @@ a:com.intellij.diff.impl.CacheDiffRequestProcessor
 - <init>(com.intellij.openapi.project.Project,java.lang.String):V
 - p:dropCaches():V
 - pa:getCurrentRequestProvider():java.lang.Object
-- p:getFastLoadingTimeMillis():I
+- p:getFastLoadingTimeMillis():J
 - pa:getRequestName(java.lang.Object):java.lang.String
 - pa:loadRequest(java.lang.Object,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.requests.DiffRequest
 - p:loadRequestFast(java.lang.Object):com.intellij.diff.requests.DiffRequest

@@ -11,6 +11,7 @@ create_kotlinc_options(name= "k7", jvm_target = "7")
 create_kotlinc_options(name= "k8", jvm_target = "8")
 create_kotlinc_options(name= "k11", jvm_target = "11")
 create_kotlinc_options(name = "k17", jvm_target = "17")
+create_kotlinc_options(name = "k21", jvm_target = "21")
 
 java_binary(
     name = "monorepo-jvm-builder",
@@ -76,6 +77,30 @@ java_binary(
     "--add-opens=jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED",
     "--add-opens=jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED",
     "-Didea.home.path=$${BUILD_WORKSPACE_DIRECTORY}",
+    # same as .idea/runConfigurations/IDEA.xml:
+    "-Xmx2g",
+    "-XX:MaxJavaStackTraceDepth=10000",
+    "-Didea.kotlin.plugin.use.k2=true",
+    "-XX:+AllowEnhancedClassRedefinition",
+    "-XX:PrintIdealGraphLevl=3",
+    "-XX:+IgnoreUnrecognizedVMOptions",
+    "-ea",
+    "-Dsun.io.useCanonCaches=false",
+    "-Dsun.awt.disablegrab=true",
+    "-Dsun.java2d.metal=true",
+    "-Dapple.laf.useScreenMenuBar=true",
+    "-Djdk.attach.allowAttachSelf",
+    "-Djdk.module.illegalAccess.silent=true",
+    "-DjbScreenMenuBar.enabled=true",
+    "-Didea.jre.check=true",
+    "-Didea.is.internal=true",
+    "-Didea.debug.mode=true",
+    "-Didea.config.path=$${BUILD_WORKSPACE_DIRECTORY}/config/idea",
+    "-Didea.system.path=$${BUILD_WORKSPACE_DIRECTORY}/system/idea",
+    "-Didea.initially.ask.config=true",
+    "-Didea.diagnostic.opentelemetry.file=opentelemetry.json",
+    "-Dfus.internal.test.mode=true",
+    "-Dcompose.swing.render.on.graphics=true",
   ]
 )
 
@@ -161,8 +186,8 @@ jvm_library(
     "//RegExpSupport:regexp",
     "//plugins/svn4idea:vcs-svn",
     "//plugins/testng",
-    "//plugins/IntelliLang/java-support:java-langInjection",
-    "//plugins/IntelliLang/xml-support:xml-langInjection",
+    "//java/langInjection",
+    "//xml/langInjection",
     "//plugins/xpath",
     "//plugins/xslt-debugger",
     "//plugins/xslt-debugger/engine:xslt-debugger-rt",
@@ -198,7 +223,7 @@ jvm_library(
     "//plugins/stream-debugger:java-debugger-streams",
     "@lib//:jgoodies-common",
     "//plugins/editorconfig:editorconfig-plugin-main",
-    "//plugins/sh",
+    "//plugins/sh/plugin:plugin-main",
     "//plugins/terminal/sh",
     "//plugins/gradle-maven:gradle-java-maven",
     "//plugins/markdown/core:markdown",
@@ -439,8 +464,8 @@ jvm_library(
     "//RegExpSupport:regexp",
     "//plugins/svn4idea:vcs-svn",
     "//plugins/testng",
-    "//plugins/IntelliLang/java-support:java-langInjection",
-    "//plugins/IntelliLang/xml-support:xml-langInjection",
+    "//java/langInjection",
+    "//xml/langInjection",
     "//plugins/xpath",
     "//plugins/xslt-debugger",
     "//plugins/xslt-debugger/engine:xslt-debugger-rt",
@@ -476,7 +501,7 @@ jvm_library(
     "//plugins/stream-debugger:java-debugger-streams",
     "@lib//:jgoodies-common",
     "//plugins/editorconfig:editorconfig-plugin-main",
-    "//plugins/sh",
+    "//plugins/sh/plugin:plugin-main",
     "//plugins/terminal/sh",
     "//plugins/gradle-maven:gradle-java-maven",
     "//plugins/markdown/core:markdown",

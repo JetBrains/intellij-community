@@ -13,6 +13,7 @@ import com.intellij.dvcs.push.PushSpec
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -44,8 +45,7 @@ import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
+import java.util.concurrent.Semaphore
 
 private typealias NewBranchNameCallback = suspend (suggestedName: String) -> String
 
@@ -209,10 +209,8 @@ internal class GHPRCreateViewModelImpl(
   private val _creationProgress = MutableStateFlow<CreationState?>(null)
   override val creationProgress: StateFlow<CreationState?> = _creationProgress.asStateFlow()
 
-  private val titleLock = ReentrantLock()
-
-  @Volatile
-  private var titleSetAutomatically: Boolean = true
+  private val autoTitleJob: Job
+  private val titleLock = Semaphore(1)
 
   override var remoteBranchNameCallback: NewBranchNameCallback? = null
 
@@ -222,7 +220,7 @@ internal class GHPRCreateViewModelImpl(
       descriptionText.value = template.orEmpty()
     }
 
-    cs.launchNow {
+    autoTitleJob = cs.launchNow {
       branchesWithProgress.collectScoped {
         val headBranch = it.branches.headBranch ?: return@collectScoped
         it.commitsRequest.collectScoped { commitsRequest ->
@@ -260,22 +258,28 @@ internal class GHPRCreateViewModelImpl(
   }
 
   private suspend fun setTitleFromFirstCommitOrBranch(headBranch: GitBranch, commitsRequest: Deferred<List<VcsCommitMetadata>>?) {
-    if (!titleSetAutomatically) {
-      currentCoroutineContext().cancel()
-      return
-    }
     val commits = runCatching { commitsRequest?.await() }.getOrNull() ?: return
-    titleLock.withLock {
-      val singleCommit = commits.singleOrNull()
-      titleText.value = singleCommit?.subject ?: headBranch.name
+    val title = generateTitle(commits, headBranch)
+    @Suppress("BlockingMethodInNonBlockingContext")
+    titleLock.acquire()
+    try {
+      checkCanceled()
+      titleText.value = title
+    }
+    finally {
+      titleLock.release()
     }
   }
 
   override fun setTitle(text: String) {
-    titleLock.withLock {
-      if (titleText.value == text) return@withLock
-      titleSetAutomatically = false
+    titleLock.acquire()
+    try {
+      if (titleText.value == text) return
+      autoTitleJob.cancel()
       titleText.value = text
+    }
+    finally {
+      titleLock.release()
     }
   }
 
@@ -526,6 +530,11 @@ internal class GHPRCreateViewModelImpl(
     val currentBranchTrackInfo = currentBranch?.let { baseGitRepo.getBranchTrackInfo(it.name) }
     val headRepo = currentBranchTrackInfo?.remote?.let { remote -> repositories.find { it.remote.remote == remote } } ?: baseRepo
     return BranchesState(baseRepo, defaultBranch, headRepo, currentBranch)
+  }
+
+  companion object {
+    private fun generateTitle(commits: List<VcsCommitMetadata>, headBranch: GitBranch): @NlsSafe String =
+      commits.singleOrNull()?.subject ?: headBranch.name
   }
 }
 

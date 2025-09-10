@@ -1638,6 +1638,16 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/contextParameters/multipleParameters.kt");
             }
 
+            @TestMetadata("multipleParametersOneCall.kt")
+            public void testMultipleParametersOneCall() throws Exception {
+                runTest("testData/refactoring/extractFunction/contextParameters/multipleParametersOneCall.kt");
+            }
+
+            @TestMetadata("multipleParametersOnePropertyAccess.kt")
+            public void testMultipleParametersOnePropertyAccess() throws Exception {
+                runTest("testData/refactoring/extractFunction/contextParameters/multipleParametersOnePropertyAccess.kt");
+            }
+
             @TestMetadata("parameterizedContextParameters.kt")
             public void testParameterizedContextParameters() throws Exception {
                 runTest("testData/refactoring/extractFunction/contextParameters/parameterizedContextParameters.kt");
@@ -4387,6 +4397,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/overrideFunction.kt");
             }
 
+            @TestMetadata("parametersInExtraction.kt")
+            public void testParametersInExtraction() throws Exception {
+                runTest("testData/refactoring/introduceParameter/parametersInExtraction.kt");
+            }
+
             @TestMetadata("partialSubstitution.kt")
             public void testPartialSubstitution() throws Exception {
                 runTest("testData/refactoring/introduceParameter/partialSubstitution.kt");
@@ -5369,6 +5384,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             runTest("testData/refactoring/extractSuperclass/annotation.kt");
         }
 
+        @TestMetadata("classAlreadyExists.kt")
+        public void testClassAlreadyExists() throws Exception {
+            runTest("testData/refactoring/extractSuperclass/classAlreadyExists.kt");
+        }
+
         @TestMetadata("dropPropertyParameterModifiers.kt")
         public void testDropPropertyParameterModifiers() throws Exception {
             runTest("testData/refactoring/extractSuperclass/dropPropertyParameterModifiers.kt");
@@ -5422,6 +5442,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @TestMetadata("specialName.kt")
         public void testSpecialName() throws Exception {
             runTest("testData/refactoring/extractSuperclass/specialName.kt");
+        }
+
+        @TestMetadata("typealiasAlreadyExists.kt")
+        public void testTypealiasAlreadyExists() throws Exception {
+            runTest("testData/refactoring/extractSuperclass/typealiasAlreadyExists.kt");
         }
     }
 

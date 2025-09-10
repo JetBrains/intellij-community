@@ -20,6 +20,7 @@ import com.intellij.ui.JBCardLayout
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.util.PlatformUtils
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.sdk.PreferredSdkComparator
@@ -112,6 +113,7 @@ internal class PyAddTargetBasedSdkPanel(
 
   fun doValidateAll(): List<ValidationInfo> = selectedPanel?.validateAll() ?: emptyList()
 
+  @RequiresEdt
   fun getOrCreateSdk(): Sdk? = selectedPanel?.getOrCreateSdk()
 
   private fun createCardSplitter(panels: List<PyAddSdkView>, initiallySelectedPanel: PyAddSdkView): Splitter {

@@ -1,17 +1,15 @@
 package com.intellij.grazie.grammar
 
 import com.intellij.grazie.GrazieBundle
+import com.intellij.grazie.ide.ui.components.utils.html
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.Rule
-import com.intellij.grazie.utils.*
-import kotlinx.html.style
-import kotlinx.html.table
-import kotlinx.html.td
-import kotlinx.html.tr
+import kotlinx.html.*
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.Categories
 import org.languagetool.rules.ITSIssueType
+import org.languagetool.rules.IncorrectExample
 import java.net.URL
 import java.util.*
 
@@ -68,7 +66,7 @@ class LanguageToolRule(
       try {
         return kind.getCategory(JLanguageTool.getMessageBundle(lang.jLanguage!!)).name
       }
-      catch (e: MissingResourceException) {
+      catch (_: MissingResourceException) {
         return orElse
       }
     }
@@ -90,5 +88,53 @@ class LanguageToolRule(
       ltRule.locQualityIssueType == ITSIssueType.Style ||
       ltRule.category.id == Categories.STYLE.id ||
       ltRule.category.id == Categories.TYPOGRAPHY.id
+  }
+
+  private var TABLE.cellpading: String
+    get() = attributes["cellpadding"] ?: ""
+    set(value) {
+      attributes["cellpadding"] = value
+    }
+
+  private var TABLE.cellspacing: String
+    get() = attributes["cellspacing"] ?: ""
+    set(value) {
+      attributes["cellspacing"] = value
+    }
+
+  private var TD.valign: String
+    get() = attributes["valign"] ?: ""
+    set(value) {
+      attributes["valign"] = value
+    }
+
+  private fun FlowOrPhrasingContent.toHtml(example: IncorrectExample, mistakeHandler: FlowOrPhrasingContent.(String) -> Unit) {
+    Regex("(.*?)<marker>(.*?)</marker>(.*)").findAll(example.example).forEach {
+      val (prefix, mistake, suffix) = it.destructured
+
+      +prefix
+      mistakeHandler(mistake)
+      +suffix
+    }
+  }
+
+  fun FlowOrPhrasingContent.toIncorrectHtml(example: IncorrectExample) {
+    toHtml(example) { mistake ->
+      if (mistake.isNotEmpty()) {
+        strong {
+          +mistake
+        }
+      }
+    }
+  }
+
+  fun FlowOrPhrasingContent.toCorrectHtml(example: IncorrectExample) {
+    toHtml(example) {
+      if (example.corrections.isNotEmpty()) {
+        strong {
+          +example.corrections.joinToString(separator = " / ")
+        }
+      }
+    }
   }
 }

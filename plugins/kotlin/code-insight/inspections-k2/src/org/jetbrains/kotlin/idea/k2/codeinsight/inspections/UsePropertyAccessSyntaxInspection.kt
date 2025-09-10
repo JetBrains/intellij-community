@@ -25,13 +25,7 @@ import org.jdom.Element
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.declarationScope
-import org.jetbrains.kotlin.analysis.api.components.directlyOverriddenSymbols
-import org.jetbrains.kotlin.analysis.api.components.expectedType
-import org.jetbrains.kotlin.analysis.api.components.lowerBoundIfFlexible
-import org.jetbrains.kotlin.analysis.api.components.scope
-import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
-import org.jetbrains.kotlin.analysis.api.components.syntheticJavaPropertiesScope
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
@@ -277,8 +271,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         private val propertyName: Name,
         private val convertExpressionToBlockBodyData: ConvertExpressionToBlockBodyData?
     ) : PsiUpdateModCommandQuickFix() {
-        override fun getName() = KotlinBundle.message("use.property.access.syntax")
-        override fun getFamilyName() = name
+        override fun getFamilyName(): String = KotlinBundle.message("use.property.access.syntax")
 
         override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
             when (val ktExpression = element as? KtExpression) {

@@ -15,7 +15,6 @@ com.intellij.codeInsight.daemon.ReferenceImporter
 - s:setHighlightersToEditor(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,I,I,java.util.Collection,I):V
 a:com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 - com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-- *s:processHighlights(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,com.intellij.lang.annotation.HighlightSeverity,I,I,com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.util.Processor):Z
 - *s:processHighlights(com.intellij.openapi.editor.ex.MarkupModelEx,com.intellij.openapi.project.Project,com.intellij.lang.annotation.HighlightSeverity,I,I,com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.util.Processor):Z
 f:com.intellij.codeInsight.daemon.impl.FileStatusMap
 - com.intellij.openapi.Disposable
@@ -60,13 +59,6 @@ com.intellij.codeInsight.daemon.impl.HighlightingSession
 - *sf:acceptRangeHighlighter(com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.openapi.editor.markup.RangeHighlighter):Z
 - *sf:getCodeInsightContext(com.intellij.openapi.editor.markup.RangeHighlighter):com.intellij.codeInsight.multiverse.CodeInsightContext
 - *sf:installCodeInsightContext(com.intellij.openapi.editor.markup.RangeHighlighter,com.intellij.openapi.project.Project,com.intellij.codeInsight.multiverse.CodeInsightContext):V
-f:com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
-- com.intellij.psi.search.ActualCodeInsightContextInfo
-- com.intellij.psi.search.CodeInsightContextAwareSearchScope
-- com.intellij.psi.search.GlobalSearchScope
-- *:contains(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):Z
-- *:getCodeInsightContextInfo():com.intellij.psi.search.CodeInsightContextInfo
-- *:getFileInfo(com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.search.CodeInsightContextFileInfo
 c:com.intellij.openapi.module.impl.scopes.ModulesScope
 - com.intellij.psi.search.GlobalSearchScope
 - com.intellij.psi.search.ActualCodeInsightContextInfo

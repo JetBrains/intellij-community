@@ -15,10 +15,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -143,8 +143,8 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
     applyRequest(request, force, scrollToChangePolicy);
   }
 
-  protected int getFastLoadingTimeMillis() {
-    return ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+  protected long getFastLoadingTimeMillis() {
+    return ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS;
   }
 
   /**

@@ -7,8 +7,17 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.MacroCallNode;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.Variable;
+import com.intellij.codeInsight.template.macro.CompleteSmartMacro;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection;
 import com.intellij.diagnostic.ITNReporter;
@@ -48,6 +57,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
 
@@ -812,6 +822,59 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   public void testDeprecatedImplementationDetailAttribute() {
     doHighlightingTest("deprecatedImplementationDetail.xml");
+  }
+
+  public void testInsertHandlerForClassAttributeInvokesSmartCompletionWhenTagCompleted() {
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
+    myFixture.configureByText(
+      "plugin.xml",
+      //language=XML
+      """
+        <idea-plugin>
+          <extensionPoints>
+            <extensionPoint name="testEp" interface="java.lang.Number"/>
+          </extensionPoints>
+          <extensions defaultExtensionNs="com.intellij">
+            <<caret>
+          </extensions>
+        </idea-plugin>
+        """
+    );
+
+    LookupElement testEpLookupElement = completeEpAndGetLookupElement("testEp");
+
+    myFixture.getLookup().setCurrentItem(testEpLookupElement);
+    myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR);
+
+    assertSmartCompletionInvoked();
+  }
+
+  private @NotNull LookupElement completeEpAndGetLookupElement(String completedLookupString) {
+    LookupElement[] elements = myFixture.completeBasic();
+    assertNotNull(elements);
+    assertTrue("Should have completion elements", elements.length > 0);
+
+    LookupElement lookupElement = null;
+    for (LookupElement element : elements) {
+      if (completedLookupString.equals(element.getLookupString())) {
+        lookupElement = element;
+        break;
+      }
+    }
+    assertNotNull("Should find the '" + completedLookupString + "' item in completion", lookupElement);
+    return lookupElement;
+  }
+
+  private void assertSmartCompletionInvoked() {
+    Template activeTemplate = TemplateManager.getInstance(getProject()).getActiveTemplate(myFixture.getEditor());
+    List<Variable> variables = activeTemplate.getVariables();
+    assertSize(1, variables);
+    Expression expression = variables.getFirst().getExpression();
+    assertInstanceOf(expression, (MacroCallNode.class));
+    Macro macro = ((MacroCallNode)expression).getMacro();
+    if (!(macro instanceof CompleteSmartMacro)) {
+      fail("Expected CompleteSmartMacro, got " + macro);
+    }
   }
 
   private void doHighlightingTest(String... filePaths) {

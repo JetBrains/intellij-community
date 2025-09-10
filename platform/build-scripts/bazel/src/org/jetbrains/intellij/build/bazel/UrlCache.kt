@@ -219,7 +219,6 @@ internal class UrlCache(val modulesBazel: List<Path>, val repositories: List<Jar
 
   @Suppress("DuplicatedCode")
   fun calculateHash(url: String, repo: JarRepository): String {
-    val digest = MessageDigest.getInstance("SHA-256")
     println("Downloading '$url'")
     val requestBuilder = HttpRequest.newBuilder()
       .uri(URI.create(url))
@@ -233,14 +232,7 @@ internal class UrlCache(val modulesBazel: List<Path>, val repositories: List<Jar
       error("Cannot download $url: ${response.statusCode()}\n$body")
     }
 
-    response.body().use { inputStream ->
-      val buffer = ByteArray(8192)
-      var bytesRead: Int
-      while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-        digest.update(buffer, 0, bytesRead)
-      }
-    }
-    return digest.digest().joinToString("") { "%02x".format(it) }
+    return response.body().sha256()
   }
 
   private inline fun <reified T> HttpResponse<T>.followRedirectsIfNeeded(maxRedirects: Int = 5): HttpResponse<T> {
@@ -293,4 +285,16 @@ private fun parseNetrc(netrcPath: Path, @Suppress("SameParameterValue") machine:
   }
   // no matching machine found
   return null
+}
+
+fun InputStream.sha256(): String {
+  val digest = MessageDigest.getInstance("SHA-256")
+  use {
+    val buffer = ByteArray(8192)
+    var bytesRead: Int
+    while (read(buffer).also { bytesRead = it } != -1) {
+      digest.update(buffer, 0, bytesRead)
+    }
+  }
+  return digest.digest().joinToString("") { "%02x".format(it) }
 }

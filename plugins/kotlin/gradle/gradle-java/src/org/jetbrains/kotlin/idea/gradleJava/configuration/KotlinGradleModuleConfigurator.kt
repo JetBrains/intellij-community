@@ -36,7 +36,7 @@ class KotlinGradleModuleConfigurator : KotlinWithGradleConfigurator() {
     override fun getKotlinPluginExpression(forKotlinDsl: Boolean): String =
         if (forKotlinDsl) "kotlin(\"jvm\")" else "id 'org.jetbrains.kotlin.jvm'"
 
-    override fun getJvmTarget(sdk: Sdk?, version: IdeKotlinVersion) = getDefaultJvmTarget(sdk, version)?.description
+    override fun getJvmTarget(sdk: Sdk?, version: IdeKotlinVersion): String? = getDefaultJvmTarget(sdk, version)?.description
 
     override fun isApplicable(module: Module): Boolean {
         return super.isApplicable(module) && !module.isAndroidModule()
@@ -68,9 +68,9 @@ class KotlinGradleModuleConfigurator : KotlinWithGradleConfigurator() {
 
     companion object {
         @NonNls
-        const val NAME = "gradle"
+        const val NAME: String = "gradle"
 
         @NonNls
-        const val KOTLIN = "kotlin"
+        const val KOTLIN: String = "kotlin"
     }
 }

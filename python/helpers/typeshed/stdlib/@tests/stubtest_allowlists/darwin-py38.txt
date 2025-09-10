@@ -1,6 +1,0 @@
-webbrowser.MacOSX.__init__
-
-# Doesn't exist on macos:
-spwd
-msilib(.[a-z]+)?
-ossaudiodev

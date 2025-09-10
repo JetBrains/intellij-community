@@ -34,6 +34,7 @@ import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.Dispatchers;
 import kotlinx.coroutines.GlobalScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -234,8 +235,8 @@ public abstract class DocumentDataHookUp extends GridDataHookUpBase<GridRow, Gri
     }
   }
 
-
-  protected class DocumentDataMutator
+  @ApiStatus.Internal
+  public class DocumentDataMutator
     implements GridMutator.RowsMutator<GridRow, GridColumn>, GridMutator.ColumnsMutator<GridRow, GridColumn> {
 
     @Override

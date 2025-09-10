@@ -1,13 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
+import kotlin.jvm.JvmField;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
+import org.junit.rules.TestName;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,12 +45,15 @@ public class JBCefMultiRenderingModeTest {
   }
 
   private static void show(@NotNull JBCefBrowser browser) {
+    Disposable disposable = Disposer.newDisposable("JBCefMultiRenderingModeTest::show");
     invokeAndWaitForLoad(browser, () -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
+      Disposer.register(disposable, () -> frame.removeNotify());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);
       frame.add(browser.getComponent(), BorderLayout.CENTER);
       frame.setVisible(true);
     });
+    Disposer.dispose(disposable);
   }
 }

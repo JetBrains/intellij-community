@@ -11,7 +11,7 @@ jvm_library(
   name = "pycharm-community-ide-implTraining",
   module_name = "intellij.pycharm.community.ide.implTraining",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util:util-ui",

@@ -13,10 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,6 +119,9 @@ public final class GrSetStrongTypeIntention extends Intention {
 
     TextRange range = afterPostprocess.getTextRange();
     document.deleteString(range.getStartOffset(), range.getEndOffset());
+    if (rangeMarker.isValid()) {
+      editor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
+    }
 
     TemplateManager templateManager = TemplateManager.getInstance(project);
     templateManager.startTemplate(editor, template, new TemplateEditingAdapter() {
@@ -230,10 +230,10 @@ public final class GrSetStrongTypeIntention extends Intention {
           return false;
         }
 
-        if (pparent instanceof GrVariableDeclaration) {
-          if (((GrVariableDeclaration)pparent).getTypeElementGroovy() != null) return false;
+        if (pparent instanceof GrVariableDeclaration declaration) {
+          if (declaration.getTypeElementGroovy() != null || declaration.isTuple()) return false;
 
-          GrVariable[] variables = ((GrVariableDeclaration)pparent).getVariables();
+          GrVariable[] variables = declaration.getVariables();
           for (GrVariable variable : variables) {
             if (isVarDeclaredWithInitializer(variable)) return true;
           }

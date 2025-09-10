@@ -21,7 +21,7 @@ jvm_library(
   name = "toolingExtension-impl",
   module_name = "intellij.gradle.toolingExtension.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_toolingExtension-impl",
   deps = [
     "@lib//:jetbrains-annotations",
@@ -67,7 +67,7 @@ jvm_library(
   name = "toolingExtension-tests_test_lib",
   module_name = "intellij.gradle.toolingExtension.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",

@@ -179,7 +179,7 @@ private class K2DfaAssistProvider : DfaAssistProvider {
                         if (symbol is KaVariableSymbol) {
                             val name = symbol.name.asString() + inlineSuffix
                             val expectedType = symbol.returnType
-                            val isNonNullPrimitiveType = expectedType.isPrimitive && !expectedType.canBeNull
+                            val isNonNullPrimitiveType = expectedType.isPrimitive && !expectedType.isNullable
                             return@readAction VariableResult.Variable(name, symbol.psi, isNonNullPrimitiveType)
                         }
                     }

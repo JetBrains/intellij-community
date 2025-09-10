@@ -74,6 +74,7 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(currentSession: XDebugS
 }
 
 private fun XLineBreakpointImpl<*>.getInfo(): XLineBreakpointInfo {
-  val highlightingRange = highlightRange?.toRpc()
+  val range = highlightRange
+  val highlightingRange = range?.toRpc()
   return XLineBreakpointInfo(isTemporary, line, fileUrl, highlightingRange, file?.rpcId())
 }

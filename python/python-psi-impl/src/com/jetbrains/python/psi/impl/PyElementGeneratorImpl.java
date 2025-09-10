@@ -218,13 +218,15 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   @Override
-  public PyBinaryExpression createBinaryExpression(String s, PyExpression expr, PyExpression listLiteral) {
-    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), "a " + s + " b");
+  public PyBinaryExpression createBinaryExpression(@NotNull String operator,
+                                                   @NotNull PyExpression leftOperand,
+                                                   @NotNull PyExpression rightOperand) {
+    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), "a " + operator + " b");
     final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();
     PyBinaryExpression binExpr = (PyBinaryExpression)expressionStatement.getExpression();
     ASTNode binnode = binExpr.getNode();
-    binnode.replaceChild(binExpr.getLeftExpression().getNode(), expr.getNode().copyElement());
-    binnode.replaceChild(binExpr.getRightExpression().getNode(), listLiteral.getNode().copyElement());
+    binnode.replaceChild(binExpr.getLeftExpression().getNode(), leftOperand.getNode().copyElement());
+    binnode.replaceChild(binExpr.getRightExpression().getNode(), rightOperand.getNode().copyElement());
     return binExpr;
   }
 

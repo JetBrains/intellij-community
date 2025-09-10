@@ -98,6 +98,7 @@ open class OnboardingLessonPromoter(@NonNls protected val lessonId: String,
                                    ActionsBundle.message("group.HelpMenu.text").dropMnemonic(),
                                    LearnBundle.message("action.ShowLearnPanel.text"), lessonName)
     promoPanel.add(JLabel("<html>$text</html>").also {
+      it.border = JBUI.Borders.empty(10)
       it.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
       it.font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().size2D + JBUIScale.scale(-1))
     })

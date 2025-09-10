@@ -63,7 +63,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     }
 
     Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
-    Map<@NotNull String, @NotNull ContentModuleDescriptor> contentModuleIdMap = PluginManagerCore.getPluginSet().buildContentModuleIdMap();
+    Map<@NotNull PluginModuleId, @NotNull ContentModuleDescriptor> contentModuleIdMap = PluginManagerCore.getPluginSet().buildContentModuleIdMap();
     Collection<? extends IdeaPluginDescriptor> autoSwitchedDescriptors = enable ?
                                                                          getDependenciesToEnable(descriptors, pluginIdMap, contentModuleIdMap) :
                                                                          getDependentsToDisable(descriptors, pluginIdMap, contentModuleIdMap);
@@ -133,7 +133,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
 
   private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependenciesToEnable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
                                                                                              @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
-                                                                                             @NotNull Map<String, ContentModuleDescriptor> contentModuleIdMap) {
+                                                                                             @NotNull Map<PluginModuleId, ContentModuleDescriptor> contentModuleIdMap) {
     Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
@@ -158,7 +158,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
 
   private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependentsToDisable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
                                                                                             @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
-                                                                                            @NotNull Map<String, ContentModuleDescriptor> contentModuleIdMap) {
+                                                                                            @NotNull Map<PluginModuleId, ContentModuleDescriptor> contentModuleIdMap) {
     Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
 

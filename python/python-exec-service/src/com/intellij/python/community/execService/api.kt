@@ -17,6 +17,7 @@ import com.intellij.python.community.execService.impl.Arg
 import com.intellij.python.community.execService.impl.ExecServiceImpl
 import com.intellij.python.community.execService.impl.PyExecBundle
 import com.intellij.python.community.execService.impl.transformerToHandler
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.PyResult
@@ -54,6 +55,7 @@ data class BinOnTarget(internal val configureTargetCmdLine: (TargetedCommandLine
   constructor(exePath: FullPathOnTarget, target: TargetEnvironmentConfiguration?) : this({ it.setExePath(exePath) }, target)
 }
 
+fun PythonBinary.asBinToExec(): BinaryToExec = BinOnEel(this)
 
 /**
  * Execute [binary] right directly on the eel it resides on.
@@ -162,6 +164,20 @@ typealias ProcessOutputTransformer<T> = (EelProcessExecutionResult) -> Result<T,
 object ZeroCodeStdoutTransformer : ProcessOutputTransformer<String> {
   override fun invoke(processOutput: EelProcessExecutionResult): Result<String, String?> =
     if (processOutput.exitCode == 0) Result.success(processOutput.stdoutString.trim()) else Result.failure(null)
+}
+
+/**
+ * A process output transformer that parses standard output using a provided parser function.
+ *
+ * @param T The type of the result produced by the transformer.
+ * @param stdoutParser A function that takes a string (standard output) and parses it into a [Result] containing
+ * either a successfully parsed result of type [T], or a failure with an optional [NlsSafe] error message.
+ */
+open class ZeroCodeStdoutParserTransformer<T>(val stdoutParser: (String) -> Result<T, @NlsSafe String?>) : ProcessOutputTransformer<T> {
+  override fun invoke(processOutput: EelProcessExecutionResult): Result<T, @NlsSafe String?> {
+    val data = ZeroCodeStdoutTransformer.invoke(processOutput).getOr { return it }
+    return stdoutParser(data)
+  }
 }
 
 

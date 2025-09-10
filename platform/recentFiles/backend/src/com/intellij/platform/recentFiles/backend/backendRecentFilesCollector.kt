@@ -23,9 +23,12 @@ import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.IconUtil
+import com.intellij.util.PlatformUtils
+import com.intellij.util.Processor
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 import kotlin.math.max
@@ -116,13 +119,41 @@ private fun getRecentFiles(project: Project): List<VirtualFile> {
   return result
 }
 
+private fun areThereFilesWithSameName(virtualFile: VirtualFile, project: Project): Boolean {
+  return if (PlatformUtils.isRider()) {
+    val searchScope = GlobalSearchScope.allScope(project)
+    val processor = StopOnTwoSameNamesProcessor(virtualFile.name)
+    FilenameIndex.processFilesByName(virtualFile.name, false, searchScope, processor)
+    processor.areThereMoreThanOneFile()
+  }
+  else {
+    FilenameIndex.getVirtualFilesByName(virtualFile.name, GlobalSearchScope.projectScope(project)).size > 1
+  }
+}
+
+private class StopOnTwoSameNamesProcessor(private val searchedName: String): Processor<VirtualFile> {
+  private var fileNameCounter = AtomicInteger(0)
+
+  fun areThereMoreThanOneFile(): Boolean {
+    return fileNameCounter.get() > 1
+  }
+
+  override fun process(file: VirtualFile): Boolean {
+    val name = file.name
+
+    if (searchedName != name) return true
+
+    val newCount = fileNameCounter.incrementAndGet()
+    return newCount <= 1
+  }
+}
+
 internal fun createRecentFileViewModel(virtualFile: VirtualFile, project: Project): SwitcherRpcDto.File {
   ProgressManager.checkCanceled()
   val parentPath = virtualFile.parent?.path?.toNioPathOrNull()
-  val sameNameFiles = FilenameIndex.getVirtualFilesByName(virtualFile.name, GlobalSearchScope.projectScope(project))
   val result = if (parentPath == null ||
                    parentPath.nameCount == 0 ||
-                   sameNameFiles.size <= 1
+                   !areThereFilesWithSameName(virtualFile, project)
   ) {
     ""
   }

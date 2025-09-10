@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.pyi.PyiLanguageDialect;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 
@@ -50,21 +50,9 @@ public sealed class TypeEvalContext {
 
   private final ThreadLocal<ProcessingContext> myProcessingContext = ThreadLocal.withInitial(ProcessingContext::new);
 
-  protected final Map<PyTypedElement, PyType> myEvaluated = createMap();
-  protected final Map<PyCallable, PyType> myEvaluatedReturn = createMap();
-  protected final Map<Pair<PyExpression, Object>, PyType> contextTypeCache = createMap();
-  /**
-   * AssumptionContext invariant requires that if type is in the map, 
-   * it's dependencies are also in the map, so we can't use softValueMap.
-   * Temporary solution until we know assumeType works as expected.
-   * @see TypeEvalContext#assumeType(PyTypedElement, PyType, Function) 
-   */
-  private static <T> Map<T, PyType> createMap() {
-    if (Registry.is("python.use.better.control.flow.type.inference")) {
-      return new ConcurrentHashMap<>();
-    }
-    return CollectionFactory.createConcurrentSoftValueMap();
-  }
+  protected final Map<PyTypedElement, PyType> myEvaluated = CollectionFactory.createConcurrentSoftValueMap();
+  protected final Map<PyCallable, PyType> myEvaluatedReturn = CollectionFactory.createConcurrentSoftValueMap();
+  protected final Map<Pair<PyExpression, Object>, PyType> contextTypeCache = CollectionFactory.createConcurrentSoftValueMap();
 
   private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, boolean allowCallContext, @Nullable PsiFile origin) {
     myConstraints = new TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, origin);
@@ -81,15 +69,15 @@ public sealed class TypeEvalContext {
   }
 
   public boolean allowDataFlow(PsiElement element) {
-    return myConstraints.myAllowDataFlow || inOrigin(element);
+    return myConstraints.myAllowDataFlow && !inPyiFile(element) || inOrigin(element);
   }
 
   public boolean allowReturnTypes(PsiElement element) {
-    return myConstraints.myAllowDataFlow || inOrigin(element);
+    return myConstraints.myAllowDataFlow && !inPyiFile(element) || inOrigin(element);
   }
 
   public boolean allowCallContext(@NotNull PsiElement element) {
-    return myConstraints.myAllowCallContext && inOrigin(element);
+    return myConstraints.myAllowCallContext && !inPyiFile(element) && inOrigin(element);
   }
 
   /**
@@ -329,7 +317,7 @@ public sealed class TypeEvalContext {
   }
 
   public boolean maySwitchToAST(@NotNull PsiElement element) {
-    return myConstraints.myAllowStubToAST || inOrigin(element);
+    return myConstraints.myAllowStubToAST && !inPyiFile(element) || inOrigin(element);
   }
 
   public @Nullable PsiFile getOrigin() {
@@ -369,6 +357,14 @@ public sealed class TypeEvalContext {
     return myConstraints.myOrigin == element.getContainingFile() || myConstraints.myOrigin == getContextFile(element);
   }
 
+  private static boolean inPyiFile(@NotNull PsiElement element) {
+    if (isPyiFile(element.getContainingFile())) {
+      return true;
+    }
+    PsiFile contextFile = getContextFile(element);
+    return contextFile != null && isPyiFile(contextFile);
+  }
+
   private static PsiFile getContextFile(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
@@ -379,6 +375,10 @@ public sealed class TypeEvalContext {
     else {
       return getContextFile(context);
     }
+  }
+
+  private static boolean isPyiFile(@NotNull PsiFile file) {
+    return file.getLanguage().equals(PyiLanguageDialect.getInstance());
   }
 
   private static class PyNullType implements PyType {

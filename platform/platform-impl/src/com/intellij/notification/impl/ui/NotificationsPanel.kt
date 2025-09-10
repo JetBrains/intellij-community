@@ -106,7 +106,10 @@ class NotificationsPanel(private val project: Project, parentDisposable: Disposa
 
     suggestions.setRemoveCallback(Consumer(ApplicationNotificationsModel::remove))
     timeline.setRemoveCallback(Consumer(ApplicationNotificationsModel::remove))
-    timeline.setClearCallback { ApplicationNotificationsModel.clearTimeline(project) }
+    timeline.setClearCallback {
+      ApplicationNotificationsModel.getNotifications(project).filter { !it.isSuggestionType }.forEach { it.expire() }
+      ApplicationNotificationsModel.clearTimeline(project)
+    }
 
     Disposer.register(parentDisposable, this)
 

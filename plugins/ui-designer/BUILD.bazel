@@ -146,6 +146,12 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "@lib//:caffeine",
   ],
+  exports = [
+    "//java/compiler/forms-compiler:java-guiForms-compiler",
+    "//java/compiler/forms-compiler:java-guiForms-compiler_test_lib",
+    "//plugins/java-i18n",
+    "//plugins/java-i18n:java-i18n_test_lib",
+  ],
   runtime_deps = [
     ":java-guiForms-designer_resources",
     ":java-guiForms-designer_test_resources",

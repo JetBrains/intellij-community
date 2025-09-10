@@ -793,6 +793,7 @@ f:org.jetbrains.jps.util.JpsPathUtil
 - sf:JAR_URL_PREFIX:java.lang.String
 - <init>():V
 - s:getLibraryRootUrl(java.io.File):java.lang.String
+- s:getLibraryRootUrl(java.nio.file.Path):java.lang.String
 - s:isJrtUrl(java.lang.String):Z
 - s:isUnder(java.util.Set,java.io.File):Z
 - s:pathToUrl(java.lang.String):java.lang.String

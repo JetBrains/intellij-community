@@ -72,7 +72,7 @@ final class HighlighterRecycler {
 
   @Nullable
   RangeHighlighter pickupFileLevelRangeHighlighter(int fileTextLength) {
-    return pickupHighlighterFromGarbageBin(0, fileTextLength, DaemonCodeAnalyzerEx.FILE_LEVEL_FAKE_LAYER);
+    return pickupHighlighterFromGarbageBin(0, fileTextLength, HighlightInfoUpdaterImpl.FILE_LEVEL_FAKE_LAYER);
   }
 
   /**

@@ -6,6 +6,8 @@ f:com.intellij.formatting.Indent$Type
 - *sf:OUTDENT_SPACES:com.intellij.formatting.Indent$Type
 c:com.intellij.openapi.editor.EditorModificationUtilEx
 - *s:calcAfterLineEnd(com.intellij.openapi.editor.Editor,I,com.intellij.openapi.editor.LogicalPosition,com.intellij.openapi.editor.VisualPosition):I
+f:com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent
+- *:getSettings():com.intellij.psi.codeStyle.CodeStyleSettings
 *:com.intellij.psi.codeStyle.CommentStyleSettings
 - a:isBlockCommentIncludesSpace():Z
 - a:isLineCommentFollowedWithSpace():Z

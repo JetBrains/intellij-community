@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 
 class SwapStringEqualsIgnoreCaseIntention : SelfTargetingRangeIntention<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java,
-    KotlinBundle.lazyMessage("flip.equals")
+    KotlinBundle.messagePointer("flip.equals")
 ), LowPriorityAction {
 
     override fun applicabilityRange(element: KtDotQualifiedExpression): TextRange? {

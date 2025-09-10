@@ -11,7 +11,7 @@ jvm_library(
   name = "tests-compose_test_lib",
   module_name = "kotlin.tests-compose",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = ["@lib//:kotlin-stdlib"]
 )
 ### auto-generated section `build kotlin.tests-compose` end

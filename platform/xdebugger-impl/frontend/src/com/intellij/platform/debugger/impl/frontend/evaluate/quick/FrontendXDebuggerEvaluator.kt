@@ -16,6 +16,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackWithOrigin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future
@@ -47,13 +48,15 @@ internal open class FrontendXDebuggerEvaluator(
 ) : XDebuggerEvaluator() {
   override fun evaluate(expression: String, callback: XEvaluationCallback, expressionPosition: XSourcePosition?) {
     evaluateByRpc(callback) {
-      XDebuggerEvaluatorApi.getInstance().evaluate(frameId, expression, expressionPosition?.toRpc())
+      val origin = XEvaluationCallbackWithOrigin.getOrigin(callback)
+      XDebuggerEvaluatorApi.getInstance().evaluate(frameId, expression, expressionPosition?.toRpc(), origin)
     }
   }
 
   override fun evaluate(expression: XExpression, callback: XEvaluationCallback, expressionPosition: XSourcePosition?) {
     evaluateByRpc(callback) {
-      XDebuggerEvaluatorApi.getInstance().evaluateXExpression(frameId, expression.toRpc(), expressionPosition?.toRpc())
+      val origin = XEvaluationCallbackWithOrigin.getOrigin(callback)
+      XDebuggerEvaluatorApi.getInstance().evaluateXExpression(frameId, expression.toRpc(), expressionPosition?.toRpc(), origin)
     }
   }
 
@@ -90,7 +93,8 @@ private class FrontendXDebuggerDocumentOffsetEvaluator(
 ) : FrontendXDebuggerEvaluator(project, scope, frameId), XDebuggerDocumentOffsetEvaluator {
   override fun evaluate(document: Document, offset: Int, hintType: ValueHintType, callback: XEvaluationCallback) {
     evaluateByRpc(callback) {
-      XDebuggerEvaluatorApi.getInstance().evaluateInDocument(frameId, document.rpcId(), offset, hintType)
+      val origin = XEvaluationCallbackWithOrigin.getOrigin(callback)
+      XDebuggerEvaluatorApi.getInstance().evaluateInDocument(frameId, document.rpcId(), offset, hintType, origin)
     }
   }
 }

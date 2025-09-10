@@ -9,7 +9,6 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.DummyWorkspaceFileSetData
-import com.intellij.workspaceModel.core.fileIndex.impl.LibrariesAndSdkContributors.Companion.getGlobalLibrary
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleSourceRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.StoredFileSet
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
@@ -47,11 +46,6 @@ internal fun findFileSetDescriptor(
   val sdk = snapshot.findSdk(set)
   if (sdk != null) {
     return SdkRootDescriptor(set.root, sdk)
-  }
-
-  val globalLibrary = getGlobalLibrary(set)
-  if (globalLibrary != null) {
-    return LibraryRootDescriptor(set.root, globalLibrary)
   }
 
   log.trace { "Unexpected data: $data" }

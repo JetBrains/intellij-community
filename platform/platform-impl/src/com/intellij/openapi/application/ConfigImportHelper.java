@@ -15,9 +15,7 @@ import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.application.migrations.JpaBuddyMigration242;
 import com.intellij.openapi.application.migrations.NotebooksMigration242;
-import com.intellij.openapi.application.migrations.PythonProMigration242;
 import com.intellij.openapi.application.migrations.SpaceMigration252;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
@@ -495,8 +493,11 @@ public final class ConfigImportHelper {
   }
 
   private static boolean shouldAskForConfig() {
+    if (!canAskForConfig()) {
+      return false;
+    }
     String showImportDialog = System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
-    if ("default-production".equals(showImportDialog) || "never".equals(showImportDialog)) {
+    if ("default-production".equals(showImportDialog)) {
       return false;
     }
     return PluginManagerCore.isRunningFromSources() ||
@@ -504,11 +505,13 @@ public final class ConfigImportHelper {
            "true".equals(showImportDialog);
   }
 
-  private static @Nullable Pair<Path, Path> showDialogAndGetOldConfigPath(List<Path> guessedOldConfigDirs) {
+  private static boolean canAskForConfig() {
     String showImportDialog = System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
-    if ("never".equals(showImportDialog)) {
-      return null;
-    }
+    return !"never".equals(showImportDialog) && !AppMode.isRemoteDevHost();
+  }
+
+  private static @Nullable Pair<Path, Path> showDialogAndGetOldConfigPath(List<Path> guessedOldConfigDirs) {
+    if (!canAskForConfig()) return null;
 
     //noinspection TestOnlyProblems
     LookAndFeelThemeAdapterKt.setEarlyUiLaF();
@@ -1218,9 +1221,7 @@ public final class ConfigImportHelper {
   private static void performMigrations(PluginMigrationOptions options) {
     // WRITE IN MIGRATIONS HERE
     // Note that migrations are not taken into account for IDE updates through Toolbox
-    new PythonProMigration242().migratePlugins(options);
     new NotebooksMigration242().migratePlugins(options);
-    new JpaBuddyMigration242().migratePlugins(options);
     new SpaceMigration252().migratePlugins(options);
   }
 
@@ -1282,7 +1283,7 @@ public final class ConfigImportHelper {
       }
 
       try {
-        IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadAndInitDescriptorFromArtifact(Paths.get(source), null);
+        IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(Paths.get(source), null);
         if (descriptor != null) {
           result.add(descriptor.getPluginId());
         }

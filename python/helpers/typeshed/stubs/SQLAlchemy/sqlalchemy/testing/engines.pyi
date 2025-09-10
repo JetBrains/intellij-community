@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from collections.abc import Mapping
 from typing import Any, overload
 from typing_extensions import Literal

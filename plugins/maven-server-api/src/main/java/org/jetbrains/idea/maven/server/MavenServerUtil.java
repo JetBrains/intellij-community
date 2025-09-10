@@ -51,12 +51,13 @@ public final class MavenServerUtil {
   public static @NotNull File findMavenBasedir(@NotNull File workingDir) {
     File baseDir = workingDir;
     File dir = workingDir;
-    while ((dir = dir.getParentFile()) != null) {
+    while (dir != null) {
       MavenServerStatsCollector.fileRead(new File(dir, ".mvn"));
       if (new File(dir, ".mvn").exists()) {
         baseDir = dir;
         break;
       }
+      dir = dir.getParentFile();
     }
     try {
       return baseDir.getCanonicalFile();

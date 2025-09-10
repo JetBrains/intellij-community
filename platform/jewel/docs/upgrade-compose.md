@@ -46,7 +46,7 @@ extremely unpractical.
 1. Open the [intellij-community](../../..) project in IntelliJ IDEA
 2. Open the Project Structure dialog
 3. Navigate to _Modules_ > _intellij.libraries.compose.foundation.desktop_ module
-4. Double-click the _compose-foundation-desktop_ library
+4. Double-click the _compose.foundation.desktop_ library
 5. Click the _Edit_ button, pick the new version and follow the instructions. Make sure the _sources_ and _Javadoc_
    options are selected, and leave the rest to the defaults.
 6. Note down the Skiko version used by the CMP dependency. You can do that
@@ -61,10 +61,14 @@ extremely unpractical.
 8. Update the _org.jetbrains.compose.components.components.resources_ and
    _org.jetbrains.compose.components.components.resources.desktop_ dependencies to the same CMP version with the same
    procedure as above
-9. Now it's time to update the Skiko dependency. Go to the _intellij.libraries.skiko_ module
-10. If the Skiko version currently listed is different from the one CMP requires — which is usually the case — then
+9. Navigate to _intellij.libraries.compose.runtime.desktop_ module and update the _compose-runtime-desktop_ library the same way like with _compose-foundation-desktop_
+10. Now it's time to update the Skiko dependency. Go to the _intellij.libraries.skiko_ module
+11. If the Skiko version currently listed is different from the one CMP requires — which is usually the case — then
     follow the same procedure as above to upgrade Skiko to the required version. Note that the required Skiko version
     may not be the latest one.
+    * **Important:** `skiko-awt-runtime-all` is a custom-built package hosted in the
+      [IntelliJ Dependencies](https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/skiko/skiko-awt-runtime-all/)
+      repo. If the required version is not available, you'll need to ask Kuba to build it and publish it.
 
 You should now be able to see the changes in `.iml` files that correspond to the upgrades. If they do not immediately
 show up, you can use the _Save all_ action to force the IDE to write changes to disk.

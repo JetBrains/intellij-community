@@ -67,6 +67,7 @@ import com.intellij.openapi.vfs.impl.ZipHandler
 import com.intellij.openapi.vfs.impl.jar.TimedZipHandler
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PROJECT_NEWLY_OPENED
@@ -677,6 +678,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
               configureWorkspace(project, projectStoreBaseDir, options)
             }
 
+            if (Registry.`is`("ide.create.project.root.entity") && options.projectRootDir != null) {
+              val root = options.projectRootDir!!.toUri().toString().removeSuffix("/")
+              project.serviceAsync<ProjectRootPersistentStateComponent>().projectRootUrls += root
+            }
+
             if (!addToOpened(project)) {
               throw CancellationException("project is already opened")
             }
@@ -963,6 +969,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         baseDir = projectStoreBaseDir,
         project = project,
         newProject = options.isProjectCreatedWithWizard,
+        createModule = options.createModule
       )
       if (module != null) {
         options.preparedToOpen?.invoke(module)
@@ -973,7 +980,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   private suspend fun checkExistingProjectOnOpen(projectToClose: Project, options: OpenProjectTask, projectDir: Path): Boolean {
-    if (options.forceReuseFrame) {
+    if (options.forceReuseFrame || WelcomeScreenProjectProvider.isWelcomeScreenProject(projectToClose)) {
       return !closeAndDisposeKeepingFrame(projectToClose)
     }
 
@@ -1105,11 +1112,9 @@ fun CoroutineScope.runInitProjectActivities(project: Project) {
     (project.serviceAsync<StartupManager>() as StartupManagerImpl).initProject()
   }
 
-  launch(CoroutineName("projectOpened event executing") + Dispatchers.EDT) {
-    writeIntentReadAction {
-      @Suppress("DEPRECATION", "removal")
-      ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
-    }
+  launch(CoroutineName("projectOpened event executing") + Dispatchers.UiWithModelAccess) {
+    @Suppress("DEPRECATION", "removal")
+    ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
   }
 
   @Suppress("DEPRECATION")
@@ -1119,7 +1124,7 @@ fun CoroutineScope.runInitProjectActivities(project: Project) {
     return
   }
 
-  launch(CoroutineName("projectOpened component executing") + Dispatchers.EDT) {
+  launch(CoroutineName("projectOpened component executing") + Dispatchers.UiWithModelAccess) {
     for (component in projectComponents) {
       runCatching {
         val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER)

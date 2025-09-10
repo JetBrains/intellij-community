@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.rw
 
-import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.*
@@ -11,17 +10,18 @@ import com.intellij.openapi.application.impl.InternalThreading
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ObjectUtils
+import com.intellij.util.application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.nio.file.Files
-import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.writeText
 import kotlin.math.absoluteValue
 import kotlin.random.Random
@@ -30,12 +30,12 @@ import kotlin.time.Duration.Companion.seconds
 internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
 
   private val retryMarker: Any = ObjectUtils.sentinel("rw action")
-  
+
   init {
     // init the write action counter listener
-    ApplicationManager.getApplication().service<AsyncExecutionService>() 
+    ApplicationManager.getApplication().service<AsyncExecutionService>()
   }
-  
+
   override fun smartModeConstraint(project: Project): ReadConstraint {
     check(!LightEdit.owns(project)) {
       "ReadConstraint.inSmartMode() can't be used in LightEdit mode, check that LightEdit.owns(project)==false before calling"
@@ -65,10 +65,11 @@ internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
   override suspend fun <X> executeReadAndWriteAction(
     constraints: Array<out ReadConstraint>,
     runWriteActionOnEdt: Boolean,
+    undispatched: Boolean,
     action: ReadAndWriteScope.() -> ReadResult<X>,
   ): X {
     while (true) {
-      val (readResult: ReadResult<X>, stamp: Long) = constrainedReadAction(*constraints) {
+      val (readResult: ReadResult<X>, stamp: Long) = executeReadAction(constraints.toList(), undispatched = undispatched, blocking = false) {
         Pair(ReadResult.Companion.action(), AsyncExecutionServiceImpl.getWriteActionCounter())
       }
       when (readResult) {
@@ -76,21 +77,12 @@ internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
           return readResult.value
         }
         is ReadResult.WriteAction -> {
-          val action = {
-            // Start of this Write Action increase count of write actions by one
-            val writeStamp = AsyncExecutionServiceImpl.getWriteActionCounter() - 1
-            if (stamp == writeStamp) {
-              readResult.action()
-            }
-            else {
-              retryMarker
-            }
-          }
-          val writeResult = if (runWriteActionOnEdt) {
-            edtWriteAction(action)
+          val lock = application.threadingSupport
+          val writeResult = if (runWriteActionOnEdt || lock == null) {
+            executeWriteActionOnEdt(stamp, readResult.action)
           }
           else {
-            backgroundWriteAction(action)
+            executeWriteActionOnBackgroundWithAtomicCheck(lock, stamp, undispatched, readResult.action)
           }
           if (writeResult !== retryMarker) {
             @Suppress("UNCHECKED_CAST")
@@ -99,6 +91,36 @@ internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
         }
       }
     }
+  }
+
+  private suspend fun <T> executeWriteActionOnEdt(originalStamp: Long, action: () -> T): /*T or retryMarker */ Any? {
+    return withContext(Dispatchers.EDT) {
+      val writeStamp = AsyncExecutionServiceImpl.getWriteActionCounter()
+      if (originalStamp == writeStamp) {
+        application.runWriteAction(Computable {
+          action()
+        })
+      }
+      else {
+        retryMarker
+      }
+    }
+  }
+
+  private suspend fun <T> executeWriteActionOnBackgroundWithAtomicCheck(lock: ThreadingSupport, originalStamp: Long, undispatched: Boolean, action: () -> T): /*T or retryMarker */ Any? {
+    val dispatcher = if (undispatched) EmptyCoroutineContext else Dispatchers.Default
+    val ref = withContext(dispatcher + InternalThreading.RunInBackgroundWriteActionMarker) {
+      lock.runWriteActionWithCheckInWriteIntent(
+        {
+          val writeStamp = AsyncExecutionServiceImpl.getWriteActionCounter()
+          return@runWriteActionWithCheckInWriteIntent originalStamp == writeStamp
+        }, {
+          // ref because we want to handle nullable T
+          // if only we had union types in Kotlin...
+          Ref(action())
+        })
+    }
+    return if (ref == null) retryMarker else ref.get()
   }
 
   override suspend fun <T> runWriteAction(action: () -> T): T {
@@ -138,10 +160,12 @@ ${dump.rawDump}""")
           InternalThreading.incrementBackgroundWriteActionCount()
           try {
             lock.runWriteAction(action)
-          } finally {
+          }
+          finally {
             InternalThreading.decrementBackgroundWriteActionCount()
           }
-        } else {
+        }
+        else {
           @Suppress("ForbiddenInSuspectContextMethod")
           application.runWriteAction(ThrowableComputable(action))
         }

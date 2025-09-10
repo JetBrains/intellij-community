@@ -723,7 +723,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
   private fun doTestCtrlHoverDoc(inputFile: String, expectedDoc: String) {
     configure(inputFile.trimIndent())
     val doc = ReadAction.nonBlocking (Callable { CtrlMouseHandler.getGoToDeclarationOrUsagesText (myFixture.editor) }).submit(AppExecutorUtil.getAppExecutorService()).get()
-    assertEquals(expectedDoc, UIUtil.getHtmlBody(doc!!))
+    assertEquals(expectedDoc, UIUtil.getHtmlBodyWithoutPreWrapper(doc!!))
   }
 
   fun configure(text: String) {

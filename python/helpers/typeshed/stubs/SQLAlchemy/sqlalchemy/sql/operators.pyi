@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from collections.abc import Container, Iterable
 from operator import truediv
 from typing import Any, Generic, TypeVar

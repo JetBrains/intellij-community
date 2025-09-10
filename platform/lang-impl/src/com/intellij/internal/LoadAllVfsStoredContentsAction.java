@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.internal;
 
@@ -78,7 +78,7 @@ final class LoadAllVfsStoredContentsAction extends AnAction implements DumbAware
       return true;
     }
     try {
-      try (InputStream stream = PersistentFS.getInstance().getInputStream(file)) {
+      try (InputStream stream = ManagingFS.getInstance().getInputStream(file)) {
         // check if it's really cached in VFS
         if (!(stream instanceof DataInputStream)) return true;
         byte[] bytes = FileUtil.loadBytes(stream);

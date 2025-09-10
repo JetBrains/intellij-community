@@ -30,9 +30,6 @@ public class ScopeDescriptor implements ColoredItem {
   }
 
   public @Nullable SearchScope getScope() {
-    if (needsUserInputForScope()) {
-      performUiAction();
-    }
     return myScope;
   }
 
@@ -42,10 +39,6 @@ public class ScopeDescriptor implements ColoredItem {
   @ApiStatus.Experimental
   public boolean needsUserInputForScope() {
     return false;
-  }
-
-  @ApiStatus.Experimental
-  protected void performUiAction() {
   }
 
   public boolean scopeEquals(SearchScope scope) {

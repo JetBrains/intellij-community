@@ -2,16 +2,19 @@
 package com.jetbrains.performancePlugin
 
 import com.intellij.ide.CliResult
-import com.intellij.openapi.application.ApplicationStarter
+import com.intellij.openapi.application.ModernApplicationStarter
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import kotlin.system.exitProcess
 
-internal class StopTelemetryStarter : ApplicationStarter {
+internal class StopTelemetryStarter : ModernApplicationStarter() {
   override fun canProcessExternalCommandLine(): Boolean = true
 
-  override fun main(args: List<String>) {
+  override suspend fun start(args: List<String>) {
     logger<StopTelemetryStarter>().info("IDE is not running")
     println("IDE is not running")
+
+    exitProcess(0)
   }
 
   override suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CliResult {

@@ -38,9 +38,9 @@ open class InstalledPluginsTableModel @JvmOverloads constructor(
   @JvmField
   protected val myInstalledPluginComponents: MutableList<ListPluginComponent> = mutableListOf()
   @JvmField
-  protected val myInstalledPluginComponentMap: MutableMap<PluginId?, MutableList<ListPluginComponent>> = mutableMapOf()
+  protected val myInstalledPluginComponentMap: MutableMap<PluginId, MutableList<ListPluginComponent>> = mutableMapOf()
   @JvmField
-  protected val myMarketplacePluginComponentMap: MutableMap<PluginId?, MutableList<ListPluginComponent>> = mutableMapOf()
+  protected val myMarketplacePluginComponentMap: MutableMap<PluginId, MutableList<ListPluginComponent>> = mutableMapOf()
   @JvmField
   protected val myDetailPanels: MutableList<PluginDetailsPageComponent> = mutableListOf()
   @JvmField

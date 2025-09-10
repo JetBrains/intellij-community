@@ -59,6 +59,21 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     assertEventRejected(validator, elg, "NODE_REF_ABC")
   }
 
+  fun test_simple_dictionary_rules() {
+    val validator = newValidatorByFileWithDictionary(
+      "test_simple_dictionary_rules.json",
+      "test_simple_dictionary.ndjson"
+    )
+
+    val elg = EventLogGroup("dictionary.test.group", 1)
+
+    assertEventDataAccepted(validator, elg, "dictionary_value", "value1")
+    assertEventDataAccepted(validator, elg, "dictionary_value", "value2")
+    assertEventDataAccepted(validator, elg, "dictionary_value", "value3")
+    assertEventDataAccepted(validator, elg, "dictionary_value", "value4")
+    assertEventDataNotAccepted(validator, elg, ValidationResultType.REJECTED, "dictionary_value", "value5")
+  }
+
   @Test
   fun test_simple_enum_rules_with_spaces() {
     // enum values: ["NODE_REF_AAA", "NODE_REF_BBB", "NODE_REF_CCC"]

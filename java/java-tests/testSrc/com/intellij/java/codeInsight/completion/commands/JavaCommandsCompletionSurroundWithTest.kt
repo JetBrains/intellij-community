@@ -30,7 +30,7 @@ class JavaCommandsCompletionSurroundWithTest : LightFixtureCompletionTestCase() 
     myFixture.checkResult("""
         class A { 
             void a(){
-                if () {
+                if (<caret>) {
                     int a = 1;
                 }
             }
@@ -51,7 +51,7 @@ class JavaCommandsCompletionSurroundWithTest : LightFixtureCompletionTestCase() 
     myFixture.checkResult("""
         class A { 
             void a(){
-                if () {
+                if (<caret>) {
                     int a = 1;
                 }
             }

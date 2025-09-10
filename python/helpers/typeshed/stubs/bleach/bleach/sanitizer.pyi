@@ -1,6 +1,6 @@
 from collections.abc import Callable, Container, Iterable, Iterator
 from re import Pattern
-from typing import Final, Protocol
+from typing import Final, Protocol, type_check_only
 from typing_extensions import TypeAlias
 
 from html5lib.filters.base import Filter
@@ -22,9 +22,13 @@ INVISIBLE_REPLACEMENT_CHAR: Final = "?"
 
 class NoCssSanitizerWarning(UserWarning): ...
 
-# A html5lib Filter class
-class _Filter(Protocol):
-    def __call__(self, *, source: BleachSanitizerFilter): ...
+@type_check_only
+class _FilterConstructor(Protocol):
+    def __call__(self, *, source: BleachSanitizerFilter) -> Filter: ...
+
+# _FilterConstructor used to be called _Filter
+# this alias is obsolete and can potentially be removed in the future
+_Filter: TypeAlias = _FilterConstructor  # noqa: Y047
 
 _AttributeFilter: TypeAlias = Callable[[str, str, str], bool]
 _AttributeDict: TypeAlias = dict[str, list[str] | _AttributeFilter] | dict[str, list[str]] | dict[str, _AttributeFilter]
@@ -48,7 +52,7 @@ class Cleaner:
         protocols: Iterable[str] = ...,
         strip: bool = False,
         strip_comments: bool = True,
-        filters: Iterable[_Filter] | None = None,
+        filters: Iterable[_FilterConstructor] | None = None,
         css_sanitizer: CSSSanitizer | None = None,
     ) -> None: ...
     def clean(self, text: str) -> str: ...

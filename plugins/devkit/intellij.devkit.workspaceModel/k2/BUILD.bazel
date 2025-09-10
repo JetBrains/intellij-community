@@ -23,7 +23,7 @@ jvm_library(
   name = "k2",
   module_name = "intellij.devkit.workspaceModel.k2",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_k2",
   deps = [
     "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
@@ -47,7 +47,7 @@ jvm_library(
 jvm_library(
   name = "k2_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_k2",
   associates = [":k2"],
   deps = [

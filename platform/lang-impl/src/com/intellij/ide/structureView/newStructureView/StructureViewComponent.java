@@ -8,6 +8,7 @@ import com.intellij.ide.structureView.customRegions.CustomRegionTreeElement;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.structureView.logical.LogicalStructureDataKeys;
+import com.intellij.ide.structureView.logical.impl.LogicalStructureElementsVisitor;
 import com.intellij.ide.structureView.logical.impl.LogicalStructureViewModel;
 import com.intellij.ide.structureView.logical.impl.LogicalStructureViewTreeElement;
 import com.intellij.ide.structureView.logical.model.LogicalPsiDescription;
@@ -473,7 +474,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
           if (psiDescriptions == null) {
             psiDescriptions = logicalStructureViewModel.getAssembledModel().getLogicalPsiDescriptions();
           }
-          return logicalStructureViewModel.visitPathForLogicalElementSelection(treeElement, element, psiDescriptions);
+          return LogicalStructureElementsVisitor.INSTANCE.visitPathForLogicalElementSelection(treeElement, element, psiDescriptions);
         }
         return visitPathForElementSelection(path, element, editorOffset, state);
       }
@@ -1000,7 +1001,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     @Override
     public void processMouseEvent(MouseEvent event) {
       if (event.getID() == MouseEvent.MOUSE_PRESSED) requestFocus();
-      if (myTreeModel instanceof StructureViewModel.ActionHandler || myTreeModel instanceof StructureViewModel.ClickHandler) {
+      if (myTreeModel instanceof StructureViewModel.ClickHandler) {
         processCustomEventHandler(myTreeModel, event)
           .whenComplete((Boolean handled, Throwable t) -> {
             if (handled != null && handled)
@@ -1067,8 +1068,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       int fragmentIndex = simpleColoredComponent.findFragmentAt(dx);
       if (fragmentIndex < 0)
         return CompletableFuture.completedFuture(false);
-      else if (handler instanceof StructureViewModel.ActionHandler actionHandler)
-        return CompletableFuture.completedFuture(actionHandler.handleClick(treeElement, fragmentIndex));
       else if (handler instanceof StructureViewModel.ClickHandler actionHandler)
         return actionHandler.handleClick(new StructureViewClickEvent(treeElement, fragmentIndex));
       else
@@ -1263,7 +1262,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       this.mainComponent = mainComponent;
 
       add(mainComponent, DEFAULT_LAYER);
-      if (Registry.is("logical.structure.actions.enabled", true)) {
+      if (Registry.is("logical.structure.actions.enabled", false)) {
         floatingToolbar = new StructureViewFloatingToolbar(this, StructureViewComponent.this);
         add(floatingToolbar, POPUP_LAYER);
         mainComponent.getVerticalScrollBar().addAdjustmentListener(event -> floatingToolbar.setScrollingDy(event.getValue()));

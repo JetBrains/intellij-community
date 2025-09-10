@@ -10,7 +10,7 @@ jvm_library(
   name = "multiplatform",
   module_name = "intellij.platform.util.base.multiplatform",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:jetbrains-annotations",

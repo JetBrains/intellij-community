@@ -114,7 +114,7 @@
     <registryKey
       key="build.toolwindow.split.tree"
       description="Use split implementation (frontend/backend) of Build tool window"
-      defaultValue="false"
+      defaultValue="true"
     />
 
     <projectService serviceInterface="com.intellij.toolWindow.ToolWindowStripeManager"
@@ -190,6 +190,9 @@
     <!--XNext-->
     <applicationService serviceInterface="com.intellij.openapi.application.impl.InternalUICustomization"
                         serviceImplementation="com.intellij.openapi.application.impl.islands.IslandsUICustomization"/>
+
+    <applicationService serviceInterface="com.intellij.ui.tabs.impl.IslandsPainterProvider"
+                        serviceImplementation="com.intellij.openapi.application.impl.islands.IslandsInternalPainterProvider"/>
     <!---->
 
     <adEntityProvider implementation="com.intellij.openapi.editor.impl.ad.document.DefaultAdEntityProvider" />

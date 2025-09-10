@@ -60,7 +60,7 @@ jvm_library(
     "//plugins/copyright",
     "//plugins/IntelliLang:langInjection",
     "@lib//:guava",
-    "//plugins/IntelliLang/java-support:java-langInjection",
+    "//java/langInjection",
     "//jps/jps-builders:build",
     "//spellchecker",
     "//plugins/junit",
@@ -123,6 +123,7 @@ jvm_library(
     "//java/compiler/impl",
     "//platform/ide-core-impl",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//platform/lang-api:lang",
     "@community//build:build-javac-rt",
     "//platform/editor-ui-ex:editor-ex",
@@ -140,8 +141,8 @@ jvm_library(
     "//plugins/ant:ant_test_lib",
     "@lib//:guava",
     "//java/testFramework",
-    "//plugins/IntelliLang/java-support:java-langInjection",
-    "//plugins/IntelliLang/xml-support:xml-langInjection",
+    "//java/langInjection",
+    "//xml/langInjection",
     "//jps/jps-builders:build",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
@@ -178,6 +179,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//java/unscramble",
   ],
+  exports = ["//plugins/groovy/groovy-psi:psi"],
   runtime_deps = [":groovy_resources"]
 )
 ### auto-generated section `build intellij.groovy` end

@@ -7,8 +7,10 @@ import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.events.RoundedIntEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
-object PyDataViewerCollector : CounterUsagesCollector() {
+@ApiStatus.Internal
+internal object PyDataViewerCollector : CounterUsagesCollector() {
 
   private val GROUP = EventLogGroup("python.dataview", 5)
 
@@ -30,7 +32,8 @@ object PyDataViewerCollector : CounterUsagesCollector() {
   val FORMATTING_APPLIED_EVENT: EventId1<Boolean> = GROUP.registerEvent("formatting.applied", IS_NEW_TABLE_FIELD)
   val RELOAD_APPLIED_EVENT: EventId1<Boolean> = GROUP.registerEvent("reload.applied", IS_NEW_TABLE_FIELD)
 
-  enum class DataType(private val typeName: String?) {
+  @ApiStatus.Internal
+  internal enum class DataType(private val typeName: String?) {
     ARRAY("ndarray"),
     DATAFRAME("DataFrame"),
     GEO_DATAFRAME("GeoDataFrame"),

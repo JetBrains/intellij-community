@@ -4,10 +4,12 @@ package org.jetbrains.kotlin.idea.jvm.shared.scratch.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 
+@ApiStatus.Internal
 class StopScratchAction : ScratchAction(
-    KotlinJvmBundle.getLazyMessage("scratch.stop.button"),
+    KotlinJvmBundle.messagePointer("scratch.stop.button"),
     AllIcons.Actions.Suspend
 ) {
 

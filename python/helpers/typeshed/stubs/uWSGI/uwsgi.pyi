@@ -2,13 +2,14 @@ from _typeshed import HasFileno, OptExcInfo, ReadOnlyBuffer
 from _typeshed.wsgi import WSGIApplication
 from collections.abc import Callable
 from types import ModuleType
-from typing import Any, Literal, Protocol, final, overload
+from typing import Any, Literal, Protocol, final, overload, type_check_only
 from typing_extensions import Self, TypeAlias
 
 import uwsgidecorators
 
 _TrueOrNone: TypeAlias = Literal[True] | None
 
+@type_check_only
 class _RPCCallable(Protocol):
     def __call__(self, *args: bytes) -> bytes | None: ...
 

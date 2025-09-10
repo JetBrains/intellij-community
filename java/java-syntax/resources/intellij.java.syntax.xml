@@ -1,2 +1,9 @@
 <idea-plugin>
+
+  <extensionPoints>
+    <extensionPoint name="java.syntax.languageLevelProvider"
+                    interface="com.intellij.java.syntax.element.JavaLanguageLevelProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
 </idea-plugin>

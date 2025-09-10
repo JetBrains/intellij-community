@@ -50,10 +50,10 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.*
-import java.util.*
 import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
 import javax.swing.*
@@ -194,10 +194,17 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
               searchStatePublisher.searchStoppedProducingResults(searchId, resultListModel.size, true)
 
               if (!resultListModel.isValid || resultListModel.isEmpty) {
-                if (!textField.text.isEmpty() &&
-                    (vm.currentTab.getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(true) ?: false) {
-                  headerPane.updateActionsAsync()
-                  return@withContext
+                if (!textField.text.isEmpty()) {
+                  val currentTab = vm.currentTab
+                  if (currentTab.tabId == searchContext.tabId) {
+
+                    if ((currentTab.getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(true) ?: false) {
+                      currentTab.lastNotFoundString = textField.text
+                      headerPane.updateActionsAsync()
+                      return@withContext
+                    }
+
+                  }
                 }
               }
 
@@ -413,6 +420,30 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     }
     else {
       resultList.repaint()
+      refreshPresentations()
+    }
+  }
+
+  private suspend fun refreshPresentations() {
+    val visibleRange = resultList.firstVisibleIndex..resultList.lastVisibleIndex
+    val visibleRows = visibleRange.mapNotNull { resultListModel.get(it) as? SeResultListItemRow }
+
+    coroutineScope {
+      visibleRows.forEach { itemRow ->
+        val item = itemRow.item
+
+        launch {
+          val newPresentation = vm.currentTab.getUpdatedPresentation(item)
+          if (newPresentation != null) {
+            val newItemRow = SeResultListItemRow(item.withPresentation(newPresentation))
+
+            withContext(Dispatchers.EDT) {
+              val index = resultListModel.indexOf(itemRow).takeIf { it != -1 } ?: return@withContext
+              resultListModel.set(index, newItemRow)
+            }
+          }
+        }
+      }
     }
   }
 
@@ -467,7 +498,6 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       private fun indexChanged(index: Int) {
         if (index != currentDescriptionIndex) {
           currentDescriptionIndex = index
-          showDescriptionForIndex()
         }
       }
     }
@@ -581,10 +611,6 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     })
   }
 
-  private fun showDescriptionForIndex() {
-    // TODO: Implement description footer
-  }
-
   private fun onFocusLost(e: FocusEvent) {
     if (isWaylandToolkit()) {
       // In Wayland focus is always lost when the window is being moved.
@@ -653,11 +679,36 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   private fun createExtendedInfoComponent(): ExtendedInfoComponent? {
     if (isExtendedInfoEnabled()) {
       val leftText = fun(element: Any): String? {
-        val leftText = (element as? SeResultListItemRow)?.item?.presentation?.extendedDescription
+        val leftText = (element as? SeResultListItemRow)?.item?.presentation?.extendedInfo?.text
         extendedInfoContainer.isVisible = !leftText.isNullOrEmpty()
         return leftText
       }
-      return ExtendedInfoComponent(project, ExtendedInfo(leftText) { null })
+
+      val rightAction = fun(element: Any?): AnAction? {
+        val extendedInfo = (element as? SeResultListItemRow)?.item?.presentation?.extendedInfo
+        val actionText = extendedInfo?.actionText
+        val actionDescription = extendedInfo?.actionDescription
+        val item = (element as? SeResultListItemRow)?.item ?: return null
+
+        return object : DumbAwareAction({ actionText }, { actionDescription }) {
+          override fun actionPerformed(e: AnActionEvent) {
+            vm.coroutineScope.launch {
+              if (vm.currentTab.performExtendedAction(item)) {
+                withContext(Dispatchers.EDT) {
+                  closePopup()
+                }
+              }
+            }
+          }
+        }.apply {
+          if (extendedInfo?.keyCode != null && extendedInfo.modifiers != null ) {
+            val shortcutSet = CustomShortcutSet(KeyStroke.getKeyStroke(extendedInfo.keyCode!!, extendedInfo.modifiers!!))
+            registerCustomShortcutSet(shortcutSet, resultList, this@SePopupContentPane)
+          }
+        }
+      }
+
+      return ExtendedInfoComponent(project, ExtendedInfo(leftText, rightAction))
     }
     return null
   }
@@ -780,6 +831,11 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       resultList.selectedIndex = newIndex
       ScrollingUtil.ensureIndexIsVisible(resultList, newIndex, -1)
     }
+  }
+
+  @TestOnly
+  fun getResultListModel(): SeResultListModel {
+    return resultListModel
   }
 
   override fun dispose() {}

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -38,12 +39,12 @@ class ConvertSecondaryConstructorToPrimaryInspection : IntentionBasedInspection<
     },
     problemText = KotlinBundle.message("convert.to.primary.constructor.before.text")
 ) {
-    override fun inspectionTarget(element: KtSecondaryConstructor) = element.getConstructorKeyword()
+    override fun inspectionTarget(element: KtSecondaryConstructor): PsiElement = element.getConstructorKeyword()
 }
 
 class ConvertSecondaryConstructorToPrimaryIntention : SelfTargetingRangeIntention<KtSecondaryConstructor>(
     KtSecondaryConstructor::class.java,
-    KotlinBundle.lazyMessage("convert.to.primary.constructor")
+    KotlinBundle.messagePointer("convert.to.primary.constructor")
 ) {
     private tailrec fun ConstructorDescriptor.isReachableByDelegationFrom(
         constructor: ConstructorDescriptor, context: BindingContext, visited: Set<ConstructorDescriptor> = emptySet()

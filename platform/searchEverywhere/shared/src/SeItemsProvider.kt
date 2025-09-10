@@ -22,4 +22,11 @@ interface SeItemsProvider: Disposable {
    * Defines if results can be shown in <i>Find</i> toolwindow.
    */
   suspend fun canBeShownInFindResults(): Boolean
+
+  /**
+   * @return true if the popup should be closed, false otherwise
+   */
+  suspend fun performExtendedAction(item: SeItem): Boolean {
+    return false
+  }
 }

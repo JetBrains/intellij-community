@@ -1,0 +1,48 @@
+### auto-generated section `build intellij.sh.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.sh.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:gson",
+    "//plugins/sh/core",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/indexing-impl",
+    "//platform/core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/usageView",
+    "//platform/execution-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-ui",
+    "//platform/xdebugger-api:debugger",
+    "//platform/util/jdom",
+    "//platform/indexing-api:indexing",
+    "//spellchecker",
+    "//platform/analysis-api:analysis",
+    "//platform/statistics",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+  ],
+  runtime_deps = [
+    ":backend_resources",
+    "//platform/backend",
+  ]
+)
+### auto-generated section `build intellij.sh.backend` end

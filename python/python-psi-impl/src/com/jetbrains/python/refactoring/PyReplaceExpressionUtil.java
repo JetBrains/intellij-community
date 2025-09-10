@@ -150,7 +150,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
         final PyType valueType = context.getType(formatValue);
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(oldExpression);
         final PyType tupleType = builtinCache.getTupleType();
-        final PyType mappingType = PyTypeParser.getTypeByName(oldExpression, "collections.Mapping", context);
+        final PyType mappingType = PyTypeParser.getTypeByName(oldExpression, "collections.abc.Mapping", context);
         if (!PyTypeChecker.match(tupleType, valueType, context) &&
             !(mappingType != null && PyTypeChecker.match(mappingType, valueType, context))) {
           return replaceSubstringWithSingleValueFormatting(oldExpression, textRange, prefix, suffix, formatValue, newText, substitutions);

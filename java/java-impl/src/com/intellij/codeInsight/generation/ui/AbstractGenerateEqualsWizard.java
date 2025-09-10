@@ -9,15 +9,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.ui.AbstractMemberSelectionPanel;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import java.awt.*;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Nikolay.Tropin
@@ -159,6 +158,11 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
     }
 
     return true;
+  }
+
+  @TestOnly
+  public Set<Map.Entry<M,I>> getFieldsToNonNull() {
+    return new LinkedHashSet<>(myFieldsToNonNull.entrySet());
   }
 
   @Override

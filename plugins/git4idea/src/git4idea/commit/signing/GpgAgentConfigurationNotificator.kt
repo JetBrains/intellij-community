@@ -25,31 +25,34 @@ import git4idea.GitNotificationIdsHolder.Companion.GPG_AGENT_CONFIGURATION_SUCCE
 import git4idea.config.GitExecutable
 import git4idea.config.GitExecutableManager
 import git4idea.i18n.GitBundle
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import kotlin.io.path.pathString
 
 @Service(Service.Level.PROJECT)
-internal class GpgAgentConfigurationNotificator(private val project: Project,
-                                                private val coroutineScope: CoroutineScope) {
+internal class GpgAgentConfigurationNotificator(private val project: Project) {
 
   private fun isEnabled() = Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry.notification.proposal", false)
 
+  suspend fun proposeCustomPinentryAgentConfiguration(type: NotificationType = NotificationType.INFORMATION) {
+    if (!isEnabled()) return
+    val canBeConfigured = withContext(Dispatchers.IO) {
+      GpgAgentConfigurator.getInstance(project).canBeConfigured(project)
+    }
+    if (!canBeConfigured) return
+
+    runOnceForProject(project, id = "GPG_PINENTRY_CONFIGURATION_PROPOSAL") {
+      showPinentryConfigurationNotification(true, type)
+    }
+  }
+
   @RequiresBackgroundThread
-  fun proposeCustomPinentryAgentConfiguration(isSuggestion: Boolean, type: NotificationType = NotificationType.INFORMATION) {
+  fun proposeCustomPinentryAgentConfigurationSync(type: NotificationType = NotificationType.INFORMATION) {
     if (!isEnabled()) return
     if (!GpgAgentConfigurator.getInstance(project).canBeConfigured(project)) return
 
-    if (isSuggestion) {
-      coroutineScope.launch {
-        runOnceForProject(project, id = "GPG_PINENTRY_CONFIGURATION_PROPOSAL") {
-          showPinentryConfigurationNotification(true, type)
-        }
-      }
-    } else {
-      showPinentryConfigurationNotification(false, type)
-    }
+    showPinentryConfigurationNotification(false, type)
   }
 
   private fun showPinentryConfigurationNotification(isSuggestion: Boolean, type: NotificationType) {

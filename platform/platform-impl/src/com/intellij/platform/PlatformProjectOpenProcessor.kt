@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.checkTrustedState
+import com.intellij.openapi.project.impl.getOrInitializeModule
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.startup.StartupManager
@@ -285,7 +286,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return project
     }
 
-    suspend fun runDirectoryProjectConfigurators(baseDir: Path, project: Project, newProject: Boolean): Module? {
+    suspend fun runDirectoryProjectConfigurators(baseDir: Path, project: Project, newProject: Boolean, createModule: Boolean): Module? {
       project.putUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR, true)
 
       val moduleRef = Ref<Module>()
@@ -297,6 +298,9 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
       }
 
+      if (createModule){
+        moduleRef.getOrInitializeModule(project, virtualFile)
+      }
       for (configurator in EP_NAME.lazySequence()) {
         try {
           if (configurator is DirectoryProjectConfigurator.AsyncDirectoryProjectConfigurator) {

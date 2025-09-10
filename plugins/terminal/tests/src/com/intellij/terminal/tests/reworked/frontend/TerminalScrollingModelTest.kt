@@ -461,7 +461,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
       assertThat(offset)
         .overridingErrorMessage {
           val text = outputModel.document.text
-          val textWithCursor = StringBuilder(text).insert(outputModel.cursorOffsetState.value, "<cursor>")
+          val textWithCursor = StringBuilder(text).insert(outputModel.cursorOffsetState.value.toRelative(), "<cursor>")
           "Expected scroll offset: ${expectedScrollOffset}, but got $offset. Output text:\n$textWithCursor"
         }
         .isEqualTo(expectedScrollOffset)

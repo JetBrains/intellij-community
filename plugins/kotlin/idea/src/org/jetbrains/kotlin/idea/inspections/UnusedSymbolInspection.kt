@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
+import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInsight.options.JavaInspectionButtons
 import com.intellij.codeInsight.options.JavaInspectionControls
 import com.intellij.codeInspection.*
@@ -699,14 +700,14 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             val fqName = resolvedName.fqName?.asString() ?: continue
 
             // checks taken from com.intellij.codeInspection.util.SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes
-            if (fqName.startsWith("kotlin.")
-                || fqName.startsWith("java.")
-                || fqName.startsWith("javax.")
-                || fqName.startsWith("org.jetbrains.annotations.")
-            )
-                continue
+            if (
+                fqName.startsWith("kotlin.") || 
+                fqName.startsWith("java.") || 
+                fqName.startsWith("javax.") || 
+                fqName.startsWith("org.jetbrains.annotations.")
+            ) continue
 
-            val intentionAction = createAddToDependencyInjectionAnnotationsFix(declaration.project, fqName)
+            val intentionAction = QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(declaration.project, fqName)
 
             list.add(IntentionWrapper(intentionAction))
         }

@@ -22,6 +22,7 @@ class ShowInstancesByClassAction : XDebuggerTreeActionBase(), ActionRemoteBehavi
   override fun isEnabled(node: XValueNodeImpl, e: AnActionEvent): Boolean {
     if (DebuggerUIUtil.getSessionProxy(e) == null) return false
     val xValue = node.valueContainer
+    if (!XDebugManagerProxy.getInstance().hasBackendCounterpart(xValue)) return false
     val descriptor = xValue.xValueDescriptorAsync?.getNow(null) as? JavaValueDescriptor ?: return false
     val objectReferenceInfo = descriptor.objectReferenceInfo ?: return false
 

@@ -63,7 +63,9 @@ class _DataLayout:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _DataLayoutEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_DataLayout.ValueType], builtins.type):
+class _DataLayoutEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_DataLayout.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     kYXDepthBatch: _DataLayout.ValueType  # 0
     """Naming convention:
@@ -121,7 +123,9 @@ class _FilterLayout:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _FilterLayoutEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_FilterLayout.ValueType], builtins.type):
+class _FilterLayoutEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_FilterLayout.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     kOutputInputYX: _FilterLayout.ValueType  # 0
     """Naming convention:
@@ -175,7 +179,9 @@ class _ActivationMode:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _ActivationModeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_ActivationMode.ValueType], builtins.type):
+class _ActivationModeEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_ActivationMode.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     kNone: _ActivationMode.ValueType  # 0
     kSigmoid: _ActivationMode.ValueType  # 1
@@ -229,7 +235,9 @@ class _ConvolutionMode:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _ConvolutionModeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_ConvolutionMode.ValueType], builtins.type):
+class _ConvolutionModeEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_ConvolutionMode.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     CROSS_CORRELATION: _ConvolutionMode.ValueType  # 0
     CONVOLUTION: _ConvolutionMode.ValueType  # 1
@@ -248,7 +256,9 @@ class _ConvolutionKind:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _ConvolutionKindEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_ConvolutionKind.ValueType], builtins.type):
+class _ConvolutionKindEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_ConvolutionKind.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     INVALID: _ConvolutionKind.ValueType  # 0
     FORWARD: _ConvolutionKind.ValueType  # 1
@@ -289,7 +299,9 @@ class _FusedMHAKind:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _FusedMHAKindEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_FusedMHAKind.ValueType], builtins.type):
+class _FusedMHAKindEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_FusedMHAKind.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     BMM1_OUTPUT_UNKNOWN: _FusedMHAKind.ValueType  # 0
     BMM1_OUTPUT_INPUT_TYPE: _FusedMHAKind.ValueType  # 1
@@ -307,7 +319,9 @@ class _FMHAMaskKind:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _FMHAMaskKindEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_FMHAMaskKind.ValueType], builtins.type):
+class _FMHAMaskKindEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_FMHAMaskKind.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     NO_MASK: _FMHAMaskKind.ValueType  # 0
     PADDING: _FMHAMaskKind.ValueType  # 1
@@ -348,9 +362,30 @@ class TensorDescriptorProto(google.protobuf.message.Message):
         data_layout: global___DataLayout.ValueType | None = ...,
         filter_layout: global___FilterLayout.ValueType | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["data_layout", b"data_layout", "filter_layout", b"filter_layout", "layout_oneof", b"layout_oneof"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["data_layout", b"data_layout", "data_type", b"data_type", "dimensions", b"dimensions", "filter_layout", b"filter_layout", "layout_oneof", b"layout_oneof"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["layout_oneof", b"layout_oneof"]) -> typing.Literal["data_layout", "filter_layout"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "data_layout", b"data_layout", "filter_layout", b"filter_layout", "layout_oneof", b"layout_oneof"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "data_layout",
+            b"data_layout",
+            "data_type",
+            b"data_type",
+            "dimensions",
+            b"dimensions",
+            "filter_layout",
+            b"filter_layout",
+            "layout_oneof",
+            b"layout_oneof",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["layout_oneof", b"layout_oneof"]
+    ) -> typing.Literal["data_layout", "filter_layout"] | None: ...
 
 global___TensorDescriptorProto = TensorDescriptorProto
 
@@ -364,7 +399,9 @@ class AlgorithmProto(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _MathTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[AlgorithmProto._MathType.ValueType], builtins.type):
+    class _MathTypeEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[AlgorithmProto._MathType.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         DEFAULT_MATH: AlgorithmProto._MathType.ValueType  # 0
         TENSOR_OP_MATH: AlgorithmProto._MathType.ValueType  # 1
@@ -387,12 +424,7 @@ class AlgorithmProto(google.protobuf.message.Message):
         VALUE_FIELD_NUMBER: builtins.int
         key: builtins.int
         value: builtins.int
-        def __init__(
-            self,
-            *,
-            key: builtins.int | None = ...,
-            value: builtins.int | None = ...,
-        ) -> None: ...
+        def __init__(self, *, key: builtins.int | None = ..., value: builtins.int | None = ...) -> None: ...
         def ClearField(self, field_name: typing.Literal["key", b"key", "value", b"value"]) -> None: ...
 
     ALGO_ID_FIELD_NUMBER: builtins.int
@@ -433,7 +465,21 @@ class AlgorithmProto(google.protobuf.message.Message):
         workspace_size: google.protobuf.wrappers_pb2.UInt64Value | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["workspace_size", b"workspace_size"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["algo_id", b"algo_id", "is_cudnn_frontend", b"is_cudnn_frontend", "math_type", b"math_type", "tuning_knobs", b"tuning_knobs", "workspace_size", b"workspace_size"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "algo_id",
+            b"algo_id",
+            "is_cudnn_frontend",
+            b"is_cudnn_frontend",
+            "math_type",
+            b"math_type",
+            "tuning_knobs",
+            b"tuning_knobs",
+            "workspace_size",
+            b"workspace_size",
+        ],
+    ) -> None: ...
 
 global___AlgorithmProto = AlgorithmProto
 
@@ -461,14 +507,52 @@ class AlgorithmConfigProto(google.protobuf.message.Message):
         algorithm_no_scratch: global___AlgorithmProto | None = ...,
         scratch_size: builtins.int | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["algorithm", b"algorithm", "algorithm_no_scratch", b"algorithm_no_scratch", "optional_algorithm", b"optional_algorithm", "optional_algorithm_no_scratch", b"optional_algorithm_no_scratch", "optional_scratch_size", b"optional_scratch_size", "scratch_size", b"scratch_size"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["algorithm", b"algorithm", "algorithm_no_scratch", b"algorithm_no_scratch", "optional_algorithm", b"optional_algorithm", "optional_algorithm_no_scratch", b"optional_algorithm_no_scratch", "optional_scratch_size", b"optional_scratch_size", "scratch_size", b"scratch_size"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "algorithm",
+            b"algorithm",
+            "algorithm_no_scratch",
+            b"algorithm_no_scratch",
+            "optional_algorithm",
+            b"optional_algorithm",
+            "optional_algorithm_no_scratch",
+            b"optional_algorithm_no_scratch",
+            "optional_scratch_size",
+            b"optional_scratch_size",
+            "scratch_size",
+            b"scratch_size",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "algorithm",
+            b"algorithm",
+            "algorithm_no_scratch",
+            b"algorithm_no_scratch",
+            "optional_algorithm",
+            b"optional_algorithm",
+            "optional_algorithm_no_scratch",
+            b"optional_algorithm_no_scratch",
+            "optional_scratch_size",
+            b"optional_scratch_size",
+            "scratch_size",
+            b"scratch_size",
+        ],
+    ) -> None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_algorithm", b"optional_algorithm"]) -> typing.Literal["algorithm"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_algorithm", b"optional_algorithm"]
+    ) -> typing.Literal["algorithm"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_algorithm_no_scratch", b"optional_algorithm_no_scratch"]) -> typing.Literal["algorithm_no_scratch"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_algorithm_no_scratch", b"optional_algorithm_no_scratch"]
+    ) -> typing.Literal["algorithm_no_scratch"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_scratch_size", b"optional_scratch_size"]) -> typing.Literal["scratch_size"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_scratch_size", b"optional_scratch_size"]
+    ) -> typing.Literal["scratch_size"] | None: ...
 
 global___AlgorithmConfigProto = AlgorithmConfigProto
 
@@ -512,6 +596,24 @@ class ConvolutionDescriptorProto(google.protobuf.message.Message):
         convolution_mode: global___ConvolutionMode.ValueType | None = ...,
         name: builtins.str | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["compute_mode", b"compute_mode", "convolution_mode", b"convolution_mode", "dilations", b"dilations", "group_count", b"group_count", "name", b"name", "paddings", b"paddings", "strides", b"strides"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "compute_mode",
+            b"compute_mode",
+            "convolution_mode",
+            b"convolution_mode",
+            "dilations",
+            b"dilations",
+            "group_count",
+            b"group_count",
+            "name",
+            b"name",
+            "paddings",
+            b"paddings",
+            "strides",
+            b"strides",
+        ],
+    ) -> None: ...
 
 global___ConvolutionDescriptorProto = ConvolutionDescriptorProto

@@ -11,7 +11,7 @@ jvm_library(
   name = "code-insight-common",
   module_name = "kotlin.gradle.code-insight-common",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -48,9 +48,6 @@ jvm_library(
     "//plugins/kotlin/project-wizard/core",
     "//plugins/gradle/java",
     "//plugins/kotlin/base/statistics",
-    "//platform/diff-api:diff",
-    "//platform/diff-impl",
-    "//platform/util/diff",
     "//platform/vcs-api/vcs-api-core:vcs-core",
     "//platform/core-ui",
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",

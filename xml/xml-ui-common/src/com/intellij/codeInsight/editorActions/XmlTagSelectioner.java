@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +14,7 @@ import java.util.List;
 public class XmlTagSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
-    return e instanceof XmlTag;
+    return e instanceof XmlTag && !(e instanceof HtmlTag);
   }
 
   @Override

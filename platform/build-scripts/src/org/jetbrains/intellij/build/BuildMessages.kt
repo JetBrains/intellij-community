@@ -3,7 +3,9 @@ package org.jetbrains.intellij.build
 
 import java.util.concurrent.Callable
 
-interface BuildMessages: System.Logger {
+interface BuildMessages {
+  fun debug(message: String)
+
   fun info(message: String)
 
   fun warning(message: String)
@@ -11,9 +13,9 @@ interface BuildMessages: System.Logger {
   /**
    * Report an error and stop the build process
    */
-  fun error(message: String)
+  fun logErrorAndThrow(message: String)
 
-  fun error(message: String, cause: Throwable)
+  fun logErrorAndThrow(message: String, cause: Throwable)
 
   fun compilationErrors(compilerName: String, messages: List<String>)
 

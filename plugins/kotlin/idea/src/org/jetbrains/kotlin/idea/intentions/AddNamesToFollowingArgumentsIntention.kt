@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 class AddNamesToFollowingArgumentsIntention : SelfTargetingIntention<KtValueArgument>(
-    KtValueArgument::class.java, KotlinBundle.lazyMessage("add.names.to.this.argument.and.following.arguments")
+    KtValueArgument::class.java, KotlinBundle.messagePointer("add.names.to.this.argument.and.following.arguments")
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtValueArgument, caretOffset: Int): Boolean {
         val argumentList = element.parent as? KtValueArgumentList ?: return false

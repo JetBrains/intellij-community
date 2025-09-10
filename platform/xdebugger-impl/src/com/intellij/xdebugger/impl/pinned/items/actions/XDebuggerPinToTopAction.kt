@@ -1,8 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.pinned.items.actions
 
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.pinned.items.*
@@ -13,25 +16,26 @@ import icons.PlatformDebuggerImplIcons
 import java.awt.event.MouseEvent
 import java.util.*
 
-class XDebuggerPinToTopAction : XDebuggerTreeActionBase() {
+class XDebuggerPinToTopAction : XDebuggerTreeActionBase(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
 
     companion object {
-
-        fun pinToTopField(event: MouseEvent?, node: XValueNodeImpl) {
-            ActionManager.getInstance().getAction("XDebugger.PinToTop").actionPerformed(
-                AnActionEvent.createFromInputEvent(
-                    event,
-                    XDebuggerPinToTopAction::class.java.name,
-                    Presentation(),
-                    SimpleDataContext.builder()
-                      .add(XDebuggerTree.XDEBUGGER_TREE_KEY, node.tree)
-                      .add(CommonDataKeys.PROJECT, node.tree.project)
-                      .add(XDebuggerTree.SELECTED_NODES, Collections.singletonList(node))
-                      .build()
-                )
-            )
+        fun pinToTopField(mouseEvent: MouseEvent?, node: XValueNodeImpl) {
+          val event = AnActionEvent.createFromInputEvent(
+            mouseEvent,
+            XDebuggerPinToTopAction::class.java.name,
+            Presentation(),
+            SimpleDataContext.builder()
+              .add(XDebuggerTree.XDEBUGGER_TREE_KEY, node.tree)
+              .add(CommonDataKeys.PROJECT, node.tree.project)
+              .add(XDebuggerTree.SELECTED_NODES, Collections.singletonList(node))
+              .build()
+          )
+          if (node.name != null) { // to follow the "perform" logic
+            performImpl(node.tree.project, node)
+            val action = ActionManager.getInstance().getAction("XDebugger.PinToTop")
+            ActionsCollectorImpl.onAfterActionInvoked(action, event, AnActionResult.PERFORMED)
+          }
         }
-
     }
 
     override fun update(e: AnActionEvent) {
@@ -60,25 +64,29 @@ class XDebuggerPinToTopAction : XDebuggerTreeActionBase() {
   }
 
   override fun perform(node: XValueNodeImpl?, nodeName: String, e: AnActionEvent) {
-        node ?: return
-        val project = e.project ?: return
+    node ?: return
+    val project = e.project ?: return
+    performImpl(project, node)
+  }
+}
 
-        if (!node.canBePinned())
-            return
+private fun performImpl(project: Project, node: XValueNodeImpl) {
+  if (!node.canBePinned())
+    return
 
-        val pinToTopManager = XDebuggerPinToTopManager.getInstance(project)
+  val pinToTopManager = XDebuggerPinToTopManager.getInstance(project)
 
-        val pinInfo = node.getPinInfo()
-            ?: return
+  val pinInfo = node.getPinInfo()
+                ?: return
 
-        val pinNode = !node.isPinned(pinToTopManager)
-        if (pinNode) {
-           pinToTopManager.addItemInfo(pinInfo)
-        } else {
-           pinToTopManager.removeItemInfo(pinInfo)
-        }
-        node.parentPinToTopValue?.onChildPinned(pinNode, pinInfo)
+  val pinNode = !node.isPinned(pinToTopManager)
+  if (pinNode) {
+    pinToTopManager.addItemInfo(pinInfo)
+  }
+  else {
+    pinToTopManager.removeItemInfo(pinInfo)
+  }
+  node.parentPinToTopValue?.onChildPinned(pinNode, pinInfo)
 
-        XDebuggerUtilImpl.rebuildTreeAndViews(node.tree)
-    }
+  XDebuggerUtilImpl.rebuildTreeAndViews(node.tree)
 }

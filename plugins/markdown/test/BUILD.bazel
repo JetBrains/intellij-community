@@ -17,7 +17,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.markdown.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/markdown/core:markdown",
     "//plugins/markdown/fenceInjection",
@@ -50,7 +50,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//xml/tests:tests_test_lib",
-    "//plugins/IntelliLang/xml-support:xml-langInjection",
+    "//xml/langInjection",
     "//platform/platform-tests:tests_test_lib",
     "@lib//:jsoup",
     "@lib//:jcef",

@@ -260,7 +260,7 @@ object IfThenTransformationUtils {
                 true
             hasImplicitReceiverReplaceableBySafeCall(data) || data.baseClause.hasFirstReceiverOf(data.checkedExpression) ->
                 generateSequence(data.baseClause) { (it as? KtDotQualifiedExpression)?.receiverExpression }.toList()
-                    .all { it.expressionType?.canBeNull == false || it.smartCastInfo?.smartCastType?.canBeNull == false }
+                    .all { it.expressionType?.isNullable == false || it.smartCastInfo?.smartCastType?.isNullable == false }
             else ->
                 false
         }
@@ -294,7 +294,7 @@ object IfThenTransformationUtils {
     private fun KaSession.conditionHasIncompatibleTypes(data: IfThenTransformationData): Boolean {
         val isExpression = data.condition as? KtIsExpression ?: return false
         val targetType = isExpression.typeReference?.type ?: return true
-        if (targetType.canBeNull) return true
+        if (targetType.isNullable) return true
         // TODO: the following check can be removed after fix of KT-14576
         val originalType = data.checkedExpression.expressionType ?: return true
 

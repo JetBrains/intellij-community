@@ -22,6 +22,10 @@ interface XBreakpointApi : RemoteApi<Unit> {
 
   suspend fun setDefaultSuspendPolicy(project: ProjectId, breakpointTypeId: XBreakpointTypeId, policy: SuspendPolicy)
 
+  suspend fun getDefaultGroup(project: ProjectId): String?
+
+  suspend fun setDefaultGroup(project: ProjectId, group: String?)
+
   suspend fun setConditionEnabled(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean)
 
   suspend fun setConditionExpression(breakpointId: XBreakpointId, requestId: Long, condition: XExpressionDto?)

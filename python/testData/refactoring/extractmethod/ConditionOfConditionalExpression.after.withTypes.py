@@ -1,3 +1,6 @@
+from typing import Any
+
+
 def f(n):
     return n * 2 if bar(n) else n + 1
 

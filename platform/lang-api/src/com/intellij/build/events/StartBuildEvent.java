@@ -16,11 +16,21 @@
 package com.intellij.build.events;
 
 import com.intellij.build.BuildDescriptor;
+import com.intellij.build.BuildViewSettingsProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.NonExtendable
 public interface StartBuildEvent extends StartEvent {
+
   @NotNull BuildDescriptor getBuildDescriptor();
+
+  @ApiStatus.Experimental
+  default @Nullable BuildViewSettingsProvider getBuildViewSettings() {
+    return null;
+  }
 }

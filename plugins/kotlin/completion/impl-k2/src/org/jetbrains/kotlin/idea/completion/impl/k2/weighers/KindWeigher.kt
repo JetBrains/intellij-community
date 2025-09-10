@@ -45,7 +45,7 @@ internal object KindWeigher {
 
     private var LookupElement.isSymbolToSkip: Boolean by NotNullableUserDataProperty(Key("KOTLIN_KIND_WEIGHER_IS_SYMBOL_TO_SKIP"), false)
 
-    context(KaSession)
+    context(_: KaSession)
     fun addWeight(lookupElement: LookupElement, symbol: KaSymbol?, context: WeighingContext) {
         lookupElement.isSymbolToSkip = symbol in context.symbolsToSkip
         lookupElement.isEnumEntry = symbol is KaEnumEntrySymbol

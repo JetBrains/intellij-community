@@ -32,113 +32,79 @@ import kotlin.script.experimental.annotations.KotlinScript
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.host.configurationDependencies
 import kotlin.script.experimental.jvm.JvmDependency
+import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.templates.ScriptTemplateDefinition
 
-
+/**
+ * @param additionalResolverClasspath Allows to specify additional jars needed for DependenciesResolver (and not script template).
+ * Script template dependencies naturally become (part of) dependencies of the script which is not always desired for resolver dependencies.
+ * i.e. gradle resolver may depend on some jars that 'built.gradle.kts' files should not depend on.
+ */
 fun loadDefinitionsFromTemplates(
     templateClassNames: List<String>,
-    templateClasspath: List<File>,
-    baseHostConfiguration: ScriptingHostConfiguration,
-    // TODO: need to provide a way to specify this in compiler/repl .. etc
-    /*
-     * Allows to specify additional jars needed for DependenciesResolver (and not script template).
-     * Script template dependencies naturally become (part of) dependencies of the script which is not always desired for resolver dependencies.
-     * i.e. gradle resolver may depend on some jars that 'built.gradle.kts' files should not depend on.
-     */
-    additionalResolverClasspath: List<File> = emptyList(),
-    defaultCompilerOptions: Iterable<String> = emptyList()
-): List<ScriptDefinition> = loadDefinitionsFromTemplatesByPaths(
-    templateClassNames,
-    templateClasspath.map(File::toPath),
-    baseHostConfiguration,
-    additionalResolverClasspath.map(File::toPath),
-    defaultCompilerOptions
-)
-
-// TODO: consider rewriting to return sequence
-fun loadDefinitionsFromTemplatesByPaths(
-    templateClassNames: List<String>,
-    templateClasspath: List<Path>,
-    baseHostConfiguration: ScriptingHostConfiguration,
-    // TODO: need to provide a way to specify this in compiler/repl .. etc
-    /*
-     * Allows to specify additional jars needed for DependenciesResolver (and not script template).
-     * Script template dependencies naturally become (part of) dependencies of the script which is not always desired for resolver dependencies.
-     * i.e. gradle resolver may depend on some jars that 'built.gradle.kts' files should not depend on.
-     */
+    templateClasspath: List<Path>, // TODO: need to provide a way to specify this in compiler/repl .. etc
     additionalResolverClasspath: List<Path> = emptyList(),
+    baseHostConfiguration: ScriptingHostConfiguration = defaultJvmScriptingHostConfiguration,
     defaultCompilerOptions: Iterable<String> = emptyList()
-): List<ScriptDefinition> {
+): Sequence<ScriptDefinition> = sequence {
     val classpath = adjustClasspath(templateClasspath + additionalResolverClasspath)
-    scriptingInfoLog("Loading script definitions: classes = $templateClassNames, classpath = ${classpath}")
+    scriptingInfoLog("Loading script definitions: classes=$templateClassNames, classpath=$classpath")
 
     val baseLoader = ScriptDefinitionsSource::class.java.classLoader
-    val loader = if (classpath.isEmpty())
-        baseLoader
-    else
-        UrlClassLoader.build().files(classpath).parent(baseLoader).get()
+    val loader = if (classpath.isEmpty()) baseLoader
+    else UrlClassLoader.build().files(classpath).parent(baseLoader).get()
 
-    val definitions = templateClassNames.mapNotNull { templateClassName ->
+    templateClassNames.forEach { templateClassName ->
         try {
             // TODO: drop class loading here - it should be handled downstream
             // as a compatibility measure, the asm based reading of annotations should be implemented to filter classes before classloading
-            val template = loader.loadClass(templateClassName).kotlin
-            // do not use `Path::toFile` here as it might break the path format of non-local file system
+            val template =
+                loader.loadClass(templateClassName).kotlin // do not use `Path::toFile` here as it might break the path format of non-local file system
             val templateClasspathAsFiles = templateClasspath.map { File(it.toString()) }
             val hostConfiguration = ScriptingHostConfiguration(baseHostConfiguration) {
                 configurationDependencies(JvmDependency(templateClasspathAsFiles))
             }
 
             when {
-                template.annotations.firstIsInstanceOrNull<KotlinScript>() != null -> {
-                    ScriptDefinition.FromTemplate(hostConfiguration, template, ScriptDefinition::class, defaultCompilerOptions)
-                }
-
-                template.annotations.firstIsInstanceOrNull<ScriptTemplateDefinition>() != null -> {
-                    FromLegacy(
-                        hostConfiguration,
-                        KotlinScriptDefinitionFromAnnotatedTemplate(
-                            template,
-                            hostConfiguration[ScriptingHostConfiguration.getEnvironment]?.invoke(),
-                            templateClasspathAsFiles
-                        ),
-                        defaultCompilerOptions
+                template.annotations.firstIsInstanceOrNull<KotlinScript>() != null ->
+                    ScriptDefinition.FromTemplate(
+                        hostConfiguration, template, ScriptDefinition::class, defaultCompilerOptions
                     )
-                }
+
+                template.annotations.firstIsInstanceOrNull<ScriptTemplateDefinition>() != null ->
+                    FromLegacy(
+                        hostConfiguration, KotlinScriptDefinitionFromAnnotatedTemplate(
+                            template, hostConfiguration[ScriptingHostConfiguration.getEnvironment]?.invoke(), templateClasspathAsFiles
+                        ), defaultCompilerOptions
+                    )
 
                 else -> {
                     scriptingWarnLog("Cannot find a valid script definition annotation on the class $template")
                     null
                 }
+            }?.let {
+                scriptingInfoLog("Loaded definition=${it.name}}")
+                yield(it)
             }
         } catch (e: ClassNotFoundException) {
             // Assuming that direct ClassNotFoundException is the result of versions mismatch and missing subsystems, e.g. gradle
             // so, it only results in warning, while other errors are severe misconfigurations, resulting it user-visible error
             scriptingWarnLog("Cannot load script definition class $templateClassName", e)
-            null
         } catch (e: Throwable) {
-            if (e is ControlFlowException) {
-                throw e
-            }
+            if (e is ControlFlowException) throw e
 
             val message = "Cannot load script definition class $templateClassName"
-            PluginManager.getPluginByClassNameAsNoAccessToClass(templateClassName)?.let {
-                scriptingErrorLog(message, PluginException(message, e, it))
-            } ?: scriptingErrorLog(message, e)
-            null
+            val pluginException =
+                PluginManager.getPluginByClassNameAsNoAccessToClass(templateClassName)?.let { PluginException(message, e, it) }
+            scriptingErrorLog(message, pluginException ?: e)
         }
     }
-
-    scriptingInfoLog("Loaded definitions: classes = $templateClassNames, definitions = ${definitions.map { it.name }}")
-    return definitions
 }
 
 private fun adjustClasspath(source: List<Path>): List<Path> {
     val cacheFolder = lazy {
         val tempDirectory = FileUtil.getTempDirectory()
-        tempDirectory.toNioPathOrNull()
-            ?.resolve("kotlin-script-dependencies")
-            ?.findOrCreateDirectory()
+        tempDirectory.toNioPathOrNull()?.resolve("kotlin-script-dependencies")?.findOrCreateDirectory()
     }
     return source.map {
         if (it.shouldBeMovedToHost()) {

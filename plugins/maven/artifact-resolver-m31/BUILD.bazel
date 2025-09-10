@@ -11,7 +11,7 @@ jvm_library(
   name = "artifactResolver-m31",
   module_name = "intellij.maven.artifactResolver.m31",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:maven-artifact_resolver-m31-org-apache-maven-maven-core-3-0-5-provided",

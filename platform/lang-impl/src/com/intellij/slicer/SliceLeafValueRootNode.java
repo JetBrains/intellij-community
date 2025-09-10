@@ -3,6 +3,7 @@ package com.intellij.slicer;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -80,13 +81,15 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
     renderer.append(LangBundle.message("node.slice.value"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
     if (usage != null) {
-      PsiElement element = usage.getElement();
-      if (element == null) {
-        renderer.append(UsageViewBundle.message("node.invalid") + " ", UsageTreeColors.INVALID_ATTRIBUTES);
-      }
-      else {
-        appendElementText(usage, element, renderer);
-      }
+      ReadAction.run(() -> {
+        PsiElement element = usage.getElement();
+        if (element == null) {
+          renderer.append(UsageViewBundle.message("node.invalid") + " ", UsageTreeColors.INVALID_ATTRIBUTES);
+        }
+        else {
+          appendElementText(usage, element, renderer);
+        }
+      });
     }
     else {
       renderer.append(LangBundle.message("node.slice.other"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
@@ -96,10 +99,10 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
   private static void appendElementText(@NotNull UsageInfo2UsageAdapter usage,
                                         final @NotNull PsiElement element,
                                         final @NotNull SliceUsageCellRendererBase renderer) {
-    PsiFile file = element.getContainingFile();
+    PsiFile psiFile = element.getContainingFile();
     List<TextChunk> result = new ArrayList<>();
-    ChunkExtractor.getExtractor(element.getContainingFile())
-      .appendTextChunks(usage, file.getText(), element.getTextOffset(), element.getTextRange().getEndOffset(),
+    ChunkExtractor.getExtractor(psiFile)
+      .appendTextChunks(usage, psiFile.getText(), element.getTextOffset(), element.getTextRange().getEndOffset(),
                         false, result);
 
     for (TextChunk chunk : result) {

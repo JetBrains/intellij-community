@@ -38,8 +38,8 @@ import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 
 class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpression>(
     KtLambdaExpression::class.java,
-    KotlinBundle.lazyMessage("convert.to.anonymous.function"),
-    KotlinBundle.lazyMessage("convert.lambda.expression.to.anonymous.function")
+    KotlinBundle.messagePointer("convert.to.anonymous.function"),
+    KotlinBundle.messagePointer("convert.lambda.expression.to.anonymous.function")
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtLambdaExpression, caretOffset: Int): Boolean {
         val argument = element.getStrictParentOfType<KtValueArgument>()

@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class ConvertParameterToReceiverIntention : SelfTargetingIntention<KtParameter>(
     KtParameter::class.java,
-    KotlinBundle.lazyMessage("convert.parameter.to.receiver")
+    KotlinBundle.messagePointer("convert.parameter.to.receiver")
 ) {
     override fun isApplicableTo(element: KtParameter, caretOffset: Int): Boolean {
         val identifier = element.nameIdentifier ?: return false

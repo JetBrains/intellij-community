@@ -271,7 +271,7 @@ public final class PluginDownloader {
   private @Nullable IdeaPluginDescriptorImpl loadDescriptorFromArtifact() throws IOException {
     ThreadingAssertions.assertBackgroundThread();
     if (myBuildNumber == null) {
-      return PluginDescriptorLoader.loadAndInitDescriptorFromArtifact(getFilePath(), null);
+      return PluginDescriptorLoader.loadDescriptorFromArtifact(getFilePath(), null);
     }
     else {
       return PluginDescriptorLoader.readBasicDescriptorDataFromArtifact(getFilePath());

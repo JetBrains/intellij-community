@@ -969,7 +969,7 @@ public final class HighlightFixUtil {
    * @return true if type parameters of a class are potentially compatible with type arguments in the list
    * (that is: number of parameters is the same, and argument types are within bounds)
    */
-  private static boolean isPotentiallyCompatible(@NotNull PsiClass psiClass, @NotNull PsiReferenceParameterList referenceParameterList) {
+  public static boolean isPotentiallyCompatible(@NotNull PsiClass psiClass, @NotNull PsiReferenceParameterList referenceParameterList) {
     PsiTypeElement[] referenceElements = referenceParameterList.getTypeParameterElements();
 
     PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();

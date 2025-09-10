@@ -11,7 +11,7 @@ jvm_library(
   name = "ijent",
   module_name = "intellij.platform.ijent",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -27,7 +27,7 @@ jvm_library(
 jvm_library(
   name = "ijent_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   associates = [":ijent"],
   deps = [
     "@lib//:junit5",
@@ -39,6 +39,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/eel",
   ],
+  exports = ["//platform/eel"],
   runtime_deps = [":ijent_resources"]
 )
 ### auto-generated section `build intellij.platform.ijent` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -89,6 +89,12 @@ fun KtElement.canAnalyze(): Boolean {
     val containingFile = containingFile as? KtFile ?: return false // EA-114080, EA-113475, EA-134193
     return containingFile.doNotAnalyze == null // To prevent exceptions during analysis
 }
+
+/**
+ * Compiled files don't have real bodies, so they have to be skipped to avoid decompilation
+ */
+val KtDeclarationWithBody.bodyExpressionIfNotCompiled: KtExpression?
+    get() = takeUnless { containingKtFile.isCompiled }?.bodyExpression
 
 val PsiClass.isEnumEntryLightClass: Boolean
     get() = (this as? KtLightClass)?.kotlinOrigin is KtEnumEntry

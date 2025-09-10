@@ -52,7 +52,7 @@ class DestructureInspection : IntentionBasedInspection<KtDeclaration>(
 
 class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
     KtDeclaration::class.java,
-    KotlinBundle.lazyMessage("use.destructuring.declaration")
+    KotlinBundle.messagePointer("use.destructuring.declaration")
 ) {
     override fun applyTo(element: KtDeclaration, editor: Editor?) {
         Holder.applyTo(element, editor)

@@ -17,7 +17,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.json.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -38,7 +38,6 @@ jvm_library(
     "//platform/testFramework/extensions:testExtensions",
     "@lib//:kotlin-stdlib",
     "//plugins/IntelliLang:langInjection",
-    "//plugins/IntelliLang/plugin",
     "@lib//:jsonpath",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:assert_j",
@@ -48,6 +47,9 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "@lib//:kotlin-reflect",
+    "//platform/syntax/syntax-psi:psi",
+    "//json/syntax",
+    "//platform/syntax/syntax-util:util",
   ],
   runtime_deps = [":tests_test_resources"]
 )

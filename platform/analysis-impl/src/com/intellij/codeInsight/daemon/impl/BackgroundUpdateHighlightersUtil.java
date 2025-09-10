@@ -286,9 +286,11 @@ public final class BackgroundUpdateHighlightersUtil {
       TextAttributes actualAttributes = highlighter.getTextAttributes(colorsScheme);
       boolean attributesSet = Comparing.equal(infoAttributes, actualAttributes);
       if (!attributesSet) {
+        TextAttributes forcedTextAttributes = highlighter.getForcedTextAttributes();
         highlighter.setTextAttributes(infoAttributes);
         TextAttributes afterSet = highlighter.getTextAttributes(colorsScheme);
         LOG.error("Expected to set " + infoAttributes + " but actual attributes are: " + actualAttributes +
+                  "; forcedTextAttributes: '" + forcedTextAttributes + "'" +
                   "; colorsScheme: '" + (colorsScheme == null ? "[global]" : colorsScheme.getName()) + "'" +
                   "; highlighter:" + highlighter + " (" + highlighter.getClass() + ")" +
                   "; was reused from the bin: " + (salvagedHighlighter != null) +

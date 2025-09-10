@@ -9,12 +9,15 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import javax.swing.Action
+import java.awt.Component
 import javax.swing.JComponent
 
 @ApiStatus.Internal
 @IntellijInternalApi
 interface PluginManagerCustomizer {
+
+  fun isEnabled(): Boolean
+
   fun initCustomizer(parentComponent: JComponent)
 
   suspend fun getInstallButonCustomizationModel(
@@ -38,6 +41,8 @@ interface PluginManagerCustomizer {
 
   fun updateAfterModification(updateUi: () -> Unit)
 
+  suspend fun updateAfterModificationAsync(updateUi: suspend () -> Unit)
+
   fun getExtraPluginsActions(): List<AnAction>
 
   fun onPluginDeleted(pluginModel: PluginUiModel, pluginSource: PluginSource)
@@ -47,6 +52,10 @@ interface PluginManagerCustomizer {
 
   fun ensurePluginStatesLoaded()
 
+  fun customRepositoriesUpdated(repoUrls: List<String>)
+
+  fun requestRestart(pluginModelFacade: PluginModelFacade, parentComponent: JComponent? = null)
+
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<PluginManagerCustomizer> = ExtensionPointName("com.intellij.pluginManagerCustomizer")
@@ -54,7 +63,7 @@ interface PluginManagerCustomizer {
     @JvmStatic
     fun getInstance(): PluginManagerCustomizer? {
       if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
-        return EP_NAME.extensionList.firstOrNull()
+        return EP_NAME.extensionList.firstOrNull { it.isEnabled() }
       }
       return null
     }
@@ -65,7 +74,7 @@ interface PluginManagerCustomizer {
 data class OptionsButonCustomizationModel(
   val additionalActions: List<AnAction>,
   val isVisible: Boolean = true,
-  val mainAction: Action? = null,
+  val mainAction: (() -> Unit)? = null,
   @param:NlsSafe val text: String? = null,
 )
 

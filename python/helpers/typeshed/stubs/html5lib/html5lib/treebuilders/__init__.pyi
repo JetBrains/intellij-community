@@ -1,6 +1,5 @@
-from _typeshed import Incomplete
-from typing import Any
+from typing import Literal
 
-treeBuilderCache: Any
+treeBuilderCache: dict[str, type]
 
-def getTreeBuilder(treeType, implementation: Incomplete | None = None, **kwargs): ...
+def getTreeBuilder(treeType: Literal["dom", "etree", "lxml"], implementation=None, **kwargs): ...

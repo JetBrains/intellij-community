@@ -49,7 +49,8 @@ import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.chooseMembers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperInfo
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperRefactoring
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperConflictSearcher
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperRefactoring
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractExtractKotlinFunctionHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.EXTRACT_FUNCTION
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ExtractKotlinFunctionHandler
@@ -434,7 +435,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
         }
     }
 
-    protected fun doExtractSuperTest(unused: String, isInterface: Boolean) {
+    protected open fun doExtractSuperTest(unused: String, isInterface: Boolean) {
         doTest(checkAdditionalAfterdata = true) { file ->
             file as KtFile
 
@@ -448,7 +449,13 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
             val editor = fixture.editor
             val originalClass = file.findElementAt(editor.caretModel.offset)?.getStrictParentOfType<KtClassOrObject>()!!
             val memberInfos = chooseMembers(extractClassMembers(originalClass))
-            val conflicts = ExtractSuperRefactoring.collectConflicts(originalClass, memberInfos, targetParent, className, isInterface)
+            val conflicts = KotlinExtractSuperConflictSearcher.getInstance().collectConflicts(
+                originalClass,
+                memberInfos,
+                targetParent,
+                className,
+                isInterface,
+            )
             project.checkConflictsInteractively(conflicts) {
                 val extractInfo = ExtractSuperInfo(
                     originalClass,
@@ -459,7 +466,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                     isInterface,
                     DocCommentPolicy(DocCommentPolicy.ASIS)
                 )
-                ExtractSuperRefactoring(extractInfo).performRefactoring()
+                KotlinExtractSuperRefactoring.getInstance().performRefactoring(extractInfo)
             }
         }
     }

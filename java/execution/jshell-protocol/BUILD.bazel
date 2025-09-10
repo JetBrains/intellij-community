@@ -5,14 +5,14 @@ jvm_library(
   name = "java-jshell-protocol",
   module_name = "intellij.java.jshell.protocol",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k11"
 )
 
 jvm_library(
   name = "java-jshell-protocol_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testStrc/**/*.kt", "testStrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testStrc/**/*.kt", "testStrc/**/*.java", "testStrc/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k11",
   associates = [":java-jshell-protocol"],
   deps = ["@lib//:junit4"]

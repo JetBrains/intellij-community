@@ -10,7 +10,7 @@ jvm_library(
   name = "images-build",
   module_name = "intellij.platform.images.build",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//jps/model-api:model",
     "//jps/model-impl",
@@ -33,6 +33,7 @@ jvm_library(
     "//platform/util/zip",
     "@lib//:platform-images-build-pngencoder",
     "@lib//:hash4j",
+    "@lib//:jetbrains-intellij-deps-eclipse-jgit",
     ":platform_util_xmlDom_provided",
   ],
   runtime_deps = ["@lib//:commons-imaging"]
@@ -41,7 +42,7 @@ jvm_library(
 jvm_library(
   name = "images-build_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   associates = [":images-build"],
   deps = [
     "//jps/model-api:model",
@@ -68,6 +69,7 @@ jvm_library(
     "//platform/util/zip",
     "@lib//:platform-images-build-pngencoder",
     "@lib//:hash4j",
+    "@lib//:jetbrains-intellij-deps-eclipse-jgit",
   ]
 )
 ### auto-generated section `build intellij.platform.images.build` end

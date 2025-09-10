@@ -885,6 +885,7 @@
       <reference ref="Maven.AddManagedFiles"/>
       <reference ref="Maven.RemoveManagedFiles"/>
       <separator/>
+      <reference ref="Maven.RunBuild"/>
       <reference ref="Maven.ExecuteGoal"/>
       <reference ref="Maven.ToggleOffline"/>
       <reference ref="Maven.ToggleSkipTests"/>

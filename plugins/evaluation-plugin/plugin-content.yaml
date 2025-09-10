@@ -29,6 +29,7 @@
   - name: intellij.evaluationPlugin.languages.json
   - name: intellij.evaluationPlugin.languages.markdown
   - name: intellij.evaluationPlugin.languages.php
+  - name: intellij.evaluationPlugin.languages.properties
   - name: intellij.evaluationPlugin.languages.pythonDocker
   - name: intellij.evaluationPlugin.languages.ruby
   - name: intellij.evaluationPlugin.languages.rust

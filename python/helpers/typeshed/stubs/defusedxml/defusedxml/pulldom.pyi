@@ -1,12 +1,13 @@
+from typing import Final
 from xml.dom.pulldom import DOMEventStream
+from xml.sax import _SupportsReadClose
+from xml.sax.xmlreader import XMLReader
 
-from .expatreader import DefusedExpatParser
-
-__origin__: str
+__origin__: Final = "xml.dom.pulldom"
 
 def parse(
-    stream_or_string,
-    parser: DefusedExpatParser | None = None,
+    stream_or_string: str | _SupportsReadClose[str] | _SupportsReadClose[bytes],
+    parser: XMLReader | None = None,
     bufsize: int | None = None,
     forbid_dtd: bool = False,
     forbid_entities: bool = True,
@@ -14,7 +15,7 @@ def parse(
 ) -> DOMEventStream: ...
 def parseString(
     string: str,
-    parser: DefusedExpatParser | None = None,
+    parser: XMLReader | None = None,
     forbid_dtd: bool = False,
     forbid_entities: bool = True,
     forbid_external: bool = True,

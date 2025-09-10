@@ -17,9 +17,12 @@ internal class TerminalCompletionEnterAction : TerminalPromotedDumbAwareAction()
 
   override fun update(e: AnActionEvent) {
     val editor = e.terminalEditor
-    if (editor == null || LookupManager.getActiveLookup(editor) == null || !editor.isOutputModelEditor) {
-      e.presentation.isEnabled = false
-    }
+    val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl
+    e.presentation.isEnabledAndVisible = editor != null
+                                         && editor.isOutputModelEditor
+                                         && lookup != null
+                                         && lookup.isAvailableToUser
+                                         && lookup.currentItemOrEmpty != null
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

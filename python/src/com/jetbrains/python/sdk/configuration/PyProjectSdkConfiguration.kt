@@ -27,6 +27,7 @@ import com.jetbrains.python.sdk.configuration.suppressors.PyInterpreterInspectio
 import com.jetbrains.python.sdk.configuration.suppressors.PyPackageRequirementsInspectionSuppressor
 import com.jetbrains.python.sdk.configuration.suppressors.TipOfTheDaySuppressor
 import com.jetbrains.python.sdk.configurePythonSdk
+import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.uv.isUv
 import com.jetbrains.python.statistics.ConfiguredPythonInterpreterIdsHolder.Companion.SDK_HAS_BEEN_CONFIGURED_AS_THE_PROJECT_INTERPRETER
 import com.jetbrains.python.util.ShowingMessageErrorSync
@@ -81,12 +82,14 @@ object PyProjectSdkConfiguration {
   }
 
   suspend fun setReadyToUseSdk(project: Project, module: Module, sdk: Sdk) {
-    withContext(Dispatchers.EDT) {
-      if (module.isDisposed) {
-        return@withContext
-      }
+    if (module.isDisposed) {
+      return
+    }
 
-      configurePythonSdk(project, module, sdk)
+    sdk.persist()
+
+    configurePythonSdk(project, module, sdk)
+    withContext(Dispatchers.EDT) {
       notifyAboutConfiguredSdk(project, module, sdk)
     }
   }

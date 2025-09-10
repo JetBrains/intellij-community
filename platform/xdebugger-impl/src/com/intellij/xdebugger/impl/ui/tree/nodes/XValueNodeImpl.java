@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
@@ -39,9 +38,8 @@ import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNodeEx, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode, RestorableStateNode {
   private static final Logger LOG = Logger.getInstance(XValueNodeImpl.class);
@@ -53,7 +51,8 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private final @NlsSafe String myName;
   private @Nullable String myRawValue;
   private XFullValueEvaluator myFullValueEvaluator;
-  private final @NotNull List<@NotNull XDebuggerTreeNodeHyperlink> myAdditionalHyperLinks = new ArrayList<>();
+  // Should only update on EDT, keeping atomic just in case (all informal contracts may change at any time)
+  private final @NotNull AtomicReference<@Nullable XDebuggerTreeNodeHyperlink> myAdditionalHyperLink = new AtomicReference<>();
   private boolean myChanged;
   private XValuePresentation myValuePresentation;
   private @Nullable Icon myInlayIcon;
@@ -173,22 +172,21 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   public void addAdditionalHyperlink(@NotNull XDebuggerTreeNodeHyperlink link) {
     invokeNodeUpdate(() -> {
-      if (hasLinks()) {
-        return;
+      if (!myAdditionalHyperLink.compareAndSet(null, link)) {
+        LOG.warn("Additional hyperlink already set; having more than one is not supported");
       }
-      myAdditionalHyperLinks.add(link);
       fireNodeChanged();
     });
   }
 
   public void clearAdditionalHyperlinks() {
     invokeNodeUpdate(() -> {
-      myAdditionalHyperLinks.clear();
+      myAdditionalHyperLink.set(null);
     });
   }
 
   public boolean hasLinks() {
-    return myFullValueEvaluator != null && myFullValueEvaluator.isEnabled() || !myAdditionalHyperLinks.isEmpty();
+    return myFullValueEvaluator != null && myFullValueEvaluator.isEnabled() || myAdditionalHyperLink.get() != null;
   }
 
   @Override
@@ -305,13 +303,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   public void appendToComponent(@NotNull ColoredTextContainer component) {
     super.appendToComponent(component);
 
-    for (XDebuggerTreeNodeHyperlink hyperlink : getAdditionalLinks()) {
+    XDebuggerTreeNodeHyperlink hyperlink = myAdditionalHyperLink.get();
+    if (hyperlink != null) {
       component.append(hyperlink.getLinkText(), hyperlink.getTextAttributes(), hyperlink);
     }
-  }
-
-  private @NotNull List<@NotNull XDebuggerTreeNodeHyperlink> getAdditionalLinks() {
-    return myAdditionalHyperLinks;
   }
 
   @Override

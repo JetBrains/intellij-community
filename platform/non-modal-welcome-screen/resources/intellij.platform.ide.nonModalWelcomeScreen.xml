@@ -1,0 +1,44 @@
+<idea-plugin package="com.intellij.platform.ide.nonModalWelcomeScreen">
+  <dependencies>
+    <module name="intellij.platform.compose"/>
+    <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
+  </dependencies>
+  <resource-bundle>messages.NonModalWelcomeScreenBundle</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenContentProvider"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenFeature"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeature" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenRightTabBannerProvider"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabBannerProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenProjectActivity"/>
+
+    <noProjectStateHandler implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenNoProjectStateHandler" order="first"/>
+
+    <actionConfigurationCustomizer implementation="com.intellij.platform.ide.nonModalWelcomeScreen.actions.WelcomeScreenAwareActionsCustomizer" />
+
+    <fileEditorProvider id="settingsWindow" implementation="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFileEditorProvider"/>
+    <projectViewPane implementation="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanel"/>
+
+    <advancedSetting id="welcome.screen.non.modal.enabled" default="true"
+                     groupKey="group.advanced.settings.welcome.screen"/>
+    <advancedSetting id="welcome.screen.non.modal.right.tab.enabled" default="true"
+                     groupKey="group.advanced.settings.welcome.screen"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector"/>
+  </extensions>
+
+  <actions resource-bundle="messages.NonModalWelcomeScreenBundle">
+    <group id="NonModalWelcomeScreen.LeftTabActions.New">
+      <reference ref="NewProjectOrModuleGroup"/>
+      <separator/>
+    </group>
+    <action id="OpenWelcome" class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.OpenWelcomeScreenAction">
+      <add-to-group group-id="HelpMenu" anchor="first"/>
+    </action>
+  </actions>
+</idea-plugin>

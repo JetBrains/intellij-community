@@ -354,7 +354,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
       for (fileNameMatcher in grammar.fileNameMatchers) {
         if (fileNameMatcher is TextMateFileNameMatcher.Name) {
           val newName = fileNameMatcher.fileName.lowercase()
-          extensionMapping.put(fileNameMatcher.copy(newName), rootScopeName)
+          extensionMapping.put(fileNameMatcher.copy(fileName = newName), rootScopeName)
         }
         else {
           extensionMapping.put(fileNameMatcher, rootScopeName)

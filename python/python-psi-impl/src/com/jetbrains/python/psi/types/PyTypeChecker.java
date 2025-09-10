@@ -156,7 +156,7 @@ public final class PyTypeChecker {
     if (expected instanceof PyConcatenateType concatenateType) {
       return Optional.of(match(concatenateType, actual, context));
     }
-    
+
     if (expected == null || actual == null || isUnknown(actual, context.context)) {
       return Optional.of(true);
     }
@@ -445,7 +445,7 @@ public final class PyTypeChecker {
       if (expectedPrefixSize > actualParameters.getParameters().size()) {
         return false;
       }
-      List<PyType> actualFirstParamTypes = ContainerUtil.map(actualParameters.getParameters().subList(0, expectedPrefixSize), 
+      List<PyType> actualFirstParamTypes = ContainerUtil.map(actualParameters.getParameters().subList(0, expectedPrefixSize),
                                                              it -> it.getType(context.context));
       if (!match(expectedFirstTypes, actualFirstParamTypes, context)) {
         return false;
@@ -569,6 +569,27 @@ public final class PyTypeChecker {
       return Optional.of(true);
     }
     return Optional.empty();
+  }
+
+  public static boolean sameType(@Nullable PyType type1, @Nullable PyType type2, @NotNull TypeEvalContext context) {
+    if ((type1 == null || type2 == null) && type1 != type2) return false;
+
+    return match(type1, type2, context)
+           && match(type2, type1, context);
+  }
+
+  /**
+   * if some possible value of one type is assignable to the other type
+   */
+  public static boolean overlappingTypes(@Nullable PyType type1, @Nullable PyType type2, @NotNull TypeEvalContext context) {
+    if (type1 instanceof PyUnionType unionType1) {
+      return ContainerUtil.exists(unionType1.getMembers(), t -> overlappingTypes(t, type2, context));
+    }
+    if (type2 instanceof PyUnionType unionType2) {
+      return ContainerUtil.exists(unionType2.getMembers(), t -> overlappingTypes(type1, t, context));
+    }
+    return match(type1, type2, context)
+           || match(type2, type1, context);
   }
 
   private static boolean matchProtocols(@NotNull PyClassType expected, @NotNull PyClassType actual, @NotNull MatchContext matchContext) {

@@ -9,8 +9,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.progress.CeProcessCanceledException;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.ClearableLazyValue;
@@ -442,7 +440,7 @@ public class Invoker implements InvokerMBean {
 
       List<ContentModuleDescriptor> modules = IdeaPluginDescriptorImplKt.getContentModules((IdeaPluginDescriptorImpl)plugin);
       for (var module : modules) {
-        if (Objects.equals(moduleId, module.getModuleName())) {
+        if (Objects.equals(moduleId, module.getModuleIdString())) {
           return requireNonNull(module.getPluginClassLoader());
         }
       }

@@ -38,6 +38,16 @@ val reportInvalidActionChains: Boolean = System.getProperty("ijpl.report.invalid
 @get:ApiStatus.Internal
 val installSuvorovProgress: Boolean = System.getProperty("ide.install.suvorov.progress", "true").toBoolean()
 
+@get:ApiStatus.Internal
+val useDebouncedDrawingInSuvorovProgress: Boolean = System.getProperty("ide.suvorov.progress.debounced.drawing", "true").toBoolean()
+
+/**
+ * - `true` means that [kotlinx.coroutines.Dispatchers.EDT] will acquire write-intent lock in non-blocking way
+ * - `false` means that [kotlinx.coroutines.Dispatchers.EDT] will block on the acquisition of high-level write-intent lock.
+ */
+@get:ApiStatus.Internal
+val useNonBlockingIntentLockForEdtCoroutines: Boolean = System.getProperty("ide.non.blocking.write.intent.lock.for.edt.coroutines", "false").toBoolean()
+
 /**
  * Represents the deadline before blocking read lock acquisition starts compensating parallelism for coroutine worker threads
  */

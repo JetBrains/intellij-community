@@ -1,26 +1,26 @@
-LineBreakpoint created at nestedLaunches.kt:32
+LineBreakpoint created at nestedLaunches.kt:33
 Run Java
 Connected to the target VM
-nestedLaunches.kt:32
+nestedLaunches.kt:33
 vvv stack trace vvv
-  bar:32, NestedLaunchesKt
-  invokeSuspend:21, NestedLaunchesKt$main$2$1$2$1
+  bar:33, NestedLaunchesKt
+  invokeSuspend:22, NestedLaunchesKt$main$2$1$2$1
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
-  invokeSuspend:19, NestedLaunchesKt$main$2$1$2
+  invokeSuspend:20, NestedLaunchesKt$main$2$1$2
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
-  invokeSuspend:17, NestedLaunchesKt$main$2$1
+  invokeSuspend:18, NestedLaunchesKt$main$2$1
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
-  invokeSuspend:10, NestedLaunchesKt$main$2
+  invokeSuspend:11, NestedLaunchesKt$main$2
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
-  main:8, NestedLaunchesKt
+  main:9, NestedLaunchesKt
   invoke:-1, NestedLaunchesKt$main$3
   invoke:-1, NestedLaunchesKt$main$3
   <hidden frames>

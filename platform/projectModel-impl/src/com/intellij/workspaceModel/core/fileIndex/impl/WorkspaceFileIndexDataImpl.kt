@@ -6,15 +6,10 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
@@ -37,7 +32,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 @Suppress("DuplicatedCode")
 internal suspend fun initWorkspaceFileIndexData(
   project: Project,
-  parentDisposable: Disposable,
   contributorList: List<WorkspaceFileIndexContributor<*>>,
 ): WorkspaceFileIndexDataImpl {
   val fileSets = Object2ObjectOpenHashMap<VirtualFile, StoredFileSetCollection>()
@@ -45,19 +39,6 @@ internal suspend fun initWorkspaceFileIndexData(
 
   val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelInternal
   val nonExistingFilesRegistry = NonExistingWorkspaceRootsRegistry(project, workspaceModel.getVirtualFileUrlManager())
-
-  val librariesAndSdkContributors: LibrariesAndSdkContributors? = if (Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")) {
-    null
-  }
-  else {
-    LibrariesAndSdkContributors(
-      project = project,
-      fileSets = fileSets,
-      fileSetsByPackagePrefix = fileSetsByPackagePrefix,
-      projectRootManager = project.serviceAsync<ProjectRootManager>() as ProjectRootManagerEx,
-      parentDisposable = parentDisposable,
-    )
-  }
 
   val contributors = getContributors(contributorList, EntityStorageKind.MAIN)
 
@@ -83,15 +64,6 @@ internal suspend fun initWorkspaceFileIndexData(
       storage = workspaceModel.currentSnapshotOfUnloadedEntities,
       contributorMap = getContributors(contributorList, EntityStorageKind.UNLOADED),
     )
-  }
-
-  if (librariesAndSdkContributors != null) {
-    WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
-      val libraryTablesRegistrar = serviceAsync<LibraryTablesRegistrar>()
-      readActionBlocking {
-        librariesAndSdkContributors.registerFileSets(libraryTablesRegistrar)
-      }
-    }
   }
 
   WorkspaceFileIndexDataMetrics.initTimeNanosec.addElapsedTime(start)
@@ -134,19 +106,6 @@ internal fun blockingInitWorkspaceFileIndexData(
   val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelInternal
   val nonExistingFilesRegistry = NonExistingWorkspaceRootsRegistry(project, workspaceModel.getVirtualFileUrlManager())
 
-  val librariesAndSdkContributors: LibrariesAndSdkContributors? = if (Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")) {
-    null
-  }
-  else {
-    LibrariesAndSdkContributors(
-      project = project,
-      fileSets = fileSets,
-      fileSetsByPackagePrefix = fileSetsByPackagePrefix,
-      projectRootManager = ProjectRootManagerEx.getInstanceEx(project),
-      parentDisposable = parentDisposable,
-    )
-  }
-
   val contributors = getContributors(contributorList, EntityStorageKind.MAIN)
 
   WorkspaceFileIndexDataMetrics.instancesCounter.incrementAndGet()
@@ -162,15 +121,6 @@ internal fun blockingInitWorkspaceFileIndexData(
     storage = workspaceModel.currentSnapshotOfUnloadedEntities,
     contributorMap = getContributors(contributorList, EntityStorageKind.UNLOADED),
   )
-
-  if (librariesAndSdkContributors != null) {
-    WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
-      val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
-      ApplicationManager.getApplication().runReadAction {
-        librariesAndSdkContributors.registerFileSets(libraryTablesRegistrar)
-      }
-    }
-  }
 
   WorkspaceFileIndexDataMetrics.initTimeNanosec.addElapsedTime(start)
 
@@ -340,7 +290,8 @@ internal class WorkspaceFileIndexDataImpl(
         is DependencyDescription.OnReference<*, *> -> processOnReference(dependency,
                                                                          event,
                                                                          removedEntities as MutableSet<WorkspaceEntity>,
-                                                                         addedEntities as MutableSet<WorkspaceEntity>,)
+                                                                         addedEntities as MutableSet<WorkspaceEntity>,
+                                                                         contributor.entityClass as Class<WorkspaceEntity>,)
       }
     }
 
@@ -361,39 +312,42 @@ internal class WorkspaceFileIndexDataImpl(
     event: VersionedStorageChange,
     removedEntities: MutableSet<WorkspaceEntity>,
     addedEntities: MutableSet<WorkspaceEntity>,
+    entityClass: Class<WorkspaceEntity>,
   ) {
-    val previousDependencies = mutableSetOf<SymbolicEntityId<R>>()
-    val actualDependencies = mutableSetOf<SymbolicEntityId<R>>()
 
-    event.getChanges(dependencyDescription.referenceHolderClass).asSequence().forEach { change ->
-      change.oldEntity?.let {
-        dependencyDescription.referencedEntitiesGetter(it).toCollection(previousDependencies)
-      }
-      change.newEntity?.let {
-        dependencyDescription.referencedEntitiesGetter(it).toCollection(actualDependencies)
+    val entitiesInStorageAfter by lazy(LazyThreadSafetyMode.NONE) { event.storageAfter.entities(entityClass).toSet() }
+    val entitiesInStorageBefore by lazy(LazyThreadSafetyMode.NONE) { event.storageBefore.entities(entityClass).toSet() }
+
+    fun processAddedSymbolicEntityId(symbolicEntityId: SymbolicEntityId<R>) {
+      // no entity in the old storage has a reference to the referenced entity of added entity => first reference added
+      if (!event.storageBefore.hasReferrers(symbolicEntityId, dependencyDescription.referenceHolderClass)) {
+        symbolicEntityId.resolve(event.storageAfter)?.let { referencedEntity ->
+          addedEntities.add(referencedEntity)
+          if (entitiesInStorageBefore.contains(referencedEntity)) {
+            removedEntities.add(referencedEntity)
+          }
+        }
       }
     }
 
-    // everything in actual dependencies but not in previous is considered new
-    // everything in previous but not in actual dependencies is considered removed
-
-    (actualDependencies - previousDependencies)
-      // We want to filter out entities that were already referenced by any reference holder
-      .filter { event.storageBefore.referrers(it, dependencyDescription.referenceHolderClass).none() }
-      .mapNotNull { it.resolve(event.storageAfter) }
-      .forEach {
-        removedEntities.add(it)
-        addedEntities.add(it)
+    fun processRemovedSymbolicEntityId(symbolicEntityId: SymbolicEntityId<R>) {
+      // no entity in the new storage has a reference to the referenced entity of removed entity => last reference removed
+      if (!event.storageAfter.hasReferrers(symbolicEntityId, dependencyDescription.referenceHolderClass)) {
+        symbolicEntityId.resolve(event.storageBefore)?.let {
+          removedEntities.add(it)
+          if (entitiesInStorageAfter.contains(it)) {
+            addedEntities.add(it)
+          }
+        }
       }
+    }
 
-    (previousDependencies - actualDependencies)
-      // we want to filter out references that are still referenced by any reference holder
-      .filter { event.storageAfter.referrers(it, dependencyDescription.referenceHolderClass).none() }
-      .mapNotNull { it.resolve(event.storageBefore) }
-      .forEach {
-        removedEntities.add(it)
-        addedEntities.add(it)
+    event.getChangedReferences(dependencyDescription.referenceHolderClass, dependencyDescription.referenceSymbolicEntityIdClass).forEach {
+      when (it) {
+        is ReferenceChange.Added -> processAddedSymbolicEntityId(it.symbolicEntityId)
+        is ReferenceChange.Removed -> processRemovedSymbolicEntityId(it.symbolicEntityId)
       }
+    }
   }
 
   private fun <R: WorkspaceEntity, E: WorkspaceEntity> processOnArbitraryEntityDependency(dependency: DependencyDescription.OnArbitraryEntity<R, E>,
@@ -405,7 +359,7 @@ internal class WorkspaceFileIndexDataImpl(
     val dependantEntitiesInStorageAfter by lazy(LazyThreadSafetyMode.NONE) { event.storageAfter.entities(dependantClass).toSet() }
     val dependantEntitiesInStorageBefore by lazy(LazyThreadSafetyMode.NONE) { event.storageBefore.entities(dependantClass).toSet() }
 
-    event.getChanges(dependency.entityClass).asSequence().forEach { change ->
+    event.getChanges(dependency.entityClass).forEach { change ->
       change.oldEntity?.let {
         val dependantEntities = dependency.dependantEntitiesGetter(it)
         for (entity in dependantEntities) {
@@ -479,8 +433,8 @@ internal class WorkspaceFileIndexDataImpl(
     }
     resetFileCache()
     if (storeRegistrar.registeredFileSets.isNotEmpty() || removeRegistrar.removedFileSets.isNotEmpty()) {
-      val changeLog = WorkspaceFileIndexChangedEvent(removedFileSets = removeRegistrar.removedFileSets.values,
-                                                     registeredFileSets = storeRegistrar.registeredFileSets.values,
+      val changeLog = WorkspaceFileIndexChangedEvent(removedFileSets = removeRegistrar.removedFileSets.values.flatMapTo(HashSet()) { it },
+                                                     registeredFileSets = storeRegistrar.registeredFileSets.values.flatMapTo(HashSet()) { it },
                                                      storageBefore = event.storageBefore,
                                                      storageAfter = event.storageAfter,)
       project.messageBus.syncPublisher(WorkspaceFileIndexListener.TOPIC).workspaceFileIndexChanged(changeLog)
@@ -516,8 +470,8 @@ internal class WorkspaceFileIndexDataImpl(
 
     WorkspaceFileIndexDataMetrics.updateDirtyEntitiesTimeNanosec.addElapsedTime(start)
     if (storeRegistrar.registeredFileSets.isNotEmpty() || removeRegistrar.removedFileSets.isNotEmpty()) {
-      val changeLog = WorkspaceFileIndexChangedEvent(removedFileSets = removeRegistrar.removedFileSets.values,
-                                                     registeredFileSets = storeRegistrar.registeredFileSets.values,
+      val changeLog = WorkspaceFileIndexChangedEvent(removedFileSets = removeRegistrar.removedFileSets.values.flatMapTo(HashSet()) { it },
+                                                     registeredFileSets = storeRegistrar.registeredFileSets.values.flatMapTo(HashSet()) { it },
                                                      storageBefore = storage,
                                                      storageAfter = storage,)
       project.messageBus.syncPublisher(WorkspaceFileIndexListener.TOPIC).workspaceFileIndexChanged(changeLog)

@@ -246,7 +246,7 @@ public final class PluginInstaller {
   ) {
     try {
       var pluginDescriptor = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        return PluginDescriptorLoader.loadAndInitDescriptorFromArtifact(file, null);
+        return PluginDescriptorLoader.loadDescriptorFromArtifact(file, null);
       }, IdeBundle.message("action.InstallFromDiskAction.progress.text"), true, project);
 
       if (pluginDescriptor == null) {

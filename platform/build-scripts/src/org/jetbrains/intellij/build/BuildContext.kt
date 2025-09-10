@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.platform.buildData.productInfo.ProductInfoLayoutItem
+import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.runtime.product.serialization.RawProductModules
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.collections.immutable.PersistentMap
@@ -176,6 +178,13 @@ interface BuildContext : CompilationContext {
    * which supports running the IDE without running the build scripts.
    */
   suspend fun createProductRunner(additionalPluginModules: List<String> = emptyList(), forceUseDevBuild: Boolean = false): IntellijProductRunner
+
+  /**
+   * Loads raw data from product-modules.xml file located in module [rootModuleName], for a product running in [productMode].
+   * It doesn't use files from module output directories, so it works even if the modules aren't compiled yet.
+   */
+  @ApiStatus.Internal
+  fun loadRawProductModules(rootModuleName: String, productMode: ProductMode): RawProductModules
 
   suspend fun runProcess(
     args: List<String>,

@@ -476,6 +476,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testInterModuleDependenciesIfThereArePropertiesInArtifactHeader() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -522,6 +523,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testInterModuleDependenciesIfThereArePropertiesInArtifactHeaderDefinedInParent() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'groupId' contains an expression but should be a constant")
     createProjectPom("""
                        <groupId>${'$'}{groupProp}</groupId>
                        <artifactId>parent</artifactId>
@@ -1403,9 +1405,9 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                          </dependencies>
                        </dependencyManagement>
        
-                       <modules>
-                         <module>m</module>
-                       </modules>
+                       <$modulesTag>
+                         <$moduleTag>m</$moduleTag>
+                       </$modulesTag>
                        """.trimIndent())
 
     createModulePom("m", """

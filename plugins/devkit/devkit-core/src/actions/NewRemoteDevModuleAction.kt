@@ -288,7 +288,7 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
         CommandProcessor.getInstance().runUndoTransparentAction {
           val fileElement = DomManager.getDomManager(project).getFileElement(essentialModulesXmlPsi, IdeaPlugin::class.java)
                             ?: return@runUndoTransparentAction
-          val moduleEntry = fileElement.rootElement.content.addModuleEntry()
+          val moduleEntry = fileElement.rootElement.getFirstOrAddContentDescriptor().addModuleEntry()
           moduleEntry.name.stringValue = module.name
         }
       }

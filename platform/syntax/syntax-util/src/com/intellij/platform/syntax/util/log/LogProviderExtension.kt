@@ -5,7 +5,7 @@ package com.intellij.platform.syntax.util.log
 
 import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.extensions.ExtensionPointKey
-import com.intellij.platform.syntax.extensions.ExtensionSupport
+import com.intellij.platform.syntax.extensions.currentExtensionSupport
 import com.intellij.platform.syntax.logger.noopLogger
 import org.jetbrains.annotations.ApiStatus
 
@@ -14,13 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 fun logger(name: String): Logger =
-  ExtensionSupport().getExtensions(logProviderExtensionPoint).firstNotNullOfOrNull { it.getLogger(name) } ?: noopLogger()
-
-/**
- * Provides a [Logger] for your environment with the qualified name of the receiver class, or [noopLogger] if no Logger was provided.
- */
-@ApiStatus.Experimental
-inline fun <reified T> logger(): Logger = logger(T::class.qualifiedName!!)
+  currentExtensionSupport().getExtensions(logProviderExtensionPoint).firstNotNullOfOrNull { it.getLogger(name) } ?: noopLogger()
 
 /**
  * Implement this extension point to provide a [Logger] for your environment with the given name..

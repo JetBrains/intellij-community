@@ -11,7 +11,7 @@ jvm_library(
   name = "model-impl",
   module_name = "intellij.platform.jps.model.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k11",
   deps = [
     "//platform/util",
@@ -39,7 +39,7 @@ jvm_library(
   name = "model-tests_test_lib",
   module_name = "intellij.platform.jps.model.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//jps/model-api:model",
     "//jps/model-impl",

@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.devkit.runtimeModuleRepository.generator` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "generator",
+  module_name = "intellij.devkit.runtimeModuleRepository.generator",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//jps/model-api:model",
+    "//platform/runtime/repository",
+    "//jps/model-serialization",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+### auto-generated section `build intellij.devkit.runtimeModuleRepository.generator` end

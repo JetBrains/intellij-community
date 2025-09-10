@@ -13,6 +13,7 @@ import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.pyprojectToml.PyProjectTomlManager
 import org.jetbrains.annotations.ApiStatus
 
+
 @ApiStatus.Internal
 class PoetryProjectTomlManager(project: Project, sdk: Sdk) : PyProjectTomlManager(project, sdk) {
   override fun parseRequirements(requirementsFile: VirtualFile): List<PyRequirement> {

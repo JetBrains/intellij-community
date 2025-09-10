@@ -129,7 +129,7 @@ class XDebuggerPinToTopManager(coroutineScope: CoroutineScope) {
   }
 
   fun isPinToTopSupported(node: XDebuggerTreeNode?): Boolean {
-    return if (node is XValueContainerNode<*>) return node.valueContainer is PinToTopValue else false
+    return ((node as? XValueContainerNode<*>)?.valueContainer as? PinToTopValue)?.canBePinned() ?: false
   }
 }
 

@@ -119,6 +119,10 @@ class SeTabDelegate(
     return providers.getValue().canBeShownInFindResults()
   }
 
+  suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
+    return providers.getValue().getUpdatedPresentation(item)
+  }
+
   suspend fun openInFindToolWindow(
     sessionRef: DurableRef<SeSessionEntity>,
     params: SeParams,
@@ -137,6 +141,13 @@ class SeTabDelegate(
                                                           providers.getValue().getProviderIds(disabledProviders ?: emptyList()),
                                                           params,
                                                           isAllTab)
+  }
+
+  /**
+   * @return true if the popup should be closed, false otherwise
+   */
+  suspend fun performExtendedAction(item: SeItemData): Boolean {
+    return providers.getValue().performExtendedAction(item)
   }
 
   override fun dispose() {}
@@ -221,6 +232,22 @@ class SeTabDelegate(
       val frontedProviders = frontendProvidersFacade?.providerIds?.filter { !disabledProviders.contains(it) }
                              ?: emptyList()
       return localProviders.toList() + frontedProviders
+    }
+
+    suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
+      val localItem = item.fetchItemIfExists()
+      return if (localItem != null) {
+        localItem.presentation()
+      }
+      else {
+        frontendProvidersFacade?.getUpdatedPresentation(item)
+      }
+    }
+
+    suspend fun performExtendedAction(item: SeItemData): Boolean {
+      return localProviders[item.providerId]?.performExtendedAction(item) ?: run {
+        frontendProvidersFacade?.performExtendedAction(item) ?: false
+      }
     }
   }
 

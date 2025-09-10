@@ -27,7 +27,7 @@ internal suspend fun showDocumentationPopup(
   project: Project,
   requests: List<DocumentationRequest>,
   popupContext: PopupContext,
-): AbstractPopup {
+): Pair<AbstractPopup, DocumentationUI> {
   val browser = DocumentationBrowser.createBrowser(project, requests)
   try {
     // to avoid flickering: show popup after there is anything to show
@@ -40,7 +40,8 @@ internal suspend fun showDocumentationPopup(
     Disposer.dispose(browser)
     throw ce
   }
-  val popupUI = DocumentationPopupUI(project, DocumentationUI(project, browser, isPopup = true))
+  val documentationUi = DocumentationUI(project, browser, isPopup = true)
+  val popupUI = DocumentationPopupUI(project, documentationUi)
   val popup = createDocumentationPopup(project, popupUI, popupContext)
   try {
     writeIntentReadAction {
@@ -58,7 +59,7 @@ internal suspend fun showDocumentationPopup(
   }
   check(popup.canShow()) // sanity check
   boundsHandler.showPopup(popup)
-  return popup
+  return popup to documentationUi
 }
 
 private fun createDocumentationPopup(

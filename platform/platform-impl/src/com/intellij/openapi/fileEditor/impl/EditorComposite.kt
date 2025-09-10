@@ -1072,11 +1072,12 @@ internal fun focusEditorOnComposite(
   composite: EditorComposite,
   splitters: EditorsSplitters,
   toFront: Boolean = true,
+  forceFocus: Boolean = false,
 ): Boolean {
   val currentWindow = splitters.currentWindow
   val currentSelectedComposite = currentWindow?.selectedComposite
   // while the editor was loading, the user switched to another editor - don't steal focus
-  if (currentSelectedComposite === composite) {
+  if (currentSelectedComposite === composite || forceFocus) {
     val preferredFocusedComponent = composite.preferredFocusedComponent
     if (preferredFocusedComponent == null) {
       LOG.warn("Cannot focus editor (splitters=$splitters, composite=$composite, reason=preferredFocusedComponent is null)")

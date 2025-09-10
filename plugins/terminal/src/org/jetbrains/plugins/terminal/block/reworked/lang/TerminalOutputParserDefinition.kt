@@ -28,7 +28,7 @@ internal class TerminalOutputParserDefinition : ParserDefinition {
   }
 
   override fun createFile(viewProvider: FileViewProvider): PsiFile {
-    return TerminalOutputPsiFile(viewProvider)
+    return TerminalOutputPsiFile(viewProvider, initialContent = "")
   }
 
   override fun getWhitespaceTokens(): TokenSet {

@@ -17,7 +17,7 @@ jvm_library(
   name = "k2",
   module_name = "kotlin.compiler-plugins.kotlinx-serialization.k2",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_k2",
   deps = [
     "//plugins/kotlin/code-insight/api",

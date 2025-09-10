@@ -30,7 +30,7 @@ def line_interpolate_point(
 @overload
 def line_locate_point(
     line: LineString | MultiLineString | GeometryCollection | None, other: Point | None, normalized: bool = False, **kwargs
-) -> float: ...
+) -> np.float64: ...
 @overload
 def line_locate_point(
     line: LineString | MultiLineString | GeometryCollection | None, other: OptGeoArrayLikeSeq, normalized: bool = False, **kwargs

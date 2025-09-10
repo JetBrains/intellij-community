@@ -192,7 +192,7 @@ class KtScratchExecutionSession(
 
     private fun createCommandLine(originalFile: KtFile, module: Module?, mainClassName: String, tempOutDir: String): Pair<TargetEnvironmentRequest, TargetedCommandLine> {
         val javaParameters = JavaParametersBuilder(originalFile.project)
-            .withSdkFrom(module, true)
+            .withSdkFrom(module)
             .withMainClassName(mainClassName)
             .build()
 

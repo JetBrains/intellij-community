@@ -23,6 +23,13 @@ public interface EntityStorage {
   public fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> referrers(id: SymbolicEntityId<E>, entityClass: Class<R>): Sequence<R>
 
   /**
+   * Returns `true` if there is at least one entity of type [entityClass] which contains a [SymbolicEntityId] property equal to the given [id].
+   * It works faster than [referrers].
+   */
+  @ApiStatus.Experimental
+  public fun <E: WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> hasReferrers(id: SymbolicEntityId<E>, entityClass: Class<R>): Boolean
+
+  /**
    * Returns an entity which [symbolicId][WorkspaceEntityWithSymbolicId.symbolicId] property is equal to the given [id] or `null` if there 
    * is no such entity.
    */

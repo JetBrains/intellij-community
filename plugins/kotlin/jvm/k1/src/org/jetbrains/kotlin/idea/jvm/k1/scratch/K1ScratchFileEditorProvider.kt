@@ -24,7 +24,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.isKotlinScratch
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.isKotlinWorksheet
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputHandlerAdapter
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.KtScratchFileEditorProvider
 
@@ -33,7 +32,7 @@ internal class K1ScratchFileEditorProvider : KtScratchFileEditorProvider() {
         if (!file.isValid) {
             return false
         }
-        if (!file.isKotlinScratch && !file.isKotlinWorksheet) {
+        if (!file.isKotlinScratch) {
             return false
         }
         val psiFile =
@@ -53,10 +52,10 @@ internal class K1ScratchFileEditorProvider : KtScratchFileEditorProvider() {
         )
 
         val mainEditor = textEditorProvider.createFileEditor(
-          project = project,
-          file = scratchFile.file,
-          document = readAction { FileDocumentManager.getInstance().getDocument(scratchFile.file) },
-          editorCoroutineScope = editorCoroutineScope,
+            project = project,
+            file = scratchFile.virtualFile,
+            document = readAction { FileDocumentManager.getInstance().getDocument(scratchFile.virtualFile) },
+            editorCoroutineScope = editorCoroutineScope,
         )
         val editorFactory = serviceAsync<EditorFactory>()
         return withContext(Dispatchers.EDT) {

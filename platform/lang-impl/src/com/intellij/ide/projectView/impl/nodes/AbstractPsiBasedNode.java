@@ -151,6 +151,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     if (UISettings.getInstance().getShowInplaceComments()) {
       ProjectViewInplaceCommentProducerImplKt.appendInplaceComments(this, appender);
     }
+    ProjectViewInplaceCommentProducerImplKt.appendVfsInfo(this, appender);
   }
 
   // Should be called in atomic action

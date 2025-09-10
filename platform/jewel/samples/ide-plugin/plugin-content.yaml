@@ -1,4 +1,0 @@
-- name: lib/platform-jewel-samples-idePlugin.jar
-  modules:
-  - name: intellij.platform.jewel.samples.idePlugin
-  - name: intellij.platform.jewel.samples.showcase

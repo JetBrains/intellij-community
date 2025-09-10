@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nls
  * Discovers and links as managed by uv all relevant project roots and saves them in `.idea/uv.xml`.
  * For a tree of nested uv projects, only the topmost directories are linked.
  */
-class UvLinkAction : AnAction() {
+internal class UvLinkAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val basePath = project.basePath ?: return

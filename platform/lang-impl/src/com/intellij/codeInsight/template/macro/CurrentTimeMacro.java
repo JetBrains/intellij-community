@@ -3,8 +3,10 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
+import org.jetbrains.annotations.ApiStatus;
 
-final class CurrentTimeMacro extends SimpleMacro {
+@ApiStatus.Internal
+public final class CurrentTimeMacro extends SimpleMacro {
   private CurrentTimeMacro() {
     super("time");
   }

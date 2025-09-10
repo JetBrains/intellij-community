@@ -15,9 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Intersection types arise in a process of computing least upper bound.
- */
+/// Intersection types arise in the process of computing the Least Upper Bound (LUB) of two or more types.
+///
+/// See JLS 4.9 Intersection Types
+/// @see GenericsUtil#getLeastUpperBound
 public final class PsiIntersectionType extends PsiType.Stub {
   private final PsiType[] myConjuncts;
 

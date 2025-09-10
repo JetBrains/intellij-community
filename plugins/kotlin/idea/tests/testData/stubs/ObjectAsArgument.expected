@@ -10,7 +10,7 @@ FILE[kind=File[packageFqName=<root>]]
           TYPE_REFERENCE
             USER_TYPE
               REFERENCE_EXPRESSION[referencedName=C1]
-        OBJECT_DECLARATION[classId=null, fqName=null, isCompanion=false, isLocal=true, isObjectLiteral=true, isTopLevel=false, name=null, superNames=[I]]
+        OBJECT_DECLARATION[classId=null, fqName=null, isLocal=true, isObjectLiteral=true, isTopLevel=false, name=null, superNames=[I]]
           SUPER_TYPE_LIST
             SUPER_TYPE_ENTRY
               TYPE_REFERENCE

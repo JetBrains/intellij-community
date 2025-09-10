@@ -7,7 +7,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.sun.jdi.Value;
 
 public abstract class ToStringCommand implements SuspendContextCommand {

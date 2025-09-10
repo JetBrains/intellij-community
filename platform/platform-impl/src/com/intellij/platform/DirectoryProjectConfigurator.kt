@@ -22,6 +22,8 @@ interface DirectoryProjectConfigurator {
 
   /**
    * Please use [AsyncDirectoryProjectConfigurator] instead.
+   * If you want to configure new modules e.g., detect and set an SDK for a module,
+   * consider subscribing to [com.intellij.platform.backend.workspace.WorkspaceModel.eventLog] instead.
    * @param isProjectCreatedWithWizard if true, then new project created with wizard, existing folder opened otherwise
    */
   fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isProjectCreatedWithWizard: Boolean)
@@ -30,6 +32,10 @@ interface DirectoryProjectConfigurator {
     final override val isEdtRequired: Boolean
       get() = false
 
+    /**
+     * If you want to configure new modules e.g., detect and set an SDK for a module,
+     * consider subscribing to [com.intellij.platform.backend.workspace.WorkspaceModel.eventLog] instead.
+     */
     final override fun configureProject(project: Project,
                                         baseDir: VirtualFile,
                                         moduleRef: Ref<Module>,

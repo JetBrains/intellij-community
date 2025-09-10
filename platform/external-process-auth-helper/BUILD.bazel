@@ -11,7 +11,7 @@ jvm_library(
   name = "external-process-auth-helper",
   module_name = "intellij.platform.externalProcessAuthHelper",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -35,7 +35,7 @@ jvm_library(
 jvm_library(
   name = "external-process-auth-helper_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":external-process-auth-helper"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -54,6 +54,7 @@ jvm_library(
     "//platform/eel",
     "//platform/eel-provider",
   ],
+  exports = ["//platform/built-in-server:builtInServer-impl"],
   runtime_deps = [":external-process-auth-helper_resources"]
 )
 ### auto-generated section `build intellij.platform.externalProcessAuthHelper` end

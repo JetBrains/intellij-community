@@ -11,7 +11,7 @@ jvm_library(
   name = "psi",
   module_name = "intellij.xml.psi",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//xml/xml-parser:parser",
     "//platform/core-api:core",

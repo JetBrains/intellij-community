@@ -8,14 +8,18 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.text.CheckerRunner
-import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
+import com.intellij.grazie.text.TextExtractor.findAllTextContents
+import com.intellij.grazie.text.TextProblem
 import com.intellij.lang.Language
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.profile.codeInspection.InspectionProfileManager
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization
 import java.util.*
@@ -30,23 +34,13 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
       return PsiElementVisitor.EMPTY_VISITOR
     }
 
-    val checkers = TextChecker.allCheckers()
     val checkedDomains = checkedDomains()
     val areChecksDisabled = getDisabledChecker(file)
 
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
         if (element is PsiWhiteSpace || areChecksDisabled(element)) return
-
-        val texts = TextExtractor.findUniqueTextsAt(element, checkedDomains)
-        if (skipCheckingTooLargeTexts(texts)) return
-
-        for (extracted in sortByPriority(texts, session.priorityRange)) {
-          val runner = CheckerRunner(extracted)
-          runner.run(checkers) { problem ->
-            runner.toProblemDescriptors(problem, isOnTheFly).forEach(holder::registerProblem)
-          }
-        }
+        inspectElement(element, { !it.isStyleLike }, session, holder, checkedDomains)
       }
     }
   }
@@ -67,17 +61,6 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
       catch (e: ClassNotFoundException) {
         false
       }
-    }
-
-    @JvmStatic
-    fun findAllTextContents(vp: FileViewProvider, domains: Set<TextContent.TextDomain>): Set<TextContent> {
-      val allContents: MutableSet<TextContent> = HashSet()
-      for (root in vp.allFiles) {
-        for (element in SyntaxTraverser.psiTraverser(root)) {
-          allContents.addAll(TextExtractor.findTextsExactlyAt(element, domains))
-        }
-      }
-      return allContents
     }
 
     @JvmStatic
@@ -130,6 +113,27 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
         }
         lang != null && lang.id in disabledLanguages
       }
+    }
+
+    @JvmStatic
+    fun inspectElement(
+      element: PsiElement,
+      problemFilter: (TextProblem) -> Boolean,
+      session: LocalInspectionToolSession,
+      problemsHolder: ProblemsHolder,
+      checkedDomains: Set<TextContent.TextDomain>,
+    ) {
+      val texts = TextExtractor.findUniqueTextsAt(element, checkedDomains)
+      if (skipCheckingTooLargeTexts(texts)) return
+
+      sortByPriority(texts, session.priorityRange)
+        .map { CheckerRunner(it) }
+        .map { it to it.run().filter(problemFilter) }
+        .forEach { (runner, problems) ->
+          problems.forEach { problem ->
+            runner.toProblemDescriptors(problem, problemsHolder.isOnTheFly).forEach(problemsHolder::registerProblem)
+          }
+        }
     }
 
     @JvmStatic

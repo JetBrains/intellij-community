@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -20,7 +21,7 @@ import org.jetbrains.kotlin.psi.KtUserType
 internal class KotlinQuickDocumentationCompletionCommandProvider : AbstractQuickDocumentationCompletionCommand() {
     override fun findElement(offset: Int, psiFile: PsiFile): PsiElement? {
         var context = getCommandContext(offset, psiFile)
-        if (context is PsiWhiteSpace) context = context.prevSibling
+        if (context is PsiWhiteSpace) context = PsiTreeUtil.prevVisibleLeaf(context) ?: return null
         if (context?.tokenType != KtTokens.IDENTIFIER) return null
         if (isDeclaration(context.parent)) return context
         if (context.parent is KtNameReferenceExpression &&

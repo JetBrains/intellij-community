@@ -2,6 +2,8 @@
 package com.intellij.terminal.tests.block
 
 import com.intellij.openapi.util.Disposer
+import com.intellij.terminal.completion.spec.ShellCommandExecutor
+import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import com.intellij.terminal.tests.block.util.TerminalSessionTestUtil
 import com.intellij.terminal.tests.block.util.TerminalSessionTestUtil.getCommandResultFuture
@@ -120,11 +122,16 @@ internal class ShellBaseGeneratorsTest(private val shellPath: Path) {
     typedPrefix: String = ""
   ) = runBlocking {
     val executor = ShellDataGeneratorsExecutorImpl(session)
+    val commandExecutor = object : ShellCommandExecutor {
+      override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult {
+        return session.commandExecutionManager.runGeneratorAsync(command).await()
+      }
+    }
     val context = ShellRuntimeContextImpl(
       currentDirectory = "",
       typedPrefix,
       session.shellIntegration.shellType.toShellName(),
-      ShellCachingGeneratorCommandsRunner { command -> session.commandExecutionManager.runGeneratorAsync(command).await() }
+      ShellCachingGeneratorCommandsRunner(commandExecutor)
     )
     val deferred: Deferred<T> = async(Dispatchers.Default) {
       executor.execute(context, generator)

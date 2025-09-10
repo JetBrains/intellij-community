@@ -27,7 +27,8 @@ def get_jvm_flags(flags):
         # "--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED",
         # kotlin compiler
         "-Dkotlin.environment.keepalive=true",
-        "-Didea.io.use.nio2=true",
+        # temporarily disabled to fix build on Windows, JBR-9260
+        "-Djbr.java.io.use.nio=false",
         # https://github.com/netty/netty/issues/11532
         "-Dio.netty.tryReflectionSetAccessible=true",
         # see TargetConfigurationDigestProperty.KOTLIN_VERSION - we invalidate cache if kotlinc version changed

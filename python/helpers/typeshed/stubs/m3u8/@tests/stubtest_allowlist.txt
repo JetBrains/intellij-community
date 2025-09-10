@@ -1,0 +1,5 @@
+# type check only
+m3u8.httpclient.HTTPSHandler.__new__
+# internal functions and attributes
+m3u8.parser.get_segment_custom_value
+m3u8.parser.save_segment_custom_value

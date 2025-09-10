@@ -11,7 +11,19 @@ import org.jetbrains.annotations.ApiStatus
 private val LOG = fileLogger()
 
 /**
- * Converts an [Document] instance into a [DocumentId] which can be used in RPC calls and stored in Rhizome.
+ * Converts a [Document] instance into a [DocumentId] which can be used in RPC calls and stored in Rhizome.
+ *
+ * **WARNING: This API is experimental and should be used with care.**
+ *
+ * In the monolith version of the IDE, this essentially stores a reference to the original document object.
+ * In Remote Development scenarios, the document is serialized for transmission to the frontend.
+ *
+ * Important limitations:
+ * - **Won't work for documents created manually on the frontend** - only documents that exist in the backend
+ *   IDE instance can be properly serialized and retrieved
+ * - Document state may not be fully synchronized with the backend's one
+ *
+ * @return A [DocumentId] that can be used in RPC calls
  */
 @ApiStatus.Experimental
 fun Document.rpcId(): DocumentId {
@@ -22,6 +34,20 @@ fun Document.rpcId(): DocumentId {
 
 /**
  * Retrieves the [Document] associated with the given [DocumentId].
+ *
+ * **WARNING: This API is experimental and should be used with care.**
+ *
+ * In the monolith version of the IDE, this method essentially does nothing - it just reuses the original
+ * document object that was passed to [rpcId]. However, in distributed scenarios (Remote Development), this
+ * function attempts to deserialize a Document from RPC data.
+ *
+ * Important limitations:
+ * - **Won't work for documents created manually on the frontend** - only documents that originated from
+ *   the backend IDE instance can be properly retrieved
+ * - Document state may not be fully synchronized with the frontend's one
+ * - May return null if deserialization fails or the document is no longer available
+ *
+ * @return The [Document] if available, or null if deserialization fails or the document cannot be found
  */
 @ApiStatus.Experimental
 fun DocumentId.document(): Document? {

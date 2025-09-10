@@ -97,6 +97,7 @@ object TerminalEditorFactory {
     parentDisposable: Disposable,
   ): EditorImpl {
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = false)
+    editor.contentComponent.focusTraversalKeysEnabled = false
     editor.contextMenuGroupId = "Terminal.ReworkedTerminalContextMenu"
     editor.useTerminalDefaultBackground(parentDisposable)
     configureSoftWraps(editor)

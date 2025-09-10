@@ -1,14 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.intention
 
-import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.json.JsonBundle
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.fixes.AddOptionalPropertiesIntention
 import org.intellij.lang.annotations.Language
-import org.jetbrains.yaml.intentions.YAMLAddOptionalPropertiesIntention
 import org.junit.Assert
 
 class YAMLAddOptionalPropertiesIntentionTest : BasePlatformTestCase() {
@@ -68,14 +67,14 @@ class YAMLAddOptionalPropertiesIntentionTest : BasePlatformTestCase() {
     addSchema()
 
     val yaml = myFixture.configureByText("test.yaml", before)
-    Assert.assertNotNull(JsonSchemaService.Impl.get(myFixture.project).getSchemaObject(yaml))
     ensureSchemaIsCached(yaml)
-    val intention = myFixture.findSingleIntention(YAMLAddOptionalPropertiesIntention().text)
-    ShowIntentionActionsHandler.chooseActionAndInvoke(myFixture.file, myFixture.editor, intention, intention.text)
+    val intentionText = JsonBundle.message("intention.add.not.required.properties.text")
+    val intention = myFixture.getAvailableIntention(intentionText)!!
 
-    ensureSchemaIsCached(yaml)
     val previewText = myFixture.getIntentionPreviewText(intention)
     Assert.assertEquals(after, previewText)
+
+    myFixture.checkPreviewAndLaunchAction(intention)
     myFixture.checkResult(after)
   }
 
@@ -126,7 +125,7 @@ class YAMLAddOptionalPropertiesIntentionTest : BasePlatformTestCase() {
     myFixture.configureByText("test.yaml", """
       a<caret>a:
     """.trimIndent())
-    Assert.assertNull(myFixture.getAvailableIntention(AddOptionalPropertiesIntention().text))
+    Assert.assertNull(myFixture.getAvailableIntention(AddOptionalPropertiesIntention().getText()))
   }
 
   fun `test add example from schema as default value`() {

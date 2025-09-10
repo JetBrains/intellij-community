@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -42,7 +43,7 @@ fun KaSession.areTypeArgumentsRedundant(
             // `val list = emptyList<T>()`
             parent as? KtProperty
             // `val list = emptyList<T>().smth{...}`
-            ?: (parent as? KtDotQualifiedExpression)?.parent as? KtProperty
+                ?: (parent as? KtDotQualifiedExpression)?.parent as? KtProperty
         if (property != null && property.typeReference == null) {
             return false
         }
@@ -157,4 +158,30 @@ private fun KaSession.areTypesEqual(
         (approximateFlexible || type1.hasFlexibleNullability == type2.hasFlexibleNullability) &&
                 type1.semanticallyEquals(type2)
     }
+}
+
+context(_: KaSession)
+fun KtTypeProjection.canBeReplacedWithUnderscore(callExpression: KtCallExpression): Boolean {
+    val newCallExpression = buildCallExpressionWithUnderscores(callExpression, this)
+        ?: return false
+
+    return areTypeArgumentsEqual(callExpression, newCallExpression, false)
+}
+
+private fun buildCallExpressionWithUnderscores(element: KtCallExpression, typeProjectionToReplace: KtTypeProjection): KtCallExpression? {
+    val context = findContextToAnalyze(element) ?: return null
+    val typeArgumentRange = typeProjectionToReplace.textRange.shiftLeft(context.startOffset)
+
+    val textWithUnderscore = context.text.replaceRange(typeArgumentRange.startOffset, typeArgumentRange.endOffset, "_")
+
+    val (prefix, suffix) = if (context.parent !is KtClassBody) {
+        "object Obj {" to "}"
+    } else "" to ""
+
+    val codeFragment = KtPsiFactory(
+        element.project,
+        markGenerated = false,
+    ).createBlockCodeFragment("$prefix$textWithUnderscore$suffix", context)
+
+    return codeFragment.findElementAt(typeArgumentRange.start + prefix.length)?.parentOfType()
 }

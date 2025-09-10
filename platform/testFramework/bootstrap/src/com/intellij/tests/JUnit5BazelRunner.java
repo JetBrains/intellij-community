@@ -159,7 +159,7 @@ public final class JUnit5BazelRunner {
         System.exit(42);
       }
 
-      var testExecutionListener = getTestExecutionListener();
+      var testExecutionListeners = getTestExecutionListeners();
       var xmlOutputFile = getXmlOutputFile();
 
       try (var bazelJUnitOutputListener = new BazelJUnitOutputListener(xmlOutputFile)) {
@@ -167,12 +167,15 @@ public final class JUnit5BazelRunner {
           .addShutdownHook(
             new Thread(() -> bazelJUnitOutputListener.closeForInterrupt(), "BazelJUnitOutputListenerShutdownHook")
           );
-        launcher.registerTestExecutionListeners(bazelJUnitOutputListener, testExecutionListener);
+        testExecutionListeners.add(bazelJUnitOutputListener);
+        launcher.registerTestExecutionListeners(testExecutionListeners.toArray(TestExecutionListener[]::new));
         launcher.execute(testPlan);
       }
 
-      if (testExecutionListener instanceof ConsoleTestLogger &&
-          ((ConsoleTestLogger)testExecutionListener).hasTestsWithThrowableResults()) {
+      if (testExecutionListeners.stream().anyMatch(
+        l -> (l instanceof ConsoleTestLogger && ((ConsoleTestLogger)l).hasTestsWithThrowableResults()) ||
+             (l instanceof BazelJUnitOutputListener && ((BazelJUnitOutputListener)l).hasTestsWithThrowableResults()))
+      ) {
         System.err.println("Some tests failed");
         System.exit(EXIT_CODE_TEST_FAILURE_OTHER);
       }
@@ -209,12 +212,12 @@ public final class JUnit5BazelRunner {
     return xmlOut;
   }
 
-  private static TestExecutionListener getTestExecutionListener() {
-    if (isUnderTeamCity()) {
-      return new JUnit5TeamCityRunnerForTestAllSuite.TCExecutionListener();
-    } else {
-      return new ConsoleTestLogger();
+  private static List<TestExecutionListener> getTestExecutionListeners() {
+    List<TestExecutionListener> myListeners = new ArrayList<>();
+    if (!isUnderTeamCity()) {
+      myListeners.add(new ConsoleTestLogger());
     }
+    return myListeners;
   }
 
   private static Filter<?>[] getTestFilters(List<? extends DiscoverySelector> bazelTestSelectors) {
@@ -457,16 +460,6 @@ public final class JUnit5BazelRunner {
       if (testIdentifier.isTest()) {
         result.getThrowable().ifPresent(testThrowable -> {
           if (!IgnoreException.isIgnoringThrowable(testThrowable)) {
-            testsWithThrowableResult.add(testIdentifier);
-          }
-        });
-      }
-
-      if (testIdentifier.isTest()) {
-        System.out.println("Finished: " + testIdentifier.getDisplayName() + " -> " + result.getStatus());
-        result.getThrowable().ifPresent(t -> {
-          t.printStackTrace(System.err);
-          if (!IgnoreException.isIgnoringThrowable(t)) {
             testsWithThrowableResult.add(testIdentifier);
           }
         });

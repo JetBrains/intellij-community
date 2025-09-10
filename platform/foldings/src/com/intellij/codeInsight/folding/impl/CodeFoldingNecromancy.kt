@@ -11,7 +11,7 @@ import java.io.DataOutput
 
 internal object CodeFoldingNecromancy : Necromancy<CodeFoldingZombie> {
 
-  override fun spellLevel(): Int = 1
+  override fun spellLevel(): Int = 2
 
   override fun isDeepBury(): Boolean = false
 
@@ -47,7 +47,8 @@ internal object CodeFoldingNecromancy : Necromancy<CodeFoldingZombie> {
     writeGroupId(output, region.groupId)
     output.writeBoolean(region.neverExpands)
     output.writeBoolean(region.isExpanded)
-    output.writeBoolean(region.isAutoCreated)
+    output.writeBoolean(region.isCollapsedByDefault)
+    output.writeBoolean(region.isFrontendCreated)
   }
 
   private fun writeGroupId(output: DataOutput, groupId: Long?) {
@@ -77,8 +78,9 @@ internal object CodeFoldingNecromancy : Necromancy<CodeFoldingZombie> {
     val groupId = readGroupId(input)
     val neverExpands = input.readBoolean()
     val isExpanded = input.readBoolean()
-    val isAutoCreated = input.readBoolean()
-    return CodeFoldingRegion(start, end, placeholder, groupId, neverExpands, isExpanded, isAutoCreated)
+    val isCollapsedByDefault = input.readBoolean()
+    val isFrontendCreated = input.readBoolean()
+    return CodeFoldingRegion(start, end, placeholder, groupId, neverExpands, isExpanded, isCollapsedByDefault, isFrontendCreated)
   }
 
   private fun readGroupId(input: DataInput): Long? {

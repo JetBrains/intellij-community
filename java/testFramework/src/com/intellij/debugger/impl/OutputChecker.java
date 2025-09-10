@@ -266,6 +266,9 @@ public class OutputChecker {
       result = result.replace("-Ddebugger.agent.support.throwable=false ", "");
       result = result.replaceAll("\\((.*):\\d+\\)", "($1:!LINE_NUMBER!)");
 
+      // Ignore unstable lambdas ordering, IDEA-378517.
+      result = result.replaceAll("lambda\\$(.*)\\$\\d+", "lambda\\$$1\\$L");
+
       result = fixSlashes(result, JDK_HOME_STR);
       result = result.replace("!JDK_HOME!\\bin\\java.exe", "!JDK_HOME!\\bin\\java");
 

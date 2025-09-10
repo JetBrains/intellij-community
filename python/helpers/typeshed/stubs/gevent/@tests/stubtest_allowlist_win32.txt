@@ -1,6 +1,7 @@
 # Error: is not present in stub
 # =============================
 # these get exported but don't actually work on win32 so we ignore them
+gevent.signal.__all__
 gevent.signal.getsignal
 gevent.signal.signal
 
@@ -18,9 +19,3 @@ gevent.libev.corecext.*
 # these won't work until we find out if we can install libev somehow with choco
 gevent.libev.corecffi
 gevent.libev.watcher
-
-# these don't work on windows
-gevent.ares
-gevent.resolver.ares
-gevent.resolver.cares
-gevent.resolver_ares

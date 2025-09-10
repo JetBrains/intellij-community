@@ -2,7 +2,6 @@
 package org.jetbrains.idea.devkit.references
 
 import com.intellij.openapi.application.QueryExecutorBase
-import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.xml.XmlTag
@@ -14,15 +13,20 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil
 /**
  * Searches for plugin module references.
  */
-internal class PluginModuleReferencesQueryExecutor : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>() {
+internal class PluginModuleReferencesQueryExecutor : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(true) {
 
   override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
     val elementToSearch = queryParameters.elementToSearch
     if (elementToSearch !is XmlTag) return
     if (DomUtil.getDomElement(elementToSearch) !is IdeaPlugin) return
-    if (runReadAction { !DescriptorUtil.isPluginModuleFile(elementToSearch.containingFile) }) return
-    val moduleName = elementToSearch.containingFile.name.removeSuffix(".xml")
+    val moduleName = getModuleName(elementToSearch) ?: return
     queryParameters.optimizer.searchWord(moduleName, queryParameters.effectiveSearchScope, true, elementToSearch)
+  }
+
+  private fun getModuleName(elementToSearch: XmlTag): String? {
+    val containingFile = elementToSearch.containingFile ?: return null
+    if (!DescriptorUtil.isPluginModuleFile(containingFile)) return null
+    return containingFile.containingFile.name.removeSuffix(".xml")
   }
 
 }

@@ -26,4 +26,8 @@ private val ourHandler = object : XDebuggerProxySuspendedActionHandler() {
       XDebugSessionApi.getInstance().stepOut(session.id)
     }
   }
+
+  override fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean {
+    return super.isEnabled(session, dataContext) && session.isStepOutActionAllowed
+  }
 }

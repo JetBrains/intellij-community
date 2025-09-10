@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from ..sql import ddl as ddl
 from . import events as events, util as util
 from .base import (

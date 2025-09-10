@@ -202,7 +202,7 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
 
 private fun pluginRequiresDisabledPlugin(
   plugin: PluginId, pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-  contentModuleIdMap: Map<String, ContentModuleDescriptor>, disabledPluginIds: Set<PluginId>,
+  contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>, disabledPluginIds: Set<PluginId>,
 ): Boolean {
   if (disabledPluginIds.isEmpty()) return false
   val rootDescriptor = pluginMap[plugin] ?: return false

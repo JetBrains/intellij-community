@@ -44,7 +44,7 @@
 
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"
                       rootTagName="idea-plugin"
-                      stubVersion="18"/>
+                      stubVersion="19"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
@@ -61,6 +61,9 @@
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionPointImpl"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extensions"
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsImpl"/>
+    <xml.xmlExtension implementation="org.jetbrains.idea.devkit.dom.xml.PluginXmlExtension"/>
+    <completion.contributor language="XML" implementationClass="org.jetbrains.idea.devkit.dom.xml.PluginXmlCompletionContributor"
+                            order="before xmlNonFirst"/>
 
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex"/>
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex"/>
@@ -243,6 +246,12 @@
                      enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseJBColorInspection"
                      key="inspection.use.JB.color.display.name"/>
+    <localInspection language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UseIntelliJVirtualThreadsInspection"
+                     key="inspection.use.intellij.virtual.threads.display.name"/>
     <localInspection language="UAST" shortName="UseDPIAwareInsets"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -688,9 +697,7 @@
     <registryKey key="devkit.inlay.threading" defaultValue="false"
                  description="Experimental inlays for Threading Annotations"/>
 
-    <registryKey key="intellij.commit.message.validation.enabled" defaultValue="false"
-                 description="Enables commit messages validation for intellij project"/>
-    <registryKey key="intellij.platform.commit.message.validation.enabled" defaultValue="false"
+    <registryKey key="intellij.platform.commit.message.validation.enabled" defaultValue="true"
                  description="Enables commit messages validation for IntelliJ Platform"/>
     <registryKey key="aia.commit.message.validation.enabled" defaultValue="true"
                  description="Enables commit messages validation for AI Assistant project"/>

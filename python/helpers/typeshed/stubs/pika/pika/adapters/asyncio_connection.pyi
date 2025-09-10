@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from asyncio import AbstractEventLoop
 from collections.abc import Callable
 from logging import Logger
@@ -6,7 +5,7 @@ from typing_extensions import Self
 
 from ..connection import Parameters
 from .base_connection import BaseConnection
-from .utils import io_services_utils, nbio_interface
+from .utils import connection_workflow, io_services_utils, nbio_interface
 
 LOGGER: Logger
 
@@ -22,7 +21,11 @@ class AsyncioConnection(BaseConnection):
     ) -> None: ...
     @classmethod
     def create_connection(
-        cls, connection_configs, on_done, custom_ioloop: AbstractEventLoop | None = None, workflow: Incomplete | None = None
+        cls,
+        connection_configs,
+        on_done,
+        custom_ioloop: AbstractEventLoop | None = None,
+        workflow: connection_workflow.AbstractAMQPConnectionWorkflow | None = None,
     ): ...
 
 class _AsyncioIOServicesAdapter(
@@ -31,7 +34,7 @@ class _AsyncioIOServicesAdapter(
     nbio_interface.AbstractIOServices,
     nbio_interface.AbstractFileDescriptorServices,
 ):
-    def __init__(self, loop: Incomplete | None = None) -> None: ...
+    def __init__(self, loop: AbstractEventLoop | None = None) -> None: ...
     def get_native_ioloop(self): ...
     def close(self) -> None: ...
     def run(self) -> None: ...

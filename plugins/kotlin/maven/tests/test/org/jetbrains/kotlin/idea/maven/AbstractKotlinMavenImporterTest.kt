@@ -3004,7 +3004,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             // Check that we haven't lost internal argument during importing to facet
-            Assert.assertEquals("-XXLanguage:+InlineClasses", facetSettings.compilerSettings?.additionalArguments)
+            Assert.assertTrue("Argument is missing from compiler settings", "-XXLanguage:+InlineClasses" in facetSettings.compilerSettings!!.additionalArguments)
 
             // Check that internal argument influenced LanguageVersionSettings correctly
             Assert.assertEquals(

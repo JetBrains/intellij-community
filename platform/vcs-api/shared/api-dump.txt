@@ -26,6 +26,14 @@ f:com.intellij.openapi.vcs.changes.ChangeListChange
 - f:getChangeListName():java.lang.String
 f:com.intellij.openapi.vcs.changes.ChangeListChange$Companion
 - f:replaceChangeContents(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.changes.ContentRevision,com.intellij.openapi.vcs.changes.ContentRevision):com.intellij.openapi.vcs.changes.Change
+com.intellij.openapi.vcs.changes.ChangeListDecorator
+- sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
+- a:decorateChangeList(com.intellij.openapi.vcs.changes.LocalChangeList,com.intellij.ui.ColoredTreeCellRenderer,Z,Z,Z):V
+- s:getDecorators(com.intellij.openapi.project.Project):java.util.List
+com.intellij.openapi.vcs.changes.FilePathIconProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- getIcon(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.project.Project):javax.swing.Icon
+- getIcon(com.intellij.openapi.vcs.FilePath,Z,com.intellij.openapi.project.Project):javax.swing.Icon
 com.intellij.openapi.vcs.changes.InclusionListener
 - java.util.EventListener
 - a:inclusionChanged():V
@@ -58,7 +66,6 @@ a:com.intellij.openapi.vcs.changes.LocalChangeList
 - isBlank():Z
 - a:isDefault():Z
 - a:isReadOnly():Z
-- a:setComment(java.lang.String):V
 c:com.intellij.openapi.vcs.changes.LocallyDeletedChange
 - <init>(com.intellij.openapi.vcs.FilePath):V
 - equals(java.lang.Object):Z
@@ -74,3 +81,21 @@ f:com.intellij.openapi.vcs.changes.LogicalLock
 - getExpirationDate():java.util.Date
 - getOwner():java.lang.String
 - isIsLocal():Z
+f:com.intellij.openapi.vcs.changes.TextRevisionNumber
+- com.intellij.openapi.vcs.history.ShortVcsRevisionNumber
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.String):V
+- asString():java.lang.String
+- compareTo(com.intellij.openapi.vcs.history.VcsRevisionNumber):I
+- equals(java.lang.Object):Z
+- hashCode():I
+- toShortString():java.lang.String
+com.intellij.openapi.vcs.history.ShortVcsRevisionNumber
+- com.intellij.openapi.vcs.history.VcsRevisionNumber
+- a:toShortString():java.lang.String
+com.intellij.vcs.log.Hash
+- a:asString():java.lang.String
+- a:toShortString():java.lang.String
+com.intellij.vcs.log.VcsUser
+- a:getEmail():java.lang.String
+- a:getName():java.lang.String

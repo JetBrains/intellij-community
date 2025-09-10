@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.gradle.scripting.shared
 
-import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -71,7 +71,7 @@ internal class LoadKtGradleConfigurationAction : AnAction() {
 
     private fun getNotificationVisibility(editor: Editor): Boolean {
         if (!scriptConfigurationsNeedToBeUpdatedBalloon) return false
-        if (DiffUtil.isDiffEditor(editor)) return false
+        if (editor.getEditorKind() == EditorKind.DIFF) return false
 
         val project = editor.project ?: return false
 

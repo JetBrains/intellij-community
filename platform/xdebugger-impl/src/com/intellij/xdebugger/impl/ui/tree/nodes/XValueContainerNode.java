@@ -114,7 +114,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   private List<XValueNodeImpl> initChildrenList(int initialSize) {
     XDebuggerPinToTopManager pinToTopManager = XDebuggerPinToTopManager.Companion.getInstance(myTree.getProject());
     boolean needBaseSorting = !myAlreadySorted && XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues();
-    boolean isPinToTopSupported = pinToTopManager.isEnabled() && pinToTopManager.isPinToTopSupported(this);
+    boolean isPinToTopSupported = pinToTopManager.isEnabled();
 
     if (!needBaseSorting && !isPinToTopSupported) {
       return new ArrayList<>(initialSize);

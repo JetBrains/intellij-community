@@ -17,7 +17,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "kotlin.gradle.gradle.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -82,6 +82,7 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
   ],
+  exports = ["@lib//:kotlin-tooling-core"],
   runtime_deps = [":tests_test_resources"]
 )
 ### auto-generated section `build kotlin.gradle.gradle.tests` end

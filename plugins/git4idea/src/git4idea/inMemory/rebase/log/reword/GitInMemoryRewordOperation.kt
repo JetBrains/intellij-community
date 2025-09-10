@@ -23,11 +23,11 @@ internal class GitInMemoryRewordOperation(
   override val failureTitle: String = GitBundle.message("in.memory.rebase.log.reword.failed.title")
 
   override suspend fun editCommits(): CommitEditingResult {
-    val targetCommit = commits.first()
+    val targetCommit = baseToHeadCommitsRange.first()
 
     LOG.info("Start computing new head for reword operation of $targetCommit")
-    val rewordedTargetCommit = objectRepo.commitTreeWithOverrides(commits.first(), message = newMessage.toByteArray())
-    val newHead = objectRepo.chainCommits(rewordedTargetCommit, commits.drop(1))
+    val rewordedTargetCommit = objectRepo.commitTreeWithOverrides(baseToHeadCommitsRange.first(), message = newMessage.toByteArray())
+    val newHead = objectRepo.chainCommits(rewordedTargetCommit, baseToHeadCommitsRange.drop(1))
 
     LOG.info("Finish computing new head for reword operation")
     return CommitEditingResult(newHead, rewordedTargetCommit)

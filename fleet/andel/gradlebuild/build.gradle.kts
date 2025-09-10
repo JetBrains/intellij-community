@@ -31,6 +31,8 @@ kotlin {
     "-Xlambdas=class",
     "-Xconsistent-data-class-copy-visibility",
     "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
+    "-Xwasm-kclass-fqn",
+    "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
   )
   jvm {}
   wasmJs {
@@ -70,6 +72,9 @@ kotlin {
       isTransitive = false
     }
     implementation(project(":fleet.util.core"))
+    implementation(project(":fleet.util.codepoints"))
+    api(project(":fleet.bifurcan"))
+    implementation(project(":fleet.fastutil"))
   }
   // KOTLIN__MARKER_END
 }

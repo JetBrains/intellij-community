@@ -188,7 +188,7 @@ class NeededResources:
         recompute_hashes: bool = True,
         base_url: str | None = None,
         script_name: str | None = None,
-        publisher_signature: str = ...,
+        publisher_signature: str = "fanstatic",
         resources: Iterable[Dependable] | None = None,
     ) -> None: ...
     def has_resources(self) -> bool: ...

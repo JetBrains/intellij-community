@@ -9,15 +9,14 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-/**
- * @author lesya
- */
 public final class ExecutionBundle extends DynamicBundle {
-  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key,
+                                             Object @NotNull ... params) {
     return ourInstance.getMessage(key, params);
   }
 
-  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key,
+                                                              Object @NotNull ... params) {
     return ourInstance.getLazyMessage(key, params);
   }
 

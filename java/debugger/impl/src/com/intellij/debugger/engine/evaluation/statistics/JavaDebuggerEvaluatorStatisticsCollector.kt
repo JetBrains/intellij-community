@@ -10,7 +10,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
 
 object JavaDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
 

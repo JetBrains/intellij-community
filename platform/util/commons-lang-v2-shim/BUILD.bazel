@@ -5,7 +5,7 @@ jvm_library(
   name = "commons-lang-v2-shim",
   module_name = "intellij.platform.util.commonsLangV2Shim",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:commons-lang3",
     "@lib//:platform-util-commons_lang_v2_shim-commons-collections",

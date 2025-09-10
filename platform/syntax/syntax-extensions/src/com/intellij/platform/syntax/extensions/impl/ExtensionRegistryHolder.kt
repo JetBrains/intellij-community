@@ -3,6 +3,7 @@ package com.intellij.platform.syntax.extensions.impl
 
 import com.intellij.platform.syntax.extensions.ExtensionRegistry
 import com.intellij.platform.syntax.extensions.ExtensionSupport
+import com.intellij.platform.syntax.extensions.currentExtensionSupport
 import com.intellij.platform.syntax.extensions.StaticExtensionSupport
 import fleet.util.multiplatform.linkToActual
 import kotlin.contracts.ExperimentalContracts
@@ -28,7 +29,7 @@ internal val staticRegistryHolder: RegistryHolder by lazy {
 
 /**
  * Tries to find [com.intellij.platform.syntax.psi.IntelliJExtensionSupport] in the class path.
- * If it succeeds, it means we are running in IntelliJ, and we must use IJ plugin model as the [ExtensionSupport] backend.
+ * If it succeeds, it means we are running in IntelliJ, and we must use IJ plugin model as the [currentExtensionSupport] backend.
  * Otherwise, returning [ExtensionRegistryImpl].
  *
  * @See instantiateExtensionRegistryJvm

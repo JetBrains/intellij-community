@@ -114,7 +114,7 @@ private fun performCheckinProjectAction(e: AnActionEvent) {
 
 @ApiStatus.Internal
 fun getAllCommittableRoots(project: Project): List<FilePath> {
-  return ProjectLevelVcsManager.getInstance(project).allVcsRoots
+  return ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()
     .filter { it.vcs?.checkinEnvironment != null }
     .map { getFilePath(it.path) }
 }

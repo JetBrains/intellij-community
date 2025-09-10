@@ -11,9 +11,7 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 
 class RemoveUselessCallFix : PsiUpdateModCommandQuickFix() {
 
-    override fun getName() = KotlinBundle.message("remove.redundant.call.fix.text")
-
-    override fun getFamilyName() = name
+    override fun getFamilyName(): String = KotlinBundle.message("remove.redundant.call.fix.text")
 
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
         val qualifiedDescriptor = (element as? KtQualifiedExpression) ?: return

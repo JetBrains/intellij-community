@@ -84,7 +84,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
     "@lib//:junit4",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "//java/java-impl-inspections:impl-inspections",
     "//java/java-impl-refactorings:impl-refactorings",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",

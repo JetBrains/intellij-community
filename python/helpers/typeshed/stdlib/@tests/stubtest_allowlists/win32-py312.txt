@@ -1,19 +1,31 @@
-_winapi.GetLongPathName
-_winapi.GetShortPathName
-ntpath.exists
-os.path.exists
+# =======
+# >= 3.12
+# =======
 
 # Undocumented internal method, not really for public consumption.
 # (Hard to add types for unless we add stubs for the undocumented _overlapped module...)
 asyncio.IocpProactor.finish_socket_func
 asyncio.windows_events.IocpProactor.finish_socket_func
 
-# pathlib functions that rely on modules that don't exist on Windows
-pathlib.Path.owner
-pathlib.Path.group
+
+# =========
+# 3.12 only
+# =========
+
+_winapi.GetLongPathName
+_winapi.GetShortPathName
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; <= 3.12
+# =============================================================
 
 # Modules that don't exist on Windows
 crypt
 nis
 ossaudiodev
 spwd
+
+# Incompatible changes introduced in Python 3.12.11
+# (Remove once 3.12.11 becomes available for Windows)
+(ntpath.realpath)?

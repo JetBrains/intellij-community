@@ -5,6 +5,10 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.defaultType
+import org.jetbrains.kotlin.analysis.api.components.isNothingType
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -19,7 +23,7 @@ internal object PreferredSubtypeWeigher {
         UNRELATED
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KaSymbol) {
         val preferredSubtype = context.preferredSubtype ?: return
         val actualClassType = (symbol as? KaClassLikeSymbol)?.defaultType ?: return

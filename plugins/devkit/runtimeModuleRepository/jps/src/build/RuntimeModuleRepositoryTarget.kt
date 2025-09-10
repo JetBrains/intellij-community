@@ -4,8 +4,7 @@
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
 import com.dynatrace.hash4j.hashing.HashSink
-import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.COMPACT_REPOSITORY_FILE_NAME
-import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
+import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
 import com.intellij.devkit.runtimeModuleRepository.jps.impl.DevkitRuntimeModuleRepositoryJpsBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.runtime.repository.serialization.impl.CompactFileReader
@@ -72,14 +71,14 @@ internal class RuntimeModuleRepositoryTarget(
     val project = context.projectDescriptor.project
     val outputUrl = JpsJavaExtensionService.getInstance().getProjectExtension(project)?.outputUrl ?: return emptyList()
     val outputDir = JpsPathUtil.urlToFile(outputUrl)
-    return java.util.List.of(File(outputDir, JAR_REPOSITORY_FILE_NAME),
-                             File(outputDir, COMPACT_REPOSITORY_FILE_NAME))
+    return java.util.List.of(File(outputDir, RuntimeModuleRepositoryGenerator.JAR_REPOSITORY_FILE_NAME),
+                             File(outputDir, RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME))
   }
 
   override fun computeConfigurationDigest(projectDescriptor: ProjectDescriptor, hash: HashSink) {
     hash.putString(JarFileSerializer.SPECIFICATION_VERSION)
     hash.putInt(CompactFileReader.FORMAT_VERSION)
-    hash.putInt(RuntimeModuleRepositoryBuildConstants.GENERATOR_VERSION)
+    hash.putInt(RuntimeModuleRepositoryGenerator.GENERATOR_VERSION)
 
     val time = measureTimeMillis {
       computeDependenciesDigest(projectDescriptor, hash)
@@ -100,7 +99,7 @@ internal class RuntimeModuleRepositoryTarget(
       hash.putInt(sourceRoots.size)
 
       var counter = 0
-      RuntimeModuleRepositoryBuilder.enumerateRuntimeDependencies(module).processModuleAndLibraries(
+      RuntimeModuleRepositoryGenerator.enumerateRuntimeDependencies(module).processModuleAndLibraries(
         {
           hash.putString(it.name)
           counter++

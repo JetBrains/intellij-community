@@ -38,6 +38,7 @@ import java.util.zip.CRC32
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import kotlin.io.path.name
 import kotlin.random.Random
 
 class ZipTest {
@@ -203,27 +204,44 @@ class ZipTest {
   @Test
   fun `small file`(@TempDir tempDir: Path) {
     val dir = tempDir.resolve("dir")
-    val file = dir.resolve("samples/nested_dir/__init__.py")
-    Files.createDirectories(file.parent)
-    val data = "\n"
-    Files.writeString(file, data)
+    val data = createTestFileInDir(dir)
 
     val archiveFile = tempDir.resolve("archive.zip")
     zipWithCompression(archiveFile, mapOf(dir to ""))
 
+    val name = "samples-dir/nested_dir-dir/__init__.py"
 
     java.util.zip.ZipFile(archiveFile.toFile()).use { jdkZipFile ->
-      val entry = jdkZipFile.getEntry("samples/nested_dir/__init__.py")
+      val entry = jdkZipFile.getEntry(name)
       assertThat(entry).isNotNull()
       val crc = CRC32().also { it.update(data.toByteArray()) }.value
       assertThat(entry.crc).isEqualTo(crc)
     }
 
     HashMapZipFile.load(archiveFile).use { zipFile ->
-      val entry = zipFile.getRawEntry("samples/nested_dir/__init__.py")
+      val entry = zipFile.getRawEntry(name)
       assertThat(entry).isNotNull()
       assertThat(entry!!.isCompressed).isFalse()
       assertThat(entry.getData(zipFile).decodeToString()).isEqualTo(data)
+    }
+  }
+
+  @Test
+  fun `multiple dirs with same empty prefix`(@TempDir tempDir: Path) {
+    val dir1 = tempDir.resolve("dir1")
+    val dir2 = tempDir.resolve("dir2")
+
+    createTestFileInDir(dir1)
+    createTestFileInDir(dir2)
+
+    val archiveFile = tempDir.resolve("archive.zip")
+    zipWithCompression(archiveFile, mapOf(dir1 to "", dir2 to ""))
+
+    HashMapZipFile.load(archiveFile).use { zipFile ->
+      assertThat(zipFile.entries.map { it.name }).containsExactlyInAnyOrder(
+        "samples-dir1/nested_dir-dir1/__init__.py",
+        "samples-dir2/nested_dir-dir2/__init__.py"
+      )
     }
   }
 
@@ -621,6 +639,14 @@ class ZipTest {
       }
     }
   }
+}
+
+private fun createTestFileInDir(dir: Path): String {
+  val file = dir.resolve("samples-${dir.name}/nested_dir-${dir.name}/__init__.py")
+  Files.createDirectories(file.parent)
+  val data = "\n"
+  Files.writeString(file, data)
+  return data
 }
 
 // check both IKV- and non-IKV variants of an immutable zip file

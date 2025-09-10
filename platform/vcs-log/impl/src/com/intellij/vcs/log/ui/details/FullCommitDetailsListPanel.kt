@@ -7,7 +7,6 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
-import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
@@ -18,6 +17,7 @@ import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.ui.progress.ProgressUIUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -77,7 +77,7 @@ private class ChangesBrowserWithLoadingPanel(project: Project, disposable: Dispo
     }
 
   private val changesBrowserLoadingPanel =
-    JBLoadingPanel(BorderLayout(), disposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
+    JBLoadingPanel(BorderLayout(), disposable, ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS).apply {
       add(changesBrowser, BorderLayout.CENTER)
     }
 

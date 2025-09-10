@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 from decimal import Decimal
 from re import Pattern
-from typing import TypedDict
+from typing import TypedDict, type_check_only
 
 from .adjacency_graphs import _Graph
 from .matching import _Match
@@ -15,6 +15,7 @@ MIN_SUBMATCH_GUESSES_MULTI_CHAR: int
 MIN_YEAR_SPACE: int
 REFERENCE_YEAR: int
 
+@type_check_only
 class _GuessesResult(TypedDict):
     password: str
     guesses: int

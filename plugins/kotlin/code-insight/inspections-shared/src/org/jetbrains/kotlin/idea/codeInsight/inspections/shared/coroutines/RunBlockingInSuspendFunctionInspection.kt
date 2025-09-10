@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.parents
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
@@ -17,7 +16,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.symbol
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.equalsOrEqualsByPsi
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.resources.BUNDLE
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -26,7 +24,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.getCallExpressionSymbol
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
-import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.refactoring.singleLambdaArgumentExpression
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -94,11 +91,8 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
         if (!isRunBlocking(function)) return null
         val lambdaArgument = element.lambdaArguments.singleOrNull() ?: return null
         val functionLiteral = lambdaArgument.getLambdaExpression()?.functionLiteral ?: return null
-        val anonymousFunctionSymbol = functionLiteral.symbol
 
-        val labelReferenceExpressions = functionLiteral.descendantsOfType<KtLabelReferenceExpression>().filter {
-            it.resolveExpression().equalsOrEqualsByPsi(anonymousFunctionSymbol) 
-        }.map { it.createSmartPointer() }.toList()
+        val labelReferenceExpressions = functionLiteral.findRelatedLabelReferences().map { it.createSmartPointer() }
 
         return Context(
             labelReferenceExpressions,

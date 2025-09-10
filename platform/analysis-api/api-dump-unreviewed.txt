@@ -167,10 +167,6 @@ a:com.intellij.codeInsight.completion.CompletionConfidence
 - <init>():V
 - shouldSkipAutopopup(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement,com.intellij.psi.PsiFile,I):com.intellij.util.ThreeState
 - shouldSkipAutopopup(com.intellij.psi.PsiElement,com.intellij.psi.PsiFile,I):com.intellij.util.ThreeState
-f:com.intellij.codeInsight.completion.CompletionConfidenceEP
-- com.intellij.lang.LanguageExtensionPoint
-- <init>():V
-- s:forLanguage(com.intellij.lang.Language):java.util.List
 a:com.intellij.codeInsight.completion.CompletionContributor
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP:com.intellij.openapi.extensions.ExtensionPointName
@@ -2431,22 +2427,13 @@ c:com.intellij.openapi.fileEditor.OpenFileDescriptor
 - canNavigate():Z
 - canNavigateToSource():Z
 - compareTo(com.intellij.openapi.fileEditor.OpenFileDescriptor):I
-- dispose():V
-- getColumn():I
 - getFile():com.intellij.openapi.vfs.VirtualFile
-- getLine():I
 - getOffset():I
-- getProject():com.intellij.openapi.project.Project
-- getRangeMarker():com.intellij.openapi.editor.RangeMarker
-- s:getRangeToUnfoldOnNavigation(com.intellij.openapi.editor.Editor):com.intellij.openapi.util.TextRange
 - isUseCurrentWindow():Z
 - isUsePreviewTab():Z
 - navigate(Z):V
 - navigateIn(com.intellij.openapi.editor.Editor):V
 - navigateInEditor(com.intellij.openapi.project.Project,Z):Z
-- setScrollType(com.intellij.openapi.editor.ScrollType):V
-- setUseCurrentWindow(Z):com.intellij.openapi.fileEditor.OpenFileDescriptor
-- setUsePreviewTab(Z):com.intellij.openapi.fileEditor.OpenFileDescriptor
 f:com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 - <init>(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.fileEditor.FileEditorProvider):V
 - f:component1():com.intellij.openapi.fileEditor.FileEditor

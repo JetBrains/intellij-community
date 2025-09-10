@@ -16,14 +16,13 @@
     <module name="intellij.platform.ml.logs"/>
     <module name="intellij.libraries.microba"/>
     <module name="intellij.libraries.skiko"/>
-
+    <module name="intellij.libraries.coil"/>
     <module name="intellij.charts"/>
-
-
     <module name="intellij.platform.compose"/>
     <module name="intellij.platform.compose.markdown"/>
     <module name="intellij.platform.jewel.foundation"/>
     <module name="intellij.libraries.compose.foundation.desktop"/>
+    <module name="intellij.libraries.compose.runtime.desktop"/>
     <module name="intellij.platform.jewel.ui"/>
     <module name="intellij.platform.jewel.ideLafBridge"/>
     <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
@@ -54,6 +53,12 @@
     <module name="intellij.platform.polySymbols.backend" loading="embedded"/> <!--todo: move to essential modules when not embedded-->
 
     <module name="intellij.regexp" loading="embedded"/>
+
+    <module name="intellij.platform.langInjection"/>
+    <module name="intellij.platform.langInjection.backend"/>
+
+    <module name="intellij.libraries.grpc"/>
+    <module name="intellij.libraries.grpc.netty.shaded"/>
   </content>
 
   <xi:include href="/META-INF/grid-core-modules.xml"/>

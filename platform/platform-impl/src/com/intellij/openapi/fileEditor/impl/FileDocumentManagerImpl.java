@@ -8,10 +8,7 @@ import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionGuardImpl;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -232,18 +229,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   private void saveAllDocumentsLater() {
     // later because some document might have been blocked by PSI right now
-    ApplicationManager.getApplication().invokeLater(() -> {
-      Document[] unsavedDocuments = getUnsavedDocuments();
-      for (Document document : unsavedDocuments) {
-        VirtualFile file = getFile(document);
-        if (file != null) {
-          Project project = ProjectUtil.guessProjectForFile(file);
-          if (project == null || !PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document)) {
-            saveDocument(document);
-          }
-        }
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> saveAllDocuments(false), ModalityState.nonModal());
   }
 
   @Override
@@ -390,6 +376,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     LOG.trace("  writing...");
     WriteAction.run(() -> doSaveDocumentInWriteAction(document, file));
     LOG.trace("  done");
+    myMultiCaster.afterDocumentSaved(document);
   }
 
   private boolean maySaveDocument(@NotNull VirtualFile file, @NotNull Document document, boolean isExplicit) {
@@ -674,14 +661,12 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         @Override
         public void afterVfsChange() {
           for (VFileEvent event : events) {
-            if (event instanceof VFileContentChangeEvent changeEvent && changeEvent.getFile().isValid()) {
-              myFileDocumentManager.contentsChanged(changeEvent);
-            }
-            else if (event instanceof VFileDeleteEvent deleteEvent) {
-              myFileDocumentManager.fileDeleted(deleteEvent.getFile());
-            }
-            else if (event instanceof VFilePropertyChangeEvent propEvent && propEvent.getFile().isValid()) {
-              myFileDocumentManager.propertyChanged(propEvent);
+            switch (event) {
+              case VFileContentChangeEvent changeEvent when changeEvent.getFile().isValid() -> myFileDocumentManager.contentsChanged(changeEvent);
+              case VFileDeleteEvent deleteEvent -> myFileDocumentManager.fileDeleted(deleteEvent.getFile());
+              case VFilePropertyChangeEvent propEvent when propEvent.getFile().isValid() -> myFileDocumentManager.propertyChanged(propEvent);
+              default -> {
+              }
             }
           }
           Reference.reachabilityFence(strongRefsToDocuments);

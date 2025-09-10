@@ -53,7 +53,7 @@ interface KotlinBuildSystemDependencyManager {
     fun startProjectSync()
 }
 
-fun ExternalLibraryDescriptor.withScope(newScope: DependencyScope) = ExternalLibraryDescriptor(
+fun ExternalLibraryDescriptor.withScope(newScope: DependencyScope): ExternalLibraryDescriptor = ExternalLibraryDescriptor(
     libraryGroupId,
     libraryArtifactId,
     minVersion,

@@ -2,6 +2,9 @@
 package org.jetbrains.intellij.build.fus
 
 import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
+import com.jetbrains.fus.reporting.configuration.ConfigurationClient
+import com.google.gson.JsonParser
+import com.jetbrains.fus.reporting.serialization.FusKotlinSerializer
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -35,6 +38,26 @@ internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(
           path = "resources/event-log-metadata/$recorderId/events-scheme.json",
           content = download(metadataServiceUri(featureUsageStatisticsProperties, context))
         )
+        val dictionaryListBytes = download(dictionaryServiceUri(featureUsageStatisticsProperties, context, "dictionaries.json"))
+        val dictionariesListJson = JsonParser.parseString(String(dictionaryListBytes))
+        val dictionariesList = dictionariesListJson.asJsonObject.get("dictionaries").asJsonArray
+
+        if (!dictionariesList.isEmpty) {
+          moduleOutputPatcher.patchModuleOutput(
+            moduleName = "intellij.platform.ide.impl",
+            path = "resources/event-log-metadata/$recorderId/dictionaries/dictionaries.json",
+            content = dictionaryListBytes
+          )
+        }
+
+        for (dictionary in dictionariesList) {
+          val dictionaryName = dictionary.asString
+          moduleOutputPatcher.patchModuleOutput(
+            moduleName = "intellij.platform.ide.impl",
+            path = "resources/event-log-metadata/$recorderId/dictionaries/$dictionaryName",
+            content = download(dictionaryServiceUri(featureUsageStatisticsProperties, context, dictionaryName))
+          )
+        }
       }
       catch (e: CancellationException) {
         throw e
@@ -59,14 +82,21 @@ private suspend fun download(url: String): ByteArray {
   return downloadAsBytes(url)
 }
 
-private suspend fun metadataServiceUri(featureUsageStatisticsProperties: FeatureUsageStatisticsProperties, context: BuildContext): String {
+private suspend fun serviceUri(featureUsageStatisticsProperties: FeatureUsageStatisticsProperties, context: BuildContext): ConfigurationClient {
   val providerUri = appendProductCode(featureUsageStatisticsProperties.metadataProviderUri, context)
   Span.current().addEvent("parsing", Attributes.of(AttributeKey.stringKey("url"), providerUri))
   val appInfo = context.applicationInfo
   val configurationClient = ConfigurationClientFactory.create(
-    download(providerUri).inputStream().reader(),
-    context.applicationInfo.productCode,
-    "${appInfo.majorVersion}.${appInfo.minorVersion}"
+    reader = download(providerUri).inputStream().reader(),
+    productCode = context.applicationInfo.productCode,
+    productVersion = "${appInfo.majorVersion}.${appInfo.minorVersion}",
+    serializer = FusKotlinSerializer()
   )
-  return configurationClient.provideMetadataProductUrl()!!
+  return configurationClient
 }
+
+private suspend fun metadataServiceUri(featureUsageStatisticsProperties: FeatureUsageStatisticsProperties, context: BuildContext): String
+  = serviceUri(featureUsageStatisticsProperties, context).provideMetadataProductUrl()!!
+
+private suspend fun dictionaryServiceUri(featureUsageStatisticsProperties: FeatureUsageStatisticsProperties, context: BuildContext, fileName: String): String
+  = "${serviceUri(featureUsageStatisticsProperties, context).provideDictionaryEndpoint()!!}${featureUsageStatisticsProperties.recorderId}/$fileName"

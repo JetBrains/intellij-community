@@ -1,0 +1,10 @@
+// "Use withIndex() instead of manual index increment" "true"
+
+fun foo(list: List<String>): Int? {
+    for ((index, s) in list.withIndex()) {
+        val x = s.length * index
+        if (x > 0) return x
+    }
+    return null
+}
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UseWithIndexInspection$createQuickFix$1

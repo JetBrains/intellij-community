@@ -11,25 +11,6 @@ import org.jetbrains.plugins.textmate.plist.Plist
 import kotlin.jvm.JvmStatic
 
 object PreferencesReadUtil {
-  /**
-   * @return pair <scopeName></scopeName>, settingsPlist> or null if rootPlist doesn't contain 'settings' child
-   * or scopeName is null or empty
-   */
-  @JvmStatic
-  fun retrieveSettingsPlist(rootPlist: Plist): Pair<String, Plist>? {
-    var scopeName: String? = null
-    var settingsValuePlist: Plist? = null
-    val value = rootPlist.getPlistValue(Constants.SCOPE_KEY)
-    if (value != null) {
-      scopeName = value.string
-      val settingsValue = rootPlist.getPlistValue(Constants.SETTINGS_KEY)
-      if (scopeName != null && !scopeName.isEmpty() && settingsValue != null) {
-        settingsValuePlist = settingsValue.plist
-      }
-    }
-    return if (scopeName != null && settingsValuePlist != null) scopeName to settingsValuePlist else null
-  }
-
   fun readPairs(pairsValue: PListValue?): Set<TextMateBracePair>? {
     if (pairsValue == null) {
       return null

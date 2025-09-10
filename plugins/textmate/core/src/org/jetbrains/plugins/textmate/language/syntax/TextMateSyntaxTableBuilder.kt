@@ -167,7 +167,7 @@ private class RawLanguageDescriptor(
           InjectionNodeDescriptor(selector, compiledRule)
         }
       }.compactList()
-      TextMateLanguageDescriptor(scopeName, rootNode, injections)
+      TextMateLanguageDescriptor(rootNode, injections)
     }
   }
 }

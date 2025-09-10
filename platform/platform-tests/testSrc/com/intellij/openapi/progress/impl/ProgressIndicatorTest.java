@@ -1170,7 +1170,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   public void testPushPopStateMustSaveProgressWindowTitle() {
-    ProgressWindow window = new ProgressWindow(false, null);
+    ProgressWindow window = new ProgressWindow(false, getProject());
     window.setTitle("myTitle");
     window.setIndeterminate(false);
     window.setFraction(1);

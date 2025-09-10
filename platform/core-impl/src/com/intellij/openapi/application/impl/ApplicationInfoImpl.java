@@ -50,6 +50,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myPatchVersion;
   private String myFullVersionFormat;
   private String myBuildNumber;
+  private @Nullable String myBuildBranchName;
   private String myApiVersion;
   private String myVersionSuffix;
   private String myCompanyName = "JetBrains s.r.o.";
@@ -273,7 +274,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     if (myPluginManagerUrl == null) {
       readPluginInfo(null);
     }
-    
+
     Objects.requireNonNull(svgIconUrl, "Missing attribute: //icon@svg");
     Objects.requireNonNull(mySmallSvgIconUrl, "Missing attribute: //icon@svg-small");
 
@@ -343,6 +344,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public @NotNull BuildNumber getBuild() {
     return Objects.requireNonNull(BuildNumber.fromString(myBuildNumber));
+  }
+
+  @Override
+  public @Nullable String getBuildBranchName() {
+    return myBuildBranchName;
   }
 
   @Override
@@ -626,6 +632,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private void readBuildInfo(XmlElement element) {
     myBuildNumber = getAttributeValue(element, "number");
     myApiVersion = getAttributeValue(element, "apiVersion");
+    myBuildBranchName = getAttributeValue(element, "branchName");
 
     String dateString = element.getAttributeValue("date");
     if (dateString != null && !dateString.equals("__BUILD_DATE__")) {

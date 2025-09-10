@@ -1,10 +1,10 @@
 import inspect
 from builtins import dict as _dict  # alias to avoid conflicts with attribute name
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Generator, Iterator
 from contextlib import _GeneratorContextManager
 from inspect import Signature, getfullargspec as getfullargspec, iscoroutinefunction as iscoroutinefunction
 from re import Pattern
-from typing import Any, Literal, TypeVar
+from typing import Any, Final, Literal, TypeVar
 from typing_extensions import ParamSpec
 
 _C = TypeVar("_C", bound=Callable[..., Any])
@@ -12,10 +12,9 @@ _Func = TypeVar("_Func", bound=Callable[..., Any])
 _T = TypeVar("_T")
 _P = ParamSpec("_P")
 
-def get_init(cls: type) -> None: ...
-
-DEF: Pattern[str]
-POS: Literal[inspect._ParameterKind.POSITIONAL_OR_KEYWORD]
+DEF: Final[Pattern[str]]
+POS: Final[Literal[inspect._ParameterKind.POSITIONAL_OR_KEYWORD]]
+EMPTY: Final[type[inspect._empty]]
 
 class FunctionMaker:
     args: list[str]
@@ -59,13 +58,14 @@ class FunctionMaker:
     ) -> Callable[..., Any]: ...
 
 def fix(args: tuple[Any, ...], kwargs: dict[str, Any], sig: Signature) -> tuple[tuple[Any, ...], dict[str, Any]]: ...
-def decorate(func: _Func, caller: Callable[..., Any], extras: Any = ...) -> _Func: ...
+def decorate(func: _Func, caller: Callable[..., Any], extras: tuple[Any, ...] = ..., kwsyntax: bool = False) -> _Func: ...
 def decoratorx(caller: Callable[..., Any]) -> Callable[..., Any]: ...
 def decorator(
-    caller: Callable[..., Any], _func: Callable[..., Any] | None = ...
+    caller: Callable[..., Any], _func: Callable[..., Any] | None = None, kwsyntax: bool = False
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]: ...
 
 class ContextManager(_GeneratorContextManager[_T]):
+    def __init__(self, g: Callable[..., Generator[_T]], *a: Any, **k: Any) -> None: ...
     def __call__(self, func: _C) -> _C: ...
 
 def contextmanager(func: Callable[_P, Iterator[_T]]) -> Callable[_P, ContextManager[_T]]: ...

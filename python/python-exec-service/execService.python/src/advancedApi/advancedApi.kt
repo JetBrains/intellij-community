@@ -22,7 +22,7 @@ suspend fun <T> ExecService.executePythonAdvanced(
   processInteractiveHandler: ProcessInteractiveHandler<T>,
 ): PyResult<T> =
   executeAdvanced(
-    binary = BinOnEel(python.binary),
+    binary = python.binary,
     args = Args(*python.args.toTypedArray()).add(args),
     // TODO: Merge PATH
     options = options.copy(env = options.env + python.env), processInteractiveHandler)

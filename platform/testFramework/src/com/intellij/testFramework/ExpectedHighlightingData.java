@@ -78,8 +78,9 @@ public class ExpectedHighlightingData {
   private static final String SYMBOL_NAME_MARKER = "symbolName";
   private static final String LINE_MARKER = "lineMarker";
   private static final String ANY_TEXT = "*";
-
-  private static final HighlightInfoType WHATEVER = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, HighlighterColors.TEXT);
+  private static class Holder {
+    private static final HighlightInfoType WHATEVER = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, HighlighterColors.TEXT);
+  }
 
   private static boolean isDuplicatedCheckDisabled = false;
   private static int failedDuplicationChecks = 0;
@@ -307,7 +308,7 @@ public class ExpectedHighlightingData {
       tooltip = tooltip.replaceAll("\\\\\"", "\"");
     }
 
-    HighlightInfoType type = WHATEVER;
+    HighlightInfoType type = Holder.WHATEVER;
     if (typeString != null) {
       try {
         type = getTypeByName(typeString);
@@ -740,7 +741,7 @@ public class ExpectedHighlightingData {
 
   private static boolean matchesPattern(@NotNull HighlightInfo expectedInfo, @NotNull HighlightInfo info, boolean strictMatch) {
     if (expectedInfo == info) return true;
-    boolean typeMatches = expectedInfo.type.equals(info.type) || !strictMatch && (expectedInfo.type == WHATEVER || info.type == WHATEVER);
+    boolean typeMatches = expectedInfo.type.equals(info.type) || !strictMatch && (expectedInfo.type == Holder.WHATEVER || info.type == Holder.WHATEVER);
     boolean textAttributesMatches = sameTextAttributesByValue(expectedInfo.getTextAttributes(null, null), info.getTextAttributes(null, null)) ||
                                     !strictMatch && (expectedInfo.forcedTextAttributes == null || info.forcedTextAttributes == null);
     boolean attributesKeyMatches = !strictMatch && (expectedInfo.forcedTextAttributesKey == null || info.forcedTextAttributesKey == null) ||

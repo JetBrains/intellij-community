@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.registry.RegistryValue
@@ -29,14 +30,17 @@ import com.intellij.vcs.log.impl.VcsLogCachesInvalidator
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogStorageLocker
 import com.intellij.vcs.log.util.PersistentUtil
+import com.intellij.vcs.log.util.StorageId
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil.VcsUserHashingStrategy
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -76,6 +80,7 @@ class VcsLogData @ApiStatus.Internal constructor(
 
   private val refresher: VcsLogRefresherImpl
   val dataPack: DataPack get() = refresher.currentDataPack
+  val isRefreshInProgress: StateFlow<Boolean> get() = refresher.isBusy
   private val dataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList<DataPackChangeListener>()
 
   val containingBranchesGetter: ContainingBranchesGetter
@@ -95,14 +100,37 @@ class VcsLogData @ApiStatus.Internal constructor(
 
   init {
     val dataDisposable = Disposer.newDisposable("Vcs Log Data Disposable for ${logProviders}")
-    val dataDisposableJob = cs.launch(start = CoroutineStart.UNDISPATCHED) {
+    val dataDisposableJob = cs.launch(CoroutineName("Data disposer"), start = CoroutineStart.UNDISPATCHED) {
+      val dataDisposalStarted = AtomicBoolean(false)
+      val shutdownTask = Runnable {
+        if (!dataDisposalStarted.compareAndSet(false, true)) {
+          LOG.warn("unregisterShutdownTask should be called")
+          return@Runnable
+        }
+
+        LOG.info("Disposing log data on app shutdown")
+        // Forcibly dispose the storage data holders to flush the data on disk.
+        Disposer.dispose(dataDisposable)
+      }
+
       try {
+        ShutDownTracker.getInstance().registerShutdownTask(shutdownTask)
         awaitCancellation()
       }
       finally {
-        // disposing storage triggers flushing on disk
-        withContext(NonCancellable + Dispatchers.IO) {
-          Disposer.dispose(dataDisposable)
+        ShutDownTracker.getInstance().unregisterShutdownTask(shutdownTask)
+        if (dataDisposalStarted.compareAndSet(false, true)) {
+          // disposing storage triggers flushing on disk
+          withContext(NonCancellable + Dispatchers.IO) {
+            LOG.info("Disposing log data")
+            Disposer.dispose(dataDisposable)
+
+            yield() // give constructor a chance to complete
+            if (storage is VcsLogStorageImpl && !storage.isDisposed) {
+              LOG.error("Storage for $logProviders was not disposed")
+              Disposer.dispose(storage)
+            }
+          }
         }
       }
     }.apply {
@@ -163,18 +191,11 @@ class VcsLogData @ApiStatus.Internal constructor(
       finally {
         try {
           withContext(NonCancellable) {
-            initJob.joinWithTimeout(1.minutes) { LOG.warn("Init job shutdown timed out", it) }
+            initJob.joinWithTimeout(1.minutes) { LOG.warn("Init job shutdown timed out") }
             topCommitsCache.clear()
-            indexDiagnosticJob.joinWithTimeout(10.milliseconds) { LOG.warn("Index diagnostic shutdown timed out", it) }
+            indexDiagnosticJob.joinWithTimeout(10.milliseconds) { LOG.warn("Index diagnostic shutdown timed out") }
 
             dataDisposableJob.join()
-            // disposing storage triggers flushing on disk
-            withContext(Dispatchers.IO) {
-              if (storage is VcsLogStorageImpl && !storage.isDisposed) {
-                LOG.error("Storage for $logProviders was not disposed")
-                Disposer.dispose(storage)
-              }
-            }
           }
         }
         finally {
@@ -243,11 +264,6 @@ class VcsLogData @ApiStatus.Internal constructor(
         }
       }
     }, { isDisposed })
-  }
-
-  @ApiStatus.Internal
-  suspend fun awaitDispose() {
-    cs.coroutineContext.job.cancelAndJoin()
   }
 
   private suspend fun readCurrentUser(): Map<VirtualFile, VcsUser> =
@@ -331,6 +347,30 @@ class VcsLogData @ApiStatus.Internal constructor(
     val index = VcsLogPersistentIndex(project, logProviders, indexers, storage, indexBackend, progress, errorHandler, dataDisposable)
     return storage to index
   }
+
+  internal val hasPersistentStorage: Boolean
+    get() = collectStorageIds().isNotEmpty()
+
+  internal suspend fun clearPersistentStorage() {
+    require(isDisposed) { "Cannot clear persistent storage of a non-disposed data manager" }
+    cs.coroutineContext.job.cancelAndJoin()
+    storageLocker.acquireLock(storageId)
+    try {
+      val storageIds = collectStorageIds()
+      withContext(Dispatchers.IO) {
+        VcsLogStorageImpl.cleanupStorageFiles(storageIds)
+      }
+    }
+    finally {
+      storageLocker.releaseLock(storageId)
+    }
+  }
+
+  private fun collectStorageIds(): List<StorageId> =
+    linkedSetOf((index as? VcsLogPersistentIndex)?.indexStorageId,
+                (storage as? VcsLogStorageImpl)?.refsStorageId,
+                (storage as? VcsLogStorageImpl)?.hashesStorageId)
+      .filterNotNull()
 
   private inner class MyVcsLogUserResolver : VcsLogUserResolverBase(), Disposable {
     private val listener = DataPackChangeListener {

@@ -195,10 +195,6 @@ internal data class HatchFormFields(
   val hatchError: ObservableMutableProperty<PyError?>,
 ) {
   fun onShown(scope: CoroutineScope, model: PythonMutableTargetAddInterpreterModel, state: AddInterpreterState, isFilterOnlyExisting: Boolean) {
-    basePythonComboBox?.let { comboBox ->
-      model.interpreterLoading.onEach { comboBox.setBusy(it) }.launchIn(scope + Dispatchers.EDT)
-    }
-
     model.hatchEnvironmentsResult.onEach { environmentsResult ->
       hatchError.set((environmentsResult as? Result.Failure)?.error)
 
@@ -238,7 +234,6 @@ internal fun Panel.buildHatchFormFields(
     basePythonComboBox = pythonInterpreterComboBox(
       title = message("sdk.create.custom.base.python"),
       selectedSdkProperty = model.state.baseInterpreter,
-      model = model,
       validationRequestor = validationRequestor,
       onPathSelected = model::addInterpreter,
     )

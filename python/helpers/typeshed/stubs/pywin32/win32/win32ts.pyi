@@ -32,6 +32,7 @@ WTSClientHardwareId: int
 WTSClientName: int
 WTSClientProductId: int
 WTSClientProtocolType: int
+WTSIsRemoteSession: int
 WTSConnectQuery: int
 WTSConnectState: int
 WTSConnected: int

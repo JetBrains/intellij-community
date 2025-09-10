@@ -21,8 +21,10 @@ import com.jetbrains.python.console.pydev.ConsoleCommunicationListener
 import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyStatementList
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 
+@ApiStatus.Internal
 open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageConsoleView,
                                             processHandler: ProcessHandler,
                                             final override val consoleCommunication: ConsoleCommunication) : PythonConsoleExecuteActionHandler(processHandler, false), ConsoleCommunicationListener {

@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.workspace.jps.entities.LibraryId;
 import com.intellij.platform.workspace.jps.entities.LibraryTableId;
@@ -50,7 +51,9 @@ public class EntityIndexingServiceTest extends EntityIndexingServiceTestBase {
   }
 
   public void testIndexingProjectLibrary() throws Exception {
-    doTest(this::createProjectLibrary, this::removeProjectLibrary, LibraryIndexableFilesIteratorImpl::createIteratorList);
+    if (!Registry.is("use.workspace.file.index.for.partial.scanning", false)) {
+      doTest(this::createProjectLibrary, this::removeProjectLibrary, LibraryIndexableFilesIteratorImpl::createIteratorList);
+    }
   }
 
   @NotNull
@@ -84,8 +87,10 @@ public class EntityIndexingServiceTest extends EntityIndexingServiceTestBase {
   }
 
   public void testIndexingGlobalLibrary() throws Exception {
-    doTest(this::createGlobalLibrary, this::removeGlobalLibrary,
-           pair -> LibraryIndexableFilesIteratorImpl.createIteratorList(pair.getFirst()));
+    if (!Registry.is("use.workspace.file.index.for.partial.scanning", false)) {
+      doTest(this::createGlobalLibrary, this::removeGlobalLibrary,
+             pair -> LibraryIndexableFilesIteratorImpl.createIteratorList(pair.getFirst()));
+    }
   }
 
   @NotNull
@@ -100,7 +105,9 @@ public class EntityIndexingServiceTest extends EntityIndexingServiceTestBase {
   }
 
   public void testIndexingModuleLibrary() throws Exception {
-    doTest(this::createModuleLibrary, this::removeModuleLibrary, LibraryIndexableFilesIteratorImpl::createIteratorList);
+    if (!Registry.is("use.workspace.file.index.for.partial.scanning", false)) {
+      doTest(this::createModuleLibrary, this::removeModuleLibrary, LibraryIndexableFilesIteratorImpl::createIteratorList);
+    }
   }
 
   private void removeModuleLibrary(Library library) {

@@ -10,6 +10,38 @@ artefacts to Maven Central.
 
 Please ping Jakub, Nebojsa, or Sasha for help and guidance.
 
+High-level steps:
+
+1. Bump the Jewel API version in [`gradle.properties`](../gradle.properties)
+2. Run the [version updater script](../scripts/jewel-version-updater.main.kts)
+3. Run the Metalava validator against the previous release on the `master` branch, and fix any issues you find:
+   ```shell
+   ./scripts/metalava-signatures.main.kts validate --release <previous-release>
+   ```
+4. Generate the new Metalava signatures for the new release:
+   ```shell
+   ./scripts/metalava-signatures.main.kts update <new-release>
+   ```
+5. Cherry-pick the changes to the target release branches (e.g., `252`)
+   1. Make sure you've not included IJP major release-specific changes
+   2. Update the Kotlin version in the [Gradle version catalog](../gradle/libs.versions.toml) to match the IJ Platform's Kotlin version
+   3. Update other related versions if needed
+   4. Run `./gradlew generateThemes --rerun-tasks` to update the standalone theme definitions
+   5. Run all Gradle-based checks
+   6. Run all IJ tests (e.g., via the `tests.cmd` script)
+   7. Verify everything works in the Jewel Standalone sample (components, Markdown rendering)
+   8. Verify everything works in the Jewel IDE samples (toolwindow, component showcase)
+   9. Verify that the publishing works locally (including POMs, especially for newly added/changed modules — see below)
+   10. Verify that the Metalava signatures are matching the ones on `master`:
+       ```shell
+       ./scripts/metalava-signatures.sh --validate --release <new-release>
+       ```
+   11. Open a merge request for each cherry-pick branch on Space
+6. When both MRs are approved and merged:
+   1. Run the TeamCity job to publish the artefacts to Maven Central
+   2. Tag the commits the releases were cut from, with this format: `JEWEL-[Jewel version]-[major IJP version]`. For
+      example, for Jewel 0.30.0, `JEWEL-0.30.0-251` on the 251 branch and `JEWEL-0.30.0-252` on the 252 branch.
+
 ## Testing publishing locally
 
 Before pulling the trigger on a release process, it's a good idea to make sure that all and only the artefacts that

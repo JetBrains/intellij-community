@@ -166,8 +166,14 @@ public final class AboutDialog extends DialogWrapper {
 
     @NotNull Pair<String, String> result = getBuildInfo(appInfo);
     lines.add(result.first);
-    lines.add("");
     myInfo.add(result.second);
+    @Nullable Pair<String, String> branchInfo = getBuildBranchInfo(appInfo);
+    if (branchInfo != null) {
+      lines.add(branchInfo.first);
+      myInfo.add(branchInfo.second);
+    }
+    lines.add("");
+
     CustomProperty revision = ContainerUtil.find(
       IdeProductInfo.getInstance().getCurrentProductInfo()
         .getCustomProperties(), o -> CustomPropertyNames.GIT_REVISION.equals(o.getKey()));
@@ -267,6 +273,15 @@ public final class AboutDialog extends DialogWrapper {
 
     return Pair.create(buildInfo, buildInfoNonLocalized);
   }
+
+  private static @Nullable Pair<String, String> getBuildBranchInfo(@NotNull ApplicationInfo appInfo) {
+    var buildBranch = appInfo.getBuildBranchName();
+    if (buildBranch != null) {
+      return Pair.create(IdeBundle.message("about.box.build.from.branch", buildBranch), "Built from the branch: " + buildBranch);
+    }
+    return null;
+  }
+
 
   private static JBFont getDefaultTextFont() {
     return JBFont.medium();

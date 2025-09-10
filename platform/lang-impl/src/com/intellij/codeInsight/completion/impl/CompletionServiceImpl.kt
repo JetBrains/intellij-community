@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.impl
 
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.CompletionPhase.*
+import com.intellij.codeInsight.completion.CompletionPhase.Companion.NoCompletion
 import com.intellij.codeInsight.completion.StatisticsWeigher.LookupStatisticsWeigher
 import com.intellij.codeInsight.lookup.Classifier
 import com.intellij.codeInsight.lookup.ClassifierFactory
@@ -19,6 +20,7 @@ import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.client.forEachSession
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
@@ -72,7 +74,7 @@ open class CompletionServiceImpl : BaseCompletionService() {
     // Keep the function for compatibility with external plugins
     @JvmStatic
     fun setCompletionPhase(phase: CompletionPhase) {
-      LOG.trace("Set completion phase :: phase=$phase")
+      LOG.trace { "Set completion phase :: phase=$phase" }
       val clientCompletionService = tryGetClientCompletionService(application.currentSessionOrNull) ?: return
       clientCompletionService.completionPhase = phase
     }
@@ -134,10 +136,10 @@ open class CompletionServiceImpl : BaseCompletionService() {
     return if (isCurrentlyUnderLocalId) apiCompletionProcess else null
   }
 
-  private class CompletionResultSetImpl(consumer: java.util.function.Consumer<in CompletionResult>?,
-                                        prefixMatcher: PrefixMatcher?,
+  private class CompletionResultSetImpl(consumer: java.util.function.Consumer<in CompletionResult>,
+                                        prefixMatcher: PrefixMatcher,
                                         contributor: CompletionContributor?,
-                                        parameters: CompletionParameters?,
+                                        parameters: CompletionParameters,
                                         sorter: CompletionSorter?,
                                         original: CompletionResultSetImpl?) :
     BaseCompletionResultSet(consumer, prefixMatcher, contributor, parameters, sorter, original) {
@@ -252,7 +254,7 @@ private class ClientCompletionService(private val appSession: ClientAppSession) 
           .completionPhaseChanged(isCompletionRunning)
       }
 
-      LOG.trace("Dispose old phase :: oldPhase=$oldPhase, newPhase=$phase, indicator=${if (phase.indicator != null) phase.indicator.hashCode() else -1}")
+      LOG.trace { "Dispose old phase :: oldPhase=$oldPhase, newPhase=$phase, indicator=${if (phase.indicator != null) phase.indicator.hashCode() else -1}" }
       Disposer.dispose(oldPhase)
       completionPhaseHolder = CompletionPhaseHolder(phase = phase, phaseTrace = Throwable())
     }
@@ -287,5 +289,8 @@ private fun reportPhase(phaseHolder: CompletionPhaseHolder) {
   LOG.error("${phaseHolder.phase}; $current$traceText")
 }
 
-private data class CompletionPhaseHolder(@JvmField val phase: CompletionPhase, @JvmField val phaseTrace: Throwable?)
+private data class CompletionPhaseHolder(
+  @JvmField val phase: CompletionPhase,
+  @JvmField val phaseTrace: Throwable?
+)
 

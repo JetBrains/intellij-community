@@ -6,7 +6,8 @@ import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.toBuilder
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
@@ -19,10 +20,15 @@ internal class GradleProjectRootSyncContributor : GradleSyncContributor {
 
   override val phase: GradleSyncPhase = GradleSyncPhase.INITIAL_PHASE
 
-  override suspend fun updateProjectModel(context: ProjectResolverContext, storage: MutableEntityStorage) {
+  override suspend fun createProjectModel(
+    context: ProjectResolverContext,
+    storage: ImmutableEntityStorage,
+  ): ImmutableEntityStorage {
+    val builder = storage.toBuilder()
     val entitySource = GradleProjectRootEntitySource(context.projectPath, phase)
     val projectRootData = GradleProjectRootData(Path.of(context.projectPath), entitySource)
-    storage addEntity createModuleEntity(context, projectRootData)
+    builder addEntity createModuleEntity(context, projectRootData)
+    return builder.toSnapshot()
   }
 
   private fun createModuleEntity(

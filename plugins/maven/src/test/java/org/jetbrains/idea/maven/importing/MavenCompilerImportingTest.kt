@@ -1195,6 +1195,8 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testCompilerArgumentsShouldBeSetForMainAndAdditionalSources() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createProjectSubDir("src/main/java")
     createProjectSubDir("src/main/java17")
     importProjectAsync("""

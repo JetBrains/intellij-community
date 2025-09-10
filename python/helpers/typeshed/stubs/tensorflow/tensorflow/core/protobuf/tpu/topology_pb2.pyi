@@ -30,7 +30,9 @@ class TPUHardwareFeature(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _EmbeddingFeatureEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TPUHardwareFeature._EmbeddingFeature.ValueType], builtins.type):
+    class _EmbeddingFeatureEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TPUHardwareFeature._EmbeddingFeature.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         UNSUPPORTED: TPUHardwareFeature._EmbeddingFeature.ValueType  # 0
         """No embedding lookup accelerator available on the tpu."""
@@ -72,7 +74,12 @@ class TPUHardwareFeature(google.protobuf.message.Message):
         embedding_feature: global___TPUHardwareFeature.EmbeddingFeature.ValueType | None = ...,
         num_embedding_devices_per_chip: builtins.int | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["embedding_feature", b"embedding_feature", "num_embedding_devices_per_chip", b"num_embedding_devices_per_chip"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "embedding_feature", b"embedding_feature", "num_embedding_devices_per_chip", b"num_embedding_devices_per_chip"
+        ],
+    ) -> None: ...
 
 global___TPUHardwareFeature = TPUHardwareFeature
 
@@ -123,6 +130,20 @@ class TopologyProto(google.protobuf.message.Message):
         tpu_hardware_feature: global___TPUHardwareFeature | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["tpu_hardware_feature", b"tpu_hardware_feature"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["device_coordinates", b"device_coordinates", "mesh_shape", b"mesh_shape", "num_tasks", b"num_tasks", "num_tpu_devices_per_task", b"num_tpu_devices_per_task", "tpu_hardware_feature", b"tpu_hardware_feature"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "device_coordinates",
+            b"device_coordinates",
+            "mesh_shape",
+            b"mesh_shape",
+            "num_tasks",
+            b"num_tasks",
+            "num_tpu_devices_per_task",
+            b"num_tpu_devices_per_task",
+            "tpu_hardware_feature",
+            b"tpu_hardware_feature",
+        ],
+    ) -> None: ...
 
 global___TopologyProto = TopologyProto

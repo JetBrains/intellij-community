@@ -18,6 +18,7 @@ import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
@@ -109,8 +110,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   @Override
   protected JComponent createSouthPanel() {
-    if (useDialogWrapperSouthPanel())
+    if (useDialogWrapperSouthPanel()) {
       return super.createSouthPanel();
+    }
 
     JPanel panel = new JPanel(new BorderLayout());
     if (getStyle() == DialogStyle.COMPACT) {
@@ -210,6 +212,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
    * Validates the current step. If the current step is valid commits it and moves the wizard to the next step.
    * Usually, should be used from UI event handlers or after deferred user interaction, e.g. validation in background thread.
    */
+  @RequiresEdt
   public void proceedToNextStep() {
     if (isLastStep()) {
       // Commit data of current step and perform OK action
@@ -418,6 +421,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   /**
    * override this to provide alternate step order
+   *
    * @param step index
    * @return the next step's index
    */
@@ -440,6 +444,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   /**
    * override this to provide alternate step order
+   *
    * @param step index
    * @return the previous step's index
    */
@@ -509,8 +514,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   public void updateWizardButtons() {
-    if (!mySteps.isEmpty() && getRootPane() != null)
+    if (!mySteps.isEmpty() && getRootPane() != null) {
       updateButtons();
+    }
   }
 
   public void updateButtons(boolean lastStep, boolean canGoNext, boolean firstStep) {
@@ -580,8 +586,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   @Override
   protected Action @NotNull [] createActions() {
-    if (useDialogWrapperSouthPanel())
+    if (useDialogWrapperSouthPanel()) {
       throw new UnsupportedOperationException("Not implemented");
+    }
 
     return super.createActions();
   }
@@ -594,5 +601,4 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   protected int getNumberOfSteps() {
     return mySteps.size();
   }
-
 }

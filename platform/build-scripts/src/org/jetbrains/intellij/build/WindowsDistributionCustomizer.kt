@@ -43,8 +43,12 @@ open class WindowsDistributionCustomizer {
   /**
    * Path to a directory containing images for installer: `logo.bmp`, `headerlogo.bmp`, `install.ico`, `uninstall.ico`.
    */
-  @Suppress("SpellCheckingInspection")
   var installerImagesPath: String? = null
+
+  /**
+   * Set to `false` for products that are not updated with patches.
+   */
+  var publishUninstaller: Boolean = true
 
   /**
    * List of file extensions (without a leading dot) which the installer will suggest to associate with the product.

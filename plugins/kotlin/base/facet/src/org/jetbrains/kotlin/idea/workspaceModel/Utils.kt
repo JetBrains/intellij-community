@@ -87,7 +87,7 @@ fun deserializeExternalSystemTestRunTask(deserializedTask: String): ExternalSyst
 
 object CompilerArgumentsSerializer {
     private val gson = GsonBuilder()
-        .registerTypeAdapter(InternalArgument::class.java, InternalArgumentSerializer)
+        .registerTypeAdapter(ManualLanguageFeatureSetting::class.java, ManualLanguageFeatureSettingSerializer)
         .create()
 
     private val argumentsTypeMap = mapOf(
@@ -122,17 +122,17 @@ object CompilerArgumentsSerializer {
     }
 }
 
-private object InternalArgumentSerializer : JsonSerializer<InternalArgument>, JsonDeserializer<InternalArgument> {
+private object ManualLanguageFeatureSettingSerializer : JsonSerializer<ManualLanguageFeatureSetting>, JsonDeserializer<ManualLanguageFeatureSetting> {
     private const val TYPE = "type"
 
-    private val argumentsTypeMap: Map<String, Class<out InternalArgument>> = mapOf(
+    private val argumentsTypeMap: Map<String, Class<out ManualLanguageFeatureSetting>> = mapOf(
         "M" to ManualLanguageFeatureSetting::class.java,
     )
 
     private val gson = Gson()
 
     override fun serialize(
-        src: InternalArgument,
+        src: ManualLanguageFeatureSetting,
         typeOfSrc: Type,
         context: JsonSerializationContext
     ): JsonElement {
@@ -147,7 +147,7 @@ private object InternalArgumentSerializer : JsonSerializer<InternalArgument>, Js
         json: JsonElement,
         typeOfT: Type,
         context: JsonDeserializationContext,
-    ): InternalArgument {
+    ): ManualLanguageFeatureSetting {
         val classIdentifier = json.asJsonObject[TYPE].asString
         val classType = argumentsTypeMap[classIdentifier] ?: error("Class identifier not found: $classIdentifier")
         return gson.fromJson(json, classType)

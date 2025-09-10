@@ -94,14 +94,15 @@ open class AddKotlinLibraryQuickFixProvider(
 /**
  * Will use the [KotlinLibraryVersionProvider] to look up the version
  */
-fun LibraryDescriptorProvider.Companion.default() = LibraryDescriptorProvider { libraryGroupId, libraryArtifactId, psiRef ->
-    val module = psiRef.element.module ?: return@LibraryDescriptorProvider null
-    val libraryVersion = KotlinLibraryVersionProvider.EP_NAME.extensionList.firstNotNullOfOrNull { provider ->
-        provider.getVersion(module, libraryGroupId, libraryArtifactId)
-    }
+fun LibraryDescriptorProvider.Companion.default(): LibraryDescriptorProvider =
+    LibraryDescriptorProvider { libraryGroupId, libraryArtifactId, psiRef ->
+        val module = psiRef.element.module ?: return@LibraryDescriptorProvider null
+        val libraryVersion = KotlinLibraryVersionProvider.EP_NAME.extensionList.firstNotNullOfOrNull { provider ->
+            provider.getVersion(module, libraryGroupId, libraryArtifactId)
+        } ?: return@LibraryDescriptorProvider null
 
-    ExternalLibraryDescriptor(libraryGroupId, libraryArtifactId, libraryVersion, libraryVersion, libraryVersion)
-}
+        ExternalLibraryDescriptor(libraryGroupId, libraryArtifactId, libraryVersion, libraryVersion, libraryVersion)
+    }
 
 
 /**

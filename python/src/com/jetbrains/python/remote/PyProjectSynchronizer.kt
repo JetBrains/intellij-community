@@ -16,7 +16,7 @@ typealias PathMappings = List<PathMappingSettings.PathMapping>
 /**
  * ProjectSynchronizer is an engine that synchronize code between local and remote system or between java (which is local)
  * and python (which may be remote).
- * This engine is sdk-specific and used by [com.jetbrains.python.newProject.DeprecatedUtils] (and friends).
+ * This engine is sdk-specific.
  *
  * When generator creates remote project, it may use python helpers (with aid of tasks) and it may need some way
  * to pull remote files, patch them and push 'em back. The way it does it is skd-specific and this interface encapsulates it.

@@ -37,6 +37,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/coroutines",
     "//platform/dvcs-impl/shared",
+    "//platform/vcs-impl/shared",
   ],
   runtime_deps = [":vcs-hg_resources"]
 )
@@ -78,6 +79,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/coroutines",
     "//platform/dvcs-impl/shared",
+    "//platform/vcs-impl/shared",
   ],
   runtime_deps = [":vcs-hg_resources"]
 )

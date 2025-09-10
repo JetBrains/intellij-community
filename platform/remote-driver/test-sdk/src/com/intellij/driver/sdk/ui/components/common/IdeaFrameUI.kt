@@ -19,11 +19,15 @@ import javax.swing.JFrame
 
 fun Finder.ideFrame() = x(IdeaFrameUI::class.java) { byClass("IdeFrameImpl") }
 
+fun Finder.ideFrames() = xx(IdeaFrameUI::class.java) { byClass("IdeFrameImpl") }
+
 fun Finder.ideFrame(action: IdeaFrameUI.() -> Unit) {
   ideFrame().action()
 }
 
 fun Driver.ideFrame(action: IdeaFrameUI.() -> Unit = {}): IdeaFrameUI = ui.ideFrame().apply(action)
+
+fun Driver.ideFrame(index: Int, action: IdeaFrameUI.() -> Unit = {}): IdeaFrameUI = ui.ideFrames().list()[index].apply(action)
 
 fun Finder.projectIdeFrame(projectName: String, action: IdeaFrameUI.() -> Unit) {
   x("//div[@class='IdeFrameImpl' and contains(@accessiblename, '${projectName}')]", IdeaFrameUI::class.java).action()

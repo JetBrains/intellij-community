@@ -7,7 +7,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -21,6 +20,7 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
@@ -231,8 +231,7 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
     ToolTipManager.sharedInstance().registerComponent(myTree);
     PopupHandler.installPopupMenu(myTree, VcsLogActionIds.POPUP_ACTION_GROUP, CONTEXT_MENU);
 
-    myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
-                                              ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+    myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this, ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS);
 
     myChangesBrowser = new PushLogChangesBrowser(project, false, false, myChangesLoadingPane);
     myChangesBrowser.hideViewerBorder();

@@ -5,7 +5,7 @@ jvm_library(
   name = "sqlite",
   module_name = "intellij.platform.sqlite",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/util",
     "@lib//:kotlin-stdlib",
@@ -17,7 +17,7 @@ jvm_library(
 jvm_library(
   name = "sqlite_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":sqlite"],
   deps = [
     "//platform/util",

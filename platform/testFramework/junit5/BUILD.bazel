@@ -27,7 +27,7 @@ jvm_library(
   name = "junit5",
   module_name = "intellij.platform.testFramework.junit5",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:junit5Jupiter",
     "@lib//:jetbrains-annotations",
@@ -62,7 +62,7 @@ jvm_library(
 jvm_library(
   name = "junit5_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":junit5"],
   deps = [
     "@lib//:junit5Jupiter",

@@ -508,7 +508,7 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   private final class SetAsDefaultGroupAction extends AnAction {
-    private final String myName;
+    private final @Nullable String myName;
 
     private SetAsDefaultGroupAction(XBreakpointCustomGroup group) {
       super(group.isDefault()

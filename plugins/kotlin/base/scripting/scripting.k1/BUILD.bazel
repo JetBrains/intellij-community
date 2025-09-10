@@ -11,7 +11,7 @@ jvm_library(
   name = "scripting.k1",
   module_name = "kotlin.base.scripting.k1",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
@@ -46,7 +46,6 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
-    "//platform/diff-impl",
     "//platform/ide-core",
     "//platform/ide-core-impl",
     "//java/openapi:java",
@@ -70,7 +69,7 @@ jvm_library(
 jvm_library(
   name = "scripting.k1_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":scripting.k1"],
   deps = [
     "//platform/core-api:core",
@@ -110,7 +109,6 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
-    "//platform/diff-impl",
     "//platform/ide-core",
     "//platform/ide-core-impl",
     "//java/openapi:java",

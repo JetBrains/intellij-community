@@ -113,10 +113,10 @@ sealed interface DependencyDescription<E : WorkspaceEntity> {
    */
   @ApiStatus.Experimental
   data class OnReference<E: WorkspaceEntityWithSymbolicId, R: WorkspaceEntity>(
-    /** Type that could contain references to [E] */
+    /** Type that contains references to [E] */
     val referenceHolderClass: Class<R>,
-    /** Computes references */
-    val referencedEntitiesGetter: (R) -> Sequence<SymbolicEntityId<E>>
+    /** Type of [SymbolicEntityId] which is referenced by [referenceHolderClass] */
+    val referenceSymbolicEntityIdClass: Class<out SymbolicEntityId<E>>
   ): DependencyDescription<E>
 }
 

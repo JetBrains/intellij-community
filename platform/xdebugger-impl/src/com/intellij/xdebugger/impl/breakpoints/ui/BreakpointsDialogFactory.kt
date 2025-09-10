@@ -2,12 +2,12 @@
 package com.intellij.xdebugger.impl.breakpoints.ui
 
 
+import com.intellij.idea.AppMode
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.project.projectId
 import com.intellij.platform.rpc.topics.sendToClient
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.impl.breakpoints.SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC
@@ -54,7 +54,7 @@ class BreakpointsDialogFactory(private val project: Project) {
   }
 
   fun showDialog(initialBreakpointId: XBreakpointId?) {
-    if (useFeProxy()) {
+    if (useFeProxy() && AppMode.isRemoteDevHost()) {
       hideBalloon()
       SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC.sendToClient(project, ShowBreakpointDialogRequest(initialBreakpointId))
       return

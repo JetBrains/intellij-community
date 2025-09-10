@@ -41,4 +41,8 @@ class SeClassesProvider(private val contributorWrapper: SeAsyncWeightedContribut
 
   override suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> =
     targetsProviderDelegate.getTypeVisibilityStates<LanguageRef>(index)
+
+  override suspend fun performExtendedAction(item: SeItem): Boolean {
+    return targetsProviderDelegate.performExtendedAction(item)
+  }
 }

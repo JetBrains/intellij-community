@@ -475,6 +475,10 @@ public final class ProgressRunner<R> {
       // cancellation of the Job cancels the future
       job.invokeOnCompletion(true, true, (throwable) -> {
         if (throwable != null) {
+          // surrounding code expects PCE
+          throwable = throwable instanceof CancellationException ?
+                      new CeProcessCanceledException((CancellationException)throwable) :
+                      throwable;
           resultFuture.completeExceptionally(throwable);
         }
         return Unit.INSTANCE;
@@ -489,14 +493,24 @@ public final class ProgressRunner<R> {
       Runnable runnable = new ProgressRunnable<>(resultFuture, task, progressIndicator);
       // If it sync modal execution on other thread — use current lock state
       ContextAwareRunnable contextRunnable = () -> {
-        childContext.runInChildContext(() -> {
-          CoroutineContext effectiveContext =
-            ThreadContext.currentThreadContext().plus(asContextElement(progressIndicator.getModalityState()).plus(sharedPermit));
-          ThreadContext.installThreadContext(effectiveContext, true, () -> {
-            runnable.run();
-            return Unit.INSTANCE;
+        try {
+          childContext.runInChildContext(() -> {
+            CoroutineContext effectiveContext =
+              ThreadContext.currentThreadContext().plus(asContextElement(progressIndicator.getModalityState()).plus(sharedPermit));
+            ThreadContext.installThreadContext(effectiveContext, true, () -> {
+              runnable.run();
+              return Unit.INSTANCE;
+            });
           });
-        });
+        }
+        catch (Throwable e) {
+          // Any exception from runnable or from context job should complete resultFuture exceptionally and should be handled by the caller.
+          // Due to a race, it is possible that the runnable has already finished (normally or exceptionally),
+          // but only here do we catch an exception from the context job.
+          if (!resultFuture.isDone()) {
+            LOG.error(e);
+          }
+        }
       };
       switch (myThreadToUse) {
         case POOLED:

@@ -19,4 +19,5 @@ package com.intellij.build.events;
  * @author Vladislav.Soroka
  */
 public interface StartEvent extends BuildEvent {
+
 }

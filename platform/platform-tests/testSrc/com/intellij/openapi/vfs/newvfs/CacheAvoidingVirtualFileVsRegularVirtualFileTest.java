@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.vfs.VFileProperty.*;
 import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.MIN_REGULAR_FILE_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -91,6 +92,19 @@ public class CacheAvoidingVirtualFileVsRegularVirtualFileTest {
                      "regular VirtualFile[" + regularFile.getPath() + "].isDirectory() must be equal to its Transient counterpart");
         assertEquals(regularFile.isWritable(), transientFile.isWritable(),
                      "regular VirtualFile[" + regularFile.getPath() + "].isWriteable() must be equal to its Transient counterpart");
+
+        assertEquals(regularFile.is(SYMLINK), transientFile.is(SYMLINK),
+                     "regular VirtualFile[" + regularFile.getPath() + "].is(SYMLINK) must be equal to its Transient counterpart");
+        assertEquals(regularFile.is(HIDDEN), transientFile.is(HIDDEN),
+                     "regular VirtualFile[" + regularFile.getPath() + "].is(HIDDEN) must be equal to its Transient counterpart");
+        assertEquals(regularFile.is(SPECIAL), transientFile.is(SPECIAL),
+                     "regular VirtualFile[" + regularFile.getPath() + "].is(SPECIAL) must be equal to its Transient counterpart");
+
+        //transientFile requests current timeStamp, while regularFile could keep cached value from the past
+        //assertThat(regularFile.getTimeStamp())
+        //  .describedAs("regular VirtualFile[" + regularFile.getPath() + "].getTimeStamp() must be close to its Transient counterpart")
+        //  .isCloseTo(transientFile.getTimeStamp(), Offset.offset(100_000L));
+
 
         if (!regularFile.isDirectory()) {//type/length is undefined for directories
           assertEquals(regularFile.getLength(), transientFile.getLength(),

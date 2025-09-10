@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
 val PUSH_MEMBERS_DOWN: String get() = RefactoringBundle.message("push.members.down.title")
 
@@ -64,7 +65,13 @@ class KotlinPushDownHandler : AbstractPullPushMembersHandler(
         if (!(classOrObject is KtClass && classOrObject.isInheritable())) {
             // TODO: Check if it's appropriate to use org.jetbrains.kotlin.idea.codeinsight.utils.KotlinPsiUtilsKt.isInheritable here.
             // Previously, org.jetbrains.kotlin.idea.core.isInheritable was used.
-            reportFinalClassOrObject(project, editor, classOrObject)
+
+            val containingClass = classOrObject.containingClass()
+            if (containingClass != null) {
+                invoke(project, editor, classOrObject = containingClass, member = classOrObject, dataContext)
+            } else {
+                reportFinalClassOrObject(project, editor, classOrObject)
+            }
             return
         }
 

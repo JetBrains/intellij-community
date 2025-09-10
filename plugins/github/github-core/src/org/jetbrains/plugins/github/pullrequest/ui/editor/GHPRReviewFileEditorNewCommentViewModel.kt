@@ -5,13 +5,16 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 
 interface GHPRReviewFileEditorNewCommentViewModel : GHPRReviewNewCommentEditorViewModel {
-  val line: Int
+  val location: GHPRReviewCommentLocation
 }
 
-internal class GHPRReviewFileEditorNewCommentViewModelImpl(override val line: Int,
-                                                           private val sharedVm: GHPRReviewNewCommentEditorViewModel)
+internal class GHPRReviewFileEditorNewCommentViewModelImpl(
+  override val location: GHPRReviewCommentLocation,
+  private val sharedVm: GHPRReviewNewCommentEditorViewModel,
+)
   : GHPRReviewFileEditorNewCommentViewModel, GHPRReviewNewCommentEditorViewModel by sharedVm {
   private val _focusRequestsChannel = Channel<Unit>(1, BufferOverflow.DROP_OLDEST)
   override val focusRequests: Flow<Unit> get() = _focusRequestsChannel.receiveAsFlow()

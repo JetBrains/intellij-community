@@ -1,8 +1,16 @@
 from _typeshed import Incomplete
 
-from networkx.utils.backends import _dispatch
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
+from numpy.random import RandomState
 
-@_dispatch
+__all__ = ["kernighan_lin_bisection"]
+
+@_dispatchable
 def kernighan_lin_bisection(
-    G, partition: Incomplete | None = None, max_iter: int = 10, weight: str = "weight", seed: Incomplete | None = None
+    G: Graph[_Node],
+    partition: tuple[Incomplete] | None = None,
+    max_iter: int = 10,
+    weight: str = "weight",
+    seed: int | RandomState | None = None,
 ): ...

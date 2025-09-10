@@ -60,7 +60,9 @@
     "Islands": 1,
     "Island": {
       "arc": 20,
-      "border1.insets": "6,6,6,6"
+      "borderWidth": 4,
+      "inactiveAlpha": 0.44,
+      "inactiveAlphaInStatusBar": 0.2
     },
 
     "MainWindow.background": "BackgroundLight",
@@ -74,7 +76,8 @@
       "background": "#131314",
       "selectedBackground": "ToolWindowBackground",
       "hoverBackground": "#FFFFFF12",
-      "separatorColor": "#FFFFFF16"
+      "separatorColor": "#FFFFFF16",
+      "foreground": "#6F737A"
     },
 
     "MainToolbar": {
@@ -121,7 +124,7 @@
     },
 
     "Editor": {
-      "SearchField.background": "BackgroundMid",
+      "SearchField.background": "BackgroundDark",
       "Toolbar.borderColor": "BorderDark",
       "ToolTip": {
         "background": "BackgroundLight",
@@ -325,6 +328,23 @@
       },
       "ChatItem": {
         "Hover": "#5A5D6333"
+      }
+    },
+
+    "ScrollBar": {
+      "hoverThumbBorderColor": "#2626268C",
+      "hoverThumbColor": "#8080808C",
+      "hoverTrackColor": "#80808000",
+      "thumbBorderColor": "#26262659",
+      "thumbColor": "#80808059",
+      "trackColor": "#80808000",
+      "Transparent": {
+        "hoverThumbBorderColor": "#2626268C",
+        "hoverThumbColor": "#8080808C",
+        "hoverTrackColor": "#8080801A",
+        "thumbBorderColor": "#26262600",
+        "thumbColor": "#80808000",
+        "trackColor": "#80808000"
       }
     },
 

@@ -61,7 +61,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = -2661619799941496807L
+        const val serializationHash = -8976769733834761447L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -662,7 +662,7 @@ class RdTestSession private constructor(
     private val _stopAllureStep: RdSignal<RdAllureStopStepInfo>,
     private val _exitApp: RdSignal<Unit>,
     private val _showNotification: RdSignal<String>,
-    private val _forceLeaveAllModals: RdCall<Boolean, Unit>,
+    private val _forceLeaveAllModals: RdCall<Unit, Boolean>,
     private val _closeAllOpenedProjects: RdCall<Unit, Boolean>,
     private val _runNextAction: RdCall<RdTestActionParameters, String?>,
     private val _requestFocus: RdCall<Boolean, Boolean>,
@@ -694,7 +694,7 @@ class RdTestSession private constructor(
             val _stopAllureStep = RdSignal.read(ctx, buffer, RdAllureStopStepInfo)
             val _exitApp = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
             val _showNotification = RdSignal.read(ctx, buffer, FrameworkMarshallers.String)
-            val _forceLeaveAllModals = RdCall.read(ctx, buffer, FrameworkMarshallers.Bool, FrameworkMarshallers.Void)
+            val _forceLeaveAllModals = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _closeAllOpenedProjects = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _runNextAction = RdCall.read(ctx, buffer, RdTestActionParameters, __StringNullableSerializer)
             val _requestFocus = RdCall.read(ctx, buffer, FrameworkMarshallers.Bool, FrameworkMarshallers.Bool)
@@ -747,7 +747,7 @@ class RdTestSession private constructor(
     val stopAllureStep: IAsyncSignal<RdAllureStopStepInfo> get() = _stopAllureStep
     val exitApp: IAsyncSignal<Unit> get() = _exitApp
     val showNotification: ISignal<String> get() = _showNotification
-    val forceLeaveAllModals: RdCall<Boolean, Unit> get() = _forceLeaveAllModals
+    val forceLeaveAllModals: RdCall<Unit, Boolean> get() = _forceLeaveAllModals
     val closeAllOpenedProjects: RdCall<Unit, Boolean> get() = _closeAllOpenedProjects
     val runNextAction: RdCall<RdTestActionParameters, String?> get() = _runNextAction
     val requestFocus: RdCall<Boolean, Boolean> get() = _requestFocus
@@ -822,7 +822,7 @@ class RdTestSession private constructor(
         RdSignal<RdAllureStopStepInfo>(RdAllureStopStepInfo),
         RdSignal<Unit>(FrameworkMarshallers.Void),
         RdSignal<String>(FrameworkMarshallers.String),
-        RdCall<Boolean, Unit>(FrameworkMarshallers.Bool, FrameworkMarshallers.Void),
+        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<RdTestActionParameters, String?>(RdTestActionParameters, __StringNullableSerializer),
         RdCall<Boolean, Boolean>(FrameworkMarshallers.Bool, FrameworkMarshallers.Bool),

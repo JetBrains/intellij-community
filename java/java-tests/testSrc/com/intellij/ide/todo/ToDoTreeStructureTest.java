@@ -45,7 +45,7 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
     try {
       all.init();
       //second rebuild, e.g. switching scope in scope based t.o.d.o panel
-      CompletableFuture<?> rebuildCache = all.rebuildCache();
+      CompletableFuture<?> rebuildCache = all.rebuildCacheTestAccessor();
       while (!rebuildCache.isDone()) {
         IdeEventQueue.getInstance().flushQueue();
       }

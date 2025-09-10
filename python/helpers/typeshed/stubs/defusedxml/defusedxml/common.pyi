@@ -1,29 +1,31 @@
-from _typeshed import Incomplete
+from typing import Final
 
-PY3: bool
+PY3: Final[bool]
 
 class DefusedXmlException(ValueError): ...
 
 class DTDForbidden(DefusedXmlException):
-    name: Incomplete
-    sysid: Incomplete
-    pubid: Incomplete
-    def __init__(self, name, sysid, pubid) -> None: ...
+    name: str
+    sysid: str | None
+    pubid: str | None
+    def __init__(self, name: str, sysid: str | None, pubid: str | None) -> None: ...
 
 class EntitiesForbidden(DefusedXmlException):
-    name: Incomplete
-    value: Incomplete
-    base: Incomplete
-    sysid: Incomplete
-    pubid: Incomplete
-    notation_name: Incomplete
-    def __init__(self, name, value, base, sysid, pubid, notation_name) -> None: ...
+    name: str
+    value: str | None
+    base: str | None
+    sysid: str | None
+    pubid: str | None
+    notation_name: str | None
+    def __init__(
+        self, name: str, value: str | None, base: str | None, sysid: str | None, pubid: str | None, notation_name: str | None
+    ) -> None: ...
 
 class ExternalReferenceForbidden(DefusedXmlException):
-    context: Incomplete
-    base: Incomplete
-    sysid: Incomplete
-    pubid: Incomplete
-    def __init__(self, context, base, sysid, pubid) -> None: ...
+    context: str
+    base: str | None
+    sysid: str | None
+    pubid: str | None
+    def __init__(self, context: str, base: str | None, sysid: str | None, pubid: str | None) -> None: ...
 
 class NotSupportedError(DefusedXmlException): ...

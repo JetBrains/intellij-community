@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.not
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
@@ -19,6 +18,7 @@ import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.AsyncProcessIcon
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -30,13 +30,11 @@ import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.PYTHON
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.UV
 import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState
 import com.jetbrains.python.sdk.add.v2.executableSelector
-import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import com.jetbrains.python.sdk.uv.impl.setUvExecutable
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.venvReader.tryResolvePath
 import io.github.z4kn4fein.semver.Version
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -173,19 +171,12 @@ internal class EnvironmentCreatorUv(
   }
 
   override suspend fun setupEnvSdk(
-    project: Project,
-    module: Module?,
+    moduleBasePath: Path,
     baseSdks: List<Sdk>,
-    projectPath: String,
-    homePath: String?,
-    installPackages: Boolean,
+    basePythonBinaryPath: PythonBinary?,
+    installPackages: Boolean
   ): PyResult<Sdk> {
-    val workingDir = module?.basePath?.let { tryResolvePath(it) } ?: project.basePath?.let { tryResolvePath(it) }
-    if (workingDir == null) {
-      return PyResult.localizedError(message("python.sdk.uv.working.dir.is.not.specified"))
-    }
-
-    return setupNewUvSdkAndEnv(workingDir, baseSdks, pythonVersion.get())
+    return setupNewUvSdkAndEnv(moduleBasePath, baseSdks, pythonVersion.get())
   }
 
   override suspend fun detectExecutable() {

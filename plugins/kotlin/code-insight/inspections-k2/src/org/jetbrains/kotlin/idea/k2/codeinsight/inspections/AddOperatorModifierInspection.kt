@@ -9,9 +9,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.withExpectedActuals
@@ -52,11 +52,9 @@ class AddOperatorModifierInspection : KotlinApplicableInspectionBase.Simple<KtNa
 
     @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtNamedFunction): Unit? {
-        val canBeOperator = analyze(element) {
-            var symbol = element.symbol as? KaNamedFunctionSymbol
-            symbol?.canBeOperator == true && !symbol.isOperator
-        }
+        val symbol = element.symbol as? KaNamedFunctionSymbol
+        val canBeOperator = symbol?.canBeOperator == true && !symbol.isOperator
 
-        return if (canBeOperator) return Unit else null
+        return canBeOperator.asUnit
     }
 }

@@ -13,11 +13,12 @@ import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
 import com.intellij.cce.workspace.filter.CompareSessionsStorage
 import com.intellij.cce.workspace.filter.CompareSessionsStorageImpl
+import com.intellij.cce.workspace.filter.LookupFilter
+import com.intellij.cce.workspace.filter.SessionLookupsFilter
 import com.intellij.cce.workspace.filter.SessionsFilter
 import com.intellij.cce.workspace.info.FileEvaluationDataInfo
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.info.FileSessionsInfo
-import com.intellij.cce.workspace.storages.FileErrorsStorage
 import com.intellij.cce.workspace.storages.SessionsStorage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -27,6 +28,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
   private val inputWorkspaces: List<EvaluationWorkspace>?,
   filters: List<SessionsFilter>,
   comparisonFilters: List<CompareSessionsFilter>,
+  lookupFilters: List<LookupFilter>,
   private val feature: EvaluableFeature<T>
 ) : BackgroundEvaluationStep {
   override val name: String = "Report generation"
@@ -39,6 +41,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
                                                                    CompareSessionsStorageImpl(it)
                                                                  }
                                                                  else emptyList()
+  private val sessionLookupFilter: SessionLookupsFilter = SessionLookupsFilter(lookupFilters)
 
   override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
     val workspaces = inputWorkspaces ?: listOf(workspace)
@@ -149,6 +152,8 @@ class ReportGenerationStep<T : EvaluationStrategy>(
         val sessionsEvaluation = sessionsInfo.copy(
           sessions = comparisonStorage.get(file.evaluationType)
         )
+
+        sessionLookupFilter.filter(sessionsEvaluation.sessions)
         val evaluator = title2evaluator.getValue(file.evaluationType)
         val metricsEvaluation = evaluator.evaluate(sessionsEvaluation.sessions, numberOfSessions)
 

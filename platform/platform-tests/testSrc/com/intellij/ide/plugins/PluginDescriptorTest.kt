@@ -81,7 +81,7 @@ class PluginDescriptorTest {
     assertThat(descriptor).isNotNull()
     val pluginDependencies = descriptor.moduleDependencies.plugins
     assertThat(pluginDependencies).hasSize(2)
-    assertThat(pluginDependencies.map { it.id.idString }).containsExactly("dep1", "dep2")
+    assertThat(pluginDependencies.map { it.idString }).containsExactly("dep1", "dep2")
   }
 
   @Test
@@ -182,7 +182,7 @@ class PluginDescriptorTest {
   @Test
   fun `descriptor with vendor and release date loads`() {
     val pluginFile = pluginDirPath.resolve(PluginManagerCore.PLUGIN_XML_PATH)
-    val descriptor = readAndInitDescriptorFromBytesForTest(pluginFile, false, """
+    val descriptor = readDescriptorFromBytesForTest(pluginFile, false, """
     <idea-plugin>
       <id>bar</id>
       <vendor>JetBrains</vendor>
@@ -356,9 +356,9 @@ class PluginDescriptorTest {
     plugin("bar") {
       resourceBundle = "resourceBundle"
       content {
-        module(moduleName = "bar.opt", loadingRule = ModuleLoadingRule.OPTIONAL) {}
-        module(moduleName = "bar.req", loadingRule = ModuleLoadingRule.REQUIRED) {}
-        module(moduleName = "bar.emb", loadingRule = ModuleLoadingRule.EMBEDDED) {}
+        module("bar.opt", loadingRule = ModuleLoadingRule.OPTIONAL) {}
+        module("bar.req", loadingRule = ModuleLoadingRule.REQUIRED) {}
+        module("bar.emb", loadingRule = ModuleLoadingRule.EMBEDDED) {}
       }
     }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.packageToMainJar: Boolean get() = true
@@ -376,9 +376,9 @@ class PluginDescriptorTest {
     plugin("bar") {
       resourceBundle = "resourceBundle"
       content {
-        module(moduleName = "bar.opt", loadingRule = ModuleLoadingRule.OPTIONAL) { resourceBundle = "bar.opt" }
-        module(moduleName = "bar.req", loadingRule = ModuleLoadingRule.REQUIRED) { resourceBundle = "bar.req" }
-        module(moduleName = "bar.emb", loadingRule = ModuleLoadingRule.EMBEDDED) { resourceBundle = "bar.emb" }
+        module("bar.opt", loadingRule = ModuleLoadingRule.OPTIONAL) { resourceBundle = "bar.opt" }
+        module("bar.req", loadingRule = ModuleLoadingRule.REQUIRED) { resourceBundle = "bar.req" }
+        module("bar.emb", loadingRule = ModuleLoadingRule.EMBEDDED) { resourceBundle = "bar.emb" }
       }
     }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.packageToMainJar: Boolean get() = true
@@ -388,7 +388,7 @@ class PluginDescriptorTest {
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
     assertThat(descriptor.resourceBundleBaseName).isEqualTo("resourceBundle")
     assertThat(descriptor.contentModules).hasSize(3)
-    assertThat(descriptor.contentModules).allMatch { it.resourceBundleBaseName == it.moduleName }
+    assertThat(descriptor.contentModules).allMatch { it.resourceBundleBaseName == it.moduleId.id }
   }
 
   @Test

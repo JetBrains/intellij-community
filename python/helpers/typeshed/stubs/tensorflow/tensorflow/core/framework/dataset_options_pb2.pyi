@@ -25,7 +25,9 @@ class _AutoShardPolicy:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _AutoShardPolicyEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_AutoShardPolicy.ValueType], builtins.type):
+class _AutoShardPolicyEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_AutoShardPolicy.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     AUTO: _AutoShardPolicy.ValueType  # 0
     """AUTO: Attempts FILE-based sharding, falling back to DATA-based sharding."""
@@ -77,7 +79,9 @@ class _ExternalStatePolicy:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _ExternalStatePolicyEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_ExternalStatePolicy.ValueType], builtins.type):
+class _ExternalStatePolicyEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_ExternalStatePolicy.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     POLICY_WARN: _ExternalStatePolicy.ValueType  # 0
     POLICY_IGNORE: _ExternalStatePolicy.ValueType  # 1
@@ -116,18 +120,76 @@ class AutotuneOptions(google.protobuf.message.Message):
         autotune_algorithm: tensorflow.core.framework.model_pb2.AutotuneAlgorithm.ValueType | None = ...,
         initial_parallelism: builtins.int | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["autotune_algorithm", b"autotune_algorithm", "cpu_budget", b"cpu_budget", "enabled", b"enabled", "initial_parallelism", b"initial_parallelism", "optional_autotune_algorithm", b"optional_autotune_algorithm", "optional_cpu_budget", b"optional_cpu_budget", "optional_enabled", b"optional_enabled", "optional_initial_parallelism", b"optional_initial_parallelism", "optional_ram_budget", b"optional_ram_budget", "ram_budget", b"ram_budget"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["autotune_algorithm", b"autotune_algorithm", "cpu_budget", b"cpu_budget", "enabled", b"enabled", "initial_parallelism", b"initial_parallelism", "optional_autotune_algorithm", b"optional_autotune_algorithm", "optional_cpu_budget", b"optional_cpu_budget", "optional_enabled", b"optional_enabled", "optional_initial_parallelism", b"optional_initial_parallelism", "optional_ram_budget", b"optional_ram_budget", "ram_budget", b"ram_budget"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "autotune_algorithm",
+            b"autotune_algorithm",
+            "cpu_budget",
+            b"cpu_budget",
+            "enabled",
+            b"enabled",
+            "initial_parallelism",
+            b"initial_parallelism",
+            "optional_autotune_algorithm",
+            b"optional_autotune_algorithm",
+            "optional_cpu_budget",
+            b"optional_cpu_budget",
+            "optional_enabled",
+            b"optional_enabled",
+            "optional_initial_parallelism",
+            b"optional_initial_parallelism",
+            "optional_ram_budget",
+            b"optional_ram_budget",
+            "ram_budget",
+            b"ram_budget",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "autotune_algorithm",
+            b"autotune_algorithm",
+            "cpu_budget",
+            b"cpu_budget",
+            "enabled",
+            b"enabled",
+            "initial_parallelism",
+            b"initial_parallelism",
+            "optional_autotune_algorithm",
+            b"optional_autotune_algorithm",
+            "optional_cpu_budget",
+            b"optional_cpu_budget",
+            "optional_enabled",
+            b"optional_enabled",
+            "optional_initial_parallelism",
+            b"optional_initial_parallelism",
+            "optional_ram_budget",
+            b"optional_ram_budget",
+            "ram_budget",
+            b"ram_budget",
+        ],
+    ) -> None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_autotune_algorithm", b"optional_autotune_algorithm"]) -> typing.Literal["autotune_algorithm"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_autotune_algorithm", b"optional_autotune_algorithm"]
+    ) -> typing.Literal["autotune_algorithm"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_cpu_budget", b"optional_cpu_budget"]) -> typing.Literal["cpu_budget"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_cpu_budget", b"optional_cpu_budget"]
+    ) -> typing.Literal["cpu_budget"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_enabled", b"optional_enabled"]) -> typing.Literal["enabled"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_enabled", b"optional_enabled"]
+    ) -> typing.Literal["enabled"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_initial_parallelism", b"optional_initial_parallelism"]) -> typing.Literal["initial_parallelism"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_initial_parallelism", b"optional_initial_parallelism"]
+    ) -> typing.Literal["initial_parallelism"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_ram_budget", b"optional_ram_budget"]) -> typing.Literal["ram_budget"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_ram_budget", b"optional_ram_budget"]
+    ) -> typing.Literal["ram_budget"] | None: ...
 
 global___AutotuneOptions = AutotuneOptions
 
@@ -141,7 +203,9 @@ class CardinalityOptions(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _ComputeLevelEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[CardinalityOptions._ComputeLevel.ValueType], builtins.type):
+    class _ComputeLevelEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[CardinalityOptions._ComputeLevel.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         CARDINALITY_COMPUTE_UNSPECIFIED: CardinalityOptions._ComputeLevel.ValueType  # 0
         CARDINALITY_COMPUTE_LOW: CardinalityOptions._ComputeLevel.ValueType  # 1
@@ -172,11 +236,7 @@ class CardinalityOptions(google.protobuf.message.Message):
 
     COMPUTE_LEVEL_FIELD_NUMBER: builtins.int
     compute_level: global___CardinalityOptions.ComputeLevel.ValueType
-    def __init__(
-        self,
-        *,
-        compute_level: global___CardinalityOptions.ComputeLevel.ValueType | None = ...,
-    ) -> None: ...
+    def __init__(self, *, compute_level: global___CardinalityOptions.ComputeLevel.ValueType | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["compute_level", b"compute_level"]) -> None: ...
 
 global___CardinalityOptions = CardinalityOptions
@@ -192,14 +252,25 @@ class DistributeOptions(google.protobuf.message.Message):
     auto_shard_policy: global___AutoShardPolicy.ValueType
     num_devices: builtins.int
     def __init__(
-        self,
-        *,
-        auto_shard_policy: global___AutoShardPolicy.ValueType | None = ...,
-        num_devices: builtins.int | None = ...,
+        self, *, auto_shard_policy: global___AutoShardPolicy.ValueType | None = ..., num_devices: builtins.int | None = ...
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["num_devices", b"num_devices", "optional_num_devices", b"optional_num_devices"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["auto_shard_policy", b"auto_shard_policy", "num_devices", b"num_devices", "optional_num_devices", b"optional_num_devices"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["optional_num_devices", b"optional_num_devices"]) -> typing.Literal["num_devices"] | None: ...
+    def HasField(
+        self, field_name: typing.Literal["num_devices", b"num_devices", "optional_num_devices", b"optional_num_devices"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "auto_shard_policy",
+            b"auto_shard_policy",
+            "num_devices",
+            b"num_devices",
+            "optional_num_devices",
+            b"optional_num_devices",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_num_devices", b"optional_num_devices"]
+    ) -> typing.Literal["num_devices"] | None: ...
 
 global___DistributeOptions = DistributeOptions
 
@@ -249,32 +320,160 @@ class OptimizationOptions(google.protobuf.message.Message):
         inject_prefetch: builtins.bool | None = ...,
         seq_interleave_prefetch: builtins.bool | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["apply_default_optimizations", b"apply_default_optimizations", "filter_fusion", b"filter_fusion", "filter_parallelization", b"filter_parallelization", "inject_prefetch", b"inject_prefetch", "map_and_batch_fusion", b"map_and_batch_fusion", "map_and_filter_fusion", b"map_and_filter_fusion", "map_fusion", b"map_fusion", "map_parallelization", b"map_parallelization", "noop_elimination", b"noop_elimination", "optional_apply_default_optimizations", b"optional_apply_default_optimizations", "optional_filter_fusion", b"optional_filter_fusion", "optional_filter_parallelization", b"optional_filter_parallelization", "optional_inject_prefetch", b"optional_inject_prefetch", "optional_map_and_batch_fusion", b"optional_map_and_batch_fusion", "optional_map_and_filter_fusion", b"optional_map_and_filter_fusion", "optional_map_fusion", b"optional_map_fusion", "optional_map_parallelization", b"optional_map_parallelization", "optional_noop_elimination", b"optional_noop_elimination", "optional_parallel_batch", b"optional_parallel_batch", "optional_seq_interleave_prefetch", b"optional_seq_interleave_prefetch", "optional_shuffle_and_repeat_fusion", b"optional_shuffle_and_repeat_fusion", "parallel_batch", b"parallel_batch", "seq_interleave_prefetch", b"seq_interleave_prefetch", "shuffle_and_repeat_fusion", b"shuffle_and_repeat_fusion"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["apply_default_optimizations", b"apply_default_optimizations", "filter_fusion", b"filter_fusion", "filter_parallelization", b"filter_parallelization", "inject_prefetch", b"inject_prefetch", "map_and_batch_fusion", b"map_and_batch_fusion", "map_and_filter_fusion", b"map_and_filter_fusion", "map_fusion", b"map_fusion", "map_parallelization", b"map_parallelization", "noop_elimination", b"noop_elimination", "optional_apply_default_optimizations", b"optional_apply_default_optimizations", "optional_filter_fusion", b"optional_filter_fusion", "optional_filter_parallelization", b"optional_filter_parallelization", "optional_inject_prefetch", b"optional_inject_prefetch", "optional_map_and_batch_fusion", b"optional_map_and_batch_fusion", "optional_map_and_filter_fusion", b"optional_map_and_filter_fusion", "optional_map_fusion", b"optional_map_fusion", "optional_map_parallelization", b"optional_map_parallelization", "optional_noop_elimination", b"optional_noop_elimination", "optional_parallel_batch", b"optional_parallel_batch", "optional_seq_interleave_prefetch", b"optional_seq_interleave_prefetch", "optional_shuffle_and_repeat_fusion", b"optional_shuffle_and_repeat_fusion", "parallel_batch", b"parallel_batch", "seq_interleave_prefetch", b"seq_interleave_prefetch", "shuffle_and_repeat_fusion", b"shuffle_and_repeat_fusion"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "apply_default_optimizations",
+            b"apply_default_optimizations",
+            "filter_fusion",
+            b"filter_fusion",
+            "filter_parallelization",
+            b"filter_parallelization",
+            "inject_prefetch",
+            b"inject_prefetch",
+            "map_and_batch_fusion",
+            b"map_and_batch_fusion",
+            "map_and_filter_fusion",
+            b"map_and_filter_fusion",
+            "map_fusion",
+            b"map_fusion",
+            "map_parallelization",
+            b"map_parallelization",
+            "noop_elimination",
+            b"noop_elimination",
+            "optional_apply_default_optimizations",
+            b"optional_apply_default_optimizations",
+            "optional_filter_fusion",
+            b"optional_filter_fusion",
+            "optional_filter_parallelization",
+            b"optional_filter_parallelization",
+            "optional_inject_prefetch",
+            b"optional_inject_prefetch",
+            "optional_map_and_batch_fusion",
+            b"optional_map_and_batch_fusion",
+            "optional_map_and_filter_fusion",
+            b"optional_map_and_filter_fusion",
+            "optional_map_fusion",
+            b"optional_map_fusion",
+            "optional_map_parallelization",
+            b"optional_map_parallelization",
+            "optional_noop_elimination",
+            b"optional_noop_elimination",
+            "optional_parallel_batch",
+            b"optional_parallel_batch",
+            "optional_seq_interleave_prefetch",
+            b"optional_seq_interleave_prefetch",
+            "optional_shuffle_and_repeat_fusion",
+            b"optional_shuffle_and_repeat_fusion",
+            "parallel_batch",
+            b"parallel_batch",
+            "seq_interleave_prefetch",
+            b"seq_interleave_prefetch",
+            "shuffle_and_repeat_fusion",
+            b"shuffle_and_repeat_fusion",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "apply_default_optimizations",
+            b"apply_default_optimizations",
+            "filter_fusion",
+            b"filter_fusion",
+            "filter_parallelization",
+            b"filter_parallelization",
+            "inject_prefetch",
+            b"inject_prefetch",
+            "map_and_batch_fusion",
+            b"map_and_batch_fusion",
+            "map_and_filter_fusion",
+            b"map_and_filter_fusion",
+            "map_fusion",
+            b"map_fusion",
+            "map_parallelization",
+            b"map_parallelization",
+            "noop_elimination",
+            b"noop_elimination",
+            "optional_apply_default_optimizations",
+            b"optional_apply_default_optimizations",
+            "optional_filter_fusion",
+            b"optional_filter_fusion",
+            "optional_filter_parallelization",
+            b"optional_filter_parallelization",
+            "optional_inject_prefetch",
+            b"optional_inject_prefetch",
+            "optional_map_and_batch_fusion",
+            b"optional_map_and_batch_fusion",
+            "optional_map_and_filter_fusion",
+            b"optional_map_and_filter_fusion",
+            "optional_map_fusion",
+            b"optional_map_fusion",
+            "optional_map_parallelization",
+            b"optional_map_parallelization",
+            "optional_noop_elimination",
+            b"optional_noop_elimination",
+            "optional_parallel_batch",
+            b"optional_parallel_batch",
+            "optional_seq_interleave_prefetch",
+            b"optional_seq_interleave_prefetch",
+            "optional_shuffle_and_repeat_fusion",
+            b"optional_shuffle_and_repeat_fusion",
+            "parallel_batch",
+            b"parallel_batch",
+            "seq_interleave_prefetch",
+            b"seq_interleave_prefetch",
+            "shuffle_and_repeat_fusion",
+            b"shuffle_and_repeat_fusion",
+        ],
+    ) -> None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_apply_default_optimizations", b"optional_apply_default_optimizations"]) -> typing.Literal["apply_default_optimizations"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_apply_default_optimizations", b"optional_apply_default_optimizations"]
+    ) -> typing.Literal["apply_default_optimizations"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_filter_fusion", b"optional_filter_fusion"]) -> typing.Literal["filter_fusion"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_filter_fusion", b"optional_filter_fusion"]
+    ) -> typing.Literal["filter_fusion"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_filter_parallelization", b"optional_filter_parallelization"]) -> typing.Literal["filter_parallelization"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_filter_parallelization", b"optional_filter_parallelization"]
+    ) -> typing.Literal["filter_parallelization"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_inject_prefetch", b"optional_inject_prefetch"]) -> typing.Literal["inject_prefetch"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_inject_prefetch", b"optional_inject_prefetch"]
+    ) -> typing.Literal["inject_prefetch"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_map_and_batch_fusion", b"optional_map_and_batch_fusion"]) -> typing.Literal["map_and_batch_fusion"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_map_and_batch_fusion", b"optional_map_and_batch_fusion"]
+    ) -> typing.Literal["map_and_batch_fusion"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_map_and_filter_fusion", b"optional_map_and_filter_fusion"]) -> typing.Literal["map_and_filter_fusion"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_map_and_filter_fusion", b"optional_map_and_filter_fusion"]
+    ) -> typing.Literal["map_and_filter_fusion"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_map_fusion", b"optional_map_fusion"]) -> typing.Literal["map_fusion"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_map_fusion", b"optional_map_fusion"]
+    ) -> typing.Literal["map_fusion"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_map_parallelization", b"optional_map_parallelization"]) -> typing.Literal["map_parallelization"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_map_parallelization", b"optional_map_parallelization"]
+    ) -> typing.Literal["map_parallelization"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_noop_elimination", b"optional_noop_elimination"]) -> typing.Literal["noop_elimination"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_noop_elimination", b"optional_noop_elimination"]
+    ) -> typing.Literal["noop_elimination"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_parallel_batch", b"optional_parallel_batch"]) -> typing.Literal["parallel_batch"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_parallel_batch", b"optional_parallel_batch"]
+    ) -> typing.Literal["parallel_batch"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_seq_interleave_prefetch", b"optional_seq_interleave_prefetch"]) -> typing.Literal["seq_interleave_prefetch"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_seq_interleave_prefetch", b"optional_seq_interleave_prefetch"]
+    ) -> typing.Literal["seq_interleave_prefetch"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_shuffle_and_repeat_fusion", b"optional_shuffle_and_repeat_fusion"]) -> typing.Literal["shuffle_and_repeat_fusion"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_shuffle_and_repeat_fusion", b"optional_shuffle_and_repeat_fusion"]
+    ) -> typing.Literal["shuffle_and_repeat_fusion"] | None: ...
 
 global___OptimizationOptions = OptimizationOptions
 
@@ -286,14 +485,14 @@ class ServiceOptions(google.protobuf.message.Message):
 
     PINNED_FIELD_NUMBER: builtins.int
     pinned: builtins.bool
-    def __init__(
-        self,
-        *,
-        pinned: builtins.bool | None = ...,
-    ) -> None: ...
-    def HasField(self, field_name: typing.Literal["optional_pinned", b"optional_pinned", "pinned", b"pinned"]) -> builtins.bool: ...
+    def __init__(self, *, pinned: builtins.bool | None = ...) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["optional_pinned", b"optional_pinned", "pinned", b"pinned"]
+    ) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["optional_pinned", b"optional_pinned", "pinned", b"pinned"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["optional_pinned", b"optional_pinned"]) -> typing.Literal["pinned"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_pinned", b"optional_pinned"]
+    ) -> typing.Literal["pinned"] | None: ...
 
 global___ServiceOptions = ServiceOptions
 
@@ -308,17 +507,42 @@ class ThreadingOptions(google.protobuf.message.Message):
     max_intra_op_parallelism: builtins.int
     private_threadpool_size: builtins.int
     def __init__(
-        self,
-        *,
-        max_intra_op_parallelism: builtins.int | None = ...,
-        private_threadpool_size: builtins.int | None = ...,
+        self, *, max_intra_op_parallelism: builtins.int | None = ..., private_threadpool_size: builtins.int | None = ...
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["max_intra_op_parallelism", b"max_intra_op_parallelism", "optional_max_intra_op_parallelism", b"optional_max_intra_op_parallelism", "optional_private_threadpool_size", b"optional_private_threadpool_size", "private_threadpool_size", b"private_threadpool_size"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["max_intra_op_parallelism", b"max_intra_op_parallelism", "optional_max_intra_op_parallelism", b"optional_max_intra_op_parallelism", "optional_private_threadpool_size", b"optional_private_threadpool_size", "private_threadpool_size", b"private_threadpool_size"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "max_intra_op_parallelism",
+            b"max_intra_op_parallelism",
+            "optional_max_intra_op_parallelism",
+            b"optional_max_intra_op_parallelism",
+            "optional_private_threadpool_size",
+            b"optional_private_threadpool_size",
+            "private_threadpool_size",
+            b"private_threadpool_size",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "max_intra_op_parallelism",
+            b"max_intra_op_parallelism",
+            "optional_max_intra_op_parallelism",
+            b"optional_max_intra_op_parallelism",
+            "optional_private_threadpool_size",
+            b"optional_private_threadpool_size",
+            "private_threadpool_size",
+            b"private_threadpool_size",
+        ],
+    ) -> None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_max_intra_op_parallelism", b"optional_max_intra_op_parallelism"]) -> typing.Literal["max_intra_op_parallelism"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_max_intra_op_parallelism", b"optional_max_intra_op_parallelism"]
+    ) -> typing.Literal["max_intra_op_parallelism"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_private_threadpool_size", b"optional_private_threadpool_size"]) -> typing.Literal["private_threadpool_size"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_private_threadpool_size", b"optional_private_threadpool_size"]
+    ) -> typing.Literal["private_threadpool_size"] | None: ...
 
 global___ThreadingOptions = ThreadingOptions
 
@@ -390,19 +614,107 @@ class Options(google.protobuf.message.Message):
         symbolic_checkpoint: builtins.bool | None = ...,
         warm_start: builtins.bool | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["autotune_options", b"autotune_options", "dataset_name", b"dataset_name", "deterministic", b"deterministic", "distribute_options", b"distribute_options", "external_state_policy", b"external_state_policy", "optimization_options", b"optimization_options", "optional_dataset_name", b"optional_dataset_name", "optional_deterministic", b"optional_deterministic", "optional_external_state_policy", b"optional_external_state_policy", "optional_slack", b"optional_slack", "optional_symbolic_checkpoint", b"optional_symbolic_checkpoint", "optional_warm_start", b"optional_warm_start", "service_options", b"service_options", "slack", b"slack", "symbolic_checkpoint", b"symbolic_checkpoint", "threading_options", b"threading_options", "warm_start", b"warm_start"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["autotune_options", b"autotune_options", "dataset_name", b"dataset_name", "deterministic", b"deterministic", "distribute_options", b"distribute_options", "external_state_policy", b"external_state_policy", "framework_type", b"framework_type", "optimization_options", b"optimization_options", "optional_dataset_name", b"optional_dataset_name", "optional_deterministic", b"optional_deterministic", "optional_external_state_policy", b"optional_external_state_policy", "optional_slack", b"optional_slack", "optional_symbolic_checkpoint", b"optional_symbolic_checkpoint", "optional_warm_start", b"optional_warm_start", "service_options", b"service_options", "slack", b"slack", "symbolic_checkpoint", b"symbolic_checkpoint", "threading_options", b"threading_options", "warm_start", b"warm_start"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "autotune_options",
+            b"autotune_options",
+            "dataset_name",
+            b"dataset_name",
+            "deterministic",
+            b"deterministic",
+            "distribute_options",
+            b"distribute_options",
+            "external_state_policy",
+            b"external_state_policy",
+            "optimization_options",
+            b"optimization_options",
+            "optional_dataset_name",
+            b"optional_dataset_name",
+            "optional_deterministic",
+            b"optional_deterministic",
+            "optional_external_state_policy",
+            b"optional_external_state_policy",
+            "optional_slack",
+            b"optional_slack",
+            "optional_symbolic_checkpoint",
+            b"optional_symbolic_checkpoint",
+            "optional_warm_start",
+            b"optional_warm_start",
+            "service_options",
+            b"service_options",
+            "slack",
+            b"slack",
+            "symbolic_checkpoint",
+            b"symbolic_checkpoint",
+            "threading_options",
+            b"threading_options",
+            "warm_start",
+            b"warm_start",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "autotune_options",
+            b"autotune_options",
+            "dataset_name",
+            b"dataset_name",
+            "deterministic",
+            b"deterministic",
+            "distribute_options",
+            b"distribute_options",
+            "external_state_policy",
+            b"external_state_policy",
+            "framework_type",
+            b"framework_type",
+            "optimization_options",
+            b"optimization_options",
+            "optional_dataset_name",
+            b"optional_dataset_name",
+            "optional_deterministic",
+            b"optional_deterministic",
+            "optional_external_state_policy",
+            b"optional_external_state_policy",
+            "optional_slack",
+            b"optional_slack",
+            "optional_symbolic_checkpoint",
+            b"optional_symbolic_checkpoint",
+            "optional_warm_start",
+            b"optional_warm_start",
+            "service_options",
+            b"service_options",
+            "slack",
+            b"slack",
+            "symbolic_checkpoint",
+            b"symbolic_checkpoint",
+            "threading_options",
+            b"threading_options",
+            "warm_start",
+            b"warm_start",
+        ],
+    ) -> None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_dataset_name", b"optional_dataset_name"]) -> typing.Literal["dataset_name"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_dataset_name", b"optional_dataset_name"]
+    ) -> typing.Literal["dataset_name"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_deterministic", b"optional_deterministic"]) -> typing.Literal["deterministic"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_deterministic", b"optional_deterministic"]
+    ) -> typing.Literal["deterministic"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_external_state_policy", b"optional_external_state_policy"]) -> typing.Literal["external_state_policy"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_external_state_policy", b"optional_external_state_policy"]
+    ) -> typing.Literal["external_state_policy"] | None: ...
     @typing.overload
     def WhichOneof(self, oneof_group: typing.Literal["optional_slack", b"optional_slack"]) -> typing.Literal["slack"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_symbolic_checkpoint", b"optional_symbolic_checkpoint"]) -> typing.Literal["symbolic_checkpoint"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_symbolic_checkpoint", b"optional_symbolic_checkpoint"]
+    ) -> typing.Literal["symbolic_checkpoint"] | None: ...
     @typing.overload
-    def WhichOneof(self, oneof_group: typing.Literal["optional_warm_start", b"optional_warm_start"]) -> typing.Literal["warm_start"] | None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["optional_warm_start", b"optional_warm_start"]
+    ) -> typing.Literal["warm_start"] | None: ...
 
 global___Options = Options

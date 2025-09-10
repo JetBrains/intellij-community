@@ -8,10 +8,7 @@ import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.codeInsight.intention.impl.IntentionContainer;
 import com.intellij.codeInsight.intention.impl.IntentionGroup;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
-import com.intellij.codeInsight.template.TemplateEditingAdapter;
-import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.*;
 import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.OptionControllerProvider;
@@ -279,12 +276,19 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
       }
 
       final Template tmpl = builder.buildInlineTemplate();
-      finalEditor.getCaretModel().moveToOffset(0);
-      TemplateManager.getInstance(context.project()).startTemplate(finalEditor, tmpl, new TemplateEditingAdapter() {
-        @Override
-        public void templateFinished(@NotNull Template tmpl, boolean brokenOff) {
-          ModCommandExecutor.executeInteractively(context, name, editor, () -> template.templateFinishFunction().apply(psiFile));
-        }
+      CaretAutoMoveController.forbidCaretMovementInsideIfNeeded(finalEditor, () -> {
+        finalEditor.getCaretModel().moveToOffset(0);
+        TemplateManager.getInstance(context.project()).startTemplate(finalEditor, tmpl, new TemplateEditingAdapter() {
+          @Override
+          public void templateFinished(@NotNull Template tmpl, boolean brokenOff) {
+            ModCommandExecutor.executeInteractively(
+              context,
+              name,
+              editor,
+              () -> template.templateFinishFunction().apply(psiFile)
+            );
+          }
+        });
       });
     });
     return true;

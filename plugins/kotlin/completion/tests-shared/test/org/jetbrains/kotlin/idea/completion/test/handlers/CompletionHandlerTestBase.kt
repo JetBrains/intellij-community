@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.project.Project
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
@@ -28,6 +29,7 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
             completionChars: String,
             afterFilePath: String,
             actions: List<String>? = emptyList(),
+            useExpensiveRenderer: Boolean = false,
             afterTypingBlock: () -> Unit = {}
         ) {
             testWithAutoCompleteSetting(fileText) {
@@ -45,7 +47,7 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
                 fixture.complete(completionType, time)
 
                 if (lookupString != null || itemText != null || tailText != null) {
-                    val item = getExistentLookupElement(fixture.project, lookupString, itemText, tailText)
+                    val item = getExistentLookupElement(fixture.project, lookupString, itemText, tailText, useExpensiveRenderer)
                     if (item != null) {
                         selectItem(fixture, item, completionChars.last())
                     }
@@ -71,7 +73,13 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
             }
         }
 
-        fun getExistentLookupElement(project: Project, lookupString: String?, itemText: String?, tailText: String?): LookupElement? {
+        fun getExistentLookupElement(
+            project: Project,
+            lookupString: String?,
+            itemText: String?,
+            tailText: String?,
+            useExpensiveRenderer: Boolean
+        ): LookupElement? {
             val lookup = LookupManager.getInstance(project)?.activeLookup as LookupImpl? ?: return null
             val items = lookup.items
 
@@ -88,6 +96,14 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
 
                 if (lookupOk) {
                     lookupElement.renderElement(presentation)
+
+                    if (useExpensiveRenderer) {
+                        timeoutRunBlocking {
+                            @Suppress("UNCHECKED_CAST")
+                            (lookupElement.expensiveRenderer as? LookupElementRenderer<LookupElement>)
+                                ?.renderElement(lookupElement, presentation)
+                        }
+                    }
 
                     val textOk = if (itemText != null) {
                         val itemItemText = presentation.itemText

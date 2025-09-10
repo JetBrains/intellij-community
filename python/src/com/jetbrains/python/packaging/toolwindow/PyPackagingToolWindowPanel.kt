@@ -30,6 +30,7 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.packaging.toolwindow.details.PyPackageInfoPanel
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
+import com.jetbrains.python.packaging.toolwindow.model.ErrorNode
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
 import com.jetbrains.python.packaging.toolwindow.modules.PyPackagesSdkController
@@ -45,11 +46,13 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
+import java.awt.KeyboardFocusManager
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindowPanel(false, true), Disposable {
@@ -238,6 +241,10 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     packageListController.showSearchResult(installed, repoData)
   }
 
+  fun showErrorResult(errorNode: ErrorNode) {
+    packageListController.showErrorResult(errorNode)
+  }
+
   fun resetSearch(installed: List<InstalledPackage>, repos: List<PyPackagesViewData>, currentSdk: Sdk?) {
     packageListController.resetSearch(installed, repos, currentSdk)
   }
@@ -254,6 +261,14 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
   fun startLoadingSdk() {
     this.descriptionController.setPackage(null)
     packageListController.startSdkInit()
+  }
+
+  fun clearFocus() {
+    val kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+    val owner = kfm.focusOwner
+    if (owner != null && SwingUtilities.isDescendingFrom(owner, this)) {
+      kfm.clearGlobalFocusOwner()
+    }
   }
 
   override fun dispose() {

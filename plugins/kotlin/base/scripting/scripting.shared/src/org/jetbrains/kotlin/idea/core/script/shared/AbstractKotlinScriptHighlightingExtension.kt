@@ -2,8 +2,9 @@
 package org.jetbrains.kotlin.idea.core.script.shared
 
 import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.psi.util.CachedValueProvider.Result.create
+import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinScriptHighlightingExtension
-import org.jetbrains.kotlin.idea.base.highlighting.computeIfAbsent
 import org.jetbrains.kotlin.idea.base.highlighting.shouldDefinitelyHighlight
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -18,11 +19,12 @@ interface AbstractKotlinScriptHighlightingExtension : KotlinScriptHighlightingEx
     override fun shouldHighlightScript(file: KtFile): Boolean {
         val project = file.project
 
-        return file.computeIfAbsent(
-            ProjectRootModificationTracker.getInstance(project),
-            ScriptDependenciesModificationTracker.getInstance(project)
-        ) {
-            calculateShouldHighlightScript(file)
+        return CachedValuesManager.getManager(file.project).getCachedValue(file) {
+            create(
+                file.calculateShouldHighlightScript(file),
+                ProjectRootModificationTracker.getInstance(project),
+                ScriptDependenciesModificationTracker.getInstance(project)
+            )
         }
     }
 

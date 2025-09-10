@@ -2,6 +2,7 @@
 package com.intellij.refactoring.suggested
 
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.createSmartPointer
@@ -123,6 +124,9 @@ class SuggestedRefactoringState(
   }
 
   private fun createRestoredDeclarationCopy(): PsiElement {
+    if (!anchor.isValid) {
+      throw ProcessCanceledException()
+    }
     val psiFile = anchor.containingFile
     val signatureRange = refactoringSupport.signatureRange(anchor)!!
     val importsRange = refactoringSupport.importsRange(psiFile)

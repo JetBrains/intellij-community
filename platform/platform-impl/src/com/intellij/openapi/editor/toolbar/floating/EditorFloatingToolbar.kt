@@ -2,6 +2,9 @@
 package com.intellij.openapi.editor.toolbar.floating
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -10,8 +13,13 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.createExtensionDisposable
 import com.intellij.openapi.observable.util.addComponent
 import com.intellij.openapi.observable.util.whenKeyPressed
+import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.ui.isComponentUnderMouse
 import com.intellij.openapi.ui.isFocusAncestor
+import com.jetbrains.rd.util.threading.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 import java.awt.FlowLayout
 import java.awt.Point
 import java.awt.Rectangle
@@ -36,12 +44,33 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
     }, editor.disposable)
   }
 
-  private fun addFloatingToolbarComponent(editor: EditorImpl, provider: FloatingToolbarProvider) {
-    if (provider.isApplicable(editor.dataContext)) {
-      val disposable = FloatingToolbarProvider.EP_NAME.createExtensionDisposable(provider, editor.disposable)
-      val component = EditorFloatingToolbarComponent(editor, provider, disposable)
-      addComponent(component, disposable)
-      provider.register(editor.dataContext, component, disposable)
+  private fun addFloatingToolbarComponent(
+    editor: EditorImpl,
+    provider: FloatingToolbarProvider,
+  ) {
+    editor.disposable.createLifetime().launch {
+      val dataContext = withContext(Dispatchers.UiWithModelAccess) {
+        editor.dataContext
+      }
+      val providerApplicable = readAction {
+        provider.isApplicable(dataContext)
+      }
+      if (providerApplicable) {
+        withContext(Dispatchers.UiWithModelAccess) {
+          coroutineContext.ensureActive()
+          val disposable = FloatingToolbarProvider.EP_NAME.createExtensionDisposable(
+            extension = provider,
+            parentDisposable = editor.disposable,
+          )
+          val component = EditorFloatingToolbarComponent(
+            editor = editor,
+            provider = provider,
+            parentDisposable = disposable,
+          )
+          addComponent(component, disposable)
+          provider.register(dataContext, component, disposable)
+        }
+      }
     }
   }
 

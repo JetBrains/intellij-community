@@ -56,8 +56,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -270,7 +270,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
     final Ref<UsageInfo[]> refUsages = new Ref<>();
     final Ref<Language> refErrorLanguage = new Ref<>();
-    final Ref<Boolean> refProcessCanceled = new Ref<>();
+    final Ref<ProcessCanceledException> refProcessCanceled = new Ref<>();
     final Ref<Boolean> anyException = new Ref<>();
     final Ref<Boolean> indexNotReadyException = new Ref<>();
 
@@ -284,7 +284,9 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         refErrorLanguage.set(e.getElementLanguage());
       }
       catch (ProcessCanceledException e) {
-        refProcessCanceled.set(Boolean.TRUE);
+        // PCE is expected here if the user actually has pressed the "Cancel" button in the modal progress.
+        // Let's save it for debugging purposes.
+        refProcessCanceled.set(e);
       }
       catch (IndexNotReadyException e) {
         indexNotReadyException.set(Boolean.TRUE);
@@ -314,6 +316,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       return;
     }
     if (!refProcessCanceled.isNull()) {
+      // wrapping the PCE to ISE as our logging infrastructure doesn't allow logging PCEs.
+      IllegalStateException exception = new IllegalStateException(refProcessCanceled.get());
+      LOG.error("PCE was not expected here", exception);
+
       MessagesService.getInstance().showErrorDialog(myProject, RefactoringBundle.message("refactoring.index.corruption.notifiction"), RefactoringBundle.message("error.title"));
       return;
     }
@@ -688,14 +694,17 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
   }
 
+  /**
+   * The main entry point to the refactoring process. It calls {@link #doRun}.
+   */
   @Override
   public final void run() {
-    Runnable baseRunnable = () -> {
+    final Runnable baseRunnable = () -> {
       try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
         doRun();
       }
     };
-    Runnable runnable = shouldDisableAccessChecks() ?
+    final Runnable runnable = shouldDisableAccessChecks() ?
                         () -> NonProjectFileWritingAccessProvider.disableChecksDuring(baseRunnable) :
                         baseRunnable;
     if (ApplicationManager.getApplication().isUnitTestMode()) {

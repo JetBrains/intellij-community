@@ -20,7 +20,7 @@ jvm_library(
   name = "settings-local",
   module_name = "intellij.platform.settings.local",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_settings-local",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -53,7 +53,7 @@ jvm_library(
 jvm_library(
   name = "settings-local_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_settings-local",
   associates = [":settings-local"],
   deps = [

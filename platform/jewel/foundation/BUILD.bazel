@@ -10,7 +10,7 @@ create_kotlinc_options(
     "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
     "org.jetbrains.jewel.foundation.InternalJewelApi",
   ],
-  x_context_receivers = True,
+  x_context_parameters = True,
   x_explicit_api_mode = "strict"
 )
 
@@ -24,7 +24,7 @@ jvm_library(
   name = "foundation",
   module_name = "intellij.platform.jewel.foundation",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form", "src/main/generated-kotlin/**/*.kt", "src/main/generated-kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom_foundation",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -44,7 +44,7 @@ jvm_library(
 jvm_library(
   name = "foundation_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_foundation",
   associates = [":foundation"],
   deps = [
@@ -54,6 +54,10 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//libraries/skiko",
     "//libraries/compose-foundation-desktop-junit",
+  ],
+  exports = [
+    "//libraries/compose-foundation-desktop",
+    "//libraries/skiko",
   ],
   runtime_deps = [":foundation_resources"],
   plugins = ["@lib//:compose-plugin"]

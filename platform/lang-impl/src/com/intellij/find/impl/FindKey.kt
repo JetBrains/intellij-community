@@ -20,4 +20,7 @@ object FindKey {
       if (isCwmClient) return Registry.`is`("find.in.files.split.cwm")
       return Registry.`is`("find.in.files.split")
     }
+
+  @JvmStatic
+  val isLazyPreviewEnabled: Boolean = Registry.`is`("find.in.files.split.lazy.preview")
 }

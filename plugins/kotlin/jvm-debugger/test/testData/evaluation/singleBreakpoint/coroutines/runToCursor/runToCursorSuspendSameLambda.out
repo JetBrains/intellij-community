@@ -1,8 +1,8 @@
-LineBreakpoint created at runToCursorSuspendSameLambda.kt:18
+LineBreakpoint created at runToCursorSuspendSameLambda.kt:19
 Run Java
 Connected to the target VM
-runToCursorSuspendSameLambda.kt:18
-runToCursorSuspendSameLambda.kt:25
+runToCursorSuspendSameLambda.kt:19
+runToCursorSuspendSameLambda.kt:26
 Compile bytecode for i
 Compile bytecode for k
 Disconnected from the target VM

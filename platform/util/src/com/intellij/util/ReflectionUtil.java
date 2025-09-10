@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.util.lang.CompoundRuntimeException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -559,31 +558,6 @@ public final class ReflectionUtil {
       throw new IllegalArgumentException("No (non-static, non-final) field of "+fieldType+" found in the "+ownerClass);
     }
     return found;
-  }
-
-  private static final Object unsafe;
-  static {
-    Class<?> unsafeClass;
-    try {
-      unsafeClass = Class.forName("sun.misc.Unsafe");
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
-    unsafe = getStaticFieldValue(unsafeClass, unsafeClass, "theUnsafe");
-    if (unsafe == null) {
-      throw new RuntimeException("Could not find 'theUnsafe' field in the Unsafe class");
-    }
-  }
-
-  /**
-   * @deprecated Use {@link java.lang.invoke.VarHandle} or {@link java.util.concurrent.ConcurrentHashMap} or other standard JDK concurrent facilities
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @NotNull Object getUnsafe() {
-    return unsafe;
   }
 
   /**

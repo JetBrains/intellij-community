@@ -73,7 +73,7 @@ public final class JBCefApp {
 
   private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 119;
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
-  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 18;
+  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 20;
 
   private static final String MIN_SUPPORTED_GLIBC_DEFAULT = "2.28.0";
 

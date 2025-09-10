@@ -11,7 +11,9 @@ import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.util.io.PathPrefixTree
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.util.containers.prefixTree.map.toPrefixTreeMap
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
@@ -35,11 +37,13 @@ internal class GradleSourceRootSyncContributor : GradleSyncContributor {
 
   override val phase: GradleSyncPhase = GradleSyncPhase.SOURCE_SET_MODEL_PHASE
 
-  override suspend fun updateProjectModel(
+  override suspend fun createProjectModel(
     context: ProjectResolverContext,
-    storage: MutableEntityStorage,
-  ) {
-    configureProjectSourceRoots(context, storage)
+    storage: ImmutableEntityStorage,
+  ): ImmutableEntityStorage {
+    val builder = storage.toBuilder()
+    configureProjectSourceRoots(context, builder)
+    return builder.toSnapshot()
   }
 
   private suspend fun configureProjectSourceRoots(

@@ -140,7 +140,7 @@ class PatternInstrumenterTest {
   }
 
   private fun loadClass(type: InstrumentationType = InstrumentationType.EXCEPTION): Class<*> {
-    val testDir = PluginPathManager.getPluginHomePath("IntelliLang") + "/intellilang-jps-plugin/testData/patternInstrumenter/"
+    val testDir = PluginPathManager.getPluginHomePath("IntelliLang") + "/tests/testData/patternInstrumenter/"
     val testName = testName.methodName.capitalize()
     val testFile = IdeaTestUtil.findSourceFile(testDir + testName)
     val classesDir = tempDir.newDirectory("out")

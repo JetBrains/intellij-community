@@ -17,7 +17,7 @@ jvm_library(
   name = "grazie-tests_test_lib",
   module_name = "intellij.grazie.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["kotlin/**/*.kt", "kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["kotlin/**/*.kt", "kotlin/**/*.java", "kotlin/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -60,6 +60,12 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+  ],
+  exports = [
+    "//plugins/grazie",
+    "@lib//:grazie-tests-ai-grazie-spell-hunspell-de",
+    "@lib//:grazie-tests-ai-grazie-spell-hunspell-ru",
+    "@lib//:grazie-tests-ai-grazie-spell-hunspell-uk",
   ],
   runtime_deps = [":grazie-tests_test_resources"]
 )

@@ -11,7 +11,7 @@ jvm_library(
   name = "vcs-git-coverage",
   module_name = "intellij.vcs.git.coverage",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -25,6 +25,8 @@ jvm_library(
     "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-log/impl",
     "//platform/vcs-log/graph:vcs-log-graph-impl",
+    "//platform/vcs-api/shared",
+    "//platform/vcs-impl/shared",
   ],
   runtime_deps = [":vcs-git-coverage_resources"]
 )
@@ -32,7 +34,7 @@ jvm_library(
 jvm_library(
   name = "vcs-git-coverage_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":vcs-git-coverage"],
   deps = [
     "@lib//:junit5",
@@ -53,6 +55,8 @@ jvm_library(
     "//platform/vcs-log/impl:impl_test_lib",
     "//platform/vcs-log/graph:vcs-log-graph-impl",
     "//platform/vcs-log/graph:vcs-log-graph-impl_test_lib",
+    "//platform/vcs-api/shared",
+    "//platform/vcs-impl/shared",
   ],
   runtime_deps = [":vcs-git-coverage_resources"]
 )

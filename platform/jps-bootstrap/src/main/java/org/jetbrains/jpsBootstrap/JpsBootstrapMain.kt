@@ -77,7 +77,7 @@ class JpsBootstrapMain(args: Array<String>?) {
       showUsagesAndExit()
     }
 
-    projectHome = Path.of(freeArgs.first()).normalize()
+    projectHome = Path.of(freeArgs.first()).toAbsolutePath().normalize()
     onlyDownloadJdk = cmdline.hasOption(OPT_ONLY_DOWNLOAD_JDK)
     onlyPrepareArgfileForJar = cmdline.hasOption(OPT_ONLY_PREPARE_ARGFILE_FOR_JAR)
     if (onlyDownloadJdk) {
@@ -431,7 +431,7 @@ class JpsBootstrapMain(args: Array<String>?) {
     private fun showUsagesAndExit() {
       val formatter = HelpFormatter()
       formatter.width = 1000
-      formatter.printHelp("./jps-bootstrap.sh [jps-bootstrap options] MODULE_NAME CLASS_NAME [arguments_passed_to_CLASS_NAME's_main]", createCliOptions())
+      formatter.printHelp("./jps-bootstrap.sh [jps-bootstrap options] PROJECT_HOME MODULE_NAME CLASS_NAME [arguments_passed_to_CLASS_NAME's_main]", createCliOptions())
       exitProcess(1)
     }
 

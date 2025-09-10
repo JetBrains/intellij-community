@@ -821,7 +821,6 @@ a:com.intellij.execution.rmi.RemoteProcessSupport
 - p:logText(java.lang.Object,com.intellij.execution.process.ProcessEvent,com.intellij.openapi.util.Key):V
 - p:onCreated(java.lang.Object,java.lang.Object,java.lang.Object):V
 - p:onProcessTerminated(com.intellij.execution.process.ProcessEvent):V
-- p:publishPort(I):I
 - release(java.lang.Object,java.lang.Object):java.util.concurrent.Future
 - p:sendDataAfterStart(com.intellij.execution.process.ProcessHandler):V
 - stopAll():V

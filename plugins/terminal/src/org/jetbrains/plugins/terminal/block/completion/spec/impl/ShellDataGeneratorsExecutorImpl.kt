@@ -6,7 +6,6 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Scheduler
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.Key
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
@@ -63,7 +62,5 @@ class ShellDataGeneratorsExecutorImpl(session: BlockTerminalSession) : ShellData
 
   companion object {
     private val LOG: Logger = logger<ShellDataGeneratorsExecutorImpl>()
-
-    val KEY: Key<ShellDataGeneratorsExecutorImpl> = Key.create("IJShellGeneratorsExecutor")
   }
 }

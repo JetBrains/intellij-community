@@ -15,24 +15,24 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * **For applied usages, please consider [withConnectionToRemotePort]**.
- *
+ * 
  * Accepts remote connections to a named host specified by [address].
- *
+ * 
  * If an error occurs during creation of the server, an [EelConnectionError] will be thrown.
  * Otherwise, a [ConnectionAcceptor] object is returned, which means that the server was created successfully.
- *
+ * 
  * Locally, the server exists as a channel of [Connection]s, which allows imitating a server on the IDE side.
- *
+ * 
  * Packets sent to the channels and received from the channel may be split and/or concatenated.
  * The packets may be split only if their size exceeds [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
- *
+ * 
  * If the connections get closed, then the channels also get closed in the sense of [SendChannel.close].
- *
+ * 
  * If an exception happens during sending, then [Connection.sendChannel] gets closed exceptionally with [RemoteNetworkException].
- *
+ * 
  * [Connection.sendChannel] can be closed separately with [SendChannel.close]. In this case, the EOF is sent to the server.
  * Note, that [Connection.receiveChannel] is __not__ closed in this case.
- *
+ * 
  * One should not forget to invoke [Connection.close] when the connection is not needed.
  */
 @GeneratedBuilder.Result
@@ -44,27 +44,27 @@ fun EelTunnelsApi.getAcceptorForRemotePort(): EelTunnelsApiHelpers.GetAcceptorFo
 
 /**
  * **For applied usages, consider using [withConnectionToRemotePort]**.
- *
+ * 
  * Creates a connection to a TCP socket to a named host specified by [address].
- *
+ * 
  * If an error occurs during establishment of the connection, an [EelConnectionError] will be thrown.
  * Otherwise, a [Connection] object is returned, which means that the connection is ready to use.
- *
+ * 
  * The connection exists as a pair of channels [Connection.sendChannel] and [Connection.receiveChannel],
  * which allow communicating to a remote server from the IDE side.
- *
+ * 
  * Packets sent to the channel and received from the channel may be split and/or concatenated.
  * The packets may be split only if their size exceeds [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
- *
+ * 
  * If the connection gets closed from the server, then the channels also get closed in the sense of [SendChannel.close].
- *
+ * 
  * If an exception happens during sending, then [Connection.receiveChannel] gets closed exceptionally with [RemoteNetworkException].
- *
+ * 
  * [Connection.sendChannel] can be closed separately with [SendChannel.close]. In this case, the EOF is sent to the server.
  * Note, that [Connection.receiveChannel] is __not__ closed in this case.
- *
+ * 
  * One should not forget to invoke [Connection.close] when the connection is not needed.
- *
+ * 
  * To configure a socket before connection use [configureSocketBeforeConnection]. After that, use [Connection.configureSocket]
  */
 @GeneratedBuilder.Result
@@ -94,7 +94,7 @@ object EelTunnelsApiHelpers {
   class GetAcceptorForRemotePort(
     private val owner: EelTunnelsApi,
   ) : OwnedBuilder<EelTunnelsApi.ConnectionAcceptor> {
-    private var configureServerSocket: @ExtensionFunctionType Function1<ConfigurableSocket, Unit> = {}
+    private var configureServerSocket: ConfigurableSocket.() -> Unit = {}
 
     private var hostname: String = "localhost"
 
@@ -104,7 +104,7 @@ object EelTunnelsApiHelpers {
 
     private var timeout: Duration = 10.seconds
 
-    fun configureServerSocket(arg: @ExtensionFunctionType Function1<ConfigurableSocket, Unit>): GetAcceptorForRemotePort = apply {
+    fun configureServerSocket(arg: ConfigurableSocket.() -> Unit): GetAcceptorForRemotePort = apply {
       this.configureServerSocket = arg
     }
 
@@ -169,7 +169,7 @@ object EelTunnelsApiHelpers {
   class GetConnectionToRemotePort(
     private val owner: EelTunnelsApi,
   ) : OwnedBuilder<Connection> {
-    private var configureSocketBeforeConnection: @ExtensionFunctionType Function1<ConfigurableClientSocket, Unit> = {}
+    private var configureSocketBeforeConnection: ConfigurableClientSocket.() -> Unit = {}
 
     private var hostname: String = "localhost"
 
@@ -180,10 +180,9 @@ object EelTunnelsApiHelpers {
     private var timeout: Duration = 10.seconds
 
     @ApiStatus.Internal
-    fun configureSocketBeforeConnection(arg: @ExtensionFunctionType Function1<ConfigurableClientSocket, Unit>): GetConnectionToRemotePort =
-      apply {
-        this.configureSocketBeforeConnection = arg
-      }
+    fun configureSocketBeforeConnection(arg: ConfigurableClientSocket.() -> Unit): GetConnectionToRemotePort = apply {
+      this.configureSocketBeforeConnection = arg
+    }
 
     @ApiStatus.Experimental
     fun hostname(arg: String): GetConnectionToRemotePort = apply {

@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.IntPredicate;
 
 /**
  * Subclass overwrites few attribute-accessing methods to re-implement them over {@link AttributesStorageOverBlobStorage}.
@@ -61,9 +61,13 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
     //}
 
     int parentModCount = records.getModCount(parentId);
-    ListResult result = attributeAccessor.readAttributeRaw(parentId, CHILDREN_ATTR, buffer -> {
+    int flags = records.getFlags(parentId);
+    List<? extends ChildInfo> childrenList = attributeAccessor.readAttributeRaw(parentId, CHILDREN_ATTR, buffer -> {
       int count = DataInputOutputUtil.readINT(buffer);
-      List<ChildInfo> children = (count == 0) ? Collections.emptyList() : new ArrayList<>(count);
+      if (count == 0) {
+        return Collections.emptyList();
+      }
+      List<ChildInfo> children = new ArrayList<>(count);
       int maxID = records.maxAllocatedID();
       int prevId = parentId;
       for (int i = 0; i < count; i++) {
@@ -75,41 +79,56 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
         ChildInfo child = new ChildInfoImpl(childId, nameId, null, null, null);
         children.add(child);
       }
-      return new ListResult(parentModCount, children, parentId);
+      return children;
     });
-    if (result == null) {
-      return new ListResult(parentModCount, Collections.emptyList(), parentId);
+    if (childrenList == null) {
+      childrenList = Collections.emptyList();
     }
-    return result;
+
+    if (FSRecordsImpl.areAllChildrenCached(flags)) {
+      return ListResult.allCached(parentModCount, childrenList, parentId);
+    }
+    else {
+      return ListResult.notAllCached(parentModCount, childrenList, parentId);
+    }
   }
 
   @Override
-  public int @NotNull [] listIds(int fileId) throws IOException {
+  public boolean forEachChild(int fileId,
+                              @NotNull IntPredicate childConsumer) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     if (fileId == SUPER_ROOT_ID) {
       throw new AssertionError(
         "Incorrect call .listIds() with is a super-root record id(=" + SUPER_ROOT_ID + ") -- use .listRoots() instead");
     }
 
-    int[] childrenIds = attributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
+    Boolean stoppedEarly = attributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
       int count = DataInputOutputUtil.readINT(buffer);
-      int[] result = ArrayUtil.newIntArray(count);
+      if(count == 0){
+        return false;
+      }
       int prevId = fileId;
       int maxID = connection.records().maxAllocatedID();
       for (int i = 0; i < count; i++) {
-        prevId = result[i] = DataInputOutputUtil.readINT(buffer) + prevId;
+        int childId = DataInputOutputUtil.readINT(buffer) + prevId;
+        if (childConsumer.test(childId)) {
+          return true;
+        }
+        prevId = childId;
         checkChildIdValid(fileId, prevId, i, maxID);
       }
-      return result;
+
+      return false;
     });
-    if (childrenIds == null) {
-      return ArrayUtilRt.EMPTY_INT_ARRAY;
+
+    if (stoppedEarly == null) {
+      return false;
     }
-    return childrenIds;
+    return stoppedEarly;
   }
 
   @Override
-  boolean mayHaveChildren(int fileId) throws IOException {
+  boolean maybeHaveChildren(int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     if (fileId == SUPER_ROOT_ID) {
       throw new AssertionError(

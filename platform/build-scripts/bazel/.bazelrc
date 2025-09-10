@@ -51,6 +51,9 @@ common --experimental_convenience_symlinks=ignore
 
 common --incompatible_strict_action_env=true
 
+# IJI-2738 Bazel: jps-to-bazel: less idle time for Bazel server
+startup --max_idle_secs=1800
+
 common --enable_platform_specific_config
 common --incompatible_enable_proto_toolchain_resolution
 

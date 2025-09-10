@@ -22,6 +22,9 @@ import kotlinx.coroutines.future.asCompletableFuture
 import java.nio.charset.Charset
 import java.nio.file.FileSystems
 import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.exists
 import kotlin.io.path.name
 
 internal class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCommandLineBuilder {
@@ -34,9 +37,11 @@ internal class EelBuildCommandLineBuilder(val project: Project, exePath: Path) :
 
   private val workingDirectory: Path = getSystemSubfolder(BuildManager.SYSTEM_ROOT)
   private val cacheDirectory: Path = getSystemSubfolder("jps-${ApplicationInfo.getInstance().getBuild()}")
+    .resolve(project.getProjectCacheFileName())
 
   init {
     workingDirectory.createDirectories() // Ijent doesn't support running anything in non-existing directory
+    cacheDirectory.createDirectories()
   }
 
   override fun addParameter(parameter: String) {
@@ -80,13 +85,26 @@ internal class EelBuildCommandLineBuilder(val project: Project, exePath: Path) :
     return EelPathUtils.transferLocalContentToRemote(path, EelPathUtils.TransferTarget.Explicit(remotePath))
   }
 
-  override fun copyProjectSpecificPathToTargetIfRequired(project: Project, path: Path): Path {
-    if (path.getEelDescriptor() != LocalEelDescriptor) {
+  override fun copyProjectSpecificPathToTargetIfRequired(project: Project, path: Path): Path = EelPathUtils.transferLocalContentToRemote(
+    path,
+    EelPathUtils.TransferTarget.Explicit(cacheDirectory.resolve(path.name))
+  )
+
+  @OptIn(ExperimentalPathApi::class)
+  override fun syncProjectSpecificPathWithTarget(project: Project, path: Path): Path {
+    val target = cacheDirectory.resolve(path.name)
+    if (target.getEelDescriptor() == LocalEelDescriptor) {
       return path
     }
-    val cacheFileName = project.getProjectCacheFileName()
-    val target = cacheDirectory.resolve(cacheFileName).resolve(path.name)
-    return EelPathUtils.transferLocalContentToRemote(path, EelPathUtils.TransferTarget.Explicit(target))
+    // this code should be replaced with com.intellij.platform.eel.provider.utils.EelPathUtils.incrementalWalkingTransfer when
+    // it's ready for production
+    if (target.exists()) {
+      target.deleteRecursively()
+    }
+    return EelPathUtils.transferLocalContentToRemote(
+      path,
+      EelPathUtils.TransferTarget.Explicit(target)
+    )
   }
 
   override fun getYjpAgentPath(yourKitProfilerService: YourKitProfilerService?): String? {

@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from .base import Pool as Pool, reset_commit as reset_commit, reset_none as reset_none, reset_rollback as reset_rollback
 from .dbapi_proxy import clear_managers as clear_managers, manage as manage
 from .impl import (

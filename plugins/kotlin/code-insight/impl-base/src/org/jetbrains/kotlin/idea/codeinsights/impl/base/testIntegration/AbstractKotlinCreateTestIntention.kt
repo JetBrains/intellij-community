@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<KtElement>(
     KtElement::class.java,
-    KotlinBundle.lazyMessage("create.test")
+    KotlinBundle.messagePointer("create.test")
 ) {
 
     protected abstract fun isResolvable(classOrObject: KtClassOrObject): Boolean

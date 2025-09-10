@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.problems.InvalidPluginIDProblem
+import com.jetbrains.plugin.structure.base.problems.InvalidPluginName
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
@@ -19,6 +20,7 @@ import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName
 import com.jetbrains.plugin.structure.intellij.verifiers.DEFAULT_ILLEGAL_PREFIXES
 import com.jetbrains.plugin.structure.intellij.verifiers.PRODUCT_ID_RESTRICTED_WORDS
 import kotlinx.collections.immutable.plus
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.jps.model.module.JpsModule
@@ -30,6 +32,15 @@ import java.util.function.BiPredicate
  * Describes a distribution of an IntelliJ-based IDE hosted in the IntelliJ repository.
  */
 abstract class JetBrainsProductProperties : ProductProperties() {
+  companion object {
+    @ApiStatus.Internal
+    fun isCommunityModule(module: JpsModule, context: BuildContext): Boolean {
+      return module.contentRootsList.urls.all { url ->
+        Path.of(JpsPathUtil.urlToPath(url)).startsWith(context.paths.communityHomeDir)
+      }
+    }
+  }
+
   init {
     scrambleMainJar = true
     includeIntoSourcesArchiveFilter = BiPredicate(::isCommunityModule)
@@ -39,10 +50,9 @@ abstract class JetBrainsProductProperties : ProductProperties() {
     productLayout.addPlatformSpec { layout, _ -> layout.withModule(IJENT_BOOT_CLASSPATH_MODULE, PLATFORM_CORE_NIO_FS) }
   }
 
-  protected fun isCommunityModule(module: JpsModule, context: BuildContext): Boolean =
-    module.contentRootsList.urls.all { url ->
-      Path.of(JpsPathUtil.urlToPath(url)).startsWith(context.paths.communityHomeDir)
-    }
+  protected fun isCommunityModule(module: JpsModule, context: BuildContext): Boolean {
+    return JetBrainsProductProperties.isCommunityModule(module, context)
+  }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) { }
 
@@ -87,6 +97,13 @@ abstract class JetBrainsProductProperties : ProductProperties() {
         pluginId == "CFML Support" ||
         pluginId == "Error-prone plugin" ||
         pluginId == "Lombook Plugin"
+      is InvalidPluginName ->
+        // those plugins are already published
+        pluginId == "org.jetbrains.plugins.localization" || // GNU GetText Files Support (*.po)
+        pluginId == "com.jetbrains.php.joomla" || // Joomla!
+        pluginId == "com.intellij.zh" || // Chinese (Simplified) Language Pack / 中文语言包
+        pluginId == "com.intellij.ko" || // Korean Language Pack / 한국어 언어 팩
+        pluginId == "com.intellij.ja" // Japanese Language Pack / 日本語言語パック
       /**
        * According to https://plugins.jetbrains.com/docs/marketplace/add-required-parameters.html:
        * > Please make sure the `release-version` and the `version` parameters match.

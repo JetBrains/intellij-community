@@ -4,6 +4,8 @@ package com.intellij.terminal.tests.block
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
+import com.intellij.terminal.completion.spec.ShellCommandExecutor
+import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.tests.block.testApps.MoveCursorToLineEndAndPrint
 import com.intellij.terminal.tests.block.testApps.SimpleTextRepeater
@@ -108,11 +110,16 @@ internal class BlockTerminalTest(private val shellPath: Path) {
         val generatorCommandSent = createCommandSentDeferred(session)
         // Create generator and context each time, because default implementations are caching
         val generatorsExecutor = ShellDataGeneratorsExecutorImpl(session)
+        val commandExecutor = object : ShellCommandExecutor {
+          override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult {
+            return session.commandExecutionManager.runGeneratorAsync(command).await()
+          }
+        }
         val context = ShellRuntimeContextImpl(
           "",
           "",
           session.shellIntegration.shellType.toShellName(),
-          ShellCachingGeneratorCommandsRunner { command -> session.commandExecutionManager.runGeneratorAsync(command).await() }
+          ShellCachingGeneratorCommandsRunner(commandExecutor)
         )
         val commandsListDeferred: Deferred<List<ShellCommandSpec>> = async(Dispatchers.Default) {
           generatorsExecutor.execute(context, availableCommandsGenerator())

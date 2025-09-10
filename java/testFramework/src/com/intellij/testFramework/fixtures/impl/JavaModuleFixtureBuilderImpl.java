@@ -4,9 +4,9 @@ package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -51,11 +52,20 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
   private LanguageLevel myLanguageLevel;
 
   public JavaModuleFixtureBuilderImpl(@NotNull TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
-    super(StdModuleTypes.JAVA, fixtureBuilder);
+    super((Supplier<? extends ModuleType<?>>)() -> JavaModuleType.getModuleType(), fixtureBuilder);
   }
 
+  /**
+   * @deprecated use {@link #JavaModuleFixtureBuilderImpl(TestFixtureBuilder)} or {@link #JavaModuleFixtureBuilderImpl(Supplier, TestFixtureBuilder)} instead.
+   */
+  @Deprecated
   public JavaModuleFixtureBuilderImpl(final ModuleType moduleType, final TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
     super(moduleType, fixtureBuilder);
+  }
+
+  protected JavaModuleFixtureBuilderImpl(@NotNull Supplier<? extends @NotNull ModuleType<?>> moduleTypeSupplier,
+                                         @NotNull TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
+    super(moduleTypeSupplier, fixtureBuilder);
   }
 
   @Override

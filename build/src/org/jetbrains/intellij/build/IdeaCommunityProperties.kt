@@ -74,6 +74,9 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       "intellij.platform.util.base.multiplatform",
       "intellij.platform.util.zip",
     ))
+    mavenArtifacts.validateForMavenCentralPublication = { module ->
+      JewelMavenArtifacts.isPublishedJewelModule(module)
+    }
     mavenArtifacts.patchCoordinates = { module, coordinates ->
       when {
         JewelMavenArtifacts.isPublishedJewelModule(module) -> JewelMavenArtifacts.patchCoordinates(module, coordinates)
@@ -92,7 +95,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       }
     }
     mavenArtifacts.isJavadocJarRequired = {
-      JewelMavenArtifacts.isPublishedJewelModule(it)
+      JewelMavenArtifacts.isPublishedJewelModule(it) && it.name != "intellij.platform.jewel.intUi.decoratedWindow"
     }
     mavenArtifacts.validate = { context, artifacts ->
       JewelMavenArtifacts.validate(context, artifacts)

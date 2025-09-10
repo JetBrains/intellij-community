@@ -27,7 +27,7 @@ jvm_library(
   name = "repository-search",
   module_name = "intellij.repository.search",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form", "src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_repository-search",
   deps = [
     "//platform/core-api:core",
@@ -59,7 +59,7 @@ jvm_library(
 jvm_library(
   name = "repository-search_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_repository-search",
   associates = [":repository-search"],
   deps = [
@@ -92,6 +92,7 @@ jvm_library(
     "@lib//:kotlinx-document-store-mvstore",
     "@lib//:mvstore",
   ],
+  exports = ["@lib//:package-search-api-client"],
   runtime_deps = [
     ":repository-search_resources",
     ":repository-search_test_resources",

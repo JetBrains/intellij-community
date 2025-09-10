@@ -28,7 +28,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.min
 import kotlin.test.assertTrue
@@ -336,6 +335,26 @@ class EdtCoroutineDispatcherTest {
     }
   }
 
+  @Test
+  fun `immediate relaxed ui dispatcher performs dispatch when locks are forbidden`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.UI) {
+      assertThat(application.isReadAccessAllowed).isFalse
+      val currentTrace = getCurrentTrace()
+      launch(Dispatchers.UiWithModelAccessImmediate) {
+        assertNotTraceContinuation(currentTrace)
+        runReadAction { }
+      }
+    }
+    withContext(Dispatchers.UiImmediate) {
+      assertThat(application.isReadAccessAllowed).isFalse
+      val currentTrace = getCurrentTrace()
+      launch(Dispatchers.UiWithModelAccessImmediate) {
+        assertNotTraceContinuation(currentTrace)
+        runReadAction { }
+      }
+    }
+  }
+
   private fun assertTraceContinuation(originalTrace: List<StackTraceElement>) {
     withClue("This code should be executing in the same frame as it was called from") {
       assertThat(Throwable().stackTrace.reversed()).startsWith(*originalTrace.toTypedArray())
@@ -363,8 +382,8 @@ class EdtCoroutineDispatcherTest {
         }
       }
       finally {
-        assertThat(application.isReadAccessAllowed).isTrue
-        assertThat(application.isWriteIntentLockAcquired).isTrue
+        assertThat(application.isReadAccessAllowed).isEqualTo(!useNonBlockingIntentLockForEdtCoroutines)
+        assertThat(application.isWriteIntentLockAcquired).isEqualTo(!useNonBlockingIntentLockForEdtCoroutines)
         assertThat(application.isWriteAccessAllowed).isFalse
       }
     }

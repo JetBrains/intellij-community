@@ -59,12 +59,16 @@ public class OffsetTranslator implements Disposable {
   }
 
   private boolean isUpToDate() {
-    return this == myCopyDocument.getUserData(RANGE_TRANSLATION) && myOriginalFile.isValid();
+     return isPresentInUserData() && myOriginalFile.isValid();
+  }
+
+  private boolean isPresentInUserData() {
+    return this == myCopyDocument.getUserData(RANGE_TRANSLATION);
   }
 
   @Override
   public void dispose() {
-    if (isUpToDate()) {
+    if (isPresentInUserData()) {
       myCopyDocument.putUserData(RANGE_TRANSLATION, null);
     }
   }

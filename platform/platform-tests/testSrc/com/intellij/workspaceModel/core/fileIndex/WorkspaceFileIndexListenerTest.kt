@@ -67,7 +67,7 @@ class WorkspaceFileIndexListenerTest {
     assertEquals(1, listener.registeredFileSets.size)
 
     assertEquals(parentEntityRoot,
-                 listener.registeredFileSets.first().first().root.toVirtualFileUrl(model.getVirtualFileUrlManager()))
+                 listener.registeredFileSets.first().root.toVirtualFileUrl(model.getVirtualFileUrlManager()))
   }
 
 
@@ -98,13 +98,13 @@ class WorkspaceFileIndexListenerTest {
     assertEquals(1, listener.removedRoots.size)
     assertEquals(1, listener.registeredFileSets.size)
     assertEquals(parentEntityRoot,
-                 listener.removedRoots.first().first().root.toVirtualFileUrl(model.getVirtualFileUrlManager()))
+                 listener.removedRoots.first().root.toVirtualFileUrl(model.getVirtualFileUrlManager()))
 
   }
 
   private class MyWorkspaceFileIndexListener : WorkspaceFileIndexListener {
-    val registeredFileSets = ConcurrentCollectionFactory.createConcurrentSet<Set<WorkspaceFileSet>>()
-    val removedRoots = ConcurrentCollectionFactory.createConcurrentSet<Set<WorkspaceFileSet>>()
+    val registeredFileSets = ConcurrentCollectionFactory.createConcurrentSet<WorkspaceFileSet>()
+    val removedRoots = ConcurrentCollectionFactory.createConcurrentSet<WorkspaceFileSet>()
 
     override fun workspaceFileIndexChanged(event: WorkspaceFileIndexChangedEvent) {
       event.registeredFileSets.forEach {

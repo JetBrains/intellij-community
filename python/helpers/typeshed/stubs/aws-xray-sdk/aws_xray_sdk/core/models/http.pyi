@@ -1,13 +1,13 @@
-from typing import Any
+from typing import Final
 
-URL: str
-METHOD: str
-USER_AGENT: str
-CLIENT_IP: str
-X_FORWARDED_FOR: str
-STATUS: str
-CONTENT_LENGTH: str
-XRAY_HEADER: str
-ALT_XRAY_HEADER: str
-request_keys: Any
-response_keys: Any
+URL: Final[str]
+METHOD: Final[str]
+USER_AGENT: Final[str]
+CLIENT_IP: Final[str]
+X_FORWARDED_FOR: Final[str]
+STATUS: Final[str]
+CONTENT_LENGTH: Final[str]
+XRAY_HEADER: Final[str]
+ALT_XRAY_HEADER: Final[str]
+request_keys: tuple[str, ...]
+response_keys: tuple[str, ...]

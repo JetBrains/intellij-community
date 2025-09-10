@@ -73,8 +73,8 @@ case "$(uname)" in
     ;;
 esac
 
-JBR_VERSION=17.0.14
-JBR_BUILD=b1376.4
+JBR_VERSION=21.0.8
+JBR_BUILD=b1038.68
 
 if [ "$darwin" = "true" ]; then
     case $(uname -m) in

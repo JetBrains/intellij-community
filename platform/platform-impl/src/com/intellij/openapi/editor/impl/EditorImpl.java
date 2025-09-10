@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.Dumpable;
@@ -10,6 +11,8 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.ui.laf.MouseDragSelectionEventHandler;
@@ -70,6 +73,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -151,6 +155,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK =
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
+  // A cache for CodeStyle.getSettings(myProject, myVirtualFile) and similar file-specific calls.
+  // Valid for this.myProject and this.myVirtualFile only.
+  // E.g., it is not a valid replacement for CodeStyle.getSettings(myProject).
+  @ApiStatus.Internal
+  public static final Key<CodeStyleSettings> CODE_STYLE_SETTINGS = Key.create("editor.code.style.settings");
   private final @NotNull DocumentEx myDocument;
 
   private final JPanel myPanel;
@@ -277,6 +286,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final SingleEdtTaskScheduler mouseSelectionStateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
   private Runnable mouseSelectionStateResetRunnable;
+  private final SingleEdtTaskScheduler errorStripeDelayedRepaintAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
 
   private int myDragOnGutterSelectionStartLine = -1;
   private RangeMarker myDraggedRange;
@@ -343,7 +353,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myNeedToSelectPreviousChar;
 
   boolean myDocumentChangeInProgress;
-  private boolean myErrorStripeNeedsRepaint;
+  /**
+   * A text range of the current repaint request for {@link #myMarkupModel}.{@link EditorMarkupModelImpl#repaint(int, int)}.
+   * Offsets are packed into a long for atomicity, because range highlighters can be changed in BGT.
+   * (see {@link TextRangeScalarUtil} for how to unpack).
+   * -1 means repaint is not needed.
+   * */
+  private volatile long myErrorStripeNeedsRepaintRange = -1;
 
   private final List<EditorPopupHandler> myPopupHandlers = new ArrayList<>();
 
@@ -612,6 +628,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         case EditorState.myBorderPropertyName -> borderChanged();
       }
     }, myDisposable);
+
+    ApplicationManager.getApplication().getMessageBus().connect(myDisposable).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        private void clearCachedCodeStyleSettings() {
+          putUserData(CODE_STYLE_SETTINGS, null);
+        }
+
+        @Override
+        public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+          clearCachedCodeStyleSettings();
+        }
+
+        @Override
+        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          clearCachedCodeStyleSettings();
+        }
+      });
   }
 
   public void applyFocusMode() {
@@ -650,25 +682,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     fireFocusLost(e);
   }
 
+  private void queueErrorStipeRepaintRequest(int start, int end) {
+    long range = myErrorStripeNeedsRepaintRange;
+    long requested = TextRangeScalarUtil.toScalarRange(start, end);
+    // merge existing request with the new
+    myErrorStripeNeedsRepaintRange = TextRangeScalarUtil.union(range == -1 ? requested : range, requested);
+    errorStripeDelayedRepaintAlarm.cancelAndRequest(50, ()->invokeDelayedErrorStripeRepaint()); // in case nobody called repaint
+  }
+
   private void errorStripeMarkerChanged(@NotNull RangeHighlighterEx highlighter) {
-    if (myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) return; // will be repainted later
-
-    if (myDocumentChangeInProgress) {
-      // postpone repaint request, as folding model can be in inconsistent state and so coordinate
-      // conversions might give incorrect results
-      myErrorStripeNeedsRepaint = true;
-      return;
-    }
-
-    // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
-    if (myFoldingModel.isInBatchFoldingOperation()) {
-      myErrorStripeNeedsRepaint = true;
-    }
-    else {
-      int start = highlighter.getAffectedAreaStartOffset();
-      int end = highlighter.getAffectedAreaEndOffset();
-      myMarkupModel.repaint(start, end);
-    }
+    int start = highlighter.getAffectedAreaStartOffset();
+    int end = highlighter.getAffectedAreaEndOffset();
+    queueErrorStipeRepaintRequest(start, end);
   }
   private record HighlighterChange(int affectedStart,
                                    int affectedEnd,
@@ -1083,8 +1108,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     myHighlighter.setColorScheme(myScheme);
-    myMarkupModel.rebuild();
-
     myGutterComponent.reinitSettings(updateGutterSize);
     myGutterComponent.revalidate();
 
@@ -1181,6 +1204,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // clear error panel's cached image
       // replace UI with default to release resources (e.g. coroutines) of a custom UI correctly
       myVerticalScrollBar.setPersistentUI(JBScrollBar.createDefaultUI());
+      mouseSelectionStateAlarm.dispose();
+      errorStripeDelayedRepaintAlarm.dispose();
     });
   }
 
@@ -1586,12 +1611,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull Point2D offsetToPoint2D(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
-    return ReadAction.compute(() -> myView.offsetToXY(offset, leanTowardsLargerOffsets, beforeSoftWrap));
+    return EditorThreading.compute(() -> myView.offsetToXY(offset, leanTowardsLargerOffsets, beforeSoftWrap));
   }
 
   @Override
   public @NotNull Point offsetToXY(int offset, boolean leanForward, boolean beforeSoftWrap) {
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       Point2D point2D = offsetToPoint2D(offset, leanForward, beforeSoftWrap);
       return new Point((int)point2D.getX(), (int)point2D.getY());
     });
@@ -1646,7 +1671,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull LogicalPosition xyToLogicalPosition(@NotNull Point p) {
-    return ReadAction.compute(() -> myView.xyToLogicalPosition(p));
+    return EditorThreading.compute(() -> myView.xyToLogicalPosition(p));
   }
 
   private int logicalToVisualLine(int logicalLine) {
@@ -1881,10 +1906,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  @RequiresEdt
   void invokeDelayedErrorStripeRepaint() {
-    if (myErrorStripeNeedsRepaint) {
-      myMarkupModel.repaint();
-      myErrorStripeNeedsRepaint = false;
+    long range = myErrorStripeNeedsRepaintRange;
+    if (range != -1) {
+      errorStripeDelayedRepaintAlarm.cancel();
+      myMarkupModel.repaint(TextRangeScalarUtil.startOffset(range), TextRangeScalarUtil.endOffset(range));
+      myErrorStripeNeedsRepaintRange = -1;
     }
   }
 
@@ -1892,9 +1920,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocumentChangeInProgress = false;
     if (myDocument.isInBulkUpdate()) return;
 
-    if (myErrorStripeNeedsRepaint) {
-      myMarkupModel.repaint(e.getOffset(), e.getOffset() + e.getNewLength());
-      myErrorStripeNeedsRepaint = false;
+    if (myErrorStripeNeedsRepaintRange != -1) {
+      queueErrorStipeRepaintRequest(e.getOffset(), e.getOffset() + e.getNewLength());
+      invokeDelayedErrorStripeRepaint();
     }
 
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
@@ -3891,8 +3919,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true,
                                                 EditorUtil.attributesImpactFontStyle(attributes),
                                                 EditorUtil.attributesImpactForegroundColor(attributes));
-        myMarkupModel.errorStripeMarkersModelAttributesChanged((RangeHighlighterEx)highlighter);
-
         HighlightInfo fileLevelInfo = HighlightInfo.fromRangeHighlighter(highlighter);
         if (fileLevelInfo != null && fileLevelInfo.isFileLevelAnnotation()) {
           if (textEditor == null) {
@@ -5097,10 +5123,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
     if (myProject != null) {
       VirtualFile eventFile = event.getVirtualFile();
-      if (eventFile != null && !eventFile.equals(getVirtualFile())) {
+      final var file = getVirtualFile();
+      if (eventFile != null && !eventFile.equals(file)) {
         return;
       }
       int oldTabSize = EditorUtil.getTabSize(this);
+      final var eventSettings = event.getSettings();
+      final var cachedSettings = this.getUserData(CODE_STYLE_SETTINGS);
+      if (cachedSettings != null && eventSettings == null) {
+        // This event is not a result of settings computation finishing, but also we already have settings cached.
+        // As editor settings are reinitialized, only the cached settings will be used.
+        // But settings for the file may have changed, so we must request the settings properly.
+        // If the settings indeed need to be recomputed, the request will trigger a background computation.
+        // Once that computation is finished, this method will be called again with eventSettings != null.
+        CodeStyle.getSettings(myProject, file);
+      }
+      if (eventSettings != null) {
+        this.putUserData(CODE_STYLE_SETTINGS, eventSettings);
+      }
       mySettings.reinitSettings();
       int newTabSize = EditorUtil.getTabSize(this);
       if (oldTabSize != newTabSize) {
@@ -5174,7 +5214,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void layout() {
-      WriteIntentReadAction.run((Runnable)() -> {
+      EditorThreading.run(() -> {
         if (isInDistractionFreeMode()) {
           // re-calc gutter extra size after editor size is set
           // & layout once again to avoid blinking

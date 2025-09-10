@@ -92,9 +92,12 @@ class TeamcityFormatter(Formatter):
     def result(self, step):
         assert isinstance(step, Step)
         step_name = _step_name(step)
-        if step.status == Status.failed:
+        fail_statuses = [Status.failed]
+        if hasattr(Status, "error"):
+            fail_statuses.append(Status.error)
+        if step.status in fail_statuses:
             try:
-                error = traceback.format_exc(step.exc_traceback)
+                error = "".join(traceback.format_exception(step.exception))
                 if error != step.error_message:
                     self._messages.testStdErr(step_name, error)
             except Exception:

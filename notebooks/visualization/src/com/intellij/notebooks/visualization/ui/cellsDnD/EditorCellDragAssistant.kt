@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.WindowManager
 import org.jetbrains.annotations.Nls
 import java.awt.KeyEventDispatcher
 import java.awt.KeyboardFocusManager
@@ -95,6 +96,7 @@ class EditorCellDragAssistant(
     if (dragPreview == null) {
       dragPreview = CellDragCellPreviewWindow(getPlaceholderText(), editor)
       dragPreview?.isVisible = true
+      WindowManager.getInstance().setAlphaModeRatio(dragPreview, 0.2f)
       foldDraggedCellIfNeeded()
     }
 

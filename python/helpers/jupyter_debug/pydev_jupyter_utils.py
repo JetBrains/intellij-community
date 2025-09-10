@@ -105,14 +105,9 @@ def enable_tracing():
 def disable_tracing():
     ipython_shell = get_ipython()
     if hasattr(ipython_shell, "debugger"):
-        ipython_shell.debugger.disable_tracing()
-        kill_pydev_threads(ipython_shell.debugger)
-
-
-def kill_pydev_threads(py_db):
-    from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
-    py_db.finish_debugging_session()
-    kill_all_pydev_threads()
+        py_db = ipython_shell.debugger
+        py_db.disable_tracing()
+        py_db.dispose_and_kill_all_pydevd_threads()
 
 
 def is_cell_filename(filename):

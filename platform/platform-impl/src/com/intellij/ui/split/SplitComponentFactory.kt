@@ -16,6 +16,7 @@ import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.UID
 import com.intellij.ui.RemoteTransferUIManager
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -79,7 +80,8 @@ class SplitComponentFactory private constructor() {
 
   @JvmName("getRegisteredModel")
   fun getModel(id: SplitComponentId): SplitComponentModel? {
-    return findValueById(id, SplitComponentModelIdType)
+    val modelIsLocal = id.modelIsOnClient == PlatformUtils.isJetBrainsClient()
+    return if (modelIsLocal) findValueById(id, SplitComponentModelIdType) else null
   }
 
   inline fun <reified T : SplitComponentModel> getModel(id: SplitComponentId): T? {
@@ -89,7 +91,10 @@ class SplitComponentFactory private constructor() {
 
 @ApiStatus.Experimental
 @Serializable
-data class SplitComponentId(override val uid: UID) : Id
+data class SplitComponentId @ApiStatus.Internal constructor(
+  override val uid: UID,
+  @ApiStatus.Internal val modelIsOnClient: Boolean = PlatformUtils.isJetBrainsClient(),
+) : Id
 
 @ApiStatus.Internal
 data class SplitComponentIdWithProvider(val providerId: String, val componentId: SplitComponentId) {

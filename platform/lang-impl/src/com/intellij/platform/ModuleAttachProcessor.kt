@@ -92,7 +92,8 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
       val newProject = ProjectManagerEx.getInstanceEx().newProjectAsync(file = projectDir, options = options)
       PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir = projectDir,
                                                                     project = newProject,
-                                                                    newProject = true)
+                                                                    newProject = true,
+                                                                    createModule = true)
       runInAutoSaveDisabledMode {
         saveSettings(newProject)
       }

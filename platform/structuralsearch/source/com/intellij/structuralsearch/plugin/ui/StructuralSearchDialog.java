@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
@@ -74,10 +74,7 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
-import com.intellij.ui.BadgeIconSupplier;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -609,7 +606,6 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     mySearchEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
     mySearchCriteriaEdit = createEditor(false);
     mySearchEditorPanel.setFirstComponent(searchEditorPanel);
-    myComponentsWithEditorBackground.add(searchEditorPanel);
 
     // Wrapper
     mySearchWrapper = new JPanel(new BorderLayout()); // needed for border
@@ -626,7 +622,6 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     searchEditorPanel.add(myMatchCase, searchConstraint.anchor(WEST).insetRight(DEFAULT_HGAP));
 
     mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
-    myComponentsWithEditorBackground.add(myFilterPanel.getTable());
 
     final JPanel searchPanel = new JPanel(new GridBagLayout());
     final var northConstraint = new GridBag().setDefaultWeightX(1.0);
@@ -653,9 +648,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
 
     myReplaceCriteriaEdit = createEditor(true);
     myReplaceWrapper = new JPanel(new GridBagLayout());
-    myComponentsWithEditorBackground.add(myReplaceWrapper);
 
-    final var wrapperConstraint = new GridBag().setDefaultInsets(10, 10, 10, 0);
+    final var wrapperConstraint = new GridBag().setDefaultInsets(DEFAULT_VGAP, DEFAULT_HGAP, DEFAULT_VGAP, 0);
     myReplaceWrapper.add(myReplaceCriteriaEdit, wrapperConstraint.nextLine().emptyInsets().fillCell().coverLine().weightx(1.0).weighty(1.0));
     myReplaceWrapper.add(myShortenFqn, wrapperConstraint.nextLine());
     myReplaceWrapper.add(myStaticImport, wrapperConstraint);
@@ -1208,14 +1202,18 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       component.setBackground(scheme.getDefaultBackground());
     });
 
-    final var borderTopBottom = JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 1, 0, 1, 0);
-    if (myEditConfigOnly) {
-      final var borderTopOnly = JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 1, 0, 0, 0);
-      if (mySearchWrapper != null) mySearchWrapper.setBorder(myReplace ? borderTopBottom : borderTopOnly);
-      if (myReplaceWrapper != null) myReplaceWrapper.setBorder(borderTopOnly);
-    } else {
-      if (mySearchWrapper != null) mySearchWrapper.setBorder(borderTopBottom);
-      if (myReplaceWrapper != null) myReplaceWrapper.setBorder(borderTopBottom);
+    final var borderTopBottom = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0);
+    final var borderTopOnly = JBUI.Borders.customLineTop(JBColor.border());
+    final var borderBottomOnly = JBUI.Borders.customLineBottom(JBColor.border());
+    if (mySearchWrapper != null) {
+      mySearchCriteriaEdit.setBorder(borderBottomOnly);
+      mySearchWrapper.setBorder(borderTopOnly);
+    }
+    if (myReplaceWrapper != null) {
+      myReplaceCriteriaEdit.setBorder(borderTopBottom);
+    }
+    if (myReplacePanel != null) {
+      myReplacePanel.setBorder(myReplace ? borderTopOnly : JBUI.Borders.empty());
     }
 
     myExistingTemplatesComponent.updateColors();
@@ -1239,6 +1237,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     myReplace = !myReplace;
     setTitle(getDefaultTitle());
     myReplacePanel.setVisible(myReplace);
+    updateColors();
     loadConfiguration(myConfiguration);
     final Dimension size =
       DimensionService.getInstance().getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY, myProject);

@@ -1257,7 +1257,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       while ((tab = table) == null || tab.length == 0) {
           if ((sc = sizeCtl) < 0)
               Thread.yield(); // lost initialization race; just spin
-          else if (SIZECTL.compareAndSet(this, sc, -1)) {
+          else if (SIZECTL.compareAndSetInt(this, sc, -1)) {
               try {
                   if ((tab = table) == null || tab.length == 0) {
                       int n = (sc > 0) ? sc : DEFAULT_CAPACITY;
@@ -1288,13 +1288,13 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   private final void addCount(long x, int check) {
     CounterCell[] as; long b, s;
       if ((as = counterCells) != null ||
-          !BASECOUNT.compareAndSet(this, b = baseCount, s = b + x)) {
+          !BASECOUNT.compareAndSetLong(this, b = baseCount, s = b + x)) {
         CounterCell a; long v; int m;
           boolean uncontended = true;
           if (as == null || (m = as.length - 1) < 0 ||
               (a = as[ThreadLocalRandom.getProbe() & m]) == null ||
               !(uncontended =
-                  CounterCell.CELLVALUE.compareAndSet(a, v = a.value, v + x))) {
+                  CounterCell.CELLVALUE.compareAndSetLong(a, v = a.value, v + x))) {
               fullAddCount(x, uncontended);
               return;
           }
@@ -1311,10 +1311,10 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                   if (sc == rs + MAX_RESIZERS || sc == rs + 1 ||
                       (nt = nextTable) == null || transferIndex <= 0)
                       break;
-                  if (SIZECTL.compareAndSet(this, sc, sc + 1))
+                  if (SIZECTL.compareAndSetInt(this, sc, sc + 1))
                       transfer(tab, nt);
               }
-              else if (SIZECTL.compareAndSet(this, sc, rs + 2))
+              else if (SIZECTL.compareAndSetInt(this, sc, rs + 2))
                   transfer(tab, null);
               s = sumCount();
           }
@@ -1334,7 +1334,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
               if (sc == rs + MAX_RESIZERS || sc == rs + 1 ||
                   transferIndex <= 0)
                   break;
-              if (SIZECTL.compareAndSet(this, sc, sc + 1)) {
+              if (SIZECTL.compareAndSetInt(this, sc, sc + 1)) {
                   transfer(tab, nextTab);
                   break;
               }
@@ -1357,7 +1357,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           Node<V>[] tab = table; int n;
           if (tab == null || (n = tab.length) == 0) {
               n = (sc > c) ? sc : c;
-              if (SIZECTL.compareAndSet(this, sc, -1)) {
+              if (SIZECTL.compareAndSetInt(this, sc, -1)) {
                   try {
                       if (table == tab) {
                           @SuppressWarnings("unchecked")
@@ -1374,7 +1374,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
               break;
           else if (tab == table) {
               int rs = resizeStamp(n);
-              if (SIZECTL.compareAndSet(this, sc, (rs << RESIZE_STAMP_SHIFT) + 2))
+              if (SIZECTL.compareAndSetInt(this, sc, (rs << RESIZE_STAMP_SHIFT) + 2))
                   transfer(tab, null);
           }
       }
@@ -1414,7 +1414,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                   i = -1;
                   advance = false;
               }
-              else if (TRANSFERINDEX.compareAndSet(this, nextIndex,
+              else if (TRANSFERINDEX.compareAndSetInt(this, nextIndex,
                         nextBound = (nextIndex > stride ?
                                      nextIndex - stride : 0))) {
                   bound = nextBound;
@@ -1431,7 +1431,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                   return;
               }
               sc = sizeCtl;
-              if (SIZECTL.compareAndSet(this, sc, sc - 1)) {
+              if (SIZECTL.compareAndSetInt(this, sc, sc - 1)) {
                   if ((sc - 2) != resizeStamp(n) << RESIZE_STAMP_SHIFT)
                       return;
                   finishing = advance = true;
@@ -1549,7 +1549,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                   if (cellsBusy == 0) {            // Try to attach new Cell
                     CounterCell r = new CounterCell(x); // Optimistic create
                       if (cellsBusy == 0 &&
-                          CELLSBUSY.compareAndSet(this, 0, 1)) {
+                          CELLSBUSY.compareAndSetInt(this, 0, 1)) {
                           boolean created = false;
                           try {               // Recheck under lock
                             CounterCell[] rs; int m, j;
@@ -1571,14 +1571,14 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
               }
               else if (!wasUncontended)       // CAS already known to fail
                   wasUncontended = true;      // Continue after rehash
-              else if (CounterCell.CELLVALUE.compareAndSet(c, v = c.value, v + x))
+              else if (CounterCell.CELLVALUE.compareAndSetLong(c, v = c.value, v + x))
                   break;
               else if (counterCells != cs || n >= NCPU)
                   collide = false;            // At max size or stale
               else if (!collide)
                   collide = true;
               else if (cellsBusy == 0 &&
-                       CELLSBUSY.compareAndSet(this, 0, 1)) {
+                       CELLSBUSY.compareAndSetInt(this, 0, 1)) {
                   try {
                       if (counterCells == cs) // Expand table unless stale
                           counterCells = Arrays.copyOf(cs, n << 1);
@@ -1591,7 +1591,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
               h = ThreadLocalRandom.advanceProbe(h);
           }
           else if (cellsBusy == 0 && counterCells == cs &&
-                   CELLSBUSY.compareAndSet(this, 0, 1)) {
+                   CELLSBUSY.compareAndSetInt(this, 0, 1)) {
               boolean init = false;
               try {                           // Initialize table
                   if (counterCells == cs) {
@@ -1606,7 +1606,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
               if (init)
                   break;
           }
-          else if (BASECOUNT.compareAndSet(this, v = baseCount, v + x))
+          else if (BASECOUNT.compareAndSetLong(this, v = baseCount, v + x))
               break;                          // Fall back on using base
       }
   }
@@ -1784,7 +1784,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
        * Acquires write lock for tree restructuring.
        */
       private final void lockRoot() {
-          if (!LOCKSTATE.compareAndSet(this, 0, WRITER))
+          if (!LOCKSTATE.compareAndSetInt(this, 0, WRITER))
               contendedLock(); // offload to separate method
       }
 
@@ -1802,14 +1802,14 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           boolean waiting = false;
           for (int s;;) {
               if (((s = lockState) & ~WAITER) == 0) {
-                  if (LOCKSTATE.compareAndSet(this, s, WRITER)) {
+                  if (LOCKSTATE.compareAndSetInt(this, s, WRITER)) {
                       if (waiting)
                           waiter = null;
                       return;
                   }
               }
               else if ((s & WAITER) == 0) {
-                  if (LOCKSTATE.compareAndSet(this, s, s | WAITER)) {
+                  if (LOCKSTATE.compareAndSetInt(this, s, s | WAITER)) {
                       waiting = true;
                       waiter = Thread.currentThread();
                   }
@@ -1834,7 +1834,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
             }
             e = e.next;
           }
-          else if (LOCKSTATE.compareAndSet(this, s,
+          else if (LOCKSTATE.compareAndSetInt(this, s,
                                        s + READER)) {
             TreeNode<V> r;
             TreeNode<V> p;

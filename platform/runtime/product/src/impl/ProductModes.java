@@ -3,6 +3,7 @@ package com.intellij.platform.runtime.product.impl;
 
 import com.intellij.platform.runtime.product.ProductMode;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -10,7 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * Currently, this is determined by the presence of specific modules in dependencies. We can change this and require to specify modes 
  * a module is compatible with explicitly in the future.
  */
-final class ProductModes {
+@ApiStatus.Internal
+public final class ProductModes {
   private ProductModes() {
   }
 

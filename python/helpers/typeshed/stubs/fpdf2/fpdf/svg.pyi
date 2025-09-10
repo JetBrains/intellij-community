@@ -2,7 +2,7 @@ from _typeshed import Incomplete, Unused
 from collections.abc import Callable
 from logging import Logger
 from re import Pattern
-from typing import Literal, NamedTuple, overload
+from typing import Final, Literal, NamedTuple, Protocol, TypeVar, overload, type_check_only
 
 from ._fonttools_shims import BasePen, _TTGlyphSet
 from .drawing import ClippingPath, PaintedPath
@@ -10,13 +10,18 @@ from .fpdf import FPDF
 from .image_datastructures import ImageCache
 
 LOGGER: Logger
-
 __pdoc__: dict[str, bool]
 
-def force_nodocument(item): ...
+@type_check_only
+class _HasQualname(Protocol):
+    __qualname__: str
 
-NUMBER_SPLIT: Pattern[str]
-TRANSFORM_GETTER: Pattern[str]
+_T = TypeVar("_T", bound=_HasQualname)
+
+def force_nodocument(item: _T) -> _T: ...
+
+NUMBER_SPLIT: Final[Pattern[str]]
+TRANSFORM_GETTER: Final[Pattern[str]]
 
 class Percent(float): ...
 
@@ -110,12 +115,10 @@ class SVGObject:
     def transform_to_rect_viewport(
         self, scale, width, height, align_viewbox: bool = True, ignore_svg_top_attrs: bool = False
     ): ...
-    def draw_to_page(
-        self, pdf: FPDF, x: Incomplete | None = None, y: Incomplete | None = None, debug_stream: Incomplete | None = None
-    ) -> None: ...
+    def draw_to_page(self, pdf: FPDF, x=None, y=None, debug_stream=None) -> None: ...
     def handle_defs(self, defs) -> None: ...
     def build_xref(self, xref): ...
-    def build_group(self, group, pdf_group: Incomplete | None = None): ...
+    def build_group(self, group, pdf_group=None): ...
     def build_path(self, path): ...
     def build_shape(self, shape): ...
     def build_clipping_path(self, shape, clip_id): ...

@@ -78,6 +78,11 @@ data class PluginValidationOptions(
    */
   val modulesWithIncorrectlyPlacedModuleDescriptor: Set<String> = emptySet(),
 
+  /**
+   * Set of implementation classes of existing application-level and project-level components which shouldn't be reported as errors. 
+   */
+  val componentImplementationClassesToIgnore: Set<String> = emptySet(),
+
   val pluginVariantsWithDynamicIncludes: List<PluginVariantWithDynamicIncludes> = emptyList(),
 )
 
@@ -620,6 +625,24 @@ class PluginModelValidator(
     }
     for (listenerElement in moduleDescriptor.moduleElementsContainer.listeners) {
       reportError("Module-level listener '$listenerElement' is defined in '${sourceModule.name}', but they aren't supported.")
+    }
+    for (componentElement in moduleDescriptor.projectElementsContainer.components) {
+      if (componentElement.implementationClass !in validationOptions.componentImplementationClassesToIgnore) {
+        reportError("""
+        |Project-level component '$componentElement' is defined in '${sourceModule.name}'.
+        |Project-level components are deprecated in general and it's forbidden to add new ones in intellij monorepo.
+        |Migrate it as described at https://plugins.jetbrains.com/docs/intellij/plugin-components.html.
+      """.trimMargin())
+      }
+    }
+    for (componentElement in moduleDescriptor.appElementsContainer.components) {
+      if (componentElement.implementationClass !in validationOptions.componentImplementationClassesToIgnore) {
+        reportError("""
+          |Application-level component '$componentElement' is defined in '${sourceModule.name}'.
+          |Application-level components are deprecated in general and it's forbidden to add new ones in intellij monorepo.
+          |Migrate it as described at https://plugins.jetbrains.com/docs/intellij/plugin-components.html.
+        """.trimMargin())
+      }
     }
   }
 

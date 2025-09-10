@@ -5,7 +5,7 @@ jvm_library(
   name = "java-guiForms-compiler",
   module_name = "intellij.java.guiForms.compiler",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = [
     "//platform/util/jdom",
@@ -21,7 +21,7 @@ jvm_library(
 jvm_library(
   name = "java-guiForms-compiler_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   associates = [":java-guiForms-compiler"],
   deps = [
@@ -33,7 +33,8 @@ jvm_library(
     "//platform/util",
     "@lib//:jetbrains-annotations",
     "@lib//:junit4",
-  ]
+  ],
+  exports = ["//java/compiler/instrumentation-util"]
 )
 ### auto-generated section `build intellij.java.guiForms.compiler` end
 

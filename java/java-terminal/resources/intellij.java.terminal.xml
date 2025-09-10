@@ -6,4 +6,8 @@
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <commandSpecsProvider implementation="com.intellij.java.terminal.JavaShellCommandSpecsProvider"/>
   </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.openapi.projectRoots">
+    <externalJavaConfigurationMissingAction implementation="com.intellij.java.terminal.ExternalJavaConfigurationDownloadInTerminalAction"/>
+  </extensions>
 </idea-plugin>

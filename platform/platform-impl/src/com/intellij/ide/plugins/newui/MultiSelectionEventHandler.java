@@ -90,12 +90,12 @@ public final class MultiSelectionEventHandler extends EventHandler {
           }
 
           DefaultActionGroup group = new DefaultActionGroup();
-          component.createPopupMenu(group, getDisableableSelection());
+          component.createPopupMenu(group, getSelection());
           if (group.getChildrenCount() == 0) {
             return;
           }
 
-          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreatePopupMenu(component, group, getDisableableSelection());
+          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreatePopupMenu(component, group, getSelection());
 
           ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PluginManagerConfigurable", group);
           popupMenu.setTargetComponent(component);
@@ -186,9 +186,9 @@ public final class MultiSelectionEventHandler extends EventHandler {
           if (component.getSelection() != SelectionType.SELECTION) {
             component.setSelection(SelectionType.SELECTION);
           }
-          component.handleKeyAction(event, getDisableableSelection());
+          component.handleKeyAction(event, getSelection());
 
-          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processHandleKeyAction(component, event, getDisableableSelection());
+          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processHandleKeyAction(component, event, getSelection());
         }
       }
 
@@ -287,10 +287,6 @@ public final class MultiSelectionEventHandler extends EventHandler {
   @Override
   public @NotNull List<ListPluginComponent> getSelection() {
     return myComponents.stream().filter(component -> component.getSelection() == SelectionType.SELECTION).toList();
-  }
-
-  private @NotNull List<ListPluginComponent> getDisableableSelection() {
-    return getSelection().stream().filter(pluginComponent -> pluginComponent.isDisableAllowed()).toList();
   }
 
   @Override

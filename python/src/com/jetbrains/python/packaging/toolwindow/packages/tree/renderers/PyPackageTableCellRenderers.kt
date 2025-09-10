@@ -35,6 +35,7 @@ internal class PackageNameCellRenderer : TableCellRenderer {
 
     return when (pkg) {
       is ExpandResultNode -> createExpandNodeComponent(pkg, background)
+      is ErrorNode ->  createErrorNodeComponent(pkg, background)
       else -> createNameComponent(pkg, background)
     }
   }
@@ -48,6 +49,19 @@ internal class PackageNameCellRenderer : TableCellRenderer {
     }
     return PackageRendererUtils.createBasicPanel().apply {
       add(expandNodeLabel)
+      background = bg
+    }
+  }
+
+  private fun createErrorNodeComponent(
+    node: ErrorNode,
+    bg: Color,
+  ): Component {
+    val errorNodeLabel = JBLabel(node.description).apply {
+      foreground = UIUtil.getContextHelpForeground()
+    }
+    return PackageRendererUtils.createBasicPanel().apply {
+      add(errorNodeLabel)
       background = bg
     }
   }
@@ -101,6 +115,7 @@ internal class PackageVersionCellRenderer : TableCellRenderer {
       }
       is RequirementPackage -> requirementPackageStrategy(versionPanel, pkg, versionLabel)
       is ExpandResultNode -> JLabel()
+      is ErrorNode -> errorNodeStrategy(versionPanel, pkg, linkLabel)
     }
 
     return versionPanel

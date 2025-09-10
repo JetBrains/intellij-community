@@ -28,28 +28,29 @@ public class RecordThisDelegateFix extends PsiUpdateModCommandAction<PsiMethod> 
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiMethod element, @NotNull ModPsiUpdater updater) {
+    PsiCodeBlock body = element.getBody();
+    if (body == null || body.getLBrace() == null) {
+      return;
+    }
     CommentTracker tracker = new CommentTracker();
     Map<PsiField, PsiExpression> map = collectAssignedFields(element);
+    if (map == null) return;
     PsiClass containingClass = element.getContainingClass();
     if (containingClass == null) return;
     PsiRecordComponent[] components = containingClass.getRecordComponents();
     if (components.length != map.size()) return;
     StringBuilder text = new StringBuilder("this(");
     for (int i = 0; i < components.length; i++) {
-      if (i > 0) text.append(", ");
       PsiRecordComponent component = components[i];
       PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
       if (field == null) continue;
       PsiExpression expression = map.get(field);
       if (expression == null) continue;
+      if (i > 0) text.append(", ");
       text.append(tracker.text(expression));
     }
     text.append(");");
     ArrayList<PsiExpression> expressions = new ArrayList<>(map.values());
-    PsiCodeBlock body = element.getBody();
-    if (body == null || body.getLBrace() == null) {
-      return;
-    }
     if (expressions.isEmpty()) {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
       body.addAfter(factory.createStatementFromText(text.toString(), element), body.getLBrace());
@@ -93,19 +94,20 @@ public class RecordThisDelegateFix extends PsiUpdateModCommandAction<PsiMethod> 
 
   private static boolean canCollectFields(@NotNull PsiMethod method, PsiClass aClass) {
     Map<PsiField, PsiExpression> collected = collectAssignedFields(method);
+    if (collected == null) return false;
     PsiRecordComponent[] components = aClass.getRecordComponents();
     return components.length == collected.size();
   }
 
-  @NotNull
+  @Nullable
   private static Map<PsiField, PsiExpression> collectAssignedFields(@NotNull PsiMethod method) {
     Map<PsiField, PsiExpression> assignedFields = new HashMap<>();
     PsiCodeBlock body = method.getBody();
-    if (body == null) return assignedFields;
+    if (body == null || body.getLBrace() == null) return null;
 
     PsiStatement[] statements = body.getStatements();
     for (PsiStatement statement : statements) {
-      if (PsiTreeUtil.hasErrorElements(statement)) break;
+      if (PsiTreeUtil.hasErrorElements(statement)) return null;
       if (!(statement instanceof PsiExpressionStatement expressionStatement)) {
         break;
       }

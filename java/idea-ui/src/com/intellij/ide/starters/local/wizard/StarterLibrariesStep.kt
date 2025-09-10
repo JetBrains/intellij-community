@@ -99,8 +99,8 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
   private fun createLibrariesList(): CheckboxTreeBase {
     val list = CheckboxTreeBase(object : CheckboxTree.CheckboxTreeCellRenderer() {
       override fun customizeRenderer(
-        tree: JTree?,
-        value: Any?,
+        tree: JTree,
+        value: Any,
         selected: Boolean,
         expanded: Boolean,
         leaf: Boolean,

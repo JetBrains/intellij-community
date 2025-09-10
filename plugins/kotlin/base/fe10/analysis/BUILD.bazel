@@ -15,7 +15,7 @@ jvm_library(
   name = "analysis",
   module_name = "kotlin.base.fe10.analysis",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_analysis",
   deps = [
     "@lib//:kotlin-stdlib",

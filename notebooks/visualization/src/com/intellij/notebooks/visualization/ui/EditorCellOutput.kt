@@ -4,7 +4,6 @@ package com.intellij.notebooks.visualization.ui
 import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKey
 import com.intellij.openapi.observable.properties.AtomicProperty
 
-class EditorCellOutput(dataKey: NotebookOutputDataKey) {
-  val dataKey: AtomicProperty<NotebookOutputDataKey> = AtomicProperty(dataKey)
+class EditorCellOutput(val dataKey: NotebookOutputDataKey) {
   val size: AtomicProperty<EditorCellOutputSize> = AtomicProperty(EditorCellOutputSize())
 }

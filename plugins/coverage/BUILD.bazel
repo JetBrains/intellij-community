@@ -11,7 +11,7 @@ jvm_library(
   name = "coverage",
   module_name = "intellij.java.coverage",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:java-coverage-_ja_co_co",
     "//platform/analysis-api:analysis",
@@ -57,7 +57,7 @@ jvm_library(
 jvm_library(
   name = "coverage_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":coverage"],
   deps = [
     "@lib//:java-coverage-_ja_co_co",
@@ -100,6 +100,13 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
     "@lib//:fastutil-min",
+    "//java/java-runtime:rt",
+  ],
+  exports = [
+    "//plugins/coverage-common:coverage",
+    "//plugins/coverage-common:coverage_test_lib",
+    "//java/execution/openapi:java-execution",
+    "//java/openapi:java",
   ],
   runtime_deps = [":coverage_resources"]
 )

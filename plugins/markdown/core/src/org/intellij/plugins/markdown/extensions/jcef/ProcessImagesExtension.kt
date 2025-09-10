@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.extensions.jcef
 
 import com.intellij.ide.vfs.rpcId
-import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
@@ -25,10 +24,11 @@ internal class ProcessImagesExtension(
   override fun loadResource(resourceName: String): ResourceProvider.Resource? {
     val baseFileId = baseFile?.rpcId() ?: return null
     val projectId = project?.projectId() ?: return null
-    val resource = runBlocking {
-      VirtualFileAccessor.getInstance().getFileByResourceName(resourceName, baseFileId, projectId)?.virtualFile()
+    val content = runBlocking {
+      VirtualFileAccessor.getInstance().tryToLoadFileContent(resourceName, baseFileId, projectId)
     } ?: return null
-    return ResourceProvider.loadExternalResource(resource)
+
+    return ResourceProvider.Resource(content)
   }
 
   override fun dispose() = Unit

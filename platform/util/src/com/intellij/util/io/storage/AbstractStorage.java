@@ -289,6 +289,11 @@ public abstract class AbstractStorage implements IStorage {
     });
   }
 
+  @TestOnly
+  public byte[] readBytesTestAccessor(int record) throws IOException {
+    return readBytes(record);
+  } 
+  
   protected void appendBytes(int record, ByteArraySequence bytes) throws IOException {
     final int delta = bytes.getLength();
     if (delta == 0) return;

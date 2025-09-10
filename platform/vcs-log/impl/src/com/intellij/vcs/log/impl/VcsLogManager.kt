@@ -6,7 +6,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -21,7 +24,6 @@ import com.intellij.util.BitUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.MultiMap
-import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.DataPackChangeListener
@@ -38,6 +40,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.ints.IntSets
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus.*
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
@@ -68,8 +71,7 @@ open class VcsLogManager @Internal constructor(
   val colorManager: VcsLogColorManager = VcsLogColorManagerFactory.create(logProviders.keys)
   private val statusBarProgress = VcsLogStatusBarProgress(project, logProviders, dataManager.index.indexingRoots, dataManager.progress)
 
-  private val disposed = AtomicBoolean(false)
-  val isDisposed: Boolean get() = disposed.get()
+  val isDisposed: Boolean get() = !cs.isActive
 
   init {
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -80,7 +82,17 @@ open class VcsLogManager @Internal constructor(
         awaitCancellation()
       }
       finally {
-        Disposer.dispose(refresherDisposable)
+        LOG.debug { "Disposing $name" }
+        withContext(NonCancellable) {
+          Disposer.dispose(refresherDisposable)
+
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            runCatching {
+              disposeUi()
+            }.getOrLogException(LOG)
+          }
+          LOG.debug { "Disposed ${name}" }
+        }
       }
     }
   }
@@ -263,51 +275,20 @@ open class VcsLogManager @Internal constructor(
     Disposer.dispose(statusBarProgress)
   }
 
-  private fun startDisposing(): Boolean {
-    val wasNotStartedBefore = disposed.compareAndSet(false, true)
-    if (!wasNotStartedBefore) {
-      LOG.warn("$name is already disposed. Ignoring dispose request", Throwable("Dispose trace for $name"))
-      return false
-    }
-    return true
-  }
-
   /**
-   * Release all resources associated with the manager
-   *
-   * @param useRawSwingDispatcher on app shutdown the proper EDT dispatcher might not be available
-   * @param clearStorage clear the persistent storage (indexes and stuff)
+   * Manually release all resources associated with the manager
    */
   @Internal
-  suspend fun dispose(useRawSwingDispatcher: Boolean = false, clearStorage: Boolean = false) {
-    if (!startDisposing()) return
-    withContext(NonCancellable) {
-      cs.cancel()
-      val uiDispatcher = if (useRawSwingDispatcher) RawSwingDispatcher else Dispatchers.EDT
-      withContext(uiDispatcher) {
-        disposeUi()
-      }
-      withContext(Dispatchers.Default) {
-        val storageToClear = if (clearStorage) storageIds() else emptyList()
-        dataManager.awaitDispose()
+  suspend fun dispose() {
+    cs.coroutineContext.job.cancelAndJoin()
+  }
 
-        for (storageId in storageToClear) {
-          try {
-            val deleted = withContext(Dispatchers.IO) { storageId.cleanupAllStorageFiles() }
-            if (deleted) {
-              LOG.info("Deleted ${storageId.storagePath}")
-            }
-            else {
-              LOG.error("Could not delete ${storageId.storagePath}")
-            }
-          }
-          catch (t: Throwable) {
-            LOG.error(t)
-          }
-        }
-      }
-      LOG.debug("Disposed ${name}")
-    }
+  internal val hasPersistentStorage: Boolean
+    get() = dataManager.hasPersistentStorage
+
+  internal suspend fun clearPersistentStorage() {
+    require(isDisposed) { "Cannot clear persistent storage of a not disposed VcsLogManager"}
+    dataManager.clearPersistentStorage()
   }
 
   private fun refreshLogOnVcsEvents(
@@ -448,7 +429,7 @@ open class VcsLogManager @Internal constructor(
 @Internal
 suspend fun VcsLogManager.awaitContainsCommit(hash: Hash, root: VirtualFile): Boolean {
   if (!containsCommit(hash, root)) {
-    if (isLogUpToDate) return false
+    if (isLogUpToDate && !dataManager.isRefreshInProgress.value) return false
     waitForRefresh()
     if (!containsCommit(hash, root)) return false
   }
@@ -468,7 +449,7 @@ private fun VcsLogManager.containsCommit(hash: Hash, root: VirtualFile): Boolean
 
 private fun VcsLogUiEx.isVisible(): Boolean = ComponentUtil.isShowing(mainComponent, false)
 
-suspend fun VcsLogManager.waitForRefresh() {
+private suspend fun VcsLogManager.waitForUpToDateLog() {
   suspendCancellableCoroutine { continuation ->
     val dataPackListener = object : DataPackChangeListener {
       override fun onDataPackChange(newDataPack: DataPack) {
@@ -489,4 +470,15 @@ suspend fun VcsLogManager.waitForRefresh() {
 
     continuation.invokeOnCancellation { dataManager.removeDataPackChangeListener(dataPackListener) }
   }
+}
+
+private suspend fun VcsLogManager.waitForOngoingRefreshToFinish() {
+  dataManager.isRefreshInProgress.first {
+    !it
+  }
+}
+
+suspend fun VcsLogManager.waitForRefresh() {
+  waitForUpToDateLog()
+  waitForOngoingRefreshToFinish()
 }

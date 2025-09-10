@@ -9,6 +9,8 @@ import com.intellij.lang.ParserDefinition.SpaceRequirements
 import com.intellij.lang.PsiParser
 import com.intellij.lexer.Lexer
 import com.intellij.lexer.XmlLexer
+import com.intellij.lexer.createXmlLexer
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
@@ -26,7 +28,7 @@ open class XMLParserDefinition :
   ParserDefinition {
 
   override fun createLexer(project: Project?): Lexer =
-    XmlLexer()
+    createXmlLexer()
 
   override fun getFileNodeType(): IFileElementType =
     XmlElementType.XML_FILE

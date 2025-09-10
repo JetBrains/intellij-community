@@ -2,6 +2,7 @@
 package com.intellij.testFramework.common
 
 import com.intellij.diagnostic.ThreadDumper
+import com.intellij.util.DebugAttachDetectorArgs
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
@@ -13,6 +14,10 @@ import kotlin.time.Duration.Companion.seconds
 @TestOnly
 val DEFAULT_TEST_TIMEOUT: Duration = 10.seconds
 
+/**
+ * Runs a suspending block of code with a specified timeout within the given coroutine context.
+ * During debug session, the timeout is ignored.
+ */
 @TestOnly
 fun <T> timeoutRunBlocking(
   timeout: Duration = DEFAULT_TEST_TIMEOUT,
@@ -27,8 +32,11 @@ fun <T> timeoutRunBlocking(
     @OptIn(DelicateCoroutinesApi::class)
     withContext(blockingDispatcher) {
       try {
-        val value = withTimeout(timeout) {
-          job.await()
+        val value = when {
+          DebugAttachDetectorArgs.isAttached() -> job.await()
+          else -> withTimeout(timeout) {
+            job.await()
+          }
         }
         Result.success(value)
       }

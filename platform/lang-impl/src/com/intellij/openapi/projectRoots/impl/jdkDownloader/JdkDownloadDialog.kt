@@ -191,7 +191,7 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
   val defaultItem = availableItems    /* pick the newest OpenJDK */
                       .filter { it.isDefaultItem }
                       .maxByOrNull { it.jdkMajorVersion }
-                    ?: availableItems /* pick a "lightweight" non-preview JDK is no default is available */
+                    ?: availableItems /* pick a "lightweight" non-preview JDK if no default option is available */
                       .filter { it.jdkMajorVersion == latestVersion && !it.isPreview }
                       .minByOrNull { it.archiveSize }
                     ?: availableItems.firstOrNull() /* strange case, e.g., only preview JDKs aren't filtered */

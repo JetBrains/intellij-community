@@ -245,4 +245,14 @@ public class PyFoldingTest extends PyTestCase {
   public void testMatchFolding() {
     doTest();
   }
+  
+  // PY-79930
+  public void testFutureImport() {
+    doTest();
+  }
+
+  // PY-79930
+  public void testFutureImportWithOneImport() {
+    doTest();
+  }
 }

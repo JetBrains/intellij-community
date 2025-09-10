@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,5 +30,6 @@ public abstract class FileModificationService {
     return preparePsiElementsForWrite(Arrays.asList(elements));
   }
 
+  @RequiresEdt
   public abstract boolean prepareVirtualFilesForWrite(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files);
 }

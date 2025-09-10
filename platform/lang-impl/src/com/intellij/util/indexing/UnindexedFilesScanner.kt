@@ -2,8 +2,7 @@
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
@@ -16,6 +15,7 @@ import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.registry.Registry
@@ -215,9 +215,14 @@ class UnindexedFilesScanner (
 
     val triggerA = forceReindexingTrigger
     val triggerB = oldTask.forceReindexingTrigger
-    val mergedPredicate = BiPredicate { f: IndexedFile, stamp: FileIndexingStamp ->
-      (triggerA != null && triggerA.test(f, stamp)) ||
-      (triggerB != null && triggerB.test(f, stamp))
+
+    val mergedPredicate = if (triggerA == null && triggerB == null) {
+      null
+    } else {
+      BiPredicate { f: IndexedFile, stamp: FileIndexingStamp ->
+        (triggerA != null && triggerA.test(f, stamp)) ||
+        (triggerB != null && triggerB.test(f, stamp))
+      }
     }
     return UnindexedFilesScanner(
       myProject,
@@ -249,11 +254,8 @@ class UnindexedFilesScanner (
           .collectIndexableFilesConcurrently(orderedProviders)
       }
       finally {
-        ReadAction.run<Throwable> {
-          // read action ensures that service won't be disposed and storage inside won't be closed
-          myProject.getServiceIfCreated(ProjectIndexingDependenciesService::class.java)
-            ?.completeToken(scanningRequest, scanningIterators.isFullIndexUpdate())
-        }
+        myProject.getServiceIfCreated(ProjectIndexingDependenciesService::class.java)
+          ?.completeToken(scanningRequest, scanningIterators.isFullIndexUpdate())
       }
     }
 
@@ -507,6 +509,7 @@ class UnindexedFilesScanner (
       }
     }
 
+    @OptIn(IntellijInternalApi::class)
     private suspend fun scanFiles(
       provider: IndexableFilesIterator,
       scanningStatistics: ScanningStatistics,
@@ -517,45 +520,50 @@ class UnindexedFilesScanner (
       val indexingQueue = project.getService(PerProjectIndexingQueue::class.java)
       scanningStatistics.startFileChecking()
       try {
-        var counter = 0
-        readAction {
-          val currentCounter = counter++
-          if (currentCounter != 0) {
-            // report only restarts of scanning read action
-            span.addEvent("Read action restart #${currentCounter} (${files.size} files remain to scan)")
-          }
-          val finder =
-            if (ourTestMode == TestMode.PUSHING) null
-            else UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger, scanningRequest)
-          val pushingUtil = PushingUtil(project, provider)
-          if (!pushingUtil.mayBeUsed()) {
-            LOG.warn("Iterator based on $provider can't be used.")
-            return@readAction
-          }
-          while (files.isNotEmpty()) {
-            val file = files.removeFirst()
-            try {
-              if (file.isValid) {
-                if (file is VirtualFileWithId) {
-                  filterHandler.addFileId(project, file.id)
-                }
-                pushingUtil.applyPushers(file)
-                val status = finder?.getFileStatus(file)
-                if (status != null) {
-                  if (status.shouldIndex && ourTestMode == null) {
-                    indexingQueue.addFile(file, scanningHistory.scanningSessionId)
+        outerWhile@ while (files.isNotEmpty()) {
+          indicator.suspendIfPaused()
+          var counter = 0
+          readActionUndispatched {
+            val currentCounter = counter++
+            if (currentCounter != 0) {
+              // report only restarts of scanning read action
+              span.addEvent("Read action restart #${currentCounter} (${files.size} files remain to scan)")
+            }
+            val finder =
+              if (ourTestMode == TestMode.PUSHING) null
+              else UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger, scanningRequest)
+            val pushingUtil = PushingUtil(project, provider)
+            if (!pushingUtil.mayBeUsed()) {
+              LOG.warn("Iterator based on $provider can't be used.")
+              return@readActionUndispatched
+            }
+
+            innerWhile@ while (files.isNotEmpty()) {
+              if (indicator.isPaused()) break@innerWhile
+              val file = files.removeFirst()
+              try {
+                if (file.isValid) {
+                  if (file is VirtualFileWithId) {
+                    filterHandler.addFileId(project, file.id)
                   }
-                  scanningStatistics.addStatus(file, status, project)
+                  pushingUtil.applyPushers(file)
+                  val status = finder?.getFileStatus(file)
+                  if (status != null) {
+                    if (status.shouldIndex && ourTestMode == null) {
+                      indexingQueue.addFile(file, scanningHistory.scanningSessionId)
+                    }
+                    scanningStatistics.addStatus(file, status, project)
+                  }
                 }
               }
-            }
-            catch (e: ProcessCanceledException) {
-              files.addFirst(file)
-              throw e
-            }
-            catch (e: Exception) {
-              LOG.error("Error while scanning ${file.presentableUrl}\n" +
-                        "To reindex this file IDE has to be restarted", e);
+              catch (e: ProcessCanceledException) {
+                files.addFirst(file)
+                throw e
+              }
+              catch (e: Exception) {
+                LOG.error("Error while scanning ${file.presentableUrl}\n" +
+                          "To reindex this file IDE has to be restarted", e)
+              }
             }
           }
         }
@@ -565,7 +573,7 @@ class UnindexedFilesScanner (
       }
     }
 
-    private suspend fun getFilesToScan(
+    private fun getFilesToScan(
       fileScannerVisitors: List<IndexableFileScanner.IndexableFileVisitor>,
       scanningStatistics: ScanningStatistics,
       provider: IndexableFilesIterator,

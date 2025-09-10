@@ -5,7 +5,10 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.*
 import com.intellij.ide.projectView.actions.MarkRootsManager
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
@@ -27,8 +30,10 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.PathUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isVirtualEnv
@@ -164,6 +169,7 @@ fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
 }
 
 @Internal
+@RequiresBackgroundThread
 fun detectAssociatedEnvironments(module: Module, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
   detectVirtualEnvs(module, existingSdks, context).filter { it.isAssociatedWithModule(module) }
 
@@ -188,7 +194,7 @@ fun createSdkByGenerateTask(
   val homeFile = try {
     val homePath = ProgressManager.getInstance().run(generateSdkHomePath)
     StandardFileSystems.local().refreshAndFindFileByPath(homePath) ?: throw ExecutionException(
-      PyBundle.message("python.sdk.directory.not.found", homePath)
+      PyBundle.message("python.sdk.python.executable.not.found", homePath)
     )
   }
   catch (e: ExecutionException) {
@@ -218,19 +224,20 @@ fun createSdkByGenerateTask(
 
 @Internal
 suspend fun createSdk(
-  sdkHomePath: Path,
+  pythonBinaryPath: PythonBinary,
   existingSdks: List<Sdk>,
   associatedProjectPath: String?,
   suggestedSdkName: String?,
   sdkAdditionalData: PythonSdkAdditionalData? = null,
 ): PyResult<Sdk> {
-  val homeFile = withContext(Dispatchers.IO) { StandardFileSystems.local().refreshAndFindFileByPath(sdkHomePath.pathString) }
-                 ?: return PyResult.localizedError(PyBundle.message("python.sdk.directory.not.found", sdkHomePath.pathString))
+  val pythonBinaryVirtualFile = withContext(Dispatchers.IO) {
+    StandardFileSystems.local().refreshAndFindFileByPath(pythonBinaryPath.pathString)
+  } ?: return PyResult.localizedError(PyBundle.message("python.sdk.python.executable.not.found", pythonBinaryPath.pathString))
 
-  val sdkName = suggestedSdkName ?: suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
+  val sdkName = suggestedSdkName ?: suggestAssociatedSdkName(pythonBinaryPath.pathString, associatedProjectPath)
   val sdk = SdkConfigurationUtil.setupSdk(
     existingSdks.toTypedArray(),
-    homeFile,
+    pythonBinaryVirtualFile,
     PythonSdkType.getInstance(),
     false,
     sdkAdditionalData,

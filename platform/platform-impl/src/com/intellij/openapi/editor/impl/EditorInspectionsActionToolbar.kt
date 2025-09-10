@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -72,11 +73,18 @@ open class EditorInspectionsActionToolbar(
     return ToolbarActionButton(action, presentation, place, minimumSize)
   }
 
-  override fun isDefaultActionButtonImplementation(oldActionButton: ActionButton, newPresentation: Presentation): Boolean {
+  override fun canReuseActionButton(oldActionButton: ActionButton, newPresentation: Presentation): Boolean {
     if (RedesignedInspectionsManager.isAvailable()) {
-      return super.isDefaultActionButtonImplementation(oldActionButton, newPresentation)
+      return super.canReuseActionButton(oldActionButton, newPresentation)
     }
-    return oldActionButton.javaClass == ToolbarActionButton::class.java
+
+    val shouldHaveText = newPresentation.getClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR) == true
+    if (shouldHaveText) {
+      return oldActionButton.javaClass == ActionButtonWithText::class.java
+    }
+    else {
+      return oldActionButton.javaClass == ToolbarActionButton::class.java
+    }
   }
 
   override fun doLayout() {

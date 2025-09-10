@@ -11,7 +11,7 @@ private class TerminalInlineCompletionEditorInsertHandler : InlineCompletionEdit
     val terminalTypeAhead = editor.getUserData(TerminalTypeAhead.KEY) ?: return
     val terminalInput = editor.getUserData(TerminalInput.KEY) ?: return
 
-    terminalTypeAhead.stringTyped(textToInsert)
+    terminalTypeAhead.type(textToInsert)
     terminalInput.sendString(textToInsert)
   }
 

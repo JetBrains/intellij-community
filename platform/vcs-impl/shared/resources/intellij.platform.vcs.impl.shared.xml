@@ -12,8 +12,20 @@
     <registryKey key="vcs.shelves.rhizome.enabled" defaultValue="false" restartRequired="true"
                  description="New vcs shelves split to frontend and backend using Rhizome and rpc"/>
 
+    <registryKey key="vcs.rd.local.changes.enabled" defaultValue="false" restartRequired="true"
+                 description="RD-friendly local changes view"/>
+
     <projectService serviceImplementation="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
     <projectSettings service="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
     <rdct.remoteSettingProvider implementation="com.intellij.platform.vcs.impl.shared.VcsRemoteSettingsInfoProvider"/>
+
+    <changesGroupingPolicy key="directory" id="directory" weight="10"
+                           implementationClass="com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy$Factory"/>
   </extensions>
+
+  <extensionPoints>
+    <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
+    </extensionPoint>
+  </extensionPoints>
 </idea-plugin>

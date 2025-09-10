@@ -419,6 +419,15 @@ public class PyStubsTest extends PyTestCase {
     assertEquals("Foo docstring.", docString);
   }
 
+  public void testTargetExpressionArgument() {
+    final PyFile file = getTestFile();
+    final PyFunction function = file.findTopLevelFunction("f");
+    assertNotNull(function);
+    final PyTargetExpressionStub targetExpressionStub = (PyTargetExpressionStub)function.getStub().findChildStubByElementType(PyStubElementTypes.TARGET_EXPRESSION);
+    assertNotNull(targetExpressionStub);
+    assertEquals("number", targetExpressionStub.getName());
+  }
+
   public void testMetaClass() {
     runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
       final PyFile file = getTestFile();

@@ -20,6 +20,6 @@ class EditorMacroTest: LightPlatformCodeInsightTestCase() {
   }
 
   private fun expand(macro: EditorMacro) = runBlocking(Dispatchers.IO) {
-    ReadAction.compute<String?, Exception> { macro.expand(editor) }
+    ReadAction.compute<String?, Exception> { macro.expandTestAccessor(editor) }
   }
 }

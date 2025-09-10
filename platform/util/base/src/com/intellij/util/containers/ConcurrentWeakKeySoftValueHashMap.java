@@ -5,6 +5,7 @@ import com.intellij.util.ObjectUtilsRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
@@ -158,27 +159,36 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   }
 
   /////////////////////////////
-  private static class HardKey<K,V> implements KeyReference<K,V> {
-    private K myKey;
+  private static class HardKey<K,V> extends PhantomReference<K> implements KeyReference<K,V> {
+    private K referent;
     private int myHash;
 
+    HardKey() {
+      super(null, null);
+    }
+
     private void set(@NotNull K key, int hash) {
-      myKey = key;
+      referent = key;
       myHash = hash;
     }
 
-    private void clear() {
-      myKey = null;
+    @Override
+    public void clear() {
+      referent = null;
     }
 
     @Override
     public K get() {
-      return myKey;
+      return referent;
     }
 
+    /**
+     * @see WeakKey#equals(Object)
+     */
+    @SuppressWarnings("EqualsDoesntCheckParameterClass")
     @Override
     public boolean equals(Object o) {
-      return o.equals(this); // see WeakKey.equals()
+      return o.equals(this);
     }
 
     @Override

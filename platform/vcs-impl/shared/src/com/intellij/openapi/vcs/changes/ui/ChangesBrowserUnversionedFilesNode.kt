@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider
+import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import org.jetbrains.annotations.Nls
 
 class ChangesBrowserUnversionedFilesNode(private val project: Project,
@@ -13,7 +14,7 @@ class ChangesBrowserUnversionedFilesNode(private val project: Project,
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     super.render(renderer, selected, expanded, hasFocus)
-    if (!project.isDisposed && ChangesTreeCompatibilityProvider.getInstance().isUnversionedInUpdateMode(project)) {
+    if (!project.isDisposed && ChangeListsViewModel.getInstance(project).changeListManagerState.value.fileHoldersState.unversionedInUpdateMode) {
       appendUpdatingState(renderer)
     }
   }

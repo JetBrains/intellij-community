@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class ConvertReceiverParameterToContextParameterIntention : SelfTargetingIntention<KtTypeReference>(
     KtTypeReference::class.java,
-    KotlinBundle.lazyMessage("convert.receiver.parameter.to.context.parameter"),
+    KotlinBundle.messagePointer("convert.receiver.parameter.to.context.parameter"),
 ), LowPriorityAction {
     override fun startInWriteAction(): Boolean = false
 

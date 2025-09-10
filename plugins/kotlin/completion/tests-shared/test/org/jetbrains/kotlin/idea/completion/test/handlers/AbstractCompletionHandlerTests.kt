@@ -26,6 +26,7 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
         const val LOOKUP_STRING_PREFIX = "ELEMENT:"
         const val ELEMENT_TEXT_PREFIX = "ELEMENT_TEXT:"
         const val TAIL_TEXT_PREFIX = "TAIL_TEXT:"
+        const val USE_EXPENSIVE_RENDERER = "// USE_EXPENSIVE_RENDERER"
         const val COMPLETION_CHAR_PREFIX = "CHAR:"
         const val COMPLETION_CHARS_PREFIX = "CHARS:"
         const val CODE_STYLE_SETTING_PREFIX = "CODE_STYLE_SETTING:"
@@ -76,6 +77,7 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
                     val lookupString = InTextDirectivesUtils.findStringWithPrefixes(fileText, LOOKUP_STRING_PREFIX)
                     val itemText = InTextDirectivesUtils.findStringWithPrefixes(fileText, ELEMENT_TEXT_PREFIX)
                     val tailText = InTextDirectivesUtils.findStringWithPrefixes(fileText, TAIL_TEXT_PREFIX)
+                    val useExpensiveRenderer = InTextDirectivesUtils.isDirectiveDefined(fileText, USE_EXPENSIVE_RENDERER)
                     val completionChars = completionChars(fileText)
 
                     val completionType = ExpectedCompletionUtils.getCompletionType(fileText) ?: defaultCompletionType
@@ -110,6 +112,7 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
                         tailText,
                         completionChars,
                         testFile.name + ".after",
+                        useExpensiveRenderer = useExpensiveRenderer
                     )
                 }
             }

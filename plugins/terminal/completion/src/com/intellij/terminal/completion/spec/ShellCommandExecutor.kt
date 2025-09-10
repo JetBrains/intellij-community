@@ -5,11 +5,10 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
-fun interface ShellCommandExecutor {
+interface ShellCommandExecutor {
   /**
-   * Simple basic interface to
-   * Runs the command in Shell and returns the result.
-   * Whether it is a visible user command or hidden generator command or mock execution etc. is decided by implementation.
+   * Runs the shell command and returns the result.
+   * How this command is executed depends on the implementation.
    */
-  suspend fun runShellCommand(@Language("ShellScript") command: String): ShellCommandResult
+  suspend fun runShellCommand(directory: String, @Language("ShellScript") command: String): ShellCommandResult
 }

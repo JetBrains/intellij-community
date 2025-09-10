@@ -1,0 +1,3 @@
+# Cannot import these Windows packages at stubtest runtime:
+dateutil.tzwin
+dateutil.tz.win

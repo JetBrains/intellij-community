@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 
 class TestRunnerParams(val language: Language)
 
-class TestRunRequest(val tests: List<String>, val project: Project)
+class TestRunRequest(val tests: List<String>, val testCommand: String?, val project: Project)
 class TestRunResult(
   val exitCode: Int,
   val passed: List<String>,

@@ -9,6 +9,10 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.components.importableFqName
 import org.jetbrains.kotlin.analysis.api.components.isAnyType
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -105,7 +109,7 @@ private fun KaSymbol.toSignatureData(): SymbolData {
  * Instead, we first create a representation of the symbol using [SymbolData] and [TypeData] that we then compare with
  * the existing symbols within the target scope.
  */
-@OptIn(KaExperimentalApi::class)
+@OptIn(KaExperimentalApi::class, KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
 internal fun checkNameClashConflicts(
     allDeclarationsToMove: Iterable<KtNamedDeclaration>,
     targetPkg: FqName,
@@ -181,30 +185,34 @@ internal fun checkNameClashConflicts(
     val conflicts = MultiMap<PsiElement, String>()
     allDeclarationsToMove
         .forEach { declaration ->
-            val signatureData = analyze(declaration) {
-                declaration.symbol.toSignatureData()
-            }
-            analyze(targetKaModule) {
-                if (!declaration.canBeAnalysed()) return@analyze
-
-                val containerSymbol = if (targetContainer is KtClassOrObject) {
-                    targetContainer.symbol
-                } else findPackage(targetPkg)
-
-                if (containerSymbol == null) return@analyze
-                walkDeclarations(containerSymbol, signatureData) { conflictingSymbol, conflictingScope ->
-                    val renderedDeclaration = analyze(declaration) {
-                        // This needs to be in a nested analyze call because the KaModules might
-                        // differ between source and target
-                        declaration.symbol.renderForConflict()
+            allowAnalysisOnEdt {
+                allowAnalysisFromWriteAction {
+                    val signatureData = analyze(declaration) {
+                        declaration.symbol.toSignatureData()
                     }
-                    val message = KotlinBundle.message(
-                        "text.declarations.clash.move.0.destination.1.declared.in.scope.2",
-                        renderedDeclaration,
-                        conflictingSymbol.renderForConflict(),
-                        conflictingScope.renderForConflict().ifBlank { "default" },
-                    )
-                    conflicts.putValue(declaration, message)
+                    analyze(targetKaModule) {
+                        if (!declaration.canBeAnalysed()) return@analyze
+
+                        val containerSymbol = if (targetContainer is KtClassOrObject) {
+                            targetContainer.symbol
+                        } else findPackage(targetPkg)
+
+                        if (containerSymbol == null) return@analyze
+                        walkDeclarations(containerSymbol, signatureData) { conflictingSymbol, conflictingScope ->
+                            val renderedDeclaration = analyze(declaration) {
+                                // This needs to be in a nested analyze call because the KaModules might
+                                // differ between source and target
+                                declaration.symbol.renderForConflict()
+                            }
+                            val message = KotlinBundle.message(
+                                "text.declarations.clash.move.0.destination.1.declared.in.scope.2",
+                                renderedDeclaration,
+                                conflictingSymbol.renderForConflict(),
+                                conflictingScope.renderForConflict().ifBlank { "default" },
+                            )
+                            conflicts.putValue(declaration, message)
+                        }
+                    }
                 }
             }
         }

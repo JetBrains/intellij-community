@@ -5,7 +5,7 @@ jvm_library(
   name = "completion",
   module_name = "intellij.terminal.completion",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:terminal-completion-terminal-completion-spec",
@@ -17,7 +17,7 @@ jvm_library(
 jvm_library(
   name = "completion_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":completion"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -26,7 +26,8 @@ jvm_library(
     "@lib//:junit4",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ]
+  ],
+  exports = ["@lib//:terminal-completion-terminal-completion-spec"]
 )
 ### auto-generated section `build intellij.terminal.completion` end
 

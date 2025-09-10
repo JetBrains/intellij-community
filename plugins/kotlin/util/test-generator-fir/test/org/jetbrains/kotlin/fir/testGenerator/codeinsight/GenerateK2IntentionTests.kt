@@ -53,6 +53,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertUnsafeCastCallToUnsafeCast", pattern = pattern)
             model("${idea}intentions/expandBooleanExpression", pattern = pattern)
             model("${idea}intentions/removeAllArgumentNames", pattern = pattern)
+            model("${idea}intentions/removeEmptyPrimaryConstructor", pattern = pattern)
             model("${idea}intentions/convertPropertyGetterToInitializer", pattern = pattern)
             model("${idea}intentions/convertToRawStringTemplate", pattern = pattern)
             model("${idea}intentions/toRawStringLiteral", pattern = pattern)
@@ -131,6 +132,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/branched/doubleBangToIfThen", pattern = pattern)
             model("${idea}intentions/introduceVariable", pattern = pattern)
             model("${idea}intentions/convertToMultiDollarString", pattern = pattern)
+            model("${idea}intentions/convertToIndexedFunctionCall", pattern = pattern)
             model("${idea}/intentions/concatenationToBuildCollection", pattern = pattern)
 
             //model("${idea}intentions/loopToCallChain", pattern = pattern, isIgnored = true)
@@ -156,6 +158,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertToScope", pattern = pattern)
             model("${idea}intentions/implementAbstractMember", pattern = pattern)
             model("${idea}intentions/replaceSizeZeroCheckWithIsEmpty", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/replaceTypeArgumentWithUnderscore", pattern = pattern)
             model("${idea}intentions/movePropertyToClassBody", pattern = pattern)
             model("${idea}intentions/replaceAddWithPlusAssign", pattern = pattern)
             model("${idea}intentions/reconstructTypeInCastOrIs", pattern = pattern)

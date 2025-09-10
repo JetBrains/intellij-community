@@ -207,14 +207,14 @@ fun replaceHomePathToTilde(sdkHomePath: @NonNls String): @NlsSafe String {
 }
 
 
-class PythonSdkComboBoxListCellRenderer(val loadingFlow: StateFlow<Boolean>) : ColoredListCellRenderer<PythonSelectableInterpreter?>() {
+class PythonSdkComboBoxListCellRenderer(val isLoading: () -> Boolean) : ColoredListCellRenderer<PythonSelectableInterpreter?>() {
 
   override fun getListCellRendererComponent(list: JList<out PythonSelectableInterpreter?>?, value: PythonSelectableInterpreter?, index: Int, selected: Boolean, hasFocus: Boolean): Component {
     return super.getListCellRendererComponent(list, value, index, selected, hasFocus)
   }
 
   override fun customizeCellRenderer(list: JList<out PythonSelectableInterpreter?>, value: PythonSelectableInterpreter?, index: Int, selected: Boolean, hasFocus: Boolean) {
-    customizeForPythonInterpreter(loadingFlow.value, value)
+    customizeForPythonInterpreter(isLoading.invoke(), value)
   }
 }
 
@@ -249,12 +249,11 @@ class PythonEnvironmentComboBoxRenderer : ColoredListCellRenderer<Any>() {
 internal fun Panel.pythonInterpreterComboBox(
   title: @Nls String,
   selectedSdkProperty: ObservableMutableProperty<PythonSelectableInterpreter?>, // todo not sdk
-  model: PythonAddInterpreterModel,
   validationRequestor: DialogValidationRequestor,
   onPathSelected: (VanillaPythonWithLanguageLevel) -> PythonSelectableInterpreter,
   customizer: RowsRange.() -> Unit = {},
 ): PythonInterpreterComboBox {
-  val comboBox = PythonInterpreterComboBox(model, onPathSelected, ShowingMessageErrorSync)
+  val comboBox = PythonInterpreterComboBox(onPathSelected, ShowingMessageErrorSync)
     .apply {
       setBusy(true)
     }
@@ -290,16 +289,15 @@ internal fun Panel.pythonInterpreterComboBox(
 }
 
 internal class PythonInterpreterComboBox(
-  val controller: PythonAddInterpreterModel,
   val onPathSelected: (VanillaPythonWithLanguageLevel) -> PythonSelectableInterpreter,
   private val errorSink: ErrorSink,
 ) : ComboBox<PythonSelectableInterpreter?>() {
 
   init {
-    renderer = PythonSdkComboBoxListCellRenderer(controller.interpreterLoading)
+    renderer = PythonSdkComboBoxListCellRenderer { isBusy }
     val newOnPathSelected: (String) -> Unit = {
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("python.sdk.validating.environment")) {
-        controller.getSystemPythonFromSelection(it, errorSink)?.let { python ->
+        getSystemPythonFromSelection(it, errorSink)?.let { python ->
           onPathSelected(python).also { interpreter ->
             require(isEditable) {
               "works only with editable combobox because it doesn't reject non-listed items (the list will be updated later via coroutine)"
@@ -309,20 +307,22 @@ internal class PythonInterpreterComboBox(
         }
       }
     }
-    editor = PythonSdkComboBoxWithBrowseButtonEditor(this, controller, newOnPathSelected)
+    editor = PythonSdkComboBoxWithBrowseButtonEditor(this, newOnPathSelected)
   }
 
-  fun initialize(scope: CoroutineScope, flow: Flow<List<PythonSelectableInterpreter>>) {
-    controller.interpreterLoading.onEach {
-      setBusy(it)
-    }.launchIn(scope + Dispatchers.EDT)
-
-
+  fun initialize(scope: CoroutineScope, flow: Flow<List<PythonSelectableInterpreter>?>) {
     flow.onEach { interpreters ->
+      if (interpreters == null) {
+        setBusy(true)
+        return@onEach
+      }
+
       val selectedItemReminder = selectedItem
       removeAllItems()
       interpreters.forEach(this::addItem)
       selectedItemReminder?.let { selectedItem = it }
+
+      setBusy(false)
     }.launchIn(scope + Dispatchers.EDT)
   }
 

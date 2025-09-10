@@ -5,7 +5,7 @@ jvm_library(
   name = "buildScripts-devBuildServer",
   module_name = "intellij.platform.buildScripts.devBuildServer",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/build-scripts",

@@ -74,8 +74,11 @@ internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySu
     val fqNameRangeMarker = document.createRangeMarker(startOffset, fqNameEndOffset)
 
     if (shortenCommand != null
-        && editor.caretModel.caretCount == 1
+        && editor.caretModel.caretCount == 1 &&
+        temporarySuffix.isEmpty()
     ) {
+        // We can only use the existing shortenCommand if the temporarySuffix is null.
+        // Otherwise, the PSI structure might be different compared to before, which can cause exceptions.
         ShortenCommandWrapper(
             delegate = shortenCommand,
             copy = file,

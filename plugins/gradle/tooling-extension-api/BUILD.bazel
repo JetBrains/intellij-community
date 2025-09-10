@@ -15,7 +15,7 @@ jvm_library(
   name = "toolingExtension",
   module_name = "intellij.gradle.toolingExtension",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_toolingExtension",
   deps = [
     "@lib//:kotlin-stdlib",

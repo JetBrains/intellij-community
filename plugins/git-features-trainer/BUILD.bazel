@@ -11,7 +11,7 @@ jvm_library(
   name = "vcs-git-featuresTrainer",
   module_name = "intellij.vcs.git.featuresTrainer",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:git-learning-project",
@@ -41,7 +41,7 @@ jvm_library(
 jvm_library(
   name = "vcs-git-featuresTrainer_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":vcs-git-featuresTrainer"],
   deps = [
     "@lib//:kotlin-stdlib",

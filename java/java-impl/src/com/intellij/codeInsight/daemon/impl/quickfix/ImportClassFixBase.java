@@ -62,6 +62,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   @RequiresReadLock
   protected ImportClassFixBase(@NotNull T referenceElement, @NotNull R reference) {
     super(referenceElement.getProject());
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     myReferenceElement = referenceElement;
     myReference = reference;
     myContainingPsiFile = referenceElement.getContainingFile();

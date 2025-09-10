@@ -54,6 +54,10 @@ class SeClassesTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.openInFindToolWindow(sessionRef, params, initEvent, false)
   }
 
+  override suspend fun performExtendedAction(item: SeItemData): Boolean {
+    return delegate.performExtendedAction(item)
+  }
+
   override fun dispose() {
     Disposer.dispose(delegate)
   }

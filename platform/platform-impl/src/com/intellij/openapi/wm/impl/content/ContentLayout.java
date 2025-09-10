@@ -112,7 +112,7 @@ public abstract class ContentLayout {
     return component == null || !"true".equals(ClientProperty.get(component, ToolWindowContentUi.HIDE_ID_LABEL));
   }
 
-  boolean isIdVisible() {
+  public boolean isIdVisible() {
     return idLabel.isVisible();
   }
 }

@@ -6,8 +6,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.rpc.XValueId
-import com.intellij.xdebugger.impl.rpc.withId
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import kotlinx.coroutines.Dispatchers
@@ -22,13 +22,17 @@ abstract class XJumpToSourceActionBase : XDebuggerTreeActionBase() {
 
     val session = DebuggerUIUtil.getSessionProxy(e) ?: return
     session.coroutineScope.launch(Dispatchers.EDT) {
-      val navigated = withId(value, session) { xValueId ->
+      val navigated = XDebugManagerProxy.getInstance().withId(value, session) { xValueId ->
         navigateToSource(xValueId)
       }
       if (navigated && dialog != null && `is`("debugger.close.dialog.on.navigate")) {
         dialog.close(DialogWrapper.CANCEL_EXIT_CODE)
       }
     }
+  }
+
+  override fun isEnabled(node: XValueNodeImpl, e: AnActionEvent): Boolean {
+    return super.isEnabled(node, e) && XDebugManagerProxy.getInstance().hasBackendCounterpart(node.valueContainer)
   }
 
   /**

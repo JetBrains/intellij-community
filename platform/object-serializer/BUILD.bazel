@@ -5,7 +5,7 @@ jvm_library(
   name = "object-serializer",
   module_name = "intellij.platform.objectSerializer",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:ion",
@@ -28,7 +28,7 @@ jvm_library(
 jvm_library(
   name = "object-serializer_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testInternalSrc/**/*.kt", "testInternalSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testInternalSrc/**/*.kt", "testInternalSrc/**/*.java", "testInternalSrc/**/*.form"], allow_empty = True),
   associates = [":object-serializer"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -65,7 +65,7 @@ jvm_library(
   name = "objectSerializer-annotations",
   module_name = "intellij.platform.objectSerializer.annotations",
   visibility = ["//visibility:public"],
-  srcs = glob(["annotations/**/*.kt", "annotations/**/*.java"], allow_empty = True),
+  srcs = glob(["annotations/**/*.kt", "annotations/**/*.java", "annotations/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8"
 )
 ### auto-generated section `build intellij.platform.objectSerializer.annotations` end
@@ -81,7 +81,7 @@ jvm_library(
   name = "objectSerializer-tests_test_lib",
   module_name = "intellij.platform.objectSerializer.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/testFramework",

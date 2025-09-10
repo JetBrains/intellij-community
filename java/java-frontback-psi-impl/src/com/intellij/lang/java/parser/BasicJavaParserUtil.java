@@ -2,7 +2,7 @@
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.java.syntax.lexer.JavaDocLexer;
+import com.intellij.java.syntax.element.lazyParser.ParsingUtil;
 import com.intellij.java.syntax.lexer.JavaLexer;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderAdapter;
@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.platform.syntax.SyntaxElementType;
 import com.intellij.platform.syntax.lexer.Lexer;
 import com.intellij.platform.syntax.lexer.TokenList;
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder;
@@ -20,12 +21,12 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
 import com.intellij.psi.impl.source.WhiteSpaceAndCommentSetHolder;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.indexing.IndexingDataKeys;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static com.intellij.platform.syntax.lexer.TokenListUtil.tokenListLexer;
-import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COMMENT;
 
 @ApiStatus.Experimental
 public final class BasicJavaParserUtil {
@@ -283,10 +283,11 @@ public final class BasicJavaParserUtil {
   }
 
   public static @Nullable ASTNode parseFragmentWithHighestLanguageLevel(
-    ASTNode chameleon,
-    BasicJavaParserUtil.ParserWrapper wrapper
+    @NotNull ASTNode chameleon,
+    @NotNull BasicJavaParserUtil.ParserWrapper wrapper,
+    @NotNull Function<LanguageLevel, Lexer> lexer
   ) {
-    return parseFragment(chameleon, wrapper, true, LanguageLevel.HIGHEST, JavaLexer::new);
+    return parseFragment(chameleon, wrapper, true, LanguageLevel.HIGHEST, lexer);
   }
 
   public static @Nullable ASTNode parseFragment(
@@ -308,21 +309,18 @@ public final class BasicJavaParserUtil {
     assert psi != null : chameleon;
 
     PsiSyntaxBuilderFactory factory = PsiSyntaxBuilderFactory.getInstance();
-    Lexer lexer = BasicJavaAstTreeUtil.is(chameleon, BASIC_DOC_COMMENT) ? new JavaDocLexer(level) : javaLexer.apply(level);
+    Lexer lexer = javaLexer.apply(level);
     PsiSyntaxBuilder psiBuilder = factory.createBuilder(chameleon, lexer, chameleon.getElementType().getLanguage(), chameleon.getChars());
 
     long startTime = System.nanoTime();
     SyntaxTreeBuilder builder = psiBuilder.getSyntaxTreeBuilder();
-    SyntaxTreeBuilder.Marker root = builder.mark();
-    wrapper.parse(builder, level);
-    if (!builder.eof()) {
-      if (!eatAll) throw new AssertionError("Unexpected token: '" + builder.getTokenText() + "'");
-      final SyntaxTreeBuilder.Marker extras = builder.mark();
-      while (!builder.eof()) builder.advanceLexer();
-      extras.error(JavaPsiBundle.message("unexpected.tokens"));
-    }
     ElementTypeConverter converter = ElementTypeConverters.getConverter(JavaLanguage.INSTANCE);
-    root.done(ElementTypeConverterKt.convertNotNull(converter, chameleon.getElementType()));
+    SyntaxElementType type = ElementTypeConverterKt.convertNotNull(converter, chameleon.getElementType());
+    ParsingUtil.parseFragment(builder, type, eatAll, () -> {
+      wrapper.parse(builder, level);
+      return Unit.INSTANCE;
+    });
+
     ASTNode result = psiBuilder.getTreeBuilt().getFirstChildNode();
     ParsingDiagnostics.registerParse(builder, chameleon.getElementType().getLanguage(), System.nanoTime() - startTime);
     return result;

@@ -26,16 +26,14 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 
 class SafeAccessToIfThenIntention : SelfTargetingRangeIntention<KtSafeQualifiedExpression>(
-    KtSafeQualifiedExpression::class.java, KotlinBundle.lazyMessage("replace.safe.access.expression.with.if.expression")
+    KtSafeQualifiedExpression::class.java, KotlinBundle.messagePointer("replace.safe.access.expression.with.if.expression")
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtSafeQualifiedExpression): TextRange? {
         if (element.selectorExpression == null) return null
         return element.operationTokenNode.textRange
     }
 
-    override fun startInWriteAction(): Boolean {
-        return false
-    }
+    override fun startInWriteAction(): Boolean = false
 
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun applyTo(element: KtSafeQualifiedExpression, editor: Editor?) {

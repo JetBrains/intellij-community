@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.platform.testFramework.assertion.WorkspaceAssertions
 import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
+import com.intellij.platform.workspace.storage.toBuilder
 import kotlinx.coroutines.delay
 import org.jetbrains.plugins.gradle.importing.TestModelProvider
 import org.jetbrains.plugins.gradle.importing.TestPhasedModel
@@ -125,7 +126,8 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         addModelProviders(DEFAULT_MODEL_FETCH_PHASES.map(::TestModelProvider))
       }
       for (phase in allPhases) {
-        addSyncContributor(phase, disposable) { _, _ ->
+        addSyncContributor(phase, disposable) { _, storage -> storage }
+        whenSyncPhaseCompleted(phase, disposable) {
           syncContributorAssertions.trace {
             for (completedPhase in completedPhases) {
               Assertions.assertTrue(completedPhase < phase) {
@@ -177,13 +179,15 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
         for (phase in allPhases) {
           addSyncContributor(phase, disposable) { context, storage ->
+            val builder = storage.toBuilder()
             syncContributorAssertions.trace {
               val entitySource = GradleTestEntitySource(context.projectPath, phase)
-              storage addEntity GradleTestEntity(phase, entitySource)
+              builder addEntity GradleTestEntity(phase, entitySource)
               Assertions.assertTrue(completedPhases.add(phase)) {
                 "The $phase should be completed only once."
               }
             }
+            return@addSyncContributor builder.toSnapshot()
           }
           whenSyncPhaseCompleted(phase, disposable) { _ ->
             syncPhaseCompletionAssertions.trace {
@@ -242,13 +246,15 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
       for (phase in allPhases) {
         addSyncContributor(phase, disposable) { context, storage ->
+          val builder = storage.toBuilder()
           syncContributorAssertions.trace {
             val entitySource = GradleTestBridgeEntitySource(context.projectPath, phase)
-            storage addEntity GradleTestEntity(phase, entitySource)
+            builder addEntity GradleTestEntity(phase, entitySource)
             Assertions.assertTrue(completedPhases.add(phase)) {
               "The $phase should be completed only once."
             }
           }
+          return@addSyncContributor builder.toSnapshot()
         }
         whenSyncPhaseCompleted(phase, disposable) { _ ->
           syncPhaseCompletionAssertions.trace {
@@ -318,7 +324,8 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val completedPhases = CopyOnWriteArrayList<GradleSyncPhase>()
 
       for (phase in allPhases) {
-        addSyncContributor(phase, disposable) { _, _ ->
+        addSyncContributor(phase, disposable) { _, storage -> storage }
+        whenSyncPhaseCompleted(phase, disposable) {
           modelFetchPhaseCompletionAssertion.trace {
             completedPhases.add(phase)
           }
@@ -430,27 +437,33 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
     Disposer.newDisposable().use { disposable ->
       val projectLoadingAssertion = ListenerAssertion()
       val modelFetchCompletionAssertion = ListenerAssertion()
-      val modelFetchPhaseCompletionAssertion = ListenerAssertion()
+      val syncContributorAssertion = ListenerAssertion()
+      val syncListenerAssertion = ListenerAssertion()
       val syncCancellationAssertion = ListenerAssertion()
       val executionStartAssertion = ListenerAssertion()
       val executionFinishAssertion = ListenerAssertion()
 
       val allPhases = DEFAULT_SYNC_PHASES
-      val expectedCompletedPhases = allPhases.filter { it <= cancellationPhase }
+      val expectedCompletedPhases = allPhases.filter { it < cancellationPhase }
       val actualCompletedPhases = CopyOnWriteArrayList<GradleSyncPhase>()
 
       addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
         addModelProviders(DEFAULT_MODEL_FETCH_PHASES.map(::TestModelProvider))
       }
       for (phase in allPhases) {
-        addSyncContributor(phase, disposable) { resolverContext, _ ->
-          modelFetchPhaseCompletionAssertion.trace {
-            actualCompletedPhases.add(phase)
+        addSyncContributor(phase, disposable) { context, storage ->
+          syncContributorAssertion.trace {
             if (phase == cancellationPhase) {
-              assertCancellation({ cancellation(resolverContext) }) {
+              assertCancellation({ cancellation(context) }) {
                 "The Gradle sync should be cancelled after cancellation"
               }
             }
+          }
+          return@addSyncContributor storage
+        }
+        whenSyncPhaseCompleted(phase, disposable) {
+          syncListenerAssertion.trace {
+            actualCompletedPhases.add(phase)
           }
         }
       }
@@ -518,10 +531,18 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         "Expected completed phases = $expectedCompletedPhases\n" +
         "Actual completed phases = $actualCompletedPhases"
       }
-      modelFetchPhaseCompletionAssertion.assertListenerFailures()
-      modelFetchPhaseCompletionAssertion.assertListenerState(expectedCompletedPhases.size) {
+      syncContributorAssertion.assertListenerFailures()
+      syncContributorAssertion.assertListenerState(expectedCompletedPhases.size + 1) {
         "Gradle sync should be cancelled during the $cancellationPhase.\n" +
-        "Therefore the earliest model fetch phases should be completed.\n" +
+        "Therefore the earlier sync phases should be completed.\n" +
+        "Requested phases = $allPhases\n" +
+        "Expected completed phases = $expectedCompletedPhases\n" +
+        "Actual completed phases = $actualCompletedPhases"
+      }
+      syncListenerAssertion.assertListenerFailures()
+      syncListenerAssertion.assertListenerState(expectedCompletedPhases.size) {
+        "Gradle sync should be cancelled during the $cancellationPhase.\n" +
+        "Therefore the earlier sync phases should be completed.\n" +
         "Requested phases = $allPhases\n" +
         "Expected completed phases = $expectedCompletedPhases\n" +
         "Actual completed phases = $actualCompletedPhases"

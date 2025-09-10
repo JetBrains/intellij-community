@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.ProgressDialogUI
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.progress.util.createDialogWrapper
 import com.intellij.openapi.project.Project
@@ -40,6 +39,7 @@ import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.platform.util.progress.ProgressPipe
 import com.intellij.platform.util.progress.ProgressState
 import com.intellij.platform.util.progress.createProgressPipe
+import com.intellij.ui.progress.ProgressUIUtil
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.application
 import com.intellij.util.awaitCancellationAndInvoke
@@ -486,7 +486,7 @@ internal fun CoroutineScope.showIndicator(
   stateFlow: Flow<ProgressState>,
 ): Job {
   return launch(Dispatchers.Default) {
-    delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
+    delay(ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS)
     withContext(progressManagerTracer.span("Progress: ${progressModel.title}")) {
       withContext(Dispatchers.EDT) {
         val taskInfo = taskInfo(progressModel.title, progressModel.cancellation)
@@ -585,7 +585,7 @@ private fun CoroutineScope.showModalIndicator(
       if (isHeadlessEnv()) {
         return@supervisorScope
       }
-      delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
+      delay(ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS)
       doShowModalIndicator(taskJob, descriptor, stateFlow, deferredDialog)
     }
   }

@@ -37,6 +37,7 @@ import com.jetbrains.python.sdk.setAssociationToModuleAsync
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 
@@ -44,7 +45,8 @@ import java.nio.file.Path
  * This class only supports local, not remote target.
  * TODO: Support remote target (ie \\wsl)
  */
-internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
+@ApiStatus.Internal
+class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
   override suspend fun createAndAddSdkForConfigurator(module: Module): PyResult<Sdk?> = createAndAddSdk(module, Source.CONFIGURATOR)
 
   override suspend fun getIntention(module: Module): @IntentionName String? {

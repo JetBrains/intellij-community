@@ -4,6 +4,7 @@ package com.intellij.platform.backend.workspace
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.ReferenceChange
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import org.jetbrains.annotations.ApiStatus
@@ -16,7 +17,8 @@ import org.jetbrains.annotations.ApiStatus
 public class StorageReplacement internal constructor(
   public val version: Long,
   public val builder: MutableEntityStorage,
-  public val changes: Map<Class<*>, List<EntityChange<*>>>
+  public val changes: Map<Class<*>, List<EntityChange<*>>>,
+  public val symbolicEntityIdChanges: Map<Class<*>, Set<ReferenceChange<*>>>,
 )
 
 /**
@@ -45,6 +47,6 @@ public class BuilderSnapshot @ApiStatus.Internal constructor(private val version
   @OptIn(EntityStorageInstrumentationApi::class)
   public fun getStorageReplacement(): StorageReplacement {
     val changes = (builder as MutableEntityStorageInstrumentation).collectChanges()
-    return StorageReplacement(version, builder, changes)
+    return StorageReplacement(version, builder, changes, builder.collectSymbolicEntityIdsChanges())
   }
 }

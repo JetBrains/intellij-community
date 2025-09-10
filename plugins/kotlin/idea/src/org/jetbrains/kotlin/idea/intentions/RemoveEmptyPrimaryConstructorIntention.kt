@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -17,9 +17,8 @@ class RemoveEmptyPrimaryConstructorInspection : IntentionBasedInspection<KtPrima
 
 class RemoveEmptyPrimaryConstructorIntention : SelfTargetingOffsetIndependentIntention<KtPrimaryConstructor>(
     KtPrimaryConstructor::class.java,
-    KotlinBundle.lazyMessage("remove.empty.primary.constructor")
+    KotlinBundle.messagePointer("remove.empty.primary.constructor")
 ) {
-
     override fun applyTo(element: KtPrimaryConstructor, editor: Editor?) {
         element.delete()
     }

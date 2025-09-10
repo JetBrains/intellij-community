@@ -21,7 +21,7 @@ jvm_library(
   name = "jps",
   module_name = "intellij.devkit.runtimeModuleRepository.jps",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_jps",
   deps = [
     "//jps/model-api:model",
@@ -30,6 +30,7 @@ jvm_library(
     "//platform/runtime/repository",
     "@lib//:kotlin-stdlib",
     "//jps/model-serialization",
+    "//plugins/devkit/runtimeModuleRepository/generator",
     "@lib//:hash4j",
   ],
   runtime_deps = [":jps_resources"]
@@ -38,7 +39,7 @@ jvm_library(
 jvm_library(
   name = "jps_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_jps",
   associates = [":jps"],
   deps = [
@@ -51,6 +52,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//jps/jps-builders:build-tests_test_lib",
     "//jps/model-serialization",
+    "//plugins/devkit/runtimeModuleRepository/generator",
     "@lib//:hash4j",
   ],
   runtime_deps = [":jps_resources"]

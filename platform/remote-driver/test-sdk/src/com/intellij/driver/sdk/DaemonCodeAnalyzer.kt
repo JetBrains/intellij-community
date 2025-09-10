@@ -24,6 +24,7 @@ interface HighlightInfo {
   fun getSeverity(): HighlightSeverity
   fun getText(): String
   fun getHighlighter(): RangeHighlighterEx
+  fun fromRangeHighlighter(rangeHighlighter: RangeHighlighter): HighlightInfo?
 }
 
 @Remote("com.intellij.lang.annotation.HighlightSeverity")
@@ -69,8 +70,9 @@ fun Driver.waitForCodeAnalysis(project: Project? = null, file: VirtualFile, time
   }
 }
 
-fun Driver.getHighlights(document: Document): List<HighlightInfo> {
+fun Driver.getHighlights(document: Document, project: Project? = null): List<HighlightInfo> {
+  val project = project ?: singleProject()
   return withReadAction {
-    service<DaemonCodeAnalyzer>(singleProject()).getHighlights(document, null, singleProject())
+    service<DaemonCodeAnalyzer>(project).getHighlights(document, null, project)
   }
 }

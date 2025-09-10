@@ -1,0 +1,9 @@
+### auto-generated section `local-libs` start
+load("@rules_java//java:defs.bzl", "java_import")
+
+java_import(
+  name = "dokka-core-1-4-10-2-dev-52-snapshot",
+  jars = ["dokka-core-1.4.10.2-dev-52-SNAPSHOT-9f86d081884c7d659a2f.jar"],
+  visibility = ["//visibility:public"]
+)
+### auto-generated section `local-libs` end

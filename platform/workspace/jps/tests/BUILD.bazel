@@ -16,7 +16,7 @@ jvm_library(
 jvm_library(
   name = "tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True),
   associates = ["//platform/workspace/jps"],
   deps = [
     "//platform/analysis-api:analysis",

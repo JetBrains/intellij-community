@@ -110,7 +110,7 @@ private fun KtExpression.dropToStringAndParenthesis(): KtExpression =
  *   this function can convert `bar` to "${bar}", `2.3f` to "2.3f", ...
  */
 context(_: KaSession)
-private fun buildStringTemplateForExpression(expr: KtExpression?, forceBraces: Boolean, nextText: String?): String {
+fun buildStringTemplateForExpression(expr: KtExpression?, forceBraces: Boolean, nextText: String?): String {
     if (expr == null) return ""
     val expression = expr.dropToStringAndParenthesis()
 

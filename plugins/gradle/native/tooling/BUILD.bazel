@@ -21,7 +21,7 @@ jvm_library(
   name = "tooling",
   module_name = "intellij.gradle.native.tooling",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_tooling",
   deps = [
     "@lib//:jetbrains-annotations",
@@ -40,7 +40,7 @@ jvm_library(
   name = "gradle-native-tooling-tests_test_lib",
   module_name = "intellij.gradle.native.tooling.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:junit4",

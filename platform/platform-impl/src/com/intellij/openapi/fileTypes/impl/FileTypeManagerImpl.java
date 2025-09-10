@@ -140,7 +140,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final Map<String, StandardFileType> standardFileTypes = new LinkedHashMap<>();
   private final SchemeManager<FileTypeWithDescriptor> schemeManager;
 
-  protected FileTypeManagerImpl(@NotNull CoroutineScope coroutineScope) throws IOException {
+  @ApiStatus.Internal
+  public FileTypeManagerImpl(@NotNull CoroutineScope coroutineScope) throws IOException {
     detectionService = new FileTypeDetectionService(this, coroutineScope);
 
     NonLazySchemeProcessor<FileTypeWithDescriptor, FileTypeWithDescriptor> abstractTypesProcessor = new NonLazySchemeProcessor<>() {

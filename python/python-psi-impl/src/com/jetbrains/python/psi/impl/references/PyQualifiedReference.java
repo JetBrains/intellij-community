@@ -92,10 +92,13 @@ public class PyQualifiedReference extends PyReferenceImpl {
       ret.addAll(membersOfQualifier);
     }
 
-    // look for assignment of this attribute in containing function
-    if (qualifier instanceof PyQualifiedExpression && ret.isEmpty()) {
-      if (addAssignedAttributes(ret, referencedName, (PyQualifiedExpression)qualifier)) {
-        return ret;
+    if (myContext.getTypeEvalContext().maySwitchToAST(myElement)) {
+      // look for assignment of this attribute in containing function
+      // See PyResolveTest#testAttributeAssignedNearby for an example
+      if (qualifier instanceof PyQualifiedExpression && ret.isEmpty()) {
+        if (addAssignedAttributes(ret, referencedName, (PyQualifiedExpression)qualifier)) {
+          return ret;
+        }
       }
     }
 

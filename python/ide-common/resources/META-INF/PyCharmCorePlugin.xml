@@ -25,6 +25,8 @@
   <xi:include href="/META-INF/pycharm-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="true" description="Show unhandled exceptions that were thrown during interactive operation"
+                 key="ide.exceptions.show.interactive" overrides="true"/>
     <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
                         serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"
                         overrides="true"/>

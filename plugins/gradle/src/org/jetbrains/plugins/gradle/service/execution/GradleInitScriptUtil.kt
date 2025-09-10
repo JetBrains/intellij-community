@@ -19,6 +19,8 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
 import gnu.trove.TObjectHash
 import groovy.lang.MissingMethodException
+import io.opentelemetry.api.trace.Span
+import io.opentelemetry.context.ImplicitContextKeyed
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.invocation.Gradle
 import org.gradle.util.GradleVersion
@@ -40,8 +42,8 @@ import kotlin.io.path.*
 private val LOG = Logger.getInstance("org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil")
 private val EXCLUDED_JAR_SUFFIXES = setOf(
   "lib/app.jar",
-  "lib/app-client.jar",
-  "lib/lib-client.jar"
+  "lib/app-backend.jar",
+  "lib/lib.jar"
 )
 
 @ApiStatus.Internal
@@ -79,6 +81,8 @@ val GRADLE_TOOLING_EXTENSION_CLASSES: Set<Class<*>> = setOf(
   Multimap::class.java, // guava
   StringUtils::class.java, // apache commons
   TObjectHash::class.java, // trove hashing
+  Span::class.java, // opentelemetry
+  ImplicitContextKeyed::class.java // opentelemetry-context
 )
 
 @JvmField

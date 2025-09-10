@@ -1,3 +1,18 @@
+*f:com.intellij.ide.rpc.AnActionId
+- *sf:Companion:com.intellij.ide.rpc.AnActionId$Companion
+- <init>():V
+*bf:com.intellij.ide.rpc.AnActionId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.rpc.AnActionId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.rpc.AnActionId
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.rpc.AnActionId):V
+*f:com.intellij.ide.rpc.AnActionId$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.ide.rpc.AnActionIdKt
+- *sf:action(com.intellij.ide.rpc.AnActionId):com.intellij.openapi.actionSystem.AnAction
+- *sf:rpcId(com.intellij.openapi.actionSystem.AnAction,kotlinx.coroutines.CoroutineScope):com.intellij.ide.rpc.AnActionId
 *f:com.intellij.ide.rpc.DataContextId
 - *sf:Companion:com.intellij.ide.rpc.DataContextId$Companion
 - <init>():V
@@ -28,6 +43,14 @@ f:com.intellij.ide.rpc.DataContextIdKt
 f:com.intellij.ide.rpc.DocumentIdKt
 - *sf:document(com.intellij.ide.rpc.DocumentId):com.intellij.openapi.editor.Document
 - *sf:rpcId(com.intellij.openapi.editor.Document):com.intellij.ide.rpc.DocumentId
+*f:com.intellij.ide.ui.WindowFocusFrontendService
+- *sf:Companion:com.intellij.ide.ui.WindowFocusFrontendService$Companion
+- <init>():V
+- f:isFrontendFocused():Z
+- f:performActionWithFocus(Z,kotlin.jvm.functions.Function0):java.lang.Object
+- bs:performActionWithFocus$default(com.intellij.ide.ui.WindowFocusFrontendService,Z,kotlin.jvm.functions.Function0,I,java.lang.Object):java.lang.Object
+*f:com.intellij.ide.ui.WindowFocusFrontendService$Companion
+- f:getInstance():com.intellij.ide.ui.WindowFocusFrontendService
 *f:com.intellij.ide.ui.colors.ColorId
 - *sf:Companion:com.intellij.ide.ui.colors.ColorId$Companion
 - <init>():V

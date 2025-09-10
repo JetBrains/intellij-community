@@ -203,7 +203,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
                                                () -> createInfoHolder(injectedPsi), (toolId, psiElement, infos) -> {
               // convert injected infos to host
               List<? extends HighlightInfo> hostInfos = infos.isEmpty()
-                                                        ? infos
+                                                        ? List.of()
                                                         : ContainerUtil.flatMap(infos, info -> createPatchedInfos(info, injectedPsi, documentWindow, injectedLanguageManager));
               resultSink.accept(toolId, psiElement, hostInfos);
             });
@@ -247,10 +247,10 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     }
     resultSink.accept(InjectedLanguageManagerImpl.INJECTION_BACKGROUND_TOOL_ID, injectedPsi, result);
   }
-  private static @NotNull List<HighlightInfo> createPatchedInfos(@NotNull HighlightInfo info,
-                                                                 @NotNull PsiFile injectedPsi,
-                                                                 @NotNull DocumentWindow documentWindow,
-                                                                 @NotNull InjectedLanguageManager injectedLanguageManager) {
+  private static @NotNull List<@NotNull HighlightInfo> createPatchedInfos(@NotNull HighlightInfo info,
+                                                                          @NotNull PsiFile injectedPsi,
+                                                                          @NotNull DocumentWindow documentWindow,
+                                                                          @NotNull InjectedLanguageManager injectedLanguageManager) {
     ProperTextRange infoRange = new ProperTextRange(info.startOffset, info.endOffset);
     List<TextRange> editables = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, infoRange);
     List<HighlightInfo> result = new ArrayList<>(editables.size());

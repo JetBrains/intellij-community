@@ -16,11 +16,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier
-import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -162,12 +158,16 @@ object CreateKotlinCallableActionTextBuilder {
     context(_: KaSession)
     fun renderCandidatesOfParameterTypes(expectedParameters: List<ExpectedParameter>, container: KtElement?): List<ParamCandidate> {
         val generator = UniqueNameGenerator()
-        return expectedParameters.map { expectedParameter ->
-            val types = if (container == null) listOf("Any")
-            else expectedParameter.expectedTypes.map {
-                renderTypeName(it, container) ?: "Any"
+        return expectedParameters.mapNotNull { expectedParameter ->
+            val types = if (container == null) {
+                listOf("Any")
+            } else {
+                expectedParameter.expectedTypes.map {
+                    renderTypeName(it, container) ?: "Any"
+                }
             }
-            ParamCandidate(expectedParameter.semanticNames.map { generator.generateUniqueName(it) }, types)
+            val semanticNames = expectedParameter.semanticNames.ifEmpty { return@mapNotNull null }
+            ParamCandidate(semanticNames.map { generator.generateUniqueName(it) }, types)
         }
     }
 }

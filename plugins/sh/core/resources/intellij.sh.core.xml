@@ -1,0 +1,39 @@
+<idea-plugin>
+  <resource-bundle>messages.ShBundle</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.shellOccurrencesHighlightingSuppressor"
+                    interface="com.intellij.sh.highlighting.ShOccurrencesHighlightingSuppressor"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType language="Shell Script" extensions="bash;sh;zsh" hashBangs="bash;sh;zsh" fieldName="INSTANCE" name="Shell Script"
+              implementationClass="com.intellij.sh.ShFileType"/>
+    <lang.syntaxHighlighter language="Shell Script" implementationClass="com.intellij.sh.highlighter.ShSyntaxHighlighter"/>
+    <lang.parserDefinition language="Shell Script" implementationClass="com.intellij.sh.parser.ShParserDefinition"/>
+    <lang.commenter language="Shell Script" implementationClass="com.intellij.sh.editor.ShCommenter"/>
+    <lang.foldingBuilder language="Shell Script" implementationClass="com.intellij.sh.editor.ShFoldingBuilder"/>
+    <lang.quoteHandler language="Shell Script" implementationClass="com.intellij.sh.ShQuoteHandler"/>
+    <editor.backspaceModeOverride language="Shell Script" implementationClass="com.intellij.sh.ShBackspaceModeOverride"/>
+
+    <annotator language="Shell Script" implementationClass="com.intellij.sh.ShAnnotator"/>
+    <colorSettingsPage implementation="com.intellij.sh.highlighter.ShColorPage"/>
+    <additionalTextAttributes scheme="Default" file="colors/ShDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colors/ShDarcula.xml"/>
+
+    <typedHandler implementation="com.intellij.sh.ShTypedHandler"/>
+    <lang.braceMatcher language="Shell Script" implementationClass="com.intellij.sh.ShBraceMatcher"/>
+
+    <langCodeStyleSettingsProvider implementation="com.intellij.sh.codeStyle.ShLanguageCodeStyleSettingsProvider"/>
+    <lineIndentProvider implementation="com.intellij.sh.formatter.ShLineIndentProvider"/>
+
+    <highlightErrorFilter implementation="com.intellij.sh.ShErrorFilter"/>
+    <daemon.highlightInfoFilter implementation="com.intellij.sh.ShErrorFilter"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.sh.statistics.ShCounterUsagesCollector"/>
+
+    <notificationGroup id="Shell Script" displayType="BALLOON" bundle="messages.ShBundle" key="notification.group.shell.script"/>
+    <statistics.notificationIdsHolder implementation="com.intellij.sh.ShNotificationDisplayIds"/>
+  </extensions>
+</idea-plugin>

@@ -74,7 +74,7 @@ private fun methodSourceIsImplicitlyUsed(element: PsiMethod): Boolean {
       if (parent is PsiClass) psiClass = parent
     }
 
-    return psiClass.methods.any { otherMethod ->
+    return psiClass.allMethods.any { otherMethod ->
       MetaAnnotationUtil.isMetaAnnotated(otherMethod, setOf(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE))
       && MetaAnnotationUtil.isMetaAnnotated(otherMethod, setOf(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
       && isAnnotationMemberContainsName(methodName, otherMethod, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE)
@@ -95,7 +95,7 @@ private fun fieldSourceIsImplicitlyUsed(element: PsiField): Boolean {
       if (parent is PsiClass) psiClass = parent
     }
 
-    return psiClass.methods.any { method ->
+    return psiClass.allMethods.any { method ->
       MetaAnnotationUtil.isMetaAnnotated(method, setOf(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_FIELD_SOURCE))
       && MetaAnnotationUtil.isMetaAnnotated(method, setOf(ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
       && isAnnotationMemberContainsName(fieldName, method, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_FIELD_SOURCE)
@@ -107,32 +107,41 @@ private fun fieldSourceIsImplicitlyUsed(element: PsiField): Boolean {
   }
 }
 
+private fun nestedClassIsImplicitlyUsed(element: PsiClass): Boolean {
+  return MetaAnnotationUtil.isMetaAnnotated(element, setOf(ORG_JUNIT_JUPITER_API_NESTED))
+}
+
 private fun isAnnotationMemberContainsName(name: String, method: PsiMethod, annotationFqn: String): Boolean {
   val annotation = method.getAnnotation(annotationFqn) ?: return false
-  val value = annotation.findAttributeValue("value")
+  val value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
   if (value == null && method.name == name) return true
-  if (value is PsiArrayInitializerMemberValue) {
-    if (value.initializers.isEmpty() && method.name == name) return true
-    for (memberValue in value.initializers) {
-      if (memberValue is PsiLiteralExpression) {
-        val data = JavaConstantExpressionEvaluator.computeConstantExpression(memberValue, null, false) as? String ?: continue
-        if (data.isEmpty() && method.name == name) return true
-        if (data == name) return true
-      }
+
+  val initializers = if (value is PsiArrayInitializerMemberValue) value.initializers else arrayOf(value)
+  // if an annotation value is empty, it's equivalent to the annotation value equal to the method name
+  if (initializers.isEmpty() && method.name == name) return true
+  for (memberValue in initializers) {
+    if (memberValue is PsiLiteralExpression) {
+      val data = JavaConstantExpressionEvaluator.computeConstantExpression(memberValue, null, false) as? String ?: continue
+      if (data.isEmpty() && method.name == name) return true
+      if (data == name) return true
     }
   }
   return false
 }
 
 class JUnit5ImplicitUsageProvider : ImplicitUsageProvider {
-  override fun isImplicitUsage(element: PsiElement): Boolean {
-    return (element is PsiParameter && parameterIsUsedByParameterizedTest(element))
-           || (element is PsiEnumConstant && enumReferenceIsUsedByParameterizedTest(element))
-           || (element is PsiMethod && methodSourceIsImplicitlyUsed(element))
-           || (element is PsiField && fieldSourceIsImplicitlyUsed(element))
+  override fun isImplicitUsage(element: PsiElement): Boolean = when (element) {
+    is PsiParameter -> parameterIsUsedByParameterizedTest(element)
+    is PsiEnumConstant -> enumReferenceIsUsedByParameterizedTest(element)
+    is PsiMethod -> methodSourceIsImplicitlyUsed(element)
+    is PsiField -> fieldSourceIsImplicitlyUsed(element)
+    is PsiClass -> nestedClassIsImplicitlyUsed(element)
+    else -> false
   }
 
-  override fun isImplicitRead(element: PsiElement): Boolean = false
+  override fun isImplicitRead(element: PsiElement): Boolean {
+    return element is PsiField && fieldSourceIsImplicitlyUsed(element)
+  }
 
   override fun isImplicitWrite(element: PsiElement): Boolean {
     return element is PsiField && MetaAnnotationUtil.isMetaAnnotated(element, setOf(ORG_JUNIT_JUPITER_API_IO_TEMPDIR))

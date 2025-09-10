@@ -11,6 +11,7 @@ import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.util.module
@@ -46,7 +48,7 @@ internal class ActualKeywordHandler(
     private val declaration: KtNamedDeclaration? = null,
 ) : CompletionKeywordHandler<KaSession>(KtTokens.ACTUAL_KEYWORD) {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
@@ -60,7 +62,7 @@ internal class ActualKeywordHandler(
                 lookup
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun createActualLookups(
         parameters: KotlinFirCompletionParameters,
         project: Project
@@ -102,7 +104,7 @@ internal class ActualKeywordHandler(
         return actualsForExpected.isEmpty()
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createLookupElement(
         project: Project,
         file: KtFile,
@@ -134,7 +136,7 @@ internal class ActualKeywordHandler(
         )
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaDeclarationSymbol.textPresentation(): String {
         val symbol = this
         return buildString {
@@ -148,7 +150,7 @@ internal class ActualKeywordHandler(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaDeclarationSymbol.iconPresentation(): RowIcon {
         val symbol = this
         val baseIcon = KotlinIconProvider.getBaseIcon(symbol)

@@ -8,7 +8,7 @@ XmlFile:test.xml
       XmlToken:XML_TAG_END('>')
       XmlText
         PsiWhiteSpace(' ')
-        PsiErrorElement:Unescaped & or nonterminated character/entity reference
+        PsiErrorElement:Unescaped & or unterminated character/entity reference
           XmlToken:XML_BAD_CHARACTER('&')
         XmlToken:XML_DATA_CHARACTERS('n')
         PsiWhiteSpace(' ')

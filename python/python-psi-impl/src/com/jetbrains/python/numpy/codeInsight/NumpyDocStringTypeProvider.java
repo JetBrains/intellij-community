@@ -55,7 +55,7 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   private static final Pattern NUMPY_ARRAY_PATTERN = Pattern.compile("(\\(\\.\\.\\..*\\))(.*)");
   public static final String NDARRAY = "numpy.core.multiarray.ndarray";
 
-  private static final String NDARRAY_OR_ITERABLE = NDARRAY + " or collections.Iterable or int or long or float";
+  private static final String NDARRAY_OR_ITERABLE = NDARRAY + " or collections.abc.Iterable or int or long or float";
 
   static {
     NUMPY_ALIAS_TO_REAL_TYPE.put("ndarray", NDARRAY);
@@ -82,15 +82,15 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     // 4 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("Python type", "object");
     // 3 occurrences
-    NUMPY_ALIAS_TO_REAL_TYPE.put("callable", "collections.Callable");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("callable", "collections.abc.Callable");
     // 3 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("number", "int or long or float or complex");
 
     //treat all collections as iterable
-    NUMPY_ALIAS_TO_REAL_TYPE.put("sequence", "collections.Iterable");
-    NUMPY_ALIAS_TO_REAL_TYPE.put("set", "collections.Iterable");
-    NUMPY_ALIAS_TO_REAL_TYPE.put("list", "collections.Iterable");
-    NUMPY_ALIAS_TO_REAL_TYPE.put("tuple", "collections.Iterable or tuple");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("sequence", "collections.abc.Iterable");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("set", "collections.abc.Iterable");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("list", "collections.abc.Iterable");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("tuple", "collections.abc.Iterable or tuple");
 
     NUMPY_ALIAS_TO_REAL_TYPE.put("ints", "int");
     NUMPY_ALIAS_TO_REAL_TYPE.put("non-zero int", "int");
@@ -382,7 +382,7 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
       }
       if (paramType != null) {
         if (isUfuncType(function, paramType)) {
-          return getPsiFacade(function).parseTypeAnnotation("numbers.Number or numpy.core.multiarray.ndarray or collections.Iterable", function);
+          return getPsiFacade(function).parseTypeAnnotation("numbers.Number or numpy.core.multiarray.ndarray or collections.abc.Iterable", function);
         }
         final PyType numpyDocType = parseNumpyDocType(function, paramType);
         if ("size".equals(parameterName)) {

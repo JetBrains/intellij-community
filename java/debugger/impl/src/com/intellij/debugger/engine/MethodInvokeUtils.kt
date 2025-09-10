@@ -19,12 +19,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.CommonClassNames
 import com.intellij.rt.debugger.MethodInvoker
 import com.intellij.util.BitUtil.isSet
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
 import com.jetbrains.jdi.ArrayReferenceImpl
 import com.sun.jdi.*
 import com.sun.jdi.ObjectReference.INVOKE_NONVIRTUAL
 import org.jetbrains.annotations.ApiStatus
-import java.util.EnumSet
+import java.util.*
 
 @ApiStatus.Internal
 object MethodInvokeUtils {

@@ -9,6 +9,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.xmlb.XmlSerializer
 import com.jetbrains.python.PyBundle
@@ -33,7 +34,7 @@ enum class UvRunType {
 @ApiStatus.Internal
 data class UvRunConfigurationOptions(
   var runType: UvRunType = UvRunType.SCRIPT,
-  var scriptOrModule: String = "",
+  @NlsActions.ActionText var scriptOrModule: String = "",
   var args: List<String> = listOf(),
   var env: Map<String, String> = mapOf(),
   var checkSync: Boolean = true,
@@ -41,18 +42,18 @@ data class UvRunConfigurationOptions(
   var uvArgs: List<String> = listOf()
 ) {
   val uvSdk: Sdk?
-    get() = uvSdkKey?.let {PythonSdkUtil.findSdkByKey(it)}
+    get() = uvSdkKey?.let { PythonSdkUtil.findSdkByKey(it) }
 
   val workingDirectory: Path?
     get() = (uvSdk?.sdkAdditionalData as? UvSdkAdditionalData)?.uvWorkingDirectory
-      ?: tryResolvePath(uvSdk?.associatedModulePath)
+            ?: tryResolvePath(uvSdk?.associatedModulePath)
 }
 
 @ApiStatus.Internal
 class UvRunConfiguration(
   project: Project,
   factory: ConfigurationFactory,
-) : AbstractPythonRunConfiguration<UvRunConfiguration>(project, factory) {
+): AbstractPythonRunConfiguration<UvRunConfiguration>(project, factory) {
   var options: UvRunConfigurationOptions = UvRunConfigurationOptions(
     uvSdkKey = module?.pythonSdk?.name ?: project.pythonSdk?.name,
   )
@@ -62,7 +63,7 @@ class UvRunConfiguration(
   override fun getState(
     executor: Executor,
     environment: ExecutionEnvironment,
-  ): RunProfileState? =
+  ): RunProfileState =
     UvRunConfigurationState(this, environment, project)
 
   override fun readExternal(element: Element) {
@@ -82,6 +83,21 @@ class UvRunConfiguration(
   override fun getSdk(): Sdk? {
     return options.uvSdk
   }
+
+  override fun suggestedName(): String? {
+    return when (options.runType) {
+      UvRunType.SCRIPT -> {
+        val path = options.scriptOrModule
+        if (path.isBlank()) null else fileNameFromPath(path)
+      }
+      UvRunType.MODULE -> {
+        val moduleName = options.scriptOrModule
+        moduleName.ifBlank { null }
+      }
+    }
+  }
+
+  private fun fileNameFromPath(path: String): @NlsSafe String = Path.of(path).fileName.toString()
 }
 
 @ApiStatus.Internal

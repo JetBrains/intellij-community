@@ -31,6 +31,7 @@ import com.jetbrains.python.sdk.readOnlyErrorMessage
 import kotlinx.coroutines.CoroutineStart
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
+import org.jetbrains.annotations.Nls
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -189,10 +190,12 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
     }
   }
 
-
   @ApiStatus.Internal
   @CheckReturnValue
   protected abstract suspend fun syncCommand(): PyResult<Unit>
+
+  @ApiStatus.Internal
+  open fun syncErrorMessage(): PackageManagerErrorMessage? = null
 
   @ApiStatus.Internal
   @CheckReturnValue
@@ -217,7 +220,14 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
   @ApiStatus.Internal
   protected abstract suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>>
 
+  /**
+   * Extracts project top-level dependencies.
+   * Returns null by default — this manager doesn't support dependency extraction.
+   */
   @ApiStatus.Internal
+  open suspend fun extractDependencies(): PyResult<List<PythonPackage>>? = null
+
+    @ApiStatus.Internal
   suspend fun waitForInit() {
     initializationJob?.join()
     if (shouldBeInitInstantly()) {
@@ -262,5 +272,11 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
     @Topic.AppLevel
     val PACKAGE_MANAGEMENT_TOPIC: Topic<PythonPackageManagementListener> = Topic(PythonPackageManagementListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
     val RUNNING_PACKAGING_TASKS: Key<Boolean> = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks")
+
+    @ApiStatus.Internal
+    data class PackageManagerErrorMessage(
+      @param:Nls val descriptionMessage: String,
+      @param:Nls val fixCommandMessage: String
+    )
   }
 }

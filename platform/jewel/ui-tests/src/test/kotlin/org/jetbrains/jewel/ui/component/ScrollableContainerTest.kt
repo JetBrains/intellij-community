@@ -29,11 +29,11 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import org.jetbrains.jewel.IntUiTestTheme
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.styling.default
+import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
@@ -51,7 +51,7 @@ class ScrollableContainerTest {
     fun `content should be as wide as container when scrollbar is always visible and content is too short to scroll (non-lazy)`() {
         val scrollState = ScrollState(0)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 VerticallyScrollableContainer(
@@ -81,7 +81,7 @@ class ScrollableContainerTest {
 
         val scrollState = ScrollState(0)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 VerticallyScrollableContainer(
@@ -113,7 +113,7 @@ class ScrollableContainerTest {
 
         val scrollState = ScrollState(0)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 VerticallyScrollableContainer(
@@ -141,7 +141,7 @@ class ScrollableContainerTest {
     fun `content should be as wide as container when scrollbar is always visible and content is too short to scroll (lazy)`() {
         val scrollState = LazyListState()
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 VerticallyScrollableContainer(
@@ -171,7 +171,7 @@ class ScrollableContainerTest {
 
         val scrollState = LazyListState()
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 VerticallyScrollableContainer(
@@ -203,7 +203,7 @@ class ScrollableContainerTest {
 
         val scrollState = LazyListState()
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 VerticallyScrollableContainer(
@@ -231,7 +231,7 @@ class ScrollableContainerTest {
     fun `content should be as tall as container when scrollbar is always visible and content is too narrow to scroll (non-lazy)`() {
         val scrollState = ScrollState(0)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 HorizontallyScrollableContainer(
@@ -256,7 +256,7 @@ class ScrollableContainerTest {
 
         val scrollState = ScrollState(0)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 HorizontallyScrollableContainer(
@@ -282,7 +282,7 @@ class ScrollableContainerTest {
 
         val scrollState = ScrollState(0)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 HorizontallyScrollableContainer(
@@ -307,7 +307,7 @@ class ScrollableContainerTest {
         val words = loremIpsum.split(' ').filter { it.isNotBlank() }.take(3)
 
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 HorizontallyScrollableContainer(
@@ -346,7 +346,7 @@ class ScrollableContainerTest {
         val words = loremIpsum.split(' ').filter { it.isNotBlank() }
 
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 HorizontallyScrollableContainer(
@@ -386,7 +386,7 @@ class ScrollableContainerTest {
         val words = loremIpsum.split(' ').filter { it.isNotBlank() }
 
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 HorizontallyScrollableContainer(
@@ -424,7 +424,7 @@ class ScrollableContainerTest {
         val scrollState = ScrollState(0)
         val count = mutableIntStateOf(3)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 VerticallyScrollableContainer(
@@ -466,7 +466,7 @@ class ScrollableContainerTest {
         val scrollState = ScrollState(0)
         val count = mutableIntStateOf(3)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 VerticallyScrollableContainer(
@@ -505,7 +505,7 @@ class ScrollableContainerTest {
         val scrollState = ScrollState(0)
         val count = mutableIntStateOf(3)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = false)
 
                 VerticallyScrollableContainer(
@@ -546,7 +546,7 @@ class ScrollableContainerTest {
         val scrollState = ScrollState(0)
         val count = mutableIntStateOf(3)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 HorizontallyScrollableContainer(
@@ -588,7 +588,7 @@ class ScrollableContainerTest {
         val scrollState = ScrollState(0)
         val count = mutableIntStateOf(3)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 HorizontallyScrollableContainer(
@@ -627,7 +627,7 @@ class ScrollableContainerTest {
         val scrollState = ScrollState(0)
         val count = mutableIntStateOf(3)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = false)
 
                 HorizontallyScrollableContainer(
@@ -666,7 +666,7 @@ class ScrollableContainerTest {
         val scrollState = ScrollState(0)
         val itemWidth = mutableIntStateOf(20)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 VerticallyScrollableContainer(
@@ -729,7 +729,7 @@ class ScrollableContainerTest {
         val scrollState = ScrollState(0)
         val itemWidth = mutableIntStateOf(20)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 VerticallyScrollableContainer(
@@ -793,7 +793,7 @@ class ScrollableContainerTest {
         val scrollState = ScrollState(0)
         val itemWidth = mutableIntStateOf(20)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 VerticallyScrollableContainer(
@@ -854,7 +854,7 @@ class ScrollableContainerTest {
         val scrollState = ScrollState(0)
         val itemWidth = mutableIntStateOf(20)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = false)
 
                 VerticallyScrollableContainer(
@@ -915,7 +915,7 @@ class ScrollableContainerTest {
         val scrollState = ScrollState(0)
         val itemWidth = mutableIntStateOf(20)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = false)
 
                 VerticallyScrollableContainer(
@@ -976,7 +976,7 @@ class ScrollableContainerTest {
         val scrollState = ScrollState(0)
         val itemHeight = mutableIntStateOf(20)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 HorizontallyScrollableContainer(
@@ -1039,7 +1039,7 @@ class ScrollableContainerTest {
         val scrollState = ScrollState(0)
         val itemHeight = mutableIntStateOf(20)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 HorizontallyScrollableContainer(
@@ -1103,7 +1103,7 @@ class ScrollableContainerTest {
         val scrollState = ScrollState(0)
         val itemHeight = mutableIntStateOf(20)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = true)
 
                 HorizontallyScrollableContainer(
@@ -1164,7 +1164,7 @@ class ScrollableContainerTest {
         val scrollState = ScrollState(0)
         val itemHeight = mutableIntStateOf(20)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = false)
 
                 HorizontallyScrollableContainer(
@@ -1225,7 +1225,7 @@ class ScrollableContainerTest {
         val scrollState = ScrollState(0)
         val itemHeight = mutableIntStateOf(20)
         rule.setContent {
-            IntUiTestTheme {
+            IntUiTheme {
                 val scrollbarStyle by rememberScrollbarStyle(alwaysVisible = false)
 
                 HorizontallyScrollableContainer(

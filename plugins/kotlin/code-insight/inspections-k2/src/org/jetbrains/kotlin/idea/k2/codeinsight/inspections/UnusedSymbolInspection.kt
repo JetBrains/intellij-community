@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
+import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
@@ -28,7 +29,10 @@ class UnusedSymbolInspection : LocalInspectionTool() {
                 if (!K2UnusedSymbolUtil.isApplicableByPsi(element) || K2UnusedSymbolUtil.isLocalDeclaration(element)) return
                 val message = element.describe()?.let { KotlinBaseHighlightingBundle.message("inspection.message.never.used", it) } ?: return
                 val psiToReportProblem = analyze(element) { K2UnusedSymbolUtil.getPsiToReportProblem(element, javaInspection) } ?: return
-                holder.registerProblem(psiToReportProblem, message, *K2UnusedSymbolUtil.createQuickFixes(element))
+                val quickFixes = analyze(element) {
+                    K2UnusedSymbolUtil.createQuickFixes(element).map { IntentionWrapper.wrapToQuickFix(it, holder.file) } 
+                }
+                holder.registerProblem(psiToReportProblem, message, *quickFixes.toTypedArray())
             }
         }
     }

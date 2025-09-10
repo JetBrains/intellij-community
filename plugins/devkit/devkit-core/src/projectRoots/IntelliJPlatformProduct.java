@@ -10,10 +10,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public enum IntelliJPlatformProduct {
-  IDEA("IU", "IntelliJ IDEA", null, "com.jetbrains.intellij.idea:ideaIU", "idea:ideaIU"),
+  IDEA("IU", "IntelliJ IDEA", null, "com.jetbrains.intellij.idea:idea", "idea:idea"),
+  IDEA_IU("IU", "IntelliJ IDEA", null, "com.jetbrains.intellij.idea:ideaIU", "idea:ideaIU"),
   IDEA_IC("IC", "IntelliJ IDEA Community Edition", PlatformUtils.IDEA_CE_PREFIX, "com.jetbrains.intellij.idea:ideaIC", "idea:ideaIC"),
   IDEA_IE("IE", "IntelliJ IDEA Educational Edition", PlatformUtils.IDEA_EDU_PREFIX, null, null),
-  RUBYMINE("RM", "RubyMine", PlatformUtils.RUBY_PREFIX, null, "ruby:RubyMine"),
+  RUBYMINE("RM", "RubyMine", PlatformUtils.RUBY_PREFIX, "com.jetbrains.intellij.rubymine:rubymine", "ruby:RubyMine"),
   PYCHARM("PY", "PyCharm", PlatformUtils.PYCHARM_PREFIX, "com.jetbrains.intellij.pycharm:pycharmPY", "python:pycharm-professional"),
   PYCHARM_PC("PC", "PyCharm Community Edition", PlatformUtils.PYCHARM_CE_PREFIX, "com.jetbrains.intellij.pycharm:pycharmPC", "python:pycharm-community"),
   DATASPELL("DS", "DataSpell", PlatformUtils.DATASPELL_PREFIX, null, "python:dataspell"),
@@ -26,13 +27,14 @@ public enum IntelliJPlatformProduct {
   RIDER("RD", "Rider", PlatformUtils.RIDER_PREFIX, "com.jetbrains.intellij.rider:riderRD", "rider:JetBrains.Rider"),
   GOIDE("GO", "GoLand", PlatformUtils.GOIDE_PREFIX, "com.jetbrains.intellij.goland:goland", "go:goland"),
   ANDROID_STUDIO("AI", "Android Studio", "AndroidStudio", null, "com.google.android.studio:android-studio"),
-  JETBRAINS_CLIENT("JBC", "JetBrains Client", PlatformUtils.JETBRAINS_CLIENT_PREFIX, null, null),
+  JETBRAINS_CLIENT("JBC", "JetBrains Client", PlatformUtils.JETBRAINS_CLIENT_PREFIX, null, "idea/code-with-me:JetBrainsClient"),
   GATEWAY("GW", "Gateway", PlatformUtils.GATEWAY_PREFIX, "com.jetbrains.intellij.gateway:gateway", "idea/gateway:JetBrainsGateway"),
   FLEET_BACKEND("FLIJ", "Fleet Backend", PlatformUtils.FLEET_PREFIX, "com.jetbrains.intellij.fleetBackend:fleetBackend", null),
   AQUA("QA", "Aqua", PlatformUtils.AQUA_PREFIX, null, "aqua:aqua"),
   RUSTROVER("RR", "RustRover", PlatformUtils.RUSTROVER_PREFIX, "com.jetbrains.intellij.rustrover:RustRover", "rustrover:RustRover"),
   WRITERSIDE("WRS", "Writerside", PlatformUtils.WRITERSIDE_PREFIX, "com.jetbrains.intellij.idea:writerside", "writerside:writerside"),
-  GIT_CLIENT("GIG", "GitClient", PlatformUtils.GIT_CLIENT_PREFIX, null, null);
+  GIT_CLIENT("GIG", "GitClient", PlatformUtils.GIT_CLIENT_PREFIX, null, null),
+  MPS("MPS", "MPS", PlatformUtils.MPS_PREFIX, null, "mps:MPS"),;
 
   private final String myProductCode;
   private final String myName;

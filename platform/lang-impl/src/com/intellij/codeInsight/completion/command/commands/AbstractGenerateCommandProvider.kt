@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.actions.CodeInsightAction
 import com.intellij.codeInsight.completion.command.*
 import com.intellij.ide.DataManager
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.Utils
@@ -29,7 +28,6 @@ abstract class AbstractGenerateCommandProvider : CommandProvider, DumbAware {
     val project = context.project
     val offset = context.offset
     val editor = context.editor
-    if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return emptyList()
     val element = psiFile.findElementAt(if (offset - 1 >= 0) offset - 1 else offset)
     if (element == null) return emptyList()
     if (!generationIsAvailable(element, offset)) return emptyList()

@@ -58,7 +58,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
 
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(DesignerBundle.message("designer.toolwindow.name"),
                                                                                false, getAnchor(), myProject, true);
-    myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowUIDesigner);
+    myToolWindow.setIcon(UiDesignerIcons.ToolWindowUIDesigner);
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myToolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
@@ -116,7 +116,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
     return createContent(designer,
                          toolWindowContent,
                          DesignerBundle.message("designer.toolwindow.title"),
-                         AllIcons.Toolwindows.ToolWindowUIDesigner,
+                         UiDesignerIcons.ToolWindowUIDesigner,
                          toolWindowContent.getToolWindowPanel(),
                          toolWindowContent.getComponentTree(),
                          320,

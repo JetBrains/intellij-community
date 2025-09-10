@@ -29,7 +29,7 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
-    return arrayListOf(
+    return listOf(
       IS_ENABLED, ITEM_TYPE, TYPE_WEIGHT, IS_HIGH_PRIORITY
     )
   }
@@ -40,41 +40,40 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?,
                                   correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
-    val data = arrayListOf<EventPair<*>>()
-    data.addIfTrue(IS_HIGH_PRIORITY, isHighPriority(elementPriority))
+    return buildList {
+      addIfTrue(IS_HIGH_PRIORITY, isHighPriority(elementPriority))
 
-    var similarityScore: Double? = null
+      var similarityScore: Double? = null
 
-    // (element is GotoActionModel.MatchedValue) for actions and option provided by 'ActionSearchEverywhereContributor'
-    // (element is OptionDescription || element is AnAction) for actions and option provided by 'TopHitSEContributor'
-    if (element is GotoActionModel.MatchedValue) {
-      data.add(ITEM_TYPE.with(element.type))
-      data.add(TYPE_WEIGHT.with(element.valueTypeWeight))
+      // (element is GotoActionModel.MatchedValue) for actions and option provided by 'ActionSearchEverywhereContributor'
+      // (element is OptionDescription || element is AnAction) for actions and option provided by 'TopHitSEContributor'
+      if (element is GotoActionModel.MatchedValue) {
+        add(ITEM_TYPE.with(element.type))
+        add(TYPE_WEIGHT.with(element.valueTypeWeight))
 
-      element.similarityScore?.let { similarityScore = it }
-      data.add(IS_SEMANTIC_ONLY.with(element.type == GotoActionModel.MatchedValueType.SEMANTIC))
-    }
-    else {
-      data.add(IS_SEMANTIC_ONLY.with(false))
-    }
+        element.similarityScore?.let { similarityScore = it }
+        add(IS_SEMANTIC_ONLY.with(element.type == GotoActionModel.MatchedValueType.SEMANTIC))
+      }
+      else {
+        add(IS_SEMANTIC_ONLY.with(false))
+      }
 
-    val value = if (element is GotoActionModel.MatchedValue) element.value else element
-    val valueName = getValueName(value)
-    valueName?.let {
-      data.addAll(getNameMatchingFeatures(it, searchQuery))
-    }
-    if (similarityScore != null) {
-      data.add(SIMILARITY_SCORE.with(roundDouble(similarityScore)))
-    }
-    else if (ApplicationManager.getApplication().isEAP) { // for now, we can collect the data only from EAP builds
-      val actionEmbedding = getActionEmbedding(valueName)
-      val queryEmbedding = getQueryEmbedding(searchQuery, split = false)
-      if (actionEmbedding != null && queryEmbedding != null) {
-        data.add(SIMILARITY_SCORE.with(roundDouble(actionEmbedding.cosine(queryEmbedding).toDouble())))
+      val value = if (element is GotoActionModel.MatchedValue) element.value else element
+      val valueName = getValueName(value)
+      valueName?.let {
+        addAll(getNameMatchingFeatures(it, searchQuery))
+      }
+      if (similarityScore != null) {
+        add(SIMILARITY_SCORE.with(roundDouble(similarityScore)))
+      }
+      else if (ApplicationManager.getApplication().isEAP) { // for now, we can collect the data only from EAP builds
+        val actionEmbedding = getActionEmbedding(valueName)
+        val queryEmbedding = getQueryEmbedding(searchQuery, split = false)
+        if (actionEmbedding != null && queryEmbedding != null) {
+          add(SIMILARITY_SCORE.with(roundDouble(actionEmbedding.cosine(queryEmbedding).toDouble())))
+        }
       }
     }
-
-    return data
   }
 
   private fun getValueName(value: Any): String? {

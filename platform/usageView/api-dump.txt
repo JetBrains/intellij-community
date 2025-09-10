@@ -66,15 +66,8 @@ f:com.intellij.usages.ChunkExtractor
 - s:getStartOffset(java.util.List):I
 - s:isHighlightedAsComment(com.intellij.openapi.editor.colors.TextAttributesKey[]):Z
 - s:isHighlightedAsString(com.intellij.openapi.editor.colors.TextAttributesKey[]):Z
-com.intellij.usages.CompactGroup
-- a:hasCommonParent(com.intellij.usages.CompactGroup):Z
-- a:isParentOf(com.intellij.usages.CompactGroup):Z
-- a:merge(com.intellij.usages.CompactGroup):com.intellij.usages.CompactGroup
-- a:split(com.intellij.usages.CompactGroup,Z):java.util.List
 f:com.intellij.usages.CompactGroupHelper
 - <init>():V
-- s:findLongestCommonParent(java.lang.String,java.lang.String):java.util.List
-- s:listStartsWith(java.util.List,java.util.List):Z
 - s:pathToPathList(java.lang.String):java.util.List
 com.intellij.usages.ConfigurableUsageTarget
 - com.intellij.usages.UsageTarget

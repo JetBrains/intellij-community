@@ -207,7 +207,7 @@
     <localInspection language="Python" shortName="PyRedeclarationInspection" suppressId="PyRedeclaration" bundle="messages.PyPsiBundle" key="INSP.NAME.redeclaration" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyRedeclarationInspection"/>
     <localInspection language="Python" shortName="PyTypeAliasRedeclarationInspection" suppressId="PyTypeAliasRedeclaration" bundle="messages.PyPsiBundle" key="INSP.NAME.type.alias.redeclaration" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTypeAliasRedeclarationInspection"/>
     <localInspection language="Python" shortName="PyMethodParametersInspection" suppressId="PyMethodParameters" bundle="messages.PyPsiBundle" key="INSP.NAME.problematic.first.parameter" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMethodParametersInspection"/>
-    <localInspection language="Python" shortName="PyUnreachableCodeInspection" suppressId="PyUnreachableCode" bundle="messages.PyPsiBundle" key="INSP.NAME.unreachable.code" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyUnreachableCodeInspection"/>
+    <localInspection language="Python" shortName="PyUnreachableCodeInspection" suppressId="PyUnreachableCode" bundle="messages.PyPsiBundle" key="INSP.NAME.unreachable.code" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" implementationClass="com.jetbrains.python.inspections.PyUnreachableCodeInspection"/>
     <localInspection language="Python" shortName="PyMethodFirstArgAssignmentInspection" suppressId="PyMethodFirstArgAssignment" bundle="messages.PyPsiBundle" key="INSP.NAME.first.arg.assign" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyMethodFirstArgAssignmentInspection"/>
     <localInspection language="Python" shortName="PyStringFormatInspection" suppressId="PyStringFormat" bundle="messages.PyPsiBundle" key="INSP.NAME.str.format" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyStringFormatInspection"/>
     <localInspection language="Python" shortName="PyMethodOverridingInspection" suppressId="PyMethodOverriding" bundle="messages.PyPsiBundle" key="INSP.NAME.method.over" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyMethodOverridingInspection"/>
@@ -238,6 +238,8 @@
     <localInspection language="Python" shortName="PyMandatoryEncodingInspection" suppressId="PyMandatoryEncoding" bundle="messages.PyPsiBundle" key="INSP.NAME.mandatory.encoding" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyMandatoryEncodingInspection"/>
     <localInspection language="Python" shortName="PyClassHasNoInitInspection" suppressId="PyClassHasNoInit" bundle="messages.PyPsiBundle" key="INSP.NAME.class.has.no.init" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyClassHasNoInitInspection"/>
     <localInspection language="Python" shortName="PyNoneFunctionAssignmentInspection" suppressId="PyNoneFunctionAssignment" bundle="messages.PyPsiBundle" key="INSP.NAME.none.function.assignment" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyNoneFunctionAssignmentInspection"/>
+    <localInspection language="Python" shortName="PyInvalidCastInspection" suppressId="PyInvalidCast" bundle="messages.PyPsiBundle" key="INSP.NAME.invalid.cast" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyInvalidCastInspection"/>
+    <localInspection language="Python" shortName="PyUnnecessaryCastInspection" suppressId="PyUnnecessaryCast" bundle="messages.PyPsiBundle" key="INSP.NAME.unnecessary.cast" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" implementationClass="com.jetbrains.python.inspections.PyUnnecessaryCastInspection"/>
     <localInspection language="Python" shortName="PyProtectedMemberInspection" suppressId="PyProtectedMember" bundle="messages.PyPsiBundle" key="INSP.NAME.protected.member" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyProtectedMemberInspection"/>
     <localInspection language="Python" shortName="PyMethodMayBeStaticInspection" suppressId="PyMethodMayBeStatic" bundle="messages.PyPsiBundle" key="INSP.NAME.method.may.be.static" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMethodMayBeStaticInspection"/>
     <localInspection language="Python" shortName="PyDocstringTypesInspection" suppressId="PyDocstringTypes" bundle="messages.PyPsiBundle" key="INSP.NAME.docstring.types" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyDocstringTypesInspection"/>
@@ -493,9 +495,6 @@
       <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
-    <registryKey defaultValue="false"
-                 description="Enable experimental better handling of recursive cases in type inference"
-                 key="python.use.better.control.flow.type.inference"/>
     <registryKey defaultValue="true"
                  description="Enable pyi stubs distributed with numpy (see https://github.com/numpy/numpy/issues/18565)"
                  key="enable.numpy.pyi.stubs"/>
@@ -512,6 +511,8 @@
                  description="It enables the use of a library-level cache for PSI elements from packages."/>
     <registryKey key="python.statement.lists.incremental.reparse" defaultValue="false"
                  description="Enables incremental reparse for statement lists"/>
+    <registryKey key="python.strict.type.narrow" defaultValue="false"
+                 description="Allows narrowing types exhaustively to Never"/>
 
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
   </extensions>

@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 class IntroduceImportAliasIntention : SelfTargetingRangeIntention<KtNameReferenceExpression>(
     KtNameReferenceExpression::class.java,
-    KotlinBundle.lazyMessage("introduce.import.alias")
+    KotlinBundle.messagePointer("introduce.import.alias")
 ) {
     override fun applicabilityRange(element: KtNameReferenceExpression): TextRange? {
         if (element.parent is KtInstanceExpressionWithLabel || element.mainReference.getImportAlias() != null) return null

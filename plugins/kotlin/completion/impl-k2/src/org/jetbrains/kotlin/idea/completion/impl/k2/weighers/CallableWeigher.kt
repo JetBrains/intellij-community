@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.psi.UserDataProperty
 
-internal object CallableWeigher {
+object CallableWeigher {
     const val WEIGHER_ID = "kotlin.callableWeigher"
 
     private enum class Weight1 {

@@ -3,9 +3,9 @@
 class ForMultiLanguageSupport {
   // The finally block always executes when the try block exits.
 
-    // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>.
+    // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>.
     // das ist <GRAMMAR_ERROR descr="FUEHR_FUER">führ</GRAMMAR_ERROR> Dich!
-    // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <GRAMMAR_ERROR descr="MANNSTUNDE">Mannstunden</GRAMMAR_ERROR>.
+    // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <STYLE_SUGGESTION descr="MANNSTUNDE">Mannstunden</STYLE_SUGGESTION>.
 
   // Cover following cases
   // a) initially missing
@@ -45,7 +45,7 @@ class ForMultiLanguageSupport {
 
   // We don't use the PHP php_strip_whitespace() function
 
-  // If Content-Type is set to text/html, or is unset -> html
+  // If Content-Type is set to text/html, or is unset -> <GRAMMAR_ERROR descr="FILE_EXTENSIONS_CASE">html</GRAMMAR_ERROR>
 
   /*
   for(;;)

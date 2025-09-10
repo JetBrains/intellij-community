@@ -30,7 +30,7 @@ private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTyp
     stub: KotlinCallableStubBase<TDeclaration>,
     sink: IndexSink
 ) {
-    if (!stub.isExtension()) return
+    if (!stub.isExtension) return
 
     val declaration = stub.psi
     val callableName = declaration.name ?: return
@@ -117,7 +117,7 @@ fun indexInternals(stub: KotlinCallableStubBase<*>, sink: IndexSink) {
 
     if (!modifierListStub.hasModifier(KtTokens.INTERNAL_KEYWORD)) return
 
-    if (stub.isTopLevel()) return
+    if (stub.isTopLevel) return
 
     if (modifierListStub.hasModifier(KtTokens.OPEN_KEYWORD) || modifierListStub.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
         sink.occurrence(KotlinOverridableInternalMembersShortNameIndex.indexKey, name)
@@ -144,7 +144,7 @@ private fun JvmFileClassUtil.stringFromAnnotation(annotation: KtAnnotationEntry)
 }
 
 fun indexJvmNameAnnotation(stub: KotlinAnnotationEntryStub, sink: IndexSink) {
-    if (stub.getShortName() != JvmFileClassUtil.JVM_NAME_SHORT) return
+    if (stub.shortName != JvmFileClassUtil.JVM_NAME_SHORT) return
 
     val jvmName = JvmFileClassUtil.stringFromAnnotation(stub.psi) ?: return
     val annotatedElementName = stub.parentStub.parentStub.annotatedJvmNameElementName ?: return
@@ -167,7 +167,7 @@ private val KotlinStubWithFqName<*>.modifierList: KotlinModifierListStub?
     get() = findChildStubByType(KtStubElementTypes.MODIFIER_LIST)
 
 fun <TDeclaration : KtCallableDeclaration> KotlinCallableStubBase<TDeclaration>.isDeclaredInObject(): Boolean {
-    if (isTopLevel()) return false
+    if (isTopLevel) return false
     val containingDeclaration = parentStub?.parentStub?.psi
 
     return containingDeclaration is KtObjectDeclaration && !containingDeclaration.isObjectLiteral()

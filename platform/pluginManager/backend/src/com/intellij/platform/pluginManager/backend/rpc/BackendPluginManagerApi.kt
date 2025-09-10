@@ -11,8 +11,9 @@ import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +43,7 @@ class BackendPluginManagerApi : PluginManagerApi {
   }
 
   override suspend fun getInstalledPlugins(): List<PluginDto> {
-    return InstalledPluginsState.getInstance().installedPlugins.map(PluginDescriptorConverter::toPluginDto)
+    return InstalledPluginsState.getInstance().installedPlugins.map { PluginDescriptorConverter.toPluginDto(it, true) }
   }
 
   override suspend fun getUpdates(): List<PluginDto> {
@@ -73,8 +74,15 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.isPluginInstalled(pluginId)
   }
 
-  override suspend fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean {
-    return DefaultUiPluginManagerController.hasPluginsAvailableForEnableDisable(pluginIds)
+  override suspend fun getPluginsRequiresUltimateMap(pluginIds: List<PluginId>): Map<PluginId, Boolean> {
+    return DefaultUiPluginManagerController.getPluginsRequiresUltimateMap(pluginIds)
+  }
+
+  override suspend fun loadErrors(
+    sessionId: String,
+    pluginIds: List<PluginId>,
+  ): Map<PluginId, CheckErrorsResult> {
+    return DefaultUiPluginManagerController.loadErrors(sessionId, pluginIds)
   }
 
   override suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
@@ -85,12 +93,22 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.getPluginInstallationStates()
   }
 
-  override suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginDto> {
-    return DefaultUiPluginManagerController.findInstalledPlugins(plugins).mapValues { PluginDto.fromModel(it.value) }
+  override suspend fun getCustomRepoTags(): Set<String> {
+    return DefaultUiPluginManagerController.getCustomRepoTags()
   }
 
-  override suspend fun getCustomRepoPlugins(): List<PluginDto> {
-    return DefaultUiPluginManagerController.getCustomRepoPlugins().map { PluginDto.fromModel(it) }
+  override suspend fun updateCustomRepositories(repositoryUrls: List<String>) {
+    val list = UpdateSettings.getInstance().storedPluginHosts
+    list.clear()
+    list.addAll(repositoryUrls)
+  }
+
+  override suspend fun loadDescriptorById(pluginId: PluginId): PluginDto? {
+    return DefaultUiPluginManagerController.loadDescriptorById(pluginId)?.let { PluginDto.fromModel(it) }
+  }
+
+  override suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginDto> {
+    return DefaultUiPluginManagerController.findInstalledPlugins(plugins).mapValues { PluginDto.fromModel(it.value) }
   }
 
   override suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginDto>> {
@@ -210,7 +228,7 @@ class BackendPluginManagerApi : PluginManagerApi {
 
   override suspend fun initSession(sessionId: String): InitSessionResult {
     val initSessionResult = DefaultUiPluginManagerController.initSession(sessionId)
-    return InitSessionResult(initSessionResult.visiblePlugins.map { PluginDto.fromModel(it) }, initSessionResult.pluginStates)
+    return InitSessionResult(initSessionResult.visiblePlugins.map { PluginDto.fromModel(it, true) }, initSessionResult.pluginStates)
   }
 
   override suspend fun isPluginEnabled(pluginId: PluginId): Boolean {

@@ -8,6 +8,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.execution.serviceView.ServiceModel.ServiceViewItem;
@@ -35,7 +36,7 @@ import java.util.List;
 
 import static com.intellij.platform.execution.serviceView.ServiceViewDragHelper.getTheOnlyRootContributor;
 
-final class ServiceViewActionProvider {
+public final class ServiceViewActionProvider {
   private static final @NonNls String SERVICE_VIEW_ITEM_TOOLBAR = "ServiceViewItemToolbar";
   static final @NonNls String SERVICE_VIEW_ITEM_POPUP = "ServiceViewItemPopup";
   private static final @NonNls String SERVICE_VIEW_TREE_TOOLBAR = "ServiceViewTreeToolbar";
@@ -267,7 +268,18 @@ final class ServiceViewActionProvider {
     }
   };
 
-  public static final class ItemToolbarActionGroup extends ActionGroup {
+  public static final class DefaultFrontendServiceViewActionGroup extends DefaultActionGroup
+    implements ActionRemoteBehaviorSpecification.Frontend {
+
+    public DefaultFrontendServiceViewActionGroup() {
+    }
+
+    public DefaultFrontendServiceViewActionGroup(@NotNull List<? extends AnAction> actions) {
+      super(actions);
+    }
+  }
+
+  public static final class ItemToolbarActionGroup extends ActionGroup implements ActionRemoteBehaviorSpecification.Frontend {
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return doGetActions(e, true);

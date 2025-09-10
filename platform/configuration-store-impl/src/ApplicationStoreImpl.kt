@@ -6,12 +6,8 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PathManager.getSystemDir
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.components.PathMacroManager
-import com.intellij.openapi.components.StateStorageOperation
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.stateStore
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -31,7 +27,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 @ApiStatus.Internal
-const val APP_CONFIG: String = "\$APP_CONFIG\$"
+const val APP_CONFIG: String = $$"$APP_CONFIG$"
 
 @ApiStatus.Internal
 @VisibleForTesting

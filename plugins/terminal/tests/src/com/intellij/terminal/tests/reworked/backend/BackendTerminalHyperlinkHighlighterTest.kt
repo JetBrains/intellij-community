@@ -4,6 +4,7 @@ package com.intellij.terminal.tests.reworked.backend
 import com.intellij.execution.filters.ConsoleFilterProvider
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.execution.impl.InlayProvider
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -59,6 +60,33 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     assertLinks(
       link(at(0, "link0")),
       link(at(1, "link1")),
+    )
+    assertHighlightings()
+  }
+
+  @Test
+  fun `some links with inlays`() = withFixture {
+    // Must have multiple results per line because com.intellij.execution.filters.CompositeFilter.createFinalResult
+    // is broken and doesn't preserve the result item as-is if there's only one result.
+    updateModel(0L, """
+      0: line0 link_inlay01 link_inlay02
+      1: line1 link_inlay11 link_inlay12
+    """.trimIndent())
+    assertText("""
+      0: line0 link_inlay01 link_inlay02
+      1: line1 link_inlay11 link_inlay12
+    """.trimIndent())
+    assertLinks(
+      link(at(0, "link_inlay01")),
+      link(at(0, "link_inlay02")),
+      link(at(1, "link_inlay11")),
+      link(at(1, "link_inlay12")),
+    )
+    assertInlays(
+      inlay(at(0, "link_inlay01")),
+      inlay(at(0, "link_inlay02")),
+      inlay(at(1, "link_inlay11")),
+      inlay(at(1, "link_inlay12")),
     )
     assertHighlightings()
   }
@@ -186,6 +214,34 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       highlight(at(0, "highlight0"), highlight = HIGHLIGHT1),
       highlight(at(1, "highlight1"), highlight = HIGHLIGHT2),
     )
+  }
+
+  @Test
+  fun `some highlighting with inlays`() = withFixture {
+    filter.highlight = HIGHLIGHT1
+    // Must have multiple results per line because com.intellij.execution.filters.CompositeFilter.createFinalResult
+    // is broken and doesn't preserve the result item as-is if there's only one result.
+    updateModel(0L, """
+      0: line0 highlight_inlay01 highlight_inlay02
+      1: line1 highlight_inlay11 highlight_inlay12
+    """.trimIndent())
+    assertText("""
+      0: line0 highlight_inlay01 highlight_inlay02
+      1: line1 highlight_inlay11 highlight_inlay12
+    """.trimIndent())
+    assertHighlightings(
+      highlight(at(0, "highlight_inlay01")),
+      highlight(at(0, "highlight_inlay02")),
+      highlight(at(1, "highlight_inlay11")),
+      highlight(at(1, "highlight_inlay12")),
+    )
+    assertInlays(
+      inlay(at(0, "highlight_inlay01")),
+      inlay(at(0, "highlight_inlay02")),
+      inlay(at(1, "highlight_inlay11")),
+      inlay(at(1, "highlight_inlay12")),
+    )
+    assertLinks()
   }
 
   @Test
@@ -482,6 +538,24 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       }
     }
 
+    suspend fun assertInlays(vararg expectedInlays: Inlay) {
+      awaitEventProcessing()
+      val actualInlays = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalInlayInfo>()
+      assertThat(actualInlays).hasSameSizeAs(expectedInlays)
+      for (i in actualInlays.indices) {
+        val actual = actualInlays[i]
+        val expected = expectedInlays[i]
+        val expectedStartOffset = expected.locator.locateOffset(document)
+        val expectedEndOffset = expectedStartOffset + expected.locator.length
+        val actualStartOffset = outputModel.absoluteOffset(actual.absoluteStartOffset).toRelative()
+        val actualEndOffset = outputModel.absoluteOffset(actual.absoluteEndOffset).toRelative()
+
+        val description = "at $i actual inlay $actual expected inlay $expected"
+        assertThat(actualStartOffset).`as`(description).isEqualTo(expectedStartOffset)
+        assertThat(actualEndOffset).`as`(description).isEqualTo(expectedEndOffset)
+      }
+    }
+
     suspend fun assertClicks(vararg clicks: LinkLocator) {
       awaitEventProcessing()
       for (click in clicks) {
@@ -497,6 +571,10 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       followedHighlight: TextAttributes? = filter.followedHighlight,
       hoveredHighlight: TextAttributes? = filter.hoveredHighlight,
     ): Link = Link(at, highlight, followedHighlight, hoveredHighlight)
+
+    fun inlay(
+      at: LinkLocator,
+    ): Inlay = Inlay(at)
 
     fun highlight(
       at: LinkLocator,
@@ -520,6 +598,10 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     data class Highlighting(
       val locator: LinkLocator,
       val highlight: TextAttributes?,
+    )
+
+    data class Inlay(
+      val locator: LinkLocator,
     )
 
     data class LinkLocator(val line: Int, val substring: String) {
@@ -546,7 +628,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       var hoveredHighlight: TextAttributes? = null
       var delayPerLine = 0L
 
-      private val pattern = Regex("""(link|highlight)\d+""")
+      private val pattern = Regex("""(link|highlight|link_inlay|highlight_inlay)\d+""")
 
       override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
         if (delayPerLine > 0) {
@@ -555,17 +637,48 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
         val startOffset = entireLength - line.length
         val results = mutableListOf<Filter.ResultItem>()
         pattern.findAll(line).forEach { matchResult ->
-          val isHyperlink = matchResult.groups[1]?.value == "link"
-          results += Filter.ResultItem(
-            startOffset + matchResult.range.first,
-            startOffset + matchResult.range.last + 1,
-            if (isHyperlink) MyHyperlinkInfo(matchResult.value) else null,
-            highlight,
-            if (isHyperlink) followedHighlight else null,
-            if (isHyperlink) hoveredHighlight else null,
+          val isHyperlink = matchResult.groups[1]?.value?.startsWith("link") == true
+          val isInlay = matchResult.groups[1]?.value?.endsWith("_inlay") == true
+          results += createResultItem(
+            highlightStartOffset = startOffset + matchResult.range.first,
+            highlightEndOffset = startOffset + matchResult.range.last + 1,
+            hyperlinkInfo = if (isHyperlink) MyHyperlinkInfo(matchResult.value) else null,
+            highlightAttributes = highlight,
+            followedHyperlinkAttributes = if (isHyperlink) followedHighlight else null,
+            hoveredHyperlinkAttributes = if (isHyperlink) hoveredHighlight else null,
+            isInlay = isInlay,
           )
         }
         return if (results.isNotEmpty()) Filter.Result(results) else null
+      }
+
+      private fun createResultItem(
+        highlightStartOffset: Int,
+        highlightEndOffset: Int,
+        hyperlinkInfo: HyperlinkInfo?,
+        highlightAttributes: TextAttributes?,
+        followedHyperlinkAttributes: TextAttributes?,
+        hoveredHyperlinkAttributes: TextAttributes?,
+        isInlay: Boolean,
+      ): Filter.ResultItem = if (isInlay) {
+        InlayResultItem(
+          highlightStartOffset,
+          highlightEndOffset,
+          hyperlinkInfo,
+          highlightAttributes,
+          followedHyperlinkAttributes,
+          hoveredHyperlinkAttributes
+        )
+      }
+      else {
+        Filter.ResultItem(
+          highlightStartOffset,
+          highlightEndOffset,
+          hyperlinkInfo,
+          highlightAttributes,
+          followedHyperlinkAttributes,
+          hoveredHyperlinkAttributes
+        )
       }
     }
 
@@ -576,6 +689,22 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     }
   }
 }
+
+private class InlayResultItem(
+  highlightStartOffset: Int,
+  highlightEndOffset: Int,
+  hyperlinkInfo: HyperlinkInfo?,
+  highlightAttributes: TextAttributes?,
+  followedHyperlinkAttributes: TextAttributes?,
+  hoveredHyperlinkAttributes: TextAttributes?,
+) : Filter.ResultItem(
+  highlightStartOffset,
+  highlightEndOffset,
+  hyperlinkInfo,
+  highlightAttributes,
+  followedHyperlinkAttributes,
+  hoveredHyperlinkAttributes
+), InlayProvider
 
 private val HIGHLIGHT1 =
   EditorColorsManager.getInstance().globalScheme.getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES)

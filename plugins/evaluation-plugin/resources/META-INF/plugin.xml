@@ -23,6 +23,7 @@
     <module name="intellij.evaluationPlugin.languages.json"/>
     <module name="intellij.evaluationPlugin.languages.markdown"/>
     <module name="intellij.evaluationPlugin.languages.php"/>
+    <module name="intellij.evaluationPlugin.languages.properties"/>
     <module name="intellij.evaluationPlugin.languages.pythonDocker"/>
     <module name="intellij.evaluationPlugin.languages.ruby"/>
     <module name="intellij.evaluationPlugin.languages.rust"/>

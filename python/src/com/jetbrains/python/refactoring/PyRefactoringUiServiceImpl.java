@@ -20,12 +20,13 @@ import com.jetbrains.python.refactoring.inline.PyInlineFunctionDialog;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import com.jetbrains.python.refactoring.introduce.PyIntroduceHandlerUi;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Consumer;
 
+@NotNullByDefault
 public final class PyRefactoringUiServiceImpl extends PyRefactoringUiService {
   @Override
   public void showIntroduceTargetChooser(IntroduceOperation operation,
@@ -92,9 +93,9 @@ public final class PyRefactoringUiServiceImpl extends PyRefactoringUiService {
   }
 
   @Override
-  public void showPyInlineFunctionDialog(@NotNull Project project,
-                                         @NotNull Editor editor,
-                                         @NotNull PyFunction function,
+  public void showPyInlineFunctionDialog(Project project,
+                                         Editor editor,
+                                         PyFunction function,
                                          @Nullable PsiReference reference) {
     new PyInlineFunctionDialog(project, editor, function, reference).show();
   }

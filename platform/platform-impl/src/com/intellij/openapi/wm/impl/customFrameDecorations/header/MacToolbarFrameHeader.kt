@@ -17,6 +17,8 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.Sim
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.BorderPainter
+import com.intellij.ui.DefaultBorderPainter
 import com.intellij.ui.UIBundle
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
@@ -69,6 +71,8 @@ internal class MacToolbarFrameHeader(
   }
 
   val customTitleBar: WindowDecorations.CustomTitleBar?
+
+  internal var borderPainter: BorderPainter = DefaultBorderPainter()
 
   init {
     // a colorful toolbar
@@ -152,6 +156,11 @@ internal class MacToolbarFrameHeader(
 
   private fun getPreferredHeight(): Int {
     return CustomWindowHeaderUtil.getPreferredWindowHeaderHeight(view is CompactHeaderView)
+  }
+
+  override fun paint(g: Graphics) {
+    super.paint(g)
+    borderPainter.paintAfterChildren(this, g)
   }
 
   override fun paintComponent(g: Graphics) {

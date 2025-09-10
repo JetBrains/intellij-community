@@ -44,7 +44,7 @@ class DashStop(Serialisable):
 
 class DashStopList(Serialisable):
     ds: Incomplete
-    def __init__(self, ds: Incomplete | None = None) -> None: ...
+    def __init__(self, ds=None) -> None: ...
 
 class LineProperties(Serialisable):
     tagname: ClassVar[str]

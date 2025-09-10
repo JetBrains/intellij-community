@@ -97,7 +97,7 @@ class RepairUtilityBuilder {
           val manifest = tmpDir.resolve("manifest.json")
           if (Files.notExists(manifest)) {
             val repairLog = tmpDir.resolve("repair.log")
-            context.messages.error("Unable to generate installation integrity manifest: ${Files.readString(repairLog)}")
+            context.messages.logErrorAndThrow("Unable to generate installation integrity manifest: ${Files.readString(repairLog)}")
           }
           val baseName = baseArtifactName(context)
           val artifact = context.paths.artifactDir.resolve("${baseName}${distributionBinary.distributionSuffix}.manifest")
@@ -185,7 +185,7 @@ class RepairUtilityBuilder {
         withContext(Dispatchers.IO) {
           for (file in binaries.values) {
             if (Files.notExists(file)) {
-              context.messages.error("$file doesn't exist")
+              context.messages.logErrorAndThrow("$file doesn't exist")
             }
             Files.setPosixFilePermissions(file, executablePermissions)
           }

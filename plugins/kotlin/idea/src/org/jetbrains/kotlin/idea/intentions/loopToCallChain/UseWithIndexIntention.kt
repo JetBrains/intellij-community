@@ -19,7 +19,7 @@ class UseWithIndexInspection : IntentionBasedInspection<KtForExpression>(UseWith
 
 class UseWithIndexIntention : SelfTargetingRangeIntention<KtForExpression>(
     KtForExpression::class.java,
-    KotlinBundle.lazyMessage("use.withindex.instead.of.manual.index.increment")
+    KotlinBundle.messagePointer("use.withindex.instead.of.manual.index.increment")
 ) {
 
     override fun startInWriteAction(): Boolean  = false

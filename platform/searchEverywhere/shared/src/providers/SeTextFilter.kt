@@ -22,6 +22,7 @@ class SeTextFilter(
 
   override fun toState(): SeFilterState {
     val map = mutableMapOf<String, SeFilterValue>()
+    map[TEXT_FILTER] = SeFilterValue.One("true")
     selectedScopeId?.let { map[SELECTED_SCOPE_ID] = SeFilterValue.One(it) }
     selectedType?.let { map[SELECTED_TYPE] = SeFilterValue.One(it) }
     map[MATCH_CASE] = SeFilterValue.One(isCaseSensitive.toString())
@@ -31,13 +32,15 @@ class SeTextFilter(
   }
 
   companion object {
+    private const val TEXT_FILTER = "TEXT_FILTER"
     private const val SELECTED_SCOPE_ID = "SELECTED_SCOPE_ID"
     private const val SELECTED_TYPE = "SELECTED_TYPE"
     private const val MATCH_CASE = "MATCH_CASE"
     private const val WORDS = "WORDS"
     private const val REGEX = "REGEX"
 
-    fun from(state: SeFilterState): SeTextFilter {
+    fun from(state: SeFilterState): SeTextFilter? {
+    if (!isTextFilter(state)) return null
       when (state) {
         is SeFilterState.Data -> {
           val map = state.map
@@ -66,5 +69,8 @@ class SeTextFilter(
 
     fun isRegularExpressions(state: SeFilterState): Boolean? =
       (state as? SeFilterState.Data)?.map?.get(REGEX)?.let { it as? SeFilterValue.One }?.value?.toBoolean()
+
+    private fun isTextFilter(state: SeFilterState): Boolean =
+      (state as? SeFilterState.Data)?.map?.get(TEXT_FILTER)?.let { it as? SeFilterValue.One }?.value?.toBoolean() == true
   }
 }

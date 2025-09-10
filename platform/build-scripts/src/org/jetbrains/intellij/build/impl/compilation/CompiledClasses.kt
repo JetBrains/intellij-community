@@ -1,9 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.util.io.Decompressor
 import com.intellij.util.currentJavaVersion
+import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -14,8 +15,8 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.JpsCompilationRunner
 import org.jetbrains.intellij.build.impl.cleanOutput
-import org.jetbrains.intellij.build.impl.generateRuntimeModuleRepository
 import org.jetbrains.intellij.build.impl.isBazelTestRun
+import org.jetbrains.intellij.build.impl.isRunningFromBazelOut
 import org.jetbrains.intellij.build.jpsCache.isForceDownloadJpsCache
 import org.jetbrains.intellij.build.jpsCache.isPortableCompilationCacheEnabled
 import org.jetbrains.intellij.build.jpsCache.jpsCacheRemoteGitUrl
@@ -36,30 +37,30 @@ internal fun checkCompilationOptions(context: CompilationContext) {
       options.incrementalCompilation = false
     }
     else {
-      messages.error(message)
+      messages.logErrorAndThrow(message)
     }
   }
   if (options.pathToCompiledClassesArchive != null && isPortableCompilationCacheEnabled) {
-    messages.error("JPS Cache is enabled so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' cannot be used")
+    messages.logErrorAndThrow("JPS Cache is enabled so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' cannot be used")
   }
   val pathToCompiledClassArchiveMetadata = options.pathToCompiledClassesArchivesMetadata
   if (pathToCompiledClassArchiveMetadata != null && isPortableCompilationCacheEnabled) {
-    messages.error("JPS Cache is enabled " +
-                   "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
+    messages.logErrorAndThrow("JPS Cache is enabled " +
+                              "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
   }
   if (options.pathToCompiledClassesArchive != null && options.incrementalCompilation) {
-    messages.error("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' is specified, so 'incremental compilation' option cannot be enabled")
+    messages.logErrorAndThrow("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' is specified, so 'incremental compilation' option cannot be enabled")
   }
 
   if (options.useCompiledClassesFromProjectOutput) {
     if (options.pathToCompiledClassesArchive != null) {
-      messages.error(
+      messages.logErrorAndThrow(
         "'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
         "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' cannot be used"
       )
     }
     if (pathToCompiledClassArchiveMetadata != null) {
-      messages.error(
+      messages.logErrorAndThrow(
         "'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
         "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output"
       )
@@ -67,13 +68,13 @@ internal fun checkCompilationOptions(context: CompilationContext) {
   }
 
   if (pathToCompiledClassArchiveMetadata != null && options.incrementalCompilation) {
-    messages.error("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' is specified, " +
-                     "so 'incremental compilation' option cannot be used")
+    messages.logErrorAndThrow("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' is specified, " +
+                              "so 'incremental compilation' option cannot be used")
   }
 
   if (options.pathToCompiledClassesArchive != null && pathToCompiledClassArchiveMetadata != null) {
-    messages.error("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' is specified, " +
-                   "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
+    messages.logErrorAndThrow("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' is specified, " +
+                              "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
   }
   if (options.forceRebuild && options.incrementalCompilation) {
     messages.warning("'${BuildOptions.FORCE_REBUILD_PROPERTY}' is specified, so 'incremental compilation' option will be ignored")
@@ -86,17 +87,17 @@ internal fun checkCompilationOptions(context: CompilationContext) {
       options.incrementalCompilation = false
     }
     else {
-      messages.error(message)
+      messages.logErrorAndThrow(message)
     }
   }
   if (options.forceRebuild && options.pathToCompiledClassesArchive != null) {
-    messages.error("Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' options are specified")
+    messages.logErrorAndThrow("Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' options are specified")
   }
   if (options.forceRebuild && pathToCompiledClassArchiveMetadata != null) {
-    messages.error("Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' options are specified")
+    messages.logErrorAndThrow("Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' options are specified")
   }
   if (options.isInDevelopmentMode && ProjectStamps.PORTABLE_CACHES && !System.getProperty("jps.cache.test").toBoolean()) {
-    messages.error("${ProjectStamps.PORTABLE_CACHES_PROPERTY} is not expected to be enabled in development mode due to performance penalty")
+    messages.logErrorAndThrow("${ProjectStamps.PORTABLE_CACHES_PROPERTY} is not expected to be enabled in development mode due to performance penalty")
   }
   if (!options.useCompiledClassesFromProjectOutput) {
     Span.current().addEvent("incremental compilation", Attributes.of(AttributeKey.booleanKey("options.incrementalCompilation"), options.incrementalCompilation))
@@ -120,10 +121,15 @@ internal fun keepCompilationState(options: BuildOptions): Boolean {
 }
 
 internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Collection<String>?, includingTestsInModules: List<String>?, span: Span) {
+  if (context.compilationData.outputForAllModulesIsAvailable) {
+    span.addEvent("Output for all modules was already provided in this compilation session, skipping compilation")
+    return
+  }
+  
   val pathToCompiledClassArchiveMetadata = context.options.pathToCompiledClassesArchivesMetadata
   when {
     context.options.useCompiledClassesFromProjectOutput -> {
-      check(isBazelTestRun() || context.classesOutputDirectory.exists()) {
+      check(isBazelTestRun() || context.classesOutputDirectory.exists() || PathManager.getArchivedCompiledClassesMapping() != null || isRunningFromBazelOut()) {
         "${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled but the classes output directory ${context.classesOutputDirectory} doesn't exist"
       }
       val production = context.classesOutputDirectory.resolve("production")
@@ -134,10 +140,12 @@ internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Co
         span.addEvent(msg)
       }
       span.addEvent("compiled classes reused", Attributes.of(AttributeKey.stringKey("dir"), context.classesOutputDirectory.toString()))
+      context.compilationData.outputForAllModulesIsAvailable = true
     }
     context.options.pathToCompiledClassesArchive != null -> {
       span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"), context.options.pathToCompiledClassesArchive.toString()))
       unpackCompiledClasses(classOutput = context.classesOutputDirectory, context = context)
+      context.compilationData.outputForAllModulesIsAvailable = true
     }
     pathToCompiledClassArchiveMetadata != null -> {
       span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"), pathToCompiledClassArchiveMetadata.toString()))
@@ -153,6 +161,7 @@ internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Co
            */
           saveHash = !forInstallers,
         )
+        context.compilationData.outputForAllModulesIsAvailable = true
       }
     }
     else -> {
@@ -201,13 +210,7 @@ internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Co
     }
   }
 
-  if (context.options.useCompiledClassesFromProjectOutput) {
-    context.compilationData.runtimeModuleRepositoryGenerated = true
-  }
-  else {
-    generateRuntimeModuleRepository(context)
-    context.options.useCompiledClassesFromProjectOutput = true
-  }
+  context.options.useCompiledClassesFromProjectOutput = true
 }
 
 internal fun isIncrementalCompilationDataAvailable(context: CompilationContext): Boolean {

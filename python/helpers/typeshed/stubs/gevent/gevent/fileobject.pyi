@@ -149,7 +149,9 @@ if sys.platform != "win32":
         ) -> None: ...
 
     _FileObjectType: TypeAlias = type[FileObjectPosix[Any, Any] | FileObjectBlock[Any, Any] | FileObjectThread[Any, Any]]
+    __all__ = ["FileObjectPosix", "FileObjectThread", "FileObjectBlock", "FileObject"]
 else:
     _FileObjectType: TypeAlias = type[FileObjectBlock[Any, Any] | FileObjectThread[Any, Any]]
+    __all__ = ["FileObjectThread", "FileObjectBlock", "FileObject"]
 
 FileObject: _FileObjectType

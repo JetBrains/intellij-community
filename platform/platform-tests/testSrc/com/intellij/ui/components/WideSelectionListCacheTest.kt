@@ -82,7 +82,7 @@ class WideSelectionListCacheTest {
 
   private fun updateAndCheckCache(list: JBList<Int>, items: Set<Any>) {
     val ui = list.ui as WideSelectionListUI
-    ui.updateLayoutState()
+    ui.updateLayoutStateTestAccessor()
 
     assertEquals(list.cachedItems, items.toSet())
   }

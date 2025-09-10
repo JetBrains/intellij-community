@@ -41,6 +41,7 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
   open val nameExtensionComponent: JComponent? = null
   open var newProjectPath: String? = null
 
+  @RequiresEdt
   override fun getOrCreateSdk(): Sdk? = sdk
 
   open fun getStatisticInfo(): InterpreterStatisticsInfo? = null

@@ -4,6 +4,7 @@ package com.intellij.ide.util.scopeChooser
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.IndexingBundle
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -17,7 +18,9 @@ interface ScopeModelService {
 
   fun getScopeDescriptorById(scopeId: String): ScopeDescriptor?
 
-  fun openEditScopesDialog(selectedScopeId: String?, onFinish: (selectedScopeId: String?) -> Unit)
+  fun openEditScopesDialog(selectedScopeId: String?, modelId: String, onFinish: (selectedScopeId: String?) -> Unit)
+
+  fun getCoroutineScope(): CoroutineScope
 
   companion object {
     @JvmStatic

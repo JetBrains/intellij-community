@@ -215,7 +215,7 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private suspend fun listenIdleAndActivate(settings: GeneralSettings) {
-    if (settings.inactiveTimeout.seconds <= LISTEN_DELAY) {
+    if (settings.isAutoSaveIfInactive && settings.inactiveTimeout.seconds <= LISTEN_DELAY) {
       executeOnIdle()
     }
 

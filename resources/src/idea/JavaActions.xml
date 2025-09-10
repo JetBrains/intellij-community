@@ -47,10 +47,6 @@
       <add-to-group group-id="FileMainSettingsGroup" anchor="after" relative-to-action="ShowSettings"/>
       <add-to-group group-id="SettingsEntryPointGroup" anchor="before" relative-to-action="ShowSettings"/>
     </action>
-    <action id="TemplateProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
-      <add-to-group group-id="FileSettingsGroup" anchor="last"/>
-      <override-text place="MainMenu"/>
-    </action>
     <action id="ShowSiblings" class="com.intellij.codeInsight.hint.actions.ShowSiblingsAction">
       <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickImplementations"/>
     </action>
@@ -253,10 +249,6 @@
       <action id="WelcomeScreen.DevelopPlugins" class="com.intellij.openapi.wm.impl.welcomeScreen.DevelopPluginsAction"/>
       <add-to-group group-id="WelcomeScreen.Documentation" anchor="last"/>
     </group>
-
-    <action id="WelcomeScreen.Configure.ProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
-      <add-to-group group-id="WelcomeScreen.Configure" anchor="before" relative-to-action="RunConfigurationTemplatesForNewProjects"/>
-    </action>
 
     <action id="AddFrameworkSupport" class="com.intellij.ide.util.frameworkSupport.AddFrameworkSupportAction">
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="before" relative-to-action="LoadUnloadModules"/>

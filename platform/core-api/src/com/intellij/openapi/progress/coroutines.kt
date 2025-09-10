@@ -135,26 +135,40 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParalleli
     if (!allowOrphan && ctx[Job] == null) {
       LOG.error(IllegalStateException("There is no ProgressIndicator or Job in this thread, the current job is not cancellable."))
     }
-    val (lockContext, cleanup) = getLockContext(ctx)
-    try {
-      if (compensateParallelism) {
-        @OptIn(InternalCoroutinesApi::class)
-        IntellijCoroutines.runBlockingWithParallelismCompensation(ctx + lockContext, action)
+    wrapInReadActionIfCurrentlyWriteAction {
+      val (lockContext, cleanup) = getLockContext(ctx)
+      try {
+        if (compensateParallelism) {
+          @OptIn(InternalCoroutinesApi::class)
+          IntellijCoroutines.runBlockingWithParallelismCompensation(ctx + lockContext, action)
+        }
+        else {
+          @Suppress("RAW_RUN_BLOCKING")
+          runBlocking(ctx + lockContext, action)
+        }
       }
-      else {
-        @Suppress("RAW_RUN_BLOCKING")
-        runBlocking(ctx + lockContext, action)
+      catch (pce: ProcessCanceledException) {
+        throw pce
+      }
+      catch (ce: CancellationException) {
+        throw CeProcessCanceledException(ce)
+      }
+      finally {
+        cleanup.finish()
       }
     }
-    catch (pce: ProcessCanceledException) {
-      throw pce
+  }
+}
+
+// reducing service stacktraces by inlining
+private inline fun <T> wrapInReadActionIfCurrentlyWriteAction(crossinline action: () -> T): T {
+  return if (ApplicationManager.getApplication().isWriteAccessAllowed) {
+    runReadAction {
+      action()
     }
-    catch (ce: CancellationException) {
-      throw CeProcessCanceledException(ce)
-    }
-    finally {
-      cleanup.finish()
-    }
+  }
+  else {
+    action()
   }
 }
 

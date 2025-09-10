@@ -1,15 +1,16 @@
-from _typeshed import Incomplete
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
 
-from networkx.utils.backends import _dispatch
+__all__ = ["shortest_augmenting_path"]
 
-@_dispatch
+@_dispatchable
 def shortest_augmenting_path(
-    G,
-    s,
-    t,
+    G: Graph[_Node],
+    s: _Node,
+    t: _Node,
     capacity: str = "capacity",
-    residual: Incomplete | None = None,
+    residual: Graph[_Node] | None = None,
     value_only: bool = False,
     two_phase: bool = False,
-    cutoff: Incomplete | None = None,
+    cutoff: float | None = None,
 ): ...

@@ -119,7 +119,7 @@ class KmpSyntaxNode internal constructor(
 
   override fun hashCode(): Int = arrayOf(
     context, markerIndex, startLexemeIndex
-  ).hashCode()
+  ).contentHashCode()
 
   override val text: CharSequence
     get() = context.text.subSequence(
@@ -162,6 +162,8 @@ class KmpSyntaxNode internal constructor(
         isChameleon() -> (chameleonSyntaxNode?.firstChild() as KmpSyntaxNode?)
           ?.copy(parent = this)
 
+        ast.collapsed(markerIndex) -> null // this is a collapsed non-lazy-parseable node, meaning it's a leaf
+
         else -> {
           val childMarkerIndex = ast.firstChild(markerIndex)
           when {
@@ -188,10 +190,13 @@ class KmpSyntaxNode internal constructor(
       }
     }
 
-    isChameleon() && !isCopyOfParent() -> (chameleonSyntaxNode?.firstChild() as KmpSyntaxNode?)
-      ?.copy(parent = this)
+    isChameleon() && !isCopyOfParent() -> {
+      (chameleonSyntaxNode?.firstChild() as KmpSyntaxNode?)?.copy(parent = this)
+    }
 
-    else -> null
+    else -> {
+      null
+    }
   }
 
   private fun isCopyOfParent(): Boolean =
@@ -201,11 +206,15 @@ class KmpSyntaxNode internal constructor(
     parent.endLexemeIndex == this.endLexemeIndex &&
     parent.markerIndex == this.markerIndex
 
-  internal fun isChameleon(): Boolean = (isMarker &&
-                                         context.ast.kind(markerIndex) == MarkerKind.Start &&
-                                         context.ast.elementType(markerIndex).isLazyParseable() &&
-                                         context.ast.collapsed(markerIndex)) ||
-                                        (!isMarker && type.isLazyParseable())
+  internal fun isChameleon(): Boolean =
+    if (isMarker) {
+      context.ast.kind(markerIndex) == MarkerKind.Start &&
+      context.ast.elementType(markerIndex).isLazyParseable() &&
+      context.ast.collapsed(markerIndex)
+    }
+    else {
+      type.isLazyParseable()
+    }
 
   override fun lastChild(): SyntaxNode? = firstChild().lastSibling()
 
@@ -302,8 +311,8 @@ class KmpSyntaxNode internal constructor(
     val c = try {
       context.ast.chameleonAt(id)
     }
-    catch (_: NullPointerException) {
-      error("Chameleon at $id not found.")
+    catch (e: NullPointerException) {
+      throw IllegalStateException("Chameleon at $id not found.", e)
     }
     return c.realize {
       parseChameleon(
@@ -406,8 +415,8 @@ class KmpSyntaxNode internal constructor(
     rootLexer: Lexer,
     newTokens: TokenList,
     newText: CharSequence,
-    startOffset: Long,
-    endOffset: Long,
+    startOffset: Int,
+    endOffset: Int,
     cancellationProvider: CancellationProvider,
     builderFactory: SyntaxBuilderFactory,
   ): Triple<KmpSyntaxNode, TokenList, Boolean>? {
@@ -416,7 +425,7 @@ class KmpSyntaxNode internal constructor(
         startOffset >= 0 && startOffset < newTokens.tokenizedText.length -> {
           newTokens.getTokenType(
             newTokens
-              .tokenIndexAtOffset(startOffset.toInt())
+              .tokenIndexAtOffset(startOffset)
               .onMinusOne(newTokens.tokenCount - 1)
           )
         }
@@ -492,8 +501,8 @@ class KmpSyntaxNode internal constructor(
     lexer: Lexer,
     newTokens: TokenList,
     newText: CharSequence,
-    startOffset: Long,
-    endOffset: Long,
+    startOffset: Int,
+    endOffset: Int,
     cancellationProvider: CancellationProvider,
   ): Pair<ASTMarkers, TokenList>? {
     val (reparseableNode, nodeTokens, isLexerChanged) = this.findDeepestReparseableNode(
@@ -574,7 +583,7 @@ fun interface TokenizationPolicy {
   fun tokenize(
     text: CharSequence,
     lexer: Lexer,
-    cancellationProvider: CancellationProvider,
+    cancellationProvider: CancellationProvider?,
   ): TokenList
 }
 
@@ -596,7 +605,7 @@ private fun substitute(
     val contextKey = key + syntaxNode.context.startLexemeIndex
     val newKey = if (contextKey >= syntaxNode.endLexemeIndex) key + diff else key
     if (contextKey == syntaxNode.startLexemeIndex) {
-      newKey to ChameleonRef(parsedChameleon)
+      newKey to newChameleonRef(parsedChameleon)
     }
     else {
       newKey to value
@@ -637,7 +646,7 @@ private fun substitute(
               else oldParsedChameleon.customLexemeStore
               val newParsedChameleon = AstMarkersChameleon(newTokens, ast = reparsedAst)
               diff = if (theSameTokens) diff else 0
-              lexemeIndex to ChameleonRef(newParsedChameleon)
+              lexemeIndex to newChameleonRef(newParsedChameleon)
             }
 
             else -> (lexemeIndex + diff) to ref

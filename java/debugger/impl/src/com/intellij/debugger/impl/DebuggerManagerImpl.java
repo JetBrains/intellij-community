@@ -39,10 +39,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.util.net.NetKt.localhostInetAddress;
+
 @State(name = "DebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class DebuggerManagerImpl extends DebuggerManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DebuggerManagerImpl.class);
-  public static final String LOCALHOST_ADDRESS_FALLBACK = "127.0.0.1";
+  public static final String LOCALHOST_ADDRESS_FALLBACK = localhostInetAddress().getHostAddress();
   private static final int WAIT_KILL_TIMEOUT = 10000;
 
   private final Project myProject;

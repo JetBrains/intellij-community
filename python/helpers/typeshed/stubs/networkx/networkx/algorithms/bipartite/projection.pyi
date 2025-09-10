@@ -1,14 +1,26 @@
 from _typeshed import Incomplete
+from collections.abc import Callable, Iterable
 
-from networkx.utils.backends import _dispatch
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
 
-@_dispatch
-def projected_graph(B, nodes, multigraph: bool = False): ...
-@_dispatch
-def weighted_projected_graph(B, nodes, ratio: bool = False): ...
-@_dispatch
-def collaboration_weighted_projected_graph(B, nodes): ...
-@_dispatch
-def overlap_weighted_projected_graph(B, nodes, jaccard: bool = True): ...
-@_dispatch
-def generic_weighted_projected_graph(B, nodes, weight_function: Incomplete | None = None): ...
+__all__ = [
+    "projected_graph",
+    "weighted_projected_graph",
+    "collaboration_weighted_projected_graph",
+    "overlap_weighted_projected_graph",
+    "generic_weighted_projected_graph",
+]
+
+@_dispatchable
+def projected_graph(B: Graph[_Node], nodes: Iterable[Incomplete], multigraph: bool = False): ...
+@_dispatchable
+def weighted_projected_graph(B: Graph[_Node], nodes: Iterable[Incomplete], ratio: bool = False): ...
+@_dispatchable
+def collaboration_weighted_projected_graph(B: Graph[_Node], nodes: Iterable[Incomplete]): ...
+@_dispatchable
+def overlap_weighted_projected_graph(B: Graph[_Node], nodes: Iterable[Incomplete], jaccard: bool = True): ...
+@_dispatchable
+def generic_weighted_projected_graph(
+    B: Graph[_Node], nodes: Iterable[Incomplete], weight_function: Callable[..., Incomplete] | None = None
+): ...

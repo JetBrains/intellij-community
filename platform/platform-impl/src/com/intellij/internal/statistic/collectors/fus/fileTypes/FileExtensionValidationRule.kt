@@ -2,8 +2,10 @@
 package com.intellij.internal.statistic.collectors.fus.fileTypes
 
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalFileCustomValidationRule
+import org.jetbrains.annotations.ApiStatus
 
-internal class FileExtensionValidationRule : LocalFileCustomValidationRule(
+@ApiStatus.Internal
+class FileExtensionValidationRule : LocalFileCustomValidationRule(
   "file.extension.validation.rule",
   FileExtensionValidationRule::class.java,
   "allowed_file_extensions.txt"

@@ -34,7 +34,7 @@ PLAN
 Kotlin script is a general term meaning `.kts` file where one can write code in Kotlin on a top level.
 Differ to a regular `.kt` file, for example, to write `val a = 3 + 5` there is no need to declare a function or class. 
 
-There are different script types usually associated with a specific file sub-extension, e.g. `.main.kts`, `.ws.kts` or `.gradle.kts`. Here
+There are different script types usually associated with a specific file sub-extension, e.g. `.main.kts` or `.gradle.kts`. Here
 is where magic comes into play. Every script type has its specific set of implicit gems (import statements, base class,
 receivers, annotations, etc.).
 
@@ -49,8 +49,7 @@ The latter are called "standalone" and reside outside project source roots.
 Scripts requiring access to module sources and dependencies are "non-standalone" and therefore reside inside source roots.   
 
 Both DSL and source of dependencies are "encapsulated" in the file extension or even its name. For example, `.kts` support pure Kotlin
-(including the standard library) and are standalone. Scripts having `.ws.kts` extension are also "pure Kotlin" ones but reside in module
-source roots and have access to its sources and dependencies.
+(including the standard library) and are standalone.
 
 ### How file name defines a script type
 

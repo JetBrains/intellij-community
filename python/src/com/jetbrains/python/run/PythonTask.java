@@ -70,6 +70,7 @@ import static com.intellij.execution.target.value.TargetEnvironmentFunctions.tar
  * <i>NB! This class doesn't provide full support for Targets API but does it best to emulate it in some cases. Use targets API directly.</i>
  */
 @ApiStatus.Obsolete
+@ApiStatus.Internal
 public class PythonTask {
   /**
    * Mils we wait to process to be stopped when "rerun" called

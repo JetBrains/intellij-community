@@ -21,7 +21,7 @@ import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
@@ -263,7 +263,7 @@ class CopyrightManager @NonInjectable constructor(private val project: Project,
   }
 }
 
-private class CopyrightManagerDocumentListener : BulkFileListener {
+private class CopyrightManagerDocumentListener : BulkFileListenerBackgroundable {
   private val newFilePaths = ConcurrentCollectionFactory.createConcurrentSet<String>()
 
   private val isDocumentListenerAdded = AtomicBoolean()

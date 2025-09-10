@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 class IntroduceImportAliasIntention : SelfTargetingRangeIntention<KtNameReferenceExpression>(
     KtNameReferenceExpression::class.java,
-    KotlinBundle.lazyMessage("introduce.import.alias")
+    KotlinBundle.messagePointer("introduce.import.alias")
 ), LowPriorityAction {
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun applicabilityRange(element: KtNameReferenceExpression): TextRange? {

@@ -1,5 +1,3 @@
-from _typeshed import Incomplete
-
 from tensorflow.keras import (
     activations as activations,
     callbacks as callbacks,
@@ -14,4 +12,4 @@ from tensorflow.keras import (
 )
 from tensorflow.keras.models import Model as Model
 
-def __getattr__(name: str) -> Incomplete: ...
+def __getattr__(name: str): ...  # incomplete module
