@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
+import jetbrains.buildServer.messages.serviceMessages.Message;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.junit.platform.engine.*;
 import org.junit.platform.engine.discovery.ClassNameFilter;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
@@ -13,6 +15,8 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.vintage.engine.descriptor.VintageTestDescriptor;
 
 import java.io.IOException;
+import java.io.StringWriter;
+import java.io.PrintWriter;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -21,9 +25,27 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes.BUILD_PORBLEM;
+
 // Used to run JUnit 5 tests via JUnit 5 runtime
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public final class JUnit5TeamCityRunnerForTestsOnClasspath {
+  public static void reportFailureAsBuildProblem(Throwable e) {
+    int messageSplitThreshold = 4_000;
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    e.printStackTrace(pw);
+    String stackTrace = sw.toString();
+    for (int i = 0; i < stackTrace.length(); i += messageSplitThreshold) {
+      int endIndex = Math.min(i + messageSplitThreshold, stackTrace.length());
+      String chunk = stackTrace.substring(i, endIndex);
+      System.out.println(new Message(chunk, "FAILURE", null).asString());
+    }
+
+    System.out.println(ServiceMessage.asString(BUILD_PORBLEM,
+                                               Collections.singletonMap("description", stackTrace.substring(0, messageSplitThreshold))));
+  }
+
   private static final String ourCollectTestsFile = System.getProperty("intellij.build.test.list.classes");
 
   public static void main(String[] args) {
@@ -76,6 +98,10 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
         //see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
         System.exit(42);
       }
+    }
+    catch (Throwable e) {
+      reportFailureAsBuildProblem(e);
+      System.exit(1);
     }
     finally {
       System.exit(0);

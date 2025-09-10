@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.jvm.shared.scratch
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -11,7 +12,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.messages.Topic
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.ScratchFileOptionsFile
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.ScratchFileOptions
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.ScratchFileOptionsByFile
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -19,13 +21,13 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-abstract class ScratchFile(val project: Project, val file: VirtualFile) {
+abstract class ScratchFile(val project: Project, val virtualFile: VirtualFile) {
     private val moduleListeners: MutableList<() -> Unit> = mutableListOf()
     var module: Module? = null
         private set
 
     fun getPsiFile(): PsiFile? = runReadAction {
-        file.toPsiFile(project)
+        virtualFile.toPsiFile(project)
     }
 
     val ktFile: KtFile?
@@ -48,16 +50,10 @@ abstract class ScratchFile(val project: Project, val file: VirtualFile) {
     }
 
     val options: ScratchFileOptions
-        get() = getPsiFile()?.virtualFile?.let {
-            ScratchFileOptionsFile[project, it]
-        } ?: ScratchFileOptions()
+        get() = project.service<ScratchFileOptionsByFile>()[virtualFile] ?: ScratchFileOptions()
 
     fun saveOptions(update: ScratchFileOptions.() -> ScratchFileOptions) {
-        val virtualFile = getPsiFile()?.virtualFile ?: return
-        with(virtualFile) {
-            val configToUpdate = ScratchFileOptionsFile[project, this] ?: ScratchFileOptions()
-            ScratchFileOptionsFile[project, this] = configToUpdate.update()
-        }
+        project.service<ScratchFileOptionsByFile>()[virtualFile] = options.update()
     }
 
     fun getExpressions(): List<ScratchExpression> = runReadAction {
@@ -66,7 +62,7 @@ abstract class ScratchFile(val project: Project, val file: VirtualFile) {
 
     fun getExpressionAtLine(line: Int): ScratchExpression? = getExpressions().find { line in it.lineStart..it.lineEnd }
 
-    fun getExpressions(psiFile: PsiFile): List<ScratchExpression> {
+    private fun getExpressions(psiFile: PsiFile): List<ScratchExpression> {
         // todo multiple expressions at one line
         val doc = PsiDocumentManager.getInstance(psiFile.project).getLastCommittedDocument(psiFile) ?: return emptyList()
         var line = 0
@@ -112,12 +108,6 @@ abstract class ScratchFile(val project: Project, val file: VirtualFile) {
 }
 
 data class ScratchExpression(val element: PsiElement, val lineStart: Int, val lineEnd: Int = lineStart)
-
-data class ScratchFileOptions(
-    val isRepl: Boolean = false,
-    val isMakeBeforeRun: Boolean = false,
-    val isInteractiveMode: Boolean = true
-)
 
 interface ScratchFileListener {
     fun fileCreated(file: ScratchFile)

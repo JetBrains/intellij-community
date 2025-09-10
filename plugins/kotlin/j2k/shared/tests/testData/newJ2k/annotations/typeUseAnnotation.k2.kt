@@ -28,14 +28,17 @@ class TEST2 {
     var bar: @TypeUseAnon2 String? = null
 }
 
+// KTIJ-35460
 class TEST3 {
     @Anon5(1)
-    fun foo(@Anon5(2) o: @TypeUseAnon3 Any?): @TypeUseAnon3 String {
+    @TypeUseAnon3
+    fun foo(@Anon5(2) @TypeUseAnon3 o: @TypeUseAnon3 Any?): @TypeUseAnon3 String {
         @Anon5(3) val baz: @TypeUseAnon3 String = ""
         return ""
     }
 
     @Anon5(4)
+    @TypeUseAnon3
     var bar: @TypeUseAnon3 String? = null
 }
 

@@ -5,6 +5,7 @@ from antlr4.Lexer import Lexer as Lexer
 from antlr4.Token import Token as Token
 
 class CommonTokenStream(BufferedTokenStream):
+    __slots__ = "channel"
     channel: Incomplete
     def __init__(self, lexer: Lexer, channel: int = 0) -> None: ...
     def adjustSeekIndex(self, i: int) -> int: ...

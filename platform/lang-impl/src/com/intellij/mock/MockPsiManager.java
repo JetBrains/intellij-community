@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.mock;
 
@@ -88,6 +88,11 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
 
   @Override
   public void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener, @NotNull Disposable parentDisposable) {
+  }
+
+  @Override
+  @ApiStatus.Experimental
+  public void addPsiTreeChangeListenerBackgroundable(@NotNull PsiTreeChangeListener listener, @NotNull Disposable parentDisposable) {
   }
 
   @Override
@@ -258,15 +263,23 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   }
 
   @ApiStatus.Internal
+  @Deprecated
   @Override
   public void addTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor) {
 
   }
 
   @ApiStatus.Internal
+  @Deprecated
   @Override
   public void removeTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor) {
 
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void addTreeChangePreprocessorBackgroundable(@NotNull PsiTreeChangePreprocessor preprocessor,
+                                                      @NotNull Disposable parentDisposable) {
   }
 
   @Override
@@ -275,6 +288,12 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
 
   @Override
   public void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, @NotNull Disposable parentDisposable) {
+
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void addTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor, @NotNull Disposable parentDisposable) {
 
   }
 }

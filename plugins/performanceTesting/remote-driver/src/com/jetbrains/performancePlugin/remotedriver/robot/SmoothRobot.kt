@@ -134,6 +134,10 @@ internal class SmoothRobot @JvmOverloads constructor(
     click(c, MouseButton.LEFT_BUTTON, 2)
   }
 
+  fun tripleClick(c: Component) {
+    click(c, MouseButton.LEFT_BUTTON, 3)
+  }
+
   fun pressMouse(mouseButton: RemoteMouseButton) {
     pressMouse(mouseButton.toAssertJ())
   }
@@ -197,15 +201,18 @@ internal class SmoothRobot @JvmOverloads constructor(
   fun selectAndDrag(component: Component, from: Point, to: Point, delayMs: Int) {
     moveMouse(component, from)
 
-    click(component, from)
-    pressMouse(RemoteMouseButton.LEFT)
+    try {
+      click(component, from)
+      pressMouse(RemoteMouseButton.LEFT)
 
-    Thread.sleep(delayMs.toLong())
-    moveMouse(component, to)
+      Thread.sleep(delayMs.toLong())
+      moveMouse(component, to)
 
-    Thread.sleep(delayMs.toLong())
-    moveMouse(component, to)
-    releaseMouse(RemoteMouseButton.LEFT)
+      Thread.sleep(delayMs.toLong())
+      moveMouse(component, to)
+    } finally {
+      releaseMouse(RemoteMouseButton.LEFT)
+    }
   }
 
   fun makeScreenshot(): ByteArray = makeScreenshot(Rectangle(Toolkit.getDefaultToolkit().screenSize))

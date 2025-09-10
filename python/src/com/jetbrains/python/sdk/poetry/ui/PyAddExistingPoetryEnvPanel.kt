@@ -21,6 +21,7 @@ import com.jetbrains.python.sdk.poetry.*
 import com.jetbrains.python.ui.pyMayBeModalBlocking
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 import java.awt.BorderLayout
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
@@ -75,9 +76,15 @@ class PyAddExistingPoetryEnvPanel(
     return when (val sdk = sdkComboBox.selectedSdk) {
       is PyDetectedSdk -> {
         val mappedModule = sdkToModule[sdk.name] ?: module
+
         runWithModalBlockingOrInBackground(project, msg = PyBundle.message("python.sdk.dialog.title.setting.up.poetry.environment")) {
-          setupPoetrySdk(project, mappedModule, existingSdks, newProjectPath,
-                         getPythonExecutable(sdk.name), false, sdk.name).onSuccess {
+          val moduleBasePath = mappedModule?.basePath?.let { Path.of(it) }
+                               ?: error("module base path is invalid: ${mappedModule?.basePath}")
+
+          val basePythonBinaryPath = getPythonExecutable(sdk.name).let { Path.of(it) }
+                                     ?: error("base python binary path is invalid, home path is ${sdk.name}")
+
+          createPoetrySdk(moduleBasePath, existingSdks, basePythonBinaryPath).onSuccess {
             PySdkSettings.instance.preferredVirtualEnvBaseSdk = getPythonExecutable(sdk.name)
           }
         }.getOrNull()

@@ -11,7 +11,7 @@ jvm_library(
   name = "typeMigration",
   module_name = "intellij.java.typeMigration",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -33,7 +33,7 @@ jvm_library(
 jvm_library(
   name = "typeMigration_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":typeMigration"],
   deps = [
     "//platform/analysis-api:analysis",

@@ -11,7 +11,8 @@
 *f:com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider$Companion
 - f:getTreeElement(java.lang.Object):com.intellij.ide.structureView.StructureViewTreeElement
 *:com.intellij.ide.structureView.logical.model.ExtendedLogicalObject
-- a:isTheSameParent(java.lang.Object):Z
+- canRepresentPsiElement(com.intellij.psi.PsiElement):Z
+- isTheSameParent(java.lang.Object):Z
 *:com.intellij.ide.structureView.logical.model.LogicalContainer
 - a:getElements():java.util.List
 *a:com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider

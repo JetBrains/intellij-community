@@ -1,6 +1,5 @@
 <idea-plugin package="org.intellij.plugins.markdown.fenceInjection">
   <dependencies>
-    <plugin id="org.intellij.intelliLang"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.langInjection"/>
   </dependencies>

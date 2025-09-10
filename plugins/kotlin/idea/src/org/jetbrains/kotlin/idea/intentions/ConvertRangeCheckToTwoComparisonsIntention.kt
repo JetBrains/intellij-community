@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ConvertRangeCheckToTwoComparisonsIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
-    KotlinBundle.lazyMessage("convert.to.comparisons")
+    KotlinBundle.messagePointer("convert.to.comparisons")
 ) {
     private fun KtExpression?.isSimple() = this is KtConstantExpression || this is KtNameReferenceExpression
 
@@ -23,7 +23,7 @@ class ConvertRangeCheckToTwoComparisonsIntention : SelfTargetingOffsetIndependen
         element.replace(convertToComparison(element)?.value ?: return)
     }
 
-    override fun isApplicableTo(element: KtBinaryExpression) = convertToComparison(element) != null
+    override fun isApplicableTo(element: KtBinaryExpression): Boolean = convertToComparison(element) != null
 
     private fun convertToComparison(element: KtBinaryExpression): Lazy<KtExpression>? {
         if (element.operationToken != KtTokens.IN_KEYWORD) return null

@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -59,13 +60,15 @@ public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
     IntSet result = new IntOpenHashSet();
     Queue<Integer> queue = new ArrayDeque<>();
     queue.add(id);
+    FSRecordsImpl vfsPeer = FSRecords.getInstance();
     while (!queue.isEmpty()) {
       int recordId = queue.poll();
       if (result.add(recordId)) {
         ProgressManager.checkCanceled();
-        for (int childId : FSRecords.getInstance().listIds(recordId)) {
+        vfsPeer.forEachChildOf(recordId, childId -> {
           queue.add(childId);
-        }
+          return false;
+        });
       }
     }
     return result.toIntArray();

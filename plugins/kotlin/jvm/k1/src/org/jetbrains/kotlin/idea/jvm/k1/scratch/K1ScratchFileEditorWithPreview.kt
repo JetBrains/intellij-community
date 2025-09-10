@@ -8,11 +8,11 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.util.Disposer
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.KtScratchFileEditorWithPreview
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.ScratchFileEditorWithPreview
 
 class K1ScratchFileEditorWithPreview(
   val kotlinScratchFile: K1KotlinScratchFile, sourceTextEditor: TextEditor, previewTextEditor: TextEditor
-) : KtScratchFileEditorWithPreview(kotlinScratchFile, sourceTextEditor, previewTextEditor) {
+) : ScratchFileEditorWithPreview(kotlinScratchFile, sourceTextEditor, previewTextEditor) {
     init {
         kotlinScratchFile.compilingScratchExecutor?.addOutputHandler(commonPreviewOutputHandler)
         kotlinScratchFile.replScratchExecutor?.addOutputHandler(commonPreviewOutputHandler)
@@ -27,10 +27,10 @@ class K1ScratchFileEditorWithPreview(
     override fun createToolbar(): ActionToolbar = ScratchTopPanel(kotlinScratchFile).actionsToolbar
 
     companion object {
-        fun create(scratchFile: K1KotlinScratchFile): KtScratchFileEditorWithPreview {
-            val textEditorProvider = TextEditorProvider.Companion.getInstance()
+        fun create(scratchFile: K1KotlinScratchFile): ScratchFileEditorWithPreview {
+            val textEditorProvider = TextEditorProvider.getInstance()
 
-            val mainEditor = textEditorProvider.createEditor(scratchFile.project, scratchFile.file) as TextEditor
+            val mainEditor = textEditorProvider.createEditor(scratchFile.project, scratchFile.virtualFile) as TextEditor
             val editorFactory = EditorFactory.getInstance()
 
             val viewer = editorFactory.createViewer(editorFactory.createDocument(""), scratchFile.project, EditorKind.PREVIEW)

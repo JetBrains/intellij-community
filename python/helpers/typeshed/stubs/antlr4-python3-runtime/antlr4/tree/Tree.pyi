@@ -27,6 +27,7 @@ class ParseTreeListener:
     def exitEveryRule(self, ctx): ...
 
 class TerminalNodeImpl(TerminalNode):
+    __slots__ = ("parentCtx", "symbol")
     parentCtx: Incomplete
     symbol: Incomplete
     def __init__(self, symbol: Token) -> None: ...

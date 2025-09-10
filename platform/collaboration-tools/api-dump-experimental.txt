@@ -396,6 +396,7 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - f:isCombinedDiffEnabled():Z
 *f:com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+- sf:THREAD_TOP_MARGIN:I
 - f:actionsVisibleOnHover(javax.swing.JComponent,javax.swing.JComponent):V
 - f:build(com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$ComponentType,kotlin.jvm.functions.Function1,javax.swing.JComponent,kotlin.jvm.functions.Function1):javax.swing.JComponent
 - f:buildDynamic(com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$ComponentType,kotlin.jvm.functions.Function1,javax.swing.JComponent,kotlin.jvm.functions.Function1):javax.swing.JComponent
@@ -522,13 +523,6 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComponentFactory
 - f:createIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel,com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModel,java.lang.String):com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 - f:getSELECTED_CHANGES():com.intellij.openapi.actionSystem.DataKey
-*f:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory
-- *sf:Companion:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory$Companion
-- <init>(com.intellij.openapi.project.Project,com.intellij.collaboration.ui.SingleValueModel):V
-- f:create(java.lang.String,Z):com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
-- bs:create$default(com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory,java.lang.String,Z,I,java.lang.Object):com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
-*f:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory$Companion
-- f:createTreeToolbar(com.intellij.openapi.actionSystem.ActionManager,java.lang.String,javax.swing.JComponent):javax.swing.JComponent
 *f:com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 - f:createIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModel,com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory$Config,com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig):javax.swing.JComponent
@@ -971,9 +965,9 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - *sf:controlInlaysIn(com.intellij.diff.tools.util.base.DiffViewerBase,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):V
 - *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function3,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function4,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function6,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - *bs:showCodeReview$default(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function3,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- *bs:showCodeReview$default(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function4,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- *bs:showCodeReview$default(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function6,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 - *sf:Companion:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$Companion
 - a:canCreateComment(I):Z
@@ -1025,14 +1019,15 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel$WithMultilineComments
 - com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$WithMultilineComments
 *f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
+- com.intellij.openapi.Disposable
 - com.intellij.openapi.editor.markup.ActiveGutterRenderer
 - com.intellij.openapi.editor.markup.LineMarkerRenderer
 - com.intellij.openapi.editor.markup.LineMarkerRendererEx
 - *sf:Companion:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer$Companion
 - canDoAction(com.intellij.openapi.editor.Editor,java.awt.event.MouseEvent):Z
+- dispose():V
 - doAction(com.intellij.openapi.editor.Editor,java.awt.event.MouseEvent):V
 - getPosition():com.intellij.openapi.editor.markup.LineMarkerRendererEx$Position
-- f:launch(kotlin.coroutines.Continuation):java.lang.Object
 - paint(com.intellij.openapi.editor.Editor,java.awt.Graphics,java.awt.Rectangle):V
 *f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer$Companion
 - f:render(com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel,com.intellij.openapi.editor.ex.EditorEx,kotlin.coroutines.Continuation):java.lang.Object

@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -63,6 +65,11 @@ public final class Restarter {
 
     if (PlatformUtils.isJetBrainsClient()) {
       // the client launched from a host IDE overrides `ApplicationNamesInfo#getScriptName`
+      Application application = ApplicationManager.getApplication();
+      if (application == null) return null;
+      //noinspection SimplifiableServiceRetrieving
+      IdeProductInfo productInfo = application.getService(IdeProductInfo.class);
+      if (productInfo == null) return null;
       var launchData = IdeProductInfo.getInstance().getCurrentProductInfo().getLaunch();
       if (launchData.size() == 1) {
         var hostLauncher = PathManager.getHomeDir()

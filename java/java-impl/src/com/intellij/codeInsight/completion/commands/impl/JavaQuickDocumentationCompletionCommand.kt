@@ -9,10 +9,14 @@ import com.intellij.psi.util.PsiTreeUtil
 internal class JavaQuickDocumentationCompletionCommand : AbstractQuickDocumentationCompletionCommand() {
   override fun findElement(offset: Int, psiFile: PsiFile): PsiElement? {
     var context = getCommandContext(offset, psiFile) ?: return null
-    if (context is PsiWhiteSpace) context = context.prevSibling
+    if (context is PsiWhiteSpace) context = PsiTreeUtil.prevVisibleLeaf(context) ?: return null
     if (context !is PsiIdentifier) return null
     if (context.parent is PsiMember) return context
+    //example:
+    // String.<caret> a = "1";
     if (((context.parent?.parent as? PsiTypeElement)?.type as? PsiClassType)?.resolve() is PsiMember) return context
+    //example:
+    // void a() throws Exception.<caret>{}
     if (context.parent?.parent is PsiReferenceList && (context.parent as? PsiJavaCodeReferenceElement)?.resolve() is PsiMember) return context
     val value = PsiTreeUtil.getParentOfType(context, PsiJavaCodeReferenceElement::class.java, false) ?: return null
     val resolved = value.resolve()

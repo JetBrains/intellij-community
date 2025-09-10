@@ -50,7 +50,6 @@ class ProjectIndexingDependenciesStorage(private val storage: FileChannel, stora
       writeIntOrExecute(INCOMPLETE_SCANNING_MARK_OFFSET, if (mark) 1 else 0) { bytesWritten ->
         throw IOException(tooFewBytesWrittenMsg(bytesWritten, "incomplete scanning mark"))
       }
-      storage.force(false)
     }
   }
 

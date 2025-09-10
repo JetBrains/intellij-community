@@ -11,6 +11,7 @@ import com.intellij.psi.util.nextLeafs
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.lookups.factories.insertAndShortenReferencesInStringUsingTemporarySuffix
@@ -21,7 +22,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal object FirSuperEntriesProvider {
-    context(KaSession)
+    context(_: KaSession)
     fun getSuperClassesAvailableForSuperCall(context: PsiElement): List<KaNamedClassSymbol> {
         val containingClass = context.getStrictParentOfType<KtClassOrObject>() ?: return emptyList()
         val containingClassSymbol = containingClass.classSymbol ?: return emptyList()

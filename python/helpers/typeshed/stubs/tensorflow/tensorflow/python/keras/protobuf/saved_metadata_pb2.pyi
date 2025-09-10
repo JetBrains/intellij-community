@@ -25,11 +25,7 @@ class SavedMetadata(google.protobuf.message.Message):
         Keras object is stored.
         """
 
-    def __init__(
-        self,
-        *,
-        nodes: collections.abc.Iterable[global___SavedObject] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, nodes: collections.abc.Iterable[global___SavedObject] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["nodes", b"nodes"]) -> None: ...
 
 global___SavedMetadata = SavedMetadata
@@ -74,6 +70,20 @@ class SavedObject(google.protobuf.message.Message):
         version: tensorflow.python.keras.protobuf.versions_pb2.VersionDef | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["version", b"version"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["identifier", b"identifier", "metadata", b"metadata", "node_id", b"node_id", "node_path", b"node_path", "version", b"version"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "identifier",
+            b"identifier",
+            "metadata",
+            b"metadata",
+            "node_id",
+            b"node_id",
+            "node_path",
+            b"node_path",
+            "version",
+            b"version",
+        ],
+    ) -> None: ...
 
 global___SavedObject = SavedObject

@@ -67,6 +67,12 @@ class LogicalStructureAssembledModel<T> private constructor(
         result.add(model)
       }
     }
+    if (model is LogicalContainer<*>) {
+      model.getElements().forEach { child ->
+        if (child == null) return@forEach
+        result.addAll(getLogicalPsiDescriptions(child))
+      }
+    }
     for (provider in LogicalStructureElementsProvider.getProviders(model)) {
       if (provider is LogicalPsiDescription) {
         if (!provider.isAskChildren()) {

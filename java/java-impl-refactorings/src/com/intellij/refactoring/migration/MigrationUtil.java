@@ -61,7 +61,7 @@ public final class MigrationUtil {
 
   private static List<UsageInfo> findRefs(final PsiElement aClass, GlobalSearchScope searchScope) {
     List<UsageInfo> results = new ArrayList<>();
-    for (PsiReference usage : ReferencesSearch.search(aClass, searchScope, false).asIterable()) {
+    for (PsiReference usage : ReferencesSearch.search(aClass, searchScope, false)) {
       results.add(new UsageInfo(usage));
     }
 
@@ -83,10 +83,18 @@ public final class MigrationUtil {
         if (usage instanceof MigrationProcessor.MigrationUsageInfo usageInfo && Objects.equals(newQName, usageInfo.mapEntry.getNewName())) {
           PsiElement element = usage.getElement();
           if (element == null || !element.isValid()) continue;
+
+          if (elementToBind instanceof PsiClass && newQName != null) {
+            PsiClass[] inScope = JavaPsiFacade.getInstance(element.getProject()).findClasses(newQName, element.getResolveScope());
+            if (inScope.length > 0) {
+              elementToBind = inScope[0];
+            }
+          }
+
           UElement uElement = UastContextKt.toUElement(element);
           PsiElement psiElement;
-          if (uElement instanceof UReferenceExpression) {
-            psiElement = UastCodeGenerationPluginKt.bindToElement((UReferenceExpression)uElement, elementToBind);
+          if (uElement instanceof UReferenceExpression uReference) {
+            psiElement = UastCodeGenerationPluginKt.bindToElement(uReference, elementToBind);
           }
           else {
             psiElement = bindNonJavaReference(elementToBind, element, usage);

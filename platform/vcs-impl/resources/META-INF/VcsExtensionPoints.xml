@@ -52,10 +52,6 @@
       <with attribute="preloaderClassName" implements="com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider$Preloader"/>
     </extensionPoint>
 
-    <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
-    </extensionPoint>
-
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="openapi.vcs.impl.LocalLineStatusTrackerProvider"
                     interface="com.intellij.openapi.vcs.impl.LocalLineStatusTrackerProvider"
@@ -154,11 +150,6 @@
                     area="IDEA_PROJECT"
                     dynamic="true"/>
 
-    <extensionPoint name="vcs.changeListDecorator"
-                    interface="com.intellij.openapi.vcs.changes.ChangeListDecorator"
-                    area="IDEA_PROJECT"
-                    dynamic="true"/>
-
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"
                     interface="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"
@@ -216,9 +207,6 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.ui.commitOptionsDialogExtension"
                     interface="com.intellij.openapi.vcs.ui.CommitOptionsDialogExtension"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.ui.filePathIconProvider"
-                    interface="com.intellij.openapi.vcs.changes.FilePathIconProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.ui.shareProjectAction"
                     interface="com.intellij.openapi.vcs.changes.ui.ShareProjectActionProvider"

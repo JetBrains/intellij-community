@@ -36,7 +36,7 @@ import org.jetbrains.intellij.build.checkForNoDiskSpace
 import org.jetbrains.intellij.build.computeHashForModuleOutput
 import org.jetbrains.intellij.build.computeModuleSourcesByContent
 import org.jetbrains.intellij.build.defaultLibrarySourcesNamesFilter
-import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_CLIENT_JAR
+import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
@@ -119,8 +119,8 @@ private val predefinedMergeRules = listOf<Pair<String, (String, FrontendModuleFi
   "guava.jar" to { it, _ -> it == "Guava" },
   "opentelemetry.jar" to { it, _ -> it == "opentelemetry" || it == "opentelemetry-semconv" || it.startsWith("opentelemetry-exporter-otlp") },
   "bouncy-castle.jar" to { it, _ -> it.startsWith("bouncy-castle-") },
-  PRODUCT_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && !filter.isProjectLibraryIncluded(name) },
-  PRODUCT_CLIENT_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && filter.isProjectLibraryIncluded(name) },
+  PRODUCT_BACKEND_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && filter.isBackendProjectLibrary(name) },
+  PRODUCT_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && !filter.isBackendProjectLibrary(name) },
   // see ClassPathUtil.getUtilClassPath
   UTIL_8_JAR to { it, _ ->
     libsUsedInJps.contains(it) ||
@@ -199,14 +199,14 @@ class JarPackager private constructor(
         }
 
         if (!libraryToMerge.isEmpty()) {
-          val clientLibraries = libraryToMerge.filterKeys { frontendModuleFilter.isProjectLibraryIncluded(it.name) }
-          if (clientLibraries.isNotEmpty()) {
-            packager.projectLibsToSourceWithMappings(uberJarFile = outputDir.resolve(PlatformJarNames.LIB_CLIENT_JAR), libraryToMerge = clientLibraries)
+          val commonLibraries = libraryToMerge.filterKeys { !frontendModuleFilter.isBackendProjectLibrary(it.name) }
+          if (commonLibraries.isNotEmpty()) {
+            packager.projectLibsToSourceWithMappings(uberJarFile = outputDir.resolve(PlatformJarNames.LIB_JAR), libraryToMerge = commonLibraries)
           }
 
-          val nonClientLibraries = libraryToMerge.filterKeys { !frontendModuleFilter.isProjectLibraryIncluded(it.name) }
-          if (nonClientLibraries.isNotEmpty()) {
-            packager.projectLibsToSourceWithMappings(uberJarFile = outputDir.resolve(PlatformJarNames.LIB_JAR), libraryToMerge = nonClientLibraries)
+          val backendLibraries = libraryToMerge.filterKeys { frontendModuleFilter.isBackendProjectLibrary(it.name) }
+          if (backendLibraries.isNotEmpty()) {
+            packager.projectLibsToSourceWithMappings(uberJarFile = outputDir.resolve(PlatformJarNames.LIB_BACKEND_JAR), libraryToMerge = backendLibraries)
           }
         }
       }
@@ -248,9 +248,18 @@ class JarPackager private constructor(
   private suspend fun computeModuleSources(includedModules: Collection<ModuleItem>, layout: BaseLayout?, searchableOptionSet: SearchableOptionSetDescriptor?) {
     val addedModules = HashSet<String>()
 
+    val modulesWithCustomPath = HashSet<String>()
+    for (item in includedModules) {
+      if (layout is PluginLayout && !item.relativeOutputFile.contains('/')) {
+        if (item.relativeOutputFile != layout.getMainJarName()) {
+          modulesWithCustomPath.add(item.moduleName)
+        }
+      }
+    }
+
     // First, check the content. This is done prior to everything else since we might configure a custom relativeOutputFile.
     if (layout is PluginLayout) {
-      computeModuleSourcesByContent(helper, context, layout, addedModules, jarPackager = this, searchableOptionSet)
+      computeModuleSourcesByContent(helper, context, layout, addedModules, jarPackager = this, searchableOptionSet, modulesWithCustomPath)
     }
 
     for (item in includedModules) {

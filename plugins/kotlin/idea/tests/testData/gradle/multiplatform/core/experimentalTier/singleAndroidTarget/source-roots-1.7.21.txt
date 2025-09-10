@@ -4,7 +4,6 @@ project
 project.androidTest
     src/androidAndroidTest/kotlin (Java, Test)
     src/androidAndroidTestDebug/kotlin (Java, Test)
-    src/androidDebugAndroidTest/kotlin (Java, Test)
     src/androidTest/java (Java, Test)
     src/androidTestDebug/java (Java, Test)
 

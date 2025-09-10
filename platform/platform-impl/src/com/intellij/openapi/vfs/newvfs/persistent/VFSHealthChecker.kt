@@ -322,7 +322,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
                 val isDirectory = BitUtil.isSet(flags, IS_DIRECTORY)
 
                 val children = try {
-                  impl.listIds(fileId)
+                  impl.list(fileId).children.map { it.id }.toIntArray()
                 }
                 catch (e: Throwable) {
                   //'childId is out of allocated range' now also falls here: 'cos .listIds() checks childId, and
@@ -376,7 +376,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     if (BitUtil.isSet(parentFlags, CHILDREN_CACHED)) {
       try {
         //MAYBE RC: use .listIdsUnchecked() method -- to not trigger VFS rebuild?
-        val childrenOfParent = impl.listIds(parentId)
+        val childrenOfParent = impl.list(parentId).children.map { it.id }
         if (childrenOfParent.indexOf(fileId) < 0) {
           //Check: is it an orphan _duplicate_ -- is there a non-orphan child with the same name?
           val fileNameId = fileRecords.getNameId(fileId)

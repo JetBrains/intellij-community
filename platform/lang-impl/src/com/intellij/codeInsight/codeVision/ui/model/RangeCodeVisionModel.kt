@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.codeVision.ui.model
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
-import com.intellij.codeInsight.codeVision.CodeVisionBundle
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.codeVision.CodeVisionMessageBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.project.Project
@@ -15,9 +15,8 @@ class RangeCodeVisionModel(
   val editor: Editor,
   lensMap: Map<CodeVisionAnchorKind, List<CodeVisionEntry>>,
   val anchoringRange: TextRange,
-  @Nls val name: String = CodeVisionBundle.message("codeLens.more.popup.header")
+  @Nls val name: String = CodeVisionMessageBundle.message("codeLens.more.popup.header")
 ) {
-
   enum class InlayState {
     NORMAL,
     ACTIVE

@@ -91,6 +91,7 @@ public class GitRebaseProcess {
   private final @NotNull GitChangesSaver mySaver;
   private final @NotNull ProgressManager myProgressManager;
   private final @NotNull VcsDirtyScopeManager myDirtyScopeManager;
+  private boolean isSuccessful = false;
 
   public GitRebaseProcess(@NotNull Project project, @NotNull GitRebaseSpec rebaseSpec, @Nullable GitRebaseResumeMode customMode) {
     myProject = project;
@@ -174,6 +175,7 @@ public class GitRebaseProcess {
         mySaver.load();
       }
       if (latestStatus == GitRebaseStatus.Type.SUCCESS) {
+        isSuccessful = true;
         notifySuccess();
       }
 
@@ -392,6 +394,10 @@ public class GitRebaseProcess {
 
     String message = GitSuccessfulRebase.formatMessage(rebasedBranch, baseBranch, params != null && params.getBranch() != null);
     myNotifier.notifyMinorInfo(REBASE_SUCCESSFUL, GitBundle.message("rebase.notification.successful.title"), message);
+  }
+
+  public boolean isSuccessful() {
+    return isSuccessful;
   }
 
   private static @Nullable String getCommonCurrentBranchNameIfAllTheSame(@NotNull Collection<? extends GitRepository> repositories) {

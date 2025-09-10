@@ -10,8 +10,8 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.terminal.session.TerminalHyperlinkId
-import org.jetbrains.plugins.terminal.block.reworked.IS_ALTERNATE_BUFFER_KEY
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_ALTERNATE_BUFFER_DATA_KEY
 
 internal class HyperlinkContextMenuActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification.BackendOnly {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -22,7 +22,7 @@ internal class HyperlinkContextMenuActionGroup : ActionGroup(), ActionRemoteBeha
     LOG.trace { "getChildren(): event=$e" }
     val sessionId = e.dataContext.getData(TerminalSessionId.KEY) ?: return emptyArray()
     LOG.trace { "getChildren(): sessionId=$sessionId" }
-    val isAltBuf = e.dataContext.getData(IS_ALTERNATE_BUFFER_KEY) ?: return emptyArray()
+    val isAltBuf = e.dataContext.getData(IS_ALTERNATE_BUFFER_DATA_KEY) ?: return emptyArray()
     LOG.trace { "getChildren(): isAltBuf=$isAltBuf" }
     val hyperlinkId = e.dataContext.getData(TerminalHyperlinkId.KEY) ?: return emptyArray()
     LOG.trace { "getChildren(): hyperlinkId=$hyperlinkId" }

@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmJsLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmWasiLibraryKind
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.withLibraryToSourceAnalysis
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
@@ -2365,7 +2365,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
 
     private fun stdlibJs(): LibraryEx = projectLibrary(
         "kotlin-stdlib-js",
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(TestKotlinArtifacts.kotlinStdlibJs),
+        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(TestKotlinArtifacts.kotlinStdlibJs),
         kind = KotlinJavaScriptLibraryKind
     )
 

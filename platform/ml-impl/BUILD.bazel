@@ -17,7 +17,7 @@ jvm_library(
   name = "ml-impl",
   module_name = "intellij.platform.ml.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:ngram-slp",
@@ -47,7 +47,7 @@ jvm_library(
 jvm_library(
   name = "ml-impl_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":ml-impl"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -74,6 +74,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/statistics/testFramework",
   ],
+  exports = ["@lib//:ngram-slp"],
   runtime_deps = [
     ":ml-impl_resources",
     ":ml-impl_test_resources",

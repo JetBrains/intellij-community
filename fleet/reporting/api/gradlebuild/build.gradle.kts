@@ -29,6 +29,7 @@ kotlin {
   compilerOptions.freeCompilerArgs = listOf(
     "-Xlambdas=class",
     "-Xconsistent-data-class-copy-visibility",
+    "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
   )
   jvm {}
   wasmJs {
@@ -57,8 +58,6 @@ kotlin {
     implementation(jps.com.intellij.platform.kotlinx.coroutines.core.jvm134738847.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.io.opentelemetry.opentelemetry.sdk966255575.get())
-    implementation(jps.io.opentelemetry.semconv.opentelemetry.semconv489456914.get())
   }
   // KOTLIN__MARKER_END
 }

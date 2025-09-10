@@ -44,8 +44,10 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,7 +63,7 @@ import static com.jetbrains.python.PyNames.CANONICAL_SELF;
 /**
  * User : ktisha
  */
-
+@ApiStatus.Internal
 public class PyChangeSignatureDialog extends
                                      ChangeSignatureDialogBase<PyParameterInfo, PyFunction, String, PyMethodDescriptor, PyParameterTableModelItem, PyParameterTableModel> {
 
@@ -102,8 +104,9 @@ public class PyChangeSignatureDialog extends
     return name != null && validator.isIdentifier(name, project) && !validator.isKeyword(name, project);
   }
 
+  @VisibleForTesting
   @Override
-  protected @Nullable String validateAndCommitData() {
+  public @Nullable String validateAndCommitData() {
     final String functionName = myNameField.getText().trim();
     if (!functionName.equals(myMethod.getName())) {
       final boolean defined = IntroduceValidator.isDefinedInScope(functionName, myMethod.getMethod());

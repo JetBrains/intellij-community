@@ -5,10 +5,7 @@ import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.util.ChronoUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
@@ -40,8 +37,17 @@ public final class JavaSpellcheckingStrategy extends SpellcheckingStrategy imple
     if (element instanceof PsiNamedElement) {
       return myNamedElementTokenizer;
     }
+    if (shouldIgnore(element)) {
+      return EMPTY_TOKENIZER;
+    }
 
     return super.getTokenizer(element);
+  }
+
+  private boolean shouldIgnore(PsiElement element) {
+    return element instanceof PsiComment comment
+           && comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT
+           && useTextLevelSpellchecking();
   }
 
   @Override

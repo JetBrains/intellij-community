@@ -4,9 +4,7 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.EmptyStackException;
 import java.util.Iterator;
@@ -98,11 +96,15 @@ public class TestSuiteStack {
     return getStackSize() == 0;
   }
   
-  protected int getStackSize() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public int getStackSize() {
     return myStack.size();
   }
 
-  protected String[] getSuitePath() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public String[] getSuitePath() {
     final int stackSize = getStackSize();
     final String[] names = new String[stackSize];
     int i = 0;
@@ -112,7 +114,9 @@ public class TestSuiteStack {
     return names;
   }
 
-  protected String getSuitePathPresentation() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public String getSuitePathPresentation() {
     final String[] names = getSuitePath();
     if (names.length == 0) {
       return EMPTY;

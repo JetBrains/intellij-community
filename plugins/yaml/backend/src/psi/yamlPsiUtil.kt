@@ -44,6 +44,9 @@ private val types = sequenceOf(YamlBooleanType.getSharedInstance(),
                                YamlStringType.getInstance(), YamlAnything.getInstance())
 
 private fun isValid(meta: YamlMetaType, value: YAMLValue): Boolean {
+  val tagText = value.tag?.text
+  if (tagText != null && !meta.isSupportedTag(tagText)) return false
+
   val problemsHolder = ProblemsHolder(InspectionManager.getInstance(value.project), value.containingFile, false)
   meta.validateValue(value, problemsHolder)
   return !problemsHolder.hasResults()

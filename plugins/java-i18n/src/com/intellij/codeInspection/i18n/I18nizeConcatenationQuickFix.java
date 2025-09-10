@@ -31,7 +31,7 @@ import java.util.Objects;
 public final class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix<UPolyadicExpression> {
   public static final @NonNls String PARAMETERS_OPTION_KEY = "PARAMETERS";
 
-  public I18nizeConcatenationQuickFix(NlsInfo.Localized info) {
+  I18nizeConcatenationQuickFix(NlsInfo.Localized info) {
     super(info);
   }
 

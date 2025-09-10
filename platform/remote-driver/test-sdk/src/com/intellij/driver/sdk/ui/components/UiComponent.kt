@@ -7,6 +7,7 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.SearchContext
 import com.intellij.driver.sdk.ui.UiText
 import com.intellij.driver.sdk.ui.UiText.Companion.asString
+import com.intellij.driver.sdk.ui.keyboard.RemoteKeyboard
 import com.intellij.driver.sdk.ui.keyboard.WithKeyboard
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Robot
@@ -67,6 +68,11 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       findThisComponent(timeout)
       return this
     }
+  }
+
+  override fun keyboard(keyboardActions: RemoteKeyboard.() -> Unit) {
+    component // making sure the component is found
+    super.keyboard(keyboardActions)
   }
 
   /**
@@ -429,11 +435,15 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     }
   }
 
-  fun tripleClick(point: Point) {
+  fun tripleClick(point: Point? = null) {
     LOG.info("Triple click at $this${point?.let { ": $it" } ?: ""}")
-    withComponent { robot.click(it, point, RemoteMouseButton.LEFT, 3) }
+    if (point != null) {
+      withComponent { robot.click(it, point, RemoteMouseButton.LEFT, 3) }
+    }
+    else {
+      withComponent { robot.tripleClick(it) }
+    }
   }
-
   fun rightClick(point: Point? = null) {
     LOG.info("Right click at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
@@ -471,4 +481,6 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   fun getForegroundColor(): Color {
     return withComponent { Color(it.getForeground().getRGB()) }
   }
+
+  fun getLocationOnScreen(): Point = component.getLocationOnScreen()
 }

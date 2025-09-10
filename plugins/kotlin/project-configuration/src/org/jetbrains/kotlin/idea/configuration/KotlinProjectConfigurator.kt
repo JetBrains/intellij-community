@@ -168,6 +168,6 @@ interface KotlinProjectConfigurator {
     }
 
     companion object {
-        val EP_NAME = ExtensionPointName.create<KotlinProjectConfigurator>("org.jetbrains.kotlin.projectConfigurator")
+        val EP_NAME: ExtensionPointName<KotlinProjectConfigurator> = ExtensionPointName.create<KotlinProjectConfigurator>("org.jetbrains.kotlin.projectConfigurator")
     }
 }

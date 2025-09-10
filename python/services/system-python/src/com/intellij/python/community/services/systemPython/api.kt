@@ -23,7 +23,7 @@ import org.jetbrains.annotations.CheckReturnValue
  * Service to register and obtain [SystemPython]s
  */
 @ApiStatus.NonExtendable
-sealed interface SystemPythonService {
+interface SystemPythonService {
   /**
    * The result of this function might be cached. Use [forceRefresh] to reload it forcibly.
    * @return system pythons installed on OS sorted by type, then by lang.level: in order from highest (hence, the first one is usually the best one)
@@ -91,7 +91,7 @@ class SystemPython internal constructor(private val delegate: VanillaPythonWithL
  * Tool to install python on OS.
  */
 @ApiStatus.NonExtendable
-sealed interface PythonInstallerService {
+interface PythonInstallerService {
 
   /**
    * Installs latest stable python on OS.

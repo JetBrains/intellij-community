@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ReplaceTypeArgumentWithUnderscoreIntention : SelfTargetingRangeIntention<KtTypeProjection>(
-    KtTypeProjection::class.java, KotlinBundle.lazyMessage("replace.with.underscore")
+    KtTypeProjection::class.java, KotlinBundle.messagePointer("replace.with.underscore")
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtTypeProjection): TextRange? {
         if (!element.languageVersionSettings.supportsFeature(LanguageFeature.PartiallySpecifiedTypeArguments)) return null

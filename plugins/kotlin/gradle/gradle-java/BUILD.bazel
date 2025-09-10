@@ -21,7 +21,7 @@ jvm_library(
   name = "gradle-java",
   module_name = "kotlin.gradle.gradle-java",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_gradle-java",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -72,7 +72,6 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/external-system-api:externalSystem",
     "//platform/platform-impl:ide-impl",
-    "//platform/diff-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
@@ -96,7 +95,7 @@ jvm_library(
 jvm_library(
   name = "gradle-java_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_gradle-java",
   associates = [":gradle-java"],
   deps = [
@@ -154,7 +153,6 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/external-system-api:externalSystem",
     "//platform/platform-impl:ide-impl",
-    "//platform/diff-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",

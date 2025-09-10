@@ -1,3 +1,9 @@
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `build kotlin.idea.tests` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
@@ -21,7 +27,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "kotlin.idea.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_tests",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -183,7 +189,6 @@ jvm_library(
     "//plugins/kotlin/jvm/k1",
     "//plugins/kotlin/base/scripting/scripting.k1",
     "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
-    "//plugins/IntelliLang/plugin",
     "//plugins/IntelliLang/backend",
     "//plugins/kotlin/base/scripting/scripting.shared",
   ],

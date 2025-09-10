@@ -24,7 +24,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "kotlin.core.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_tests",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -57,7 +57,6 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",
-    "//platform/diff-impl",
     "//java/java-impl:impl",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/core-ui",

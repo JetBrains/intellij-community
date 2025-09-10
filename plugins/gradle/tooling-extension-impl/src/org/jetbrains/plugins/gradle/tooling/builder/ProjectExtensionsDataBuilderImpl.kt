@@ -6,7 +6,6 @@ import com.intellij.gradle.toolingExtension.impl.util.GradleConventionUtil
 import com.intellij.gradle.toolingExtension.impl.util.GradleConventionUtil.getConventionPlugins
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import groovy.lang.Closure
-import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
@@ -41,17 +40,14 @@ class ProjectExtensionsDataBuilderImpl : ModelBuilderService {
       result.gradleProperties.add(DefaultGradleProperty(entry.key, typeFqn))
     }
 
-    for (it in DefaultGroovyMethods.findAll(extensions)) {
-      val extension = it as ExtensionContainer
-      val keyList = extractKeys(extension)
+    val keyList = extractKeys(extensions)
 
-      for (name in keyList) {
-        val value = extension.findByName(name)
-        if (value == null) continue
+    for (name in keyList) {
+      val value = extensions.findByName(name)
+      if (value == null) continue
 
-        val rootTypeFqn = getType(value)
-        result.extensions.add(DefaultGradleExtension(name, rootTypeFqn))
-      }
+      val rootTypeFqn = getType(value)
+      result.extensions.add(DefaultGradleExtension(name, rootTypeFqn))
     }
     return result
   }

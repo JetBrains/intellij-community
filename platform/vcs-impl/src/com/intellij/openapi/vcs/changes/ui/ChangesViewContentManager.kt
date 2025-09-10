@@ -21,10 +21,9 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.platform.vcs.impl.shared.ui.ToolWindowLazyContent
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
-import com.intellij.ui.content.ContentManagerEvent
-import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ObjectUtils.tryCast
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -32,7 +31,6 @@ import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.CommitModeManager
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
 
@@ -112,10 +110,7 @@ class ChangesViewContentManager private constructor(private val project: Project
 
   private fun initContentManager(toolWindow: ToolWindow) {
     val contentManager = toolWindow.contentManager
-    val listener = ContentProvidersListener(toolWindow)
-    contentManager.addContentManagerListener(listener)
-    Disposer.register(this, Disposable { contentManager.removeContentManagerListener(listener) })
-    project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, listener)
+    ToolWindowLazyContent.installInitializer(toolWindow)
 
     val contents = addedContents.filter { it.resolveContentManager() === contentManager }
     for (content in contents) {
@@ -215,21 +210,6 @@ class ChangesViewContentManager private constructor(private val project: Project
     return content.resolveToolWindowId()
   }
 
-  private inner class ContentProvidersListener(val toolWindow: ToolWindow) : ContentManagerListener, ToolWindowManagerListener {
-    override fun stateChanged(toolWindowManager: ToolWindowManager) {
-      if (toolWindow.isVisible) {
-        val content = toolWindow.contentManager.selectedContent ?: return
-        initLazyContent(content)
-      }
-    }
-
-    override fun selectionChanged(event: ContentManagerEvent) {
-      if (toolWindow.isVisible) {
-        initLazyContent(event.content)
-      }
-    }
-  }
-
   enum class TabOrderWeight(val tabName: String?, val weight: Int) {
     LOCAL_CHANGES(ChangesViewContentManager.LOCAL_CHANGES, 10),
     REPOSITORY(ChangesViewContentManager.REPOSITORY, 20),
@@ -263,9 +243,6 @@ class ChangesViewContentManager private constructor(private val project: Project
   companion object {
     const val TOOLWINDOW_ID: String = ToolWindowId.VCS
     internal const val COMMIT_TOOLWINDOW_ID = ToolWindowId.COMMIT
-
-    @JvmField
-    internal val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider?>("CONTENT_PROVIDER_SUPPLIER")
 
     /**
      * Whether the commit window is in the windowed or floating mode.
@@ -330,14 +307,6 @@ class ChangesViewContentManager private constructor(private val project: Project
     @JvmStatic
     fun shouldHaveSplitterDiffPreview(project: Project, isContentVertical: Boolean): Boolean {
       return !isContentVertical || !isCommitToolWindowShown(project)
-    }
-
-    @ApiStatus.Internal
-    fun initLazyContent(content: Content) {
-      val provider = content.getUserData(CONTENT_PROVIDER_SUPPLIER_KEY)?.invoke() ?: return
-      content.putUserData(CONTENT_PROVIDER_SUPPLIER_KEY, null)
-      provider.initTabContent(content)
-      IJSwingUtilities.updateComponentTreeUI(content.component)
     }
 
     /**

@@ -8,6 +8,7 @@ import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.webTypes.impl.WebTypesSymbolTypeSupportFactoryEP
 import com.intellij.polySymbols.webTypes.json.WebTypes
 import com.intellij.polySymbols.webTypes.json.jsTypesSyntaxWithLegacy
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -35,6 +36,8 @@ interface WebTypesSymbolTypeSupportFactory {
     private object EmptySupport : PolySymbolTypeSupport {
       override val typeProperty: PolySymbolProperty<*>? get() = null
       override fun resolve(types: List<PolySymbolTypeSupport.TypeReference>): Any? = null
+      override fun <T> withEvaluationLocation(location: PsiElement?, action: () -> T): T =
+        action()
     }
 
   }

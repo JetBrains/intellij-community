@@ -50,7 +50,7 @@ class TerminalOutputScrollingModelImpl(
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       outputModel.cursorOffsetState.collect { offset ->
         if (shouldScrollToCursor) {
-          updateScrollPosition(offset)
+          updateScrollPosition(offset.toRelative())
         }
       }
     }
@@ -60,7 +60,7 @@ class TerminalOutputScrollingModelImpl(
         if (shouldScrollToCursor) {
           // We already called in an EDT, but let's update the scroll later to not block output model updates.
           coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            updateScrollPosition(outputModel.cursorOffsetState.value)
+            updateScrollPosition(outputModel.cursorOffsetState.value.toRelative())
           }
         }
       }
@@ -93,7 +93,7 @@ class TerminalOutputScrollingModelImpl(
       shouldScrollToCursor = true
     }
     if (shouldScrollToCursor) {
-      updateScrollPosition(outputModel.cursorOffsetState.value)
+      updateScrollPosition(outputModel.cursorOffsetState.value.toRelative())
     }
   }
 
@@ -195,7 +195,7 @@ class TerminalOutputScrollingModelImpl(
   }
 
   private fun getCurrentOutputModelState(): OutputModelState {
-    return OutputModelState(outputModel.cursorOffsetState.value, outputModel.document.modificationStamp)
+    return OutputModelState(outputModel.cursorOffsetState.value.toRelative(), outputModel.document.modificationStamp)
   }
 
   private data class OutputModelState(val cursorOffset: Int, val docStamp: Long)

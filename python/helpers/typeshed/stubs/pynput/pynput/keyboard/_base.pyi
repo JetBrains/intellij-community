@@ -1,8 +1,8 @@
 import contextlib
 import enum
 import sys
-from collections.abc import Callable, Iterable, Iterator
-from typing import Any, ClassVar
+from collections.abc import Callable, Generator, Iterable, Iterator
+from typing import Any, ClassVar, cast
 from typing_extensions import Self
 
 from pynput._util import AbstractListener
@@ -25,71 +25,74 @@ class KeyCode:
     def from_dead(cls, char: str, **kwargs: Any) -> Self: ...
 
 class Key(enum.Enum):
-    alt: KeyCode
-    alt_l: KeyCode
-    alt_r: KeyCode
-    alt_gr: KeyCode
-    backspace: KeyCode
-    caps_lock: KeyCode
-    cmd: KeyCode
-    cmd_l: KeyCode
-    cmd_r: KeyCode
-    ctrl: KeyCode
-    ctrl_l: KeyCode
-    ctrl_r: KeyCode
-    delete: KeyCode
-    down: KeyCode
-    end: KeyCode
-    enter: KeyCode
-    esc: KeyCode
-    f1: KeyCode
-    f2: KeyCode
-    f3: KeyCode
-    f4: KeyCode
-    f5: KeyCode
-    f6: KeyCode
-    f7: KeyCode
-    f8: KeyCode
-    f9: KeyCode
-    f10: KeyCode
-    f11: KeyCode
-    f12: KeyCode
-    f13: KeyCode
-    f14: KeyCode
-    f15: KeyCode
-    f16: KeyCode
-    f17: KeyCode
-    f18: KeyCode
-    f19: KeyCode
-    f20: KeyCode
+    alt = cast(KeyCode, ...)
+    alt_l = cast(KeyCode, ...)
+    alt_r = cast(KeyCode, ...)
+    alt_gr = cast(KeyCode, ...)
+    backspace = cast(KeyCode, ...)
+    caps_lock = cast(KeyCode, ...)
+    cmd = cast(KeyCode, ...)
+    cmd_l = cast(KeyCode, ...)
+    cmd_r = cast(KeyCode, ...)
+    ctrl = cast(KeyCode, ...)
+    ctrl_l = cast(KeyCode, ...)
+    ctrl_r = cast(KeyCode, ...)
+    delete = cast(KeyCode, ...)
+    down = cast(KeyCode, ...)
+    end = cast(KeyCode, ...)
+    enter = cast(KeyCode, ...)
+    esc = cast(KeyCode, ...)
+    f1 = cast(KeyCode, ...)
+    f2 = cast(KeyCode, ...)
+    f3 = cast(KeyCode, ...)
+    f4 = cast(KeyCode, ...)
+    f5 = cast(KeyCode, ...)
+    f6 = cast(KeyCode, ...)
+    f7 = cast(KeyCode, ...)
+    f8 = cast(KeyCode, ...)
+    f9 = cast(KeyCode, ...)
+    f10 = cast(KeyCode, ...)
+    f11 = cast(KeyCode, ...)
+    f12 = cast(KeyCode, ...)
+    f13 = cast(KeyCode, ...)
+    f14 = cast(KeyCode, ...)
+    f15 = cast(KeyCode, ...)
+    f16 = cast(KeyCode, ...)
+    f17 = cast(KeyCode, ...)
+    f18 = cast(KeyCode, ...)
+    f19 = cast(KeyCode, ...)
+    f20 = cast(KeyCode, ...)
     if sys.platform == "win32":
-        f21: KeyCode
-        f22: KeyCode
-        f23: KeyCode
-        f24: KeyCode
-    home: KeyCode
-    left: KeyCode
-    page_down: KeyCode
-    page_up: KeyCode
-    right: KeyCode
-    shift: KeyCode
-    shift_l: KeyCode
-    shift_r: KeyCode
-    space: KeyCode
-    tab: KeyCode
-    up: KeyCode
-    media_play_pause: KeyCode
-    media_volume_mute: KeyCode
-    media_volume_down: KeyCode
-    media_volume_up: KeyCode
-    media_previous: KeyCode
-    media_next: KeyCode
-    insert: KeyCode
-    menu: KeyCode
-    num_lock: KeyCode
-    pause: KeyCode
-    print_screen: KeyCode
-    scroll_lock: KeyCode
+        f21 = cast(KeyCode, ...)
+        f22 = cast(KeyCode, ...)
+        f23 = cast(KeyCode, ...)
+        f24 = cast(KeyCode, ...)
+    home = cast(KeyCode, ...)
+    left = cast(KeyCode, ...)
+    page_down = cast(KeyCode, ...)
+    page_up = cast(KeyCode, ...)
+    right = cast(KeyCode, ...)
+    shift = cast(KeyCode, ...)
+    shift_l = cast(KeyCode, ...)
+    shift_r = cast(KeyCode, ...)
+    space = cast(KeyCode, ...)
+    tab = cast(KeyCode, ...)
+    up = cast(KeyCode, ...)
+    media_play_pause = cast(KeyCode, ...)
+    media_stop = cast(KeyCode, ...)
+    media_volume_mute = cast(KeyCode, ...)
+    media_volume_down = cast(KeyCode, ...)
+    media_volume_up = cast(KeyCode, ...)
+    media_previous = cast(KeyCode, ...)
+    media_next = cast(KeyCode, ...)
+    if sys.platform == "darwin":
+        media_eject = cast(KeyCode, ...)
+    insert = cast(KeyCode, ...)
+    menu = cast(KeyCode, ...)
+    num_lock = cast(KeyCode, ...)
+    pause = cast(KeyCode, ...)
+    print_screen = cast(KeyCode, ...)
+    scroll_lock = cast(KeyCode, ...)
 
 class Controller:
     _KeyCode: ClassVar[type[KeyCode]]  # undocumented
@@ -108,7 +111,7 @@ class Controller:
     def tap(self, key: str | Key | KeyCode) -> None: ...
     def touch(self, key: str | Key | KeyCode, is_press: bool) -> None: ...
     @contextlib.contextmanager
-    def pressed(self, *args: str | Key | KeyCode) -> Iterator[None]: ...
+    def pressed(self, *args: str | Key | KeyCode) -> Generator[None]: ...
     def type(self, string: str) -> None: ...
     @property
     def modifiers(self) -> contextlib.AbstractContextManager[Iterator[set[Key]]]: ...

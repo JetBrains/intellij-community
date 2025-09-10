@@ -4,7 +4,6 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.OptionsBundle
-import kotlinx.coroutines.CoroutineScope
 
 class ProofreadConfigurable : ConfigurableBase<ProofreadSettingsPanel, GrazieConfig>(
   "proofread",
@@ -13,6 +12,6 @@ class ProofreadConfigurable : ConfigurableBase<ProofreadSettingsPanel, GrazieCon
 ) {
   private val ui by lazy { ProofreadSettingsPanel() }
 
-  override fun getSettings() = service<GrazieConfig>()
-  override fun createUi() = ui
+  override fun getSettings(): GrazieConfig = service<GrazieConfig>()
+  override fun createUi(): ProofreadSettingsPanel = ui
 }

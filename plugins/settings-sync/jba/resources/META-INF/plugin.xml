@@ -10,6 +10,7 @@
 
   <dependencies>
     <module name="intellij.settingsSync.core"/>
+    <plugin id="com.intellij.marketplace"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

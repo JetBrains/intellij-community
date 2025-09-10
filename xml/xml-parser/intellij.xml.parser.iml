@@ -16,5 +16,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.syntax" />
     <orderEntry type="module" module-name="intellij.platform.syntax.psi" />
+    <orderEntry type="module" module-name="intellij.xml.syntax" />
+    <orderEntry type="module" module-name="intellij.platform.syntax.util" />
   </component>
 </module>

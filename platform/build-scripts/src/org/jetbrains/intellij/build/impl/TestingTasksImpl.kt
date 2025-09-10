@@ -66,6 +66,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.outputStream
+import kotlin.io.path.pathString
 import kotlin.io.path.readLines
 import kotlin.random.Random
 
@@ -189,10 +190,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           prefix = "Run configuration module mismatch, expected '$mainModule' (set in option 'intellij.build.test.main.module'), actual:\n",
           separator = "\n",
         ) { "  * Run configuration: '${it.name}', module: '${it.moduleName}'" }
-        context.messages.error(errorMessage)
+        context.messages.logErrorAndThrow(errorMessage)
       }
     }
 
+    val systemProperties = LinkedHashMap<String, String>(additionalSystemProperties)
     try {
       val compilationTasks = CompilationTasks.create(context)
       options.beforeRunProjectArtifacts?.splitToSequence(';')?.filterNotTo(HashSet(), String::isEmpty)?.let {
@@ -208,6 +210,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"),
                                         listOfNotNull(mainModule, "intellij.platform.buildScripts"))
       }
+      val runtimeModuleRepository = context.getOriginalModuleRepository()
+      systemProperties["intellij.platform.runtime.repository.path"] = runtimeModuleRepository.repositoryPath.pathString
     }
     catch (e: Exception) {
       if (options.isCancelBuildOnTestPreparationFailure) {
@@ -223,7 +227,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       })
     }
     else {
-      val systemProperties = LinkedHashMap<String, String>(additionalSystemProperties)
       val effectiveAdditionalJvmOptions = additionalJvmOptions.toMutableList()
       if (options.isTestDiscoveryEnabled) {
         loadTestDiscovery(effectiveAdditionalJvmOptions, systemProperties)
@@ -270,7 +273,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
 
     if (options.validateMainModule && mainModule.isNullOrEmpty()) {
-      context.messages.error("'intellij.build.test.main.module.validate' option requires 'intellij.build.test.main.module' to be set")
+      context.messages.logErrorAndThrow("'intellij.build.test.main.module.validate' option requires 'intellij.build.test.main.module' to be set")
     }
   }
 
@@ -403,7 +406,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
                          mainModule: String) {
     val testConfigurationType = System.getProperty("teamcity.remote-debug.type")
     if (testConfigurationType != "junit") {
-      context.messages.error(
+      context.messages.logErrorAndThrow(
         "Remote debugging is supported for junit run configurations only, but 'teamcity.remote-debug.type' is $testConfigurationType")
     }
     val testObject = System.getProperty("teamcity.remote-debug.junit.type")
@@ -415,11 +418,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         context.messages.warning("Launching all test methods in the class $junitClass")
       }
       else {
-        context.messages.error(message)
+        context.messages.logErrorAndThrow(message)
       }
     }
     if (junitClass == null) {
-      context.messages.error("Remote debugging supports debugging all test methods in a class for now, but target class isn't specified")
+      context.messages.logErrorAndThrow("Remote debugging supports debugging all test methods in a class for now, but target class isn't specified")
     }
     if (options.testPatterns != null) {
       context.messages.warning("'intellij.build.test.patterns' option is ignored while debugging via TeamCity plugin")
@@ -648,7 +651,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       "java.io.tmpdir" to tempDir,
       "teamcity.build.tempDir" to tempDir,
       "teamcity.tests.recentlyFailedTests.file" to System.getProperty("teamcity.tests.recentlyFailedTests.file"),
-      "teamcity.build.branch.is_default" to System.getProperty("teamcity.build.branch.is_default"),
+      "teamcity.build.branch" to System.getProperty(BuildOptions.TEAMCITY_BUILD_BRANCH),
+      "teamcity.build.branch.is_default" to System.getProperty(BuildOptions.TEAMCITY_BUILD_BRANCH_IS_DEFAULT),
       "jna.nosys" to "true",
       "javax.xml.parsers.SAXParserFactory" to "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
       "file.encoding" to "UTF-8",
@@ -926,7 +930,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
     else if (options.isDedicatedTestRuntime != "false") {
       if (options.isDedicatedTestRuntime != "class" && options.isDedicatedTestRuntime != "package") {
-        context.messages.error("Unsupported 'intellij.build.test.dedicated.runtime' value: ${options.isDedicatedTestRuntime}. Expected 'class', 'package' or 'false'")
+        context.messages.logErrorAndThrow("Unsupported 'intellij.build.test.dedicated.runtime' value: ${options.isDedicatedTestRuntime}. Expected 'class', 'package' or 'false'")
       }
       context.messages.info("Will run tests in dedicated runtimes ('${options.isDedicatedTestRuntime}')")
       // First, collect all tests for both JUnit5 and JUnit3+4
@@ -1115,8 +1119,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           throw NoTestsFound()
         }
 
-        if (attempt == options.attemptCount) break
-
         if (runJUnit5) {
           val failedClassesJUnit5 = failedClassesJUnit5List.let { if (Files.exists(it)) it.readLines() else emptyList() }
           if (failedClassesJUnit5.isNotEmpty()) {
@@ -1136,6 +1138,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
             runJUnit34 = false
           }
         }
+      }
+      if (runJUnit5 || runJUnit34) {
+        throw Exception("Failed to run tests (attempt count: ${options.attemptCount}) runJUnit5=$runJUnit5, runJUnit34=$runJUnit34")
       }
     }
   }
@@ -1243,7 +1248,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     builder.inheritIO()
     val exitCode = builder.start().waitFor()
     if (exitCode != 0 && exitCode != NO_TESTS_ERROR) {
-      context.messages.error("Tests failed with exit code $exitCode")
+      context.messages.warning("Tests failed with exit code $exitCode")
     }
     return exitCode
   }
@@ -1328,7 +1333,7 @@ private suspend fun publishTestDiscovery(messages: BuildMessages, file: String?)
       uploader.upload(path, map)
     }
     catch (e: Exception) {
-      messages.error(e.message!!, e)
+      messages.logErrorAndThrow(e.message!!, e)
     }
   }
   messages.buildStatus("With Discovery, {build.status.text}")

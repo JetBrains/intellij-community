@@ -54,7 +54,7 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
     return FrontendXDebuggerManager.getInstance(project).breakpointsManager
   }
 
-  override fun canShowInlineDebuggerData(xValue: XValue): Boolean {
+  override fun hasBackendCounterpart(xValue: XValue): Boolean {
     return FrontendXValue.extract(xValue) != null
   }
 }

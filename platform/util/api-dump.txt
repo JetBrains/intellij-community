@@ -252,6 +252,9 @@ com.intellij.ui.icons.RowIcon
 - com.intellij.ui.icons.DarkIconProvider
 - a:getAllIcons():java.util.List
 - a:setIcon(javax.swing.Icon,I):V
+f:com.intellij.util.BazelEnvironmentUtil
+- sf:INSTANCE:com.intellij.util.BazelEnvironmentUtil
+- sf:isBazelTestRun():Z
 com.intellij.util.BooleanFunction
 - java.util.function.Predicate
 - a:fun(java.lang.Object):Z

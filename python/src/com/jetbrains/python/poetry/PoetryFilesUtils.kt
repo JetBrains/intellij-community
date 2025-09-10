@@ -94,9 +94,9 @@ class PoetryPyProjectTomlPythonVersionsService : Disposable {
   fun validateSdkVersions(moduleFile: VirtualFile, sdks: List<Sdk>): List<Sdk> =
     sdks.filter { getVersion(moduleFile).isValid(it.versionString) }
 
-  fun validateInterpretersVersions(moduleFile: VirtualFile, interpreters: Flow<List<PythonSelectableInterpreter>>): Flow<List<PythonSelectableInterpreter>> {
+  fun validateInterpretersVersions(moduleFile: VirtualFile, interpreters: Flow<List<PythonSelectableInterpreter>?>): Flow<List<PythonSelectableInterpreter>?> {
     val version = getVersion(moduleFile)
-    return interpreters.map { list -> list.filter { version.isValid(it.languageLevel) } }
+    return interpreters.map { list -> list?.filter { version.isValid(it.languageLevel) } }
   }
 
   private fun getVersion(moduleFile: VirtualFile): PoetryPythonVersion =

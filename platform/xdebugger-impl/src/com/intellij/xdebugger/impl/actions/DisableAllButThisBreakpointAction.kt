@@ -1,10 +1,13 @@
 package com.intellij.xdebugger.impl.actions
 
-import com.intellij.xdebugger.breakpoints.XBreakpoint
-import com.intellij.xdebugger.breakpoints.XBreakpointManager
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
+import org.jetbrains.annotations.ApiStatus
 
-class DisableAllButThisBreakpointAction : AllButThisBreakpointAction() {
-  override fun performAction(breakpointManager: XBreakpointManager, breakpoint: XBreakpoint<*>) {
-    breakpoint.isEnabled = false
+@ApiStatus.Internal
+class DisableAllButThisBreakpointAction : AllButThisBreakpointAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+  override fun performAction(breakpointManager: XBreakpointManagerProxy, breakpoint: XBreakpointProxy) {
+    breakpoint.setEnabled(false)
   }
 }

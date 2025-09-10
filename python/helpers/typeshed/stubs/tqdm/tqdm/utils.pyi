@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
 from collections.abc import Callable, Mapping
 from re import Pattern
-from typing import Protocol, TypeVar
+from typing import Protocol, TypeVar, type_check_only
 from typing_extensions import ParamSpec
 
 CUR_OS: str
@@ -15,6 +15,7 @@ class FormatReplace:
     def __init__(self, replace: str = "") -> None: ...
     def __format__(self, _) -> str: ...
 
+@type_check_only
 class _Has__Comparable(Protocol):
     _comparable: Incomplete
 

@@ -38,7 +38,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="library" scope="TEST" name="mockito" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.mockito" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="easymock" level="project" />
     <orderEntry type="library" scope="TEST" name="Objenesis" level="project" />

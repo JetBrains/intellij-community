@@ -42,8 +42,4 @@ class InstallPackageButtonItem(
     val presentation = factory.withCursorOnHover(basePresentation, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
     return PresentationRenderer(presentation)
   }
-
-
 }
-
-

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -140,11 +140,10 @@ open class KotlinUMethod(
             buildTrampolineForJvmOverload()?.let { return it }
 
             val bodyExpression = when (sourcePsi) {
-                is KtFunction -> sourcePsi.bodyExpression
-                is KtPropertyAccessor -> sourcePsi.bodyExpression
-                is KtProperty -> when {
-                    psiRef is KtLightMethod && psiRef.isGetter -> sourcePsi.getter?.bodyExpression
-                    psiRef is KtLightMethod && psiRef.isSetter -> sourcePsi.setter?.bodyExpression
+                is KtFunction, is KtPropertyAccessor -> sourcePsi.bodyExpressionIfNotCompiled
+                is KtProperty -> when (psiRef) {
+                    is KtLightMethod if psiRef.isGetter -> sourcePsi.getter?.bodyExpressionIfNotCompiled
+                    is KtLightMethod if psiRef.isSetter -> sourcePsi.setter?.bodyExpressionIfNotCompiled
                     else -> null
                 }
 

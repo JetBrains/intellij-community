@@ -39,14 +39,9 @@ import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TerminalWidgetKt;
 import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.docking.DockContainer;
-import com.intellij.ui.docking.DockManager;
-import com.intellij.ui.docking.DockableContent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
@@ -69,7 +64,6 @@ import org.jetbrains.plugins.terminal.fus.TerminalFocusFusService;
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay;
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
-import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
 import java.awt.*;
@@ -92,7 +86,6 @@ public final class TerminalToolWindowManager implements Disposable {
   private ToolWindowEx myToolWindow;
   private final Project myProject;
   private final AbstractTerminalRunner<?> myTerminalRunner;
-  private TerminalDockContainer myDockContainer;
   private final Map<TerminalWidget, TerminalContainer> myContainerByWidgetMap = new HashMap<>();
   /**
    * Stores IDs of the {@link TerminalSessionTab} that is stored on backend.
@@ -194,10 +187,7 @@ public final class TerminalToolWindowManager implements Disposable {
 
     installDirectoryDnD(toolWindow);
 
-    if (myDockContainer == null) {
-      myDockContainer = new TerminalDockContainer();
-      DockManager.getInstance(myProject).register(myDockContainer, toolWindow.getDisposable());
-    }
+    TerminalDockContainer.install(myProject, toolWindow.getDecorator());
 
     var focusService = TerminalFocusFusService.getInstance();
     if (focusService != null) { // the service only exists on the frontend
@@ -371,15 +361,16 @@ public final class TerminalToolWindowManager implements Disposable {
     return toolWindow;
   }
 
-  private @NotNull Content createNewTab(@Nullable ContentManager contentManager,
-                                        @Nullable TerminalWidget terminalWidget,
-                                        @NotNull AbstractTerminalRunner<?> terminalRunner,
-                                        @NotNull TerminalEngine preferredEngine,
-                                        @Nullable TerminalTabState tabState,
-                                        @Nullable TerminalSessionTab sessionTab,
-                                        @Nullable TerminalStartupFusInfo startupFusInfo,
-                                        boolean requestFocus,
-                                        boolean deferSessionStartUntilUiShown) {
+  @ApiStatus.Internal
+  @NotNull Content createNewTab(@Nullable ContentManager contentManager,
+                                @Nullable TerminalWidget terminalWidget,
+                                @NotNull AbstractTerminalRunner<?> terminalRunner,
+                                @NotNull TerminalEngine preferredEngine,
+                                @Nullable TerminalTabState tabState,
+                                @Nullable TerminalSessionTab sessionTab,
+                                @Nullable TerminalStartupFusInfo startupFusInfo,
+                                boolean requestFocus,
+                                boolean deferSessionStartUntilUiShown) {
     ToolWindow toolWindow = getOrInitToolWindow();
     TerminalStartupMoment startupMoment = requestFocus && deferSessionStartUntilUiShown ? new TerminalStartupMoment() : null;
     Content content = createTerminalContent(terminalRunner, preferredEngine, terminalWidget, tabState,
@@ -884,7 +875,8 @@ public final class TerminalToolWindowManager implements Disposable {
     return findNearestContentManager(deepestComponent);
   }
 
-  private static @Nullable ContentManager findNearestContentManager(@Nullable Component component) {
+  @ApiStatus.Internal
+  static @Nullable ContentManager findNearestContentManager(@Nullable Component component) {
     if (component == null) return null;
     var dataContext = DataManager.getInstance().getDataContext(component);
     return dataContext.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER);
@@ -895,60 +887,6 @@ public final class TerminalToolWindowManager implements Disposable {
       return ((PsiFile)item).getParent();
     }
     return ObjectUtils.tryCast(item, PsiDirectory.class);
-  }
-
-  /**
-   * Terminal tab can be moved to the editor using {@link org.jetbrains.plugins.terminal.action.MoveTerminalSessionToEditorAction}.
-   * This dock container is responsible for an ability to drop the editor tab with the terminal
-   * back to the terminal tool window.
-   */
-  private final class TerminalDockContainer implements DockContainer {
-    @Override
-    public @NotNull RelativeRectangle getAcceptArea() {
-      return new RelativeRectangle(myToolWindow.getDecorator());
-    }
-
-    @Override
-    public @NotNull ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
-      return isTerminalSessionContent(content) ? ContentResponse.ACCEPT_MOVE : ContentResponse.DENY;
-    }
-
-    @Override
-    public @NotNull JComponent getContainerComponent() {
-      return myToolWindow.getDecorator();
-    }
-
-    @Override
-    public void add(@NotNull DockableContent content, RelativePoint dropTarget) {
-      if (dropTarget == null) return;
-      if (isTerminalSessionContent(content)) {
-        // Find the right split to create the new tab in
-        Component component = dropTarget.getOriginalComponent();
-        Point point = dropTarget.getOriginalPoint();
-        Component deepestComponent = UIUtil.getDeepestComponentAt(component, point.x, point.y);
-        ContentManager nearestManager = findNearestContentManager(deepestComponent);
-
-        TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)content.getKey();
-        var engine = TerminalEngine.CLASSIC; // Engine doesn't matter here because we will reuse the existing terminal widget.
-        Content newContent = createNewTab(nearestManager, terminalFile.getTerminalWidget(), myTerminalRunner, engine,
-                                          null, null, null, true, true);
-        newContent.setDisplayName(terminalFile.getName());
-      }
-    }
-
-    private static boolean isTerminalSessionContent(@NotNull DockableContent<?> content) {
-      return content.getKey() instanceof TerminalSessionVirtualFileImpl;
-    }
-
-    @Override
-    public boolean isEmpty() {
-      return false;
-    }
-
-    @Override
-    public boolean isDisposeWhenEmpty() {
-      return false;
-    }
   }
 
   /**

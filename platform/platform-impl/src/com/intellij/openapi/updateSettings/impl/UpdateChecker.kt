@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
+import com.fasterxml.jackson.databind.JsonMappingException
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.externalComponents.ExternalComponentSource
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.ide.plugins.newui.UiPluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
@@ -26,6 +28,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.util.Url
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -137,16 +140,21 @@ object UpdateChecker {
   fun updateAndShowResult(project: Project?, customSettings: UpdateSettings? = null) {
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
       override fun run(indicator: ProgressIndicator) {
-        doUpdateAndShowResult(
-          project = getProject(),
-          customSettings = customSettings,
-          userInitiated = true,
-          showResults = true,
-          preferDialog = isConditionalModal,
-          showSettingsLink = shouldStartInBackground(),
-          indicator = indicator,
-        )?.let {
-          ApplicationManager.getApplication().invokeLater(it)
+        val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope
+        coroutineScope.launch {
+          doUpdateAndShowResult(
+            project = getProject(),
+            customSettings = customSettings,
+            userInitiated = true,
+            showResults = true,
+            preferDialog = isConditionalModal,
+            showSettingsLink = shouldStartInBackground(),
+            indicator = indicator,
+          )?.let {
+            withContext(Dispatchers.EDT) {
+              it()
+            }
+          }
         }
       }
 
@@ -261,7 +269,7 @@ object UpdateChecker {
     val allEnabled: Collection<PluginDownloader> = emptyList(),
     val allDisabled: Collection<PluginDownloader> = emptyList(),
     val incompatible: Collection<IdeaPluginDescriptor> = emptyList(),
-    val errors: Map<String?, Exception> = emptyMap()
+    val errors: Map<String?, Exception> = emptyMap(),
   ) {
     val all: List<PluginDownloader> by lazy {
       allEnabled + allDisabled
@@ -435,6 +443,7 @@ object UpdateChecker {
     return it is SocketTimeoutException
            || it is UnknownHostException
            || it is HttpRequests.HttpStatusException && it.statusCode == HttpURLConnection.HTTP_NOT_FOUND
+           || it is JsonMappingException && it.cause?.message?.contains("Unexpected end-of-input") == true
   }
 
   @RequiresBackgroundThread
@@ -646,7 +655,7 @@ private fun doUpdateAndShowResult(
   showSettingsLink: Boolean,
   indicator: ProgressIndicator? = null,
   callback: ActionCallback? = null,
-): (() -> Unit)? {
+): (suspend () -> Unit)? {
   val updateSettings = customSettings ?: UpdateSettings.getInstance()
 
   val platformUpdates = UpdateChecker.getPlatformUpdates(updateSettings, indicator)
@@ -761,7 +770,7 @@ private fun showErrors(project: Project?, @NlsContexts.DialogMessage message: St
 }
 
 @RequiresEdt
-private fun showResults(
+private suspend fun showResults(
   project: Project?,
   updatesForPlugins: List<PluginDownloader>,
   customRepoPlugins: Collection<PluginUiModel>,
@@ -775,9 +784,17 @@ private fun showResults(
     if (userInitiated) {
       shownNotifications.remove(NotificationKind.PLUGINS)?.forEach { it.expire() }
     }
+    val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope
+    coroutineScope.launch(Dispatchers.EDT) {
 
+    }
+    val plugins = withContext(Dispatchers.IO) {
+      UiPluginManager.getInstance().findInstalledPlugins(updatesForPlugins.map { it.id }.toSet())
+    }
     // offer all updates in a dialog
-    val showUpdateDialog = { PluginUpdateDialog(project, updatesForPlugins, customRepoPlugins).show() }
+    val showUpdateDialog = {
+      PluginUpdateDialog(project, updatesForPlugins, customRepoPlugins, plugins).show()
+    }
 
     if (forceDialog) {
       showUpdateDialog()

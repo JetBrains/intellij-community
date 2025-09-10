@@ -11,7 +11,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.properties.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -49,7 +49,8 @@ jvm_library(
     "//platform/diff-impl",
     "//xml/xml-psi-api:psi",
     "@lib//:fastutil-min",
-  ]
+  ],
+  exports = ["//plugins/properties:properties-backend"]
 )
 ### auto-generated section `build intellij.properties.tests` end
 

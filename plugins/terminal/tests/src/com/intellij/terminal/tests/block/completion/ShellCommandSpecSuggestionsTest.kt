@@ -403,9 +403,11 @@ internal class ShellCommandSpecSuggestionsTest {
     mockFiles: List<String> = emptyList(),
   ): ShellCommandSpecCompletion {
     // Mock fileSuggestionsGenerator result
-    val generatorCommandsRunner = ShellCommandExecutor {
-      val output = mockFiles.joinToString("\n")
-      ShellCommandResult.create(output, exitCode = 0)
+    val generatorCommandsRunner = object : ShellCommandExecutor {
+      override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult {
+        val output = mockFiles.joinToString("\n")
+        return ShellCommandResult.create(output, exitCode = 0)
+      }
     }
     val completion = ShellCommandSpecCompletion(
       TestCommandSpecsManager(spec),

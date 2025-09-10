@@ -5,6 +5,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.psi.PsiManager
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptDefinitionsStorage
@@ -24,9 +25,9 @@ import java.nio.file.Path
 
 internal class KotlinDslScriptSyncExtension : GradleSyncExtension {
 
-    override fun updateProjectStorage(
+    override fun updateProjectModel(
         context: ProjectResolverContext,
-        syncStorage: ImmutableEntityStorage,
+        syncStorage: MutableEntityStorage,
         projectStorage: MutableEntityStorage,
         phase: GradleSyncPhase
     ) {
@@ -42,13 +43,13 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
 
     override val phase: GradleSyncPhase = GradleSyncPhase.ADDITIONAL_MODEL_PHASE
 
-    override suspend fun updateProjectModel(
+    override suspend fun createProjectModel(
         context: ProjectResolverContext,
-        storage: MutableEntityStorage
-    ) {
+        storage: ImmutableEntityStorage
+    ): ImmutableEntityStorage {
         val project = context.project
         val taskId = context.externalSystemTaskId
-        val tasks = kotlinDslSyncListenerInstance?.tasks ?: return
+        val tasks = kotlinDslSyncListenerInstance?.tasks ?: return storage
         val sync = synchronized(tasks) { tasks[taskId] }
 
         for (buildModel in context.allBuilds) {
@@ -69,13 +70,13 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
             }
         }
 
-        if (sync == null || sync.models.isEmpty()) return
+        if (sync == null || sync.models.isEmpty()) return storage
 
         val gradleHome = context.allBuilds.asSequence()
             .flatMap { it.projects.asSequence() }
             .mapNotNull { context.getProjectModel(it, GradleBuildScriptClasspathModel::class.java) }
             .mapNotNull { it.gradleHomeDir?.absolutePath }
-            .firstOrNull() ?: context.settings.gradleHome
+            .firstOrNull() ?: context.settings.gradleHome ?: return storage
 
         GradleScriptDefinitionsStorage.getInstance(project).loadDefinitions(
             params = GradleDefinitionsParams(
@@ -87,6 +88,7 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
                 context.settings.env
             )
         )
+
         val gradleScripts = sync.models.mapNotNullTo(mutableSetOf()) {
             val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(it.file)) ?: return@mapNotNullTo null
             GradleScriptModel(
@@ -97,13 +99,17 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
             )
         }
 
+        val builder = storage.toBuilder()
+
         GradleScriptRefinedConfigurationProvider.getInstance(project)
-            .processScripts(GradleScriptModelData(gradleScripts, sync.javaHome), storage)
+            .processScripts(GradleScriptModelData(gradleScripts, sync.javaHome), builder)
 
         val ktFiles = gradleScripts.mapNotNull {
             readAction { PsiManager.getInstance(project).findFile(it.virtualFile) as? KtFile }
         }.toTypedArray()
 
         DefaultScriptResolutionStrategy.getInstance(project).execute(*ktFiles).join()
+
+        return builder.toSnapshot()
     }
 }

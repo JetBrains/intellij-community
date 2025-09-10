@@ -12,13 +12,13 @@ internal fun MutableTWorkspace.generateK2GradleBuildScriptHighlighterTests() {
                 "gradle/highlighting/gradle8",
                 pattern = Patterns.DIRECTORY,
                 isRecursive = false,
-                setUpStatements = listOf("gradleVersion = \"8.6\";")
+                setUpStatements = listOf("setGradleVersion(\"8.6\");")
             )
             model(
                 "gradle/highlighting/gradle7",
                 pattern = Patterns.DIRECTORY,
                 isRecursive = false,
-                setUpStatements = listOf("gradleVersion = \"7.6.4\";")
+                setUpStatements = listOf("setGradleVersion(\"7.6.4\");")
             )
         }
     }

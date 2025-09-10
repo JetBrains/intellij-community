@@ -285,7 +285,7 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
         val targetClassName = targetClass.name
 
         val nameAndKind = PropertyUtilBase.getPropertyNameAndKind(methodName)
-        if (nameAndKind != null) {
+        if (nameAndKind != null && ktRequest == null) {
             val setterRequired = nameAndKind.second == PropertyKind.SETTER
             val expectedParameters = request.expectedParameters
             val returnTypes = request.returnType

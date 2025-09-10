@@ -5,9 +5,12 @@ package org.jetbrains.kotlin.idea.completion.checkers
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaUseSiteVisibilityChecker
+import org.jetbrains.kotlin.analysis.api.components.createUseSiteVisibilityChecker
+import org.jetbrains.kotlin.analysis.api.components.deprecationStatus
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.util.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
@@ -68,7 +71,7 @@ internal class CompletionVisibilityChecker(
                 declarationModule in useSiteModule.directFriendDependencies
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun isVisible(
         symbol: KaDeclarationSymbol,
         positionContext: KotlinRawPositionContext,
@@ -92,7 +95,7 @@ internal class CompletionVisibilityChecker(
         return getCachedVisibilityChecker(positionContext).isVisible(symbol)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getCachedVisibilityChecker(positionContext: KotlinRawPositionContext): KaUseSiteVisibilityChecker {
         return visibilityCheckerPerPositionContextCache.getOrPut(positionContext) {
             createUseSiteVisibilityChecker(

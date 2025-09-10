@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,5 +59,6 @@ public abstract class ReadonlyStatusHandler {
     return ensureFilesWritable(Arrays.asList(files));
   }
 
+  @RequiresEdt
   public abstract @NotNull OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> files);
 }

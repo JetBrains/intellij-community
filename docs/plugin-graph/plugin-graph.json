@@ -2752,10 +2752,10 @@
   "group": "nodes",
   "data": {
     "id": "v41",
-    "name": "intellij.sh",
+    "name": "intellij.sh.plugin",
     "n": "i.sh",
-    "package": "com.intellij.sh",
-    "sourceModule": "intellij.sh",
+    "package": "com.intellij.sh.plugin",
+    "sourceModule": "intellij.sh.plugin",
     "descriptor": "community/plugins/sh/resources/META-INF/plugin.xml",
     "pluginId": "com.jetbrains.sh",
     "parent": "cv41",
@@ -2768,7 +2768,7 @@
     "name": "intellij.sh/terminal",
     "n": "i.sh/terminal",
     "package": "com.intellij.sh.run.terminal",
-    "sourceModule": "intellij.sh",
+    "sourceModule": "intellij.sh.plugin",
     "descriptor": "community/plugins/sh/resources/intellij.sh.terminal.xml",
     "parent": "cv41",
     "type": 0
@@ -2780,7 +2780,7 @@
     "name": "intellij.sh/copyright",
     "n": "i.sh/copyright",
     "package": "com.intellij.sh.copyright",
-    "sourceModule": "intellij.sh",
+    "sourceModule": "intellij.sh.plugin",
     "descriptor": "community/plugins/sh/resources/intellij.sh.copyright.xml",
     "parent": "cv41",
     "type": 0

@@ -4,7 +4,7 @@ from typing import ClassVar
 from ..cmd import Command
 
 class bdist_rpm(Command):
-    description: str
+    description: ClassVar[str]
     user_options: ClassVar[list[tuple[str, str | None, str]]]
     boolean_options: ClassVar[list[str]]
     negative_opt: ClassVar[dict[str, str]]
@@ -41,12 +41,12 @@ class bdist_rpm(Command):
     conflicts: Incomplete
     build_requires: Incomplete
     obsoletes: Incomplete
-    keep_temp: int
-    use_rpm_opt_flags: int
-    rpm3_mode: int
-    no_autoreq: int
+    keep_temp: bool
+    use_rpm_opt_flags: bool
+    rpm3_mode: bool
+    no_autoreq: bool
     force_arch: Incomplete
-    quiet: int
+    quiet: bool
     def initialize_options(self) -> None: ...
     def finalize_options(self) -> None: ...
     def finalize_package_data(self) -> None: ...

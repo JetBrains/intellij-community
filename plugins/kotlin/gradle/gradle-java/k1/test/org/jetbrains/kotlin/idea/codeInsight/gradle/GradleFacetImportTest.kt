@@ -18,6 +18,7 @@ import com.intellij.openapi.util.io.FileUtil
 import junit.framework.TestCase
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -232,7 +233,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         assertSameKotlinSdks("project.main", "project.test")
 
         assertEquals(
-            listOf(
+            listOf<Pair<String, JpsModuleSourceRootType<*>>>(
                 "file:///src/main/kotlin" to SourceKotlinRootType,
                 "file:///src/main/resources" to ResourceKotlinRootType
             ),
@@ -240,7 +241,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         )
 
         assertEquals(
-            listOf(
+            listOf<Pair<String, JpsModuleSourceRootType<*>>>(
                 "file:///src/test/kotlin" to TestSourceKotlinRootType,
                 "file:///src/test/resources" to TestResourceKotlinRootType
             ),
@@ -272,7 +273,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         assertAllModulesConfigured()
 
         assertEquals(
-            listOf(
+            listOf<Pair<String, JpsModuleSourceRootType<*>>>(
                 "file:///src/main/kotlin" to SourceKotlinRootType,
                 "file:///src/main/resources" to ResourceKotlinRootType
             ),
@@ -280,7 +281,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         )
 
         assertEquals(
-            listOf(
+            listOf<Pair<String, JpsModuleSourceRootType<*>>>(
                 "file:///src/test/kotlin" to TestSourceKotlinRootType,
                 "file:///src/test/resources" to TestResourceKotlinRootType
             ),
@@ -322,14 +323,14 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         assertAllModulesConfigured()
 
         assertEquals(
-            listOf(
+            listOf<Pair<String, JpsModuleSourceRootType<*>>>(
                 "file:///src/main/kotlin" to SourceKotlinRootType,
                 "file:///src/main/resources" to ResourceKotlinRootType
             ),
             getSourceRootInfos("project.main")
         )
         assertEquals(
-            listOf(
+            listOf<Pair<String, JpsModuleSourceRootType<*>>>(
                 "file:///src/test/kotlin" to TestSourceKotlinRootType,
                 "file:///src/test/resources" to TestResourceKotlinRootType
             ),
@@ -393,7 +394,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         assertEquals(KotlinCommonLibraryKind, libraries.single { it.name?.contains("kotlin-stdlib-common") == true }.kind)
 
         assertEquals(
-            listOf(
+            listOf<Pair<String, JpsModuleSourceRootType<*>>>(
                 "file:///src/main/kotlin" to SourceKotlinRootType,
                 "file:///src/main/resources" to ResourceKotlinRootType
             ),
@@ -401,7 +402,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         )
 
         assertEquals(
-            listOf(
+            listOf<Pair<String, JpsModuleSourceRootType<*>>>(
                 "file:///src/test/kotlin" to TestSourceKotlinRootType,
                 "file:///src/test/resources" to TestResourceKotlinRootType
             ),
@@ -427,7 +428,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         assertEquals(KotlinCommonLibraryKind, (stdlib as LibraryEx).kind)
 
         assertEquals(
-            listOf(
+            listOf<Pair<String, JpsModuleSourceRootType<*>>>(
                 "file:///src/main/java" to SourceKotlinRootType,
                 "file:///src/main/kotlin" to SourceKotlinRootType,
                 "file:///src/main/resources" to ResourceKotlinRootType
@@ -436,7 +437,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         )
 
         assertEquals(
-            listOf(
+            listOf<Pair<String, JpsModuleSourceRootType<*>>>(
                 "file:///src/test/java" to TestSourceKotlinRootType,
                 "file:///src/test/kotlin" to TestSourceKotlinRootType,
                 "file:///src/test/resources" to TestResourceKotlinRootType
@@ -491,7 +492,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         assertEquals(KotlinJpsPluginSettings.fallbackVersionForOutdatedCompiler, KotlinJpsPluginSettings.jpsVersion(myProject))
 
         assertEquals(
-            listOf(
+            listOf<Pair<String, JpsModuleSourceRootType<*>>>(
                 "file:///src/main/kotlin" to SourceKotlinRootType,
                 "file:///src/main/resources" to ResourceKotlinRootType
             ),
@@ -499,7 +500,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         )
 
         assertEquals(
-            listOf(
+            listOf<Pair<String, JpsModuleSourceRootType<*>>>(
                 "file:///src/test/kotlin" to TestSourceKotlinRootType,
                 "file:///src/test/resources" to TestResourceKotlinRootType
             ),
@@ -742,7 +743,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         assertSameKotlinSdks("project.main", "project.test")
 
         assertEquals(
-            listOf(
+            listOf<Pair<String, JpsModuleSourceRootType<*>>>(
                 "file:///src/main/java" to SourceKotlinRootType,
                 "file:///src/main/kotlin" to SourceKotlinRootType,
                 "file:///src/main/resources" to ResourceKotlinRootType
@@ -750,7 +751,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             getSourceRootInfos("project.main")
         )
         assertEquals(
-            listOf(
+            listOf<Pair<String, JpsModuleSourceRootType<*>>>(
                 "file:///src/test/java" to TestSourceKotlinRootType,
                 "file:///src/test/kotlin" to TestSourceKotlinRootType,
                 "file:///src/test/resources" to TestResourceKotlinRootType
@@ -768,7 +769,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         assertEquals(LanguageVersion.KOTLIN_1_3, facetSettings.languageLevel)
 
         // We haven't lost internal argument during importing to facet
-        assertEquals("-XXLanguage:+InlineClasses", facetSettings.compilerSettings?.additionalArguments)
+        assertTrue("Argument is missing from compiler settings", "-XXLanguage:+InlineClasses" in facetSettings.compilerSettings!!.additionalArguments)
 
         // Inline classes are enabled even though LV = 1.3
         assertEquals(

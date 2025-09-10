@@ -1,16 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.execution.Platform;
 import com.intellij.execution.process.LocalProcessService;
 import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.system.OS;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
@@ -35,10 +32,8 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.BLOCK_TERMINAL_FISH_REGISTRY;
 import static org.jetbrains.plugins.terminal.TerminalStartupKt.shouldUseEelApi;
 import static org.jetbrains.plugins.terminal.TerminalStartupKt.startProcess;
-import static org.jetbrains.plugins.terminal.util.ShellNameUtil.*;
 
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
@@ -246,23 +241,5 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
                                                              @NotNull Map<String, String> envs) {
     ShellStartupOptions options = new ShellStartupOptions.Builder().shellCommand(shellCommand).envVariables(envs).build();
     return LocalShellIntegrationInjector.injectShellIntegration(options, isGenOneTerminalEnabled(), isGenTwoTerminalEnabled());
-  }
-
-  /**
-   * @return true if we should source advanced shell integration for the specified shell.
-   * This integration makes available such advanced terminal features as command blocks.
-   */
-  @ApiStatus.Internal
-  public static boolean supportsBlocksShellIntegration(@NotNull String shellName) {
-    if (isPowerShell(shellName)) {
-      // Let's do not source advanced shell integration on versions older than Windows 10 and on Windows Server.
-      // Since bundled ConPTY might not be used there, and we may break the shell then.
-      return OS.CURRENT == OS.Windows && OS.CURRENT.isAtLeast(10, 0) ||
-             OS.CURRENT.getPlatform() == Platform.UNIX;
-    }
-    return shellName.equals(BASH_NAME)
-           || OS.CURRENT == OS.macOS && shellName.equals(SH_NAME)
-           || shellName.equals(ZSH_NAME)
-           || shellName.equals(FISH_NAME) && Registry.is(BLOCK_TERMINAL_FISH_REGISTRY, false);
   }
 }

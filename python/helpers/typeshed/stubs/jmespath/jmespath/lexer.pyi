@@ -1,8 +1,9 @@
 from collections.abc import Iterator
-from typing import ClassVar, TypedDict
+from typing import ClassVar, TypedDict, type_check_only
 
 from jmespath.exceptions import EmptyExpressionError as EmptyExpressionError, LexerError as LexerError
 
+@type_check_only
 class _LexerTokenizeResult(TypedDict):
     type: str
     value: str

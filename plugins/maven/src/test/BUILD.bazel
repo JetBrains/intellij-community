@@ -17,7 +17,7 @@ jvm_library(
   name = "maven-tests_test_lib",
   module_name = "intellij.maven.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["java/**/*.kt", "java/**/*.java"], allow_empty = True),
+  srcs = glob(["java/**/*.kt", "java/**/*.java", "java/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/maven",
     "//plugins/maven/testFramework",
@@ -55,7 +55,7 @@ jvm_library(
     "//platform/workspace/jps",
     "@lib//:guava",
     "//plugins/maven/artifact-resolver/common",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "//plugins/maven/jps-plugin:jps",
     "//plugins/maven/jps-plugin:jps_test_lib",
     "//plugins/maven/maven3-server-common:server-m3-common",
@@ -74,6 +74,8 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//platform/xdebugger-api:debugger",
     "//libraries/hamcrest",
+    "//platform/testFramework/eelJava",
+    "//platform/eel-provider",
   ],
   runtime_deps = [":maven-tests_test_resources"]
 )

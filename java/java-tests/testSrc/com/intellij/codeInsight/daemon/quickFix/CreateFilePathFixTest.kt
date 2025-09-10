@@ -127,7 +127,7 @@ class CreateFilePathFixTest : CreateFileQuickFixTestCase() {
       assertEquals(expectedFileName, fileReference.fileNameToCreate)
       val intention = fileReference.quickFixes!![0]
 
-      val options = (intention as AbstractCreateFileFix).myDirectories
+      val options = (intention as AbstractCreateFileFix).directories
 
       assertEquals(expectedOptions.size, options.size)
 

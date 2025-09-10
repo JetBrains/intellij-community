@@ -1333,31 +1333,54 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration")
-    public static class AddOpenToClassDeclaration extends AbstractHighLevelQuickFixMultiFileTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
+    @TestMetadata("../../../idea/tests/testData/quickfix/modifiers")
+    public abstract static class Modifiers extends AbstractHighLevelQuickFixMultiFileTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration")
+        public static class AddOpenToClassDeclaration extends AbstractHighLevelQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("extendsFromJava.before.Main.java")
+            public void testExtendsFromJava() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/extendsFromJava.before.Main.java");
+            }
+
+            @TestMetadata("finalJavaSupertype.before.Main.kt")
+            public void testFinalJavaSupertype() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/finalJavaSupertype.before.Main.kt");
+            }
+
+            @TestMetadata("finalJavaUpperBound.before.Main.kt")
+            public void testFinalJavaUpperBound() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/finalJavaUpperBound.before.Main.kt");
+            }
         }
 
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/modifiers")
+        public static class Uncategorized extends AbstractHighLevelQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
 
-        @TestMetadata("extendsFromJava.before.Main.java")
-        public void testExtendsFromJava() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/extendsFromJava.before.Main.java");
-        }
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
 
-        @TestMetadata("finalJavaSupertype.before.Main.kt")
-        public void testFinalJavaSupertype() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/finalJavaSupertype.before.Main.kt");
-        }
-
-        @TestMetadata("finalJavaUpperBound.before.Main.kt")
-        public void testFinalJavaUpperBound() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/finalJavaUpperBound.before.Main.kt");
+            @TestMetadata("constVal.before.Main.kt")
+            public void testConstVal() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/constVal.before.Main.kt");
+            }
         }
     }
 

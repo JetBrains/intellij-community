@@ -31,11 +31,11 @@ public class XHtmlLexer extends HtmlLexer {
   }
 
   public XHtmlLexer() {
-    this(new XmlLexer(true));
+    this(XmlLexerKt.createXmlLexer(true));
   }
 
   public XHtmlLexer(boolean highlightMode) {
-    this(new XmlLexer(true), highlightMode);
+    this(XmlLexerKt.createXmlLexer(true), highlightMode);
   }
 
   @Override

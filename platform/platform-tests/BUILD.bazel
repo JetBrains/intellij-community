@@ -170,6 +170,9 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//platform/runtime/product",
     "//platform/locking.impl",
+    "//platform/testFramework/junit5/highlighting",
+    "//platform/vcs-impl/shared",
+    "@lib//:com-jetbrains-fus-reporting-connection-client",
   ],
   runtime_deps = [
     ":tests_test_resources",

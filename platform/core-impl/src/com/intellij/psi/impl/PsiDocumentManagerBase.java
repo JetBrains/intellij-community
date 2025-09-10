@@ -436,7 +436,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
                               @NotNull Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
     if (isEventSystemEnabled(document)) {
-      ThreadingAssertions.assertEventDispatchThread();
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
     }
     boolean[] ok = {true};
     if (synchronously) {
@@ -463,7 +463,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
                                               @NotNull @Unmodifiable List<? extends BooleanRunnable> reparseInjectedProcessors,
                                               boolean synchronously) {
     if (isEventSystemEnabled(document)) {
-      ThreadingAssertions.assertEventDispatchThread();
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
     }
     if (myProject.isDisposed()) return false;
     assert !(document instanceof DocumentWindow);
@@ -1278,6 +1278,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @TestOnly
+  @ApiStatus.Internal
   public void clearUncommittedDocuments() {
     myUncommittedDocuments.clear();
     myUncommittedDocumentTraces.clear();
@@ -1357,4 +1358,17 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
    */
   @ApiStatus.Internal
   public void assertFileIsFromCorrectProject(@NotNull VirtualFile virtualFile) {}
+
+  @TestOnly
+  @ApiStatus.Internal
+  public <T extends Throwable> void executeTestInProductionMode(@NotNull ThrowableRunnable<T> runnable) throws T {
+    boolean old = myUnitTestMode;
+    myUnitTestMode = false;
+    try {
+      runnable.run();
+    }
+    finally {
+      myUnitTestMode = old;
+    }
+  }
 }

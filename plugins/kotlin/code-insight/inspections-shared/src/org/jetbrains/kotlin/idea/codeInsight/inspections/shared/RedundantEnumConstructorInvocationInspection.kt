@@ -32,9 +32,7 @@ internal class RedundantEnumConstructorInvocationInspection : AbstractKotlinInsp
 }
 
 private class RemoveEnumConstructorInvocationFix : PsiUpdateModCommandQuickFix() {
-    override fun getName(): String = KotlinBundle.message("remove.enum.constructor.invocation.fix.text")
-
-    override fun getFamilyName(): String = name
+    override fun getFamilyName(): String = KotlinBundle.message("remove.enum.constructor.invocation.fix.text")
 
     override fun applyFix(
         project: Project,

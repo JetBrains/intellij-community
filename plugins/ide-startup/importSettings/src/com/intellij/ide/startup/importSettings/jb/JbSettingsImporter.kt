@@ -33,18 +33,15 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.codeStyle.CodeStyleSchemes
-import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.getComponentManagerImpl
+import com.intellij.serviceContainer.getComponentManagerEx
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.application
 import com.intellij.util.io.copy
-import kotlinx.coroutines.CoroutineScope
 import java.io.FileInputStream
 import java.io.InputStream
 import java.nio.file.FileVisitResult
@@ -80,7 +77,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     val storageManager = componentStore.storageManager
     val (components, files) = findComponentsAndFiles()
     withExternalStreamProvider(arrayOf(storageManager)) {
-      val componentManagerImpl = ApplicationManager.getApplication().getComponentManagerImpl()
+      val componentManagerImpl = ApplicationManager.getApplication().getComponentManagerEx()
       val availableComponents = loadNotLoadedComponents(EmptyProgressIndicator(), componentManagerImpl, components, pluginIds)
       componentStore.reloadComponents(files, emptyList(), availableComponents)
       if (categories.contains(SettingsCategory.KEYMAP)) {
@@ -168,7 +165,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     LOG.info("NOT loaded components(${notLoadedComponents.size}):\n${notLoadedComponents.joinToString()}")
     LOG.info("NOT loaded storages(${unknownStorage.size}):\n${unknownStorage.joinToString()}")
     progressIndicator.checkCanceled()
-    val componentManagerImpl = ApplicationManager.getApplication().getComponentManagerImpl()
+    val componentManagerImpl = ApplicationManager.getApplication().getComponentManagerEx()
     val defaultProject = ProjectManager.getInstance().defaultProject
     val defaultProjectStore = (defaultProject as ComponentManager).stateStore as ComponentStoreImpl
     val defaultProjectStorage = defaultProjectStore.storageManager.getStateStorage(FileStorageAnnotation("", false))
@@ -178,8 +175,7 @@ class JbSettingsImporter(private val configDirPath: Path,
 
     val projectDefaultComponentNames = loadProjectDefaultComponentNames()
     if (projectDefaultComponentNames.isNotEmpty()) {
-      loadNotLoadedComponents(progressIndicator, defaultProject.getComponentManagerImpl(),
-                              projectDefaultComponentNames, null)
+      loadNotLoadedComponents(progressIndicator, defaultProject.getComponentManagerEx(), projectDefaultComponentNames, null)
     }
 
     for (component in notLoadedComponents) {
@@ -273,7 +269,7 @@ class JbSettingsImporter(private val configDirPath: Path,
 
   private fun loadNotLoadedComponents(
     progressIndicator: ProgressIndicator,
-    componentManagerImpl: ComponentManagerImpl,
+    componentManagerImpl: ComponentManagerEx,
     componentsToLoad: Collection<String>,
     pluginIds: Set<String>?
   ): Set<String> {
@@ -302,24 +298,6 @@ class JbSettingsImporter(private val configDirPath: Path,
 
     LOG.info("Loaded notFoundComponents in ${System.currentTimeMillis() - start} ms")
     return foundComponents.keys
-  }
-
-  internal fun isNewUIValueChanged(): Boolean {
-    val earlyAccessRegistryPath = configDirPath / EarlyAccessRegistryManager.fileName
-    if (!earlyAccessRegistryPath.exists()) {
-      return false
-    }
-    val eaLinesIterator = earlyAccessRegistryPath.toFile().readLines().iterator()
-    while (eaLinesIterator.hasNext()) {
-      val key = eaLinesIterator.next()
-      if (eaLinesIterator.hasNext()) {
-        val value = eaLinesIterator.next()
-        if (key == ExperimentalUI.KEY) {
-          return value != defaultNewUIValue.toString()
-        }
-      }
-    }
-    return false
   }
 
   private fun filesFromFolder(dir: Path, prefix: String = dir.name): Collection<String> {
@@ -404,8 +382,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     return retval
   }
 
-  suspend fun installPlugins(
-    coroutineScope: CoroutineScope,
+  fun installPlugins(
     progressIndicator: ProgressIndicator,
     pluginsMap: Map<PluginId, PluginMainDescriptor?>,
   ) {

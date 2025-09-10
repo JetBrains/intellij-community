@@ -5,7 +5,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleDefinitionsParams
-import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptDefinitionWrapper
 import org.jetbrains.kotlin.gradle.scripting.shared.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.configurationResolverDelegate
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.scriptWorkspaceModelManagerDelegate
@@ -50,38 +49,30 @@ class GradleScriptDefinitionsStorage(val project: Project) :
     }
 
     fun loadDefinitions(params: GradleDefinitionsParams) {
-        _definitions.set(loadAndWrapDefinitions(params))
+        val definitions = loadGradleDefinitions(params).map {
+            it.with {
+                ide {
+                    kotlinScriptTemplateInfo(NewScriptFileInfo().apply {
+                        id = "gradle-kts"
+                        title = ".gradle.kts"
+                        templateName = "Kotlin Script Gradle"
+                    })
+                    configurationResolverDelegate {
+                        GradleScriptRefinedConfigurationProvider.getInstance(project)
+                    }
+                    scriptWorkspaceModelManagerDelegate {
+                        GradleScriptRefinedConfigurationProvider.getInstance(project)
+                    }
+                }
+            }
+        }
+        _definitions.set(definitions)
         initialized.set(true)
         updateState {
             it.copyFrom(params)
         }
         ScriptDefinitionProviderImpl.getInstance(project).notifyDefinitionsChanged()
     }
-
-    private fun loadAndWrapDefinitions(params: GradleDefinitionsParams): List<ScriptDefinition> {
-        val definitions = loadGradleDefinitions(project, params)
-        return definitions.map {
-            if (it !is GradleScriptDefinitionWrapper) it
-            else {
-                it.with {
-                    ide {
-                        kotlinScriptTemplateInfo(NewScriptFileInfo().apply {
-                            id = "gradle-kts"
-                            title = ".gradle.kts"
-                            templateName = "Kotlin Script Gradle"
-                        })
-                        configurationResolverDelegate {
-                            GradleScriptRefinedConfigurationProvider.getInstance(project)
-                        }
-                        scriptWorkspaceModelManagerDelegate {
-                            GradleScriptRefinedConfigurationProvider.getInstance(project)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
 
     data class State(
         @Attribute @JvmField val workingDir: String? = null,
@@ -108,8 +99,8 @@ class GradleScriptDefinitionsStorage(val project: Project) :
                 gradleHome ?: return null,
                 javaHome ?: return null,
                 gradleVersion ?: return null,
-                jvmArguments ?: return null,
-                environment ?: return null
+                jvmArguments,
+                environment
             )
         }
     }

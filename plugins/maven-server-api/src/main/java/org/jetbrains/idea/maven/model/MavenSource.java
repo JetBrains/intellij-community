@@ -94,10 +94,10 @@ public class MavenSource implements Serializable {
     return myIsSourceTag;
   }
 
-  public MavenSource withNewDirectory(String newDir) {
+  public MavenSource withNewDirectory(@NotNull String newDir) {
     return new MavenSource(
       myIsSourceTag,
-      myDirectory,
+      newDir,
       myIncludes,
       myExcludes,
       myScope,

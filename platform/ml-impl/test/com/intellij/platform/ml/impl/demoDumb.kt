@@ -6,7 +6,10 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsageCollectorEP
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.UsageCollectors.COUNTER_EP_NAME
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.intellij.platform.ml.*
 import com.intellij.platform.ml.environment.Environment
 import com.intellij.platform.ml.impl.logs.MLEventLoggerProvider.Companion.ML_RECORDER_ID
@@ -53,14 +56,13 @@ private object DumbModeApiPlatform : TestApiPlatform() {
   )
 }
 
-private class DumbTaskFusLogger : CounterUsagesCollector() {
-  companion object {
-    val GROUP = EventLogGroup("dumb-task", 1, ML_RECORDER_ID).also {
-      it.registerMLTaskLogging<DumbMLModel, Unit>("finished", MockDumbTask, EntireSessionLoggingStrategy.UNIT)
-    }
+private class DumbTaskFusLogger(private val disposable: Disposable) : CounterUsagesCollector() {
+  private val myGroup = EventLogGroup("dumb-task", 1, ML_RECORDER_ID).also {
+    it.registerMLTaskLogging<DumbMLModel, Unit>("finished", MockDumbTask, EntireSessionLoggingStrategy.UNIT,
+                                                disposable = disposable)
   }
 
-  override fun getGroup() = GROUP
+  override fun getGroup() = myGroup
 }
 
 class DumbTask : MLApiLogsTestCase() {
@@ -73,55 +75,56 @@ class DumbTask : MLApiLogsTestCase() {
     }
 
     ReplaceableIJPlatform.replacingWith(DumbModeApiPlatform) {
-      registerEventLogger(DumbTaskFusLogger())
+      Disposer.newCheckedDisposable("DumbTask::test dumb ml task").use { disposable ->
+        registerEventLogger(DumbTaskFusLogger(disposable))
 
-      val loggerEP = CounterUsageCollectorEP()
-      application.extensionArea.getExtensionPoint(COUNTER_EP_NAME).registerExtension(loggerEP, this.testRootDisposable)
+        val loggerEP = CounterUsageCollectorEP()
+        application.extensionArea.getExtensionPoint(COUNTER_EP_NAME).registerExtension(loggerEP, this.testRootDisposable)
 
-      FUCollectorTestCase.listenForEvents(ML_RECORDER_ID, this.testRootDisposable, collectLogs) {
+        FUCollectorTestCase.listenForEvents(ML_RECORDER_ID, this.testRootDisposable, collectLogs) {
 
-        repeat(3) { sessionIndex ->
+          repeat(3) { sessionIndex ->
 
-          println("Demo session #$sessionIndex has started")
+            println("Demo session #$sessionIndex has started")
 
-          runBlocking {
+            runBlocking {
 
-            val startOutcome = MockDumbTask.startMLSession(
-              callParameters = Environment.of(),
-              permanentSessionEnvironment = Environment.of(
-                TierCompletionSession with CompletionSession(
-                  language = PlainTextLanguage.INSTANCE,
-                  callOrder = 1,
-                  completionType = CompletionType.SMART
+              val startOutcome = MockDumbTask.startMLSession(
+                callParameters = Environment.of(),
+                permanentSessionEnvironment = Environment.of(
+                  TierCompletionSession with CompletionSession(
+                    language = PlainTextLanguage.INSTANCE,
+                    callOrder = 1,
+                    completionType = CompletionType.SMART
+                  )
                 )
               )
-            )
 
-            val completionSession = startOutcome.session ?: return@runBlocking
-            completionSession.withNestedDumbSessions { lookupSessionCreator ->
+              val completionSession = startOutcome.session ?: return@runBlocking
+              completionSession.withNestedDumbSessions { lookupSessionCreator ->
 
-              lookupSessionCreator.nestConsidering(Environment.of(), Environment.of(TierLookup with LookupImpl(true, 1)))
-                .withConsiderations {
-                  it.consider(Environment.of(), Environment.of(TierItem with LookupItem("hello", emptyMap())))
-                  it.consider(Environment.of(), Environment.of(TierItem with LookupItem("world", emptyMap())))
-                }
+                lookupSessionCreator.nestConsidering(Environment.of(), Environment.of(TierLookup with LookupImpl(true, 1)))
+                  .withConsiderations {
+                    it.consider(Environment.of(), Environment.of(TierItem with LookupItem("hello", emptyMap())))
+                    it.consider(Environment.of(), Environment.of(TierItem with LookupItem("world", emptyMap())))
+                  }
 
-              lookupSessionCreator.nestConsidering(Environment.of(), Environment.of(TierLookup with LookupImpl(false, 2)))
-                .withConsiderations {
-                  it.consider(Environment.of(), Environment.of(TierItem with LookupItem("hello!!!", mapOf("bold" to true))))
-                  it.consider(Environment.of(), Environment.of(TierItem with LookupItem("AAAAA!!", mapOf("strikethrough" to true))))
-                  it.consider(Environment.of(), Environment.of(TierItem with LookupItem("AAAAAAAAAAAAAAAAA", mapOf("cursive" to true))))
-                }
+                lookupSessionCreator.nestConsidering(Environment.of(), Environment.of(TierLookup with LookupImpl(false, 2)))
+                  .withConsiderations {
+                    it.consider(Environment.of(), Environment.of(TierItem with LookupItem("hello!!!", mapOf("bold" to true))))
+                    it.consider(Environment.of(), Environment.of(TierItem with LookupItem("AAAAA!!", mapOf("strikethrough" to true))))
+                    it.consider(Environment.of(), Environment.of(TierItem with LookupItem("AAAAAAAAAAAAAAAAA", mapOf("cursive" to true))))
+                  }
+              }
             }
+
+            Thread.sleep(3 * 1000)
+
+            println("Demo session #$sessionIndex has finished")
           }
-
-          Thread.sleep(3 * 1000)
-
-          println("Demo session #$sessionIndex has finished")
         }
       }
     }
-
     //val jsonSaver = MLLogsToJsonSaver(Path.of(".") / "testResources")
     //jsonSaver.save(logs, "ml_logs_dumb")
   }

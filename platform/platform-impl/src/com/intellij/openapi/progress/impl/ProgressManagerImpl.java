@@ -4,6 +4,8 @@ package com.intellij.openapi.progress.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.PingProgress;
@@ -17,6 +19,8 @@ import com.intellij.ui.SystemNotifications;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.IOCancellationCallback;
 import com.intellij.util.io.IOCancellationCallbackHolder;
+import com.intellij.util.progress.JfrCancellationEventCallback;
+import com.intellij.util.progress.JfrCancellationEventsCallbackHolder;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +39,7 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
   public ProgressManagerImpl() {
     ExtensionPointImpl.Companion.setCheckCanceledAction(ProgressManager::checkCanceled);
     IOCancellationCallbackHolder.INSTANCE.setIoCancellationCallback(new IdeIOCancellationCallback());
+    JfrCancellationEventsCallbackHolder.INSTANCE.setCallback(new IdeJfrCancellationCallback());
   }
 
   @Override
@@ -92,8 +97,74 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
     return result;
   }
 
+  @Override
+  protected void fireNonCancellableEvent() {
+    if (!shouldFireCheckCanceledEvent()) {
+      return;
+    }
+    CheckCanceledEvent event = new CheckCanceledEvent(true, false, false, false, false, false);
+    if (event.isEnabled() && event.shouldCommit()) {
+      event.commit();
+    }
+  }
+
+  @Override
+  protected void fireCanceledByJobEvent() {
+    if (!shouldFireCheckCanceledEvent()) {
+      return;
+    }
+    CheckCanceledEvent event = new CheckCanceledEvent(false, false, true, false, false, true);
+    if (event.isEnabled() && event.shouldCommit()) {
+      event.commit();
+    }
+  }
+
+  @Override
+  protected void fireCanceledByIndicatorEvent(@Nullable ProgressIndicator indicator) {
+    if (!shouldFireCheckCanceledEvent()) {
+      return;
+    }
+    @SuppressWarnings("TestOnlyProblems")
+    CheckCanceledEvent event = new CheckCanceledEvent(false,
+                                                      indicator != null,
+                                                      Cancellation.currentJob() != null,
+                                                      false,
+                                                      false,
+                                                      indicator != null && indicator.isCanceled());
+    if (event.isEnabled() && event.shouldCommit()) {
+      event.commit();
+    }
+  }
+
+  @Override
+  protected void fireCheckCanceledNone() {
+    if (!shouldFireCheckCanceledEvent()) {
+      return;
+    }
+    CheckCanceledEvent event = new CheckCanceledEvent(false, false, Cancellation.currentJob() != null, true, false, false);
+    if (event.isEnabled() && event.shouldCommit()) {
+      event.commit();
+    }
+  }
+
+  @Override
+  protected void fireCheckCanceledOnlyHooks() {
+    if (!shouldFireCheckCanceledEvent()) {
+      return;
+    }
+    CheckCanceledEvent event = new CheckCanceledEvent(false, false, Cancellation.currentJob() != null, false, true, false);
+    if (event.isEnabled() && event.shouldCommit()) {
+      event.commit();
+    }
+  }
+
   private static void systemNotify(@NotNull Task.NotificationInfo info) {
     SystemNotifications.getInstance().notify(info.getNotificationName(), info.getNotificationTitle(), info.getNotificationText());
+  }
+
+  private static boolean shouldFireCheckCanceledEvent() {
+    ApplicationEx applicationManagerEx = ApplicationManagerEx.getApplicationEx();
+    return applicationManagerEx != null && applicationManagerEx.isWriteActionPending() && applicationManagerEx.isReadAccessAllowed();
   }
 
   @Override
@@ -262,6 +333,31 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
     @Override
     public void interactWithUI() {
       PingProgress.interactWithEdtProgress();
+    }
+  }
+
+  private static final class IdeJfrCancellationCallback implements JfrCancellationEventCallback {
+
+    @Override
+    public void nonCanceledSectionInvoked() {
+      if (!shouldFireCheckCanceledEvent()) {
+        return;
+      }
+      CheckCanceledEvent event = new CheckCanceledEvent(true, false, Cancellation.currentJob() != null, false, false, false);
+      if (event.isEnabled() && event.shouldCommit()) {
+        event.commit();
+      }
+    }
+
+    @Override
+    public void cancellableSectionInvoked(boolean wasCanceled) {
+      if (!shouldFireCheckCanceledEvent()) {
+        return;
+      }
+      CheckCanceledEvent event = new CheckCanceledEvent(false, false, Cancellation.currentJob() != null, false, false, wasCanceled);
+      if (event.isEnabled() && event.shouldCommit()) {
+        event.commit();
+      }
     }
   }
 }

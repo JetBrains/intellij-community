@@ -11,13 +11,16 @@ jvm_library(
   name = "buildView",
   module_name = "intellij.platform.buildView",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-serialization-core",
     "//platform/kernel/shared:kernel",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-api:core",
+    "//platform/core-ui",
   ],
   runtime_deps = [":buildView_resources"]
 )

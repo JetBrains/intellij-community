@@ -11,7 +11,7 @@ jvm_library(
   name = "java",
   module_name = "intellij.gradle.java",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/gradle",
@@ -101,7 +101,7 @@ jvm_library(
   name = "java-tests_test_lib",
   module_name = "intellij.gradle.java.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:jmock",
     "@lib//:junit4",
@@ -129,8 +129,9 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//platform/external-system-api/dependency-updater",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//plugins/maven-server-api:maven-server",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "@lib//:mockito-kotlin",
     "//java/execution/impl",
     "//plugins/groovy",

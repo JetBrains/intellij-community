@@ -82,6 +82,13 @@ f:com.intellij.util.BitUtil
 - sf:set(B,B,Z):B
 - sf:set(I,I,Z):I
 - sf:set(J,J,Z):J
+com.intellij.util.ThreadLocalKmp
+- a:get():java.lang.Object
+- a:remove():V
+- a:set(java.lang.Object):V
+f:com.intellij.util.ThreadLocalKmpKt
+- sf:ThreadLocalKmp():com.intellij.util.ThreadLocalKmp
+- sf:ThreadLocalKmp(kotlin.jvm.functions.Function0):com.intellij.util.ThreadLocalKmp
 e:com.intellij.util.ThreeState
 - java.lang.Enum
 - sf:Companion:com.intellij.util.ThreeState$Companion

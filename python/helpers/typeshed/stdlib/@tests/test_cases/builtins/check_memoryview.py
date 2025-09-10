@@ -56,3 +56,6 @@ assert_type(float_mv[0:2], memoryview[float])
 # An invalid literal should raise an error.
 mv = memoryview(b"abc")
 mv.cast("abc")  # type: ignore
+
+mv.index(42)  # type: ignore
+mv.count(42)  # type: ignore

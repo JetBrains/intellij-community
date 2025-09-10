@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -136,11 +137,10 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       }
     }
 
-    final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
     final List<ParameterInfoImpl> psiParameters = new ArrayList<>();
     int paramIdx = 0;
     final String paramName = myParameter.getName();
-    for (PsiParameter param : parameters) {
+    for (PsiParameter param : myMethod.getParameterList().getParameters()) {
       if (!Comparing.strEqual(paramName, param.getName())) {
         psiParameters.add(ParameterInfoImpl.create(paramIdx).withName(param.getName()).withType(param.getType()));
       }
@@ -291,9 +291,9 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   }
 
   private @Nullable PsiElement findAnchorForLocalVariableDeclaration(PsiCodeBlock body) {
-    PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(myMethod);
-    if (call != null) {
-      return call.getParent();
+    if (!JavaFeature.STATEMENTS_BEFORE_SUPER.isSufficient(PsiUtil.getLanguageLevel(body))) {
+      PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(myMethod);
+      if (call != null) return call.getParent();
     }
     return body.getLBrace();
   }
@@ -365,18 +365,12 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     public void visitThisExpression(@NotNull PsiThisExpression thisExpression) {
       super.visitThisExpression(thisExpression);
       final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
-      PsiElement containingClass;
-      if (qualifier != null) {
-        containingClass = qualifier.resolve();
-      }
-      else {
-        containingClass = PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class);
-      }
+      PsiElement containingClass = (qualifier != null) ? qualifier.resolve() : PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class);
       final PsiClass methodContainingClass = myMethod.getContainingClass();
       LOG.assertTrue(methodContainingClass != null);
       if (!PsiTreeUtil.isAncestor(containingClass, methodContainingClass, false) || myMethod.hasModifierProperty(PsiModifier.STATIC)) {
         myConflicts.putValue(thisExpression, JavaRefactoringBundle.message("inline.parameter.dependency.unavailable.in.parameter.method",
-                                                                           "<b><code>this<code></b>"));
+                                                                           "<b><code>this</code></b>"));
       }
     }
 

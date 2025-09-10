@@ -11,7 +11,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.terminal.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/platform-impl:ide-impl",
     "//platform/testFramework",
@@ -36,7 +36,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util/coroutines",
     "//platform/platform-impl/internal",
-    "//plugins/sh",
+    "//plugins/sh/plugin",
     "//platform/code-style-api:codeStyle",
     "@lib//:assert_j",
     "@lib//:jediterm-core",
@@ -44,6 +44,8 @@ jvm_library(
     "@lib//:pty4j",
     "@lib//:guava",
     "@lib//:junit4",
+    "//platform/eel-provider",
+    "//platform/lang-impl",
   ],
   runtime_deps = [":tests_test_resources"]
 )

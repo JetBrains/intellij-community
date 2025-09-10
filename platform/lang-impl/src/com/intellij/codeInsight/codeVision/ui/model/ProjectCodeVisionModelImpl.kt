@@ -24,10 +24,9 @@ open class ProjectCodeVisionModel(val project: Project) {
   
   val maxVisibleLensCount: ViewableMap<CodeVisionAnchorKind, Int> = ViewableMap()
   val lensPopupActive: Property<Boolean> = Property(false)
-  val moreEntry: AdditionalCodeVisionEntry = AdditionalCodeVisionEntry(MORE_PROVIDER_ID, CodeVisionBundle.message("more"))
+  val moreEntry: AdditionalCodeVisionEntry = AdditionalCodeVisionEntry(MORE_PROVIDER_ID, CodeVisionMessageBundle.message("more"))
 
-
-  protected fun getCodeVisionHost() = CodeVisionInitializer.getInstance(project).getCodeVisionHost()
+  protected fun getCodeVisionHost(): CodeVisionHost = CodeVisionInitializer.getInstance(project).getCodeVisionHost()
 
   fun handleLensClick(editor: Editor, range: TextRange, anchorInlay: Inlay<*>, entry: CodeVisionEntry) {
     if (entry.providerId == MORE_PROVIDER_ID) {

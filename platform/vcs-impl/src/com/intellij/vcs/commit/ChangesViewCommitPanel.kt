@@ -80,7 +80,7 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(
 private class ChangesViewCommitTabTitleUpdater(tree: ChangesTree, workflowUi: CommitWorkflowUi, disposable: Disposable)
   : CommitTabTitleUpdater(tree, LOCAL_CHANGES, { message("local.changes.tab") },
                           pathsProvider = {
-                            val singleRoot = ProjectLevelVcsManager.getInstance(tree.project).allVersionedRoots.singleOrNull()
+                            val singleRoot = ProjectLevelVcsManager.getInstance(tree.project).getAllVersionedRoots().singleOrNull()
                             if (singleRoot != null) listOf(getFilePath(singleRoot)) else workflowUi.getDisplayedPaths()
                           }),
     ChangesViewContentManagerListener {

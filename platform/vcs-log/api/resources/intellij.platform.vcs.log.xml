@@ -2,5 +2,6 @@
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.vcs.log.graph"/>
+    <module name="intellij.platform.vcs"/>
   </dependencies>
 </idea-plugin>

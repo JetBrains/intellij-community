@@ -37,6 +37,11 @@ class PaddingMap(google.protobuf.message.Message):
         shape_index: builtins.int | None = ...,
         padding_arg_index: builtins.int | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["arg_index", b"arg_index", "padding_arg_index", b"padding_arg_index", "shape_index", b"shape_index"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "arg_index", b"arg_index", "padding_arg_index", b"padding_arg_index", "shape_index", b"shape_index"
+        ],
+    ) -> None: ...
 
 global___PaddingMap = PaddingMap

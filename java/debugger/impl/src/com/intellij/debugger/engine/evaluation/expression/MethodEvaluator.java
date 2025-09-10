@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class MethodEvaluator
@@ -10,10 +10,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMName;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.evaluation.EvaluateRuntimeException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,13 +33,14 @@ public class MethodEvaluator implements Evaluator {
   private final Evaluator[] myArgumentEvaluators;
   private final Evaluator myObjectEvaluator;
   private final boolean myMustBeVararg;
+  private final boolean myLastArgumentIsNotArray;
 
   public MethodEvaluator(Evaluator objectEvaluator,
                          JVMName className,
                          String methodName,
                          JVMName signature,
                          Evaluator[] argumentEvaluators) {
-    this(objectEvaluator, className, methodName, signature, argumentEvaluators, false);
+    this(objectEvaluator, className, methodName, signature, argumentEvaluators, false, false);
   }
 
   public MethodEvaluator(Evaluator objectEvaluator,
@@ -49,13 +48,15 @@ public class MethodEvaluator implements Evaluator {
                          String methodName,
                          JVMName signature,
                          Evaluator[] argumentEvaluators,
-                         boolean mustBeVararg) {
+                         boolean mustBeVararg,
+                         boolean lastArgumentIsNotArray) {
     myObjectEvaluator = DisableGC.create(objectEvaluator);
     myClassName = className;
     myMethodName = methodName;
     myMethodSignature = signature;
     myArgumentEvaluators = argumentEvaluators;
     myMustBeVararg = mustBeVararg;
+    myLastArgumentIsNotArray = lastArgumentIsNotArray;
   }
 
   @Override
@@ -127,11 +128,13 @@ public class MethodEvaluator implements Evaluator {
       if (jdiMethod == null) {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.instance.method", myMethodName));
       }
-      if (myMustBeVararg && !jdiMethod.isVarArgs() && ContainerUtil.getLastItem(jdiMethod.argumentTypes()) instanceof ArrayType) {
-        // this is a workaround for jdk bugs when bridge or proxy methods do not have ACC_VARARGS flags
+
+      if (myMustBeVararg || jdiMethod.isVarArgs()) {
+        // we have to call it for bridge or proxy methods that do not have ACC_VARARGS flags
         // see IDEA-129869 and IDEA-202380
-        MethodImpl.handleVarArgs(jdiMethod, args);
+        handleVarargs(jdiMethod, args, context);
       }
+
       if (signature == null) { // runtime conversions
         argsConversions(jdiMethod, args, context);
       }
@@ -163,6 +166,74 @@ public class MethodEvaluator implements Evaluator {
     catch (Exception e) {
       LOG.debug(e);
       throw EvaluateExceptionUtil.createEvaluateException(e);
+    }
+  }
+
+  /**
+   * This method is an imroved version of {@link MethodImpl#handleVarArgs(Method, List)}:
+   * <ul>
+   * <li>creation of arrays is done through {@link DebuggerUtilsEx#mirrorOfArray(ArrayType, int, EvaluationContext)} to avoid
+   * an immediate result collection</li>
+   * <li>wrapping of null vararg value into an array depending on the argument type</li>
+   * <li>load vararg parameter type if it is not yet loaded</li>
+   * </ul>
+   */
+  private void handleVarargs(@NotNull Method jdiMethod, @NotNull List<Value> args, @NotNull EvaluationContextImpl context)
+    throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
+    int paramCount = jdiMethod.argumentTypeNames().size();
+    ArrayType lastParamType = getLastParameterArrayType(jdiMethod, context);
+    int argCount = args.size();
+    if (argCount < paramCount - 1) {
+      return;
+    }
+    if (argCount == paramCount - 1) {
+      args.add(DebuggerUtilsEx.mirrorOfArray(lastParamType, 0, context));
+      return;
+    }
+    Value nthArgValue = args.get(paramCount - 1);
+    if (nthArgValue == null && argCount == paramCount) {
+      if (myLastArgumentIsNotArray) {
+        args.set(paramCount - 1, DebuggerUtilsEx.mirrorOfArray(lastParamType, 1, context));
+      }
+      return;
+    }
+    Type nthArgType = (nthArgValue == null) ? null : nthArgValue.type();
+    if (nthArgType instanceof ArrayType arrayType) {
+      if (argCount == paramCount && DebuggerUtilsImpl.instanceOf(arrayType, lastParamType)) {
+        return;
+      }
+    }
+
+    int count = argCount - paramCount + 1;
+    ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(lastParamType, count, context);
+
+    argArray.setValues(0, args, paramCount - 1, count);
+    args.set(paramCount - 1, argArray);
+
+    if (argCount > paramCount) {
+      args.subList(paramCount, argCount).clear();
+    }
+  }
+
+  private static ArrayType getLastParameterArrayType(@NotNull Method jdiMethod, @NotNull EvaluationContextImpl context)
+    throws ClassNotLoadedException, EvaluateException, InvalidTypeException {
+    int paramCount = jdiMethod.argumentTypeNames().size();
+    if (jdiMethod instanceof MethodImpl methodImpl) {
+      try {
+        String paramSignature = methodImpl.argumentSignatures().get(paramCount - 1);
+        return (ArrayType)methodImpl.findType(paramSignature);
+      }
+      catch (ClassNotLoadedException e) {
+        try {
+          return (ArrayType)context.getDebugProcess().loadClass(context, e, jdiMethod.declaringType().classLoader());
+        }
+        catch (IncompatibleThreadStateException | InvocationException ex) {
+          throw EvaluateExceptionUtil.createEvaluateException(ex);
+        }
+      }
+    }
+    else {
+      return (ArrayType)jdiMethod.argumentTypes().get(paramCount - 1);
     }
   }
 

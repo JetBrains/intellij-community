@@ -2,6 +2,7 @@
 package com.intellij.find
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolder
@@ -18,7 +19,6 @@ import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.UnknownNullability
-import java.util.concurrent.CancellationException
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
@@ -749,14 +749,8 @@ open class FindModel : UserDataHolder, Cloneable {
 
   private fun notifyObservers() {
     for (observer in myObservers) {
-      try {
+      LOG.runAndLogException {
         observer.findModelChanged(this)
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error("FindModelObserver threw an exception: $observer", e)
       }
     }
   }

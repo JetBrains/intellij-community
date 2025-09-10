@@ -94,7 +94,6 @@ a:com.intellij.codeInsight.AutoPopupController
 - a:autoPopupParameterInfo(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement):V
 - a:cancelAllRequests():V
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.AutoPopupController
-- a:scheduleAutoPopup(com.intellij.openapi.editor.Editor):V
 - a:scheduleAutoPopup(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.completion.CompletionType,com.intellij.openapi.util.Condition):V
 - a:waitForDelayedActions(J,java.util.concurrent.TimeUnit):V
 c:com.intellij.codeInsight.CodeInsightSettings
@@ -572,30 +571,12 @@ Fc:com.intellij.codeInsight.daemon.impl.HighlightInfo
 - s:convertSeverityToProblemHighlight(com.intellij.lang.annotation.HighlightSeverity):com.intellij.codeInspection.ProblemHighlightType
 - s:convertType(com.intellij.codeInsight.daemon.impl.HighlightInfoType):com.intellij.codeInspection.ProblemHighlightType
 - equals(java.lang.Object):Z
-- findRegisteredQuickFix(java.util.function.BiFunction):java.lang.Object
 - s:fromRangeHighlighter(com.intellij.openapi.editor.markup.RangeHighlighter):com.intellij.codeInsight.daemon.impl.HighlightInfo
-- getActualEndOffset():I
-- getActualStartOffset():I
 - s:getAttributesByType(com.intellij.psi.PsiElement,com.intellij.codeInsight.daemon.impl.HighlightInfoType,com.intellij.openapi.editor.colors.TextAttributesScheme):com.intellij.openapi.editor.markup.TextAttributes
 - getDescription():java.lang.String
-- getEndOffset():I
-- getGutterIconRenderer():com.intellij.codeInsight.daemon.GutterMark
-- getHighlighter():com.intellij.openapi.editor.ex.RangeHighlighterEx
-- getInspectionToolId():java.lang.String
-- getProblemGroup():com.intellij.lang.annotation.ProblemGroup
-- getSameFamilyFix(com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption):com.intellij.codeInsight.intention.IntentionAction
-- getSeverity():com.intellij.lang.annotation.HighlightSeverity
-- getStartOffset():I
-- getText():java.lang.String
-- getTextAttributes(com.intellij.psi.PsiElement,com.intellij.openapi.editor.colors.EditorColorsScheme):com.intellij.openapi.editor.markup.TextAttributes
 - getToolTip():java.lang.String
-- hasHint():Z
 - hashCode():I
-- isAfterEndOfLine():Z
 - s:newHighlightInfo(com.intellij.codeInsight.daemon.impl.HighlightInfoType):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
-- registerFix(com.intellij.codeInsight.intention.IntentionAction,java.util.List,java.lang.String,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):V
-- setHighlighter(com.intellij.openapi.editor.ex.RangeHighlighterEx):V
-- unregisterQuickFix(com.intellij.openapi.util.Condition):V
 f:com.intellij.codeInsight.daemon.impl.HighlightInfo$IntentionActionDescriptor
 - <init>(com.intellij.codeInsight.intention.IntentionAction,java.util.List,java.lang.String,javax.swing.Icon,com.intellij.codeInsight.daemon.HighlightDisplayKey,com.intellij.lang.annotation.ProblemGroup,com.intellij.lang.annotation.HighlightSeverity):V
 - <init>(com.intellij.codeInsight.intention.IntentionAction,java.util.List,java.lang.String,javax.swing.Icon,com.intellij.codeInsight.daemon.HighlightDisplayKey,com.intellij.lang.annotation.ProblemGroup,com.intellij.lang.annotation.HighlightSeverity,com.intellij.openapi.util.Segment):V
@@ -2913,21 +2894,12 @@ a:com.intellij.openapi.module.impl.scopes.LibraryScopeBase
 - isSearchInModuleContent(com.intellij.openapi.module.Module):Z
 f:com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 - com.intellij.psi.search.GlobalSearchScope
-- sf:COMPILE_ONLY:I
-- sf:LIBRARIES:I
-- sf:MODULES:I
-- sf:TESTS:I
-- calcHashCode():I
 - compare(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):I
-- contains(com.intellij.openapi.vfs.VirtualFile):Z
 - equals(java.lang.Object):Z
 - extractFileEnumeration():com.intellij.psi.search.impl.VirtualFileEnumeration
 - getDisplayName():java.lang.String
-- s:getFileEnumerationUnderRoots(java.util.Collection):com.intellij.psi.search.impl.VirtualFileEnumeration
-- getModule():com.intellij.openapi.module.Module
-- getRoots():java.util.Collection
-- isSearchInLibraries():Z
-- isSearchInModuleContent(com.intellij.openapi.module.Module):Z
+- f:getModule():com.intellij.openapi.module.Module
+- f:getRoots():java.util.Collection
 - isSearchInModuleContent(com.intellij.openapi.module.Module,Z):Z
 c:com.intellij.openapi.module.impl.scopes.ModulesScope
 - com.intellij.psi.search.GlobalSearchScope

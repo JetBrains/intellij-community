@@ -5,10 +5,11 @@ import com.intellij.ide.CustomDataContextSerializer
 import com.intellij.openapi.actionSystem.DataKey
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.serializer
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_ALTERNATE_BUFFER_DATA_KEY
 
 internal class IsAlternateBufferDataContextSerializer : CustomDataContextSerializer<Boolean> {
   override val key: DataKey<Boolean>
-    get() = IS_ALTERNATE_BUFFER_KEY
+    get() = IS_ALTERNATE_BUFFER_DATA_KEY
   override val serializer: KSerializer<Boolean>
     get() = Boolean.serializer()
 }

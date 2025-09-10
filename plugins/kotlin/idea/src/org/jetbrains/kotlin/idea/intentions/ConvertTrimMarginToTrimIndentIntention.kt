@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
 class ConvertTrimMarginToTrimIndentIntention : SelfTargetingIntention<KtCallExpression>(
-    KtCallExpression::class.java, KotlinBundle.lazyMessage("convert.to.trim.indent")
+    KtCallExpression::class.java, KotlinBundle.messagePointer("convert.to.trim.indent")
 ) {
     override fun isApplicableTo(element: KtCallExpression, caretOffset: Int): Boolean {
         val template = (element.getQualifiedExpressionForSelector()?.receiverExpression as? KtStringTemplateExpression) ?: return false

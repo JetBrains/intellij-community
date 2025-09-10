@@ -3,6 +3,7 @@ package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -16,6 +17,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 
 class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   override fun accepts(builder: IndexableEntityProvider.IndexableIteratorBuilder): Boolean =
+    !Registry.`is`("use.workspace.file.index.for.partial.scanning") &&
     builder is LibraryIdIteratorBuilder
 
   override fun instantiate(builders: Collection<IndexableEntityProvider.IndexableIteratorBuilder>,

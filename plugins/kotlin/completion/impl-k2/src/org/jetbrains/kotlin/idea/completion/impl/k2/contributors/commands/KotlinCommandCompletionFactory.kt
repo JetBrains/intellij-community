@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands
 
 import com.intellij.codeInsight.completion.command.CommandCompletionFactory
 import com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
@@ -19,6 +20,8 @@ import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 
 internal class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAware {
     override fun isApplicable(psiFile: PsiFile, offset: Int): Boolean {
+        //many fixes don't work in kotlin, wait for fixing from the kotlin side
+        if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return false
         if (offset < 1) return false
         if (psiFile !is KtFile) return false
         var element = psiFile.findElementAt(offset - 1)

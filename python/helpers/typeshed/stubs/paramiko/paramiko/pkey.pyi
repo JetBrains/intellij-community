@@ -12,7 +12,14 @@ _BytesT = TypeVar("_BytesT", bound=bytes | bytearray)
 
 def _unpad_openssh(data: _BytesT) -> _BytesT: ...
 
+class UnknownKeyType(Exception):
+    key_type: str | type | None
+    key_bytes: bytes | None
+    def __init__(self, key_type: str | type | None = None, key_bytes: bytes | None = None) -> None: ...
+
 class PKey:
+    name: str
+    HASHES: dict[str, type]
     public_blob: PublicBlob | None
     BEGIN_TAG: Pattern[str]
     END_TAG: Pattern[str]

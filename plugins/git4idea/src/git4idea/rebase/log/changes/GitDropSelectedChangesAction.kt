@@ -2,12 +2,12 @@
 package git4idea.rebase.log.changes
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import git4idea.GitDisposable
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitSingleCommitEditingAction
 import git4idea.rebase.log.GitCommitEditingOperationResult
+import git4idea.rebase.log.focusCommitWhenReady
 import git4idea.rebase.log.notifySuccess
 import kotlinx.coroutines.launch
 
@@ -17,7 +17,7 @@ internal class GitDropSelectedChangesAction : GitSingleCommitEditingAction() {
   )
 
   override fun update(e: AnActionEvent, commitEditingData: SingleCommitEditingData) {
-    if (!Registry.`is`("git.drop.selected.changes.enabled") || commitEditingData.selectedChanges.isEmpty()) {
+    if (commitEditingData.selectedChanges.isEmpty()) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -33,18 +33,21 @@ internal class GitDropSelectedChangesAction : GitSingleCommitEditingAction() {
 
   override fun actionPerformedAfterChecks(commitEditingData: SingleCommitEditingData) {
     val project = commitEditingData.project
-    val changes = commitEditingData.selectedChanges
+    val repository = commitEditingData.repository
+    val ui = commitEditingData.logUiEx
 
     GitDisposable.getInstance(project).coroutineScope.launch {
       withBackgroundProgress(project, GitBundle.message("rebase.log.changes.drop.action.progress.indicator.title"), false) {
-        val operationResult = GitDropSelectedChangesOperation(commitEditingData.repository, commitEditingData.selectedCommit, changes).execute()
+        val operationResult = GitDropSelectedChangesOperation(repository, commitEditingData.selectedCommit, commitEditingData.selectedChanges).execute()
         if (operationResult is GitCommitEditingOperationResult.Complete) {
+          ui?.focusCommitWhenReady(repository, operationResult.commitToFocus)
           operationResult.notifySuccess(
             GitBundle.message("rebase.log.changes.drop.action.notification.successful.title"),
             null,
             GitBundle.message("rebase.log.changes.drop.action.progress.indicator.undo.title"),
             GitBundle.message("rebase.log.changes.drop.action.notification.undo.not.allowed.title"),
-            GitBundle.message("rebase.log.changes.drop.action.notification.undo.failed.title")
+            GitBundle.message("rebase.log.changes.drop.action.notification.undo.failed.title"),
+            ui
           )
         }
       }

@@ -19,8 +19,10 @@ import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -168,19 +170,10 @@ public class NullableAnnotationsPanel {
 
     myComponent = new JPanel(new GridBagLayout());
     myComponent.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
-    GridBagConstraints constraints = new GridBagConstraints();
-    constraints.anchor = GridBagConstraints.WEST;
-    constraints.weightx = 1;
-    myComponent.add(new JLabel(JavaBundle.message("nullable.notnull.annotation.used.label")), constraints);
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    constraints.insets.bottom = 3;
-    constraints.gridy = 1;
-    myComponent.add(myCombo, constraints);
-    constraints.insets.bottom = 0;
-    constraints.gridy = 2;
-    constraints.fill = GridBagConstraints.BOTH;
-    constraints.weighty = 1;
-    myComponent.add(tablePanel, constraints);
+    GridBag constraints = new GridBag().setDefaultAnchor(GridBagConstraints.WEST);
+    myComponent.add(new JLabel(JavaBundle.message("nullable.notnull.annotation.used.label")), constraints.nextLine().next());
+    myComponent.add(myCombo, constraints.next().fillCellHorizontally().weightx(1).insetBottom(UIUtil.DEFAULT_VGAP));
+    myComponent.add(tablePanel, constraints.nextLine().coverLine().fillCell().weighty(1));
   }
 
   private @NotNull TableCellRenderer createHeaderRenderer() {

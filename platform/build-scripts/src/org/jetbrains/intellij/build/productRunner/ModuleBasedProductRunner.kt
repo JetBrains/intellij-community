@@ -13,16 +13,17 @@ import kotlin.time.Duration
  */
 internal class ModuleBasedProductRunner(private val rootModuleForModularLoader: String, private val context: BuildContext) : IntellijProductRunner {
   override suspend fun runProduct(args: List<String>, additionalVmProperties: VmProperties, timeout: Duration) {
+    val originalModuleRepository = context.getOriginalModuleRepository()
     val systemProperties = VmProperties(
       mapOf(
-        "intellij.platform.runtime.repository.path" to context.getOriginalModuleRepository().repositoryPath.pathString,
+        "intellij.platform.runtime.repository.path" to originalModuleRepository.repositoryPath.pathString,
         "intellij.platform.root.module" to rootModuleForModularLoader,
         "intellij.platform.product.mode" to context.productProperties.productMode.id,
         "idea.vendor.name" to context.applicationInfo.shortCompanyName,
       )
     )
 
-    val loaderModule = context.getOriginalModuleRepository().repository.getModule(RuntimeModuleId.module("intellij.platform.runtime.loader"))
+    val loaderModule = originalModuleRepository.repository.getModule(RuntimeModuleId.module("intellij.platform.runtime.loader"))
     val ideClasspath = loaderModule.moduleClasspath.map { it.pathString }
     runApplicationStarter(
       context = context,

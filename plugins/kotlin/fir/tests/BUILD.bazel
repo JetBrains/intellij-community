@@ -23,7 +23,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "kotlin.fir.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_tests",
   deps = [
     "@lib//:kotlinc-analysis-api",
@@ -58,6 +58,7 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/debugger/openapi:java-debugger",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//platform/editor-ui-ex:editor-ex",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
@@ -95,6 +96,7 @@ jvm_library(
     "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl-k2",
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
+    "//java/java-runtime:rt",
   ]
 )
 ### auto-generated section `build kotlin.fir.tests` end

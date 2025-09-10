@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import java.nio.file.Path
 
-class UvProjectOpenProvider() : AbstractOpenProjectProvider() {
+internal class UvProjectOpenProvider() : AbstractOpenProjectProvider() {
   override val systemId: ProjectSystemId = UvConstants.SYSTEM_ID
 
   override fun isProjectFile(file: VirtualFile): Boolean {
@@ -33,7 +33,7 @@ class UvProjectOpenProvider() : AbstractOpenProjectProvider() {
     UvProjectModelService.forgetProjectModelRoot(project, Path.of(externalProjectPath))
   }
 
-  companion object {
+ private companion object {
     val UV_TOOL_TABLE_HEADER: Regex = """\[tool\.uv[.\w-]*]""".toRegex()
   }
 }

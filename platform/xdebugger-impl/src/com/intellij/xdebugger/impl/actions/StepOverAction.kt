@@ -27,4 +27,8 @@ private val ourHandler = object : XDebuggerProxySuspendedActionHandler() {
       XDebugSessionApi.getInstance().stepOver(session.id, ignoreBreakpoints = false)
     }
   }
+
+  override fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean {
+    return super.isEnabled(session, dataContext) && session.isStepOverActionAllowed
+  }
 }

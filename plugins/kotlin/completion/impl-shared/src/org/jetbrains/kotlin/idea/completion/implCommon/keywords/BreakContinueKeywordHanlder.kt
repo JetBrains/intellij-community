@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.completion.implCommon.keywords
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -37,7 +39,7 @@ class BreakContinueKeywordHandler(keyword: KtKeywordToken) : CompletionKeywordHa
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun createLookups(expression: KtExpression?): Collection<LookupElement> {
         if (expression == null) return emptyList()
         val supportsNonLocalBreakContinue =
@@ -55,7 +57,7 @@ class BreakContinueKeywordHandler(keyword: KtKeywordToken) : CompletionKeywordHa
             }
             .toList()
     }
-    context(KaSession)
+    context(_: KaSession)
     private fun canDoNonLocalJump(
         body: KtDeclarationWithBody,
         supportsNonLocalBreakContinue: Boolean,
@@ -63,7 +65,7 @@ class BreakContinueKeywordHandler(keyword: KtKeywordToken) : CompletionKeywordHa
             body is KtFunctionLiteral &&
             isInlineFunctionCall(body.findLabelAndCall().second)
 
-    context(KaSession)
+    context(_: KaSession)
     override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
@@ -72,7 +74,8 @@ class BreakContinueKeywordHandler(keyword: KtKeywordToken) : CompletionKeywordHa
     ): Collection<LookupElement> = createLookups(expression)
 }
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 fun isInlineFunctionCall(call: KtCallExpression?): Boolean =
     (call?.calleeExpression as? KtReferenceExpression)?.mainReference
         ?.resolveToSymbol()

@@ -37,7 +37,6 @@ import com.intellij.spellchecker.grazie.dictionary.ExtendedWordListWithFrequency
 import com.intellij.spellchecker.grazie.dictionary.WordListAdapter
 import com.intellij.spellchecker.grazie.ranker.DiacriticSuggestionRanker
 import com.intellij.spellchecker.hunspell.HunspellDictionary
-import com.intellij.spellchecker.inspections.IdentifierSplitter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
@@ -145,7 +144,7 @@ class GrazieSpellCheckerEngine(
   }
 
   override fun addDictionary(dictionary: Dictionary) {
-    adapter.addDictionary(dictionary)
+    if (!isDictionaryLoad(dictionary.name)) adapter.addDictionary(dictionary)
   }
 
   override fun addModifiableDictionary(dictionary: EditableDictionary) {

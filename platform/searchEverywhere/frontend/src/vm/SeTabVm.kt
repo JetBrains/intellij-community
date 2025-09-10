@@ -82,6 +82,8 @@ class SeTabVm(
       }
     }
 
+  internal var lastNotFoundString: String? = null
+
   init {
     coroutineScope.launch {
       isActiveFlow.combine(dumbModeStateFlow) { isActive, _ ->
@@ -94,7 +96,12 @@ class SeTabVm(
 
         val searchPatternWithAutoToggle = searchPattern.onEach {
           withContext(Dispatchers.EDT) {
-            (getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(false)
+            if (lastNotFoundString != null) {
+              val newPatternContainsPrevious = lastNotFoundString!!.length > 1 && it.contains(lastNotFoundString!!)
+              if (!newPatternContainsPrevious) {
+                (getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(false)
+              }
+            }
           }
         }
 
@@ -188,20 +195,31 @@ class SeTabVm(
       it is SearchEverywhereToggleAction
     } as? SearchEverywhereToggleAction
   }
+
+  suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
+    return tab.getUpdatedPresentation(item)
+  }
+
+  /**
+   * @return true if the popup should be closed, false otherwise
+   */
+  suspend fun performExtendedAction(item: SeItemData) : Boolean {
+    return tab.performExtendedAction(item)
+  }
 }
 
-private const val ESSENTIALS_WAITING_TIMEOUT: Long = 2000
 private const val ESSENTIALS_THROTTLE_DELAY: Long = 100
 private const val ESSENTIALS_ENOUGH_COUNT: Int = 15
 private const val FAST_PASS_THROTTLE: Long = 100
 
 private fun Flow<SeResultEvent>.throttleUntilEssentialsArrive(essentialProviderIds: Set<SeProviderId>): Flow<ThrottledItems<SeResultEvent>> {
   val essentialProvidersCounts = essentialProviderIds.associateWith { 0 }.toMutableMap()
+  val essentialWaitingTimeout: Long = AdvancedSettings.getInt("search.everywhere.contributors.wait.timeout").toLong()
 
   SeLog.log(SeLog.THROTTLING) { "Will start throttle with essential providers: $essentialProviderIds"}
 
   return throttledWithAccumulation(
-    resultThrottlingMs = ESSENTIALS_WAITING_TIMEOUT,
+    resultThrottlingMs = essentialWaitingTimeout,
     shouldPassItem = { it !is SeResultEndEvent },
     fastPassThrottlingMs = FAST_PASS_THROTTLE,
     shouldFastPassItem = { it.providerId().shouldIgnoreThrottling() }

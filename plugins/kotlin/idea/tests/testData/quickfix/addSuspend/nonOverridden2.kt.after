@@ -49,3 +49,4 @@ open class C1 : B() {
     }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeSuspendInHierarchyFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeSuspendInHierarchyFix

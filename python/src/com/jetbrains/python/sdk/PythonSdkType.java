@@ -412,7 +412,8 @@ public final class PythonSdkType extends SdkType {
       // TODO [targets] Cache version as for `PyRemoteSdkAdditionalDataBase`
       String versionString;
       try {
-        versionString = PyInterpreterVersionUtil.getInterpreterVersion((PyTargetAwareAdditionalData)sdkAdditionalData, null, true);
+        versionString =
+          PyInterpreterVersionUtil.getInterpreterVersionForJava((PyTargetAwareAdditionalData)sdkAdditionalData).toPythonVersion();
       }
       catch (Exception e) {
         versionString = "undefined";

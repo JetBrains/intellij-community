@@ -18,7 +18,7 @@ jvm_library(
   name = "community_test_lib",
   module_name = "intellij.javaFX.community",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/javaFX",
     "//plugins/javaFX:javaFX_test_lib",
@@ -47,6 +47,10 @@ jvm_library(
     "//plugins/javaFX:javaFX-properties",
     "//xml/xml-psi-api:psi",
     "//java/java-impl-refactorings:impl-refactorings",
+  ],
+  exports = [
+    "//plugins/javaFX",
+    "//plugins/javaFX:javaFX_test_lib",
   ],
   runtime_deps = [":community_resources"]
 )

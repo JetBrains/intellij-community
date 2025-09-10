@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.backend.impl
 
-import com.intellij.find.FindManager
 import com.intellij.ide.rpc.DataContextId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
@@ -113,9 +112,18 @@ class SeRemoteApiImpl: SeRemoteApi {
     return SeBackendService.getInstance(project).getDisplayNameForProvider(sessionRef, dataContextId, providerIds)
   }
 
-  override suspend fun getTextSearchOptions(projectId: ProjectId): SeTextSearchOptions? {
+  override suspend fun getUpdatedPresentation(projectId: ProjectId, item: SeItemData): SeItemPresentation? {
     val project = projectId.findProjectOrNull() ?: return null
-    val findModel = FindManager.getInstance(project).findInProjectModel
-    return SeTextSearchOptions(findModel.isCaseSensitive, findModel.isWholeWordsOnly, findModel.isRegularExpressions)
+    return SeBackendService.getInstance(project).getUpdatedPresentation(item)
+  }
+
+  override suspend fun performExtendedAction(
+    projectId: ProjectId,
+    sessionRef: DurableRef<SeSessionEntity>,
+    itemData: SeItemData,
+    isAllTab: Boolean,
+  ): Boolean {
+    val project = projectId.findProjectOrNull() ?: return false
+    return SeBackendService.getInstance(project).performExtendedAction(sessionRef, itemData, isAllTab)
   }
 }

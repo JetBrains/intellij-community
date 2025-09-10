@@ -5,7 +5,6 @@ from collections.abc import Iterable, Mapping, Sequence
 from typing import Any, Protocol, TypeVar
 from typing_extensions import TypeAlias
 
-import numpy  # pytype needs the unaliased import to resolve DTypeLike
 import numpy as np
 import numpy.typing as npt
 import tensorflow as tf
@@ -55,7 +54,7 @@ SparseTensorCompatible: TypeAlias = TensorCompatible | tf.SparseTensor
 TensorOrArray: TypeAlias = tf.Tensor | AnyArray
 
 ShapeLike: TypeAlias = tf.TensorShape | Iterable[ScalarTensorCompatible | None] | int | tf.Tensor
-DTypeLike: TypeAlias = DType | str | numpy.dtype[Any] | int
+DTypeLike: TypeAlias = DType | str | np.dtype[Any] | int
 
 ContainerTensors: TypeAlias = ContainerGeneric[tf.Tensor]
 ContainerTensorsLike: TypeAlias = ContainerGeneric[TensorLike]

@@ -209,6 +209,7 @@ f:com.intellij.vcs.log.data.VcsLogData
 - f:getUserNameResolver():com.intellij.vcs.log.data.VcsLogUserResolver
 - f:isDisposed():Z
 - sf:isIndexSwitchedOnInRegistry():Z
+- f:isRefreshInProgress():kotlinx.coroutines.flow.StateFlow
 - f:isSingleUser():Z
 - f:refresh(java.util.Collection):V
 - f:refresh(java.util.Collection,Z):V
@@ -338,15 +339,6 @@ f:com.intellij.vcs.log.impl.CommonUiProperties
 - sf:SHOW_ROOT_NAMES:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
 - sf:SHOW_TAG_NAMES:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
 - <init>():V
-f:com.intellij.vcs.log.impl.HashImpl
-- com.intellij.vcs.log.Hash
-- asString():java.lang.String
-- s:build(java.lang.String):com.intellij.vcs.log.Hash
-- equals(java.lang.Object):Z
-- hashCode():I
-- s:read(java.io.DataInput):com.intellij.vcs.log.Hash
-- toShortString():java.lang.String
-- write(java.io.DataOutput):V
 c:com.intellij.vcs.log.impl.LogDataImpl
 - com.intellij.vcs.log.VcsLogProvider$DetailedLogData
 - com.intellij.vcs.log.VcsLogProvider$LogData

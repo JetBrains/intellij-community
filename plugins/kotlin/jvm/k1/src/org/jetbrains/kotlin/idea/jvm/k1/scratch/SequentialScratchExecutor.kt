@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchExpression
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
-abstract class SequentialScratchExecutor(override val file: K1KotlinScratchFile) : ScratchExecutor(file) {
+abstract class SequentialScratchExecutor(override val scratchFile: K1KotlinScratchFile) : ScratchExecutor(scratchFile) {
     abstract fun executeStatement(expression: ScratchExpression)
 
     protected abstract fun startExecution()
@@ -23,7 +23,7 @@ abstract class SequentialScratchExecutor(override val file: K1KotlinScratchFile)
     protected abstract fun needProcessToStart(): Boolean
 
     fun start() {
-        EditorFactory.getInstance().eventMulticaster.addDocumentListener(listener, file.project.messageBus.connect())
+        EditorFactory.getInstance().eventMulticaster.addDocumentListener(listener, scratchFile.project.messageBus.connect())
 
         startExecution()
     }
@@ -35,10 +35,10 @@ abstract class SequentialScratchExecutor(override val file: K1KotlinScratchFile)
     }
 
     fun executeNew() {
-        val expressions = file.getExpressions()
+        val expressions = scratchFile.getExpressions()
         if (wasExpressionExecuted(expressions.size)) return
 
-        handler.onStart(file)
+        handler.onStart(scratchFile)
 
         for ((index, expression) in expressions.withIndex()) {
             if (wasExpressionExecuted(index)) continue
@@ -51,9 +51,9 @@ abstract class SequentialScratchExecutor(override val file: K1KotlinScratchFile)
     override fun execute() {
         if (needToRestartProcess()) {
             resetLastExecutedIndex()
-            handler.clear(file)
+            handler.clear(scratchFile)
 
-            handler.onStart(file)
+            handler.onStart(scratchFile)
             stopExecution {
                 ApplicationManager.getApplication().invokeLater {
                     executeNew()
@@ -65,7 +65,7 @@ abstract class SequentialScratchExecutor(override val file: K1KotlinScratchFile)
     }
 
     fun getFirstNewExpression(): ScratchExpression? {
-        val expressions = runReadAction { file.getExpressions() }
+        val expressions = runReadAction { scratchFile.getExpressions() }
         val firstNewExpressionIndex = lastExecuted + 1
         if (firstNewExpressionIndex in expressions.indices) {
             return expressions[firstNewExpressionIndex]
@@ -84,14 +84,14 @@ abstract class SequentialScratchExecutor(override val file: K1KotlinScratchFile)
                 return
             }
 
-            if (PsiManager.getInstance(file.project).findFile(virtualFile) != file.getPsiFile()) return
+            if (PsiManager.getInstance(scratchFile.project).findFile(virtualFile) != scratchFile.getPsiFile()) return
 
             val changedLine = document.getLineNumber(event.offset)
-            val changedExpression = file.getExpressionAtLine(changedLine) ?: return
-            val changedExpressionIndex = file.getExpressions().indexOf(changedExpression)
+            val changedExpression = scratchFile.getExpressionAtLine(changedLine) ?: return
+            val changedExpressionIndex = scratchFile.getExpressions().indexOf(changedExpression)
             if (wasExpressionExecuted(changedExpressionIndex)) {
                 resetLastExecutedIndex()
-                handler.clear(file)
+                handler.clear(scratchFile)
 
                 stopExecution()
             }

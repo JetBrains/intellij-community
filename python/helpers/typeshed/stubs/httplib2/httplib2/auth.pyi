@@ -1,16 +1,19 @@
-from typing import Any
+import re
+from _typeshed import Incomplete
+from collections.abc import Callable
+from typing import Final
 
-UNQUOTE_PAIRS: Any
-unquote: Any
-tchar: Any
-token: Any
-token68: Any
-quoted_string: Any
-auth_param_name: Any
-auth_param: Any
-params: Any
-scheme: Any
-challenge: Any
-authentication_info: Any
-www_authenticate: Any
-downcaseTokens: Any
+UNQUOTE_PAIRS: Final[re.Pattern[str]]
+unquote: Callable[..., str]
+tchar: Final[str]
+token: Incomplete  # types from pyparsing library
+token68: Incomplete
+quoted_string: Incomplete
+auth_param_name: Incomplete
+auth_param: Incomplete
+params: Incomplete
+scheme: Incomplete
+challenge: Incomplete
+authentication_info: Incomplete
+www_authenticate: Incomplete
+downcaseTokens: Incomplete

@@ -46,9 +46,7 @@ public final class RuntimeModuleId {
    * Creates ID of a runtime module corresponding to the test part of module {@code moduleName} in intellij project configuration.
    */
   public static @NotNull RuntimeModuleId moduleTests(@NotNull String moduleName) {
-    return new RuntimeModuleId(moduleName.equals("intellij.platform.split")
-                               ? "intellij.platform.split.testFramework"
-                               : moduleName + TESTS_NAME_SUFFIX);
+    return new RuntimeModuleId(moduleName + TESTS_NAME_SUFFIX);
   }
 
   /**

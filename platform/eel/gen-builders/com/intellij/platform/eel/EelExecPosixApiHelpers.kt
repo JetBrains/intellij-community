@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * @param exe An **absolute** path to the executable.
  *  TODO Or do relative paths also work?
- *
+ *  
  *  All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
  *  [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
  */

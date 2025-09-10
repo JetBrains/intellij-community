@@ -32,7 +32,7 @@ class GitWarmupConfigurator : WarmupConfigurator {
     }
 
     val projectLevelVcsManager = project.serviceAsync<ProjectLevelVcsManager>()
-    val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
+    val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.getAllVcsRoots().toList(), project)
     if (logProviders.isEmpty()) {
       logger?.reportMessage(1, "No git roots to index")
       return false

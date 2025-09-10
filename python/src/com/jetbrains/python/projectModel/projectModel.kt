@@ -2,6 +2,9 @@
 package com.jetbrains.python.projectModel
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.nio.file.FileVisitResult
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -53,6 +56,7 @@ interface PythonProjectModelResolver<P : ExternalProject> {
    * this method should return `null` for `libs/` but module graphs containing *only* modules `project1` and `project2`
    * for the directories `project1/` and `project2` respectively, even if there is a dependency between them.
    */
+  @RequiresBackgroundThread
   fun discoverProjectRootSubgraph(root: Path): ExternalProjectGraph<P>?
 
   /**
@@ -73,7 +77,7 @@ interface PythonProjectModelResolver<P : ExternalProject> {
    * If these two projects are independents, there will be two graphs for `project1` and `project2` respectively.
    */
   @OptIn(ExperimentalPathApi::class)
-  fun discoverIndependentProjectGraphs(root: Path): List<ExternalProjectGraph<P>> {
+  suspend fun discoverIndependentProjectGraphs(root: Path): List<ExternalProjectGraph<P>> = withContext(Dispatchers.IO) {
     val graphs = mutableListOf<ExternalProjectGraph<P>>()
     root.visitFileTree {
       onPreVisitDirectory { dir, _ ->
@@ -87,7 +91,7 @@ interface PythonProjectModelResolver<P : ExternalProject> {
     }
 
     // TODO make sure that roots doesn't leave ijProjectRoot boundaries
-    return mergeRootsReferringToEachOther(graphs)
+    return@withContext mergeRootsReferringToEachOther(graphs)
   }
 }
 
@@ -103,6 +107,7 @@ interface ProjectModelSyncListener {
   fun onFinish(projectRoot: Path): Unit = Unit
 }
 
+@RequiresBackgroundThread
 private fun <P : ExternalProject> mergeRootsReferringToEachOther(roots: List<ExternalProjectGraph<P>>): List<ExternalProjectGraph<P>> {
   fun commonAncestorPath(paths: Iterable<Path>): Path {
     val normalized = paths.map { it.normalize() }

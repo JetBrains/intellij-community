@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.recentFiles.frontend.model
 
+import com.intellij.ide.actions.shouldUseFallbackSwitcher
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -14,6 +15,7 @@ private val LOG by lazy { fileLogger() }
 
 internal class RecentFileModelSynchronizer : ProjectActivity {
   override suspend fun execute(project: Project) {
+    if (shouldUseFallbackSwitcher()) return
     val synchronizationScope = RecentFilesCoroutineScopeProvider.getInstanceAsync(project).coroutineScope.childScope("RecentFilesModel frontend/backend synchronisation")
 
     val frontendRecentFilesModel = FrontendRecentFilesModel.getInstanceAsync(project)

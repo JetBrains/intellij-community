@@ -1,52 +1,65 @@
-# ==========
-# TODO: Review the following
-# ==========
-
-_socket.*
-_posixsubprocess.cloexec_pipe
-curses.has_key
-selectors.KqueueSelector
-socket.[A-Z0-9_]+
-
-_ctypes.dlclose
-_ctypes.dlopen
-_ctypes.dlsym
-
-# ==========
-# Allowlist entries that cannot or should not be fixed
-# ==========
-
+# ==========================================
 # Modules that do not exist on Linux systems
-_msi
+# ==========================================
+
 _winapi
 asyncio.windows_events
 asyncio.windows_utils
+encodings.oem
+encodings.mbcs
 msvcrt
 nt
 winreg
 winsound
 
-# multiprocessing.popen_spawn_win32 exists on Linux but fail to import
-multiprocessing.popen_spawn_win32
 
-# Platform differences that cannot be captured by the type system
-fcntl.I_[A-Z0-9_]+
-os.SCHED_[A-Z_]+
-posix.SCHED_[A-Z_]+
-((os|posix).CLONE_[A-Z]+)?  # Python 3.12+
-(posix.O_[A-Z_]+)?
-(posix.ST_[A-Z]+)?
-(termios.[A-Z0-9_]+)?
+# ==========================================================
+# Other allowlist entries that cannot or should not be fixed
+# ==========================================================
 
-# Some of these exist on non-windows, but they are useless and this is not intended
-stat.FILE_ATTRIBUTE_[A-Z_]+
-
-# Methods that come from __getattr__() at runtime
-tkinter.Tk.createfilehandler
-tkinter.Tk.deletefilehandler
-
-_?curses.ACS_.* # ACS codes are initialized only after initscr call
+_?curses.ACS_.*  # ACS codes are initialized only after initscr call
 curses.COLORS  # Initialized after start_color
 curses.COLOR_PAIRS  # Initialized after start_color
 curses.COLS  # Initialized only after initscr call
 curses.LINES  # Initialized only after initscr call
+curses.has_key  # stubtest gets confused because this is both a module and a function in curses
+fcntl.I_[A-Z0-9_]+  # Platform differences that cannot be captured by the type system
+multiprocessing.popen_spawn_win32  # exists on Linux but fails to import
+select.poll  # Actually a function; we have a class so it can be used as a type
+
+# These seem like they should be available on Linux, but they're not
+# on GitHub Actions runners for some reason.
+_?socket.IPX_TYPE
+_?socket.RDS_CANCEL_SENT_TO
+_?socket.RDS_CMSG_RDMA_ARGS
+_?socket.RDS_CMSG_RDMA_DEST
+_?socket.RDS_CMSG_RDMA_MAP
+_?socket.RDS_CMSG_RDMA_STATUS
+_?socket.RDS_CONG_MONITOR
+_?socket.RDS_FREE_MR
+_?socket.RDS_GET_MR
+_?socket.RDS_GET_MR_FOR_DEST
+_?socket.RDS_RDMA_DONTWAIT
+_?socket.RDS_RDMA_FENCE
+_?socket.RDS_RDMA_INVALIDATE
+_?socket.RDS_RDMA_NOTIFY_ME
+_?socket.RDS_RDMA_READWRITE
+_?socket.RDS_RDMA_SILENT
+_?socket.RDS_RDMA_USE_ONCE
+_?socket.RDS_RECVERR
+_?socket.SOL_ATALK
+_?socket.SOL_AX25
+_?socket.SOL_HCI
+_?socket.SOL_IPX
+_?socket.SOL_NETROM
+_?socket.SOL_ROSE
+
+# Some of these exist on non-windows, but they are useless and this is not intended
+stat.FILE_ATTRIBUTE_[A-Z_]+
+
+# This is available on Linux, but it's documented as for kernel debugging and
+# not present on GitHub Actions runners.
+termios.TIOCTTYGSTRUCT
+
+tkinter.Tk.createfilehandler  # Methods that come from __getattr__() at runtime
+tkinter.Tk.deletefilehandler  # Methods that come from __getattr__() at runtime

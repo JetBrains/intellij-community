@@ -75,6 +75,11 @@ public class K2ExpressionTypeTestGenerated extends AbstractK2ExpressionTypeTest 
         runTest("../../idea/tests/testData/codeInsight/expressionType/ConstructorCall_fromKotlin_implicit.kt");
     }
 
+    @TestMetadata("FlexibleType.kt")
+    public void testFlexibleType() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/expressionType/FlexibleType.kt");
+    }
+
     @TestMetadata("IfAsExpression.kt")
     public void testIfAsExpression() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/expressionType/IfAsExpression.kt");

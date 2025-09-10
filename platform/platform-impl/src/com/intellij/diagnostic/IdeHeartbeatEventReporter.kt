@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.VMOptions.MemoryKind
@@ -26,7 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.lang.management.ManagementFactory
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.NANOSECONDS
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -73,61 +73,54 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
   private suspend fun heartBeatRoutine() {
     delay(Registry.intValue("ide.heartbeat.delay").toLong())
 
-    var lastCpuTime: Long = 0
-    var lastGcTime: Long = -1
-    var lastTimeToSafepoint: Long = 0
-    var lastTimeAtSafepoint: Long = 0
-    var lastSafepointsCount: Long = 0
+    val cpuTimeDiffer = LongDiffer(0)//cpu time is in nanoseconds
+    //other durations are in milliseconds by default:
+    val gcDurationDiffer = LongDiffer(0)
+    val timeToSafepointDiffer = LongDiffer(0)
+    val timeAtSafepointDiffer = LongDiffer(0)
+    val safepointsCountDiffer = LongDiffer(0)
+
     val gcBeans = ManagementFactory.getGarbageCollectorMXBeans()
+    val mxBean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
     while (true) {
-      val mxBean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
       val cpuLoad: Double = mxBean.cpuLoad
-      val cpuLoadInt = if (cpuLoad in 0.0..1.0) {
+      val cpuLoadInPercents = if (cpuLoad in 0.0..1.0) {
         (cpuLoad * 100).roundToInt()
       }
       else {
         -1
       }
       val swapSize = mxBean.totalSwapSpaceSize.toDouble()
-      val swapLoad = if (swapSize > 0) ((1 - mxBean.freeSwapSpaceSize / swapSize) * 100).toInt() else 0
+      val swapLoadInPercents = if (swapSize > 0) ((1 - mxBean.freeSwapSpaceSize / swapSize) * 100).toInt() else 0
 
-      val totalGcTime = gcBeans.sumOf { it.collectionTime }
-      val thisGcTime = if (lastGcTime == -1L) 0 else totalGcTime - lastGcTime
-      lastGcTime = thisGcTime
+      val accumulatedGcDuration = gcBeans.sumOf { it.collectionTime.coerceAtLeast(0) }
+      val gcDurationInPeriodMs = gcDurationDiffer.toDiff(accumulatedGcDuration)
 
-      val totalCpuTime = mxBean.processCpuTime
-      val thisCpuTime: Long
-      if (totalCpuTime < 0) {
-        thisCpuTime = -1
+      val accumulatedCpuTimeNs = mxBean.processCpuTime
+      val cpuTimeInPeriodMs = if (accumulatedCpuTimeNs < 0) {
+        -1 //marker 'metric is not available'
       }
       else {
-        thisCpuTime = totalCpuTime - lastCpuTime
-        lastCpuTime = thisCpuTime
+        NANOSECONDS.toMillis(cpuTimeDiffer.toDiff(accumulatedCpuTimeNs)).toInt()
       }
 
       val timeToSafepointMs = SafepointBean.totalTimeToSafepointMs()?.let { totalTimeToSafepointMs ->
-        val currentTimeToSafepoint = (totalTimeToSafepointMs - lastTimeToSafepoint).toInt()
-        lastTimeToSafepoint = totalTimeToSafepointMs
-        currentTimeToSafepoint
+        timeToSafepointDiffer.toDiff(totalTimeToSafepointMs).toInt()
       } ?: -1
       val timeAtSafepointMs = SafepointBean.totalTimeAtSafepointMs()?.let { totalTimeAtSafepointMs ->
-        val currentTimeAtSafepoint = (totalTimeAtSafepointMs - lastTimeAtSafepoint).toInt()
-        lastTimeAtSafepoint = totalTimeAtSafepointMs
-        currentTimeAtSafepoint
+        timeAtSafepointDiffer.toDiff(totalTimeAtSafepointMs).toInt()
       } ?: -1
       val safepointsCount = SafepointBean.safepointCount()?.let { totalSafepointCount ->
-        val currentSafepointsCount = (totalSafepointCount - lastSafepointsCount).toInt()
-        lastSafepointsCount = totalSafepointCount
-        currentSafepointsCount
+        safepointsCountDiffer.toDiff(totalSafepointCount).toInt()
       } ?: -1
 
       // don't report total GC time in the first 5 minutes of IJ execution
       UILatencyLogger.HEARTBEAT.log(
-        UILatencyLogger.SYSTEM_CPU_LOAD.with(cpuLoadInt),
-        UILatencyLogger.SWAP_LOAD.with(swapLoad),
-        UILatencyLogger.CPU_TIME.with(TimeUnit.NANOSECONDS.toMillis(thisCpuTime).toInt()),
+        UILatencyLogger.SYSTEM_CPU_LOAD.with(cpuLoadInPercents),
+        UILatencyLogger.SWAP_LOAD.with(swapLoadInPercents),
+        UILatencyLogger.CPU_TIME.with(cpuTimeInPeriodMs),
 
-        UILatencyLogger.GC_TIME.with(thisGcTime.toInt()),
+        UILatencyLogger.GC_TIME.with(gcDurationInPeriodMs.toInt()),
 
         UILatencyLogger.TIME_TO_SAFEPOINT.with(timeToSafepointMs),
         UILatencyLogger.TIME_AT_SAFEPOINT.with(timeAtSafepointMs),
@@ -143,7 +136,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 }
 
 internal object UILatencyLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("performance", 79)
+  private val GROUP = EventLogGroup("performance", 80)
 
   internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
   internal val SWAP_LOAD: IntEventField = Int("swap_load")
@@ -176,6 +169,23 @@ internal object UILatencyLogger : CounterUsagesCollector() {
 
   @JvmField
   val LAGGING: EventId2<Long, Boolean> = GROUP.registerEvent("ui.lagging", EventFields.DurationMs, Boolean("during_indexing"))
+
+  val FREEZE_CHAIN_DURATION_US: LongEventField = LongEventField("duration_us", description = "Total duration of freeze chain in microseconds.")
+  val FREEZE_CHAIN_READING_DURATION_US: LongEventField = LongEventField("reading_duration_us", description = "Total duration of reading (read and write-intent) operations in microseconds.")
+  val FREEZE_CHAIN_WRITING_DURATION_US: LongEventField = LongEventField("writing_duration_us", description = "Total duration of writing operations in microseconds.")
+  val FREEZE_CHAIN_READING_OPERATIONS: IntEventField = Int("reading_operations", description = "Number of read operations during the freeze chain")
+  val FREEZE_CHAIN_WRITING_OPERATIONS: IntEventField = Int("writing_operations", description = "Number of write operations during the freeze chain")
+
+  @JvmField
+  val FREEZE_CHAIN: VarargEventId = GROUP.registerVarargEvent(
+    eventId = "ui.freeze.chain",
+    description = "Description of continuous lagging period on EDT (a freeze chain)",
+    FREEZE_CHAIN_DURATION_US,
+    FREEZE_CHAIN_READING_DURATION_US,
+    FREEZE_CHAIN_WRITING_DURATION_US,
+    FREEZE_CHAIN_READING_OPERATIONS,
+    FREEZE_CHAIN_WRITING_OPERATIONS)
+
 
   @JvmField
   val COLD_START: BooleanEventField = Boolean("cold_start")
@@ -422,6 +432,17 @@ internal object UILatencyLogger : CounterUsagesCollector() {
   }
 
   @JvmStatic
+  fun reportFreezeChain(totalDuration: Duration, readingDuration: Duration, writingDuration: Duration, readingOperations: Int, writingOperations: Int) {
+    FREEZE_CHAIN.log(
+      FREEZE_CHAIN_DURATION_US.with(totalDuration.inWholeMicroseconds),
+      FREEZE_CHAIN_READING_DURATION_US.with(readingDuration.inWholeMicroseconds),
+      FREEZE_CHAIN_WRITING_DURATION_US.with(writingDuration.inWholeMicroseconds),
+      FREEZE_CHAIN_READING_OPERATIONS.with(readingOperations),
+      FREEZE_CHAIN_WRITING_OPERATIONS.with(writingOperations)
+    )
+  }
+
+  @JvmStatic
   fun lowMemory(
     kind: MemoryKind,
     currentXmxMegabytes: Int,
@@ -475,5 +496,20 @@ internal object UILatencyLogger : CounterUsagesCollector() {
     private fun newHistogram(): FusHistogramBuilder {
       return FusHistogramBuilder(MEM_HISTOGRAM_BUCKETS, FusHistogramBuilder.RoundingDirection.UP)
     }
+  }
+}
+
+/** Converts accumulated value into diff-value */
+internal class LongDiffer(var previousAccumulatedValue: Long = 0) {
+
+  /** @return diff between newAccumulatedValue and previous accumulated value, and updates the previous accumulated value */
+  fun toDiff(newAccumulatedValue: Long): Long {
+    val diff = newAccumulatedValue - previousAccumulatedValue
+    previousAccumulatedValue = newAccumulatedValue
+    return diff
+  }
+
+  override fun toString(): String {
+    return "LongDiffer[accumulated: $previousAccumulatedValue]"
   }
 }

@@ -3,29 +3,24 @@ package com.jetbrains.python.console;
 
 import com.google.common.base.CharMatcher;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IJSwingUtilities;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
+@ApiStatus.Internal
 public final class PyConsoleUtil {
   public static final String ORDINARY_PROMPT = ">>>";
   public static final String INPUT_PROMPT = ">?";
@@ -46,13 +42,6 @@ public final class PyConsoleUtil {
 
   public static final @NonNls String ASYNCIO_REPL_ENV = "ASYNCIO_REPL";
 
-  private static final String[] PROMPTS = new String[]{
-    ORDINARY_PROMPT,
-    INDENT_PROMPT,
-    HELP_PROMPT,
-    IPYTHON_PAGING_PROMPT
-  };
-
 
   public static final Key<PythonConsoleData> PYTHON_CONSOLE_DATA = Key.create("python-console-data");
 
@@ -61,40 +50,6 @@ public final class PyConsoleUtil {
 
   public static boolean isPagingPrompt(@Nullable String prompt) {
     return prompt != null && IPYTHON_PAGING_PROMPT.equals(prompt.trim());
-  }
-
-  static String processPrompts(final LanguageConsoleView languageConsole, String string) {
-    // Change prompt
-    for (String prompt : PROMPTS) {
-      if (string.startsWith(prompt)) {
-        // Process multi prompts here
-        if (!Strings.areSameInstance(prompt, HELP_PROMPT)) {
-          final StringBuilder builder = new StringBuilder();
-          builder.append(prompt).append(prompt);
-          while (string.startsWith(builder.toString())) {
-            builder.append(prompt);
-          }
-          final String multiPrompt = builder.substring(prompt.length());
-          if (Strings.areSameInstance(prompt, INDENT_PROMPT)) {
-            prompt = multiPrompt;
-          }
-          string = string.substring(multiPrompt.length());
-        }
-        else {
-          string = string.substring(prompt.length());
-        }
-
-        // Change console editor prompt if required
-        final String currentPrompt = languageConsole.getPrompt();
-        final String trimmedPrompt = prompt.trim();
-        if (currentPrompt != null && !currentPrompt.equals(trimmedPrompt)) {
-          languageConsole.setPrompt(trimmedPrompt);
-          scrollDown(languageConsole.getConsoleEditor());
-        }
-        break;
-      }
-    }
-    return string;
   }
 
 
@@ -107,7 +62,7 @@ public final class PyConsoleUtil {
   }
 
 
-  public static boolean detectIPythonImported(@NotNull String text, final ConsoleViewContentType outputType) {
+  public static boolean detectIPythonImported(@NotNull String text) {
     return text.contains("PyDev console: using IPython ");
   }
 
@@ -148,11 +103,6 @@ public final class PyConsoleUtil {
   public static void setIPythonAutomagic(@NotNull VirtualFile file, boolean detected) {
     PythonConsoleData consoleData = getOrCreateIPythonData(file);
     consoleData.setIPythonAutomagic(detected);
-  }
-
-  public static void setCurrentIndentSize(@NotNull VirtualFile file, int indentSize) {
-    PythonConsoleData consoleData = getOrCreateIPythonData(file);
-    consoleData.setIndentSize(indentSize);
   }
 
   public static AnAction createTabCompletionAction(PythonConsoleView consoleView) {
@@ -240,41 +190,6 @@ public final class PyConsoleUtil {
     anAction.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK, consoleView.getConsoleEditor().getComponent());
     anAction.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK, consoleView.getHistoryViewer().getComponent());
     return anAction;
-  }
-
-  public static AnAction createScrollToEndAction(final @NotNull Editor editor) {
-    return new ScrollToTheEndToolbarAction(editor);
-  }
-
-  private static @NotNull AnActionEvent createActionEvent(@NotNull AnActionEvent e, @NotNull PythonConsoleView consoleView) {
-    DataContext dataContext = SimpleDataContext.builder()
-      .setParent(e.getDataContext())
-      .add(CommonDataKeys.EDITOR, consoleView.getEditor())
-      .build();
-    return e.withDataContext(dataContext);
-  }
-
-  public static AnAction createPrintAction(PythonConsoleView consoleView) {
-    final AnAction printAction = ActionManager.getInstance().getAction("Print");
-    return new DumbAwareAction() {
-      {
-        ActionUtil.copyFrom(this, "Print");
-      }
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        printAction.update(createActionEvent(e, consoleView));
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        printAction.actionPerformed(createActionEvent(e, consoleView));
-      }
-
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
-      }
-    };
   }
 
   public static boolean isCommandQueueEnabled(Project project) {

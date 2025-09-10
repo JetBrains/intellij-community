@@ -522,6 +522,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testParentWithoutARelativePath() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     runWithoutStaticSync()
     createProjectPom("""
                        <groupId>test</groupId>
@@ -561,6 +562,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testModuleWithPropertiesWithParentWithoutARelativePath() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1025,6 +1027,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testProjectWithMavenConfigCustomUserSettingsXml() = runBlocking {
     runWithoutStaticSync()
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     val configFile = createProjectSubFile(".mvn/maven.config", "-s .mvn/custom-settings.xml")
     val settingsFile = createProjectSubFile(".mvn/custom-settings.xml",
                          """
@@ -1091,6 +1094,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testProjectWithActiveProfilesAndInactiveFromSettingsXml() = runBlocking {
     runWithoutStaticSync()
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     updateSettingsXml("""
                         <activeProfiles>
                           <activeProfile>one</activeProfile>

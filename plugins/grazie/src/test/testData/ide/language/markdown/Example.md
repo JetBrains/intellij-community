@@ -40,8 +40,8 @@ It's a *react* method. (Fine, as it's emphasized)
 They are stored in the <GRAMMAR_ERROR descr="POSSESSIVE_APOSTROPHE">images</GRAMMAR_ERROR> directory.
 They are stored in the **images** directory. (Shouldn't suggest inserting apostrophe inside markup)
 
-Defined field String name = "John<GRAMMAR_ERROR descr="EN_QUOTES">"</GRAMMAR_ERROR>
-System.out.println(<GRAMMAR_ERROR descr="EN_QUOTES">"</GRAMMAR_ERROR>Hello <GRAMMAR_ERROR descr="EN_QUOTES">"</GRAMMAR_ERROR> + name)
+Defined field String name = "John<STYLE_SUGGESTION descr="EN_QUOTES">"</STYLE_SUGGESTION>
+System.out.println(<STYLE_SUGGESTION descr="EN_QUOTES">"</STYLE_SUGGESTION>Hello <STYLE_SUGGESTION descr="EN_QUOTES">"</STYLE_SUGGESTION> + name)
 foo(<GRAMMAR_ERROR descr="THE_PUNCT">a,</GRAMMAR_ERROR> <GRAMMAR_ERROR descr="THE_PUNCT">the,</GRAMMAR_ERROR> an)
 
 ## Немного русского
@@ -50,14 +50,14 @@ foo(<GRAMMAR_ERROR descr="THE_PUNCT">a,</GRAMMAR_ERROR> <GRAMMAR_ERROR descr="TH
 А <GRAMMAR_ERROR descr="grammar_vse_li_noun">все ли ошибка</GRAMMAR_ERROR> найдены?
 Это случилось <GRAMMAR_ERROR descr="INVALID_DATE">31 ноября</GRAMMAR_ERROR> 2014 г.
 За весь вечер она <GRAMMAR_ERROR descr="ne_proronila_ni">не проронила и слово</GRAMMAR_ERROR>.
-Собрание состоится в <GRAMMAR_ERROR descr="RU_COMPOUNDS">конференц зале</GRAMMAR_ERROR>.
+Собрание состоится в <GRAMMAR_ERROR descr="Стандартное написание – «конференц-зале»">конференц зале</GRAMMAR_ERROR>.
 <GRAMMAR_ERROR descr="WORD_REPEAT_RULE">Он он</GRAMMAR_ERROR> ошибка.
 
 Я предлагаю в&nbsp;своём приложении создавать что-нибудь.
 
-Er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>.
+Er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>.
 das ist <GRAMMAR_ERROR descr="FUEHR_FUER">führ</GRAMMAR_ERROR> Dich!
-das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <GRAMMAR_ERROR descr="MANNSTUNDE">Mannstunden</GRAMMAR_ERROR>.
+das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <STYLE_SUGGESTION descr="MANNSTUNDE">Mannstunden</STYLE_SUGGESTION>.
 
 Indices are up-to-date.
 Indices are up to date.

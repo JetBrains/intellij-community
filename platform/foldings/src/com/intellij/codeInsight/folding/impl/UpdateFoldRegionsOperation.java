@@ -10,13 +10,13 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.impl.FoldingKeys;
-import com.intellij.openapi.editor.impl.FoldingModelImpl;
+import com.intellij.openapi.editor.impl.zombie.CodeFoldingZombieUtils;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -26,6 +26,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -83,12 +84,11 @@ final class UpdateFoldRegionsOperation implements Runnable {
     EditorFoldingInfo info = EditorFoldingInfo.get(myEditor);
     FoldingModelEx foldingModel = (FoldingModelEx)myEditor.getFoldingModel();
 
-    Map<TextRange, Boolean> zombieToExpandStatusMap = removeZombieRegions(foldingModel);
     Map<TextRange, Boolean> rangeToExpandStatusMap = removeInvalidRegions(info, foldingModel);
 
     Map<FoldRegion, Boolean> shouldExpand = new HashMap<>();
     Map<FoldingGroup, Boolean> groupExpand = new HashMap<>();
-    List<FoldRegion> newRegions = addNewRegions(info, foldingModel, zombieToExpandStatusMap, rangeToExpandStatusMap, shouldExpand, groupExpand);
+    List<FoldRegion> newRegions = addNewRegions(info, foldingModel, rangeToExpandStatusMap, shouldExpand, groupExpand);
     if (CodeFoldingManagerImpl.isAsyncFoldingUpdater(myEditor)) {
       Map<TextRange, Boolean> postponedExpansionMap = CodeFoldingManagerImpl.getAsyncExpandStatusMap(myEditor);
       if (postponedExpansionMap != null) {
@@ -100,6 +100,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
     }
     applyExpandStatus(newRegions, shouldExpand, groupExpand);
     foldingModel.clearDocumentRangesModificationStatus();
+    CodeFoldingZombieUtils.INSTANCE.postponeAndScheduleCleanupZombieRegions(myEditor);
   }
 
   private static void applyExpandStatus(@NotNull List<? extends FoldRegion> newRegions,
@@ -117,7 +118,6 @@ final class UpdateFoldRegionsOperation implements Runnable {
 
   private @NotNull List<FoldRegion> addNewRegions(@NotNull EditorFoldingInfo info,
                                                   @NotNull FoldingModelEx foldingModel,
-                                                  @NotNull Map<TextRange, Boolean> zombieToExpandStatusMap,
                                                   @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap,
                                                   @NotNull Map<FoldRegion, Boolean> shouldExpand,
                                                   @NotNull Map<FoldingGroup, Boolean> groupExpand) {
@@ -139,12 +139,13 @@ final class UpdateFoldRegionsOperation implements Runnable {
                                 descriptor, myEditor.getDocument().getTextLength()));
         continue;
       }
-      FoldRegion region = foldingModel.createFoldRegion(range.getStartOffset(), range.getEndOffset(),
-                                                        placeholder == null ? "..." : placeholder,
-                                                        group,
-                                                        descriptor.isNonExpandable());
-      if (region == null) continue;
 
+      FoldRegion region = mergeWithZombie(foldingModel, range,
+                                          placeholder == null ? "..." : placeholder,
+                                          group,
+                                          descriptor.isNonExpandable());
+      if (region == null) continue;
+      
       PsiElement psi;
       try (AccessToken ignore = SlowOperations.knownIssue("IDEA-326651, EA-831712")) {
         psi = descriptor.getElement().getPsi();
@@ -157,7 +158,8 @@ final class UpdateFoldRegionsOperation implements Runnable {
       region.setGutterMarkEnabledForSingleLine(descriptor.isGutterMarkEnabledForSingleLine());
 
       if (descriptor.canBeRemovedWhenCollapsed()) region.putUserData(CAN_BE_REMOVED_WHEN_COLLAPSED, Boolean.TRUE);
-      region.putUserData(COLLAPSED_BY_DEFAULT, regionInfo.collapsedByDefault);
+      CodeFoldingManagerImpl.markAsFrontendCreated(region);
+      CodeFoldingManagerImpl.setCollapsedByDef(region, regionInfo.collapsedByDefault);
       region.putUserData(KEEP_EXPANDED_ON_FIRST_COLLAPSE_ALL, regionInfo.keepExpandedOnFirstCollapseAll);
       region.putUserData(SIGNATURE, ObjectUtils.chooseNotNull(regionInfo.signature, NO_SIGNATURE));
 
@@ -165,18 +167,10 @@ final class UpdateFoldRegionsOperation implements Runnable {
       newRegions.add(region);
 
       if (descriptor.isNonExpandable()) {
-        region.putUserData(FoldingKeys.SELECT_REGION_ON_CARET_NEARBY, Boolean.TRUE);
+        region.putUserData(SELECT_REGION_ON_CARET_NEARBY, Boolean.TRUE);
       }
       else {
-        boolean expandStatus;
-        Boolean zombieExpand = zombieToExpandStatusMap.get(range);
-        if (zombieExpand != null) {
-          region.putUserData(ZOMBIE_BITTEN_KEY, true);
-          expandStatus = zombieExpand;
-        }
-        else {
-          expandStatus = shouldExpandNewRegion(range, rangeToExpandStatusMap, regionInfo.collapsedByDefault);
-        }
+        boolean expandStatus = shouldExpandNewRegion(range, rangeToExpandStatusMap, regionInfo.collapsedByDefault);
         if (group == null) {
           shouldExpand.put(region, expandStatus);
         }
@@ -189,6 +183,37 @@ final class UpdateFoldRegionsOperation implements Runnable {
 
     return newRegions;
   }
+
+  private static @Nullable FoldRegion mergeWithZombie(@NotNull FoldingModelEx foldingModel,
+                                                      @NotNull TextRange range,
+                                                      @NotNull String placeholder,
+                                                      @Nullable FoldingGroup group,
+                                                      boolean shouldNeverExpand) {
+    FoldRegion region = null;
+    Boolean zombieExpand = null;
+    
+    FoldRegion zombieFoldRegion = foldingModel.getFoldRegion(range.getStartOffset(), range.getEndOffset());
+    if (zombieFoldRegion != null && ZOMBIE_REGION_KEY.isIn(zombieFoldRegion)) {
+      // check zombie for reuse to avoid blinking
+      if (placeholder.equals(zombieFoldRegion.getPlaceholderText())
+          && group == zombieFoldRegion.getGroup()
+          && shouldNeverExpand == zombieFoldRegion.shouldNeverExpand()) {
+        region = zombieFoldRegion;
+        ZOMBIE_REGION_KEY.set(region, null); // bless a zombie for a new life
+      }
+      else {
+        foldingModel.removeFoldRegion(zombieFoldRegion);
+      }
+    }
+
+    if (region == null) {
+      region = foldingModel.createFoldRegion(range.getStartOffset(), range.getEndOffset(),
+                                             placeholder,
+                                             group,
+                                             shouldNeverExpand);
+    }
+    return region;
+  } 
 
   private boolean shouldExpandNewRegion(TextRange range,
                                         Map<TextRange, Boolean> rangeToExpandStatusMap,
@@ -292,7 +317,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
       if (isInjected != myForInjected) return false;
     }
     boolean forceKeepRegion = myKeepCollapsedRegions && !region.isExpanded() && !regionOrGroupCanBeRemovedWhenCollapsed(region);
-    Boolean storedCollapsedByDefault = region.getUserData(COLLAPSED_BY_DEFAULT);
+    Boolean storedCollapsedByDefault = CodeFoldingManagerImpl.getCollapsedByDef(region);
     final Collection<FoldingUpdate.RegionInfo> regionInfos;
     if (element != null && !(regionInfos = myElementsToFoldMap.get(element)).isEmpty()) {
       FoldingUpdate.RegionInfo[] array = regionInfos.toArray(new FoldingUpdate.RegionInfo[0]);
@@ -349,30 +374,6 @@ final class UpdateFoldRegionsOperation implements Runnable {
     int regionEndLine = myEditor.getDocument().getLineNumber(region.getEndOffset());
     int caretLine = myEditor.getCaretModel().getLogicalPosition().line;
     return caretLine >= regionStartLine && caretLine <= regionEndLine;
-  }
-
-  private static @NotNull Map<TextRange, Boolean> removeZombieRegions(@NotNull FoldingModelEx foldingModel) {
-    Map<TextRange, Boolean> zombieMap = null;
-    List<FoldRegion> zombies = null;
-    if (!(foldingModel instanceof FoldingModelImpl foldingModelImpl) ||
-        (foldingModelImpl.getIsZombieRaised().compareAndSet(true, false))) {
-      for (FoldRegion region : foldingModel.getAllFoldRegions()) {
-        if (region.getUserData(ZOMBIE_REGION_KEY) != null && region.getUserData(AUTO_CREATED_ZOMBIE) == null) {
-          if (zombieMap == null) {
-            zombieMap = new HashMap<>();
-            zombies = new ArrayList<>();
-          }
-          zombieMap.put(region.getTextRange(), region.isExpanded());
-          zombies.add(region);
-        }
-      }
-    }
-    if (zombies != null) {
-      for (FoldRegion region : zombies) {
-        foldingModel.removeFoldRegion(region);
-      }
-    }
-    return zombieMap != null ? zombieMap : Collections.emptyMap();
   }
 
   private static final class FoldingMap extends MultiMap<PsiElement, FoldingUpdate.RegionInfo> {

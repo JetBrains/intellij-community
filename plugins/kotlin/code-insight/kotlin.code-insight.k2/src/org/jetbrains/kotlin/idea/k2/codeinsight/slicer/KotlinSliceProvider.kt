@@ -45,7 +45,8 @@ class KotlinSliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer 
                     return when {
                         types.isEmpty() -> return Nullability.UNKNOWN
                         types.all { it.isNothingType && it.isMarkedNullable } -> Nullability.NULLABLE
-                        types.any { it is KaErrorType || it.canBeNull ||
+                        types.any {
+                          it is KaErrorType || it.isNullable ||
                                 (it as? KaFlexibleType)?.let { flexibleType -> flexibleType.upperBound.isMarkedNullable != flexibleType.lowerBound.isMarkedNullable } == true } -> Nullability.UNKNOWN
                         else -> Nullability.NOT_NULL
                     }

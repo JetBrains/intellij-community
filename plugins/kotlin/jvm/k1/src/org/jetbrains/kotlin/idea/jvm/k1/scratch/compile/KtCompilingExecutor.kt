@@ -22,12 +22,12 @@ class KtCompilingExecutor(file: ScratchFile) : ScratchExecutor(file) {
     private var session: KtScratchExecutionSession? = null
 
     override fun execute() {
-        handler.clear(file)
-        handler.onStart(file)
+        handler.clear(scratchFile)
+        handler.onStart(scratchFile)
 
-        session = KtScratchExecutionSession(file, this)
+        session = KtScratchExecutionSession(scratchFile, this)
         session?.execute {
-            handler.onFinish(file)
+            handler.onFinish(scratchFile)
             session = null
         }
     }
@@ -38,7 +38,7 @@ class KtCompilingExecutor(file: ScratchFile) : ScratchExecutor(file) {
         try {
             session?.stop()
         } finally {
-            handler.onFinish(file)
+            handler.onFinish(scratchFile)
         }
     }
 
@@ -61,7 +61,7 @@ class KtCompilingExecutor(file: ScratchFile) : ScratchExecutor(file) {
             val bindingContext = analysisResult.bindingContext
             val diagnostics = bindingContext.diagnostics.filter { it.severity == Severity.ERROR }
             if (diagnostics.isNotEmpty()) {
-                val scratchPsiFile = file.getPsiFile()
+                val scratchPsiFile = scratchFile.getPsiFile()
                 diagnostics.forEach { diagnostic ->
                     val errorText = DefaultErrorMessages.render(diagnostic)
                     if (psiFile == scratchPsiFile) {
@@ -69,19 +69,19 @@ class KtCompilingExecutor(file: ScratchFile) : ScratchExecutor(file) {
                             val scratchExpression = expressions.findExpression(diagnostic.psiElement)
                             if (scratchExpression == null) {
                                 LOG.error("Couldn't find expression to report error: ${diagnostic.psiElement.getElementTextWithContext()}")
-                                handler.error(file, errorText)
+                                handler.error(scratchFile, errorText)
 
                             } else {
-                                handler.handle(file, scratchExpression, ScratchOutput(errorText, ScratchOutputType.ERROR))
+                                handler.handle(scratchFile, scratchExpression, ScratchOutput(errorText, ScratchOutputType.ERROR))
                             }
                         } else {
-                            handler.error(file, errorText)
+                            handler.error(scratchFile, errorText)
                         }
                     } else {
-                        handler.error(file, errorText)
+                        handler.error(scratchFile, errorText)
                     }
                 }
-                handler.onFinish(file)
+                handler.onFinish(scratchFile)
                 return@runReadActionInSmartMode false
             }
             return@runReadActionInSmartMode true
@@ -105,7 +105,7 @@ class KtCompilingExecutor(file: ScratchFile) : ScratchExecutor(file) {
             val out = processOutput.stdout
             val err = processOutput.stderr
             if (err.isNotBlank()) {
-                handler.error(file, err)
+                handler.error(scratchFile, err)
             }
             if (out.isNotBlank()) {
                 parseStdOut(out)
@@ -139,11 +139,11 @@ class KtCompilingExecutor(file: ScratchFile) : ScratchExecutor(file) {
                             )
                         } else {
                             userOutput.forEach { output ->
-                                handler.handle(file, scratchExpression, ScratchOutput(output, ScratchOutputType.OUTPUT))
+                                handler.handle(scratchFile, scratchExpression, ScratchOutput(output, ScratchOutputType.OUTPUT))
                             }
 
                             results.forEach { result ->
-                                handler.handle(file, scratchExpression, ScratchOutput(result, ScratchOutputType.RESULT))
+                                handler.handle(scratchFile, scratchExpression, ScratchOutput(result, ScratchOutputType.RESULT))
                             }
                         }
 

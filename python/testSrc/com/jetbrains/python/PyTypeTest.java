@@ -298,7 +298,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testIfIsInstanceOr1() {
-    doTest("Union[str, int]",
+    doTest("Union[int, str]",
            """
                def foo(a):
                    if isinstance(a, int) or isinstance(a, str):
@@ -307,7 +307,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testIfIsInstanceOr2() {
-    doTest("Union[B, A, int, str]",
+    doTest("Union[str, int, A, B]",
            """
            class A:
                pass
@@ -351,7 +351,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testIfIsInstanceLogicalExpressions() {
-    doTest("Union[B, str]",
+    doTest("Union[str, B]",
            """
              class A:
                  pass

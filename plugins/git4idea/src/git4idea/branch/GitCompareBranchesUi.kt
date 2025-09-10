@@ -30,7 +30,6 @@ import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRange
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRoot
-import git4idea.GitUtil.HEAD
 import git4idea.i18n.GitBundle
 import git4idea.i18n.GitBundleExtensions.html
 import git4idea.repo.GitRepository
@@ -41,31 +40,19 @@ import java.util.function.Consumer
 import javax.swing.JComponent
 
 @ApiStatus.Internal
-class GitCompareBranchesUi(internal val project: Project,
-                           val rangeFilter: VcsLogRangeFilter,
-                           internal val rootFilter: VcsLogRootFilter?) {
-  @JvmOverloads
-  constructor(project: Project,
-              repositories: List<GitRepository>,
-              branchName: String,
-              otherBranchName: String = "") : this(project, createRangeFilter(repositories, branchName, otherBranchName),
-                                                   createRootFilter(repositories))
-
-  companion object {
-    private fun createRangeFilter(repositories: List<GitRepository>, branchName: String, otherBranchName: String = ""): VcsLogRangeFilter {
-      val currentBranchName = repositories.first().currentBranchName
-      val secondRef = when {
-        otherBranchName.isNotBlank() -> otherBranchName
-        repositories.size == 1 && !currentBranchName.isNullOrBlank() -> currentBranchName
-        else -> HEAD
-      }
-      return fromRange(secondRef, branchName)
-    }
-
-    private fun createRootFilter(repositories: List<GitRepository>): VcsLogRootFilter? {
-      return repositories.singleOrNull()?.let { fromRoot(it.root) }
-    }
-  }
+class GitCompareBranchesUi(
+  private val project: Project,
+  val rangeFilter: VcsLogRangeFilter,
+  internal val rootFilter: VcsLogRootFilter?,
+) {
+  constructor(
+    project: Project,
+    repositories: List<GitRepository>,
+    branchName: String,
+    otherBranchName: String,
+  ) : this(project,
+           fromRange(otherBranchName, branchName),
+           repositories.singleOrNull()?.let { fromRoot(it.root) })
 
   internal fun create(logManager: VcsLogManager, onDispose: () -> Unit): JComponent {
     val topLogUi = createTopUi(logManager).also {

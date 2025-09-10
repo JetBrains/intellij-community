@@ -30,6 +30,10 @@ class SeItemData(
     return SeItemData(uuid, providerId, weight, presentation, uuidToReplace, additionalInfo, itemRef)
   }
 
+  fun withPresentation(presentation: SeItemPresentation): SeItemData {
+    return SeItemData(uuid, providerId, weight, presentation, uuidsToReplace, additionalInfo, itemRef)
+  }
+
   @ApiStatus.Internal
   companion object {
     suspend fun createItemData(

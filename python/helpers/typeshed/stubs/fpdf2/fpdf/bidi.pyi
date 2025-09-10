@@ -15,6 +15,7 @@ class _BracketInfo(TypedDict):
 BIDI_BRACKETS: Final[dict[str, _BracketInfo]]
 
 class BidiCharacter:
+    __slots__ = ["character_index", "character", "bidi_class", "original_bidi_class", "embedding_level", "direction"]
     character_index: int
     character: str
     bidi_class: str
@@ -28,11 +29,13 @@ class BidiCharacter:
 
 @dataclass
 class DirectionalStatus:
+    __slots__ = ["embedding_level", "directional_override_status", "directional_isolate_status"]
     embedding_level: int  # between 0 and MAX_DEPTH
     directional_override_status: Literal["N", "L", "R"]
     directional_isolate_status: bool
 
 class IsolatingRun:
+    __slots__ = ["characters", "previous_direction", "next_direction"]
     characters: list[BidiCharacter]
     previous_direction: str
     next_direction: str
@@ -46,6 +49,7 @@ def auto_detect_base_direction(string: str, stop_at_pdi: bool = False, debug: bo
 def calculate_isolate_runs(paragraph: Sequence[BidiCharacter]) -> list[IsolatingRun]: ...
 
 class BidiParagraph:
+    __slots__ = ("text", "base_direction", "debug", "base_embedding_level", "characters")
     text: str
     base_direction: TextDirection
     debug: bool

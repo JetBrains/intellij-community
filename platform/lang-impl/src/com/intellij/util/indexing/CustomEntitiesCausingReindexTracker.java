@@ -134,8 +134,11 @@ final class CustomEntitiesCausingReindexTracker {
         return isEntityToRescan(contentRoot);
       }
       return false;
-    } else if (Registry.is("ide.workspace.model.sdk.remove.custom.processing") && entity instanceof SdkEntity) {
+    } else if (entity instanceof SdkEntity) {
       return hasDependencyOn((SdkEntity) entity, project);
+    }
+    else if (entity instanceof ProjectSettingsEntity && Registry.is("project.root.manager.over.wsm", true)) {
+      return true; // don't care if there are references from modules or not: project sdk is always indexed
     }
     return isEntityToRescan(entity);
   }

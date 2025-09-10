@@ -1,9 +1,8 @@
 import bdb
 from _typeshed import Incomplete
 
-from win32com.axdebug.util import trace
-from win32com.server.util import unwrap as unwrap
-from win32comext.axdebug import gateways as gateways
+from win32comext.axdebug import gateways
+from win32comext.axdebug.util import trace
 
 def fnull(*args) -> None: ...
 

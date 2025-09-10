@@ -43,23 +43,21 @@ internal object PythonPackageManagerUIHelpers {
     }.getOrNull()
   }
 
-
   suspend fun showBalloon(point: RelativePoint, @NlsContexts.DialogMessage text: String, style: BalloonStyle): Balloon =
     withContext(Dispatchers.EDT) {
-      val content = JLabel()
       val (borderColor, fillColor) = when (style) {
         BalloonStyle.SUCCESS -> JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR to JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND
         BalloonStyle.INFO -> JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR to JBUI.CurrentTheme.Banner.INFO_BACKGROUND
         BalloonStyle.ERROR -> JBUI.CurrentTheme.Validator.errorBorderColor() to JBUI.CurrentTheme.Validator.errorBackgroundColor()
       }
       val balloonBuilder = JBPopupFactory.getInstance()
-        .createBalloonBuilder(content)
+        .createBalloonBuilder(JLabel(text))
         .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets"))
         .setBorderColor(borderColor)
         .setFillColor(fillColor)
         .setHideOnClickOutside(true)
         .setHideOnFrameResize(false)
-      content.text = text
+
       val balloon = balloonBuilder.createBalloon()
       balloon.show(point, Balloon.Position.below)
       balloon

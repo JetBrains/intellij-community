@@ -1,12 +1,10 @@
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.settingsSync.core.communicator
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.DynamicPlugins.loadPlugin
-import com.intellij.ide.plugins.PluginInstaller
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginXmlPathResolver
-import com.intellij.ide.plugins.loadDescriptor
-import com.intellij.ide.plugins.loadAndInitDescriptorFromArtifact
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
@@ -16,25 +14,17 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
-import com.intellij.settingsSync.core.RestartForPluginInstall
-import com.intellij.settingsSync.core.SettingsSyncBundle
-import com.intellij.settingsSync.core.SettingsSyncEventListener
-import com.intellij.settingsSync.core.SettingsSyncEvents
-import com.intellij.settingsSync.core.SettingsSyncLocalSettings
-import com.intellij.settingsSync.core.SettingsSyncRemoteCommunicator
-import com.intellij.settingsSync.core.SettingsSyncSettings
+import com.intellij.settingsSync.core.*
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
-import com.intellij.util.ResettableLazy
-import com.intellij.util.resettableLazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.nio.file.Path
-import kotlin.math.log
 
 @ApiStatus.Internal
 object RemoteCommunicatorHolder : SettingsSyncEventListener {
@@ -141,11 +131,11 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
 
   fun getAvailableProviders(): List<SettingsSyncCommunicatorProvider> {
     val extensionList = arrayListOf<SettingsSyncCommunicatorProvider>()
-    extensionList.addAll(SettingsSyncCommunicatorProvider.PROVIDER_EP.extensionList.filter { it.isAvailable() })
+    extensionList.addAll(getAvailableSyncProviders())
     if (extensionList.find { it.providerCode == DEFAULT_PROVIDER_CODE } == null) {
       extensionList.add(DelegatingDefaultCommunicatorProvider)
     }
-    return extensionList
+    return extensionList.sortedBy { it.providerCode } // always show providers in the same order
   }
 
   fun getExternalProviders(): List<SettingsSyncCommunicatorProvider> {
@@ -219,7 +209,7 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
           }
 
           val syncPluginFile = syncPluginDownloader.filePath
-          val syncPluginDescriptor = loadAndInitDescriptorFromArtifact(syncPluginFile, null) ?: let {
+          val syncPluginDescriptor = loadDescriptorFromArtifact(syncPluginFile, null) ?: let {
             logger.error("Cannot load plugin descriptor for ${settingsSyncPluginId.idString}")
             return@withContext false
           }
@@ -242,7 +232,7 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
         return null
       }
 
-      val defaultProvider = SettingsSyncCommunicatorProvider.PROVIDER_EP.extensionList.find { it.providerCode == DEFAULT_PROVIDER_CODE }
+      val defaultProvider = getAvailableSyncProviders().find { it.providerCode == DEFAULT_PROVIDER_CODE }
                             ?: return null
       DelegatingDefaultCommunicatorProvider.delegate = defaultProvider
       return defaultProvider.authService.login(parentComponent)

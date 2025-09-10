@@ -592,13 +592,23 @@ public class JobUtilTest extends LightPlatformTestCase {
     // in which call invokeConcurrentlyUnderProgress() which normally takes 100s
     // and cancel the indicator in the meantime
     // check that invokeConcurrentlyUnderProgress() gets canceled immediately
+    CountDownLatch cancelCalled = new CountDownLatch(1);
     Job job = JobLauncher.getInstance().submitToJobThread(() -> ProgressManager.getInstance().runProcess(()->
         assertFalse(JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N, null), indicator, __->{
           TimeoutUtil.sleep(1);
           counter.incrementAndGet();
+          try {
+            cancelCalled.await();
+          }
+          catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
           return true;
     })), indicator), null);
-    Future<?> future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> indicator.cancel(), 10, TimeUnit.MILLISECONDS);
+    Future<?> future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+      indicator.cancel();
+      cancelCalled.countDown();
+    }, 10, TimeUnit.MILLISECONDS);
     UsefulTestCase.assertThrows(ProcessCanceledException.class, ()-> job.waitForCompletion(10_000));
     assertTrue(job.isDone());
     assertTrue(counter.toString(), counter.get() < N);

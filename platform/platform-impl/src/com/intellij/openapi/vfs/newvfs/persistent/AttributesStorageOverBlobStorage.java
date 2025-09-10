@@ -308,7 +308,7 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
    * by calling code)
    */
   @VisibleForTesting
-  protected static final class AttributesRecord {
+  public static final class AttributesRecord {
 
     public static final int RECORD_FILE_ID_OFFSET = 0;
     public static final int RECORD_HEADER_SIZE = Integer.BYTES;
@@ -440,7 +440,7 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
   }
 
   @VisibleForTesting
-  protected static final class AttributeEntry {
+  public static final class AttributeEntry {
     //Entry binary format:
     //    We try hard to be as compact as possible. This is because we have really a lot of very small attributes:
     //    2-10 bytes attributes are very common (and they are the most frequently queried/updated), and >97% of

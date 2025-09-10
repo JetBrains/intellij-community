@@ -4,7 +4,6 @@ package com.intellij.build;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.OutputBuildEvent;
 import com.intellij.build.events.StartBuildEvent;
-import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.actions.StopProcessAction;
@@ -160,9 +159,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
       return;
     }
 
-    if (startBuildEvent instanceof StartBuildEventImpl) {
-      myViewSettingsProvider = ((StartBuildEventImpl)startBuildEvent).getBuildViewSettingsProvider();
-    }
+    myViewSettingsProvider = startBuildEvent.getBuildViewSettings();
     if (myViewSettingsProvider == null) {
       myViewSettingsProvider = () -> false;
     }

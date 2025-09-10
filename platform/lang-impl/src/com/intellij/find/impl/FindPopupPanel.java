@@ -134,7 +134,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   private final @NotNull Disposable myDisposable;
   private final Alarm myPreviewUpdater;
   private final Runnable updatePreviewRunnable;
-  private final UpdateRescheduler previewUpdateRescheduler ;
   private final @NotNull FindPopupScopeUI myScopeUI;
   private JComponent myCodePreviewComponent;
   private SearchTextArea mySearchTextArea;
@@ -210,10 +209,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
     initComponents();
     updatePreviewRunnable = this::updatePreview;
-    // the last update attempt will be performed after 4s (to process a case with delayed RPC response). It'll be invoked only if !usageInfoAdapter.isLoaded
-    previewUpdateRescheduler = new UpdateRescheduler(50, 100, 9, LOG, (delay) -> {
-      myPreviewUpdater.addRequest(updatePreviewRunnable, delay);
-    });
     FindUsagesCollector.triggerUsedOptionsStats(myProject, FindUsagesCollector.FIND_IN_PATH, myHelper.getModel(), myScopeUI.getScopeTypeByModel(myHelper.getModel()));
   }
 
@@ -234,20 +229,31 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       adapters.add(adapter);
     }
 
+    boolean isOneFileForPreview = adapters.size() == 1 || adapters.stream().map(UsageInfoAdapter::getPath).distinct().count() == 1;
+    if (FindKey.isLazyPreviewEnabled() && isOneFileForPreview &&
+        ContainerUtil.exists(adapters, adapter -> adapter instanceof ItemWithLazyContent &&
+                                                  !((ItemWithLazyContent)adapter).isContentComputed())) {
+      LOG.debug("Preview will be updated when item will be loaded");
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myUsagePreviewPanel.showLoading();
+      });
+      return;
+    }
+
     String selectedFilePath = file;
 
     UsageAdaptersKt.getUsageInfoAsFuture(adapters, myProject).thenAccept(selectedUsages -> {
       record UsagesFileInfo(boolean isOneAndOnlyOnePsiFileInUsages, @Nullable VirtualFile virtualFile, String path) {
       }
       ReadAction.nonBlocking(() -> new UsagesFileInfo(
-          UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(selectedUsages),
+          isOneFileForPreview,
           selectedFilePath != null && !FindKey.isEnabled()? VfsUtil.findFileByIoFile(new File(selectedFilePath), true) : null,
           selectedFilePath
         ))
         .finishOnUiThread(ModalityState.nonModal(), usagesFileInfo -> {
           myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selectedUsages.size()));
           FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, myHelper.getModel().clone());
-          myUsagePreviewPanel.updateLayout(myProject, selectedUsages);
+          myUsagePreviewPanel.updateLayout(myProject, selectedUsages, !isOneFileForPreview);
           myUsagePreviewTitle.clear();
           if (usagesFileInfo.isOneAndOnlyOnePsiFileInUsages && selectedFilePath != null) {
             myUsagePreviewTitle.append(PathUtil.getFileName(selectedFilePath), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -267,8 +273,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       Logger.getInstance(FindPopupPanel.class).error(throwable);
       return null;
     });
-
-    previewUpdateRescheduler.rescheduleIfNeeded(!ContainerUtil.and(adapters, UsageInfoAdapter::isLoaded));
   }
 
   @Override
@@ -744,7 +748,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
     myResultsPreviewTable.getSelectionModel().addListSelectionListener(e -> {
       if (e.getValueIsAdjusting() || Disposer.isDisposed(myPreviewUpdater)) return;
-      previewUpdateRescheduler.reset();
       myPreviewUpdater.addRequest(updatePreviewRunnable, 50);
     });
     DocumentAdapter documentAdapter = new DocumentAdapter() {
@@ -1229,18 +1232,22 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       public void run(@NotNull ProgressIndicator indicator) {
         startTime.set(System.currentTimeMillis());
         AtomicLong timeToFirstResult = new AtomicLong(-1);
-        GlobalSearchScope scope = ReadAction.nonBlocking(
-          () -> FindInProjectUtil.getGlobalSearchScope(project, myHelper.myPreviousModel)
-        ).wrapProgress(indicator).executeSynchronously();
-
+        GlobalSearchScope scope = FindKey.isEnabled()
+                                  ? null
+                                  : ReadAction.nonBlocking(() -> FindInProjectUtil.getGlobalSearchScope(project, myHelper.myPreviousModel))
+                                    .wrapProgress(indicator).executeSynchronously();
         FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myUsageViewPresentation);
         ThreadLocal<Reference<FindPopupItem>> recentItemRef = new ThreadLocal<>();
         Set<String> filePaths = ConcurrentHashMap.newKeySet();
 
         projectExecutor.findUsages(project, myResultsPreviewSearchProgress, processPresentation, findModel, previousUsages,
-                                   !myResultsPreviewTable.isEmpty(), myDisposable, (usageInfos) -> {
-            myPreviewUpdater.addRequest(updatePreviewRunnable, 50);
-            return null;
+                                   !myResultsPreviewTable.isEmpty(), myDisposable, (adapter) -> {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              Map<Integer, Usage> selectedUsages = getSelectedUsages();
+              if (selectedUsages != null && selectedUsages.containsValue(adapter)) {
+                myPreviewUpdater.addRequest(updatePreviewRunnable, 50);
+              }
+            });
           }, (usage) -> {
           if (isCancelled()) {
             onStop(hash);
@@ -1344,14 +1351,19 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
       public void onFinish() {
         ApplicationManager.getApplication().invokeLater(() -> {
+          boolean isEmpty = resultsCount.get() == 0;
+
           if (!isCancelled()) {
-            boolean isEmpty = resultsCount.get() == 0;
             if (isEmpty) {
               showEmptyText(FindBundle.message("message.nothingFound"), true);
             }
           }
           FindUsagesCollector.recordSearchFinished(System.currentTimeMillis() - startTime.get(), resultsCount.get(), ShowUsagesAction.getUsagesPageSize());
           onStop(hash);
+
+          if (FindKey.isEnabled()) {
+            myHelper.onSearchFinish(isEmpty ? 0 : myResultsPreviewTable.getRowCount());
+          }
         }, state);
       }
     }, myResultsPreviewSearchProgress);
@@ -1576,7 +1588,10 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       if (backendValidator.isFinished) {
         header.loadingIcon.setIcon(EmptyIcon.ICON_16);
       }
-      myHelper.onSearchStop();
+
+      if (!FindKey.isEnabled()) {
+        myHelper.onSearchFinish(myResultsPreviewTable.getRowCount());
+      }
     });
   }
 
@@ -1725,11 +1740,13 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   }
 
   private @Nullable Map<Integer, Usage> getSelectedUsages() {
+    if (myResultsPreviewTable.isEmpty()) return null;
     int[] rows = myResultsPreviewTable.getSelectedRows();
     Map<Integer, Usage> result = null;
     for (int i = rows.length - 1; i >= 0; i--) {
       int row = rows[i];
-      Object valueAt = myResultsPreviewTable.getModel().getValueAt(row, 0);
+      Object valueAt;
+      valueAt = myResultsPreviewTable.getModel().getValueAt(row, 0);
       if (valueAt instanceof FindPopupItem) {
         if (result == null) result = new LinkedHashMap<>();
         result.put(row, ((FindPopupItem)valueAt).getUsage());
@@ -1775,9 +1792,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       }
 
       @Override
-      protected boolean isDefaultActionButtonImplementation(@NotNull ActionButton oldActionButton, @NotNull Presentation newPresentation) {
+      protected boolean canReuseActionButton(@NotNull ActionButton oldActionButton, @NotNull Presentation newPresentation) {
         if (!ExperimentalUI.isNewUI()) {
-          return super.isDefaultActionButtonImplementation(oldActionButton, newPresentation);
+          return super.canReuseActionButton(oldActionButton, newPresentation);
         }
 
         return oldActionButton instanceof ActionButtonWithText;

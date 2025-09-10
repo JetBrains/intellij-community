@@ -24,7 +24,7 @@ jvm_library(
   name = "code-insight",
   module_name = "kotlin.base.code-insight",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_code-insight",
   deps = [
     "@lib//:jetbrains-annotations",
@@ -70,7 +70,7 @@ jvm_library(
 jvm_library(
   name = "code-insight_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_code-insight",
   associates = [":code-insight"],
   deps = [
@@ -120,6 +120,7 @@ jvm_library(
     "//plugins/kotlin/base/code-insight/minimal",
     "@lib//:kotlin-test",
   ],
+  exports = ["//plugins/kotlin/base/code-insight/minimal"],
   runtime_deps = [":code-insight_resources"]
 )
 ### auto-generated section `build kotlin.base.code-insight` end

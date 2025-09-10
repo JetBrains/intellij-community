@@ -46,7 +46,7 @@ class ShowNotificationCommitResultHandler(private val committer: VcsCommitter) :
     val changesFailedToCommit = countChangesIgnoringChangeLists(committer.failedToCommitChanges)
     val changesCommitted = countChangesIgnoringChangeLists(committer.changes) - changesFailedToCommit
 
-    val freshRoot = committer.commitContext.freshRoots?.singleOrNull()
+    val freshRoot = committer.commitContext.freshUnhostedRoots?.singleOrNull()
 
     val type =
       if (commitErrors.isNotEmpty()) CommitNotificationType.Failed

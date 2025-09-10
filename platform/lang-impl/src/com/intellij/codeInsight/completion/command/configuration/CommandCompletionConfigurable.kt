@@ -2,13 +2,13 @@
 package com.intellij.codeInsight.completion.command.configuration
 
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.completion.group.GroupedCompletionContributor
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 
@@ -31,14 +31,26 @@ class CommandCompletionConfigurableProvider : ConfigurableProvider() {
       val settings = ApplicationCommandCompletionService.getInstance()
 
       group(CodeInsightBundle.message("options.command.completion.display.name")) {
+        lateinit var completionEnabledCheckBox: Cell<JBCheckBox>
         row {
-          checkBox(CodeInsightBundle.message("options.command.completion.enabled"))
+          completionEnabledCheckBox = checkBox(CodeInsightBundle.message("options.command.completion.enabled"))
             .bindSelected({ settings.state.isEnabled() },
                           { r -> settings.state.setEnabled(r) })
             .gap(RightGap.SMALL)
           contextHelp(CodeInsightBundle.message("options.command.completion.display.comment"))
             .gap(RightGap.SMALL)
           icon(AllIcons.General.Beta)
+        }
+        if (GroupedCompletionContributor.isGroupEnabledInApp()) {
+          indent {
+            row {
+              checkBox(CodeInsightBundle.message("options.command.completion.show.group"))
+                .bindSelected({ settings.state.useGroup },
+                              { r -> settings.state.useGroup = r })
+                .gap(RightGap.SMALL)
+                .enabledIf(completionEnabledCheckBox.selected)
+            }
+          }
         }
       }
     }

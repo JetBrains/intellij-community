@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs
 
 import com.intellij.codeInsight.daemon.impl.FileStatusMap
@@ -42,7 +42,7 @@ internal class RefreshSessionImpl internal constructor(
   val isAsynchronous: Boolean,
   private val myIsRecursive: Boolean,
   private val myIsBackground: Boolean,
-  private val myFinishRunnable: Runnable?,
+  internal val myFinishRunnable: Runnable?,
   modality: ModalityState,
 ) : RefreshSession() {
   val modality: ModalityState = getSaneModalityState(modality)

@@ -21,7 +21,7 @@ jvm_library(
   name = "buildData",
   module_name = "intellij.platform.buildData",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_buildData",
   deps = [
     "@lib//:kotlin-stdlib",

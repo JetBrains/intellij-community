@@ -13,8 +13,8 @@ import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import java.lang.invoke.VarHandle
 import java.nio.charset.Charset
-import java.util.concurrent.atomic.AtomicLongFieldUpdater
 
 internal val LOG: Logger = logger<BaseState>()
 
@@ -27,7 +27,9 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   companion object {
     @JvmStatic
     // should be part of class and not file level to access private field of class
-    private val MOD_COUNT_UPDATER = AtomicLongFieldUpdater.newUpdater(BaseState::class.java, "ownModificationCount")
+    private val OWN_MODIFICATION_COUNT_HANDLE: VarHandle = MethodHandles
+          .privateLookupIn(BaseState::class.java, MethodHandles.lookup())
+          .findVarHandle(BaseState::class.java, "ownModificationCount", Long::class.java)
   }
 
   // do not use SmartList because most objects have more than 1 property
@@ -35,7 +37,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
   @Volatile
   @Transient
-  private var ownModificationCount = 0L
+  private var ownModificationCount: Long = 0L
 
   private fun <T> addProperty(p: StoredPropertyBase<T>): StoredPropertyBase<T> {
     @Suppress("UNCHECKED_CAST")
@@ -143,12 +145,12 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
   @ApiStatus.Internal
   fun intIncrementModificationCount() {
-    MOD_COUNT_UPDATER.incrementAndGet(this)
+    addModificationCount(1L)
   }
 
   @ApiStatus.Internal
   fun addModificationCount(delta: Long) {
-    MOD_COUNT_UPDATER.addAndGet(this, delta)
+    OWN_MODIFICATION_COUNT_HANDLE.getAndAdd(this, delta)
   }
 
   override fun accepts(accessor: Accessor, bean: Any): Boolean {

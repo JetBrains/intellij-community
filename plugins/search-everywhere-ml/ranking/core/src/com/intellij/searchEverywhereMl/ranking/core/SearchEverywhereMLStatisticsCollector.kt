@@ -377,32 +377,36 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   }
 
   private fun registerEvent(eventId: String, vararg additional: EventField<*>): VarargEventId {
-    val fields = arrayListOf(
-      PROJECT_OPENED_KEY,
-      SESSION_ID_LOG_DATA_KEY,
-      SEARCH_INDEX_DATA_KEY,
-      TOTAL_NUMBER_OF_ITEMS_DATA_KEY,
-      SE_TAB_ID_KEY,
-      EXPERIMENT_GROUP,
-      EXPERIMENT_VERSION,
-      ORDER_BY_ML_GROUP,
-      IS_INTERNAL,
-      SEARCH_START_TIME_KEY,
-      TIME_TO_FIRST_RESULT_DATA_KEY,
-      TYPED_SYMBOL_KEYS,
-      TYPED_BACKSPACES_DATA_KEY,
-      REBUILD_REASON_KEY,
-      IS_MIXED_LIST,
-      IS_PROJECT_DISPOSED_KEY,
-      SELECTED_INDEXES_DATA_KEY,
-      SELECTED_ELEMENTS_DATA_KEY,
-      SELECTED_ELEMENTS_CONSISTENT,
-      SEARCH_STATE_FEATURES_DATA_KEY,
-      COLLECTED_RESULTS_DATA_KEY
-    )
-    fields.addAll(SearchEverywhereSessionPropertyProvider.getAllDeclarations())
-    fields.addAll(SearchEverywhereContextFeaturesProvider.getContextFields())
-    fields.addAll(additional)
+    val fields = buildList {
+      addAll(listOf(
+        PROJECT_OPENED_KEY,
+        SESSION_ID_LOG_DATA_KEY,
+        SEARCH_INDEX_DATA_KEY,
+        TOTAL_NUMBER_OF_ITEMS_DATA_KEY,
+        SE_TAB_ID_KEY,
+        EXPERIMENT_GROUP,
+        EXPERIMENT_VERSION,
+        ORDER_BY_ML_GROUP,
+        IS_INTERNAL,
+        SEARCH_START_TIME_KEY,
+        TIME_TO_FIRST_RESULT_DATA_KEY,
+        TYPED_SYMBOL_KEYS,
+        TYPED_BACKSPACES_DATA_KEY,
+        REBUILD_REASON_KEY,
+        IS_MIXED_LIST,
+        IS_PROJECT_DISPOSED_KEY,
+        SELECTED_INDEXES_DATA_KEY,
+        SELECTED_ELEMENTS_DATA_KEY,
+        SELECTED_ELEMENTS_CONSISTENT,
+        SEARCH_STATE_FEATURES_DATA_KEY,
+        COLLECTED_RESULTS_DATA_KEY
+      ))
+
+      addAll(SearchEverywhereSessionPropertyProvider.getAllDeclarations())
+      addAll(SearchEverywhereContextFeaturesProvider.getContextFields())
+      addAll(additional)
+    }
+
     return GROUP.registerVarargEvent(eventId, *fields.toTypedArray())
   }
 }

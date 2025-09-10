@@ -170,6 +170,10 @@
                     interface="com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider"
                     dynamic="true"/>
 
+    <extensionPoint name="openInBrowserFloatingToolbarSuppressor"
+                    interface="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserFloatingToolbarSuppressor"
+                    dynamic="true"/>
+
     <extensionPoint name="actionPromoter" interface="com.intellij.openapi.actionSystem.ActionPromoter" dynamic="true"/>
 
     <extensionPoint name="editorTypedHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorTypedHandlerBean" dynamic="false">
@@ -339,6 +343,10 @@
 
     <extensionPoint name="remote.pathMappingProvider" interface="com.intellij.remote.PathMappingProvider" dynamic="true"/>
     <extensionPoint name="remote.targetAwarePathMappingProvider" interface="com.intellij.remote.TargetAwarePathMappingProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.remote.customDataContextSerializer"
+                    interface="com.intellij.ide.CustomDataContextSerializer"
+                    dynamic="true"/>
 
     <extensionPoint name="colorAndFontOptionsImportHandler" interface="com.intellij.application.options.colors.ImportHandler" dynamic="true"/>
 
@@ -638,6 +646,7 @@
     <extensionPoint name="findInDirectoryScopeProvider" interface="com.intellij.find.impl.FindInDirectoryScopeProvider" dynamic="true"/>
 
     <extensionPoint name="customTypeRpcSerializer" interface="com.intellij.ide.rpc.CustomTypeRpcSerializer" dynamic="true"/>
+    <extensionPoint name="anActionSerializer" interface="com.intellij.ide.rpc.AnActionSerializer" dynamic="true"/>
 
     <extensionPoint name="frontendDocumentIdRegistry" interface="com.intellij.ide.rpc.FrontendDocumentIdRegistry"
                     dynamic="true"/>
@@ -689,5 +698,13 @@
                     beanClass="com.intellij.ui.split.SplitComponentProviderBean">
       <with attribute="implementation" implements="com.intellij.ui.split.SplitComponentProvider"/>
     </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.ide.gdpr.traceConsentManager"
+                    interface="com.intellij.ide.gdpr.trace.TraceConsentManager"
+                    dynamic="true"/>
+
+    <extensionPoint name="projectStorePathCustomizer"
+                    interface="com.intellij.openapi.project.ProjectStorePathCustomizer"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

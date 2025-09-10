@@ -204,7 +204,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)child)) {
       return new CommentWithInjectionBlock(child, wrap, alignment, indent, settings, javaSettings, formattingMode);
     }
-    if (child instanceof LeafElement || childPsi instanceof PsiJavaModuleReferenceElement) {
+    if (child instanceof LeafElement) {
       if (child.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
         return new CStyleCommentBlock(child, actualIndent);
       }
@@ -375,6 +375,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (parentType == JavaElementType.EXPRESSION_STATEMENT) return Indent.getNoneIndent();
     if (parentType == JavaElementType.IMPLICIT_CLASS) return Indent.getNoneIndent();
     if (parentType == JavaElementType.RECORD_COMPONENT) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.PACKAGE_STATEMENT) return Indent.getNoneIndent();
     if (SourceTreeToPsiMap.treeElementToPsi(parent) instanceof PsiFile) {
       return Indent.getNoneIndent();
     }

@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
@@ -11,6 +12,7 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +49,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
   private JButton myShowHiddenTabsButton;
   private ArrayList<Component> myHiddenArrowButtons;
-  private int hoverTab = -1;
+  @ApiStatus.Internal protected int hoverTab = -1;
   private boolean tabsOverlapBorder;
   private boolean useSelectedRectBackup = false;
   private Color myTabHoverColor;
@@ -297,6 +299,11 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
   @Override
   protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    if (customization != null && customization.paintTab(g, new Rectangle(x, y, w, h), tabIndex == hoverTab, isSelected)) {
+      return;
+    }
+
     if (tabStyle == TabStyle.fill) {
       if (tabPane.isEnabled()) {
         g.setColor(isSelected ? ENABLED_SELECTED_COLOR : tabIndex == hoverTab ? getHoverColor() : tabPane.getBackground());
@@ -355,6 +362,11 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
   @Override
   protected void paintTabBorder(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    if (customization != null && customization.paintTabBorder(g, tabPlacement, tabIndex, x, y, w, h, isSelected)) {
+      return;
+    }
+
     if (isSelected && tabStyle == TabStyle.underline) {
       boolean wrap = tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT;
       switch (tabPlacement) {

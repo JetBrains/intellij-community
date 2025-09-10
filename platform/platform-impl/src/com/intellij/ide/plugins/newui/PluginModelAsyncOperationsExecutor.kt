@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
+import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -11,6 +12,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -33,6 +35,53 @@ internal object PluginModelAsyncOperationsExecutor {
       val errors = UiPluginManager.getInstance().loadErrors(sessionId)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         callback(needRestart, errors)
+      }
+    }
+  }
+
+  fun performAutoInstall(
+    cs: CoroutineScope,
+    modelFacade: PluginModelFacade,
+    descriptor: PluginUiModel,
+    customizer: PluginManagerCustomizer?,
+    component: JComponent,
+  ) {
+    cs.launch(Dispatchers.IO) {
+      val stateForComponent = ModalityState.stateForComponent(component)
+      val customizationModel = customizer?.getInstallButonCustomizationModel(modelFacade, descriptor, stateForComponent)
+      withContext(Dispatchers.EDT + stateForComponent.asContextElement()) {
+        val customAction = customizationModel?.mainAction
+        if (customAction != null) {
+          customAction()
+          return@withContext
+        }
+        modelFacade.installOrUpdatePlugin(component, descriptor, null, stateForComponent)
+      }
+    }
+  }
+
+  fun performMarketplaceSearch(
+    cs: CoroutineScope,
+    query: String,
+    loadUpdates: Boolean,
+    callback: (PluginSearchResult, List<PluginUiModel>) -> Unit,
+  ) {
+    cs.launch(Dispatchers.IO) {
+      val pluginManager = UiPluginManager.getInstance()
+      val result = pluginManager.executeMarketplaceQuery(query, 10000, true)
+      val updates = mutableListOf<PluginUiModel>()
+      if (loadUpdates) {
+        updates.addAll(pluginManager.getUpdateModels())
+      }
+      callback(result, updates)
+    }
+  }
+
+  fun loadUpdates(cs: CoroutineScope, callback: (List<PluginUiModel>) -> Unit) {
+    cs.launch(Dispatchers.IO) {
+      val updates = UiPluginManager.getInstance().getUpdateModels()
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        callback(updates)
       }
     }
   }
@@ -60,6 +109,7 @@ internal object PluginModelAsyncOperationsExecutor {
     cs.launch(Dispatchers.IO) {
       val result = UiPluginManager.getInstance().enablePlugins(sessionId, descriptorIds, enable, project)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        PluginManagerCustomizer.getInstance()?.updateAfterModificationAsync { }
         callback(result)
       }
     }
@@ -87,25 +137,12 @@ internal object PluginModelAsyncOperationsExecutor {
     }
   }
 
-  fun updateButtons(
-    cs: CoroutineScope,
-    installedPluginComponents: List<ListPluginComponent>,
-    pluginComponentsMap: Map<PluginId, List<ListPluginComponent>>,
-    detailPanels: List<PluginDetailsPageComponent>,
-  ) {
-    cs.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      for (component in installedPluginComponents) {
-        component.updateButtons()
-      }
-      for (plugins in pluginComponentsMap.values) {
-        for (plugin in plugins) {
-          if (plugin.myInstalledDescriptorForMarketplace != null) {
-            plugin.updateButtons()
-          }
-        }
-      }
-      for (detailPanel in detailPanels) {
-        detailPanel.updateAll()
+  fun findPlugins(pluginIds: Set<PluginId>, callback: (Map<PluginId, PluginUiModel>) -> Unit) {
+    val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope
+    coroutineScope.launch(Dispatchers.IO) {
+      val plugins = UiPluginManager.getInstance().findInstalledPlugins(pluginIds)
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        callback(plugins)
       }
     }
   }
@@ -123,9 +160,7 @@ internal object PluginModelAsyncOperationsExecutor {
         UiPluginManager.getInstance().getPlugin(pluginId)
       }
       else null
-      println("scheduling swithc to edt for ${pluginId.idString}")
       withContext(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
-        println("switched to edt for ${pluginId.idString}")
         callback(installationState, installedDescriptor)
       }
     }

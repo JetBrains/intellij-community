@@ -8,7 +8,8 @@ import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
-import org.jetbrains.intellij.build.impl.CompilationContextImpl.Companion.createCompilationContext
+import org.jetbrains.intellij.build.impl.CompilationContextImpl
+import org.jetbrains.intellij.build.impl.asBazelIfNeeded
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -32,7 +33,7 @@ class CoverageTest {
     mainModule = "intellij.platform.buildScripts.tests"
   }
 
-  private suspend fun context(): CompilationContext = createCompilationContext(
+  private suspend fun context(): CompilationContext = CompilationContextImpl.createCompilationContext(
     projectHome = ULTIMATE_HOME,
     buildOutputRootEvaluator = { tempDir },
     setupTracer = false,
@@ -40,7 +41,7 @@ class CoverageTest {
     options = BuildOptions().apply {
       useCompiledClassesFromProjectOutput = true
     }
-  )
+  ).asBazelIfNeeded
 
   @Test
   fun test() {

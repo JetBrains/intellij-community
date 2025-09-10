@@ -12,7 +12,6 @@ plugins {
   alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
   alias(jps.plugins.kotlin.serialization)
-  alias(jps.plugins.rpc)
   // GRADLE_PLUGINS__MARKER_END
 }
 
@@ -33,6 +32,7 @@ kotlin {
     "-Xlambdas=class",
     "-Xconsistent-data-class-copy-visibility",
     "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
+    "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
   )
   jvm {}
   wasmJs {

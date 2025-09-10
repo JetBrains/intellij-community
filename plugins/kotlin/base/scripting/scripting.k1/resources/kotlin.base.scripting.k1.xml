@@ -20,6 +20,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <psi.clsCustomNavigationPolicy
+            implementation="org.jetbrains.kotlin.idea.core.script.k1.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
+
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.core.script.k1.highlighter.ScriptExternalHighlightingPass$Registrar"/>
 
     <projectConfigurable groupId="language"

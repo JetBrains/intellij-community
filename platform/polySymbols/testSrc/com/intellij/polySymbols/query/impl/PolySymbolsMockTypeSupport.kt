@@ -3,6 +3,7 @@ package com.intellij.polySymbols.query.impl
 
 import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport
+import com.intellij.psi.PsiElement
 
 object PolySymbolsMockTypeSupport : PolySymbolTypeSupport {
 
@@ -19,4 +20,8 @@ object PolySymbolsMockTypeSupport : PolySymbolTypeSupport {
         else -> it
       }
     }
+
+  override fun <T> withEvaluationLocation(location: PsiElement?, action: () -> T): T =
+    action()
+
 }

@@ -292,7 +292,7 @@ m2: Sequence[int]
 m3: array.array[int]
 m4: collections.deque[int]
 m5: list[int]
-m6: memoryview
+m6: memoryview[int]
 m7: range
 m8: tuple[int]
 

@@ -1,14 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml;
 
-import com.intellij.lang.xml.XMLParserDefinition;
-import com.intellij.lexer.FilterLexer;
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer.XmlLexer;
-import com.intellij.testFramework.LexerTestCase;
+import com.intellij.platform.syntax.lexer.Lexer;
+import com.intellij.platform.syntax.util.lexer.FilterLexer;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.syntax.LexerTestCase;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.xml.syntax.XmlSyntaxDefinition;
+import com.intellij.xml.syntax.lexer.XmlLexer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -60,8 +60,10 @@ public class XmlLexerTest extends LexerTestCase {
       PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/psi/xml",
       fileName);
     final XmlLexer lexer = new XmlLexer();
-    final FilterLexer filterLexer = new FilterLexer(new XmlLexer(),
-                                                    new FilterLexer.SetFilter(new XMLParserDefinition().getWhitespaceTokens()));
+    final FilterLexer filterLexer = new com.intellij.platform.syntax.util.lexer.FilterLexer(
+      new XmlLexer(),
+      new FilterLexer.SetFilter(XmlSyntaxDefinition.INSTANCE.getWHITESPACES())
+    );
 
     Benchmark.newBenchmark("XML Lexer Performance on " + fileName, () -> {
       for (int i = 0; i < 10; i++) {

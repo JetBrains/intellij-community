@@ -34,7 +34,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.*
-import kotlin.io.path.exists
 
 @ApiStatus.Internal
 class EmbeddedClientLauncher private constructor(private val moduleRepository: RuntimeModuleRepository, 
@@ -209,6 +208,8 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "jna.nosys", 
       "jna.noclasspath", 
       "idea.is.internal",
+      "intellij.test.jars.location",
+      PathManager.PROPERTY_HOME_PATH,
     )
     propertiesToPass.forEach { 
       vmParametersList.defineProperty(it, System.getProperty(it))

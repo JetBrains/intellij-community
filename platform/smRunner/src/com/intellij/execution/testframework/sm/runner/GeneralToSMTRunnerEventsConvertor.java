@@ -7,9 +7,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Roman Chernyatchik
  */
+@ApiStatus.Internal
 public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
 
   private final Map<String, SMTestProxy> myRunningTestsFullNameToProxy = new ConcurrentHashMap<>();
@@ -219,7 +218,8 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     }
   }
 
-  protected SMTestProxy findChild(SMTestProxy parentSuite, String fullName, boolean preferSuite) {
+  @VisibleForTesting
+  public SMTestProxy findChild(SMTestProxy parentSuite, String fullName, boolean preferSuite) {
     if (myTreeBuildBeforeStart) {
       Set<SMTestProxy> acceptedProxies = new LinkedHashSet<>();
       Collection<? extends SMTestProxy> children = myCurrentChildren.get(fullName);
@@ -442,7 +442,8 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     fireOnTestsCountInSuite(count);
   }
 
-  protected final @NotNull SMTestProxy getCurrentSuite() {
+  @VisibleForTesting
+  public final @NotNull SMTestProxy getCurrentSuite() {
     final SMTestProxy currentSuite = mySuitesStack.getCurrentSuite();
 
     if (currentSuite != null) {
@@ -456,21 +457,25 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   }
 
-  protected String getFullTestName(final String testName) {
+  @VisibleForTesting
+  public String getFullTestName(final String testName) {
     // Test name should be unique
     return testName;
   }
 
-  protected int getRunningTestsQuantity() {
+  @TestOnly
+  public int getRunningTestsQuantity() {
     return myRunningTestsFullNameToProxy.size();
   }
 
-  protected @Nullable SMTestProxy getProxyByFullTestName(final String fullTestName) {
+  @VisibleForTesting
+  @Nullable
+  public SMTestProxy getProxyByFullTestName(final String fullTestName) {
     return myRunningTestsFullNameToProxy.get(fullTestName);
   }
 
   @TestOnly
-  protected void clearInternalSuitesStack() {
+  public void clearInternalSuitesStack() {
     mySuitesStack.clear();
   }
 

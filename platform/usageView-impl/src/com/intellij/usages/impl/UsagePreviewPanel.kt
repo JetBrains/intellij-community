@@ -59,15 +59,8 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.PositionTracker
-import com.intellij.util.ui.StatusText
-import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.util.ui.*
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 import java.awt.BorderLayout
@@ -82,6 +75,7 @@ import java.util.concurrent.Callable
 import java.util.regex.Pattern
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.OverlayLayout
 import kotlin.Pair
 
 open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
@@ -100,6 +94,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
   private var myToolbarWithSimilarUsagesLink: UsagePreviewToolbarWithSimilarUsagesLink? = null
   private var myMostCommonUsagePatternsComponent: MostCommonUsagePatternsComponent? = null
   private val cs = UsageViewCoroutineScopeProvider.getInstance(project).coroutineScope.childScope()
+  private var iconScope: CoroutineScope? = null
   private var myShowTooltipBalloon = Registry.`is`("ide.find.show.tooltip.in.preview")
 
   override fun uiDataSnapshot(sink: DataSink) {
@@ -162,6 +157,12 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
         }
         invalidate()
         validate()
+      } else if (iconScope?.isActive == true) {
+        removeAll()
+        add(myEditor!!.component, BorderLayout.CENTER)
+        invalidate()
+        validate()
+        repaint()
       }
 
       PsiDocumentManager.getInstance(project).performForCommittedDocument(document, Runnable {
@@ -282,7 +283,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
 
   @Deprecated("Implementation details of UsagePreviewPanel")
   fun getCannotPreviewMessage(infos: List<UsageInfo>): String? {
-    return cannotPreviewMessage(infos)
+    return cannotPreviewMessage(infos, severalFilesSelected = false)
   }
 
   @RequiresEdt
@@ -337,13 +338,65 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
   }
 
   override fun updateLayoutLater(infos: List<UsageInfo>?) {
+    updateLayoutLater(infos, severalFilesSelected = false)
+  }
+
+  @Internal
+  override fun updateLayoutLater(infos: List<UsageInfo>?, severalFilesSelected: Boolean) {
     cs.launch(ModalityState.current().asContextElement()) {
-      previewUsages(infos)
+      previewUsages(infos, severalFilesSelected)
     }
   }
 
-  private suspend fun previewUsages(infos: List<UsageInfo>?) {
-    val cannotPreviewMessage = readAction { cannotPreviewMessage(infos) }
+  /**
+   * Show loading state in the preview panel. Intended to be called when lazy preview is enabled
+   * and usages are being calculated asynchronously.
+   */
+  @RequiresEdt
+  @Internal
+  fun showLoading() {
+    ThreadingAssertions.assertEventDispatchThread()
+    val keepContent = myEditor != null
+    if (keepContent && iconScope?.isActive == true) {
+      return
+    }
+    removeAll()
+    if (!keepContent) {
+      val editorFactory = EditorFactory.getInstance()
+      val document = editorFactory.createDocument("")
+      myEditor = editorFactory.createViewer(document)
+      customizeEditorSettings(myEditor!!.settings)
+      myEditor!!.setBorder(if (myIsEditor) null else JBEmptyBorder(0, UIUtil.LARGE_VGAP, 0, 0))
+    }
+    val editorComponent = myEditor!!.component
+
+    val iconLoadingScope = cs.childScope("preview.loading.spinner.scope")
+    val processIcon = AsyncProcessIcon.createBig(iconLoadingScope)
+    iconScope = iconLoadingScope
+
+    val layeredContainer = JPanel().apply {
+      layout = OverlayLayout(this)
+      add(processIcon)
+      add(editorComponent)
+    }
+
+    add(layeredContainer, BorderLayout.CENTER)
+    revalidate()
+    repaint()
+
+    processIcon.addHierarchyListener { _ ->
+      if (!processIcon.isDisplayable) {
+        iconScope?.cancel("spinner removed")
+      }
+    }
+    Disposer.register(this) { iconScope?.cancel("usage preview panel disposed") }
+
+    processIcon.alignmentX = 0.5f
+    processIcon.alignmentY = 0.5f
+  }
+
+  private suspend fun previewUsages(infos: List<UsageInfo>?, severalFilesSelected: Boolean) {
+    val cannotPreviewMessage = readAction { cannotPreviewMessage(infos, severalFilesSelected) }
     if (cannotPreviewMessage == null) {
       resetEditor(infos!!)
     }
@@ -524,7 +577,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
      * @param infoRange the [UsageInfo.getRangeInElement] result in corresponding UsageInfo
      * @return range to highlight for in usage preview
      */
-    @ApiStatus.Internal
+    @Internal
     @JvmStatic
     fun calculateHighlightingRangeForUsage(psiElement: PsiElement, infoRange: ProperTextRange?): TextRange {
       val elementRange = psiElement.textRange
@@ -573,12 +626,15 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     val PREVIEW_EDITOR_FLAG = Key.create<UsagePreviewPanel>("PREVIEW_EDITOR_FLAG")
 
     @Contract("null -> !null")
-    private fun cannotPreviewMessage(infos: List<UsageInfo>?): @NlsContexts.StatusText String? {
+    private fun cannotPreviewMessage(infos: List<UsageInfo>?, severalFilesSelected: Boolean): @NlsContexts.StatusText String? {
       if (infos == null) {
         return UsageViewBundle.message("usage.preview.isnt.available")
       }
       if (ContainerUtil.isEmpty(infos)) {
         return UsageViewBundle.message("select.the.usage.to.preview")
+      }
+      if (severalFilesSelected) {
+        return UsageViewBundle.message("several.occurrences.selected")
       }
       var psiFile: PsiFile? = null
       for (info in infos) {
@@ -598,7 +654,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     @RequiresReadLock
     @RequiresBackgroundThread
     @JvmStatic
-    fun isOneAndOnlyOnePsiFileInUsages(infos: List<UsageInfo>?) = cannotPreviewMessage(infos) == null
+    fun isOneAndOnlyOnePsiFileInUsages(infos: List<UsageInfo>?): Boolean = cannotPreviewMessage(infos, false) == null
 
     private fun isOnlyGroupNodesSelected(infos: List<UsageInfo>, groupNodes: Set<GroupNode>): Boolean {
       return infos.isEmpty() && !groupNodes.isEmpty()

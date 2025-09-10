@@ -5,6 +5,9 @@ import com.intellij.codeInsight.actions.CodeInsightAction;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.sh.backend.actions.ShGenerateForLoop;
+import com.intellij.sh.backend.actions.ShGenerateUntilLoop;
+import com.intellij.sh.backend.actions.ShGenerateWhileLoop;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 

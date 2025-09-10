@@ -11,7 +11,7 @@ jvm_library(
   name = "scaffolding",
   module_name = "intellij.devkit.scaffolding",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",

@@ -32,6 +32,7 @@ kotlin {
     "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
     "-Xcontext-parameters",
     "-Xjvm-default=all",
+    "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
   )
   jvm {}
   pluginManager.withPlugin("fleet-build-jps-module-plugin") {

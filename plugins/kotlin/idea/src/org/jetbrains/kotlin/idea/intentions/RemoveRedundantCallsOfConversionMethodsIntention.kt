@@ -25,7 +25,7 @@ class RemoveRedundantCallsOfConversionMethodsInspection : IntentionBasedInspecti
 
 class RemoveRedundantCallsOfConversionMethodsIntention : SelfTargetingRangeIntention<KtQualifiedExpression>(
     KtQualifiedExpression::class.java,
-    KotlinBundle.lazyMessage("remove.redundant.calls.of.the.conversion.method")
+    KotlinBundle.messagePointer("remove.redundant.calls.of.the.conversion.method")
 ) {
 
     @ExperimentalUnsignedTypes

@@ -17,7 +17,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "kotlin.base.injection.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_tests",
   deps = [
     "//platform/analysis-api:analysis",
@@ -35,7 +35,6 @@ jvm_library(
     "//RegExpSupport:regexp",
     "//RegExpSupport:regexp_test_lib",
     "//plugins/IntelliLang:langInjection",
-    "//plugins/IntelliLang/plugin",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/IntelliLang/backend",
   ]

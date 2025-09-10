@@ -92,9 +92,7 @@ public final class ClassPath {
     this.mimicJarUrlConnection = mimicJarUrlConnection;
 
     this.files = files.toArray(new Path[]{});
-    synchronized (this) {
-      filesConvertedToDefaultFs = false;
-    }
+    filesConvertedToDefaultFs = false;
     if (resourceFileFactory == null) {
       this.resourceFileFactory = file -> new JdkZipResourceFile(file, configuration.lockJars);
     }

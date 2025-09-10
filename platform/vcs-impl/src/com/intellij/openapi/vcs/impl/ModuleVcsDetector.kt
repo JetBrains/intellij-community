@@ -8,7 +8,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.*
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.Companion.MAPPING_DETECTION_LOG
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
 import com.intellij.util.ui.update.MergingUpdateQueue

@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSourcesAsync
 import org.jetbrains.kotlin.idea.debugger.core.render.GetterDescriptor
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import kotlin.metadata.ExperimentalContextReceivers
 import kotlin.metadata.KmProperty
 import kotlin.metadata.isNotDefault
@@ -127,9 +128,10 @@ class KotlinClassRenderer : ClassRenderer() {
         return gettersToShow
     }
 
-    @OptIn(ExperimentalContextReceivers::class)
+    @OptIn(ExperimentalContextReceivers::class, KaExperimentalApi::class)
+    @Suppress("OPT_IN_USAGE_ERROR")
     private fun KmProperty.shouldBeVisibleInVariablesView(): Boolean {
-        return getter.isNotDefault && receiverParameterType == null && contextReceiverTypes.isEmpty()
+        return getter.isNotDefault && receiverParameterType == null && contextParameters.isEmpty()
     }
 
     override fun calcLabel(

@@ -62,7 +62,7 @@ fun EelFileSystemApi.createTemporaryFile(): EelFileSystemApiHelpers.CreateTempor
  * Returns names of files in a directory and the attributes of the corresponding files.
  * If [path] is a symlink, it will be resolved regardless of [symlinkPolicy].
  *  TODO Is it an expected behaviour?
- *
+ * 
  * [symlinkPolicy] controls resolution of symlinks among children.
  *  TODO The behaviour is different from resolveSymlinks in [stat]. To be fixed.
  */
@@ -103,10 +103,10 @@ fun EelFileSystemApi.stat(
 
 /**
  * Unregisters a previously watched path.
- *
+ * 
  * @param unwatchOptions The options specifying the path to be unwatched. See [UnwatchOptions].
  * @return True if the operation was successful. False if the path hadn't been previously watched or unwatch failed.
- *
+ * 
  * @throws UnsupportedOperationException if the method isn't implemented for the file system.
  */
 @GeneratedBuilder.Result
@@ -121,7 +121,7 @@ fun EelFileSystemApi.unwatch(
 
 /**
  * Adds the watched paths from the specified set of file paths. A path is watched till [unwatch] method is explicitly called for it.
- *
+ * 
  * Use [WatchOptionsBuilder] to construct the watch configuration. Example:
  * ```
  * val flow = eel.fs.addWatchRoots(
@@ -130,7 +130,7 @@ fun EelFileSystemApi.unwatch(
  *         .paths(setOf(eelPath))
  *         .build())
  * ```
- *
+ * 
  * @param watchOptions The options to use for file watching. See [WatchOptions]
  * @return True if the operation was successful.
  */

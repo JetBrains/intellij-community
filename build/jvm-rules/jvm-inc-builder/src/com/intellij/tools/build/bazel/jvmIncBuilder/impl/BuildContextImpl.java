@@ -149,8 +149,8 @@ public class BuildContextImpl implements BuildContext {
     if (CLFlags.X_WASM_ATTACH_JS_EXCEPTION.isFlagSet(flags)) {
       options.add("-Xwasm-attach-js-exception");
     }
-    if ("+InlineClasses".equals(CLFlags.X_X_LANGUAGE.getOptionalScalarValue(flags))) {
-      options.add("-XXLanguage:+InlineClasses");
+    for (String flag : CLFlags.X_X_LANGUAGE.getValue(flags)) {
+      options.add("-XXLanguage:" + flag);
     }
 
     StringBuilder cp = new StringBuilder();
@@ -332,6 +332,21 @@ public class BuildContextImpl implements BuildContext {
     try {
       if (!myAllowWarnings && msg.getKind() == Message.Kind.WARNING) {
         return;
+      }
+      if (!myAllowWarnings) {
+        // Some warnings in javac are impossible to disable
+        // They're also reported as notes, not warnings
+        // It greatly pollutes compilation output
+        String text = msg.getText();
+        if (text.startsWith("Some input files use unchecked or unsafe operations.") ||
+            text.startsWith("Some input files use or override a deprecated API that is marked for removal.") ||
+            text.startsWith("Some input files additionally use or override a deprecated API.") ||
+            text.startsWith("Recompile with -Xlint:unchecked for details.") ||
+            text.startsWith("Recompile with -Xlint:removal for details.") ||
+            text.contains("uses or overrides a deprecated API that is marked for removal") ||
+            text.contains("uses unchecked or unsafe operations"))  {
+          return;
+        }
       }
       if (msg.getSource() != null) {
         myMessageSink.append(msg.getSource().getName()).append(": ");

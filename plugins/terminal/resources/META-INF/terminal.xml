@@ -60,8 +60,8 @@
     <registryKey key="terminal.use.EelApi" defaultValue="false"
                  description="Use EelApi to launch a shell process. Launching a local shell works the same as before.
                   For WSL environments, the shell process in WSL will be launched via IJEnt instead of using wsl.exe."/>
-    <registryKey key="terminal.new.ui.completion.popup" defaultValue="false"
-                 description="Disabled completion popUp for reworked terminal for development time"/>
+    <registryKey key="terminal.new.ui.completion.popup" defaultValue="true"
+                 description="Whether popup-based command completion feature is enabled in the Reworked Terminal"/>
     <registryKey key="terminal.type.ahead" defaultValue="true"
                  description="Whether terminal should predict how shell handles typing to minimize the typing latency. Monolith-only at the moment"/>
     <registryKey key="terminal.generic.hyperlinks" defaultValue="false"

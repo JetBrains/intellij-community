@@ -1,6 +1,6 @@
-from _typeshed import Incomplete
+from logging import Logger
 
-LOGGER: Incomplete
+LOGGER: Logger
 
 class HeartbeatChecker:
     def __init__(self, connection, timeout) -> None: ...

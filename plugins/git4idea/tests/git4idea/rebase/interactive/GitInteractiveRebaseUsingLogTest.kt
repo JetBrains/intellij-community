@@ -137,8 +137,8 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
   fun `test incorrect git-rebase-todo file was generated`() {
     val commit = file("firstFile.txt").create("").addCommit("0").details()
     build {
-        1()
-        2()
+      1()
+      2()
     }
     logData.refreshAndWait(repo, true)
     updateChangeListManager()
@@ -148,7 +148,7 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
       DialogWrapper.OK_EXIT_CODE
     }
 
-    interactivelyRebaseUsingLog(repo, commit, logData)
+    runBlocking { interactivelyRebaseUsingLog(repo, commit, logData) }
 
     assertErrorNotification("Rebase failed", GitBundle.message("rebase.using.log.couldnt.start.error"))
   }
@@ -189,7 +189,7 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
   private fun assertExceptionDuringEntriesGeneration(
     commit: VcsCommitMetadata,
     reason: CantRebaseUsingLogException.Reason,
-    failMessage: (entries: List<GitRebaseEntry>) -> String
+    failMessage: (entries: List<GitRebaseEntry>) -> String,
   ) {
     logData.refreshAndWait(repo, true)
     try {

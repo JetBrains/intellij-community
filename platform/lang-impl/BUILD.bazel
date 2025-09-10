@@ -54,6 +54,7 @@ jvm_library(
     "//jps/model-impl",
     "//platform/analysis-impl",
     "//platform/structure-view-impl:structureView-impl",
+    "@lib//:commons-lang3",
     "@lib//:commons-logging",
     "//platform/diff-impl",
     "//platform/built-in-server-api:builtInServer",
@@ -148,7 +149,7 @@ jvm_library(
   name = "lang-tests_test_lib",
   module_name = "intellij.platform.lang.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/boot",
@@ -225,6 +226,16 @@ jvm_library(
     "//platform/statistics/testFramework",
     "//platform/testFramework/junit5/projectStructure",
     "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
+  ],
+  exports = [
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/indexing-impl",
+    "//platform/projectModel-impl",
+    "//platform/ide-core-impl",
+    "//platform/analysis-impl",
+    "//platform/structure-view-impl:structureView-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.lang.tests` end

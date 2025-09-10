@@ -5,6 +5,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
     @Storage(StoragePathMacros.WORKSPACE_FILE)
   }
 )
+@ApiStatus.Internal
 public final class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDebuggerOptionsProvider.State> {
   private @NotNull State myState = new State();
 

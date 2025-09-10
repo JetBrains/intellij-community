@@ -7,7 +7,6 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.descendants
 import com.intellij.psi.util.parents
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -17,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.util.takeWhileIsInstance
 
 internal class PutExpressionsOnSeparateLinesIntention :
-    KotlinApplicableModCommandAction<KtOperationReferenceExpression, Unit>(KtOperationReferenceExpression::class) {
+    KotlinApplicableModCommandAction.Simple<KtOperationReferenceExpression>(KtOperationReferenceExpression::class) {
 
     override fun isApplicableByPsi(element: KtOperationReferenceExpression): Boolean {
         element.topmostBinaryExpression()?.visitOperations {
@@ -29,9 +28,6 @@ internal class PutExpressionsOnSeparateLinesIntention :
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("put.expressions.on.separate.lines")
-
-    override fun KaSession.prepareContext(element: KtOperationReferenceExpression) {
-    }
 
     override fun invoke(
       actionContext: ActionContext,

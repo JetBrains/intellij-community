@@ -8,8 +8,12 @@ import org.jetbrains.annotations.ApiStatus
 @Serializable
 @ApiStatus.Internal
 data class PrepareToUninstallResult(
-  val dependants: Map<PluginId, List<String>>,
+  val dependants: Map<PluginId, List<PluginNameAndId>>,
   val bundledPlugins: List<PluginId>,
 ) {
   fun isPluginBundled(pluginId: PluginId): Boolean = pluginId in bundledPlugins
 }
+
+@Serializable
+@ApiStatus.Internal
+data class PluginNameAndId(val name: String, val id: PluginId)

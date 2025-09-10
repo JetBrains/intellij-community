@@ -26,10 +26,15 @@ class InstallOptionButton @JvmOverloads constructor(
   }
 
 
-  fun setTextAndSize() {
-    text = IdeBundle.message("action.AnActionButton.text.install")
+  fun setTextAndSize(statusText: @Nls String?) {
+    text = statusText ?: IdeBundle.message("action.AnActionButton.text.install")
     isEnabled = !isUpgradeRequired
-    setWidth72(this)
+    if (statusText != null) {
+      setWidth(this, 80)
+    }
+    else {
+      setWidth72(this)
+    }
   }
 
   override fun setButtonColors(fill: Boolean) {
@@ -38,7 +43,7 @@ class InstallOptionButton @JvmOverloads constructor(
   override fun setEnabled(enabled: Boolean, statusText: @Nls String?) {
     isEnabled = enabled
     if (enabled) {
-      setTextAndSize()
+      setTextAndSize(statusText)
     }
     else {
       text = statusText

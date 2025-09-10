@@ -6,7 +6,9 @@ import org.jetbrains.annotations.PropertyKey
 
 private const val BUNDLE = "messages.EAPFeedbackMessagesBundle"
 
-internal object EAPFeedbackBundle : DynamicBundle(BUNDLE) {
+internal object EAPFeedbackBundle {
+  private val instance = DynamicBundle(EAPFeedbackBundle::class.java, BUNDLE)
+
   @Suppress("SpreadOperator")
-  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any) = getMessage(key, *params)
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any) = instance.getMessage(key, *params)
 }

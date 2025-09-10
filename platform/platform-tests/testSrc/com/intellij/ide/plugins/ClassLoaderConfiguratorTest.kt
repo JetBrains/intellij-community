@@ -33,20 +33,20 @@ internal class ClassLoaderConfiguratorTest {
     val kotlinGradleJava = kotlin.createContentModuleInTest(
       subBuilder = emptyBuilder,
       descriptorPath = "",
-      module = PluginContentDescriptor.ModuleItem(name = "kotlin.gradle.gradle-java",
+      module = PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId("kotlin.gradle.gradle-java"),
                                                   loadingRule = ModuleLoadingRule.OPTIONAL,
                                                   configFile = null,
                                                   descriptorContent = null))
     val kotlinCompilerGradle = kotlin.createContentModuleInTest(
       subBuilder = emptyBuilder,
       descriptorPath = "",
-      module = PluginContentDescriptor.ModuleItem(name = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle",
+      module = PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId("kotlin.compiler-plugins.annotation-based-compiler-support.gradle"),
                                                   loadingRule = ModuleLoadingRule.OPTIONAL,
                                                   configFile = null,
                                                   descriptorContent = null))
     val plugins = arrayOf(kotlin, gradle, kotlinGradleJava, kotlinCompilerGradle)
     sortDependenciesInPlace(plugins)
-    assertThat(plugins.last().contentModuleName).isNull()
+    assertThat(plugins.last().contentModuleId).isNull()
   }
 
   @Test
@@ -58,11 +58,11 @@ internal class ClassLoaderConfiguratorTest {
       Path.of(""),
       false,
     )
-    fun createModuleDescriptor(name: String): ContentModuleDescriptor {
+    fun createModuleDescriptor(moduleId: String): ContentModuleDescriptor {
       return plugin.createContentModuleInTest(
-        subBuilder = PluginDescriptorBuilder.builder().apply { `package` = name },
+        subBuilder = PluginDescriptorBuilder.builder().apply { `package` = moduleId },
         descriptorPath = "",
-        module = PluginContentDescriptor.ModuleItem(name = name, configFile = null, descriptorContent = null, loadingRule = ModuleLoadingRule.OPTIONAL),
+        module = PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId(moduleId), configFile = null, descriptorContent = null, loadingRule = ModuleLoadingRule.OPTIONAL),
       )
     }
     val modules = arrayOf(
@@ -70,7 +70,7 @@ internal class ClassLoaderConfiguratorTest {
       createModuleDescriptor("com.foo.bar"),
     )
     sortDependenciesInPlace(modules)
-    assertThat(modules.map { it.moduleName }).containsExactly("com.foo.bar", "com.foo")
+    assertThat(modules.map { it.moduleId.id }).containsExactly("com.foo.bar", "com.foo")
   }
 
   @Test
@@ -88,7 +88,7 @@ internal class ClassLoaderConfiguratorTest {
     assertThat(scope.isDefinitelyAlienClass(name = "dd", packagePrefix = "dd", force = false)).isNull()
     assertThat(scope.isDefinitelyAlienClass(name = "com.example.extraSupportedFeature.Foo", packagePrefix = "com.example.extraSupportedFeature.", force = false))
       .isEqualToIgnoringWhitespace("Class com.example.extraSupportedFeature.Foo must not be requested from main classloader of p_dependent plugin. " +
-                 "Matches content module (packagePrefix=com.example.extraSupportedFeature., moduleName=com.example.sub).")
+                 "Matches content module (packagePrefix=com.example.extraSupportedFeature., moduleId=com.example.sub).")
   }
 
   @Test

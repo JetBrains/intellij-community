@@ -296,7 +296,7 @@ include 'p1:leaf', 'p2:leaf'
     doTest()
   }
 
-  override fun createImportSpec(): ImportSpec? {
+  override fun createImportSpec(): ImportSpec {
     val importSpecBuilder = ImportSpecBuilder(super.createImportSpec())
     if (isPreview) {
       importSpecBuilder.usePreviewMode()

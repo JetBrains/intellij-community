@@ -2,13 +2,15 @@
 package com.intellij.build.events;
 
 import com.intellij.build.FilePosition;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
  */
 public interface FileMessageEvent extends MessageEvent {
-  FilePosition getFilePosition();
+
+  @NotNull FilePosition getFilePosition();
 
   @Override
-  FileMessageEventResult getResult();
+  @NotNull FileMessageEventResult getResult();
 }

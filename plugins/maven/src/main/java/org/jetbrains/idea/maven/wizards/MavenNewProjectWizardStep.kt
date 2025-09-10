@@ -35,14 +35,14 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  final override val jdkIntentProperty: GraphProperty<ProjectWizardJdkIntent?> = propertyGraph.property(null)
-  final override var jdkIntent: ProjectWizardJdkIntent? by jdkIntentProperty
+  final override val jdkIntentProperty: GraphProperty<ProjectWizardJdkIntent> = propertyGraph.property(ProjectWizardJdkIntent.NoJdk)
+  final override var jdkIntent: ProjectWizardJdkIntent by jdkIntentProperty
 
   protected fun setupJavaSdkUI(builder: Panel) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
       projectWizardJdkComboBox(this, jdkIntentProperty)
-        .whenItemSelectedFromUi { jdkIntent?.javaVersion?.let { logSdkChanged(it.feature) } }
-        .onApply { jdkIntent?.javaVersion?.let { logSdkFinished(it.feature) } }
+        .whenItemSelectedFromUi { jdkIntent.javaVersion?.let { logSdkChanged(it.feature) } }
+        .onApply { jdkIntent.javaVersion?.let { logSdkFinished(it.feature) } }
     }.bottomGap(BottomGap.SMALL)
   }
 
@@ -78,16 +78,10 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   }
 
   protected fun <T : AbstractMavenModuleBuilder> linkMavenProject(project: Project, builder: T, configure: (T) -> Unit = {}): Module? {
-    val sdk = jdkIntent?.prepareJdk()
-    builder.moduleJdk = sdk
     builder.name = parentStep.name
     builder.contentEntryPath = "${parentStep.path}/${parentStep.name}"
 
     builder.isCreatingNewProject = context.isCreatingNewProject
-
-    if (context.isCreatingNewProject) {
-      context.projectJdk = sdk
-    }
 
     builder.parentProject = parentData
     builder.aggregatorProject = parentData
@@ -97,7 +91,7 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
     configure(builder)
 
-    val sdkDownloadTask = jdkIntent?.downloadTask
+    val sdkDownloadTask = jdkIntent.downloadTask
     val isCreatingNewProject = context.isCreatingNewProject
 
     if (isCreatingNewProject) {

@@ -5,6 +5,7 @@ from antlr4.dfa.DFAState import DFAState as DFAState
 from antlr4.Utils import str_list as str_list
 
 class DFASerializer:
+    __slots__ = ("dfa", "literalNames", "symbolicNames")
     dfa: Incomplete
     literalNames: list[str] | None
     symbolicNames: list[str] | None

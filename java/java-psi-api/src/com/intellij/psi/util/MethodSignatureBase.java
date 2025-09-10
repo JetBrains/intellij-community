@@ -18,7 +18,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
 
   MethodSignatureBase(@NotNull PsiSubstitutor substitutor, PsiType @NotNull [] parameterTypes, PsiTypeParameter @NotNull [] typeParameters) {
     mySubstitutor = substitutor;
-    assert substitutor.isValid();
+    if (!substitutor.isValid()) throw new IllegalStateException("Substitutor " + substitutor + " is not valid");
     myParameterTypes = PsiType.createArray(parameterTypes.length);
     for (int i = 0; i < parameterTypes.length; i++) {
       PsiType type = parameterTypes[i];

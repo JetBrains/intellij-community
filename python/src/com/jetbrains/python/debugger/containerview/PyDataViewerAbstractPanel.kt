@@ -13,12 +13,14 @@ import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.PyDebuggerException
 import com.jetbrains.python.debugger.PyFrameAccessor
 import com.jetbrains.python.debugger.statistics.PyDataViewerCollector
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 abstract class PyDataViewerAbstractPanel(
   val dataViewerModel: PyDataViewerModel,
   val isPanelFromFactory: Boolean = false,

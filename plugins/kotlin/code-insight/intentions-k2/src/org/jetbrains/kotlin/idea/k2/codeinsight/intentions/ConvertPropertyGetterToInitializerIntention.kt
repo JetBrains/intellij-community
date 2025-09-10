@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -15,7 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 
 internal class ConvertPropertyGetterToInitializerIntention :
-    KotlinApplicableModCommandAction<KtPropertyAccessor, Unit>(KtPropertyAccessor::class) {
+    KotlinApplicableModCommandAction.Simple<KtPropertyAccessor>(KtPropertyAccessor::class) {
 
     override fun stopSearchAt(
         element: PsiElement,
@@ -34,9 +33,6 @@ internal class ConvertPropertyGetterToInitializerIntention :
                 property.containingClass()?.isInterface() != true &&
                 element.modifierList?.hasModifier(KtTokens.EXPECT_KEYWORD) != true &&
                 element.containingClass()?.hasExpectModifier() != true
-    }
-
-    override fun KaSession.prepareContext(element: KtPropertyAccessor) {
     }
 
     override fun invoke(

@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.codeVision.settings
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
-import com.intellij.codeInsight.codeVision.CodeVisionBundle
+import com.intellij.codeInsight.codeVision.CodeVisionMessageBundle
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.settings.InlayGroupSettingProvider
 import com.intellij.openapi.ui.ComboBox
@@ -35,14 +35,14 @@ class CodeVisionGlobalSettingsProvider : InlayGroupSettingProvider {
   override val group: InlayGroup = InlayGroup.CODE_VISION_GROUP_NEW
 
   override val component: DialogPanel = panel {
-    row(CodeVisionBundle.message("CodeLensGlobalSettingsProvider.defaultPosition.description")) {
-      defaultPositionComboBox = comboBox(defaultAnchors, renderer = textListCellRenderer("") { CodeVisionBundle.message(it.key) })
+    row(CodeVisionMessageBundle.message("CodeLensGlobalSettingsProvider.defaultPosition.description")) {
+      defaultPositionComboBox = comboBox(defaultAnchors, renderer = textListCellRenderer("") { CodeVisionMessageBundle.message(it.key) })
         .component
     }
-    row(CodeVisionBundle.message("CodeLensGlobalSettingsProvider.visibleMetricsAbove.description")) {
+    row(CodeVisionMessageBundle.message("CodeLensGlobalSettingsProvider.visibleMetricsAbove.description")) {
       visibleMetricsAbove = spinner(1..10, 1).component
     }
-    row(CodeVisionBundle.message("CodeLensGlobalSettingsProvider.visibleMetricsNext.description")) {
+    row(CodeVisionMessageBundle.message("CodeLensGlobalSettingsProvider.visibleMetricsNext.description")) {
       visibleMetricsNext = spinner(1..10, 1).component
     }
   }

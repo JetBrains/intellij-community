@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
-import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
+import com.intellij.codeInsight.daemon.SyntheticPsiFileSupport;
 import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
@@ -137,7 +137,7 @@ public class DiffViewerCreatePatchActionProvider implements AnActionExtensionPro
   private static @NotNull FilePath guessFilePath(@NotNull DiffContent content, @NotNull String title) {
     if (content instanceof FileContent) {
       VirtualFile file = ((FileContent)content).getFile();
-      String path = OutsidersPsiFileSupport.getOriginalFilePath(file);
+      String path = SyntheticPsiFileSupport.getOriginalFilePath(file);
       if (path != null) return VcsUtil.getFilePath(path, file.isDirectory());
     }
 

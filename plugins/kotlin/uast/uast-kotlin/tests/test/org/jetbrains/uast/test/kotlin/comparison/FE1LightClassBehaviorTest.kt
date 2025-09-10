@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.uast.test.common.kotlin.LightClassBehaviorTestBase
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
+import kotlin.test.assertFails
 
 @RunWith(JUnit38ClassRunner::class)
 class FE1LightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), LightClassBehaviorTestBase {
@@ -35,12 +36,14 @@ class FE1LightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
     }
 
     fun testLocalClassCaching() {
-        try {
+        assertFails("If KTIJ-26663 is fixed, unmute this test") {
             checkLocalClassCaching(myFixture)
-            // TODO: KTIJ-26663
-            error("Unmute me")
-        } catch (e: Throwable) {
-            return
+        }
+    }
+
+    fun testAnnotationsOnClassCaching() {
+        assertFails("If KTIJ-35138 is fixed, unmute this test") {
+            annotationsOnClassCaching(myFixture)
         }
     }
 

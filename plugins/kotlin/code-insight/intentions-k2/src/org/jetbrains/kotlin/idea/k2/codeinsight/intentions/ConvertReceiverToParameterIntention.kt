@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 
 internal class ConvertReceiverToParameterIntention : SelfTargetingOffsetIndependentIntention<KtTypeReference>(
     KtTypeReference::class.java,
-    KotlinBundle.lazyMessage("convert.receiver.to.parameter")
+    KotlinBundle.messagePointer("convert.receiver.to.parameter")
 ), LowPriorityAction {
 
     override fun startInWriteAction(): Boolean = false

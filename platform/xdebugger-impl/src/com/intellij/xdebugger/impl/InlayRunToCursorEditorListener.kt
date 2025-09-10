@@ -246,12 +246,22 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       PsiManager.getInstance(project).findFile(virtualFile)
     } ?: return false
 
-    val changedRangesInfo = VcsFacade.getInstance().getChangedRangesInfo(psiFile) ?: return false
+    val vcsFacade = VcsFacade.getInstance()
+    val changedRangesInfo = vcsFacade.getChangedRangesInfo(psiFile)
 
-    val lineStartOffset = document.getLineStartOffset(lineNumber)
-    return changedRangesInfo.allChangedRanges.any {
-      it.contains(lineStartOffset)
+    val linesWithRemovedRangesAfter = vcsFacade.getLinesWithRemovedRangesAfter(psiFile)
+    if (linesWithRemovedRangesAfter.contains(lineNumber) || linesWithRemovedRangesAfter.contains(lineNumber + 1)) {
+      return true
     }
+
+    if (changedRangesInfo != null) {
+      val lineStartOffset = document.getLineStartOffset(lineNumber)
+      if (changedRangesInfo.allChangedRanges.any { it.contains(lineStartOffset) }) {
+        return true
+      }
+    }
+
+    return false
   }
 
   @RequiresEdt

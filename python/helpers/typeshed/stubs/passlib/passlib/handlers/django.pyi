@@ -1,4 +1,5 @@
 from typing import Any, ClassVar
+from typing_extensions import Self
 
 import passlib.utils.handlers as uh
 from passlib.handlers.bcrypt import _wrapped_bcrypt
@@ -9,12 +10,12 @@ class DjangoSaltedHash(uh.HasSalt, uh.GenericHandler):
     salt_chars: ClassVar[str]
     checksum_chars: ClassVar[str]
     @classmethod
-    def from_string(cls, hash): ...
+    def from_string(cls, hash) -> Self: ...  # type: ignore[override]
 
 class DjangoVariableHash(uh.HasRounds, DjangoSaltedHash):  # type: ignore[misc]
     min_rounds: ClassVar[int]
     @classmethod
-    def from_string(cls, hash): ...
+    def from_string(cls, hash) -> Self: ...  # type: ignore[override]
 
 class django_salted_sha1(DjangoSaltedHash):
     name: ClassVar[str]
@@ -37,7 +38,7 @@ class django_bcrypt_sha256(_wrapped_bcrypt):
     @classmethod
     def identify(cls, hash): ...
     @classmethod
-    def from_string(cls, hash): ...
+    def from_string(cls, hash) -> Self: ...  # type: ignore[override]
 
 class django_pbkdf2_sha256(DjangoVariableHash):
     name: ClassVar[str]
@@ -70,7 +71,7 @@ class django_des_crypt(uh.TruncateMixin, uh.HasSalt, uh.GenericHandler):  # type
     truncate_size: ClassVar[int]
     use_duplicate_salt: bool
     @classmethod
-    def from_string(cls, hash): ...
+    def from_string(cls, hash) -> Self: ...  # type: ignore[override]
 
 class django_disabled(DisabledHash, uh.StaticHandler):
     name: ClassVar[str]
@@ -79,3 +80,14 @@ class django_disabled(DisabledHash, uh.StaticHandler):
     def identify(cls, hash: str | bytes) -> bool: ...
     @classmethod
     def verify(cls, secret: str | bytes, hash: str | bytes) -> bool: ...  # type: ignore[override]
+
+__all__ = [
+    "django_salted_sha1",
+    "django_salted_md5",
+    "django_bcrypt",
+    "django_pbkdf2_sha1",
+    "django_pbkdf2_sha256",
+    "django_argon2",
+    "django_des_crypt",
+    "django_disabled",
+]

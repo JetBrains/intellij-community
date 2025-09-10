@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -37,9 +40,7 @@ abstract class ProtectedInFinalInspectionBase : AbstractKotlinInspection() {
     protected abstract fun isApplicable(parentClass: KtClass, declaration: KtDeclaration): Boolean
 
     class MakePrivateFix : LocalQuickFix {
-        override fun getName(): String = KotlinBundle.message("make.private.fix.text")
-
-        override fun getFamilyName(): String = name
+        override fun getFamilyName(): String = KotlinBundle.message("make.private.fix.text")
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val modifierListOwner = descriptor.psiElement.getParentOfType<KtModifierListOwner>(true)
@@ -49,9 +50,7 @@ abstract class ProtectedInFinalInspectionBase : AbstractKotlinInspection() {
     }
 
     class MakeOpenFix : LocalQuickFix {
-        override fun getName(): String = KotlinBundle.message("make.open.fix.text")
-
-        override fun getFamilyName(): String = name
+        override fun getFamilyName(): String = KotlinBundle.message("make.open.fix.text")
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val modifierListOwner = descriptor.psiElement.getParentOfType<KtModifierListOwner>(true)

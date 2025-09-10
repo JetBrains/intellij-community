@@ -5,7 +5,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.xml.XmlTokenType
 
 class XmlHighlightingLexer :
-  DelegateLexer(XmlLexer()) {
+  DelegateLexer(createXmlLexer()) {
 
   override fun getTokenType(): IElementType? {
     var tokenType = delegate.tokenType

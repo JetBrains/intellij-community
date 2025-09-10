@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -57,7 +57,7 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
     return new JavaElementVisitor() {
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
-        if (aClass.isInterface() || aClass.isRecord() || aClass.isEnum()) {
+        if (aClass.isInterface() || aClass.isRecord() || aClass.isEnum() || PsiUtil.isLocalOrAnonymousClass(aClass)) {
           return;
         }
 
@@ -72,10 +72,11 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
         if (aClass.getContainingClass() != null) {
           return;
         }
-        PsiJavaFile file = (PsiJavaFile)aClass.getContainingFile();
-        boolean underRoot = file.getPackageStatement() == null;
+        PsiFile file = aClass.getContainingFile();
+        if (!(file instanceof PsiJavaFile javaFile)) return;
+        boolean underRoot = javaFile.getPackageStatement() == null;
 
-        if (file.getClasses().length != 1) {
+        if (javaFile.getClasses().length != 1) {
           return;
         }
 

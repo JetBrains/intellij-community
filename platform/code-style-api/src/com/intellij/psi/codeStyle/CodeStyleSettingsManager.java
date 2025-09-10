@@ -386,10 +386,15 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     getMessageBus().connect().subscribe(CodeStyleSettingsListener.TOPIC, listener);
   }
 
-  public void fireCodeStyleSettingsChanged(@NotNull VirtualFile file) {
+  @ApiStatus.Internal
+  public void fireCodeStyleSettingsChanged(@NotNull VirtualFile file, @Nullable CodeStyleSettings settings) {
     if (getProject() != null) {
-      fireCodeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(getProject(), file));
+      fireCodeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(getProject(), file, settings));
     }
+  }
+
+  public void fireCodeStyleSettingsChanged(@NotNull VirtualFile file) {
+    fireCodeStyleSettingsChanged(file, null);
   }
 
   public void fireCodeStyleSettingsChanged() {

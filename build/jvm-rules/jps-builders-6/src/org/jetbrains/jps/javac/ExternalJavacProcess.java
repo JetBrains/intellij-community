@@ -29,7 +29,7 @@ import java.util.logging.Formatter;
 @ApiStatus.Internal
 public final class ExternalJavacProcess {
   public static final String JPS_JAVA_COMPILING_TOOL_PROPERTY = "jps.java.compiling.tool";
-  public static final int MINIMUM_REQUIRED_JAVA_VERSION = 7;
+  public static final int MINIMUM_REQUIRED_JAVA_VERSION = 8;
   private final EventLoopGroup myEventLoopGroup;
   private final boolean myKeepRunning;
   private volatile ChannelFuture myConnectFuture;
@@ -256,43 +256,40 @@ public final class ExternalJavacProcess {
                 }
                 outs.put(new File(outputGroup.getOutputRoot()), srcRoots);
               }
-              myThreadPool.execute(new Runnable() {
-                @Override
-                public void run() {
-                  boolean keepRunning = myKeepRunning;
+              myThreadPool.execute(() -> {
+                boolean keepRunning = myKeepRunning;
+                try {
+                  final JavacRemoteProto.Message result = compile(context, sessionId, options, files, cp, platformCp, modulePath, upgradeModulePath, srcPath, outs, new CanceledStatus() {
+                    @Override
+                    public boolean isCanceled() {
+                      return Boolean.TRUE.equals(myCanceled.get(sessionId));
+                    }
+                  });
+                  context.channel().writeAndFlush(result).awaitUninterruptibly();
+                }
+                catch (Throwable throwable) {
+                  // in case of unexpected exception exit, to ensure the process is not stuck in a problematic state
+                  keepRunning = false;
+                  throwable.printStackTrace(System.err);
                   try {
-                    final JavacRemoteProto.Message result = compile(context, sessionId, options, files, cp, platformCp, modulePath, upgradeModulePath, srcPath, outs, new CanceledStatus() {
-                      @Override
-                      public boolean isCanceled() {
-                        return Boolean.TRUE.equals(myCanceled.get(sessionId));
-                      }
-                    });
-                    context.channel().writeAndFlush(result).awaitUninterruptibly();
+                    // attempt to report via proto
+                    context.channel().writeAndFlush(JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createFailure(throwable.getMessage(), throwable)));
                   }
-                  catch (Throwable throwable) {
-                    // in case of unexpected exception exit, to ensure the process is not stuck in a problematic state
-                    keepRunning = false;
-                    throwable.printStackTrace(System.err);
-                    try {
-                      // attempt to report via proto
-                      context.channel().writeAndFlush(JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createFailure(throwable.getMessage(), throwable)));
-                    }
-                    catch (Throwable ignored) {
-                    }
+                  catch (Throwable ignored) {
                   }
-                  finally {
-                    myCanceled.remove(sessionId); // state cleanup
-                    if (keepRunning) {
-                      JavacMain.clearCompilerZipFileCache();
-                      //noinspection CallToSystemGC
-                      System.gc();
-                    }
-                    else {
-                      // in this mode this is only one-time compilation process that should stop after build is complete
-                      ExternalJavacProcess.this.stop();
-                    }
-                    Thread.interrupted(); // reset interrupted status
+                }
+                finally {
+                  myCanceled.remove(sessionId); // state cleanup
+                  if (keepRunning) {
+                    JavacMain.clearCompilerZipFileCache();
+                    //noinspection CallToSystemGC
+                    System.gc();
                   }
+                  else {
+                    // in this mode this is only one-time compilation process that should stop after build is complete
+                    ExternalJavacProcess.this.stop();
+                  }
+                  Thread.interrupted(); // reset interrupted status
                 }
               });
             }

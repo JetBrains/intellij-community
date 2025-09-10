@@ -246,12 +246,6 @@ public class IndexStorageLayoutBenchmark {
       return true;
     }
   };
-  private static final IdFilter ID_FILTER_EVERYTHING = new IdFilter() {
-    @Override
-    public boolean containsFileId(int id) {
-      return true;
-    }
-  };
 
   @Benchmark
   public boolean indexStorage_forEachKey(StorageContext storageContext,
@@ -262,7 +256,7 @@ public class IndexStorageLayoutBenchmark {
         return true;
       },
       SCOPE_EVERYTHING,
-      ID_FILTER_EVERYTHING
+      IdFilter.ACCEPT_ALL
     );
   }
 

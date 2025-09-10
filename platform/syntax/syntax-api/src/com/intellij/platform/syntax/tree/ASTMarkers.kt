@@ -22,11 +22,10 @@ interface ChameleonRef {
   fun realize(func: () -> AstMarkersChameleon): AstMarkersChameleon
 }
 
-@Suppress("unused")
-fun ChameleonRef(): ChameleonRef = linkToActual()
+fun newChameleonRef(): ChameleonRef = linkToActual()
 
 @Suppress("unused")
-fun ChameleonRef(chameleon: AstMarkersChameleon): ChameleonRef = linkToActual()
+fun newChameleonRef(chameleon: AstMarkersChameleon): ChameleonRef = linkToActual()
 
 @ApiStatus.Experimental
 interface ASTMarkers {

@@ -6,11 +6,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiResolveHelper
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
+import kotlin.io.path.name
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinCompiledLightClassesJavaAccessibilityTest : KotlinLightCodeInsightFixtureTestCase() {

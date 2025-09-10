@@ -1,24 +1,23 @@
 package com.intellij.grazie.grammar
 
 import com.intellij.grazie.GrazieBundle
-import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.detection.LangDetector
-import com.intellij.grazie.grammar.LanguageToolChecker.Problem
+import com.intellij.grazie.ide.ui.components.utils.html
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.*
-import com.intellij.grazie.utils.html
-import com.intellij.grazie.utils.messageSanitized
 import com.intellij.grazie.utils.trimToNull
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.ClassLoaderUtil
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Predicates
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
@@ -35,28 +34,18 @@ import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.function.Predicate
 
+
 open class LanguageToolChecker : TextChecker() {
   @ApiStatus.Internal
   class TestChecker : LanguageToolChecker()
 
   override fun getRules(locale: Locale): Collection<Rule> {
     val language = Languages.getLanguageForLocale(locale)
-    val lang = Lang.values().find { it.jLanguage == language } ?: return emptyList()
+    val lang = Lang.entries.find { it.jLanguage == language } ?: return emptyList()
     return grammarRules(LangTool.getTool(lang), lang)
   }
 
   override fun check(extracted: TextContent): List<Problem> {
-    val cache = extracted.getUserData(cacheKey)
-    val configStamp = service<GrazieConfig>().modificationCount
-    if (cache == null || cache.configStamp != configStamp) {
-      val problems = doCheck(extracted)
-      extracted.putUserData(cacheKey, CachedResults(configStamp, problems))
-      return problems
-    }
-    return cache.problems
-  }
-
-  private fun doCheck(extracted: TextContent): List<Problem> {
     val text = extracted.toString()
     if (text.isBlank()) {
       return emptyList()
@@ -120,7 +109,7 @@ open class LanguageToolChecker : TextChecker() {
       Predicate { om ->
         ProgressManager.checkCanceled()
         quotedMatches.none { qm ->
-          qm.rule == om.rule &&
+          qm.rule.id == om.rule.id &&
           quotedText.offsetToOriginal(qm.fromPos) == om.fromPos &&
           quotedText.offsetToOriginal(qm.toPos) == om.toPos
         }
@@ -184,13 +173,14 @@ open class LanguageToolChecker : TextChecker() {
 
     private fun isAbstractCategory(id: String) =
       id == RuleGroup.SENTENCE_END_PUNCTUATION || id == RuleGroup.SENTENCE_START_CASE || id == RuleGroup.UNLIKELY_OPENING_PUNCTUATION
+
+    override fun isStyleLike(): Boolean {
+      return LanguageToolRule.isStyleLike(match.rule)
+    }
   }
 }
 
-private data class CachedResults(val configStamp: Long, val problems: List<Problem>)
-
 private val logger = LoggerFactory.getLogger(LanguageToolChecker::class.java)
-private val cacheKey = Key.create<CachedResults>("grazie.LT.problem.cache")
 private val interner = Interner.createWeakInterner<String>()
 private val sentenceSeparationRules = setOf("LC_AFTER_PERIOD", "PUNT_GEEN_HL", "KLEIN_NACH_PUNKT")
 private val openClosedRangeStart = Regex("[\\[(].+?(\\.\\.|:|,|;).+[])]")
@@ -263,6 +253,9 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
 
   return false
 }
+
+private val RuleMatch.messageSanitized
+  get() = message.replace("<suggestion>", "").replace("</suggestion>", "")
 
 private fun isPartOfQuotedLiteralText(match: RuleMatch, text: TextContent): Boolean {
   return quotedLiteralPattern.findAll(text.toString())

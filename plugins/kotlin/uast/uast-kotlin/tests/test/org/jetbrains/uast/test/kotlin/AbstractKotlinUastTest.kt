@@ -39,7 +39,7 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
@@ -62,6 +62,7 @@ import org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension
 import org.jetbrains.uast.kotlin.internal.CliKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.internal.UastAnalysisHandlerExtension
 import java.io.File
+import kotlin.io.path.absolutePathString
 
 abstract class AbstractKotlinUastTest : TestCase(),
                                         ExpectedPluginModeProvider {
@@ -195,7 +196,7 @@ abstract class AbstractKotlinUastTest : TestCase(),
     private fun createEnvironment(source: File) {
         compilerConfiguration = createKotlinCompilerConfiguration(source)
         compilerConfiguration.put(JVMConfigurationKeys.USE_PSI_CLASS_FILES_READING, true)
-        compilerConfiguration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, TestKotlinArtifacts.kotlinCompiler)
+        compilerConfiguration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, TestKotlinArtifacts.kotlinCompiler.toFile())
 
         kotlinCoreEnvironment = KotlinCoreEnvironment.createForTests(
             parentDisposable = testRootDisposable,
@@ -250,5 +251,5 @@ private fun loadScriptingPlugin(configuration: CompilerConfiguration, parentDisp
         TestKotlinArtifacts.kotlinScriptingJvm
     )
 
-    PluginCliParser.loadPluginsSafe(pluginClasspath.map { it.absolutePath }, emptyList(), emptyList(), configuration, parentDisposable)
+    PluginCliParser.loadPluginsSafe(pluginClasspath.map { it.absolutePathString() }, emptyList(), emptyList(), configuration, parentDisposable)
 }

@@ -214,7 +214,9 @@ internal sealed class GitObject {
     override val dependencies: List<Oid> = entries.values.filter { it.mode != FileMode.GITLINK }.map { it.oid }
 
     @JvmInline
-    value class FileName(val value: String)
+    value class FileName(val value: String) {
+      override fun toString(): String = value
+    }
 
     @NonNls
     enum class FileMode(val value: String) {

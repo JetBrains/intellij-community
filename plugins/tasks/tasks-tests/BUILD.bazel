@@ -11,7 +11,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.tasks.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -21,6 +21,7 @@ jvm_library(
     "//plugins/tasks/tasks-core:core",
     "//plugins/tasks/tasks-java:java",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//plugins/tasks/tasks-compatibility:compatibility",
     "//platform/vcs-api:vcs",
     "@lib//:junit4",

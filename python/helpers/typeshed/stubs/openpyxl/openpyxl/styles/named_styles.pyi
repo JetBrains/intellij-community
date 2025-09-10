@@ -31,7 +31,7 @@ class NamedStyle(Serialisable):
         fill: Fill | None = None,
         border: Border | None = None,
         alignment: Alignment | None = None,
-        number_format: Incomplete | None = None,
+        number_format=None,
         protection: Protection | None = None,
         builtinId: ConvertibleToInt | None = None,
         hidden: _ConvertibleToBool | None = False,
@@ -44,7 +44,7 @@ class NamedStyle(Serialisable):
     def as_name(self) -> _NamedCellStyle: ...
 
 class NamedStyleList(list[NamedStyle]):
-    def __init__(self, iterable: Iterable[NamedStyle] = ()) -> None: ...  # type: ignore[override]
+    def __init__(self, iterable: Iterable[NamedStyle] = ()) -> None: ...
     @property
     def names(self) -> list[str]: ...
     def __getitem__(self, key: int | str) -> NamedStyle: ...  # type: ignore[override]

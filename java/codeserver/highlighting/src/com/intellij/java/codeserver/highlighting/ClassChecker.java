@@ -159,16 +159,10 @@ final class ClassChecker {
     PsiElement parent = aClass.getParent();
     boolean checkSiblings;
     if (parent instanceof PsiClass psiClass && !PsiUtil.isLocalOrAnonymousClass(psiClass) && !PsiUtil.isLocalOrAnonymousClass(aClass)) {
-      // optimization: instead of iterating PsiClass children manually, we can get them all from caches
-      PsiClass innerClass = psiClass.findInnerClassByName(name, false);
-      if (innerClass != null && innerClass != aClass) {
-        if (innerClass.getTextOffset() > aClass.getTextOffset()) {
-          // report duplicate lower in text
-          PsiClass c = innerClass;
-          innerClass = aClass;
-          aClass = c;
-        }
-        myVisitor.report(JavaErrorKinds.CLASS_DUPLICATE.create(aClass, innerClass));
+      var duplicates = ContainerUtil.filter(psiClass.getInnerClasses(), c -> Objects.equals(c.getName(), name));
+      var duplicatesWithoutMe = ContainerUtil.filter(duplicates, c -> c != aClass);
+      if (!duplicatesWithoutMe.isEmpty()) {
+        myVisitor.report(JavaErrorKinds.CLASS_DUPLICATE.create(aClass, duplicatesWithoutMe.get(0)));
         return;
       }
       checkSiblings = false; // there still might be duplicates in parents
@@ -204,6 +198,7 @@ final class ClassChecker {
 
       if (element instanceof PsiClass psiClass && name.equals(psiClass.getName())) {
         myVisitor.report(JavaErrorKinds.CLASS_DUPLICATE.create(aClass, psiClass));
+        return;
       }
     }
   }

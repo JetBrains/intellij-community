@@ -10,6 +10,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -52,8 +54,9 @@ public abstract class ArrayFilterAction extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       MessageTreeNode node = getFilterNode(e);
-      if (node != null) {
-        ArrayFilterInplaceEditor.edit(node, false);
+      XDebugSessionProxy sessionProxy = DebuggerUIUtil.getSessionProxy(e);
+      if (node != null && sessionProxy != null) {
+        ArrayFilterInplaceEditor.edit(node, false, sessionProxy);
       }
     }
   }

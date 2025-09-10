@@ -2,9 +2,9 @@
 package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProvider
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.ListSelectionModel
@@ -13,6 +13,7 @@ import javax.swing.ListSelectionModel
 interface SeResultList {
   val size: Int
   val frozenCount: Int
+  val pendingReplacementElementUuids: MutableSet<String>
 
   fun getRow(index: Int): SeResultListRow
   fun addRow(index: Int, row: SeResultListRow)
@@ -39,41 +40,49 @@ interface SeResultList {
 fun SeResultList.handleEvent(event: SeResultEvent, onAdd: ((SeItemData) -> Unit)? = null, onRemove: (() -> Unit)? = null) {
   when (event) {
     is SeResultAddedEvent -> {
-      val index = indexToAdd(event.itemData)
-      addRow(index, SeResultListItemRow(event.itemData))
-      onAdd?.invoke(event.itemData)
+      if (pendingReplacementElementUuids.remove(event.itemData.uuid)) {
+        SeLog.log(SeLog.DEFAULT) { "SeResultAddedEvent: uuid ${event.itemData.uuid} was skipped because it was supposed to be replaced by an element which came earlier" }
+      }
+      else {
+        val index = indexToAdd(event.itemData)
+        addRow(index, SeResultListItemRow(event.itemData))
+        onAdd?.invoke(event.itemData)
 
-      /* Animated icon in the text field disappears when the first result appears.
-       * So let the loading row will be in the list from the moment the first
-       * item appears until the last item appears.
-       */
-      if (size == 1) {
-        addRow(SeResultListMoreRow)
+        /* Animated icon in the text field disappears when the first result appears.
+         * So let the loading row will be in the list from the moment the first
+         * item appears until the last item appears.
+         */
+        if (size == 1) {
+          addRow(SeResultListMoreRow)
+        }
       }
     }
     is SeResultReplacedEvent -> {
       val indexes = event.uuidsToReplace.mapNotNull { uuidToReplace ->
-        firstIndexOrNull(true) { uuidToReplace == it.uuid }
-        ?: if (ApplicationManager.getApplication().isInternal) {
-          error("Item with UUID = ${uuidToReplace} is not found in the list")
+        val index = firstIndexOrNull(true) { uuidToReplace == it.uuid }
+        if (index == null) {
+          pendingReplacementElementUuids.add(uuidToReplace)
+          SeLog.log(SeLog.DEFAULT) { "SeResultReplacedEvent: uuid $uuidToReplace not found in the list, saved to pending replacement" }
         }
-        else null
-      }.sorted()
 
-      var wasAdded = false
-      indexes.forEach { index ->
-        removeRow(index)
-        onRemove?.invoke()
-        if (!wasAdded) {
-          addRow(index, SeResultListItemRow(event.newItemData))
-          onAdd?.invoke(event.newItemData)
-          wasAdded = true
-        }
-      }
+        index
+      }.sortedDescending()
 
-      if (!wasAdded) {
-        addRow(lastIndexToInsertItem, SeResultListItemRow(event.newItemData))
+      if (indexes.isEmpty()) {
+        val index = indexToAdd(event.newItemData)
+        addRow(index, SeResultListItemRow(event.newItemData))
         onAdd?.invoke(event.newItemData)
+      }
+      else {
+        indexes.forEach { index ->
+          removeRow(index)
+          onRemove?.invoke()
+          if (index == indexes.last()) {
+            // We replace only one element with the smallest index
+            addRow(index, SeResultListItemRow(event.newItemData))
+            onAdd?.invoke(event.newItemData)
+          }
+        }
       }
     }
     is SeResultEndEvent -> {}// Do nothing
@@ -118,6 +127,8 @@ val SeResultList.lastIndexToInsertItem: Int
 class SeResultListModelAdapter(private val listModel: SeResultListModel, private val selectionModel: ListSelectionModel) : SeResultList {
   override val size: Int get() = listModel.size
   override val frozenCount: Int get() = listModel.freezer.frozenCount
+  override val pendingReplacementElementUuids: MutableSet<String>
+    get() = listModel.pendingReplacementElementUuids
 
   override fun getRow(index: Int): SeResultListRow =
     listModel.getElementAt(index)
@@ -149,7 +160,7 @@ class SeResultListModelAdapter(private val listModel: SeResultListModel, private
 }
 
 @ApiStatus.Internal
-class SeResultListCollection : SeResultList {
+class SeResultListCollection(override val pendingReplacementElementUuids: MutableSet<String>) : SeResultList {
   val list: MutableList<SeResultListRow> = mutableListOf()
 
   override val size: Int get() = list.size

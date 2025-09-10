@@ -35,6 +35,10 @@ class JComboboxAction(val project: Project, private val disposable: Disposable, 
   private var latestMask: String? by latestMaskProperty
   val saveMask: () -> Unit = { FindSettings.getInstance().fileMask = latestMask }
 
+  fun onMaskChanged(mask: String?) {
+    latestMask = mask
+  }
+
   override fun createCustomComponent(presentation: Presentation, place: String): ComboboxActionComponent =
     ComboboxActionComponent(project, latestMaskProperty, disposable) { onChanged(it) }.also { it.isEditable = true }
 
@@ -97,8 +101,8 @@ class JComboboxAction(val project: Project, private val disposable: Disposable, 
       prototypeDisplayValue = emptyText
       isOpaque = false
       insertItemAt(emptyText, 0)
-      selectedItem = FindSettings.getInstance().fileMask ?: emptyText
-      findModel.fileFilter = FindSettings.getInstance().fileMask
+      selectedItem = latestMaskProperty.get() ?: emptyText
+      findModel.fileFilter = latestMaskProperty.get()
       addItemListener(itemListener)
 
       findModel.addObserver(findModelObserver)

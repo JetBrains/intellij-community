@@ -27,7 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class XDebuggerRunToCursorActionHandler(private val myIgnoreBreakpoints: Boolean) : XDebuggerProxySuspendedActionHandler() {
   override fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean {
-    return super.isEnabled(session, dataContext) && XDebuggerUtilImpl.getCaretPosition(session.project, dataContext) != null
+    return super.isEnabled(session, dataContext) && session.isRunToCursorActionAllowed && XDebuggerUtilImpl.getCaretPosition(session.project, dataContext) != null
   }
 
   override fun perform(session: XDebugSessionProxy, dataContext: DataContext) {

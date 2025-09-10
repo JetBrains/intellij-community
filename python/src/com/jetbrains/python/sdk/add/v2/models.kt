@@ -68,24 +68,25 @@ abstract class PythonAddInterpreterModel(
   open val state: AddInterpreterState = AddInterpreterState(propertyGraph)
   val targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null
 
-  internal val knownInterpreters: MutableStateFlow<List<PythonSelectableInterpreter>> = MutableStateFlow(emptyList())
-  private val _detectedInterpreters: MutableStateFlow<List<DetectedSelectableInterpreter>> = MutableStateFlow(emptyList())
-  val detectedInterpreters: StateFlow<List<DetectedSelectableInterpreter>> = _detectedInterpreters
+  internal val knownInterpreters: MutableStateFlow<List<PythonSelectableInterpreter>?> = MutableStateFlow(null)
+  private val _detectedInterpreters: MutableStateFlow<List<DetectedSelectableInterpreter>?> = MutableStateFlow(null)
+  val detectedInterpreters: StateFlow<List<DetectedSelectableInterpreter>?> = _detectedInterpreters
   val manuallyAddedInterpreters: MutableStateFlow<List<PythonSelectableInterpreter>> = MutableStateFlow(emptyList())
   private var installable: List<InstallableSelectableInterpreter> = emptyList()
   val condaEnvironments: MutableStateFlow<List<PyCondaEnv>> = MutableStateFlow(emptyList())
   val hatchEnvironmentsResult: MutableStateFlow<PyResult<List<HatchVirtualEnvironment>>?> = MutableStateFlow(null)
 
-  lateinit var allInterpreters: StateFlow<List<PythonSelectableInterpreter>>
-  lateinit var baseInterpreters: StateFlow<List<PythonSelectableInterpreter>>
+  lateinit var allInterpreters: StateFlow<List<PythonSelectableInterpreter>?>
+  lateinit var baseInterpreters: StateFlow<List<PythonSelectableInterpreter>?>
 
-  val interpreterLoading: MutableStateFlow<Boolean> = MutableStateFlow(true)
   val condaEnvironmentsLoading: MutableStateFlow<Boolean> = MutableStateFlow(true)
 
   @TestOnly
   @ApiStatus.Internal
   fun addDetected(detected: DetectedSelectableInterpreter) {
-    _detectedInterpreters.value += detected
+    _detectedInterpreters.value?.let { existing ->
+      _detectedInterpreters.value = existing + detected
+    }
   }
 
   // If the project is provided, sdks associated with it will be kept in the list of interpreters. If not, then they will be filtered out.
@@ -106,8 +107,6 @@ abstract class PythonAddInterpreterModel(
       val existingSelectableInterpreters = getExistingSelectableInterpreters()
       knownInterpreters.value = existingSelectableInterpreters
       _detectedInterpreters.value = getDetectedSelectableInterpreters(existingSelectableInterpreters)
-    }.invokeOnCompletion {
-      this.interpreterLoading.value = false
     }
 
     this.allInterpreters = combine(
@@ -115,16 +114,18 @@ abstract class PythonAddInterpreterModel(
       detectedInterpreters,
       manuallyAddedInterpreters,
     ) { known, detected, added ->
+      if (known == null || detected == null) return@combine null
       added + known + detected
-    }.map { it.distinctBy { int -> int.homePath }.sorted() }.stateIn(scope, started = SharingStarted.Eagerly, initialValue = emptyList())
+    }.map { all ->
+      all?.distinctBy { int -> int.homePath }?.sorted()
+    }.stateIn(scope, started = SharingStarted.Eagerly, initialValue = null)
 
-    this.baseInterpreters = detectedInterpreters.map { all ->
-      all.filter(DetectedSelectableInterpreter::isBase)
-    }.mapLatest { allExisting ->
-      val existingLanguageLevels = allExisting.map { it.languageLevel }.toSet()
+    this.baseInterpreters = detectedInterpreters.mapLatest { detected ->
+      val detectedBase = detected?.filter(DetectedSelectableInterpreter::isBase) ?: return@mapLatest null
+      val existingLanguageLevels = detectedBase.map { it.languageLevel }.toSet()
       val nonExistingInstallable = installable.filter { it.languageLevel !in existingLanguageLevels }
-      allExisting.sorted() + nonExistingInstallable
-    }.stateIn(scope, started = SharingStarted.Eagerly, initialValue = emptyList())
+      detectedBase.sorted() + nonExistingInstallable
+    }.stateIn(scope, started = SharingStarted.Eagerly, initialValue = null)
 
 
     scope.launch(CoroutineName("Detecting Conda Executable and environments") + Dispatchers.IO) {
@@ -257,31 +258,8 @@ abstract class PythonAddInterpreterModel(
   @RequiresEdt
   internal fun addInstalledInterpreter(homePath: Path, languageLevel: LanguageLevel): DetectedSelectableInterpreter {
     val installedInterpreter = DetectedSelectableInterpreter(homePath.pathString, languageLevel, true)
-    _detectedInterpreters.value += installedInterpreter
+    _detectedInterpreters.value = (_detectedInterpreters.value ?: emptyList()) + installedInterpreter
     return installedInterpreter
-  }
-
-  /**
-   * Given [pathToPython] returns either cleaned path (if valid) or null and reports error to [errorSink]
-   */
-  suspend fun getSystemPythonFromSelection(pathToPython: String, errorSink: ErrorSink): SystemPython? {
-    val result = try {
-      when (val r = systemPythonService.registerSystemPython(Path(pathToPython))) {
-        is Result.Failure -> PyResult.failure(r.error)
-        is Result.Success -> PyResult.success(r.result)
-      }
-    }
-    catch (e: InvalidPathException) {
-      PyResult.localizedError(e.localizedMessage)
-    }
-
-    return when (result) {
-      is Result.Success -> result.result
-      is Result.Failure -> {
-        errorSink.emit(result.error)
-        null
-      }
-    }
   }
 }
 
@@ -352,8 +330,8 @@ class PythonLocalAddInterpreterModel(projectPathFlows: ProjectPathFlows) : Pytho
     super.initialize(scope)
 
     val mostRecentlyUsedBasePath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
-    val interpreterToSelect = detectedInterpreters.value.find { it.homePath == mostRecentlyUsedBasePath }
-                              ?: baseInterpreters.value.filterIsInstance<ExistingSelectableInterpreter>().maxByOrNull { it.languageLevel }
+    val interpreterToSelect = detectedInterpreters.value?.find { it.homePath == mostRecentlyUsedBasePath }
+                              ?: baseInterpreters.value?.filterIsInstance<ExistingSelectableInterpreter>()?.maxByOrNull { it.languageLevel }
 
     if (interpreterToSelect != null) {
       state.baseInterpreter.set(interpreterToSelect)
@@ -458,10 +436,10 @@ class MutableTargetState(propertyGraph: PropertyGraph) : AddInterpreterState(pro
 
 
 internal val PythonAddInterpreterModel.existingSdks
-  get() = allInterpreters.value.filterIsInstance<ExistingSelectableInterpreter>().map { it.sdk }
+  get() = allInterpreters.value?.filterIsInstance<ExistingSelectableInterpreter>()?.map { it.sdk } ?: emptyList()
 
 internal fun PythonAddInterpreterModel.findInterpreter(path: String): PythonSelectableInterpreter? {
-  return allInterpreters.value.find { it.homePath == path }
+  return allInterpreters.value?.find { it.homePath == path }
 }
 
 internal suspend fun PythonAddInterpreterModel.detectCondaEnvironmentsOrError(errorSink: ErrorSink) {
@@ -482,4 +460,28 @@ internal suspend fun PythonAddInterpreterModel.getBasePath(module: Module?): Pat
   val pyProjectTomlBased = module?.let { PyProjectToml.findFile(it)?.toNioPathOrNull()?.parent }
 
   pyProjectTomlBased ?: module?.basePath?.let { Path.of(it) } ?: projectPathFlows.projectPathWithDefault.first()
+}
+
+/**
+ * Given [pathToPython] returns either cleaned path (if valid) or null and reports error to [errorSink]
+ */
+@ApiStatus.Internal
+suspend fun getSystemPythonFromSelection(pathToPython: String, errorSink: ErrorSink): SystemPython? {
+  val result = try {
+    when (val r = SystemPythonService().registerSystemPython(Path(pathToPython))) {
+      is Result.Failure -> PyResult.failure(r.error)
+      is Result.Success -> PyResult.success(r.result)
+    }
+  }
+  catch (e: InvalidPathException) {
+    PyResult.localizedError(e.localizedMessage)
+  }
+
+  return when (result) {
+    is Result.Success -> result.result
+    is Result.Failure -> {
+      errorSink.emit(result.error)
+      null
+    }
+  }
 }

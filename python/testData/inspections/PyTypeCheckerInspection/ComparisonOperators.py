@@ -11,7 +11,7 @@ def test():
     c = C()
     f(<warning descr="Expected type 'str', got 'bool' instead">1 < 2</warning>)
     f(<warning descr="Expected type 'str', got 'bool' instead">o == o</warning>)
-    f(<warning descr="Expected type 'str', got 'bool' instead">o >= o</warning>)
+    f(o >= o)
     f(<warning descr="Expected type 'str', got 'bool' instead">'foo' > 'bar'</warning>)
     f(<warning descr="Expected type 'str', got 'bool' instead"><warning descr="Expected type 'int', got 'C' instead">c</warning> < 1</warning>)
     f(<warning descr="Expected type 'str', got 'List[Any]' instead">c > 1</warning>)

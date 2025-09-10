@@ -11,7 +11,7 @@ jvm_library(
   name = "kotlin-highlighting-shared",
   module_name = "kotlin.highlighting.shared",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -26,7 +26,6 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
-    "//platform/diff-impl",
     "//java/java-analysis-impl:analysis-impl",
     "//platform/lang-impl",
     "//platform/core-ui",

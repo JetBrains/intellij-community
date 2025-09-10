@@ -38,6 +38,10 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
         checkLocalClassCaching(myFixture)
     }
 
+    fun testAnnotationsOnClassCaching() {
+        annotationsOnClassCaching(myFixture)
+    }
+
     fun testThrowsList() {
         checkThrowsList(myFixture)
     }

@@ -6,7 +6,6 @@ import com.jetbrains.rhizomedb.DbContext
 import com.jetbrains.rhizomedb.Instruction
 import com.jetbrains.rhizomedb.Q
 import fleet.util.UID
-import fleet.util.associateByUnique
 import fleet.util.openmap.SerializedValue
 import kotlinx.serialization.KSerializer
 import kotlin.reflect.KClass
@@ -86,3 +85,14 @@ data class InstructionSet(private val coders: List<InstructionCoder<*, *>>) {
     }
   }
 }
+
+private fun <T, K> Iterable<T>.associateByUnique(keySelector: (T) -> K): Map<K, T> =
+  let { iter ->
+    buildMap {
+      for (x in iter) {
+        val key = keySelector(x)
+        require(put(key, x) == null) { "key $key is not unique" }
+      }
+    }
+  }
+

@@ -294,12 +294,6 @@ f:com.intellij.ide.GeneralSettingsState
 - bs:copy$default(com.intellij.ide.GeneralSettingsState,java.lang.String,java.lang.String,java.lang.Boolean,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,java.lang.Integer,com.intellij.ide.ProcessCloseConfirmation,I,Z,I,java.lang.Object):com.intellij.ide.GeneralSettingsState
 - equals(java.lang.Object):Z
 - hashCode():I
-f:com.intellij.ide.IdeCoreBundle
-- com.intellij.DynamicBundle
-- sf:BUNDLE:java.lang.String
-- sf:INSTANCE:com.intellij.ide.IdeCoreBundle
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 e:com.intellij.ide.ProcessCloseConfirmation
 - java.lang.Enum
 - sf:ASK:com.intellij.ide.ProcessCloseConfirmation

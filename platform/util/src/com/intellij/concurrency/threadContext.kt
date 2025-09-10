@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ThreadContext")
 @file:Experimental
 
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.util.Processor
+import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.captureCallableThreadContext
 import com.intellij.util.concurrency.capturePropagationContext
@@ -17,6 +18,7 @@ import com.intellij.util.concurrency.isCheckContextAssertions
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.ThreadContextElement
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -311,19 +313,47 @@ fun <T> installThreadContext(coroutineContext: CoroutineContext, replace: Boolea
  */
 @Deprecated("Use higher-order function for installation of thread context")
 fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = false): AccessToken {
-  return withThreadLocal(tlCoroutineContext) { previousContext ->
+  val applyToken = applyThreadContextElements(coroutineContext)
+  val tlToken = withThreadLocal(tlCoroutineContext) { previousContext ->
     @OptIn(InternalCoroutinesApi::class)
     val currentSnapshot = IntellijCoroutines.currentThreadCoroutineContext()
     if (!replace && previousContext.snapshot === currentSnapshot && previousContext.context != null) {
       LOG.error(Throwable("Thread context was already set: $previousContext. \n " +
-                "Most likely, you are using 'runBlocking' instead of 'runBlockingCancellable' somewhere in the asynchronous stack. \n" +
-                "Also, if you have any kind of manual event queue draining/pumping/flushing/etc \n" +
-                "you have to wrap the loop with `resetThreadContext().use { // your queue draining code }`. \n" +
-                "See usages of resetThreadContext().").apply {
+                          "Most likely, you are using 'runBlocking' instead of 'runBlockingCancellable' somewhere in the asynchronous stack. \n" +
+                          "Also, if you have any kind of manual event queue draining/pumping/flushing/etc \n" +
+                          "you have to wrap the loop with `resetThreadContext().use { // your queue draining code }`. \n" +
+                          "See usages of resetThreadContext().").apply {
         addSuppressed(previousContext.creationTrace ?: tracingHint())
       })
     }
     InstalledThreadContext(currentSnapshot, coroutineContext)
+  }
+  return object : AccessToken() {
+    override fun finish() {
+      tlToken.finish()
+      applyToken.finish()
+    }
+  }
+}
+
+private fun applyThreadContextElements(context: CoroutineContext): AccessToken {
+  val threadLocalValues: MutableList<Pair<ThreadContextElement<*>, Any?>> = SmartList()
+  context.fold(Unit) { _, elem ->
+    // CoroutineId uses expensive Thread.setName in its updateThreadContext
+    // this is visible in our benchmarks, and it is pretty useless
+    // so we explicitly ignore this context element
+    @Suppress("INVISIBLE_REFERENCE")
+    if (elem is ThreadContextElement<*> && elem !is kotlinx.coroutines.CoroutineId) {
+      threadLocalValues.add(elem to elem.updateThreadContext(context))
+    }
+  }
+  return object : AccessToken() {
+    override fun finish() {
+      for ((elem, previousValue) in threadLocalValues.asReversed()) {
+        @Suppress("MEMBER_PROJECTED_OUT")
+        elem.restoreThreadContext(context, previousValue)
+      }
+    }
   }
 }
 
@@ -372,6 +402,7 @@ fun installTemporaryThreadContext(coroutineContext: CoroutineContext): AccessTok
  *
  * TODO ? move to more appropriate package before removing `@Internal`
  */
+
 @Internal
 fun <T> withThreadLocal(variable: ThreadLocal<T>, update: (value: T) -> T): AccessToken {
   val previousValue = variable.get()

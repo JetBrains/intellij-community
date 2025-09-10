@@ -3,14 +3,15 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.packaging.PythonDependenciesExtractor
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.PythonPackageManager.Companion.PackageManagerErrorMessage
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
@@ -47,7 +48,9 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
   override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> {
     if (pythonPackages.isEmpty()) return PyResult.success(Unit)
 
-    val (standalonePackages, declaredPackages) = categorizePackages(pythonPackages)
+    val (standalonePackages, declaredPackages) = categorizePackages(pythonPackages).getOr {
+      return it
+    }
 
     uninstallStandalonePackages(standalonePackages).getOr { return it }
     uninstallDeclaredPackages(declaredPackages).getOr { return it }
@@ -55,14 +58,23 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
     return PyResult.success(Unit)
   }
 
+  override suspend fun extractDependencies(): PyResult<List<PythonPackage>> {
+    return uv.listTopLevelPackages()
+  }
+
   /**
    * Categorizes packages into standalone packages and pyproject.toml declared packages.
    */
-  private suspend fun categorizePackages(packages: Array<out String>): Pair<List<PyPackageName>, List<PyPackageName>> {
-    val dependencyNames = PythonDependenciesExtractor.forSdk(project, sdk)?.extract()?.map { it.name }?.toSet() ?: emptySet()
-    return packages
+  private suspend fun categorizePackages(packages: Array<out String>): PyResult<Pair<List<PyPackageName>, List<PyPackageName>>> {
+    val dependencyNames = extractDependencies().getOr {
+      return it
+    }.map { it.name }
+
+    val categorizedPackages =  packages
       .map { PyPackageName.from(it) }
-      .partition { it.name !in dependencyNames || sdk.uvUsePackageManagement }
+      .partition { it.name !in dependencyNames || sdk.uvUsePackageManagement  }
+
+    return PyResult.success(categorizedPackages)
   }
 
   /**
@@ -100,6 +112,12 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
   override suspend fun syncCommand(): PyResult<Unit> {
     return uv.sync().mapSuccess { }
   }
+
+  override fun syncErrorMessage(): PackageManagerErrorMessage =
+    PackageManagerErrorMessage(
+      message("python.uv.lockfile.out.of.sync"),
+      message("python.uv.update.lock")
+    )
 
   suspend fun lock(): PyResult<Unit> {
     uv.lock().getOr {

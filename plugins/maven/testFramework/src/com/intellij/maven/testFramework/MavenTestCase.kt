@@ -4,11 +4,11 @@ package com.intellij.maven.testFramework
 import com.intellij.UtilBundle
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.DataManager
-import com.intellij.maven.testFramework.wsl2.JdkWslTestInstaller
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
@@ -27,7 +27,11 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
+import com.intellij.platform.testFramework.eelJava.EelTestJdkProvider
 import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -35,7 +39,6 @@ import com.intellij.testFramework.utils.io.createFile
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
@@ -51,6 +54,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator.MavenProgressTracker
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.junit.Assume.assumeTrue
 import java.awt.HeadlessException
 import java.io.IOException
 import java.nio.charset.StandardCharsets
@@ -65,7 +69,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     private set
   private var myPathTransformer: RemotePathTransformerFactory.Transformer? = null
 
-  private lateinit var ourTempDir: Path
   private lateinit var myDir: Path
 
   private var myTestFixture: IdeaProjectTestFixture? = null
@@ -128,10 +131,9 @@ abstract class MavenTestCase : UsefulTestCase() {
     myProject = myTestFixture!!.project
     myPathTransformer = RemotePathTransformerFactory.createForProject(project)
     setupCustomJdk()
-    ensureTempDirCreated()
 
-    myDir = ourTempDir.resolve(getTestName(false))
-    myDir.ensureExists()
+    myDir = Path.of(myProject!!.basePath!!).parent
+    myDir.ensureFolderExists()
 
     mavenProgressIndicator = MavenProgressIndicator(project, EmptyProgressIndicator(ModalityState.nonModal()), null)
 
@@ -165,19 +167,9 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   private fun setupCustomJdk() {
-    var jdkPath: String? = null
-    if (isProjectInEelEnvironment()) {
-      jdkPath = getEelFixtureEngineJavaHome()
-    }
+    val jdkPath = EelTestJdkProvider.getJdkPath()
     if (myJdk == null && jdkPath != null) {
-      if (isProjectInWslEelEnvironment()) {
-        val definition = getTeamcityJavaItemDefinition()
-        if(definition!= null) {
-          val jdkToInstall = JdkWslTestInstaller.readJdkItem(Path.of(definition))
-          JdkWslTestInstaller(Path.of(jdkPath), jdkToInstall).checkOrInstallJDK()
-        }
-      }
-      myJdk = JavaSdk.getInstance().createJdk("Maven Test JDK", jdkPath)
+      myJdk = JavaSdk.getInstance().createJdk("Maven Test JDK", jdkPath.toString())
       val jdkTable = ProjectJdkTable.getInstance()
       WriteAction.runAndWait<RuntimeException> { jdkTable.addJdk(myJdk!!) }
     }
@@ -193,23 +185,6 @@ abstract class MavenTestCase : UsefulTestCase() {
         jdkTable.removeJdk(myJdk!!)
       }
     }
-  }
-
-
-  private fun isProjectInEelEnvironment(): Boolean {
-    return System.getenv("EEL_FIXTURE_ENGINE") != null
-  }
-
-  private fun isProjectInWslEelEnvironment(): Boolean {
-    return "wsl".equals(System.getenv("EEL_FIXTURE_ENGINE"), true)
-  }
-
-  private fun getEelFixtureEngineJavaHome(): String {
-    return System.getenv("EEL_FIXTURE_ENGINE_JAVA_HOME") ?: throw IllegalArgumentException("The system environment variable EEL_FIXTURE_ENGINE_JAVA_HOME should be explicitly specified")
-  }
-
-  private fun getTeamcityJavaItemDefinition(): String? {
-    return System.getenv("TEAMCITY_WSL_JDK_DEFINITION")
   }
 
   protected fun waitForMavenUtilRunnablesComplete() {
@@ -232,8 +207,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     return "LicenseManager is not installed" == message
   }
 
-
-
   override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
     LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
       override fun processError(
@@ -247,23 +220,11 @@ abstract class MavenTestCase : UsefulTestCase() {
       }
     }) { super.runBare(testRunnable) }
   }
-  
-
-  private fun findExisingJdkByPath(jdkPath: String): Sdk? {
-    val sdk = ProjectJdkTable.getInstance().allJdks.find { jdkPath == it.homePath }!!
-    val jdkTable = ProjectJdkTable.getInstance()
-    for (existingSdk in jdkTable.allJdks) {
-      if (existingSdk === sdk) return sdk
-    }
-    return null
-  }
 
   override fun tearDown() {
     RunAll(
       ThrowableRunnable {
-        val mavenProgressTracker =
-          myProject!!.getServiceIfCreated(MavenProgressTracker::class.java)
-        mavenProgressTracker?.assertProgressTasksCompleted()
+        myProject?.serviceIfCreated<MavenProgressTracker>()?.assertProgressTasksCompleted()
       },
       ThrowableRunnable { MavenServerManager.getInstance().closeAllConnectorsAndWait() },
       ThrowableRunnable { checkAllMavenConnectorsDisposed() },
@@ -297,30 +258,8 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
   }
 
-  private fun ensureTempDirCreated() {
-    ourTempDir = when {
-      isProjectInWslEelEnvironment() -> {
-        val fileSystemMount = getFileSystemMount()
-        if (fileSystemMount.isBlank()) {
-          throw IllegalArgumentException("The EEL_FIXTURE_MOUNT environment variable is not specified")
-        }
-        Path(fileSystemMount).resolve("/tmp/mavenTests")
-      }
-      isProjectInEelEnvironment() -> {
-        val fileSystemMount = getFileSystemMount()
-        if (fileSystemMount.isBlank()) {
-          throw IllegalArgumentException("The EEL_FIXTURE_MOUNT environment variable is not specified")
-        }
-        Path(fileSystemMount).resolve("mavenTests")
-      }
-      else -> FileUtil.getTempDirectory().toNioPathOrNull()!!.resolve("mavenTests")
-    }
-    FileUtil.delete(ourTempDir)
-    ourTempDir.ensureExists()
-  }
-
   protected open fun setUpFixtures() {
-    val fixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, useDirectoryBasedProjectFormat()).fixture
+    val fixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder("project", useDirectoryBasedProjectFormat()).fixture
     myTestFixture = fixture
     fixture.setUp()
   }
@@ -331,9 +270,9 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected open fun setUpInWriteAction() {
-    val projectDir = myDir.resolve("project")
-    projectDir.createDirectories()
-    myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)
+    val projectRoot = Path.of(myProject!!.basePath)
+    projectRoot.ensureFolderExists()
+    myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectRoot)
   }
 
   protected open fun tearDownFixtures() {
@@ -405,6 +344,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected fun updateSettingsXmlFully(@Language("XML") content: @NonNls String): VirtualFile {
     val ioFile = myDir.resolve("settings.xml")
     ioFile.findOrCreateFile()
+    VfsRootAccess.allowRootAccess(myProject!!, ioFile.toString())
     val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile)!!
     setFileContent(f, content)
     refreshFiles(listOf(f))
@@ -507,12 +447,12 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   protected fun createProjectSubDir(relativePath: String): VirtualFile {
     val f = projectPath.resolve(relativePath)
-    f.createDirectories()
+    f.ensureFolderExists()
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
   }
 
   protected fun createFile(path: Path): VirtualFile {
-    path.parent.createDirectories()
+    path.parent.ensureFolderExists()
     path.createFile()
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
   }
@@ -782,10 +722,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     return connector
   }
 
-  protected fun getFileSystemMount(): String {
-    return System.getenv("EEL_FIXTURE_MOUNT") ?: ""
-  }
-
   private val testMavenHome: String?
     get() = System.getProperty("idea.maven.test.home")
 
@@ -795,10 +731,13 @@ abstract class MavenTestCase : UsefulTestCase() {
     return file1Bytes.contentEquals(file2Bytes)
   }
 
-  private fun Path.ensureExists() {
+  private fun Path.ensureFolderExists() {
+    if (!parent.exists()) {
+      createParentDirectories()
+    }
     if (!exists()) {
       try {
-        createDirectories()
+        createDirectory()
       }
       catch (e: Exception) {
         throw IOException(UtilBundle.message("exception.directory.can.not.create", this), e)
@@ -813,6 +752,10 @@ abstract class MavenTestCase : UsefulTestCase() {
   @Language("XML")
   fun createPomXml(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: @NonNls String?): @NonNls String {
     return createPomXml(modelVersion, xml)
+  }
+
+  protected fun assumeOnLocalEnvironmentOnly(cause: String) {
+    assumeTrue("Unable to run the test in non-local environment: $cause", LocalEelDescriptor == project.getEelDescriptor())
   }
 
   companion object {

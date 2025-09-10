@@ -6,9 +6,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndLibraryProjectDescriptor {
@@ -58,15 +58,15 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
     }
 
     public KotlinWithJdkAndRuntimeLightProjectDescriptor(
-            @NotNull List<? extends File> libraryFiles,
-            @NotNull List<? extends File> librarySourceFiles
+            @NotNull List<? extends Path> libraryFiles,
+            @NotNull List<? extends Path> librarySourceFiles
     ) {
         this(libraryFiles, librarySourceFiles, null);
     }
 
     public KotlinWithJdkAndRuntimeLightProjectDescriptor(
-            @NotNull List<? extends File> libraryFiles,
-            @NotNull List<? extends File> librarySourceFiles,
+            @NotNull List<? extends Path> libraryFiles,
+            @NotNull List<? extends Path> librarySourceFiles,
             @Nullable LanguageLevel languageLevel
     ) {
         super(libraryFiles, librarySourceFiles, languageLevel);

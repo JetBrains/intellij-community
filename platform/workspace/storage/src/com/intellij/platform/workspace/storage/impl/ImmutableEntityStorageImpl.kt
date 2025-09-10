@@ -197,6 +197,14 @@ internal class MutableEntityStorageImpl(
       .map { entityDataByIdOrDie(it).createEntity(this) as R }
   }
 
+  override fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> hasReferrers(
+    id: SymbolicEntityId<E>,
+    entityClass: Class<R>,
+  ): Boolean = hasReferrersTimeMs.addMeasuredTime {
+    val classId = entityClass.toClassId()
+    return indexes.softLinks.getIdsByEntry(id).any { it.clazz == classId }
+  }
+
   @Suppress("UNCHECKED_CAST")
   override fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E? = resolveTimeMs.addMeasuredTime {
     val entityIds = indexes.symbolicIdIndex.getIdsByEntry(id) ?: return@addMeasuredTime null
@@ -253,6 +261,11 @@ internal class MutableEntityStorageImpl(
       // Add the change to changelog
       changeLog.addAddEvent(newEntityData.createEntityId(), newEntityData)
 
+      // Update soft links index
+      if (newEntityData is SoftLinkable) {
+        newEntityData.index(indexes.softLinks)
+        trackChangedSoftLinks()
+      }
       // Update indexes
       indexes.entityAdded(newEntityData, symbolicId)
     }
@@ -348,6 +361,7 @@ internal class MutableEntityStorageImpl(
 
       if (modifiableEntity.changedProperty.isNotEmpty()) {
         this.indexes.updateSymbolicIdIndexes(this, updatedEntity, beforeSymbolicId, copiedData, modifiableEntity)
+        trackChangedSoftLinks()
       }
 
       updatedEntity
@@ -394,6 +408,22 @@ internal class MutableEntityStorageImpl(
     finally {
       finishWriting()
     }
+  }
+
+  override fun collectSymbolicEntityIdsChanges(): Map<Class<*>, Set<ReferenceChange<*>>> {
+    val result = mutableMapOf<Class<*>, MutableSet<ReferenceChange<*>>>()
+
+    for (entry in changeLog.addedSymbolicIds) {
+      val addedIds = entry.value.map { ReferenceChange.Added(it) }
+      result.computeIfAbsent(entry.key) { HashSet() }.addAll(addedIds)
+    }
+
+    for (entry in changeLog.removedSymbolicIds) {
+      val removedIds = entry.value.map { ReferenceChange.Removed(it) }
+      result.computeIfAbsent(entry.key) { HashSet() }.addAll(removedIds)
+    }
+
+    return result
   }
 
   override fun collectChanges(): Map<Class<*>, List<EntityChange<*>>> = collectChangesTimeMs.addMeasuredTime {
@@ -824,7 +854,10 @@ internal class MutableEntityStorageImpl(
 
     // Update indexes and generate changelog entry
     val entityData = entityDataByIdOrDie(id)
-    if (entityData is SoftLinkable) indexes.removeFromSoftLinksIndex(entityData)
+    if (entityData is SoftLinkable) {
+      indexes.removeFromSoftLinksIndex(entityData)
+      trackChangedSoftLinks()
+    }
     indexes.entityRemoved(id)
     this.changeLog.addRemoveEvent(id, originalEntityData)
 
@@ -880,6 +913,16 @@ internal class MutableEntityStorageImpl(
     }
   }
 
+  internal fun trackChangedSoftLinks() {
+    indexes.softLinks.addedValues().forEach { (k, v) ->
+      changeLog.addAddedIds(k.clazz.findWorkspaceEntity(), v)
+    }
+    indexes.softLinks.removedValues().forEach { (k, v) ->
+      changeLog.addRemovedIds(k.clazz.findWorkspaceEntity(), v)
+    }
+    indexes.softLinks.clearTrackedValues()
+  }
+
   companion object {
 
     private val LOG = logger<MutableEntityStorageImpl>()
@@ -887,6 +930,7 @@ internal class MutableEntityStorageImpl(
     private val instancesCounter: AtomicLong = AtomicLong()
     private val getEntitiesTimeMs = MillisecondsMeasurer()
     private val getReferrersTimeMs = MillisecondsMeasurer()
+    private val hasReferrersTimeMs = MillisecondsMeasurer()
     private val resolveTimeMs = MillisecondsMeasurer()
     private val getEntitiesBySourceTimeMs = MillisecondsMeasurer()
     private val addEntityTimeMs = MillisecondsMeasurer()
@@ -905,6 +949,7 @@ internal class MutableEntityStorageImpl(
       val instancesCountCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.instances.count").buildObserver()
       val getEntitiesTimeCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.entities.ms").buildObserver()
       val getReferrersTimeCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.referrers.ms").buildObserver()
+      val hasReferrersTimeCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.hasReferrers.ms").buildObserver()
       val resolveTimeCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.resolve.ms").buildObserver()
       val getEntitiesBySourceTimeCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.entities.by.source.ms").buildObserver()
       val addEntityTimeCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.add.entity.ms").buildObserver()
@@ -924,6 +969,7 @@ internal class MutableEntityStorageImpl(
           instancesCountCounter.record(instancesCounter.get())
           getEntitiesTimeCounter.record(getEntitiesTimeMs.asMilliseconds())
           getReferrersTimeCounter.record(getReferrersTimeMs.asMilliseconds())
+          hasReferrersTimeCounter.record(hasReferrersTimeMs.asMilliseconds())
           resolveTimeCounter.record(resolveTimeMs.asMilliseconds())
           getEntitiesBySourceTimeCounter.record(getEntitiesBySourceTimeMs.asMilliseconds())
           addEntityTimeCounter.record(addEntityTimeMs.asMilliseconds())
@@ -938,7 +984,8 @@ internal class MutableEntityStorageImpl(
           getMutableExternalMappingTimeCounter.record(getMutableExternalMappingTimeMs.asMilliseconds())
           getMutableVFUrlIndexTimeCounter.record(getMutableVFUrlIndexTimeMs.asMilliseconds())
         },
-        instancesCountCounter, getEntitiesTimeCounter, getReferrersTimeCounter, resolveTimeCounter,
+        instancesCountCounter, getEntitiesTimeCounter, getReferrersTimeCounter,
+        hasReferrersTimeCounter, resolveTimeCounter,
         getEntitiesBySourceTimeCounter, addEntityTimeCounter,
         putEntityTimeCounter, modifyEntityTimeCounter, removeEntityTimeCounter, replaceBySourceTimeCounter,
         collectChangesTimeCounter, hasSameEntitiesTimeCounter, toSnapshotTimeCounter, applyChangesFromTimeCounter,
@@ -995,6 +1042,11 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
     return indexes.softLinks.getIdsByEntry(id).asSequence()
       .filter { it.clazz == classId }
       .map { entityDataByIdOrDie(it).createEntity(this) as R }
+  }
+
+  override fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> hasReferrers(id: SymbolicEntityId<E>, entityClass: Class<R>): Boolean {
+    val classId = entityClass.toClassId()
+    return indexes.softLinks.getIdsByEntry(id).any { it.clazz == classId }
   }
 
   override fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E? {

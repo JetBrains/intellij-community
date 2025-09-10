@@ -321,7 +321,7 @@ public class PluginUpdatesService {
   ) {
     return updateResult -> {
       if (updateResult == null) consumer.accept(null);
-      else consumer.accept(ContainerUtil.map(updateResult.getPluginUpdates().getAll(), downloader -> new PluginUiModelAdapter(downloader.getDescriptor())));
+      else consumer.accept(ContainerUtil.map(updateResult.getPluginUpdates().getAll(), downloader -> downloader.getUiModel()));
     };
   }
 }

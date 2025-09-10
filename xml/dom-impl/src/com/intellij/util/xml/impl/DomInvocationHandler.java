@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,10 +24,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
-import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
-import com.intellij.util.xml.reflect.DomAttributeChildDescription;
-import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import com.intellij.util.xml.reflect.*;
 import com.intellij.util.xml.stubs.*;
 import com.intellij.xml.util.InclusionProvider;
 import net.sf.cglib.proxy.AdvancedProxy;
@@ -406,12 +403,22 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     List<? extends AbstractDomChildrenDescription> descriptions = getGenericInfo().getChildrenDescriptions();
     for (int i = 0, descriptionsSize = descriptions.size(); i < descriptionsSize; i++) {
       AbstractDomChildrenDescription description = descriptions.get(i);
+      // this allows skipping non-stubbed elements and avoiding AST loading for files included with xi:include:
+      if (visitingNamedElementsAndNameDoesNotMatch(visitor, description)) {
+        continue;
+      }
       List<? extends DomElement> values = description.getValues(element);
       for (int j = 0, valuesSize = values.size(); j < valuesSize; j++) {
         DomElement value = values.get(j);
         value.accept(visitor);
       }
     }
+  }
+
+  private static boolean visitingNamedElementsAndNameDoesNotMatch(DomElementVisitor visitor, AbstractDomChildrenDescription description) {
+    return description instanceof DomChildrenDescription domChildrenDescription &&
+           visitor instanceof DomLocalNameElementVisitor domLocalNameElementVisitor &&
+           !domChildrenDescription.getXmlElementName().equals(domLocalNameElementVisitor.getLocalName());
   }
 
   protected final @NotNull Converter<?> getScalarConverter() {
@@ -873,5 +880,22 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
       }
     }
   }
-}
 
+  /**
+   * Optimization allowing visiting only elements with a specified name,
+   * which helps avoid visiting non-stubbed elements and loading AST.
+   */
+  public abstract static class DomLocalNameElementVisitor implements DomElementVisitor {
+
+    private final String myLocalName;
+
+    public DomLocalNameElementVisitor(String localName) {
+      myLocalName = localName;
+    }
+
+    public String getLocalName() {
+      return myLocalName;
+    }
+  }
+
+}

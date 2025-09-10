@@ -46,6 +46,14 @@ interface NavigationOptions {
   @Internal
   fun sourceNavigationOnly(value: Boolean): NavigationOptions
 
+  /**
+   * Sets whether to force the focus regardless of other conditions.
+   *
+   * Default: `false`.
+   */
+  @Internal
+  fun forceFocus(value: Boolean): NavigationOptions
+
   companion object {
 
     @JvmStatic
@@ -61,6 +69,7 @@ interface NavigationOptions {
       preserveCaret = false,
       openInRightSplit = false,
       sourceNavigationOnly = false,
+      forceFocus = false,
     )
   }
 
@@ -73,6 +82,7 @@ interface NavigationOptions {
     // but not opening library settings (https://youtrack.jetbrains.com/issue/IJPL-157790)
     @Experimental @JvmField val sourceNavigationOnly: Boolean,
     @Experimental @JvmField val openInRightSplit: Boolean,
+    @Experimental @JvmField val forceFocus: Boolean,
   ) : NavigationOptions {
     override fun requestFocus(value: Boolean): NavigationOptions = copy(requestFocus = value)
 
@@ -81,5 +91,7 @@ interface NavigationOptions {
     override fun openInRightSplit(value: Boolean): NavigationOptions = copy(openInRightSplit = value)
 
     override fun sourceNavigationOnly(value: Boolean): NavigationOptions = copy(sourceNavigationOnly = value)
+
+    override fun forceFocus(value: Boolean): NavigationOptions = copy(forceFocus = value)
   }
 }

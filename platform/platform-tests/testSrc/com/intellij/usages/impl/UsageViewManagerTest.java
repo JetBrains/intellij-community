@@ -3,24 +3,30 @@ package com.intellij.usages.impl;
 
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.testFramework.ProjectExtension;
 import com.intellij.testFramework.TemporaryDirectoryExtension;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.FixturesKt;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewManager;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
+@TestApplication
 public class UsageViewManagerTest {
-  @RegisterExtension
-  public static final ProjectExtension projectRule = new ProjectExtension();
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(null, "IJ"), OpenProjectTask.build(), false);
+  private static final TestFixture<com.intellij.openapi.module.Module> moduleFixture = FixturesKt.moduleFixture(projectFixture, "shared", null);
 
   @RegisterExtension
   public final TemporaryDirectoryExtension temporaryDirectory = new TemporaryDirectoryExtension();
@@ -32,12 +38,12 @@ public class UsageViewManagerTest {
     findModel.setDirectoryName(dir.getPath());
     findModel.setWithSubdirectories(true);
     findModel.setProjectScope(false);
-    UsageTarget target = new FindInProjectUtil.StringUsageTarget(projectRule.getProject(), findModel);
-    UsageViewManagerImpl manager = (UsageViewManagerImpl)UsageViewManager.getInstance(projectRule.getProject());
+    UsageTarget target = new FindInProjectUtil.StringUsageTarget(projectFixture.get(), findModel);
+    UsageViewManagerImpl manager = (UsageViewManagerImpl)UsageViewManager.getInstance(projectFixture.get());
     ApplicationManager.getApplication().runReadAction(() -> {
       SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target}).get();
       GlobalSearchScope expectedScope = GlobalSearchScopesCore.directoryScope(
-        projectRule.getProject(),
+        projectFixture.get(),
         FindInProjectUtil.getDirectory(findModel),
         true
       );
@@ -47,13 +53,13 @@ public class UsageViewManagerTest {
 
   @Test
   public void scopeCreatedForFindInModuleContent() {
-    Module module = projectRule.getModule();
+    com.intellij.openapi.module.Module module = moduleFixture.get();
 
     FindModel findModel = new FindModel();
     findModel.setModuleName(module.getName());
     findModel.setProjectScope(false);
-    UsageTarget target = new FindInProjectUtil.StringUsageTarget(projectRule.getProject(), findModel);
-    UsageViewManagerImpl manager = (UsageViewManagerImpl)UsageViewManager.getInstance(projectRule.getProject());
+    UsageTarget target = new FindInProjectUtil.StringUsageTarget(projectFixture.get(), findModel);
+    UsageViewManagerImpl manager = (UsageViewManagerImpl)UsageViewManager.getInstance(projectFixture.get());
     SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target}).get();
     assertThat(module.getModuleContentScope()).isEqualTo(scope);
   }

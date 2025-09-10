@@ -18,6 +18,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import java.io.File
+import java.nio.file.Files
 import kotlin.test.assertTrue
 
 private const val RECORDER_ID = "TEST"
@@ -63,6 +64,21 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
     return newValidator(loadContent(fileName))
   }
 
+  internal fun newValidatorByFileWithDictionary(fileName: String, dictionaryFileName: String): TestSensitiveDataValidator {
+    val content = loadContent(fileName)
+    val persistence = TestEventLogMetadataPersistence(content)
+    val dictionaryFile = File(PlatformTestUtil.getPlatformTestDataPath() + "fus/validation/" + dictionaryFileName)
+    persistence.dictionaryStorage.updateDictionaryByName(dictionaryFile.name, Files.readAllBytes(dictionaryFile.toPath()))
+    persistence.setDictionaryLastModified(dictionaryFile.name, dictionaryFile.lastModified())
+    val storage = object : ValidationRulesPersistedStorage(RECORDER_ID, persistence, TestEventLogMetadataLoader(content)) {
+      override fun createValidators(build: EventLogBuild?,
+                                    groups: EventGroupRemoteDescriptors): MutableMap<String, EventGroupRules> {
+        return super.createValidators(build, groups)
+      }
+    }
+    return TestSensitiveDataValidator(storage, RECORDER_ID)
+  }
+
   internal fun loadContent(fileName: String): String {
     val file = File(PlatformTestUtil.getPlatformTestDataPath() + "fus/validation/" + fileName)
     assertTrue { file.exists() }
@@ -103,6 +119,10 @@ class TestEventLogMetadataLoader(private val myContent: String) : EventLogMetada
   override fun getLastModifiedOnServer(): Long = 0
 
   override fun loadMetadataFromServer(): String = myContent
+
+  override fun getDictionariesLastModifiedOnServer(recorderId: String?): Map<String?, Long?> = emptyMap()
+
+  override fun loadDictionaryFromServer(recorderId: String?, dictionaryName: String?): String = ""
 
   override fun getOptionValues(): Map<String, String> = emptyMap()
 }

@@ -18,7 +18,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShFileType;
 import com.intellij.sh.ShLanguage;
-import com.intellij.sh.formatter.ShShfmtFormatterUtil;
+import com.intellij.sh.formatter.ShFormatterDownloader;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.sh.utils.ProjectUtil;
 import com.intellij.ui.DocumentAdapter;
@@ -65,7 +65,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     myShfmtPathSelector.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent documentEvent) {
-        myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(myShfmtPathSelector.getText()));
+        myWarningPanel.setVisible(!ShFormatterDownloader.getInstance().isValidPath(myShfmtPathSelector.getText()));
       }
     });
 
@@ -86,9 +86,9 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     myIndentField = new IntegerField(null, CodeStyleConstraints.MIN_INDENT_SIZE, CodeStyleConstraints.MAX_INDENT_SIZE);
     myTabField = new IntegerField(null, CodeStyleConstraints.MIN_TAB_SIZE, CodeStyleConstraints.MAX_TAB_SIZE);
     myShfmtDownloadLink = new ActionLink(ShBundle.message("sh.code.style.download.link"), e -> {
-        ShShfmtFormatterUtil.download(myProject,
-                                      () -> myShfmtPathSelector.setText(ShSettings.getShfmtPath(myProject)),
-                                      () -> myErrorLabel.setVisible(true));
+        ShFormatterDownloader.getInstance().download(myProject,
+                                                     () -> myShfmtPathSelector.setText(ShSettings.getShfmtPath(myProject)),
+                                                     () -> myErrorLabel.setVisible(true));
     });
   }
 
@@ -128,7 +128,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     shSettings.MINIFY_PROGRAM = myMinifyProgram.isSelected();
     shSettings.USE_UNIX_LINE_SEPARATOR = myUnixLineSeparator.isSelected();
     ShSettings.setShfmtPath(myProject, myShfmtPathSelector.getText());
-    myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(myShfmtPathSelector.getText()));
+    myWarningPanel.setVisible(!ShFormatterDownloader.getInstance().isValidPath(myShfmtPathSelector.getText()));
     myErrorLabel.setVisible(false);
   }
 
@@ -169,7 +169,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     myMinifyProgram.setSelected(shSettings.MINIFY_PROGRAM);
     myUnixLineSeparator.setSelected(shSettings.USE_UNIX_LINE_SEPARATOR);
     myShfmtPathSelector.setText(ShSettings.getShfmtPath(myProject));
-    myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(ShSettings.getShfmtPath(myProject)));
+    myWarningPanel.setVisible(!ShFormatterDownloader.getInstance().isValidPath(ShSettings.getShfmtPath(myProject)));
     myErrorLabel.setVisible(false);
   }
 

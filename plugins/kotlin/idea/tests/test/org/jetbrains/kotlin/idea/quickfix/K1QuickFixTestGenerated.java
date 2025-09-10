@@ -3298,6 +3298,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("companionObjectConstructor.kt")
+        public void testCompanionObjectConstructor() throws Exception {
+            runTest("testData/quickfix/changeObjectToClass/companionObjectConstructor.kt");
+        }
+
         @TestMetadata("primaryConstructor.kt")
         public void testPrimaryConstructor() throws Exception {
             runTest("testData/quickfix/changeObjectToClass/primaryConstructor.kt");
@@ -5764,6 +5769,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/member/innerClass.kt");
                     }
 
+                    @TestMetadata("propertyLikeCall.kt")
+                    public void testPropertyLikeCall() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/propertyLikeCall.kt");
+                    }
+
                     @TestMetadata("propertyOnUserType.kt")
                     public void testPropertyOnUserType() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/member/propertyOnUserType.kt");
@@ -5931,6 +5941,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     @TestMetadata("inLambdaWithExpectedType5.kt")
                     public void testInLambdaWithExpectedType5() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/simple/inLambdaWithExpectedType5.kt");
+                    }
+
+                    @TestMetadata("incompileableCode.kt")
+                    public void testIncompileableCode() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/incompileableCode.kt");
                     }
 
                     @TestMetadata("insideIfCondition.kt")
@@ -9737,6 +9752,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/explicitlyIgnoreReturnValue/parentheses.kt");
         }
 
+        @TestMetadata("parenthesesInIfBranch.kt")
+        public void testParenthesesInIfBranch() throws Exception {
+            runTest("testData/quickfix/explicitlyIgnoreReturnValue/parenthesesInIfBranch.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/quickfix/explicitlyIgnoreReturnValue/simple.kt");
@@ -11658,6 +11678,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         public void testBasic() throws Exception {
             runTest("testData/quickfix/missingConstructorBrackets/basic.kt");
         }
+
+        @TestMetadata("constructor.kt")
+        public void testConstructor() throws Exception {
+            runTest("testData/quickfix/missingConstructorBrackets/constructor.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -12391,6 +12416,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("removeRedundantNullable.kt")
             public void testRemoveRedundantNullable() throws Exception {
                 runTest("testData/quickfix/nullables/removeRedundantNullable.kt");
+            }
+
+            @TestMetadata("removeRedundantNullable1.kt")
+            public void testRemoveRedundantNullable1() throws Exception {
+                runTest("testData/quickfix/nullables/removeRedundantNullable1.kt");
             }
 
             @TestMetadata("removeSupertypeNullable1.kt")
@@ -13824,6 +13854,35 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             public void testVirtualMethodHiddenWithPublicModifier() throws Exception {
                 runTest("testData/quickfix/override/virtualMethodHiddenWithPublicModifier.kt");
             }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/overridingIgnorableWithMustUse")
+    public static class OverridingIgnorableWithMustUse extends AbstractK1QuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("alreadyAnnotated.kt")
+        public void testAlreadyAnnotated() throws Exception {
+            runTest("testData/quickfix/overridingIgnorableWithMustUse/alreadyAnnotated.kt");
+        }
+
+        @TestMetadata("class.kt")
+        public void testClass() throws Exception {
+            runTest("testData/quickfix/overridingIgnorableWithMustUse/class.kt");
+        }
+
+        @TestMetadata("file.kt")
+        public void testFile() throws Exception {
+            runTest("testData/quickfix/overridingIgnorableWithMustUse/file.kt");
         }
     }
 

@@ -5,6 +5,7 @@ from antlr4.tree.Tree import ParseTree as ParseTree
 from antlr4.xpath.XPathLexer import XPathLexer as XPathLexer
 
 class ParseTreePattern:
+    __slots__ = ("matcher", "patternRuleIndex", "pattern", "patternTree")
     matcher: Incomplete
     patternRuleIndex: Incomplete
     pattern: Incomplete

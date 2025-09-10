@@ -8,10 +8,8 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.EelPlatformKt;
 import com.intellij.platform.eel.provider.EelProviderUtil;
@@ -39,10 +37,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.isDirectory;
 import static org.jetbrains.plugins.terminal.TerminalStartupKt.findEelDescriptor;
+import static org.jetbrains.plugins.terminal.util.TerminalEnvironment.TERMINAL_EMULATOR;
+import static org.jetbrains.plugins.terminal.util.TerminalEnvironment.TERM_SESSION_ID;
 
 @ApiStatus.Internal
 public final class LocalOptionsConfigurer {
@@ -52,7 +51,7 @@ public final class LocalOptionsConfigurer {
     String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory(), project);
     List<String> initialCommand = getInitialCommand(baseOptions, project, workingDir);
     var eelDescriptor = findEelDescriptor(workingDir, initialCommand);
-    Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), workingDir, project, eelDescriptor);
+    Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), project, eelDescriptor, initialCommand);
 
     TerminalWidget widget = baseOptions.getWidget();
     if (widget != null) {
@@ -115,9 +114,9 @@ public final class LocalOptionsConfigurer {
   }
 
   private static @NotNull Map<String, String> getTerminalEnvironment(@NotNull Map<String, String> baseEnvs,
-                                                                     @NotNull String workingDir,
                                                                      @NotNull Project project,
-                                                                     @NotNull EelDescriptor eelDescriptor) {
+                                                                     @NotNull EelDescriptor eelDescriptor,
+                                                                     @NotNull List<String> shellCommand) {
     final var isWindows = EelPlatformKt.isWindows(eelDescriptor.getOsFamily());
 
     Map<String, String> envs = isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
@@ -133,6 +132,12 @@ public final class LocalOptionsConfigurer {
         envs.putAll(fetchLoginShellEnvVariables(eelDescriptor));
       }
       EnvironmentRestorer.restoreOverriddenVars(envs);
+      if (envs.isEmpty()) {
+        LOG.warn("Empty parent environment for " + shellCommand + " on (" + eelDescriptor.getMachine().getName() + ")");
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Parent environment for " + shellCommand + " on (" + eelDescriptor.getMachine().getName() + ")" + ": " + envs);
+      }
     }
     else {
       LOG.info("No parent environment passed");
@@ -142,20 +147,20 @@ public final class LocalOptionsConfigurer {
     if (!isWindows) {
       envs.put("TERM", "xterm-256color");
     }
-    envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
-    envs.put("TERM_SESSION_ID", UUID.randomUUID().toString());
+    envs.put(TERMINAL_EMULATOR, "JetBrains-JediTerm");
+    envs.put(TERM_SESSION_ID, UUID.randomUUID().toString());
 
     TerminalEnvironment.INSTANCE.setCharacterEncoding(envs);
 
-    if (TrustedProjects.isProjectTrusted(project)) {
+    // user-defined envs are passed for trusted projects only (IJPL-111912)
+    EnvironmentVariablesData trustedEnvData = TrustedProjects.isProjectTrusted(project) ? envData : null;
+    if (trustedEnvData != null) {
       PathMacroManager macroManager = PathMacroManager.getInstance(project);
-      for (Map.Entry<String, String> env : envData.getEnvs().entrySet()) {
+      for (Map.Entry<String, String> env : trustedEnvData.getEnvs().entrySet()) {
         envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
       }
-      if (WslPath.isWslUncPath(workingDir)) {
-        setupWslEnv(envData.getEnvs(), envs);
-      }
     }
+    TerminalEnvironment.setWslEnv(eelDescriptor, shellCommand, trustedEnvData, envs);
     return envs;
   }
 
@@ -196,17 +201,6 @@ public final class LocalOptionsConfigurer {
 
   private static @NotNull String getShellPath(@NotNull Project project) {
     return TerminalProjectOptionsProvider.getInstance(project).getShellPath();
-  }
-
-  private static void setupWslEnv(@NotNull Map<String, String> userEnvs, @NotNull Map<String, String> resultEnvs) {
-    String wslEnv = userEnvs.keySet().stream().map(name -> name + "/u").collect(Collectors.joining(":"));
-    if (wslEnv.isEmpty()) return;
-    String prevValue = userEnvs.get(WslConstants.WSLENV);
-    if (prevValue == null) {
-      prevValue = System.getenv(WslConstants.WSLENV);
-    }
-    String newWslEnv = prevValue != null ? StringUtil.trimEnd(prevValue, ':') + ':' + wslEnv : wslEnv;
-    resultEnvs.put(WslConstants.WSLENV, newWslEnv);
   }
 
   private static Map<String, String> fetchLoginShellEnvVariables(@NotNull EelDescriptor eelDescriptor) {

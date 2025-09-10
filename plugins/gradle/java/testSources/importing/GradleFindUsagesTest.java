@@ -6,7 +6,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -14,10 +17,8 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
-import org.gradle.wrapper.PathAssembler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -26,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,16 +48,6 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   @Parameterized.Parameters(name = "with Gradle-{0}")
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
-  }
-
-  @Override
-  protected void collectAllowedRoots(List<String> roots, PathAssembler.LocalDistribution distribution) {
-    super.collectAllowedRoots(roots, distribution);
-    File gradleUserHomeDir = GradleUserHomeUtil.gradleUserHomeDir();
-    File generatedGradleJarsDir = new File(gradleUserHomeDir, "caches/" + gradleVersion + "/generated-gradle-jars");
-    roots.add(generatedGradleJarsDir.getPath());
-    File gradleDistLibDir = new File(distribution.getDistributionDir(), "gradle-" + gradleVersion + "/lib");
-    roots.add(gradleDistLibDir.getPath());
   }
 
   @Test

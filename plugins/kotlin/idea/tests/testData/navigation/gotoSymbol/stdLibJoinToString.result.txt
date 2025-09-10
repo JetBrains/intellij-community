@@ -3,7 +3,7 @@ NavigationItem:
 ItemPresentation:
     presentableText: Array<out T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((T) -> CharSequence?))
     locationString: (kotlin.collections)
-    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/abstract_extension_function.svg, Public])
+    icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun <T> kotlin.Array<out T>.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((T) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
 QualifiedName: Array.joinToString
 
@@ -129,7 +129,7 @@ NavigationItem:
 ItemPresentation:
     presentableText: Iterable<T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((T) -> CharSequence?))
     locationString: (kotlin.collections)
-    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/abstract_extension_function.svg, Public])
+    icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun <T> kotlin.collections.Iterable<T>.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((T) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
 QualifiedName: Iterable.joinToString
 
@@ -165,7 +165,7 @@ NavigationItem:
 ItemPresentation:
     presentableText: Sequence<T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((T) -> CharSequence?))
     locationString: (kotlin.sequences)
-    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/abstract_extension_function.svg, Public])
+    icon: RowIcon(icons=[Function, Public])
 TargetElement: public fun <T> kotlin.sequences.Sequence<T>.joinToString(separator: kotlin.CharSequence = COMPILED_CODE, prefix: kotlin.CharSequence = COMPILED_CODE, postfix: kotlin.CharSequence = COMPILED_CODE, limit: kotlin.Int = COMPILED_CODE, truncated: kotlin.CharSequence = COMPILED_CODE, transform: ((T) -> kotlin.CharSequence)? = COMPILED_CODE): kotlin.String { /* compiled code */ }
 QualifiedName: Sequence.joinToString
 

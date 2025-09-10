@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.config.KOTLIN_SOURCE_ROOT_TYPE_ID
 import org.jetbrains.kotlin.config.KOTLIN_TEST_ROOT_TYPE_ID
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.FirKaModuleFactory
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.KaNotUnderContentRootModuleFactory
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.KaNotUnderContentRootModuleImpl
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryEntityBasedLibraryModuleBase
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleImpl
@@ -58,7 +59,7 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
     }
 
     override fun getNotUnderContentRootModule(project: Project): KaNotUnderContentRootModule {
-        return KaNotUnderContentRootModuleImpl(file = null, project)
+        return getKaNotUnderContentRootModule(project, null)
     }
 
     override fun getModule(element: PsiElement, useSiteModule: KaModule?): KaModule {
@@ -95,7 +96,7 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
             .filter { virtualFile == null || virtualFile in it.contentScope }
 
         ModuleChooser.chooseModule(candidates, useSiteModule)?.let { return it }
-        return KaNotUnderContentRootModuleImpl(psiFile, project)
+        return getKaNotUnderContentRootModule(project, psiFile)
     }
 
     private fun createKaModules(data: ModuleCandidate): List<KaModule> = when (data) {
@@ -344,3 +345,7 @@ private fun <T> cachedKaModule(
         withEntry("contextualModule", useSiteModule.toString())
     }
 }
+
+private fun getKaNotUnderContentRootModule(project: Project, psiFile: PsiFile?): KaNotUnderContentRootModule =
+    KaNotUnderContentRootModuleFactory.EP_NAME.extensionList.firstNotNullOfOrNull { factory -> factory.create(project, psiFile) }
+        ?: KaNotUnderContentRootModuleImpl(project =  project, file = psiFile)

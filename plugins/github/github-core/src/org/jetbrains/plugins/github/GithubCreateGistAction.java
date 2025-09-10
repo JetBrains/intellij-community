@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +52,12 @@ public class GithubCreateGistAction extends DumbAwareAction {
     boolean isDirectory = (file != null && file.isDirectory());
 
     if (!isTerminal && !isDirectory && (!hasFilesWithContent || editor != null && editor.getDocument().getTextLength() == 0)) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
+    // In DataSpell we'd like to have this functionality disabled. See DS-7105
+    if (PlatformUtils.isDataSpell()) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }

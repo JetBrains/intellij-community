@@ -16,7 +16,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -89,7 +91,8 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     HighlightInfo[][] infoToGo = new HighlightInfo[2][2]; //HighlightInfo[luck-noluck][skip-noskip]
     CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
     int caretOffsetIfNoLuck = myGoForward ? -1 : document.getTextLength();
-    DaemonCodeAnalyzerEx.processHighlights(document, project, minSeverity, 0, document.getTextLength(), context, info -> {
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
+    DaemonCodeAnalyzerEx.processHighlights(model, project, minSeverity, 0, document.getTextLength(), context, info -> {
       if (mySeverity != null && info.getSeverity() != mySeverity) return true;
       int startOffset = getNavigationPositionFor(info, document);
       if (SeverityRegistrar.isGotoBySeverityEnabled(info.getSeverity())) {
@@ -182,7 +185,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
         scrollingModel.scrollTo(editor.offsetToLogicalPosition(Math.min(maxOffset, offset)), ScrollType.MAKE_VISIBLE);
 
         if (postNavigateRunnable != null) {
-          postNavigateRunnable.run();
+          scrollingModel.runActionOnScrollingFinished(postNavigateRunnable);
         }
       }
     );

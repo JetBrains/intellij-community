@@ -46,5 +46,8 @@
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="module" module-name="intellij.json" exported="" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="module" module-name="intellij.json.syntax" />
+    <orderEntry type="module" module-name="intellij.platform.syntax.psi" />
+    <orderEntry type="module" module-name="intellij.platform.syntax.util" />
   </component>
 </module>

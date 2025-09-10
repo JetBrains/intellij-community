@@ -51,6 +51,7 @@ SFTP_FLAG_EXCL: int
 
 CMD_NAMES: dict[int, str]
 
+class int64(int): ...
 class SFTPError(Exception): ...
 
 class BaseSFTP:

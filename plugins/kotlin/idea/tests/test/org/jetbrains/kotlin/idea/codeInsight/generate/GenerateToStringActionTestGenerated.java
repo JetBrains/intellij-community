@@ -161,6 +161,11 @@ public abstract class GenerateToStringActionTestGenerated extends AbstractGenera
             runTest("testData/codeInsight/generate/toString/singleTemplate/explicitDefaultAccessors.kt");
         }
 
+        @TestMetadata("intersectionOverride.kt")
+        public void testIntersectionOverride() throws Exception {
+            runTest("testData/codeInsight/generate/toString/singleTemplate/intersectionOverride.kt");
+        }
+
         @TestMetadata("keepQuotes.kt")
         public void testKeepQuotes() throws Exception {
             runTest("testData/codeInsight/generate/toString/singleTemplate/keepQuotes.kt");

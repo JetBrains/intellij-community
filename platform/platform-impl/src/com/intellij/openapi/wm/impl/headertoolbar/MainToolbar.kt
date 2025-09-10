@@ -25,8 +25,8 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.toolbarLayout.CompressingLayoutStrategy
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -114,6 +114,8 @@ class MainToolbar(
   private val flavor: MainToolbarFlavor
   private val widthCalculationListeners = mutableSetOf<ToolbarWidthCalculationListener>()
   private val cachedWidths by lazy { ConcurrentHashMap<String, Int>() }
+
+  internal var borderPainter: BorderPainter = DefaultBorderPainter()
 
   init {
     this.background = background
@@ -211,6 +213,8 @@ class MainToolbar(
 
     migratePreviousCustomizations(schema)
     migrateVcsActions(schema)
+
+    InternalUICustomization.getInstance()?.configureMainToolbar(this)
   }
 
   private fun migrateVcsActions(schema: CustomActionsSchema) {
@@ -290,7 +294,13 @@ class MainToolbar(
     super.paintComponent(g)
     if (!CustomWindowHeaderUtil.isToolbarInHeader(UISettings.getInstance(), isFullScreen())) {
       ProjectWindowCustomizerService.getInstance().paint(frame, this, g as Graphics2D)
+      InternalUICustomization.getInstance()?.paintFrameBackground(frame, this, g)
     }
+  }
+
+  override fun paintChildren(g: Graphics) {
+    super.paintChildren(g)
+    borderPainter.paintAfterChildren(this, g)
   }
 
   private fun installClickListener(popupHandler: PopupHandler, customTitleBar: WindowDecorations.CustomTitleBar?) {

@@ -5,7 +5,7 @@ jvm_library(
   name = "vcs-testFramework",
   module_name = "intellij.platform.vcs.testFramework",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -37,7 +37,7 @@ jvm_library(
   name = "vcs-tests_test_lib",
   module_name = "intellij.platform.vcs.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -61,7 +61,7 @@ jvm_library(
     "//platform/indexing-impl",
     "//platform/platform-api:ide",
     "//platform/diff-impl/tests:tests_test_lib",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "//platform/util:util-tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -73,7 +73,8 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-  ]
+  ],
+  exports = ["//platform/vcs-tests:vcs-testFramework"]
 )
 ### auto-generated section `build intellij.platform.vcs.tests` end
 

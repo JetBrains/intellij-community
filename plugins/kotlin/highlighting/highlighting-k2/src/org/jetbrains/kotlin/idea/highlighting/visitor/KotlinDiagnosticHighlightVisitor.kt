@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningP
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector
 import org.jetbrains.kotlin.psi.*
+import kotlin.coroutines.cancellation.CancellationException
 
 
 class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtension {
@@ -120,17 +121,18 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
             .onEach { diagnostic -> diagnostic.psi.clearSavedKaDiagnosticsForUnresolvedReference() }
         val builders = filteredAnalysisResult
             .map { diagnostic ->
-                Pair(diagnostic.psi,
-                diagnostic.textRanges.mapNotNull { range ->
-                    try {
-                        convertToBuilder(file, range, diagnostic)
-                    } catch (e: ProcessCanceledException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Logger.getInstance(KotlinDiagnosticHighlightVisitor::class.java).error(e)
-                        null
-                    }
-                })
+                Pair(
+                    diagnostic.psi,
+                     try {
+                         diagnostic.textRanges.map { range ->
+                             convertToBuilder(file, range, diagnostic)
+                         }
+                     } catch (e: CancellationException) {
+                         throw e
+                     } catch (e: Throwable) {
+                         Logger.getInstance(KotlinDiagnosticHighlightVisitor::class.java).error(e)
+                         emptyList()
+                     })
             }
 
         // psi elements in the list can duplicate, but infrequently

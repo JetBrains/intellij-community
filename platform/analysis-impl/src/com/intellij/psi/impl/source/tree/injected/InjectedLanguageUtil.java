@@ -50,6 +50,22 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
   }
 
   /**
+   * A key used internally for forcing the association of an injected editor.
+   * It is used for artificially created editors (to emulate behaviors for actions)
+   */
+  @ApiStatus.Internal
+  public static final Key<Editor> FORCE_INJECTED_EDITOR_KEY = Key.create("FORCE_INJECTED_EDITOR_KEY");
+
+  /**
+   * A key used internally to identify and handle temporarily injected modified language copies.
+   * This key serves as a marker in the context of language injections, enabling operations
+   * related to managing and retrieving injected PSI elements.
+   * It is used mostly for modified copies, because in this case it is impossible to match elements directly.
+   */
+  @ApiStatus.Internal
+  public static final Key<PsiElement> FORCE_INJECTED_COPY_ELEMENT_KEY = Key.create("FORCE_INJECTED_COPY_ELEMENT_KEY");
+
+  /**
    * {@link InjectedLanguageManager#FRANKENSTEIN_INJECTION}
    * @deprecated Use {@link InjectedLanguageManager#isFrankensteinInjection(PsiElement)} or
    *             {@link MultiHostRegistrar#frankensteinInjection(boolean)} instead
@@ -178,6 +194,8 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     if (!documentWindow.isValid()) {
       return hostEditor; // since the moment we got hold of injectedFile and this moment call, document may have been dirtied
     }
+    Editor editor = hostEditor.getUserData(FORCE_INJECTED_EDITOR_KEY);
+    if (editor != null) return editor;
     return InjectedEditorWindowTracker.getInstance().createEditor(documentWindow, hostEditor, injectedFile);
   }
 

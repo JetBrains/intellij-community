@@ -72,6 +72,10 @@ open class AsyncPromise<T> private constructor(
       throw pce
     }
     catch (e: CancellationException) {
+      val cause = e.cause // since JRE25, the cancellation exception in the future is not re-thrown as-is, but wrapped into a new CancellationException
+      if (cause is ProcessCanceledException) {
+        throw cause
+      }
       null
     }
   }

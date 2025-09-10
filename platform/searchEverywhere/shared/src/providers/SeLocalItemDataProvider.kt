@@ -3,15 +3,18 @@ package com.intellij.platform.searchEverywhere.providers
 
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
@@ -88,6 +91,13 @@ class SeLocalItemDataProvider(
    */
   suspend fun canBeShownInFindResults(): Boolean {
     return provider.canBeShownInFindResults()
+  }
+
+  suspend fun performExtendedAction(itemData: SeItemData): Boolean {
+    val item = itemData.fetchItemIfExists() ?: return false
+    return withContext(Dispatchers.EDT) {
+      provider.performExtendedAction(item)
+    }
   }
 
   override fun dispose() {

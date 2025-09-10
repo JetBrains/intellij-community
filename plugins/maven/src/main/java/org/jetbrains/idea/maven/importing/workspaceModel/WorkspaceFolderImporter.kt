@@ -30,8 +30,11 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.stream.Stream
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
 
 internal class WorkspaceFolderImporter(
   private val builder: MutableEntityStorage,
@@ -195,14 +198,14 @@ internal class WorkspaceFolderImporter(
       val mainCollector = GeneratedFoldersCollector(folders, generatedFolderSetting, JavaSourceRootType.SOURCE)
       val testCollector = GeneratedFoldersCollector(folders, generatedFolderSetting, JavaSourceRootType.TEST_SOURCE)
 
-      val mainAnnotationsDir = File(mavenProject.getAnnotationProcessorDirectory(false))
-      val testAnnotationsDir = File(mavenProject.getAnnotationProcessorDirectory(true))
+      val mainAnnotationsDir = Path.of(mavenProject.getAnnotationProcessorDirectory(false))
+      val testAnnotationsDir = Path.of(mavenProject.getAnnotationProcessorDirectory(true))
       mainCollector.addAnnotationFolder(mainAnnotationsDir)
       testCollector.addAnnotationFolder(testAnnotationsDir)
 
-      val toSkip = FileCollectionFactory.createCanonicalFileSet(listOf(mainAnnotationsDir, testAnnotationsDir))
-      mainCollector.collectGeneratedFolders(File(mavenProject.toAbsolutePath(mavenProject.getGeneratedSourcesDirectory(false))), toSkip)
-      testCollector.collectGeneratedFolders(File(mavenProject.toAbsolutePath(mavenProject.getGeneratedSourcesDirectory(true))), toSkip)
+      val toSkip = FileCollectionFactory.createCanonicalPathSet(listOf(mainAnnotationsDir, testAnnotationsDir))
+      mainCollector.collectGeneratedFolders(Path.of(mavenProject.toAbsolutePath(mavenProject.getGeneratedSourcesDirectory(false))), toSkip)
+      testCollector.collectGeneratedFolders(Path.of(mavenProject.toAbsolutePath(mavenProject.getGeneratedSourcesDirectory(true))), toSkip)
     }
   }
 
@@ -248,42 +251,49 @@ internal class WorkspaceFolderImporter(
   private class GeneratedFoldersCollector(val result: MutableList<ContentRootCollector.ImportedFolder>,
                                           val setting: MavenImportingSettings.GeneratedSourcesFolder,
                                           val type: JpsModuleSourceRootType<*>) {
-    fun addAnnotationFolder(dir: File) {
+    fun addAnnotationFolder(dir: Path) {
       when (setting) {
         SUBFOLDER, AUTODETECT -> addIfDirectoryExists(dir, true)
         else -> {}
       }
     }
 
-    fun collectGeneratedFolders(targetDir: File, annotationFoldersToSkip: Set<File>) {
-      fun addAllSubDirs(dir: File) = dir.listFiles()?.forEach { addGeneratedSources(it, annotationFoldersToSkip) }
+    fun collectGeneratedFolders(targetDir: Path, annotationFoldersToSkip: Set<Path>) {
+
+      fun addAllSubfoldersAsGeneratedSources(dir: Path) {
+        if (!dir.isDirectory()) {
+          return
+        }
+        dir.listDirectoryEntries()
+          .forEach { addGeneratedSources(it, annotationFoldersToSkip) }
+      }
 
       when (setting) {
         GENERATED_SOURCE_FOLDER -> addGeneratedSources(targetDir, annotationFoldersToSkip)
-        SUBFOLDER -> addAllSubDirs(targetDir)
+        SUBFOLDER -> addAllSubfoldersAsGeneratedSources(targetDir)
         AUTODETECT -> {
-          for (it in JavaSourceRootDetectionUtil.suggestRoots(targetDir)) {
-            val suggestedDir = it.directory
+          for (it in JavaSourceRootDetectionUtil.suggestRoots(targetDir.toFile())) {
+            val suggestedDir = it.directory.toPath()
             addGeneratedSources(suggestedDir, annotationFoldersToSkip)
 
-            val suggestedRootPointAtTargetDir = FileUtil.filesEqual(suggestedDir, targetDir)
+            val suggestedRootPointAtTargetDir = suggestedDir.equals(targetDir)
             if (suggestedRootPointAtTargetDir) return
           }
-          addAllSubDirs(targetDir)
+          addAllSubfoldersAsGeneratedSources(targetDir)
         }
         IGNORE -> {}
       }
     }
 
-    private fun addGeneratedSources(dir: File, foldersToSkip: Set<File>) {
+    private fun addGeneratedSources(dir: Path, foldersToSkip: Set<Path>) {
       if (dir !in foldersToSkip) {
         addIfDirectoryExists(dir)
       }
     }
 
-    private fun addIfDirectoryExists(dir: File, isAnnotationFolder: Boolean = false) {
-      if (dir.isDirectory) {
-        result.add(ContentRootCollector.GeneratedSourceFolder(dir.path, type, isAnnotationFolder))
+    private fun addIfDirectoryExists(dir: Path, isAnnotationFolder: Boolean = false) {
+      if (Files.isDirectory(dir)) {
+        result.add(ContentRootCollector.GeneratedSourceFolder(dir.toString(), type, isAnnotationFolder))
       }
     }
   }

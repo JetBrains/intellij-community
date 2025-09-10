@@ -111,5 +111,45 @@ class GrUnusedDefInspectionTest : GrHighlightingTestBase() {
     """)
   }
 
+  fun testUnnamedParametersInVariableDeclaration() {
+    doTestHighlighting("""
+        def (_, _, <warning descr="Assignment is not used">a</warning>, _, _) = [1, 2, 3, 4, 5]
+        var (_, _, <warning descr="Assignment is not used">b</warning>, _, _) = [1, 2, 3, 4, 5]
+        def (_, _) = [1, 2]
+        var (_, _) = [1, 2]
+    """.trimIndent())
+  }
+
+  fun testUnnamedParametersInLambdaClosures() {
+    doTestHighlighting("""
+        def <warning descr="Assignment is not used">a</warning> = (_, _, x, _, _) -> x
+        def <warning descr="Assignment is not used">b</warning> = { _, _, y, _, _ -> y }
+        def <warning descr="Assignment is not used">c</warning> = { _ -> 1 }
+        def <warning descr="Assignment is not used">d</warning> = { (_) -> 1 }
+    """.trimIndent())
+  }
+
+  fun testVariableWithUnderscoreNameIsConsideredToBeUnused() {
+    doTestHighlighting("""
+      static void a() {
+          def <warning descr="Assignment is not used">_</warning> = 1
+      }
+      
+      static void b() {
+          if (new Object() instanceof Object <warning descr="Variable is not used">_</warning>) {}
+      }
+      
+      static void c() {
+          for(int <warning descr="Assignment is not used">_</warning> = 1;;) {}
+      }
+      
+      static void main(String[] args) {
+          a()
+          b()
+          c()
+      }
+    """)
+  }
+
   override fun getProjectDescriptor(): LightProjectDescriptor = GROOVY_5_0
 }

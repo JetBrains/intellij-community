@@ -136,6 +136,10 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doFail("hello", "The method name clashes with an already existing name");
   }
 
+  public void testNameCollisionOuterFunction() {
+    doFail("bar", "The method name clashes with an already existing name");
+  }
+
   public void testOutNotEmptyStatements() {
     doTest("sum_squares");
   }
@@ -349,6 +353,31 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("body");
   }
 
+  // PY-83066
+  public void testExtractAddsImport1() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport2() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport3() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport4() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport5() {
+    doTest("body");
+  }
+
   // PY-35287
   public void testTypedStatements() {
     doTest("greeting");
@@ -356,5 +385,15 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
 
   public void testPreserveWhitespaceBetweenStatements() {
     doTest("extracted");
+  }
+
+  // PY-61591
+  public void testMethodNameCanShadowModuleFunction() {
+    doTest("_require_instance");
+  }
+
+  // PY-61591
+  public void testInnerFunctionWithSameNameAsOuterMethod() {
+    doTest("foo");
   }
 }

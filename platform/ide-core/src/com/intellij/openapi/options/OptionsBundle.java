@@ -10,6 +10,11 @@ import java.util.function.Supplier;
 
 public final class OptionsBundle extends DynamicBundle {
   public static final String BUNDLE = "messages.OptionsBundle";
+
+  /**
+   * @deprecated Use only static methods of {@link OptionsBundle}.
+   */
+  @Deprecated
   public static final OptionsBundle INSTANCE = new OptionsBundle();
 
   private OptionsBundle() {
@@ -20,7 +25,8 @@ public final class OptionsBundle extends DynamicBundle {
     return INSTANCE.getMessage(key, params);
   }
 
-  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                              Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

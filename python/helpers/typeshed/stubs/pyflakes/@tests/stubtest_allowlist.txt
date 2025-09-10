@@ -3,6 +3,7 @@ pyflakes.messages.DuplicateArgument.message_args
 pyflakes.messages.ForwardAnnotationSyntaxError.message_args
 pyflakes.messages.FutureFeatureNotDefined.message_args
 pyflakes.messages.ImportShadowedByLoopVar.message_args
+pyflakes.messages.ImportStarNotPermitted.message_args
 pyflakes.messages.ImportStarUsage.message_args
 pyflakes.messages.ImportStarUsed.message_args
 pyflakes.messages.MultiValueRepeatedKeyLiteral.message_args
@@ -22,4 +23,8 @@ pyflakes.messages.UndefinedLocal.message_args
 pyflakes.messages.UndefinedName.message_args
 pyflakes.messages.UnusedAnnotation.message_args
 pyflakes.messages.UnusedImport.message_args
+pyflakes.messages.UnusedIndirectAssignment.message_args
 pyflakes.messages.UnusedVariable.message_args
+
+# Tests are not included:
+pyflakes.test.*

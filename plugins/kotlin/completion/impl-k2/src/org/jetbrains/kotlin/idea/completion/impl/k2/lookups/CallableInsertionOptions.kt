@@ -16,7 +16,7 @@ data class CallableInsertionOptions(
     val insertionStrategy: CallableInsertionStrategy,
 )
 
-context(KaSession)
+context(_: KaSession)
 internal fun detectCallableOptions(symbol: KaCallableSymbol, importStrategyDetector: ImportStrategyDetector): CallableInsertionOptions {
     return CallableInsertionOptions(
         importingStrategy = importStrategyDetector.detectImportStrategyForCallableSymbol(symbol),

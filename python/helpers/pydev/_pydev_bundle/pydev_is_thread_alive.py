@@ -5,8 +5,18 @@ from _pydev_imps._pydev_saved_modules import threading
 # It is required to debug threads started by start_new_thread in Python 3.4
 _temp = threading.Thread()
 
+# Python >=3.14
+if hasattr(_temp, "_os_thread_handle") and hasattr(_temp, "_started"):
+    def is_thread_alive(t):
+        return not t._os_thread_handle.is_done()
+
+# Python ==3.13
+elif hasattr(_temp, "_handle") and hasattr(_temp, "_started"):
+    def is_thread_alive(t):
+        return not t._handle.is_done()
+
 # Python <=3.12
-if hasattr(_temp, '_is_stopped'):
+elif hasattr(_temp, '_is_stopped'):
     def is_thread_alive(t):
         return not t._is_stopped
 
@@ -19,11 +29,6 @@ elif hasattr(_temp, '_Thread__stopped'):
 elif hasattr(_temp, 'isAlive'):
     def is_thread_alive(t):
         return t.isAlive()
-
-# Python >=3.13
-elif hasattr(_temp, 'is_alive'):
-    def is_thread_alive(t):
-        return t.is_alive()
 
 else:
     def is_thread_alive(t):

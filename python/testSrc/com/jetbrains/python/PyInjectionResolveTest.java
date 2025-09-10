@@ -89,4 +89,9 @@ public class PyInjectionResolveTest extends PyResolveTestCase {
   public void testNewStyleGenericTypeAliasForwardReference() {
     assertResolvesTo(PyClass.class, "MyClass");
   }
+
+  // PY-59986
+  public void testQuotedUnionTypeReferenceTopLevel() {
+    assertResolvesTo(PyClass.class, "int");
+  }
 }

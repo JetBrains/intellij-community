@@ -11,7 +11,7 @@ jvm_library(
   name = "k1",
   module_name = "kotlin.gradle.gradle-java.k1",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -57,7 +57,7 @@ jvm_library(
 jvm_library(
   name = "k1_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":k1"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -138,6 +138,10 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
+  ],
+  exports = [
+    "@lib//:kotlin-tooling-core",
+    "@lib//:kotlin-gradle-plugin-idea",
   ],
   runtime_deps = [":k1_resources"]
 )

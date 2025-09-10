@@ -21,6 +21,7 @@ import java.util.*
 
 public object ByteCodeViewerManager {
   private val CLASS_SEARCHER_EP = ExtensionPointName<ClassSearcher>("ByteCodeViewer.classSearcher")
+  private val CLASS_FINDER_EP = ExtensionPointName<BytecodeViewerClassFileFinder>("ByteCodeViewer.classFileFinder")
 
   private fun PsiClass.containingClassFileClass(): PsiClass {
     return parentsOfType<PsiClass>(withSelf = true)
@@ -30,6 +31,12 @@ public object ByteCodeViewerManager {
 
   public fun findClassFile(aClass: PsiClass): VirtualFile? {
     val fileClass = aClass.containingClassFileClass()
+    for (finder in CLASS_FINDER_EP.extensionList) {
+      val vFile = finder.findClass(aClass, fileClass)
+      if (vFile != null) {
+        return vFile
+      }
+    }
     val file = fileClass.originalElement.containingFile.virtualFile ?: return null
     val fileIndex = ProjectFileIndex.getInstance(aClass.project)
     val jvmClassName = ClassUtil.getBinaryClassName(aClass) ?: return null

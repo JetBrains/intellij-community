@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
+import com.jetbrains.performancePlugin.utils.HighlightingTestUtil
 import com.sampullara.cli.Args
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
@@ -103,7 +104,7 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
       .openFile(file = file, options = FileEditorOpenOptions(requestFocus = true))
 
     if (useWaitForCodeAnalysisCode(options)) {
-      waitForAnalysisWithNewApproach(project, spanRef, timeout, suppressErrors)
+      HighlightingTestUtil.waitForAnalysisWithNewApproach(project, spanRef, timeout, suppressErrors)
       openFileSpan!!.end()
       return
     }

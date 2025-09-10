@@ -1,23 +1,26 @@
-from _typeshed import Incomplete
-from typing import Any
+from _typeshed import ReadableBuffer
+from logging import Logger
+from typing import Any, Final
 
-BASE64_CHARS: Any
-AB64_CHARS: Any
-HASH64_CHARS: Any
-BCRYPT_CHARS: Any
-PADDED_BASE64_CHARS: Any
-HEX_CHARS: Any
-UPPER_HEX_CHARS: Any
-LOWER_HEX_CHARS: Any
-ALL_BYTE_VALUES: Any
+log: Logger
 
-def compile_byte_translation(mapping, source: Incomplete | None = None): ...
-def b64s_encode(data): ...
-def b64s_decode(data): ...
-def ab64_encode(data): ...
-def ab64_decode(data): ...
-def b32encode(source): ...
-def b32decode(source): ...
+BASE64_CHARS: Final[str]
+AB64_CHARS: Final[str]
+HASH64_CHARS: Final[str]
+BCRYPT_CHARS: Final[str]
+PADDED_BASE64_CHARS: Final[str]
+HEX_CHARS: Final[str]
+UPPER_HEX_CHARS: Final[str]
+LOWER_HEX_CHARS: Final[str]
+ALL_BYTE_VALUES: Final[bytes]
+
+def compile_byte_translation(mapping: dict[str | bytes | int, str | bytes], source: bytes | None = None) -> bytes: ...
+def b64s_encode(data: ReadableBuffer) -> bytes: ...
+def b64s_decode(data: str | ReadableBuffer) -> bytes: ...
+def ab64_encode(data: ReadableBuffer) -> bytes: ...
+def ab64_decode(data: str | ReadableBuffer) -> bytes: ...
+def b32encode(source: ReadableBuffer) -> str: ...
+def b32decode(source: str | bytes) -> bytes: ...
 
 class Base64Engine:
     bytemap: Any
@@ -46,6 +49,35 @@ class LazyBase64Engine(Base64Engine):
     def __init__(self, *args, **kwds) -> None: ...
     def __getattribute__(self, attr: str): ...
 
-h64: Any
-h64big: Any
-bcrypt64: Any
+h64: Base64Engine
+h64big: Base64Engine
+bcrypt64: Base64Engine
+
+__all__ = [
+    # constants
+    "BASE64_CHARS",
+    "PADDED_BASE64_CHARS",
+    "AB64_CHARS",
+    "HASH64_CHARS",
+    "BCRYPT_CHARS",
+    "HEX_CHARS",
+    "LOWER_HEX_CHARS",
+    "UPPER_HEX_CHARS",
+    "ALL_BYTE_VALUES",
+    # misc
+    "compile_byte_translation",
+    # base64
+    "ab64_encode",
+    "ab64_decode",
+    "b64s_encode",
+    "b64s_decode",
+    # base32
+    "b32encode",
+    "b32decode",
+    # custom encodings
+    "Base64Engine",
+    "LazyBase64Engine",
+    "h64",
+    "h64big",
+    "bcrypt64",
+]

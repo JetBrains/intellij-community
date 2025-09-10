@@ -5,10 +5,12 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.LanguageExtensionWithAny;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class CompletionConfidenceEP extends LanguageExtensionPoint<CompletionConfidence> {
   private static final LanguageExtension<CompletionConfidence> INSTANCE = new LanguageExtensionWithAny<>("com.intellij.completion.confidence");
 

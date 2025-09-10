@@ -26,7 +26,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -54,6 +53,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -186,8 +186,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
       new MyShowDiff().showDiff();
     });
-    myChangesTreeLoadingPanel = new JBLoadingPanel(new BorderLayout(), getDisposable(),
-                                                   ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+    myChangesTreeLoadingPanel = new JBLoadingPanel(new BorderLayout(), getDisposable(), ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS);
     myChangesTreeLoadingPanel.add(myChangesTreeList, BorderLayout.CENTER);
     myShouldUpdateChangeListName = defaultList == null && externalCommitMessage == null;
     myPatchFile = new TextFieldWithBrowseButton();

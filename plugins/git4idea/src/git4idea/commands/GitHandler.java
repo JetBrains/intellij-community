@@ -31,7 +31,6 @@ import git4idea.GitVcs;
 import git4idea.config.GitExecutable;
 import git4idea.config.GitExecutableContext;
 import git4idea.config.GitExecutableManager;
-import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +131,7 @@ public abstract class GitHandler {
       .withExePath(executable.getExePath())
       .withCharset(StandardCharsets.UTF_8);
 
-    for (String parameter : getConfigParameters(project, configParameters)) {
+    for (String parameter : getConfigParameters(configParameters)) {
       myCommandLine.addParameters("-c", parameter);
     }
     myCommandLine.addParameter(command.name());
@@ -148,12 +147,7 @@ public abstract class GitHandler {
     myExecutableContext = new GitExecutableContext(gitVcs, root, executableType);
   }
 
-  private static @NotNull List<@NonNls String> getConfigParameters(@Nullable Project project,
-                                                                   @NotNull List<@NonNls String> requestedConfigParameters) {
-    if (project == null || !GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(project)) {
-      return Collections.emptyList();
-    }
-
+  private static @NotNull List<@NonNls String> getConfigParameters(@NotNull List<@NonNls String> requestedConfigParameters) {
     List<@NonNls String> toPass = new ArrayList<>();
     toPass.add("core.quotepath=false");
     toPass.add("log.showSignature=false");
@@ -208,6 +202,16 @@ public abstract class GitHandler {
    */
   public void withNoTty() {
     myExecutableContext.withNoTty(true);
+  }
+
+  public void addConfigParameters(@NonNls String ... params) {
+    addConfigParameters(Arrays.asList(params));
+  }
+
+  public void addConfigParameters(@NonNls List<String> params) {
+    for (String param : params) {
+      myCommandLine.getParametersList().prependAll("-c", param);
+    }
   }
 
   public void addParameters(@NonNls String @NotNull ... parameters) {

@@ -20,7 +20,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.completion.test.KotlinCompletionTestCase
 import org.jetbrains.kotlin.idea.core.script.shared.getScriptReports
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously
@@ -109,7 +109,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
             module.addDependency(
                 projectLibrary(
                     "script-runtime",
-                    classesRoot = VfsUtil.findFileByIoFile(TestKotlinArtifacts.kotlinScriptRuntime, true)
+                    classesRoot = VfsUtil.findFileByIoFile(TestKotlinArtifacts.kotlinScriptRuntime.toFile(), true)
                 )
             )
 
@@ -276,8 +276,8 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
         }
 
         return buildMap {
-            put("runtime-classes", listOf(TestKotlinArtifacts.kotlinStdlib))
-            put("runtime-source", listOf(TestKotlinArtifacts.kotlinStdlibSources, TestKotlinArtifacts.kotlinStdlibCommonSources))
+            put("runtime-classes", listOf(TestKotlinArtifacts.kotlinStdlib.toFile()))
+            put("runtime-source", listOf(TestKotlinArtifacts.kotlinStdlibSources.toFile(), TestKotlinArtifacts.kotlinStdlibCommonSources.toFile()))
             libClasses?.let { put("lib-classes", listOf(it)) }
             libSrcDir?.let { put("lib-source", listOf(it)) }
             moduleClasses?.let { put("module-classes", listOf(it)) }
@@ -288,9 +288,9 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
 
     protected fun getScriptingClasspath(): List<File> {
         return listOf(
-          TestKotlinArtifacts.kotlinScriptRuntime,
-          TestKotlinArtifacts.kotlinScriptingCommon,
-          TestKotlinArtifacts.kotlinScriptingJvm,
+          TestKotlinArtifacts.kotlinScriptRuntime.toFile(),
+          TestKotlinArtifacts.kotlinScriptingCommon.toFile(),
+          TestKotlinArtifacts.kotlinScriptingJvm.toFile(),
         )
     }
 

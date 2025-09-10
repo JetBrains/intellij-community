@@ -15,7 +15,6 @@ import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-
 internal object PyPackageManagerUiConfirmationHelpers {
   private const val CONFIRM_PACKAGE_INSTALLATION_PROPERTY: String = "python.confirm.package.installation"
 
@@ -60,7 +59,6 @@ internal object PyPackageManagerUiConfirmationHelpers {
       .doNotAsk(ConfirmPackageInstallationDoNotAskOption())
       .ask(project)
   }
-
 
   private class ConfirmPackageInstallationDoNotAskOption : DoNotAskOption.Adapter() {
     override fun rememberChoice(isSelected: Boolean, exitCode: Int) {

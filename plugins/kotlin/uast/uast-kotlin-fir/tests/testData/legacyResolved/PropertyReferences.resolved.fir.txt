@@ -32,19 +32,7 @@ UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identif
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = mutableProp) -> Kotlin_Light_Method: setMutableProp
     UPostfixExpression (operator = --) -> USimpleNameReferenceExpression (identifier = --) -> FUN: dec
-UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A(init: Int) {
-    private var privateProp = 0 // accesses should be field accesses
-    var mutableProp: Int
-    init {
-        mutableProp = init
-    }
-
-    fun add(x: Int): Int {
-        val result = privateProp
-        privateProp = x
-        return privateProp
-    }
-}: A
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:ClassOrObject: A
     UPrefixExpression (operator = -) -> USimpleNameReferenceExpression (identifier = -) -> FUN: unaryMinus
     UPrefixExpression (operator = -) -> USimpleNameReferenceExpression (identifier = mutableProp) -> Kotlin_Light_Method: getMutableProp
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = mutableProp) -> Kotlin_Light_Method: setMutableProp

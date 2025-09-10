@@ -34,7 +34,7 @@ public abstract class GradleBuildFileHighlightingTestGenerated extends AbstractG
 
         @Override
         protected void setUp() {
-            gradleVersion = "8.6";
+            setGradleVersion("8.6");
             super.setUp();
         }
 
@@ -84,7 +84,7 @@ public abstract class GradleBuildFileHighlightingTestGenerated extends AbstractG
 
         @Override
         protected void setUp() {
-            gradleVersion = "7.6.4";
+            setGradleVersion("7.6.4");
             super.setUp();
         }
 

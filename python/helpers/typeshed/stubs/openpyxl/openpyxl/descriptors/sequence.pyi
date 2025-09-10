@@ -1,6 +1,6 @@
 from _typeshed import Incomplete, Unused
 from collections.abc import Generator, Iterable, Sized
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar, type_check_only
 from typing_extensions import Self
 
 from openpyxl.descriptors import Strict
@@ -13,10 +13,12 @@ from .base import Alias, Descriptor
 _T = TypeVar("_T")
 _ContainerT = TypeVar("_ContainerT")
 
+@type_check_only
 class _SupportsFromTree(Protocol):
     @classmethod
     def from_tree(cls, node: _SerialisableTreeElement) -> Any: ...
 
+@type_check_only
 class _SupportsToTree(Protocol):
     def to_tree(self) -> Element: ...
 
@@ -47,6 +49,7 @@ class ValueSequence(Sequence[_ContainerT]):
     ) -> Generator[Element, None, None]: ...
     def from_tree(self, node: _HasGet[_T]) -> _T: ...
 
+@type_check_only
 class _NestedSequenceToTreeObj(Sized, Iterable[_SupportsToTree], Protocol): ...
 
 # See `Sequence` for the meaning of `_ContainerT`.

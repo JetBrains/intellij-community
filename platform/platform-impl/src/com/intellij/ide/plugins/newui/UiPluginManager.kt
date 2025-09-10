@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
+import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.marketplace.*
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
@@ -9,11 +11,12 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import javax.swing.JComponent
@@ -40,36 +43,32 @@ class UiPluginManager {
     return getController().initSession(uuid.toString())
   }
 
-  fun executeMarketplaceQuery(query: String, count: Int, includeUpgradeToCommercialIde: Boolean): PluginSearchResult {
+  suspend fun executeMarketplaceQuery(query: String, count: Int, includeUpgradeToCommercialIde: Boolean): PluginSearchResult {
     return getController().executePluginsSearch(query, count, includeUpgradeToCommercialIde)
   }
 
-  fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel> {
+  suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel> {
     return getController().getVisiblePlugins(showImplementationDetails)
   }
 
-  fun getInstalledPlugins(): List<PluginUiModel> {
+  suspend fun getInstalledPlugins(): List<PluginUiModel> {
     return getController().getInstalledPlugins()
   }
 
-  fun getUpdateModels(): List<PluginUiModel> {
+  suspend fun getUpdateModels(): List<PluginUiModel> {
     return getController().getUpdates()
   }
 
-  fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
+  suspend fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
     return getController().loadPluginDetails(model)
   }
 
-  fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
+  suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
     return getController().loadPluginReviews(pluginId, page)
   }
 
-  fun allowLoadUnloadWithoutRestart(pluginId: PluginId): Boolean {
-    return getController().allowLoadUnloadWithoutRestart(pluginId)
-  }
-
   fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null, callback: (Map<PluginId, Boolean>) -> Unit = {}) {
-    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO)  {
+    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
       callback(getController().resetSession(sessionId, removeSession, parentComponent))
     }
   }
@@ -78,30 +77,30 @@ class UiPluginManager {
     return getController().loadErrors(sessionId)
   }
 
-  fun getPlugin(pluginId: PluginId): PluginUiModel? {
+  fun loadErrors(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, CheckErrorsResult> {
+    return runBlockingMaybeCancellable {
+      getController().loadErrors(sessionId, pluginIds)
+    }
+  }
+
+  suspend fun getPlugin(pluginId: PluginId): PluginUiModel? {
     return getController().getPlugin(pluginId)
   }
 
-  fun isPluginInstalled(pluginId: PluginId): Boolean {
+  suspend fun isPluginInstalled(pluginId: PluginId): Boolean {
     return getController().isPluginInstalled(pluginId)
   }
 
-  fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean {
-    return getController().hasPluginsAvailableForEnableDisable(pluginIds)
+  suspend fun getPluginsRequiresUltimateMap(pluginIds: List<PluginId>): Map<PluginId, Boolean> {
+    return getController().getPluginsRequiresUltimateMap(pluginIds)
   }
 
   fun setPluginStatus(sessionId: String, pluginIds: List<PluginId>, enable: Boolean) {
     getController().setPluginStatus(sessionId, pluginIds, enable)
   }
 
-  fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult {
+  suspend fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult {
     return getController().applySession(sessionId, parent, project)
-
-  }
-
-  @NlsSafe
-  fun getApplySessionError(sessionId: String): String? {
-    return getController().getApplyError(sessionId)
   }
 
   suspend fun updatePluginDependencies(sessionId: String): Set<PluginId> {
@@ -112,15 +111,31 @@ class UiPluginManager {
     return getController().isModified(sessionId)
   }
 
+  suspend fun loadDescriptorById(pluginId: PluginId): PluginUiModel? {
+    return getController().loadDescriptorById(pluginId)
+  }
+
   suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginUiModel> {
     return getController().findInstalledPlugins(plugins)
+  }
+
+  fun findInstalledPluginsSync(plugins: Set<PluginId>): Map<PluginId, PluginUiModel> {
+    return runBlockingMaybeCancellable { findInstalledPlugins(plugins) }
+  }
+
+  fun getInstallationStatesSync(): Map<PluginId, PluginInstallationState> {
+    return runBlockingMaybeCancellable { getInstallationStates() }
+  }
+
+  suspend fun getInstallationStates(): Map<PluginId, PluginInstallationState> {
+    return getController().getPluginInstallationStates()
   }
 
   fun enablePlugins(sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?): SetEnabledStateResult {
     return getController().enablePlugins(sessionId, descriptorIds, enable, project)
   }
 
-  fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult {
+  suspend fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult {
     return getController().prepareToUninstall(pluginsToUninstall)
   }
 
@@ -136,12 +151,14 @@ class UiPluginManager {
     return getController().filterPluginsRequiringUltimateButItsDisabled(pluginIds)
   }
 
-  fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId> {
+  suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId> {
     return getController().enableRequiredPlugins(sessionId, pluginId)
   }
 
-  fun getCustomRepoPlugins(): List<PluginUiModel> {
-    return getController().getCustomRepoPlugins()
+  //Not going to block EDT, because no real IO operations are needed
+  @Suppress("RAW_RUN_BLOCKING")
+  fun getCustomRepoTags(): Set<String> {
+    return runBlocking { getController().getCustomRepoTags() }
   }
 
   suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>> {
@@ -164,7 +181,7 @@ class UiPluginManager {
     return getController().setEnableStateForDependencies(sessionId, descriptorIds, enable)
   }
 
-  fun findPluginNames(pluginIds: List<PluginId>): List<String> {
+  suspend fun findPluginNames(pluginIds: List<PluginId>): List<String> {
     return getController().findPluginNames(pluginIds)
   }
 
@@ -172,15 +189,15 @@ class UiPluginManager {
     return getController().findPlugin(pluginId)
   }
 
-  fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String? = null, indicator: ProgressIndicator? = null): PluginUiModel? {
+  suspend fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String? = null, indicator: ProgressIndicator? = null): PluginUiModel? {
     return getController().getLastCompatiblePluginUpdateModel(pluginId, buildNumber, indicator)
   }
 
-  fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String? = null): List<IdeCompatibleUpdate> {
+  suspend fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String? = null): List<IdeCompatibleUpdate> {
     return getController().getLastCompatiblePluginUpdate(allIds, throwExceptions, buildNumber)
   }
 
-  fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
+  suspend fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
     return getController().loadPluginMetadata(externalPluginId)
   }
 
@@ -193,14 +210,17 @@ class UiPluginManager {
   }
 
   fun updateDescriptorsForInstalledPlugins() {
-    getController().updateDescriptorsForInstalledPlugins()
+    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+      getController().updateDescriptorsForInstalledPlugins()
+    }
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   fun isNeedUpdate(pluginId: PluginId): Boolean {
-    return getController().isNeedUpdate(pluginId)
+    return runBlockingMaybeCancellable { getController().isNeedUpdate(pluginId) }
   }
 
-  fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
+  suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
     return getController().getPluginInstallationState(pluginId)
   }
 

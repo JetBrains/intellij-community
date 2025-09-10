@@ -368,13 +368,8 @@
 
     <editorSmartKeysConfigurable instance="org.jetbrains.kotlin.idea.editor.KotlinEditorOptionsConfigurable"/>
 
-    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinDeclarationAndAssignmentHandler"/>
     <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinInitializerAndIfToElvisHandler"/>
     <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinBlockIntoSingleStatementHandler"/>
-    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinStatementsAddSemicolonHandler"/>
-    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinToStringTemplateHandler"/>
-    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinWithTrailingCommaHandler"/>
-    <joinLinesHandler implementation="org.jetbrains.kotlin.idea.joinLines.JoinWhenEntryHandler"/>
 
     <quoteHandler fileType="Kotlin" className="org.jetbrains.kotlin.idea.editor.KotlinQuoteHandler"/>
 

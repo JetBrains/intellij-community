@@ -151,9 +151,107 @@ class StructuredValue(google.protobuf.message.Message):
         tensor_value: tensorflow.core.framework.tensor_pb2.TensorProto | None = ...,
         numpy_value: tensorflow.core.framework.tensor_pb2.TensorProto | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["bool_value", b"bool_value", "bounded_tensor_spec_value", b"bounded_tensor_spec_value", "dict_value", b"dict_value", "float64_value", b"float64_value", "int64_value", b"int64_value", "kind", b"kind", "list_value", b"list_value", "named_tuple_value", b"named_tuple_value", "none_value", b"none_value", "numpy_value", b"numpy_value", "string_value", b"string_value", "tensor_dtype_value", b"tensor_dtype_value", "tensor_shape_value", b"tensor_shape_value", "tensor_spec_value", b"tensor_spec_value", "tensor_value", b"tensor_value", "tuple_value", b"tuple_value", "type_spec_value", b"type_spec_value"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["bool_value", b"bool_value", "bounded_tensor_spec_value", b"bounded_tensor_spec_value", "dict_value", b"dict_value", "float64_value", b"float64_value", "int64_value", b"int64_value", "kind", b"kind", "list_value", b"list_value", "named_tuple_value", b"named_tuple_value", "none_value", b"none_value", "numpy_value", b"numpy_value", "string_value", b"string_value", "tensor_dtype_value", b"tensor_dtype_value", "tensor_shape_value", b"tensor_shape_value", "tensor_spec_value", b"tensor_spec_value", "tensor_value", b"tensor_value", "tuple_value", b"tuple_value", "type_spec_value", b"type_spec_value"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["kind", b"kind"]) -> typing.Literal["none_value", "float64_value", "int64_value", "string_value", "bool_value", "tensor_shape_value", "tensor_dtype_value", "tensor_spec_value", "type_spec_value", "bounded_tensor_spec_value", "list_value", "tuple_value", "dict_value", "named_tuple_value", "tensor_value", "numpy_value"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "bool_value",
+            b"bool_value",
+            "bounded_tensor_spec_value",
+            b"bounded_tensor_spec_value",
+            "dict_value",
+            b"dict_value",
+            "float64_value",
+            b"float64_value",
+            "int64_value",
+            b"int64_value",
+            "kind",
+            b"kind",
+            "list_value",
+            b"list_value",
+            "named_tuple_value",
+            b"named_tuple_value",
+            "none_value",
+            b"none_value",
+            "numpy_value",
+            b"numpy_value",
+            "string_value",
+            b"string_value",
+            "tensor_dtype_value",
+            b"tensor_dtype_value",
+            "tensor_shape_value",
+            b"tensor_shape_value",
+            "tensor_spec_value",
+            b"tensor_spec_value",
+            "tensor_value",
+            b"tensor_value",
+            "tuple_value",
+            b"tuple_value",
+            "type_spec_value",
+            b"type_spec_value",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "bool_value",
+            b"bool_value",
+            "bounded_tensor_spec_value",
+            b"bounded_tensor_spec_value",
+            "dict_value",
+            b"dict_value",
+            "float64_value",
+            b"float64_value",
+            "int64_value",
+            b"int64_value",
+            "kind",
+            b"kind",
+            "list_value",
+            b"list_value",
+            "named_tuple_value",
+            b"named_tuple_value",
+            "none_value",
+            b"none_value",
+            "numpy_value",
+            b"numpy_value",
+            "string_value",
+            b"string_value",
+            "tensor_dtype_value",
+            b"tensor_dtype_value",
+            "tensor_shape_value",
+            b"tensor_shape_value",
+            "tensor_spec_value",
+            b"tensor_spec_value",
+            "tensor_value",
+            b"tensor_value",
+            "tuple_value",
+            b"tuple_value",
+            "type_spec_value",
+            b"type_spec_value",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["kind", b"kind"]
+    ) -> (
+        typing.Literal[
+            "none_value",
+            "float64_value",
+            "int64_value",
+            "string_value",
+            "bool_value",
+            "tensor_shape_value",
+            "tensor_dtype_value",
+            "tensor_spec_value",
+            "type_spec_value",
+            "bounded_tensor_spec_value",
+            "list_value",
+            "tuple_value",
+            "dict_value",
+            "named_tuple_value",
+            "tensor_value",
+            "numpy_value",
+        ]
+        | None
+    ): ...
 
 global___StructuredValue = StructuredValue
 
@@ -163,9 +261,7 @@ class NoneValue(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___NoneValue = NoneValue
 
@@ -178,11 +274,7 @@ class ListValue(google.protobuf.message.Message):
     VALUES_FIELD_NUMBER: builtins.int
     @property
     def values(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___StructuredValue]: ...
-    def __init__(
-        self,
-        *,
-        values: collections.abc.Iterable[global___StructuredValue] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, values: collections.abc.Iterable[global___StructuredValue] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["values", b"values"]) -> None: ...
 
 global___ListValue = ListValue
@@ -196,11 +288,7 @@ class TupleValue(google.protobuf.message.Message):
     VALUES_FIELD_NUMBER: builtins.int
     @property
     def values(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___StructuredValue]: ...
-    def __init__(
-        self,
-        *,
-        values: collections.abc.Iterable[global___StructuredValue] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, values: collections.abc.Iterable[global___StructuredValue] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["values", b"values"]) -> None: ...
 
 global___TupleValue = TupleValue
@@ -222,23 +310,14 @@ class DictValue(google.protobuf.message.Message):
         key: builtins.str
         @property
         def value(self) -> global___StructuredValue: ...
-        def __init__(
-            self,
-            *,
-            key: builtins.str | None = ...,
-            value: global___StructuredValue | None = ...,
-        ) -> None: ...
+        def __init__(self, *, key: builtins.str | None = ..., value: global___StructuredValue | None = ...) -> None: ...
         def HasField(self, field_name: typing.Literal["value", b"value"]) -> builtins.bool: ...
         def ClearField(self, field_name: typing.Literal["key", b"key", "value", b"value"]) -> None: ...
 
     FIELDS_FIELD_NUMBER: builtins.int
     @property
     def fields(self) -> google.protobuf.internal.containers.MessageMap[builtins.str, global___StructuredValue]: ...
-    def __init__(
-        self,
-        *,
-        fields: collections.abc.Mapping[builtins.str, global___StructuredValue] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, fields: collections.abc.Mapping[builtins.str, global___StructuredValue] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["fields", b"fields"]) -> None: ...
 
 global___DictValue = DictValue
@@ -254,12 +333,7 @@ class PairValue(google.protobuf.message.Message):
     key: builtins.str
     @property
     def value(self) -> global___StructuredValue: ...
-    def __init__(
-        self,
-        *,
-        key: builtins.str | None = ...,
-        value: global___StructuredValue | None = ...,
-    ) -> None: ...
+    def __init__(self, *, key: builtins.str | None = ..., value: global___StructuredValue | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["value", b"value"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["key", b"key", "value", b"value"]) -> None: ...
 
@@ -277,10 +351,7 @@ class NamedTupleValue(google.protobuf.message.Message):
     @property
     def values(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___PairValue]: ...
     def __init__(
-        self,
-        *,
-        name: builtins.str | None = ...,
-        values: collections.abc.Iterable[global___PairValue] | None = ...,
+        self, *, name: builtins.str | None = ..., values: collections.abc.Iterable[global___PairValue] | None = ...
     ) -> None: ...
     def ClearField(self, field_name: typing.Literal["name", b"name", "values", b"values"]) -> None: ...
 
@@ -339,8 +410,15 @@ class BoundedTensorSpecProto(google.protobuf.message.Message):
         minimum: tensorflow.core.framework.tensor_pb2.TensorProto | None = ...,
         maximum: tensorflow.core.framework.tensor_pb2.TensorProto | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["maximum", b"maximum", "minimum", b"minimum", "shape", b"shape"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["dtype", b"dtype", "maximum", b"maximum", "minimum", b"minimum", "name", b"name", "shape", b"shape"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["maximum", b"maximum", "minimum", b"minimum", "shape", b"shape"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "dtype", b"dtype", "maximum", b"maximum", "minimum", b"minimum", "name", b"name", "shape", b"shape"
+        ],
+    ) -> None: ...
 
 global___BoundedTensorSpecProto = BoundedTensorSpecProto
 
@@ -354,7 +432,9 @@ class TypeSpecProto(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _TypeSpecClassEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TypeSpecProto._TypeSpecClass.ValueType], builtins.type):
+    class _TypeSpecClassEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[TypeSpecProto._TypeSpecClass.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         UNKNOWN: TypeSpecProto._TypeSpecClass.ValueType  # 0
         SPARSE_TENSOR_SPEC: TypeSpecProto._TypeSpecClass.ValueType  # 1
@@ -439,6 +519,18 @@ class TypeSpecProto(google.protobuf.message.Message):
         num_flat_components: builtins.int | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["type_state", b"type_state"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["num_flat_components", b"num_flat_components", "type_spec_class", b"type_spec_class", "type_spec_class_name", b"type_spec_class_name", "type_state", b"type_state"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "num_flat_components",
+            b"num_flat_components",
+            "type_spec_class",
+            b"type_spec_class",
+            "type_spec_class_name",
+            b"type_spec_class_name",
+            "type_state",
+            b"type_state",
+        ],
+    ) -> None: ...
 
 global___TypeSpecProto = TypeSpecProto

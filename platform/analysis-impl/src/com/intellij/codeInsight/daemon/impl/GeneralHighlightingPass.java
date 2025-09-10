@@ -59,7 +59,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   private final boolean myUpdateAll;
   private final @NotNull ProperTextRange myPriorityRange;
 
-  private final List<HighlightInfo> myHighlights = Collections.synchronizedList(new ArrayList<>());
+  private final List<@NotNull HighlightInfo> myHighlights = Collections.synchronizedList(new ArrayList<>());
 
   private volatile boolean myHasErrorElement;
   private volatile boolean myHasErrorSeverity;
@@ -367,7 +367,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     }
   }
 
-  private static @NotNull List<Problem> convertToProblems(@NotNull Collection<? extends HighlightInfo> infos,
+  private static @NotNull List<Problem> convertToProblems(@NotNull Collection<? extends @NotNull HighlightInfo> infos,
                                                           @NotNull VirtualFile file,
                                                           boolean hasErrorElement) {
     List<Problem> problems = new SmartList<>();

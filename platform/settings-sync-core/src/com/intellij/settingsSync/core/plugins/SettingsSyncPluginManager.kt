@@ -1,12 +1,6 @@
 package com.intellij.settingsSync.core.plugins
 
-import com.intellij.ide.plugins.ContentModuleDescriptor
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginEnableStateChangedListener
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginStateListener
-import com.intellij.ide.plugins.PluginStateManager
+import com.intellij.ide.plugins.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -14,11 +8,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.settingsSync.core.*
-import com.intellij.settingsSync.core.RestartForPluginDisable
-import com.intellij.settingsSync.core.RestartForPluginEnable
 import com.intellij.settingsSync.core.config.BUNDLED_PLUGINS_ID
-import com.intellij.settingsSync.core.enabledOrDisabled
 import com.intellij.settingsSync.core.plugins.SettingsSyncPluginsState.PluginData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -27,6 +19,7 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.FileVisitResult
 import java.time.Instant
 
+@OptIn(IntellijInternalApi::class)
 @Service
 internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Disposable {
   private val pluginInstallationStateListener = PluginInstallationStateListener()
@@ -127,7 +120,7 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
   private fun isUltimate(
     plugin: IdeaPluginDescriptor,
     pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    contentModuleIdMap: Map<String, ContentModuleDescriptor>,
+    contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
   ): Boolean {
     var isUltimate = false
     PluginManagerCore.processAllNonOptionalDependencyIds(plugin as IdeaPluginDescriptorImpl, pluginIdMap, contentModuleIdMap) {

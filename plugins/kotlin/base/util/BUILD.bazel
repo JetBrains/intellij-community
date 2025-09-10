@@ -18,7 +18,7 @@ jvm_library(
   name = "util",
   module_name = "kotlin.base.util",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_util",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -35,7 +35,6 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/external-system-api:externalSystem",
     "//platform/lang-core",
-    "//platform/diff-impl",
     "//platform/indexing-api:indexing",
     "//java/java-psi-impl:psi-impl",
     "//java/java-analysis-impl:analysis-impl",
@@ -51,7 +50,7 @@ jvm_library(
 jvm_library(
   name = "util_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_util",
   associates = [":util"],
   deps = [
@@ -69,7 +68,6 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/external-system-api:externalSystem",
     "//platform/lang-core",
-    "//platform/diff-impl",
     "//platform/indexing-api:indexing",
     "//java/java-psi-impl:psi-impl",
     "@lib//:kotlin-test-junit",

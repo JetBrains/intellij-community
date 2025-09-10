@@ -11,10 +11,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,7 +26,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     document.addDocumentListener(this);
   }
 
-  RangeMarkerTree() {
+  protected RangeMarkerTree() {
   }
 
   @Override
@@ -41,34 +38,23 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   protected int compareEqualStartIntervals(@NotNull IntervalTreeImpl.IntervalNode<T> i1, @NotNull IntervalTreeImpl.IntervalNode<T> i2) {
     RMNode<?> o1 = (RMNode<?>)i1;
     RMNode<?> o2 = (RMNode<?>)i2;
-    boolean greedyL1 = o1.isGreedyToLeft();
-    boolean greedyL2 = o2.isGreedyToLeft();
-    if (greedyL1 != greedyL2) return greedyL1 ? -1 : 1;
-
-    int o1Length = o1.intervalEnd() - o1.intervalStart();
-    int o2Length = o2.intervalEnd() - o2.intervalStart();
-    int d = o1Length - o2Length;
-    if (d != 0) return d;
-
-    boolean greedyR1 = o1.isGreedyToRight();
-    boolean greedyR2 = o2.isGreedyToRight();
-    if (greedyR1 != greedyR2) return greedyR1 ? -1 : 1;
-
-    boolean stickyR1 = o1.isStickingToRight();
-    boolean stickyR2 = o2.isStickingToRight();
-    if (stickyR1 != stickyR2) return stickyR1 ? -1 : 1;
-
-    return 0;
+    return o1.compareTo(o2);
   }
 
   @ApiStatus.Internal
-  public void dispose(@NotNull Document document) {
+  protected void dispose(@NotNull Document document) {
     document.removeDocumentListener(this);
+  }
+  
+  @TestOnly
+  @ApiStatus.Internal
+  public void disposeInTests(@NotNull Document document) {
+    dispose(document);
   }
 
   private static final int DUPLICATE_LIMIT = 30; // assertion: no more than DUPLICATE_LIMIT range markers are allowed to be registered at given (start, end)
   @Override
-  public @NotNull RMNode<T> addInterval(@NotNull T interval, int start, int end,
+  protected @NotNull RMNode<T> addInterval(@NotNull T interval, int start, int end,
                                         boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     ((RangeMarkerImpl)interval).setValid(true);
     RMNode<T> node = (RMNode<T>)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
@@ -97,6 +83,12 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     return null;
   }
 
+  @TestOnly
+  @ApiStatus.Internal
+  public void addIntervalTestAccessor(@NotNull T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+    addInterval(interval, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
+  }
+
   @Override
   protected @NotNull RMNode<T> createNewNode(@NotNull T key, int start, int end,
                                              boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
@@ -117,18 +109,18 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   @ApiStatus.Internal
-  public static class RMNode<T extends RangeMarkerEx> extends IntervalTreeImpl.IntervalNode<T> {
+  protected static class RMNode<T extends RangeMarkerEx> extends IntervalTreeImpl.IntervalNode<T> implements Comparable<RMNode<?>> {
     private static final byte EXPAND_TO_LEFT_FLAG = VALID_FLAG<<1;
     private static final byte EXPAND_TO_RIGHT_FLAG = EXPAND_TO_LEFT_FLAG<<1;
     protected static final byte STICK_TO_RIGHT_FLAG = EXPAND_TO_RIGHT_FLAG << 1;
 
-    public RMNode(@NotNull RangeMarkerTree<T> rangeMarkerTree,
-                  @NotNull T key,
-                  int start,
-                  int end,
-                  boolean greedyToLeft,
-                  boolean greedyToRight,
-                  boolean stickingToRight) {
+    protected RMNode(@NotNull RangeMarkerTree<T> rangeMarkerTree,
+                     @NotNull T key,
+                     int start,
+                     int end,
+                     boolean greedyToLeft,
+                     boolean greedyToRight,
+                     boolean stickingToRight) {
       super(rangeMarkerTree, key, start, end);
       setFlag(EXPAND_TO_LEFT_FLAG, greedyToLeft);
       setFlag(EXPAND_TO_RIGHT_FLAG, greedyToRight);
@@ -147,7 +139,30 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       return isFlagSet(STICK_TO_RIGHT_FLAG);
     }
 
-    public void onRemoved() {}
+    protected void onRemoved() {}
+
+    @Override
+    public int compareTo(@NotNull RangeMarkerTree.RMNode<?> o2) {
+      RMNode<?> o1 = this;
+      boolean greedyL1 = o1.isGreedyToLeft();
+      boolean greedyL2 = o2.isGreedyToLeft();
+      if (greedyL1 != greedyL2) return greedyL1 ? -1 : 1;
+
+      int o1Length = o1.intervalEnd() - o1.intervalStart();
+      int o2Length = o2.intervalEnd() - o2.intervalStart();
+      int d = o1Length - o2Length;
+      if (d != 0) return d;
+
+      boolean greedyR1 = o1.isGreedyToRight();
+      boolean greedyR2 = o2.isGreedyToRight();
+      if (greedyR1 != greedyR2) return greedyR1 ? -1 : 1;
+
+      boolean stickyR1 = o1.isStickingToRight();
+      boolean stickyR2 = o2.isStickingToRight();
+      if (stickyR1 != stickyR2) return stickyR1 ? -1 : 1;
+
+      return 0;
+    }
 
     @Override
     public String toString() {
@@ -185,8 +200,11 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     List<T> toInvalidate = Collections.emptyList();
     try {
       toInvalidate = runUnderWriteLock(() -> {
-        List<T> ret = Collections.emptyList();
-        if (size() != 0) {
+        List<T> ret;
+        if (size() == 0) {
+          ret = Collections.emptyList();
+        }
+        else {
           ret = updateMarkersOnChange(e);
           if (DocumentEventUtil.isMoveInsertion(e)) {
             ret = ContainerUtil.concat(ret, reTargetMarkersOnChange(e));
@@ -287,7 +305,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       if (marker != null) {
         if (marker.isValid()) return marker;
         // marker can become invalid on its own, e.g., FoldRegion
-        node.removeIntervalInternal(i);
+        node.removeIntervalInternal(i, t);
         invalidated.add(t);
       }
     }

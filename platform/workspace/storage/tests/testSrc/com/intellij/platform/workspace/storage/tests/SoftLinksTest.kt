@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -41,6 +42,10 @@ class SoftLinksTest {
     // Check
     assertTrue(NameId(newId) in builder)
     assertOneElement(builder.referrers(NameId(newId), WithSoftLinkEntity::class.java).toList())
+    // Check first added/last removed
+    assertTrue(NameId(id) in builder.changeLog.removedSymbolicIds[WithSoftLinkEntity::class.java]!!)
+    assertTrue(NameId(newId) in builder.changeLog.addedSymbolicIds[WithSoftLinkEntity::class.java]!!)
+    assertTrue(NameId(id) !in builder.changeLog.addedSymbolicIds[WithSoftLinkEntity::class.java]!!)
   }
 
   @Test
@@ -68,6 +73,8 @@ class SoftLinksTest {
     // Check
     assertNotNull(NameId(newId) in builder)
     assertOneElement(builder.referrers(NameId(newId), WithSoftLinkEntity::class.java).toList())
+    assertTrue(NameId(id) in builder.changeLog.removedSymbolicIds[WithSoftLinkEntity::class.java]!!)
+    assertTrue(NameId(newId) in builder.changeLog.addedSymbolicIds[WithSoftLinkEntity::class.java]!!)
 
     // Change symbolic id to the initial value
     val anotherNewBuilder = createBuilderFrom(builder.toSnapshot())
@@ -82,6 +89,8 @@ class SoftLinksTest {
     // Check
     assertNotNull(NameId(id) in builder)
     assertOneElement(builder.referrers(NameId(id), WithSoftLinkEntity::class.java).toList())
+    assertTrue(NameId(id) in builder.changeLog.addedSymbolicIds[WithSoftLinkEntity::class.java]!!)
+    assertTrue(NameId(newId) in builder.changeLog.removedSymbolicIds[WithSoftLinkEntity::class.java]!!)
   }
 
   @Test
@@ -98,7 +107,8 @@ class SoftLinksTest {
     }
 
     builder.assertConsistency()
-
+    assertTrue(NameId("newName") in builder.changeLog.addedSymbolicIds[WithSoftLinkEntity::class.java]!!)
+    assertTrue(NameId("Name") in builder.changeLog.removedSymbolicIds[WithSoftLinkEntity::class.java]!!)
     assertEquals("newName", builder.entities(WithSoftLinkEntity::class.java).single().link.presentableName)
   }
 
@@ -200,5 +210,34 @@ class SoftLinksTest {
     assertEquals("AnotherData", (updatedEntity.listSealedContainer.single() as SealedContainer.SmallContainer).notId.name)
     assertEquals("AnotherData",
                  (updatedEntity.deepSealedClass as DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour).id.name)
+  }
+
+  @Test
+  fun `many entities one symbolic id`() {
+    val builder = createEmptyBuilder()
+    val namedEntity = builder addEntity NamedEntity("Name", MySource)
+    val entity = builder addEntity WithSoftLinkEntity(namedEntity.symbolicId, MySource)
+    builder addEntity WithSoftLinkEntity(namedEntity.symbolicId, MySource)
+
+    assertEquals( 1, builder.changeLog.addedSymbolicIds[WithSoftLinkEntity::class.java]?.size)
+    assertTrue(NameId("Name") in builder.changeLog.addedSymbolicIds[WithSoftLinkEntity::class.java]!!)
+
+    builder.removeEntity(entity)
+    assertEquals( 1, builder.changeLog.removedSymbolicIds[WithSoftLinkEntity::class.java]?.size)
+    assertNull(builder.changeLog.addedSymbolicIds[WithSoftLinkEntity::class.java])
+    assertTrue(NameId("Name") in builder.changeLog.removedSymbolicIds[WithSoftLinkEntity::class.java]!!)
+  }
+
+  @Test
+  fun `many entity types one symbolic id`() {
+    val builder = createEmptyBuilder()
+    val namedEntity = builder addEntity NamedEntity("Name", MySource)
+    val entity = builder addEntity WithSoftLinkEntity(namedEntity.symbolicId, MySource)
+    builder addEntity ComposedIdSoftRefEntity("AnotherType", namedEntity.symbolicId, MySource)
+    assertTrue(NameId("Name") in builder.changeLog.addedSymbolicIds[WithSoftLinkEntity::class.java]!!)
+    assertTrue(NameId("Name") in builder.changeLog.addedSymbolicIds[ComposedIdSoftRefEntity::class.java]!!)
+    builder.removeEntity(entity)
+    assertTrue(NameId("Name") in builder.changeLog.removedSymbolicIds[WithSoftLinkEntity::class.java]!!)
+    assertNull(builder.changeLog.addedSymbolicIds[WithSoftLinkEntity::class.java])
   }
 }

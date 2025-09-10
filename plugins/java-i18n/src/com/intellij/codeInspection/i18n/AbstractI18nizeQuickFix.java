@@ -43,7 +43,7 @@ public abstract class AbstractI18nizeQuickFix<T extends UExpression> implements 
   private static final Set<String> AUXILIARY_WORDS = Set.of("is", "the", "of", "and", "a", "an");
   private final NlsInfo.Localized myInfo;
 
-  protected AbstractI18nizeQuickFix(NlsInfo.Localized info) {
+  AbstractI18nizeQuickFix(NlsInfo.Localized info) {
     myInfo = info;
   }
 
@@ -85,11 +85,11 @@ public abstract class AbstractI18nizeQuickFix<T extends UExpression> implements 
                                         T literalExpression,
                                         String i18nizedText) throws IncorrectOperationException;
 
-  protected static void doDocumentReplacement(@NotNull PsiFile psiFile,
-                                              UElement literalExpression,
-                                              String i18nizedText,
-                                              Document document,
-                                              @Nullable UastCodeGenerationPlugin generationPlugin) {
+  static void doDocumentReplacement(@NotNull PsiFile psiFile,
+                                    UElement literalExpression,
+                                    String i18nizedText,
+                                    Document document,
+                                    @Nullable UastCodeGenerationPlugin generationPlugin) {
     PsiElement psi = literalExpression.getSourcePsi();
     if (psi == null) {
       return;
@@ -115,7 +115,7 @@ public abstract class AbstractI18nizeQuickFix<T extends UExpression> implements 
     generationPlugin.replace(uElement, uElement, UElement.class);
   }
 
-  protected @NotNull I18nizeQuickFixDialog.DialogCustomization getCustomization(String value) {
+  @NotNull I18nizeQuickFixDialog.DialogCustomization getCustomization(String value) {
     return new I18nizeQuickFixDialog.DialogCustomization(null, true, false, null, getSuggestedName(value, myInfo));
   }
 
@@ -151,7 +151,7 @@ public abstract class AbstractI18nizeQuickFix<T extends UExpression> implements 
 
   protected abstract JavaI18nizeQuickFixDialog<T> createDialog(Project project, PsiFile context, @NotNull T concatenation);
 
-  protected static String getSuggestedName(String value, NlsInfo.Localized info) {
+  static String getSuggestedName(String value, NlsInfo.Localized info) {
     String prefix = info.getPrefix();
     String suffix = info.getSuffix();
     if (prefix.isEmpty() && suffix.isEmpty()) return null;

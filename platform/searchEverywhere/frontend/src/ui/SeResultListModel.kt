@@ -23,10 +23,13 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
   val isValidState: StateFlow<Boolean> get() = _isValidState.asStateFlow()
   private val _isValidState = MutableStateFlow(true)
 
+  val pendingReplacementElementUuids: MutableSet<String> = mutableSetOf()
+
   fun reset() {
     SeLog.log(SeLog.THROTTLING) { "Will reset result list model" }
     freezer.reset()
     _isValidState.value = true
+    pendingReplacementElementUuids.clear()
     removeAllElements()
   }
 
@@ -46,7 +49,7 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
     val resultListAdapter = SeResultListModelAdapter(this, selectionModelProvider())
     when (throttledEvent) {
       is ThrottledAccumulatedItems<SeResultEvent> -> {
-        val accumulatedList = SeResultListCollection()
+        val accumulatedList = SeResultListCollection(pendingReplacementElementUuids)
         throttledEvent.items.forEach {
           accumulatedList.handleEvent(it)
         }

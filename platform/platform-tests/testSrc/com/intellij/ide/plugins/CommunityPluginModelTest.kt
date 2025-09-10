@@ -16,6 +16,7 @@ class CommunityPluginModelTest {
       skipUnresolvedOptionalContentModules = true,
       referencedPluginIdsOfExternalPlugins = setOf(
         //these modules are defined in the ultimate part
+        "com.intellij.marketplace",
         "com.intellij.modules.python-in-mini-ide-capable",
         "com.intellij.modules.rider",
         "com.intellij.modules.ultimate",
@@ -34,6 +35,10 @@ class CommunityPluginModelTest {
       additionalPatternsOfDirectoriesContainingIncludedXmlFiles = listOf(
         "org/jetbrains/android/dom",
         "com/android/tools/idea/ui/resourcemanager/META-INF",
+      ),
+      componentImplementationClassesToIgnore = setOf(
+        "com.intellij.designer.DesignerToolWindowManager",
+        "com.intellij.designer.palette.PaletteToolWindowManager",
       ),
       pluginVariantsWithDynamicIncludes = listOf(
         PluginVariantWithDynamicIncludes(

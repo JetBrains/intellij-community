@@ -17,7 +17,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "kotlin.j2k.k1.new.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_tests",
   deps = [
     "//platform/code-style-api:codeStyle",

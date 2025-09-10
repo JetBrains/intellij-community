@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributorKt.pathToAnonymousClass;
+import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereNavigationHandlerKt.pathToAnonymousClass;
 
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent, Disposable {
   public static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<>("ChooseByNamePopup");

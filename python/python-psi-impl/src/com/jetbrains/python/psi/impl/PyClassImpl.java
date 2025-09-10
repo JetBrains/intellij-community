@@ -78,6 +78,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    if (PyTypingTypeProvider.ANY.equals(getQualifiedName())) {
+      return null;
+    }
     return new PyClassTypeImpl(this, true);
   }
 

@@ -784,6 +784,14 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     // no warnings for Void methods, where only null can be possibly returned
     if (returnType == null || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID)) return;
 
+    reportNullableReturnsProblems(reporter, problems, nullability, anno, manager);
+  }
+
+  protected void reportNullableReturnsProblems(ProblemReporter reporter,
+                         List<NullabilityProblem<?>> problems,
+                         Nullability nullability,
+                         PsiAnnotation anno,
+                         NullableNotNullManager manager) {
     for (NullabilityProblem<PsiExpression> problem : StreamEx.of(problems).map(NullabilityProblemKind.nullableReturn::asMyProblem).nonNull()) {
       final PsiExpression anchor = problem.getAnchor();
       PsiExpression expr = problem.getDereferencedExpression();

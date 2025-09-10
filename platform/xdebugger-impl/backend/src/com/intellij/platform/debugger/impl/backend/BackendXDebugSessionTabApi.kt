@@ -4,11 +4,7 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabEvent
 import com.intellij.xdebugger.impl.findValue
-import com.intellij.xdebugger.impl.rpc.XDebugSessionAdditionalTabComponentManagerId
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XDebugSessionTabApi
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabDto
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfoCallback
+import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.Dispatchers
@@ -18,10 +14,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 internal class BackendXDebugSessionTabApi : XDebugSessionTabApi {
-  override suspend fun sessionTabInfo(sessionId: XDebugSessionId): Flow<XDebuggerSessionTabDto?> {
+  override suspend fun sessionTabInfo(sessionId: XDebugSessionId): Flow<XDebuggerSessionTabDto> {
     val session = sessionId.findValue() ?: return emptyFlow()
     return session.tabInitDataFlow.map {
-      if (it == null) return@map null
       XDebuggerSessionTabDto(it, session.getPausedEventsFlow().toRpc())
     }
   }

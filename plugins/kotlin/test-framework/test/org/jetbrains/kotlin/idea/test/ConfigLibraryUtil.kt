@@ -21,11 +21,16 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.jarFile
+import junit.framework.TestCase
+import kotlinx.coroutines.Job
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.junit.jupiter.api.Test
+import org.junitpioneer.jupiter.RetryingTest
 import java.io.File
+import java.nio.file.Path
 import kotlin.test.assertNotNull
 
 const val CONFIGURE_LIBRARY_PREFIX = "CONFIGURE_LIBRARY:"
@@ -40,15 +45,15 @@ object ConfigLibraryUtil {
     private const val LIB_NAME_KOTLIN_STDLIB_JS = "KOTLIN_STDLIB_JS_LIB_NAME"
     private const val LIB_NAME_KOTLIN_STDLIB_COMMON = "KOTLIN_STDLIB_COMMON_LIB_NAME"
 
-    val ATTACHABLE_LIBRARIES = mapOf(
-      "KotlinTestJunit" to TestKotlinArtifacts.kotlinTestJunit,
-      "JUnit" to File(PathUtil.getJarPathForClass(junit.framework.TestCase::class.java)),
-      "JUnit3" to TestKotlinArtifacts.junit3,
-      "JUnit4" to File(PathUtil.getJarPathForClass(junit.framework.TestCase::class.java)),
-      "JUnit5" to File(PathUtil.getJarPathForClass(org.junit.jupiter.api.Test::class.java)),
-      "JUnit5-Pioneer" to File(PathUtil.getJarPathForClass(org.junitpioneer.jupiter.RetryingTest::class.java)),
-      "TestNG" to File(PathUtil.getJarPathForClass(org.testng.annotations.Test::class.java)),
-      "Coroutines" to File(PathUtil.getJarPathForClass(kotlinx.coroutines.Job::class.java)),
+    val ATTACHABLE_LIBRARIES: Map<String, File> = mapOf(
+        "KotlinTestJunit" to TestKotlinArtifacts.kotlinTestJunit.toFile(),
+        "JUnit" to File(PathUtil.getJarPathForClass(TestCase::class.java)),
+        "JUnit3" to TestKotlinArtifacts.junit3.toFile(),
+        "JUnit4" to File(PathUtil.getJarPathForClass(TestCase::class.java)),
+        "JUnit5" to File(PathUtil.getJarPathForClass(Test::class.java)),
+        "JUnit5-Pioneer" to File(PathUtil.getJarPathForClass(RetryingTest::class.java)),
+        "TestNG" to File(PathUtil.getJarPathForClass(org.testng.annotations.Test::class.java)),
+        "Coroutines" to File(PathUtil.getJarPathForClass(Job::class.java)),
     )
 
     fun configureKotlinRuntimeAndSdk(module: Module, sdk: Sdk) {
@@ -275,6 +280,10 @@ object ConfigLibraryUtil {
 }
 
 fun Library.ModifiableModel.addRoot(file: File, kind: OrderRootType) {
+    addRoot(VfsUtil.getUrlForLibraryRoot(file), kind)
+}
+
+fun Library.ModifiableModel.addRoot(file: Path, kind: OrderRootType) {
     addRoot(VfsUtil.getUrlForLibraryRoot(file), kind)
 }
 

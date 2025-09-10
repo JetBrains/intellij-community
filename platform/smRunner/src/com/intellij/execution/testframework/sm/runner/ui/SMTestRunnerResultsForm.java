@@ -57,10 +57,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -553,11 +550,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myDisposed = true;
   }
 
-  protected int getTotalTestCount() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public int getTotalTestCount() {
     return myTotalTestCount;
   }
 
-  protected int getStartedTestCount() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public int getStartedTestCount() {
     return myStartedTestCount;
   }
 
@@ -583,11 +584,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myMentionedCategories;
   }
 
-  protected long getStartTime() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public long getStartTime() {
     return myStartTime;
   }
 
-  protected long getEndTime() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public long getEndTime() {
     return myEndTime;
   }
 

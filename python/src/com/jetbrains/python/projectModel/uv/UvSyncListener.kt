@@ -5,7 +5,7 @@ import com.intellij.util.messages.Topic
 import com.jetbrains.python.projectModel.ProjectModelSyncListener
 import java.nio.file.Path
 
-interface UvSyncListener : ProjectModelSyncListener {
+internal interface UvSyncListener : ProjectModelSyncListener {
   companion object {
     @Topic.ProjectLevel
     val TOPIC: Topic<UvSyncListener> = Topic(UvSyncListener::class.java, Topic.BroadcastDirection.NONE)

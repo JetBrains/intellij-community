@@ -22,7 +22,6 @@ import java.util.function.Supplier
 internal class VcsLogContentProvider(private val project: Project) : ChangesViewContentProvider {
   override fun initTabContent(content: Content) {
     val projectLog = VcsProjectLog.getInstance(project) as? IdeVcsProjectLog ?: return
-    if (projectLog.isDisposing) return
 
     thisLogger<VcsLogContentProvider>().debug("Adding main Log ui container to the content for ${project.name}")
 

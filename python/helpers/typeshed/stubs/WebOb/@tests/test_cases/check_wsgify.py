@@ -56,13 +56,10 @@ def app(request: Request) -> str:
 
 
 application = app
-assert_type(app, "wsgify[Request, []]")
+assert_type(app, "wsgify[[], Request]")
 assert_type(app(env, start_response), "Iterable[bytes]")
 assert_type(app(request), _AnyResponse)
-# FIXME: For some reason pyright complains here with
-# mismatch: expected "wsgify[Request, ()]" but received "wsgify[Request, ()]"
-# can you spot the difference?
-# assert_type(app(application), "wsgify[Request, []]")
+assert_type(app(application), "wsgify[[], Request]")
 application = app(application)
 
 
@@ -78,13 +75,10 @@ def m_app(request: Request) -> str:
 
 
 application = m_app
-# FIXME: same weird pyright error where it complains about the types
-#        being the same
-# assert_type(m_app, "wsgify[Request, [WSGIApplication]]")
+assert_type(m_app, "wsgify[[WSGIApplication], Request]")
 assert_type(m_app(env, start_response), "Iterable[bytes]")
 assert_type(m_app(request), _AnyResponse)
-# FIXME: and also here
-# assert_type(m_app(application), "wsgify[Request, [WSGIApplication]]")
+assert_type(m_app(application), "wsgify[[WSGIApplication], Request]")
 application = m_app(application)
 
 
@@ -99,7 +93,7 @@ def my_request_app(request: MyRequest) -> None:
 
 
 application = my_request_app
-assert_type(my_request_app, "wsgify[MyRequest, []]")
+assert_type(my_request_app, "wsgify[[], MyRequest]")
 
 
 # we are allowed to accept a less specific request class
@@ -109,7 +103,7 @@ def valid_request_app(request: Request) -> None:
 
 
 # but the opposite is not allowed
-@wsgify  # type:ignore
+@wsgify  # type: ignore
 def invalid_request_app(request: MyRequest) -> None:
     pass
 
@@ -117,5 +111,5 @@ def invalid_request_app(request: MyRequest) -> None:
 # we can't really make passing extra arguments directly work
 # otherwise we have to give up most of our type safety for
 # something that should only be used through wsgify.middleware
-wsgify(args=(1,))  # type:ignore
-wsgify(kwargs={"ips": ["127.0.0.1"]})  # type:ignore
+wsgify(args=(1,))  # type: ignore
+wsgify(kwargs={"ips": ["127.0.0.1"]})  # type: ignore

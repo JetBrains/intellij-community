@@ -5,6 +5,8 @@ import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.idea.IJIgnore;
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.nastradamus.NastradamusClient;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.bucketing.*;
@@ -618,7 +620,19 @@ public class TestCaseLoader {
     if (myGetClassesCalled) {
       throw new IllegalStateException("Cannot fill more classes after 'getClasses' was already called");
     }
-    final String relevantJarsRoot = System.getProperty("intellij.test.jars.location");
+
+    String relevantJarsRoot = System.getProperty("intellij.test.jars.location");
+
+    Path currentJarPath = PathManager.getJarForClass(getClass());
+    if (relevantJarsRoot == null && currentJarPath != null) {
+      String bazelOutSubstring = "out/bazel-out";
+      int bazelOutPathIndex = FileUtilRt.toSystemIndependentName(currentJarPath.toString()).indexOf(bazelOutSubstring);
+      if (bazelOutPathIndex > 0) {
+        // Was compiled by Bazel, let's set a relevant compilation root if it was not set yet
+        relevantJarsRoot = currentJarPath.toString().substring(0, bazelOutPathIndex + 1 + bazelOutSubstring.length());
+      }
+    }
+
     boolean noRelevantJarsRoot = StringUtil.isEmptyOrSpaces(relevantJarsRoot);
     long t = System.nanoTime();
 

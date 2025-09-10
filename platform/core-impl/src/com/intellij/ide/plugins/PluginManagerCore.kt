@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.ide.plugins.PluginManagerCore.loadedPlugins
 import com.intellij.ide.plugins.PluginManagerCore.processAllNonOptionalDependencies
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationInfo
@@ -22,6 +23,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
@@ -215,11 +217,17 @@ object PluginManagerCore {
   fun isPlatformClass(fqn: String): Boolean =
     fqn.startsWith("java.") || fqn.startsWith("javax.") || fqn.startsWith("kotlin.") || fqn.startsWith("groovy.")
 
-  private fun isVendorItemTrusted(vendorItem: String): Boolean =
-    if (vendorItem.isEmpty()) false
-    else isVendorJetBrains(vendorItem) ||
-         vendorItem == ApplicationInfoImpl.getShadowInstance().companyName ||
-         vendorItem == ApplicationInfoImpl.getShadowInstance().shortCompanyName
+  @ApiStatus.Internal
+  fun isVendorItemTrusted(vendorItem: String): Boolean {
+    return if (vendorItem.isBlank()) {
+      false
+    }
+    else {
+      isVendorJetBrains(vendorItem)
+      || vendorItem == ApplicationInfoImpl.getShadowInstance().companyName
+      || vendorItem == ApplicationInfoImpl.getShadowInstance().shortCompanyName
+    }
+  }
 
   @JvmStatic
   fun isVendorTrusted(vendor: String): Boolean =
@@ -313,9 +321,7 @@ object PluginManagerCore {
       for (descriptor in getPluginSet().allPlugins) {
         if (pluginIds.contains(descriptor.getPluginId())) {
           descriptor.isMarkedForLoading = enabled
-          if (descriptor !is ContentModuleDescriptor) {
-            descriptors.add(descriptor)
-          }
+          descriptors.add(descriptor)
         }
       }
       val pluginEnabler = PluginEnabler.getInstance()
@@ -486,12 +492,12 @@ object PluginManagerCore {
                     loadingResult.getIncompleteIdMap().flatMap { (_, value) ->
                       value.pluginAliases.map { it to value }
                     }.toMap()
-    val fullContentModuleIdMap = HashMap<String, ContentModuleDescriptor>()
+    val fullContentModuleIdMap = HashMap<PluginModuleId, ContentModuleDescriptor>()
     for (descriptor in loadingResult.getIncompleteIdMap().values) {
-      descriptor.contentModules.associateByTo(fullContentModuleIdMap) { it.moduleName }
+      descriptor.contentModules.associateByTo(fullContentModuleIdMap) { it.moduleId }
     }
     for (descriptor in idMap.values) {
-      descriptor.contentModules.associateByTo(fullContentModuleIdMap) { it.moduleName }
+      descriptor.contentModules.associateByTo(fullContentModuleIdMap) { it.moduleId }
     }
 
     if (initContext.checkEssentialPlugins && !idMap.containsKey(CORE_ID)) {
@@ -501,7 +507,7 @@ object PluginManagerCore {
 
     checkThirdPartyPluginsPrivacyConsent(parentActivity, idMap)
 
-    val pluginSetBuilder = PluginSetBuilder(loadingResult.enabledPluginsById.values.toSet())
+    val pluginSetBuilder = PluginSetBuilder(loadingResult.getPluginsToAttemptLoading())
     selectPluginsForLoading(descriptors = pluginSetBuilder.unsortedPlugins, idMap = idMap, errors = pluginErrorsById, initContext = initContext)
     pluginSetBuilder.checkPluginCycles(globalErrors)
     val pluginsToDisable = HashMap<PluginId, String>()
@@ -577,9 +583,9 @@ object PluginManagerCore {
     if (initContext.explicitPluginSubsetToLoad != null) {
       val rootPluginsToLoad: Set<PluginId> = initContext.explicitPluginSubsetToLoad!!.toHashSet() + initContext.essentialPlugins
       val pluginsToLoad = LinkedHashSet<IdeaPluginDescriptorImpl>(rootPluginsToLoad.size)
-      val contentModuleIdMap = HashMap<String, ContentModuleDescriptor>()
+      val contentModuleIdMap = HashMap<PluginModuleId, ContentModuleDescriptor>()
       for (descriptor in descriptors) {
-        descriptor.contentModules.associateByTo(contentModuleIdMap) { it.moduleName }
+        descriptor.contentModules.associateByTo(contentModuleIdMap) { it.moduleId }
       }
       for (id in rootPluginsToLoad) {
         val descriptor = idMap[id] ?: continue
@@ -627,10 +633,9 @@ object PluginManagerCore {
     val corePlugin = idMap[CORE_ID]
     if (corePlugin != null) {
       val disabledModulesOfCorePlugin =
-        corePlugin.contentModules
-          .filter { it.moduleLoadingRule.required && !it.isMarkedForLoading }
+        corePlugin.contentModules.filter { it.moduleLoadingRule.required && !it.isMarkedForLoading }
       if (disabledModulesOfCorePlugin.isNotEmpty()) {
-        throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.moduleName })
+        throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.moduleId.id })
       }
     }
     var missing: MutableList<Pair<String, PluginNonLoadReason?>>? = null
@@ -772,7 +777,7 @@ object PluginManagerCore {
 
   @ApiStatus.Internal
   fun processAllNonOptionalDependencyIds(rootDescriptor: IdeaPluginDescriptorImpl, pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-                                         contentModuleIdMap: Map<String, ContentModuleDescriptor>,
+                                         contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
                                          consumer: (PluginId) -> FileVisitResult) {
     processAllNonOptionalDependencies(rootDescriptor, depProcessed = HashSet(), pluginIdMap, contentModuleIdMap) { pluginId, _ -> 
       if (pluginId == null) FileVisitResult.CONTINUE else consumer(pluginId) 
@@ -787,7 +792,7 @@ object PluginManagerCore {
   fun processAllNonOptionalDependencies(
     rootDescriptor: IdeaPluginDescriptorImpl,
     pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    contentModuleIdMap: Map<String, ContentModuleDescriptor>,
+    contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
     consumer: (IdeaPluginDescriptorImpl) -> FileVisitResult,
   ): Boolean = processAllNonOptionalDependencies(rootDescriptor, depProcessed = HashSet(), pluginIdMap, contentModuleIdMap, consumer = { _, descriptor ->
     if (descriptor == null) FileVisitResult.CONTINUE else consumer(descriptor)
@@ -797,10 +802,10 @@ object PluginManagerCore {
     rootDescriptor: IdeaPluginDescriptorImpl,
     depProcessed: MutableSet<in IdeaPluginDescriptorImpl>,
     pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    contentModuleIdMap: Map<String, ContentModuleDescriptor>,
+    contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
     consumer: (PluginId?, IdeaPluginDescriptorImpl?) -> FileVisitResult,
   ): Boolean {
-    fun processDependency(pluginId: PluginId?, moduleId: String?): Boolean {
+    fun processDependency(pluginId: PluginId?, moduleId: PluginModuleId?): Boolean {
       val descriptor = if (pluginId != null) pluginIdMap[pluginId] else contentModuleIdMap[moduleId]
       val pluginId = descriptor?.getPluginId() ?: pluginId
       when (consumer(pluginId, descriptor)) {
@@ -817,10 +822,10 @@ object PluginManagerCore {
     }
     fun processModuleDependencies(moduleDependencies: ModuleDependencies): Boolean {
       for (plugin in moduleDependencies.plugins) {
-        if (!processDependency(plugin.id, null)) return false
+        if (!processDependency(plugin, null)) return false
       }
       for (module in moduleDependencies.modules) {
-        if (!processDependency(null, module.name)) return false
+        if (!processDependency(null, module)) return false
       }
       return true
     }
@@ -853,13 +858,13 @@ object PluginManagerCore {
       }
     }
     for (plugin in descriptor.moduleDependencies.plugins) {
-      dependencies.add(plugin.id)
+      dependencies.add(plugin)
     }
     if (descriptor is PluginMainDescriptor) {
       for (contentModule in descriptor.contentModules) {
         if (contentModule.moduleLoadingRule.required) {
           for (contentModuleDependency in contentModule.moduleDependencies.plugins) {
-            dependencies.add(contentModuleDependency.id)
+            dependencies.add(contentModuleDependency)
           }
         }
       }
@@ -916,7 +921,7 @@ object PluginManagerCore {
   }
 
   /**
-   * @return `true` if any required dependency of some essential plugin (both plugin or modular, including transitive) is provided by [pluginDescriptor].
+   * @return `true` If any required dependency of some essential plugin (both plugin or modular, including transitive) is provided by [pluginDescriptor].
    * Note that `pluginDescriptor is essential` does not imply `isRequiredForEssentialPlugin(pluginDescriptor) == true`.
    */
   @ApiStatus.Internal
@@ -1024,7 +1029,7 @@ fun pluginRequiresUltimatePluginButItsDisabled(plugin: PluginId): Boolean {
 
 @ApiStatus.Internal
 fun pluginRequiresUltimatePluginButItsDisabled(rootPlugin: IdeaPluginDescriptorImpl, pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-                                               contentModuleIdMap: Map<String, ContentModuleDescriptor>): Boolean {
+                                               contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>): Boolean {
   if (!isDisabled(ULTIMATE_PLUGIN_ID)) return false
   return pluginRequiresUltimatePlugin(rootPlugin, pluginMap, contentModuleIdMap)
 }
@@ -1032,15 +1037,15 @@ fun pluginRequiresUltimatePluginButItsDisabled(rootPlugin: IdeaPluginDescriptorI
 
 @ApiStatus.Internal
 fun pluginRequiresUltimatePluginButItsDisabled(plugin: PluginId, pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-                                               contentModuleIdMap: Map<String, ContentModuleDescriptor>): Boolean {
+                                               contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>): Boolean {
   if (!isDisabled(ULTIMATE_PLUGIN_ID)) return false
   return pluginRequiresUltimatePlugin(plugin, pluginMap, contentModuleIdMap)
 }
 
 @ApiStatus.Internal
-fun pluginRequiresUltimatePlugin(plugin: PluginId, 
+fun pluginRequiresUltimatePlugin(plugin: PluginId,
                                  pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-                                 contentModuleMap: Map<String, ContentModuleDescriptor>,
+                                 contentModuleMap: Map<PluginModuleId, ContentModuleDescriptor>,
 ): Boolean {
   val rootDescriptor = pluginMap[plugin]
   if (rootDescriptor == null) return false
@@ -1050,12 +1055,30 @@ fun pluginRequiresUltimatePlugin(plugin: PluginId,
 @ApiStatus.Internal
 fun pluginRequiresUltimatePlugin(rootDescriptor: IdeaPluginDescriptorImpl,
                                  pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-                                 contentModuleMap: Map<String, ContentModuleDescriptor>,
+                                 contentModuleMap: Map<PluginModuleId, ContentModuleDescriptor>,
 ): Boolean {
   return !processAllNonOptionalDependencies(rootDescriptor, pluginMap, contentModuleMap) { descriptorImpl ->
     when (descriptorImpl.pluginId) {
       ULTIMATE_PLUGIN_ID -> FileVisitResult.TERMINATE
       else -> FileVisitResult.CONTINUE
+    }
+  }
+}
+
+@ApiStatus.Internal
+@IntellijInternalApi
+fun isPlatformOrJetBrainsBundled(aClass: Class<*>): Boolean {
+  val classLoader = aClass.classLoader
+  when {
+    classLoader is PluginAwareClassLoader -> {
+      val plugin = classLoader.pluginDescriptor
+      return plugin.isBundled && PluginManagerCore.isDevelopedByJetBrains(plugin)
+    }
+    PluginManagerCore.isRunningFromSources() -> {
+      return true
+    }
+    else -> {
+      return PluginUtils.getPluginDescriptorIfIdeaClassLoaderIsUsed(aClass) == null
     }
   }
 }

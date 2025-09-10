@@ -2,6 +2,8 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.UIUtil;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
@@ -24,23 +26,24 @@ public final class JBCefTestHelper {
   /**
    * Shows the browser in a frame in waits for a load completion.
    */
-  public static void showAndWaitForLoad(@NotNull JBCefBrowserBase browser, @NotNull String frameTitle) {
-    invokeAndWaitForLoad(browser, () -> show(browser, frameTitle));
+  public static void showAndWaitForLoad(@NotNull JBCefBrowserBase browser, @NotNull String frameTitle, Disposable parentDisposable) {
+    invokeAndWaitForLoad(browser, () -> show(browser, frameTitle, parentDisposable));
   }
 
   /**
    * Shows the browser in a frame asynchronously.
    */
-  public static void showAsync(@NotNull JBCefBrowserBase browser, @NotNull String frameTitle) {
-    EventQueue.invokeLater(() -> show(browser, frameTitle));
+  public static void showAsync(@NotNull JBCefBrowserBase browser, @NotNull String frameTitle, Disposable parentDisposable) {
+    EventQueue.invokeLater(() -> show(browser, frameTitle, parentDisposable));
   }
 
-  private static void show(@NotNull JBCefBrowserBase browser, @NotNull String frameTitle) {
+  private static void show(@NotNull JBCefBrowserBase browser, @NotNull String frameTitle, Disposable parentDisposable) {
     JFrame frame = new JFrame(frameTitle);
     frame.setSize(640, 480);
     frame.setLocationRelativeTo(null);
     frame.add(browser.getComponent(), BorderLayout.CENTER);
     frame.setVisible(true);
+    Disposer.register(parentDisposable, () -> frame.removeNotify());
   }
 
   /**

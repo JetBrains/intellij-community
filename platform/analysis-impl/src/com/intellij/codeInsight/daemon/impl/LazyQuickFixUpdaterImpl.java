@@ -12,6 +12,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
@@ -34,11 +36,11 @@ import java.util.function.Consumer;
 
 /**
  * Manages computation of lazy quick fixes registered via {@link HighlightInfo.Builder#registerLazyFixes(Consumer)} in background.
- * The list of lazy quick fixes that require background computation is stored in {@link HighlightInfo#myLazyQuickFixes}.
+ * The list of lazy quick fixes that require background computation is stored in {@link HighlightInfo.OffsetStore#lazyQuickFixes}.
  * If {@link HighlightInfo#hasLazyQuickFixes()} is true, it means that {@link HighlightInfo} will need to compute its quickfixes in background.
  * That computation is started by {@link LazyQuickFixUpdater#startComputingNextQuickFixes(PsiFile, Editor, ProperTextRange)}, which tries to start not too many jobs to conserve resources
  * and to avoid calculating quick fixes for HighlightInfo which will never be needed anyway.
- * Upon its completion for each info, the futures in {@link HighlightInfo#myLazyQuickFixes} are computed, which means its quickfixes are ready to be shown.
+ * Upon its completion for each info, the futures in {@link HighlightInfo.OffsetStore#lazyQuickFixes} are computed, which means its quickfixes are ready to be shown.
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
@@ -85,10 +87,12 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
 
   private void startLazyFixJobs(@NotNull Editor editor, @NotNull Project project, @NotNull CodeInsightContext context, int startOffset, int endOffset) {
     List<HighlightInfo> infos = new ArrayList<>();
-    DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, HighlightSeverity.ERROR, startOffset, endOffset,context, info -> {
-      infos.add(info);
-      return true;
-    });
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(editor.getDocument(), project, true);
+    DaemonCodeAnalyzerEx.processHighlights(model, project, HighlightSeverity.ERROR, startOffset, endOffset, context,
+                                           info -> {
+                                             infos.add(info);
+                                             return true;
+                                           });
     // query hasLazyQuickFixes outside MarkupModel lock
     for (HighlightInfo info : infos) {
       if (info.hasLazyQuickFixes()) {

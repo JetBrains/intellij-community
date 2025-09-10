@@ -4,14 +4,15 @@ package com.intellij.openapi.progress.util
 import com.intellij.CommonBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalThreading
+import com.intellij.openapi.application.useDebouncedDrawingInSuvorovProgress
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.impl.fus.FreezeUiUsageCollector
 import com.intellij.openapi.progress.util.ui.NiceOverlayUi
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -20,6 +21,7 @@ import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.application
 import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.GraphicsUtil
 import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.getLogger
 import kotlinx.coroutines.Deferred
@@ -68,7 +70,7 @@ object SuvorovProgress {
     eternalStealer = EternalEventStealer(disposable)
   }
 
-  private val title: AtomicReference<@Nls String> = AtomicReference()
+  private val title: AtomicReference<@Nls String?> = AtomicReference()
 
   fun <T> withProgressTitle(title: String, action: () -> T): T {
     val oldTitle = this.title.getAndSet(title)
@@ -89,7 +91,7 @@ object SuvorovProgress {
       return
     }
 
-    FreezeUiUsageCollector.reportUiFreezePopupVisible()
+    LifecycleUsageTriggerCollector.onFreezePopupShown()
 
     // in tests, there is no UI scale, but we still want to run SuvorovProgress
     val isScaleInitialized = (application.isUnitTestMode || JBUIScale.isInitialized())
@@ -110,8 +112,12 @@ object SuvorovProgress {
         processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
       }
       "NiceOverlay" -> {
+        if (title.get() != null) {
+          showPotemkinProgress(awaitedValue, true)
+        }
         val currentFocusedPane = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow?.let(SwingUtilities::getRootPane)
-        if (currentFocusedPane == null) {
+        // IJPL-203107 in remote development, there is no graphics for a component
+        if (currentFocusedPane == null || GraphicsUtil.safelyGetGraphics(currentFocusedPane) == null) {
           // can happen also in tests
           processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
         }
@@ -163,11 +169,23 @@ object SuvorovProgress {
       }, disposable)
 
     repostAllEvents()
+    var oldTimestamp = System.currentTimeMillis()
     try {
       while (!awaitedValue.isCompleted) {
-        niceOverlay.redrawMainComponent()
-        stealer.dispatchEvents(0)
-        Thread.sleep(10)
+        if (useDebouncedDrawingInSuvorovProgress) {
+          val newTimestamp = System.currentTimeMillis()
+          if (newTimestamp - oldTimestamp >= 10) {
+            // we do not want to redraw the UI too frequently
+            oldTimestamp = newTimestamp
+            niceOverlay.redrawMainComponent()
+          }
+          stealer.dispatchEvents(10)
+        }
+        else {
+          niceOverlay.redrawMainComponent()
+          stealer.dispatchEvents(0)
+          Thread.sleep(10)
+        }
       }
     }
     finally {
@@ -180,7 +198,7 @@ object SuvorovProgress {
     // some focus machinery may require Write-Intent read action
     // we need to remove it from there
     getGlobalThreadingSupport().relaxPreventiveLockingActions {
-      val title = this.title.get()
+      @Suppress("HardCodedStringLiteral") val title = this.title.get()
       val progress = if (title != null || isBar) {
         PotemkinProgress(title ?: CommonBundle.message("title.long.non.interactive.progress"), null, null, null)
       }

@@ -232,7 +232,7 @@ public final class CommonJavaRefactoringUtil {
       if (text.charAt(correctedOffset) == ';') {//initially caret on the end of line
         correctedOffset--;
       }
-      if (correctedOffset < 0 || text.charAt(correctedOffset) != ')' && text.charAt(correctedOffset) != '.' && text.charAt(correctedOffset) != '}') {
+      if (correctedOffset < 0 || text.charAt(correctedOffset) != ')' && text.charAt(correctedOffset) != '.' && text.charAt(correctedOffset) != '}' && text.charAt(correctedOffset) != '"') {
         correctedOffset = offset;
       }
     }

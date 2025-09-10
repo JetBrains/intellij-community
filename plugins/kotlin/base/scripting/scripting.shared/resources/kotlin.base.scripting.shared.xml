@@ -30,9 +30,6 @@
             defaultValue="false"
             restartRequired="false"/>
 
-    <psi.clsCustomNavigationPolicy
-            implementation="org.jetbrains.kotlin.idea.core.script.shared.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
-
     <fileType name="script-definition-marker" fieldName="INSTANCE"
               implementationClass="org.jetbrains.kotlin.idea.core.script.shared.definition.ScriptDefinitionMarkerFileType"/>
   </extensions>

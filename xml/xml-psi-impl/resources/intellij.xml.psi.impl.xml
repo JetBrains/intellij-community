@@ -3,6 +3,7 @@
     <module name="intellij.xml.psi"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.regexp"/>
+    <module name="intellij.xml.syntax"/>
   </dependencies>
 
   <projectListeners>
@@ -31,8 +32,11 @@
     <lang.parserDefinition language="HTML" implementationClass="com.intellij.lang.html.HTMLParserDefinition"/>
     <lang.parserDefinition language="XHTML" implementationClass="com.intellij.lang.xhtml.XHTMLParserDefinition"/>
 
+    <syntax.syntaxDefinition language="XML" implementationClass="com.intellij.lang.xml.XmlSyntaxDefinitionExtension"/>
+
     <applicationService serviceInterface="com.intellij.html.embedding.BasicHtmlRawTextElementFactory"
                         serviceImplementation="com.intellij.lang.html.HtmlRawTextElementFactoryImpl"/>
+    <applicationService serviceImplementation="com.intellij.application.options.editor.XmlFoldingSettings"/>
 
     <lang.elementManipulator forClass="com.intellij.psi.xml.XmlAttributeValue"
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator"/>
@@ -106,5 +110,7 @@
     <lang.syntaxHighlighterFactory language="DTD" implementationClass="com.intellij.lang.dtd.DtdSyntaxHighlighterFactory"/>
 
     <applicationService serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
+    <applicationSettings service="com.intellij.application.options.editor.WebEditorOptions"/>
+    <rdct.remoteSettingProvider implementation="com.intellij.application.options.editor.WebEditorOptionsRemoteSettingInfoProvider"/>
   </extensions>
 </idea-plugin>

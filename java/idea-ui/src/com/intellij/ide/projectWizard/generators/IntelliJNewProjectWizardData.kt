@@ -6,9 +6,9 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 
 interface IntelliJNewProjectWizardData {
 
-  val jdkIntentProperty: ObservableMutableProperty<ProjectWizardJdkIntent?>
+  val jdkIntentProperty: ObservableMutableProperty<ProjectWizardJdkIntent>
 
-  var jdkIntent: ProjectWizardJdkIntent?
+  var jdkIntent: ProjectWizardJdkIntent
 
   val moduleNameProperty: ObservableMutableProperty<String>
 

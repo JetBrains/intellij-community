@@ -64,7 +64,7 @@ the following line.
 
 The first three special comments indicate that JSpecify annotations are applied
 in ways that are
-[unrecognized](http://jspecify.org/spec#recognized-locations-type-use). Tools
+[unrecognized](https://jspecify.dev/docs/spec#recognized-type-use). Tools
 are likely to report an error in the case of the first two, somewhat less likely
 to report an error in the case of the third (since they might choose to give
 their meaning to annotations there), and not *obligated* to do anything for any

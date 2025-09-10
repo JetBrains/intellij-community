@@ -2,6 +2,8 @@
 package com.intellij.mcpserver.settings
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil.browse
+import com.intellij.ide.IdeBundle.messagePointer
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpserverIcons
 import com.intellij.mcpserver.clientConfiguration.McpClient
@@ -10,16 +12,21 @@ import com.intellij.mcpserver.createStdioMcpServerJsonConfiguration
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.util.getHelpLink
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
@@ -33,14 +40,35 @@ import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.ide.RestService.Companion.getLastFocusedOrOpenedProject
+import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionEvent
 import java.nio.file.Path
-import javax.swing.AbstractAction
-import javax.swing.JCheckBox
-import javax.swing.JComponent
-import javax.swing.SwingUtilities
+import javax.swing.*
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
+
+private class UpdatableBrowserLink(icon: Icon?, text: @Nls String?, tooltip: @Nls String?, var url: @NonNls String) : ActionLink() {
+  constructor(text: @Nls String, url: @NonNls String) : this(AllIcons.Ide.External_link_arrow, text, null, url)
+
+  init {
+    addActionListener { browse(url) }
+    icon?.let { setIcon(it, true) }
+    text?.let { setText(it) }
+    tooltip?.let { toolTipText = it }
+    ActionManagerEx.withLazyActionManager(scope = null) {
+      val group = DefaultActionGroup(object : DumbAwareAction(messagePointer("action.text.open.link.in.browser"), AllIcons.Nodes.PpWeb){
+        override fun actionPerformed(e: AnActionEvent) {
+          browse(url)
+        }
+      }, object: DumbAwareAction(messagePointer("action.text.copy.link.address"), AllIcons.Actions.Copy) {
+        override fun actionPerformed(e: AnActionEvent) {
+          CopyPasteManager.getInstance().setContents(StringSelection(url))
+        }
+      })
+      componentPopupMenu = it.createActionPopupMenu("popup@browser.link.context.menu", group).component
+    }
+  }
+}
 
 class McpServerSettingsConfigurable : SearchableConfigurable {
   private var settingsPanel: DialogPanel? = null
@@ -71,12 +99,13 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
         }
 
         fun getLinkText(): String = if (McpServerService.getInstance().isRunning) McpServerService.getInstance().serverSseUrl else ""
-        val link = browserLink(getLinkText(), getLinkText()).visibleIf(enabledCheckboxState!!)
+        val link = cell(UpdatableBrowserLink(getLinkText(), getLinkText())).visibleIf(enabledCheckboxState!!)
 
         enabledCheckboxState!!.addListener {
           McpServerService.getInstance().settingsChanged(it)
           val isServerRunning = McpServerService.getInstance().isRunning
-          link.component.text = if (isServerRunning) McpServerService.getInstance().serverSseUrl else ""
+          link.component.text = getLinkText()
+          link.component.url = getLinkText()
           checkboxWithValidation.text = if (isServerRunning) McpServerBundle.message("enable.mcp.server.when.enabled") else McpServerBundle.message("enable.mcp.server")
         }
       }.bottomGap(BottomGap.SMALL)

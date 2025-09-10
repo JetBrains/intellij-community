@@ -39,6 +39,10 @@ public abstract class LookupArranger implements WeighingContext {
     }
     myMatchingItems.add(item);
 
+    if (supportCustomCaches(item)) {
+      return;
+    }
+
     if (isTopPriorityItem(item)) {
       myTopPriorityItems.add(item);
     }
@@ -47,6 +51,17 @@ public abstract class LookupArranger implements WeighingContext {
     } else if (isPrefixItem(item, false)) {
       myInexactPrefixItems.add(item);
     }
+  }
+
+  /**
+   * Determines whether custom caching for the specified {@code LookupElement} is supported.
+   *
+   * @param item the {@code LookupElement} to check for custom cache support and process it, or {@code null} if no specific element is provided
+   * @return {@code true} if custom caching is supported for the given element; {@code false} otherwise
+   */
+  @ApiStatus.Internal
+  protected boolean supportCustomCaches(@Nullable LookupElement item) {
+    return false;
   }
 
   public void registerMatcher(@NotNull LookupElement item, @NotNull PrefixMatcher matcher) {
@@ -120,7 +135,8 @@ public abstract class LookupArranger implements WeighingContext {
     rebuildItemCache();
   }
 
-  private void rebuildItemCache() {
+  @ApiStatus.Internal
+  protected void rebuildItemCache() {
     myMatchingItems.clear();
     myExactPrefixItems.clear();
     myInexactPrefixItems.clear();

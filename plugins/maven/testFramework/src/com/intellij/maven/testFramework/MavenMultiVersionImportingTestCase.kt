@@ -54,6 +54,12 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   @JvmField
   var myMavenModelVersion: String? = null
 
+  protected val modulesTag: String
+    get() = if(isModel410()) "subprojects" else "modules"
+
+  protected val moduleTag: String
+    get() = if(isModel410()) "subproject" else "module"
+
   protected var myWrapperTestFixture: MavenWrapperTestFixture? = null
 
   protected fun assumeVersionMoreThan(version: String) {
@@ -80,6 +86,13 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     if (myMavenModelVersion == MavenConstants.MODEL_VERSION_4_1_0) r.run()
   }
 
+
+  protected fun assumeModel_4_0_0(message: String) {
+    Assume.assumeTrue(message, myMavenModelVersion == MavenConstants.MODEL_VERSION_4_0_0)
+  }
+  protected fun assumeModel_4_1_0(message: String) {
+    Assume.assumeTrue(message, myMavenModelVersion == MavenConstants.MODEL_VERSION_4_1_0)
+  }
 
   protected fun assumeMaven3() {
     val version: String = getActualVersion(myMavenVersion!!)
@@ -119,7 +132,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     }
     val actualMavenVersion = getActualVersion(myMavenVersion!!)
     if (isMaven4)
-    MavenLog.LOG.warn("Running test with Maven $actualMavenVersion")
+      MavenLog.LOG.warn("Running test with Maven $actualMavenVersion")
     myWrapperTestFixture = MavenWrapperTestFixture(project, actualMavenVersion)
     myWrapperTestFixture!!.setUp()
     modelVersion = myMavenModelVersion ?: MavenConstants.MODEL_VERSION_4_0_0
@@ -356,7 +369,7 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
     // compare relative paths
     if (expectedPaths.all { !it.isAbsolute }) {
       val actualRelativePaths = actualPaths.map { basePath.relativize(it) }
-      assertSameElements("Unexpected list of source roots ", actualRelativePaths.map { it.toString() }, expectedPaths.map { it.toString()})
+      assertSameElements("Unexpected list of source roots ", actualRelativePaths.map { it.toString() }, expectedPaths.map { it.toString() })
       return
     }
 

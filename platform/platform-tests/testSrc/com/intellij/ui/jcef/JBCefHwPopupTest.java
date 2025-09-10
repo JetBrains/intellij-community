@@ -72,5 +72,6 @@ public class JBCefHwPopupTest {
     });
 
     assertTrue(popupIsShowing.get());
+    frame.removeNotify();
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.execution.target
 
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
 interface CustomToolLanguageConfigurable<T> {
   fun setIntrospectable(introspectable: LanguageRuntimeType.Introspectable)
@@ -9,6 +10,7 @@ interface CustomToolLanguageConfigurable<T> {
   /**
    * Call [validate] first to make sure there are no errors
    */
+  @RequiresEdt
   fun createCustomTool(): T?
 
   fun validate(): Collection<ValidationInfo>

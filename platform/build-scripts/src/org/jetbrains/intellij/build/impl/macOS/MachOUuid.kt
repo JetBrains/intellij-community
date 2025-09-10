@@ -114,7 +114,7 @@ class MachOUuid(private val executable: Path, private val customizer: MacDistrib
           channel.position(channel.position() + cmdBodySize)
         }
       }
-      context.messages.error("LC_UUID not found in $executable")
+      context.messages.logErrorAndThrow("LC_UUID not found in $executable")
     }
 
     if (canBeSignedLocally) {

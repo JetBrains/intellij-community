@@ -116,6 +116,19 @@ public final class AsyncTreeModel extends AbstractTreeModel
     Disposer.register(parent, this);
   }
 
+  /**
+   * Returns the underlying background model.
+   * <p>
+   *   The model is generally not safe to access from the EDT.
+   *   The correct way to access it depends on the implementation of the model passed to the constructor.
+   * </p>
+   * @return the underlying background model
+   */
+  @NotNull
+  public TreeModel getModel() {
+    return model;
+  }
+
   @Override
   public void dispose() {
     EDT.assertIsEdt();
@@ -1213,6 +1226,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
    * @deprecated do not use
    */
   @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
   public void setRootImmediately(@NotNull Object object) {
     Node node = new Node(object, LeafState.NEVER);
     node.insertPath(new CachingTreePath(object));

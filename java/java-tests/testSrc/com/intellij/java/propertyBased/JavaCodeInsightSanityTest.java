@@ -128,7 +128,8 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
                                                 f -> {
                                                   ProjectFileIndex projectFileIndex =
                                                     ProjectRootManager.getInstance(myFixture.getProject()).getFileIndex();
-                                                  return projectFileIndex.isInSource(f.getVirtualFile());
+                                                  return projectFileIndex.isInSource(f.getVirtualFile()) &&
+                                                         !f.getVirtualFile().getPath().contains("testData");
                                                 },
                                                 fileActions);
   }

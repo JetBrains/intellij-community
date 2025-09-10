@@ -37,6 +37,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.SoftReference;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -48,11 +49,11 @@ import static com.intellij.reference.SoftReference.dereference;
 public final class CompletionInitializationUtil {
   private static final Logger LOG = Logger.getInstance(CompletionInitializationUtil.class);
 
-  public static CompletionInitializationContextImpl createCompletionInitializationContext(@NotNull Project project,
-                                                                                          @NotNull Editor editor,
-                                                                                          @NotNull Caret caret,
-                                                                                          int invocationCount,
-                                                                                          CompletionType completionType) {
+  public static @NotNull CompletionInitializationContextImpl createCompletionInitializationContext(@NotNull Project project,
+                                                                                                   @NotNull Editor editor,
+                                                                                                   @NotNull Caret caret,
+                                                                                                   int invocationCount,
+                                                                                                   @NotNull CompletionType completionType) {
     return WriteAction.compute(() -> {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       CompletionAssertions.checkEditorValid(editor);
@@ -66,12 +67,11 @@ public final class CompletionInitializationUtil {
     });
   }
 
-  @ApiStatus.Internal
-  public static CompletionInitializationContextImpl runContributorsBeforeCompletion(Editor editor,
-                                                                                    PsiFile psiFile,
-                                                                                    int invocationCount,
-                                                                                    @NotNull Caret caret,
-                                                                                    CompletionType completionType) {
+  public static @NotNull CompletionInitializationContextImpl runContributorsBeforeCompletion(@NotNull Editor editor,
+                                                                                             @NotNull PsiFile psiFile,
+                                                                                             int invocationCount,
+                                                                                             @NotNull Caret caret,
+                                                                                             CompletionType completionType) {
     final Ref<CompletionContributor> current = Ref.create(null);
     CompletionInitializationContextImpl context =
       new CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount) {
@@ -82,20 +82,22 @@ public final class CompletionInitializationUtil {
           super.setDummyIdentifier(dummyIdentifier);
 
           if (dummyIdentifierChanger != null) {
-            LOG.error("Changing the dummy identifier twice, already changed by " + dummyIdentifierChanger);
+            LOG.error("Changing the dummy identifier twice, already changed by " + dummyIdentifierChanger + ". The second one is " + current.get());
           }
           dummyIdentifierChanger = current.get();
         }
       };
-    Project project = psiFile.getProject();
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
-      for (final CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(context.getPositionLanguage(), project)) {
+      Project project = psiFile.getProject();
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      List<CompletionContributor> contributors = CompletionContributor.forLanguageHonorDumbness(context.getPositionLanguage(), project);
+      for (CompletionContributor contributor : contributors) {
         current.set(contributor);
         contributor.beforeCompletion(context);
         CompletionAssertions.checkEditorValid(editor);
-        assert !PsiDocumentManager.getInstance(project).isUncommited(editor.getDocument()) : "Contributor " +
-                                                                                             contributor +
-                                                                                             " left the document uncommitted";
+        if (documentManager.isUncommited(editor.getDocument())) {
+          LOG.error("Contributor " + contributor + " left the document uncommitted");
+        }
       }
     });
     return context;

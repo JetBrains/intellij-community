@@ -21,7 +21,7 @@ jvm_library(
   name = "kotlin-code-insight-postfix-templates-k2",
   module_name = "kotlin.code-insight.postfix-templates.k2",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_kotlin-code-insight-postfix-templates-k2",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -51,7 +51,7 @@ jvm_library(
 jvm_library(
   name = "kotlin-code-insight-postfix-templates-k2_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_kotlin-code-insight-postfix-templates-k2",
   associates = [":kotlin-code-insight-postfix-templates-k2"],
   deps = [

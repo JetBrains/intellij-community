@@ -22,8 +22,6 @@ import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
-import com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptor;
-import com.intellij.java.debugger.impl.shared.engine.JavaValueObjectReferenceInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -72,6 +70,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   private final @NotNull EvaluationContextImpl myEvaluationContext;
   private final NodeManagerImpl myNodeManager;
   private final boolean myContextSet;
+  private final CompletableFuture<XDescriptor> myXDescriptorFuture;
+  private final CompletableFuture<XPinToTopData> myPinToTopDataFuture;
 
   protected JavaValue(JavaValue parent,
                       @NotNull ValueDescriptorImpl valueDescriptor,
@@ -94,12 +94,23 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     myNodeManager = nodeManager;
     myContextSet = contextSet;
     myCanBePinned = doComputeCanBePinned();
+    myXDescriptorFuture = myValueDescriptor.getInitFuture()
+      .thenCompose(__ -> {
+        return JavaValueUtilsKt.getJavaValueXDescriptor(this);
+      });
+    myPinToTopDataFuture = myValueDescriptor.getInitFuture()
+      .thenApply(__ -> new XPinToTopData(canBePinned(), getTag(), null, null, null));
   }
 
   @Override
   public @Nullable String getTag() {
     Type type = myValueDescriptor.getType();
     return type == null ? null : type.name();
+  }
+
+  @Override
+  public @Nullable CompletableFuture<XPinToTopData> getPinToTopDataFuture() {
+    return myPinToTopDataFuture;
   }
 
   @Override
@@ -522,18 +533,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   @Override
-  public @Nullable CompletableFuture<XDescriptor> getXValueDescriptorAsync() {
-    return myValueDescriptor.getInitFuture().thenApply(ignored -> {
-      Value value = myValueDescriptor.getValue();
-      JavaValueObjectReferenceInfo objectReferenceInfo = null;
-      if (value instanceof ObjectReference ref) {
-        objectReferenceInfo = new JavaValueObjectReferenceInfo(ref.referenceType().name(), ref.virtualMachine().canGetInstanceInfo());
-      }
-      return new JavaValueDescriptor(
-        myValueDescriptor.isString(),
-        objectReferenceInfo
-      );
-    });
+  public @NotNull CompletableFuture<XDescriptor> getXValueDescriptorAsync() {
+    return myXDescriptorFuture;
   }
 
   @Override
@@ -679,14 +680,17 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     };
   }
 
-  public void setRenderer(NodeRenderer nodeRenderer, final XValueNodeImpl node) {
+  public void setRenderer(NodeRenderer nodeRenderer, @Nullable final XValueNodeImpl node) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myValueDescriptor.setRenderer(nodeRenderer);
     reBuild(node);
   }
 
-  public void reBuild(final XValueNodeImpl node) {
+  public void reBuild(final @Nullable XValueNodeImpl node) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (node == null) {
+      return;
+    }
     node.invokeNodeUpdate(() -> {
       node.clearChildren();
       computePresentation(node, XValuePlace.TREE);

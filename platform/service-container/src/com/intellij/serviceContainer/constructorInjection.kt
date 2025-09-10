@@ -18,6 +18,7 @@ import java.nio.file.Path
 import kotlin.Any
 import kotlin.Array
 import kotlin.Boolean
+import kotlin.Comparator
 import kotlin.Pair
 import kotlin.RuntimeException
 import kotlin.Suppress
@@ -293,7 +294,7 @@ private fun findTargetAdapter(componentManager: ComponentManagerImpl,
                               requestorClass: Class<*>,
                               requestorConstructor: Constructor<*>,
                               pluginId: PluginId): ComponentAdapter? {
-  val byKey = componentManager.getComponentAdapter(expectedType)
+  val byKey = componentManager.getComponentOrServiceAdapter(expectedType, lookupService = true)
   if (byKey != null && requestorKey != byKey.componentKey) {
     return byKey
   }

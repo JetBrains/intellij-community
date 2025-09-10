@@ -4,13 +4,13 @@
 
 package org.jetbrains.kotlin.idea.base.highlighting
 
-import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
+import com.intellij.codeInsight.daemon.SyntheticPsiFileSupport
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
-import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
@@ -50,22 +50,17 @@ fun KtFile.shouldHighlightFile(): Boolean {
     return if (isScript()) { /* isScript() is based on stub index */
         KotlinScriptHighlightingExtension.shouldHighlightScript(project, this)
     } else {
-        computeIfAbsent(ProjectRootModificationTracker.getInstance(project)) {
-            calculateShouldHighlightFile()
+        CachedValuesManager.getManager(this.project).getCachedValue(this) {
+            Result.create(calculateShouldHighlightFile(), ProjectRootModificationTracker.getInstance(project))
         }
     }
 }
-
-fun KtFile.computeIfAbsent(vararg dependencies: Any, compute: KtFile.() -> Boolean): Boolean =
-    CachedValuesManager.getManager(project).getCachedValue(this) {
-        CachedValueProvider.Result.create(compute(), dependencies)
-    }
 
 private fun isIndexingInProgress(project: Project) = runReadAction { DumbService.getInstance(project).isDumb }
 
 fun KtFile.shouldDefinitelyHighlight(): Boolean =
     (this is KtCodeFragment && context != null) ||
-            OutsidersPsiFileSupport.isOutsiderFile(virtualFile) ||
+            SyntheticPsiFileSupport.isOutsiderFile(virtualFile) ||
             (this !is KtCodeFragment && virtualFile?.fileSystem is NonPhysicalFileSystem)
 
 @OptIn(KaPlatformInterface::class)

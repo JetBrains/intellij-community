@@ -5,7 +5,7 @@ jvm_library(
   name = "junit-v5-rt",
   module_name = "intellij.junit.v5.rt",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/junit_rt:junit-rt",

@@ -11,7 +11,7 @@ jvm_library(
   name = "yaml",
   module_name = "intellij.markdown.frontmatter.yaml",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//plugins/IntelliLang:langInjection",

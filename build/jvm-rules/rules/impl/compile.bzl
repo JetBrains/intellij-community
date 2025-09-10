@@ -79,7 +79,7 @@ def _jvm_deps(ctx, associated_targets, deps, runtime_deps):
 
     # reduced classpath, exclude transitive deps from compilation
     #prune_transitive_deps = toolchains.kt.experimental_prune_transitive_deps and "kt_experimental_prune_transitive_deps_incompatible" not in ctx.attr.tags
-    prune_transitive_deps = False and "kt_experimental_prune_transitive_deps_incompatible" not in ctx.attr.tags
+    prune_transitive_deps = True and "kt_experimental_prune_transitive_deps_incompatible" not in ctx.attr.tags
     transitive = _compute_transitive_jars(dep_infos, prune_transitive_deps)
 
     return struct(

@@ -65,7 +65,7 @@ class ReplaceAssociateFunctionFix(
 ) : KotlinModCommandQuickFix<KtExpression>() {
     private val functionName = function.name(hasDestination)
 
-    override fun getName(): String = KotlinBundle.message("replace.with.0", functionName)
+    override fun getFamilyName(): String = KotlinBundle.message("replace.with.0", functionName)
 
     override fun applyFix(
         project: Project,
@@ -118,8 +118,6 @@ class ReplaceAssociateFunctionFix(
             dotQualifiedExpression.replace(newExpression)
         }
     }
-
-    override fun getFamilyName(): String = name
 
     private fun BuilderByPattern<KtExpression>.appendLambda(lambda: KtLambdaExpression, body: KtExpression? = null) {
         appendFixedText("{")

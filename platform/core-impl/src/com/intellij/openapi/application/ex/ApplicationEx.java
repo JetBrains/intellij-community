@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.Disposable;
@@ -214,7 +214,7 @@ public interface ApplicationEx extends Application {
   default void flushNativeEventQueue() {}
 
   @ApiStatus.Internal
-  default void dispatchCoroutineOnEDT(Runnable runnable, ModalityState state) {
+  default void dispatchCoroutineOnEDT(Runnable runnable, ModalityState state, boolean acquireWriteIntentLockInNonBlockingWay) {
     invokeLater(runnable, state, Conditions.alwaysFalse());
   }
 

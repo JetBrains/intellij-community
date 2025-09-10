@@ -9,7 +9,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
 
-internal val CONFIG_STATE_TOPIC: Topic<GrazieStateLifecycle> = Topic(GrazieStateLifecycle::class.java, Topic.BroadcastDirection.NONE)
+val CONFIG_STATE_TOPIC: Topic<GrazieStateLifecycle> = Topic(GrazieStateLifecycle::class.java, Topic.BroadcastDirection.NONE)
 
 interface GrazieStateLifecycle {
   /** Update Grazie state */

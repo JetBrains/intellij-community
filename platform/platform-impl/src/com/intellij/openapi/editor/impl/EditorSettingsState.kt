@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.EditorCoreUtil
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.EditorImpl.CODE_STYLE_SETTINGS
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesLanguageSupport
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineComponent.Companion.EDITOR_LANGUAGE
@@ -92,22 +93,38 @@ class EditorSettingsState(private val editor: EditorImpl?,
         CodeStyle.getProjectOrDefaultSettings(project).getIndentOptions(null).USE_TAB_CHARACTER
       }
       else {
+        val settings = editor?.getUserData(CODE_STYLE_SETTINGS) ?: CodeStyle.getSettings(project, file)
         SlowOperations.knownIssue("IDEA-333523, EA-914853").use {
-          CodeStyle.getIndentOptions(project, file).USE_TAB_CHARACTER
+          settings.getIndentOptionsByFile(project, file, null).USE_TAB_CHARACTER
         }
       }
     })
   }
   var myWrapWhenTypingReachesRightMargin: Boolean by property {
-    if (editor == null) CodeStyle.getDefaultSettings().isWrapOnTyping(language)
-    else CodeStyle.getSettings(editor).isWrapOnTyping(language)
+    val settings = if (editor == null) {
+      CodeStyle.getDefaultSettings()
+    }
+    else {
+      getEditorCodeStyleSettingsOrDefaults(editor)
+    }
+    settings.isWrapOnTyping(language)
   }
   var softMargins: List<Int> by property {
-    if (editor == null) mutableListOf() else CodeStyle.getSettings(editor).getSoftMargins(language)
+    if (editor == null) {
+      mutableListOf()
+    }
+    else {
+      getEditorCodeStyleSettingsOrDefaults(editor).getSoftMargins(language)
+    }
   }
   var rightMargin: Int by property {
-    if (editor != null) CodeStyle.getSettings(editor).getRightMargin(language)
-    else CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(language)
+    val settings = if (editor == null) {
+      CodeStyle.getProjectOrDefaultSettings(project)
+    }
+    else {
+      getEditorCodeStyleSettingsOrDefaults(editor)
+    }
+    settings.getRightMargin(language)
   }
   // todo: I don't know how to listen to changes for the result of `file?.fileType`. Also seems like there is no way to provide
   //   `language ` directly and it has to be calculated indirectly, so it has to be in background, but the current infrastructure is not ready
@@ -353,4 +370,16 @@ private fun fileNameMatches(fileName: String, globPatterns: String): Boolean {
     .map { it.trim() }
     .filter { !it.isEmpty() }
     .any { PatternUtil.fromMask(it).matcher(fileName).matches() }
+}
+
+private fun getEditorCodeStyleSettingsOrDefaults(editor: EditorImpl): CodeStyleSettings {
+  val editorSettings = editor.getUserData(CODE_STYLE_SETTINGS)
+  val project = editor.project
+  val file = editor.virtualFile
+  return if (project != null && file != null) {
+    editorSettings ?: CodeStyle.getSettings(project, file)
+  }
+  else {
+    CodeStyle.getDefaultSettings()
+  }
 }

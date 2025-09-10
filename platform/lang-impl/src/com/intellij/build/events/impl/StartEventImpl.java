@@ -15,17 +15,43 @@
  */
 package com.intellij.build.events.impl;
 
-import com.intellij.build.events.BuildEventsNls;
+import com.intellij.build.events.BuildEvents;
+import com.intellij.build.events.BuildEventsNls.Description;
+import com.intellij.build.events.BuildEventsNls.Hint;
+import com.intellij.build.events.BuildEventsNls.Message;
 import com.intellij.build.events.StartEvent;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
+@Internal
 public class StartEventImpl extends AbstractBuildEvent implements StartEvent {
 
-  public StartEventImpl(@NotNull Object eventId, @Nullable Object parentId, long eventTime, @NotNull @BuildEventsNls.Message String message) {
-    super(eventId, parentId, eventTime, message);
+  @Internal
+  public StartEventImpl(
+    @NotNull Object id,
+    @Nullable Object parentId,
+    @Nullable Long time,
+    @NotNull @Message String message,
+    @Nullable @Hint String hint,
+    @Nullable @Description String description
+  ) {
+    super(id, parentId, time, message, hint, description);
+  }
+
+  /**
+   * @deprecated Use {@link BuildEvents#start()} event builder instead.
+   */
+  @Deprecated
+  public StartEventImpl(
+    @NotNull Object eventId,
+    @Nullable Object parentId,
+    long eventTime,
+    @NotNull @Message String message
+  ) {
+    this(eventId, parentId, eventTime, message, null, null);
   }
 }

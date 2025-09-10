@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.indices.names
 
 import com.intellij.ide.highlighter.JavaClassFileType
@@ -34,8 +34,7 @@ import org.jetbrains.kotlin.name.FqName
  *
  * The index currently only supports JARs, KLIBs (packed and unpacked), and JRT modules. Loose `.class` files are not supported. This is
  * because it is not trivial to arrive at a binary root for a loose `.class` file (the directory structure might not correspond to the
- * package name). Such loose structures are rare, so it is currently not worth maintaining an index for it. Please use
- * [isSupportedByBinaryRootToPackageIndex] to determine if a [VirtualFile] binary root is supported by the index.
+ * package name). Please use [isSupportedByBinaryRootToPackageIndex] to determine if a [VirtualFile] binary root is supported by the index.
  *
  * `.kotlin_builtins` files do not need to be supported because
  * [StandardClassIds.builtInsPackages][org.jetbrains.kotlin.name.StandardClassIds.builtInsPackages] can be used to get the package names.
@@ -83,7 +82,7 @@ class KotlinBinaryRootToPackageIndex : FileBasedIndexExtension<String, String>()
             when (fileType) {
                 JavaClassFileType.INSTANCE -> fileContent.toKotlinJvmBinaryClass()?.packageName
                 KotlinBuiltInFileType -> (readKotlinMetadataDefinition(fileContent) as? BuiltInDefinitionFile)?.packageFqName
-                KlibMetaFileType -> fileContent.toCompatibleFileWithMetadata()?.packageFqName
+                KlibMetaFileType -> fileContent.toKlibMetadataCompatibleFileWithMetadata()?.packageFqName
                 else -> null
             }
 

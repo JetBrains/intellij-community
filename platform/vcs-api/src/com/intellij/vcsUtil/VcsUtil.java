@@ -9,8 +9,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -35,7 +33,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.util.Function;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.vcs.VcsSymlinkResolver;
 import org.jetbrains.annotations.*;
@@ -239,11 +236,7 @@ public final class VcsUtil {
   }
 
   public static @Nullable Icon getIcon(@Nullable Project project, @NotNull FilePath filePath) {
-    if (project != null && project.isDisposed()) return null;
-    VirtualFile virtualFile = filePath.getVirtualFile();
-    if (virtualFile != null) return IconUtil.getIcon(virtualFile, 0, project);
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(filePath.getName());
-    return fileType.getIcon();
+    return com.intellij.platform.vcs.VcsUtil.getIcon(project, filePath);
   }
 
   public static boolean isChangeForFolder(Change change) {

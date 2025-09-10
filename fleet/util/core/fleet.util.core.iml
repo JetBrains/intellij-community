@@ -2,13 +2,13 @@
 <module type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -Xlambdas=class -Xconsistent-data-class-copy-visibility -opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi" />
+          <option name="additionalArguments" value="-Xjvm-default=all -Xlambdas=class -Xconsistent-data-class-copy-visibility -opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi -Xwasm-kclass-fqn -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
-            <stringArg name="jvmTarget" arg="17" />
+            <stringArg name="jvmTarget" arg="21" />
             <stringArg name="apiVersion" arg="2.2" />
             <stringArg name="languageVersion" arg="2.2" />
           </stringArguments>
@@ -16,7 +16,7 @@
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.2.0-0.1/expects-compiler-plugin-2.2.0-0.1.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.2.20-RC-0.1/expects-compiler-plugin-2.2.20-RC-0.1.jar</arg>
               </args>
             </arrayArg>
           </arrayArguments>
@@ -43,9 +43,7 @@
     <orderEntry type="module" module-name="fleet.reporting.api" />
     <orderEntry type="module" module-name="fleet.reporting.shared" />
     <orderEntry type="module" module-name="fleet.multiplatform.shims" exported="" />
-    <orderEntry type="module" module-name="fleet.fastutil" exported="" />
-    <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
     <orderEntry type="module" module-name="fleet.util.multiplatform" scope="PROVIDED" />
-    <orderEntry type="library" name="de.cketti.unicode.kotlin.codepoints.jvm" level="project" />
+    <orderEntry type="module" module-name="fleet.util.serialization" exported="" />
   </component>
 </module>

@@ -1,6 +1,8 @@
 package com.intellij.driver.sdk.ui.components.settings
 
+import com.intellij.driver.sdk.ui.accessibleName
 import com.intellij.driver.sdk.ui.components.ComponentData
+import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.elements.checkBox
 import com.intellij.driver.sdk.ui.components.elements.textField
@@ -9,7 +11,7 @@ import javax.swing.JCheckBox
 import javax.swing.JLabel
 
 fun SettingsDialogUiComponent.pluginsSettingsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
-  x("//div[@class='ConfigurableEditor']/ancestor::div[.//div[@accessiblename='Installed']][1]", PluginsSettingsPageUiComponent::class.java).apply(action)
+  x("//div[@class='ConfigurableEditor']/ancestor::div[.//div[@accessiblename='Installed' and @javaclass='javax.swing.JLabel']][1]", PluginsSettingsPageUiComponent::class.java).apply(action)
 
 class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
   val searchPluginTextField = textField { byAccessibleName("Search plugins") }
@@ -21,14 +23,19 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
       and(byType("com.intellij.ide.plugins.newui.ListPluginComponent"), byAccessibleName(pluginName))
     }.apply(action)
 
+  fun getPluginsList(): List<ListPluginComponent> =
+    xx("//*[@javaclass='com.intellij.ide.plugins.newui.ListPluginComponent']", ListPluginComponent::class.java).list()
+
   fun pluginDetailsPage(action: PluginDetailsPage.() -> Unit = {}): PluginDetailsPage =
     x(PluginDetailsPage::class.java) { byType("com.intellij.ide.plugins.newui.PluginDetailsPageComponent") }.apply(action)
 
   class ListPluginComponent(data: ComponentData) : UiComponent(data) {
+    val name = this.accessibleName
     val installButton = x { and(byType(JButton::class.java), byAccessibleName("Install")) }
     val installedButton = x { and(byType(JButton::class.java), byAccessibleName("Installed")) }
     val enabledCheckBox = checkBox { and(byType(JCheckBox::class.java), byAccessibleName("Enabled")) }
     val ultimateTagLabel = x { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Ultimate")) }
+    val errorNotice = x { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
   }
 
   class PluginDetailsPage(data: ComponentData) : UiComponent(data) {

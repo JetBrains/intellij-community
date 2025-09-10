@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.libraries.compose.runtime.desktop` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "compose-runtime-desktop_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "compose-runtime-desktop",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:libraries-compose-runtime-desktop-jetbrains-compose-runtime-desktop"],
+  runtime_deps = [
+    ":compose-runtime-desktop_resources",
+    "@lib//:libraries-compose-runtime-desktop-jetbrains-compose-runtime-desktop",
+  ]
+)
+### auto-generated section `build intellij.libraries.compose.runtime.desktop` end

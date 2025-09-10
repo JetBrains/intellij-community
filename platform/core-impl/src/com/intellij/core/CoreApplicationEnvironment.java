@@ -243,7 +243,7 @@ public class CoreApplicationEnvironment {
 
   @SuppressWarnings("unused")
   public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
-    IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadAndInitForCoreEnv(pluginRoot, fileName);
+    IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadForCoreEnv(pluginRoot, fileName);
     if (descriptor == null) {
       PluginManagerCore.getLogger().error("Cannot load " + fileName + " from " + pluginRoot);
       return;

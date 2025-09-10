@@ -1,4 +1,4 @@
-load("//:rules/impl/kotlinc-options.bzl", "derive")
+load("//:rules/impl/kotlinc-options.bzl", "derive", "to_flags")
 
 _JOPTS = {
     "warn": struct(
@@ -105,6 +105,17 @@ JavacOptions = provider(
 
 def _javac_options_impl(ctx):
     return [JavacOptions(**{n: getattr(ctx.attr, n, None) for n in _JOPTS})]
+
+# Used by the Bazel plugin
+def javac_options_to_flags(javac_options):
+    """Translate JavacOptions to worker flags for Bazel Plugin
+
+    Args:
+        javac_options maybe containing JavacOptions
+    Returns:
+        list of flags to add to the command line.
+    """
+    return to_flags(_JOPTS, javac_options)
 
 kt_javac_options = rule(
     implementation = _javac_options_impl,

@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileListener
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.syncPublisherWithDisposeCheck
 
-class K2KotlinScratchFile(project: Project, file: VirtualFile, coroutineScope: CoroutineScope) : ScratchFile(project, file) {
+class K2KotlinScratchFile(project: Project, virtualFile: VirtualFile, coroutineScope: CoroutineScope) : ScratchFile(project, virtualFile) {
     val executor: K2ScratchExecutor = K2ScratchExecutor(this, project, coroutineScope)
 
     init {

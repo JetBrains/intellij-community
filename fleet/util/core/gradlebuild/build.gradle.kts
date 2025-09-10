@@ -33,6 +33,8 @@ kotlin {
     "-Xlambdas=class",
     "-Xconsistent-data-class-copy-visibility",
     "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
+    "-Xwasm-kclass-fqn",
+    "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
   )
   jvm {}
   wasmJs {
@@ -71,18 +73,12 @@ kotlin {
     api(jps.org.jetbrains.kotlinx.kotlinx.collections.immutable.jvm717536558.get().let { "${it.group}:kotlinx-collections-immutable:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.org.jetbrains.kotlinx.kotlinx.datetime.jvm1686009755.get().let { "${it.group}:kotlinx-datetime:${it.version}" }) {
-      isTransitive = false
-    }
-    implementation(jps.de.cketti.unicode.kotlin.codepoints.jvm1960123061.get().let { "${it.group}:kotlin-codepoints:${it.version}" }) {
-      isTransitive = false
-    }
     api(project(":fleet.util.logging.api"))
     implementation(project(":fleet.reporting.api"))
     implementation(project(":fleet.reporting.shared"))
     api(project(":fleet.multiplatform.shims"))
-    api(project(":fleet.fastutil"))
     compileOnly(project(":fleet.util.multiplatform"))
+    api(project(":fleet.util.serialization"))
   }
   sourceSets.wasmJsMain.dependencies {
     api(project(":fleet.util.multiplatform"))

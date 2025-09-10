@@ -2,13 +2,13 @@
 <module type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all" />
+          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
-            <stringArg name="jvmTarget" arg="17" />
+            <stringArg name="jvmTarget" arg="21" />
             <stringArg name="apiVersion" arg="2.2" />
             <stringArg name="languageVersion" arg="2.2" />
           </stringArguments>
@@ -47,6 +47,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.diff" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.platform.boot" />

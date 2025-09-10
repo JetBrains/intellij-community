@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ToInfixCallIntention : SelfTargetingIntention<KtCallExpression>(
     KtCallExpression::class.java,
-    KotlinBundle.lazyMessage("replace.with.infix.function.call")
+    KotlinBundle.messagePointer("replace.with.infix.function.call")
 ) {
     override fun isApplicableTo(element: KtCallExpression, caretOffset: Int): Boolean {
         val calleeExpr = element.calleeExpression as? KtNameReferenceExpression ?: return false

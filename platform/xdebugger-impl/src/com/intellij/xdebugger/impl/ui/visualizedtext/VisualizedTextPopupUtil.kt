@@ -136,7 +136,10 @@ internal class VisualizedTextPanel(private val project: Project) : JPanel(CardLa
   /** Visualize the text and show it nicely. */
   fun showVisualizedText(value: String) {
     val tabs = VisualizedTextPopupUtil.collectVisualizedTabs(project, value, parentDisposable = this)
-    assert(tabs.isNotEmpty()) { "at least one raw tab is expected to be provided by fallback visualizer" }
+    if (tabs.isEmpty()) {
+      // popup might already be canceled, ignore it
+      return
+    }
     val component = if (tabs.size > 1) {
       createTabbedPane(tabs)
     } else {

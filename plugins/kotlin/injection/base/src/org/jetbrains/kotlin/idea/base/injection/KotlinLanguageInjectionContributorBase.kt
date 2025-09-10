@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -70,12 +71,12 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
     abstract fun injectionInfoByAnnotation(callableDeclaration: KtCallableDeclaration): InjectionInfo?
 
     abstract fun injectionInfoByParameterAnnotation(functionReference: KtReference, argumentName: Name?, argumentIndex: Int): InjectionInfo?
+    
+    abstract fun injectionInfoByExtensionReceiverParameter(callableDeclaration: KtCallableDeclaration): InjectionInfo?
 
     private val absentKotlinInjection: BaseInjection = BaseInjection("ABSENT_KOTLIN_BASE_INJECTION")
 
     companion object {
-        private val STRING_LITERALS_REGEXP: Regex = "\"([^\"]*)\"".toRegex()
-
         private val trimIndentName = Name.identifier("trimIndent")
         private val trimMarginName = Name.identifier("trimMargin")
     }
@@ -254,41 +255,22 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         val qualifiedExpression = host.parent as? KtDotQualifiedExpression ?: return null
         if (qualifiedExpression.receiverExpression != host) return null
 
-        val callExpression = qualifiedExpression.selectorExpression as? KtCallExpression ?: return null
-        val callee = callExpression.calleeExpression ?: return null
+        val callee = qualifiedExpression.getCalleeExpressionIfAny() ?: return null
 
         val kotlinInjections: List<BaseInjection> = configuration.getInjections(KOTLIN_SUPPORT_ID)
-
-        val calleeName = callee.text
-        val possibleNames = collectPossibleNames(kotlinInjections)
-
-        if (calleeName !in possibleNames) {
-            return null
-        }
 
         for (reference in callee.references) {
             ProgressManager.checkCanceled()
 
-            val resolvedTo = reference.resolve() as? KtFunction ?: continue
-            resolvedTo.receiverTypeReference?.findInjection(configuration, kotlinInjections)?.let { return it }
+            if (reference !is KtReference) continue
+
+            val resolvedTo = reference.resolve() as? KtCallableDeclaration ?: continue
+            val injectionInfo = resolvedTo.receiverTypeReference?.findInjection(configuration, kotlinInjections)
+                ?: injectionInfoByExtensionReceiverParameter(resolvedTo)
+            injectionInfo?.let { return it }
         }
 
         return null
-    }
-
-    private fun collectPossibleNames(injections: List<BaseInjection>): Set<String> {
-        val result = HashSet<String>()
-
-        for (injection in injections) {
-            val injectionPlaces = injection.injectionPlaces
-            for (place in injectionPlaces) {
-                val placeStr = place.toString()
-                val literals = STRING_LITERALS_REGEXP.findAll(placeStr).map { it.groupValues[1] }
-                result.addAll(literals)
-            }
-        }
-
-        return result
     }
 
     private fun injectWithVariableUsage(host: KtElement, containingFile: PsiFile, configuration: Configuration, originalHost: Boolean): InjectionInfo? {
@@ -401,8 +383,8 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
                       )
                       injectionForKotlinInfixCallParameter?.let { return it }
                   } else {
-                      val injectionInfo =
-                          ktFunction.receiverTypeReference?.findInjection(configuration) ?: injectionInfoByAnnotation(ktFunction)
+                      val injectionInfo = ktFunction.receiverTypeReference?.findInjection(configuration)
+                          ?: injectionInfoByExtensionReceiverParameter(ktFunction)
                       injectionInfo?.let { return it }
                   }
               }

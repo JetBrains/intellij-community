@@ -16,26 +16,23 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.java.debugger.impl.shared.SharedDebuggerUtils;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.xdebugger.XExpression;
-import com.intellij.xdebugger.frame.XStringValueModifier;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.java.debugger.impl.shared.engine.JavaValueTextModificationPreparatorKt.convertToJavaStringLiteral;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 /*
  * Class SetValueAction
  * @author Jeka
  */
-public abstract class JavaValueModifier extends XValueModifier implements XStringValueModifier {
+public abstract class JavaValueModifier extends XValueModifier {
   private final JavaValue myJavaValue;
 
   public JavaValueModifier(JavaValue javaValue) {
@@ -64,7 +61,7 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
         @Override
         public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
           callback.setValue(
-            StringUtil.wrapWithDoubleQuote(SharedDebuggerUtils.translateStringValue(DebuggerUtils.getValueAsString(evaluationContext, value))));
+            convertToJavaStringLiteral(DebuggerUtils.getValueAsString(evaluationContext, value)));
         }
       });
     }
@@ -254,10 +251,5 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
 
     progressWindow.setTitle(JavaDebuggerBundle.message("title.evaluating"));
     evaluationContext.getManagerThread().startProgress(askSetAction, progressWindow);
-  }
-
-  @Override
-  public @NotNull XExpression stringToXExpression(@NotNull String text) {
-    return XExpressionImpl.fromText(StringUtil.wrapWithDoubleQuote(SharedDebuggerUtils.translateStringValue(text)));
   }
 }

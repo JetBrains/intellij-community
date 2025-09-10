@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.indices.names
 
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.ID
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.decompiler.konan.FileWithMetadata
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinMetadataStubBuilder
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.name.FqName
@@ -35,7 +35,7 @@ class KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex : NameByPackageS
         }
     }
 
-    override fun getDeclarationNamesByMetadata(kotlinJvmBinaryClass: KotlinJvmBinaryClass): List<Name> {
+    override fun getDeclarationNamesByClassFile(kotlinJvmBinaryClass: KotlinJvmBinaryClass): List<Name> {
         return when (kotlinJvmBinaryClass.classHeader.kind) {
             KotlinClassHeader.Kind.CLASS -> {
                 val className = kotlinJvmBinaryClass.classId.relativeClassName.pathSegments().first()
@@ -68,14 +68,14 @@ class KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex : NameByPackageS
         return mapOf(builtins.packageFqName to names.distinct())
     }
 
-    override fun getDeclarationNamesByKnm(kotlinNativeMetadata: FileWithMetadata.Compatible): List<Name> {
-        val nameResolver = kotlinNativeMetadata.nameResolver
+    override fun getDeclarationNamesByKnm(metadata: KotlinMetadataStubBuilder.FileWithMetadata.Compatible): List<Name> {
+        val nameResolver = metadata.nameResolver
         val names = buildList {
-            kotlinNativeMetadata.classesToDecompile.mapTo(this) { pbClass ->
+            metadata.classesToDecompile.mapTo(this) { pbClass ->
                 val classId = nameResolver.getClassId(pbClass.fqName)
                 classId.shortClassName
             }
-            kotlinNativeMetadata.proto.`package`.typeAliasOrBuilderList.mapTo(this) { pbTypeAlias ->
+            metadata.proto.`package`.typeAliasOrBuilderList.mapTo(this) { pbTypeAlias ->
                 nameResolver.getName(pbTypeAlias.name)
             }
         }

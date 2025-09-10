@@ -1,6 +1,9 @@
-from _typeshed import Incomplete
+from _socket import SocketType
+from logging import Logger
 
-LOGGER: Incomplete
+LOGGER: Logger
 
-def socket_requires_keepalive(tcp_options): ...
-def set_sock_opts(tcp_options, sock) -> None: ...
+_SUPPORTED_TCP_OPTIONS: dict[str, int]
+
+def socket_requires_keepalive(tcp_options: dict[str, int]) -> bool: ...
+def set_sock_opts(tcp_options: dict[str, int] | None, sock: SocketType) -> None: ...

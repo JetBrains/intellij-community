@@ -6,7 +6,6 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.multiverseProjectFixture
 import com.intellij.psi.PsiManager
@@ -22,24 +21,8 @@ import kotlin.test.assertNotNull
 @TestApplication
 internal class MultiverseSdkResolveTest {
   companion object {
-    @Suppress("unused")
-    val disableNewSdkTreatment = testFixture<Unit>("install registry") {
-      // todo IJPL-149669: Disable custom processing for Global Libraries and SDKs
-      //      the test does not pass with the new default value of the key
 
-      val key = "ide.workspace.model.sdk.remove.custom.processing"
-      val value = false
-
-      val registryValue = Registry.get(key)
-      val oldValue = registryValue.asBoolean()
-      registryValue.setValue(value)
-
-      initialized(Unit) {
-        Registry.get(key).resetToDefault()
-      }
-    }
-
-    val projectFixture = multiverseProjectFixture {
+    val projectFixture = multiverseProjectFixture(openAfterCreation = true) {
       module("foo") {
         //useSdk("jdk")
         contentRoot("root") {
@@ -73,8 +56,8 @@ internal class MultiverseSdkResolveTest {
   fun `test resolve`(): Unit = timeoutRunBlocking {
     val project = projectFixture.get()
     IndexingTestUtil.waitUntilIndexesAreReady(project)
+    val file = requireNotNull(VfsUtil.findFile(Path(project.basePath!!, "foo/root/root/A.java"), true))
     readAction {
-      val file = requireNotNull(VfsUtil.findFile(Path(project.basePath!!, "foo/root/root/A.java"), false))
       val psiFile = requireNotNull(PsiManager.getInstance(project).findFile(file))
       val offset = psiFile.text.indexOf("String")
       val ref = requireNotNull(psiFile.findReferenceAt(offset))

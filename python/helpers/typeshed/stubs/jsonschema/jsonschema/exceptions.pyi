@@ -71,7 +71,7 @@ class UnknownType(Exception):
 class FormatError(Exception):
     message: Incomplete
     cause: Incomplete
-    def __init__(self, message, cause: Incomplete | None = None) -> None: ...
+    def __init__(self, message, cause=None) -> None: ...
 
 class ErrorTree:
     errors: MutableMapping[str, ValidationError]

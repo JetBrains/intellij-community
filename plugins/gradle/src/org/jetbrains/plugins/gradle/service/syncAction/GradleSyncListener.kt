@@ -6,7 +6,8 @@ import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
+@ApiStatus.OverrideOnly
 interface GradleSyncListener {
 
   /**

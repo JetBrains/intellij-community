@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExplicitlyIgnoredByName
 import org.jetbrains.kotlin.idea.highlighting.analyzers.isCalleeExpression
@@ -212,12 +214,24 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
             K2UnusedSymbolUtil.getPsiToReportProblem(declaration, javaInspection)
         }
         if (problemPsiElement == null) return
+        if (isEntryPoint(declaration)) return
         val description = declaration.describe() ?: return
         val message = KotlinBaseHighlightingBundle.message("inspection.message.never.used", description)
         val builder = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(problemPsiElement, message, deadCodeInfoType, null)
         val fixes = K2UnusedSymbolUtil.createQuickFixes(declaration)
         fixes.forEach { builder.registerFix(it, null, null, null, deadCodeKey) }
         holder.add(builder.create())
+    }
+
+    private fun isEntryPoint(declaration: KtNamedDeclaration): Boolean {
+        val lightElement: PsiElement = when (declaration) {
+            is KtEnumEntry -> LightClassUtil.getLightClassBackingField(declaration)
+            is KtClassOrObject -> declaration.toLightClass()
+            is KtNamedFunction, is KtSecondaryConstructor -> LightClassUtil.getLightClassMethod(declaration as KtFunction)
+            is KtProperty -> LightClassUtil.getLightClassBackingField(declaration)
+            else -> null
+        } ?: return false
+        return javaInspection.isEntryPoint(lightElement)
     }
 }
 

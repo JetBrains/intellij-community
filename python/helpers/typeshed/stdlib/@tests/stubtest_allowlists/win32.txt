@@ -1,23 +1,25 @@
-ctypes.GetLastError  # Is actually a pointer
+# ============================================
+# TODO: Allowlist entries that should be fixed
+# ============================================
+
 # alias for a class defined elsewhere,
 # mypy infers the variable has type `(*args) -> DupHandle` but stubtest infers the runtime type as <class DupHandle>
 multiprocessing.reduction.AbstractReducer.DupHandle
 
 # Exists at runtime, but missing from stubs
-encodings.mbcs
-encodings.oem
 _winapi.CreateFileMapping
 _winapi.MapViewOfFile
 _winapi.OpenFileMapping
 _winapi.VirtualQuerySize
 
 
-# ==========
-# Allowlist entries that cannot or should not be fixed
-# ==========
-
+# ============================================
 # Modules that do not exist on Windows systems
+# ============================================
+
 _curses
+_dbm
+_gdbm
 _posixsubprocess
 asyncio.unix_events
 dbm.gnu
@@ -32,12 +34,8 @@ syslog
 termios
 xxlimited
 
-# multiprocessing.popen_fork, popen_forkserver, and popen_spawn_posix exist on Windows but fail to import
-multiprocessing.popen_fork
-multiprocessing.popen_forkserver
-multiprocessing.popen_spawn_posix
-
 # Modules that rely on _curses
+_curses_panel
 curses
 curses.ascii
 curses.has_key
@@ -48,7 +46,11 @@ curses.textpad
 pty
 tty
 
-# Added in a patch release, backported to all security branches,
-# but have yet to find their way to all GitHub Actions images
-(sys.get_int_max_str_digits)?
-(sys.set_int_max_str_digits)?
+
+# ==========================================================
+# Other allowlist entries that cannot or should not be fixed
+# ==========================================================
+
+multiprocessing.popen_fork  # exists on Windows but fails to import
+multiprocessing.popen_forkserver  # exists on Windows but fails to import
+multiprocessing.popen_spawn_posix  # exists on Windows but fails to import

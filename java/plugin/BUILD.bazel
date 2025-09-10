@@ -36,7 +36,6 @@ jvm_library(
     "//java/typeMigration",
     "//resources:java-resources",
     "//resources-en:java-resources-en",
-    "//plugins/IntelliLang/plugin",
     "//java/performancePlugin",
     "//java/vcs",
     "//java/java-syntax:syntax",

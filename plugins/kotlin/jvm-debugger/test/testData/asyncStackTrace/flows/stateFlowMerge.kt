@@ -1,7 +1,7 @@
 @file:JvmName("StateFlowMerge")
 package flows.stateFlow.merge
 
-// ATTACH_LIBRARY: maven(com.intellij.platform:kotlinx-coroutines-core-jvm:1.8.0-intellij-11)
+// ATTACH_LIBRARY_BY_LABEL: classes(@kotlin_test_deps//:kotlinx-coroutines-core-jvm-1.8.0-intellij-11.jar)
 
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay

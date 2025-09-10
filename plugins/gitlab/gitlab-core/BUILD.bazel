@@ -23,7 +23,7 @@ jvm_library(
   name = "vcs-gitlab",
   module_name = "intellij.vcs.gitlab",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -75,7 +75,7 @@ jvm_library(
 jvm_library(
   name = "vcs-gitlab_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "testApi/**/*.kt", "testApi/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form", "testApi/**/*.kt", "testApi/**/*.java", "testApi/**/*.form"], allow_empty = True),
   associates = [":vcs-gitlab"],
   deps = [
     "//platform/analysis-api:analysis",

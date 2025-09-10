@@ -34,10 +34,10 @@ public class JavaAbiClassFilter extends ClassVisitor {
     };
     ClassReader reader = new FailSafeClassReader(classBytes);
     JavaAbiClassFilter abiVisitor = new JavaAbiClassFilter(writer, MethodContainer.create(reader));
-    // Stripping FRAMES and DEBUG-INFO from abi.jar might lead to bytecode differences between compilation results against some artifact and abi-version of this artifact.
-    // This won't affect the behavior of the resulting bytecode. However, if such differences are not desired, FRAMES and DEBUG-INFO should be kept.
+    // Stripping certain DEBUG-INFO from abi.jar might lead to bytecode differences between compilation results against some artifact and abi-version of this artifact.
+    // This won't affect the behavior of the resulting bytecode. However, if such differences are not desired, parameter DEBUG-INFO should be kept.
     reader.accept(
-      abiVisitor, ClassReader.SKIP_CODE /*| ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG*/
+      abiVisitor, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES /*| ClassReader.SKIP_DEBUG*/
     );
     return abiVisitor.isAbiClass? writer.toByteArray() : null;
   }
@@ -63,6 +63,10 @@ public class JavaAbiClassFilter extends ClassVisitor {
 
   private static boolean isSynthetic(int access) {
     return (access & Opcodes.ACC_SYNTHETIC) != 0;
+  }
+
+  private static boolean isStatic(int access) {
+    return (access & Opcodes.ACC_STATIC) != 0;
   }
 
   private static boolean isPackageLocal(int access) {
@@ -127,21 +131,45 @@ public class JavaAbiClassFilter extends ClassVisitor {
     }
   }
 
+  @Override
+  public void visitSource(String source, String debug) {
+    // skip source information
+  }
+
   private static final class AbiMethod extends MethodNode {
     private static final List<InsnNode> ourBodyInstructions = List.of(
       new InsnNode(Opcodes.ACONST_NULL),
       new InsnNode(Opcodes.ATHROW)
     );
+    private final Label myMethodStart = new Label();
+    private final Label myMethodEnd = new Label();
+    private final int myParamsSize;
 
     AbiMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
       super(Opcodes.API_VERSION, access, name, descriptor, signature, exceptions);
-
+      myParamsSize = (Type.getArgumentsAndReturnSizes(desc) >> 2) - (isStatic(access)? 1 : 0);
       if ((access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)) == 0) {
         // in a valid bytecode, non-abstract and non-native methods must have a code attribute
+        instructions.add(getLabelNode(myMethodStart));
         for (InsnNode insn : ourBodyInstructions) {
           instructions.add(insn);
         }
+        instructions.add(getLabelNode(myMethodEnd));
       }
+    }
+
+    @Override
+    public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
+      if (index < myParamsSize) {
+        // keep local variable DEBUG info for method parameters only
+        super.visitLocalVariable(name, descriptor, signature, myMethodStart, myMethodEnd, index);
+      }
+      // skip all other local vars
+    }
+
+    @Override
+    public void visitLineNumber(int line, Label start) {
+      // skip line numbers
     }
   }
 

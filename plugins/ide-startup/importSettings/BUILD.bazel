@@ -11,7 +11,7 @@ jvm_library(
   name = "importSettings",
   module_name = "intellij.ide.startup.importSettings",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -53,7 +53,7 @@ jvm_library(
 jvm_library(
   name = "importSettings_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":importSettings"],
   deps = [
     "@lib//:kotlin-stdlib",

@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.resolve.calls.components.isVararg
 
 class RemoveAllArgumentNamesIntention : SelfTargetingIntention<KtCallElement>(
     KtCallElement::class.java,
-    KotlinBundle.lazyMessage("remove.all.argument.names")
+    KotlinBundle.messagePointer("remove.all.argument.names")
 ) {
     override fun isApplicableTo(element: KtCallElement, caretOffset: Int): Boolean {
         val arguments = element.valueArgumentList?.arguments ?: return false

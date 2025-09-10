@@ -23,6 +23,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -122,7 +123,9 @@ public class CompletionData {
     }
   };
 
-  private static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile, ElementPattern<Character> prefixStartTrim) {
+  private static @NotNull String findPrefixStatic(@Nullable PsiElement insertedElement,
+                                                  int offsetInFile,
+                                                  @NotNull ElementPattern<Character> prefixStartTrim) {
     if(insertedElement == null) return "";
 
     final Document document = insertedElement.getContainingFile().getViewProvider().getDocument();
@@ -143,11 +146,11 @@ public class CompletionData {
    * @deprecated Use {@link CompletionUtil} methods instead
    */
   @Deprecated(forRemoval = true)
-  public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile) {
+  public static @NotNull String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile) {
     return findPrefixStatic(insertedElement, offsetInFile, NOT_JAVA_ID);
   }
 
-  private static String findPrefixDefault(final PsiElement insertedElement, final int offset, final @NotNull ElementPattern trimStart) {
+  private static @NotNull String findPrefixDefault(@NotNull PsiElement insertedElement, int offset, @NotNull ElementPattern trimStart) {
     String substr = insertedElement.getText().substring(0, offset - insertedElement.getTextRange().getStartOffset());
     if (substr.isEmpty() || Character.isWhitespace(substr.charAt(substr.length() - 1))) return "";
 

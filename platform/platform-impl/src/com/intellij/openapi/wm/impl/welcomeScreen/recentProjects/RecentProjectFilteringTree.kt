@@ -22,7 +22,6 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RecentProjectsWelcomeScreenActionBase
-import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.TextComponentEmptyText
@@ -820,7 +819,6 @@ class RecentProjectFilteringTree(
       val dataContext = DataManager.getInstance().getDataContext(tree)
       val actionPlace = UIUtil.uiParents(tree, true).let { parents ->
         for (parent in parents) {
-          if (parent is ToolWindowPane) return@let ActionPlaces.WELCOME_SCREEN_NON_MODAL
           if (parent is FlatWelcomeFrame) return@let ActionPlaces.WELCOME_SCREEN
         }
         return@let ActionPlaces.POPUP

@@ -29,6 +29,7 @@ import com.jetbrains.python.sdk.pipenv.ui.PyAddNewPipEnvFromFilePanel
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.nio.file.Path
 import javax.swing.JComponent
@@ -38,7 +39,8 @@ import kotlin.io.path.pathString
 
 private val LOGGER = Logger.getInstance(PyPipfileSdkConfiguration::class.java)
 
-internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
+@ApiStatus.Internal
+class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override suspend fun createAndAddSdkForConfigurator(module: Module): PyResult<Sdk?> = createAndAddSDk(module, Source.CONFIGURATOR)
 

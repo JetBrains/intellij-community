@@ -65,8 +65,10 @@ private class GitCompareWithBranchesTreeModel(project: Project, repository: GitR
   override fun getLocalBranches(): Collection<GitStandardLocalBranch> = repository.state.localBranches.skipCurrentBranch()
   override fun getRecentBranches(): Collection<GitStandardLocalBranch> = super.getRecentBranches().skipCurrentBranch()
 
-  private fun Collection<GitStandardLocalBranch>.skipCurrentBranch(): Collection<GitStandardLocalBranch> =
-    filter { repository.state.currentRef?.matches(it) == false }
+  private fun Collection<GitStandardLocalBranch>.skipCurrentBranch(): Collection<GitStandardLocalBranch> {
+    val currentBranch = repository.state.currentBranch ?: return this
+    return filter { it != currentBranch }
+  }
 
   override fun getPreferredSelection(): TreePath? {
     return getPreferredBranch()?.let { createTreePathFor(this, it) }

@@ -36,12 +36,12 @@ import org.jetbrains.intellij.build.LocalDistFileContent
 import org.jetbrains.intellij.build.MacLibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials
+import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.buildSearchableOptions
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactData
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
-import org.jetbrains.intellij.build.impl.moduleBased.findProductModulesFile
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
 import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
@@ -146,8 +146,6 @@ val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = listOf(
   SupportedDistribution(OsFamily.MACOS, JvmArchitecture.aarch64, MacLibcImpl.DEFAULT),
   SupportedDistribution(OsFamily.LINUX, JvmArchitecture.x64, LinuxLibcImpl.GLIBC),
   SupportedDistribution(OsFamily.LINUX, JvmArchitecture.aarch64, LinuxLibcImpl.GLIBC),
-  SupportedDistribution(OsFamily.LINUX, JvmArchitecture.x64, LinuxLibcImpl.MUSL),
-  SupportedDistribution(OsFamily.LINUX, JvmArchitecture.aarch64, LinuxLibcImpl.MUSL),
 )
 
 fun createIdeaPropertyFile(context: BuildContext): CharSequence {
@@ -382,8 +380,12 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
     val builtinModuleData = spanBuilder("build provided module list").use {
       Files.deleteIfExists(providedModuleFile)
       // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-      // it's necessary to use the dev build to get correct paths in 'layout' data 
-      context.createProductRunner(forceUseDevBuild = true).runProduct(listOf("listBundledPlugins", providedModuleFile.toString()))
+      // it's necessary to use the dev build to get correct paths in 'layout' data
+
+      context.createProductRunner(forceUseDevBuild = true).runProduct(
+        listOf("listBundledPlugins", providedModuleFile.toString()),
+        additionalVmProperties = additionalProperties()
+      )
 
       context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
       try {
@@ -412,6 +414,15 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
     }
   }
 }
+
+/**
+ JDK17 falls back to `?` which is normal dir name. But JDK21 falls back to the `$HOME` which is `/` making all paths absolute causing permission
+ problems. The script we start have a proper home directory passed via property, but it is not implicitly passed to the subprocesses, so we need to
+ do this explicitly.
+
+ @see https://youtrack.jetbrains.com/issue/IJPL-203604
+**/
+internal fun additionalProperties(): VmProperties = VmProperties(mapOf("user.home" to System.getProperty("user.home")))
 
 private suspend fun distributionState(
   pluginsToPublish: Set<PluginLayout>,
@@ -554,7 +565,7 @@ private suspend fun checkProductProperties(context: BuildContext) {
   properties.embeddedFrontendRootModule?.let { embeddedFrontendRootModule ->
     checkModule(embeddedFrontendRootModule, "productProperties.embeddedFrontendRootModule", context)
     if (findProductModulesFile(context, embeddedFrontendRootModule) == null) {
-      context.messages.error(
+      context.messages.logErrorAndThrow(
         "Cannot find product-modules.xml file in sources of '$embeddedFrontendRootModule' module specified as " +
         "'productProperties.embeddedFrontendRootModule'."
       )
@@ -563,7 +574,7 @@ private suspend fun checkProductProperties(context: BuildContext) {
   properties.rootModuleForModularLoader?.let { rootModule ->
     checkModule(rootModule, "productProperties.rootModuleForModularLoader", context)
     if (properties.productLayout.bundledPluginModules.isNotEmpty()) {
-      context.messages.error(
+      context.messages.logErrorAndThrow(
         """
         |'${properties.javaClass.name}' uses module-based loader, so the following bundled plugins must be specified in product-modules.xml file 
         |located in '$rootModule', not via 'productLayout.bundledPluginModules' property: 
@@ -719,7 +730,7 @@ private fun checkModules(modules: Collection<String?>?, fieldName: String, conte
 
 private fun checkModule(moduleName: String?, fieldName: String, context: CompilationContext) {
   if (moduleName != null && context.findModule(moduleName) == null) {
-    context.messages.error("Module '$moduleName' from $fieldName isn't found in the project")
+    context.messages.logErrorAndThrow("Module '$moduleName' from $fieldName isn't found in the project")
   }
 }
 
@@ -1055,7 +1066,7 @@ private suspend fun lookForJunkFiles(context: BuildContext, paths: List<Path>) {
   }
 
   if (result.isNotEmpty()) {
-    context.messages.error(result.joinToString("\n", prefix = "Junk files:\n"))
+    context.messages.logErrorAndThrow(result.joinToString("\n", prefix = "Junk files:\n"))
   }
 }
 
@@ -1072,7 +1083,9 @@ internal suspend fun buildAdditionalAuthoringArtifacts(productRunner: IntellijPr
     for (command in commands) {
       launch(CoroutineName("build ${command.first}")) {
         val targetPath = temporaryBuildDirectory.resolve(command.first).resolve(command.second)
-        productRunner.runProduct(args = listOf(command.first, targetPath.toString()), timeout = DEFAULT_TIMEOUT)
+        productRunner.runProduct(args = listOf(command.first, targetPath.toString()),
+                                 additionalVmProperties = additionalProperties(),
+                                 timeout = DEFAULT_TIMEOUT)
 
         val targetFile = context.paths.artifactDir.resolve("${command.second}.zip")
         zipWithCompression(

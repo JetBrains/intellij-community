@@ -3,13 +3,14 @@ package org.jetbrains.kotlin.idea.script
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
+import java.nio.file.Path
 import kotlin.script.dependencies.Environment
 
 
@@ -25,15 +26,15 @@ internal fun prepareScriptDefinitions(
     testName: String,
     scriptDefinitionSourcePath: String,
     testRootDisposable: Disposable,
-    aKtsLibs: List<File>,
-    bKtsLibs: List<File>
+    aKtsLibs: List<Path>,
+    bKtsLibs: List<Path>
 ): TestEnvironment {
 
     compileLibToDir(testName, File(scriptDefinitionSourcePath))
     return TestEnvironment(
         mutableMapOf(
-            "lib-classes-A" to aKtsLibs,
-            "lib-classes-B" to bKtsLibs,
+            "lib-classes-A" to aKtsLibs.map { it.toFile() },
+            "lib-classes-B" to bKtsLibs.map { it.toFile() },
             "template-classes-names" to listOf(
                 "org.jetbrains.kotlin.idea.script.definition.TestScriptDefinitionA",
                 "org.jetbrains.kotlin.idea.script.definition.TestScriptDefinitionB"
@@ -48,7 +49,7 @@ internal fun prepareScriptDefinitions(
 private fun compileLibToDir(testName: String, srcDir: File): File {
     val outDir = KotlinTestUtils.tmpDirForReusableFolder("${testName}${srcDir.name}Out")
     KotlinCompilerStandalone(
-        listOf(srcDir), target = outDir, classpath = scripDefinitionCompilationClassPath + listOf(outDir),
+        listOf(srcDir), target = outDir, classpath = scripDefinitionCompilationClassPath.map { it.toFile() } + listOf(outDir),
         compileKotlinSourcesBeforeJava = false
     ).compile()
     return outDir
@@ -70,8 +71,8 @@ private fun registerScriptDefinitionsProvider(project: Project, testRootDisposab
 }
 
 class TestEnvironment(val env: MutableMap<String, Any>) {
-    fun update(aKtsLibs: List<File>? = null, bKtsLibs: List<File>? = null) {
-        aKtsLibs?.let { env["lib-classes-A"] = it }
-        bKtsLibs?.let { env["lib-classes-B"] = it }
+    fun update(aKtsLibs: List<Path>? = null, bKtsLibs: List<Path>? = null) {
+        aKtsLibs?.let { libs -> env["lib-classes-A"] = libs.map { lib -> lib.toFile() } }
+        bKtsLibs?.let { libs -> env["lib-classes-B"] = libs.map { lib -> lib.toFile() } }
     }
 }

@@ -14,13 +14,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
@@ -41,18 +42,35 @@ public abstract class TextExtractor {
   private static final Key<CachedValue<Cache>> COMMON_PARENT_CACHE = Key.create("TextExtractor common parent cache");
   private static final Key<CachedValue<Cache>> QUERY_CACHE = Key.create("TextExtractor query cache");
   private static final Key<Boolean> IGNORED = Key.create("TextExtractor ignored");
-  private static final Key<Map<TextContent, TextContent>> CONTENT_INTERNER = Key.create("TextExtractor interner");
+  private static final Key<CachedValue<Map<TextContent, TextContent>>> CONTENT_INTERNER = Key.create("TextExtractor interner");
   private static final Pattern SUPPRESSION = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP);
 
   /**
    * Extract text from the given PSI element, if possible.
    * The returned text is most often fully embedded in {@code element},
-   * but it may also include other PSI elements (e.g. adjacent comments).
+   * but it may also include other PSI elements (e.g., adjacent comments).
    * In the latter case, this extension should return an equal {@link TextContent} for every one of those adjacent elements.
+   * <p>
+   * Typical usage:
+   *
+   * <pre><code class="java">TextContentBuilder.FromPsi.build(element, textDomain)</code></pre>
+   *
+   * Implementation guidance:
+   * <p>
+   * To maximize performance, guard against unnecessary (and sometimes quite expensive) operations by checking that
+   * the requested textDomain is contained in allowedDomains before extracting.
+   *
+   * <pre><code class="java">
+   * if (shouldExtractTextContent(root) && allowedDomains.contains(textDomain)) {
+   *   // some other potentially performance-intensive operations
+   *   return TextContentBuilder.FromPsi.build(root, textDomain)
+   * }
+   * </code></pre>
+   *
+   * See concrete implementations (e.g., in ChatInputTextExtractor, JsonTextExtractor, GoTextExtractor, etc.) for
+   * examples.
+
    * @param allowedDomains the set of the text domains that are expected by the caller.
-   *                       The extension may check this set before doing unnecessary expensive PSI traversal
-   *                       to improve the performance,
-   *                       but it's not necessary.
    * @see TextContentBuilder
    * @see #buildTextContents
    */
@@ -95,7 +113,7 @@ public abstract class TextExtractor {
     PsiFile file = psi.getContainingFile();
     return ContainerUtil.filter(
       obtainContents(allowedDomains, file, psi),
-      c -> c.getUserData(IGNORED) == null && allowedDomains.contains(c.getDomain())
+      c -> Boolean.FALSE.equals(c.getUserData(IGNORED)) && allowedDomains.contains(c.getDomain())
     );
   }
 
@@ -110,7 +128,7 @@ public abstract class TextExtractor {
       CachedValue<Cache> cache = each.getUserData(COMMON_PARENT_CACHE);
       if (cache != null) {
         List<TextContent> cached = ContainerUtil.filter(cache.getValue().getCached(allowedDomains), c ->
-          c.getUserData(IGNORED) == null && c.intersectsRange(psiRange));
+          Boolean.FALSE.equals(c.getUserData(IGNORED)) && c.intersectsRange(psiRange));
         if (!cached.isEmpty()) {
           return cached;
         }
@@ -121,7 +139,7 @@ public abstract class TextExtractor {
       }
     }
 
-    for (PsiElement each = psi; each != null; each = each.getParent()) {
+    for (PsiElement each = psi; each != null && each != file; each = each.getParent()) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
       List<TextContent> contents = obtainContents(allowedDomains, file != null ? file : psi.getContainingFile(), each);
@@ -133,7 +151,7 @@ public abstract class TextExtractor {
 
       if (!contents.isEmpty()) {
         return ContainerUtil.filter(contents, c ->
-          c.getUserData(IGNORED) == null && allowedDomains.contains(c.getDomain()) && c.intersectsRange(psiRange));
+          Boolean.FALSE.equals(c.getUserData(IGNORED)) && allowedDomains.contains(c.getDomain()) && c.intersectsRange(psiRange));
       }
     }
 
@@ -142,11 +160,19 @@ public abstract class TextExtractor {
 
   private static Cache obtainCache(PsiElement psi, Key<CachedValue<Cache>> key) {
     var provider = TextContentModificationTrackerProvider.EP_NAME.forLanguage(psi.getLanguage());
-    var tracker = provider == null ? PsiModificationTracker.MODIFICATION_COUNT : provider.getModificationTracker(psi);
+    var providedTracker = provider != null ? provider.getModificationTracker(psi) : null;
+    var tracker = providedTracker != null ? providedTracker : PsiModificationTracker.MODIFICATION_COUNT;
     
-    CachedValue<Cache> cache = CachedValuesManager.getManager(psi.getProject()).createCachedValue(
-      () -> CachedValueProvider.Result.create(new Cache(), tracker));
+    CachedValue<Cache> cache = CachedValuesManager.getManager(psi.getProject())
+      .createCachedValue(() -> CachedValueProvider.Result.create(new Cache(), tracker));
     cache = ((UserDataHolderEx)psi).putUserDataIfAbsent(key, cache);
+    return cache.getValue();
+  }
+
+  private static Map<TextContent, TextContent> obtainInterner(PsiFile file) {
+    CachedValue<Map<TextContent, TextContent>> cache = CachedValuesManager.getManager(file.getProject())
+      .createCachedValue(() -> CachedValueProvider.Result.create(createConcurrentWeakKeyWeakValueMap(), file));
+    cache = ((UserDataHolderEx)file).putUserDataIfAbsent(CONTENT_INTERNER, cache);
     return cache.getValue();
   }
 
@@ -170,13 +196,12 @@ public abstract class TextExtractor {
     if (contents.isEmpty()) return Collections.emptyList();
 
     // deduplicate equal contents created by different threads to avoid O(token_count) 'equals' checks later on
-    var interner = ConcurrencyUtil.computeIfAbsent(file, CONTENT_INTERNER, () -> createConcurrentWeakKeyWeakValueMap());
+    var interner = obtainInterner(file);
     contents = ContainerUtil.map(contents, content -> interner.computeIfAbsent(content, __ -> content));
 
     for (TextContent content : contents) {
-      if (shouldIgnore(content)) {
-        content.putUserData(IGNORED, true);
-      }
+      if (content.getUserData(IGNORED) != null) continue;
+      content.putUserData(IGNORED, shouldIgnore(content));
     }
 
     if (stamp.mayCacheNow()) {
@@ -223,9 +248,9 @@ public abstract class TextExtractor {
   }
 
   private static boolean shouldIgnore(TextContent content) {
-    return hasIntersectingInjection(content, content.getContainingFile()) ||
-           isSuppressionComment(content) ||
-           isCopyrightComment(content);
+    return isSuppressionComment(content) ||
+           isCopyrightComment(content) ||
+           hasIntersectingInjection(content, content.getContainingFile());
   }
 
   private static boolean isCopyrightComment(TextContent content) {
@@ -255,6 +280,21 @@ public abstract class TextExtractor {
 
     TextRange psiRange = psi.getTextRange();
     return ContainerUtil.filter(findTextsAt(psi, allowedDomains), c -> psiRange.contains(c.textOffsetToFile(0)));
+  }
+
+
+  /**
+   * Extract all text contents from a file view provider that match the specified domains.
+   * Traverses through all PSI elements in all root files of the view provider and collects matching text contents.
+   */
+  public static Set<TextContent> findAllTextContents(FileViewProvider vp, Set<TextContent.TextDomain> domains) {
+    Set<TextContent> allContents = new HashSet<>();
+    for (PsiFile root : vp.getAllFiles()) {
+      for (PsiElement element : SyntaxTraverser.psiTraverser(root)) {
+        allContents.addAll(findTextsExactlyAt(element, domains));
+      }
+    }
+    return allContents;
   }
 
   private static boolean hasIntersectingInjection(TextContent content, PsiFile file) {
@@ -308,5 +348,10 @@ public abstract class TextExtractor {
       ContainerUtil.addIfNotNull(result, Language.findLanguageByID(point.language));
     }
     return result;
+  }
+  
+  @TestOnly
+  public @NotNull List<TextContent> buildTextContentsTestAccessor(@NotNull PsiElement element, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+    return buildTextContents(element, allowedDomains); 
   }
 }

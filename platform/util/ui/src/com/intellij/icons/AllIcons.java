@@ -780,15 +780,6 @@ public class AllIcons {
       /** 18x14 */ public static final @NotNull Icon TopRight = load("ide/roundShadow/topRight.svg", 2056222615, 0);
     }
 
-    public static final class RunAnything {
-
-      /** @deprecated to be removed without replacement */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval
-      public static final @NotNull Icon OpenRecentProject = load("ide/runAnything/openRecentProject.svg", 0, 0);
-    }
-
     public static final class Shadow {
       /** 4x14 */ public static final @NotNull Icon Bottom = load("ide/shadow/bottom.svg", 840768513, 0);
       /** 18x22 */ public static final @NotNull Icon BottomLeft = load("ide/shadow/bottomLeft.svg", -1321651824, 0);
@@ -971,16 +962,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon JarDirectory = load("nodes/jarDirectory.svg", -692661187, 0);
     /** 16x16 */ public static final @NotNull Icon JavaDocFolder = load("nodes/javaDocFolder.svg", 135532303, 0);
     /** 16x16 */ public static final @NotNull Icon JavaModule = load("expui/nodes/moduleJava.svg", "nodes/javaModule.svg", 2003423238, 0);
-
-    public static final class Jsf {
-
-      /** @deprecated to be removed (Use AllIcons.Actions.Edit instead) */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval
-      public static final @NotNull Icon Renderer = load("nodes/jsf/renderer.svg", 0, 0);
-    }
-
     /** 16x16 */ public static final @NotNull Icon JunitTestMark = load("expui/nodes/junitTestMark.svg", "nodes/junitTestMark.svg", -1344036663, 0);
     /** 16x16 */ public static final @NotNull Icon KeymapAnt = load("expui/nodes/folder.svg", "nodes/keymapAnt.svg", 1301975081, 0);
     /** 16x16 */ public static final @NotNull Icon KeymapEditor = load("expui/nodes/folder.svg", "nodes/keymapEditor.svg", 1477064864, 0);
@@ -1077,18 +1058,6 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval
-    public static final @NotNull Icon Cvs_global = load("nodes/cvs_global.svg", 0, 0);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull Icon Cvs_roots = load("nodes/cvs_roots.svg", 0, 0);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
     public static final @NotNull Icon InspectionResults = load("nodes/inspectionResults.svg", 0, 0);
 
     /** @deprecated to be removed (Use AllIcons.Nodes.ClassInitializer instead) */
@@ -1096,12 +1065,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval
     public static final @NotNull Icon J2eeParameter = load("nodes/j2eeParameter.svg", 0, 0);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull Icon PluginLogo = load("nodes/pluginLogo.svg", 0, 0);
 
     /** @deprecated to be removed without replacement */
     @SuppressWarnings("unused")
@@ -1201,6 +1164,7 @@ public class AllIcons {
 
   public static final class Providers {
     /** 16x16 */ public static final @NotNull Icon ActiveMQ = load("providers/activeMQ.svg", -1202590345, 0);
+    /** 16x16 */ public static final @NotNull Icon AmazonWebServices = load("providers/amazonWebServices.svg", -1722782738, 2);
     /** 16x16 */ public static final @NotNull Icon Apache = load("providers/apache.svg", 1920166272, 2);
     /** 16x16 */ public static final @NotNull Icon ApacheDerby = load("providers/apacheDerby.svg", -1039281205, 2);
     /** 16x16 */ public static final @NotNull Icon ApacheIgnite = load("providers/apacheIgnite.svg", 550257054, 2);
@@ -1225,6 +1189,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Firebird = load("providers/firebird.svg", 1881709539, 0);
     /** 16x16 */ public static final @NotNull Icon GaussDB = load("providers/gaussDB.svg", -650009525, 2);
     /** 16x16 */ public static final @NotNull Icon GeminiDb = load("providers/geminiDb.svg", 1146970231, 2);
+    /** 16x16 */ public static final @NotNull Icon GoogleCloud = load("providers/googleCloud.svg", -1785343781, 0);
     /** 16x16 */ public static final @NotNull Icon GoogleCloudSpanner = load("providers/googleCloudSpanner.svg", 2080603813, 0);
     /** 16x16 */ public static final @NotNull Icon Greenplum = load("providers/greenplum.svg", -2098154949, 0);
     /** 16x16 */ public static final @NotNull Icon H2 = load("providers/h2.svg", 1284289147, 2);
@@ -1268,6 +1233,11 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Turso = load("providers/turso.svg", -988781978, 2);
     /** 16x16 */ public static final @NotNull Icon Vertica = load("providers/vertica.svg", 237190308, 2);
     /** 16x16 */ public static final @NotNull Icon Yugabyte = load("providers/yugabyte.svg", -644567085, 2);
+  }
+
+  public static final class RemoteServers {
+    /** 16x16 */ public static final @NotNull Icon ResumeScaled = load("expui/remoteServers/resumeScaled.svg", -397781337, 0);
+    /** 16x16 */ public static final @NotNull Icon SuspendScaled = load("expui/remoteServers/suspendScaled.svg", 1727665128, 0);
   }
 
   public static final class Run {
@@ -1446,12 +1416,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval
     public static final @NotNull Icon ToolWindowFavorites = load("toolwindows/toolWindowFavorites.svg", 0, 0);
-
-    /** @deprecated to be removed without replacement */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull Icon ToolWindowUIDesigner = load("toolwindows/toolWindowUIDesigner.svg", 0, 0);
   }
 
   public static final class TransferSettings {
@@ -1539,12 +1503,6 @@ public class AllIcons {
       /** 10x10 */ public static final @NotNull Icon RemoveDisabledHover = load("welcome/recentProjects/removeDisabled-hover.svg", -1439591680, 2);
       /** 10x10 */ public static final @NotNull Icon RemoveDisabled = load("welcome/recentProjects/removeDisabled.svg", -760582353, 2);
     }
-
-    /** @deprecated to be removed */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull Icon CreateNewProject = load("welcome/createNewProject.svg", 0, 0);
   }
 
   public static final class Windows {

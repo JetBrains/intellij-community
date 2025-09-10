@@ -20,7 +20,7 @@ jvm_library(
   name = "repl",
   module_name = "kotlin.repl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_repl",
   deps = [
     "@lib//:kotlin-stdlib",

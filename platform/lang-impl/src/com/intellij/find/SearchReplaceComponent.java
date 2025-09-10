@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutUtilKt;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -325,8 +326,13 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       Touchbar.setActions(this, touchbarActions);
     }
 
-    if (ExperimentalUI.isNewUI()) {
+    if (isNewUI) {
       setBackground(JBColor.namedColor("Editor.SearchField.background", JBColor.background()));
+
+      InternalUICustomization customization = InternalUICustomization.getInstance();
+      if (customization != null) {
+        customization.configureSearchReplaceComponentBorder(this);
+      }
     }
 
     updateInner("", "", false, false);

@@ -105,7 +105,7 @@ class BuildSystemTypeSettingComponent(
             minimumSize: Supplier<out Dimension>
         ): ActionButton = BuildSystemChooseButton(action as BuildSystemTypeAction, presentation, place, minimumSize)
 
-        override fun isDefaultActionButtonImplementation(
+        override fun canReuseActionButton(
             oldActionButton: ActionButton,
             newPresentation: Presentation
         ): Boolean {

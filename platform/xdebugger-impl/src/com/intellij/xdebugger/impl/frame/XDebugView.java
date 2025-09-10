@@ -70,6 +70,12 @@ public abstract class XDebugView implements Disposable {
     return component == null ? null : getSession(component);
   }
 
+  @ApiStatus.Internal
+  protected static @Nullable XDebugSessionProxy getSessionProxy(@NotNull EventObject e) {
+    Component component = e.getSource() instanceof Component ? (Component)e.getSource() : null;
+    return component == null ? null : getSessionProxy(component);
+  }
+
   /**
    * Use {@link #getSessionProxy} instead.
    */

@@ -10,6 +10,7 @@ internal class McpServerSettings : SimplePersistentStateComponent<McpServerSetti
     fun getInstance(): McpServerSettings = service()
 
     const val DEFAULT_MCP_PORT: Int = 64342
+    const val DEFAULT_MCP_PRIVATE_PORT: Int = DEFAULT_MCP_PORT + 100
   }
 
   override fun loadState(state: MyState) {

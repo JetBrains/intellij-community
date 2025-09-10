@@ -20,6 +20,7 @@ class SeItemsProviderMock(
   private val size: Int = 100,
   private val delayMillis: Long = 0,
   private val delayStep: Int = 0,
+  private val shouldCloseOnSelect: Boolean = true,
 ) : SeItemsProvider {
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
@@ -50,7 +51,7 @@ class SeItemsProviderMock(
 
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
     SeLog.logSuspendable(USER_ACTION) { "Provider ${id} item selected: ${item.presentation().text}" }
-    return true
+    return shouldCloseOnSelect
   }
 
   override suspend fun canBeShownInFindResults(): Boolean {
@@ -64,6 +65,13 @@ class SeItemsProviderMock(
 
 @ApiStatus.Internal
 class SeItemMock(val text: @NlsSafe String) : SeItem {
+  private var presentationUpdateCounter = -1
+
   override fun weight(): Int = 0
-  override suspend fun presentation(): SeItemPresentation = SeSimpleItemPresentation(text = text, isMultiSelectionSupported = false)
+  override suspend fun presentation(): SeItemPresentation {
+    presentationUpdateCounter++
+
+    return SeSimpleItemPresentation(text = if (presentationUpdateCounter > 0) "$text - $presentationUpdateCounter" else text,
+                                    isMultiSelectionSupported = false)
+  }
 }

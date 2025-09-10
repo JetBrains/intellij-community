@@ -11,7 +11,7 @@ jvm_library(
   name = "yaml",
   module_name = "intellij.yaml",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -40,7 +40,7 @@ jvm_library(
 jvm_library(
   name = "yaml_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":yaml"],
   deps = [
     "//platform/analysis-api:analysis",

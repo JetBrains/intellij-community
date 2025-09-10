@@ -25,7 +25,7 @@ public final class InlineTextValuePopupProvider implements InlineValuePopupProvi
   @Override
   public boolean accepts(@NotNull XValueNodeImpl xValueNode) {
     XValue value = xValueNode.getValueContainer();
-    return value instanceof XValueTextProvider && ((XValueTextProvider)value).shouldShowTextValue();
+    return value instanceof XValueTextProvider textValue && textValue.shouldShowTextValue();
   }
 
   @Override

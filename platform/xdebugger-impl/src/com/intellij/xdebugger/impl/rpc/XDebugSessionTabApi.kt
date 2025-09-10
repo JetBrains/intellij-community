@@ -11,9 +11,11 @@ import com.intellij.platform.rpc.UID
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
+import fleet.rpc.core.DeferredSerializer
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.SendChannelSerializer
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
@@ -25,7 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface XDebugSessionTabApi : RemoteApi<Unit> {
 
-  suspend fun sessionTabInfo(sessionId: XDebugSessionId): Flow<XDebuggerSessionTabDto?>
+  suspend fun sessionTabInfo(sessionId: XDebugSessionId): Flow<XDebuggerSessionTabDto>
   suspend fun onTabInitialized(sessionId: XDebugSessionId, tabInfo: XDebuggerSessionTabInfoCallback)
 
   suspend fun additionalTabEvents(tabComponentsManagerId: XDebugSessionAdditionalTabComponentManagerId): Flow<XDebuggerSessionAdditionalTabEvent>
@@ -72,13 +74,24 @@ data class XDebuggerSessionTabInfo(
   val iconId: IconId?,
   val forceNewDebuggerUi: Boolean,
   val withFramesCustomization: Boolean,
+  val defaultFramesViewKey: String?,
   // TODO pass to frontend
   @Transient val contentToReuse: RunContentDescriptor? = null,
+  val executionEnvironmentId: ExecutionEnvironmentId?,
   val executionEnvironmentProxyDto: ExecutionEnvironmentProxyDto?,
   val additionalTabsComponentManagerId: XDebugSessionAdditionalTabComponentManagerId,
   @Serializable(with = SendChannelSerializer::class) val tabClosedCallback: SendChannel<Unit>,
+  @Serializable(with = DeferredSerializer::class) val backendRunContendDescriptorId: Deferred<RunContentDescriptorId>,
 ) : XDebuggerSessionTabAbstractInfo
 
+@ApiStatus.Internal
+@Serializable
+data class ExecutionEnvironmentId(override val uid: UID) : Id
+
+
+@ApiStatus.Internal
+@Serializable
+data class RunContentDescriptorId(override val uid: UID) : Id
 
 @ApiStatus.Internal
 @Serializable

@@ -168,14 +168,14 @@ private fun PsiType.mapConjuncts(action: (PsiType) -> PsiType): PsiType {
 private class TypeLattice(context: PsiElement) {
   private val manager = context.manager
   private val top = getJavaLangObject(context) as PsiType
-  private val bottom = PsiTypes.nullType() as PsiType
+  private val bottom = PsiTypes.nullType()
 
   fun join(types: Iterable<PsiType>): PsiType = types.fold(bottom) { accum, type ->
-    GenericsUtil.getLeastUpperBound(accum, type, manager) ?: bottom
+    GenericsUtil.getLeastUpperBound(accum, type, manager) ?: top
   }
 
   fun meet(types: Iterable<PsiType>): PsiType = types.fold(top) { accum, type ->
-    GenericsUtil.getGreatestLowerBound(accum, type)
+    GenericsUtil.getGreatestLowerBound(accum, type) ?: bottom
   }
 }
 

@@ -1,29 +1,35 @@
 from _typeshed import Incomplete
 from typing import Any
 
+from .services import DriverConfig
+
 class SwarmSpec(dict[str, Any]):
     def __init__(
         self,
-        version,
-        task_history_retention_limit: Incomplete | None = None,
-        snapshot_interval: Incomplete | None = None,
-        keep_old_snapshots: Incomplete | None = None,
-        log_entries_for_slow_followers: Incomplete | None = None,
-        heartbeat_tick: Incomplete | None = None,
-        election_tick: Incomplete | None = None,
-        dispatcher_heartbeat_period: Incomplete | None = None,
-        node_cert_expiry: Incomplete | None = None,
-        external_cas: Incomplete | None = None,
-        name: Incomplete | None = None,
-        labels: Incomplete | None = None,
-        signing_ca_cert: Incomplete | None = None,
-        signing_ca_key: Incomplete | None = None,
-        ca_force_rotate: Incomplete | None = None,
-        autolock_managers: Incomplete | None = None,
-        log_driver: Incomplete | None = None,
+        version: str,
+        task_history_retention_limit: int | None = None,
+        snapshot_interval: int | None = None,
+        keep_old_snapshots: int | None = None,
+        log_entries_for_slow_followers: int | None = None,
+        heartbeat_tick: int | None = None,
+        election_tick: int | None = None,
+        dispatcher_heartbeat_period: int | None = None,
+        node_cert_expiry: int | None = None,
+        external_cas: list[SwarmExternalCA] | None = None,
+        name: str | None = None,
+        labels: dict[str, Incomplete] | None = None,
+        signing_ca_cert: str | None = None,
+        signing_ca_key: str | None = None,
+        ca_force_rotate: int | None = None,
+        autolock_managers: bool | None = None,
+        log_driver: DriverConfig | None = None,
     ) -> None: ...
 
 class SwarmExternalCA(dict[str, Any]):
     def __init__(
-        self, url, protocol: Incomplete | None = None, options: Incomplete | None = None, ca_cert: Incomplete | None = None
+        self,
+        url: str,
+        protocol: str | None = None,
+        options: dict[Incomplete, Incomplete] | None = None,
+        ca_cert: str | None = None,
     ) -> None: ...

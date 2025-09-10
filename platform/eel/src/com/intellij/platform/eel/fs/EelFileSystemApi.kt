@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import java.nio.ByteBuffer
-import java.nio.file.Path
 
 @get:ApiStatus.Internal
 val EelFileSystemApi.pathSeparator: String
@@ -221,21 +220,16 @@ interface EelFileSystemApi {
     interface Other : FullReadError, EelFsError.Other
   }
 
-   /**
-   * Calculates a xxHash3 hash for each file in the given directory in a BFS manner. The provided path can point to a nonexistent file or\
+  /**
+   * Calculates a xxHash3 hash for each file in the given directory in a DFS manner. The provided path can point to a nonexistent file or\
    * directory when the target EelPath is on the remote side (this would indicate that the file/directory has been created locally).\
-   * EelPath pointing to a local file/directory has to be valid.
+   * EelPath pointing to a local file/directory has to be valid. Directory hash supports directories, files, and symlinks.
    *
    * @param path is the target directory through which will be recursed.
    * @return a flow which emits a tuple of file EelPath and its hash.
    */
   @CheckReturnValue
-  suspend fun directoryHash(path: EelPath): Flow<DirectoryHashEntry>
-
-  sealed class DirectoryHashEntry {
-    data class Hash(val path: EelPath, val hash: Long) : DirectoryHashEntry()
-    data class Error(val error: DirectoryHashError) : DirectoryHashEntry()
-  }
+  suspend fun directoryHash(path: EelPath): Flow<DirectoryHashEntryResult>
 
   sealed interface DirectoryHashError : EelFsError {
     interface Other : DirectoryHashError, EelFsError.Other

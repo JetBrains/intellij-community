@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from .engine import (
     create_engine as create_engine,
     create_mock_engine as create_mock_engine,

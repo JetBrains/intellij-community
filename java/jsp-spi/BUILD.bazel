@@ -5,7 +5,7 @@ jvm_library(
   name = "jsp-spi",
   module_name = "intellij.jsp.spi",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//java/jsp-openapi:jsp",
     "//java/openapi:java",

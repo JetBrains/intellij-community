@@ -219,6 +219,12 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   public void testnew$arrayInitializerTrailingComma() { doTest(); }
 
+  public void testnew$nlInsideArrayDeclaration() { doTest(); }
+
+  public void testnew$nlBeforeArrayDeclaration() { doTest(); }
+
+  public void testnew$nlInsideArrayDeclarationWithExpression() { doTest(); }
+
   public void testnew$nestedArrayInitializer() { doTest(); }
 
   public void testnew$emptyNestedArrayInitializer() { doTest(); }
@@ -282,6 +288,10 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testnew$newLine21() { doTest(); }
 
   public void testnew$newLine22() { doTest(); }
+
+  public void testnew$newLine23() { doTest(); }
+
+  public void testnew$newLine24() { doTest(); }
 
   public void testanonymous$anonymous() { doTest(); }
 

@@ -20,6 +20,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -35,7 +36,8 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
 
   private final GroovyFile[] myFiles;
 
-  protected ConvertToJavaProcessor(Project project, GroovyFile... files) {
+  @VisibleForTesting
+  public ConvertToJavaProcessor(Project project, GroovyFile... files) {
     super(project);
     myFiles = files;
   }

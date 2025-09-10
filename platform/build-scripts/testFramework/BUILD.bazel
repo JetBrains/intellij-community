@@ -11,7 +11,7 @@ jvm_library(
   name = "testFramework",
   module_name = "intellij.platform.buildScripts.testFramework",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_testFramework",
   deps = [
     "//platform/build-scripts",
@@ -41,7 +41,6 @@ jvm_library(
     "//tools/reproducibleBuilds.diff",
     "//jps/jps-builders:build",
     "//platform/runtime/product",
-    "@lib//:devkit-runtime-module-repository-jps",
     "@lib//:aalto-xml",
     "//platform/platform-impl/bootstrap",
     "//platform/core-impl",

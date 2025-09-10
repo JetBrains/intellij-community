@@ -8,29 +8,48 @@ import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
-import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncExtension
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
 
+@ApiStatus.Internal
 @Order(GradleJpsSyncExtension.ORDER)
-internal class GradleJpsSyncExtension : GradleSyncExtension {
+class GradleJpsSyncExtension : GradleSyncExtension {
 
-  override fun updateSyncStorage(
+  override fun updateProjectModel(
     context: ProjectResolverContext,
     syncStorage: MutableEntityStorage,
-    projectStorage: ImmutableEntityStorage,
+    projectStorage: MutableEntityStorage,
     phase: GradleSyncPhase,
   ) {
+    removeModulesWithUsedContentRoots(context, syncStorage, projectStorage, phase)
     removeUnloadedModules(context, syncStorage, phase)
     removeBridgeModules(context, syncStorage, projectStorage, phase)
     renameDuplicatedModules(context, syncStorage, projectStorage, phase)
     removeDuplicatedContentRoots(context, syncStorage, projectStorage, phase)
+  }
+
+  private fun removeModulesWithUsedContentRoots(
+    context: ProjectResolverContext,
+    syncStorage: EntityStorage,
+    projectStorage: MutableEntityStorage,
+    phase: GradleSyncPhase,
+  ) {
+    val usedContentRoots = syncStorage.entitiesToReplace<ContentRootEntity>(context, phase)
+      .mapTo(HashSet()) { it.url }
+    val entitiesToRemove = projectStorage.entitiesToSkip<ModuleEntity>(context, phase)
+      .filter { module -> module.exModuleOptions?.externalSystem == null }
+      .filter { module -> module.contentRoots.any { it.url in usedContentRoots } }
+      .toList()
+    projectStorage.removeAllEntities(entitiesToRemove)
   }
 
   private fun removeUnloadedModules(
@@ -44,7 +63,7 @@ internal class GradleJpsSyncExtension : GradleSyncExtension {
     for (moduleEntity in syncStorage.entitiesToReplace<ModuleEntity>(context, phase)) {
       for (moduleName in generateModuleNames(context, moduleEntity)) {
         if (unloadedModuleNameHolder.isUnloaded(moduleName)) {
-          syncStorage.removeEntity(moduleEntity)
+          entitiesToRemove.add(moduleEntity)
         }
       }
     }
@@ -54,7 +73,7 @@ internal class GradleJpsSyncExtension : GradleSyncExtension {
   private fun removeBridgeModules(
     context: ProjectResolverContext,
     syncStorage: MutableEntityStorage,
-    projectStorage: ImmutableEntityStorage,
+    projectStorage: EntityStorage,
     phase: GradleSyncPhase,
   ) {
     val entitiesToRemove = ArrayList<WorkspaceEntity>()
@@ -70,7 +89,7 @@ internal class GradleJpsSyncExtension : GradleSyncExtension {
   private fun removeDuplicatedContentRoots(
     context: ProjectResolverContext,
     syncStorage: MutableEntityStorage,
-    projectStorage: ImmutableEntityStorage,
+    projectStorage: EntityStorage,
     phase: GradleSyncPhase,
   ) {
     if (isSharedSourceSupportEnabled(context.project)) {
@@ -90,7 +109,7 @@ internal class GradleJpsSyncExtension : GradleSyncExtension {
   private fun renameDuplicatedModules(
     context: ProjectResolverContext,
     syncStorage: MutableEntityStorage,
-    projectStorage: ImmutableEntityStorage,
+    projectStorage: EntityStorage,
     phase: GradleSyncPhase,
   ) {
     val moduleNames = projectStorage.entitiesToSkip<ModuleEntity>(context, phase)
@@ -102,6 +121,7 @@ internal class GradleJpsSyncExtension : GradleSyncExtension {
             syncStorage.modifyModuleEntity(moduleEntity) {
               name = moduleName
             }
+            break
           }
         }
       }
@@ -123,6 +143,6 @@ internal class GradleJpsSyncExtension : GradleSyncExtension {
 
   companion object {
 
-    const val ORDER: Int = 1000
+    const val ORDER: Int = GradleBaseSyncExtension.ORDER - 1000
   }
 }

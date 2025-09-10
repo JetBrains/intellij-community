@@ -1,6 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages
-// PSI_ELEMENT_AS_TITLE: "fun fooWithOverloads(Int, Double, String): Unit"
+// PSI_ELEMENT_AS_TITLE: "fun fooWithOverloads(Int = ..., Double = ..., String = ...): Unit"
 // FIND_BY_REF
 
 package usages

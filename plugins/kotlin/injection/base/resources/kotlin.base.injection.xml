@@ -1,6 +1,5 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.base.injection">
   <dependencies>
-    <plugin id="org.intellij.intelliLang"/>
     <module name="intellij.java.langInjection"/>
     <module name="intellij.platform.langInjection.backend"/>
   </dependencies>

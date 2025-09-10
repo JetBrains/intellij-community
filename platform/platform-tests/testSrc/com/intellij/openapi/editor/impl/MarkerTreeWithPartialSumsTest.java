@@ -38,7 +38,7 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
   @Override
   public void tearDown() throws Exception {
     try {
-      if (myTree != null) myTree.dispose(myDocument);
+      if (myTree != null) myTree.disposeInTests(myDocument);
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -198,7 +198,7 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
     MyRange(int offset, int value, boolean stickToRight) {
       super(myDocument, offset, offset, false, true);
       myValue = value;
-      myTree.addInterval(this, offset, offset, false, false, stickToRight, 0);
+      myTree.addIntervalTestAccessor(this, offset, offset, false, false, stickToRight, 0);
     }
 
     @Override

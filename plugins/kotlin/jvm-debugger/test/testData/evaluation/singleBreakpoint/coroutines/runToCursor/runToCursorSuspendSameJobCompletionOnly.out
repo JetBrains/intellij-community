@@ -1,8 +1,8 @@
-LineBreakpoint created at runToCursorSuspendSameJobCompletionOnly.kt:28
+LineBreakpoint created at runToCursorSuspendSameJobCompletionOnly.kt:29
 Run Java
 Connected to the target VM
-runToCursorSuspendSameJobCompletionOnly.kt:28
-runToCursorSuspendSameJobCompletionOnly.kt:36
+runToCursorSuspendSameJobCompletionOnly.kt:29
+runToCursorSuspendSameJobCompletionOnly.kt:37
 Compile bytecode for k
 Disconnected from the target VM
 

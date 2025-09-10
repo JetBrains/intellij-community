@@ -33,13 +33,15 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
   @BeforeEach
   fun setupComponentStore() {
     componentStore = TestComponentStore(configDir)
-    application.replaceService(IComponentStore::class.java, componentStore, disposable)
+    val app = application
+    app.replaceService(IComponentStore::class.java, componentStore, disposable)
+    app.componentStoreImplChanged()
     //warm up
-    application.registerService(ExportableNonRoamable::class.java, ExportableNonRoamable::class.java, testPluginDescriptor, false)
-    application.registerService(Roamable::class.java, Roamable::class.java, testPluginDescriptor, false)
+    app.registerService(ExportableNonRoamable::class.java, ExportableNonRoamable::class.java, testPluginDescriptor, false)
+    app.registerService(Roamable::class.java, Roamable::class.java, testPluginDescriptor, false)
     //application.registerService(Roamable::class.java, Roamable::class.java, false)
 
-    application.processAllImplementationClasses { _, _ ->
+    app.processAllImplementationClasses { _, _ ->
       // do nothing
     }
   }
@@ -68,9 +70,11 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
 
   @AfterEach
   fun resetComponentStatesToDefault() {
-    application.unregisterService(ExportableNonRoamable::class.java)
-    application.unregisterService(Roamable::class.java)
+    val app = application
+    app.unregisterService(ExportableNonRoamable::class.java)
+    app.unregisterService(Roamable::class.java)
     componentStore.resetComponents()
+    app.componentStoreImplChanged()
   }
 
   protected fun CoroutineScope.initSettingsSync(initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit, crossIdeSync: Boolean = false) {

@@ -16,7 +16,7 @@ jvm_library(
   name = "impl",
   module_name = "kotlin.gradle.gradle-tooling.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -37,7 +37,7 @@ jvm_library(
 jvm_library(
   name = "impl_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   associates = [":impl"],
   deps = [

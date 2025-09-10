@@ -5,16 +5,14 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 
-class ToggleBuildTracingAction : ToggleAction(TracingBundle.message("action.toggle.build.tracing.text")) {
+internal class ToggleBuildTracingAction : ToggleAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun isSelected(e: AnActionEvent): Boolean {
     return TracingService.getInstance().isTracingEnabled()
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     TracingService.getInstance().setTracingEnabled(state)
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
   }
 }

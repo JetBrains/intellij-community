@@ -15,7 +15,7 @@ jvm_library(
   name = "product",
   module_name = "intellij.platform.runtime.product",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_product",
   deps = [
     "@lib//:jetbrains-annotations",

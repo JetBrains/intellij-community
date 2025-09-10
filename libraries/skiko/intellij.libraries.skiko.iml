@@ -29,19 +29,19 @@
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="jetbrains.skiko.awt.runtime.all" type="repository">
-        <properties maven-id="org.jetbrains.skiko:skiko-awt-runtime-all:0.9.18">
+        <properties maven-id="org.jetbrains.skiko:skiko-awt-runtime-all:0.9.22">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt-runtime-all/0.9.18/skiko-awt-runtime-all-0.9.18.jar">
-              <sha256sum>bfc691ca200b0479b4f49caf9e592a00f31ab98e08901d0368f0029e0c58627f</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt-runtime-all/0.9.22/skiko-awt-runtime-all-0.9.22.jar">
+              <sha256sum>d80c10074a588ab03444e317cb2207fc399d22871024f05d739adeba28edeba4</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt-runtime-all/0.9.18/skiko-awt-runtime-all-0.9.18.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt-runtime-all/0.9.22/skiko-awt-runtime-all-0.9.22.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt-runtime-all/0.9.18/skiko-awt-runtime-all-0.9.18-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt-runtime-all/0.9.22/skiko-awt-runtime-all-0.9.22-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

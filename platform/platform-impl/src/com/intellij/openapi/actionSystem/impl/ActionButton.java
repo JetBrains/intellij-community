@@ -610,7 +610,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       updateToolTipText();
     }
     else if (ActionUtil.COMPONENT_PROVIDER.toString().equals(propertyName)) {
-      LOG.warn("Unexpected: existing button was replaced with a CustomComponentAction: " + e.getNewValue());
+      LOG.debug("existing button was replaced with a CustomComponentAction: " + e.getNewValue());
     }
   }
 

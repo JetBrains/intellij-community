@@ -1,36 +1,17 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 
 jps_test(
   name = "k2_test",
   runtime_deps = [
     ":k2_test_lib",
     "//:main_test_lib",
-    "@lib//:java-debugger-agent-holder-debugger-agent",
   ],
   data = [
-    "//plugins/kotlin/jvm-debugger/test:test_testData",
-    "@kotlin_test_deps_annotations//file:annotations.jar",
-    "@kotlin_test_deps_junit//file:junit.jar",
-    "@kotlin_test_deps_kotlin-compiler//file:kotlin-compiler.jar",
-    "@kotlin_test_deps_kotlin-daemon//file:kotlin-daemon.jar",
-    "@kotlin_test_deps_kotlin-dist-for-ide//file:kotlin-dist-for-ide.jar",
-    "@kotlin_test_deps_kotlin-jps-plugin-classpath//file:kotlin-jps-plugin-classpath.jar",
-    "@kotlin_test_deps_kotlin-reflect-sources//file:kotlin-reflect-sources.jar",
-    "@kotlin_test_deps_kotlin-reflect//file:kotlin-reflect.jar",
-    "@kotlin_test_deps_kotlin-script-runtime//file:kotlin-script-runtime.jar",
-    "@kotlin_test_deps_kotlin-scripting-common//file:kotlin-scripting-common.jar",
-    "@kotlin_test_deps_kotlin-scripting-compiler//file:kotlin-scripting-compiler.jar",
-    "@kotlin_test_deps_kotlin-scripting-compiler-impl//file:kotlin-scripting-compiler-impl.jar",
-    "@kotlin_test_deps_kotlin-scripting-jvm//file:kotlin-scripting-jvm.jar",
-    "@kotlin_test_deps_kotlin-stdlib-common-sources//file:kotlin-stdlib-common-sources.jar",
-    "@kotlin_test_deps_kotlin-stdlib-jdk7//file:kotlin-stdlib-jdk7.jar",
-    "@kotlin_test_deps_kotlin-stdlib-jdk8-sources//file:kotlin-stdlib-jdk8-sources.jar",
-    "@kotlin_test_deps_kotlin-stdlib-jdk8//file:kotlin-stdlib-jdk8.jar",
-    "@kotlin_test_deps_kotlin-stdlib-sources//file:kotlin-stdlib-sources.jar",
-    "@kotlin_test_deps_kotlin-stdlib//file:kotlin-stdlib.jar",
-    "@kotlin_test_deps_kotlin-test-junit//file:kotlin-test-junit.jar",
-    "@kotlin_test_deps_kotlin-test//file:kotlin-test.jar",
-  ],
+    "@debugger_test_deps_debugger_agent//file:debugger-agent.jar",
+    "@community//plugins/kotlin/jvm-debugger/test:testData",
+    "@community//plugins/kotlin/idea/tests:testData",
+  ] + all_test_dep_targets,
   tags = [
     "block-network",
   ],
@@ -51,7 +32,7 @@ jvm_library(
   name = "k2_test_lib",
   module_name = "kotlin.jvm-debugger.test.k2",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-ui",
     "//plugins/kotlin/plugin/k2",
@@ -96,6 +77,7 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl_test_lib",
     "//platform/xdebugger-testFramework:debugger-testFramework",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//plugins/stream-debugger:java-debugger-streams",
     "//plugins/stream-debugger:java-debugger-streams_test_lib",
     "//aether-dependency-resolver",

@@ -135,7 +135,7 @@ public final class DebugReflectionUtil {
     for (Map.Entry<Object, String> entry : startRoots.entrySet()) {
       Object startRoot = entry.getKey();
       String description = entry.getValue();
-      toVisit.addLast(new BackLink<Object>(startRoot, null, "(root)", null) {
+      toVisit.addLast(new BackLink<Object>(startRoot, null, -2, null) {
         @Override
         void print(@NotNull StringBuilder result) {
           super.print(result);
@@ -188,14 +188,14 @@ public final class DebugReflectionUtil {
         throw new RuntimeException(e);
       }
 
-      queue(value, field, null, backLink, queue, maxQueueSize, shouldExamineValue);
+      queue(value, field, -1, backLink, queue, maxQueueSize, shouldExamineValue);
     }
     if (rootClass.isArray()) {
       try {
         Object[] objects = (Object[])root;
         for (int i = 0; i < objects.length; i++) {
           Object value = objects[i];
-          queue(value, null, "["+i+"]", backLink, queue, maxQueueSize, shouldExamineValue);
+          queue(value, null, i, backLink, queue, maxQueueSize, shouldExamineValue);
         }
       }
       catch (ClassCastException ignored) {
@@ -207,7 +207,7 @@ public final class DebugReflectionUtil {
           if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
           try {
             Object value = field.get(null);
-            queue(value, field, null, backLink, queue, maxQueueSize, shouldExamineValue);
+            queue(value, field, -1, backLink, queue, maxQueueSize, shouldExamineValue);
           }
           catch (IllegalAccessException ignored) {
           }
@@ -217,7 +217,7 @@ public final class DebugReflectionUtil {
 
   private static void queue(@Nullable Object value,
                             @Nullable Field field,
-                            @Nullable String fieldName,
+                            int arrayIndex, // -1 if the field is not an array
                             @NotNull BackLink<?> backLink,
                             @NotNull Deque<? super BackLink<?>> queue,
                             int maxQueueSize,
@@ -226,7 +226,7 @@ public final class DebugReflectionUtil {
       return;
     }
     if (shouldExamineValue.test(value) && queue.size() < maxQueueSize) {
-      queue.addLast(new BackLink<>(value, field, fieldName, backLink));
+      queue.addLast(new BackLink<>(value, field, arrayIndex, backLink));
     }
   }
 
@@ -237,19 +237,15 @@ public final class DebugReflectionUtil {
   public static class BackLink<V> {
     private final @NotNull V value;
     private final Field field;
-    /**
-     * human-readable field name (sometimes the Field is not available, e.g., when it's synthetic).
-     * when null, it can be computed from field.getName()
-     */
-    private final String fieldName;
+    private final int arrayIndex; // -2 if the root, -1 if not an array, array index otherwise
     private final BackLink<?> backLink;
     private final int depth;
 
-    BackLink(@NotNull V value, @Nullable Field field, @Nullable String fieldName, @Nullable BackLink<?> backLink) {
+    BackLink(@NotNull V value, @Nullable Field field, int arrayIndex, @Nullable BackLink<?> backLink) {
       this.value = value;
       this.field = field;
-      this.fieldName = fieldName;
-      assert field != null ^ fieldName != null : "One of field/fieldName must be null and the other not-null, but got: "+field+"/"+fieldName;
+      this.arrayIndex = arrayIndex;
+      assert field != null ^ arrayIndex != -1 : "One of field/arrayIndex must be present and the other should not, but got: "+field+"/"+arrayIndex;
       this.backLink = backLink;
       depth = backLink == null ? 0 : backLink.depth + 1;
     }
@@ -270,7 +266,7 @@ public final class DebugReflectionUtil {
     }
 
     String getFieldName() {
-      return this.fieldName != null ? this.fieldName : field.getDeclaringClass().getName() + "." + field.getName();
+      return arrayIndex==-2 ?" (root)" : arrayIndex != -1 ? "["+arrayIndex+"]" : field.getDeclaringClass().getName() + "." + field.getName();
     }
 
     void print(@NotNull StringBuilder result) {

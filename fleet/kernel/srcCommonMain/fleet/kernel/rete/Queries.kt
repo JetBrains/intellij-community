@@ -14,14 +14,14 @@ import kotlin.jvm.JvmName
  * There is always a match in Single, run with it. If the match is invalidate while the body is running, cancel everything.
  */
 suspend fun <T, R> StateQuery<T>.withCurrentMatch(f: suspend CoroutineScope.(T) -> R): WithMatchResult<R> {
-  return matchesFlow().first().withMatch(f)
+  return matchesFlow().firstNotNull { it.withMatch(f) }
 }
 
 /**
  * Will wait until Maybe emits a match and then run with it once.
  */
 suspend fun <T, R> Query<Maybe, T>.withFirstMatch(f: suspend CoroutineScope.(T) -> R): WithMatchResult<R> {
-  return matchesFlow().first().withMatch(f)
+  return matchesFlow().firstNotNull { it.withMatch(f) }
 }
 
 /**

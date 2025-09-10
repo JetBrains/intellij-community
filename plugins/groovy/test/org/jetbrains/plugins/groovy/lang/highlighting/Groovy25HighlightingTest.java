@@ -225,6 +225,22 @@ public class Groovy25HighlightingTest extends LightGroovyTestCase implements Hig
                        summary['Imported rules'] += 1""", GroovyAssignabilityCheckInspection.class);
   }
 
+  public void testTupleDeclaration() {
+    highlightingTest(
+         """
+         void f() {
+             def x = 0
+             def y = 1
+             (x, y) = [-1, 0]
+             <error descr="Tuple declaration should end with 'def' modifier">var</error> (Integer a, b) = [1, 2]
+             def (Integer c, d) = [3, 4]
+     
+             <error descr="Tuple declaration should end with 'def' modifier">final</error> (Integer e, f) = [5, 6]
+         }
+         """
+    );
+  }
+
   @Override
   public final @NotNull LightProjectDescriptor getProjectDescriptor() {
     return GroovyProjectDescriptors.GROOVY_2_5;

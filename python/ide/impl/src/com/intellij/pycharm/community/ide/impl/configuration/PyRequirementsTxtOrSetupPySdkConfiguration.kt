@@ -5,16 +5,15 @@ import com.intellij.CommonBundle
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -32,13 +31,13 @@ import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
 import com.jetbrains.python.packaging.setupPy.SetupPyManager
-import com.jetbrains.python.requirements.RequirementsFileType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.createVirtualEnvAndSdkSynchronously
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.nio.file.Paths
 import javax.swing.JComponent
@@ -47,6 +46,7 @@ import kotlin.io.path.Path
 
 private val LOGGER = fileLogger()
 
+@ApiStatus.Internal
 class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
   override suspend fun createAndAddSdkForConfigurator(module: Module): PyResult<Sdk?> = createAndAddSdk(module, Source.CONFIGURATOR)
 
@@ -104,6 +104,9 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
 
   private suspend fun askForEnvData(module: Module, existingSdks: List<Sdk>, source: Source): PyAddNewVirtualEnvFromFilePanel.Data? {
     val requirementsTxtOrSetupPy = getRequirementsTxtOrSetupPy(module) ?: return null
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      return null
+    }
 
     var permitted = false
     var envData: PyAddNewVirtualEnvFromFilePanel.Data? = null
@@ -126,18 +129,6 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
 
     return if (permitted) envData else null
   }
-
-  private fun getCommandForPipInstall(requirementsTxtOrSetupPy: VirtualFile): List<String> {
-    return if (FileTypeRegistry.getInstance().isFileOfType(requirementsTxtOrSetupPy, RequirementsFileType.INSTANCE)) {
-      listOf("-r", getAbsPath(requirementsTxtOrSetupPy))
-    }
-    else {
-      listOf("-e", getAbsPath(requirementsTxtOrSetupPy.parent))
-    }
-  }
-
-  @NlsSafe
-  private fun getAbsPath(file: VirtualFile): String = file.toNioPath().toAbsolutePath().toString()
 
   private class Dialog(
     module: Module,

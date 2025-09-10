@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.registerComponentInstance
 import com.intellij.testFramework.rules.InMemoryFsRule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -126,7 +127,7 @@ class SettingsSyncIdeMediatorTest : BasePlatformTestCase() {
   @TestFor(issues = ["IDEA-324914"])
   @Test
   fun `process files2apply last`() {
-    val componentManager = ApplicationManager.getApplication() as ComponentManagerEx
+    val componentManager = ApplicationManager.getApplication()
     val rootConfig = memoryFs.fs.getPath("/IDEA-324914/appConfig")
     val componentStore = object : ComponentStoreImpl() {
       override val storageManager: StateStorageManager
@@ -138,14 +139,14 @@ class SettingsSyncIdeMediatorTest : BasePlatformTestCase() {
     }
     val callbackCalls = mutableListOf<String>()
     val firstComponent = FirstComponent({ callbackCalls.add("First") })
-    componentManager.registerComponentInstance(FirstComponent::class.java, firstComponent)
+    componentManager.registerComponentInstance(FirstComponent::class.java, firstComponent, getTestRootDisposable())
     runBlocking(Dispatchers.Default) {
       componentStore.initComponent(firstComponent, null, PluginManagerCore.CORE_ID)
     }
     componentStore.storageManager.getStateStorage(getStateSpec(FirstComponent::class.java)!!.storages[0]).createSaveSessionProducer()
 
     val secondComponent = SecondComponent({ callbackCalls.add("Second") })
-    componentManager.registerComponentInstance(SecondComponent::class.java, secondComponent)
+    componentManager.registerComponentInstance(SecondComponent::class.java, secondComponent, getTestRootDisposable())
     runBlocking(Dispatchers.Default) {
       componentStore.initComponent(secondComponent, null, PluginManagerCore.CORE_ID)
     }

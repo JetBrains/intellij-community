@@ -21,7 +21,7 @@ Reports type parameters that can have <code>in</code> or <code>out</code> varian
   fun consumeString(box: Box&lt;String&gt;) {}
   fun consumeCharSequence(box: Box&lt;CharSequence&gt;) {}
 
-  fun usage(box: Box&lt;String&gt;) ++{
+  fun usage(box: Box&lt;String&gt;) {
       consumeString(box)
       consumeCharSequence(box) // OK
   }

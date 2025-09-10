@@ -38,10 +38,9 @@ class TooFrequentCodeStyleComputationWatcher(val project: Project) {
 
   private fun calcCurrentCacheEvictionRate(): Double = 1.0 / rollingAvgBuffer.rollingAvg * 1000
 
-  @Synchronized
   fun beforeCacheEntryInserted(currentCacheSize: Int, maxCacheSize: Int) {
     if (Registry.`is`("code.style.cache.high.eviction.rate.automatic.recovery.enabled") && !isEvictionTrackingBlocked()) {
-      checkEvictionRate(currentCacheSize, maxCacheSize)
+      synchronized(this) { checkEvictionRate(currentCacheSize, maxCacheSize) }
     }
   }
 
@@ -123,12 +122,12 @@ class TooFrequentCodeStyleComputationWatcher(val project: Project) {
 }
 
 // bulk operations (e.g., reformatting a directory) may exceed the eviction rate threshold for their duration
-private val HIGH_CACHE_EVICTION_RATE_MIN_DURATION: Long =
-  Registry.intValue("code.style.cache.high.eviction.rate.automatic.recovery.threshold.duration").toLong()
+private val HIGH_CACHE_EVICTION_RATE_MIN_DURATION: Long
+  get() = Registry.intValue("code.style.cache.high.eviction.rate.automatic.recovery.threshold.duration").toLong()
 
 // evictions-per-second
-private val HIGH_CACHE_EVICTION_RATE_THRESHOLD: Long =
-  Registry.intValue("code.style.cache.high.eviction.rate.automatic.recovery.threshold.frequency").toLong()
+private val HIGH_CACHE_EVICTION_RATE_THRESHOLD: Long
+  get() = Registry.intValue("code.style.cache.high.eviction.rate.automatic.recovery.threshold.frequency").toLong()
 
 private const val TRACKING_NOT_STARTED: Long = -1
 private const val TRACKING_BLOCKED: Long = -2

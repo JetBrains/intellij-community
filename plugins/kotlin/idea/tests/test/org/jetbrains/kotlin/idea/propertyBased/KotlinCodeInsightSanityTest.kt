@@ -24,6 +24,13 @@ open class KotlinCodeInsightSanityTest : KotlinLightCodeInsightFixtureTestCase()
 
     override fun setUp() {
         super.setUp()
+        // to avoid failures from some plugins
+        assertEquals(
+            "Set system property -Djavax.xml.parsers.SAXParserFactory=com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
+            "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
+            System.getProperty("javax.xml.parsers.SAXParserFactory")
+        )
+
         RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     }
 

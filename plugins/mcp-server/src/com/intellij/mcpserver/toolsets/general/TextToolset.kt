@@ -15,6 +15,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -101,26 +102,34 @@ class TextToolset : McpToolset {
     @McpDescription("Case-sensitive search")
     caseSensitive: Boolean = true,
   ) {
+    // Validate that oldText is not empty to prevent endless loop
+    if (oldText.isEmpty()) mcpFail("oldText is empty")
+    
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.replacing.text.in.file", pathInProject, oldText, newText))
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(pathInProject)
     val file: VirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
                             ?: mcpFail("file not found: $pathInProject")
-    val (document, text) = readAction {
+    val (document, rangeMarkers) = readAction {
+      Cancellation.ensureActive()
+      val rangeMarkers = mutableListOf<RangeMarker>()
       val document = FileDocumentManager.getInstance().getDocument(file) ?: mcpFail("Could not get document for $file")
-      document to document.text
+      val text = document.text
+      var currentStartIndex = 0
+
+      while (true) {
+        Cancellation.checkCancelled()
+        val occurrenceStart = text.indexOf(oldText, currentStartIndex, !caseSensitive)
+        if (occurrenceStart < 0) break
+        val rangeMarker = document.createRangeMarker(occurrenceStart, occurrenceStart + oldText.length, true)
+        rangeMarkers.add(rangeMarker)
+        if (!replaceAll) break // only the first occurence
+        currentStartIndex = occurrenceStart + oldText.length
+      }
+      document to rangeMarkers.toList()
     }
 
-    val rangeMarkers = mutableListOf<RangeMarker>()
-    var currentStartIndex = 0
-    while (true) {
-      val occurrenceStart = text.indexOf(oldText, currentStartIndex, !caseSensitive)
-      if (occurrenceStart < 0) break
-      val rangeMarker = document.createRangeMarker(occurrenceStart, occurrenceStart + oldText.length, true)
-      rangeMarkers.add(rangeMarker)
-      if (!replaceAll) break // only the first occurence
-      currentStartIndex = occurrenceStart + oldText.length
-    }
+    if (rangeMarkers.isEmpty()) mcpFail("No occurrences found")
 
     writeCommandAction(project, commandName = FindBundle.message("find.replace.text.dialog.title")) {
       for (marker in rangeMarkers.reversed()) {

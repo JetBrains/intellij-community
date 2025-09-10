@@ -155,6 +155,15 @@ val KtTypeReference.typeIfSafeToResolve: KaType?
 
 @OptIn(KaContextParameterApi::class)
 context(_: KaSession)
+fun KaNamedFunctionSymbol.isEqualsMethodSymbol(): Boolean {
+    if (name != OperatorNameConventions.EQUALS) return false
+    if (!isOverride) return false
+    val parameterType = valueParameters.singleOrNull()?.returnType ?: return false
+    return parameterType.isNullableAnyType() && returnType.isNonNullableBooleanType()
+}
+
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 private val KtTypeReference.isSafeToResolve: Boolean
     get() {
         val typeElement = this.typeElement?.unwrapNullability() ?: return false

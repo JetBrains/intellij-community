@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDirectoryMapping
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.Companion.MAPPING_DETECTION_LOG
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ModuleAttachListener
@@ -42,7 +42,7 @@ private class VcsModuleAttachListener : ModuleAttachListener {
     if (!VcsUtil.shouldDetectVcsMappingsFor(project)) return
 
     val vcsManager = ProjectLevelVcsManager.getInstance(project)
-    val mappings = vcsManager.directoryMappings
+    val mappings = vcsManager.getDirectoryMappings()
     val singleMapping = mappings.singleOrNull()
     if (singleMapping != null) {
       val contentRoots = ModuleRootManager.getInstance(primaryModule).contentRoots
@@ -52,7 +52,7 @@ private class VcsModuleAttachListener : ModuleAttachListener {
           FileUtil.filesEqual(File(singleContentRoot.path), File(singleMapping.directory))) {
         val vcs = vcsManager.findVersioningVcs(addedModuleContentRoot)
         if (vcs != null && vcs.name == singleMapping.vcs) {
-          vcsManager.directoryMappings = listOf(VcsDirectoryMapping.createDefault(vcs.name))
+          vcsManager.setDirectoryMappings(listOf(VcsDirectoryMapping.createDefault(vcs.name)))
           return
         }
       }
@@ -61,7 +61,7 @@ private class VcsModuleAttachListener : ModuleAttachListener {
     if (vcs != null) {
       val newMappings = ArrayList(mappings)
       newMappings.add(VcsDirectoryMapping(addedModuleContentRoot.path, vcs.name))
-      vcsManager.directoryMappings = newMappings
+      vcsManager.setDirectoryMappings(newMappings)
     }
   }
 
@@ -71,7 +71,7 @@ private class VcsModuleAttachListener : ModuleAttachListener {
     if (!VcsUtil.shouldDetectVcsMappingsFor(project)) return
 
     val vcsManager = ProjectLevelVcsManager.getInstance(project)
-    val mappings = vcsManager.directoryMappings
+    val mappings = vcsManager.getDirectoryMappings()
     val newMappings = ArrayList(mappings)
     for (mapping in mappings) {
       for (root in ModuleRootManager.getInstance(module).contentRoots) {
@@ -80,6 +80,6 @@ private class VcsModuleAttachListener : ModuleAttachListener {
         }
       }
     }
-    vcsManager.directoryMappings = newMappings
+    vcsManager.setDirectoryMappings(newMappings)
   }
 }

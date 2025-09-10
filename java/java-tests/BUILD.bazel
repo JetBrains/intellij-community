@@ -17,7 +17,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.java.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True, exclude = ["testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/precompiledData/**/*"]),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True, exclude = ["testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/precompiledData/**/*"]),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -50,6 +50,7 @@ jvm_library(
     "//platform/diff-api:diff",
     "//platform/usageView",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//java/java-runtime:rt",
     "//platform/platform-api:ide",
     "//plugins/java-i18n",
@@ -85,7 +86,7 @@ jvm_library(
     "//plugins/groovy:groovy_test_lib",
     "//platform/lang-impl:lang-tests_test_lib",
     "//platform/platform-impl/internal",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "@lib//:assert_j",
     "//xml/xml-analysis-impl:analysis-impl",
     "//xml/xml-psi-api:psi",
@@ -154,12 +155,19 @@ jvm_library(
     "//platform/lang-impl",
     "//xml/impl",
     "//platform/syntax/syntax-scripts:scripts",
+    "@lib//:byte-buddy",
+  ],
+  exports = [
+    "//plugins/java-i18n",
+    "//plugins/java-i18n:java-i18n_test_lib",
+    "//plugins/coverage",
+    "//plugins/coverage:coverage_test_lib",
   ],
   runtime_deps = [
     ":tests_test_resources",
     "//community-resources:customization",
-    "//plugins/IntelliLang/java-support:java-langInjection",
-    "//plugins/IntelliLang/xml-support:xml-langInjection",
+    "//java/langInjection",
+    "//xml/langInjection",
   ]
 )
 ### auto-generated section `build intellij.java.tests` end

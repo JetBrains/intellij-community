@@ -2,7 +2,9 @@
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
@@ -509,8 +511,17 @@ public final class RedundantCastUtil {
       if (originalFunctionalInterfaceType.equals(functionalInterfaceType)) {
         final PsiType castExprType = LambdaUtil.performWithTargetType(newLambdaExpression, functionalInterfaceType, () -> strippedCast.getType());
         if (castExprType != null && interfaceReturnType.isAssignableFrom(castExprType)) {
-          addToResults(returnExpression);
-          return;
+          // Special case: ignore explicit changing of nullability
+          PsiTypeElement originalCastType = returnExpression.getCastType();
+          if (originalCastType != null) {
+            Nullability returnTypeNullability = originalCastType.getType().getNullability().nullability();
+            Nullability castExprNullability = castExprType.getNullability().nullability();
+            boolean explicitChangeOfNullability = !returnTypeNullability.equals(Nullability.UNKNOWN) && !returnTypeNullability.equals(castExprNullability);
+            if (!explicitChangeOfNullability) {
+              addToResults(returnExpression);
+              return;
+            }
+          }
         }
       }
       strippedCast.replace(returnExpression);

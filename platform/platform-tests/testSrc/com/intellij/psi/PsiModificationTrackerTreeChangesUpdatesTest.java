@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -20,21 +19,13 @@ public class PsiModificationTrackerTreeChangesUpdatesTest extends HeavyPlatformT
     // since we want to test PsiModificationTrackerImpl in isolation, we create a separate instance:
     // The existing PsiModificationTrackerImpl is affected by various components.
     myTracker = new PsiModificationTrackerImpl(getProject());
-    PsiManagerEx.getInstanceEx(getProject()).addTreeChangePreprocessor(myTracker);
+    PsiManagerEx.getInstanceEx(getProject()).addTreeChangePreprocessor(myTracker, getTestRootDisposable());
   }
 
   @Override
   public void tearDown() throws Exception {
-    try {
-      PsiManagerEx.getInstanceEx(getProject()).removeTreeChangePreprocessor(myTracker);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      myTracker = null;
-      super.tearDown();
-    }
+    myTracker = null;
+    super.tearDown();
   }
 
   public void testMoveFile() throws IOException {

@@ -47,14 +47,14 @@ import org.jetbrains.intellij.build.excludedLibJars
 import org.jetbrains.intellij.build.generatePluginClassPath
 import org.jetbrains.intellij.build.generatePluginClassPathFromPrebuiltPluginFiles
 import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
-import org.jetbrains.intellij.build.impl.ArchivedCompilationContext
-import org.jetbrains.intellij.build.impl.BazelCompilationContext
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.CompilationContextImpl
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
 import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.asArchived
 import org.jetbrains.intellij.build.impl.asArchivedIfNeeded
+import org.jetbrains.intellij.build.impl.asBazelIfNeeded
 import org.jetbrains.intellij.build.impl.collectIncludedPluginModules
 import org.jetbrains.intellij.build.impl.collectPlatformModules
 import org.jetbrains.intellij.build.impl.copyDistFiles
@@ -63,7 +63,6 @@ import org.jetbrains.intellij.build.impl.createPlatformLayout
 import org.jetbrains.intellij.build.impl.generateRuntimeModuleRepositoryForDevBuild
 import org.jetbrains.intellij.build.impl.getOsDistributionBuilder
 import org.jetbrains.intellij.build.impl.getToolModules
-import org.jetbrains.intellij.build.impl.isRunningFromBazelOut
 import org.jetbrains.intellij.build.impl.layoutPlatformDistribution
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
@@ -92,6 +91,8 @@ data class BuildRequest(
   @JvmField val platformPrefix: String,
   @JvmField val additionalModules: List<String>,
   @JvmField val projectDir: Path,
+  /** For a standalone frontend distribution where `platformPrefix` is "JetBrainsClient", specifies the platform prefix of its base IDE. */
+  @JvmField val baseIdePlatformPrefixForFrontend: String? = null,
   @JvmField val devRootDir: Path = System.getProperty("idea.dev.root.dir")?.let { Path.of(it).normalize().toAbsolutePath() } ?: projectDir.resolve("out/dev-run"),
   @JvmField val jarCacheDir: Path = devRootDir.resolve("jar-cache"),
   @JvmField val productionClassOutput: Path = System.getenv("CLASSES_DIR")?.let { Path.of(it).normalize().toAbsolutePath() } ?: projectDir.resolve("out/classes/production"),
@@ -116,11 +117,16 @@ data class BuildRequest(
   @JvmField val os: OsFamily = OsFamily.currentOs
 ) {
   override fun toString(): String =
-    "BuildRequest(platformPrefix='$platformPrefix', " +
-    "additionalModules=$additionalModules, " +
-    "productionClassOutput=$productionClassOutput, " +
-    "keepHttpClient=$keepHttpClient, " +
-    "generateRuntimeModuleRepository=$generateRuntimeModuleRepository"
+    buildString {
+      append("BuildRequest(platformPrefix='$platformPrefix', ")
+      if (baseIdePlatformPrefixForFrontend != null) {
+        append("baseIdePlatformPrefixForFrontend='$baseIdePlatformPrefixForFrontend', ")
+      }
+      append("additionalModules=$additionalModules, ")
+      append("productionClassOutput=$productionClassOutput, ")
+      append("keepHttpClient=$keepHttpClient, ")
+      append("generateRuntimeModuleRepository=$generateRuntimeModuleRepository")
+    }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -138,7 +144,11 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
   }
 
   val classifier = computeAdditionalModulesFingerprint(request.additionalModules)
-  val productDirNameWithoutClassifier = if (request.platformPrefix == "Idea") "idea-community" else request.platformPrefix
+  val productDirNameWithoutClassifier = when (request.platformPrefix) {
+    "Idea" -> "idea-community"
+    "JetBrainsClient" -> "${request.baseIdePlatformPrefixForFrontend ?: ""}${request.platformPrefix}"
+    else -> request.platformPrefix
+  }
   val productDirName = (productDirNameWithoutClassifier + (if (System.getProperty("intellij.build.minimal").toBoolean()) "-ij-void" else "") + classifier).takeLast(255)
 
   val buildDir = withContext(Dispatchers.IO.limitedParallelism(4)) {
@@ -508,8 +518,8 @@ private suspend fun createBuildContext(
           options = options,
           customBuildPaths = result,
         )
-        .let { if (options.unpackCompiledClassesArchives) it else ArchivedCompilationContext(it) }
-        .let { if (!isRunningFromBazelOut()) it else BazelCompilationContext(it) }
+        .asBazelIfNeeded
+        .let { if (options.unpackCompiledClassesArchives) it else it.asArchived }
       }
     }
 

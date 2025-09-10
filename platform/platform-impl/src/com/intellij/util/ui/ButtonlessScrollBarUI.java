@@ -4,6 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -232,7 +233,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   public static boolean isMacOverlayScrollbarSupported() {
-    return SystemInfo.isMac && !Registry.is("ide.mac.disableMacScrollbars");
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    return (SystemInfo.isMac && !Registry.is("ide.mac.disableMacScrollbars")) || (customization != null && customization.isMacScrollBar());
   }
 
   private void updateMacScrollbarStyle() {

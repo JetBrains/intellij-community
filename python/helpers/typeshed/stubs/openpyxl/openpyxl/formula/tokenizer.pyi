@@ -30,6 +30,7 @@ class Tokenizer:
     def render(self): ...
 
 class Token:
+    __slots__ = ["value", "type", "subtype"]
     LITERAL: Final = "LITERAL"
     OPERAND: Final = "OPERAND"
     FUNC: Final = "FUNC"

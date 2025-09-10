@@ -34,6 +34,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValuePlace;
@@ -46,7 +47,10 @@ import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
-import com.intellij.xdebugger.impl.ui.tree.nodes.*;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackWithOrigin;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -218,8 +222,8 @@ public class XValueHint extends AbstractValueHint {
   }
 
   private Runnable getShowPopupRunnable(@NotNull XValue value, @Nullable XFullValueEvaluator evaluator) {
-    if (value instanceof XValueTextProvider && ((XValueTextProvider)value).shouldShowTextValue()) {
-      @NotNull String initialText = StringUtil.notNullize(((XValueTextProvider)value).getValueText());
+    if (value instanceof XValueTextProvider textValue && textValue.shouldShowTextValue()) {
+      @NotNull String initialText = StringUtil.notNullize(textValue.getValueText());
       return () -> showTextPopup(getTreeCreator(), Pair.create(value, myValueName), initialText, evaluator);
     }
     return () -> showTree(value);

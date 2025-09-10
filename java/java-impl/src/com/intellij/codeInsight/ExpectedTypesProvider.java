@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
@@ -637,6 +638,14 @@ public final class ExpectedTypesProvider {
       PsiManager manager = statement.getManager();
       if(manager == null) return Collections.emptyList();
       PsiType lub = getLeastUpperBound(expectedTypes, manager);
+      if (lub instanceof PsiIntersectionType intersectionType) {
+        Condition<PsiType> condition = type ->
+          !(type instanceof PsiClassType classType && classType.resolve() instanceof PsiClass aClass &&
+            CommonClassNames.JAVA_LANG_RECORD.equals(aClass.getQualifiedName()));
+        List<PsiType> listWithoutRecords =
+          ContainerUtil.filter(intersectionType.getConjuncts(), condition);
+        lub = PsiIntersectionType.createIntersection(listWithoutRecords);
+      }
       if (lub == null) return Collections.emptyList();
       return Collections.singletonList(createInfo(lub, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, lub, TailTypes.noneType()));
     }

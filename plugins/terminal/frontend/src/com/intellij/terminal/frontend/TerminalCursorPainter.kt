@@ -24,8 +24,8 @@ import com.jediterm.terminal.ui.AwtTransformers
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import java.awt.Color
@@ -91,24 +91,6 @@ internal class TerminalCursorPainter private constructor(
         updateCursor(curCursorState)
       }
     }, coroutineScope.asDisposable())
-
-    // Handling the case when:
-    // 0. The cursor is at the end of the document.
-    // 1. Something was appended to the document.
-    // 2. An equal amount of text was removed from the beginning, so that the max document size is maintained.
-    // 3. As a result, the logical offset of the cursor stayed the same, but we still need to repaint it.
-    outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
-        // This listener exists to handle the case when the offset has not changed,
-        // but it must also work correctly when the offset has in fact changed.
-        // In that case, the offset is updated before this listener is invoked,
-        // but it may not have been collected yet,
-        // because the collector might be called in an invokeLater by the coroutine dispatcher.
-        // Therefore, the flow is guaranteed to have the correct value, but curCursorState is not.
-        curCursorState = curCursorState.copy(offset = outputModel.cursorOffsetState.value)
-        updateCursor(curCursorState)
-      }
-    })
   }
 
   fun addListener(parentDisposable: Disposable, listener: TerminalCursorPainterListener) {
@@ -142,11 +124,13 @@ internal class TerminalCursorPainter private constructor(
       CursorShape.BLINK_UNDERLINE, CursorShape.STEADY_UNDERLINE -> UnderlineCursorRenderer(editor, outputModel, listeners)
       CursorShape.BLINK_VERTICAL_BAR, CursorShape.STEADY_VERTICAL_BAR -> VerticalBarCursorRenderer(editor, outputModel, listeners)
     }
+
+    val documentOffset = state.offset.toRelative()
     if (shouldBlink) {
-      paintBlinkingCursor(renderer, state.offset)
+      paintBlinkingCursor(renderer, documentOffset)
     }
     else {
-      paintStaticCursor(renderer, state.offset)
+      paintStaticCursor(renderer, documentOffset)
     }
   }
 
@@ -200,7 +184,7 @@ internal class TerminalCursorPainter private constructor(
   }
 
   private data class CursorState(
-    val offset: Int,
+    val offset: TerminalOffset,
     val isFocused: Boolean,
     val isCursorVisible: Boolean,
     val cursorShape: CursorShape?,

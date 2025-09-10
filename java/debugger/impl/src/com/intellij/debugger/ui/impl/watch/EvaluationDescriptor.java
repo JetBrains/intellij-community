@@ -26,8 +26,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -97,8 +97,15 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
         throw EvaluateExceptionUtil.NULL_STACK_FRAME;
       }
 
-      Value value = XEvaluationOrigin.computeWithOrigin(thisEvaluationContext, XEvaluationOrigin.RENDERER,
-                                                        () -> evaluator.evaluate(thisEvaluationContext));
+      XEvaluationOrigin descriptorOrigin = XEvaluationOrigin.getOrigin(this);
+      Value value;
+      if (descriptorOrigin != XEvaluationOrigin.UNSPECIFIED) {
+        value = XEvaluationOrigin.computeWithOrigin(thisEvaluationContext, descriptorOrigin,
+                                                          () -> evaluator.evaluate(thisEvaluationContext));
+      }
+      else {
+        value = evaluator.evaluate(thisEvaluationContext);
+      }
       thisEvaluationContext.keep(value);
 
       myModifier = evaluator.getModifier();

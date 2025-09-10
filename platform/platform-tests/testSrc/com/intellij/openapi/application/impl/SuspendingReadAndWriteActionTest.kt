@@ -1,20 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.readAndEdtWriteAction
-import com.intellij.openapi.application.readAndBackgroundWriteAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
+import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertContains
+import kotlin.time.Duration.Companion.seconds
 
 private const val REPETITIONS: Int = 100
 
@@ -96,11 +96,11 @@ class SuspendingReadAndWriteActionTest {
         application.assertReadAccessAllowed()
       }
 
-      fun assertWriteActionWithoutCurrentJob() {
+      fun assertNoWriteActionWithoutCurrentJob() {
         Assertions.assertTrue(EDT.isCurrentThreadEdt())
         Assertions.assertNotNull(Cancellation.currentJob())
         Assertions.assertNull(ProgressManager.getGlobalProgressIndicator())
-        application.assertWriteAccessAllowed()
+        Assertions.assertTrue(application.isWriteAccessAllowed)
       }
 
       assertEmptyContext()
@@ -118,11 +118,11 @@ class SuspendingReadAndWriteActionTest {
         writeAction {
           assertWriteActionWithCurrentJob();
           runBlockingCancellable {
-            assertWriteActionWithoutCurrentJob() // TODO consider explicitly turning off RA inside runBlockingCancellable
+            assertNoWriteActionWithoutCurrentJob() // TODO consider explicitly turning off RA inside runBlockingCancellable
             withContext(Dispatchers.Default) {
               assertNestedContext()
             }
-            assertWriteActionWithoutCurrentJob()
+            assertNoWriteActionWithoutCurrentJob()
           }
           assertWriteActionWithCurrentJob();
           42
@@ -211,4 +211,64 @@ class SuspendingReadAndWriteActionTest {
       }
     }
   }
+
+  @Test
+  fun `readAndWriteActionUndispatched do not run in default dispatcher`(): Unit = timeoutRunBlocking {
+    val name = "Test executor for undispatched test"
+    val executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(name)
+    try {
+      val dispatcher = executor.asCoroutineDispatcher()
+
+      withContext(dispatcher) {
+        readAndEdtWriteActionUndispatched {
+          // contains because in debug mode coroutines append coroutine id
+          assertContains(Thread.currentThread().name, name)
+          writeAction {
+            EDT.assertIsEdt()
+          }
+        }
+        readAndBackgroundWriteActionUndispatched {
+          // contains because in debug mode coroutines append coroutine id
+          assertContains(Thread.currentThread().name, name)
+          writeAction {
+            assertContains(Thread.currentThread().name, name)
+          }
+        }
+      }
+    }
+    finally {
+      executor.shutdown()
+    }
+  }
+
+  fun `readAndWriteAction contention test`(bg: Boolean): Unit = timeoutRunBlocking(timeout = 10.seconds, context = Dispatchers.Default) {
+    val numberOfCoroutines = 500
+    val counter = runReadAction { AsyncExecutionServiceImpl.getWriteActionCounter() }
+    coroutineScope {
+      repeat(numberOfCoroutines) {
+        launch {
+          if (bg) {
+            readAndBackgroundWriteAction {
+              writeAction { }
+            }
+          }
+          else {
+            readAndEdtWriteAction {
+              writeAction { }
+            }
+          }
+        }
+      }
+    }
+    val newCounter = runReadAction { AsyncExecutionServiceImpl.getWriteActionCounter() }
+    Assertions.assertTrue(newCounter - counter >= numberOfCoroutines, "There should be at least $numberOfCoroutines restarts")
+    // actually we can strengthen the upper bound, but the most important part is that it grows linearly
+    Assertions.assertTrue(newCounter - counter <= numberOfCoroutines * 3, "There should be no more than $numberOfCoroutines * 3 restarts")
+  }
+
+  @Test
+  fun `number of write actions grows linearly with contention of read and edt write actions`() = `readAndWriteAction contention test`(false)
+
+  @Test
+  fun `number of write actions grows linearly with contention of read and bg write actions`() = `readAndWriteAction contention test`(true)
 }

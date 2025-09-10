@@ -9,7 +9,7 @@ import com.intellij.openapi.ui.Messages.showYesNoDialog
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.merge.MergeConflictManager
+import com.intellij.platform.vcs.changes.ChangesUtil
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -36,7 +36,7 @@ private class UnresolvedMergeCheckHandler(
       .firstOrNull()
     if (providerResult != null) return createProblemFor(providerResult)
 
-    val hasUnresolvedConflicts = commitInfo.committedChanges.any { MergeConflictManager.isMergeConflict(it.fileStatus) }
+    val hasUnresolvedConflicts = commitInfo.committedChanges.any { ChangesUtil.isMergeConflict(it) }
     if (!hasUnresolvedConflicts) return null
 
     val answer = showYesNoDialog(

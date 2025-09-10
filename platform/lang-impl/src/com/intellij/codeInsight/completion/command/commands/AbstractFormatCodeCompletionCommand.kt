@@ -8,7 +8,6 @@ import com.intellij.codeInsight.completion.command.CompletionCommand
 import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.idea.ActionsBundle
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.psi.PsiElement
@@ -25,8 +24,6 @@ import java.util.Locale.getDefault
 abstract class AbstractFormatCodeCompletionCommandProvider :
   CommandProvider {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
-    val psiFile = context.psiFile
-    if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return emptyList()
     val element = createCommand(context) ?: return emptyList()
     return listOf(element)
   }
@@ -60,7 +57,10 @@ abstract class AbstractFormatCodeCompletionCommand(private val context: CommandC
         val element = getCommandContext(offset, psiFile) ?: return@tryToCalculateCommandCompletionPreview null
         val target = findTargetToRefactor(element)
         CodeStyleManager.getInstance(psiFile.getProject()).reformat(target)
-        IntentionPreviewInfo.CustomDiff(context.psiFile.fileType, null, context.psiFile.text, psiFile.text, true)
+        val origText = context.psiFile.text
+        val modifiedText = psiFile.text
+        if (origText == modifiedText) return@tryToCalculateCommandCompletionPreview IntentionPreviewInfo.EMPTY
+        IntentionPreviewInfo.CustomDiff(context.psiFile.fileType, null, origText, modifiedText, true)
       },
       context = context,
       highlight = { _, _, _ -> true },

@@ -5,7 +5,6 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.python.pyproject.PyProjectToml
@@ -20,8 +19,10 @@ import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+@ApiStatus.Internal
 class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
   override suspend fun getIntention(module: Module): @IntentionName String? {
     return PyProjectToml.findFile(module)?.let { toml ->
@@ -52,7 +53,7 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
     val sdkSetupResult = setupNewUvSdkAndEnv(workingDir, PythonSdkUtil.getAllSdks(), null)
     sdkSetupResult.onSuccess {
       withContext(Dispatchers.EDT) {
-        SdkConfigurationUtil.addSdk(it)
+        it.persist()
         it.setAssociationToModule(sdkAssociatedModule)
       }
     }

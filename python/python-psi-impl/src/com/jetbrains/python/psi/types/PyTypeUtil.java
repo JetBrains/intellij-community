@@ -24,10 +24,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.BinaryOperator;
@@ -214,5 +211,40 @@ public final class PyTypeUtil {
   
   public static boolean inheritsAny(@NotNull PyType type, @NotNull TypeEvalContext context) {
     return type instanceof PyClassLikeType classLikeType && classLikeType.getAncestorTypes(context).contains(null);
+  }
+
+  /**
+   * Collects a set of types that participate in the textual type hint representation of {@code type}.
+   * The returned set preserves a stable DFS order and is unmodifiable.
+   */
+  public static @NotNull @UnmodifiableView Set<PyType> collectTypeComponentsFromType(@Nullable PyType type,
+                                                                                     @NotNull TypeEvalContext context) {
+    Set<PyType> result = new LinkedHashSet<>();
+
+    PyRecursiveTypeVisitor.traverse(type, context, new PyRecursiveTypeVisitor.PyTypeTraverser() {
+      @Override
+      public @NotNull PyRecursiveTypeVisitor.Traversal visitPyType(@NotNull PyType pyType) {
+        result.add(pyType);
+        return super.visitPyType(pyType);
+      }
+
+      @Override
+      public PyRecursiveTypeVisitor.@NotNull Traversal visitPyLiteralType(@NotNull PyLiteralType literalType) {
+        PyClassLikeType literalClassType = literalType.getPyClass().getType(context);
+        if (literalClassType != null) {
+          // Adds eg. signal.Handler when the given type was Literal[Handlers.SIG_DFL]
+          result.add(literalClassType);
+        }
+        return super.visitPyLiteralType(literalType);
+      }
+
+      @Override
+      public PyRecursiveTypeVisitor.@NotNull Traversal visitUnknownType() {
+        result.add(null); // add Any type
+        return super.visitUnknownType();
+      }
+    });
+
+    return Collections.unmodifiableSet(result);
   }
 }

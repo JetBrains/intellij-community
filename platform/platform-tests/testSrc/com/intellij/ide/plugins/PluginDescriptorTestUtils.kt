@@ -6,7 +6,7 @@ import org.assertj.core.api.InstanceOfAssertFactories
 import org.assertj.core.api.ObjectAssert
 
 
-fun ObjectAssert<out IdeaPluginDescriptorImpl>.hasDirectParentClassloaders(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
+fun ObjectAssert<out IdeaPluginDescriptorImpl>.hasExactDirectParentClassloaders(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
   extracting { (it.classLoader as PluginClassLoader)._getParents() }
     .asInstanceOf(InstanceOfAssertFactories.LIST)
     .containsExactlyInAnyOrder(*parentDescriptors)
@@ -43,7 +43,7 @@ fun ObjectAssert<out IdeaPluginDescriptorImpl>.isNotMarkedEnabled() = apply {
 }
 
 fun ObjectAssert<out IdeaPluginDescriptorImpl>.hasExactlyEnabledContentModules(vararg ids: String) = apply {
-  extracting { it.contentModules.mapNotNull { it.takeIf { it.isEnabled }?.moduleName } }
+  extracting { it.contentModules.mapNotNull { it.takeIf { it.isEnabled }?.moduleId?.id } }
     .asList()
     .containsExactly(*ids)
 }

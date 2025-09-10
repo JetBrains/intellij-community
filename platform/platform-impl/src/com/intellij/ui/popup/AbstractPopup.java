@@ -702,20 +702,25 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void showInFocusCenter() {
-    var parent = getFocusedParent();
+    var parent = getFocusedParent(myProject);
     if (parent != null) {
       showInCenterOf(parent);
     }
+    else {
+      LOG.error(new Throwable("Can't show the popup because no focused component could be found"));
+    }
   }
 
-  private @Nullable Component getFocusedParent() {
-    var focused = getFocusedComponent();
+  @ApiStatus.Internal
+  public static @Nullable Component getFocusedParent(@Nullable Project project) {
+    var windowManager = getWndManager();
+    var focused = windowManager == null ? null : windowManager.getFocusedComponent(project);
     if (focused != null) {
       LOG.debug("Using the focused component to show the popup " + focused);
       return focused;
     }
     var manager = WindowManager.getInstance();
-    var frame = myProject != null ? manager.getFrame(myProject) : manager.findVisibleFrame();
+    var frame = project != null ? manager.getFrame(project) : manager.findVisibleFrame();
     if (frame != null) {
       var pane = frame.getRootPane();
       LOG.debug("Using the focused frame's root pane to show the popup: frame=" + frame + " rootPane=" + pane);
@@ -729,7 +734,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         return pane;
       }
     }
-    LOG.error(new Throwable("Can't show the popup because no focused component could be found"));
     return null;
   }
 
@@ -737,7 +741,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(dataContext);
 
     if (dominantArea != null) {
-      final Component focusedComponent = getFocusedComponent();
+      var windowManager = getWndManager();
+      Component focusedComponent = windowManager == null ? null : windowManager.getFocusedComponent(myProject);
       if (focusedComponent != null) {
         Window window = SwingUtilities.windowForComponent(focusedComponent);
         JLayeredPane layeredPane;
@@ -1824,11 +1829,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   private static WindowManagerEx getWndManager() {
     return ApplicationManager.getApplication() != null ? WindowManagerEx.getInstanceEx() : null;
-  }
-  
-  private @Nullable Component getFocusedComponent() {
-    var windowManager = getWndManager();
-    return windowManager == null ? null : windowManager.getFocusedComponent(myProject);
   }
 
   @Override

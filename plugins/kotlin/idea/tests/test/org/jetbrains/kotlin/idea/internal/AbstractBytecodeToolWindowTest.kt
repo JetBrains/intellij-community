@@ -21,6 +21,10 @@ import java.io.File
 abstract class AbstractBytecodeToolWindowTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
+    override fun runInDispatchThread(): Boolean {
+        return false
+    }
+
     fun doTest(testPath: String) {
         val mainDir = File(testPath)
         val mainFileName = mainDir.name + ".kt"

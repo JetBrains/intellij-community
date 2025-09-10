@@ -4,9 +4,9 @@ package com.intellij.internal.statistic.eventLog.config;
 import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
 import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
 import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
-import com.jetbrains.fus.reporting.model.http.StatsBasicConnectionSettings;
-import com.jetbrains.fus.reporting.model.http.StatsConnectionSettings;
-import com.jetbrains.fus.reporting.model.http.StatsProxyInfo;
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatsBasicConnectionSettings;
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatsConnectionSettings;
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatsProxyInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

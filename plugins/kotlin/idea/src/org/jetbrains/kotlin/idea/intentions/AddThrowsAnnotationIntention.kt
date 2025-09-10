@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.getAbbreviatedType
 
 class AddThrowsAnnotationIntention : SelfTargetingIntention<KtThrowExpression>(
-    KtThrowExpression::class.java, KotlinBundle.lazyMessage("add.throws.annotation")
+    KtThrowExpression::class.java, KotlinBundle.messagePointer("add.throws.annotation")
 ) {
     override fun isApplicableTo(element: KtThrowExpression, caretOffset: Int): Boolean {
         if (element.platform.isJs()) return false

@@ -43,8 +43,7 @@ internal class RemoveRedundantBackticksInspection : AbstractKotlinInspection() {
 }
 
 private class RemoveRedundantBackticksQuickFix : PsiUpdateModCommandQuickFix() {
-    override fun getName(): String = KotlinBundle.message("remove.redundant.backticks.quick.fix.text")
-    override fun getFamilyName(): String = name
+    override fun getFamilyName(): String = KotlinBundle.message("remove.redundant.backticks.quick.fix.text")
 
     override fun applyFix(
         project: Project,

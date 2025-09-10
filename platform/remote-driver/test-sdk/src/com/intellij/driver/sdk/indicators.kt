@@ -37,22 +37,22 @@ fun Driver.waitForProjectOpen(timeout: Duration = 1.minutes) {
 /**
  * Method waits till a project is opened and there are no indicators for 10 seconds.
  */
-fun Driver.waitForIndicators(project: Project, timeout: Duration) {
-  waitForIndicators({ project }, timeout)
+fun Driver.waitForIndicators(project: Project, timeout: Duration, waitSmartLongEnough: Boolean = true) {
+  waitForIndicators({ project }, timeout, waitSmartLongEnough = waitSmartLongEnough)
 }
 
 /**
  * Method waits till a project is opened and there are no indicators for 10 seconds.
  */
-fun Driver.waitForIndicators(timeout: Duration) {
+fun Driver.waitForIndicators(timeout: Duration, waitSmartLongEnough: Boolean = true) {
   waitForProjectOpen(timeout)
-  waitForIndicators(::singleProject, timeout)
+  waitForIndicators(::singleProject, timeout, waitSmartLongEnough = waitSmartLongEnough)
 }
 
 /**
  * Method waits till a project is opened and there are no indicators for 10 seconds.
  */
-private fun Driver.waitForIndicators(projectGet: () -> Project, timeout: Duration) {
+private fun Driver.waitForIndicators(projectGet: () -> Project, timeout: Duration, waitSmartLongEnough: Boolean = true) {
   var smartLongEnoughStart: Instant? = null
 
   waitFor("Indicators", timeout) {
@@ -62,17 +62,21 @@ private fun Driver.waitForIndicators(projectGet: () -> Project, timeout: Duratio
       return@waitFor false
     }
 
-    val start = smartLongEnoughStart
-    if (start == null) {
-      smartLongEnoughStart = Instant.now()
+    if (waitSmartLongEnough) {
+      val start = smartLongEnoughStart
+      if (start == null) {
+        smartLongEnoughStart = Instant.now()
+      }
+      else {
+        val now = Instant.now()
+        if (start.plusSeconds(10).isBefore(now)) {
+          return@waitFor true // we are smart long enough
+        }
+      }
+      false
     }
     else {
-      val now = Instant.now()
-      if (start.plusSeconds(10).isBefore(now)) {
-        return@waitFor true // we are smart long enough
-      }
+      true
     }
-
-    false
   }
 }

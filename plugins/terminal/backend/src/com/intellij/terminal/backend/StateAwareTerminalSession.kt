@@ -198,13 +198,13 @@ internal class StateAwareTerminalSession(
           sessionModel.updateTerminalState(state)
         }
         TerminalPromptStartedEvent -> {
-          blocksModel.promptStarted(outputModel.cursorOffsetState.value)
+          blocksModel.promptStarted(outputModel.cursorOffsetState.value.toRelative())
         }
         TerminalPromptFinishedEvent -> {
-          blocksModel.promptFinished(outputModel.cursorOffsetState.value)
+          blocksModel.promptFinished(outputModel.cursorOffsetState.value.toRelative())
         }
         is TerminalCommandStartedEvent -> {
-          blocksModel.commandStarted(outputModel.cursorOffsetState.value)
+          blocksModel.commandStarted(outputModel.cursorOffsetState.value.toRelative())
         }
         is TerminalCommandFinishedEvent -> {
           blocksModel.commandFinished(event.exitCode)

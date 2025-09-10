@@ -22,15 +22,36 @@ public final class GenericsUtil {
 
   private static final Logger LOG = Logger.getInstance(GenericsUtil.class);
 
-  private GenericsUtil() {}
+  private GenericsUtil() { }
 
-  public static PsiType getGreatestLowerBound(@Nullable PsiType type1, @Nullable PsiType type2) {
+  /// Returns the Greatest Lower Bound (GLB) of the given types.
+  /// 
+  /// @see PsiIntersectionType
+  public static @Nullable PsiType getGreatestLowerBound(@Nullable PsiType type1, @Nullable PsiType type2) {
     if (type1 == null || type2 == null) return null;
     if (type1.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return type2;
     if (type2.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return type1;
     return PsiIntersectionType.createIntersection(type1, type2);
   }
 
+  //@formatter:off Temporarily disable formatter because of bug IDEA-371809
+  /// Returns the Least Upper Bound (LUB) of the given types.
+  ///
+  /// The calculation of LUB performed by this method is more precise than what is specified in JLS. Consider this example:
+  /// 
+  /// ```
+  /// void main(String[] args) {
+  ///   var a = args.length == 1 ? new ArrayList<String>() : new LinkedList<String>();
+  /// }
+  /// ```
+  /// 
+  /// This method determines the type of `a` to be an intersection type `java.util.AbstractList<String> & Cloneable & java.io.Serializable`,
+  /// whereas javac 24.0.2 determines the type of `a` to be `java.util.AbstractList` (this is the type present in bytecode).
+  ///
+  /// See JLS 4.10.4 Least Upper Bound
+  ///
+  /// @see PsiIntersectionType
+  //@formatter:on
   public static @Nullable PsiType getLeastUpperBound(PsiType type1, PsiType type2, PsiManager manager) {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type1) || TypeConversionUtil.isPrimitiveAndNotNull(type2)) return null;
     if (TypeConversionUtil.isNullType(type1)) return type2.withNullability(TypeNullability.NULLABLE_MANDATED);

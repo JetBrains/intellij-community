@@ -11,8 +11,10 @@ import com.intellij.openapi.ui.DetailsComponent
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.ModuleOrProject.*
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 class PythonInterpreterConfigurable(moduleOrProject: ModuleOrProject) : SearchableConfigurable, MasterDetails {
   private val masterDetailsComponent: PythonInterpreterMasterDetails = PythonInterpreterMasterDetails(moduleOrProject, this)
 

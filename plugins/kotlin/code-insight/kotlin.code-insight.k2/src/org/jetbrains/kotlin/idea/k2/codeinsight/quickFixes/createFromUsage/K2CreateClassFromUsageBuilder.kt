@@ -111,34 +111,41 @@ object K2CreateClassFromUsageBuilder {
     }
 
     internal class ParamListRenderResult(val renderedParamList: String, val candidateList: List<CreateKotlinCallableAction.ParamCandidate>, val primaryConstructorVisibilityModifier: String?)
+
     context(_: KaSession)
-    private fun renderParamList(isAnnotation:Boolean, refExpr: KtNameReferenceExpression): ParamListRenderResult {
+    private fun renderParamList(isAnnotation: Boolean, refExpr: KtNameReferenceExpression): ParamListRenderResult {
         val renderedParameters: String
         val shouldParenthesize: Boolean
         val prefix = if (isAnnotation) "val " else ""
-        val superTypeCallEntry = refExpr.findParentOfType<KtCallElement>(false)?:return ParamListRenderResult("", listOf(), null)
+        val superTypeCallEntry = refExpr.findParentOfType<KtCallElement>(false) ?: return ParamListRenderResult("", listOf(), null)
         val expectedParams = computeExpectedParams(superTypeCallEntry, isAnnotation)
         val candidateList = renderCandidatesOfParameterTypes(expectedParams, refExpr)
         // find params from the ref parameters, e.g.: `class F: Foo(1,"2")`
         val uniqueNameGenerator = UniqueNameGenerator()
-        renderedParameters = candidateList.joinToString(", ") { prefix + uniqueNameGenerator.generateUniqueName(it.names.first()) + ": " + it.renderedTypes.first() }
+        renderedParameters = candidateList.joinToString(", ") {
+            prefix + uniqueNameGenerator.generateUniqueName(it.names.first()) + ": " + it.renderedTypes.first()
+        }
         shouldParenthesize = expectedParams.isNotEmpty()
         val renderedParamList = if (shouldParenthesize)
             "($renderedParameters)"
         else
             renderedParameters
 
-        val primaryConstructorVisibilityModifier = expectedParams.fold<ExpectedParameter, String?>(null) { curVisibility:String?, param:ExpectedParameter ->
-            if (curVisibility == KtTokens.PRIVATE_KEYWORD.value || param.expectedTypes.any { it.toKtTypeWithNullability(refExpr)?.convertToClass()?.isPrivate() == true }) {
-                KtTokens.PRIVATE_KEYWORD.value
+        val primaryConstructorVisibilityModifier =
+            expectedParams.fold(null) { curVisibility: String?, param: ExpectedParameter ->
+                if (curVisibility == KtTokens.PRIVATE_KEYWORD.value || param.expectedTypes.any {
+                        it.toKtTypeWithNullability(refExpr)?.convertToClass()?.isPrivate() == true
+                    }) {
+                    KtTokens.PRIVATE_KEYWORD.value
+                } else if (curVisibility == KtTokens.INTERNAL_KEYWORD.value || param.expectedTypes.any {
+                        it.toKtTypeWithNullability(refExpr)?.convertToClass()?.visibilityModifierTypeOrDefault()
+                            ?.toVisibility() == Visibilities.Internal
+                    }) {
+                    KtTokens.INTERNAL_KEYWORD.value
+                } else {
+                    null
+                }
             }
-            else if (curVisibility == KtTokens.INTERNAL_KEYWORD.value || param.expectedTypes.any { it.toKtTypeWithNullability(refExpr)?.convertToClass()?.visibilityModifierTypeOrDefault()?.toVisibility() == Visibilities.Internal }) {
-                KtTokens.INTERNAL_KEYWORD.value
-            }
-            else {
-                null
-            }
-        }
         return ParamListRenderResult(renderedParamList, candidateList, primaryConstructorVisibilityModifier)
     }
 
@@ -149,9 +156,9 @@ object K2CreateClassFromUsageBuilder {
         val name = element.getReferencedName()
 
         val fullCallExpr = element.parent.let {
-            when {
-                it is KtCallExpression && it.calleeExpression == element -> it
-                it is KtQualifiedExpression && it.selectorExpression == element -> it
+            when (it) {
+                is KtCallExpression if it.calleeExpression == element -> it
+                is KtQualifiedExpression if it.selectorExpression == element -> it
                 else -> element
             }
         }

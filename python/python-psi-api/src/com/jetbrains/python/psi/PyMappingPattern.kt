@@ -3,4 +3,4 @@ package com.jetbrains.python.psi
 
 import com.jetbrains.python.ast.PyAstMappingPattern
 
-interface PyMappingPattern : PyAstMappingPattern, PyPattern, PyCaptureContext
+interface PyMappingPattern : PyAstMappingPattern, PyPattern

@@ -879,7 +879,6 @@ fun <T : CommandChain> T.cut(): T = apply {
   executeEditorAction("\$Cut")
 }
 
-@Suppress("unused")
 fun <T : CommandChain> T.undo(): T = apply {
   executeEditorAction("\$Undo")
 }

@@ -293,6 +293,12 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
       .showInBestPositionFor(editor);
   }
 
+  @TestOnly
+  @ApiStatus.Internal
+  public List<TargetDirectory> getDirectories() {
+    return myDirectories;
+  }
+
   private static @Unmodifiable @NotNull List<TargetDirectoryListItem> getTargetDirectoryListItems(List<? extends TargetDirectory> directories) {
     return ContainerUtil.map(directories, targetDirectory -> {
       PsiDirectory d = targetDirectory.getDirectory();

@@ -18,6 +18,7 @@ _S = TypeVar("_S")
 _P = ParamSpec("_P")
 
 class GroupMappingMixin:
+    __slots__ = ()
     def spawn(self, func: Callable[_P, _T], *args: _P.args, **kwargs: _P.kwargs) -> Greenlet[_P, _T]: ...
     # we would like to use ParamSpec for these, but since args and kwds are passed in as is
     # pyright will complain if we use _P.args/_P.kwargs, it appears to work on mypy though

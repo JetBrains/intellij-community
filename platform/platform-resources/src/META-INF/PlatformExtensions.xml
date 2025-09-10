@@ -8,6 +8,11 @@
     />
 
     <applicationService
+            serviceInterface="com.intellij.openapi.application.impl.TransferredWriteActionService"
+            serviceImplementation="com.intellij.openapi.application.impl.TransferredWriteActionServiceImpl"
+    />
+
+    <applicationService
       serviceInterface="com.intellij.openapi.editor.EditorThreading"
       serviceImplementation="com.intellij.openapi.editor.impl.EditorThreadingImpl"
     />
@@ -174,6 +179,8 @@
     <experimentalFeature id="wsl.execute.with.wsl.exe" percentOfUsers="100">
       <description>Run WSL commands using wsl.exe, e.g. "wsl.exe --distribution Ubuntu-20.04" (available since Windows 10 update 1903).</description>
     </experimentalFeature>
+    <registryKey defaultValue="false" description="Show unhandled exceptions that were thrown during interactive operation"
+                 key="ide.exceptions.show.interactive"/>
     <registryKey key="wsl.list.prefer.verbose.output" os="windows" defaultValue="true" restartRequired="false"
                  description="Use 'wsl.exe -l -v' to get distribution list. If it's disabled 'wsl.exe -l -q' will be used."/>
     <registryKey key="wsl.use.utf8.encoding" os="windows" defaultValue="true" restartRequired="false"
@@ -401,11 +408,6 @@
     <projectService serviceInterface="com.intellij.diff.editor.DiffEditorTabFilesManager"
                     serviceImplementation="com.intellij.diff.editor.DiffEditorTabFilesManagerImpl"/>
 
-    <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.OutsidersPsiFileSupport$HighlightFilter"/>
-    <daemon.intentionActionFilter implementation="com.intellij.codeInsight.daemon.OutsidersPsiFileSupport$IntentionFilter"/>
-    <defaultHighlightingSettingProvider id="GeneratedSourcesHighlightingSettingProvider"
-                                        implementation="com.intellij.codeInsight.daemon.OutsidersPsiFileSupport$HighlightingSettingProvider"/>
-
     <fileEditorProvider implementation="com.intellij.diff.editor.DiffFileEditorProvider"/>
     <fileEditorProvider implementation="com.intellij.ide.browsers.actions.WebPreviewEditorProvider"/>
     <fileEditorProvider implementation="com.intellij.ide.plugins.UIComponentEditorProvider"/>
@@ -630,6 +632,8 @@
 
     <projectService serviceInterface="com.intellij.openapi.project.ProjectReloadState"
                     serviceImplementation="com.intellij.openapi.project.impl.ProjectReloadStateImpl"/>
+
+    <backgroundPostStartupActivity implementation="com.intellij.openapi.project.impl.ProjectRootsSynchronizer"/>
 
     <projectService serviceInterface="com.intellij.externalDependencies.ExternalDependenciesManager"
                     serviceImplementation="com.intellij.externalDependencies.impl.ExternalDependenciesManagerImpl"/>
@@ -910,6 +914,10 @@
       implementation="com.intellij.openapi.editor.toolbar.floating.DefaultFloatingToolbarProvider"
       id="DefaultFloatingToolbarProvider"/>
 
+    <editorFloatingToolbarProvider
+      implementation="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserFloatingToolbarProvider"
+      id="OpenInBrowserFloatingToolbarProvider"/>
+
     <bundledKeymap file="$default.xml"/>
     <bundledKeymap file="Mac OS X 10.5+.xml"/>
     <bundledKeymap file="Mac OS X.xml"/>
@@ -954,6 +962,7 @@
       implementation="com.intellij.internal.statistic.collectors.fus.otherIde.LaunchJsonUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.PluginsUsagesCollector"
                                            allowOnStartup="true"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.plugins.PluginSyncUsageCollector"/>
     <statistics.applicationUsagesCollector
       implementation="com.intellij.internal.statistic.collectors.fus.ui.EditorColorSchemesUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.FontSizeInfoUsageCollector"/>
@@ -983,6 +992,7 @@
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.VcsCloneCollector"/>
 
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.SpeculativeUndoStatCollector" />
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector"/>
     <statistics.counterUsagesCollector
@@ -1049,7 +1059,6 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.MnemonicUsageCollector"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.UILatencyLogger"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.progress.impl.fus.FreezeUiUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.notification.impl.NotificationsEventLogGroup"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.featureStatistics.FeatureUsageTrackerImpl$ProductivityUsageCollector"/>
@@ -1081,6 +1090,7 @@
                                            allowOnStartup="true"/>
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider"/>
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.mp.MarketplaceEventLoggerProvider"/>
+    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.trace.TraceEventLoggerProvider"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.OsDataCollector"
                                            allowOnStartup="true"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.IdeSessionDataCollector"
@@ -1436,6 +1446,8 @@
 
     <registryKey key="show.last.visited.timestamps" defaultValue="true"
                  description="Shows recent files or code locations last visited timestamps"/>
+    <registryKey key="project.view.show.vfs.cached.children.count.limit" defaultValue="0"
+                 description="Shows the number of cached children in VFS"/>
 
     <editorFactoryDocumentListener implementation="com.intellij.openapi.command.impl.DocumentUndoProvider"/>
 
@@ -1520,6 +1532,8 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService" headlessImplementation=""/>
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerProjectActivity" order="last"/>
+
+    <registryKey key="ide.enable.notification.trace.data.sharing" defaultValue="true" description="Enables notification about sharing trace data"/>
 
     <applicationService serviceImplementation="com.intellij.usages.impl.UsageFilteringRuleStateService" client="all"/>
 

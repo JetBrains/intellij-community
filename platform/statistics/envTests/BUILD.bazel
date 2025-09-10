@@ -11,7 +11,7 @@ jvm_library(
   name = "envTests_test_lib",
   module_name = "intellij.platform.statistics.envTests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:junit4",
@@ -28,6 +28,8 @@ jvm_library(
     "//platform/statistics/uploader",
     "@lib//:jackson",
     "@lib//:jackson-databind",
+    "@lib//:com-jetbrains-fus-reporting-connection-client",
+    "@lib//:com-jetbrains-fus-reporting-serialization-kotlin",
   ]
 )
 ### auto-generated section `build intellij.platform.statistics.envTests` end

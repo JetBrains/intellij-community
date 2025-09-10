@@ -31,7 +31,7 @@ data class PoetryProject(
 }
 
 @OptIn(ExperimentalPathApi::class)
-object PoetryProjectModelResolver : PythonProjectModelResolver<PoetryProject> {
+internal object PoetryProjectModelResolver : PythonProjectModelResolver<PoetryProject> {
   override fun discoverProjectRootSubgraph(root: Path): ExternalProjectGraph<PoetryProject>? {
     if (!root.resolve(PY_PROJECT_TOML).exists()) {
       return null

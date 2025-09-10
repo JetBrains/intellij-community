@@ -27,7 +27,7 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.initDefaultProfile
 import org.jetbrains.kotlin.idea.performance.tests.utils.project.OpenProject

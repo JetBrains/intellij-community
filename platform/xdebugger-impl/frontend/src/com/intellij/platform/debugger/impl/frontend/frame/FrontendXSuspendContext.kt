@@ -2,13 +2,16 @@
 package com.intellij.platform.debugger.impl.frontend.frame
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.frontend.storage.FrontendXStackFramesStorage
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
 import com.intellij.platform.debugger.impl.rpc.XExecutionStacksEvent
 import com.intellij.platform.debugger.impl.rpc.XStackFrameDto
 import com.intellij.platform.debugger.impl.rpc.XSuspendContextDto
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XSuspendContext
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -16,8 +19,12 @@ import kotlinx.coroutines.launch
 internal class FrontendXSuspendContext(
   private val suspendContextDto: XSuspendContextDto,
   private val project: Project,
-  internal val lifetimeScope: CoroutineScope,
+  parentScope: CoroutineScope,
 ) : XSuspendContext() {
+  internal val lifetimeScope = parentScope.childScope(
+    "${parentScope.coroutineContext[CoroutineName]} (context ${suspendContextDto.id})",
+    FrontendXStackFramesStorage()
+  )
   val id = suspendContextDto.id
 
   val isStepping: Boolean

@@ -922,6 +922,20 @@ public class Py3ResolveTest extends PyResolveTestCase {
     });
   }
 
+  // PY-83803
+  public void testNonIdempotentComputation2() {
+    PyTestCase.fixme("PY-83803", StackOverflowPreventedException.class, () -> {
+      RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+
+      myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
+      PsiElement result1 = findReferenceByMarker(myFixture.getFile(), "<ref1>").resolve();
+      assertNotNull(result1);
+
+      PsiElement result2 = findReferenceByMarker(myFixture.getFile(), "<ref2>").resolve();
+      assertNotNull(result2);
+    });
+  }
+
   private void assertResolvesToItself() {
     PsiElement resolved = doResolve();
     PsiReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.getFile());

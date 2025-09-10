@@ -8,6 +8,7 @@ Lexer: Incomplete
 class TokenStream: ...
 
 class BufferedTokenStream(TokenStream):
+    __slots__ = ("tokenSource", "tokens", "index", "fetchedEOF")
     tokenSource: Incomplete
     tokens: Incomplete
     index: int

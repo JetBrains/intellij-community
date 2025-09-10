@@ -27,6 +27,12 @@ com.intellij.execution.InputRedirectAware$InputRedirectOptions
 - a:setRedirectInputPath(java.lang.String):V
 com.intellij.execution.RunConfigurationConverter
 - a:convertRunConfigurationOnDemand(org.jdom.Element):Z
+f:com.intellij.execution.actions.ChooseRunConfigurationManager
+- <init>():V
+- s:createFlatSettingsList(com.intellij.openapi.project.Project):java.util.List
+- s:createSettingsList(com.intellij.execution.impl.RunManagerImpl,com.intellij.execution.actions.ExecutorProvider,Z,Z,com.intellij.openapi.actionSystem.DataContext):java.util.List
+- s:createSettingsList(com.intellij.openapi.project.Project,com.intellij.execution.actions.ExecutorProvider,com.intellij.openapi.actionSystem.DataContext,Z):java.util.List
+- s:deleteConfiguration(com.intellij.openapi.project.Project,com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.openapi.ui.popup.JBPopup):V
 com.intellij.execution.actions.ExecutorProvider
 - a:getExecutor():com.intellij.execution.Executor
 c:com.intellij.execution.actions.StopAction

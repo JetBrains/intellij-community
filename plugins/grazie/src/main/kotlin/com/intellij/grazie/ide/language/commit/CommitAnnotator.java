@@ -13,11 +13,12 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiElement;
-import com.intellij.spellchecker.SpellCheckerSeveritiesProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 import java.util.List;
+
+import static com.intellij.grazie.ide.TextProblemSeverities.*;
 
 final class CommitAnnotator implements Annotator {
   @Override
@@ -32,33 +33,32 @@ final class CommitAnnotator implements Annotator {
   }
 
   private static void checkText(AnnotationHolder holder, TextContent text) {
-    List<TextChecker> checkers = TextChecker.allCheckers();
     CheckerRunner runner = new CheckerRunner(text);
-    runner.run(checkers, problem -> {
+    runner.run().forEach(problem -> {
       if (problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE) &&
           Text.isSingleSentence(Text.findParagraphRange(text, problem.getHighlightRanges().get(0)).subSequence(text))) {
-        return null;
+        return;
       }
 
       List<ProblemDescriptor> descriptors = runner.toProblemDescriptors(problem, true);
-      if (descriptors.isEmpty()) return null;
+      if (descriptors.isEmpty()) return;
 
       String message = problem.getDescriptionTemplate(true);
       String tooltip = problem.getTooltipTemplate();
       LocalQuickFix[] fixes = runner.toFixes(problem, descriptors.get(0));
 
       for (TextRange range : problem.getHighlightRanges()) {
+        boolean isStyle = problem.isStyleLike();
         AnnotationBuilder annotation = holder
-          .newAnnotation(SpellCheckerSeveritiesProvider.TYPO, message)
+          .newAnnotation(isStyle ? STYLE_SUGGESTION : GRAMMAR_ERROR, message)
           .tooltip(tooltip)
-          .textAttributes(SpellCheckerSeveritiesProvider.TYPO_KEY)
+          .textAttributes(isStyle ? STYLE_SUGGESTION_ATTRIBUTES : GRAMMAR_ERROR_ATTRIBUTES)
           .range(text.textRangeToFile(range));
         for (QuickFix<?> fix : fixes) {
           annotation = annotation.withFix((IntentionAction)fix);
         }
         annotation.create();
       }
-      return null;
     });
   }
 }

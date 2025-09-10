@@ -3,8 +3,8 @@ package com.intellij.searchEverywhereMl.ranking.core.features
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.internal.statistic.local.EventGlobalStatistics
 import com.intellij.internal.statistic.local.EventCountRange
+import com.intellij.internal.statistic.local.EventGlobalStatistics
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider.Companion.roundDouble
 
 internal abstract class GlobalStatisticsFields(
@@ -21,16 +21,16 @@ internal abstract class GlobalStatisticsFields(
   fun getFieldsDeclaration(): List<EventField<*>> = listOf(globalEventCount, globalEventCountToMax, usersRatio, eventCountPerUserRatio)
 
   fun getEventGlobalStatistics(eventGlobalStatistics: EventGlobalStatistics?, maxEventCount: Long): List<EventPair<*>> {
-    val result = arrayListOf<EventPair<*>>()
-    eventGlobalStatistics?.let {
-      result.add(globalEventCount.with(it.eventCount))
-      if (maxEventCount != 0L) {
-        result.add(globalEventCountToMax.with(roundDouble(it.eventCount.toDouble() / maxEventCount)))
-      }
-      result.add(usersRatio.with(roundDouble(it.usersRatio)))
-      result.add(eventCountPerUserRatio.with(roundDouble(it.eventCountPerUserRatio)))
+    if (eventGlobalStatistics == null) return emptyList()
+
+    return buildList {
+        add(globalEventCount.with(eventGlobalStatistics.eventCount))
+        if (maxEventCount != 0L) {
+          add(globalEventCountToMax.with(roundDouble(eventGlobalStatistics.eventCount.toDouble() / maxEventCount)))
+        }
+        add(usersRatio.with(roundDouble(eventGlobalStatistics.usersRatio)))
+        add(eventCountPerUserRatio.with(roundDouble(eventGlobalStatistics.eventCountPerUserRatio)))
     }
-    return result
   }
 }
 

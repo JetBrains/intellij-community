@@ -7,11 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.ui.content.custom.options.PersistentContentCustomLayoutOption
 import com.intellij.ui.content.custom.options.PersistentContentCustomLayoutOptions
 import com.intellij.xdebugger.XDebuggerBundle
-import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.frame.XDebugView
-import com.intellij.xdebugger.impl.frame.XFramesView
-import com.intellij.xdebugger.impl.frame.XThreadsFramesView
-import com.intellij.xdebugger.impl.frame.XThreadsView
+import com.intellij.xdebugger.impl.frame.*
 import org.jetbrains.annotations.ApiStatus.Internal
 
 internal object ThreadsViewConstants {
@@ -24,14 +20,14 @@ internal object ThreadsViewConstants {
 @Internal
 abstract class FramesAndThreadsLayoutOptionBase(options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : PersistentContentCustomLayoutOption(
   options) {
-  abstract fun createView(session: XDebugSessionImpl): XDebugView
+  abstract fun createView(sessionProxy: XDebugSessionProxy): XDebugView
 }
 
 internal class DefaultLayoutOption(options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : FramesAndThreadsLayoutOptionBase(
   options) {
   override fun getDisplayName(): String = XDebuggerBundle.message("debug.threads.and.frames.default.layout.option")
 
-  override fun createView(session: XDebugSessionImpl): XFramesView = XFramesView(session)
+  override fun createView(sessionProxy: XDebugSessionProxy): XFramesView = XFramesView(sessionProxy)
 
   override fun getOptionKey(): String = ThreadsViewConstants.DEFAULT_THREADS_VIEW_KEY
 }
@@ -40,7 +36,7 @@ internal class ThreadsTreeLayoutOption(
   options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : FramesAndThreadsLayoutOptionBase(options) {
   override fun getDisplayName(): String = XDebuggerBundle.message("debug.threads.and.frames.threads.tree.layout.option")
 
-  override fun createView(session: XDebugSessionImpl): XThreadsView = XThreadsView(session.project, session)
+  override fun createView(sessionProxy: XDebugSessionProxy): XThreadsView = XThreadsView(sessionProxy.project, sessionProxy)
 
   override fun getOptionKey(): String = ThreadsViewConstants.THREADS_TREE_VIEW_KEY
 }
@@ -49,7 +45,7 @@ internal class ThreadsTreeLayoutOption(
 abstract class SideBySideLayoutOptionBase(private val options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions,
                                           private val areThreadsVisible: Boolean) : FramesAndThreadsLayoutOptionBase(options) {
 
-  override fun createView(session: XDebugSessionImpl): XThreadsFramesView = XThreadsFramesView(options.debugTab).apply {
+  override fun createView(sessionProxy: XDebugSessionProxy): XThreadsFramesView = XThreadsFramesView(options.debugTab).apply {
     this.setThreadsVisible(areThreadsVisible)
   }
 }

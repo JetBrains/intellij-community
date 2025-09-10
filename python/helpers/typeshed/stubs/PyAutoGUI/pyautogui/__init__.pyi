@@ -60,8 +60,8 @@ def useImageNotFoundException(value: bool | None = None) -> None: ...
 def isShiftCharacter(character: str) -> bool: ...
 
 class Point(NamedTuple):
-    x: float
-    y: float
+    x: int
+    y: int
 
 class Size(NamedTuple):
     width: int

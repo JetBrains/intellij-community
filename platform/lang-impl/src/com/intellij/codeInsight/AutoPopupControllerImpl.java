@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
@@ -95,7 +95,8 @@ public class AutoPopupControllerImpl extends AutoPopupController {
     IdeEventQueue.getInstance().addActivityListener(() -> {
       if (skipCancelEvents.get() == 0) {
         cancelAllRequests();
-      } else {
+      }
+      else {
         skipCancelEvents.decrementAndGet();
       }
     }, myProject);
@@ -103,7 +104,7 @@ public class AutoPopupControllerImpl extends AutoPopupController {
 
   @Override
   public void autoPopupMemberLookup(@NotNull Editor editor, @Nullable Condition<? super PsiFile> condition) {
-    autoPopupMemberLookup(editor, CompletionType.BASIC, condition);
+    scheduleAutoPopup(editor, condition);
   }
 
   @Override
@@ -120,6 +121,8 @@ public class AutoPopupControllerImpl extends AutoPopupController {
     if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       return;
     }
+
+    ThreadingAssertions.assertEventDispatchThread();
 
     boolean alwaysAutoPopup = Boolean.TRUE.equals(editor.getUserData(ALWAYS_AUTO_POPUP));
     if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP && !alwaysAutoPopup) {
@@ -139,11 +142,6 @@ public class AutoPopupControllerImpl extends AutoPopupController {
     }
 
     CommittingDocuments.scheduleAsyncCompletion(editor, completionType, condition, myProject, null);
-  }
-
-  @Override
-  public void scheduleAutoPopup(@NotNull Editor editor) {
-    scheduleAutoPopup(editor, CompletionType.BASIC, null);
   }
 
   @Override

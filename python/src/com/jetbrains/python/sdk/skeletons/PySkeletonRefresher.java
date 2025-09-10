@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.containers.ContainerUtil;
@@ -81,10 +82,8 @@ public class PySkeletonRefresher {
       try {
         final List<String> errors = refresher.regenerateSkeletons();
         if (!errors.isEmpty()) {
-          LOG.warn(PyBundle.message("sdk.some.skeletons.failed"));
-          for (String moduleName : errors) {
-            LOG.warn(moduleName);
-          }
+          var failedSkeletons = StringUtil.join(errors, ", ");
+          LOG.warn(String.format("%s: %s", PyBundle.message("sdk.some.skeletons.failed"), failedSkeletons));
         }
       }
       catch (ExecutionException e) {

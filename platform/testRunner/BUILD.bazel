@@ -31,6 +31,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
     "//platform/analysis-impl",
+    "//platform/xdebugger-impl:debugger-impl",
   ],
   runtime_deps = [":testRunner_resources"]
 )
@@ -62,6 +63,8 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
   ],
   runtime_deps = [":testRunner_resources"]
 )

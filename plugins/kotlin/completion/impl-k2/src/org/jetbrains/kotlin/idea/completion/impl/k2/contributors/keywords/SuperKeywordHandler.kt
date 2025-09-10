@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
 
 internal object SuperKeywordHandler : CompletionKeywordHandler<KaSession>(KtTokens.SUPER_KEYWORD) {
-    context(KaSession)
+    context(_: KaSession)
     override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,

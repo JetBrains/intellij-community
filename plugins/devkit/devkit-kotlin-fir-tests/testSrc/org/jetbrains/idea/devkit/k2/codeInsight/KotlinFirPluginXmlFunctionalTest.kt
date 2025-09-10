@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection
 import org.jetbrains.idea.devkit.inspections.UnresolvedPluginConfigReferenceInspection
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.nio.file.Paths
@@ -43,7 +43,7 @@ class KotlinFirPluginXmlFunctionalTest : JavaCodeInsightFixtureTestCase(), Expec
     //include kotlin in the same library as java annotations
     //otherwise annotation targets are not converted, see `buildEnumCall` at `org/jetbrains/kotlin/fir/java/javaAnnotationsMapping.kt:144`
     //because kotlin builtins are not found in library session
-    moduleBuilder.addLibrary("annotations", TestKotlinArtifacts.kotlinStdlib.canonicalPath, PathUtil.getJarPathForClass(XCollection::class.java))
+    moduleBuilder.addLibrary("annotations", TestKotlinArtifacts.kotlinStdlib.toFile().canonicalPath, PathUtil.getJarPathForClass(XCollection::class.java))
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath())
     moduleBuilder.addLibrary("platform-core", PathUtil.getJarPathForClass(RegistryManager::class.java))
     moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList::class.java))

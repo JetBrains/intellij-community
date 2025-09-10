@@ -3,6 +3,7 @@ package com.intellij.codeInsight.actions
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.actions.ReaderModeProvider.ReaderMode
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -50,7 +51,9 @@ interface ReaderModeSettings : Disposable {
     private val EP_READER_MODE_PROVIDER = ExtensionPointName<ReaderModeProvider>("com.intellij.readerModeProvider")
     private val EP_READER_MODE_MATCHER = ExtensionPointName<ReaderModeMatcher>("com.intellij.readerModeMatcher")
 
-    fun getInstance(project: Project): ReaderModeSettings = project.getService(ReaderModeSettingsImpl::class.java)
+    fun getInstance(project: Project): ReaderModeSettings =
+      project.getService(ReaderModeSettingsImpl::class.java)
+      ?: throw IllegalStateException("Cannot find ReaderModeSettingsImpl service for ${ClientId.currentOrNull}")
 
     @RequiresEdt
     fun applyReaderMode(project: Project,

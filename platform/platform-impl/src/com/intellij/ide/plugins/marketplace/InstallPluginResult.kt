@@ -18,5 +18,13 @@ class InstallPluginResult {
   var restartRequired: Boolean = true
   var dynamicRestartRequired = false
   var pluginsToDisable: Set<PluginId> = emptySet()
+  var pluginsToEnable: Set<PluginId> = emptySet()
   var errors: Map<PluginId, CheckErrorsResult> = emptyMap()
+  var disabledPlugins: List<String> = emptyList()
+  var disabledDependants: List<String> = emptyList()
+  var allowInstallWithoutRestart: Boolean = true
+  var dynamicUiPlugin: Boolean = false
+  companion object {
+    val FAILED = InstallPluginResult().apply { success = false }
+  }
 }

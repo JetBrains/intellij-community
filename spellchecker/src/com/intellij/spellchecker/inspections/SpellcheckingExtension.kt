@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
@@ -20,18 +21,19 @@ interface SpellcheckingExtension {
    * In case of doing that, it's implementation's responsibility to not check the same element for spelling mistake twice.
    *
    * @param element The PSI element to check for spelling errors
+   * @param strategy The element's spellchecking strategy
    * @param consumer The callback function that will be invoked for each spelling error detected during the inspection
    *
    * @return [SpellCheckingResult.Checked] if the PSI element has been checked, [SpellCheckingResult.Ignored] otherwise
    */
-  fun spellcheck(element: PsiElement, session: LocalInspectionToolSession, consumer: Consumer<SpellingTypo>): SpellCheckingResult
+  fun spellcheck(element: PsiElement, strategy: SpellcheckingStrategy, session: LocalInspectionToolSession, consumer: Consumer<SpellingTypo>): SpellCheckingResult
 
   companion object {
     private val EP_NAME = ExtensionPointName<SpellcheckingExtension>("com.intellij.spellchecker.extension")
 
-    fun spellcheck(element: PsiElement, session: LocalInspectionToolSession, consumer: Consumer<SpellingTypo>): SpellCheckingResult =
+    fun spellcheck(element: PsiElement, strategy: SpellcheckingStrategy, session: LocalInspectionToolSession, consumer: Consumer<SpellingTypo>): SpellCheckingResult =
       EP_NAME.extensionList.asSequence()
-        .map { it.spellcheck(element, session, consumer) }
+        .map { it.spellcheck(element, strategy, session, consumer) }
         .firstOrNull { it == SpellCheckingResult.Checked } ?: SpellCheckingResult.Ignored
   }
 

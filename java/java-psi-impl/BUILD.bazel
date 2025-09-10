@@ -11,7 +11,7 @@ jvm_library(
   name = "psi-impl",
   module_name = "intellij.java.psi.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   deps = [
     "//java/java-psi-api:psi",

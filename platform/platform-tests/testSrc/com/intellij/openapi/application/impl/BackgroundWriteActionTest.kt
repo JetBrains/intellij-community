@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -422,7 +423,7 @@ class BackgroundWriteActionTest {
     edtWriteAction {
       runBlockingCancellable {
         assertRead()
-        assertWrite() // since it is invoked on a thread with permission to write
+        assertWrite() // since the lock is parallelized
         assertWil()
       }
     }
@@ -734,4 +735,48 @@ class BackgroundWriteActionTest {
     job.complete()
   }
 
+  @Test
+  fun `invokeAndWait works in post-write-action listener`() = timeoutRunBlocking {
+    val threadingSupport = getGlobalThreadingSupport()
+    val listener = object : WriteActionListener {
+      override fun afterWriteActionFinished(action: Class<*>) {
+        application.invokeAndWait { }
+      }
+    }
+    try {
+      threadingSupport.addWriteActionListener(listener)
+      backgroundWriteAction {
+      }
+    }
+    finally {
+      threadingSupport.removeWriteActionListener(listener)
+    }
+  }
+
+  @Test
+  fun `rogue read action during reacquisition of write lock of writeAction`(): Unit = timeoutRunBlocking {
+    val job = Job(coroutineContext.job)
+    withContext(Dispatchers.EDT) {
+      edtWriteAction {
+        (application as ApplicationImpl).executeSuspendingWriteAction(null, "") {
+          launch(Dispatchers.Default) {
+            readAction {
+              job.asCompletableFuture().join()
+            }
+          }
+          Thread.sleep(50)
+          launch(Dispatchers.Default) {
+            delay(100)
+            launch {
+              readAction {
+              }
+            }
+            delay(50)
+            job.complete()
+            assertTrue(ApplicationManagerEx.getApplicationEx().isWriteActionPending)
+          }
+        }
+      }
+    }
+  }
 }

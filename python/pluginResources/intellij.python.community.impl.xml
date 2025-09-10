@@ -182,6 +182,7 @@
     <registryKey key="pytest.new.run.config" defaultValue="true" description="PyTest configurations new UI"/>
     <registryKey key="python.test.autodetect.new.run.config" defaultValue="true" description="Python test autodetect configuration new UI"/>
     <registryKey key="python.run.doctest.via.pytest.configuration" defaultValue="true" description="Run doctest via pytest configuration"/>
+    <registryKey key="debugger.valueTooltipAutoShow" defaultValue="false" description="Auto show tooltip on mouse over." overrides="true"/>
 
     <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
     <configurationType implementation="com.jetbrains.python.testing.tox.PyToxConfigurationType"/>
@@ -466,6 +467,9 @@
     <registryKey defaultValue="false" description="Use legacy system python detection method based on flavors"
                  restartRequired="false" key="python.use.system.legacy.provider"/>
 
+    <registryKey defaultValue="false" description="Save preferences what type of data view will be used: the old data view or the new one."
+                 restartRequired="false" key="python.data.view.allow.save.preferences.community.vs.powerful.data.view"/>
+
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
 
@@ -673,6 +677,7 @@
 
     <!-- uv -->
     <configurationType implementation="com.jetbrains.python.sdk.uv.run.UvRunConfigurationType"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.sdk.uv.run.UvRunConfigurationProducer"/>
   </extensions>
 
   <extensionPoints>
@@ -780,10 +785,6 @@
     <extensionPoint qualifiedName="Pythonid.pythonSdkReadOnlyProvider"
                     interface="com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider"
                     dynamic="true"/>
-
-    <extensionPoint qualifiedName="Pythonid.PyProjectDependenciesExtractorProvider"
-                    dynamic="true"
-                    interface="com.jetbrains.python.packaging.PythonDependenciesExtractorProvider"/>
 
     <extensionPoint qualifiedName="Pythonid.customProcessHandlerProvider"
                     interface="com.jetbrains.python.run.PyCustomProcessHandlerProvider"
@@ -908,9 +909,6 @@
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pip.PipPackageManagerProvider" order="last"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageManagerProvider"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pipenv.PipEnvPackageManagerProvider"/>
-
-    <PyProjectDependenciesExtractorProvider implementation="com.jetbrains.python.sdk.poetry.PoetryDependenciesExtractorProvider"/>
-    <PyProjectDependenciesExtractorProvider implementation="com.jetbrains.python.sdk.uv.UvDependenciesExtractorProvider"/>
 
     <PythonPackageRequiresExtractorProvider implementation="com.jetbrains.python.poetry.packaging.PoetryRequiresExtractorProvider"/>
     <PythonPackageRequiresExtractorProvider implementation="com.jetbrains.python.uv.packaging.UvPackageRequiresExtractorProvider"/>

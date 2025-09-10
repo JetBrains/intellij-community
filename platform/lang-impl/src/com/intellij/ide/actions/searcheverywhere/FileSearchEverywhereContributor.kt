@@ -43,6 +43,20 @@ open class FileSearchEverywhereContributor(event: AnActionEvent, contributorModu
   private val modelForRenderer: GotoFileModel
   private val filter: PersistentSearchEverywhereContributorFilter<FileTypeRef>
 
+  @Internal
+  override val navigationHandler: SearchEverywhereNavigationHandler = object : SearchEverywhereNavigationHandler(project) {
+    override suspend fun createSourceNavigationRequest(project: Project, element: PsiElement, file: VirtualFile, searchText: String, offset: Int): NavigationRequest? {
+      val navigationRequests = serviceAsync<NavigationRequests>()
+      return readAction {
+        navigationRequests.sourceNavigationRequest(project = project, file = file, offset = -1, elementRange = null)
+      }
+    }
+
+    override suspend fun triggerLineOrColumnFeatureUsed(extendedNavigatable: Navigatable) {
+      serviceAsync<FeatureUsageTracker>().triggerFeatureUsed("navigation.goto.file.line")
+    }
+  }
+
   constructor(event: AnActionEvent) : this(event, null)
 
   init {
@@ -110,17 +124,6 @@ open class FileSearchEverywhereContributor(event: AnActionEvent, contributorModu
     }
 
     return consumer.process(FoundItemDescriptor(element, degree))
-  }
-
-  override suspend fun createSourceNavigationRequest(element: PsiElement, file: VirtualFile, searchText: String): NavigationRequest? {
-    val navigationRequests = serviceAsync<NavigationRequests>()
-    return readAction {
-      navigationRequests.sourceNavigationRequest(project = project, file = file, offset = -1, elementRange = null)
-    }
-  }
-
-  final override suspend fun triggerLineOrColumnFeatureUsed(extendedNavigatable: Navigatable) {
-    serviceAsync<FeatureUsageTracker>().triggerFeatureUsed("navigation.goto.file.line")
   }
 
   override fun getDataForItem(element: Any, dataId: String): Any? {

@@ -35,6 +35,8 @@ kotlin {
     "-Xconsistent-data-class-copy-visibility",
     "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
     "-Xcontext-parameters",
+    "-Xwasm-kclass-fqn",
+    "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
   )
   jvm {}
   wasmJs {
@@ -78,6 +80,8 @@ kotlin {
     implementation(project(":fleet.reporting.api"))
     implementation(project(":fleet.reporting.shared"))
     implementation(project(":fleet.multiplatform.shims"))
+    implementation(project(":fleet.bifurcan"))
+    implementation(project(":fleet.fastutil"))
   }
   // KOTLIN__MARKER_END
 }

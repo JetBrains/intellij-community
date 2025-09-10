@@ -20,6 +20,20 @@ interface ii {
 class <error descr="Duplicate class: 'a'">a</error> {
 }
 
+class DuplicateNestedClassesTest {
+  public class <error descr="Duplicate class: 'C'">C</error> {}
+  public class <error descr="Duplicate class: 'C'">C</error> {}
+  public class <error descr="Duplicate class: 'C'">C</error> {}
+}
+
+class DuplicateLocalClassesTest {
+  public void foo() {
+    class D {}
+    class <error descr="Duplicate class: 'D'">D</error> {}
+    class <error descr="Duplicate class: 'D'">D</error> {}
+  }
+}
+
 class Foo {
     void f() {
         class Bar {
@@ -41,7 +55,7 @@ class c2 {
 
 
 class cont {
-        class B {
+        class <error descr="Duplicate class: 'B'">B</error> {
         }
         {
             class B {

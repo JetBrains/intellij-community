@@ -1,9 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
+import com.intellij.testFramework.LightProjectDescriptor
 import com.jetbrains.python.fixtures.PyInspectionTestCase
+import com.jetbrains.python.fixtures.PyLightProjectDescriptor
+import com.jetbrains.python.psi.LanguageLevel
 
-class PyNewTypeInspectionTest : PyInspectionTestCase() {
+abstract class PyNewTypeInspectionTest : PyInspectionTestCase() {
   fun testNewTypeCannotBeSubclassed() {
     doTestByText(
       """
@@ -60,16 +63,37 @@ class PyNewTypeInspectionTest : PyInspectionTestCase() {
 
         NewType1 = NewType(tp=int, name="NewType1")
         NewType2 = NewType("NewType2", NewType1)
-        NewType3 = NewType("NewType3", <warning descr="Expected class">int | str</warning>)
-        NewType4 = NewType("NewType4", <warning descr="Expected class">1</warning>)
-        NewType5 = NewType("NewType5", <warning descr="NewType cannot be used with 'Literal[1]'">Literal[1]</warning>)
-        NewType6 = NewType("NewType6", <warning descr="NewType cannot be used with 'TypedDict'">TD</warning>)
-        NewType7 = NewType("NewType7", list[int])
+        NewType3 = NewType("NewType3", <warning descr="Expected class">1</warning>)
+        NewType4 = NewType("NewType4", <warning descr="NewType cannot be used with 'Literal[1]'">Literal[1]</warning>)
+        NewType5 = NewType("NewType5", <warning descr="NewType cannot be used with 'TypedDict'">TD</warning>)
+        NewType6 = NewType("NewType6", list[int])
         T = TypeVar("T")
-        NewType8 = NewType("NewType8", <warning descr="NewType cannot be generic">list[T]</warning>)
+        NewType7 = NewType("NewType7", <warning descr="NewType cannot be generic">list[T]</warning>)
       """.trimIndent()
     )
   }
 
   override fun getInspectionClass(): Class<out PyInspection> = PyNewTypeInspection::class.java
+}
+
+class PyNewTypeInspectionTestPython38 : PyNewTypeInspectionTest() {
+  override fun getProjectDescriptor(): LightProjectDescriptor? {
+    return PyLightProjectDescriptor(LanguageLevel.PYTHON39);
+  }
+}
+
+class PyNewTypeInspectionTestPython314 : PyNewTypeInspectionTest() {
+  override fun getProjectDescriptor(): LightProjectDescriptor? {
+    return PyLightProjectDescriptor(LanguageLevel.PYTHON314);
+  }
+
+  fun testUnionType() {
+    doTestByText(
+      """
+        from typing import NewType, Literal, TypedDict, TypeVar
+        
+        NewType1 = NewType("NewType1", <warning descr="Expected class">int | str</warning>)
+      """.trimIndent()
+    )
+  }
 }

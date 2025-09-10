@@ -26,7 +26,7 @@ internal class GitInMemoryRewordAction : GitSingleCommitEditingAction() {
   )
 
   override fun update(e: AnActionEvent, commitEditingData: SingleCommitEditingData) {
-    if (!Registry.`is`("git.in.memory.reword.commit.enabled")) {
+    if (!Registry.`is`("git.in.memory.commit.editing.operations.enabled")) {
       e.presentation.isEnabledAndVisible = false
       return
     }

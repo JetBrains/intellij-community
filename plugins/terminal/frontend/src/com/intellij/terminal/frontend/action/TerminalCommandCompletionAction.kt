@@ -20,6 +20,4 @@ internal class TerminalCommandCompletionAction : BaseCodeCompletionAction() {
     super.update(e)
     e.presentation.isEnabled = e.terminalEditor?.isPromptEditor == true
   }
-
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }

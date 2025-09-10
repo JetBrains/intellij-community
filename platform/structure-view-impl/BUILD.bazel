@@ -11,7 +11,7 @@ jvm_library(
   name = "structureView-impl",
   module_name = "intellij.platform.structureView.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
     "//platform/util",

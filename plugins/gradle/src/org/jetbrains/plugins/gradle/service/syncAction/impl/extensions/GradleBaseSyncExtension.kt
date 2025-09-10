@@ -3,18 +3,20 @@ package org.jetbrains.plugins.gradle.service.syncAction.impl.extensions
 
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.platform.workspace.storage.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncExtension
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeEntitySource
 
+@ApiStatus.Internal
 @Order(GradleBaseSyncExtension.ORDER)
-internal class GradleBaseSyncExtension : GradleSyncExtension {
+class GradleBaseSyncExtension : GradleSyncExtension {
 
-  override fun updateProjectStorage(
+  override fun updateProjectModel(
     context: ProjectResolverContext,
-    syncStorage: ImmutableEntityStorage,
+    syncStorage: MutableEntityStorage,
     projectStorage: MutableEntityStorage,
     phase: GradleSyncPhase,
   ) {

@@ -195,7 +195,3 @@ openpyxl.worksheet.smart_tag.CellSmartTagPr.__init__
 openpyxl.worksheet.smart_tag.CellSmartTags.__init__
 openpyxl.worksheet.table.TableColumn.__init__
 openpyxl.worksheet.table.XMLColumnProps.__init__
-
-# Inherited from the stdlib, where we lie about the presence
-# of this method in order to mark it as deprecated.
-openpyxl.xml.functions.Element.__bool__

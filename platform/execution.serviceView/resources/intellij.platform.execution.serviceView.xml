@@ -36,7 +36,7 @@
         <action id="ServiceView.SplitByType" class="com.intellij.platform.execution.serviceView.SplitByTypeAction"/>
       </group>
     </group>
-    <group id="ServiceViewItemToolbar">
+    <group id="ServiceViewItemToolbar" class="com.intellij.platform.execution.serviceView.ServiceViewActionProvider$DefaultFrontendServiceViewActionGroup">
       <group id="ServiceViewItemToolbarGroup"
              class="com.intellij.platform.execution.serviceView.ServiceViewActionProvider$ItemToolbarActionGroup"/>
       <separator/>
@@ -56,7 +56,7 @@
       <action id="ServiceView.JumpToServices" use-shortcut-of="ShowNavBar"
               class="com.intellij.platform.execution.serviceView.JumpToServicesAction"/>
     </group>
-    <group id="ServiceView.Gear">
+    <group id="ServiceView.Gear" class="com.intellij.platform.execution.serviceView.ServiceViewActionProvider$DefaultFrontendServiceViewActionGroup">
       <action id="ServiceView.SelectActiveService" class="com.intellij.platform.execution.serviceView.SelectActiveServiceAction"/>
       <action id="ServiceView.ShowServices" icon="AllIcons.Actions.ShowAsTree"
               class="com.intellij.platform.execution.serviceView.ShowServicesAction"/>

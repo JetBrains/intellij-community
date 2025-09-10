@@ -6,6 +6,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.frontend.TerminalHeuristicsBasedCommandFinishTracker.Companion.MAX_LINE_LENGTH
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
@@ -66,7 +67,7 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
 
     val lineInfo = curLineInfo
     if (e.keyCode == KeyEvent.VK_ENTER && lineInfo != null) {
-      val cursorOffset = outputModel.cursorOffsetState.value
+      val cursorOffset = outputModel.cursorOffsetState.value.toRelative()
       val textBeforeCursor = getTextBeforeCursor(cursorOffset) ?: return
       if (textBeforeCursor.startsWith(lineInfo.promptText) && textBeforeCursor.length > lineInfo.promptText.length) {
         // There is some command to execute
@@ -78,7 +79,7 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
 
   private fun updateCurLineInfo() {
     val lineInfo = curLineInfo
-    val cursorOffset = outputModel.cursorOffsetState.value
+    val cursorOffset = outputModel.cursorOffsetState.value.toRelative()
     val absoluteLineIndex = outputModel.getAbsoluteLineIndex(cursorOffset)
     val textBeforeCursor = getTextBeforeCursor(cursorOffset)
 
@@ -104,7 +105,7 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
     // Heuristic: suspend until we detect the current line has the same prompt as in the provided LineInfo
     // Then we can consider that command is finished
     modelUpdatesFlow.debounce(PROMPT_CHECKING_DELAY).first {
-      val cursorOffset = outputModel.cursorOffsetState.value
+      val cursorOffset = outputModel.cursorOffsetState.value.toRelative()
       val absoluteLineIndex = outputModel.getAbsoluteLineIndex(cursorOffset)
 
       absoluteLineIndex != lineInfo.absoluteIndex && getTextBeforeCursor(cursorOffset) == lineInfo.promptText

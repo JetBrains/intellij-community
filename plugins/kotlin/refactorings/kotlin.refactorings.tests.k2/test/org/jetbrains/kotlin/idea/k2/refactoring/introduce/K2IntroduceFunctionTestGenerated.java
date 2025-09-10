@@ -407,6 +407,16 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/contextParameters/multipleParameters.kt");
         }
 
+        @TestMetadata("multipleParametersOneCall.kt")
+        public void testMultipleParametersOneCall() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/contextParameters/multipleParametersOneCall.kt");
+        }
+
+        @TestMetadata("multipleParametersOnePropertyAccess.kt")
+        public void testMultipleParametersOnePropertyAccess() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/contextParameters/multipleParametersOnePropertyAccess.kt");
+        }
+
         @TestMetadata("parameterizedContextParameters.kt")
         public void testParameterizedContextParameters() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/contextParameters/parameterizedContextParameters.kt");

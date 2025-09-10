@@ -95,10 +95,11 @@ suspend fun PythonAddInterpreterModel.selectCondaEnvironment(base: Boolean): PyR
 }
 
 
-internal fun PythonAddInterpreterModel.installPythonIfNeeded(interpreter: PythonSelectableInterpreter): String? {
+internal fun PythonAddInterpreterModel.installPythonIfNeeded(interpreter: PythonSelectableInterpreter): Path? {
   // todo use target config
-  return if (interpreter is InstallableSelectableInterpreter) {
-    installBaseSdk(interpreter.sdk, existingSdks)?.homePath ?: return null
+  val pathString = if (interpreter is InstallableSelectableInterpreter) {
+    installBaseSdk(interpreter.sdk, existingSdks)?.homePath
   }
   else interpreter.homePath
+  return pathString?.let { Path.of(it) }
 }

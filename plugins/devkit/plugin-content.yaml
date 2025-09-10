@@ -25,12 +25,18 @@
   - name: intellij.devkit.stacktrace
   - name: intellij.devkit.apiDump
   - name: intellij.devkit.apiDump.lang
+- name: lib/modules/intellij.devkit.compose.jar
+  contentModules:
+  - name: intellij.devkit.compose
 - name: lib/modules/intellij.devkit.modules.jar
   contentModules:
   - name: intellij.devkit.modules
 - name: lib/modules/intellij.devkit.scaffolding.jar
   contentModules:
   - name: intellij.devkit.scaffolding
+- name: lib/modules/intellij.platform.jewel.samples.showcase.jar
+  contentModules:
+  - name: intellij.platform.jewel.samples.showcase
 - name: lib/workspace-model-codegen.jar
   library: workspace-model-codegen
   files:

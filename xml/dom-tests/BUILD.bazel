@@ -11,7 +11,7 @@ jvm_library(
   name = "dom-tests_test_lib",
   module_name = "intellij.xml.dom.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",

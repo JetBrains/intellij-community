@@ -21,7 +21,8 @@ val PROJECT_KEY: Key<Project> = Key.create("Project")
 val ShellRuntimeContext.isReworkedTerminal: Boolean
   get() = getUserData(IS_REWORKED_KEY) ?: false
 
-internal val IS_REWORKED_KEY: Key<Boolean> = Key.create("isReworked")
+@ApiStatus.Internal
+val IS_REWORKED_KEY: Key<Boolean> = Key.create("isReworked")
 
 /**
  * Returns the list of [path] child file names.
@@ -35,13 +36,38 @@ suspend fun ShellRuntimeContext.getChildFiles(
   path: String,
   onlyDirectories: Boolean = false,
 ): List<String> {
-  val adjustedPath = path.ifEmpty { "." }
-  val command: String = if (isReworkedTerminal) {
-    createGetFilesCommandReworked(adjustedPath)
+  if (isReworkedTerminal) {
+    return getChildFilesReworked(path, onlyDirectories)
   }
   else {
-    createGetFilesCommand(adjustedPath)
+    return getChildFilesExp(path, onlyDirectories)
   }
+}
+
+private suspend fun ShellRuntimeContext.getChildFilesReworked(path: String, onlyDirectories: Boolean): List<String> {
+  check(isReworkedTerminal)
+
+  val adjustedPath = FileUtil.expandUserHome(path.ifEmpty { "." })
+  val command = "ls -1ap $adjustedPath"
+  val result = runShellCommand(command)
+  if (result.exitCode != 0) {
+    // it is a regular case: the user entered an invalid path
+    return emptyList()
+  }
+  val separator = File.separatorChar
+  return result.output.splitToSequence("\n")
+    .filter { it.isNotBlank() }
+    .filter { !onlyDirectories || it.endsWith(separator) }
+    // do not suggest './' and '../' choices, there is no need to show them in the completion popup.
+    .filter { it != ".$separator" && it != "..$separator" }
+    .toList()
+}
+
+private suspend fun ShellRuntimeContext.getChildFilesExp(path: String, onlyDirectories: Boolean): List<String> {
+  check(!isReworkedTerminal)
+
+  val adjustedPath = path.ifEmpty { "." }
+  val command = "${GET_DIRECTORY_FILES.functionName} $adjustedPath"
   val result = runShellCommand(command)
   if (result.exitCode != 0) {
     logger<ShellRuntimeContext>().warn("Get files command for path '$adjustedPath' failed with exit code ${result.exitCode}, output: ${result.output}")
@@ -54,12 +80,4 @@ suspend fun ShellRuntimeContext.getChildFiles(
     // do not suggest './' and '../' directories if the user already typed some path
     .filter { path.isEmpty() || (it != ".$separator" && it != "..$separator") }
     .toList()
-}
-
-private fun createGetFilesCommand(adjustedPath: String): String {
-  return "${GET_DIRECTORY_FILES.functionName} $adjustedPath"
-}
-
-private fun createGetFilesCommandReworked(adjustedPath: String): String {
-  return "ls -1ap ${FileUtil.expandUserHome(adjustedPath)}"
 }

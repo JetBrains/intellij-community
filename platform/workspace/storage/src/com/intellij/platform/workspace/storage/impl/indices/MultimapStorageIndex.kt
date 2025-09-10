@@ -97,5 +97,13 @@ internal class MutableMultimapStorageIndex private constructor(
     val id = entity.createEntityId()
     this.remove(id, data)
   }
+
+  internal fun addedValues(): Map<Long, Set<SymbolicEntityId<*>>> = index.addedValues
+
+  internal fun removedValues(): Map<Long, Set<SymbolicEntityId<*>>> = index.removedValues
+
+  internal fun clearTrackedValues() {
+    index.clearTrackedValues()
+  }
 }
 

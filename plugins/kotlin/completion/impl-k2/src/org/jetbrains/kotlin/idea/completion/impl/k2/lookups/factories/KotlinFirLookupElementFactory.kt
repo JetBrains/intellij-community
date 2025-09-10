@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.asSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -27,7 +28,7 @@ import org.jetbrains.kotlin.name.Name
 
 @ApiStatus.Internal
 object KotlinFirLookupElementFactory {
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun createConstructorCallLookupElement(
         containingSymbol: KaNamedClassSymbol,
@@ -39,7 +40,7 @@ object KotlinFirLookupElementFactory {
         return ClassLookupElementFactory.createConstructorLookup(containingSymbol, visibleConstructorSymbols, importingStrategy, aliasName)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun createClassifierLookupElement(
         symbol: KaClassifierSymbol,
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
@@ -52,7 +53,7 @@ object KotlinFirLookupElementFactory {
         is KaTypeParameterSymbol -> TypeParameterLookupElementFactory.createLookup(symbol)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun createLookupElement(
         symbol: KaNamedSymbol,
@@ -71,7 +72,7 @@ object KotlinFirLookupElementFactory {
         else -> throw IllegalArgumentException("Cannot create a lookup element for $symbol")
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun createCallableLookupElement(
         name: Name,
         signature: KaCallableSignature<*>,
@@ -83,7 +84,7 @@ object KotlinFirLookupElementFactory {
         is KaVariableSignature<*> -> VariableLookupElementFactory.createLookup(signature, options, aliasName)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun createBracketOperatorLookupElement(
         operatorName: Name,
         signature: KaCallableSignature<*>,
@@ -100,18 +101,18 @@ object KotlinFirLookupElementFactory {
     fun createPackagePartLookupElement(packagePartFqName: FqName): LookupElement =
         PackagePartLookupElementFactory.createLookup(packagePartFqName)
 
-    context(KaSession)
+    context(_: KaSession)
     fun createNamedArgumentLookupElement(name: Name, types: List<KaType>): LookupElement =
         NamedArgumentLookupElementFactory.createLookup(name, types)
 
     fun createNamedArgumentWithValueLookupElement(name: Name, value: String): LookupElement =
         NamedArgumentLookupElementFactory.createLookup(name, value)
 
-    context(KaSession)
+    context(_: KaSession)
     fun createTypeLookupElement(type: KaType): LookupElement? =
         TypeLookupElementFactory.createLookup(type)
 
-    context(KaSession)
+    context(_: KaSession)
     fun createTypeLookupElement(classSymbol: KaClassifierSymbol): LookupElement? =
         TypeLookupElementFactory.createLookup(classSymbol)
 }

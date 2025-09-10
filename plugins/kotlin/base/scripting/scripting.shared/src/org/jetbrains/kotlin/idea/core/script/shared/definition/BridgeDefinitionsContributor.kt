@@ -28,7 +28,11 @@ class BridgeScriptDefinitionsContributor(private val project: Project) : ScriptD
                 val explicitDefinitions = if (explicitClasses.isEmpty())
                     emptySequence()
                 else
-                    loadDefinitionsFromTemplates(explicitClasses, classPath, baseHostConfiguration).asSequence()
+                    loadDefinitionsFromTemplates(
+                        templateClassNames = explicitClasses,
+                        templateClasspath = classPath.map { it.toPath() },
+                        baseHostConfiguration = baseHostConfiguration
+                    )
 
                 val discoveredDefinitions = if (provider.useDiscovery())
                     ScriptDefinitionsFromClasspathDiscoverySource(

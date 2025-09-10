@@ -108,6 +108,14 @@ public abstract class TextProblem {
     return group.getRules().contains(rule.getGlobalId());
   }
 
+  /**
+   * @return True if a problem isn't a grammar problem, but a style one.
+   * In this case it should be highlighted differently. {@link com.intellij.grazie.ide.TextProblemSeverities}
+   */
+  public boolean isStyleLike() {
+    return false;
+  }
+
   @Override
   public String toString() {
     return text.subSequence(highlightRanges.get(0).getStartOffset(), ContainerUtil.getLastItem(highlightRanges).getEndOffset()) + " (" + getShortMessage() + ")";

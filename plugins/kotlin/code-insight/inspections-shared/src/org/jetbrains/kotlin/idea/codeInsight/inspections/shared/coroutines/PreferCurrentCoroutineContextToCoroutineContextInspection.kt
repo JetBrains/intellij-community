@@ -60,12 +60,7 @@ internal class PreferCurrentCoroutineContextToCoroutineContextInspection : Kotli
     }
 
     private fun KaSession.isCurrentCoroutineContextFunctionPresent(): Boolean {
-        val foundSymbols = findTopLevelCallables(
-            CoroutinesIds.CURRENT_COROUTINE_CONTEXT_ID.packageName,
-            CoroutinesIds.CURRENT_COROUTINE_CONTEXT_ID.callableName
-        )
-
-        return foundSymbols.any()
+        return CoroutinesIds.CURRENT_COROUTINE_CONTEXT_ID.canBeResolved()
     }
 
     override fun createQuickFix(

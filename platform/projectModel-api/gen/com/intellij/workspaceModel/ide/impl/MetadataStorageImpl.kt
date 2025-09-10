@@ -15,7 +15,23 @@ internal object MetadataStorageImpl: MetadataStorageBase() {
         
         var typeMetadata: StorageTypeMetadata
         
+        typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.workspaceModel.ide.Source", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+        
+        addMetadata(typeMetadata)
+        
+        typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.workspaceModel.ide.NonPersistentEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+        
+        addMetadata(typeMetadata)
+        
         typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.workspaceModel.ide.ProjectRootEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+        
+        addMetadata(typeMetadata)
+        
+        typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndexTest\$MySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+        
+        addMetadata(typeMetadata)
+        
+        typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.workspaceModel.ide.legacyBridge.LibraryLevelsTrackerTest\$MySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
         
         addMetadata(typeMetadata)
         
@@ -27,8 +43,12 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
 
     override fun initializeMetadataHash() {
         addMetadataHash(typeFqn = "com.intellij.workspaceModel.ide.ProjectRootEntity", metadataHash = -2042954686)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1548610517)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -243875031)
+        addMetadataHash(typeFqn = "com.intellij.workspaceModel.ide.NonPersistentEntitySource", metadataHash = 485749134)
         addMetadataHash(typeFqn = "com.intellij.workspaceModel.ide.ProjectRootEntitySource", metadataHash = 544411415)
+        addMetadataHash(typeFqn = "com.intellij.workspaceModel.ide.Source", metadataHash = 1093972899)
+        addMetadataHash(typeFqn = "com.intellij.workspaceModel.ide.legacyBridge.LibraryLevelsTrackerTest\$MySource", metadataHash = -1911317467)
+        addMetadataHash(typeFqn = "com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndexTest\$MySource", metadataHash = -562697122)
     }
 
 }

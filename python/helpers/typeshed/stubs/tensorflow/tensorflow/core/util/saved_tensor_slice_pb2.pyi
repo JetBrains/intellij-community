@@ -52,7 +52,11 @@ class SavedSliceMeta(google.protobuf.message.Message):
         """Shape of the tensor"""
 
     @property
-    def slice(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[tensorflow.core.framework.tensor_slice_pb2.TensorSliceProto]:
+    def slice(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        tensorflow.core.framework.tensor_slice_pb2.TensorSliceProto
+    ]:
         """Explicit list of slices saved in the checkpoint file."""
 
     def __init__(
@@ -64,7 +68,9 @@ class SavedSliceMeta(google.protobuf.message.Message):
         slice: collections.abc.Iterable[tensorflow.core.framework.tensor_slice_pb2.TensorSliceProto] | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["shape", b"shape"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["name", b"name", "shape", b"shape", "slice", b"slice", "type", b"type"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["name", b"name", "shape", b"shape", "slice", b"slice", "type", b"type"]
+    ) -> None: ...
 
 global___SavedSliceMeta = SavedSliceMeta
 
@@ -158,12 +164,7 @@ class SavedTensorSlices(google.protobuf.message.Message):
     def data(self) -> global___SavedSlice:
         """This exists in all but the first item of each checkpoint file."""
 
-    def __init__(
-        self,
-        *,
-        meta: global___SavedTensorSliceMeta | None = ...,
-        data: global___SavedSlice | None = ...,
-    ) -> None: ...
+    def __init__(self, *, meta: global___SavedTensorSliceMeta | None = ..., data: global___SavedSlice | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["data", b"data", "meta", b"meta"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["data", b"data", "meta", b"meta"]) -> None: ...
 

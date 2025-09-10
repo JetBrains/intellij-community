@@ -41,11 +41,10 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean
   suspend fun hasPluginRequiresUltimateButItsDisabled(ids: List<PluginId>): Boolean
   suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId>
-  suspend fun getCustomRepoPlugins(): List<PluginDto>
   suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginDto>>
   suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean
   suspend fun isPluginInstalled(pluginId: PluginId): Boolean
-  suspend fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean
+  suspend fun getPluginsRequiresUltimateMap(pluginIds: List<PluginId>): Map<PluginId, Boolean>
   suspend fun filterPluginsRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId>
   suspend fun findPluginNames(pluginIds: List<PluginId>): List<String>
   suspend fun isNeedUpdate(pluginId: PluginId): Boolean
@@ -58,9 +57,13 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState>
   suspend fun checkPluginCanBeDownloaded(plugin: PluginDto): Boolean
   suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult>
+  suspend fun loadErrors(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, CheckErrorsResult>
   suspend fun initSession(sessionId: String): InitSessionResult
   suspend fun isPluginEnabled(pluginId: PluginId): Boolean
   suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginDto>
+  suspend fun loadDescriptorById(pluginId: PluginId): PluginDto?
+  suspend fun getCustomRepoTags(): Set<String>
+  suspend fun updateCustomRepositories(repositoryUrls: List<String>)
 
 
   companion object {

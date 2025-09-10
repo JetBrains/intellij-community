@@ -6801,105 +6801,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/convertNullablePropertyToLateinit")
-    public static class ConvertNullablePropertyToLateinit extends AbstractK1IntentionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("abstract.kt")
-        public void testAbstract() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/abstract.kt");
-        }
-
-        @TestMetadata("delegate.kt")
-        public void testDelegate() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/delegate.kt");
-        }
-
-        @TestMetadata("extension.kt")
-        public void testExtension() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/extension.kt");
-        }
-
-        @TestMetadata("getter.kt")
-        public void testGetter() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/getter.kt");
-        }
-
-        @TestMetadata("inlineClass.kt")
-        public void testInlineClass() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/inlineClass.kt");
-        }
-
-        @TestMetadata("int.kt")
-        public void testInt() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/int.kt");
-        }
-
-        @TestMetadata("local.kt")
-        public void testLocal() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/local.kt");
-        }
-
-        @TestMetadata("localLegacy.kt")
-        public void testLocalLegacy() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/localLegacy.kt");
-        }
-
-        @TestMetadata("nonNullInitializer.kt")
-        public void testNonNullInitializer() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/nonNullInitializer.kt");
-        }
-
-        @TestMetadata("nonNullable.kt")
-        public void testNonNullable() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/nonNullable.kt");
-        }
-
-        @TestMetadata("nullableUpperBound.kt")
-        public void testNullableUpperBound() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/nullableUpperBound.kt");
-        }
-
-        @TestMetadata("setter.kt")
-        public void testSetter() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/setter.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/simple.kt");
-        }
-
-        @TestMetadata("topLevel.kt")
-        public void testTopLevel() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/topLevel.kt");
-        }
-
-        @TestMetadata("topLevelLegacy.kt")
-        public void testTopLevelLegacy() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/topLevelLegacy.kt");
-        }
-
-        @TestMetadata("unsignedInt.kt")
-        public void testUnsignedInt() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/unsignedInt.kt");
-        }
-
-        @TestMetadata("val.kt")
-        public void testVal() throws Exception {
-            runTest("testData/intentions/convertNullablePropertyToLateinit/val.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertObjectLiteralToClass")
     public static class ConvertObjectLiteralToClass extends AbstractK1IntentionTest {
         @java.lang.Override
@@ -6945,6 +6846,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("objectLiteralWithCapture.kt")
         public void testObjectLiteralWithCapture() throws Exception {
             runTest("testData/intentions/convertObjectLiteralToClass/objectLiteralWithCapture.kt");
+        }
+
+        @TestMetadata("severalParameters.kt")
+        public void testSeveralParameters() throws Exception {
+            runTest("testData/intentions/convertObjectLiteralToClass/severalParameters.kt");
         }
     }
 
@@ -17828,6 +17734,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("publicMember.kt")
         public void testPublicMember() throws Exception {
             runTest("testData/intentions/specifyTypeExplicitly/publicMember.kt");
+        }
+
+        @TestMetadata("smartCastIntersectionTypesCase.kt")
+        public void testSmartCastIntersectionTypesCase() throws Exception {
+            runTest("testData/intentions/specifyTypeExplicitly/smartCastIntersectionTypesCase.kt");
+        }
+
+        @TestMetadata("smartCastSimpleCase.kt")
+        public void testSmartCastSimpleCase() throws Exception {
+            runTest("testData/intentions/specifyTypeExplicitly/smartCastSimpleCase.kt");
         }
 
         @TestMetadata("stringRedefined.kt")

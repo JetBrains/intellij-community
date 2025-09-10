@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.PyPattern
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
-class PyCaseClauseImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyCaseClause {
+class PyCaseClauseImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyCaseClause, PyCaptureContext {
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
     pyVisitor.visitPyCaseClause(this)
   }
@@ -26,7 +26,7 @@ class PyCaseClauseImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyCaseClause
       if (cs.guardCondition != null && !PyEvaluator.evaluateAsBoolean(cs.guardCondition, false)) continue
       if (cs.pattern!!.canExcludePatternType(context)) {
         subjectType = Ref.deref(
-          PyTypeAssertionEvaluator.createAssertionType(subjectType, context.getType(cs.pattern!!), false, context))
+          PyTypeAssertionEvaluator.createAssertionType(subjectType, context.getType(cs.pattern!!), false, true, context))
       }
     }
 

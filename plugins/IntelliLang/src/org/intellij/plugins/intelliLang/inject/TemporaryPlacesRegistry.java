@@ -6,10 +6,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.changesHandler.CommonInjectedFileChangesHandlerKt;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,6 +18,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.FORCE_INJECTED_COPY_ELEMENT_KEY;
 
 @Service(Service.Level.PROJECT)
 public final class TemporaryPlacesRegistry {
@@ -156,7 +155,13 @@ public final class TemporaryPlacesRegistry {
     PsiLanguageInjectionHost originalHost = CompletionUtilCoreImpl.getOriginalElement(host, containingFile);
     PsiLanguageInjectionHost injectionHost = originalHost == null ? host : originalHost;
     getInjectionPlacesSafe();
-    return injectionHost.getUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE);
+    InjectedLanguage data = injectionHost.getUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE);
+    if (data != null) return data;
+    PsiElement originalInjectionHost = injectionHost.getCopyableUserData(FORCE_INJECTED_COPY_ELEMENT_KEY);
+    if (originalInjectionHost != null) {
+      return originalInjectionHost.getUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE);
+    }
+    return null;
   }
 
   private static class TempPlace {

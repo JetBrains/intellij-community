@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vcs.merge.MergeConflictManager;
+import com.intellij.platform.vcs.changes.ChangesUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +79,7 @@ public class ChangesViewTreeStateStrategy implements ChangesTree.TreeStateStrate
     return VcsTreeModelData.allUnderTag(view, CONFLICTS_NODE_TAG).iterateRawNodes()
       .filter(ChangesBrowserChangeNode.class)
       .find(node -> {
-        return MergeConflictManager.isMergeConflict(node.getUserObject().getFileStatus());
+        return ChangesUtil.isMergeConflict(node.getUserObject());
       });
   }
 
@@ -87,7 +87,7 @@ public class ChangesViewTreeStateStrategy implements ChangesTree.TreeStateStrate
     return VcsTreeModelData.allUnderTag(view, RESOLVED_CONFLICTS_NODE_TAG).iterateRawNodes()
       .filter(ChangesBrowserChangeNode.class)
       .find(node -> {
-        return MergeConflictManager.isMergeConflict(node.getUserObject().getFileStatus());
+        return ChangesUtil.isMergeConflict(node.getUserObject());
       });
   }
 }

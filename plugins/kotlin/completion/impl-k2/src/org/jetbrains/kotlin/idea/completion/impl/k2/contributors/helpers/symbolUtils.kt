@@ -5,6 +5,9 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKindImpl
+import org.jetbrains.kotlin.analysis.api.components.memberScope
+import org.jetbrains.kotlin.analysis.api.components.packageScope
+import org.jetbrains.kotlin.analysis.api.components.staticMemberScope
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -18,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerS
  * Note that if the symbol is [org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol], `null` is returned.
  * See KT-34281 for more details.
  */
-context(KaSession)
+context(_: KaSession)
 internal val KaSymbol.staticScope: KaScopeWithKind?
     get() = when (this) {
         is KaDeclarationContainerSymbol -> KaScopeWithKindImpl(

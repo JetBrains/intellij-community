@@ -77,9 +77,9 @@ internal suspend fun importConfigIfNeeded(
 
 private fun shouldMigrateConfigOnNextRun(args: List<String>): Boolean {
   val command = args.firstOrNull()
-  //currently, migration of config will be performed on the next run only for headless commands from remote dev mode only; later we can enable this behavior for all commands 
-  return command == "cwmHostStatus" || command == "remoteDevStatus" || command == "cwmHost" || command == "invalidateCaches" || command == "remoteDevShowHelp" 
-         || command == "registerBackendLocationForGateway"
+  //currently, migration of config will be performed on the next run only for headless commands from remote dev mode only; later we can enable this behavior for all commands
+  val headlessCommands = listOf("cwmHostStatus", "remoteDevStatus", "cwmHost", "invalidateCaches", "remoteDevShowHelp", "openUrlOnClient", "registerBackendLocationForGateway");
+  return headlessCommands.contains(command)
 }
 
 private suspend fun importConfigHeadless(lockSystemDirsJob: Job, logDeferred: Deferred<Logger>) {

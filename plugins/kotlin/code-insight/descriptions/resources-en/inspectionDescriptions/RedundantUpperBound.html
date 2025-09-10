@@ -1,0 +1,24 @@
+<html>
+<body>
+<p>
+Reports redundant explicit upper bound <code>Any?</code> on a type parameter.
+In Kotlin, the default upper bound for type parameters is <code>Any?</code>, so specifying it explicitly is unnecessary.
+</p>
+
+<p>Examples:</p>
+<pre><code>// Before
+fun &lt;T : Any?&gt; foo(t: T) {}
+class C&lt;T : Any?&gt;
+</code></pre>
+
+<p>After the quick-fix is applied:</p>
+<pre><code>
+fun &lt;T&gt; foo(t: T) {}
+class C&lt;T&gt;
+</code></pre>
+
+<p>
+The quick fix removes the redundant upper bound and the preceding colon.
+</p>
+</body>
+</html>

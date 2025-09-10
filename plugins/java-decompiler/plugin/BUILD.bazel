@@ -11,7 +11,7 @@ jvm_library(
   name = "java-decompiler",
   module_name = "intellij.java.decompiler",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/java-decompiler/engine",
     "//platform/analysis-api:analysis",
@@ -36,7 +36,7 @@ jvm_library(
 jvm_library(
   name = "java-decompiler_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":java-decompiler"],
   deps = [
     "//plugins/java-decompiler/engine",
@@ -61,6 +61,10 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
+  ],
+  exports = [
+    "//plugins/java-decompiler/engine",
+    "//plugins/java-decompiler/engine:engine_test_lib",
   ],
   runtime_deps = [":java-decompiler_resources"]
 )

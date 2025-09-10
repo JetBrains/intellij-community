@@ -17,10 +17,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
@@ -55,6 +52,7 @@ import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.GridBagConstraints.*
 import java.awt.event.ActionEvent
@@ -68,11 +66,14 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.JTextComponent
 
-open class IdeErrorsDialog @ApiStatus.Internal constructor(
+open class IdeErrorsDialog @ApiStatus.Internal @JvmOverloads constructor(
   private val myMessagePool: MessagePool,
   private val myProject: Project?,
   private val ijProject: Boolean,
   defaultMessage: LogMessage?,
+  isModal: Boolean = false,
+  actionLeadToError: @Nls String? = null, // Which action led to this error (user-readable description)
+  private val hideClearButton: Boolean = false,
 ) : DialogWrapper(myProject, true), MessagePoolListener, UiDataProvider {
   private val myAcceptedNotices: MutableSet<String>
   private val myMessageClusters: MutableList<MessageCluster> = ArrayList() // exceptions with the same stacktrace
@@ -92,8 +93,11 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
   private lateinit var myLoadingDecorator: LoadingDecorator
 
   init {
-    title = DiagnosticBundle.message("error.list.title")
-    isModal = false
+    title = if (actionLeadToError != null)
+      DiagnosticBundle.message("error.list.title.with.action", actionLeadToError)
+    else
+      DiagnosticBundle.message("error.list.title")
+    this.isModal = isModal
     @Suppress("LeakingThis")
     init()
     setCancelButtonText(CommonBundle.message("close.action.name"))
@@ -302,12 +306,21 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
       .map { action: ReportAction -> action.getAction(this) }
       .toList()
     myOKAction = CompositeAction(lastAction.getAction(this), additionalActions)
+    val clearErrorsAction = if (!hideClearButton) ClearErrorsAction() else null
     return if (SystemInfo.isWindows) {
-      arrayOf(okAction, ClearErrorsAction(), cancelAction)
+      listOfNotNull(
+        okAction,
+        clearErrorsAction,
+        cancelAction
+      )
     }
     else {
-      arrayOf(ClearErrorsAction(), cancelAction, okAction)
-    }
+      listOfNotNull(
+        clearErrorsAction,
+        cancelAction,
+        okAction
+      )
+    }.toTypedArray()
   }
 
   override fun createLeftSideActions(): Array<Action> {
@@ -348,7 +361,11 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
   private fun updateControls() {
     myLoadingDecorator.startLoading(false)
     myUpdateControlsJob.cancel(null)
-    myUpdateControlsJob = service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
+    var context = Dispatchers.EDT
+    if (isModal) {
+      context += ModalityState.any().asContextElement()
+    }
+    myUpdateControlsJob = service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch(context) {
       val cluster = selectedCluster()
       val submitter = cluster.submitter
       cluster.messages.forEach { it.isRead = true }

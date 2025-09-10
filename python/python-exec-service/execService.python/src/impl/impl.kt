@@ -5,10 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
-import com.intellij.python.community.execService.Args
-import com.intellij.python.community.execService.ExecOptions
-import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
+import com.intellij.python.community.execService.*
 import com.intellij.python.community.execService.impl.transformerToHandler
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.executePythonAdvanced
@@ -41,9 +38,14 @@ internal suspend fun ExecService.validatePythonAndGetVersionImpl(python: Executa
   val versionString = versionOutput.stdoutString.let { it.ifBlank { versionOutput.stderrString } }
   val languageLevel = getLanguageLevelFromVersionStringStaticSafe(versionString.trim())
   if (languageLevel == null) {
-    return@withContext PyResult.localizedError(message("python.get.version.wrong.version", python.userReadableName, versionOutput))
+    return@withContext PyResult.localizedError(message("python.get.version.wrong.version", python.userReadableName, versionString))
   }
   return@withContext Result.success(languageLevel)
 }
 
-private val ExecutablePython.userReadableName: @NlsSafe String get() = (listOf(binary.pathString) + args).joinToString(" ")
+private val ExecutablePython.userReadableName: @NlsSafe String
+  get() =
+    (listOf(when (binary) {
+              is BinOnEel -> binary.path.pathString
+              is BinOnTarget -> binary
+            }) + args).joinToString(" ")

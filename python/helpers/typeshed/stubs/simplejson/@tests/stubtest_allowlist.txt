@@ -13,4 +13,3 @@ simplejson.tests.*
 simplejson.compat
 simplejson.ordered_dict
 simplejson.tool
-simplejson.OrderedDict

@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.nullable.NotNullFieldNotInitializedInspection;
@@ -19,19 +20,26 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.LineColumn;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,6 +50,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
@@ -60,14 +70,27 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
 
   private static final String PACKAGE_NAME = "org.jspecify.annotations";
   private static final Path PATH = Paths.get(JavaTestUtil.getJavaTestDataPath(), "/inspection/dataFlow/jspecify/");
+  private static final Pattern JSPECIFY_PATTERN = Pattern.compile("// jspecify_\\w+");
+  private static final Pattern TEST_CANNOT_CONVERT = Pattern.compile("// test:cannot-convert.*!>?");
   @Parameterized.Parameter
   public String myFileName;
+
+  private static final Statistic STATISTIC = new Statistic(new LongAdder(), new LongAdder(), new LongAdder(), MultiMap.create());
+
+  @AfterClass
+  public static void afterClass() {
+    System.out.println(STATISTIC);
+  }
 
   @Parameterized.Parameters(name = "{0}")
   public static List<String> getData() throws IOException {
     return Files.list(PATH).filter(f -> !f.getFileName().toString().startsWith("."))
       .filter(f -> Files.isDirectory(f) || f.toString().endsWith(".java"))
       .map(PATH::relativize).map(Path::toString).collect(Collectors.toList());
+  }
+
+  protected List<ErrorFilter> getErrorFilter() {
+    return Collections.emptyList();
   }
 
   @Override
@@ -101,29 +124,17 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     if (files.isEmpty()) {
       throw new IllegalStateException("No Java files");
     }
-    class FileData {
-      final Path path;
-      final String fileText;
-      final String stripped;
-      final PsiFile psiFile;
-
-      FileData(Path path, String fileText, String stripped, PsiFile psiFile) {
-        this.path = path;
-        this.fileText = fileText;
-        this.stripped = stripped;
-        this.psiFile = psiFile;
-      }
-    }
     List<FileData> fileData = new ArrayList<>();
     for (Path file : files) {
       String fileText = Files.readString(file).replace("\r\n", "\n");
-      String stripped = fileText.replaceAll("// jspecify_\\w+", "");
+      fileText = TEST_CANNOT_CONVERT.matcher(fileText).replaceAll("// jspecify_nullness_mismatch");
+      String stripped = JSPECIFY_PATTERN.matcher(fileText).replaceAll("");
       String relativeFile = FileUtil.toSystemIndependentName((dirMode ? path.relativize(file) : file.getFileName()).toString());
       PsiFile psiFile = myFixture.addFileToProject(relativeFile, stripped);
-      fileData.add(new FileData(file, fileText, stripped, psiFile));
+      fileData.add(new FileData(file, fileText, stripped, psiFile, createErrorContainer(fileText)));
     }
     for (FileData data : fileData) {
-      String fileText = data.fileText;
+      String fileText = getExpectedTest(data, getErrorFilter());
       String stripped = data.stripped;
       PsiFile file = data.psiFile;
 
@@ -143,7 +154,11 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
           });
         }
         String actualText = getActualText(actual, stripped);
-        if (!fileText.equals(actualText)) {
+        if (!getErrorFilter().isEmpty()) {
+          assertEquals("Messages don't match (" + data.path.getFileName().toString() + ")",
+                       fileText, actualText);
+        }
+        if (getErrorFilter().isEmpty() && !fileText.equals(actualText)) {
           throw new FileComparisonFailedError("Messages don't match (" + data.path.getFileName().toString() + ")",
                                               fileText, actualText, data.path.toString());
         }
@@ -151,7 +166,64 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     }
   }
 
-  private static class JSpecifyNullableStuffInspection extends NullableStuffInspection {
+  @NotNull
+  private static String getExpectedTest(@NotNull FileData data,
+                                        @NotNull List<ErrorFilter> modificators) {
+    ErrorContainer container = data.errorContainer;
+    List<ErrorInfo> errors = new ArrayList<>(container.errors());
+    STATISTIC.total.add(errors.size());
+    errors.removeIf(er ->
+                                  ContainerUtil.exists(modificators,
+                                                       m -> !m.shouldCount() && m.filterActual(data.psiFile, data.stripped, er.lineNumber, er.startLineOffset, er.message)));
+    STATISTIC.valuable.add(errors.size());
+    errors.removeIf(er -> {
+      return ContainerUtil.exists(modificators,
+                                  m -> {
+                                    boolean matched = m.shouldCount() &&
+                                                      m.filterActual(data.psiFile, data.stripped, er.lineNumber, er.startLineOffset,
+                                                                     er.message);
+                                    if (matched) {
+                                      STATISTIC.skipped.putValue(m.getClass().getName(), new Place(data.path.toString(), er.lineNumber));
+                                    }
+                                    return matched;
+                                  });
+    });
+    STATISTIC.checked.add(errors.size());
+    String restoredText = restoreWithErrors(data.stripped, new ErrorContainer(errors));
+    if (modificators.isEmpty()) {
+      assertEquals("incorrect restored file", data.fileText, restoredText);
+    }
+    return restoredText;
+  }
+
+  @NotNull
+  private static String restoreWithErrors(@NotNull String stripped, @NotNull ErrorContainer container) {
+    List<Pair<Integer, String>> indexToText = ContainerUtil.map(container.errors(), error -> Pair.create(
+      StringUtil.lineColToOffset(stripped, error.lineNumber, error.startLineOffset), error.message));
+    StringBuilder sb = new StringBuilder(stripped);
+    int additionalOffset = 0;
+    for (Pair<Integer, String> pair : indexToText) {
+      String additionalText = pair.second;
+      sb.insert(pair.first + additionalOffset, additionalText);
+      additionalOffset += additionalText.length();
+    }
+    return sb.toString();
+  }
+
+  @NotNull
+  private static ErrorContainer createErrorContainer(@NotNull String text) {
+    ErrorContainer container = new ErrorContainer(new ArrayList<>());
+    JSPECIFY_PATTERN.matcher(text).results().forEach(m -> {
+      String message = m.group();
+      int start = m.start();
+      LineColumn column = StringUtil.offsetToLineColumn(text, start);
+      container.errors.add(new ErrorInfo(column.line, column.column, message));
+    });
+
+    return container;
+  }
+
+  static class JSpecifyNullableStuffInspection extends NullableStuffInspection {
     private final Map<PsiElement, String> warnings;
 
     JSpecifyNullableStuffInspection(Map<PsiElement, String> warnings) {
@@ -172,7 +244,10 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
           "inspection.nullable.problems.at.local.variable" ->
           warnings.put(anchor, "jspecify_unrecognized_location");
         case "inspection.nullable.problems.Nullable.method.overrides.NotNull",
-          "inspection.nullable.problems.NotNull.parameter.overrides.Nullable" ->
+             "inspection.nullable.problems.NotNull.parameter.overrides.Nullable",
+             "assigning.a.collection.of.nullable.elements"
+        //,  "non.null.type.argument.is.expected"  //todo see IDEA-377707
+          ->
           warnings.put(anchor, "jspecify_nullness_mismatch");
         case "inspection.nullable.problems.method.overrides.NotNull", "inspection.nullable.problems.parameter.overrides.NotNull" ->
           warnings.put(anchor, "jspecify_nullness_not_enough_information");
@@ -198,7 +273,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   // Reports dataflow problems in code-analysis-conformant way
-  private static class JSpecifyDataFlowInspection extends DataFlowInspectionBase {
+  static class JSpecifyDataFlowInspection extends DataFlowInspectionBase {
     private final Map<PsiElement, String> warnings;
 
     JSpecifyDataFlowInspection(Map<PsiElement, String> warnings) {
@@ -216,6 +291,20 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
       }
     }
 
+    @Override
+    protected void reportNullableReturnsProblems(ProblemReporter reporter,
+                                                 List<NullabilityProblemKind.NullabilityProblem<?>> problems,
+                                                 Nullability nullability,
+                                                 PsiAnnotation anno,
+                                                 NullableNotNullManager manager) {
+      for (NullabilityProblemKind.NullabilityProblem<?> problem : problems) {
+        String warning = getJSpecifyWarning(problem);
+        if (warning != null) {
+          warnings.put(problem.getDereferencedExpression(), warning);
+        }
+      }
+    }
+
     private static @Nullable String getJSpecifyWarning(NullabilityProblemKind.NullabilityProblem<?> problem) {
       PsiExpression expression = problem.getDereferencedExpression();
       if (expression == null) return null;
@@ -225,6 +314,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
         if (methodOrLambda instanceof PsiMethod method) {
           NullabilityAnnotationInfo info =
             NullableNotNullManager.getInstance(methodOrLambda.getProject()).findEffectiveNullabilityInfo(method);
+          if (info == null || info.isInferred()) info = DfaPsiUtil.getTypeNullabilityInfo(PsiTypesUtil.getMethodReturnType(method.getBody()));
           Nullability nullability = info == null ? Nullability.UNKNOWN : info.getNullability();
           if (nullability == Nullability.NULLABLE) return null;
           if (nullability == Nullability.UNKNOWN) return "jspecify_nullness_not_enough_information";
@@ -238,6 +328,9 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     StringBuilder sb = new StringBuilder();
     int pos = 0;
     TreeMap<Integer, List<String>> map = EntryStream.of(actual)
+      .filter(e ->
+                !ContainerUtil.exists(getErrorFilter(), filter ->
+                  filter.filterExpected(e.getKey(), e.getValue())))
       .mapKeys(e -> e.getTextRange().getStartOffset())
       .grouping(TreeMap::new, Collectors.toList());
     for (String str : stripped.split("\n", -1)) {
@@ -252,4 +345,53 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     }
     return sb.toString();
   }
+
+  private record FileData(Path path, String fileText, String stripped, PsiFile psiFile, ErrorContainer errorContainer) {
+  }
+
+  private record ErrorContainer(List<ErrorInfo> errors) {
+  }
+
+  private record ErrorInfo(int lineNumber, int startLineOffset, String message) {
+  }
+
+  protected interface ErrorFilter {
+    boolean filterActual(@NotNull PsiFile file,
+                         @NotNull String strippedText,
+                         int lineNumber,
+                         int startLineOffset,
+                         @NotNull String errorMessage);
+
+    boolean filterExpected(@NotNull PsiElement psiElement, @NotNull String errorMessage);
+
+    default boolean shouldCount() {
+      return true;
+    }
+  }
+
+  record Statistic(LongAdder total, LongAdder valuable, LongAdder checked, MultiMap<String, Place> skipped) {
+    @Override
+    public String toString() {
+      return "Statistic{" +
+             "total=" + total +
+             ", valuable=" + valuable +
+             ", checked=" + checked +
+             ", skipped=\n" + prepareToString(skipped) +
+             '}';
+    }
+
+    private static String prepareToString(MultiMap<String, Place> map) {
+      StringBuilder sb = new StringBuilder();
+      for (Map.Entry<String, Collection<Place>> entry : map.entrySet()) {
+        sb.append(entry.getKey()).append(" (").append(entry.getValue().size()).append(")").append(": \n");
+        for (Place place : entry.getValue()) {
+          sb.append("  ").append(place.fileName).append(":").append(place.lineNumber).append("\n");
+        }
+        sb.append("\n");
+      }
+      return sb.toString();
+    }
+  }
+
+  record Place(String fileName, int lineNumber){}
 }

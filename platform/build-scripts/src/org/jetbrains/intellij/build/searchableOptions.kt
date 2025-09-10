@@ -14,6 +14,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader
+import org.jetbrains.intellij.build.impl.additionalProperties
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -97,7 +98,7 @@ internal suspend fun buildSearchableOptions(
     // It'll process all UI elements in the `Settings` dialog and build an index for them.
     productRunner.runProduct(
       args = listOf("traverseUI", targetDirectory.toString(), "true"),
-      additionalVmProperties = systemProperties + VmProperties(mapOf("idea.l10n.keys" to "only")),
+      additionalVmProperties = systemProperties + VmProperties(mapOf("idea.l10n.keys" to "only")) + additionalProperties(),
       timeout = DEFAULT_TIMEOUT,
     )
 

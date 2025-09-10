@@ -662,7 +662,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   @VisibleForTesting
-  protected <V> V catchCorruption(ThrowableComputable<V, IOException> operation) throws IOException {
+  public  <V> V catchCorruption(ThrowableComputable<V, IOException> operation) throws IOException {
     if (isCorrupted()) {
       throw new CorruptedException("PersistentEnumerator storage corrupted " + myFile);
     }

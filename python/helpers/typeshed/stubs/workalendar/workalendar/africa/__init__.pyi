@@ -9,3 +9,17 @@ from .nigeria import Nigeria as Nigeria
 from .sao_tome import SaoTomeAndPrincipe as SaoTomeAndPrincipe
 from .south_africa import SouthAfrica as SouthAfrica
 from .tunisia import Tunisia as Tunisia
+
+__all__ = (
+    "Algeria",
+    "Benin",
+    "IvoryCoast",
+    "Kenya",
+    "Madagascar",
+    "SaoTomeAndPrincipe",
+    "SouthAfrica",
+    "Angola",
+    "Mozambique",
+    "Nigeria",
+    "Tunisia",
+)

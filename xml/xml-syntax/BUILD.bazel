@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.xml.syntax` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "syntax_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "syntax",
+  module_name = "intellij.xml.syntax",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/util/multiplatform",
+    "@lib//:jetbrains-annotations",
+    "//platform/syntax/syntax-i18n:i18n",
+    "//platform/syntax/syntax-util:util",
+  ],
+  runtime_deps = [":syntax_resources"]
+)
+### auto-generated section `build intellij.xml.syntax` end

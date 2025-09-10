@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nls
 /**
  * Forcibly syncs all *already linked* uv projects, overriding their workspace models.
  */
-class UvSyncAction : AnAction() {
+internal class UvSyncAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     project.trackActivityBlocking(UvActivityKey) {

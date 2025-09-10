@@ -11,7 +11,7 @@ jvm_library(
   name = "vcs-gitlab-yaml",
   module_name = "intellij.vcs.gitlab.yaml",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/gitlab/gitlab-core:vcs-gitlab",
     "//plugins/yaml/backend",
@@ -26,7 +26,7 @@ jvm_library(
 jvm_library(
   name = "vcs-gitlab-yaml_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":vcs-gitlab-yaml"],
   deps = [
     "//platform/analysis-api:analysis",

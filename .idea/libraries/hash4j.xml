@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="hash4j" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.dynatrace.hash4j:hash4j:0.22.0">
+    <properties include-transitive-deps="false" maven-id="com.dynatrace.hash4j:hash4j:0.26.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.22.0/hash4j-0.22.0.jar">
-          <sha256sum>23028a3fd006e530bf495f551083208187cafd8f80624d048eba56442f16a50e</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.26.0/hash4j-0.26.0.jar">
+          <sha256sum>47c319c7015d31df78c17962c4008861f8630f383d12275cf7abd09f6a804c43</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.22.0/hash4j-0.22.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.26.0/hash4j-0.26.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.22.0/hash4j-0.22.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.26.0/hash4j-0.26.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

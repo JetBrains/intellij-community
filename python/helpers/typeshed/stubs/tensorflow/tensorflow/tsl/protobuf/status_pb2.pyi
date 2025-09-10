@@ -27,10 +27,7 @@ class StatusProto(google.protobuf.message.Message):
     message: builtins.str
     """Detail error message."""
     def __init__(
-        self,
-        *,
-        code: tensorflow.tsl.protobuf.error_codes_pb2.Code.ValueType | None = ...,
-        message: builtins.str | None = ...,
+        self, *, code: tensorflow.tsl.protobuf.error_codes_pb2.Code.ValueType | None = ..., message: builtins.str | None = ...
     ) -> None: ...
     def ClearField(self, field_name: typing.Literal["code", b"code", "message", b"message"]) -> None: ...
 

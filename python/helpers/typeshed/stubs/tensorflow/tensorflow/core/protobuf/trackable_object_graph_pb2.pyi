@@ -39,12 +39,7 @@ class TrackableObjectGraph(google.protobuf.message.Message):
             """
             local_name: builtins.str
             """A user-provided name for the edge."""
-            def __init__(
-                self,
-                *,
-                node_id: builtins.int | None = ...,
-                local_name: builtins.str | None = ...,
-            ) -> None: ...
+            def __init__(self, *, node_id: builtins.int | None = ..., local_name: builtins.str | None = ...) -> None: ...
             def ClearField(self, field_name: typing.Literal["local_name", b"local_name", "node_id", b"node_id"]) -> None: ...
 
         @typing.final
@@ -74,7 +69,9 @@ class TrackableObjectGraph(google.protobuf.message.Message):
                 full_name: builtins.str | None = ...,
                 checkpoint_key: builtins.str | None = ...,
             ) -> None: ...
-            def ClearField(self, field_name: typing.Literal["checkpoint_key", b"checkpoint_key", "full_name", b"full_name", "name", b"name"]) -> None: ...
+            def ClearField(
+                self, field_name: typing.Literal["checkpoint_key", b"checkpoint_key", "full_name", b"full_name", "name", b"name"]
+            ) -> None: ...
 
         @typing.final
         class SlotVariableReference(google.protobuf.message.Message):
@@ -100,7 +97,17 @@ class TrackableObjectGraph(google.protobuf.message.Message):
                 slot_name: builtins.str | None = ...,
                 slot_variable_node_id: builtins.int | None = ...,
             ) -> None: ...
-            def ClearField(self, field_name: typing.Literal["original_variable_node_id", b"original_variable_node_id", "slot_name", b"slot_name", "slot_variable_node_id", b"slot_variable_node_id"]) -> None: ...
+            def ClearField(
+                self,
+                field_name: typing.Literal[
+                    "original_variable_node_id",
+                    b"original_variable_node_id",
+                    "slot_name",
+                    b"slot_name",
+                    "slot_variable_node_id",
+                    b"slot_variable_node_id",
+                ],
+            ) -> None: ...
 
         CHILDREN_FIELD_NUMBER: builtins.int
         ATTRIBUTES_FIELD_NUMBER: builtins.int
@@ -108,15 +115,27 @@ class TrackableObjectGraph(google.protobuf.message.Message):
         REGISTERED_SAVER_FIELD_NUMBER: builtins.int
         HAS_CHECKPOINT_VALUES_FIELD_NUMBER: builtins.int
         @property
-        def children(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___TrackableObjectGraph.TrackableObject.ObjectReference]:
+        def children(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+            global___TrackableObjectGraph.TrackableObject.ObjectReference
+        ]:
             """Objects which this object depends on."""
 
         @property
-        def attributes(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___TrackableObjectGraph.TrackableObject.SerializedTensor]:
+        def attributes(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+            global___TrackableObjectGraph.TrackableObject.SerializedTensor
+        ]:
             """Serialized data specific to this object."""
 
         @property
-        def slot_variables(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___TrackableObjectGraph.TrackableObject.SlotVariableReference]:
+        def slot_variables(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+            global___TrackableObjectGraph.TrackableObject.SlotVariableReference
+        ]:
             """Slot variables owned by this object."""
 
         @property
@@ -138,20 +157,41 @@ class TrackableObjectGraph(google.protobuf.message.Message):
             *,
             children: collections.abc.Iterable[global___TrackableObjectGraph.TrackableObject.ObjectReference] | None = ...,
             attributes: collections.abc.Iterable[global___TrackableObjectGraph.TrackableObject.SerializedTensor] | None = ...,
-            slot_variables: collections.abc.Iterable[global___TrackableObjectGraph.TrackableObject.SlotVariableReference] | None = ...,
+            slot_variables: (
+                collections.abc.Iterable[global___TrackableObjectGraph.TrackableObject.SlotVariableReference] | None
+            ) = ...,
             registered_saver: global___RegisteredSaver | None = ...,
             has_checkpoint_values: google.protobuf.wrappers_pb2.BoolValue | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing.Literal["has_checkpoint_values", b"has_checkpoint_values", "registered_saver", b"registered_saver"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing.Literal["attributes", b"attributes", "children", b"children", "has_checkpoint_values", b"has_checkpoint_values", "registered_saver", b"registered_saver", "slot_variables", b"slot_variables"]) -> None: ...
+        def HasField(
+            self,
+            field_name: typing.Literal[
+                "has_checkpoint_values", b"has_checkpoint_values", "registered_saver", b"registered_saver"
+            ],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing.Literal[
+                "attributes",
+                b"attributes",
+                "children",
+                b"children",
+                "has_checkpoint_values",
+                b"has_checkpoint_values",
+                "registered_saver",
+                b"registered_saver",
+                "slot_variables",
+                b"slot_variables",
+            ],
+        ) -> None: ...
 
     NODES_FIELD_NUMBER: builtins.int
     @property
-    def nodes(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___TrackableObjectGraph.TrackableObject]: ...
-    def __init__(
+    def nodes(
         self,
-        *,
-        nodes: collections.abc.Iterable[global___TrackableObjectGraph.TrackableObject] | None = ...,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___TrackableObjectGraph.TrackableObject]: ...
+    def __init__(
+        self, *, nodes: collections.abc.Iterable[global___TrackableObjectGraph.TrackableObject] | None = ...
     ) -> None: ...
     def ClearField(self, field_name: typing.Literal["nodes", b"nodes"]) -> None: ...
 
@@ -167,12 +207,7 @@ class RegisteredSaver(google.protobuf.message.Message):
     """The name of the registered saver/restore function."""
     object_name: builtins.str
     """Unique auto-generated name of the object."""
-    def __init__(
-        self,
-        *,
-        name: builtins.str | None = ...,
-        object_name: builtins.str | None = ...,
-    ) -> None: ...
+    def __init__(self, *, name: builtins.str | None = ..., object_name: builtins.str | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["name", b"name", "object_name", b"object_name"]) -> None: ...
 
 global___RegisteredSaver = RegisteredSaver

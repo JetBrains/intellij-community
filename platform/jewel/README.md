@@ -162,8 +162,7 @@ The project is split in modules:
    * `ide-laf-bridge-styling` contains the IntelliJ Platform bridge theming for the Markdown renderer
    * `int-ui-standalone-styling` contains the standalone Int UI theming for the Markdown renderer
 7. `samples` contains the example apps, which showcase the available components:
-   * `standalone` is a regular CfD app, using the standalone theme definitions and custom window decoration
-   * `ide-plugin` is an IntelliJ plugin that showcases the use of the Swing Bridge
+   * `standalone` is a regular CfD app, using the standalone theme definitions and custom window decoration. See DevKit plugin for demo inside IntelliJ IDEA plugin.
    * `showcase` contains the shared component showcase code, used by both the IDE plugin and the standalone sample
 
 ## Branching strategy and IJ Platforms

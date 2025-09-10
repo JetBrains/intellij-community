@@ -67,21 +67,21 @@ public final class AppMode {
   public static void setFlags(@NotNull List<String> args) {
     isHeadless = isHeadless(args);
     isCommandLine = isHeadless || (!args.isEmpty() && isGuiCommand(args.get(0)));
-    isLightEdit = Boolean.parseBoolean(System.getProperty("idea.force.light.edit.mode")) || (!isCommandLine && !isKnownNonLightEditCommand(args) && isFileAfterOptions(args));
 
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
 
-    if (args.isEmpty()) {
-      return;
+    if (!args.isEmpty()) {
+      isRemoteDevHost = CWM_HOST_COMMAND.equals(args.get(0)) ||
+                        CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)) ||
+                        REMOTE_DEV_HOST_COMMAND.equals(args.get(0)) ||
+                        REMOTE_DEV_MODE_COMMAND.equals(args.get(0)) ||
+                        SPLIT_MODE_COMMAND.equals(args.get(0));
     }
 
-    isRemoteDevHost = CWM_HOST_COMMAND.equals(args.get(0)) ||
-                      CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)) ||
-                      REMOTE_DEV_HOST_COMMAND.equals(args.get(0)) ||
-                      REMOTE_DEV_MODE_COMMAND.equals(args.get(0)) ||
-                      SPLIT_MODE_COMMAND.equals(args.get(0));
+    isLightEdit = Boolean.parseBoolean(System.getProperty("idea.force.light.edit.mode")) ||
+                  (!isCommandLine && !isRemoteDevHost && !isKnownNonLightEditCommand(args) && isFileAfterOptions(args));
 
     for (String arg : args) {
       if (DISABLE_NON_BUNDLED_PLUGINS.equalsIgnoreCase(arg)) {
@@ -99,7 +99,7 @@ public final class AppMode {
    */
   private static boolean isKnownNonLightEditCommand(@NotNull List<String> args) {
     return !args.isEmpty() &&
-           Arrays.asList("cwmHost", "cwmHostNoLobby", "remoteDevHost", "serverMode", "splitMode", "thinClient").contains(args.get(0));
+           Arrays.asList("thinClient").contains(args.get(0));
   }
 
   private static boolean isGuiCommand(String arg) {
@@ -146,7 +146,7 @@ public final class AppMode {
     List<String> headlessCommands = Arrays.asList(
       "ant", "duplocate", "dataSources", "dump-launch-parameters", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format",
       "keymap", "update", "inspections", "intentions", "rdserver-headless", "thinClient-headless", "installFrontendPlugins", "installPlugins", "dumpActions",
-      "cwmHostStatus", "remoteDevStatus", "invalidateCaches", "warmup", "buildEventsScheme", "inspectopedia-generator", "remoteDevShowHelp",
+      "cwmHostStatus", "remoteDevStatus", "invalidateCaches", "warmup", "openUrlOnClient", "buildEventsScheme", "inspectopedia-generator", "remoteDevShowHelp",
       "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler", "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit",
       "qodanaExcludedPlugins", "project-with-shared-caches", "registerBackendLocationForGateway", "cherryPickAnalyzer", "listBundledPlugins");
     return headlessCommands.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect");

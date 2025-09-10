@@ -218,6 +218,8 @@ f:com.intellij.openapi.application.CoroutinesKt
 - *sf:getUiWithModelAccess(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
 - *sf:getUiWithModelAccessImmediate(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
 - *sf:readAndBackgroundWriteAction(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:readAndBackgroundWriteActionUndispatched(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:readAndEdtWriteActionUndispatched(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:writeAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:writeIntentReadAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.openapi.application.ReadAction
@@ -321,10 +323,6 @@ a:com.intellij.openapi.project.DumbService
 - com.intellij.openapi.roots.ContentIterator
 - processFile(com.intellij.openapi.vfs.VirtualFile):Z
 - a:processFileEx(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.containers.TreeNodeProcessingResult
-*:com.intellij.openapi.vfs.AsyncFileListener$ChangeApplierBackgroundable
-- com.intellij.openapi.vfs.AsyncFileListener$ChangeApplier
-- afterVfsChange():V
-- beforeVfsChange():V
 *:com.intellij.openapi.vfs.FileVisibilityProvider
 - *sf:Companion:com.intellij.openapi.vfs.FileVisibilityProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
@@ -356,6 +354,7 @@ a:com.intellij.openapi.vfs.VirtualFile
 a:com.intellij.openapi.vfs.VirtualFileManager
 - com.intellij.openapi.util.ModificationTracker
 - *sf:VFS_CHANGES_BG:com.intellij.util.messages.Topic
+- *a:addAsyncFileListenerBackgroundable(com.intellij.openapi.vfs.AsyncFileListener,com.intellij.openapi.Disposable):V
 *:com.intellij.openapi.vfs.VirtualFilePreCloseCheck
 - *sf:Companion:com.intellij.openapi.vfs.VirtualFilePreCloseCheck$Companion
 - a:canCloseFile(com.intellij.openapi.vfs.VirtualFile):Z
@@ -365,8 +364,7 @@ f:com.intellij.openapi.vfs.VirtualFileUtil
 - *sf:getCachedValue(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Key,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):java.lang.Object
 - *bs:getCachedValue$default(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Key,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):java.lang.Object
 *:com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
-- after(java.util.List):V
-- before(java.util.List):V
+- com.intellij.openapi.vfs.newvfs.BulkFileListener
 f:com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 - com.intellij.openapi.vfs.newvfs.events.VFileEvent
 - *:isRename():Z
@@ -411,6 +409,9 @@ f:com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 - a:presentableText(java.lang.String):com.intellij.platform.backend.presentation.TargetPresentationBuilder
 - a:presentableTextAttributes(com.intellij.openapi.editor.markup.TextAttributes):com.intellij.platform.backend.presentation.TargetPresentationBuilder
 - a:presentation():com.intellij.platform.backend.presentation.TargetPresentation
+*:com.intellij.pom.AsyncNavigatable
+- com.intellij.pom.Navigatable
+- a:navigateAsync(Z,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.pom.Navigatable
 - *:navigationRequest():com.intellij.platform.backend.navigation.NavigationRequest
 *f:com.intellij.psi.BasicInspectionVisitorBean
@@ -435,6 +436,7 @@ com.intellij.psi.PsiElement
 - *:getOwnReferences():java.util.Collection
 a:com.intellij.psi.PsiManager
 - com.intellij.openapi.util.UserDataHolderBase
+- *a:addPsiTreeChangeListenerBackgroundable(com.intellij.psi.PsiTreeChangeListener,com.intellij.openapi.Disposable):V
 - *a:findFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 - *a:findViewProvider(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.FileViewProvider
 *:com.intellij.psi.PsiNamedElementWithCustomPresentation
@@ -463,7 +465,6 @@ com.intellij.psi.SyntheticElement
 - *sf:NoContextInformation():com.intellij.psi.search.NoContextInformation
 - *sf:contains(com.intellij.psi.search.SearchScope,com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):Z
 - *sf:createContainingContextFileInfo(java.util.Collection):com.intellij.psi.search.CodeInsightContextFileInfo
-- *sf:getAnyCorrespondingContext(com.intellij.psi.search.SearchScope,com.intellij.openapi.vfs.VirtualFile):com.intellij.codeInsight.multiverse.CodeInsightContext
 - *sf:getCodeInsightContextInfo(com.intellij.psi.search.SearchScope):com.intellij.psi.search.CodeInsightContextInfo
 - *sf:getCorrespondingContexts(com.intellij.psi.search.SearchScope,com.intellij.openapi.vfs.VirtualFile):java.util.Collection
 - *sf:getFileContextInfo(com.intellij.psi.search.SearchScope,com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.search.CodeInsightContextFileInfo
@@ -481,6 +482,18 @@ c:com.intellij.psi.search.DelegatingGlobalSearchScope
 - com.intellij.psi.search.CodeInsightContextInfo
 f:com.intellij.psi.search.PsiSearchScopeUtil
 - *s:restrictScopeToFileLanguage(com.intellij.openapi.project.Project,com.intellij.psi.search.SearchScope,com.intellij.lang.LanguageMatcher):com.intellij.psi.search.SearchScope
+*:com.intellij.psi.search.UnionCapableScope
+- a:uniteWith(java.util.Collection):com.intellij.psi.search.UnionCapableScope$UnionResult
+*f:com.intellij.psi.search.UnionCapableScope$UnionResult
+- <init>(com.intellij.psi.search.GlobalSearchScope,java.util.Set):V
+- f:component1():com.intellij.psi.search.GlobalSearchScope
+- f:component2():java.util.Set
+- f:copy(com.intellij.psi.search.GlobalSearchScope,java.util.Set):com.intellij.psi.search.UnionCapableScope$UnionResult
+- bs:copy$default(com.intellij.psi.search.UnionCapableScope$UnionResult,com.intellij.psi.search.GlobalSearchScope,java.util.Set,I,java.lang.Object):com.intellij.psi.search.UnionCapableScope$UnionResult
+- equals(java.lang.Object):Z
+- f:getSkippedScopes():java.util.Set
+- f:getUnitedScope():com.intellij.psi.search.GlobalSearchScope
+- hashCode():I
 com.intellij.psi.stubs.BinaryFileStubBuilder
 - *:getFileFilter():com.intellij.openapi.vfs.VirtualFileFilter
 *:com.intellij.psi.stubs.LanguageStubDefinition

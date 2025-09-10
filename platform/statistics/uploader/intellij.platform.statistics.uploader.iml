@@ -18,5 +18,6 @@
     <orderEntry type="library" name="com.jetbrains.fus.reporting.serialization.kotlin" level="project" />
     <orderEntry type="library" name="com.jetbrains.fus.reporting.configuration" level="project" />
     <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation" level="project" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.connection.client" level="project" />
   </component>
 </module>

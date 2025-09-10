@@ -17,11 +17,13 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.templates.TemplateModuleBuilder;
 import com.intellij.util.ui.JBUI;
@@ -31,6 +33,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.MissingResourceException;
 
 /**
  * @author Dmitry Avdeev
@@ -80,9 +83,33 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     return getProjectSdkByDefault(context);
   }
 
-  public static Sdk getProjectSdkByDefault(WizardContext context) {
-    Project project = context.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : context.getProject();
-    return ProjectRootManager.getInstance(project).getProjectSdk();
+  public static @Nullable Sdk getProjectSdkByDefault(WizardContext context) {
+    Project project = context.getProject();
+    if (project == null) {
+      return getDefaultSdk();
+    }
+    else {
+      return ProjectRootManager.getInstance(project).getProjectSdk();
+    }
+  }
+
+  private static @Nullable Sdk getDefaultSdk() {
+    // this is a fallback to simulate old behavior. Please delete this code (always return null). Wizard should have its own
+    // "default sdk" setting if needed instead of relying on registry option or default project: project sdk is stored in the WSM now,
+    // but default projects do not have workspace model (at least for now).
+    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    try {
+      String sdkName = Registry.stringValue("default.project.jdk.name");
+      if (sdkName.isBlank()) {
+        return null;
+      }
+      else {
+        return ProjectJdkTable.getInstance(defaultProject).findJdk(sdkName);
+      }
+    }
+    catch (MissingResourceException ignored) {
+      return null;
+    }
   }
 
   public @NotNull String getNewProjectFilePath() {

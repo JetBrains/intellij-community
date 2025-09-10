@@ -104,7 +104,7 @@ public final class UnusedDefInspection extends GroovyLocalInspectionBase {
         if (element instanceof GrControlFlowOwner) {
           // don't go deeper
         }
-        else if (element instanceof GrVariable variable && !(element instanceof GrField)) {
+        else if (element instanceof GrVariable variable && !(element instanceof GrField) && !variable.isUnnamed()) {
           if (checked.contains(variable)) return;
           GrExpression initializer = variable.getInitializerGroovy();
           if (initializer != null) {
@@ -209,6 +209,6 @@ public final class UnusedDefInspection extends GroovyLocalInspectionBase {
   }
 
   private static boolean isLocalVariable(GrVariable var, boolean parametersAllowed) {
-    return !(var instanceof GrField || var instanceof GrParameter && !parametersAllowed);
+    return !var.isUnnamed() && !(var instanceof GrField || var instanceof GrParameter && !parametersAllowed);
   }
 }

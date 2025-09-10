@@ -8,19 +8,17 @@ import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.InspectionTestUtil
-import com.intellij.testFramework.createGlobalContextForTool
+import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
-import com.intellij.testFramework.runInEdtAndWait
+import org.jdom.Element
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.runBlocking.RunBlockingInspection
 import org.jetbrains.kotlin.util.collectionUtils.concat
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import java.io.File
-import org.jdom.Element
-import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RunBlockingInspectionTest {
@@ -40,6 +38,7 @@ class RunBlockingInspectionTest {
         }
         fun getFixture() = myFixture
         public override fun setUp() = super.setUp()
+        public override fun tearDown() = super.tearDown()
         override fun getTestDataPath() = testDataDir
         override fun getProjectDescriptor(): DefaultLightProjectDescriptor = projectDescriptor
     }
@@ -56,6 +55,17 @@ class RunBlockingInspectionTest {
         aggregatedInputFiles.forEach { input ->
             val psiFile = testCase.getFixture().configureByFile(input)
             psiFileMap[input] = psiFile
+        }
+    }
+
+    @AfterAll
+    fun tearDown() {
+        testCase.tearDown()
+        runInEdtAndWait {
+            // CodeInsightFixture use a light project.
+            // We have to clean it up after suite because it could conflict with tests which use TestApplication with a full project.
+            LightPlatformTestCase.closeAndDeleteProject()
+            PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
         }
     }
 

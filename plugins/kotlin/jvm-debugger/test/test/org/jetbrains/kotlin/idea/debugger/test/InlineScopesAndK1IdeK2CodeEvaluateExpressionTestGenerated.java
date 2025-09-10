@@ -3203,6 +3203,11 @@ public abstract class InlineScopesAndK1IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("testData/evaluation/jvmMultiModule/internalMembersInInlinedLambda.kt");
             }
 
+            @TestMetadata("jvmNameConstEvaluationMultimodule.kt")
+            public void testJvmNameConstEvaluationMultimodule() throws Exception {
+                runTest("testData/evaluation/jvmMultiModule/jvmNameConstEvaluationMultimodule.kt");
+            }
+
             @TestMetadata("objectsInInlineFunctions.kt")
             public void testObjectsInInlineFunctions() throws Exception {
                 runTest("testData/evaluation/jvmMultiModule/objectsInInlineFunctions.kt");

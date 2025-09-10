@@ -4,6 +4,7 @@ package com.intellij.platform.vcs.changes
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
@@ -67,5 +68,18 @@ object ChangesUtil {
     else {
       return JBIterable.of(beforePath, afterPath).filterNotNull()
     }
+  }
+
+  @JvmStatic
+  fun isMergeConflict(change: Change): Boolean {
+    val status = change.fileStatus
+    return isMergeConflict(status)
+  }
+
+  @JvmStatic
+  fun isMergeConflict(status: FileStatus): Boolean {
+    return status === FileStatus.MERGED_WITH_CONFLICTS ||
+           status === FileStatus.MERGED_WITH_BOTH_CONFLICTS ||
+           status === FileStatus.MERGED_WITH_PROPERTY_CONFLICTS
   }
 }

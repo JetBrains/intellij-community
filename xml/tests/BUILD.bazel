@@ -17,7 +17,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.xml.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:junit4",
     "//platform/analysis-api:analysis",
@@ -51,8 +51,7 @@ jvm_library(
     "//RegExpSupport:regexp_test_lib",
     "//platform/util/nanoxml",
     "//plugins/IntelliLang:langInjection",
-    "//plugins/IntelliLang/plugin",
-    "//plugins/IntelliLang/java-support:java-langInjection",
+    "//java/langInjection",
     "//xml/xml-analysis-impl:analysis-impl",
     "//platform/core-ui",
     "@lib//:assert_j",
@@ -62,10 +61,13 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/polySymbols:polySymbols-testFramework",
     "//libraries/xerces",
+    "//platform/syntax/syntax-scripts:scripts",
+    "//xml/xml-syntax:syntax",
+    "//java/java-runtime:rt",
   ],
   runtime_deps = [
     ":tests_test_resources",
-    "//plugins/IntelliLang/xml-support:xml-langInjection",
+    "//xml/langInjection",
   ]
 )
 ### auto-generated section `build intellij.xml.tests` end

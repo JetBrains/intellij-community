@@ -15,6 +15,7 @@ import com.intellij.codeWithMe.asContextElement
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.DocumentationSettings
+import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -60,7 +61,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     cs.cancel()
   }
 
-  fun actionPerformed(dataContext: DataContext, popupDependencies: Disposable? = null) {
+  fun actionPerformed(dataContext: DataContext, popupDependencies: Disposable? = null, documentationUiDependencies: Disposable? = null) {
     EDT.assertIsEdt()
 
     val editor = dataContext.getData(CommonDataKeys.EDITOR)
@@ -102,7 +103,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
 
     if (requests.isNullOrEmpty()) return
     val popupContext = secondaryPopupContext ?: DefaultPopupContext(project, editor)
-    showDocumentation(requests, popupContext, popupDependencies)
+    showDocumentation(requests, popupContext, popupDependencies, documentationUiDependencies)
   }
 
   private var popup: WeakReference<AbstractPopup>? = null
@@ -129,7 +130,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     return popup
   }
 
-  private fun setPopup(popup: AbstractPopup, popupDependencies: Disposable?) {
+  private fun setPopup(popup: AbstractPopup, documentationUI: DocumentationUI, popupDependencies: Disposable?, documentationUiDependencies: Disposable?) {
     EDT.assertIsEdt()
     this.popup = WeakReference(popup)
     Disposer.register(popup) {
@@ -137,11 +138,13 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
       this.popup = null
     }
     popupDependencies?.let { Disposer.register(popup, it) }
+    documentationUiDependencies?.let { Disposer.register(documentationUI, it) }
   }
 
   private fun showDocumentation(requests: List<DocumentationRequest>,
                                 popupContext: PopupContext,
-                                popupDependencies: Disposable? = null) {
+                                popupDependencies: Disposable? = null,
+                                documentationUiDependencies: Disposable? = null) {
     val toolWindowManager = DocumentationToolWindowManager.getInstance(project)
     val initial = requests.first()
     if (skipPopup) {
@@ -157,8 +160,8 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     }
     popupScope.coroutineContext.job.cancelChildren()
     popupScope.launch(context = Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
-      val popup = showDocumentationPopup(project, requests, popupContext)
-      setPopup(popup, popupDependencies)
+      val (popup, documentationUi) = showDocumentationPopup(project, requests, popupContext)
+      setPopup(popup, documentationUi, popupDependencies, documentationUiDependencies)
     }
   }
 

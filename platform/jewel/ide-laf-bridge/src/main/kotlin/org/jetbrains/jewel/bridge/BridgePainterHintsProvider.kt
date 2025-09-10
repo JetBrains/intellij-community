@@ -115,7 +115,7 @@ private constructor(
                 (bean.colorPalette as Map<String, Any?>).mapValues {
                     when (val value = it.value) {
                         is String -> value
-                        is java.awt.Color -> value.toRgbaHexString()
+                        is java.awt.Color -> value.toRgbaHexString(omitAlphaWhenFullyOpaque = true)
                         else -> null
                     }
                 }

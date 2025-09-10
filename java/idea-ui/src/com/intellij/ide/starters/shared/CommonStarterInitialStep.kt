@@ -7,6 +7,7 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.ide.projectWizard.generators.JdkDownloadService
 import com.intellij.ide.projectWizard.projectWizardJdkComboBox
+import com.intellij.ide.projectWizard.toEelDescriptorProperty
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.local.StarterModuleBuilder
 import com.intellij.ide.starters.shared.ValidationFunctions.*
@@ -62,7 +63,7 @@ abstract class CommonStarterInitialStep(
     .bindStorage(GROUP_ID_PROPERTY_NAME)
 
   protected val artifactIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { entityName }
-  protected val jdkIntentProperty: GraphProperty<ProjectWizardJdkIntent?> = propertyGraph.lazyProperty { null }
+  protected val jdkIntentProperty: GraphProperty<ProjectWizardJdkIntent> = propertyGraph.lazyProperty { ProjectWizardJdkIntent.NoJdk }
   @Deprecated("Use jdkIntentProperty instead")
   protected val sdkProperty: GraphProperty<Sdk?> = SdkPropertyBridge(propertyGraph, jdkIntentProperty)
 
@@ -145,7 +146,7 @@ abstract class CommonStarterInitialStep(
     row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
       projectWizardJdkComboBox(
         this,
-        locationProperty,
+        locationProperty.toEelDescriptorProperty(),
         jdkIntentProperty,
         wizardContext.disposable,
         wizardContext.projectJdk,
@@ -154,7 +155,7 @@ abstract class CommonStarterInitialStep(
 
       moduleBuilder.addListener(object : ModuleBuilderListener {
         override fun moduleCreated(module: Module) {
-          val downloadTask = jdkIntentProperty.get()?.downloadTask ?: return
+          val downloadTask = jdkIntentProperty.get().downloadTask ?: return
           val downloadService = module.project.service<JdkDownloadService>()
           val jdk = downloadService.setupInstallableSdk(downloadTask)
           if (wizardContext.isCreatingNewProject) {

@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
@@ -90,9 +91,11 @@ public final class FileTypeDetectionService {
   private int cachedDetectFileBufferSize = -1;
   private volatile boolean myCanUseCachedDetectedFileType = true;
   private final FileTypeManagerImpl myFileTypeManager;
+  private final CoroutineScope scope;
 
   FileTypeDetectionService(@NotNull FileTypeManagerImpl fileTypeManager, @NotNull CoroutineScope coroutineScope) {
     myFileTypeManager = fileTypeManager;
+    scope = coroutineScope;
 
     JobKt.getJob(coroutineScope.getCoroutineContext()).invokeOnCompletion(throwable -> {
       LOG.info(String.format("%s auto-detected files. Detection took %s ms", counterAutoDetect, elapsedAutoDetect));
@@ -691,8 +694,14 @@ public final class FileTypeDetectionService {
            null;
   }
 
-  private static void reparseLater(@NotNull List<? extends VirtualFile> changed) {
-    ApplicationManager.getApplication().invokeLater(() -> FileContentUtilCore.reparseFiles(changed), ApplicationManager.getApplication().getDisposed());
+  private void reparseLater(@NotNull List<? extends VirtualFile> changed) {
+    if (Registry.is("filetype.reparse.with.coroutines")) {
+      ReparseUtilKt.reparseLaterWithCoroutines(scope, changed);
+    }
+    else {
+      ApplicationManager.getApplication()
+        .invokeLater(() -> FileContentUtilCore.reparseFiles(changed), ApplicationManager.getApplication().getDisposed());
+    }
   }
 
   // for diagnostics

@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.notification.ActionCenter;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ExperimentalUI;
@@ -13,7 +14,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public final class MarkAllNotificationsAsReadAction extends DumbAwareAction {
+public final class MarkAllNotificationsAsReadAction extends DumbAwareAction
+  implements ActionRemoteBehaviorSpecification.Frontend {
   public MarkAllNotificationsAsReadAction() {
     super(IdeBundle.messagePointer("action.MarkAllNotificationsAsReadAction.text"),
           IdeBundle.messagePointer("action.MarkAllNotificationsAsReadAction.description"),

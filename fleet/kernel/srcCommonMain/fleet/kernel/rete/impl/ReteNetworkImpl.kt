@@ -302,6 +302,8 @@ internal class ReteNetworkImpl(
     observer: QueryObserver<T>,
   ): Subscription =
     if (dependencies.all { match -> !match.wasInvalidated }) {
+      val alienDependencies = dependencies.filter { it.owner != this }
+      check(alienDependencies.isEmpty()) { "Dependencies belong to another instance of rete network: ${alienDependencies}" }
       val db = lastKnownDb.value.dbOrThrow()
       val observerId = nextObserverId++
       val observerIdPair = NodeId(observerId, 0)
@@ -312,7 +314,7 @@ internal class ReteNetworkImpl(
       propagation = prop
       hydrating = true
       val observableQuery = query
-        .observable(observerIdPair)
+        .observable(this, observerIdPair)
         .tracing(tracingKey)
       val producer = asOf(db) {
         safeProducer(observableQuery, queryScope, observerNode)
@@ -381,7 +383,7 @@ internal class ReteNetworkImpl(
             tokens.forEach { token ->
               context.alter(if (token.added) change.dbAfter else change.dbBefore) {
                 @Suppress("UNCHECKED_CAST")
-                (emit as Collector<Any?>)(token as Token<Any?>)
+                (emit as Collector<Any?>)(token)
               }
             }
           }

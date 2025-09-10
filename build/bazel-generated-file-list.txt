@@ -100,6 +100,7 @@ android/design-plugin/descriptor
 android/designer
 android/designer-perf-tests
 android/designer/customview
+android/designer/gradle
 android/device-explorer
 android/device-explorer-common
 android/device-explorer-files
@@ -219,8 +220,10 @@ build/tests
 commandInterface
 community-resources
 fleet/andel
+fleet/bifurcan
 fleet/compiler-plugins
 fleet/fastutil
+fleet/junit4
 fleet/kernel
 fleet/ktor/network/tls
 fleet/lsp.protocol
@@ -230,10 +233,14 @@ fleet/reporting/shared
 fleet/rhizomedb
 fleet/rpc
 fleet/rpc.server
+fleet/util/codepoints
+fleet/util/codepoints/test
 fleet/util/core
+fleet/util/datetime
 fleet/util/logging/api
 fleet/util/logging/slf4j
 fleet/util/multiplatform
+fleet/util/serialization
 grid/api
 grid/core-impl
 grid/csv
@@ -294,6 +301,8 @@ java/java-tests
 java/jsp-base-openapi
 java/jsp-openapi
 java/jsp-spi
+java/langInjection
+java/langInjection/jps
 java/manifest
 java/openapi
 java/performancePlugin
@@ -318,6 +327,7 @@ json
 json/backend
 json/backend/regexp
 json/backend/tests
+json/syntax
 jupyter
 jvm/jvm-analysis-api
 jvm/jvm-analysis-impl
@@ -331,8 +341,10 @@ jvm/jvm-analysis-refactoring
 jvm/jvm-analysis-testFramework
 libraries/ai.grazie.spell.gec.engine.local
 libraries/assertj-core
+libraries/coil
 libraries/compose-foundation-desktop
 libraries/compose-foundation-desktop-junit
+libraries/compose-runtime-desktop
 libraries/detekt-compose-rules
 libraries/dokka
 libraries/grpc
@@ -351,6 +363,7 @@ libraries/ktor-client
 libraries/ktor-client-cio
 libraries/lucene.common
 libraries/microba
+libraries/mockito
 libraries/skiko
 libraries/testcontainers
 libraries/testng
@@ -481,7 +494,6 @@ platform/jewel/markdown/extensions/gfm-tables
 platform/jewel/markdown/extensions/images
 platform/jewel/markdown/ide-laf-bridge-styling
 platform/jewel/markdown/int-ui-standalone-styling
-platform/jewel/samples/ide-plugin
 platform/jewel/samples/showcase
 platform/jewel/samples/standalone
 platform/jewel/ui
@@ -520,6 +532,7 @@ platform/navbar/shared
 platform/navbar/testFramework
 platform/new-ui-onboarding
 platform/new-users-onboarding
+platform/non-modal-welcome-screen
 platform/object-serializer
 platform/observable
 platform/platform-api
@@ -626,10 +639,12 @@ platform/testFramework
 platform/testFramework/bootstrap
 platform/testFramework/common
 platform/testFramework/core
+platform/testFramework/eelJava
 platform/testFramework/extensions
 platform/testFramework/impl
 platform/testFramework/junit5
 platform/testFramework/junit5.jimfs
+platform/testFramework/junit5/codeInsight
 platform/testFramework/junit5/eel
 platform/testFramework/junit5/highlighting
 platform/testFramework/junit5/projectStructure
@@ -701,12 +716,7 @@ platform/xdebugger-testFramework
 plugins/ByteCodeViewer
 plugins/IntelliLang
 plugins/IntelliLang/backend
-plugins/IntelliLang/intellilang-jps-plugin
-plugins/IntelliLang/java-support
-plugins/IntelliLang/plugin
 plugins/IntelliLang/tests
-plugins/IntelliLang/xml-support
-plugins/IntelliLang/xml-support/xpath
 plugins/ant
 plugins/ant/jps-plugin
 plugins/built-in-help
@@ -758,6 +768,7 @@ plugins/devkit/devkit-java-tests
 plugins/devkit/devkit-kotlin-fir-tests
 plugins/devkit/devkit-kotlin-tests
 plugins/devkit/devkit-tests
+plugins/devkit/intellij.devkit.compose
 plugins/devkit/intellij.devkit.debugger
 plugins/devkit/intellij.devkit.git
 plugins/devkit/intellij.devkit.gradle
@@ -777,6 +788,7 @@ plugins/devkit/intellij.kotlin.devkit
 plugins/devkit/intellij.kotlin.devkit/k1
 plugins/devkit/intellij.kotlin.devkit/k2
 plugins/devkit/jps-plugin
+plugins/devkit/runtimeModuleRepository/generator
 plugins/devkit/runtimeModuleRepository/jps
 plugins/eclipse
 plugins/eclipse/common-eclipse-util
@@ -1222,16 +1234,19 @@ plugins/search-everywhere-ml/ranking/yaml
 plugins/search-everywhere-ml/typos
 plugins/settings-repository
 plugins/settings-sync/jba
-plugins/sh
+plugins/sh/backend
 plugins/sh/copyright
 plugins/sh/core
 plugins/sh/markdown
+plugins/sh/plugin
 plugins/sh/python
 plugins/sh/terminal
 plugins/space/jps-plugin
 plugins/stats-collector
 plugins/stream-debugger
 plugins/stream-debugger-core
+plugins/stream-debugger-core/intellij.debugger.streams.backend
+plugins/stream-debugger-core/intellij.debugger.streams.shared
 plugins/stream-debugger-core/testFramework
 plugins/svn4idea
 plugins/tasks/tasks-api
@@ -1253,6 +1268,7 @@ plugins/textmate
 plugins/textmate/backend
 plugins/textmate/common
 plugins/textmate/core
+plugins/textmate/core/tests
 plugins/textmate/joni
 plugins/textmate/plugin
 plugins/textmate/tests
@@ -1352,6 +1368,8 @@ xml/dom-impl
 xml/dom-openapi
 xml/dom-tests
 xml/impl
+xml/langInjection
+xml/langInjection/xpath
 xml/relaxng
 xml/testFramework
 xml/tests
@@ -1362,5 +1380,6 @@ xml/xml-psi-api
 xml/xml-psi-impl
 xml/xml-structure-view-api
 xml/xml-structure-view-impl
+xml/xml-syntax
 xml/xml-ui-common
 xml/xmlbeans

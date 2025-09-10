@@ -1,2 +1,2 @@
-version = "3.0.*"
+version = "3.2.*"
 upstream_repository = "https://github.com/python-greenlet/greenlet"

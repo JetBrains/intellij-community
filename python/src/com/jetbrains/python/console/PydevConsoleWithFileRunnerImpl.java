@@ -7,16 +7,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsContexts;
 import com.jetbrains.python.run.PythonRunConfiguration;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.function.Function;
 
-public class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
+@ApiStatus.Internal
+class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
   private final @NotNull PythonRunConfiguration myConfig;
 
-  public PydevConsoleWithFileRunnerImpl(@NotNull Project project,
+  PydevConsoleWithFileRunnerImpl(@NotNull Project project,
                                         @Nullable Sdk sdk,
                                         @NotNull PyConsoleType consoleType,
                                         @NotNull @NlsContexts.TabTitle String title,
@@ -29,15 +31,15 @@ public class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
     myConfig = config;
   }
 
-  public PydevConsoleWithFileRunnerImpl(@NotNull Project project,
-                                        @Nullable Sdk sdk,
-                                        @NotNull PyConsoleType consoleType,
-                                        @NotNull @NlsContexts.TabTitle String title,
-                                        @Nullable Function<TargetEnvironment, String> workingDir,
-                                        @NotNull Map<String, String> environmentVariables,
-                                        @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
-                                        @NotNull PythonRunConfiguration config,
-                                        @NotNull Function<TargetEnvironment, @NotNull String> startScriptFun) {
+  PydevConsoleWithFileRunnerImpl(@NotNull Project project,
+                                 @Nullable Sdk sdk,
+                                 @NotNull PyConsoleType consoleType,
+                                 @NotNull @NlsContexts.TabTitle String title,
+                                 @Nullable Function<TargetEnvironment, String> workingDir,
+                                 @NotNull Map<String, String> environmentVariables,
+                                 @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
+                                 @NotNull PythonRunConfiguration config,
+                                 @NotNull Function<TargetEnvironment, @NotNull String> startScriptFun) {
     super(project, sdk, consoleType, title, workingDir, environmentVariables, settingsProvider, startScriptFun);
     myConfig = config;
   }

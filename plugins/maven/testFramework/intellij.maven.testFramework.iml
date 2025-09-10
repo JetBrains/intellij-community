@@ -50,5 +50,7 @@
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="library" name="bouncy-castle-provider" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.eelJava" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
   </component>
 </module>

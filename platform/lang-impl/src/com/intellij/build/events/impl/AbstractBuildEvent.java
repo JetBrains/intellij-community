@@ -2,33 +2,62 @@
 package com.intellij.build.events.impl;
 
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.BuildEventsNls;
+import com.intellij.build.events.BuildEventsNls.Description;
+import com.intellij.build.events.BuildEventsNls.Hint;
+import com.intellij.build.events.BuildEventsNls.Message;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 /**
  * @author Vladislav.Soroka
  */
+@Internal
 public abstract class AbstractBuildEvent implements BuildEvent {
 
-  private final @NotNull Object myEventId;
+  private final @NotNull Object myId;
   private @Nullable Object myParentId;
-  private final long myEventTime;
-  private final @NotNull @BuildEventsNls.Message String myMessage;
-  private @Nullable @BuildEventsNls.Hint String myHint;
-  private @Nullable @BuildEventsNls.Description String myDescription;
+  private final @NotNull Long myTime;
+  private final @NotNull @Message String myMessage;
+  private @Nullable @Hint String myHint;
+  private @Nullable @Description String myDescription;
 
-  public AbstractBuildEvent(@NotNull Object eventId, @Nullable Object parentId, long eventTime, @NotNull @BuildEventsNls.Message String message) {
-    myEventId = eventId;
+  @Internal
+  protected AbstractBuildEvent(
+    @Nullable Object id,
+    @Nullable Object parentId,
+    @Nullable Long time,
+    @NotNull @Message String message,
+    @Nullable @Hint String hint,
+    @Nullable @Description String description
+  ) {
+    myId = notNull(id, () -> new Object());
     myParentId = parentId;
-    myEventTime = eventTime;
+    myTime = notNull(time, () -> System.currentTimeMillis());
     myMessage = message;
+    myHint = hint;
+    myDescription = description;
+  }
+
+  /**
+   * @deprecated Use instead {@link AbstractBuildEvent} constructor with hint and description parameters.
+   */
+  @Deprecated
+  public AbstractBuildEvent(
+    @NotNull Object eventId,
+    @Nullable Object parentId,
+    long time,
+    @NotNull @Message String message
+  ) {
+    this(eventId, parentId, time, message, null, null);
   }
 
   @Override
   public @NotNull Object getId() {
-    return myEventId;
+    return myId;
   }
 
   @Override
@@ -42,11 +71,11 @@ public abstract class AbstractBuildEvent implements BuildEvent {
 
   @Override
   public long getEventTime() {
-    return myEventTime;
+    return myTime;
   }
 
   @Override
-  public @NotNull @BuildEventsNls.Message String getMessage() {
+  public @NotNull @Message String getMessage() {
     return myMessage;
   }
 
@@ -55,25 +84,25 @@ public abstract class AbstractBuildEvent implements BuildEvent {
     return myHint;
   }
 
-  public void setHint(@Nullable @BuildEventsNls.Hint String hint) {
+  public void setHint(@Nullable @Hint String hint) {
     myHint = hint;
   }
 
   @Override
-  public @Nullable @BuildEventsNls.Description String getDescription() {
+  public @Nullable @Description String getDescription() {
     return myDescription;
   }
 
-  public void setDescription(@Nullable @BuildEventsNls.Description String description) {
+  public void setDescription(@Nullable @Description String description) {
     myDescription = description;
   }
 
   @Override
   public @NonNls String toString() {
     return getClass().getSimpleName() + "{" +
-           "myEventId=" + myEventId +
+           "myEventId=" + myId +
            ", myParentId=" + myParentId +
-           ", myEventTime=" + myEventTime +
+           ", myTime=" + myTime +
            ", myMessage='" + myMessage + '\'' +
            ", myHint='" + myHint + '\'' +
            ", myDescription='" + myDescription + '\'' +

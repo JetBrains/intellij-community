@@ -83,6 +83,50 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
     """.trimIndent())
   }
 
+  fun `test implicit usage of method in parameterized test`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    class MyTest {
+        class NewInnerTest: InnerTest() {
+            companion object {
+              @JvmStatic
+              private fun test() = arrayOf("NewInner")
+            }
+        }
+    
+        open class InnerTest {
+            @org.junit.jupiter.params.ParameterizedTest
+            @org.junit.jupiter.params.provider.MethodSource("test")
+            fun myTest(param: String) { System.out.println(param) }
+            companion object {
+              @JvmStatic
+              private fun test() = arrayOf("Inner")
+            }
+        }
+    }
+    """.trimIndent())
+  }
+
+  fun `test implicit usage of field in parameterized test`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+    class MyTest {
+        class NewInnerTest: InnerTest() {
+            companion object {
+              private val test = arrayOf("InnerTest")
+            }
+        }
+    
+        open class InnerTest {
+            @org.junit.jupiter.params.ParameterizedTest
+            @org.junit.jupiter.params.provider.FieldSource("test")
+            fun myTest(param: String) { System.out.println(param) }
+            companion object {
+              private val test = arrayOf("Inner")
+            }
+        }
+    }
+    """.trimIndent())
+  }
+
   fun `test implicit usage of field source with implicit field name`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.jupiter.params.ParameterizedTest
@@ -158,5 +202,31 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
       }
       
     """.trimIndent())
+  }
+
+  fun `test malformed nested should be used highlighting`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+        import org.junit.jupiter.api.Nested
+        import org.junit.jupiter.api.Test
+        
+        class RootTest {
+            @Test fun test1() {}
+        
+            @Nested
+            inner class NestedTestsImpl : NestedTests()
+        }
+        
+        abstract class NestedTests {
+            @Test fun test2() {}
+        
+            @Nested
+            inner class DoubleNestedTestsImpl : DoubleNestedTests()
+        }
+        
+        abstract class DoubleNestedTests {
+            @Test fun test3() {}
+        }
+        """.trimIndent())
   }
 }

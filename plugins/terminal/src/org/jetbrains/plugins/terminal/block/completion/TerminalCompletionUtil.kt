@@ -54,14 +54,13 @@ object TerminalCompletionUtil {
     return if (isOptional) "[$name]" else "<$name>"
   }
 
-  fun findIconForSuggestion(name: String, type: ShellSuggestionType): Icon? {
+  fun findIconForSuggestion(name: String, type: ShellSuggestionType): Icon {
     return when (type) {
       COMMAND -> TerminalIcons.Command
       OPTION -> TerminalIcons.Option
       FOLDER -> AllIcons.Nodes.Folder
       FILE -> getFileIcon(name)
       ARGUMENT -> TerminalIcons.Other
-      else -> null
     }
   }
 

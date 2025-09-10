@@ -21,7 +21,7 @@ jvm_library(
   name = "coroutines",
   module_name = "kotlin.jvm-debugger.coroutines",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_coroutines",
   deps = [
     "@lib//:kotlin-stdlib",

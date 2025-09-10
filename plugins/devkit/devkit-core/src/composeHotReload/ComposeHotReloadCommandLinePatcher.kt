@@ -49,7 +49,7 @@ private val COMPOSE_HOT_RELOAD_AGENT_VERSION: String get() {
 private val COMPOSE_HOT_RELOAD_AGENT_URL get() = "https://repo1.maven.org/maven2/org/jetbrains/compose/hot-reload/hot-reload-agent/$COMPOSE_HOT_RELOAD_AGENT_VERSION/hot-reload-agent-$COMPOSE_HOT_RELOAD_AGENT_VERSION-standalone.jar"
 private val COMPOSE_HOT_RELOAD_AGENT_FILE_NAME get() = "$COMPOSE_HOT_RELOAD_AGENT_FILE_PREFIX-$COMPOSE_HOT_RELOAD_AGENT_VERSION.jar"
 
-class ComposeHotReloadCommandLinePatcher : RunConfigurationExtension() {
+internal class ComposeHotReloadCommandLinePatcher : RunConfigurationExtension() {
 
   class ComposeHotReloadRegistryListener : RegistryValueListener {
     override fun afterValueChanged(value: RegistryValue) {

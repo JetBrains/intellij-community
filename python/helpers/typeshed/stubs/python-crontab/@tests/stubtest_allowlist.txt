@@ -2,3 +2,4 @@
 crontabs.CronTabs.__new__
 # stub does not have *args argument "args", but function doesn't actually accept positional args
 crontab.CronTab.remove_all
+crontab.OrderedVariableList.__init__

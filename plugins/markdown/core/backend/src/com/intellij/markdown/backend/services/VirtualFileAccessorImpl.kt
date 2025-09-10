@@ -1,7 +1,6 @@
 package com.intellij.markdown.backend.services
 
 import com.intellij.ide.vfs.VirtualFileId
-import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.BaseProjectDirectories
@@ -21,14 +20,18 @@ class VirtualFileAccessorImpl : VirtualFileAccessor {
     return baseDirectory
   }
 
-  override suspend fun getFileByResourceName(resourceName: String, virtualFileId: VirtualFileId, projectId: ProjectId): VirtualFileId? {
+  override suspend fun tryToLoadFileContent(resourceName: String, virtualFileId: VirtualFileId, projectId: ProjectId): ByteArray? {
     val projectRoot = getBaseDirectory(projectId, virtualFileId)
-    val resource = if (resourceName.startsWith("file:/")) {
+    val file = if (resourceName.startsWith("file:/")) {
       VfsUtil.findFileByIoFile(File(URL(resourceName).path), true)
     } else {
       projectRoot?.findFileByRelativePath(resourceName)
     } ?: return null
-    return resource.rpcId()
+    if (!file.exists() || file.isDirectory) {
+      return null
+    }
+    val content = file.inputStream.use { it.readBytes() }
+    return content
   }
 
   companion object {

@@ -4,10 +4,12 @@ package org.jetbrains.kotlin.idea.jvm.shared.scratch.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 
+@ApiStatus.Internal
 class ClearScratchAction : ScratchAction(
-    KotlinJvmBundle.getLazyMessage("scratch.clear.button"),
+    KotlinJvmBundle.messagePointer("scratch.clear.button"),
     AllIcons.Actions.GC
 ) {
     override fun actionPerformed(e: AnActionEvent) {

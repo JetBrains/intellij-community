@@ -1,4 +1,4 @@
-from typing import Any
+from logging import Logger
 
 from .endpoints.base import BaseEndpoint as BaseEndpoint, catch_errors_and_unavailability as catch_errors_and_unavailability
 from .errors import (
@@ -8,4 +8,4 @@ from .errors import (
     TemporarilyUnavailableError as TemporarilyUnavailableError,
 )
 
-log: Any
+log: Logger

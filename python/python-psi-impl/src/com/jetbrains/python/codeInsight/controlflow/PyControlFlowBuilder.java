@@ -16,7 +16,6 @@
 package com.jetbrains.python.codeInsight.controlflow;
 
 import com.google.common.collect.Lists;
-import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.controlflow.TransparentInstruction;
@@ -52,12 +51,12 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   private record TrueFalseNodes(@NotNull Instruction trueNode, @NotNull Instruction falseNode) {}
 
-  public ControlFlow buildControlFlow(final @NotNull ScopeOwner owner) {
-    return myBuilder.build(this, owner);
+  public PyControlFlow buildControlFlow(final @NotNull ScopeOwner owner) {
+    return new PyControlFlow(myBuilder.build(this, owner));
   }
 
   protected @NotNull ControlFlowBuilder getBuilder() {
-    return this.myBuilder;
+    return myBuilder;
   }
 
 
@@ -173,7 +172,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final ReadWriteInstruction.ACCESS access = PyAugAssignmentStatementNavigator.getStatementByTarget(node) != null
                                                ? ReadWriteInstruction.ACCESS.READWRITE
                                                : ReadWriteInstruction.ACCESS.READ;
-    final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getName(), access);
+    final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, getName(node), access);
     myBuilder.addNodeAndCheckPending(readWriteInstruction);
   }
 
@@ -1131,14 +1130,18 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       final PyQualifiedExpression e = def.getElement();
       @Nullable String name = null;
       if (e != null) {
-        final QualifiedName qname = e.asQualifiedName();
-        name = qname != null ? qname.toString() : e.getName();
+        name = getName(e);
       }
       if (name != null && ignoredNames != null && ignoredNames.contains(name)) {
         continue;
       }
       myBuilder.addNode(ReadWriteInstruction.assertType(myBuilder, e, name, def.getTypeEvalFunction()));
     }
+  }
+
+  private static @Nullable String getName(@NotNull PyQualifiedExpression expr) {
+    final QualifiedName qname = expr.asQualifiedName();
+    return qname != null ? qname.toString() : expr.getName();
   }
 
   private TransparentInstruction addTransparentInstruction() {

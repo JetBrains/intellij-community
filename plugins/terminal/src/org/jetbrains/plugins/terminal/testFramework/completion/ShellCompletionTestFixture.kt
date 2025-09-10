@@ -9,8 +9,8 @@ import com.intellij.terminal.completion.spec.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
+import org.jetbrains.plugins.terminal.testFramework.completion.impl.DummyShellCommandExecutor
 import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestCommandSpecsManager
-import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestGeneratorCommandsRunner
 import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestGeneratorsExecutor
 import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestRuntimeContextProvider
 
@@ -66,7 +66,7 @@ class ShellCompletionTestFixture private constructor(
     private var curDirectory: String = project?.guessProjectDir()?.path ?: ""
     private var shellName: ShellName = ShellName("dummy")
     private var commandSpecs: List<ShellCommandSpec>? = null
-    private var generatorCommandsRunner: ShellCommandExecutor = TestGeneratorCommandsRunner.Companion.DUMMY
+    private var generatorCommandsRunner: ShellCommandExecutor = DummyShellCommandExecutor
     private var generatorsExecutor: ShellDataGeneratorsExecutor = TestGeneratorsExecutor()
 
     /**
@@ -103,7 +103,9 @@ class ShellCompletionTestFixture private constructor(
      * because this test fixture is not running the real shell session.
      */
     fun mockShellCommandResults(mock: suspend (command: String) -> ShellCommandResult): Builder {
-      generatorCommandsRunner = ShellCommandExecutor(mock)
+      generatorCommandsRunner = object : ShellCommandExecutor {
+        override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult = mock(command)
+      }
       return this
     }
 

@@ -1,0 +1,6 @@
+version = "4.3.*"
+upstream_repository = "https://github.com/django-import-export/django-import-export"
+requires = ["django-stubs"]  # Add tablib when typed, and update _Incomplete aliases in stubs
+
+[tool.stubtest]
+skip = true  # Django requires configured settings at runtime

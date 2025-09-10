@@ -1,7 +1,7 @@
 package org.jetbrains.jewel.ui.painter
 
 import androidx.compose.ui.graphics.Color
-import org.jetbrains.jewel.ui.util.fromRGBAHexStringOrNull
+import org.jetbrains.jewel.ui.util.fromRgbaHexStringOrNull
 
 /** Provides the default [PainterHint]s to use to load images. */
 public abstract class PalettePainterHintsProvider(
@@ -18,14 +18,14 @@ public abstract class PalettePainterHintsProvider(
     protected fun resolveColor(value: String): Color? {
         // If the value is one of the named colors in the theme, use that named color's value
         val namedColor = themeColorPalette[value]
-        return namedColor ?: Color.fromRGBAHexStringOrNull(value)
+        return namedColor ?: Color.fromRgbaHexStringOrNull(value)
     }
 
     // See com.intellij.ide.ui.UITheme.toColorString
     protected fun resolveKeyColor(key: String, keyPalette: Map<String, String?>, isDark: Boolean): Color? {
         val darkKey = "$key.Dark"
         val resolvedKey = if (isDark && keyPalette.containsKey(darkKey)) darkKey else key
-        return Color.fromRGBAHexStringOrNull(keyPalette[resolvedKey] ?: return null)
+        return Color.fromRgbaHexStringOrNull(keyPalette[resolvedKey] ?: return null)
     }
 
     protected fun selectMap(

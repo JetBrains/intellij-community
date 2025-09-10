@@ -25,6 +25,8 @@ public interface MessageResourceResolver {
     public fun resolveIdeBundleMessage(key: String): String
 }
 
+@InternalJewelApi
+@get:ApiStatus.Internal
 public val LocalMessageResourceResolverProvider: ProvidableCompositionLocal<MessageResourceResolver> =
     staticCompositionLocalOf {
         error("No LocalMessageResourceResolverProvider provided. Have you forgotten the theme?")

@@ -22,16 +22,18 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@NotNullByDefault
 final class RecordBuilder {
   private final StringBuilder myRecordText = new StringBuilder();
   private final PsiClass myOriginClass;
 
-  RecordBuilder(@NotNull PsiClass originClass) {
+  RecordBuilder(PsiClass originClass) {
     myOriginClass = originClass;
   }
 
@@ -40,7 +42,7 @@ final class RecordBuilder {
   }
 
   void addRecordHeader(@Nullable RecordConstructorCandidate canonicalCtorCandidate,
-                       @NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldToAccessorCandidateMap) {
+                       Map<PsiField, @Nullable FieldAccessorCandidate> fieldToAccessorCandidateMap) {
     myRecordText.append("(");
     StringJoiner recordComponentsJoiner = new StringJoiner(",");
     if (canonicalCtorCandidate == null) {
@@ -67,7 +69,7 @@ final class RecordBuilder {
     myRecordText.append(")");
   }
 
-  void addCanonicalCtor(@NotNull PsiMethod ctor) {
+  void addCanonicalCtor(PsiMethod ctor) {
     // An explicitly declared canonical constructor must provide at least as much access as the record class. See JLS 8.10.4 
     VisibilityUtil.setVisibility(ctor.getModifierList(), VisibilityUtil.getVisibilityModifier(myOriginClass.getModifierList()));
     processUncheckedExceptions(ctor);
@@ -108,10 +110,10 @@ final class RecordBuilder {
   /// }
   /// ```
   //@formatter:on
-  void addDelegatingCtor(@NotNull PsiMethod canonicalCtor,
-                         @NotNull PsiMethod ctor,
-                         @NotNull Map<@NotNull String, @NotNull PsiExpression> fieldNamesToInitializers,
-                         @NotNull Set<@NotNull PsiStatement> trailingStatements) {
+  void addDelegatingCtor(PsiMethod canonicalCtor,
+                         PsiMethod ctor,
+                         Map<String, PsiExpression> fieldNamesToInitializers,
+                         Set<PsiStatement> trailingStatements) {
     processUncheckedExceptions(ctor);
     final PsiCodeBlock body = ctor.getBody();
     assert body != null;
@@ -138,12 +140,12 @@ final class RecordBuilder {
     myRecordText.append(ctor.getText());
   }
 
-  private static PsiStatement createDelegatingCtorCall(@NotNull PsiMethod canonicalCtor,
-                                                       @NotNull Map<@NotNull String, @NotNull PsiExpression> fieldNamesToInitializers) {
+  private static PsiStatement createDelegatingCtorCall(PsiMethod canonicalCtor,
+                                                       Map<String, PsiExpression> fieldNamesToInitializers) {
     StringBuilder delegatingCtorInvocationText = new StringBuilder();
     delegatingCtorInvocationText.append("this(");
 
-    List<@NotNull PsiExpression> expressionsInCorrectOrder = new ArrayList<>();
+    List<PsiExpression> expressionsInCorrectOrder = new ArrayList<>();
     for (PsiParameter canonicalCtorParameter : canonicalCtor.getParameterList().getParameters()) {
       PsiExpression fieldInitializerExpr = fieldNamesToInitializers.get(canonicalCtorParameter.getName());
       if (fieldInitializerExpr != null) {
@@ -158,12 +160,12 @@ final class RecordBuilder {
     return factory.createStatementFromText(delegatingCtorInvocationText.toString(), canonicalCtor);
   }
 
-  void addCtor(@NotNull PsiMethod ctor) {
+  void addCtor(PsiMethod ctor) {
     processUncheckedExceptions(ctor);
     myRecordText.append(ctor.getText());
   }
 
-  void addFieldAccessor(@NotNull FieldAccessorCandidate fieldAccessorCandidate) {
+  void addFieldAccessor(FieldAccessorCandidate fieldAccessorCandidate) {
     PsiMethod fieldAccessor = fieldAccessorCandidate.method();
     if (fieldAccessorCandidate.isDefault()) {
       trimEndingWhiteSpaces();
@@ -176,17 +178,17 @@ final class RecordBuilder {
     myRecordText.append(fieldAccessor.getText());
   }
 
-  void addModifierList(@NotNull PsiModifierList modifierList) {
+  void addModifierList(PsiModifierList modifierList) {
     modifierList.setModifierProperty(PsiModifier.STATIC, false);
     modifierList.setModifierProperty(PsiModifier.FINAL, false);
     addPsiElement(modifierList);
   }
 
-  void addPsiElement(@NotNull PsiElement psiElement) {
+  void addPsiElement(PsiElement psiElement) {
     myRecordText.append(psiElement.getText());
   }
 
-  @NotNull PsiClass build() {
+  PsiClass build() {
     JavaDummyElement dummyElement = new JavaDummyElement(myRecordText.toString(), (builder, languageLevel) -> {
       new JavaParser(languageLevel).getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS);
     }, LanguageLevel.JDK_16);
@@ -194,9 +196,9 @@ final class RecordBuilder {
     return (PsiClass)Objects.requireNonNull(SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode()));
   }
 
-  private static @NotNull String generateComponentText(@NotNull PsiField field,
-                                                       @NotNull PsiParameter ctorParameter,
-                                                       @Nullable FieldAccessorCandidate fieldAccessorCandidate) {
+  private static String generateComponentText(PsiField field,
+                                              PsiParameter ctorParameter,
+                                              @Nullable FieldAccessorCandidate fieldAccessorCandidate) {
     if (field == null) {
       throw new IllegalStateException("no field found to which the constructor parameter '" +
                                       ctorParameter.getType().toString() +
@@ -211,10 +213,10 @@ final class RecordBuilder {
     return generateComponentText(field.getAnnotations(), field.getName(), componentType, fieldAccessorCandidate);
   }
 
-  private static @NotNull String generateComponentText(@NotNull PsiAnnotation @NotNull [] fieldAnnotations,
-                                                       @NotNull String fieldName,
-                                                       @NotNull PsiType componentType,
-                                                       @Nullable FieldAccessorCandidate fieldAccessorCandidate) {
+  private static String generateComponentText(PsiAnnotation[] fieldAnnotations,
+                                              String fieldName,
+                                              PsiType componentType,
+                                              @Nullable FieldAccessorCandidate fieldAccessorCandidate) {
     String fieldAnnotationsText = Arrays.stream(fieldAnnotations)
       .filter(anno -> !AnnotationTargetUtil.isTypeAnnotation(anno))
       .map(PsiAnnotation::getText).collect(Collectors.joining(" "));
@@ -230,7 +232,7 @@ final class RecordBuilder {
     return annotationsText + componentType.getCanonicalText(true) + " " + fieldName;
   }
 
-  private void processOverrideAnnotation(@NotNull PsiModifierList accessorModifiers) {
+  private void processOverrideAnnotation(PsiModifierList accessorModifiers) {
     PsiAnnotation annotation = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(CommonClassNames.JAVA_LANG_OVERRIDE,
                                                                                  PsiNameValuePair.EMPTY_ARRAY, accessorModifiers);
     if (annotation != null) {
@@ -238,7 +240,7 @@ final class RecordBuilder {
     }
   }
 
-  private void processUncheckedExceptions(@NotNull PsiMethod fieldAccessor) {
+  private void processUncheckedExceptions(PsiMethod fieldAccessor) {
     PsiReferenceList fieldAccessorThrowsList = fieldAccessor.getThrowsList();
     PsiClassType[] throwsReferenceTypes = fieldAccessorThrowsList.getReferencedTypes();
     if (throwsReferenceTypes.length == 0) return;
@@ -277,7 +279,7 @@ final class RecordBuilder {
     myRecordText.setLength(endIndex);
   }
 
-  private static PsiDocTag createDocTag(@NotNull PsiJavaParserFacade parserFacade, @NotNull PsiClassType throwsReferenceType) {
+  private static PsiDocTag createDocTag(PsiJavaParserFacade parserFacade, PsiClassType throwsReferenceType) {
     return parserFacade.createDocTagFromText("@throws " + throwsReferenceType.getCanonicalText());
   }
 }

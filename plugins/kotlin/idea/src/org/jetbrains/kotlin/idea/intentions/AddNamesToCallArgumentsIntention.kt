@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class AddNamesToCallArgumentsIntention : SelfTargetingRangeIntention<KtCallElement>(
     KtCallElement::class.java,
-    KotlinBundle.lazyMessage("add.names.to.call.arguments")
+    KotlinBundle.messagePointer("add.names.to.call.arguments")
 ) {
     override fun applicabilityRange(element: KtCallElement): TextRange? {
         val arguments = element.valueArguments

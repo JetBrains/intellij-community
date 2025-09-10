@@ -45,6 +45,7 @@ open class NewProjectDialogUI(data: ComponentData) : UiComponent(data) {
   val nameTextField = textField("//div[@accessiblename='Name:' and @class='JBTextField']")
   val nextButton = x("//div[@text='Next']")
   open val createButton = x("//div[@text='Create']")
+  val cancelButton = x("//div[@text='Cancel']")
   private val projectTypeList = x("//div[@class='JBList']")
   val sampleCodeLabel = checkBox { byText("Add sample code") }
   val multiModuleLabel = checkBox { byText("Generate multi-module build") }

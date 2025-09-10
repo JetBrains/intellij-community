@@ -20,7 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.sun.jdi.BooleanValue;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;

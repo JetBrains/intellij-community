@@ -20,7 +20,7 @@ jvm_library(
   name = "visualization",
   module_name = "intellij.notebooks.visualization",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom_visualization",
   deps = [
     "@lib//:gson",
@@ -49,7 +49,7 @@ jvm_library(
 jvm_library(
   name = "visualization_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_visualization",
   associates = [":visualization"],
   deps = [

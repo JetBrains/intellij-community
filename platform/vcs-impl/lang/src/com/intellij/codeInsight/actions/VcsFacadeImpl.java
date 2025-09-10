@@ -115,6 +115,22 @@ public final class VcsFacadeImpl extends VcsFacade {
   }
 
   @Override
+  public @NotNull List<Integer> getLinesWithRemovedRangesAfter(@NotNull PsiFile file) {
+    Project project = file.getProject();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document == null) return emptyList();
+    LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
+    if (tracker == null) return emptyList();
+
+    List<? extends Range> trackerRanges = tracker.getRanges();
+    if (trackerRanges == null) return emptyList();
+    return trackerRanges.stream()
+      .filter(range -> range.getType() == Range.DELETED)
+      .map( range -> range.getLine1())
+      .toList();
+  }
+
+  @Override
   public @NotNull List<PsiFile> getChangedFilesFromDirs(@NotNull Project project,
                                                         @NotNull List<? extends PsiDirectory> psiDirs) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);

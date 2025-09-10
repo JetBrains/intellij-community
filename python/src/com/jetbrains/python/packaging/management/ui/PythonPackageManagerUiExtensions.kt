@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management.ui
 
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyRequirement
@@ -38,16 +39,29 @@ suspend fun PythonPackageManagerUI.updatePackagesByNamesBackground(
 @ApiStatus.Internal
 fun PythonPackageManagerUI.launchInstallPackageWithBalloonBackground(packageName: String, point: RelativePoint, versionSpec: PyRequirementVersionSpec? = null) {
   PyPackageCoroutine.launch(project) {
-    val loadBalloon = PythonPackageManagerUIHelpers.showBalloon(point, PyBundle.message("python.packaging.installing.package", packageName),
-                                                                PythonPackageManagerUIHelpers.BalloonStyle.INFO)
+    var installingBalloon: Balloon? = null
     try {
-      installPyRequirementsWithConfirmation(listOf(pyRequirement(packageName, versionSpec)))
-      loadBalloon.hide()
+      val packages = listOf(pyRequirement(packageName, versionSpec))
+
+      val confirmed = PyPackageManagerUiConfirmationHelpers.getConfirmedPackages(packages, project)
+      if (confirmed.isEmpty()) {
+        PyPackagesUsageCollector.cancelInstallPackageFromConsole.log(project)
+        return@launch
+      }
+
+      installingBalloon = PythonPackageManagerUIHelpers.showBalloon(point, PyBundle.message("python.packaging.installing.package", packageName),
+                                                                    PythonPackageManagerUIHelpers.BalloonStyle.INFO)
+
+      PyPackagesUsageCollector.installAllEvent.log(confirmed.size)
+      installPyRequirementsBackground(confirmed)
+
+      installingBalloon.hide()
+
       PyPackagesUsageCollector.installPackageFromConsole.log(project)
       PythonPackageManagerUIHelpers.showBalloon(point, PyBundle.message("python.packaging.notification.description.installed.packages", packageName), PythonPackageManagerUIHelpers.BalloonStyle.SUCCESS)
     }
     catch (t: Throwable) {
-      loadBalloon.hide()
+      installingBalloon?.hide()
       PyPackagesUsageCollector.failInstallPackageFromConsole.log(project)
       PythonPackageManagerUIHelpers.showBalloon(point, PyBundle.message("python.new.project.install.failed.title", packageName), PythonPackageManagerUIHelpers.BalloonStyle.ERROR)
       throw t

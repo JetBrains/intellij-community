@@ -172,6 +172,47 @@ interface LightClassBehaviorTestBase {
         }
     }
 
+    fun annotationsOnClassCaching(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "test.kt", """
+            package test
+                
+            annotation class MyAnnotation
+
+            @MyAnnotation
+            class TestClass {
+                fun method() {}
+            }
+            """.trimIndent()
+        )
+
+        val annotationQualifiedName = "test.MyAnnotation"
+        
+        val uFile = myFixture.file.toUElement()!!
+        val uClass = uFile.findElementByTextFromPsi<UClass>("TestClass", strict = false)
+            .orFail("can't find class TestClass")
+        
+        val lightClass = uClass.javaPsi
+        val lightAnnotationBeforeModification = lightClass.modifierList?.findAnnotation(annotationQualifiedName)
+        
+        TestCase.assertNotNull(
+            "Light class should have annotation in the modifier list at the start",
+            lightAnnotationBeforeModification
+        )
+        
+        val ktAnnotation = lightAnnotationBeforeModification?.unwrapped as KtAnnotationEntry
+        runUndoTransparentWriteAction {
+            // Remove the annotation from the Kotlin PSI
+            ktAnnotation.delete()
+        }
+
+        val lightAnnotationAfterModification = lightClass.modifierList?.findAnnotation(annotationQualifiedName)
+        TestCase.assertNull(
+            "Light class should not have annotation in the modifier list after its removal",
+            lightAnnotationAfterModification
+        )
+    }
+
     fun checkPropertyAccessorModifierListOffsets(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "test.kt", """

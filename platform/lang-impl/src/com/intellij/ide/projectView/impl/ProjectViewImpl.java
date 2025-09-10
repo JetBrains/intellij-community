@@ -732,7 +732,16 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   @CalledInAny
   public synchronized void addProjectPane(final @NotNull AbstractProjectViewPane pane) {
+    addProjectPane(pane, false);
+  }
+
+  @ApiStatus.Internal
+  @CalledInAny
+  public synchronized void addProjectPane(final @NotNull AbstractProjectViewPane pane, boolean restoreState) {
     uninitializedPanes.add(pane);
+    if (restoreState) {
+      applyUninitializedPaneState(pane);
+    }
     SelectInTarget selectInTarget = pane.createSelectInTarget();
     String id = selectInTarget.getMinorViewId();
     if (pane.getId().equals(id)) {
@@ -1093,13 +1102,17 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         LOG.warn("ignore duplicated pane with id=" + pane.getId() + "\nold " + added.getClass() + "\nnew " + pane.getClass());
       }
       else {
-        Element element = myUninitializedPaneState.remove(pane.getId());
-        if (element != null) {
-          applyPaneState(pane, element);
-        }
+        applyUninitializedPaneState(pane);
       }
     }
     return map;
+  }
+
+  private void applyUninitializedPaneState(AbstractProjectViewPane pane) {
+    Element element = myUninitializedPaneState.remove(pane.getId());
+    if (element != null) {
+      applyPaneState(pane, element);
+    }
   }
 
   private void viewSelectionChanged() {

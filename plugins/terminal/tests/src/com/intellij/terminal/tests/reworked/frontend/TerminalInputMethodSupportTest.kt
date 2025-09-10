@@ -14,6 +14,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
@@ -45,10 +46,10 @@ internal class TerminalInputMethodSupportTest : BasePlatformTestCase() {
       editor,
       coroutineScope,
       getCaretPosition = {
-        val offset = model.cursorOffsetState.value
+        val offset = model.cursorOffsetState.value.toRelative()
         editor.offsetToLogicalPosition(offset)
       },
-      cursorOffsetFlow = model.cursorOffsetState,
+      cursorOffsetFlow = model.cursorOffsetState.map { it.toRelative() },
       sendInputString = echoer::echo,
     )
   }

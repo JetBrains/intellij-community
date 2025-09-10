@@ -1,18 +1,16 @@
-from _typeshed import Incomplete
-
 from hvac.api.system_backend.system_backend_mixin import SystemBackendMixin
 
 class Mount(SystemBackendMixin):
     def list_mounted_secrets_engines(self): ...
-    def retrieve_mount_option(self, mount_point, option_name, default_value: Incomplete | None = None): ...
+    def retrieve_mount_option(self, mount_point, option_name, default_value=None): ...
     def enable_secrets_engine(
         self,
         backend_type,
-        path: Incomplete | None = None,
-        description: Incomplete | None = None,
-        config: Incomplete | None = None,
-        plugin_name: Incomplete | None = None,
-        options: Incomplete | None = None,
+        path=None,
+        description=None,
+        config=None,
+        plugin_name=None,
+        options=None,
         local: bool = False,
         seal_wrap: bool = False,
         **kwargs,
@@ -22,15 +20,15 @@ class Mount(SystemBackendMixin):
     def tune_mount_configuration(
         self,
         path,
-        default_lease_ttl: Incomplete | None = None,
-        max_lease_ttl: Incomplete | None = None,
-        description: Incomplete | None = None,
-        audit_non_hmac_request_keys: Incomplete | None = None,
-        audit_non_hmac_response_keys: Incomplete | None = None,
-        listing_visibility: Incomplete | None = None,
-        passthrough_request_headers: Incomplete | None = None,
-        options: Incomplete | None = None,
-        force_no_cache: Incomplete | None = None,
+        default_lease_ttl=None,
+        max_lease_ttl=None,
+        description=None,
+        audit_non_hmac_request_keys=None,
+        audit_non_hmac_response_keys=None,
+        listing_visibility=None,
+        passthrough_request_headers=None,
+        options=None,
+        force_no_cache=None,
         **kwargs,
     ): ...
     def move_backend(self, from_path, to_path): ...

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.trackers
 
@@ -11,9 +11,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.psi.*
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.psi.impl.PsiManagerEx
-import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED
@@ -28,7 +28,7 @@ val KOTLIN_CONSOLE_KEY = Key.create<Boolean>("kotlin.console")
  * Tested in [OutOfBlockModificationTestGenerated]
  */
 @Service(Service.Level.PROJECT)
-class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePreprocessor, Disposable {
+class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePreprocessor, Disposable.Default {
     private val modificationTrackerImpl: PsiModificationTracker =
         PsiModificationTracker.getInstance(project)
 
@@ -72,7 +72,7 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
 
         PureKotlinCodeBlockModificationListener.getInstance(project) //ensure pom listener is attached as well
 
-        PsiManagerEx.getInstanceEx(project).addTreeChangePreprocessor(this)
+        PsiManagerEx.getInstanceEx(project).addTreeChangePreprocessor(this, this)
 
         messageBusConnection.subscribe(PsiModificationTracker.TOPIC, PsiModificationTracker.Listener {
             val kotlinTrackerInternalIDECount = modificationTrackerImpl.forLanguage(KotlinLanguage.INSTANCE).modificationCount
@@ -100,6 +100,4 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
     fun incModificationCount() {
         kotlinOutOfCodeBlockTrackerImpl.incModificationCount()
     }
-
-    override fun dispose() = Unit
 }

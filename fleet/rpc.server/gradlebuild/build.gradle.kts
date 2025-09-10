@@ -28,6 +28,7 @@ kotlin {
   compilerOptions.freeCompilerArgs = listOf(
     "-Xlambdas=class",
     "-Xconsistent-data-class-copy-visibility",
+    "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks",
   )
   jvm {}
   wasmJs {
@@ -62,8 +63,6 @@ kotlin {
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.json.jvm231489733.get().let { "${it.group}:kotlinx-serialization-json:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.io.opentelemetry.opentelemetry.sdk966255575.get())
-    implementation(jps.io.opentelemetry.semconv.opentelemetry.semconv489456914.get())
     implementation(project(":fleet.rpc"))
     implementation(project(":fleet.reporting.api"))
     implementation(project(":fleet.reporting.shared"))

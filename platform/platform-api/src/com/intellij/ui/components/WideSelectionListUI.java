@@ -236,6 +236,12 @@ public final class WideSelectionListUI extends BasicListUI {
       }
     }
   }
+  
+  @TestOnly
+  @ApiStatus.Internal
+  public void updateLayoutStateTestAccessor() {
+    updateLayoutState();
+  }
 
   private @NotNull Dimension getItemPreferredSize(int index,
                                                   @NotNull ListModel<Object> dataModel,

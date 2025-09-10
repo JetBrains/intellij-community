@@ -1,5 +1,3 @@
-from _typeshed import Incomplete
-
 from hvac.api.vault_api_base import VaultApiBase
 
 DEFAULT_MOUNT_POINT: str
@@ -8,13 +6,13 @@ class Transit(VaultApiBase):
     def create_key(
         self,
         name,
-        convergent_encryption: Incomplete | None = None,
-        derived: Incomplete | None = None,
-        exportable: Incomplete | None = None,
-        allow_plaintext_backup: Incomplete | None = None,
-        key_type: Incomplete | None = None,
+        convergent_encryption=None,
+        derived=None,
+        exportable=None,
+        allow_plaintext_backup=None,
+        key_type=None,
         mount_point="transit",
-        auto_rotate_period: Incomplete | None = None,
+        auto_rotate_period=None,
     ): ...
     def read_key(self, name, mount_point="transit"): ...
     def list_keys(self, mount_point="transit"): ...
@@ -22,95 +20,74 @@ class Transit(VaultApiBase):
     def update_key_configuration(
         self,
         name,
-        min_decryption_version: Incomplete | None = None,
-        min_encryption_version: Incomplete | None = None,
-        deletion_allowed: Incomplete | None = None,
-        exportable: Incomplete | None = None,
-        allow_plaintext_backup: Incomplete | None = None,
+        min_decryption_version=None,
+        min_encryption_version=None,
+        deletion_allowed=None,
+        exportable=None,
+        allow_plaintext_backup=None,
         mount_point="transit",
-        auto_rotate_period: Incomplete | None = None,
+        auto_rotate_period=None,
     ): ...
     def rotate_key(self, name, mount_point="transit"): ...
-    def export_key(self, name, key_type, version: Incomplete | None = None, mount_point="transit"): ...
+    def export_key(self, name, key_type, version=None, mount_point="transit"): ...
     def encrypt_data(
         self,
         name,
-        plaintext: Incomplete | None = None,
-        context: Incomplete | None = None,
-        key_version: Incomplete | None = None,
-        nonce: Incomplete | None = None,
-        batch_input: Incomplete | None = None,
-        type: Incomplete | None = None,
-        convergent_encryption: Incomplete | None = None,
+        plaintext=None,
+        context=None,
+        key_version=None,
+        nonce=None,
+        batch_input=None,
+        type=None,
+        convergent_encryption=None,
         mount_point: str = "transit",
         associated_data: str | None = None,
     ): ...
     def decrypt_data(
         self,
         name,
-        ciphertext: Incomplete | None = None,
-        context: Incomplete | None = None,
-        nonce: Incomplete | None = None,
-        batch_input: Incomplete | None = None,
+        ciphertext=None,
+        context=None,
+        nonce=None,
+        batch_input=None,
         mount_point: str = "transit",
         associated_data: str | None = None,
     ): ...
     def rewrap_data(
-        self,
-        name,
-        ciphertext,
-        context: Incomplete | None = None,
-        key_version: Incomplete | None = None,
-        nonce: Incomplete | None = None,
-        batch_input: Incomplete | None = None,
-        mount_point="transit",
+        self, name, ciphertext, context=None, key_version=None, nonce=None, batch_input=None, mount_point="transit"
     ): ...
-    def generate_data_key(
-        self,
-        name,
-        key_type,
-        context: Incomplete | None = None,
-        nonce: Incomplete | None = None,
-        bits: Incomplete | None = None,
-        mount_point="transit",
-    ): ...
-    def generate_random_bytes(
-        self, n_bytes: Incomplete | None = None, output_format: Incomplete | None = None, mount_point="transit"
-    ): ...
-    def hash_data(
-        self, hash_input, algorithm: Incomplete | None = None, output_format: Incomplete | None = None, mount_point="transit"
-    ): ...
-    def generate_hmac(
-        self, name, hash_input, key_version: Incomplete | None = None, algorithm: Incomplete | None = None, mount_point="transit"
-    ): ...
+    def generate_data_key(self, name, key_type, context=None, nonce=None, bits=None, mount_point="transit"): ...
+    def generate_random_bytes(self, n_bytes=None, output_format=None, mount_point="transit"): ...
+    def hash_data(self, hash_input, algorithm=None, output_format=None, mount_point="transit"): ...
+    def generate_hmac(self, name, hash_input, key_version=None, algorithm=None, mount_point="transit"): ...
     def sign_data(
         self,
         name,
-        hash_input: Incomplete | None = None,
-        key_version: Incomplete | None = None,
-        hash_algorithm: Incomplete | None = None,
-        context: Incomplete | None = None,
-        prehashed: Incomplete | None = None,
-        signature_algorithm: Incomplete | None = None,
-        marshaling_algorithm: Incomplete | None = None,
-        salt_length: Incomplete | None = None,
+        hash_input=None,
+        key_version=None,
+        hash_algorithm=None,
+        context=None,
+        prehashed=None,
+        signature_algorithm=None,
+        marshaling_algorithm=None,
+        salt_length=None,
         mount_point="transit",
-        batch_input: Incomplete | None = None,
+        batch_input=None,
     ): ...
     def verify_signed_data(
         self,
         name,
         hash_input,
-        signature: Incomplete | None = None,
-        hmac: Incomplete | None = None,
-        hash_algorithm: Incomplete | None = None,
-        context: Incomplete | None = None,
-        prehashed: Incomplete | None = None,
-        signature_algorithm: Incomplete | None = None,
-        salt_length: Incomplete | None = None,
-        marshaling_algorithm: Incomplete | None = None,
+        signature=None,
+        hmac=None,
+        hash_algorithm=None,
+        context=None,
+        prehashed=None,
+        signature_algorithm=None,
+        salt_length=None,
+        marshaling_algorithm=None,
         mount_point="transit",
     ): ...
     def backup_key(self, name, mount_point="transit"): ...
-    def restore_key(self, backup, name: Incomplete | None = None, force: Incomplete | None = None, mount_point="transit"): ...
+    def restore_key(self, backup, name=None, force=None, mount_point="transit"): ...
     def trim_key(self, name, min_version, mount_point="transit"): ...

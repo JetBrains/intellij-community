@@ -106,11 +106,17 @@ def is_tensorflow_contrib_ops_module(qname):
     return TENSORFLOW_CONTRIB_OPS_MODULE_PATTERN.match(qname)
 
 
+def is_debugpy_module(qname):
+    # Debugpy modules should not be processed
+    return DEBUGPY_PATTERN.match(qname)
+
+
 def is_skipped_module(path, f, qname):
     return (is_mac_skipped_module(path, f) or
             is_posix_skipped_module(path, f[:f.rindex('.')]) or
             'pynestkernel' in f or
-            is_tensorflow_contrib_ops_module(qname))
+            is_tensorflow_contrib_ops_module(qname) or
+            is_debugpy_module(qname))
 
 
 def is_module(d, root):

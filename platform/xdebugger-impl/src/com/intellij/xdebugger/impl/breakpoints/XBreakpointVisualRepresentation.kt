@@ -29,6 +29,7 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.ui.DebuggerColors
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -44,7 +45,7 @@ private data class UpdateUICallback(val callOnUpdate: Runnable)
 class XBreakpointVisualRepresentation(
   cs: CoroutineScope,
   private val myBreakpoint: XLightLineBreakpointProxy,
-  isEnabled: Boolean,
+  private val isEnabled: Boolean,
   private val myBreakpointManager: XBreakpointManagerProxy,
 ) {
   private val myProject: Project = myBreakpoint.project
@@ -226,6 +227,7 @@ class XBreakpointVisualRepresentation(
     if (file == null) return
     if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return
 
+    if (!isEnabled) return
     val service = RedrawInlaysService.getInstance(myProject)
     service.launch {
       val document = readAction { findDocument(file, mayDecompile = true) } ?: return@launch
@@ -237,17 +239,16 @@ class XBreakpointVisualRepresentation(
     return object : GutterDraggableObject {
       override fun copy(line: Int, file: VirtualFile?, actionId: Int): Boolean {
         if (canMoveTo(line, file)) {
-          val debuggerManager = XDebuggerManager.getInstance(myProject) as XDebuggerManagerImpl
-          val breakpointManager = debuggerManager.breakpointManager
           // TODO IJPL-185322 implement DnD for light breakpoints?
           if (myBreakpoint !is XLineBreakpointProxy) {
             return false
           }
-          if (isCopyAction(actionId) && myBreakpoint is XLineBreakpointProxy.Monolith) {
-            // TODO IJPL-185322 support copy through gutter DnD
-            breakpointManager.copyLineBreakpoint(myBreakpoint.breakpoint, file!!.url, line)
+          if (isCopyAction(actionId)) {
+            val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(myProject)
+            breakpointManager.copyLineBreakpoint(myBreakpoint, file!!, line)
           }
           else {
+            val debuggerManager = XDebuggerManager.getInstance(myProject) as XDebuggerManagerImpl
             myBreakpoint.setFileUrl(file!!.url)
             myBreakpoint.setLine(line)
             val session = debuggerManager.currentSession
@@ -284,15 +285,8 @@ class XBreakpointVisualRepresentation(
 
   private fun canMoveTo(line: Int, file: VirtualFile?): Boolean {
     if (file != null && myBreakpoint.type.canPutAtFast(file, line, myProject) == ThreeState.YES) {
-      if (myBreakpoint is XLineBreakpointProxy.Monolith) {
-        val monolithBreakpoint = myBreakpoint.breakpoint
-        val existing = monolithBreakpoint.breakpointManager.findBreakpointAtLine(monolithBreakpoint.getType(), file, line)
-        return existing == null || existing === monolithBreakpoint
-      }
-      else {
-        // TODO IJPL-185322 support findBreakpointAtLine check for split
-        return true
-      }
+      val existing = myBreakpointManager.findBreakpointAtLine(myBreakpoint.type, file, line)
+      return existing == null || existing == myBreakpoint
     }
     return false
   }

@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.execution.rpc.ProcessHandlerDto
+import com.intellij.ide.rpc.AnActionId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
@@ -32,12 +33,6 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.Internal
 @Rpc
 interface XDebugSessionApi : RemoteApi<Unit> {
-  suspend fun currentSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?>
-
-  suspend fun topSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?>
-
-  suspend fun currentSessionState(sessionId: XDebugSessionId): Flow<XDebugSessionState>
-
   suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto?
 
   suspend fun resume(sessionId: XDebugSessionId)
@@ -96,7 +91,11 @@ data class XDebugSessionDto(
   val processHandlerDto: ProcessHandlerDto,
   val smartStepIntoHandlerDto: XSmartStepIntoHandlerDto?,
   val isLibraryFrameFilterSupported: Boolean,
+  val isValuesCustomSorted: Boolean,
   val activeNonLineBreakpointIdFlow: RpcFlow<XBreakpointId?>,
+  val restartActions: List<AnActionId>,
+  val extraActions: List<AnActionId>,
+  val extraStopActions: List<AnActionId>,
 )
 
 @ApiStatus.Internal
@@ -141,6 +140,9 @@ data class XDebugSessionState(
   val isReadOnly: Boolean,
   val isPauseActionSupported: Boolean,
   val isSuspended: Boolean,
+  val isStepOverActionAllowed: Boolean,
+  val isStepOutActionAllowed: Boolean,
+  val isRunToCursorActionAllowed: Boolean,
 )
 
 @ApiStatus.Internal

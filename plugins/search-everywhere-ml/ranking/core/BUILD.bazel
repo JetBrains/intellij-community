@@ -11,7 +11,7 @@ jvm_library(
   name = "core",
   module_name = "intellij.searchEverywhereMl.ranking.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jackson",
@@ -53,7 +53,7 @@ jvm_library(
 jvm_library(
   name = "core_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":core"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -97,6 +97,10 @@ jvm_library(
     "//plugins/search-everywhere-ml:search-everywhere-ml_test_lib",
     "//platform/bookmarks",
     "//platform/statistics/testFramework",
+  ],
+  exports = [
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
   ],
   runtime_deps = [":core_resources"]
 )

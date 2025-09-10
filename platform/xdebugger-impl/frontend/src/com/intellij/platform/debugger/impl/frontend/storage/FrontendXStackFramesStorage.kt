@@ -16,20 +16,21 @@ internal class FrontendXStackFramesStorage : AbstractCoroutineContextElement(Fro
   private val cache = ConcurrentHashMap<XStackFrameId, FrontendXStackFrame>()
 
   fun getOrCreateStackFrame(project: Project, scope: CoroutineScope, frameDto: XStackFrameDto): FrontendXStackFrame {
-    val (id, sourcePosition, equalityObject, evaluator, textPresentation, captionInfo, customBackgroundInfo, canDrop) = frameDto
-    return cache.computeIfAbsent(id) {
-      FrontendXStackFrame(
-        id,
-        project,
-        scope,
-        sourcePosition,
-        customBackgroundInfo,
-        equalityObject,
-        evaluator,
-        captionInfo,
-        textPresentation,
-        canDrop,
-      )
+    return cache.computeIfAbsent(frameDto.stackFrameId) {
+      with(frameDto) {
+        FrontendXStackFrame(
+          stackFrameId,
+          project,
+          scope,
+          sourcePosition,
+          customBackgroundInfo,
+          equalityObject,
+          evaluator,
+          captionInfo,
+          textPresentation,
+          canDrop,
+        )
+      }
     }
   }
 }

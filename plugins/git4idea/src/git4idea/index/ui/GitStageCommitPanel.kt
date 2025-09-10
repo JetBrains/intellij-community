@@ -8,10 +8,10 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.vcs.commit.CommitProgressPanel
-import com.intellij.vcs.commit.EditedCommitPresentation
 import com.intellij.vcs.commit.NonModalCommitPanel
 import git4idea.i18n.GitBundle
 import git4idea.index.ContentVersion

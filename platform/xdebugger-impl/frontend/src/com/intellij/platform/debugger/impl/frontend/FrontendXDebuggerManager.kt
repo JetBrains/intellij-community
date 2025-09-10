@@ -15,6 +15,7 @@ import com.intellij.util.asDisposable
 import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
+import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -33,7 +34,10 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
   @OptIn(ExperimentalCoroutinesApi::class)
   val currentSession: StateFlow<FrontendXDebuggerSession?> =
     channelFlow {
-      XDebuggerManagerApi.getInstance().currentSession(project.projectId())
+      val currentSessionFlow = durable {
+        XDebuggerManagerApi.getInstance().currentSession(project.projectId())
+      }
+      currentSessionFlow
         .combine(sessionsFlow) { currentSessionId, sessions ->
           currentSessionId to sessions
         }
@@ -55,7 +59,9 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
     }
 
     cs.launch {
-      val (sessionsList, eventFlow) = XDebuggerManagerApi.getInstance().sessions(project.projectId())
+      val (sessionsList, eventFlow) = durable {
+        XDebuggerManagerApi.getInstance().sessions(project.projectId())
+      }
       for (sessionDto in sessionsList) {
         synchronousExecutor.trySend {
           createDebuggerSession(sessionDto)

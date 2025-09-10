@@ -11,6 +11,8 @@
 
   <content>
     <module name="intellij.debugger.streams.core"/>
+    <module name="intellij.debugger.streams.shared"/>
+    <module name="intellij.debugger.streams.backend"/>
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
     <module name="intellij.xml.xmlbeans"/>

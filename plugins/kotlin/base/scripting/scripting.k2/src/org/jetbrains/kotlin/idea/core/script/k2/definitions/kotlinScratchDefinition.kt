@@ -53,7 +53,7 @@ private class KotlinScratchEvaluationConfiguration : ScriptEvaluationConfigurati
     }
 )
 
-private class KotlinScratchCompilationConfiguration() : ScriptCompilationConfiguration(
+private class KotlinScratchCompilationConfiguration : ScriptCompilationConfiguration(
     {
         displayName("Kotlin Scratch")
         explainField(SCRATCH_EXPLAIN_VARIABLE_NAME)

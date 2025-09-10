@@ -16,5 +16,5 @@ import androidx.compose.ui.focus.FocusEventModifierNode
  * This can be traversed from Modifier.Node() using Compose traversal API using DataProviderNode as a TraverseKey
  */
 @Suppress("unused")
-public fun Modifier.provideData(dataProvider: DataProviderContext.() -> Unit): Modifier =
+public fun Modifier.provideData(@Suppress("DEPRECATION") dataProvider: DataProviderContext.() -> Unit): Modifier =
     this then DataProviderElement(dataProvider)

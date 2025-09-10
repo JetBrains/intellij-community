@@ -29,19 +29,23 @@ public class HgCopyTest extends HgSingleUserTest {
   @Test
   public void testCopyUnmodifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
+    myChangeListManager.ensureUpToDate();
     runHgOnProjectRepo("commit", "-m", "added file");
     copyFileInCommand(file, "b.txt");
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.added("b.txt"));
   }
 
   @Test
   public void testCopyModifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
+    myChangeListManager.ensureUpToDate();
     runHgOnProjectRepo("commit", "-m", "added file");
     append(new File(file.getPath()), "newer content");
     file.refresh(false, true);
     verifyStatus(HgTestOutputParser.modified("a.txt"));
     copyFileInCommand(file, "b.txt");
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.modified("a.txt"), HgTestOutputParser.added("b.txt"));
   }
 
@@ -49,15 +53,19 @@ public class HgCopyTest extends HgSingleUserTest {
   public void testCopyUnversionedFile() throws Exception {
     VirtualFile file = makeFile(new File(myWorkingCopyDir.getPath(), "a.txt"));
     copyFileInCommand(file, "b.txt");
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.added("b.txt"), HgTestOutputParser.unknown("a.txt"));
   }
 
   @Test
   public void testCopyCopiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
+    myChangeListManager.ensureUpToDate();
     runHgOnProjectRepo("commit", "-m", "added file");
     copyFileInCommand(file, "b.txt");
+    myChangeListManager.ensureUpToDate();
     copyFileInCommand(file, "c.txt");
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.added("b.txt"), HgTestOutputParser.added("c.txt"));
   }
 
@@ -65,8 +73,10 @@ public class HgCopyTest extends HgSingleUserTest {
   public void testCopyDirWithFiles() throws Exception {
     VirtualFile parent = createDirInCommand(myWorkingCopyDir, "com");
     createFileInCommand(parent, "a.txt", "new file content");
+    myChangeListManager.ensureUpToDate();
     runHgOnProjectRepo("commit", "-m", "added file");
     copyDir(parent, "org");
+    myChangeListManager.ensureUpToDate();
     verifyStatus(HgTestOutputParser.added("org", "a.txt"));
   }
 

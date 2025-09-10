@@ -6,6 +6,7 @@ from antlr4.atn.SemanticContext import SemanticContext as SemanticContext
 from antlr4.PredictionContext import PredictionContext as PredictionContext
 
 class ATNConfig:
+    __slots__ = ("state", "alt", "context", "semanticContext", "reachesIntoOuterContext", "precedenceFilterSuppressed")
     state: Incomplete
     alt: Incomplete
     context: Incomplete
@@ -26,6 +27,7 @@ class ATNConfig:
     def equalsForConfigSet(self, other): ...
 
 class LexerATNConfig(ATNConfig):
+    __slots__ = ("lexerActionExecutor", "passedThroughNonGreedyDecision")
     lexerActionExecutor: Incomplete
     passedThroughNonGreedyDecision: Incomplete
     def __init__(

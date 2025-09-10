@@ -5,9 +5,10 @@ package org.jetbrains.kotlin.idea.fir.completion
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtil
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard
+import kotlin.io.path.name
 
 abstract class AbstractK2JvmBasicCompletionStdlibDuplicationTest : AbstractK2JvmBasicCompletionTest() {
 

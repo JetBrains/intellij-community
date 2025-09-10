@@ -14,15 +14,13 @@ jvm_library(
   name = "shared",
   module_name = "fleet.reporting.shared",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
   kotlinc_opts = ":custom_shared",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "@lib//:opentelemetry",
-    "@lib//:opentelemetry-semconv",
     "//fleet/reporting/api",
     "//fleet/multiplatform.shims",
   ]

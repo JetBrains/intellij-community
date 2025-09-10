@@ -19,7 +19,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.jvmDecompiler.KotlinBytecodeDecompiler
 import org.jetbrains.kotlin.idea.jvmDecompiler.KotlinBytecodeDecompilerTask
@@ -28,6 +28,10 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.runner.RunWith
 import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.extension
+import kotlin.io.path.name
 
 @TestRoot("idea/tests")
 @TestDataPath("\$CONTENT_ROOT")
@@ -77,7 +81,7 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
     }
 
     private fun doTestWithLibraryFile(
-        libraryFile: File,
+        libraryFile: Path,
         expectedHighlightingSetting: FileHighlightingSetting,
         expectedDuplicatedHighlighting: Boolean = false,
         openFileAction: (VirtualFile) -> VirtualFile = { it }
@@ -85,9 +89,9 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
         val libraryExtension = libraryFile.extension
         val libraryVirtualFile =
             if (libraryExtension == "jar" || libraryExtension == "klib") {
-                StandardFileSystems.jar().findFileByPath(libraryFile.absolutePath + URLUtil.JAR_SEPARATOR)
+                StandardFileSystems.jar().findFileByPath(libraryFile.absolutePathString() + URLUtil.JAR_SEPARATOR)
             } else {
-                VirtualFileManager.getInstance().findFileByNioPath(libraryFile.toPath())
+                VirtualFileManager.getInstance().findFileByNioPath(libraryFile)
             } ?: error("unable to locate ${libraryFile.name}")
         var virtualFile: VirtualFile = libraryVirtualFile
         for (childName in fileName().split("/")) {
@@ -103,7 +107,7 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    private fun withLibrary(libraryFile: File, block: () -> Unit) {
+    private fun withLibrary(libraryFile: Path, block: () -> Unit) {
         val libraryName = "library ${libraryFile.name}"
         ConfigLibraryUtil.addLibrary(module, libraryName) {
             addRoot(libraryFile, OrderRootType.CLASSES)

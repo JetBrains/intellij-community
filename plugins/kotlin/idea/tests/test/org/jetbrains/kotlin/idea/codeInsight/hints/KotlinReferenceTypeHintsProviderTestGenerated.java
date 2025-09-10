@@ -225,6 +225,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/SAMConstructor.kt");
     }
 
+    @TestMetadata("SmartCast.kt")
+    public void testSmartCast() throws Exception {
+        runTest("testData/codeInsight/hints/types/SmartCast.kt");
+    }
+
     @TestMetadata("SuspendFunctionalType.kt")
     public void testSuspendFunctionalType() throws Exception {
         runTest("testData/codeInsight/hints/types/SuspendFunctionalType.kt");

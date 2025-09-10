@@ -1,6 +1,6 @@
 from _typeshed import ConvertibleToInt, Incomplete, SupportsIter
 from collections.abc import Iterator
-from typing import Any, ClassVar, Final, Protocol
+from typing import Any, ClassVar, Final, Protocol, type_check_only
 from typing_extensions import Self
 
 from openpyxl.descriptors import MetaSerialisable
@@ -9,7 +9,10 @@ from openpyxl.xml.functions import Element
 from ..xml._functions_overloads import _HasAttrib, _HasGet, _HasTagAndGet, _HasText, _SupportsFindChartLines
 
 # For any override directly re-using Serialisable.from_tree
+@type_check_only
 class _ChildSerialisableTreeElement(_HasAttrib, _HasText, SupportsIter[Incomplete], Protocol): ...
+
+@type_check_only
 class _SerialisableTreeElement(_HasGet[object], _SupportsFindChartLines, _ChildSerialisableTreeElement, Protocol): ...
 
 KEYWORDS: Final[frozenset[str]]

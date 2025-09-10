@@ -59,7 +59,7 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
   private final JPanel myJavaCodeInfoPanel;
   private final JPanel myPreviewPanel;
   private PsiClassType myResourceBundleType;
-  protected final ResourceBundleManager myResourceBundleManager;
+  final ResourceBundleManager myResourceBundleManager;
 
   private final boolean myShowJavaCodeInfo;
   private final boolean myShowPreview;
@@ -188,7 +188,7 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
     }
   }
 
-  public PropertyCreationHandler getPropertyCreationHandler() {
+  PropertyCreationHandler getPropertyCreationHandler() {
     if (useExistingProperty()) {
       return JavaI18nUtil.EMPTY_CREATION_HANDLER;
     }

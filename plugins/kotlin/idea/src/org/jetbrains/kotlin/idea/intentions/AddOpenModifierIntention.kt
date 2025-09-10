@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 class AddOpenModifierIntention : SelfTargetingIntention<KtCallableDeclaration>(
-    KtCallableDeclaration::class.java, KotlinBundle.lazyMessage("make.open")
+    KtCallableDeclaration::class.java, KotlinBundle.messagePointer("make.open")
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtCallableDeclaration, caretOffset: Int): Boolean {
         if (element !is KtProperty && element !is KtNamedFunction) return false

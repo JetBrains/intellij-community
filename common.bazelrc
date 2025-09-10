@@ -6,13 +6,19 @@
 
 ### --- ###
 
+# Disk cache
+common --experimental_disk_cache_gc_max_size=32G --experimental_disk_cache_gc_max_age=28d
+common:macos --disk_cache=~/Library/Caches/JetBrains/monorepo-bazel-cache
+common:linux --disk_cache=~/.cache/JetBrains/monorepo-bazel-cache
+common:windows --disk_cache=~/AppData/Local/Temp/JetBrains/monorepo-bazel-cache
+
 ### NOTE on --experimental_sibling_repository_layout
 ### The option was removed due to https://github.com/bazelbuild/bazel/issues/26361
 ### One experimental option less and also it looks like it won't enabled by default in the future
 
 common --@rules_jvm//:jvm-builder=@community//:monorepo-jvm-builder_deploy.jar
 common --@rules_jvm//:default-javac-opts=@community//:default-javac-opts
-common --@rules_jvm//:default-kotlinc-opts=@community//:k17
+common --@rules_jvm//:default-kotlinc-opts=@community//:k21
 common --@rules_jvm//:koltin_inc_threshold=0 --@rules_jvm//:java_inc_threshold=0
 
 # configure resources
@@ -24,8 +30,8 @@ common --javacopt=-Xlint:-options
 
 # https://bazel.build/docs/bazel-and-java#hermetic-testing
 # The code is compiled for, executed, and tested on this JVM.
-common --java_language_version=17
-common --java_runtime_version=remotejdk_21
+common --java_language_version=21
+common --java_runtime_version=remotejbr_21
 
 # see https://bazel.build/external/lockfile
 # use `bazel mod deps --lockfile_mode=refresh` to update lock file
@@ -58,9 +64,9 @@ build:windows --@rules_kotlin//kotlin/settings:jvm_emit_jdeps=False
 # https://bazel.build/docs/bazel-and-java#config-build-tools-java
 # A second pair of JDK and JVM used to build and execute tools, which are used in the build process, but are not in the build results.
 # That JDK and JVM are controlled using --tool_java_language_version and --tool_java_runtime_version
-common --tool_java_language_version=17
+common --tool_java_language_version=21
 # Java runtime the tools should use
-common --tool_java_runtime_version=remotejbr_17
+common --tool_java_runtime_version=remotejbr_21
 
 # make sure you don't need to open file to read compilation errors
 common --experimental_ui_max_stdouterr_bytes=-1
@@ -70,10 +76,10 @@ common --experimental_ui_max_stdouterr_bytes=-1
 common --symlink_prefix=out/bazel-
 
 # FS Watch
-build --watchfs
-#build --experimental_windows_watchfs
-build:linux --nowatchfs
-build:ci --nowatchfs
+common --watchfs
+common --experimental_windows_watchfs
+common:linux --nowatchfs
+common:ci --nowatchfs
 
 common --enable_platform_specific_config
 common --incompatible_strict_action_env=true
@@ -83,6 +89,9 @@ common --experimental_platform_in_output_dir
 
 # Do not depend on external environment
 build --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+
+# Enable compact *.repo_mapping manifest
+build --incompatible_compact_repo_mapping_manifest
 
 # Generally good remote cache tweaks
 # on CI, set remote_cache_async to false! set to false for local runs also, to investigate https://github.com/bazelbuild/bazel/issues/19273
@@ -103,3 +112,11 @@ common:ci --show_progress_rate_limit=30
 
 # avoid creating a runfiles tree for binaries or tests until it is needed
 build --nobuild_runfile_links
+
+# detailed tests output by default
+# https://bazel.build/reference/command-line-reference#build-flag--test_summary
+test --test_summary=detailed
+
+# https://bazel.build/reference/test-encyclopedia
+# https://bazel.build/reference/command-line-reference#flag--test_timeout
+test --test_timeout=60,300,900,14400

@@ -7,12 +7,6 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-jvm_resources(
-  name = "impl_resources_1",
-  files = glob(["compatibilityResources/**/*"]),
-  strip_prefix = "compatibilityResources"
-)
-
 jvm_library(
   name = "impl",
   module_name = "intellij.platform.remoteServers.impl",
@@ -39,9 +33,6 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/util-ex",
   ],
-  runtime_deps = [
-    ":impl_resources",
-    ":impl_resources_1",
-  ]
+  runtime_deps = [":impl_resources"]
 )
 ### auto-generated section `build intellij.platform.remoteServers.impl` end

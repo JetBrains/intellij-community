@@ -129,7 +129,7 @@ internal class VcsLogConfigurable(private val project: Project) : BoundConfigura
   }
 
   private fun getVcsNames(): String {
-    val allVcsKeys = ProjectLevelVcsManager.getInstance(project).allActiveVcss.mapTo(mutableSetOf()) { it.keyInstanceMethod }
+    val allVcsKeys = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().mapTo(mutableSetOf()) { it.keyInstanceMethod }
     val indexedVcsKeys = VcsLogPersistentIndex.getAvailableIndexers(project).mapTo(mutableSetOf()) { it.supportedVcs }
     if (indexedVcsKeys != allVcsKeys) {
       return indexedVcsKeys.mapNotNull { VcsUtil.findVcsByKey(project, it)?.displayName }.joinToString()

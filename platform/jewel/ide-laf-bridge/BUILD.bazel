@@ -10,7 +10,7 @@ create_kotlinc_options(
     "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
     "org.jetbrains.jewel.foundation.InternalJewelApi",
   ],
-  x_context_receivers = True,
+  x_context_parameters = True,
   x_explicit_api_mode = "strict"
 )
 
@@ -24,7 +24,7 @@ jvm_library(
   name = "ide-laf-bridge",
   module_name = "intellij.platform.jewel.ideLafBridge",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_ide-laf-bridge",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -44,6 +44,11 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//platform/editor-ui-ex:editor-ex",
   ],
+  exports = [
+    "//platform/jewel/foundation",
+    "//platform/jewel/ui",
+    "//libraries/compose-foundation-desktop",
+  ],
   runtime_deps = [":ide-laf-bridge_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
@@ -51,7 +56,7 @@ jvm_library(
 jvm_library(
   name = "ide-laf-bridge_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["ide-laf-bridge-tests/src/test/kotlin/**/*.kt", "ide-laf-bridge-tests/src/test/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["ide-laf-bridge-tests/src/test/kotlin/**/*.kt", "ide-laf-bridge-tests/src/test/kotlin/**/*.java", "ide-laf-bridge-tests/src/test/kotlin/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_ide-laf-bridge",
   associates = [":ide-laf-bridge"],
   deps = [
@@ -74,6 +79,13 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//platform/editor-ui-ex:editor-ex",
     "//libraries/compose-foundation-desktop-junit",
+  ],
+  exports = [
+    "//platform/jewel/foundation",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "//platform/jewel/ui",
+    "//platform/jewel/ui:ui_test_lib",
+    "//libraries/compose-foundation-desktop",
   ],
   runtime_deps = [":ide-laf-bridge_resources"],
   plugins = ["@lib//:compose-plugin"]

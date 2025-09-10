@@ -13,7 +13,7 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
 
   @ApiStatus.Internal
   class ModuleItem(
-    val name: String,
+    val moduleId: PluginModuleId,
     val configFile: String?,
     internal val descriptorContent: CharArray?,
     val loadingRule: ModuleLoadingRule,
@@ -38,7 +38,7 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
     @TestOnly
     fun getDescriptorOrNull(): ContentModuleDescriptor? = _descriptor
 
-    override fun toString(): String = "ModuleItem(name=$name, descriptor=$_descriptor, configFile=$configFile)"
+    override fun toString(): String = "ModuleItem(id=$moduleId, descriptor=$_descriptor, configFile=$configFile)"
   }
 
   override fun toString(): String = "PluginContentDescriptor(modules=$modules)"

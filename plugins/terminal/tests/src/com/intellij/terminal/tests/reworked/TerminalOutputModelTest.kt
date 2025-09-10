@@ -191,7 +191,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       ghijkl
     """.trimIndent(), model.document.text)
     // three characters were trimmed, so the new cursor offset is 1
-    assertEquals(1, model.cursorOffsetState.value)
+    assertEquals(1, model.cursorOffsetState.value.toRelative())
 
     // now check that this specific state can be copied correctly
 
@@ -203,12 +203,12 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       def
       ghijkl
     """.trimIndent(), newModel.document.text)
-    assertEquals(1, newModel.cursorOffsetState.value)
+    assertEquals(1, newModel.cursorOffsetState.value.toRelative())
 
     // ...and modified correctly
 
     newModel.updateCursor(0, 5)
-    assertEquals(2, newModel.cursorOffsetState.value)
+    assertEquals(2, newModel.cursorOffsetState.value.toRelative())
   }
 
   @Test
@@ -326,7 +326,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     model.restore(state)
 
     assertEquals(line, model.document.text)
-    assertEquals(3, model.cursorOffsetState.value)
+    assertEquals(3, model.cursorOffsetState.value.toRelative())
     assertEquals(9L, model.trimmedLinesCount)
     assertEquals(90L, model.trimmedCharsCount)
     assertEquals(10, model.firstLineTrimmedCharsCount)
@@ -353,7 +353,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     newModel.restore(state)
 
     assertEquals(line, newModel.document.text)
-    assertEquals(3, newModel.cursorOffsetState.value)
+    assertEquals(3, newModel.cursorOffsetState.value.toRelative())
     assertEquals(9L, newModel.trimmedLinesCount)
     assertEquals(90L, newModel.trimmedCharsCount)
 

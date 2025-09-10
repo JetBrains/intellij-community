@@ -9,12 +9,17 @@ jvm_resources(
 
 jvm_library(
   name = "grpc-netty-shaded",
+  module_name = "intellij.libraries.grpc.netty.shaded",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  exports = ["@lib//:grpc-netty-shaded"],
-  runtime_deps = [
-    ":grpc-netty-shaded_resources",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
     "@lib//:grpc-netty-shaded",
-  ]
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//libraries/grpc",
+  ],
+  exports = ["@lib//:grpc-netty-shaded"],
+  runtime_deps = [":grpc-netty-shaded_resources"]
 )
 ### auto-generated section `build intellij.libraries.grpc.netty.shaded` end

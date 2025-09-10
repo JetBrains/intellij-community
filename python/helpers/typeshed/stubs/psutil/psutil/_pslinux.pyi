@@ -15,7 +15,6 @@ from psutil._common import (
     supports_ipv6 as supports_ipv6,
     usage_percent as usage_percent,
 )
-from psutil._compat import PY3 as PY3
 
 __extra__all__: Any
 POWER_SUPPLY_PATH: str
@@ -120,19 +119,30 @@ class pio(NamedTuple):
     write_chars: Any
 
 class pcputimes(NamedTuple):
-    user: Any
-    system: Any
-    children_user: Any
-    children_system: Any
-    iowait: Any
+    user: float
+    system: float
+    children_user: float
+    children_system: float
+    iowait: float
 
 def readlink(path): ...
 def file_flags_to_mode(flags): ...
 def is_storage_device(name): ...
 def set_scputimes_ntuple(procfs_path) -> None: ...
 
-scputimes: Any
-prlimit: Any
+class scputimes(NamedTuple):
+    # Note: scputimes has different fields depending on exactly how Linux
+    # is setup, but we'll include the "complete" set of fields
+    user: float
+    nice: float
+    system: float
+    idle: float
+    iowait: float
+    irq: float
+    softirq: float
+    steal: float
+    guest: float
+    guest_nice: float
 
 def calculate_avail_vmem(mems): ...
 def virtual_memory() -> svmem: ...

@@ -661,6 +661,7 @@ com.intellij.openapi.fileEditor.FileDocumentManagerListener
 - java.util.EventListener
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:TOPIC:com.intellij.util.messages.Topic
+- afterDocumentSaved(com.intellij.openapi.editor.Document):V
 - afterDocumentUnbound(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document):V
 - beforeAllDocumentsSaving():V
 - beforeAnyDocumentSaving(com.intellij.openapi.editor.Document,Z):V

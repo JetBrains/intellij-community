@@ -61,10 +61,6 @@ com.intellij.application.options.editor.AutoImportOptionsProvider
 - com.intellij.openapi.options.UnnamedConfigurable
 com.intellij.application.options.editor.CodeFoldingOptionsProvider
 - com.intellij.openapi.options.UnnamedConfigurable
-f:com.intellij.build.events.impl.OutputBuildEventImpl
-- <init>(java.lang.Object,java.lang.Object,java.lang.String,com.intellij.execution.process.ProcessOutputType):V
-- <init>(java.lang.Object,java.lang.String,com.intellij.execution.process.ProcessOutputType):V
-- getOutputType():com.intellij.execution.process.ProcessOutputType
 com.intellij.codeInsight.actions.DirectoryFormattingOptions
 - com.intellij.codeInsight.actions.ReformatFilesOptions
 - a:isIncludeSubdirectories():Z
@@ -81,6 +77,13 @@ com.intellij.codeInsight.actions.ReformatFilesOptions
 com.intellij.codeInsight.actions.onSave.FormatOnSaveOptionsBase$DefaultsProvider
 - getFileTypesFormattedOnSaveByDefault():java.util.Collection
 - getFileTypesWithOptimizeImportsOnSaveByDefault():java.util.Collection
+f:com.intellij.codeInsight.codeVision.CodeVisionBundle
+- com.intellij.DynamicBundle
+- sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionBundle$Companion
+- <init>():V
+f:com.intellij.codeInsight.codeVision.CodeVisionBundle$Companion
+- f:message(java.lang.String,java.lang.Object[]):java.lang.String
+- f:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 - sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionProviderFactory$Companion
 - sf:EP_NAME:java.lang.String
@@ -996,6 +999,8 @@ com.intellij.refactoring.introduce.IntroduceTarget
 - a:render():java.lang.String
 com.intellij.refactoring.move.MoveCallback
 - a:refactoringCompleted():V
+c:com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
+- p:checkLocalScope():com.intellij.psi.PsiElement
 com.intellij.refactoring.safeDelete.SafeDeleteDialog$Callback
 - a:run(com.intellij.refactoring.safeDelete.SafeDeleteDialog):V
 com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate

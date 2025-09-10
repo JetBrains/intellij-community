@@ -3,10 +3,13 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisBundle;
+import com.intellij.codeInsight.JavaIdeCodeInsightSettings;
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.StaticImportCanBeUsedInspection;
+import com.intellij.java.JavaBundle;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
@@ -40,6 +43,28 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
     addStaticAutoImport("java.util.Arrays");
     doTest();
     cleanupTest();
+  }
+
+  public void testRemoveAutoImportProject() {
+    addStaticAutoImport("java.util.Arrays");
+    doTest();
+    IntentionAction intention = myFixture.getAvailableIntention(
+      JavaBundle.message("inspection.static.import.can.be.used.remove.from.auto.import.name", "java.util.Arrays.sort"));
+    myFixture.launchAction(intention);
+    checkAutoImportDoesntContain("java.util.Arrays");
+  }
+
+  public void testRemoveAutoImportIde() {
+    addStaticAutoImportToIde("java.util.Arrays");
+    doTest();
+    IntentionAction intention = myFixture.getAvailableIntention(
+      JavaBundle.message("inspection.static.import.can.be.used.remove.from.auto.import.name", "java.util.Arrays.sort"));
+    myFixture.launchAction(intention);
+    checkAutoImportDoesntContain("java.util.Arrays");
+  }
+
+  private void checkAutoImportDoesntContain(@NotNull String fqn) {
+    assertFalse(JavaCodeStyleManager.getInstance(getProject()).isStaticAutoImportName(fqn));
   }
 
   public void testSimpleWithOnDemand() {
@@ -157,5 +182,8 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
   @SuppressWarnings("SameParameterValue")
   private void addStaticAutoImport(@NotNull String name) {
     JavaProjectCodeInsightSettings.getSettings(getProject()).includedAutoStaticNames.add(name);
+  }
+  private static void addStaticAutoImportToIde(@NotNull String name) {
+    JavaIdeCodeInsightSettings.getInstance().includedAutoStaticNames.add(name);
   }
 }

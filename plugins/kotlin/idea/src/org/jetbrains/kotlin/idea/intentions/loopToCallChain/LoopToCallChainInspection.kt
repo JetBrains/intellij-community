@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import java.util.function.Supplier
 
 class LoopToCallChainInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
@@ -79,19 +81,19 @@ class LoopToCallChainInspection : AbstractKotlinInspection() {
     }
 }
 
-class LoopToCallChainIntention : AbstractLoopToCallChainIntention(
+internal class LoopToCallChainIntention : AbstractLoopToCallChainIntention(
     lazy = false,
-    textGetter = KotlinBundle.lazyMessage("replace.with.stdlib.operations")
+    textGetter = KotlinBundle.messagePointer("replace.with.stdlib.operations")
 )
 
-class LoopToLazyCallChainIntention : AbstractLoopToCallChainIntention(
+internal class LoopToLazyCallChainIntention : AbstractLoopToCallChainIntention(
     lazy = true,
-    textGetter = KotlinBundle.lazyMessage("replace.with.stdlib.operations.with.use.of.assequence")
+    textGetter = KotlinBundle.messagePointer("replace.with.stdlib.operations.with.use.of.assequence")
 )
 
-abstract class AbstractLoopToCallChainIntention(
+internal abstract class AbstractLoopToCallChainIntention(
     private val lazy: Boolean,
-    textGetter: () -> String
+    textGetter: Supplier<@IntentionName String>,
 ) : SelfTargetingRangeIntention<KtForExpression>(
     KtForExpression::class.java,
     textGetter
@@ -100,7 +102,7 @@ abstract class AbstractLoopToCallChainIntention(
         val match = match(element, lazy, false)
         setTextGetter(
             if (match != null)
-                KotlinBundle.lazyMessage("replace.with.0", match.transformationMatch.buildPresentation())
+                KotlinBundle.messagePointer("replace.with.0", match.transformationMatch.buildPresentation())
             else
                 defaultTextGetter
         )

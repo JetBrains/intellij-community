@@ -11,6 +11,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
 import fleet.multiplatform.shims.ConcurrentHashMap
+import fleet.rpc.client.durable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -31,7 +32,9 @@ internal class FrontendXBreakpointTypesManager(
 
   init {
     cs.launch {
-      val (initialBreakpointTypes, breakpointTypesFlow) = XBreakpointTypeApi.getInstance().getBreakpointTypeList(project.projectId())
+      val (initialBreakpointTypes, breakpointTypesFlow) = durable {
+        XBreakpointTypeApi.getInstance().getBreakpointTypeList(project.projectId())
+      }
       handleBreakpointTypesFromBackend(initialBreakpointTypes)
       typesInitialized.complete(Unit)
 

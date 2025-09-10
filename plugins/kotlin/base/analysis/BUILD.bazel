@@ -23,7 +23,7 @@ jvm_library(
   name = "analysis",
   module_name = "kotlin.base.analysis",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_analysis",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -61,7 +61,6 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
     "//platform/projectModel-impl",
     "//platform/analysis-impl",
-    "//platform/diff-impl",
     "//java/openapi:java",
     "//java/manifest",
     "//java/java-impl:impl",

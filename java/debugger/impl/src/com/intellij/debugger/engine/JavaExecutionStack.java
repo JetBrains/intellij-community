@@ -19,6 +19,7 @@ import com.intellij.debugger.ui.breakpoints.BreakpointIntentionAction;
 import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.icons.AllIcons;
+import com.intellij.java.debugger.impl.shared.engine.JavaExecutionStackDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
@@ -28,7 +29,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XDescriptor;
 import com.intellij.xdebugger.frame.XExecutionStack;
-import com.intellij.java.debugger.impl.shared.engine.JavaExecutionStackDescriptor;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.frame.XFramesView;
@@ -206,7 +206,7 @@ public class JavaExecutionStack extends XExecutionStack {
   public void computeStackFrames(final int firstFrameIndex, final XStackFrameContainer container) {
     if (container.isObsolete()) return;
     DebuggerContextImpl debuggerContext = myDebugProcess.getDebuggerContext();
-    Objects.requireNonNull(debuggerContext.getManagerThread()).schedule(new DebuggerContextCommandImpl(debuggerContext, myThreadProxy) {
+    Objects.requireNonNull(debuggerContext.getManagerThread()).schedule(new DebuggerContextCommandImpl(debuggerContext) {
       @Override
       public @NotNull Priority getPriority() {
         return Priority.NORMAL;
@@ -214,6 +214,11 @@ public class JavaExecutionStack extends XExecutionStack {
 
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+        if (!myThreadProxy.isSuspended()) {
+          container.errorOccurred(JavaDebuggerBundle.message("frame.panel.frames.not.available"));
+          return;
+        }
+
         if (container.isObsolete()) return;
         int status = myThreadProxy.status();
         if (status == ThreadReference.THREAD_STATUS_ZOMBIE) {

@@ -49,4 +49,22 @@ class TextToolsetTest : McpToolsetTestBase() {
       assertTrue { actualResult.textContent.text?.contains("x".repeat(MAX_USAGE_TEXT_CHARS) + "||SEARCH_TARGET||" + "y".repeat(MAX_USAGE_TEXT_CHARS)) ?: false }
     }
   }
+
+  @Test
+  fun replace_text_in_file_with_empty_old_text_should_not_hang() = runBlocking {
+    // This test should fail with the current implementation due to endless loop
+    // when oldText is empty
+    testMcpTool(
+      TextToolset::replace_text_in_file.name,
+      buildJsonObject {
+        put("pathInProject", JsonPrimitive(testJavaFile.canonicalPath))
+        put("oldText", JsonPrimitive(""))  // Empty string causes endless loop
+        put("newText", JsonPrimitive("prefix"))
+        put("replaceAll", JsonPrimitive(true))
+      }
+    ) { actualResult ->
+      // Should fail with an error instead of hanging
+      assertTrue { actualResult.isError == true && actualResult.textContent.text?.contains("empty") ?: false }
+    }
+  }
 }

@@ -158,7 +158,9 @@ open class IdeStarter : ModernApplicationStarter() {
       }
       val customHandler = NoProjectStateHandler.EP_NAME.lazySequence().firstOrNull { it.canHandle() }
       if (customHandler != null) {
-        customHandler.handle()
+        withContext(Dispatchers.EDT) {
+          customHandler.handle()
+        }
         return@span false
       }
       return@span showWelcomeFrame(publisher)

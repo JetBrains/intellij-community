@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,20 +59,21 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
     assert !readOnlyFiles.isEmpty() || ContainerUtil.and(originalFiles, file -> file == null || file.isWritable())
       : "Original files: " + originalFiles + ", files: " + files;
 
-    return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(readOnlyFiles));
+    return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(readOnlyFiles), "", null);
   }
 
   @Override
+  @RequiresEdt
   public @NotNull OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles) {
     if (originalFiles.isEmpty()) {
-      return new OperationStatusImpl(VirtualFile.EMPTY_ARRAY);
+      return new OperationStatusImpl(VirtualFile.EMPTY_ARRAY, "", null);
     }
 
     checkThreading();
 
     Set<VirtualFile> realFiles = new HashSet<>(originalFiles.size());
     for (@Nullable VirtualFile file : originalFiles) {
-      file = ObjectUtils.doIfNotNull(file, VirtualFileUtil::originalFileOrSelf);
+      file = ObjectUtils.doIfNotNull(file, f->VirtualFileUtil.originalFileOrSelf(f));
       if (file instanceof VirtualFileWindow) {
         file = ((VirtualFileWindow)file).getDelegate();
       }
@@ -108,18 +110,10 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
   }
 
 
-  public static final class OperationStatusImpl extends OperationStatus {
+  private static final class OperationStatusImpl extends OperationStatus {
     private final VirtualFile[] myReadonlyFiles;
     private final @NotNull @NlsContexts.DialogMessage String myReadOnlyReason;
     private final @Nullable HyperlinkListener myHyperlinkListener;
-
-    public OperationStatusImpl(VirtualFile @NotNull [] readonlyFiles) {
-      this(readonlyFiles, "");
-    }
-
-    private OperationStatusImpl(VirtualFile[] readonlyFiles, @NotNull @NlsContexts.DialogMessage String readOnlyReason) {
-      this(readonlyFiles, readOnlyReason, null);
-    }
 
     private OperationStatusImpl(VirtualFile[] readonlyFiles,
                                 @NotNull @NlsContexts.DialogMessage String readOnlyReason,

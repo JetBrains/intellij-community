@@ -12,9 +12,9 @@ import org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameKotlinImplici
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 class ReplaceItWithExplicitFunctionLiteralParamIntention : SelfTargetingOffsetIndependentIntention<KtNameReferenceExpression>(
-  KtNameReferenceExpression::class.java, KotlinBundle.lazyMessage("replace.it.with.explicit.parameter")
+  KtNameReferenceExpression::class.java, KotlinBundle.messagePointer("replace.it.with.explicit.parameter")
 ) {
-    override fun isApplicableTo(element: KtNameReferenceExpression) = element.isReferenceToImplicitLambdaParameter()
+    override fun isApplicableTo(element: KtNameReferenceExpression): Boolean = element.isReferenceToImplicitLambdaParameter()
 
     override fun startInWriteAction(): Boolean = false
 

@@ -129,6 +129,7 @@ import com.intellij.refactoring.rename.*;
 import com.intellij.refactoring.rename.api.RenameTarget;
 import com.intellij.refactoring.rename.impl.RenameKt;
 import com.intellij.testFramework.*;
+import com.intellij.testFramework.common.EditorCaretTestUtil;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.utils.inlays.CaretAndInlaysInfo;
 import com.intellij.testFramework.utils.inlays.InlayHintsChecker;
@@ -153,7 +154,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
-import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -1071,7 +1071,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public @NotNull Collection<UsageInfo> findUsages(@NotNull PsiElement targetElement) {
+  public @NotNull @Unmodifiable Collection<UsageInfo> findUsages(@NotNull PsiElement targetElement) {
     return findUsages(targetElement, null);
   }
 
@@ -1087,7 +1087,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public @NotNull String getUsageViewTreeTextRepresentation(@NotNull List<UsageTarget> usageTargets,
+  public @NotNull String getUsageViewTreeTextRepresentation(@NotNull @Unmodifiable List<? extends UsageTarget> usageTargets,
                                                             @NotNull Collection<? extends Usage> usages) {
     UsageViewImpl usageView = (UsageViewImpl)UsageViewManager.getInstance(getProject())
       .createUsageView(usageTargets.toArray(UsageTarget.EMPTY_ARRAY), usages.toArray(Usage.EMPTY_ARRAY), new UsageViewPresentation(), null);
@@ -1125,7 +1125,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return getUsageViewTreeTextRepresentation(usageTargets, usages);
   }
 
-  public @NotNull Collection<UsageInfo> findUsages(@NotNull PsiElement targetElement, @Nullable SearchScope scope) {
+  public @NotNull @Unmodifiable Collection<UsageInfo> findUsages(@NotNull PsiElement targetElement, @Nullable SearchScope scope) {
     Project project = getProject();
     FindUsagesHandler handler =
       ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().getFindUsagesHandler(targetElement, false);
@@ -2365,7 +2365,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     private final String filePath;
     private final String newFileText;
     private final String newDocumentText;
-    private final EditorTestUtil.CaretAndSelectionState caretState;
+    private final EditorCaretTestUtil.CaretAndSelectionState caretState;
 
     private SelectionAndCaretMarkupLoader(@NotNull String fileText, @NotNull String documentText, String filePath) {
       this.filePath = filePath;

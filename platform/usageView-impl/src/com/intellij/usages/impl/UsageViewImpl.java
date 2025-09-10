@@ -1264,6 +1264,12 @@ public class UsageViewImpl implements UsageViewEx {
     myRerunAction.actionPerformed(null);
     return this;
   }
+  
+  @TestOnly
+  @ApiStatus.Internal
+  public UsageView doReRunTestAccessor() {
+    return doReRun();
+  }
 
   private void reset() {
     ThreadingAssertions.assertEventDispatchThread();

@@ -103,4 +103,38 @@ object Text {
     }
     return result
   }
+
+  object Latin {
+    private val endSentence = setOf('!', '?', '.')
+    private val partSentence = setOf(',', ';')
+
+    fun isEndPunctuation(symbol: Char) = symbol in endSentence
+    fun isEndPunctuation(line: String) = line.trim().lastOrNull() in endSentence
+
+    fun isPartPunctuation(symbol: Char) = symbol in partSentence
+    fun isPartPunctuation(line: String) = line.trim().lastOrNull() in partSentence
+  }
+
+  @JvmStatic
+  fun alignToWordBounds(textRange: TextRange, text: CharSequence): TextRange {
+    fun isWordChar(c: Char) = c.isLetterOrDigit() || c == '-'
+
+    var start = textRange.startOffset
+    while (start > 0 && isWordChar(text[start - 1])) start--
+    var end = textRange.endOffset
+    while (end < text.length && isWordChar(text[end])) end++
+    return TextRange(start, end)
+  }
+
+  @JvmStatic
+  fun expandToTouchWords(text: CharSequence, range: TextRange): TextRange {
+    var start = range.startOffset
+    var end = range.endOffset
+
+    fun shouldSkip(c: Char) = c.isWhitespace() || c == '\'' || c == '\"'
+
+    while (start > 0 && shouldSkip(text[start - 1])) start--
+    while (end < text.length && shouldSkip(text[end])) end++
+    return TextRange(start, end)
+  }
 }

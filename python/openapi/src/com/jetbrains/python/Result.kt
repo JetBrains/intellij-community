@@ -5,10 +5,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.jetbrains.python.Result.Failure
 import com.jetbrains.python.Result.Success
 import com.jetbrains.python.errorProcessing.MessageError
-import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.packaging.PyExecutionException
-import kotlinx.coroutines.CancellationException
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 /**
@@ -114,29 +110,9 @@ sealed class Result<out SUCC, out ERR> {
     fun <S> success(value: S): Success<S> = Success(value)
     fun <E> failure(error: E): Failure<E> = Failure(error)
     fun localizedError(message: @Nls String): Failure<MessageError> = failure(MessageError(message))
-
-    @ApiStatus.Internal
-    inline fun <T> runCatching(body: () -> T): PyResult<T> = pyRunCatching(body)
   }
 }
 
-@Suppress("UsagesOfObsoleteApi")
-@ApiStatus.Internal
-inline fun <T> pyRunCatching(body: () -> T): PyResult<T> {
-  return try {
-    PyResult.success(body())
-  }
-  catch (t: PyExecutionException) {
-    PyResult.failure(t.pyError)
-  }
-  catch (t: CancellationException) {
-    throw t
-  }
-  catch (t: IllegalArgumentException) {
-    //Parse deserialization exceptions
-    PyResult.localizedError(t.localizedMessage)
-  }
-}
 
 /**
  * Maps success result to another one with same error

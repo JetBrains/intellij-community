@@ -116,9 +116,9 @@ class KDocCopyPastePreProcessorTest : KotlinLightCodeInsightFixtureTestCase() {
             /**
              * Hello
              * World
-             *
-             *
-             *
+             * 
+             * 
+             * 
              */
         """.trimIndent()
     )
@@ -137,8 +137,8 @@ class KDocCopyPastePreProcessorTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent(),
         """
             /**
-             *
-             *
+             * 
+             * 
              * Hello
              * World
              */
@@ -161,12 +161,12 @@ class KDocCopyPastePreProcessorTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent(),
         """
             /**
-             *
-             *
+             * 
+             * 
              * Hello
              * World
-             *
-             *
+             * 
+             * 
              */
         """.trimIndent()
     )
@@ -187,7 +187,7 @@ class KDocCopyPastePreProcessorTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent(),
         """
             /**
-             *
+             * 
             
              * Hello
              * World
@@ -256,21 +256,21 @@ class KDocCopyPastePreProcessorTest : KotlinLightCodeInsightFixtureTestCase() {
         """
             /**
              * # Heading
-             *
+             * 
              * Some long
              * text.
-             *
+             * 
              * 1. Item 1
              * 2. Item 2
-             *
+             * 
              * ```kotlin
              * fun main(args: Array<String>) {
              *     println("Hello, world")
              * }
              * ```
-             *
+             * 
              * > Quote
-             *
+             * 
              * | id | name |
              * |----|------|
              * | 1  | John |
@@ -285,12 +285,12 @@ class KDocCopyPastePreProcessorTest : KotlinLightCodeInsightFixtureTestCase() {
             World
         """.trimIndent(),
         """
-            /*
+            /* 
              * <caret>
              */
         """.trimIndent(),
         """
-            /*
+            /* 
              * Hello
             World
              */

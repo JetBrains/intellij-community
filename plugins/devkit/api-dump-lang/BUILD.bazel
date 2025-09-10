@@ -11,7 +11,7 @@ jvm_library(
   name = "apiDump-lang",
   module_name = "intellij.devkit.apiDump.lang",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//java/java-indexing-api:indexing",
     "//platform/core-api:core",
@@ -37,7 +37,7 @@ jvm_library(
 jvm_library(
   name = "apiDump-lang_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":apiDump-lang"],
   deps = [
     "//java/java-indexing-api:indexing",

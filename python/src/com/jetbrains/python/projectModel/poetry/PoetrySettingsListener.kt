@@ -5,7 +5,7 @@ import com.intellij.util.messages.Topic
 import java.nio.file.Path
 
 // TODO Actions for linking/unlinking pyproject.toml files
-interface PoetrySettingsListener {
+internal interface PoetrySettingsListener {
   companion object {
     @Topic.ProjectLevel
     val TOPIC: Topic<PoetrySettingsListener> = Topic(PoetrySettingsListener::class.java, Topic.BroadcastDirection.NONE)

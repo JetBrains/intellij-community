@@ -1,21 +1,26 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model
 
-import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier
+import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildSrcAddedInEditableBuilds
+import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildSrcSyncedSeparately
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildTreePathAvailable
+import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier
 import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
+import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.BASE_GRADLE_VERSION
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalProjectIdentifier
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 import java.io.File
 
 class DefaultGradleLightBuildTest {
@@ -88,8 +93,7 @@ class DefaultGradleLightBuildTest {
     )
     val gradleIncludedBuild = mockGradleBuild(
       buildPath = "/rootBuild/includedBuild",
-      buildProjects = listOf(includedRootProject, includedSubproject),
-      parent = gradleRootBuild
+      buildProjects = listOf(includedRootProject, includedSubproject)
     )
 
     val deepIncludedRootProject = mockGradleProject(
@@ -106,16 +110,22 @@ class DefaultGradleLightBuildTest {
     )
     val gradleDeepIncludedBuild = mockGradleBuild(
       buildPath = "/rootBuild/includedBuild/deepIncludedBuild",
-      buildProjects = listOf(deepIncludedRootProject, deepIncludedSubproject),
-      parent = gradleIncludedBuild
+      buildProjects = listOf(deepIncludedRootProject, deepIncludedSubproject)
     )
+
+    // Set hierarchy
+    gradleRootBuild.mockIncludedBuilds(gradleIncludedBuild)
+    // Editable builds of the root contain all included builds transitively.
+    // However, the converted deep-included build should have a correct parent, not the root build.
+    gradleRootBuild.mockEditableBuildsForRoot(gradleIncludedBuild, gradleDeepIncludedBuild)
+    gradleIncludedBuild.mockIncludedBuilds(gradleDeepIncludedBuild)
 
     // WHEN
     val gradleBuilds = listOf(gradleRootBuild, gradleIncludedBuild, gradleDeepIncludedBuild)
     val convertedBuilds = DefaultGradleLightBuild.convertGradleBuilds(gradleBuilds, gradleVersion)
 
     // THEN
-    assertEquals(3, convertedBuilds.size)
+    assertEquals(3, convertedBuilds.size) { "The number of expected builds should match the expected value" }
     val (rootBuild, includedBuild, deepIncludedBuild) = convertedBuilds
 
     verifyBuild(rootBuild, "/rootBuild", listOf("rootBuild"))
@@ -144,7 +154,7 @@ class DefaultGradleLightBuildTest {
       build = deepIncludedBuild,
       buildPath = "/rootBuild/includedBuild/deepIncludedBuild",
       projectNames = listOf("deepIncludedBuild", "subproject"),
-      parent = includedBuild,
+      parent = includedBuild, // it shouldn't have a root build as a parent!
     )
     verifyProject(
       project = deepIncludedBuild.projects[0],
@@ -158,6 +168,231 @@ class DefaultGradleLightBuildTest {
       projectPath = "/rootBuild/includedBuild/deepIncludedBuild/subproject",
       identityPath = ":includedBuild:deepIncludedBuild:subproject",
       build = deepIncludedBuild, path = ":subproject",
+    )
+  }
+
+  /**
+   * Gradle >= 8.0: for buildSrc, IDEA sets a parent build corresponding to the parent directory of the buildSrc.
+   *```
+   * rootBuild/
+   * ├── buildSrc/
+   * └── includedBuild/
+   *     └── buildSrc/
+   *```
+   * It's worth running this test for 8.0, because before 8.2 identity path calculation for a project depends on the build hierarchy.
+   */
+  @ParameterizedTest
+  @GradleTestSource("8.0, $BASE_GRADLE_VERSION")
+  fun `test converted buildSrc has a parent build since Gradle 8,0`(gradleVersion: GradleVersion) {
+    val gradleRootProject = mockGradleProject(
+      buildPath = "/rootBuild",
+      path = ":", buildTreePath = ":",
+      gradleVersion = gradleVersion
+    )
+    val gradleRootBuild = mockGradleBuild(
+      buildPath = "/rootBuild",
+      buildProjects = listOf(gradleRootProject)
+    )
+
+    val gradleBuildSrcProject = mockGradleProject(
+      buildPath = "/rootBuild/buildSrc",
+      path = ":", buildTreePath = ":buildSrc",
+      gradleVersion = gradleVersion
+    )
+    val gradleBuildSrcBuild = mockGradleBuild(
+      buildPath = "/rootBuild/buildSrc",
+      buildProjects = listOf(gradleBuildSrcProject),
+    )
+
+    val gradleIncludedProject = mockGradleProject(
+      buildPath = "/rootBuild/includedBuild",
+      path = ":", buildTreePath = ":includedBuild",
+      gradleVersion = gradleVersion
+    )
+    val gradleIncludedBuild = mockGradleBuild(
+      buildPath = "/rootBuild/includedBuild",
+      buildProjects = listOf(gradleIncludedProject),
+    )
+
+    val gradleIncludedBuildSrcProject = mockGradleProject(
+      buildPath = "/rootBuild/includedBuild/buildSrc",
+      path = ":", buildTreePath = ":includedBuild:buildSrc",
+      gradleVersion = gradleVersion
+    )
+    val gradleIncludedBuildSrcBuild = mockGradleBuild(
+      buildPath = "/rootBuild/includedBuild/buildSrc",
+      buildProjects = listOf(gradleIncludedBuildSrcProject),
+    )
+
+    // Set hierarchy
+    gradleRootBuild.mockIncludedBuilds(gradleIncludedBuild)
+    assertTrue(isBuildSrcAddedInEditableBuilds(gradleVersion)) { "This test is supposed to be executed for Gradle higher than 7.2" }
+    // Gradle 7.2+ puts in editableBuilds all buildSrc belonging to all transitively included builds of the root build.
+    gradleRootBuild.mockEditableBuildsForRoot(gradleBuildSrcBuild, gradleIncludedBuild, gradleIncludedBuildSrcBuild)
+
+    // WHEN
+    val convertedBuilds = DefaultGradleLightBuild.convertGradleBuilds(
+      listOf(gradleRootBuild, gradleBuildSrcBuild, gradleIncludedBuild, gradleIncludedBuildSrcBuild), gradleVersion
+    )
+
+    // THEN
+    assertEquals(4, convertedBuilds.size) { "The number of expected builds should match the expected value" }
+    val (rootBuild, buildSrcBuild, includedBuild, includedBuildSrcBuild) = convertedBuilds
+
+    verifyBuild(
+      build = buildSrcBuild,
+      buildPath = "/rootBuild/buildSrc",
+      projectNames = listOf("buildSrc"),
+      parent = rootBuild // the main assertion for this test
+    )
+    verifyProject(
+      project = buildSrcBuild.rootProject,
+      projectPath = "/rootBuild/buildSrc",
+      identityPath = ":buildSrc",
+      build = buildSrcBuild, path = ":",
+    )
+
+    verifyBuild(
+      build = includedBuildSrcBuild,
+      buildPath = "/rootBuild/includedBuild/buildSrc",
+      projectNames = listOf("buildSrc"),
+      parent = includedBuild // the main assertion for this test
+    )
+    verifyProject(
+      project = includedBuildSrcBuild.rootProject,
+      projectPath = "/rootBuild/includedBuild/buildSrc",
+      identityPath = ":includedBuild:buildSrc", // until 8.2 an identity path is calculated relying on the build hierarchy
+      build = includedBuildSrcBuild, path = ":",
+    )
+  }
+
+  /**
+   * Gradle < 8.0: IDEA currently is not able to set a parent for buildSrc because it is synced separately until 8.0.
+   * This is not the desired behavior, it causes problems with identity path calculation. This test just declares it.
+   *
+   * Also, from 6.7-rc-1 until 8.0, buildSrc has access to included builds of the build it belongs to.
+   * See [release notes for 6.7-rc-1](https://docs.gradle.org/6.7-rc-1/release-notes.html#build-src).
+   * To follow this behavior, when IDEA syncs buildSrc, it attaches included builds of the parent build for buildSrc.
+   * See [org.jetbrains.plugins.gradle.service.project.GradleBuildSrcProjectsResolver.includeRootBuildIncludedBuildsIfNeeded]
+   *```
+   * rootBuild/
+   * ├── buildSrc/
+   * └── includedBuild/
+   *```
+   */
+  @ParameterizedTest
+  @GradleTestSource("6.6, 7.6")
+  fun `test converted buildSrc does not have a parent before Gradle 8,0`(gradleVersion: GradleVersion) {
+    val gradleRootProject = mockGradleProject(
+      buildPath = "/rootBuild",
+      path = ":", buildTreePath = ":",
+      gradleVersion = gradleVersion
+    )
+    val gradleRootBuild = mockGradleBuild(
+      buildPath = "/rootBuild",
+      buildProjects = listOf(gradleRootProject)
+    )
+
+    val gradleBuildSrcProject = mockGradleProject(
+      buildPath = "/rootBuild/buildSrc",
+      path = ":", buildTreePath = ":buildSrc",
+      gradleVersion = gradleVersion
+    )
+    val gradleBuildSrcBuild = mockGradleBuild(
+      buildPath = "/rootBuild/buildSrc",
+      buildProjects = listOf(gradleBuildSrcProject),
+    )
+
+    val gradleIncludedProject = mockGradleProject(
+      buildPath = "/rootBuild/includedBuild",
+      path = ":", buildTreePath = ":includedBuild",
+      gradleVersion = gradleVersion
+    )
+    val gradleIncludedBuild = mockGradleBuild(
+      buildPath = "/rootBuild/includedBuild",
+      buildProjects = listOf(gradleIncludedProject),
+    )
+
+    val gradleIncludedBuildSrcProject = mockGradleProject(
+      buildPath = "/rootBuild/includedBuild/buildSrc",
+      path = ":", buildTreePath = ":includedBuild:buildSrc",
+      gradleVersion = gradleVersion
+    )
+    val gradleIncludedBuildSrcBuild = mockGradleBuild(
+      buildPath = "/rootBuild/includedBuild/buildSrc",
+      buildProjects = listOf(gradleIncludedBuildSrcProject),
+    )
+
+    // Set hierarchy
+    gradleRootBuild.mockIncludedBuilds(gradleIncludedBuild)
+    val editableBuilds = if (isBuildSrcAddedInEditableBuilds(gradleVersion)) {
+      // Gradle 7.2+ puts in editableBuilds all buildSrc belonging to all transitively included builds of the root build.
+      arrayOf(gradleBuildSrcBuild, gradleIncludedBuild, gradleIncludedBuildSrcBuild)
+    } else {
+      arrayOf(gradleIncludedBuildSrcBuild)
+    }
+    gradleRootBuild.mockEditableBuildsForRoot(*editableBuilds)
+
+    // The root's included build is attached to buildSrc because IDEA includes it when syncs buildSrc separately
+    gradleBuildSrcBuild.mockIncludedBuilds(gradleIncludedBuild)
+
+    // WHEN
+    assertTrue(isBuildSrcSyncedSeparately(gradleVersion)) { "This test is supposed to be executed for Gradle below 8.0" }
+    val convertedBuilds = DefaultGradleLightBuild.convertGradleBuilds(
+      listOf(gradleRootBuild, gradleIncludedBuild),
+      gradleVersion
+    ) + DefaultGradleLightBuild.convertGradleBuilds(
+      // when IDEA syncs buildSrc, it attaches included builds of the parent build for buildSrc.
+      listOf(gradleBuildSrcBuild, gradleIncludedBuild),
+      gradleVersion
+    )
+
+    // THEN
+    assertEquals(4, convertedBuilds.size) { "The number of expected builds should match the expected value" }
+    val (rootBuild, includedBuild, buildSrcBuild, includedBuildVisibleToBuildSrc) = convertedBuilds
+
+    verifyBuild(
+      build = includedBuild,
+      buildPath = "/rootBuild/includedBuild",
+      projectNames = listOf("includedBuild"),
+      parent = rootBuild
+    )
+    verifyProject(
+      project = includedBuild.rootProject,
+      projectPath = "/rootBuild/includedBuild",
+      identityPath = ":includedBuild",
+      build = includedBuild, path = ":",
+    )
+
+    verifyBuild(
+      build = buildSrcBuild,
+      buildPath = "/rootBuild/buildSrc",
+      projectNames = listOf("buildSrc"),
+      parent = null
+    )
+    verifyProject(
+      project = buildSrcBuild.rootProject,
+      projectPath = "/rootBuild/buildSrc",
+      // A correct identityPath would be `:buildSrc`. It has this value instead because buildSrc is synced separately until 8.0.
+      // However, Gradle provides the same in GradleProjectUtil.getProjectIdentityPath.
+      identityPath = ":",
+      build = buildSrcBuild, path = ":",
+    )
+
+    // This included build belongs to the rootBuild. But in the standalone sync for buildSrc it comes as an included build of buildSrc.
+    verifyBuild(
+      build = includedBuildVisibleToBuildSrc,
+      buildPath = "/rootBuild/includedBuild",
+      projectNames = listOf("includedBuild"),
+      parent = buildSrcBuild
+    )
+    verifyProject(
+      project = includedBuildVisibleToBuildSrc.rootProject,
+      projectPath = "/rootBuild/includedBuild",
+      // In this case, the identityPath seems correct, the same as when the included build is attached to the root build.
+      // That's because in this case buildSrc is synced separately for this sync it is like a "root" build.
+      identityPath = ":includedBuild",
+      build = includedBuildVisibleToBuildSrc, path = ":",
     )
   }
 
@@ -188,25 +423,48 @@ class DefaultGradleLightBuildTest {
     }
 
     if (parent != null) {
-      on { parent.children } doReturn ImmutableDomainObjectSet(listOf(it))
+      val subprojects = parent.children + it
+      on { parent.children } doReturn ImmutableDomainObjectSet(subprojects)
     }
   }
 
   private fun mockGradleBuild(
     buildPath: String,
     buildProjects: List<BasicGradleProject>,
-    parent: GradleBuild? = null,
   ): GradleBuild = mock {
     on { buildIdentifier } doReturn DefaultBuildIdentifier(File(buildPath))
     on { rootProject } doReturn buildProjects.first()
     on { projects } doReturn ImmutableDomainObjectSet(buildProjects)
     on { includedBuilds } doReturn ImmutableDomainObjectSet(emptyList())
     on { editableBuilds } doReturn ImmutableDomainObjectSet(emptyList())
+  }
 
-    if (parent != null) {
-      on { parent.includedBuilds } doReturn ImmutableDomainObjectSet(listOf(it))
-      on { parent.editableBuilds } doReturn ImmutableDomainObjectSet(listOf(it))
+  /**
+   * Only the root build could have editable builds. Those are included builds of it and all their included builds transitively.
+   * Since 7.2, it includes buildSrc of the root build and buildSrc of all its transitive included builds.
+   * `editableBuilds` doesn't contain included builds of a buildSrc belonging to a root or any included build.
+   *
+   * [Gradle documentation for `getEditableBuilds`](https://docs.gradle.org/current/javadoc/org/gradle/tooling/model/gradle/GradleBuild.html#getEditableBuilds())
+   */
+  private fun GradleBuild.mockEditableBuildsForRoot(
+    vararg editableBuildsMocks: GradleBuild,
+  ) {
+    whenever(this.editableBuilds) doReturn ImmutableDomainObjectSet(editableBuildsMocks.asList())
+  }
+
+  /** Use it to specify included builds only. For buildSrc, please use [mockEditableBuildsForRoot] */
+  private fun GradleBuild.mockIncludedBuilds(
+    vararg includedBuildsMocks: GradleBuild,
+  ) {
+    assertTrue(includedBuildsMocks.asList().none { it.isBuildSrcBuild() }) {
+      "`buildSrc` shouldn't be added in included builds. Gradle puts all buildSrc only in editable builds and only for the root build."
     }
+    whenever(this.includedBuilds) doReturn ImmutableDomainObjectSet(includedBuildsMocks.asList())
+  }
+
+  private fun GradleBuild.isBuildSrcBuild(): Boolean {
+    val buildDirectory = this.buildIdentifier.rootDir
+    return buildDirectory.name.equals("buildSrc", ignoreCase = true)
   }
 
   private fun verifyBuild(
@@ -222,7 +480,7 @@ class DefaultGradleLightBuildTest {
       "The build directory specified in the build identifier should match the given path."
     }
     assertEquals(parent, build.parentBuild) {
-      "Only the root build should have `null` parent build."
+      "The build should have an expected `parentBuild`. The opposite indicates that the build hierarchy has been broken."
     }
     assertEquals(projectNames, build.projects.map { it.name }) {
       "The build should have projects with expected names."
@@ -247,7 +505,8 @@ class DefaultGradleLightBuildTest {
       "The project should have expected `path`. This path is relative to project's build and separated with `:`."
     }
     assertEquals(identityPath, project.identityPath) {
-      "The project should have expected `identityPath`. It identifies the project, relatively to the settings file of the root build."
+      "The project should have expected `identityPath`. It identifies the project, relatively to the settings file of the root build. " +
+      "Before 8.2 it is calculated relying on the known hierarchy of builds and projects. After 8.2, it is taken from `buildTreePath`."
     }
     assertEquals(projectPath, project.projectDirectory.path) {
       "The project should be located in expected `projectDirectory`"

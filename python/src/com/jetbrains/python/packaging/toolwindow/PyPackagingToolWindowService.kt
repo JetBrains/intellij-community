@@ -21,8 +21,11 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
-import com.jetbrains.python.packaging.*
+import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.packaging.PyPackageService
+import com.jetbrains.python.packaging.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
@@ -33,6 +36,7 @@ import com.jetbrains.python.packaging.management.*
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.packageRequirements.PackageNode
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor
+import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.repository.*
 import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.packaging.toolwindow.model.*
@@ -200,6 +204,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
         displayId = PYTHON_PACKAGE_INSTALLED
       )
     }
+    toolWindowPanel?.clearFocus()
   }
 
   suspend fun installPackage(pkg: PythonPackage, options: List<String> = emptyList()) {
@@ -211,6 +216,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
         displayId = PYTHON_PACKAGE_INSTALLED
       )
     }
+    toolWindowPanel?.clearFocus()
   }
 
   suspend fun deletePackage(vararg selectedPackages: InstalledPackage) {
@@ -220,6 +226,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       text = message("python.packaging.notification.deleted", selectedPackages.joinToString(", ") { it.name }),
       displayId = PYTHON_PACKAGE_DELETED
     )
+    toolWindowPanel?.clearFocus()
   }
 
   @ApiStatus.Internal
@@ -294,8 +301,19 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   suspend fun refreshInstalledPackages() {
     val sdk = currentSdk ?: return
+    val manager = manager
+
+    val declaredPackages = manager.extractDependencies()?.getOr {
+      withContext(Dispatchers.Main) {
+        val errorMessage = manager.syncErrorMessage() ?: return@withContext
+        showErrorNode(errorMessage.descriptionMessage, errorMessage.fixCommandMessage) {
+          manager.sync()
+        }
+      }
+      return
+    } ?: emptyList()
+
     withContext(Dispatchers.Default) {
-      val declaredPackages = PythonDependenciesExtractor.forSdk(project, sdk)?.extract() ?: emptyList()
       val installedDeclaredPackages = findInstalledDeclaredPackages(declaredPackages)
       val treeExtractor = PythonPackageRequirementsTreeExtractor.forSdk(sdk)
 
@@ -310,7 +328,6 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       }
 
       val standalonePackages = findStandalonePackages(packagesWithDependencies)
-
       installedPackages = (packagesWithDependencies + standalonePackages)
         .associateBy { it.name }
     }
@@ -482,6 +499,16 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       .filter { pkg -> installedPackages.values.find { it.name.equals(pkg, ignoreCase = true) } == null }
       .map { pkg -> InstallablePackage(pkg, repository) }
       .toList()
+  }
+
+  fun showErrorNode(@Nls description: String, @Nls fixName: String, quickFixAction: (suspend () -> PyResult<*>)) {
+    val quickFix = PackageQuickFix(fixName, quickFixAction)
+    val errorNode = ErrorNode(description, quickFix)
+    serviceScope.launch(Dispatchers.Main) {
+      installedPackages = emptyMap()
+      handleSearch("")
+      toolWindowPanel?.showErrorResult(errorNode)
+    }
   }
 
   companion object {

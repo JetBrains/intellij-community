@@ -6,6 +6,18 @@ import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+/**
+ * Defines a listener for changes that occur in the [WorkspaceFileIndex].
+ *
+ * It sends two sets of [WorkspaceFileSet], deleted and added.
+ * It also sends two [EntityStorage] before and after the changes.
+ * This is necessary because it is expected to resolve [com.intellij.platform.workspace.storage.EntityPointer] of the deleted [WorkspaceFileSet]
+ * in storageBefore and [com.intellij.platform.workspace.storage.EntityPointer] of the registered [WorkspaceFileSet] in storageAfter.
+ * However, note that [WorkspaceFileIndex] itself is not versioned, so it is not guaranteed that the deleted or added [WorkspaceFileSet] will
+ * be present in [WorkspaceFileIndex].
+ *
+ * The listener is called inside Write Action, but processing this event in Write Action may lead to unexpected results.
+ */
 @ApiStatus.Internal
 interface WorkspaceFileIndexListener : EventListener {
 
@@ -19,8 +31,8 @@ interface WorkspaceFileIndexListener : EventListener {
 
 @ApiStatus.Internal
 class WorkspaceFileIndexChangedEvent(
-  val removedFileSets: Collection<Set<WorkspaceFileSet>>,
-  val registeredFileSets: Collection<Set<WorkspaceFileSet>>,
+  val removedFileSets: Collection<WorkspaceFileSet>,
+  val registeredFileSets: Collection<WorkspaceFileSet>,
   val storageBefore: EntityStorage,
   val storageAfter: EntityStorage,
 )

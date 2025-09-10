@@ -79,7 +79,7 @@ abstract class AbstractCommonUpdateAction protected constructor(
 
     val singleVcs = vcsManager.getSingleVCS()
     presentation.setVisible(true)
-    presentation.setEnabled(!vcsManager.isBackgroundVcsOperationRunning() && (singleVcs == null || !singleVcs.isUpdateActionDisabled))
+    presentation.setEnabled(!vcsManager.isBackgroundVcsOperationRunning && (singleVcs == null || !singleVcs.isUpdateActionDisabled))
   }
 }
 

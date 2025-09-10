@@ -26,11 +26,12 @@ class SeTextFilterEditor(
   registerShortcut: (AnAction) -> Unit,
 ) : SeFilterEditorBase<SeTextFilter>(
   SeTextFilter(selectedScopeId = scopesInfo?.selectedScopeId,
-               selectedType = null,
+               selectedType = FindSettings.getInstance().fileMask,
                isCaseSensitive = initialTextSearchOptions?.isCaseSensitive ?: false,
                isWholeWordsOnly = initialTextSearchOptions?.isWholeWordsOnly ?: false,
                isRegex = initialTextSearchOptions?.isRegex ?: false)
 ) {
+  private val findInProjectModel = FindManager.getInstance(project).findInProjectModel
   private val scopeFilterAction: AnAction? = scopesInfo?.let {
     SeScopeChooserActionProvider(scopesInfo) {
       filterValue = filterValue.cloneWithScope(it)
@@ -42,13 +43,22 @@ class SeTextFilterEditor(
     }
   }
   private val caseSensitiveAction = CaseSensitiveAction(AtomicBooleanProperty(initialTextSearchOptions?.isCaseSensitive ?: false).apply {
-    afterChange { filterValue = filterValue.cloneWithCase(it) }
+    afterChange {
+      filterValue = filterValue.cloneWithCase(it)
+      findInProjectModel.isCaseSensitive = it
+    }
   }, registerShortcut) { }
   private val wordAction = WordAction(AtomicBooleanProperty(initialTextSearchOptions?.isWholeWordsOnly ?: false).apply {
-    afterChange { filterValue = filterValue.cloneWithWords(it) }
+    afterChange {
+      filterValue = filterValue.cloneWithWords(it)
+      findInProjectModel.isWholeWordsOnly = it
+    }
   }, registerShortcut) { }
   private val regexpAction = RegexpAction(AtomicBooleanProperty(initialTextSearchOptions?.isRegex ?: false).apply {
-    afterChange { filterValue = filterValue.cloneWithRegex(it) }
+    afterChange {
+      filterValue = filterValue.cloneWithRegex(it)
+      findInProjectModel.isRegularExpressions = it
+    }
   }, registerShortcut) { }
 
   override fun getHeaderActions(): List<AnAction> = listOfNotNull(scopeFilterAction, typesFilterAction)
@@ -58,7 +68,7 @@ class SeTextFilterEditor(
   fun changeType(type: String?) {
     typesFilterAction?.let {
       filterValue = filterValue.cloneWithType(type)
-      FindManager.getInstance(project).findInProjectModel.fileFilter = type
+      findInProjectModel.fileFilter = type
       FindSettings.getInstance().fileMask = type
     }
   }
@@ -66,16 +76,19 @@ class SeTextFilterEditor(
   fun selectCaseSensitiveAction(selected: Boolean) {
     filterValue = filterValue.cloneWithCase(selected)
     caseSensitiveAction.setSelected(createActionEvent(), selected)
+    findInProjectModel.isCaseSensitive = selected
   }
 
   fun selectWordAction(selected: Boolean) {
     filterValue = filterValue.cloneWithWords(selected)
     wordAction.setSelected(createActionEvent(), selected)
+    findInProjectModel.isWholeWordsOnly = selected
   }
 
   fun selectRegexpAction(selected: Boolean) {
     filterValue = filterValue.cloneWithRegex(selected)
     regexpAction.setSelected(createActionEvent(), selected)
+    findInProjectModel.isRegularExpressions = selected
   }
 
   private fun createActionEvent(): AnActionEvent {

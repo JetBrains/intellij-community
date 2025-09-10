@@ -1074,18 +1074,6 @@ c:com.intellij.build.SyncViewManager
 - com.intellij.build.AbstractViewManager
 - <init>(com.intellij.openapi.project.Project):V
 - getViewName():java.lang.String
-a:com.intellij.build.events.impl.AbstractBuildEvent
-- com.intellij.build.events.BuildEvent
-- <init>(java.lang.Object,java.lang.Object,J,java.lang.String):V
-- getDescription():java.lang.String
-- getEventTime():J
-- getHint():java.lang.String
-- getId():java.lang.Object
-- getMessage():java.lang.String
-- getParentId():java.lang.Object
-- setDescription(java.lang.String):V
-- setHint(java.lang.String):V
-- setParentId(java.lang.Object):V
 f:com.intellij.build.events.impl.DerivedResultImpl
 - com.intellij.build.events.DerivedResult
 - <init>():V
@@ -1113,75 +1101,9 @@ c:com.intellij.build.events.impl.FailureResultImpl
 - <init>(java.lang.Throwable):V
 - <init>(java.util.List):V
 - getFailures():java.util.List
-c:com.intellij.build.events.impl.FileDownloadEventImpl
-- com.intellij.build.events.impl.AbstractBuildEvent
-- com.intellij.build.events.ProgressBuildEvent
-- <init>(java.lang.Object,java.lang.Object,J,java.lang.String,J,J,java.lang.String,Z,java.lang.String):V
-- getDownloadPath():java.lang.String
-- getProgress():J
-- getTotal():J
-- getUnit():java.lang.String
-- isFirstInGroup():Z
-c:com.intellij.build.events.impl.FileDownloadedEventImpl
-- com.intellij.build.events.impl.AbstractBuildEvent
-- <init>(java.lang.Object,java.lang.Object,J,java.lang.String,J,java.lang.String):V
-- getDownloadPath():java.lang.String
-- getDuration():J
-c:com.intellij.build.events.impl.FileMessageEventImpl
-- com.intellij.build.events.impl.MessageEventImpl
-- com.intellij.build.events.FileMessageEvent
-- <init>(java.lang.Object,com.intellij.build.events.MessageEvent$Kind,java.lang.String,java.lang.String,java.lang.String,com.intellij.build.FilePosition):V
-- equals(java.lang.Object):Z
-- getFilePosition():com.intellij.build.FilePosition
-- getHint():java.lang.String
-- getNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
-- getResult():com.intellij.build.events.FileMessageEventResult
-- hashCode():I
-f:com.intellij.build.events.impl.FinishBuildEventImpl
-- com.intellij.build.events.impl.FinishEventImpl
-- com.intellij.build.events.FinishBuildEvent
-- <init>(java.lang.Object,java.lang.Object,J,java.lang.String,com.intellij.build.events.EventResult):V
-c:com.intellij.build.events.impl.FinishEventImpl
-- com.intellij.build.events.impl.AbstractBuildEvent
-- com.intellij.build.events.FinishEvent
-- <init>(java.lang.Object,java.lang.Object,J,java.lang.String,com.intellij.build.events.EventResult):V
-- getResult():com.intellij.build.events.EventResult
-c:com.intellij.build.events.impl.MessageEventImpl
-- com.intellij.build.events.impl.AbstractBuildEvent
-- com.intellij.build.events.MessageEvent
-- <init>(java.lang.Object,com.intellij.build.events.MessageEvent$Kind,java.lang.String,java.lang.String,java.lang.String):V
-- equals(java.lang.Object):Z
-- getGroup():java.lang.String
-- getKind():com.intellij.build.events.MessageEvent$Kind
-- getNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
-- getResult():com.intellij.build.events.MessageEventResult
-- hashCode():I
-- f:setDescription(java.lang.String):V
-f:com.intellij.build.events.impl.OutputBuildEventImpl
-- com.intellij.build.events.impl.AbstractBuildEvent
-- com.intellij.build.events.OutputBuildEvent
-- <init>(java.lang.Object,java.lang.Object,java.lang.String,Z):V
-- <init>(java.lang.Object,java.lang.String,Z):V
-f:com.intellij.build.events.impl.ProgressBuildEventImpl
-- com.intellij.build.events.impl.AbstractBuildEvent
-- com.intellij.build.events.ProgressBuildEvent
-- <init>(java.lang.Object,java.lang.Object,J,java.lang.String,J,J,java.lang.String):V
-- getProgress():J
-- getTotal():J
-- getUnit():java.lang.String
 f:com.intellij.build.events.impl.SkippedResultImpl
 - com.intellij.build.events.SkippedResult
 - <init>():V
-f:com.intellij.build.events.impl.StartBuildEventImpl
-- com.intellij.build.events.impl.StartEventImpl
-- com.intellij.build.events.StartBuildEvent
-- <init>(com.intellij.build.BuildDescriptor,java.lang.String):V
-- withExecutionFilter(com.intellij.execution.filters.Filter):com.intellij.build.events.impl.StartBuildEventImpl
-- withRestartActions(com.intellij.openapi.actionSystem.AnAction[]):com.intellij.build.events.impl.StartBuildEventImpl
-c:com.intellij.build.events.impl.StartEventImpl
-- com.intellij.build.events.impl.AbstractBuildEvent
-- com.intellij.build.events.StartEvent
-- <init>(java.lang.Object,java.lang.Object,J,java.lang.String):V
 f:com.intellij.build.events.impl.SuccessResultImpl
 - com.intellij.build.events.SuccessResult
 - <init>():V
@@ -1568,13 +1490,6 @@ f:com.intellij.codeInsight.actions.onSave.OptimizeImportsOnSaveOptions
 - <init>(com.intellij.openapi.project.Project):V
 - clone():com.intellij.codeInsight.actions.onSave.OptimizeImportsOnSaveOptions
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.actions.onSave.OptimizeImportsOnSaveOptions
-f:com.intellij.codeInsight.codeVision.CodeVisionBundle
-- com.intellij.DynamicBundle
-- sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionBundle$Companion
-- <init>():V
-f:com.intellij.codeInsight.codeVision.CodeVisionBundle$Companion
-- f:message(java.lang.String,java.lang.Object[]):java.lang.String
-- f:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 c:com.intellij.codeInsight.codeVision.CodeVisionContextProvider
 - <init>(com.intellij.openapi.project.Project):V
 - createCodeVisionContext(com.intellij.openapi.editor.Editor):com.intellij.codeInsight.codeVision.EditorCodeVisionContext
@@ -1925,24 +1840,21 @@ c:com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 - s:setAutoInsertTimeout(I):V
 a:com.intellij.codeInsight.completion.CompletionPhase
 - com.intellij.openapi.Disposable
-- sf:AUTO_POPUP_TYPED_EVENT:com.intellij.openapi.util.Key
 - sf:NoCompletion:com.intellij.codeInsight.completion.CompletionPhase
 - f:indicator:com.intellij.codeInsight.completion.CompletionProgressIndicator
-- p:<init>(com.intellij.codeInsight.completion.CompletionProgressIndicator):V
 - dispose():V
 - a:newCompletionStarted(I,Z):I
 f:com.intellij.codeInsight.completion.CompletionPhase$BgCalculation
 - com.intellij.codeInsight.completion.CompletionPhase
-- <init>(com.intellij.codeInsight.completion.CompletionProgressIndicator):V
 - newCompletionStarted(I,Z):I
 f:com.intellij.codeInsight.completion.CompletionPhase$CommittingDocuments
 - com.intellij.codeInsight.completion.CompletionPhase
 - dispose():V
-- ignoreCurrentDocumentChange():V
+- f:ignoreCurrentDocumentChange():V
 - newCompletionStarted(I,Z):I
 f:com.intellij.codeInsight.completion.CompletionPhase$EmptyAutoPopup
 - com.intellij.codeInsight.completion.CompletionPhase$ZombiePhase
-- allowsSkippingNewAutoPopup(com.intellij.openapi.editor.Editor,C):Z
+- f:allowsSkippingNewAutoPopup(com.intellij.openapi.editor.Editor,C):Z
 - newCompletionStarted(I,Z):I
 f:com.intellij.codeInsight.completion.CompletionPhase$InsertedSingleItem
 - com.intellij.codeInsight.completion.CompletionPhase$ZombiePhase
@@ -1950,14 +1862,12 @@ f:com.intellij.codeInsight.completion.CompletionPhase$InsertedSingleItem
 - newCompletionStarted(I,Z):I
 f:com.intellij.codeInsight.completion.CompletionPhase$ItemsCalculated
 - com.intellij.codeInsight.completion.CompletionPhase
-- <init>(com.intellij.codeInsight.completion.CompletionProgressIndicator):V
 - newCompletionStarted(I,Z):I
 f:com.intellij.codeInsight.completion.CompletionPhase$NoSuggestionsHint
 - com.intellij.codeInsight.completion.CompletionPhase$ZombiePhase
 - newCompletionStarted(I,Z):I
 f:com.intellij.codeInsight.completion.CompletionPhase$Synchronous
 - com.intellij.codeInsight.completion.CompletionPhase
-- <init>(com.intellij.codeInsight.completion.CompletionProgressIndicator):V
 - newCompletionStarted(I,Z):I
 a:com.intellij.codeInsight.completion.CompletionPhase$ZombiePhase
 - com.intellij.codeInsight.completion.CompletionPhase
@@ -8212,7 +8122,6 @@ a:com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 - getElementPriority(java.lang.Object,java.lang.String):I
 - getElementsRenderer():javax.swing.ListCellRenderer
 - getItemDescription(java.lang.Object):java.lang.String
-- psf:getLineAndColumn(java.lang.String):com.intellij.util.IntPair
 - pf:getProject():com.intellij.openapi.project.Project
 - getScope():com.intellij.ide.util.scopeChooser.ScopeDescriptor
 - getSearchProviderId():java.lang.String
@@ -8225,7 +8134,6 @@ a:com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 - processSelectedItem(java.lang.Object,I,java.lang.String):Z
 - setScope(com.intellij.ide.util.scopeChooser.ScopeDescriptor):V
 - showInFindResults():Z
-- p:triggerLineOrColumnFeatureUsed(com.intellij.pom.Navigatable,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor$Companion
 - f:createContext(com.intellij.openapi.project.Project,com.intellij.psi.SmartPsiElementPointer):com.intellij.openapi.actionSystem.DataContext
 - f:getElement(com.intellij.psi.PsiElement,java.lang.String):com.intellij.psi.PsiElement
@@ -8282,7 +8190,6 @@ c:com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 - createExtendedInfo():com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 - sf:createLanguageFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 - p:createModel(com.intellij.openapi.project.Project):com.intellij.ide.util.gotoByName.FilteringGotoByModel
-- p:createSourceNavigationRequest(com.intellij.psi.PsiElement,com.intellij.openapi.vfs.VirtualFile,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - filterControlSymbols(java.lang.String):java.lang.String
 - getActions(java.lang.Runnable):java.util.List
 - getElementPriority(java.lang.Object,java.lang.String):I
@@ -8315,7 +8222,6 @@ c:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 - createExtendedInfo():com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 - sf:createFileTypeFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 - p:createModel(com.intellij.openapi.project.Project):com.intellij.ide.util.gotoByName.FilteringGotoByModel
-- p:createSourceNavigationRequest(com.intellij.psi.PsiElement,com.intellij.openapi.vfs.VirtualFile,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - getActions(java.lang.Runnable):java.util.List
 - getDataForItem(java.lang.Object,java.lang.String):java.lang.Object
 - getElementPriority(java.lang.Object,java.lang.String):I
@@ -8325,7 +8231,6 @@ c:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 - getSortWeight():I
 - isEmptyPatternSupported():Z
 - pf:processElement(com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor,com.intellij.ide.util.gotoByName.FilteringGotoByModel,java.lang.Object,I):Z
-- pf:triggerLineOrColumnFeatureUsed(com.intellij.pom.Navigatable,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor$Companion
 - f:createFileTypeFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 a:com.intellij.ide.actions.searcheverywhere.FixedTabsListCustomizationStrategy
@@ -8410,21 +8315,6 @@ c:com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
 - getSortWeight():I
 - isShownInSeparateTab():Z
 f:com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor$Factory
-- com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory
-- <init>():V
-- createContributor(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-f:com.intellij.ide.actions.searcheverywhere.RunConfigurationsSEContributor
-- com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-- <init>(com.intellij.openapi.project.Project,java.awt.Component,java.util.function.Supplier):V
-- fetchElements(java.lang.String,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):V
-- getElementsRenderer():javax.swing.ListCellRenderer
-- getGroupName():java.lang.String
-- getSearchProviderId():java.lang.String
-- getSortWeight():I
-- getSupportedCommands():java.util.List
-- processSelectedItem(com.intellij.execution.actions.ChooseRunConfigurationPopup$ItemWrapper,I,java.lang.String):Z
-- showInFindResults():Z
-f:com.intellij.ide.actions.searcheverywhere.RunConfigurationsSEContributor$Factory
 - com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory
 - <init>():V
 - createContributor(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
@@ -10092,6 +9982,7 @@ c:com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 - p:updateImpl(com.intellij.ide.projectView.PresentationData):V
 c:com.intellij.ide.projectView.impl.nodes.PsiFileNode
 - com.intellij.ide.projectView.impl.nodes.BasePsiNode
+- com.intellij.pom.AsyncNavigatable
 - com.intellij.pom.NavigatableWithText
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.ide.projectView.ViewSettings):V
 - canNavigate():Z
@@ -16732,14 +16623,6 @@ com.intellij.ui.popup.util.MasterDetailPopupBuilder$Delegate
 - a:handleMnemonic(java.awt.event.KeyEvent,com.intellij.openapi.project.Project,com.intellij.openapi.ui.popup.JBPopup):V
 - a:itemChosen(com.intellij.ui.popup.util.ItemWrapper,com.intellij.openapi.project.Project,com.intellij.openapi.ui.popup.JBPopup,Z):V
 - a:removeSelectedItemsInTree():V
-f:com.intellij.ui.preview.DescriptorPreview
-- <init>(com.intellij.openapi.ui.Splitter,Z,com.intellij.openapi.client.ClientProjectSession):V
-- f:close():V
-- f:editor():com.intellij.openapi.editor.Editor
-- f:getEditable():Z
-- f:getSession():com.intellij.openapi.client.ClientProjectSession
-- f:getSplitter():com.intellij.openapi.ui.Splitter
-- f:open(com.intellij.openapi.fileEditor.OpenFileDescriptor):V
 a:com.intellij.ui.tabs.ColorButtonBase
 - com.intellij.notification.impl.ui.StickyButton
 - p:myColor:java.awt.Color
@@ -16798,32 +16681,12 @@ f:com.intellij.ui.tabs.FileColorManagerImpl
 f:com.intellij.uiDesigner.SerializedComponentData
 - <init>(java.lang.String):V
 - getSerializedComponents():java.lang.String
-c:com.intellij.unscramble.AnalyzeStacktraceAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.unscramble.AnalyzeStacktraceUtil
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
 - sf:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String):V
 - sf:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String,javax.swing.Icon):com.intellij.execution.ui.RunContentDescriptor
 - sf:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String,javax.swing.Icon,Z):com.intellij.execution.ui.RunContentDescriptor
-- sf:createEditorPanel(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):com.intellij.unscramble.AnalyzeStacktraceUtil$StacktraceEditorPanel
 - sf:printStacktrace(com.intellij.execution.ui.ConsoleView,java.lang.String):V
-f:com.intellij.unscramble.AnalyzeStacktraceUtil$StacktraceEditorPanel
-- javax.swing.JPanel
-- com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.UiDataProvider
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
-- dispose():V
-- f:getEditor():com.intellij.openapi.editor.Editor
-- f:getEditorComponent():javax.swing.JComponent
-- f:getText():java.lang.String
-- f:pasteTextFromClipboard():V
-- f:setText(java.lang.String):V
-- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.usageView.impl.UsageViewContentManagerImpl
 - com.intellij.usageView.UsageViewContentManager
 - <init>(com.intellij.openapi.project.Project):V

@@ -36,6 +36,8 @@ f:org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 - s:computeAllPathVariables(org.jetbrains.jps.model.JpsGlobal):java.util.Map
 - s:getBaseDirectory(org.jetbrains.jps.model.JpsProject):java.io.File
 - s:getBaseDirectory(org.jetbrains.jps.model.module.JpsModule):java.io.File
+- s:getBaseDirectoryPath(org.jetbrains.jps.model.JpsProject):java.nio.file.Path
+- s:getBaseDirectoryPath(org.jetbrains.jps.model.module.JpsModule):java.nio.file.Path
 - s:getPathVariableValue(org.jetbrains.jps.model.JpsGlobal,java.lang.String):java.lang.String
 a:org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
 - <init>():V

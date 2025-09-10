@@ -187,24 +187,21 @@ public class DebugProcessEvents extends DebugProcessImpl {
                   return;
                 }
 
-                SuspendContextImpl suspendContext = null;
+                if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL) {
+                  // This `if` is necessary in the first place for resume-only current thread stepping.
+                  // For other cases it would be just a workaround for possible problems, it reports them.
 
-                if (isResumeOnlyCurrentThread() && locatableEvent != null) {
-                  for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
-                    ThreadReferenceProxyImpl threadProxy = context.getVirtualMachineProxy().getThreadReferenceProxy(locatableEvent.thread());
-                    if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL &&
-                        context.isExplicitlyResumed(threadProxy)) {
-                      context.myResumedThreads.remove(threadProxy);
-                      suspendContext = context;
-                      suspendContext.myVotesToVote = eventSet.size();
-                      break;
-                    }
-                  }
+                  // So for the resume-only-current-thread stepping mode we replace the old placeholder context
+                  // (which was needed only to "hold" other threads) with the new one.
+
+                  // This will cancel all activities for the placeholder context (and stepping monitor also).
+
+                  // Thus, from the point of view of the stepping, it becomes the same as the classic suspend-all stepping
+                  // where the old context totally resumes and after the stepping the new one is creating.
+                  ((SuspendManagerImpl)getSuspendManager()).resumeAllSuspendAllContexts(eventSet);
                 }
 
-                if (suspendContext == null) {
-                  suspendContext = getSuspendManager().pushSuspendContext(eventSet);
-                }
+                SuspendContextImpl suspendContext = getSuspendManager().pushSuspendContext(eventSet);
 
                 Set<ClassPrepareRequestor> notifiedClassPrepareEventRequestors = null;
                 ReferenceType lastPreparedClass = null;
@@ -278,24 +275,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
               }
 
               private boolean skipEvent(@Nullable LocatableEvent locatableEvent) {
-                if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL) {
-                  // check if there is already one request with policy SUSPEND_ALL
-                  for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
-                    if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
-                      if (isResumeOnlyCurrentThread() && locatableEvent != null && !context.isEvaluating()) {
-                        // if step event is present - switch context
-                        getSuspendManager().resume(context);
-                        //((SuspendManagerImpl)getSuspendManager()).popContext(context);
-                      }
-                      else if (!DebuggerSession.enableBreakpointsDuringEvaluation()) {
-                        notifySkippedBreakpointInEvaluation(locatableEvent, context);
-                        DebuggerUtilsAsync.resume(eventSet);
-                        return true;
-                      }
-                    }
-                  }
-                }
-
                 if (!isCurrentVirtualMachine(myVmProxy)) {
                   notifySkippedBreakpoints(locatableEvent, SkippedBreakpointReason.OTHER_VM);
                   DebuggerUtilsAsync.resume(eventSet);
@@ -807,8 +786,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
 
     boolean noStandardSuspendNeeded;
-    List<SuspendContextImpl> suspendAllContexts =
-      ContainerUtil.filter(suspendManager.getEventContexts(), c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL);
+    List<SuspendContextImpl> suspendAllContexts = suspendManager.getSuspendAllContexts();
     if (!suspendAllContexts.isEmpty()) {
       logSuspendContext(suspendContext, () -> "join with suspend-all context");
       if (suspendAllContexts.size() > 1) {
@@ -817,20 +795,32 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
       noStandardSuspendNeeded = true;
       ThreadReferenceProxyImpl threadProxy = suspendContext.getVirtualMachineProxy().getThreadReferenceProxy(thread);
-      if (suspendManager.myExplicitlyResumedThreads.contains(threadProxy)) {
-        for (SuspendContextImpl context : suspendManager.getEventContexts()) {
-          if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL && !context.suspends(threadProxy)) {
+      SuspendContextImpl firstSuspendAllContext = suspendAllContexts.get(0);
+      if (suspendAllContexts.size() == 1 && firstSuspendAllContext.mySteppingThreadForResumeOneSteppingCurrentMode == threadProxy) {
+        // Stepping in "Resume only one thread in suspend-all" mode met a breakpoint
+
+        suspendManager.myExplicitlyResumedThreads.remove(threadProxy);
+        suspendManager.scheduleResume(firstSuspendAllContext);
+
+        suspendContext.getVirtualMachineProxy().suspend();
+        // Inside switchToSuspendAll the engine will replace the placeholder context with the new one.
+        // It is necessary to cancel all current activities with the placeholder context (and the stepping monitor also).
+        SuspendOtherThreadsRequestor.switchToSuspendAll(suspendContext, (s) -> true);
+      }
+      else if (suspendManager.myExplicitlyResumedThreads.contains(threadProxy)) {
+        for (SuspendContextImpl context : suspendAllContexts) {
+          if (!context.suspends(threadProxy)) {
             suspendManager.suspendThread(context, threadProxy);
           }
         }
         suspendManager.myExplicitlyResumedThreads.remove(threadProxy);
         suspendManager.scheduleResume(suspendContext);
-        SuspendManagerUtil.switchToThreadInSuspendAllContext(suspendAllContexts.get(0), threadProxy);
+        SuspendManagerUtil.switchToThreadInSuspendAllContext(firstSuspendAllContext, threadProxy);
       }
       else {
         // Already stopped, so this is "remaining" event. Need to resume the event.
         List<SuspendContextImpl> suspendAllSwitchContexts =
-          ContainerUtil.filter(suspendManager.getEventContexts(), c -> c.mySuspendAllSwitchedContext);
+          ContainerUtil.filter(suspendAllContexts, c -> c.mySuspendAllSwitchedContext);
         if (suspendAllSwitchContexts.size() != 1) {
           debugProcess.logError("Requires just one suspend all switch context, but have: " + suspendAllSwitchContexts);
         }

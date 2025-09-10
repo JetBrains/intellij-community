@@ -13,6 +13,7 @@ import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.ui.updateFrontendSettingsAndSync
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 import java.util.concurrent.CopyOnWriteArrayList
@@ -48,6 +49,11 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
 
     @ApiStatus.Internal
     var terminalEngineInRemDev: TerminalEngine = TerminalEngine.REWORKED
+
+    @ApiStatus.Internal
+    var showCompletionPopupAutomatically: Boolean = true
+    @ApiStatus.Internal
+    var commandCompletionShowingMode: TerminalCommandCompletionShowingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS
 
     var myTabName: @Nls String = TerminalBundle.message("local.terminal.default.name")
     var myCloseSessionOnLogout: Boolean = true
@@ -99,6 +105,28 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
       if (state.terminalEngine != value || state.terminalEngineInRemDev != value) {
         state.terminalEngine = value
         state.terminalEngineInRemDev = value
+        fireSettingsChanged()
+      }
+    }
+
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
+  var showCompletionPopupAutomatically: Boolean
+    get() = state.showCompletionPopupAutomatically
+    set(value) {
+      if (state.showCompletionPopupAutomatically != value) {
+        state.showCompletionPopupAutomatically = value
+        fireSettingsChanged()
+      }
+    }
+
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
+  var commandCompletionShowingMode: TerminalCommandCompletionShowingMode
+    get() = state.commandCompletionShowingMode
+    set(value) {
+      if (state.commandCompletionShowingMode != value) {
+        state.commandCompletionShowingMode = value
         fireSettingsChanged()
       }
     }

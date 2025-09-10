@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,6 +30,8 @@ import java.util.stream.Stream;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
+
+import com.intellij.tests.IgnoreException;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.reporting.ReportEntry;
@@ -76,6 +79,8 @@ public class BazelJUnitOutputListener implements TestExecutionListener, Closeabl
       throw new IllegalStateException("Unable to create output file", e);
     }
   }
+
+  private final Set<TestIdentifier> testsWithThrowableResult = new HashSet<>();
 
   @Override
   public void testPlanExecutionStarted(TestPlan testPlan) {
@@ -183,10 +188,19 @@ public class BazelJUnitOutputListener implements TestExecutionListener, Closeabl
   }
 
   @Override
-  public void executionFinished(
-    TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
+  public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
+    testExecutionResult.getThrowable().ifPresent(testThrowable -> {
+      if (!IgnoreException.isIgnoringThrowable(testThrowable)) {
+        testsWithThrowableResult.add(testIdentifier);
+      }
+    });
+
     getResult(testIdentifier).mark(testExecutionResult);
     outputIfTestRootIsComplete(testIdentifier);
+  }
+
+  public Boolean hasTestsWithThrowableResults() {
+    return !testsWithThrowableResult.isEmpty();
   }
 
   private void outputIfTestRootIsComplete(TestIdentifier testIdentifier) {

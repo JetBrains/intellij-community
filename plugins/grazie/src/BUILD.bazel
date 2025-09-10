@@ -11,7 +11,7 @@ jvm_library(
   name = "core",
   module_name = "intellij.grazie.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["main/kotlin/**/*.kt", "main/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["main/kotlin/**/*.kt", "main/kotlin/**/*.java", "main/kotlin/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jackson-module-kotlin",
@@ -71,6 +71,9 @@ jvm_library(
     "@lib//:grazie-core-ai-grazie-model-ner-jvm",
     "@lib//:kotlinx-html-jvm",
     "//platform/util/coroutines",
+    "//platform/util/progress",
+    "//platform/util/text-matching",
+    "//libraries/grpc",
   ],
   exports = [
     "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",
@@ -84,9 +87,6 @@ jvm_library(
     "@lib//:guava",
     "@lib//:jetbrains-annotations",
     "@lib//:commons-lang3",
-    "@lib//:grpc-core",
-    "@lib//:grpc-protobuf",
-    "@lib//:grpc-stub",
   ]
 )
 ### auto-generated section `build intellij.grazie.core` end

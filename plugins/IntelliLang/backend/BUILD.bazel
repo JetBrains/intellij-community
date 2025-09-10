@@ -66,7 +66,7 @@ jvm_library(
   name = "backend",
   module_name = "intellij.platform.langInjection.backend",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:jetbrains-annotations-provided",
     ":platform_backend_provided",

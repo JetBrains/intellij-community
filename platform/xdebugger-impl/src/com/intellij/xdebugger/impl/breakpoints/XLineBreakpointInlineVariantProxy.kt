@@ -5,16 +5,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-internal interface XLineBreakpointInlineVariantProxy {
+@ApiStatus.Internal
+interface XLineBreakpointInlineVariantProxy {
   val highlightRange: TextRange?
   val icon: Icon
   val tooltipDescription: String
-  fun isMatching(breakpoint: XLineBreakpointProxy): Boolean
   fun createBreakpoint(project: Project, file: VirtualFile, line: Int)
 
   data class Monolith(val variant: XLineBreakpointType<*>.XLineBreakpointVariant) : XLineBreakpointInlineVariantProxy {
@@ -24,15 +24,6 @@ internal interface XLineBreakpointInlineVariantProxy {
       get() = variant.type.enabledIcon
     override val tooltipDescription: String
       get() = variant.tooltipDescription
-
-    @Suppress("UNCHECKED_CAST") // Casts are required for gods of Kotlin-Java type inference.
-    override fun isMatching(breakpoint: XLineBreakpointProxy): Boolean {
-      val v = variant as XLineBreakpointType<XBreakpointProperties<*>>.XLineBreakpointVariant
-      val b = (breakpoint as? XLineBreakpointProxy.Monolith)?.breakpoint as? XLineBreakpointImpl<XBreakpointProperties<*>> ?: return false
-      val type: XLineBreakpointType<XBreakpointProperties<*>> = v.type
-
-      return type == b.type && type.variantAndBreakpointMatch(b, v)
-    }
 
     override fun createBreakpoint(project: Project, file: VirtualFile, line: Int) {
       val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager

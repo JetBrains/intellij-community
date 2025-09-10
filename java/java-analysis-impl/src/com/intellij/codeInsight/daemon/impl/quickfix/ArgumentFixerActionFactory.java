@@ -115,11 +115,11 @@ public abstract class ArgumentFixerActionFactory {
     }
   }
 
-  private static void doCheckNewCall(PsiType expectedTypeByParent, PsiCall callWithSingleCast, Runnable registerIntentions) {
-    JavaResolveResult resolveResult = callWithSingleCast.resolveMethodGenerics();
+  private static void doCheckNewCall(PsiType expectedTypeByParent, PsiCall call, Runnable registerIntentions) {
+    JavaResolveResult resolveResult = call.resolveMethodGenerics();
     if (resolveResult.getElement() != null && resolveResult.isValidResult()) {
-      if (expectedTypeByParent != null && callWithSingleCast instanceof PsiCallExpression) {
-        PsiType type = ((PsiCallExpression)callWithSingleCast).getType();
+      if (expectedTypeByParent != null && call instanceof PsiCallExpression callExpression) {
+        PsiType type = callExpression.getType();
         if (type != null && !TypeConversionUtil.isAssignable(expectedTypeByParent, type)) return;
       }
       registerIntentions.run();

@@ -2,8 +2,8 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider
+import com.intellij.platform.vcs.changes.ChangesUtil
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultTreeModel
 
@@ -39,19 +39,13 @@ class DefaultChangesGroupingPolicy(val project: Project, model: DefaultTreeModel
     if (node is ChangesGroupingPolicy.CompatibilityPlaceholderChangesBrowserNode) {
       val vFile = nodePath.resolve() ?: return false
       val status = ChangesTreeCompatibilityProvider.getInstance().getFileStatus(project, vFile)
-      return isMergeConflict(status)
+      return ChangesUtil.isMergeConflict(status)
     }
 
     if (node is ChangesBrowserChangeNode) {
-      return isMergeConflict(node.userObject.fileStatus)
+      return ChangesUtil.isMergeConflict(node.userObject)
     }
     return false
-  }
-
-  private fun isMergeConflict(status: FileStatus): Boolean {
-    return status === FileStatus.MERGED_WITH_CONFLICTS ||
-           status === FileStatus.MERGED_WITH_BOTH_CONFLICTS ||
-           status === FileStatus.MERGED_WITH_PROPERTY_CONFLICTS
   }
 
   companion object {

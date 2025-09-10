@@ -6,7 +6,7 @@ import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
 import com.intellij.ide.ui.icons.icon
 import com.intellij.java.debugger.impl.shared.SharedDebuggerUtils
-import com.intellij.java.debugger.impl.shared.SharedJavaDebuggerManager
+import com.intellij.java.debugger.impl.shared.SharedJavaDebuggerSession
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionApi
 import com.intellij.java.debugger.impl.shared.rpc.JavaThreadDumpDto
 import com.intellij.java.debugger.impl.shared.rpc.JavaThreadDumpItemDto
@@ -59,20 +59,9 @@ private class ThreadDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecific
   }
 
   override fun update(e: AnActionEvent) {
-    val presentation = e.presentation
-    val project = e.project
-    if (project == null) {
-      presentation.setEnabled(false)
-      return
-    }
-    val sessionProxy = DebuggerUIUtil.getSessionProxy(e)
-    if (sessionProxy == null) {
-      presentation.setEnabled(false)
-      return
-    }
-    val javaSession = SharedJavaDebuggerManager.getInstance(project).getJavaSession(sessionProxy.id)
+    val javaSession = SharedJavaDebuggerSession.findSession(e)
     val isAttached = javaSession != null && javaSession.isAttached
-    presentation.setEnabled(isAttached)
+    e.presentation.setEnabled(isAttached)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

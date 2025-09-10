@@ -43,6 +43,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.MouseMovementTracker;
 import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.popup.AbstractPopup;
@@ -312,12 +313,31 @@ public class EditorMouseHoverPopupManager implements Disposable {
         if (e.getID() == MouseEvent.MOUSE_PRESSED && e.getSource() == window) {
           myKeepPopupOnMouseMove = true;
         }
-        else if (e.getID() == WindowEvent.WINDOW_OPENED && !isParentWindow(window, e.getSource())) {
+        else if (isValidWindowOpenedEvent(e) && !isParentWindow(window, e.getSource())) {
           closeHint();
         }
         return false;
       }, hint);
     }
+  }
+
+  private static boolean isValidWindowOpenedEvent(AWTEvent e) {
+    if (e.getID() != WindowEvent.WINDOW_OPENED) return false;
+    var source = e.getSource();
+    if (!(source instanceof Component sourceComponent)) return false; // not reasonably possible
+    var sourceWindow = ComponentUtil.getWindow(sourceComponent); // most likely the component itself
+    if (sourceWindow == null) return false; // not reasonably possible either
+    // The most important part:
+    // because events are asynchronous, sometimes we get an outdated event from the previous popup that is already hidden.
+    // So let's check this, otherwise the new popup will disappear as soon as it receives this event.
+    // Prior to 2024.3 it happened very often. Then it became better for some reason, likely because
+    return sourceWindow.isShowing();
+  }
+
+  private static boolean isParentWindow(@NotNull Window parent, Object potentialChild) {
+    // hide editor mouse hover popup when any other popup/window is opened
+    return parent == potentialChild ||
+           (potentialChild instanceof Component) && isParentWindow(parent, ((Component)potentialChild).getParent());
   }
 
   private void updateHint(JComponent component, PopupBridge popupBridge) {
@@ -385,12 +405,6 @@ public class EditorMouseHoverPopupManager implements Disposable {
       return event.getOffset();
     }
     return -1;
-  }
-
-  private static boolean isParentWindow(@NotNull Window parent, Object potentialChild) {
-    // hide editor mouse hover popup when any other popup/window is opened
-    return parent == potentialChild ||
-           (potentialChild instanceof Component) && isParentWindow(parent, ((Component)potentialChild).getParent());
   }
 
   private static @Nullable HoverPopupContext createContext(

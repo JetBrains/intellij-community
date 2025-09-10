@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.template.postfix.settings
 
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.completion.group.GroupedCompletionContributor
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBCheckBox
@@ -14,6 +15,7 @@ import javax.swing.JPanel
 class PostfixTemplatesConfigurableUi {
   lateinit var completionEnabledCheckbox: JBCheckBox
   lateinit var postfixTemplatesEnabled: JBCheckBox
+  lateinit var postfixTemplatesGroupCompletion: JBCheckBox
   lateinit var shortcutComboBox: ComboBox<String>
   val templatesTreeContainer: JPanel = JPanel()
   val descriptionPanel: JPanel = JPanel()
@@ -22,6 +24,18 @@ class PostfixTemplatesConfigurableUi {
     row {
       postfixTemplatesEnabled = checkBox(CodeInsightBundle.message("postfix.completion.option.enabled"))
         .component
+    }
+    if (GroupedCompletionContributor.isGroupEnabledInApp()) {
+      indent {
+        row {
+          postfixTemplatesGroupCompletion = checkBox(CodeInsightBundle.message("postfix.completion.option.group.enabled"))
+            .component
+        }
+      }
+    }
+    else {
+      //just to have non-empty
+      postfixTemplatesGroupCompletion = JBCheckBox(CodeInsightBundle.message("postfix.completion.option.group.enabled"))
     }
     row {
       completionEnabledCheckbox = checkBox(CodeInsightBundle.message("postfix.completion.option.autopopup"))

@@ -104,9 +104,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
     }
 
     private class ReplaceWithFilterFix : KotlinModCommandQuickFix<KtOperationReferenceExpression>() {
-        override fun getName() = KotlinBundle.message("replace.with.filter.fix.text")
-
-        override fun getFamilyName() = name
+        override fun getFamilyName(): String = KotlinBundle.message("replace.with.filter.fix.text")
 
         override fun applyFix(project: Project, element: KtOperationReferenceExpression, updater: ModPsiUpdater) {
             val operationReference = element
@@ -132,9 +130,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
     }
 
     private class ReplaceWithAssignmentFix : KotlinModCommandQuickFix<KtOperationReferenceExpression>() {
-        override fun getName() = KotlinBundle.message("replace.with.assignment.fix.text")
-
-        override fun getFamilyName() = name
+        override fun getFamilyName() = KotlinBundle.message("replace.with.assignment.fix.text")
 
         override fun applyFix(project: Project, element: KtOperationReferenceExpression, updater: ModPsiUpdater) {
             val operationReference = element

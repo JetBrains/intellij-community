@@ -125,7 +125,7 @@ jvm_library(
   name = "javaFX-properties",
   module_name = "intellij.javaFX.properties",
   visibility = ["//visibility:public"],
-  srcs = glob(["properties/src/**/*.kt", "properties/src/**/*.java"], allow_empty = True),
+  srcs = glob(["properties/src/**/*.kt", "properties/src/**/*.java", "properties/src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/platform-impl:ide-impl",

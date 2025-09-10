@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.types.isError
 
 class ReconstructTypeInCastOrIsIntention : SelfTargetingOffsetIndependentIntention<KtTypeReference>(
     KtTypeReference::class.java,
-    KotlinBundle.lazyMessage("replace.by.reconstructed.type")
+    KotlinBundle.messagePointer("replace.by.reconstructed.type")
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtTypeReference): Boolean {
         // Only user types (like Foo) are interesting
@@ -38,7 +38,7 @@ class ReconstructTypeInCastOrIsIntention : SelfTargetingOffsetIndependentIntenti
         if (type.constructor.parameters.isEmpty()) return false
 
         val typePresentation = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(type)
-        setTextGetter(KotlinBundle.lazyMessage("replace.by.0", typePresentation))
+        setTextGetter(KotlinBundle.messagePointer("replace.by.0", typePresentation))
 
         return true
     }

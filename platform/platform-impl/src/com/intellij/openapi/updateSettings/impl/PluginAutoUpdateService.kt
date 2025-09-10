@@ -7,7 +7,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.contentModuleName
+import com.intellij.ide.plugins.contentModuleId
 import com.intellij.ide.ui.OptionsSearchTopHitProvider
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.openapi.application.ApplicationManager
@@ -111,7 +111,7 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
   private suspend fun downloadUpdates(downloaders: List<PluginDownloader>): List<PluginDownloader> {
     val downloadedList = mutableListOf<PluginDownloader>()
     val enabledPluginsAndModules: Set<String> = PluginManagerCore.getPluginSet().getEnabledModules().flatMap {
-      listOf(it.contentModuleName ?: it.pluginId.idString) + it.pluginAliases.map { id -> id.idString }
+      listOf(it.contentModuleId ?: it.pluginId.idString) + it.pluginAliases.map { id -> id.idString }
     }.toSet()
     val downloaders = downloaders.filter { downloader ->
       val existingUpdateState = updatesState[downloader.id]

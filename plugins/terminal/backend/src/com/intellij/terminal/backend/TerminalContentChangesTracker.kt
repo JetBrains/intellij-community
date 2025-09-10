@@ -57,6 +57,7 @@ class TerminalContentChangesTracker(
         else {
           val additionalLines = lines.subList(lastChangedVisualLine, lines.size)
           lastChangedVisualLine = 0
+          anyLineChanged = true
           flushChanges(additionalLines)
         }
       }
@@ -69,6 +70,7 @@ class TerminalContentChangesTracker(
         // and it is not tracked now.
         // TODO: consider tracking of the discarded lines in case of resizing to not replace everything.
         lastChangedVisualLine = 0
+        anyLineChanged = true
       }
     })
   }

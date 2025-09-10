@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -74,7 +74,7 @@ final class TemplateExpressionLookupElement extends LookupElementDecorator<Looku
 
   private static boolean handleCompletionChar(InsertionContext context) {
     if (context.getCompletionChar() == '.') {
-      AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+      AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
       return false;
     }
     return true;

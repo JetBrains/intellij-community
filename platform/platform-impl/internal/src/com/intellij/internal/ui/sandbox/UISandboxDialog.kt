@@ -75,7 +75,9 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
       JTextFieldPanel(),
       OnOffButtonPanel(),
       SearchTextFieldPanel(),
-      ThreeStateCheckBoxPanel())),
+      ThreeStateCheckBoxPanel(),
+      TreeWithComplexEditors(),
+    )),
 
     Group("Kotlin UI DSL", children = listOf(
       Group("ListCellRenderer", children = listOf(

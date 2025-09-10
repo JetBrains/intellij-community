@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VarargValueArgument
 
 class AddNameToArgumentIntention : SelfTargetingIntention<KtValueArgument>(
-    KtValueArgument::class.java, KotlinBundle.lazyMessage("add.name.to.argument")
+    KtValueArgument::class.java, KotlinBundle.messagePointer("add.name.to.argument")
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtValueArgument, caretOffset: Int): Boolean {
         val expression = element.getArgumentExpression() ?: return false
@@ -31,7 +31,7 @@ class AddNameToArgumentIntention : SelfTargetingIntention<KtValueArgument>(
             shouldBeLastUnnamed = !element.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
         ) ?: return false
 
-        setTextGetter(KotlinBundle.lazyMessage("add.0.to.argument", name))
+        setTextGetter(KotlinBundle.messagePointer("add.0.to.argument", name))
 
         if (expression is KtLambdaExpression) {
             val range = expression.textRange

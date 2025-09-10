@@ -7,7 +7,7 @@ Reports <code>for</code> loops with a manually incremented index variable.
 <pre><code>
   fun foo(list: List&lt;String&gt;): Int? {
       var index = 0
-      for (s in list) { &lt;== can be simplified
+      for (s in list) { // &lt;== can be simplified
           val x = s.length * index
           index++
           if (x > 0) return x

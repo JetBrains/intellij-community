@@ -73,10 +73,7 @@ import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import kotlin.Unit;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -88,10 +85,11 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 
 /**
  * @author Konstantin Bulenkov
@@ -131,12 +129,24 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
   private boolean myCanClose = true;
   private boolean myDisposed;
 
+  @Nullable
+  private final Consumer<AbstractTreeNode<?>> myCallbackAfterNavigation;
+
   public FileStructurePopup(@NotNull Project project,
                             @NotNull FileEditor fileEditor,
                             @NotNull StructureViewModel treeModel) {
+    this(project, fileEditor, treeModel, null);
+  }
+
+  @ApiStatus.Internal
+  public FileStructurePopup(@NotNull Project project,
+                            @NotNull FileEditor fileEditor,
+                            @NotNull StructureViewModel treeModel,
+                            @Nullable Consumer<AbstractTreeNode<?>> callbackAfterNavigation) {
     myProject = project;
     myFileEditor = fileEditor;
     myTreeModel = treeModel;
+    myCallbackAfterNavigation = callbackAfterNavigation;
 
     //Stop code analyzer to speed up the EDT
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
@@ -697,6 +707,9 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       if (selectedNode != null) {
         if (selectedNode.canNavigateToSource()) {
           selectedNode.navigate(true);
+          if (myCallbackAfterNavigation != null) {
+            myCallbackAfterNavigation.accept(selectedNode);
+          }
           myPopup.cancel();
           succeeded.set(true);
         }

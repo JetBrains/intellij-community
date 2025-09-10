@@ -4,7 +4,7 @@
 expect fun defaultValue1(param: Int = 1): Int
 expect suspend fun defaultValue2(param: Int = 1): Int
 
-// ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2)
+// ATTACH_LIBRARY_BY_LABEL: classes(@kotlin_test_deps//:kotlinx-coroutines-core-1.4.2.jar)
 // MODULE: jvm(common)
 // FILE: jvm.kt
 

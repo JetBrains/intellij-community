@@ -186,11 +186,9 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
     private class EnableOptimizeImportsOnTheFlyFix(file: KtFile) : LocalQuickFixOnPsiElement(file), LowPriorityAction {
         override fun getText(): String = QuickFixBundle.message("enable.optimize.imports.on.the.fly")
 
-        override fun getFamilyName() = name
+        override fun getFamilyName(): String = name
 
-        override fun startInWriteAction(): Boolean {
-            return false
-        }
+        override fun startInWriteAction(): Boolean = false
 
         override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
             SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS)

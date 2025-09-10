@@ -13,7 +13,8 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.sh.core" />
-    <orderEntry type="module" module-name="intellij.sh" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.sh.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.sh.plugin.main" scope="TEST" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />

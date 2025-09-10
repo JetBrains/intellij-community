@@ -22,7 +22,7 @@ jvm_library(
   name = "ui.jcef",
   module_name = "intellij.platform.ui.jcef",
   visibility = ["//visibility:public"],
-  srcs = glob(["jcef/**/*.kt", "jcef/**/*.java"], allow_empty = True),
+  srcs = glob(["jcef/**/*.kt", "jcef/**/*.java", "jcef/**/*.form"], allow_empty = True),
   javac_opts = ":custom-javac-options",
   deps = [
     "@lib//:jetbrains-annotations",

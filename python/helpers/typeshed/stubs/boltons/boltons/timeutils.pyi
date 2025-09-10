@@ -1,7 +1,8 @@
 from collections.abc import Generator
 from datetime import date, datetime, timedelta, tzinfo
 
-def total_seconds(td: timedelta) -> float: ...
+total_seconds = timedelta.total_seconds
+
 def dt_to_timestamp(dt: datetime) -> int: ...
 def isoparse(iso_str: str) -> datetime: ...
 def parse_timedelta(text: str) -> timedelta: ...
@@ -30,13 +31,12 @@ class ConstantTZInfo(tzinfo):
 
 UTC: ConstantTZInfo
 EPOCH_AWARE: datetime
-EPOCH_NAIVE: datetime
 
 class LocalTZInfo(tzinfo):
     def is_dst(self, dt: datetime) -> bool: ...
-    def utcoffset(self, dt: datetime | None) -> timedelta: ...
-    def dst(self, dt: datetime | None) -> timedelta: ...
-    def tzname(self, dt: datetime | None) -> str: ...
+    def utcoffset(self, dt: datetime) -> timedelta: ...  # type: ignore[override] # Doesn't support None
+    def dst(self, dt: datetime) -> timedelta: ...  # type: ignore[override] # Doesn't support None
+    def tzname(self, dt: datetime) -> str: ...  # type: ignore[override] # Doesn't support None
 
 LocalTZ: LocalTZInfo
 DSTSTART_2007: datetime

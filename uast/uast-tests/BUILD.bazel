@@ -11,7 +11,7 @@ jvm_library(
   name = "tests_test_lib",
   module_name = "intellij.platform.uast.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -31,6 +31,11 @@ jvm_library(
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+  ],
+  exports = [
+    "//uast/uast-common:uast",
+    "//uast/uast-java-ide:java-uast-ide",
+    "//uast/testFramework",
   ],
   runtime_deps = ["//java/java-tests:tests"]
 )

@@ -11,7 +11,7 @@ jvm_library(
   name = "test-generator-fe10_test_lib",
   module_name = "kotlin.util.test-generator-fe10",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "@lib//:kotlin-stdlib",

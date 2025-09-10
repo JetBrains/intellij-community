@@ -38,7 +38,7 @@ private fun cdShowChangesLastNDays(project: Project): CheckboxDescriptor {
 internal fun cdShowReadOnlyStatusDialog(project: Project): CheckboxDescriptor {
   val state = (ReadonlyStatusHandler.getInstance(project) as ReadonlyStatusHandlerImpl).state
   val name = VcsBundle.message("checkbox.show.clear.read.only.status.dialog")
-  val vcses = ProjectLevelVcsManager.getInstance(project).allSupportedVcss
+  val vcses = ProjectLevelVcsManager.getInstance(project).getAllSupportedVcss()
     .filter { it.editFileProvider != null }
     .map { it.displayName }
   val comment = when {

@@ -26,6 +26,7 @@ import org.jetbrains.intellij.build.impl.client.createFrontendContextForLauncher
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.generateEmbeddedFrontendLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
+import org.jetbrains.intellij.build.impl.productInfo.resolveProductInfoJsonSibling
 import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
 import org.jetbrains.intellij.build.impl.productInfo.writeProductInfoJson
 import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
@@ -192,6 +193,7 @@ class LinuxDistributionBuilder(
     val tarRoot = rootDirectoryName
     val tarName = context.productProperties.getBaseArtifactName(context) + suffix + ".tar.gz"
     val tarPath = context.paths.artifactDir.resolve(tarName)
+    val tarProductInfoJsonPath = tarPath.resolveProductInfoJsonSibling()
     val dirs = mutableListOf(context.paths.distAllDir, unixDistPath)
 
     if (runtimeDir != null) {
@@ -201,7 +203,7 @@ class LinuxDistributionBuilder(
     }
 
     val productJsonDir = context.paths.tempDir.resolve("linux.dist.product-info.json${suffix}")
-    writeProductJsonFile(productJsonDir, arch, withRuntime = runtimeDir != null)
+    val productJsonFile = writeProductJsonFile(productJsonDir, arch, withRuntime = runtimeDir != null)
     dirs.add(productJsonDir)
 
     spanBuilder("build Linux tar.gz")
@@ -211,6 +213,9 @@ class LinuxDistributionBuilder(
         val executableFileMatchers = generateExecutableFilesMatchers(includeRuntime = runtimeDir != null, arch, this@LinuxDistributionBuilder.targetLibcImpl).keys
         tar(tarPath, tarRoot, dirs, executableFileMatchers, context.options.buildDateInSeconds)
         validateProductJson(tarPath, tarRoot, context)
+        copyFile(productJsonFile, tarProductInfoJsonPath)
+        context.notifyArtifactBuilt(tarProductInfoJsonPath)
+
         context.notifyArtifactBuilt(tarPath)
         checkExecutablePermissions(tarPath, rootDirectoryName, includeRuntime = runtimeDir != null, arch, this@LinuxDistributionBuilder.targetLibcImpl)
       }
@@ -327,9 +332,14 @@ class LinuxDistributionBuilder(
           workingDir = snapDir,
           timeout = context.options.snapDockerBuildTimeoutMin.minutes,
         )
+
         val snapArtifactPath = moveFileToDir(resultDir.resolve(snapArtifactName), context.paths.artifactDir)
         context.notifyArtifactBuilt(snapArtifactPath)
         checkExecutablePermissions(snapArtifactPath, root = "", includeRuntime = true, arch, libc = targetLibcImpl)
+
+        val snapProductInfoJsonPath = snapArtifactPath.resolveProductInfoJsonSibling()
+        copyFile(productJsonFile, snapProductInfoJsonPath)
+        context.notifyArtifactBuilt(snapProductInfoJsonPath)
       }
   }
 

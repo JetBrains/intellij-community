@@ -362,7 +362,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
     PsiDocComment comment = PsiTreeUtil.findElementOfClassAtOffset(file, 10, PsiDocComment.class, false);
     TextExtractor extractor = new JavaTextExtractor();
     Benchmark.newBenchmark("TextContent building with HTML removal", () -> {
-      assertEquals(expected, assertOneElement(extractor.buildTextContents(comment, TextContent.TextDomain.ALL)).toString());
+      assertEquals(expected, assertOneElement(extractor.buildTextContentsTestAccessor(comment, TextContent.TextDomain.ALL)).toString());
     }).start();
   }
 
@@ -373,7 +373,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
     var psi = PsiTreeUtil.findElementOfClassAtOffset(file, 10, MarkdownParagraph.class, false);
     TextExtractor extractor = new MarkdownTextExtractor();
     Benchmark.newBenchmark("TextContent building with nbsp removal", () -> {
-      assertEquals(expected, extractor.buildTextContent(psi, TextContent.TextDomain.ALL).toString());
+      assertEquals(expected, ContainerUtil.getFirstItem(extractor.buildTextContentsTestAccessor(psi, TextContent.TextDomain.ALL)).toString());
     }).start();
   }
 
@@ -385,7 +385,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
     var literal = PsiTreeUtil.findElementOfClassAtOffset(file, 100, PsiLiteralExpression.class, false);
     var extractor = new JavaTextExtractor();
     Benchmark.newBenchmark("TextContent building from a long text fragment", () -> {
-      assertEquals(expected, assertOneElement(extractor.buildTextContents(literal, TextContent.TextDomain.ALL)).toString());
+      assertEquals(expected, assertOneElement(extractor.buildTextContentsTestAccessor(literal, TextContent.TextDomain.ALL)).toString());
     }).start();
   }
 
@@ -397,7 +397,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
     PsiElement tag = PsiTreeUtil.findElementOfClassAtOffset(file, text.indexOf("something"), PsiDocTag.class, false);
     Benchmark.newBenchmark("TextContent building from complex PSI", () -> {
       for (int i = 0; i < 10; i++) {
-        TextContent content = assertOneElement(extractor.buildTextContents(tag, TextContent.TextDomain.ALL));
+        TextContent content = assertOneElement(extractor.buildTextContentsTestAccessor(tag, TextContent.TextDomain.ALL));
         assertEquals("something if  is not too expensive", content.toString());
       }
     }).start();
@@ -415,7 +415,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
         if (element instanceof MarkdownParagraph) {
           count++;
         }
-        return delegate.buildTextContents(element, allowedDomains);
+        return delegate.buildTextContentsTestAccessor(element, allowedDomains);
       }
     };
     TextExtractor.EP.addExplicitExtension(MarkdownLanguage.INSTANCE, countingExtractor);

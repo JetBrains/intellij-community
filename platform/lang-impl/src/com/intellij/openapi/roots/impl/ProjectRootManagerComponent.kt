@@ -34,6 +34,10 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.project.stateStore
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -183,6 +187,15 @@ open class ProjectRootManagerComponent(
     }
     AdditionalLibraryRootsProvider.EP_NAME.addChangeListener(coroutineScope, rootsExtensionPointListener)
     OrderEnumerationHandler.EP_NAME.addChangeListener(coroutineScope, rootsExtensionPointListener)
+    if (useWsm) {
+      connection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+        override fun changed(event: VersionedStorageChange) {
+          if (event.getChanges(ProjectSettingsEntity::class.java).isNotEmpty()) {
+            projectJdkChanged()
+          }
+        }
+      })
+    }
   }
 
   protected open fun projectClosed() {

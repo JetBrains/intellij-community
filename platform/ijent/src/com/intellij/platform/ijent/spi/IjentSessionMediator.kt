@@ -51,12 +51,6 @@ abstract class IjentSessionMediator private constructor(
    */
   enum class ProcessExitPolicy {
     /**
-     * Treat any exit as an error.
-     * Used during initialization when process must stay alive.
-     */
-    ERROR,
-
-    /**
      * Check exit code to determine if it's an error.
      * Normal termination with expected exit codes is allowed.
      */
@@ -72,7 +66,7 @@ abstract class IjentSessionMediator private constructor(
   internal abstract suspend fun isExpectedProcessExit(exitCode: Int): Boolean
 
   @Volatile
-  internal var myExitPolicy: ProcessExitPolicy = ERROR
+  internal var myExitPolicy: ProcessExitPolicy = CHECK_CODE
 
   companion object {
     /**
@@ -141,7 +135,7 @@ abstract class IjentSessionMediator private constructor(
       // stderr logger should outlive the current scope. In case if an error appears, the scope is cancelled immediately, but the whole
       // intention of the stderr logger is to write logs of the remote process, which come from the remote machine to the local one with
       // a delay.
-      GlobalScope.launch(blockingDispatcher + ijentProcessScope.coroutineNameAppended("stderr logger")) {
+      GlobalScope.launch(IjentThreadPool.asCoroutineDispatcher() + ijentProcessScope.coroutineNameAppended("stderr logger")) {
         ijentProcessStderrLogger(process, ijentLabel, lastStderrMessages)
       }
 
@@ -324,7 +318,6 @@ private suspend fun ijentProcessExitAwaiter(
   LOG.debug { "IJent process $ijentLabel exited with code $exitCode" }
 
   val isExitExpected = when (mediator.myExitPolicy) {
-    ERROR -> false
     CHECK_CODE -> mediator.isExpectedProcessExit(exitCode)
     NORMAL -> true
   }

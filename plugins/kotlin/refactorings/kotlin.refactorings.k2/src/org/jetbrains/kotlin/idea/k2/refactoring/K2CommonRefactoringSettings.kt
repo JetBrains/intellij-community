@@ -71,6 +71,12 @@ internal class K2CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
     override var PUSH_DOWN_PREVIEW_USAGES: Boolean
             by delegateTo { it::PUSH_DOWN_PREVIEW_USAGES }
 
+    override var EXTRACT_INTERFACE_JAVADOC: Int
+            by delegateTo { it::EXTRACT_INTERFACE_JAVADOC }
+
+    override var EXTRACT_SUPERCLASS_JAVADOC: Int
+            by delegateTo { it::EXTRACT_SUPERCLASS_JAVADOC }
+
     override var INLINE_LOCAL_THIS: Boolean
             by delegateTo { it::INLINE_LOCAL_THIS }
 

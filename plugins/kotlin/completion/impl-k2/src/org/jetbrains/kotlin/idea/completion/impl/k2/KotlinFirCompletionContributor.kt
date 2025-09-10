@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns

@@ -3,6 +3,7 @@ package com.intellij.platform.pluginManager.backend.rpc
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.getTags
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 @IntellijInternalApi
 object PluginDescriptorConverter {
 
-  fun toPluginDto(descriptor: IdeaPluginDescriptor): PluginDto {
+  fun toPluginDto(descriptor: IdeaPluginDescriptor, ignoreDescriptionForNotLoadedPluigns: Boolean = false): PluginDto {
     val pluginDto = PluginDto(
       name = descriptor.name,
       pluginId = descriptor.pluginId
@@ -28,7 +29,9 @@ object PluginDescriptorConverter {
       isBundled = descriptor.isBundled
       isDeleted = (descriptor as? IdeaPluginDescriptorImpl)?.isDeleted ?: false
       category = descriptor.category
-      description = descriptor.description
+      if (!ignoreDescriptionForNotLoadedPluigns || PluginManagerCore.isLoaded(descriptor.pluginId)) {
+        description = descriptor.description
+      }
       vendor = descriptor.vendor
       changeNotes = descriptor.changeNotes
       productCode = descriptor.productCode

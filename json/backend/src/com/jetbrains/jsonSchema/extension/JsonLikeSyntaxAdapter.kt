@@ -85,13 +85,16 @@ interface JsonLikeSyntaxAdapter {
         val objectAdapter = walker?.createValueAdapter(contextForInsertion)?.asObject
                             ?: error("contextForInsertion must be an object-like element")
         val lastPropertyElement = objectAdapter.propertyList.lastOrNull()?.delegate
-        val lastElementInsideObject = if (lastPropertyElement != null) {
+        var anchor = if (lastPropertyElement != null) {
           PsiTreeUtil.skipWhitespacesAndCommentsForward(lastPropertyElement)
         }
         else {
           contextForInsertion.lastChild
-        } 
-        contextForInsertion.addBefore(newProperty, lastElementInsideObject).also {
+        }
+        if (anchor != null && anchor.text == ",") {
+          anchor = PsiTreeUtil.skipWhitespacesAndCommentsForward(anchor)
+        }
+        contextForInsertion.addBefore(newProperty, anchor).also {
           ensureComma(lastPropertyElement, it)
         }
       }

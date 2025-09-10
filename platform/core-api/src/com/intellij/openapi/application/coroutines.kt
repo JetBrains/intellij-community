@@ -1,13 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
-import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainCoroutineDispatcher
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
@@ -160,8 +163,28 @@ suspend fun <T> readAndWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>
  */
 @Experimental
 suspend fun <T> readAndBackgroundWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>): T {
-  return readWriteActionSupport().executeReadAndWriteAction(emptyArray(), false, action)
+  return readWriteActionSupport().executeReadAndWriteAction(emptyArray(), false, false, action)
 }
+
+/**
+ * Same as [readAndEdtWriteAction], but invokes write actions on a background thread instead of EDT.
+ * The execution of read and write actions happens in the dispatcher of the caller.
+ * This is useful when you expect several concurrent read-and-write actions, and you need to control their concurrency
+ */
+@Experimental
+suspend fun <T> readAndBackgroundWriteActionUndispatched(action: ReadAndWriteScope.() -> ReadResult<T>): T {
+  return readWriteActionSupport().executeReadAndWriteAction(emptyArray(), false, true, action)
+}
+
+/**
+ * Same as [readAndEdtWriteAction], but invokes read action in the context of the caller.
+ * This is useful when you expect several concurrent read-and-write actions, and you need to control their concurrency.
+ */
+@Experimental
+suspend fun <T> readAndEdtWriteActionUndispatched(action: ReadAndWriteScope.() -> ReadResult<T>): T {
+  return readWriteActionSupport().executeReadAndWriteAction(emptyArray(), true, true, action)
+}
+
 
 /**
  * Runs given [action] under [read lock][com.intellij.openapi.application.Application.runReadAction]
@@ -178,7 +201,7 @@ suspend fun <T> readAndBackgroundWriteAction(action: ReadAndWriteScope.() -> Rea
  * @see constrainedReadAction
  */
 suspend fun <T> readAndEdtWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>): T {
-  return readWriteActionSupport().executeReadAndWriteAction(emptyArray(), true, action)
+  return readWriteActionSupport().executeReadAndWriteAction(emptyArray(), true, false, action)
 }
 
 /**
@@ -229,7 +252,7 @@ suspend fun <T> readAndEdtWriteAction(action: ReadAndWriteScope.() -> ReadResult
  *
  */
 suspend fun <T> constrainedReadAndWriteAction(vararg constraints: ReadConstraint, action: ReadAndWriteScope.() -> ReadResult<T>): T {
-  return readWriteActionSupport().executeReadAndWriteAction(constraints, true, action = action)
+  return readWriteActionSupport().executeReadAndWriteAction(constraints, true, false, action = action)
 }
 
 /**

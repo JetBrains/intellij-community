@@ -12,8 +12,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.spellchecker.SpellCheckerManager
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -21,7 +20,7 @@ object GraziePlugin {
   const val id = "tanvd.grazi"
 
   object LanguageTool {
-    const val version = "6.5.0.12"
+    const val version = "6.6.16"
     const val url = "https://resources.jetbrains.com/grazie/model/language-tool"
   }
 
@@ -36,17 +35,15 @@ object GraziePlugin {
         return
       }
 
-      val newLanguages = newState.enabledLanguages.filterHunspell()
-      val prevLanguages = prevState.enabledLanguages.filterHunspell()
-      if (prevLanguages == newLanguages) return
+      GrazieScope.coroutineScope().async {
+        val newLanguages = newState.enabledLanguages.filterHunspell()
+        val prevLanguages = prevState.enabledLanguages.filterHunspell()
 
-      GrazieScope.coroutineScope().launch(Dispatchers.IO) {
         ProjectManager.getInstance().openProjects.forEach { project ->
           val manager = SpellCheckerManager.getInstance(project)
-
-          (newLanguages - prevLanguages).forEach { manager.spellChecker!!.addDictionary(it.dictionary!!) }
-          (prevLanguages - newLanguages).forEach { prev ->
-            val dicPath = getLangDynamicFolder(prev).resolve(prev.hunspellRemote!!.file).toString()
+          newLanguages.forEach { language -> manager.spellChecker!!.addDictionary(language.dictionary!!) }
+          (prevLanguages - newLanguages).forEach { language ->
+            val dicPath = getLangDynamicFolder(language).resolve(language.hunspellRemote!!.file).toString()
             manager.removeDictionary(dicPath)
           }
 

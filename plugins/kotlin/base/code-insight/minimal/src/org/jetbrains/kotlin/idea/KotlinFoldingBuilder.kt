@@ -18,12 +18,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.endLine
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.startLine
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtFunctionLiteral
-import org.jetbrains.kotlin.psi.KtImportList
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
@@ -96,10 +91,11 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         }
 
         return type == KtNodeTypes.FUNCTION_LITERAL ||
-               (type == KtNodeTypes.BLOCK && parentType != KtNodeTypes.FUNCTION_LITERAL && parentType != KtNodeTypes.SCRIPT) ||
-               type == KtNodeTypes.CLASS_BODY || type == KtTokens.BLOCK_COMMENT || type == KDocTokens.KDOC ||
-               type == KtNodeTypes.STRING_TEMPLATE || type == KtNodeTypes.PRIMARY_CONSTRUCTOR || type == KtNodeTypes.WHEN ||
-               node.shouldFoldCall(document)
+                (type == KtNodeTypes.BLOCK && parentType != KtNodeTypes.FUNCTION_LITERAL && parentType != KtNodeTypes.SCRIPT) ||
+                type == KtNodeTypes.CLASS_BODY || type == KtTokens.BLOCK_COMMENT || type == KDocTokens.KDOC ||
+                type == KtNodeTypes.STRING_TEMPLATE || type == KtNodeTypes.PRIMARY_CONSTRUCTOR || type == KtNodeTypes.WHEN ||
+                type == KtNodeTypes.ANNOTATION_ENTRY ||
+                node.shouldFoldCall(document)
     }
 
     private fun ASTNode.shouldFoldCall(document: Document): Boolean {
@@ -109,45 +105,55 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
     }
 
     private fun getRangeToFold(node: ASTNode, document: Document): TextRange {
-        if (node.elementType is KtFunctionElementType) {
-            val function = node.psi as? KtNamedFunction
-            val funKeyword = function?.funKeyword
-            val bodyExpression = function?.bodyExpression
-            if (funKeyword != null && bodyExpression != null && bodyExpression !is KtBlockExpression) {
-                if (funKeyword.startLine(document) != bodyExpression.startLine(document)) {
-                    val lineBreak = bodyExpression.siblings(forward = false, withItself = false).firstOrNull { "\n" in it.text }
-                    if (lineBreak != null) {
-                        return TextRange(lineBreak.startOffset, bodyExpression.endOffset)
+        when (node.elementType) {
+            is KtFunctionElementType -> {
+                val function = node.psi as? KtNamedFunction
+                val funKeyword = function?.funKeyword
+                val bodyExpression = function?.bodyExpression
+                if (funKeyword != null && bodyExpression != null && bodyExpression !is KtBlockExpression) {
+                    if (funKeyword.startLine(document) != bodyExpression.startLine(document)) {
+                        val lineBreak = bodyExpression.siblings(forward = false, withItself = false).firstOrNull { "\n" in it.text }
+                        if (lineBreak != null) {
+                            return TextRange(lineBreak.startOffset, bodyExpression.endOffset)
+                        }
                     }
+                    return bodyExpression.textRange
                 }
-                return bodyExpression.textRange
             }
-        }
 
-        if (node.elementType == KtNodeTypes.FUNCTION_LITERAL) {
-            val psi = node.psi as? KtFunctionLiteral
-            val lbrace = psi?.lBrace
-            val rbrace = psi?.rBrace
-            if (lbrace != null && rbrace != null) {
-                return TextRange(lbrace.startOffset, rbrace.endOffset)
+            KtNodeTypes.FUNCTION_LITERAL -> {
+                val psi = node.psi as? KtFunctionLiteral
+                val lbrace = psi?.lBrace
+                val rbrace = psi?.rBrace
+                if (lbrace != null && rbrace != null) {
+                    return TextRange(lbrace.startOffset, rbrace.endOffset)
+                }
             }
-        }
 
-        if (node.elementType == KtNodeTypes.CALL_EXPRESSION) {
-            val valueArgumentList = (node.psi as? KtCallExpression)?.valueArgumentList
-            val leftParenthesis = valueArgumentList?.leftParenthesis
-            val rightParenthesis = valueArgumentList?.rightParenthesis
-            if (leftParenthesis != null && rightParenthesis != null) {
-                return TextRange(leftParenthesis.startOffset, rightParenthesis.endOffset)
+            KtNodeTypes.CALL_EXPRESSION -> {
+                val valueArgumentList = (node.psi as? KtCallExpression)?.valueArgumentList
+                val leftParenthesis = valueArgumentList?.leftParenthesis
+                val rightParenthesis = valueArgumentList?.rightParenthesis
+                if (leftParenthesis != null && rightParenthesis != null) {
+                    return TextRange(leftParenthesis.startOffset, rightParenthesis.endOffset)
+                }
             }
-        }
 
-        if (node.elementType == KtNodeTypes.WHEN) {
-            val whenExpression = node.psi as? KtWhenExpression
-            val openBrace = whenExpression?.openBrace
-            val closeBrace = whenExpression?.closeBrace
-            if (openBrace != null && closeBrace != null) {
-                return TextRange(openBrace.startOffset, closeBrace.endOffset)
+            KtNodeTypes.WHEN -> {
+                val whenExpression = node.psi as? KtWhenExpression
+                val openBrace = whenExpression?.openBrace
+                val closeBrace = whenExpression?.closeBrace
+                if (openBrace != null && closeBrace != null) {
+                    return TextRange(openBrace.startOffset, closeBrace.endOffset)
+                }
+            }
+
+            KtNodeTypes.ANNOTATION_ENTRY -> {
+                val annotationEntry = node.psi as? KtAnnotationEntry
+                val valueArgumentList = annotationEntry?.valueArgumentList
+                if (valueArgumentList != null) {
+                    return valueArgumentList.textRange
+                }
             }
         }
 
@@ -207,7 +213,7 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         return false
     }
 
-    override fun isCustomFoldingRoot(node: ASTNode) = node.elementType == KtNodeTypes.BLOCK || node.elementType == KtNodeTypes.CLASS_BODY
+    override fun isCustomFoldingRoot(node: ASTNode): Boolean = node.elementType == KtNodeTypes.BLOCK || node.elementType == KtNodeTypes.CLASS_BODY
 
     private fun isFirstElementInFile(element: PsiElement): Boolean {
         val parent = element.parent

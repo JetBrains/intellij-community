@@ -3,6 +3,7 @@ package org.jetbrains.jewel.samples.showcase.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +28,7 @@ import org.jetbrains.jewel.ui.component.DefaultSplitButton
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconActionButton
 import org.jetbrains.jewel.ui.component.IconButton
+import org.jetbrains.jewel.ui.component.MenuScope
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.OutlinedSplitButton
 import org.jetbrains.jewel.ui.component.SelectableIconActionButton
@@ -202,7 +204,11 @@ private fun SplitButtons() {
         val items = remember { listOf("This is", "---", "A menu", "---", "Item 3") }
         var selected by remember { mutableStateOf(items.first()) }
 
-        Row(Modifier.height(150.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        FlowRow(
+            Modifier.height(150.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
             OutlinedSplitButton(
                 onClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button clicked") },
                 secondaryOnClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button chevron clicked") },
@@ -246,7 +252,7 @@ private fun SplitButtons() {
                 enabled = false,
                 onClick = {},
                 secondaryOnClick = {},
-                content = { Text("Disabled button") },
+                content = { Text("Disabled outline split button") },
                 menuContent = {},
             )
             DefaultSplitButton(
@@ -266,8 +272,51 @@ private fun SplitButtons() {
                 enabled = false,
                 onClick = {},
                 secondaryOnClick = {},
-                content = { Text("Disabled button") },
+                content = { Text("Disabled default split button") },
                 menuContent = {},
+            )
+            DefaultSplitButton(
+                onClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button clicked") },
+                secondaryOnClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button chevron clicked") },
+                content = { Text("Sub menus") },
+                menuContent = {
+                    fun MenuScope.buildSubmenus(stack: List<Int>) {
+                        val stackStr = stack.joinToString(".").let { if (stack.isEmpty()) it else "$it." }
+
+                        repeat(5) {
+                            val number = it + 1
+                            val itemStr = "$stackStr$number"
+
+                            if (stack.size == 4) {
+                                selectableItem(
+                                    selected = selected == itemStr,
+                                    onClick = {
+                                        selected = itemStr
+                                        JewelLogger.getInstance("Jewel").warn("Item clicked: $itemStr")
+                                    },
+                                ) {
+                                    Text("Item $itemStr")
+                                }
+                            } else {
+                                submenu(
+                                    submenu = { buildSubmenus(stack + number) },
+                                    content = { Text("Submenu $itemStr") },
+                                )
+                            }
+                        }
+
+                        separator()
+
+                        items(
+                            10,
+                            isSelected = { false },
+                            onItemClick = { JewelLogger.getInstance("Jewel").warn("Item clicked: $it") },
+                            content = { Text("Other Item ${it + 1}") },
+                        )
+                    }
+
+                    buildSubmenus(emptyList())
+                },
             )
         }
     }

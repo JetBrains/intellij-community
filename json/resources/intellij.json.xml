@@ -22,6 +22,10 @@
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
     <lang.parserDefinition language="JSON5" implementationClass="com.intellij.json.json5.Json5ParserDefinition"/>
     <lang.parserDefinition language="JSON Lines" implementationClass="com.intellij.json.jsonLines.JsonLinesParserDefinition"/>
+    <syntax.elementTypeConverter language="JSON" implementationClass="com.intellij.json.psi.JsonElementTypeConverterFactory"/>
+    <syntax.elementTypeConverter language="JSON" implementationClass="com.intellij.json.JsonFileTypeConverterFactory"/>
+    <syntax.syntaxDefinition language="JSON" implementationClass="com.intellij.json.JsonLanguageDefinition"/>
+
 
     <!-- Highlighting -->
     <colorSettingsPage implementation="com.intellij.json.highlighting.JsonColorsPage"/>

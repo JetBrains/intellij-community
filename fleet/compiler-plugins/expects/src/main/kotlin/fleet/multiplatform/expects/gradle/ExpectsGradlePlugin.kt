@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerPluginSupportPlugin
 import org.jetbrains.kotlin.gradle.plugin.SubpluginArtifact
 import org.jetbrains.kotlin.gradle.plugin.SubpluginOption
 
-const val VERSION = "2.2.0-0.1"
+const val VERSION = "2.2.20-RC-0.1"
 
 class ExpectsGradlePlugin : KotlinCompilerPluginSupportPlugin {
     override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean = true
