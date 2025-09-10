@@ -159,9 +159,9 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
 
         settings = KotlinScriptingSettingsImpl.getInstance(project).state
 
-        ScriptDefinitionsManager.getInstance(project).getDefinitions().forEach {
-            KotlinScriptingSettingsImpl.getInstance(project).setEnabled(it, false)
-        }
+      ScriptDefinitionsManager.getInstance(project).currentDefinitions.toList().forEach {
+        KotlinScriptingSettingsImpl.getInstance(project).setEnabled(it, false)
+      }
 
         setUpTestProject()
     }

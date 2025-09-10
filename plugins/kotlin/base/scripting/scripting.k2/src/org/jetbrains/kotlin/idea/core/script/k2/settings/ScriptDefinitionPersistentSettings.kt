@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.k2.settings
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.Attribute
-import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl
+import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
 import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettingsStorage
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
@@ -22,7 +22,7 @@ class ScriptDefinitionPersistentSettings(val project: Project) :
         updateState {
             it.copy(settings = settings)
         }
-        ScriptDefinitionProviderImpl.getInstance(project).notifyDefinitionsChanged()
+        ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
     }
 
     override fun autoReloadConfigurations(scriptDefinition: ScriptDefinition): Boolean = true

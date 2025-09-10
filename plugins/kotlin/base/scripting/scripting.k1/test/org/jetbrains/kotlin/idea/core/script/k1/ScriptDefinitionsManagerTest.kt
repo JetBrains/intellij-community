@@ -103,7 +103,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC),
-            managerWithABOrder.getDefinitions()
+            managerWithABOrder.currentDefinitions.toList()
         )
 
         val managerWithBAOrder = ScriptDefinitionsManagerUnderTest(project).apply {
@@ -128,7 +128,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB),
-            manager.getDefinitions()
+            manager.currentDefinitions.toList()
         )
 
         manager.definitionSources = listOf(
@@ -138,14 +138,14 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB), /* still the same list */
-            manager.getDefinitions()
+            manager.currentDefinitions.toList()
         )
 
         manager.reloadDefinitions()
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC /* now */),
-            manager.getDefinitions()
+            manager.currentDefinitions.toList()
         )
     }
 
@@ -158,7 +158,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC),
-            manager.getDefinitions()
+            manager.currentDefinitions.toList()
         )
 
         manager.settings = KotlinScriptingSettingsImpl(project).apply {
@@ -169,7 +169,7 @@ class ScriptDefinitionsManagerTest {
 
         assertEquals(
             listOf(definitionA, definitionB, definitionC), /* no effect */
-            manager.getDefinitions()
+            manager.currentDefinitions.toList()
         )
 
         assertEquals(
@@ -191,11 +191,6 @@ class ScriptDefinitionsManagerTest {
             setEnabled(definitionB, false)
             setEnabled(definitionC, true)
         }
-
-        assertEquals(
-            listOf(definitionA, definitionB, definitionC),
-            manager.getDefinitions()
-        )
 
         assertEquals(
             listOf(definitionA, definitionC),
