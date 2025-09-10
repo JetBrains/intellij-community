@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.properties.psi.Property
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -16,7 +17,7 @@ import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 class GradleLatestMinorVersionInspection : LocalInspectionTool() {
   override fun isAvailableForFile(file: PsiFile): Boolean {
     // TODO not sure if this should be limited to "gradle-wrapper.properties" file
-    return file.name == "gradle-wrapper.properties"
+    return FileUtilRt.fileNameEquals(file.name, "gradle-wrapper.properties")
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
