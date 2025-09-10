@@ -1420,28 +1420,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       context.getManagerThread().startLongProcessAndFork(() -> {
         try {
           try {
-            if (myMethod.isVarArgs()) {
-              // See IDEA-63581
-              // if vararg parameter array is of interface type and Object[] is expected, JDI wrap it into another array,
-              // in this case we have to unroll the array manually and pass its elements to the method instead of array object
-              int lastIndex = myMethod.argumentTypeNames().size() - 1;
-              if (lastIndex >= 0 && myArgs.size() > lastIndex) { // at least one varargs param
-                Object firstVararg = myArgs.get(lastIndex);
-                if (myArgs.size() == lastIndex + 1) { // only one vararg param
-                  if (firstVararg instanceof ArrayReference arrayRef) {
-                    if (((ArrayType)arrayRef.referenceType()).componentType() instanceof InterfaceType) {
-                      List<String> argTypes = myMethod.argumentTypeNames();
-                      if (argTypes.size() > lastIndex && argTypes.get(lastIndex).startsWith(CommonClassNames.JAVA_LANG_OBJECT)) {
-                        // unwrap array of interfaces for vararg param
-                        myArgs.remove(lastIndex);
-                        myArgs.addAll(arrayRef.getValues());
-                      }
-                    }
-                  }
-                }
-              }
-            }
-
             if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
               // ensure args are not collected
               StreamEx.of(myArgs).select(ObjectReference.class).forEach(DebuggerUtilsEx::disableCollection);
