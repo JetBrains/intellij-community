@@ -266,35 +266,33 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        suspend fun leaveAllModals(throwErrorIfModal: Boolean) {
+        suspend fun makeSureNoModals(): Boolean =
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
             repeat(10) {
               if (ModalityState.current() == ModalityState.nonModal()) {
-                return@withContext
+                return@withContext true
               }
               delay(1.seconds)
             }
-            if (throwErrorIfModal) {
-              LOG.error("Unexpected modality: " + ModalityState.current())
-            }
+            LOG.warn("Unexpected modality: " + ModalityState.current())
             LaterInvocator.forceLeaveAllModals("DistributedTestHost - leaveAllModals")
             repeat(10) {
               if (ModalityState.current() == ModalityState.nonModal()) {
-                return@withContext
+                return@withContext true
               }
               delay(1.seconds)
             }
             LOG.error("Failed to close modal dialog: " + ModalityState.current())
+            return@withContext false
           }
-        }
 
-        session.forceLeaveAllModals.setSuspend(sessionBgtDispatcher) { _, throwErrorIfModal ->
-          leaveAllModals(throwErrorIfModal)
+        session.forceLeaveAllModals.setSuspend(sessionBgtDispatcher) { _, _ ->
+          makeSureNoModals()
         }
 
         session.closeAllOpenedProjects.setSuspend(sessionBgtDispatcher) { _, _ ->
           try {
-            leaveAllModals(throwErrorIfModal = true)
+            makeSureNoModals()
 
             ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
             withContext(Dispatchers.EDT + NonCancellable) {
