@@ -3,12 +3,11 @@ package com.intellij.platform.instanceContainer.internal
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
-import kotlinx.collections.immutable.PersistentMap
 import kotlinx.coroutines.CoroutineScope
 
 internal val LOG: Logger = Logger.getInstance("#com.intellij.platform.instanceContainer")
 
-internal typealias InstanceHolders = PersistentMap<String, InstanceHolder>
+internal typealias InstanceHolders = Map<String, InstanceHolder>
 
 /**
  * @return `true` if [this] holder was statically registered,
