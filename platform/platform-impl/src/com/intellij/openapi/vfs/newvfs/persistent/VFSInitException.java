@@ -31,7 +31,8 @@ public final class VFSInitException extends IOException {
 
   @Override
   public String toString() {
-    return "[" + errorCategory + "]: " + getMessage();
+    //class name is important for Diogen exception parsing!
+    return getClass().getName() + " [" + errorCategory + "]: " + getMessage();
   }
 
   public enum ErrorCategory {
