@@ -29,9 +29,10 @@ private sealed interface BreakpointRequest {
   val requestId: Long
   suspend fun sendRequest(breakpointId: XBreakpointId, requestId: Long)
 
-  class SetLine(override val requestId: Long, val line: Int) : BreakpointRequest {
+  class SetLine(override val requestId: Long, val line: Int, private val redraw: () -> Unit) : BreakpointRequest {
     override suspend fun sendRequest(breakpointId: XBreakpointId, requestId: Long) {
       XBreakpointApi.getInstance().setLine(breakpointId, requestId, line)
+      redraw()
     }
   }
 
@@ -134,10 +135,10 @@ internal class FrontendXLineBreakpointProxy(
       afterStateChanged = {
         lineSourcePosition = null
         visualRepresentation.removeHighlighter()
-        visualRepresentation.redrawInlineInlays(oldFile, getLine())
-        visualRepresentation.redrawInlineInlays(getFile(), getLine())
       }) { requestId ->
       XBreakpointApi.getInstance().setFileUrl(id, requestId, url)
+      visualRepresentation.redrawInlineInlays(oldFile, getLine())
+      visualRepresentation.redrawInlineInlays(getFile(), getLine())
     }
   }
 
@@ -158,14 +159,14 @@ internal class FrontendXLineBreakpointProxy(
           if (visualLineMightBeChanged) {
             visualRepresentation.removeHighlighter()
           }
-
+        }
+      ) { requestId ->
+        debouncer.sendRequest(BreakpointRequest.SetLine(requestId, line) {
           // We try to redraw inlays every time,
           // due to lack of synchronization between inlay redrawing and breakpoint changes.
           visualRepresentation.redrawInlineInlays(getFile(), oldLine)
           visualRepresentation.redrawInlineInlays(getFile(), line)
-        }
-      ) { requestId ->
-        debouncer.sendRequest(BreakpointRequest.SetLine(requestId, line))
+        })
       }
     }
     else {
