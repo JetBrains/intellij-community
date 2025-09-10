@@ -69,10 +69,10 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     get() = x("//div[@myicon='clearOutputs.svg']")
   private val restartKernel
     get() = x("//div[@myicon='restartKernel.svg']")
-  private val interruptKernel
-    get() = x("//div[@myicon='stop.svg']")
   private val deleteCell
     get() = x("//div[@myicon='delete.svg']")
+  val interruptKernel
+    get() = x("//div[@myicon='stop.svg']")
   val notebookCellOutputs: List<UiComponent>
     get() = xx("//div[@class='FullEditorWidthRenderer']//div[@class='EditorComponentImpl']").list()
   val jcefOffScreens: List<JcefOffScreenViewComponent>
@@ -89,6 +89,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     get() = xx("//div[@class='FullEditorWidthRenderer']//div[@class='ImagePanel']").list()
   val lastNotebookOutput: String
     get() = notebookCellOutputs.last().getAllTexts().asString()
+  val statusBar: UiComponent
+  get() = xx("//div[@class='JupyterFileEditorToolbar']//div[@class='ActionToolbarImpl']").list().last()
 
   override val editorComponent: EditorComponentImpl
     get() = when {
