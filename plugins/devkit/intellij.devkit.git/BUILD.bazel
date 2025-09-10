@@ -41,6 +41,7 @@ jvm_library(
     "//platform/ide-core",
     "//plugins/devkit/devkit-core:core",
     "//platform/vcs-api/shared",
+    "//platform/vcs-log/impl",
     ":platform_vcs-api_vcs-core_provided",
     ":platform_vcs-log_vcs-log_provided",
     ":platform_vcs-dvcs-impl_provided",
@@ -73,6 +74,8 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/vcs-api/shared",
+    "//platform/vcs-log/impl",
+    "//platform/vcs-log/impl:impl_test_lib",
   ],
   runtime_deps = [":git_resources"]
 )
