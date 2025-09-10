@@ -18,6 +18,9 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-api:core",
+    "//platform/core-ui",
   ],
   runtime_deps = [":buildView_resources"]
 )

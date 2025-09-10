@@ -1,2 +1,5 @@
 <idea-plugin>
+  <actions>
+    <group id="BuildTree" class="com.intellij.platform.buildView.BuildTreeContextMenuActionGroup"/>
+  </actions>
 </idea-plugin>

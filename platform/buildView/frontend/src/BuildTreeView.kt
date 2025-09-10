@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.buildView.BuildTreeApi
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.ui.*
@@ -60,6 +59,7 @@ private val LOG = fileLogger()
 internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewId: SplitComponentId)
   : JPanel(), UiDataProvider, ComponentContainer {
   private val uiScope = parentScope.childScope("BuildTreeView", Dispatchers.UI + ModalityState.any().asContextElement())
+  private val model = BuildTreeViewModelProxy.getInstance(buildViewId)
 
   private val rootNode = MyNode(
     BuildTreeNode(BuildTreeNode.ROOT_ID, BuildTreeNode.NO_ID,
@@ -93,29 +93,29 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
     LOG.debug { "Creating BuildTreeView(id=$buildViewId)" }
     uiScope.launch {
       val nodeMap = mutableMapOf(buildProgressRootNode.id to buildProgressRootNode)
-      BuildTreeApi.getInstance().getTreeEventsFlow(buildViewId).collect { event ->
+      model.getTreeEventsFlow().collect { event ->
         handleTreeEvent(event, nodeMap)
       }
     }
     uiScope.launch {
-      BuildTreeApi.getInstance().getFilteringStateFlow(buildViewId).collect {
+      model.getFilteringStateFlow().collect {
         handleFilteringStateChange(it)
       }
     }
     uiScope.launch(Dispatchers.EDT /* Navigatable-s might expect WIL to be taken */) {
-      BuildTreeApi.getInstance().getNavigationFlow(buildViewId).collect {
+      model.getNavigationFlow().collect {
         handleNavigation(it.forward)
       }
     }
     uiScope.launch {
       navigationContext.collect {
         LOG.debug { "Navigation context: $it" }
-        BuildTreeApi.getInstance().onNavigationContextChange(buildViewId, it)
+        model.onNavigationContextChange(it)
       }
     }
     uiScope.launch {
       try {
-        BuildTreeApi.getInstance().getShutdownStateFlow(buildViewId).collect {
+        model.getShutdownStateFlow().collect {
           if (it) {
             LOG.debug { "Disposing BuildTreeView(id=$buildViewId)" }
             Disposer.dispose(this@BuildTreeView)
@@ -294,7 +294,7 @@ internal class BuildTreeView(parentScope: CoroutineScope, private val buildViewI
       val selectedNodeId = selectedNode?.id
       uiScope.launch {
         LOG.debug { "Selection change: $selectedNodeId" }
-        BuildTreeApi.getInstance().onSelectionChange(buildViewId, selectedNodeId)
+        model.onSelectionChange(selectedNodeId)
       }
       updateNavigationContext()
     }

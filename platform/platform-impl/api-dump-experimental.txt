@@ -514,10 +514,10 @@ f:com.intellij.ui.render.RenderersKt
 - f:getInstance():com.intellij.ui.split.SplitComponentFactory
 *f:com.intellij.ui.split.SplitComponentId
 - *sf:Companion:com.intellij.ui.split.SplitComponentId$Companion
-- <init>(I):V
 - f:component1():I
-- f:copy(I):com.intellij.ui.split.SplitComponentId
-- bs:copy$default(com.intellij.ui.split.SplitComponentId,I,I,java.lang.Object):com.intellij.ui.split.SplitComponentId
+- f:component2():Z
+- f:copy(I,Z):com.intellij.ui.split.SplitComponentId
+- bs:copy$default(com.intellij.ui.split.SplitComponentId,I,Z,I,java.lang.Object):com.intellij.ui.split.SplitComponentId
 - equals(java.lang.Object):Z
 - getUid():I
 - hashCode():I

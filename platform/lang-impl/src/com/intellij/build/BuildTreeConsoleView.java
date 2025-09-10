@@ -140,8 +140,7 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   private final OccurenceNavigator myOccurrenceNavigatorSupport;
   private final Set<BuildEvent> myDeferredEvents = ConcurrentCollectionFactory.createConcurrentSet();
 
-  // new implementation doesn't work on the client side currently (the case of code-with-me client)
-  private final boolean mySplitImplementation = !PlatformUtils.isJetBrainsClient() && Registry.is("build.toolwindow.split.tree", false);
+  private final boolean mySplitImplementation = Registry.is("build.toolwindow.split.tree", false);
 
   /**
    * @deprecated BuildViewSettingsProvider is not used anymore.
