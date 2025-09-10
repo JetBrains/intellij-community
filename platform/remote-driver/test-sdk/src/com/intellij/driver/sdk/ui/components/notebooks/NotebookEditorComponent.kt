@@ -272,8 +272,8 @@ fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: Noteb
       waitOneText("${type.typeName} Notebook").click()
 
       keyboard {
-        driver.ui.pasteText(name)
-        should("expect $name in the popup") {
+        waitFor("expect $name in the popup") {
+          driver.ui.pasteText(name)
           getAllTexts().any { it.text == name }
         }
         enter() // submit the popup
