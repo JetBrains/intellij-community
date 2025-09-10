@@ -26,6 +26,7 @@ import kotlin.reflect.KClass
 /**
  * @see com.intellij.platform.util.coroutines.childScope(kotlinx.coroutines.CoroutineScope, java.lang.String, kotlin.coroutines.CoroutineContext, boolean)
  */
+@ApiStatus.Internal
 fun CoroutineScope.childScope(
   owner: KClass<*>,
   context: CoroutineContext = EmptyCoroutineContext,

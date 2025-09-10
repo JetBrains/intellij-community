@@ -53,10 +53,6 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 *f:com.intellij.collaboration.async.CoroutineUtilKt
 - sf:DisposingMainScope(com.intellij.openapi.Disposable):kotlinx.coroutines.CoroutineScope
 - sf:asResultFlow(kotlinx.coroutines.flow.Flow):kotlinx.coroutines.flow.Flow
-- sf:associateCachingBy(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.Flow
-- sf:associateCachingBy(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.Flow
-- bs:associateCachingBy$default(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,I,java.lang.Object):kotlinx.coroutines.flow.Flow
-- bs:associateCachingBy$default(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,I,java.lang.Object):kotlinx.coroutines.flow.Flow
 - sf:awaitCancelling(kotlinx.coroutines.Deferred,kotlin.coroutines.Continuation):java.lang.Object
 - sf:cancelAndJoinSilently(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
 - sf:cancelAndJoinSilently(kotlinx.coroutines.Job,kotlin.coroutines.Continuation):java.lang.Object
@@ -79,9 +75,7 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sf:launchNowIn(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext):kotlinx.coroutines.Job
 - bs:launchNowIn$default(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,I,java.lang.Object):kotlinx.coroutines.Job
 - sf:mapCatching(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
-- sf:mapDataToModel(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.Flow
 - sf:mapFiltered(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):kotlinx.coroutines.flow.Flow
-- sf:mapModelsToViewModels(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 - *sf:mapNullableScoped(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 - *sf:mapScoped(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 - *sf:mapScoped(kotlinx.coroutines.flow.Flow,Z,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
@@ -93,6 +87,13 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sf:stateInNow(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.CoroutineScope,java.lang.Object):kotlinx.coroutines.flow.StateFlow
 - sf:throwFailure(kotlinx.coroutines.flow.Flow):kotlinx.coroutines.flow.Flow
 - *sf:withInitial(kotlinx.coroutines.flow.Flow,java.lang.Object):kotlinx.coroutines.flow.Flow
+*f:com.intellij.collaboration.async.MappingScopedItemsContainerKt
+- sf:associateCachingBy(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.Flow
+- bs:associateCachingBy$default(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,I,java.lang.Object):kotlinx.coroutines.flow.Flow
+- sf:associateCachingWith(kotlinx.coroutines.flow.Flow,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.Flow
+- bs:associateCachingWith$default(kotlinx.coroutines.flow.Flow,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,I,java.lang.Object):kotlinx.coroutines.flow.Flow
+- sf:mapDataToModel(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.Flow
+- sf:mapStatefulToStateful(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 *:com.intellij.collaboration.auth.ui.AccountsListModel
 - a:clearNewCredentials():V
 - a:getAccounts():java.util.Set
