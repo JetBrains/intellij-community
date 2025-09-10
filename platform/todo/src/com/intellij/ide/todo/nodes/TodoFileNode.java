@@ -9,6 +9,8 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.todo.SmartTodoItemPointer;
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.ide.todo.TodoTreeBuilder;
+import com.intellij.ide.todo.rpc.TodoRemoteClient;
+import com.intellij.ide.todo.rpc.TodoResult;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -16,6 +18,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.TodoItemImpl;
 import com.intellij.psi.search.PsiTodoSearchHelper;
@@ -24,6 +27,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static com.intellij.ide.todo.TodoImplementationChooserKt.shouldUseSplitTodo;
 
 public final class TodoFileNode extends PsiFileNode {
   private final TodoTreeBuilder myBuilder;
@@ -43,6 +48,25 @@ public final class TodoFileNode extends PsiFileNode {
     try {
       PsiFile psiFile = getValue();
       assert psiFile != null;
+
+      if (shouldUseSplitTodo()) {
+        VirtualFile virtualFile = psiFile.getVirtualFile();
+        if (virtualFile == null) return List.of();
+
+        TodoFilter filter = getToDoFilter();
+        int maxItems = Integer.MAX_VALUE; // TODO tune
+
+        List<TodoResult> results = TodoRemoteClient.findAllTodos(getProject(), virtualFile, filter, maxItems);
+        if (results.isEmpty()) return List.of();
+
+        List<TodoRemoteItemNode> children = new ArrayList<>(results.size());
+        for (TodoResult result : results) {
+          String lineText = result.getPresentation().isEmpty() ? "" : result.getPresentation().getFirst().getText();
+          TodoRemoteItemNode.Value value = new TodoRemoteItemNode.Value(virtualFile, result.getNavigationOffset(), result.getLength(), result.getLine(), lineText);
+          children.add(new TodoRemoteItemNode(getProject(), value, myBuilder));
+          }
+        return Collections.unmodifiableList(children);
+      }
 
       List<? extends TodoItem> items = findAllTodos(psiFile, myBuilder.getTodoTreeStructure().getSearchHelper());
       List<TodoItemNode> children = new ArrayList<>(items.size());
