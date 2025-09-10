@@ -106,6 +106,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/replaceIsEmptyWithIfEmpty")
             model("${idea}/inspectionsLocal/booleanLiteralArgument")
             model("${idea}/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals")
+            model("${idea}/inspectionsLocal/verboseNullabilityAndEmptiness")
             model("${idea}/inspectionsLocal/nestedLambdaShadowedImplicitParameter")
             model("${idea}/inspectionsLocal/unusedReceiverParameter")
             model("${idea}/inspectionsLocal/filterIsInstanceAlwaysEmpty")

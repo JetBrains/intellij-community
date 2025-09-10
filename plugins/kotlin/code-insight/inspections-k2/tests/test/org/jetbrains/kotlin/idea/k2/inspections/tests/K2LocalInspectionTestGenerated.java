@@ -15269,6 +15269,348 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness")
+    public abstract static class VerboseNullabilityAndEmptiness extends AbstractK2LocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/array")
+        public static class Array extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/array/nullOrIsEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/arrayList")
+        public static class ArrayList extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("notNullAndIsNotEmpty.kt")
+            public void testNotNullAndIsNotEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/arrayList/notNullAndIsNotEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/collection")
+        public static class Collection extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/collection/nullOrIsEmpty.kt");
+            }
+
+            @TestMetadata("nullOrIsEmptyInIsNullOrEmpty.kt")
+            public void testNullOrIsEmptyInIsNullOrEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/collection/nullOrIsEmptyInIsNullOrEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/complex")
+        public static class Complex extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/complex/nullOrIsEmpty.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty2.kt")
+            public void testNullOrIsEmpty2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/complex/nullOrIsEmpty2.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty3.kt")
+            public void testNullOrIsEmpty3() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/complex/nullOrIsEmpty3.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty4.kt")
+            public void testNullOrIsEmpty4() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/complex/nullOrIsEmpty4.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty5.kt")
+            public void testNullOrIsEmpty5() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/complex/nullOrIsEmpty5.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/hashSet")
+        public static class HashSet extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/hashSet/nullOrIsEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/intArray")
+        public static class IntArray extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/intArray/nullOrIsEmpty.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty2.kt")
+            public void testNullOrIsEmpty2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/intArray/nullOrIsEmpty2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/list")
+        public static class List extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("notNullAndIsEmpty.kt")
+            public void testNotNullAndIsEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/list/notNullAndIsEmpty.kt");
+            }
+
+            @TestMetadata("notNullAndIsNotEmpty.kt")
+            public void testNotNullAndIsNotEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/list/notNullAndIsNotEmpty.kt");
+            }
+
+            @TestMetadata("notNullAndNotIsEmpty.kt")
+            public void testNotNullAndNotIsEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/list/notNullAndNotIsEmpty.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/list/nullOrIsEmpty.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty2.kt")
+            public void testNullOrIsEmpty2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/list/nullOrIsEmpty2.kt");
+            }
+
+            @TestMetadata("nullOrIsNotEmpty.kt")
+            public void testNullOrIsNotEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/list/nullOrIsNotEmpty.kt");
+            }
+
+            @TestMetadata("nullOrNotIsNotEmpty.kt")
+            public void testNullOrNotIsNotEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/list/nullOrNotIsNotEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/map")
+        public static class Map extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/map/nullOrIsEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/receivers")
+        public static class Receivers extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/receivers/nullOrIsEmpty.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty2.kt")
+            public void testNullOrIsEmpty2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/receivers/nullOrIsEmpty2.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty3.kt")
+            public void testNullOrIsEmpty3() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/receivers/nullOrIsEmpty3.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty4.kt")
+            public void testNullOrIsEmpty4() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/receivers/nullOrIsEmpty4.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty5.kt")
+            public void testNullOrIsEmpty5() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/receivers/nullOrIsEmpty5.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty6.kt")
+            public void testNullOrIsEmpty6() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/receivers/nullOrIsEmpty6.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/set")
+        public static class Set extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/set/nullOrIsEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/str")
+        public static class Str extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("notNullAndIsNotBlank.kt")
+            public void testNotNullAndIsNotBlank() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/str/notNullAndIsNotBlank.kt");
+            }
+
+            @TestMetadata("notNullAndIsNotEmpty.kt")
+            public void testNotNullAndIsNotEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/str/notNullAndIsNotEmpty.kt");
+            }
+
+            @TestMetadata("nullOrIsBlank.kt")
+            public void testNullOrIsBlank() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/str/nullOrIsBlank.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/str/nullOrIsEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/wrapped")
+        public static class Wrapped extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("binaryExpressionInParentheses.kt")
+            public void testBinaryExpressionInParentheses() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/wrapped/binaryExpressionInParentheses.kt");
+            }
+
+            @TestMetadata("nullCheckExpressionInParentheses.kt")
+            public void testNullCheckExpressionInParentheses() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/wrapped/nullCheckExpressionInParentheses.kt");
+            }
+
+            @TestMetadata("nullOrIsEmpty.kt")
+            public void testNullOrIsEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/verboseNullabilityAndEmptiness/wrapped/nullOrIsEmpty.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter")
     public static class NestedLambdaShadowedImplicitParameter extends AbstractK2LocalInspectionTest {
         @java.lang.Override

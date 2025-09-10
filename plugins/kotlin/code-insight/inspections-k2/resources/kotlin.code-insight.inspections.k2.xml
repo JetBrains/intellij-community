@@ -1225,6 +1225,14 @@
                        language="kotlin"
                        key="non.external.classifier.extending.state.or.props.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.VerboseNullabilityAndEmptinessInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.verbose.nullability.and.emptiness.display.name" bundle="messages.KotlinBundle"/>
+
       <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.js.NonVarPropertyInExternalInterfaceInspection"
                        groupPath="Kotlin"
                        groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
