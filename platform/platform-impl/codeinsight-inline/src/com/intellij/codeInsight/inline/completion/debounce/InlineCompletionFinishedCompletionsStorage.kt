@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.debounce
 
+import com.intellij.codeInsight.inline.completion.InlineCompletionProviderID
 import com.intellij.codeInsight.inline.completion.debounce.InlineCompletionFinishedCompletionsStorage.Companion.EXPIRATION_MS
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -18,29 +19,36 @@ import java.util.*
 class InlineCompletionFinishedCompletionsStorage {
   enum class Result { ACCEPTED, REJECTED, OTHER }
 
-  data class FinishedCompletion(val result: Result, val finishTime: Long)
+  data class FinishedCompletion(val providerId: InlineCompletionProviderID, val result: Result, val finishTime: Long)
 
-  private val previousCompletions = ArrayDeque<FinishedCompletion>()
+  private val completionsPerProvider: MutableMap<InlineCompletionProviderID, ArrayDeque<FinishedCompletion>> = HashMap()
 
-  @Synchronized
-  fun record(result: Result) {
+  fun record(provider: InlineCompletionProviderID, result: Result) {
     val now = System.currentTimeMillis()
     cleanupExpired(now)
-    previousCompletions.addLast(FinishedCompletion(result, now))
+    val q = completionsPerProvider.getOrPut(provider) { ArrayDeque() }
+    q.addLast(FinishedCompletion(provider, result, now))
   }
 
-  /** Returns a snapshot of recent actions with timestamps (most recent at the end). */
-  @Synchronized
-  fun getRecentCompletions(): List<FinishedCompletion> {
+  /**
+   * Returns a snapshot of recent completions with timestamps (most recent at the end) for the given provider.
+   */
+  fun getRecentCompletions(provider: InlineCompletionProviderID): List<FinishedCompletion> {
     cleanupExpired(System.currentTimeMillis())
-    return ArrayList(previousCompletions)
+    return completionsPerProvider[provider]?.toList().orEmpty()
   }
 
   private fun cleanupExpired(now: Long) {
     val threshold = now - EXPIRATION_MS
-    while (true) {
-      val first = previousCompletions.peekFirst() ?: break
-      if (first.finishTime < threshold) previousCompletions.removeFirst() else break
+    val it = completionsPerProvider.entries.iterator()
+    while (it.hasNext()) {
+      val entry = it.next()
+      val q = entry.value
+      while (true) {
+        val first = q.peekFirst() ?: break
+        if (first.finishTime < threshold) q.removeFirst() else break
+      }
+      if (q.isEmpty()) it.remove()
     }
   }
 
