@@ -1,6 +1,5 @@
 <!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
 <idea-plugin>
-  <module value="com.intellij.modules.todo"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex"/>

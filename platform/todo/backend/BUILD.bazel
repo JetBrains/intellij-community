@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/todo",
     "//platform/kernel/backend",
+    "//platform/kernel/rpc.backend",
     "//platform/project/shared:project",
     "//platform/projectModel-api:projectModel",
     "//platform/core-api:core",
@@ -27,6 +28,9 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/editor-ui-api:editor-ui",
   ],
-  runtime_deps = [":backend_resources"]
+  runtime_deps = [
+    ":backend_resources",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.platform.todo.backend` end

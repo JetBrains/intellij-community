@@ -52,8 +52,6 @@
 
   <xi:include href="intellij.platform.bookmarks.xml"/>
 
-  <xi:include href="intellij.platform.todo.xml"/>
-
   <xi:include href="intellij.platform.syntax.psi.xml">
     <xi:fallback/>
   </xi:include>
