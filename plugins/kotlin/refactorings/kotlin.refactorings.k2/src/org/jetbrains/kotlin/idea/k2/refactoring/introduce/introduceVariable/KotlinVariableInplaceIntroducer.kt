@@ -11,11 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiReference
-import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.psi.createSmartPointer
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil.SelectableTemplateElement
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil.createNavigatableButtonWithPopup
@@ -133,7 +129,7 @@ class KotlinVariableInplaceIntroducer(
     ): TemplateEditingAdapter = object : TemplateEditingAdapter() {
         override fun templateFinished(template: Template, brokenOff: Boolean) {
             val context = analyzeInModalWindow(variable, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-                CallableReturnTypeUpdaterUtils.getTypeInfo(variable)
+                CallableReturnTypeUpdaterUtils.getTypeInfo(variable, useSmartCastType = true)
             }
             application.runWriteAction {
                 CallableReturnTypeUpdaterUtils.updateType(variable, context, myProject, myEditor)

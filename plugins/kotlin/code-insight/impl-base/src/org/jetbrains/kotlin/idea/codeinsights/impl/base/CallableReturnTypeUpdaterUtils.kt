@@ -229,7 +229,6 @@ object CallableReturnTypeUpdaterUtils {
         useSmartCastType: Boolean = false,
         allTypesConsumer: (KaType, Sequence<KaType>, Boolean) -> T?
     ): T? {
-        val defaultType = declaration.returnType
         val declarationTypes = buildList {
             if (useSmartCastType) {
                 val smartCastInfo = (declaration as? KtProperty)?.initializer?.smartCastInfo
@@ -239,7 +238,7 @@ object CallableReturnTypeUpdaterUtils {
                 }
             }
             if (this.isEmpty()) {
-                add(defaultType)
+                add(declaration.returnType)
             }
         }
         val overriddenTypes = (declaration.symbol as? KaCallableSymbol)?.directlyOverriddenSymbols

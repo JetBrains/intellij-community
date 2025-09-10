@@ -12,9 +12,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringActionHandler
+import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.util.SlowOperations
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
@@ -212,7 +214,7 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
     }
 
     protected companion object {
-        val INTRODUCE_VARIABLE get() = KotlinBundle.message("introduce.variable")
+        val INTRODUCE_VARIABLE: String get() = KotlinBundle.message("introduce.variable")
 
         fun PsiElement.isAssignmentLHS(): Boolean = parents.any {
             KtPsiUtil.isAssignment(it) && (it as KtBinaryExpression).left == this
@@ -272,10 +274,14 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
             }
         }
 
-        fun isInplaceAvailable(editor: Editor?, project: Project) = when {
+        fun isInplaceAvailable(editor: Editor?, project: Project): Boolean = when {
             editor == null -> false
             isUnitTestMode() -> (TemplateManager.getInstance(project) as? TemplateManagerImpl)?.shouldSkipInTests() == false
             else -> true
         }
     }
+
+    @VisibleForTesting
+    var occurenceReplaceChoice: OccurrencesChooser.ReplaceChoice = OccurrencesChooser.ReplaceChoice.ALL
+
 }

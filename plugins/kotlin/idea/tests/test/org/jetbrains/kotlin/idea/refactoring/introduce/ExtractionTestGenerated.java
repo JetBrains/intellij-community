@@ -132,45 +132,73 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/explicateTypeArguments")
-        public static class ExplicateTypeArguments extends AbstractExtractionTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+        public abstract static class ExplicateTypeArguments extends AbstractExtractionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/introduceVariable/explicateTypeArguments/smartCast")
+            public static class SmartCast extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("smartCastSimple.kt")
+                public void testSmartCastSimple() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/explicateTypeArguments/smartCast/smartCastSimple.kt");
+                }
+
+                @TestMetadata("smartCastWithIntersectionType.kt")
+                public void testSmartCastWithIntersectionType() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/explicateTypeArguments/smartCast/smartCastWithIntersectionType.kt");
+                }
             }
 
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/introduceVariable/explicateTypeArguments")
+            public static class Uncategorized extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
 
-            @TestMetadata("DeeperNestedCall.kt")
-            public void testDeeperNestedCall() throws Exception {
-                runTest("testData/refactoring/introduceVariable/explicateTypeArguments/DeeperNestedCall.kt");
-            }
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("NestedCall.kt")
-            public void testNestedCall() throws Exception {
-                runTest("testData/refactoring/introduceVariable/explicateTypeArguments/NestedCall.kt");
-            }
+                @TestMetadata("DeeperNestedCall.kt")
+                public void testDeeperNestedCall() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/explicateTypeArguments/DeeperNestedCall.kt");
+                }
 
-            @TestMetadata("Parenthesized.kt")
-            public void testParenthesized() throws Exception {
-                runTest("testData/refactoring/introduceVariable/explicateTypeArguments/Parenthesized.kt");
-            }
+                @TestMetadata("NestedCall.kt")
+                public void testNestedCall() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/explicateTypeArguments/NestedCall.kt");
+                }
 
-            @TestMetadata("Qualified.kt")
-            public void testQualified() throws Exception {
-                runTest("testData/refactoring/introduceVariable/explicateTypeArguments/Qualified.kt");
-            }
+                @TestMetadata("Parenthesized.kt")
+                public void testParenthesized() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/explicateTypeArguments/Parenthesized.kt");
+                }
 
-            @TestMetadata("Simple.kt")
-            public void testSimple() throws Exception {
-                runTest("testData/refactoring/introduceVariable/explicateTypeArguments/Simple.kt");
-            }
+                @TestMetadata("Qualified.kt")
+                public void testQualified() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/explicateTypeArguments/Qualified.kt");
+                }
 
-            @TestMetadata("UnmatchedOccurrences.kt")
-            public void testUnmatchedOccurrences() throws Exception {
-                runTest("testData/refactoring/introduceVariable/explicateTypeArguments/UnmatchedOccurrences.kt");
+                @TestMetadata("Simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/explicateTypeArguments/Simple.kt");
+                }
+
+                @TestMetadata("UnmatchedOccurrences.kt")
+                public void testUnmatchedOccurrences() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/explicateTypeArguments/UnmatchedOccurrences.kt");
+                }
             }
         }
 
