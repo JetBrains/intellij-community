@@ -2,7 +2,7 @@ rootProject.name = "expects-compiler-plugin"
 
 pluginManagement {
   // the compiler plugin will be built by this Kotlin compiler
-  val KOTLIN_VERSION = "2.2.20-RC"
+  val KOTLIN_VERSION = "2.2.20"
 
   plugins {
     kotlin("jvm") version KOTLIN_VERSION
