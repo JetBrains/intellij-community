@@ -15,6 +15,7 @@ import git4idea.config.gpg.isGpgSignEnabledCached
 import git4idea.inMemory.objects.GitObject
 import git4idea.inMemory.objects.Oid
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 
 /**
@@ -32,14 +33,15 @@ internal class GitObjectRepository(val repository: GitRepository) {
 
   val emptyTree by lazy { createTree(emptyMap()) }
 
-  fun findObjectFromCache(oid: Oid): GitObject? {
+  private fun findObjectFromCache(oid: Oid): GitObject? {
     return objectCache[oid]
   }
 
-  fun cacheObject(obj: GitObject) {
+  private fun cacheObject(obj: GitObject) {
     objectCache.putIfAbsent(obj.oid, obj)
   }
 
+  @TestOnly
   fun clearCache() {
     objectCache.clear()
   }
