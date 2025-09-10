@@ -556,7 +556,12 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           coroutineScope.launch(ModalityState.current().asContextElement()) {
             withContext(Dispatchers.EDT) {
               logoutFunction(configPanel)
-              configPanel.reset()
+              if (updateUserAccountsList()) {
+                configPanel.reset()
+              } else {
+                userComboBoxModel.selectedItem = userProviderHolder
+                updateUserComboBoxModel()
+              }
             }
           }
         } else {
