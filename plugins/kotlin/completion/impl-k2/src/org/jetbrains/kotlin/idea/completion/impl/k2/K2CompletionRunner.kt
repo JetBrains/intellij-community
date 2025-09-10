@@ -8,12 +8,17 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.analysis.api.components.expectedType
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
@@ -21,6 +26,8 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.K2AccumulatingLookupElementS
 import org.jetbrains.kotlin.idea.completion.impl.k2.ParallelCompletionRunner.Companion.MAX_CONCURRENT_COMPLETION_THREADS
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2ChainCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.evaluateRuntimeKaType
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.replaceTypeParametersWithStarProjections
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -29,6 +36,7 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.g
 import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.types.Variance
 import java.util.*
 
 
@@ -175,19 +183,33 @@ private fun createWeighingContext(
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun createExtensionChecker(
     positionContext: KotlinRawPositionContext,
     originalFile: KtFile,
+    runtimeType: KaType?,
 ): KaCompletionExtensionCandidateChecker? {
     val positionContext = positionContext as? KotlinSimpleNameReferencePositionContext ?: return null
+    val receiver = positionContext.explicitReceiver
+    val runtimeTypeWithErasedTypeParameters = runtimeType?.replaceTypeParametersWithStarProjections()?.render(position = Variance.INVARIANT)
+    val runtimeTypeClassId = runtimeType?.symbol?.classId
+    val castedReceiver = if (runtimeTypeWithErasedTypeParameters == null || runtimeTypeClassId == receiver?.expressionType?.symbol?.classId) {
+        receiver
+    } else if (receiver != null) {
+        // FIXME: check extensions applicable to the runtime type properly KTIJ-35532
+        val codeFragment = "(${receiver.text} as $runtimeTypeWithErasedTypeParameters)"
+        KtPsiFactory.contextual(receiver).createExpression(codeFragment)
+    } else {
+        null
+    }
     // FIXME: KTIJ-34285
     @OptIn(KaImplementationDetail::class)
     return KaBaseIllegalPsiException.allowIllegalPsiAccess {
         KtCompletionExtensionCandidateChecker.create(
             originalFile = originalFile,
             nameExpression = positionContext.nameExpression,
-            explicitReceiver = positionContext.explicitReceiver
+            explicitReceiver = castedReceiver
         )
     }
 }
@@ -201,7 +223,11 @@ private fun <P : KotlinRawPositionContext> KaSession.createCommonSectionData(
     val visibilityChecker = CompletionVisibilityChecker(parameters)
     val symbolFromIndexProvider = KtSymbolFromIndexProvider(parameters.completionFile)
     val importStrategyDetector = ImportStrategyDetector(parameters.originalFile, parameters.originalFile.project)
-    val extensionChecker by lazy { createExtensionChecker(positionContext, parameters.originalFile) }
+    val runtimeType = lazy {
+        val receiver = (positionContext as? KotlinSimpleNameReferencePositionContext)?.explicitReceiver
+        receiver?.evaluateRuntimeKaType()
+    }
+    val extensionChecker = lazy { createExtensionChecker(positionContext, parameters.originalFile, runtimeType.value) }
 
     return K2CompletionSectionCommonData(
         completionContext = completionContext,
@@ -210,7 +236,8 @@ private fun <P : KotlinRawPositionContext> KaSession.createCommonSectionData(
         visibilityChecker = visibilityChecker,
         symbolFromIndexProvider = symbolFromIndexProvider,
         importStrategyDetector = importStrategyDetector,
-        extensionCheckerProvider = { extensionChecker },
+        runtimeTypeProvider = runtimeType,
+        extensionCheckerProvider = extensionChecker,
     )
 }
 

@@ -51,6 +51,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.utils.addToStdlib.plusIfNotNull
 import kotlin.reflect.KClass
 
 private val NOT_PROPERTIES = NotPropertiesService.DEFAULT.toSet()
@@ -158,9 +159,14 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
                     val explicitReceiverTypeHint = callableWithMetadata.explicitReceiverTypeHint
                         ?: return@map builder
 
+                    val typeWithStarProjections = explicitReceiverTypeHint.replaceTypeParametersWithStarProjections()
+                        ?: return@map builder
+
                     builder.adaptToExplicitReceiver(
                         receiver = receiver,
-                        typeText = @OptIn(KaExperimentalApi::class) explicitReceiverTypeHint.render(position = Variance.INVARIANT),
+                        typeText =
+                            @OptIn(KaExperimentalApi::class)
+                            typeWithStarProjections.render(position = Variance.INVARIANT),
                     )
                 }
             }
@@ -298,7 +304,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
                     yieldAll(
                         collectDotCompletionForCallableReceiverFromIndex(
                             context = context,
-                            typesOfPossibleReceiver = types,
+                            typesOfPossibleReceiver = types.plusIfNotNull(context.runtimeType),
                         )
                     )
                 }
@@ -342,9 +348,10 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         explicitReceiver: KtExpression,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
         val receiverType = explicitReceiver.expressionType ?: return@sequence
+
         val callablesWithMetadata = collectDotCompletionForCallableReceiver(
             context = context,
-            typesOfPossibleReceiver = listOf(receiverType),
+            typesOfPossibleReceiver = listOfNotNull(receiverType, context.runtimeType),
             scopeContext = scopeContext,
         )
         yieldAll(callablesWithMetadata)
@@ -393,6 +400,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
                     context = context,
                     scopeKind = KtOutsideTowerScopeKinds.TypeScope,
                     isImportDefinitelyNotRequired = true,
+                    explicitReceiverTypeHint = context.runtimeType,
                 )
             }
         }
@@ -468,6 +476,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
                 CallableWithMetadataForCompletion(
                     _signature = applicableExtension.signature,
                     options = applicableExtension.insertionOptions,
+                    _explicitReceiverTypeHint = context.runtimeType,
                 )
             }
     }
@@ -499,6 +508,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
                             options = extension.insertionOptions,
                             scopeKind = scopeWithKind.kind,
                             aliasName = aliasName,
+                            _explicitReceiverTypeHint = context.runtimeType,
                         )
                     }
             }
@@ -594,6 +604,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         isImportDefinitelyNotRequired: Boolean = false,
         options: CallableInsertionOptions = getOptions(context, this, isImportDefinitelyNotRequired),
         aliasName: Name? = null,
+        explicitReceiverTypeHint: KaType? = null,
     ): CallableWithMetadataForCompletion {
         val javaGetterIfNotProperty = this.getJavaGetterSignatureIfNotProperty()
         val optionsToUse = if (javaGetterIfNotProperty != null && options.insertionStrategy == CallableInsertionStrategy.AsIdentifier) {
@@ -605,7 +616,8 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             _signature = javaGetterIfNotProperty ?: this,
             options = optionsToUse,
             scopeKind = scopeKind,
-            aliasName = aliasName
+            aliasName = aliasName,
+            _explicitReceiverTypeHint = explicitReceiverTypeHint,
         )
     }
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
@@ -41,7 +42,8 @@ internal class K2CompletionSectionCommonData<P : KotlinRawPositionContext>(
     val visibilityChecker: CompletionVisibilityChecker,
     val importStrategyDetector: ImportStrategyDetector,
     val symbolFromIndexProvider: KtSymbolFromIndexProvider,
-    val extensionCheckerProvider: () -> KaCompletionExtensionCandidateChecker?,
+    val runtimeTypeProvider: Lazy<KaType?>,
+    val extensionCheckerProvider: Lazy<KaCompletionExtensionCandidateChecker?>,
 )
 
 /**
@@ -49,7 +51,7 @@ internal class K2CompletionSectionCommonData<P : KotlinRawPositionContext>(
  * shared between contributors running in the same analysis session.
  */
 internal class K2CompletionSectionContext<out P : KotlinRawPositionContext>(
-    private val commonData: K2CompletionSectionCommonData<P>,
+    commonData: K2CompletionSectionCommonData<P>,
     private val contributor: K2CompletionContributor<P>,
     val sink: K2LookupElementSink,
     private val addLaterSection: (K2CompletionSection<P>) -> Unit,
@@ -72,7 +74,9 @@ internal class K2CompletionSectionContext<out P : KotlinRawPositionContext>(
 
     val symbolFromIndexProvider: KtSymbolFromIndexProvider = commonData.symbolFromIndexProvider
 
-    internal val extensionChecker: KaCompletionExtensionCandidateChecker? by lazy { commonData.extensionCheckerProvider() }
+    val runtimeType: KaType? by commonData.runtimeTypeProvider
+
+    val extensionChecker: KaCompletionExtensionCandidateChecker? by commonData.extensionCheckerProvider
 
     fun completeLaterInSameSession(
         name: String,

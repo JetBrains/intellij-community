@@ -6,6 +6,8 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
@@ -16,6 +18,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.abbreviationOrSelf
+import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.buildClassTypeWithStarProjections
 import org.jetbrains.kotlin.idea.completion.KOTLIN_CAST_REQUIRED_COLOR
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.api.serialization.ensureSerializable
@@ -30,10 +36,13 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupEle
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.debugger.evaluate.util.KotlinK2CodeFragmentUtils
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 context(_: KaSession)
@@ -163,3 +172,17 @@ internal fun LookupElementBuilder.adaptToExplicitReceiver(
         typeText = typeText,
     )
 )
+@OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
+context(kaSession: KaSession)
+internal fun KtExpression.evaluateRuntimeKaType(): KaType? {
+    val expr = this
+    val containingFile = containingFile as? KtCodeFragment
+    val runtimeTypeEvaluator = containingFile?.getCopyableUserData(KotlinK2CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR_K2)
+    return runtimeTypeEvaluator?.invoke(expr)?.restore(kaSession)
+}
+
+// See KTIJ-35541
+@OptIn(KaExperimentalApi::class)
+context(_: KaSession)
+internal fun KaType.replaceTypeParametersWithStarProjections(): KaType? =
+    abbreviationOrSelf.symbol?.let { buildClassTypeWithStarProjections(it) }
