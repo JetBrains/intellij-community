@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -25,7 +24,7 @@ import kotlin.concurrent.atomics.incrementAndFetch
 @ApiStatus.Internal
 class SeLocalItemDataProvider(
   private val provider: SeItemsProvider,
-  private val sessionRef: DurableRef<SeSessionEntity>,
+  private val session: SeSession,
   private val logLabel: String = "Local",
 ) : Disposable {
   val id: SeProviderId
@@ -42,7 +41,7 @@ class SeLocalItemDataProvider(
   fun getItems(params: SeParams): Flow<SeItemData> {
     val counter = AtomicInt(0)
     return getRawItems(params).mapNotNull { item ->
-      val itemData = SeItemData.createItemData(sessionRef, UUID.randomUUID().toString(), item, id, item.weight(), item.presentation(), infoWithReportableId, emptyList())
+      val itemData = SeItemData.createItemData(session, UUID.randomUUID().toString(), item, id, item.weight(), item.presentation(), infoWithReportableId, emptyList())
       itemData?.also {
         SeLog.log(SeLog.ITEM_EMIT) {
           val count = counter.incrementAndFetch()

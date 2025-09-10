@@ -8,7 +8,6 @@ import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -46,13 +45,13 @@ class SeTabMock(
   companion object {
     fun create(
       project: Project?,
-      sessionRef: DurableRef<SeSessionEntity>,
+      session: SeSession,
       name: String,
       providerIds: List<SeProviderId>,
       initEvent: AnActionEvent,
       scope: CoroutineScope,
     ): SeTabMock {
-      val delegate = SeTabDelegate(project, sessionRef, name, providerIds, initEvent, scope)
+      val delegate = SeTabDelegate(project, session, name, providerIds, initEvent, scope)
       return SeTabMock(name, delegate)
     }
   }

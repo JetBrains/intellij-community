@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
-import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfoProvider
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
@@ -17,7 +17,6 @@ import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDe
 import com.intellij.platform.searchEverywhere.frontend.tabs.target.SeTargetsFilterEditor
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
@@ -50,8 +49,8 @@ class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.canBeShownInFindResults()
   }
 
-  override suspend fun openInFindToolWindow(sessionRef: DurableRef<SeSessionEntity>, params: SeParams, initEvent: AnActionEvent): Boolean {
-    return delegate.openInFindToolWindow(sessionRef, params, initEvent, false)
+  override suspend fun openInFindToolWindow(session: SeSession, params: SeParams, initEvent: AnActionEvent): Boolean {
+    return delegate.openInFindToolWindow(session, params, initEvent, false)
   }
 
   override suspend fun performExtendedAction(item: SeItemData): Boolean {

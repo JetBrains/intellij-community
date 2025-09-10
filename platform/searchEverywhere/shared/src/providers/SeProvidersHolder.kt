@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder.Companion.initialize
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -54,7 +53,7 @@ class SeProvidersHolder(
     suspend fun initialize(
       initEvent: AnActionEvent,
       project: Project?,
-      sessionRef: DurableRef<SeSessionEntity>,
+      session: SeSession,
       logLabel: String,
       providerIds: List<SeProviderId>? = null,
     ): SeProvidersHolder {
@@ -96,11 +95,11 @@ class SeProvidersHolder(
         }
 
         provider?.let {
-          providers[SeProviderId(it.id)] = SeLocalItemDataProvider(it, sessionRef, logLabel)
+          providers[SeProviderId(it.id)] = SeLocalItemDataProvider(it, session, logLabel)
         }
 
         separateTabProvider?.let {
-          separateTabProviders[SeProviderId(it.id)] = SeLocalItemDataProvider(it, sessionRef, logLabel)
+          separateTabProviders[SeProviderId(it.id)] = SeLocalItemDataProvider(it, session, logLabel)
         }
       }
 

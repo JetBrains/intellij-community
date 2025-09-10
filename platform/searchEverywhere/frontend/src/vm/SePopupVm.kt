@@ -15,11 +15,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.util.SystemProperties
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.ApiStatus
 class SePopupVm(
   val coroutineScope: CoroutineScope,
   private val project: Project?,
-  private val sessionRef: DurableRef<SeSessionEntity>,
   tabs: List<SeTab>,
   deferredTabs: List<SuspendLazyProperty<SeTab?>>,
   initialSearchPattern: String?,
@@ -139,8 +137,8 @@ class SePopupVm(
     }
   }
 
-  suspend fun openInFindWindow(sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): Boolean {
-    return currentTab.openInFindWindow(sessionRef, initEvent)
+  suspend fun openInFindWindow(session: SeSession, initEvent: AnActionEvent): Boolean {
+    return currentTab.openInFindWindow(session, initEvent)
   }
 
   fun selectNextTab() {

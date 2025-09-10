@@ -21,7 +21,6 @@ import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.platform.searchEverywhere.utils.SeResultsCountBalancer
 import com.intellij.platform.searchEverywhere.utils.initAsync
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
@@ -32,14 +31,14 @@ import org.jetbrains.annotations.Nls
 @Internal
 class SeTabDelegate(
   val project: Project?,
-  private val sessionRef: DurableRef<SeSessionEntity>,
+  private val session: SeSession,
   private val logLabel: String,
   private val providerIds: List<SeProviderId>,
   private val initEvent: AnActionEvent,
   val scope: CoroutineScope,
 ) : Disposable {
   private val providers = initAsync(scope) {
-    initializeProviders(project, providerIds, initEvent, sessionRef, logLabel)
+    initializeProviders(project, providerIds, initEvent, session, logLabel)
   }
   suspend fun getProvidersIdToName(): Map<SeProviderId, @Nls String> = providers.getValue().getProvidersIdToName()
 
@@ -124,7 +123,7 @@ class SeTabDelegate(
   }
 
   suspend fun openInFindToolWindow(
-    sessionRef: DurableRef<SeSessionEntity>,
+    session: SeSession,
     params: SeParams,
     initEvent: AnActionEvent,
     isAllTab: Boolean,
@@ -136,7 +135,7 @@ class SeTabDelegate(
       initEvent.dataContext.rpcId()
     }
     return SeRemoteApi.getInstance().openInFindToolWindow(project.projectId(),
-                                                          sessionRef,
+                                                          session,
                                                           dataContextId,
                                                           providers.getValue().getProviderIds(disabledProviders ?: emptyList()),
                                                           params,
@@ -270,20 +269,20 @@ class SeTabDelegate(
       project: Project,
       providerId: SeProviderId,
       initEvent: AnActionEvent,
-      sessionRef: DurableRef<SeSessionEntity>,
+      session: SeSession,
     ): Boolean {
       val dataContextId = readAction {
         initEvent.dataContext.rpcId()
       }
       return SeFrontendService.getInstance(project).localProvidersHolder?.getLegacyContributor(providerId, false)?.isShownInSeparateTab == true ||
-             SeRemoteApi.getInstance().isShownInSeparateTab(project.projectId(), sessionRef, dataContextId, providerId)
+             SeRemoteApi.getInstance().isShownInSeparateTab(project.projectId(), session, dataContextId, providerId)
     }
 
     private suspend fun initializeProviders(
       project: Project?,
       providerIds: List<SeProviderId>,
       initEvent: AnActionEvent,
-      sessionRef: DurableRef<SeSessionEntity>,
+      session: SeSession,
       logLabel: String,
     ): Providers {
       val projectId = project?.projectId()
@@ -296,7 +295,7 @@ class SeTabDelegate(
       val localFactories = SeItemsProviderFactory.EP_NAME.extensionList.associateBy { SeProviderId(it.id) }
       val frontendOnlyIds = localFactories.filter { it.value is SeFrontendOnlyItemsProviderFactory }.map { it.key }.toSet()
 
-      val availableRemoteProviders = if (projectId != null) SeRemoteApi.getInstance().getAvailableProviderIds(projectId, sessionRef, dataContextId) else emptyMap()
+      val availableRemoteProviders = if (projectId != null) SeRemoteApi.getInstance().getAvailableProviderIds(projectId, session, dataContextId) else emptyMap()
 
       val essentialRemoteProviderIds = availableRemoteProviders[SeProviderIdUtils.ESSENTIAL_KEY]?.filter {
         !frontendOnlyIds.contains(it)
@@ -325,12 +324,12 @@ class SeTabDelegate(
 
       val frontendProvidersFacade = if (project != null) {
         val remoteProviderIdToName =
-          SeRemoteApi.getInstance().getDisplayNameForProviders(project.projectId(), sessionRef, dataContextId, remoteProviderIds.toList())
+          SeRemoteApi.getInstance().getDisplayNameForProviders(project.projectId(), session, dataContextId, remoteProviderIds.toList())
 
         if (remoteProviderIdToName.isEmpty()) null
         else SeFrontendItemDataProvidersFacade(project.projectId(),
                                                remoteProviderIdToName,
-                                               sessionRef,
+                                               session,
                                                dataContextId,
                                                hasWildcard,
                                                essentialRemoteProviderIds.filter { remoteProviderIdToName.containsKey(it) }.toSet())

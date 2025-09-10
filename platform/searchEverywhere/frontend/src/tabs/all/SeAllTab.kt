@@ -19,7 +19,6 @@ import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
 import com.intellij.ui.IdeUICustomization
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -63,9 +62,9 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.canBeShownInFindResults()
   }
 
-  override suspend fun openInFindToolWindow(sessionRef: DurableRef<SeSessionEntity>, params: SeParams, initEvent: AnActionEvent): Boolean {
+  override suspend fun openInFindToolWindow(session: SeSession, params: SeParams, initEvent: AnActionEvent): Boolean {
     val allTabFilter = SeEverywhereFilter.from(params.filter)
-    return delegate.openInFindToolWindow(sessionRef, params, initEvent, true,allTabFilter.disabledProviderIds)
+    return delegate.openInFindToolWindow(session, params, initEvent, true,allTabFilter.disabledProviderIds)
   }
 
   override suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {

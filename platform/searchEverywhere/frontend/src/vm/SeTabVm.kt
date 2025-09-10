@@ -24,7 +24,6 @@ import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -184,10 +183,10 @@ class SeTabVm(
     return tab.canBeShownInFindResults()
   }
 
-  suspend fun openInFindWindow(sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): Boolean {
+  suspend fun openInFindWindow(session: SeSession, initEvent: AnActionEvent): Boolean {
     val params = SeParams(searchPattern.value,
                           (filterEditor.getValue()?.resultFlow?.value ?: SeFilterState.Empty))
-    return tab.openInFindToolWindow(sessionRef, params, initEvent)
+    return tab.openInFindToolWindow(session, params, initEvent)
   }
 
   suspend fun getSearchEverywhereToggleAction(): SearchEverywhereToggleAction? {
