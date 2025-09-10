@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.formatter.java
 
 import com.intellij.JavaTestUtil
@@ -11,21 +11,23 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WRAP_ALWAYS
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.MavenDependencyUtil
 
-class TypeAnnotationFormatterTest : LightJavaCodeInsightFixtureTestCase() {
+class JSpecifyTypeAnnotationFormatterTest : LightJavaCodeInsightFixtureTestCase() {
   private val commonSettings: CommonCodeStyleSettings
     get() = CodeStyle.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE)
 
-  override fun getTestDataPath() = "${JavaTestUtil.getJavaTestDataPath()}/psi/formatter/java/typeAnnotation/"
+  override fun getTestDataPath() = "${JavaTestUtil.getJavaTestDataPath()}/psi/formatter/java/jSpecifyTypeAnnotation/"
 
   override fun setUp() {
     super.setUp()
     commonSettings.KEEP_LINE_BREAKS = false
     commonSettings.METHOD_ANNOTATION_WRAP = WRAP_ALWAYS
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_8)
-    ModuleRootModificationUtil.updateModel(module, DefaultLightProjectDescriptor::addJetBrainsAnnotations)
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      MavenDependencyUtil.addFromMaven(model, "org.jspecify:jspecify:1.0.0")
+    }
   }
 
   fun testKnownAnnotationBeforeType() = doTest()
@@ -61,6 +63,32 @@ class TypeAnnotationFormatterTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testModuleImport() {
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_25)
+    doTest()
+  }
+
+  fun testModuleImportWithSpaces() {
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_25)
+    doTest()
+  }
+
+  fun testModuleImportMixedWithPackageImport() {
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_25)
+    doTest()
+  }
+
+  fun testModuleImportMixedWithFqn() {
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_25)
+    doTest()
+  }
+
+
+  fun testLowLanguageLevelForModuleImport() {
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_24)
+    doTest()
+  }
+
+  fun testUnknownModuleImport() {
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_25)
     doTest()
   }
