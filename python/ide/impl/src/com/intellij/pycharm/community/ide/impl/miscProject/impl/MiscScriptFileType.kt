@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
 object MiscScriptFileType : MiscFileType {
+  override val id: String = "newScript"
   override val title: @NlsActions.ActionText String = PyCharmCommunityCustomizationBundle.message("misc.script.text")
   override val icon: Icon = PythonPsiApiIcons.Python_32x32
   override val fileName: TemplateFileName = TemplateFileName.parse("script.py")

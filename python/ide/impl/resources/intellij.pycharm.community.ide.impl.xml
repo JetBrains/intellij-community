@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="PythonCore"/>
     <module name="intellij.platform.whatsNew"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
   </dependencies>
 
   <projectListeners>
@@ -20,6 +21,8 @@
     <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
                     serviceImplementation="com.intellij.pycharm.community.ide.impl.PyProjectScopeBuilder"
                     overrides="true"/>
+    <welcomeScreenProjectProvider implementation="com.intellij.pycharm.community.ide.impl.welcomeScreen.PyCharmWelcomeScreenProjectProvider" order="first"/>
+    <platform.ide.welcomeScreenContentProvider implementation="com.intellij.pycharm.community.ide.impl.welcomeScreen.PyCharmWelcomeRightTabContentProvider"/>
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectUsageCollectorValidationRule"/>

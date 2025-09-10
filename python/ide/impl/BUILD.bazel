@@ -11,9 +11,10 @@ jvm_library(
   name = "impl",
   module_name = "intellij.pycharm.community.ide.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/compose",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -54,11 +55,13 @@ jvm_library(
     "//python/python-hatch:hatch",
     "@lib//:io-github-z4kn4fein-semver-jvm",
     "@lib//:tuweni-toml-provided",
+    "//platform/non-modal-welcome-screen",
   ],
   runtime_deps = [
     ":impl_resources",
     "//python/python-features-trainer:featuresTrainer",
-  ]
+  ],
+  plugins = ["@lib//:compose-plugin"]
 )
 
 jvm_library(
@@ -68,6 +71,7 @@ jvm_library(
   associates = [":impl"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/compose",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -119,8 +123,10 @@ jvm_library(
     "@lib//:junit5",
     "@lib//:io-github-z4kn4fein-semver-jvm",
     "@lib//:tuweni-toml-provided",
+    "//platform/non-modal-welcome-screen",
   ],
-  runtime_deps = [":impl_resources"]
+  runtime_deps = [":impl_resources"],
+  plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.pycharm.community.ide.impl` end
 
