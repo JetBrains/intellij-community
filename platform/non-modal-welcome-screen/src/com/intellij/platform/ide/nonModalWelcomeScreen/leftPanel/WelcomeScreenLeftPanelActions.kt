@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeView
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
+import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -34,15 +35,14 @@ import javax.swing.JComponent
 
 internal class WelcomeScreenLeftPanelActions(val project: Project) {
   internal val panelButtonModels: List<PanelButtonModel>
-    get() = listOf(
+    get() = listOfNotNull(
       PanelButtonModel(NonModalWelcomeScreenBundle.message ("welcome.screen.action.open"), AllIcons.Nodes.Folder,
                        runPlatformAction("OpenFile")),
       PanelButtonModel(NonModalWelcomeScreenBundle.message("welcome.screen.action.new"), AllIcons.General.Add,
                        showNewActionGroupDropDown()),
       PanelButtonModel(NonModalWelcomeScreenBundle.message("welcome.screen.action.clone"), AllIcons.General.Vcs,
                        runPlatformAction("Vcs.VcsClone")),
-      PanelButtonModel(NonModalWelcomeScreenBundle.message("welcome.screen.action.remote.development"), AllIcons.Nodes.Plugin,
-                       runPlatformAction("OpenRemoteDevelopment")),
+      remoteDevelopmentButton()
     )
 
   internal data class PanelButtonModel(
@@ -50,6 +50,12 @@ internal class WelcomeScreenLeftPanelActions(val project: Project) {
     val icon: Icon,
     val onClick: (JComponent) -> Unit,
   )
+
+  private fun remoteDevelopmentButton(): PanelButtonModel? {
+    if (!AppModeAssertions.isMonolith()) return null
+    return PanelButtonModel(NonModalWelcomeScreenBundle.message("welcome.screen.action.remote.development"), AllIcons.Nodes.Plugin,
+                            runPlatformAction("OpenRemoteDevelopment"))
+  }
 
   private fun runPlatformAction(name: String): (JComponent) -> Unit {
     val action = ActionManager.getInstance().getAction(name)
