@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.gradle.codeInspection.GradleDslInspectionProvider
@@ -43,7 +44,7 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
     }
 
     override fun isAvoidDependencyNamedArgumentsNotationInspectionAvailable(file: PsiFile) : Boolean {
-        return file.name.endsWith(".gradle.kts")
+        return FileUtilRt.extensionEquals(file.name, "gradle.kts")
     }
 
     override fun getAvoidDependencyNamedArgumentsNotationInspectionVisitor(
