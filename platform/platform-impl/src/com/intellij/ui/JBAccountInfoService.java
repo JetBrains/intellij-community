@@ -125,6 +125,11 @@ public interface JBAccountInfoService {
                                           @NotNull Map<@NotNull String, @NotNull String> clientMetadata);
 
   /**
+   * Performs the logout action by clearing stored authentication data.
+   */
+  @NotNull CompletableFuture<LogoutResult> performLogout();
+
+  /**
    * Returns the list of licenses available in the current user's account matching the specified productCode.
    * <p>
    * The returned future never completes exceptionally, other than in case of cancellation that
@@ -229,6 +234,11 @@ public interface JBAccountInfoService {
   sealed interface LoginResult permits LoginResult.LoginFailed, LoginResult.LoginSuccessful {
     record LoginSuccessful(@NotNull JBAData jbaUser) implements LoginResult { }
     record LoginFailed(@NlsSafe @NotNull String errorMessage) implements LoginResult { }
+  }
+
+  sealed interface LogoutResult permits LogoutResult.LogoutSuccessful, LogoutResult.LogoutFailed {
+    record LogoutSuccessful() implements LogoutResult { }
+    record LogoutFailed(@NlsSafe @NotNull String errorMessage) implements LogoutResult { }
   }
 
   record JbaLicense(

@@ -28,7 +28,7 @@ interface SettingsSyncAuthService {
    * The method must call `SettingsSyncEvents.getInstance().fireLoginStateChanged()` in order to propagate the changed state.
    * If function is null, logout link in the UI is not visible
    */
-  val logoutFunction: (suspend (Component?) -> Unit)?
+  val logoutFunction: (suspend (Component) -> Unit)?
     get() = null
 
   /**
