@@ -68,7 +68,7 @@ class XmlTagNameSynchronizer(private val project: Project, val cs: CoroutineScop
 
     internal val SKIP_COMMAND: Key<Boolean> = Key.create("tag.name.synchronizer.skip.command")
 
-    internal val SYNCHRONIZER_KEY: Key<XmlTagNameSynchronizer> = Key.create("tag_name_synchronizer")
+    internal val SYNCHRONIZER_KEY: Key<XmlTagNameSynchronizerImpl> = Key.create("tag_name_synchronizer")
 
     private val SUPPORTED_LANGUAGES = setOf(HTMLLanguage.INSTANCE, XMLLanguage.INSTANCE, XHTMLLanguage)
 
@@ -150,7 +150,7 @@ class XmlTagNameSynchronizer(private val project: Project, val cs: CoroutineScop
     }?.let { language ->
       withContext(Dispatchers.EDT) {
         if (editor.isDisposed || project.isDisposed()) return@withContext
-        XmlTagNameSynchronizer(editor, project, language).listenForDocumentChanges()
+        XmlTagNameSynchronizerImpl(editor, project, language).listenForDocumentChanges()
       }
     }
   }

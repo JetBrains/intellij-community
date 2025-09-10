@@ -50,10 +50,10 @@ import java.util.TreeSet;
 import static com.intellij.util.ObjectUtils.doIfNotNull;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-final class XmlTagNameSynchronizer implements DocumentListener, CaretListener, Disposable {
+final class XmlTagNameSynchronizerImpl implements DocumentListener, CaretListener, Disposable {
   @SuppressWarnings("LoggerInitializedWithForeignClass")
   private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
-  private static final Key<XmlTagNameSynchronizer> SYNCHRONIZER_KEY = com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer.Companion.getSYNCHRONIZER_KEY$intellij_xml_impl();
+  private static final Key<XmlTagNameSynchronizerImpl> SYNCHRONIZER_KEY = XmlTagNameSynchronizer.Companion.getSYNCHRONIZER_KEY$intellij_xml_impl();
   private static final Key<Couple<RangeMarker>> MARKERS_KEY = Key.create("tag.name.synchronizer.markers");
   private static final TreeSet<Segment> allMarkers = new TreeSet<>(Comparator.comparingInt(Segment::getStartOffset));
   private final PsiDocumentManagerBase myDocumentManager;
@@ -62,7 +62,7 @@ final class XmlTagNameSynchronizer implements DocumentListener, CaretListener, D
   private final Project myProject;
   private boolean myApplying;
 
-  XmlTagNameSynchronizer(EditorImpl editor, Project project, Language language) {
+  XmlTagNameSynchronizerImpl(EditorImpl editor, Project project, Language language) {
     myEditor = editor;
     myLanguage = language;
     myDocumentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
@@ -116,7 +116,7 @@ final class XmlTagNameSynchronizer implements DocumentListener, CaretListener, D
     final CharSequence fragment = event.getNewFragment();
     final int newLength = event.getNewLength();
 
-    if (document.getUserData(com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer.Companion.getSKIP_COMMAND$intellij_xml_impl()) == Boolean.TRUE) {
+    if (document.getUserData(XmlTagNameSynchronizer.Companion.getSKIP_COMMAND$intellij_xml_impl()) == Boolean.TRUE) {
       // xml completion inserts extra space after tag name to ensure correct parsing
       // js auto-import may change beginning of the document when component is imported
       // we need to ignore it
