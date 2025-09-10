@@ -677,6 +677,7 @@
 
     <!-- uv -->
     <configurationType implementation="com.jetbrains.python.sdk.uv.run.UvRunConfigurationType"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.sdk.uv.run.UvRunConfigurationProducer"/>
   </extensions>
 
   <extensionPoints>
