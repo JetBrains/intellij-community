@@ -7,16 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
-import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
-import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
-import org.jetbrains.kotlin.analysis.api.components.importingScopeContext
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.components.scopeContext
-import org.jetbrains.kotlin.analysis.api.components.withNullability
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -49,6 +40,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.ImportPath
 
@@ -172,12 +164,17 @@ internal class WeighingContext private constructor(
             val preferredSubtype = when (positionContext) {
                 is KotlinTypeNameReferencePositionContext -> {
                     val typeReferenceOwner = positionContext.typeReference?.parent
-                    val leftHandExpression = when {
-                        typeReferenceOwner is KtIsExpression -> typeReferenceOwner.leftHandSide
-                        typeReferenceOwner is KtBinaryExpressionWithTypeRHS && typeReferenceOwner.isAsOrSafeAs() -> typeReferenceOwner.left
-                        else -> null
+                    if (typeReferenceOwner?.parent?.parent is KtCatchClause) {
+                        // Prefer Throwables for exceptions
+                        buildClassType(StandardClassIds.Throwable) as? KaClassType
+                    } else {
+                        val leftHandExpression = when (typeReferenceOwner) {
+                            is KtIsExpression -> typeReferenceOwner.leftHandSide
+                            is KtBinaryExpressionWithTypeRHS if typeReferenceOwner.isAsOrSafeAs() -> typeReferenceOwner.left
+                            else -> null
+                        }
+                        leftHandExpression?.getPreferredSealedType()
                     }
-                    leftHandExpression?.getPreferredSealedType()
                 }
 
                 else -> null

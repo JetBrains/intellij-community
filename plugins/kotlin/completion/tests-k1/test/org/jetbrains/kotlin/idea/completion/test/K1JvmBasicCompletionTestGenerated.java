@@ -3922,6 +3922,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/parameterDefaultValueInFunction.kt");
             }
 
+            @TestMetadata("PreferExceptionsInCatch.kt")
+            public void testPreferExceptionsInCatch() throws Exception {
+                runTest("../testData/basic/common/PreferExceptionsInCatch.kt");
+            }
+
             @TestMetadata("PreferLessParameters.kt")
             public void testPreferLessParameters() throws Exception {
                 runTest("../testData/basic/common/PreferLessParameters.kt");

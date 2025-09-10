@@ -4116,6 +4116,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/parameterDefaultValueInFunction.kt");
         }
 
+        @TestMetadata("PreferExceptionsInCatch.kt")
+        public void testPreferExceptionsInCatch() throws Exception {
+            runTest("../../completion/testData/basic/common/PreferExceptionsInCatch.kt");
+        }
+
         @TestMetadata("PreferLessParameters.kt")
         public void testPreferLessParameters() throws Exception {
             runTest("../../completion/testData/basic/common/PreferLessParameters.kt");
