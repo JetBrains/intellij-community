@@ -15,9 +15,13 @@ import javax.swing.tree.TreePath
 
 @Internal
 interface CachedTreePresentationSupport {
-  @Internal
-  fun setCachedPresentation(presentation: CachedTreePresentation?)
+  @get:Internal
+  @set:Internal
+  var cachedPresentation: CachedTreePresentation?
 }
+
+@Internal
+const val CACHED_TREE_PRESENTATION_PROPERTY = "CACHED_TREE_PRESENTATION"
 
 @Internal
 interface TreeNodeWithCacheableAttributes {
