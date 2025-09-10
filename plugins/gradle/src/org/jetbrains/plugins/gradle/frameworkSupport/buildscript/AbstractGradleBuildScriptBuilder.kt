@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.gradle.util.GradleVersion
@@ -158,6 +159,27 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
 
   override fun withJavaLibraryPlugin(): Self =
     withPlugin("java-library")
+
+  override fun withJavaToolchain(languageVersion: Int): Self = apply {
+    assert(GradleVersionSpecificsUtil.isJavaToolchainSupported(gradleVersion)) {
+      "$gradleVersion doesn't support Java toolchains"
+    }
+    withJava {
+      call("toolchain") {
+        when (gradleDsl) {
+          GradleDsl.GROOVY -> {
+            assign("languageVersion", call("JavaLanguageVersion.of", int(languageVersion)))
+          }
+          GradleDsl.KOTLIN -> {
+            when (GradleVersionSpecificsUtil.isKotlinPropertyAssignmentSupported(gradleVersion)) {
+              true -> assign("languageVersion", call("JavaLanguageVersion.of", int(languageVersion)))
+              else -> call("languageVersion.set", call("JavaLanguageVersion.of", int(languageVersion)))
+            }
+          }
+        }
+      }
+    }
+  }
 
   override fun withIdeaPlugin(): Self =
     withPlugin("idea")

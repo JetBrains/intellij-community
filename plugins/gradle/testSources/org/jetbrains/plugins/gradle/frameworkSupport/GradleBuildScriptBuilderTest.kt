@@ -690,4 +690,60 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
       }
     }
   }
+
+  @Nested
+  inner class Toolchain {
+
+    @Test
+    fun `test Kotlin JVM toolchain`() {
+      assertBuildScript(
+        GradleVersion.version("4.10") to ("""
+          |kotlin {
+          |    jvmToolchain(17)
+          |}
+        """.trimMargin() to """
+          |kotlin {
+          |    jvmToolchain(17)
+          |}
+        """.trimMargin())
+      ) {
+        withKotlinJvmToolchain(17)
+      }
+    }
+
+    @Test
+    fun `test Java toolchain`() {
+      assertBuildScript(
+        GradleVersion.version("8.6") to ("""
+          |java {
+          |    toolchain {
+          |        languageVersion = JavaLanguageVersion.of(17)
+          |    }
+          |}
+        """.trimMargin() to """
+          |java {
+          |    toolchain {
+          |        languageVersion = JavaLanguageVersion.of(17)
+          |    }
+          |}
+        """.trimMargin()),
+
+        GradleVersion.version("6.7") to ("""
+          |java {
+          |    toolchain {
+          |        languageVersion = JavaLanguageVersion.of(17)
+          |    }
+          |}
+        """.trimMargin() to """
+          |java {
+          |    toolchain {
+          |        languageVersion.set(JavaLanguageVersion.of(17))
+          |    }
+          |}
+        """.trimMargin())
+      ) {
+        withJavaToolchain(17)
+      }
+    }
+  }
 }

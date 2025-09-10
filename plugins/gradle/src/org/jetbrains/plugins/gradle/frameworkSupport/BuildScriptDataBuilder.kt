@@ -114,6 +114,7 @@ class BuildScriptDataBuilder(
   override fun withJava(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withJava(configure) }
   override fun withJavaPlugin(): BuildScriptDataBuilder = apply { backend.withJavaPlugin() }
   override fun withJavaLibraryPlugin(): BuildScriptDataBuilder = apply { backend.withJavaLibraryPlugin() }
+  override fun withJavaToolchain(languageVersion: Int): BuildScriptDataBuilder = apply { backend.withJavaToolchain(languageVersion) }
   override fun withIdeaPlugin(): BuildScriptDataBuilder = apply { backend.withIdeaPlugin() }
   override fun withKotlin(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withKotlin(configure) }
   override fun withKotlinJvmPlugin(): BuildScriptDataBuilder = apply { backend.withKotlinJvmPlugin() }

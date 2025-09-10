@@ -70,6 +70,7 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
   fun withJava(configure: Consumer<GradleScriptTreeBuilder>): Self = withJava(configure::accept)
   fun withJavaPlugin(): Self
   fun withJavaLibraryPlugin(): Self
+  fun withJavaToolchain(languageVersion: Int): Self
 
   fun withIdeaPlugin(): Self
 
