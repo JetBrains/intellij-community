@@ -4,10 +4,6 @@ package git4idea.inMemory
 import com.intellij.openapi.vcs.VcsException
 
 import com.intellij.platform.util.progress.reportSequentialProgress
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import git4idea.commands.Git
-import git4idea.commands.GitCommand
-import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.objects.GitObject
 import git4idea.inMemory.objects.Oid
@@ -77,25 +73,6 @@ internal fun GitObjectRepository.mergeTrees(commit: GitObject.Commit, newParent:
   val baseTree = commit.parentsOids.singleOrNull()?.let { findTree(findCommit(it).treeOid) } ?: emptyTree
 
   return mergeTrees(ourTree, theirTree, baseTree)
-}
-
-/**
- * Trees should be persisted on disk
- */
-@RequiresBackgroundThread
-internal fun GitObjectRepository.mergeTrees(ours: GitObject.Tree, theirs: GitObject.Tree, base: GitObject.Tree): GitObject.Tree {
-  val handler = GitLineHandler(repository.project, repository.root, GitCommand.MERGE_TREE).apply {
-    setSilent(true)
-    addParameters("--merge-base=${base.oid}")
-    addParameters(ours.oid.hex(), theirs.oid.hex())
-  }
-  val result = Git.getInstance().runCommand(handler)
-  if (result.exitCode == 1) {
-    throw MergeConflictException(result.outputAsJoinedString)
-  }
-  result.throwOnError()
-
-  return findTree(Oid.fromHex(result.outputAsJoinedString))
 }
 
 internal class MergeConflictException(

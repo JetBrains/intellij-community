@@ -274,4 +274,23 @@ internal class GitObjectRepository(val repository: GitRepository) {
       throw e
     }
   }
+
+  /**
+   * Trees should be persisted on disk
+   */
+  @RequiresBackgroundThread
+  internal fun GitObjectRepository.mergeTrees(ours: GitObject.Tree, theirs: GitObject.Tree, base: GitObject.Tree): GitObject.Tree {
+    val handler = GitLineHandler(repository.project, repository.root, GitCommand.MERGE_TREE).apply {
+      setSilent(true)
+      addParameters("--merge-base=${base.oid}")
+      addParameters(ours.oid.hex(), theirs.oid.hex())
+    }
+    val result = Git.getInstance().runCommand(handler)
+    if (result.exitCode == 1) {
+      throw MergeConflictException(result.outputAsJoinedString)
+    }
+    result.throwOnError()
+
+    return findTree(Oid.fromHex(result.outputAsJoinedString))
+  }
 }
