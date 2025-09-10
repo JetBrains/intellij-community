@@ -46,7 +46,7 @@ val useDebouncedDrawingInSuvorovProgress: Boolean = System.getProperty("ide.suvo
  * - `false` means that [kotlinx.coroutines.Dispatchers.EDT] will block on the acquisition of high-level write-intent lock.
  */
 @get:ApiStatus.Internal
-val useNonBlockingIntentLockForEdtCoroutines: Boolean = System.getProperty("ide.non.blocking.write.intent.lock.for.edt.coroutines", "false").toBoolean()
+val useNonBlockingIntentLockForEdtCoroutines: Boolean = System.getProperty("ide.non.blocking.write.intent.lock.for.edt.coroutines", "true").toBoolean()
 
 /**
  * Represents the deadline before blocking read lock acquisition starts compensating parallelism for coroutine worker threads
