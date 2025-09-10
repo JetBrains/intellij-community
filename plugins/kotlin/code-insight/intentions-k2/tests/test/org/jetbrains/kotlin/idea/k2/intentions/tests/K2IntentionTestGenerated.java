@@ -1357,6 +1357,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/smartCastSimpleCase.kt");
         }
 
+        @TestMetadata("smartCastUnstableCase.kt")
+        public void testSmartCastUnstableCase() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/smartCastUnstableCase.kt");
+        }
+
         @TestMetadata("stringRedefined.kt")
         public void testStringRedefined() throws Exception {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/stringRedefined.kt");
