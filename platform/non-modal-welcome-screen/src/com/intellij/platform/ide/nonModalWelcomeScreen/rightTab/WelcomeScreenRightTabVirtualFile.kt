@@ -9,11 +9,12 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.testFramework.LightVirtualFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
 internal class WelcomeScreenRightTabVirtualFile(val window: WelcomeScreenRightTab, val project: Project) :
-  LightVirtualFile(window.contentProvider.title.get(), NewProjectWindowFileType(window.contentProvider), "") {
+  LightVirtualFile(window.contentProvider.title.get(), WelcomeScreenFileType(window.contentProvider), "") {
 
   init {
     putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
@@ -23,7 +24,8 @@ internal class WelcomeScreenRightTabVirtualFile(val window: WelcomeScreenRightTa
 
   override fun getPath(): String = name
 
-  private class NewProjectWindowFileType(
+  @ApiStatus.Internal
+  class WelcomeScreenFileType(
     private val contentProvider: WelcomeRightTabContentProvider
   ) : FakeFileType() {
     override fun getName(): @NonNls String = contentProvider.title.get()

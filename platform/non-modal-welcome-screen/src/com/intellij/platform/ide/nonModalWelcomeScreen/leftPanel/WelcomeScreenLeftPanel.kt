@@ -6,7 +6,10 @@ import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.FileCopyPasteUtil
+import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.ProjectViewPane
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
@@ -15,6 +18,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPa
 import com.intellij.platform.ide.nonModalWelcomeScreen.GoFileDragAndDropHandler
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelActions.Companion.leftPanelActionButton
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFile
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
@@ -36,6 +40,16 @@ import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
 internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(project) {
   private var recentProjectTreeComponent: JComponent? = null
+
+  init {
+    project.messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun selectionChanged(event: FileEditorManagerEvent) {
+        if (event.newFile?.fileType is WelcomeScreenRightTabVirtualFile.WelcomeScreenFileType) {
+          ProjectViewImpl.getInstance(project).changeView(ID)
+        }
+      }
+    })
+  }
 
   override fun getTitle(): String = NonModalWelcomeScreenBundle.message("welcome.screen.project.view.title")
 
@@ -85,7 +99,7 @@ internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectVie
     val projectFilteringTree = createRecentProjectTree()
     setupDragAndDrop(projectFilteringTree.component)
 
-    val topPanel =  JBPanel<JBPanel<*>>().apply {
+    val topPanel = JBPanel<JBPanel<*>>().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
       border = JBUI.Borders.empty()
     }
