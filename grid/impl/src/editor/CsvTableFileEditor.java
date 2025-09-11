@@ -68,6 +68,10 @@ public class CsvTableFileEditor extends TableFileEditor implements CsvFormatEdit
     return myDataGrid;
   }
 
+  @NotNull
+  public CsvFormat getFormat() {
+    return getHookup().getFormat();
+  }
   public void setFormat(@NotNull CsvFormat format) {
     getHookup().setFormat(format, new GridRequestSource(new DataGridRequestPlace(myDataGrid)));
   }
