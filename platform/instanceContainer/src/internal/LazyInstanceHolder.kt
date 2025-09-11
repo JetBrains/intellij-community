@@ -14,6 +14,7 @@ import kotlin.coroutines.*
 
 internal abstract class LazyInstanceHolder(
   parentScope: CoroutineScope,
+  private val additionalContext: CoroutineContext,
   initializer: InstanceInitializer,
 ) : InstanceHolder {
   private companion object {
@@ -283,11 +284,12 @@ private class CurrentlyInitializingInstance(@JvmField val holder: LazyInstanceHo
   companion object : CoroutineContext.Key<CurrentlyInitializingInstance>
 }
 
-internal class StaticInstanceHolder(scope: CoroutineScope, initializer: InstanceInitializer)
-  : LazyInstanceHolder(scope, initializer)
+internal class StaticInstanceHolder(scope: CoroutineScope, additionalContext: CoroutineContext, initializer: InstanceInitializer)
+  : LazyInstanceHolder(scope, additionalContext, initializer)
 
 /**
  * This class is separate from [StaticInstanceHolder] to differentiate them via `instanceof` later.
  * Another solution is to store a flag in a field.
  */
-internal class DynamicInstanceHolder(scope: CoroutineScope, initializer: InstanceInitializer) : LazyInstanceHolder(scope, initializer)
+internal class DynamicInstanceHolder(scope: CoroutineScope, additionalContext: CoroutineContext, initializer: InstanceInitializer)
+  : LazyInstanceHolder(scope, additionalContext, initializer)
