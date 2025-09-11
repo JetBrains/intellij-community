@@ -67,10 +67,10 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="org.jetbrains.intellij.deps.languagetool:languagetool-core" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core:6.6.16">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core:6.6.17">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.6.16/languagetool-core-6.6.16.jar">
-              <sha256sum>a8fed380bae2f7a34dabd93c85c8e1ecb03f8b52d94850fd3442d72805c8e905</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.6.17/languagetool-core-6.6.17.jar">
+              <sha256sum>5c87aad47da082fe14f506a705516401b06c3aa3a3f5f4d01dfb4018f48544c3</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar">
               <sha256sum>33021c9cca70c6292d53ff7dac5d1832d422e986aba52ec998532a5f47f921f8</sha256sum>
@@ -120,40 +120,40 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.6.16/languagetool-core-6.6.16.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.6.17/languagetool-core-6.6.17.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.6.16/languagetool-core-6.6.16-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.6.17/languagetool-core-6.6.17-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="org.jetbrains.intellij.deps.languagetool:language-ru" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.languagetool:language-ru:6.6.16">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.languagetool:language-ru:6.6.17">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.6.16/language-ru-6.6.16.jar">
-              <sha256sum>6b90f4c69dc23fd2cd0b441dde5e527fa0653d6443322818dbb3d73f643b72f0</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.6.17/language-ru-6.6.17.jar">
+              <sha256sum>d33524f0346e41c570a3ef32b97e7d9234ea341731708c6406efe4f69f391e6a</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.6.16/language-ru-6.6.16.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.6.17/language-ru-6.6.17.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.6.16/language-ru-6.6.16-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.6.17/language-ru-6.6.17-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="org.jetbrains.intellij.deps.languagetool:language-de" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-de:6.6.16">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-de:6.6.17">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.6.16/language-de-6.6.16.jar">
-              <sha256sum>3ce2d1d2aeb33728647ebb7841596aaaf2a8fba3a735f0da76a83bb8f6768db0</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.6.17/language-de-6.6.17.jar">
+              <sha256sum>57de01c042825d38083919a1adc1bf264da980ae1305228f8e11a0d0b06721a0</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.4/german-pos-dict-1.2.4.jar">
               <sha256sum>56f0b00adb704cbc1e86776b45f6890efe90685ab370a34b5b299593cdcaae22</sha256sum>
@@ -169,41 +169,41 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.6.16/language-de-6.6.16.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.6.17/language-de-6.6.17.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.4/german-pos-dict-1.2.4.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.7/jwordsplitter-4.7.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.6.16/language-de-6.6.16-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.6.17/language-de-6.6.17-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.7/jwordsplitter-4.7-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="org.jetbrains.intellij.deps.languagetool:language-it" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.languagetool:language-it:6.6.16">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.languagetool:language-it:6.6.17">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-it/6.6.16/language-it-6.6.16.jar">
-              <sha256sum>83d2608d2a89ebd9edaa3bbfb939d82eec1f8895c2ad6ca95edff996b2dfe95e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-it/6.6.17/language-it-6.6.17.jar">
+              <sha256sum>800e6ddb9559f1812d0aed21a4607332b952cebdf9df74c90553dda5cf8b8f07</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-it/6.6.16/language-it-6.6.16.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-it/6.6.17/language-it-6.6.17.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-it/6.6.16/language-it-6.6.16-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-it/6.6.17/language-it-6.6.17-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="jetbrains.intellij.deps.languagetool.language.uk" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-uk:6.6.16">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-uk:6.6.17">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.6.16/language-uk-6.6.16.jar">
-              <sha256sum>a6314b3bdf329ceb45111b038fb9178c8989ec90456c5eeeea0f91e309f3cc27</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.6.17/language-uk-6.6.17.jar">
+              <sha256sum>a2b07742aaed66bcff2516adfb55a66945ee4637d9118ace8d8c7ff3f11fe2ad</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/ua/net/nlp/morfologik-ukrainian-lt/6.6.0/morfologik-ukrainian-lt-6.6.0.jar">
               <sha256sum>3ff49f9b989e3c50eb8d96f4385906b3562b638607aeeddaffd90939695b66a5</sha256sum>
@@ -214,21 +214,21 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.6.16/language-uk-6.6.16.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.6.17/language-uk-6.6.17.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/ua/net/nlp/morfologik-ukrainian-lt/6.6.0/morfologik-ukrainian-lt-6.6.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.6.16/language-uk-6.6.16-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-uk/6.6.17/language-uk-6.6.17-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="jetbrains.intellij.deps.languagetool.language.be" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-be:6.6.16">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-be:6.6.17">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-be/6.6.16/language-be-6.6.16.jar">
-              <sha256sum>ef53c71c4b2c98e4f80ba584d53954713f8a079ef418dbdbcb3912c230edcff6</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-be/6.6.17/language-be-6.6.17.jar">
+              <sha256sum>92c35f59db7c8ff2c6f9742d0ad0ee11dd6a7f6b0796fb10d84e2c4b232a0da1</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/io/github/belarus/linguistics.grammardb.spell.languagetool/1.0.2/linguistics.grammardb.spell.languagetool-1.0.2.jar">
               <sha256sum>1d1a55e905faa9740d648144cf05c4a460f0f26416d2ee01157bad0877be31c2</sha256sum>
@@ -239,30 +239,30 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-be/6.6.16/language-be-6.6.16.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-be/6.6.17/language-be-6.6.17.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/belarus/linguistics.grammardb.spell.languagetool/1.0.2/linguistics.grammardb.spell.languagetool-1.0.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-be/6.6.16/language-be-6.6.16-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-be/6.6.17/language-be-6.6.17-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="org.jetbrains.intellij.deps.languagetool:language-pt" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.languagetool:language-pt:6.6.16">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.languagetool:language-pt:6.6.17">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-pt/6.6.16/language-pt-6.6.16.jar">
-              <sha256sum>e78059fd9a7fc3bd0acde47fc89bd36fb50e6d382740e6176718be69126417e5</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-pt/6.6.17/language-pt-6.6.17.jar">
+              <sha256sum>2c29a82f09fd5f455f13e6caa991c1147c990eaa51e0fd6aaf4e77a64555359a</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-pt/6.6.16/language-pt-6.6.16.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-pt/6.6.17/language-pt-6.6.17.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-pt/6.6.16/language-pt-6.6.16-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-pt/6.6.17/language-pt-6.6.17-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
