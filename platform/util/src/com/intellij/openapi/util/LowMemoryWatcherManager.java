@@ -38,9 +38,12 @@ public final class LowMemoryWatcherManager {
   /** Use exponentially smoothing GcTracker instead of WindowedSum one */
   private static final boolean USE_EXPONENTIALLY_SMOOTHING_GC_TRACKING = getBooleanProperty("LowMemoryWatcherManager.USE_EXPONENTIALLY_SMOOTHING_GC_TRACKING", false);
 
+  /** Window size for {@link GcTracker} to accumulate GC durations over. */
   private static final long WINDOW_SIZE_MS = getLongProperty("LowMemoryWatcherManager.WINDOW_SIZE_MS", SECONDS.toMillis(60));
+  /** GC duration accumulated by {@link GcTracker} over {@link #WINDOW_SIZE_MS} which is 'too much', i.e. GC is overloaded */
   private static final long IN_WINDOW_GC_DURATION_THRESHOLD_MS = getLongProperty("LowMemoryWatcherManager.IN_WINDOW_GC_DURATION_THRESHOLD_MS", SECONDS.toMillis(10));
 
+  /** Period of GC tracker updates. If <0 -- disable regular updates, update only on memory threshold violation (legacy behavior) */
   private static final long REGULAR_TRACKER_UPDATE_PERIOD_MS = getLongProperty("LowMemoryWatcherManager.REGULAR_TRACKER_UPDATE_PERIOD_MS", SECONDS.toMillis(5));
   //@formatter:on
 
@@ -79,10 +82,14 @@ public final class LowMemoryWatcherManager {
           "LowMemoryNotification{gcTime: " + currentGcTime + "ms, GC load score: " + gcLoadScore + "}" +
           "{threshold: " + memoryThreshold + ", collectionThreshold: " + memoryCollectionThreshold + "}"
         );
+        //This is not just 'after GC', it is 'memory subsystem is overloaded':
+        //  (a lot of time spent on GC recently) AND (memory still low after GC)
+        boolean afterGC = (gcLoadScore > IN_WINDOW_GC_DURATION_THRESHOLD_MS) && memoryCollectionThreshold;
+        if (afterGC) {
+          gcTracker.reset();
+        }
         synchronized (watcherNotificationTask) {
           if (watcherNotificationTaskSubmitted == null) {
-            //This is not just 'after GC', it is (a lot of time spent on GC recently) AND (memory still low after GC)
-            boolean afterGC = (gcLoadScore > IN_WINDOW_GC_DURATION_THRESHOLD_MS) && memoryCollectionThreshold;
             watcherNotificationTaskSubmitted = watcherNotificationPool.submit(() -> watcherNotificationTask.accept(afterGC));
             // maybe it's executed too fast or even synchronously
             if (watcherNotificationTaskSubmitted.isDone()) {
@@ -215,6 +222,8 @@ public final class LowMemoryWatcherManager {
     /** @return some weighted sum of GC times over the last period */
     long trackGc(long currentTimeMs,
                  long accumulatedGcDurationMs);
+
+    void reset();
   }
 
   /** GC tracker computes a moving sum over {@link #WINDOW_SIZE_MS} window over reported GC cycle durations */
@@ -263,6 +272,11 @@ public final class LowMemoryWatcherManager {
         .sum();
     }
 
+    @Override
+    public synchronized void reset() {
+      gcDurations.clear();
+    }
+
     private static class GcPeriod {
       final long timestamp;
       final long gcDurationMs;
@@ -297,7 +311,7 @@ public final class LowMemoryWatcherManager {
 
     @Override
     public synchronized long trackGc(long currentTimeMs,
-                                     long accumulatedGcDurationMs) {
+                                         long accumulatedGcDurationMs) {
       long gcDurationInLastMs = accumulatedGcDurationMs - previousAccumulatedGcDurationMs;
       if (gcDurationInLastMs > 0) {
         long sinceLastUpdateMs = currentTimeMs - previousUpdateTimestampMs;
@@ -312,6 +326,11 @@ public final class LowMemoryWatcherManager {
       previousAccumulatedGcDurationMs = accumulatedGcDurationMs;
 
       return (long)ema;
+    }
+
+    @Override
+    public synchronized void reset() {
+      ema = 0;
     }
   }
 }
