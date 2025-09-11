@@ -246,7 +246,7 @@ internal open class FirClassifierCompletionContributor(
     }
 }
 
-internal class FirAnnotationCompletionContributor(
+internal class  FirAnnotationCompletionContributor(
     sink: LookupElementSink,
     priority: Int = 0,
 ) : FirClassifierCompletionContributor(sink, priority) {

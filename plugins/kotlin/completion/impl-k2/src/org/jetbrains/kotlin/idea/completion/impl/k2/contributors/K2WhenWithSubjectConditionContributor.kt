@@ -39,7 +39,6 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributo
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinWithSubjectEntryPositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -84,7 +83,6 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
     context(_: KaSession, context: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>)
     override fun complete() {
         val positionContext = context.positionContext
-        val weighingContext = context.weighingContext
         val whenCondition = positionContext.whenCondition
         val whenExpression = whenCondition.parentOfType<KtWhenExpression>() ?: return
         val subject = whenExpression.subjectExpression ?: return
@@ -93,9 +91,9 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         val classSymbol = getClassSymbol(subjectType)
         val isSingleCondition = whenCondition.isSingleConditionInEntry()
 
-        createNullBranchLookupElement(weighingContext, subjectType)
+        createNullBranchLookupElement(subjectType)
             ?.let { context.addElement(it) }
-        createElseBranchLookupElement(weighingContext, whenCondition)
+        createElseBranchLookupElement(whenCondition)
             ?.let { context.addElement(it) }
 
         when {
@@ -129,15 +127,14 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         return classType?.symbol as? KaNamedClassSymbol
     }
 
-    context(_: KaSession)
+    context(_: KaSession, _: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>)
     private fun createNullBranchLookupElement(
-        context: WeighingContext,
         type: KaType?,
     ): LookupElement? {
         if (type?.isNullable != true) return null
 
         return createKeywordElement(keyword = KtTokens.NULL_KEYWORD.value)
-            .applyWeighs(context)
+            .applyWeighs()
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>)
@@ -271,9 +268,8 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
             .apply { getAllSealedInheritorsTo(classSymbol, this) }
     }
 
-    context(_: KaSession)
+    context(_: KaSession, _: K2CompletionSectionContext<KotlinWithSubjectEntryPositionContext>)
     private fun createElseBranchLookupElement(
-        context: WeighingContext,
         whenCondition: KtWhenCondition,
     ): LookupElement? {
         val whenEntry = whenCondition.parent as? KtWhenEntry
@@ -283,7 +279,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
         return createKeywordElement(
             keyword = KtTokens.ELSE_KEYWORD.value,
             tail = " -> ",
-        ).applyWeighs(context)
+        ).applyWeighs()
     }
 
 
@@ -339,7 +335,7 @@ internal class K2WhenWithSubjectConditionContributor : K2SimpleCompletionContrib
             .withInsertHandler(WhenConditionInsertionHandler)
             .withTailText(createStarTypeArgumentsList(typeArgumentsCount), /*grayed*/true)
             .letIf(isSingleCondition) { it.appendTailText(" -> ",  /*grayed*/true) }
-            .applyWeighs(context.weighingContext, KtSymbolWithOrigin(symbol, scopeKind))
+            .applyWeighs(KtSymbolWithOrigin(symbol, scopeKind))
     }
 }
 

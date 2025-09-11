@@ -155,7 +155,6 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2Simple
                             symbol = it,
                             userPrefix = userPrefix,
                             lookupNamesAdded = lookupNamesAdded,
-                            weighingContext = context.weighingContext,
                             scopeKind = scopeWithKind.kind,
                         )
                     }
@@ -182,7 +181,6 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2Simple
                     symbol = it,
                     userPrefix = userPrefix,
                     lookupNamesAdded = lookupNamesAdded,
-                    weighingContext = context.weighingContext,
                 )
             }
         }
@@ -194,7 +192,6 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2Simple
         symbol: KaClassifierSymbol,
         userPrefix: String,
         lookupNamesAdded: MutableSet<String>,
-        weighingContext: WeighingContext,
         scopeKind: KaScopeKind? = null,
     ) {
         ProgressManager.checkCanceled()
@@ -223,7 +220,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2Simple
 
             val lookupElement = createLookupElement(variableOrParameter, name, typeLookupElement)
             lookupElement.nameWithTypePriority = userPrefix.length // suggestions with longer user prefix get lower priority
-            lookupElement.applyWeighs(weighingContext, KtSymbolWithOrigin(symbol, scopeKind))
+            lookupElement.applyWeighs(KtSymbolWithOrigin(symbol, scopeKind))
 
             context.addElement(lookupElement)
         }

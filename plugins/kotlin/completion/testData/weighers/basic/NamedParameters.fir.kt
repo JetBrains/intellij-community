@@ -15,6 +15,7 @@ fun test(listParam: Int) {
     Options(list<caret>)
 }
 
+// ORDER: "listNew ="
 // ORDER: listLocalVal
 // ORDER: listParam
 // ORDER: listThisFileVal
@@ -22,6 +23,5 @@ fun test(listParam: Int) {
 // ORDER: listImportedVal
 // ORDER: listImportedFun
 // ORDER: "listMatch ="
-// ORDER: "listNew ="
 // ORDER: listFunNotMatchingType
 

@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.api.serialization.ensureSerializable
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributorBase.AdaptToExplicitReceiverInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.hasNoExplicitReceiver
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
@@ -45,10 +46,8 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-context(_: KaSession)
+context(_: KaSession, context: K2CompletionSectionContext<*>)
 internal fun createCallableLookupElements(
-    context: WeighingContext,
-    parameters: KotlinFirCompletionParameters,
     signature: KaCallableSignature<*>,
     options: CallableInsertionOptions,
     scopeKind: KaScopeKind? = null,
@@ -71,7 +70,7 @@ internal fun createCallableLookupElements(
             name = shortName,
             signature = signature,
             options = options,
-            expectedType = context.expectedType,
+            expectedType = context.weighingContext.expectedType,
             aliasName = aliasName,
         ).let { yield(it) }
 
@@ -87,25 +86,25 @@ internal fun createCallableLookupElements(
         if (namedSymbol is KaNamedFunctionSymbol &&
             signature is KaFunctionSignature<*> &&
             // Only offer bracket operators after dot, not for safe access or implicit receivers
-            parameters.position.parent?.parent is KtDotQualifiedExpression
+            context.parameters.position.parent?.parent is KtDotQualifiedExpression
         ) {
-            createOperatorLookupElement(context, signature, options, namedSymbol)?.let { yield(it) }
+            createOperatorLookupElement(context.weighingContext, signature, options, namedSymbol)?.let { yield(it) }
         }
     }.map { builder ->
         if (presentableText == null) builder
         else builder.withPresentableText(presentableText)
     }.map { lookup ->
-        if (!context.isPositionInsideImportOrPackageDirective) {
+        if (!context.weighingContext.isPositionInsideImportOrPackageDirective) {
             lookup.callableWeight = CallableMetadataProvider.getCallableMetadata(
                 signature = signature,
                 scopeKind = scopeKind,
-                actualReceiverTypes = context.actualReceiverTypes,
+                actualReceiverTypes = context.weighingContext.actualReceiverTypes,
                 isFunctionalVariableCall = callableSymbol is KaVariableSymbol
                         && lookup.`object` is FunctionCallLookupObject,
             )
         }
 
-        lookup.applyWeighs(context, symbolWithOrigin)
+        lookup.applyWeighs(symbolWithOrigin)
         lookup.applyKindToPresentation()
     }
 }

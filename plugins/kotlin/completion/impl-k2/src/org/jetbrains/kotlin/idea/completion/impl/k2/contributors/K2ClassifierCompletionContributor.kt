@@ -170,7 +170,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                     positionContext = positionContext,
                     visibilityChecker = sectionContext.visibilityChecker,
                 ).map {
-                    it.applyWeighs(context, symbolWithOrigin)
+                    it.applyWeighs(symbolWithOrigin)
                 }
             }
 
@@ -202,7 +202,6 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                         visibilityChecker = sectionContext.visibilityChecker,
                     ).map {
                         it.applyWeighs(
-                            context = weighingContext,
                             symbolWithOrigin = KtSymbolWithOrigin(classifierSymbol),
                         )
                     }
@@ -232,7 +231,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                         expectedType = sectionContext.weighingContext.expectedType,
                         positionContext = sectionContext.positionContext,
                         visibilityChecker = sectionContext.visibilityChecker,
-                    ).map { it.applyWeighs(sectionContext.weighingContext, symbolWithOrigin) }
+                    ).map { it.applyWeighs(symbolWithOrigin) }
                 }.forEach { sectionContext.addElement(it) }
         } else {
             sectionContext.sink.registerChainContributor(this)

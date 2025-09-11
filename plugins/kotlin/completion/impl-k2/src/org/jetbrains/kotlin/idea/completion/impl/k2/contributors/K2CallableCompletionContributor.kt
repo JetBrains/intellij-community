@@ -139,14 +139,12 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             .filterNot(isUninitializedCallable(context))
             .flatMap { callableWithMetadata ->
                 createCallableLookupElements(
-                    context = context.weighingContext,
                     signature = callableWithMetadata.signature,
                     options = callableWithMetadata.options,
                     scopeKind = callableWithMetadata.scopeKind,
                     presentableText = callableWithMetadata.itemText,
                     withTrailingLambda = context.isWithTrailingLambda(),
                     aliasName = callableWithMetadata.aliasName,
-                    parameters = context.parameters,
                 ).map { builder ->
                     val receiver = context.positionContext.explicitReceiver ?: return@map builder
 
@@ -909,8 +907,6 @@ internal class K2CallableCompletionContributor : K2AbstractCallableCompletionCon
             val signature = callableWithMetadata.signature
 
             createCallableLookupElements(
-                context = context.weighingContext,
-                parameters = context.parameters,
                 signature = signature,
                 options = callableWithMetadata.options.copy(importingStrategy = importingStrategy),
                 scopeKind = callableWithMetadata.scopeKind,

@@ -139,7 +139,7 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
             .map { elementBuilder ->
                 elementBuilder
                     .apply { isTrailingLambdaParameter = true }
-                    .applyWeighs(context.weighingContext)
+                    .applyWeighs()
             }.forEach { context.addElement(it) }
     }
 

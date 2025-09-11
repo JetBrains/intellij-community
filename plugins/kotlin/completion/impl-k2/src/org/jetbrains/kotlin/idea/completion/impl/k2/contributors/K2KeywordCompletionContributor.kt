@@ -79,7 +79,7 @@ internal class K2KeywordCompletionContributor : K2SimpleCompletionContributor<Ko
                     ?.createLookups(parameters, expression, lookupElement, context.project)
                 ?: listOf(lookupElement)
 
-            lookups.map { it.applyWeighs(context.weighingContext) }
+            lookups.map { it.applyWeighs() }
                 .forEach { context.addElement(it) }
         }
     }

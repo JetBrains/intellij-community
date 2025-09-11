@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.completion.weighers.CompletionContributorGroupW
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
 
 /**
  * A completion section is an isolated part of code of a [K2CompletionContributor] that can be run independently.
@@ -35,6 +36,10 @@ internal class K2CompletionSection<P : KotlinRawPositionContext>(
     val runnable: K2CompletionSectionRunnable<P>,
 )
 
+/**
+ * This class contains data that is common for all contexts that run within the same analysis session.
+ * This means we do not have to recreate them per section and can reuse them for all sections run in the session.
+ */
 internal class K2CompletionSectionCommonData<P : KotlinRawPositionContext>(
     val completionContext: K2CompletionContext<P>,
     val weighingContext: WeighingContext,
@@ -44,7 +49,13 @@ internal class K2CompletionSectionCommonData<P : KotlinRawPositionContext>(
     val symbolFromIndexProvider: KtSymbolFromIndexProvider,
     val runtimeTypeProvider: Lazy<KaType?>,
     val extensionCheckerProvider: Lazy<KaCompletionExtensionCandidateChecker?>,
-)
+) {
+    val sessionStorage: K2CompletionSectionSessionStorage = K2CompletionSectionSessionStorage()
+}
+
+internal class K2CompletionSectionSessionStorage {
+    internal val variables: MutableMap<KProperty<*>, Any?> = mutableMapOf()
+}
 
 /**
  * This is the context used within a [K2CompletionSection] providing common data that might be
@@ -78,6 +89,17 @@ internal class K2CompletionSectionContext<out P : KotlinRawPositionContext>(
 
     val extensionChecker: KaCompletionExtensionCandidateChecker? by commonData.extensionCheckerProvider
 
+    private val sessionStorage: K2CompletionSectionSessionStorage = commonData.sessionStorage
+
+    internal class CompletionSessionProperty<T : Any> {
+        @Suppress("UNCHECKED_CAST")
+        operator fun getValue(thisRef: K2CompletionSectionContext<*>, desc: KProperty<*>): T? =
+            thisRef.sessionStorage.variables[desc] as? T?
+
+        operator fun setValue(thisRef: K2CompletionSectionContext<*>, desc: KProperty<*>, value: T?) =
+            thisRef.sessionStorage.variables.put(desc, value)
+    }
+
     fun completeLaterInSameSession(
         name: String,
         priority: K2ContributorSectionPriority = K2ContributorSectionPriority.DEFAULT,
@@ -92,6 +114,13 @@ internal class K2CompletionSectionContext<out P : KotlinRawPositionContext>(
             )
         )
     }
+}
+
+/**
+ * Creates a property that stores the value and is shared between all sections that run in the same analysis session.
+ */
+internal fun <T: Any> completionSessionProperty(): K2CompletionSectionContext.CompletionSessionProperty<T> {
+    return K2CompletionSectionContext.CompletionSessionProperty()
 }
 
 internal typealias K2CompletionSectionRunnable<P> = context(KaSession, K2CompletionSectionContext<P>) () -> Unit

@@ -143,8 +143,6 @@ internal class K2SuperMemberCompletionContributor : K2SimpleCompletionContributo
     ): Sequence<LookupElement> {
         val signature = callableInfo.signature
         return createCallableLookupElements(
-            context = context.weighingContext,
-            parameters = context.parameters,
             signature = signature,
             options = CallableInsertionOptions(
                 importStrategyDetector.detectImportStrategyForCallableSymbol(signature.symbol),
@@ -220,8 +218,6 @@ internal class K2SuperMemberCompletionContributor : K2SimpleCompletionContributo
                 if (args.size < matchedContainingFunction.valueParameters.size) continue
 
                 val elements = createCallableLookupElements(
-                    context = context.weighingContext,
-                    parameters = context.parameters,
                     signature = signature,
                     options = CallableInsertionOptions(
                         context.importStrategyDetector.detectImportStrategyForCallableSymbol(callableInfo.signature.symbol),

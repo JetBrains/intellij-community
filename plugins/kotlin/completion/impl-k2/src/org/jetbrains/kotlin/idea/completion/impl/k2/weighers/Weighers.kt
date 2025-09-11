@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Compan
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.useSiteModule
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.*
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinClassesWeigher
@@ -286,6 +287,16 @@ internal class WeighingContext private constructor(
 
 internal object Weighers {
 
+    context(_: KaSession, sectionContext: K2CompletionSectionContext<*>)
+    fun <E : LookupElement> E.applyWeighs(
+        symbolWithOrigin: KtSymbolWithOrigin<*>? = null,
+    ): E = also { lookupElement -> // todo replace everything with apply
+        @Suppress("DEPRECATION")
+        applyWeighs(sectionContext.weighingContext, symbolWithOrigin)
+        PreferMatchingArgumentNameWeigher.addWeight(lookupElement)
+    }
+
+    @Deprecated("This method only exists for compatibility for the old Fir contributors and will be removed soon")
     context(_: KaSession)
     fun <E : LookupElement> E.applyWeighs(
         context: WeighingContext,
@@ -323,6 +334,7 @@ internal object Weighers {
             CompletionContributorGroupWeigher.Weigher,
             ExpectedTypeWeigher.Weigher,
             DeprecatedWeigher.Weigher,
+            PreferMatchingArgumentNameWeigher.Weigher,
             PriorityWeigher.Weigher,
             PreferredSubtypeWeigher.Weigher,
             PreferGetSetMethodsToPropertyWeigher.Weigher,

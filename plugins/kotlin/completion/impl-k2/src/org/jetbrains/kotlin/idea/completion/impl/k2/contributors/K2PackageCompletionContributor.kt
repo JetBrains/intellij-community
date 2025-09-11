@@ -40,7 +40,6 @@ internal class K2PackageCompletionContributor : K2SimpleCompletionContributor<Ko
             .map { packageSymbol ->
                 KotlinFirLookupElementFactory.createPackagePartLookupElement(packageSymbol.fqName)
                     .applyWeighs(
-                        context = context.weighingContext,
                         symbolWithOrigin = KtSymbolWithOrigin(
                             _symbol = packageSymbol,
                             scopeKind = KtOutsideTowerScopeKinds.PackageMemberScope,
