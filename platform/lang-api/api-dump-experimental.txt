@@ -565,7 +565,7 @@ f:com.intellij.codeInsight.hints.declarative.InlayProviderOption
 - a:render(java.lang.Object,com.intellij.openapi.project.Project):javax.swing.JComponent
 *:com.intellij.execution.RunConfigurationProducerSuppressor
 - *sf:Companion:com.intellij.execution.RunConfigurationProducerSuppressor$Companion
-- a:shouldSuppress(com.intellij.execution.actions.RunConfigurationProducer):Z
+- a:shouldSuppress(com.intellij.execution.actions.RunConfigurationProducer,com.intellij.openapi.project.Project):Z
 *f:com.intellij.execution.RunConfigurationProducerSuppressor$Companion
 *:com.intellij.execution.dashboard.RunDashboardChecker
 - a:countUniqueConfigurations(com.intellij.openapi.project.Project):I

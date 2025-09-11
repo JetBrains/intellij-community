@@ -13,7 +13,7 @@ interface RunConfigurationProducerSuppressor {
     internal val EP_NAME = ExtensionPointName<RunConfigurationProducerSuppressor>("com.intellij.runConfigurationProducerSuppressor")
   }
 
-  fun shouldSuppress(producer: RunConfigurationProducer<*>): Boolean
+  fun shouldSuppress(producer: RunConfigurationProducer<*>, project: Project): Boolean
 }
 
 /**
@@ -23,7 +23,7 @@ interface RunConfigurationProducerSuppressor {
 @Service(Service.Level.PROJECT)
 @State(name = "RunConfigurationProducerService", storages = [Storage("runConfigurations.xml")])
 @ApiStatus.Internal
-class RunConfigurationProducerService : PersistentStateComponent<RunConfigurationProducerService.State> {
+class RunConfigurationProducerService(private val project: Project) : PersistentStateComponent<RunConfigurationProducerService.State> {
   private var myState = State()
 
   companion object {
@@ -49,7 +49,7 @@ class RunConfigurationProducerService : PersistentStateComponent<RunConfiguratio
 
   fun isIgnored(producer: RunConfigurationProducer<*>): Boolean {
     for (suppressor in RunConfigurationProducerSuppressor.EP_NAME.extensionList) {
-      if (suppressor.shouldSuppress(producer)) {
+      if (suppressor.shouldSuppress(producer, project)) {
         return true
       }
     }
