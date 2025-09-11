@@ -410,17 +410,20 @@ public final class TreeRuleChecker {
       for (int i = 0; i < sentences.size(); i++) {
         ParsedSentence parsed = sentences.get(i);
 
-        String trimmed = parsed.text.trim();
-        int trimmedStart = parsed.text.indexOf(trimmed);
+        TextRange untrimmedRange = parsed.untrimmedRange;
+        String untrimmedText = untrimmedRange.substring(content.toString());
+
+        String trimmed = untrimmedText.trim();
+        int trimmedStart = untrimmedText.indexOf(trimmed);
         var suppressions = ContainerUtil.map2Set(suppressedRanges.getOrDefault(trimmed, Set.of()), r -> r.shiftRight(trimmedStart));
 
-        DocumentSentence.Analyzed ds = new DocumentSentence(parsed.text, parsed.tree.treeSupport().getGrazieLanguage())
+        DocumentSentence.Analyzed ds = new DocumentSentence(untrimmedText, parsed.tree.treeSupport().getGrazieLanguage())
           .withIntro(i == 0 ? getIntro(content) : List.of())
-          .withExclusions(SentenceTokenizer.rangeExclusions(content, TextRange.from(parsed.textStartOffset, parsed.text.length())))
+          .withExclusions(SentenceTokenizer.rangeExclusions(content, untrimmedRange))
           .withSuppressions(suppressions)
           .withTree(parsed.tree.withStartOffset(offset))
           .withMetadata(matches.get(i).metadata);
-        doc.add(new SentenceWithContent(ds, content, offset, offset + parsed.textStartOffset));
+        doc.add(new SentenceWithContent(ds, content, offset, offset + untrimmedRange.getStartOffset()));
       }
       offset += content.length();
     }

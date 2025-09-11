@@ -34,7 +34,13 @@ class ParsedSentence private constructor(
   @JvmField val extractedText: TextContent,
 
   /** The dependency tree for the sentence  */
-  @JvmField val tree: Tree
+  @JvmField val tree: Tree,
+
+  /**
+   * The range of the sentence in [extractedText] as reported by the sentence tokenizer,
+   * including leading or trailing space
+   */
+  @JvmField val untrimmedRange: TextRange
 ) {
 
   fun textOffsetToFile(textOffset: Int): Int {
@@ -110,7 +116,7 @@ class ParsedSentence private constructor(
             tree = tree.withStartOffset(start)!!
             val stubbed = trees[sentence.stubbedSwe()]
             if (stubbed != null) tree = tree.withStubbed(StubbedSentence(sentence.swe(), stubbed.withStartOffset(start)))!!
-            out.add(ParsedSentence(tree.startOffset(), tree.text(), content, tree))
+            out.add(ParsedSentence(tree.startOffset(), tree.text(), content, tree, TextRange(sentence.start, sentence.end())))
           }
         }
       }
