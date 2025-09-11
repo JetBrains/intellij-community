@@ -251,7 +251,12 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  public void testForwardReferenceInAnnotations() {
+  public void testForwardReferenceInAnnotationsWithFromFutureImportAnnotationsBefore314() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, this::doTest);
+  }
+
+  // PY-80002
+  public void testForwardReferenceInAnnotationsInPython314() {
     doTest();
   }
 
