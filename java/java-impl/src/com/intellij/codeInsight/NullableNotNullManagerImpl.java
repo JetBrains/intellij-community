@@ -59,9 +59,9 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
   private List<AnnotationPackageSupport> myAnnotationSupports;
 
-  private Map<String, AnnotationPackageSupport> myDefaultNullables;
-  private Map<String, AnnotationPackageSupport> myDefaultNotNulls;
-  private Map<String, AnnotationPackageSupport> myDefaultUnknowns;
+  private SequencedMap<String, AnnotationPackageSupport> myDefaultNullables;
+  private SequencedMap<String, AnnotationPackageSupport> myDefaultNotNulls;
+  private SequencedMap<String, AnnotationPackageSupport> myDefaultUnknowns;
   private List<String> myDefaultAll;
   public String myDefaultNullable = NULLABLE;
   public String myDefaultNotNull = NOT_NULL;
@@ -303,13 +303,13 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       myNullables.addAll(myDefaultNullables.keySet());
       if (!myDefaultNullable.equals(NULLABLE)) {
         myNullables.remove(myDefaultNullable);
-        myNullables.add(0, myDefaultNullable);
+        myNullables.addFirst(myDefaultNullable);
       }
       myNotNulls.removeAll(myDefaultNotNulls.keySet());
       myNotNulls.addAll(myDefaultNotNulls.keySet());
       if (!myDefaultNotNull.equals(NOT_NULL)) {
         myNotNulls.remove(myDefaultNotNull);
-        myNotNulls.add(0, myDefaultNotNull);
+        myNotNulls.addFirst(myDefaultNotNull);
       }
     }
   }
