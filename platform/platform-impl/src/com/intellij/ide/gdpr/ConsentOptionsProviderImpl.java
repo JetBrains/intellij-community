@@ -7,7 +7,7 @@ import com.intellij.ui.LicensingFacade;
 import java.util.Set;
 
 final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
-  private static final Set<String> productsSupportingForcedConsent = Set.of("QA", "RR", "WS", "RD", "CL", "RM");
+  private static final Set<String> productsSupportingForcedConsent = Set.of("QA", "RR", "WS", "RD", "CL", "RM", "DB");
 
   private volatile long myLastModificationCount = -1;
   private volatile boolean mySendingAllowed = false;
