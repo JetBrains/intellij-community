@@ -125,11 +125,6 @@ suspend fun collectPluginDescriptors(
       continue
     }
 
-    // Temporarily ignore org.jetbrains.bazel plugin when running under Bazel (https://youtrack.jetbrains.com/issue/IJI-3021)
-    if (isRunningFromBazelOut() && moduleName == "intellij.bazel.plugin") {
-      continue
-    }
-
     val pluginXml = findFileInModuleSources(module = context.findRequiredModule(moduleName), relativePath = "META-INF/plugin.xml", onlyProductionSources = true) ?: continue
 
     val xml = JDOMUtil.load(pluginXml)

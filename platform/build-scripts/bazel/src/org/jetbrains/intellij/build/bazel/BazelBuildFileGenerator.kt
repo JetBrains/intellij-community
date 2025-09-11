@@ -313,21 +313,12 @@ internal class BazelBuildFileGenerator(
   }
 
   fun computeModuleList(): ModuleList {
-    val bazelPluginDir = ultimateRoot?.resolve("plugins/bazel")
-
     val community = ArrayList<ModuleDescriptor>()
     val ultimate = ArrayList<ModuleDescriptor>()
     val skippedModules = ArrayList<String>()
     for (module in project.model.project.modules) {
       if (module.name == "intellij.platform.buildScripts.bazel") {
         // Skip bazel generator itself since it's a standalone Bazel project
-        skippedModules.add(module.name)
-        continue
-      }
-
-      val imlDir = JpsModelSerializationDataService.getBaseDirectory(module)!!.toPath()
-      if (bazelPluginDir != null && imlDir.startsWith(bazelPluginDir)) {
-        // Skip bazel plugin, they have their own bazel definitions
         skippedModules.add(module.name)
         continue
       }

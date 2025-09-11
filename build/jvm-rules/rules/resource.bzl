@@ -59,7 +59,6 @@ jvm_resources = rule(
             doc = """The list of resource files to create the target""",
             allow_files = True,
             mandatory = True,
-            providers = ["FileProvider"],
         ),
         "add_prefix": attr.string(
             doc = """The path prefix to prepend to Java resources, after applying `strip_prefix` (if any) to each file's relative path""",
