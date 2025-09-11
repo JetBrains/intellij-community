@@ -247,6 +247,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
+  public @NotNull IntentionAction createShowDuplicateElementsFix(@NotNull List<@NotNull ? extends NavigatablePsiElement> elements) {
+    return new ShowDuplicateElementsFix(elements).asIntention();
+  }
+
+  @Override
   public @NotNull IntentionAction createConvertToStringLiteralAction() {
     return new ConvertToStringLiteralAction().asIntention();
   }

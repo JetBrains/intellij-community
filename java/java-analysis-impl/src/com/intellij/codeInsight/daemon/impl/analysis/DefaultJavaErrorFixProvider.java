@@ -338,11 +338,11 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
       error.context().method() instanceof SyntheticElement ?
       null : myFactory.createSameErasureButDifferentMethodsFix(error.context().method(), error.context().superMethod()));
     fixes(METHOD_DUPLICATE, (error, sink) -> {
-      error.context().methods().stream()
-        .filter(m -> !m.equals(error.psi()))
-        .filter(m -> !(m instanceof SyntheticElement)) // filters out synthetic methods, such as Enum#values()
-        .findFirst()
-        .ifPresent(m -> sink.accept(myFactory.createNavigateToDuplicateElementFix(m)));
+      // filters out synthetic methods, such as Enum#values()
+      var duplicates = ContainerUtil.filter(error.context().methods(), m -> !(m instanceof SyntheticElement));
+      if (duplicates.size() > 1) {
+        sink.accept(myFactory.createShowDuplicateElementsFix(duplicates));
+      }
     });
   }
 

@@ -128,6 +128,7 @@ com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - s:moveToDirectory(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - s:navigate(com.intellij.psi.NavigatablePsiElement):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - s:navigate(com.intellij.psi.PsiFile,I):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo$Html
+- s:navigatePreviewHtmlChunk(com.intellij.psi.PsiFile,I):com.intellij.openapi.util.text.HtmlChunk
 - s:rename(com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - s:rename(com.intellij.psi.PsiFile,java.lang.String):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 com.intellij.codeInsight.lookup.Lookup

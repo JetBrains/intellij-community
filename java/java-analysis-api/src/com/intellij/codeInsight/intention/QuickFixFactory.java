@@ -127,6 +127,8 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createNavigateToDuplicateElementFix(@NotNull NavigatablePsiElement element);
 
+  public abstract @NotNull IntentionAction createShowDuplicateElementsFix(@NotNull List<@NotNull ? extends NavigatablePsiElement> elements);
+
   public abstract @NotNull IntentionAction createConvertToStringLiteralAction();
 
   /**

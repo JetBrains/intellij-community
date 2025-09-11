@@ -1,4 +1,4 @@
-// "Navigate to duplicate method" "true"
+// "Show 'foo()' duplicates|->Line #4" "true"
 
 public class MyClass {
   public void <selection><caret>foo</selection>() {}

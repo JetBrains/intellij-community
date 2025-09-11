@@ -1,4 +1,4 @@
-// "Navigate to duplicate method" "true"
+// "Show 'foo()' duplicates|->Line #5" "true"
 
 public class MyClass {
   public void foo<caret>() {}

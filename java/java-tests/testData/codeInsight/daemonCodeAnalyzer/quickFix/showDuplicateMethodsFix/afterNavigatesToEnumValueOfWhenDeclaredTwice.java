@@ -1,4 +1,4 @@
-// "Navigate to duplicate method" "true"
+// "Show 'valueOf()' duplicates|->Line #8" "true"
 
 enum MyEnum {
   FIRST;

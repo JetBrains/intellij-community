@@ -82,6 +82,17 @@ a:com.intellij.codeInsight.completion.CompletionService
 - highlightMessage():java.lang.String
 - highlightReference(com.intellij.lang.annotation.AnnotationBuilder):com.intellij.lang.annotation.AnnotationBuilder
 - highlightSeverity():com.intellij.lang.annotation.HighlightSeverity
+com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+- *s:snippet(com.intellij.psi.NavigatablePsiElement):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo$Snippet
+*f:com.intellij.codeInsight.intention.preview.IntentionPreviewInfo$Snippet
+- java.lang.Record
+- com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+- <init>(com.intellij.openapi.fileTypes.FileType,java.lang.String,I):V
+- f:equals(java.lang.Object):Z
+- fileType():com.intellij.openapi.fileTypes.FileType
+- f:hashCode():I
+- startLine():I
+- text():java.lang.String
 f:com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 - *s:getModCommandPreview(com.intellij.modcommand.ModCommand,com.intellij.modcommand.ActionContext):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 com.intellij.codeInsight.lookup.LookupEx
