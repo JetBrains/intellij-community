@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
-  private static final Set<String> productsSupportingForcedConsent = Set.of("QA", "RR", "WS", "RD", "CL", "RM");
+  private static final Set<String> productsSupportingForcedConsent = Set.of("QA", "RR", "WS", "RD", "CL", "RM", "DB");
   private static final int METADATA_LICENSE_TYPE_INDEX = 10;
 
   private volatile long myLastModificationCount = -1;
