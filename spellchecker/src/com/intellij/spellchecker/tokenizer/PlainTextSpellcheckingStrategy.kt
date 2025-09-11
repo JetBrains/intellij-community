@@ -5,6 +5,6 @@ import com.intellij.openapi.util.registry.Registry
 
 class PlainTextSpellcheckingStrategy: SpellcheckingStrategy() {
   override fun useTextLevelSpellchecking(): Boolean {
-    return Registry.`is`("spellchecker.grazie.enabled")
+    return Registry.`is`("spellchecker.grazie.enabled", false)
   }
 }

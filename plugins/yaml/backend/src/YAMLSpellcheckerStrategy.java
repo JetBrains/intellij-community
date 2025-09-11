@@ -92,7 +92,7 @@ public final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implem
 
   @Override
   public boolean useTextLevelSpellchecking() {
-    return Registry.is("spellchecker.grazie.enabled");
+    return Registry.is("spellchecker.grazie.enabled", false);
   }
 
   private boolean shouldBeIgnored(@NotNull PsiElement element) {

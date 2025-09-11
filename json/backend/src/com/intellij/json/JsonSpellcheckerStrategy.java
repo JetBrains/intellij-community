@@ -51,7 +51,7 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy implements D
 
   @Override
   public boolean useTextLevelSpellchecking() {
-    return Registry.is("spellchecker.grazie.enabled");
+    return Registry.is("spellchecker.grazie.enabled", false);
   }
 
   @Override
