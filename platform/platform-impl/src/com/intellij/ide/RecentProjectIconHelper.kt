@@ -5,6 +5,7 @@ package com.intellij.ide
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
 import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -45,17 +46,15 @@ fun unscaledProjectIconSize(): Int = Registry.intValue("ide.project.icon.size", 
 
 internal fun userScaledProjectIconSize() = JBUIScale.scale(unscaledProjectIconSize())
 
-private const val IDEA_DIR = Project.DIRECTORY_STORE_FOLDER
-
 private fun getDotIdeaPath(path: Path): Path {
   if (Files.isDirectory(path) || path.parent == null) {
-    return ProjectStorePathManager.getInstance().getStoreDirectoryPath(path)
+    return ProjectStorePathManager.getInstance().getStoreDescriptor(path).dotIdea!!
   }
 
   val fileName = path.fileName.toString()
   val dotIndex = fileName.lastIndexOf('.')
   val fileNameWithoutExt = if (dotIndex == -1) fileName else fileName.take(dotIndex)
-  return path.parent.resolve("$IDEA_DIR/$IDEA_DIR.$fileNameWithoutExt/$IDEA_DIR")
+  return path.parent.resolve("$DIRECTORY_STORE_FOLDER/$DIRECTORY_STORE_FOLDER.$fileNameWithoutExt/$DIRECTORY_STORE_FOLDER")
 }
 
 private val projectIconCache = ContainerUtil.createSoftValueMap<Pair<String, Int>, ProjectIcon>()

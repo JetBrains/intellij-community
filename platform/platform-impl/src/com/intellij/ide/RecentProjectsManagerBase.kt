@@ -1024,7 +1024,7 @@ private fun readProjectName(path: String): String {
     return path
   }
 
-  val storePath = ProjectStorePathManager.getInstance().getStoreDirectoryPath(file)
+  val storePath = ProjectStorePathManager.getInstance().getStoreDescriptor(file).dotIdea!!
   return JpsPathUtil.readProjectName(storePath) ?: PathUtilRt.getFileName(path)
 }
 

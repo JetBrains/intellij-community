@@ -1262,7 +1262,7 @@ private fun removeProjectConfigurationAndCaches(projectFile: Path) {
       Files.deleteIfExists(projectFile)
     }
     else {
-      Files.newDirectoryStream(ProjectStorePathManager.getInstance().getStoreDirectoryPath(projectFile)).use { directoryStream ->
+      Files.newDirectoryStream(ProjectStorePathManager.getInstance().getStoreDescriptor(projectFile).dotIdea!!).use { directoryStream ->
         for (file in directoryStream) {
           file!!.delete()
         }

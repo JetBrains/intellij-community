@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -12,14 +12,14 @@ import java.nio.file.Path
  * An application service for interacting with project configuration store without an instance of a [Project]
  * In all but a limited number of cases you should use [Project.componentStore]
  */
-@Internal
+@ApiStatus.Internal
 interface ProjectStorePathManager {
   /**
    * Build a path to the project store directory
    *
    * @param projectRoot root directory of the project
    */
-  fun getStoreDirectoryPath(projectRoot: Path): Path
+  fun getStoreDescriptor(projectRoot: Path): ProjectStorePathCustomizer.StoreDescriptor
 
   /**
    * Query the filesystem for an existing project store directory
@@ -28,7 +28,8 @@ interface ProjectStorePathManager {
    */
   @RequiresBackgroundThread
   fun testStoreDirectoryExistsForProjectRoot(projectRoot: Path): Boolean {
-    return Files.isDirectory(getStoreDirectoryPath(projectRoot))
+    val dotIdea = getStoreDescriptor(projectRoot).dotIdea
+    return dotIdea != null && Files.isDirectory(dotIdea)
   }
 
   /**
@@ -40,7 +41,7 @@ interface ProjectStorePathManager {
     return if (projectRoot.isDirectory) {
       val fileSystem = projectRoot.fileSystem
       val rootPath = fileSystem.getNioPath(projectRoot) ?: return null
-      fileSystem.findFileByPath(getStoreDirectoryPath(rootPath).toString())?.takeIf { it.isDirectory }
+      fileSystem.findFileByPath(getStoreDescriptor(rootPath).dotIdea.toString())?.takeIf { it.isDirectory }
     }
     else {
       null

@@ -86,8 +86,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   private static boolean isIdeaDirectory(VirtualFile file) {
-    ProjectStorePathManager storePathManager = ProjectStorePathManager.getInstance();
-    return storePathManager.testStoreDirectoryExistsForProjectRoot(file);
+    return ProjectStorePathManager.getInstance().testStoreDirectoryExistsForProjectRoot(file);
   }
 
   private static boolean hasImportProvider(VirtualFile file) {

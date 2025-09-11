@@ -361,7 +361,7 @@ object ProjectUtil {
       val storePathManager = ProjectStorePathManager.getInstance()
       val isKnownProject = storePathManager.testStoreDirectoryExistsForProjectRoot(file)
       if (!isKnownProject) {
-        val dirPath = storePathManager.getStoreDirectoryPath(file)
+        val dirPath = storePathManager.getStoreDescriptor(file)
         Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", dirPath.toString()), CommonBundle.getErrorTitle())
         return null
       }

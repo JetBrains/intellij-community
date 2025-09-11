@@ -48,8 +48,7 @@ private val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(P
 
 @ApiStatus.Internal
 open class ProjectStoreImpl(final override val project: Project) : ComponentStoreWithExtraComponents(), IProjectStore {
-  private var dirOrFile: Path? = null
-  private var dotIdea: Path? = null
+  private var configPaths: ProjectStorePathCustomizer.StoreDescriptor? = null
 
   private var lastSavedProjectName: String? = null
 
@@ -87,7 +86,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     private set
 
   private val isDirectoryBased: Boolean
-    get() = dotIdea != null
+    get() = getProjectConfigPaths().dotIdea != null
 
   override val projectFilePath: Path
     get() = storageManager.expandMacro(PROJECT_FILE)
@@ -107,15 +106,18 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
 
   final override fun setPath(file: Path, template: Project?) {
     LOG.info("Project store initialization started for path: $file and template: $template")
-    dirOrFile = file
 
     val storageManager = storageManager
     val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
     val macros = ArrayList<Macro>(5)
+    val iprFile: Path?
     if (file.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+      iprFile = file
+
       macros.add(Macro(PROJECT_FILE, file))
 
-      val workspacePath = file.parent.resolve("${file.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
+      val userBaseDir = file.parent
+      val workspacePath = userBaseDir.resolve("${file.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
       macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, workspacePath))
 
       if (isUnitTestMode) {
@@ -129,12 +131,17 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
         }
         macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, workspacePath))
       }
+
+      configPaths = ProjectStorePathCustomizer.StoreDescriptor(projectIdentityDir = userBaseDir, dotIdea = null, historicalProjectBasePath = userBaseDir)
     }
     else {
-      val dotIdea = ProjectStorePathManager.getInstance().getStoreDirectoryPath(file)
-      this.dotIdea = dotIdea
+      iprFile = null
+
+      val configPaths = ProjectStorePathManager.getInstance().getStoreDescriptor(file)
+      this.configPaths = configPaths
 
       // PROJECT_CONFIG_DIR must be the first macro
+      val dotIdea = configPaths.dotIdea!!
       macros.add(Macro(PROJECT_CONFIG_DIR, dotIdea))
       macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, dotIdea.resolve("workspace.xml")))
       macros.add(Macro(PROJECT_FILE, dotIdea.resolve("misc.xml")))
@@ -147,7 +154,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       }
     }
 
-    val presentableUrl = if (dotIdea == null) file else projectBasePath
+    val presentableUrl = if (configPaths?.dotIdea == null) file else configPaths!!.projectIdentityDir
 
     val cacheFileName = getProjectCacheFileName(presentableUrl = presentableUrl.invariantSeparatorsPathString, projectName = "")
     macros.add(Macro(StoragePathMacros.CACHE_FILE, projectsDataDir.resolve(cacheFileName).resolve("cache-state.xml")))
@@ -155,7 +162,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     storageManager.setMacros(macros)
 
     if (template != null) {
-      loadProjectFromTemplate(template)
+      loadProjectFromTemplate(template, iprFile)
     }
 
     val projectIdManager = ProjectIdManager.getInstance(project)
@@ -182,42 +189,31 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     LOG.info("Project store initialized with paths: $macros")
   }
 
-  private fun loadProjectFromTemplate(defaultProject: Project) {
+  private fun loadProjectFromTemplate(defaultProject: Project, iprFile: Path?) {
     val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy() ?: return
     runCatching {
-      val dotIdea = dotIdea
-      if (dotIdea != null) {
-        normalizeDefaultProjectElement(defaultProject, element, projectConfigDir = dotIdea)
+      if (iprFile == null) {
+        normalizeDefaultProjectElement(defaultProject, element, projectConfigDir = configPaths!!.dotIdea!!)
       }
       else {
         moveComponentConfiguration(
           defaultProject, element,
           storagePathResolver = { PROJECT_FILE },  // doesn't matter; any path will be resolved as projectFilePath (see `fileResolver`)
-          fileResolver = { if (it == "workspace.xml") workspacePath else dirOrFile!! },
+          fileResolver = { if (it == "workspace.xml") workspacePath else iprFile },
         )
       }
     }.getOrLogException(LOG)
   }
 
   final override val projectBasePath: Path
-    get() {
-      val path = dirOrFile ?: throw IllegalStateException("setPath was not yet called")
-      if (isDirectoryBased) {
-        val useParent = System.getProperty("store.basedir.parent.detection", "true").toBoolean() &&
-                        (path.fileName?.toString()?.startsWith("${Project.DIRECTORY_STORE_FOLDER}.") == true)
-        return if (useParent) path.parent.parent else path
-      }
-      else {
-        return path.parent
-      }
-    }
+    get() = getProjectConfigPaths().historicalProjectBasePath
 
   final override val locationHash: String
     get() {
       val prefix: String
       val path: Path
       if (storageScheme == StorageScheme.DIRECTORY_BASED) {
-        path = dirOrFile ?: throw IllegalStateException("setPath was not yet called")
+        path = getProjectConfigPaths().projectIdentityDir
         prefix = ""
       }
       else {
@@ -227,10 +223,14 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       return "$prefix${Integer.toHexString(path.invariantSeparatorsPathString.hashCode())}"
     }
 
+  private fun getProjectConfigPaths(): ProjectStorePathCustomizer.StoreDescriptor {
+    return (configPaths ?: throw IllegalStateException("setPath was not yet called"))
+  }
+
   override val presentableUrl: String
     get() {
       if (isDirectoryBased) {
-        return (dirOrFile ?: throw IllegalStateException("setPath was not yet called")).invariantSeparatorsPathString
+        return getProjectConfigPaths().projectIdentityDir.invariantSeparatorsPathString
       }
       else {
         return projectFilePath.invariantSeparatorsPathString
@@ -318,7 +318,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   }
 
   final override val directoryStorePath: Path?
-    get() = dotIdea
+    get() = getProjectConfigPaths().dotIdea
 
   final override fun reloadStates(componentNames: Set<String>) {
     batchReloadStates(componentNames, project.messageBus)
