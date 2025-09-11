@@ -423,6 +423,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testUpdatingModelWithNewProfiles() = runBlocking {
+    assumeModel_4_0_0("IDEA-379195")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1209,6 +1210,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testUpdatingAddsModulesFromRootProjects() = runBlocking {
+    assumeModel_4_0_0("IDEA-379195")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
