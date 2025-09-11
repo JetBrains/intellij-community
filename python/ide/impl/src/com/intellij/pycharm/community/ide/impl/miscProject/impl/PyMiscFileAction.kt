@@ -24,7 +24,7 @@ open class PyMiscFileAction(private val miscFileType: MiscFileType) : AnAction(
   override fun actionPerformed(e: AnActionEvent) {
     MiscProjectUsageCollector.projectCreated(miscFileType)
     PyMiscService.getInstance().createMiscProject(
-      e.project ?: return,
+      e.project,
       miscFileType
     )
   }

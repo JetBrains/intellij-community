@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 @Service(Service.Level.APP)
 @ApiStatus.Internal
 class PyMiscService(private val scope: CoroutineScope) {
-  fun createMiscProject(project: Project, miscFileType: MiscFileType): Unit {
+  fun createMiscProject(project: Project?, miscFileType: MiscFileType): Unit {
     scope.launch {
       val projectCreationResult = com.intellij.pycharm.community.ide.impl.miscProject.impl.createMiscProject(
         miscFileType,
