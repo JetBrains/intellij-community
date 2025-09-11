@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPs
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 
 class RemoveUselessElvisFix(element: KtBinaryExpression) : PsiUpdateModCommandAction<KtBinaryExpression>(element), CleanupFix.ModCommand {
-    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.useless.elvis.operator")
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.redundant.elvis.operator")
 
     override fun invoke(context: ActionContext, element: KtBinaryExpression, updater: ModPsiUpdater) {
         element.replaced(element.left!!).dropEnclosingParenthesesIfPossible()

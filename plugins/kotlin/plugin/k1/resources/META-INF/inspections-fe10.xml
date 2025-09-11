@@ -1332,7 +1332,7 @@
                      enabledByDefault="true"
                      level="WARNING"
                      language="kotlin"
-                     key="inspection.useless.call.on.not.null.display.name" bundle="messages.KotlinBundle"/>
+                     key="inspection.redundant.call.on.not.null.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantExplicitTypeInspection"
                      groupPath="Kotlin"
@@ -1348,7 +1348,7 @@
                      enabledByDefault="true"
                      level="WARNING"
                      language="kotlin"
-                     key="inspection.useless.call.on.collection.display.name" bundle="messages.KotlinBundle"/>
+                     key="inspection.redundant.call.on.collection.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.collections.SimplifiableCallChainInspection"
                      groupPath="Kotlin"
