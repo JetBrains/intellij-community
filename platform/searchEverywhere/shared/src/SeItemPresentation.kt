@@ -187,3 +187,9 @@ class SeTextSearchItemPresentation(
 ) : SeItemPresentation {
   val backgroundColor: Color? get() = backgroundColorId?.color()
 }
+
+@ApiStatus.Internal
+@Serializable
+class SeAdaptedItemPresentation(override val isMultiSelectionSupported: Boolean) : SeItemPresentation {
+  override val text: String get() = ""
+}

@@ -4,20 +4,15 @@ package com.intellij.platform.searchEverywhere.backend.providers.text
 import com.intellij.find.FindManager
 import com.intellij.find.impl.JComboboxAction
 import com.intellij.find.impl.SearchEverywhereItem
-import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.toSerializableTextChunk
-import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.backend.providers.ScopeChooserActionProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.*
-import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -40,7 +35,7 @@ class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int, 
 }
 
 @ApiStatus.Internal
-class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) : SeItemsProvider, SeSearchScopesProvider {
+class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeItemsProvider, SeSearchScopesProvider {
   private val contributor = contributorWrapper.contributor
   override val id: String get() = SeProviderIdUtils.TEXT_ID
   override val displayName: @Nls String
@@ -73,18 +68,12 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
       findModel.isRegularExpressions = SeTextFilter.isRegularExpressions(params.filter) ?: false
     }
 
-    coroutineToIndicator {
-      val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
-
-      contributorWrapper.fetchWeightedElements(inputQuery, indicator, object : AsyncProcessor<FoundItemDescriptor<Any>> {
-        override suspend fun process(t: FoundItemDescriptor<Any>): Boolean {
-          val weight = t.weight
-          val legacyItem = t.item as? SearchEverywhereItem ?: return true
-
-          return collector.put(SeTextSearchItem(legacyItem, weight, contributor.getExtendedInfo(legacyItem), contributorWrapper.contributor.isMultiSelectionSupported))
-        }
-      })
-    }
+    contributorWrapper.fetchElements(inputQuery, object : AsyncProcessor<Any> {
+      override suspend fun process(item: Any, weight: Int): Boolean {
+        if (item !is SearchEverywhereItem) return true
+        return collector.put(SeTextSearchItem(item, weight, contributor.getExtendedInfo(item), contributorWrapper.contributor.isMultiSelectionSupported))
+      }
+    })
   }
 
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {

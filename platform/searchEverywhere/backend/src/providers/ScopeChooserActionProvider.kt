@@ -6,7 +6,7 @@ import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.application.readAction
 import com.intellij.platform.scopes.SearchScopeData
 import com.intellij.platform.scopes.SearchScopesInfo
-import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.suspendLazy
 import org.jetbrains.annotations.ApiStatus
@@ -16,7 +16,7 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 @OptIn(ExperimentalAtomicApi::class)
 @ApiStatus.Internal
-class ScopeChooserActionProviderDelegate(private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) {
+class ScopeChooserActionProviderDelegate(private val contributorWrapper: SeAsyncContributorWrapper<Any>) {
 
   val searchScopesInfo: SuspendLazyProperty<SearchScopesInfo?> = suspendLazy { getSearchScopesInfo() }
 

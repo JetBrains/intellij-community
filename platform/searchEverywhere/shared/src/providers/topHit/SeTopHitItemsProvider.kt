@@ -1,11 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.providers.topHit
 
-import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
-import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
@@ -36,17 +32,12 @@ open class SeTopHitItemsProvider(
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val inputQuery = params.inputQuery
     val additionalWeight = if (isHost) 0 else 1
-    val weight = TopHitSEContributor.TOP_HIT_ELEMENT_PRIORITY + additionalWeight
 
-    coroutineToIndicator {
-      val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
-
-      contributorWrapper.fetchElements(inputQuery, indicator, object : AsyncProcessor<Any> {
-        override suspend fun process(t: Any): Boolean {
-          return collector.put(SeTopHitItem(t, weight, project, contributor.getExtendedInfo(t), contributorWrapper.contributor.isMultiSelectionSupported))
-        }
-      })
-    }
+    contributorWrapper.fetchElements(inputQuery, object : AsyncProcessor<Any> {
+      override suspend fun process(item: Any, weight: Int): Boolean {
+        return collector.put(SeTopHitItem(item, weight + additionalWeight, project, contributor.getExtendedInfo(item), contributorWrapper.contributor.isMultiSelectionSupported))
+      }
+    })
   }
 
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
