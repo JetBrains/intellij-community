@@ -16,7 +16,7 @@ class Maven4ModelVersionErrorParserTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldCreateBuildIssue() = runBlocking {
-    assumeModel_4_1_0("test is applicable for model 4.1")
+    assumeModel_4_0_0("test is applicable for model 4.0 only")
     Assume.assumeTrue("hard to mock the path check on windows, we test only strings", SystemInfo.isUnix)
     createProjectPom("""
       <groupId>test</groupId>
@@ -32,7 +32,7 @@ class Maven4ModelVersionErrorParserTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldCreateBuildIssueForWindowsPath() = runBlocking {
-    assumeModel_4_1_0("test is applicable for model 4.1")
+    assumeModel_4_0_0("test is applicable for model 4.0 only")
     Assume.assumeTrue("hard to mock the path check on windows, we test only strings", SystemInfo.isUnix)
     testString("[ERROR] Maven model problem: 'subprojects' unexpected subprojects element at C:\\Users\\User.Name\\IdeaProjects\\spring-petclinic\\pom.xml:-1:-1", TRIGGER_LINES_WINDOWS) {
       it.pathString == "C:\\Users\\User.Name\\IdeaProjects\\spring-petclinic\\pom.xml"
