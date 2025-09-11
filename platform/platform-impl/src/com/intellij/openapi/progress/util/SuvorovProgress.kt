@@ -371,11 +371,8 @@ private class TerminalEvent(val id: Int) : ForcedEvent
 private value class TransferredWriteActionWrapper(val event: InternalThreading.TransferredWriteActionEvent) : ForcedEvent
 
 /**
- * Protection against race condition: imagine someone posted an event that wants lock, and then they post [SuvorovProgress.ForcedWriteActionRunnable].
+ * Protection against race condition: imagine someone posted an event that wants lock, and then they post [TransferredWriteActionWrapper].
  * The second event will go into the main event queue because event stealer was not installed, but we need to execute it very quickly.
- * todo: we might get some performance if we catch [SuvorovProgress.ForcedWriteActionRunnable] in [EternalEventStealer]
- *  and execute it when [EternalEventStealer] starts dispatching events.
- *  This way we would avoid iterating over all stored events
  */
 private fun repostAllEvents() {
   val queue = IdeEventQueue.getInstance()
