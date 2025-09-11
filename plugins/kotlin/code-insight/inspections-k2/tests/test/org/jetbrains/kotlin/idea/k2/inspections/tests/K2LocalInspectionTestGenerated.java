@@ -13996,6 +13996,30 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/unsafeCastWithReturn")
+        public static class UnsafeCastWithReturn extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("isArgumentValue.kt")
+            public void testIsArgumentValue() throws Exception {
+                runTest("testData/inspectionsLocal/unsafeCastWithReturn/isArgumentValue.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/inspectionsLocal/unsafeCastWithReturn/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/uselessCallOnCollection")
         public static class UselessCallOnCollection extends AbstractK2LocalInspectionTest {
             @java.lang.Override
