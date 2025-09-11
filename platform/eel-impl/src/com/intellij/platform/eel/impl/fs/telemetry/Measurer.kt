@@ -18,8 +18,7 @@ object Measurer {
   internal val ijentTracer by lazy { TelemetryManager.getTracer(ijentMetricsScope) }
   internal val ijentMeter by lazy { TelemetryManager.getMeter(ijentMetricsScope) }
 
-  @Suppress("Unused")
-  internal val eventsCounterMeter by lazy {
+  internal val eventsCounterMeter = lazy {
     ijentMeter.counterBuilder("ijent.events.count").buildObserver().also {
       ijentMeter.batchCallback(
         { it.record(eventsCounter.get()) },
@@ -63,6 +62,8 @@ object Measurer {
 }
 
 internal inline fun <T> Measurer.measure(operation: Measurer.Operation, spanNamePrefix: String = "", body: () -> T): T {
+  // ensure a lazy value is initialized
+  eventsCounterMeter.value
   return ijentTracer.spanBuilder("ijent.${spanNamePrefix.takeIf { it.isEmpty() }?.plus(".")}${operation.name}", TracerLevel.DETAILED).use {
     eventsCounter.incrementAndGet()
     body()
