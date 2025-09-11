@@ -69,7 +69,22 @@ public interface AsyncFormattingRequest {
    * @param title   The notification title.
    * @param message The notification message.
    */
-  void onError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message);
+  default void onError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message) {
+    onError(title, message, null);
+  }
+
+  /**
+   * Show an error notification to an end user. The notification uses {@link AsyncDocumentFormattingService#getNotificationGroupId()}.
+   * <p>
+   * <b>Note:</b> {@code onError()} may be called only once, subsequent calls will be ignored.
+   *
+   * @param title     The notification title.
+   * @param message   The notification message.
+   * @param displayId The notification displayId.
+   */
+  void onError(@NotNull @NlsContexts.NotificationTitle String title,
+               @NotNull @NlsContexts.NotificationContent String message,
+               @Nullable String displayId);
 
   /**
    * Show an error notification to an end user. The notification uses {@link AsyncDocumentFormattingService#getNotificationGroupId()}. In
@@ -77,11 +92,13 @@ public interface AsyncFormattingRequest {
    * <p>
    * <b>Note:</b> {@code onError()} may be called only once, subsequent calls will be ignored.
    *
-   * @param title   The notification title.
-   * @param message The notification message.
-   * @param offset  Offset in the document to navigate to or -1 for no offset.
+   * @param title     The notification title.
+   * @param message   The notification message.
+   * @param displayId The notification displayId.
+   * @param offset    Offset in the document to navigate to or -1 for no offset.
    */
   void onError(@NotNull @NlsContexts.NotificationTitle String title,
                @NotNull @NlsContexts.NotificationContent String message,
+               @Nullable String displayId,
                int offset);
 }

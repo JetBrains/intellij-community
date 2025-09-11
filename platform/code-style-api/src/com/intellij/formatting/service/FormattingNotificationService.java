@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface FormattingNotificationService {
   static @NotNull FormattingNotificationService getInstance(@NotNull Project project) {
@@ -19,16 +20,19 @@ public interface FormattingNotificationService {
   }
 
   void reportError(@NotNull String groupId,
+                   @Nullable String displayId,
                    @NotNull @NlsContexts.NotificationTitle String title,
                    @NotNull @NlsContexts.NotificationContent String message);
 
   default void reportError(@NotNull String groupId,
-                   @NotNull @NlsContexts.NotificationTitle String title,
-                   @NotNull @NlsContexts.NotificationContent String message, AnAction... actions) {
-    reportError(groupId, title, message);
+                           @Nullable String displayId,
+                           @NotNull @NlsContexts.NotificationTitle String title,
+                           @NotNull @NlsContexts.NotificationContent String message, AnAction... actions) {
+    reportError(groupId, displayId, title, message);
   }
 
   void reportErrorAndNavigate(@NotNull String groupId,
+                              @Nullable String displayId,
                               @NotNull @NlsContexts.NotificationTitle String title,
                               @NotNull @NlsContexts.NotificationContent String message,
                               @NotNull FormattingContext context,

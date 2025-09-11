@@ -302,6 +302,7 @@ a:com.intellij.formatting.service.AsyncDocumentFormattingService
 - pa:getNotificationGroupId():java.lang.String
 - p:getTimeout():java.time.Duration
 - p:getTimeoutActions(com.intellij.formatting.FormattingContext):com.intellij.openapi.actionSystem.AnAction[]
+- p:getTimeoutNotificationDisplayId():java.lang.String
 - p:needToUpdate():Z
 - p:prepareForFormatting(com.intellij.openapi.editor.Document,com.intellij.formatting.FormattingContext):V
 p:com.intellij.formatting.service.AsyncDocumentFormattingService$FormattingTask
@@ -315,17 +316,18 @@ com.intellij.formatting.service.AsyncFormattingRequest
 - a:getFormattingRanges():java.util.List
 - a:getIOFile():java.io.File
 - a:isQuickFormat():Z
-- a:onError(java.lang.String,java.lang.String):V
-- a:onError(java.lang.String,java.lang.String,I):V
+- onError(java.lang.String,java.lang.String):V
+- a:onError(java.lang.String,java.lang.String,java.lang.String):V
+- a:onError(java.lang.String,java.lang.String,java.lang.String,I):V
 - a:onTextReady(java.lang.String):V
 com.intellij.formatting.service.DocumentMerger
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:updateDocument(com.intellij.openapi.editor.Document,java.lang.String):Z
 com.intellij.formatting.service.FormattingNotificationService
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.formatting.service.FormattingNotificationService
-- a:reportError(java.lang.String,java.lang.String,java.lang.String):V
-- reportError(java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.actionSystem.AnAction[]):V
-- a:reportErrorAndNavigate(java.lang.String,java.lang.String,java.lang.String,com.intellij.formatting.FormattingContext,I):V
+- a:reportError(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
+- reportError(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.actionSystem.AnAction[]):V
+- a:reportErrorAndNavigate(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.formatting.FormattingContext,I):V
 com.intellij.formatting.service.FormattingService
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:canFormat(com.intellij.psi.PsiFile):Z
