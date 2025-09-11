@@ -36,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.impl.feedback.PlatformFeedbackDialogs
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
@@ -1063,7 +1064,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     if (this@PluginDetailsPageComponent.pluginModel.isPluginInstallingOrUpdating(pluginModel) && indicator == null) {
       applyCustomization()
-      showInstallProgress()
+      showInstallProgress( coroutineScope.childScope("Plugin ${pluginModel.pluginId} installation"))
     }
     else {
       fullRepaint()
@@ -1408,8 +1409,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  fun showProgress(storeIndicator: Boolean, cancelRunnable: suspend () -> Unit) {
-    indicator = OneLineProgressIndicatorWithAsyncCallback(coroutineScope, false, cancelRunnable)
+  fun showProgress(storeIndicator: Boolean, installationScope: CoroutineScope, cancelRunnable: suspend () -> Unit) {
+    indicator = OneLineProgressIndicatorWithAsyncCallback(installationScope, false, cancelRunnable)
     nameAndButtons!!.setProgressComponent(null, indicator!!.createBaselineWrapper())
     if (storeIndicator) {
       PluginModelFacade.addProgress(descriptorForActions!!, indicator!!)
@@ -1418,8 +1419,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     fullRepaint()
   }
 
-  fun showInstallProgress() {
-    showProgress(true) {
+  fun showInstallProgress(installationScope: CoroutineScope) {
+    showProgress(true, installationScope) {
       pluginModel.finishInstall(descriptorForActions!!,
                                 null,
                                 false,
@@ -1429,9 +1430,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  fun showUninstallProgress(cs: CoroutineScope) {
-    showProgress(false) {
-      cs.cancel()
+  fun showUninstallProgress(installationScope: CoroutineScope) {
+    showProgress(false, installationScope) {
       hideProgress()
     }
   }

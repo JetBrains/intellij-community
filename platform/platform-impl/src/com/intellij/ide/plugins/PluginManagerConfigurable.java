@@ -65,6 +65,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.*;
 
@@ -1109,9 +1110,9 @@ public final class PluginManagerConfigurable
           new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
 
         PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
-        myPluginModelFacade.getModel().setDownloadedGroup(myInstalledPanel, downloaded, installing);
         PluginManagerPanelFactory.INSTANCE.createInstalledPanel(myCoroutineScope, myPluginModelFacade.getModel(), model -> {
           try {
+            myPluginModelFacade.getModel().setDownloadedGroup(myInstalledPanel, downloaded, installing);
             installing.getPreloadedModel().setErrors(model.getErrors());
             installing.getPreloadedModel().setPluginInstallationStates(model.getInstallationStates());
             installing.addModels(MyPluginModel.getInstallingPlugins());
@@ -2098,6 +2099,7 @@ public final class PluginManagerConfigurable
 
     if (myDisposer != null) {
       Disposer.dispose(myDisposer);
+      CoroutineScopeKt.cancel(myCoroutineScope, null);
       myDisposer = null;
     }
   }

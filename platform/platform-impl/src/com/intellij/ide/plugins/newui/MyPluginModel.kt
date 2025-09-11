@@ -43,6 +43,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -225,6 +226,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     parentComponent: JComponent?,
     descriptor: PluginUiModel,
     updateDescriptor: PluginUiModel?,
+    installationScope: CoroutineScope,
     modalityState: ModalityState,
     controller: UiPluginManagerController,
   ): InstallPluginResult? {
@@ -237,7 +239,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       val projectNotNull = tryToFindProject()
 
       val info = InstallPluginInfo(bgProgressIndicator, descriptor, this@MyPluginModel, updateDescriptor == null)
-      val installResult = runPluginInstallation(projectNotNull, bgProgressIndicator, descriptor, updateDescriptor, controller, parentComponent, modalityState, actionDescriptor, info)
+      val installResult = runPluginInstallation(projectNotNull, bgProgressIndicator, descriptor, updateDescriptor, controller, parentComponent, modalityState, installationScope, actionDescriptor, info)
       applyInstallResult(installResult, info, actionDescriptor, controller)
     }
   }
@@ -250,16 +252,17 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     controller: UiPluginManagerController,
     parentComponent: JComponent?,
     modalityState: ModalityState,
+    installationScope: CoroutineScope,
     actionDescriptor: PluginUiModel,
     installPluginInfo: InstallPluginInfo,
   ): InstallPluginResult = withContext(Dispatchers.IO) {
     if (project == null) {
-      return@withContext installOrUpdatePlugin(installPluginInfo, controller, parentComponent, descriptor, updateDescriptor, modalityState, actionDescriptor)
+      return@withContext installOrUpdatePlugin(installPluginInfo, controller, parentComponent, descriptor, updateDescriptor, installationScope, modalityState, actionDescriptor)
     }
     return@withContext withBackgroundProgress(project, IdeBundle.message("progress.title.loading.plugin.details")) {
       jobToIndicator(coroutineContext.job, bgProgressIndicator) {
         return@jobToIndicator runBlockingCancellable {
-          return@runBlockingCancellable installOrUpdatePlugin(installPluginInfo, controller, parentComponent, descriptor, updateDescriptor, modalityState, actionDescriptor)
+          return@runBlockingCancellable installOrUpdatePlugin(installPluginInfo, controller, parentComponent, descriptor, updateDescriptor, installationScope, modalityState, actionDescriptor)
         }
       }
     }
@@ -271,10 +274,11 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     parentComponent: JComponent?,
     descriptor: PluginUiModel,
     updateDescriptor: PluginUiModel?,
+    installationScope: CoroutineScope,
     modalityState: ModalityState,
     actionDescriptor: PluginUiModel,
   ): InstallPluginResult {
-    prepareToInstall(installPluginInfo)
+    prepareToInstall(installPluginInfo, installationScope)
     val result = controller.installOrUpdatePlugin(sessionId, parentComponent, descriptor, updateDescriptor, myInstallSource, modalityState, null)
     if (result.disabledPlugins.isEmpty() && result.disabledDependants.isEmpty()) {
       return result
@@ -299,7 +303,6 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     if (myPluginManagerCustomizer != null) {
       myPluginManagerCustomizer.updateAfterModificationAsync {
         info.finish(result.success, result.cancel, result.showErrors, result.restartRequired, getErrors(result))
-        null
       }
     }
     else {
@@ -335,7 +338,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     return project ?: ProjectManager.getInstance().openProjects.firstOrNull()
   }
 
-  private fun prepareToInstall(info: InstallPluginInfo) {
+  private fun prepareToInstall(info: InstallPluginInfo, installationScope: CoroutineScope) {
     val descriptor = info.descriptor
     val pluginId = descriptor.pluginId
     myInstallingInfos[pluginId] = info
@@ -375,7 +378,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
     for (panel in myDetailPanels) {
       if (panel.descriptorForActions === descriptor) {
-        panel.showInstallProgress()
+        panel.showInstallProgress(installationScope)
       }
     }
   }

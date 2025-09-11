@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.newui
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
@@ -11,6 +12,7 @@ class OneLineProgressIndicatorWithAsyncCallback(private val coroutineScope: Coro
     coroutineScope.launch {
       super.cancelRequest()
       callback()
+      coroutineScope.cancel()
     }
   }
 }
