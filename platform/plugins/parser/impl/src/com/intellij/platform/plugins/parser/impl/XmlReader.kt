@@ -645,7 +645,6 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
 
     var name: String? = null
     var loadingRule = LoadingRule.OPTIONAL
-    var os: OS? = null
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
         PluginXmlConst.CONTENT_MODULE_NAME_ATTR -> name = readContext.interner.name(reader.getAttributeValue(i))
@@ -659,7 +658,6 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
             else -> error("Unexpected value '$loading' of 'loading' attribute at ${reader.location}")
           }
         }
-        PluginXmlConst.CONTENT_MODULE_OS_ATTR -> os = readOSValue(reader.getAttributeValue(i))
       }
     }
 
@@ -669,18 +667,14 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
 
     val isEndElement = reader.next() == XMLStreamConstants.END_ELEMENT
     if (isEndElement) {
-      if (os == null || readContext.elementOsFilter(os)) {
-        builder.addContentModule(ContentModuleElement(name = name, loadingRule = loadingRule, embeddedDescriptorContent = null))
-      }
+      builder.addContentModule(ContentModuleElement(name = name, loadingRule = loadingRule, embeddedDescriptorContent = null))
     }
     else {
-      if (os == null || readContext.elementOsFilter(os)) {
-        val fromIndex = reader.textStart
-        val toIndex = fromIndex + reader.textLength
-        val length = toIndex - fromIndex
-        val descriptorContent = if (length == 0) null else reader.textCharacters.copyOfRange(fromIndex, toIndex)
-        builder.addContentModule(ContentModuleElement(name = name, loadingRule = loadingRule, embeddedDescriptorContent = descriptorContent))
-      }
+      val fromIndex = reader.textStart
+      val toIndex = fromIndex + reader.textLength
+      val length = toIndex - fromIndex
+      val descriptorContent = if (length == 0) null else reader.textCharacters.copyOfRange(fromIndex, toIndex)
+      builder.addContentModule(ContentModuleElement(name = name, loadingRule = loadingRule, embeddedDescriptorContent = descriptorContent))
 
       var nesting = 1
       while (true) {

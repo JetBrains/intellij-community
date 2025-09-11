@@ -51,7 +51,6 @@ object PluginXmlConst {
   const val CONTENT_MODULE_LOADING_REQUIRED_VALUE: String = "required"
   const val CONTENT_MODULE_LOADING_EMBEDDED_VALUE: String = "embedded"
   const val CONTENT_MODULE_LOADING_ON_DEMAND_VALUE: String = "on-demand"
-  const val CONTENT_MODULE_OS_ATTR: String = "os"
 
   const val DEPENDS_ELEM: String = "depends"
   const val DEPENDS_OPTIONAL_ATTR: String = "optional"

@@ -39,8 +39,6 @@ class PluginDescriptorLoadingContext(
   private val interner: XmlInterner
     get() = threadLocalXmlFactory.get()[0]!!
 
-  private val elementOsFilter: (OS) -> Boolean = { it.convert().isSuitableForOs() }
-
   val readContext: PluginDescriptorReaderContext = ReaderContext()
 
   @Volatile
@@ -100,8 +98,6 @@ class PluginDescriptorLoadingContext(
   private inner class ReaderContext : PluginDescriptorReaderContext {
     override val interner: XmlInterner
       get() = this@PluginDescriptorLoadingContext.interner
-    override val elementOsFilter: (OS) -> Boolean
-      get() = this@PluginDescriptorLoadingContext.elementOsFilter
     override val isMissingIncludeIgnored: Boolean
       get() = this@PluginDescriptorLoadingContext.isMissingIncludeIgnored
   }

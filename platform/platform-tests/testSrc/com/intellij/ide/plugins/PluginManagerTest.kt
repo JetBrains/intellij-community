@@ -487,8 +487,6 @@ private fun readModuleDescriptorForTest(input: ByteArray): PluginDescriptorBuild
   return PluginDescriptorFromXmlStreamConsumer(readContext = object : PluginDescriptorReaderContext {
     override val interner = NoOpXmlInterner
     override val isMissingIncludeIgnored = false
-    override val elementOsFilter: (com.intellij.platform.plugins.parser.impl.elements.OS) -> Boolean
-      get() = { it.convert().isSuitableForOs() }
   }, xIncludeLoader = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER.toXIncludeLoader(object : DataLoader {
     override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
     override fun toString() = ""
