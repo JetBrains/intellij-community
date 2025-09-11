@@ -450,6 +450,16 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/DollarsInNameNoPackage.kt"));
         }
 
+        @TestMetadata("duplicatedNoArg.kt")
+        public void testDuplicatedNoArg() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/duplicatedNoArg.kt"));
+        }
+
+        @TestMetadata("duplicatedNoArg2.kt")
+        public void testDuplicatedNoArg2() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/duplicatedNoArg2.kt"));
+        }
+
         @TestMetadata("EnumClass.kt")
         public void testEnumClass() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/EnumClass.kt"));
