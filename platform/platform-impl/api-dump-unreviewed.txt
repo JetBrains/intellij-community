@@ -9538,15 +9538,6 @@ f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature
 - getSuggestionReason():java.lang.String
 - hashCode():I
 - withImplementationDisplayName(java.lang.String):com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature
-f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
-- com.intellij.openapi.components.PersistentStateComponent
-- <init>():V
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
-- getState():org.jdom.Element
-- getUnknownFeatures():java.util.Set
-- ignoreFeature(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature):V
-- isIgnored(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature):Z
-- loadState(org.jdom.Element):V
 c:com.intellij.openapi.util.MultiValuesMap
 - <init>():V
 - <init>(Z):V
