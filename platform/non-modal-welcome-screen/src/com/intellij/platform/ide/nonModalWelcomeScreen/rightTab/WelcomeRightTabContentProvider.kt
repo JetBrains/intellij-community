@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.ui.icon.IconKey
 import java.util.function.Supplier
+import javax.swing.Icon
 
 @ApiStatus.Internal
 interface WelcomeRightTabContentProvider {
@@ -18,6 +19,7 @@ interface WelcomeRightTabContentProvider {
   val backgroundImageVectorLight: ImageVector
   val backgroundImageVectorDark: ImageVector
 
+  val fileTypeIcon: Icon
   val title: Supplier<@Nls String>
   val secondaryTitle: Supplier<@Nls String>
 

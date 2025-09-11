@@ -19,13 +19,16 @@ import com.intellij.pycharm.community.ide.impl.miscProject.PyMiscService
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscScriptFileType
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeBundle
 import com.intellij.util.application
+import com.jetbrains.python.icons.PythonIcons
 import org.jetbrains.jewel.ui.icon.PathIconKey
 import java.util.function.Supplier
+import javax.swing.Icon
 
 class PyCharmWelcomeRightTabContentProvider : WelcomeRightTabContentProvider {
   override val backgroundImageVectorLight: ImageVector = PyCharmWelcomeRightTabLightBackground
   override val backgroundImageVectorDark: ImageVector = PyCharmWelcomeRightTabDarkBackground
 
+  override val fileTypeIcon: Icon = PythonIcons.Python.Pycharm
   override val title: Supplier<String> = PyWelcomeBundle.lazyMessage("non.modal.welcome.screen.title")
   override val secondaryTitle: Supplier<String> = PyWelcomeBundle.lazyMessage("non.modal.welcome.screen.secondary.title")
 
