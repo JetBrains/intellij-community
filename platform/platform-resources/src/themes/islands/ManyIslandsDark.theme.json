@@ -217,7 +217,7 @@
     "TipOfTheDay.Image.borderColor": "Gray3",
 
     "OnePixelDivider.background": "BorderLight",
-    "Plugins.SectionHeader.background": "PanelBackground",
+    "Plugins.SectionHeader.background": "Gray1.5",
     "Debugger.EvaluateExpression.background": "Gray3",
     "NewUiOnboarding.Dialog.background": "PanelBackground",
     "WelcomeScreen.Details.background": "BackgroundDark",
