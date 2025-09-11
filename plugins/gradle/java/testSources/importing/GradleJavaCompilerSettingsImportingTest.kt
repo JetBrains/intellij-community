@@ -246,7 +246,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
     assertModules("project", "project.main", "project.test")
 
     assertProjectSdk(javaSdkVersion) // Bug should be JDK_1_8
-    assertModuleSdk("project", javaSdkVersion) // Bug should be JDK_1_8
+    assertModuleSdk("project", JavaSdkVersion.JDK_1_8)
     assertModuleSdk("project.main", JavaSdkVersion.JDK_1_8)
     assertModuleSdk("project.test", JavaSdkVersion.JDK_1_8)
     assertProjectLanguageLevel(LanguageLevel.JDK_1_8)
@@ -295,7 +295,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
     assertModules("project", "project.main", "project.test")
 
     assertProjectSdk(javaSdkVersion) // Bug should be JDK_17
-    assertModuleSdk("project", javaSdkVersion) // Bug should be JDK_17
+    assertModuleSdk("project", JavaSdkVersion.JDK_17)
     assertModuleSdk("project.main", JavaSdkVersion.JDK_1_8)
     assertModuleSdk("project.test", JavaSdkVersion.JDK_11)
     assertProjectLanguageLevel(LanguageLevel.JDK_17)
@@ -318,7 +318,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
     assertModules("project", "project.main", "project.test")
 
     assertProjectSdk(javaSdkVersion) // Bug should be JDK_1_8
-    assertModuleSdk("project", javaSdkVersion) // Bug should be JDK_1_8
+    assertModuleSdk("project", JavaSdkVersion.JDK_1_8)
     assertModuleSdk("project.main", JavaSdkVersion.JDK_1_8)
     assertModuleSdk("project.test", JavaSdkVersion.JDK_1_8)
     assertProjectLanguageLevel(LanguageLevel.JDK_1_8)
@@ -335,7 +335,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
     assertModules("project", "project.main", "project.test")
 
     assertProjectSdk(javaSdkVersion) // Bug IDEA-258496 should be JDK_11
-    assertModuleSdk("project", javaSdkVersion) // Bug should be JDK_11
+    assertModuleSdk("project", JavaSdkVersion.JDK_11)
     assertModuleSdk("project.main", JavaSdkVersion.JDK_11)
     assertModuleSdk("project.test", JavaSdkVersion.JDK_11)
     assertProjectLanguageLevel(LanguageLevel.JDK_11)

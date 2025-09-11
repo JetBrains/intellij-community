@@ -24,6 +24,8 @@ import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.jvm.toolchain.JavaCompiler;
 import org.gradle.jvm.toolchain.JavaInstallationMetadata;
+import org.gradle.jvm.toolchain.JavaLanguageVersion;
+import org.gradle.jvm.toolchain.JavaToolchainSpec;
 import org.gradle.jvm.toolchain.internal.JavaToolchain;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -58,13 +60,13 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
   @Override
   public Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {
     DefaultGradleSourceSetModel sourceSetModel = new DefaultGradleSourceSetModel();
+    sourceSetModel.setToolchainVersion(getJavaToolchainVersion(project));
     sourceSetModel.setSourceCompatibility(JavaPluginUtil.getSourceCompatibility(project));
     sourceSetModel.setTargetCompatibility(JavaPluginUtil.getTargetCompatibility(project));
     sourceSetModel.setTaskArtifacts(collectProjectTaskArtifacts(project, context));
     sourceSetModel.setConfigurationArtifacts(collectProjectConfigurationArtifacts(project, context));
     sourceSetModel.setAdditionalArtifacts(collectNonSourceSetArtifacts(project, context));
     sourceSetModel.setSourceSets(collectSourceSets(project, context));
-
     return sourceSetModel;
   }
 
@@ -80,6 +82,14 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       .withText("Project source sets cannot be resolved")
       .withException(exception)
       .reportMessage(project);
+  }
+
+  private static @Nullable Integer getJavaToolchainVersion(@NotNull Project project) {
+    JavaToolchainSpec toolchain = JavaPluginUtil.getToolchain(project);
+    if (toolchain == null) return null;
+    return toolchain.getLanguageVersion()
+      .map(JavaLanguageVersion::asInt)
+      .getOrNull();
   }
 
   private static @NotNull List<File> collectProjectTaskArtifacts(@NotNull Project project, @NotNull ModelBuilderContext context) {
