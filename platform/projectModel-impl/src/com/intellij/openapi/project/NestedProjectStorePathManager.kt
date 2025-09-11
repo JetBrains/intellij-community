@@ -10,9 +10,15 @@ import java.nio.file.Path
  */
 internal class NestedProjectStorePathManager : ProjectStorePathManager {
   override fun getStoreDescriptor(projectRoot: Path): ProjectStorePathCustomizer.StoreDescriptor {
-    ProjectStorePathCustomizer.EP_NAME.lazySequence().firstNotNullOfOrNull { it.getStoreDirectoryPath(projectRoot) }?.let {
-      return it
+    val suitableDescriptors = ProjectStorePathCustomizer.EP_NAME.extensionList.mapNotNull { it.getStoreDirectoryPath(projectRoot) }
+    if (suitableDescriptors.isNotEmpty()) {
+      require(suitableDescriptors.size == 1) {
+        "More than one suitable ProjectStorePathCustomizer found: ${suitableDescriptors.joinToString()}. " +
+        "We cannot determine which one is suitable for $projectRoot"
+      }
+      return suitableDescriptors.single()
     }
+
     val useParent = System.getProperty("store.basedir.parent.detection", "true").toBoolean() &&
                     (projectRoot.fileName?.toString()?.startsWith("${DIRECTORY_STORE_FOLDER}.") == true)
     return ProjectStorePathCustomizer.StoreDescriptor(

@@ -5,18 +5,21 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
+import java.util.ArrayList
 
-@ApiStatus.Internal
+@Internal
 interface ProjectStorePathCustomizer {
   @Internal
-  data class StoreDescriptor(
+  open class StoreDescriptor(
     // project dir as passed to setPath if dir (for example, for bazel it is BUILD.bazel, for JPS, it is a parent of .idea)
     val projectIdentityDir: Path,
     // where we do store project files (misc.xml and so on), for historical reasons, it must be named as `.idea`
     val dotIdea: Path?,
     // project dir as it is expected by user (e.g. parent of BUILD.bazel)
     val historicalProjectBasePath: Path,
-  )
+  ) {
+    open fun customMacros(): Map<String, Path> = emptyMap()
+  }
 
   fun getStoreDirectoryPath(projectRoot: Path): StoreDescriptor?
 

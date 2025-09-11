@@ -137,11 +137,11 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     else {
       iprFile = null
 
-      val configPaths = ProjectStorePathManager.getInstance().getStoreDescriptor(file)
-      this.configPaths = configPaths
+      val storeDescriptor = ProjectStorePathManager.getInstance().getStoreDescriptor(file)
+      this.configPaths = storeDescriptor
 
       // PROJECT_CONFIG_DIR must be the first macro
-      val dotIdea = configPaths.dotIdea!!
+      val dotIdea = storeDescriptor.dotIdea!!
       macros.add(Macro(PROJECT_CONFIG_DIR, dotIdea))
       macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, dotIdea.resolve("workspace.xml")))
       macros.add(Macro(PROJECT_FILE, dotIdea.resolve("misc.xml")))
@@ -151,6 +151,16 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
         isOptimiseTestLoadSpeed = Files.notExists(file)
 
         macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, dotIdea.resolve("product-workspace.xml")))
+      }
+
+      val customMacros = storeDescriptor.customMacros()
+      if (customMacros.isNotEmpty()) {
+        macros.removeIf { it.key in customMacros }
+        for ((key, value) in customMacros) {
+          macros.add(Macro(key, value))
+        }
+
+        (storageManager as ProjectStateStorageManager).setCustomMacros(customMacros)
       }
     }
 
@@ -183,6 +193,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       }
       val productWorkspaceFile = basePath.resolve("workspace/$projectWorkspaceId.xml")
       macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
+      /// todo why we call it the second time?
       storageManager.setMacros(macros)
     }
     isStoreInitialized = true
@@ -425,19 +436,27 @@ private class ProjectStateStorageManager(private val project: Project) : StateSt
   componentManager = project,
   controller = ApplicationManager.getApplication().getService(SettingsController::class.java)?.createChild(project),
 ) {
+  private var customMacros: Map<String, Path> = emptyMap()
+
   override val isUseVfsForWrite: Boolean
     get() = !useBackgroundSave()
 
   override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(path = super.normalizeFileSpec(fileSpec), macro = PROJECT_CONFIG_DIR)
 
+  fun setCustomMacros(customMacros: Map<String, Path>) {
+    this.customMacros = customMacros
+  }
+
   override fun expandMacro(collapsedPath: String): Path {
-    return if (collapsedPath[0] == '$') {
-      super.expandMacro(collapsedPath)
+    if (collapsedPath[0] == '$') {
+      return super.expandMacro(collapsedPath)
     }
-    else {
-      // PROJECT_CONFIG_DIR is the first macro
-      macros[0].value.resolve(collapsedPath)
+
+    customMacros.get(collapsedPath)?.let {
+      return it
     }
+    // PROJECT_CONFIG_DIR is the first macro
+    return macros[0].value.resolve(collapsedPath)
   }
 
   override fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
