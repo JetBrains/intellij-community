@@ -67,7 +67,7 @@ public final class Restarter {
         var hostLauncher = PathManager.getHomeDir()
           .resolve(OS.CURRENT == OS.macOS ? ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC : ApplicationEx.PRODUCT_INFO_FILE_NAME)
           .getParent()
-          .resolve(launchData.get(0).getLauncherPath())
+          .resolve(launchData.getFirst().getLauncherPath())
           .normalize();
         if (Files.exists(hostLauncher)) return hostLauncher;
       }
