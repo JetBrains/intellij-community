@@ -18,7 +18,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.junit4.JUnit4IdeaTestRunner;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -269,8 +269,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       junit5Name = junit4Name.replace("junit", "junit.v5");
     }
     else {
-      var relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
-      Map<String, List<String>> mapping = PathManager.getArchivedCompiledClassesMapping();
+      var relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
+      Map<String, List<String>> mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
       if (relevantJarsRoot != null && junit4Rt.toPath().startsWith(relevantJarsRoot) && mapping != null) {
         return ContainerUtil.map(mapping.get("production/intellij.junit.v5.rt"), File::new);
       }

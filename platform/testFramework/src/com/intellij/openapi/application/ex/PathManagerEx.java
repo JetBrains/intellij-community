@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
+import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
@@ -324,8 +325,8 @@ public final class PathManagerEx {
       throw new IllegalStateException("Classes root " + root + " doesn't exist");
     }
     if (!root.isDirectory()) {
-      String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
-      Map<String, List<String>> mapping = PathManager.getArchivedCompiledClassesMapping();
+      String relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
+      Map<String, List<String>> mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
       if (relevantJarsRoot != null && mapping != null && root.toPath().toAbsolutePath().startsWith(relevantJarsRoot)) {
         // .../idea-compile-parts-v2/test/intellij.java.compiler.tests/$sha256.jar
         String moduleName = root.getParentFile().getName();

@@ -10,7 +10,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -118,7 +118,7 @@ final class GroovyHotSwapper extends JavaProgramPatcher {
     if (ourJar.isDirectory()) { //development mode
       return PluginPathManager.getPluginHomePath("groovy") + "/hotswap/gragent.jar";
     }
-    final String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
+    final String relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
     if (relevantJarsRoot != null && ourJar.toPath().startsWith(relevantJarsRoot)) {
       return PluginPathManager.getPluginHomePath("groovy") + "/hotswap/gragent.jar";
     }

@@ -6,6 +6,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.idea.AppMode
+import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
@@ -1243,7 +1244,7 @@ private fun loadDescriptorFromResource(
         closeable = resolver as? Closeable
         val loader = ImmutableZipFileDataLoader(resolver = resolver, zipPath = file)
 
-        val relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation()
+        val relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation()
         if (pathResolver.isRunningFromSourcesWithoutDevBuild || (relevantJarsRoot != null && file.startsWith(relevantJarsRoot))) {
           // support for archived compile outputs (each module in a separate jar)
           basePath = file.parent

@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
@@ -323,7 +323,7 @@ class ModuleStructureValidator(private val context: BuildContext, private val al
  * Works both when module output is located in a directory and when it's packed in a JAR.
  */
 private fun <T> JpsModule.processProductionOutput(processor: (outputRoots: List<Path>) -> T): T {
-  val archivedCompiledClassesMapping = PathManager.getArchivedCompiledClassesMapping()
+  val archivedCompiledClassesMapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping()
   val outputJarPaths = archivedCompiledClassesMapping?.get("production/$name")
   if (outputJarPaths == null) {
     val outputDirectoryPath = JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, false)

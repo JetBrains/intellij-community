@@ -15,6 +15,7 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ArchivedCompilationContextUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -1009,7 +1010,7 @@ fun getPluginDistDirByClass(aClass: Class<*>): Path? {
 
   val jarInsideLib = PathManager.getJarForClass(aClass) ?: error("Can't find plugin dist home for ${aClass.simpleName}")
   if (jarInsideLib.fileName.toString().endsWith("jar", ignoreCase = true)) {
-    PathManager.getArchivedCompliedClassesLocation()?.let {
+    ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation()?.let {
       if (jarInsideLib.startsWith(it)) return null
     }
     return jarInsideLib
