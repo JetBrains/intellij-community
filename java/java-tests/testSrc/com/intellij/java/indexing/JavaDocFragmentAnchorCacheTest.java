@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.indexing;
 
-import com.intellij.codeInsight.javadoc.index.JavaDocFragmentAnchorCacheKt;
-import com.intellij.codeInsight.javadoc.index.JavaDocFragmentData;
+import com.intellij.codeInsight.javadoc.JavaDocFragmentAnchorCacheKt;
+import com.intellij.codeInsight.javadoc.JavaDocFragmentData;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.intellij.lang.annotations.Language;

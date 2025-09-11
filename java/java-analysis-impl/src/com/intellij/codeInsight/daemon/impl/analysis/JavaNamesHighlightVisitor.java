@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
-import com.intellij.codeInsight.javadoc.index.JavaDocFragmentAnchorCacheKt;
-import com.intellij.codeInsight.javadoc.index.JavaDocFragmentData;
+import com.intellij.codeInsight.javadoc.JavaDocFragmentAnchorCacheKt;
+import com.intellij.codeInsight.javadoc.JavaDocFragmentData;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.project.DumbAware;

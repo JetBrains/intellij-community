@@ -2,11 +2,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
-import com.intellij.codeInsight.javadoc.JavaSuperTypeSearchUtil;
-import com.intellij.codeInsight.javadoc.SnippetMarkup;
-import com.intellij.codeInsight.javadoc.index.JavaDocFragmentAnchorCacheKt;
-import com.intellij.codeInsight.javadoc.index.JavaDocFragmentData;
+import com.intellij.codeInsight.javadoc.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
