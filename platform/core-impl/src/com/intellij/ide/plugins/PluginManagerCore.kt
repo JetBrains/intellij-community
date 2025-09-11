@@ -876,7 +876,7 @@ object PluginManagerCore {
   @ApiStatus.Internal
   @Synchronized
   @JvmStatic
-  fun isUpdatedBundledPlugin(plugin: PluginDescriptor): Boolean = shadowedBundledPlugins.contains(plugin.getPluginId())
+  fun isUpdatedBundledPlugin(plugin: PluginDescriptor): Boolean = !plugin.isBundled && shadowedBundledPlugins.contains(plugin.getPluginId())
 
   private fun prepareActions(pluginNamesToDisable: Collection<String>, pluginNamesToEnable: Collection<String>): List<Supplier<HtmlChunk>> {
     if (pluginNamesToDisable.isEmpty()) {
