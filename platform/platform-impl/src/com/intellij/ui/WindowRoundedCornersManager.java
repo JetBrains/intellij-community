@@ -78,7 +78,7 @@ public final class WindowRoundedCornersManager {
         return;
       }
     }
-    else if (SystemInfo.isWindows) {
+    else if (SystemInfo.isWindows || StartupUiUtil.isWaylandToolkit()) {
       if (params == null) {
         params = "full";
       }
