@@ -20,7 +20,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 @ApiStatus.Experimental
 public final class JavaMainStringArgsContributor extends CompletionContributor implements DumbAware {
-  public static final PsiJavaElementPattern.@NotNull Capture<PsiElement> AFTER_DOT_FILTER =
+  private static final PsiJavaElementPattern.@NotNull Capture<PsiElement> AFTER_DOT_FILTER =
     psiElement().andNot(
       psiElement().afterLeaf(psiElement(JavaTokenType.DOT).withParent(PsiErrorElement.class))
     );
