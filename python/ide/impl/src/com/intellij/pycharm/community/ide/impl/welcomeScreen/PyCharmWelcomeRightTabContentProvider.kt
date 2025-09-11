@@ -2,6 +2,7 @@
 package com.intellij.pycharm.community.ide.impl.welcomeScreen
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -13,6 +14,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.editorTab.LearnIdeEditorTab
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTab
 import com.intellij.pycharm.community.ide.impl.PycharmCommunityIdeImplIcons
 import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 import com.intellij.pycharm.community.ide.impl.miscProject.PyMiscService
@@ -20,7 +22,9 @@ import com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscScriptFileTy
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeBundle
 import com.intellij.util.application
 import com.jetbrains.python.icons.PythonIcons
+import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.icon.PathIconKey
+import org.jetbrains.jewel.ui.theme.colorPalette
 import java.util.function.Supplier
 import javax.swing.Icon
 
@@ -94,9 +98,11 @@ class PyCharmWelcomeRightTabContentProvider : WelcomeRightTabContentProvider {
     }
   }
 
+  @Composable
   private fun pluginsFeatureButtonModel(project: Project): WelcomeRightTabContentProvider.FeatureButtonModel {
     return WelcomeRightTabContentProvider.FeatureButtonModel(
       text = PyWelcomeBundle.message("non.modal.welcome.screen.feature.plugins"),
+      tint = blueTint,
       icon = PathIconKey("expui/nodes/plugin.svg", PycharmCommunityIdeImplIcons::class.java),
     ) {
       application.invokeLater {
@@ -104,4 +110,10 @@ class PyCharmWelcomeRightTabContentProvider : WelcomeRightTabContentProvider {
       }
     }
   }
+
+  @get:Composable
+  private val blueTint: Color
+    get() = WelcomeScreenRightTab.color(dark = JewelTheme.colorPalette.blueOrNull(8),
+                                        light = JewelTheme.colorPalette.blueOrNull(4),
+                                        fallback = Color(0xFF548AF7))
 }
