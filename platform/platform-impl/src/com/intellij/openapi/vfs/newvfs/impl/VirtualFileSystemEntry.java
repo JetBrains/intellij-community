@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.LocalTimeCounter;
 import org.intellij.lang.annotations.MagicConstant;
@@ -158,21 +159,27 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     id = -42;
   }
 
-  @NotNull VfsData getVfsData() {
-    VfsData data = segment.owningVfsData();
-    PersistentFSImpl owningPersistentFS = data.owningPersistentFS();
-    if (!owningPersistentFS.isOwnData(data)) {
+  Throwable owningDiscrepancyError(@NotNull VfsData owningVfsData) {
+    PersistentFSImpl owningPersistentFS = owningVfsData.owningPersistentFS();
+    if (!owningPersistentFS.isOwnData(owningVfsData)) {
       if (!owningPersistentFS.isConnected()) {
-        throw new AlreadyDisposedException("VFS is disconnected, all it's files are invalid now");
+        return new AlreadyDisposedException("VFS is disconnected, all it's files are invalid now");
       }
       else {
         //PersistentFSImpl re-creates VfsData on (re-)connect
-        throw new AssertionError("'Alien' file object: was created before PersistentFS (re-)connected " +
-                                 "(id=" + id + ", parent=" + parent + "), " +
-                                 "owningData: " + data + ", pFS: " + owningPersistentFS);
+        return new AssertionError("'Alien' file object: was created before PersistentFS (re-)connected " +
+               "(id=" + id + ", parent=" + parent + ")");
       }
     }
-    return data;
+    return null;
+  }
+  VfsData getVfsData() {
+    VfsData owningVfsData = segment.owningVfsData();
+    Throwable error = owningDiscrepancyError(owningVfsData);
+    if (error != null) {
+      ExceptionUtil.rethrowUnchecked(error);
+    }
+    return owningVfsData;
   }
 
   PersistentFSImpl owningPersistentFS() {
@@ -598,38 +605,23 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       //    flaky 'Alien file object' assertions failing the tests. So we're forced to compromise our integrity: isValid()
       //    is the only method that _doesn't_ throw the AssertionError for alien files, but returns false instead.
       //    In other words: we now consider an 'alien' file as 'invalid' file, instead of a primordial sin.
-
-      VfsData data = segment.owningVfsData();
-      PersistentFSImpl owningPersistentFS = data.owningPersistentFS();
-      if (!owningPersistentFS.isOwnData(data)) {
-        Logger log = Logger.getInstance(VirtualFileSystemEntry.class);
-        if (!owningPersistentFS.isConnected()) {
-          log.warn("VFS is disconnected, all it's files are invalid now");
-        }
-        else {
-          log.warn("'Alien' file object: was created before PersistentFS (re-)connected (id=" + id + ", parent=" + parent + ")");
-        }
-        return false;
+      VfsData owningVfsData = getVfsData();
+      Throwable error = owningDiscrepancyError(owningVfsData);
+      if (error != null) {
+        Logger.getInstance(VirtualFileSystemEntry.class).warn(error);
       }
-      return data.isFileValid(id);
+      return error == null && owningVfsData.isFileValid(id);
     }
   }
 
   @Override
   public @NonNls String toString() {
-    VfsData owningVfsData = getSegment().owningVfsData();
+    VfsData owningVfsData = segment.owningVfsData();
     //don't use .owningPersistentFS() since it throws assertion if pFS not own current segment anymore,
     // but here we want to return some string always:
-    PersistentFSImpl owningPersistentFS = owningVfsData.owningPersistentFS();
-    if (!owningPersistentFS.isOwnData(owningVfsData)) {
-      if (!owningPersistentFS.isConnected()) {
-        return "VFS is disconnected, all it's files are invalid now";
-      }
-      else {
-        //PersistentFSImpl re-creates VfsData on (re-)connect
-        return "'Alien' file object: was created before PersistentFS (re-)connected " +
-               "(id=" + id + ", parent=" + parent + ")";
-      }
+    Throwable error = owningDiscrepancyError(owningVfsData);
+    if (error != null) {
+      return error.getMessage();
     }
 
     if (exists()) {
