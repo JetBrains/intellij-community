@@ -134,39 +134,38 @@ object SuvorovProgress {
     val niceOverlay = NiceOverlayUi(rootPane, false)
 
     val disposable = Disposer.newDisposable()
-    val stealer = PotemkinProgress.startStealingInputEvents(
-      { event ->
-        var dumpThreads = false
-        if (event is MouseEvent && event.id == MouseEvent.MOUSE_CLICKED) {
-          event.consume()
-          val reaction = niceOverlay.mouseClicked(event.point)
-          when (reaction) {
-            NiceOverlayUi.ClickOutcome.DUMP_THREADS -> dumpThreads = true
-            NiceOverlayUi.ClickOutcome.CLOSED, NiceOverlayUi.ClickOutcome.NOTHING -> Unit
-          }
+    val stealer = EventStealer(disposable, true) { event ->
+      var dumpThreads = false
+      if (event is MouseEvent && event.id == MouseEvent.MOUSE_CLICKED) {
+        event.consume()
+        val reaction = niceOverlay.mouseClicked(event.point)
+        when (reaction) {
+          NiceOverlayUi.ClickOutcome.DUMP_THREADS -> dumpThreads = true
+          NiceOverlayUi.ClickOutcome.CLOSED, NiceOverlayUi.ClickOutcome.NOTHING -> Unit
         }
-        if (event is MouseEvent && event.id == MouseEvent.MOUSE_MOVED) {
-          event.consume()
-          niceOverlay.mouseMoved(event.point)
-        }
-        if (event is KeyEvent && niceOverlay.dumpThreadsButtonShortcut == KeyStrokeAdapter.getDefaultKeyStroke(event)?.let { KeyboardShortcut(it, null) }) {
-          event.consume()
-          dumpThreads = true
-        }
-        if (dumpThreads) {
-          ApplicationManager.getApplication().executeOnPooledThread(Runnable {
-            val dumpFile = PerformanceWatcher.getInstance().dumpThreads("freeze-popup", true, false)
-            if (dumpFile != null) {
-              if (Files.exists(dumpFile)) {
-                RevealFileAction.openFile(dumpFile)
-              }
-              else {
-                getLogger<SuvorovProgress>().error { "Failed to dump threads to $dumpFile" }
-              }
+      }
+      if (event is MouseEvent && event.id == MouseEvent.MOUSE_MOVED) {
+        event.consume()
+        niceOverlay.mouseMoved(event.point)
+      }
+      if (event is KeyEvent && niceOverlay.dumpThreadsButtonShortcut == KeyStrokeAdapter.getDefaultKeyStroke(event)?.let { KeyboardShortcut(it, null) }) {
+        event.consume()
+        dumpThreads = true
+      }
+      if (dumpThreads) {
+        ApplicationManager.getApplication().executeOnPooledThread(Runnable {
+          val dumpFile = PerformanceWatcher.getInstance().dumpThreads("freeze-popup", true, false)
+          if (dumpFile != null) {
+            if (Files.exists(dumpFile)) {
+              RevealFileAction.openFile(dumpFile)
             }
-          })
-        }
-      }, disposable)
+            else {
+              getLogger<SuvorovProgress>().error { "Failed to dump threads to $dumpFile" }
+            }
+          }
+        })
+      }
+    }
 
     repostAllEvents()
     var oldTimestamp = System.currentTimeMillis()
@@ -179,7 +178,8 @@ object SuvorovProgress {
             oldTimestamp = newTimestamp
             niceOverlay.redrawMainComponent()
           }
-          stealer.dispatchEvents(10)
+          stealer.dispatchEvents(0)
+          stealer.waitForPing(10)
         }
         else {
           niceOverlay.redrawMainComponent()
