@@ -917,6 +917,9 @@ object DynamicPlugins {
 
   @JvmOverloads
   fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, project: Project? = null): Boolean {
+    if (!allowLoadUnloadWithoutRestart(pluginDescriptor)) {
+      return false
+    }
     return runProcess {
       withPotemkinProgress(project, IdeBundle.message("plugins.progress.loading.plugin.title", pluginDescriptor.name)) {
         publishingPluginsLoadedEvent {
