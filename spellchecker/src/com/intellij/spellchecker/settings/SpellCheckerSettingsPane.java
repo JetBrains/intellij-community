@@ -162,7 +162,7 @@ public final class SpellCheckerSettingsPane implements Disposable {
     if (myUseSingleDictionary.isSelected() && settings.getDictionaryToSave() != myDictionariesComboBox.getSelectedItem()) {
       settings.setDictionaryToSave((String)myDictionariesComboBox.getSelectedItem());
     }
-    SpellCheckerManager.Companion.restartInspections();
+    SpellCheckerManager.Companion.restartInspections(this);
     if (!myProvidedDictionariesChooserComponent.isModified() && !myDictionariesPanel.isModified()) {
       return;
     }

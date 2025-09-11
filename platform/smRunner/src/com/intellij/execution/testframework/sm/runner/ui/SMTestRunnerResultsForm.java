@@ -884,7 +884,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       writeState();
-      DaemonCodeAnalyzer.getInstance(getProject()).restart();
+      DaemonCodeAnalyzer.getInstance(getProject()).restart(this);
       try {
         SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
         TransformerHandler handler = transformerFactory.newTransformerHandler();

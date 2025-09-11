@@ -22,7 +22,7 @@ interface InlayHintsSwitch {
       for (switch in EP.extensionList) {
         switch.setEnabled(project, value)
       }
-      DaemonCodeAnalyzer.getInstance(project).restart()
+      DaemonCodeAnalyzer.getInstance(project).restart("InlayHintsSwitch enabled=$value")
     }
   }
 

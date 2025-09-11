@@ -48,7 +48,7 @@ object GraziePlugin {
           }
 
           if (project.isInitialized && project.isOpen) {
-            DaemonCodeAnalyzer.getInstance(project).restart()
+            DaemonCodeAnalyzer.getInstance(project).restart("Hunspell.update")
           }
         }
       }

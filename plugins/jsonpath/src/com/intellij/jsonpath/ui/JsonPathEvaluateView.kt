@@ -158,7 +158,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
     val jsonPathFile = PsiDocumentManager.getInstance(project).getPsiFile(searchTextField.document)
     if (jsonPathFile != null) {
       // reset inspections in expression
-      DaemonCodeAnalyzer.getInstance(project).restart(jsonPathFile)
+      DaemonCodeAnalyzer.getInstance(project).restart(jsonPathFile, this)
     }
   }
 

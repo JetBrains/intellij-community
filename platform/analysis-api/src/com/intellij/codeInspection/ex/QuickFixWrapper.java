@@ -158,7 +158,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     final PsiElement element = myDescriptor.getPsiElement();
     final PsiFile fileForUndo = element == null ? null : element.getContainingFile();
     myFix.applyFix(project, myDescriptor);
-    DaemonCodeAnalyzer.getInstance(project).restart();
+    DaemonCodeAnalyzer.getInstance(project).restart(this);
     if (fileForUndo != null && !fileForUndo.equals(psiFile)) {
       UndoUtil.markPsiFileForUndo(fileForUndo);
     }

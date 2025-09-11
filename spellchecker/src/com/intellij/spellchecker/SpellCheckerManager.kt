@@ -104,12 +104,12 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
     val runtimeDictionaries: List<Dictionary>
       get() = RuntimeDictionaryProvider.EP_NAME.extensionList.flatMap { it.dictionaries.asSequence() }
 
-    fun restartInspections() {
+    fun restartInspections(reason: Any) {
       ApplicationManager.getApplication().invokeLater {
         val projects = ProjectManager.getInstance().openProjects
         for (project in projects) {
           if (project.isInitialized && project.isOpen) {
-            DaemonCodeAnalyzer.getInstance(project).restart()
+            DaemonCodeAnalyzer.getInstance(project).restart(reason)
           }
         }
       }
@@ -165,7 +165,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
       }
     }
 
-    restartInspections()
+    restartInspections("SpellCheckerManager.updateBundledDictionaries")
   }
 
   val userDictionaryWords: Set<String>
@@ -197,14 +197,14 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
 
   private fun initUserDictionaries(spellChecker: SpellCheckerEngine) {
     val appDictionaryState = AppDictionaryState.getInstance()
-    appDictionaryState.addAppDictListener({ restartInspections() }, this)
+    appDictionaryState.addAppDictListener({ restartInspections("SpellCheckerManager.addAppDictListener") }, this)
     if (appDictionaryState.dictionary == null) {
       appDictionaryState.dictionary = UserDictionary(AppDictionaryState.DEFAULT_NAME)
     }
     appDictionary = appDictionaryState.dictionary
     spellChecker.addModifiableDictionary(appDictionary!!)
     val dictionaryState = project.service<ProjectDictionaryState>()
-    dictionaryState.addProjectDictListener { restartInspections() }
+    dictionaryState.addProjectDictListener { restartInspections("SpellCheckerManager.addProjectDictListener") }
     projectDictionary = dictionaryState.projectDictionary
     projectDictionary!!.setActiveName(getProjectDictionaryName())
 
@@ -278,7 +278,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
 
   private fun fireDictionaryChanged(dictionary: EditableDictionary) {
     userDictionaryListenerEventDispatcher.multicaster.dictChanged(dictionary)
-    restartInspections()
+    restartInspections("SpellCheckerManager.fireDictionaryChanged")
     SaveAndSyncHandler.getInstance().scheduleProjectSave(project, forceSavingAllSettings = true)
   }
 
@@ -309,7 +309,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
     if (!deletedFromApplicationWords.isEmpty()) {
       userDictionaryListenerEventDispatcher.multicaster.dictChanged(appDictionary)
     }
-    restartInspections()
+    restartInspections("SpellCheckerManager.updateUserDictionary")
   }
 
   fun getSuggestions(text: String): List<String> {
@@ -369,7 +369,7 @@ private class CustomDictFileListener(private val project: Project, private val m
 
     manager.spellChecker!!.removeDictionary(path)
     manager.loadDictionary(path)
-    restartInspections()
+    restartInspections("SpellCheckerManager.contentsChanged")
   }
 
   override fun propertyChanged(event: VirtualFilePropertyEvent) {
@@ -396,7 +396,7 @@ private class CustomDictFileListener(private val project: Project, private val m
       SpellCheckerSettings.getInstance(project).customDictionariesPaths.removeIf { dict: String? ->
         FileUtil.isAncestor(systemDependentPath, dict!!, false)
       }
-      restartInspections()
+      restartInspections("SpellCheckerManager.removeCustomDictionaries")
     }
   }
 
@@ -412,7 +412,7 @@ private class CustomDictFileListener(private val project: Project, private val m
         val filePath = file.path
         if (!isDirectory && SpellCheckerSettings.getInstance(project).customDictionariesPaths.contains(filePath)) {
           manager.loadDictionary(filePath)
-          restartInspections()
+          restartInspections("SpellCheckerManager.loadCustomDictionaries")
         }
         return isDirectory
       }

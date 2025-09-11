@@ -381,7 +381,7 @@ var Module.pythonSdk: Sdk?
     thisLogger().info("Setting PythonSDK $newSdk to module $this")
     ModuleRootModificationUtil.setModuleSdk(this, newSdk)
     runInEdt {
-      DaemonCodeAnalyzer.getInstance(project).restart()
+      DaemonCodeAnalyzer.getInstance(project).restart("Setting PythonSDK $newSdk to module $this")
     }
     ApplicationManager.getApplication().messageBus.syncPublisher(PySdkListener.TOPIC).moduleSdkUpdated(this, prevSdk, newSdk)
   }

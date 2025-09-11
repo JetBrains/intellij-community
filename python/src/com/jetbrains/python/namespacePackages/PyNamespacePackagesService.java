@@ -156,7 +156,7 @@ public final class PyNamespacePackagesService implements PersistentStateComponen
     Project project = myModule.getProject();
     ProjectView.getInstance(project).refresh();
     PsiManager.getInstance(project).dropPsiCaches();
-    DaemonCodeAnalyzer.getInstance(project).restart();
+    DaemonCodeAnalyzer.getInstance(project).restart(this);
   }
 
   @TestOnly

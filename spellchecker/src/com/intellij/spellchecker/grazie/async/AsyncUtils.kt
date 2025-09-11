@@ -19,13 +19,13 @@ internal object AsyncUtils {
     return ApplicationManager.getApplication().isUnitTestMode
   }
 
-  fun restartInspection(application: Application) {
+  fun restartInspection(application: Application, reason: Any) {
     if (application.isDisposed) {
       return
     }
 
     for (project in ProjectManager.getInstance().openProjects.filter { it.isInitialized && it.isOpen && !it.isDefault }) {
-      DaemonCodeAnalyzer.getInstance(project)?.restart()
+      DaemonCodeAnalyzer.getInstance(project)?.restart(reason)
     }
   }
 
@@ -42,7 +42,7 @@ internal object AsyncUtils {
         body()
 
         withContext(Dispatchers.EDT) {
-          restartInspection(ApplicationManager.getApplication())
+          restartInspection(ApplicationManager.getApplication(), "AsyncUtils.run")
         }
       }
     }

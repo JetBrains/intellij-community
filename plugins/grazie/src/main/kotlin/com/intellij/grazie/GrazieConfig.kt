@@ -189,7 +189,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
       service<GrazieInitializerManager>().publisher.update(prevState, newState)
 
       ProjectManager.getInstance().openProjects.forEach {
-        DaemonCodeAnalyzer.getInstance(it).restart()
+        DaemonCodeAnalyzer.getInstance(it).restart("GrazieConfig")
       }
     }
   }

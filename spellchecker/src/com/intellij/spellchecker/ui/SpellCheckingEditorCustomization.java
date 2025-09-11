@@ -108,7 +108,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     // Update representation.
     DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(project);
     if (analyzer != null) {
-      analyzer.restart(file);
+      analyzer.restart(file, this);
     }
   }
 

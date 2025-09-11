@@ -418,7 +418,7 @@ abstract class ScriptClassRootsUpdater(
 
         openedScripts.forEach {
             if (it.isValid) {
-                (PsiManager.getInstance(project).findFile(it) as? KtFile)?.let { ktFile -> DaemonCodeAnalyzer.getInstance(project).restart(ktFile) }
+                (PsiManager.getInstance(project).findFile(it) as? KtFile)?.let { ktFile -> DaemonCodeAnalyzer.getInstance(project).restart(ktFile, this) }
             }
         }
     }

@@ -121,7 +121,7 @@ public final class TypeCustomizerInspection extends BaseInspection {
         final String sourceRootPath = VfsUtilCore.getRelativePath(sourceRoot, contentRoot, '/');
         CompilerConfiguration.getInstance(project).addResourceFilePattern(sourceRootPath + ':' + path);
       }
-      DaemonCodeAnalyzer.getInstance(project).restart(file);
+      DaemonCodeAnalyzer.getInstance(project).restart(file, this);
     }
   }
 }

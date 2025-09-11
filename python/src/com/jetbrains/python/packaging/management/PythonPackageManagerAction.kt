@@ -82,7 +82,7 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
 
       PythonPackageManagerUI.forPackageManager(manager).executeCommand(e.presentation.text) {
         execute(e, manager).mapSuccess {
-          DaemonCodeAnalyzer.getInstance(psiFile.project).restart(psiFile)
+          DaemonCodeAnalyzer.getInstance(psiFile.project).restart(psiFile, this)
         }
       }
     }

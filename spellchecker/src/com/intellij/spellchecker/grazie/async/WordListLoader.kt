@@ -62,7 +62,7 @@ internal class WordListLoader(private val project: Project, private val coroutin
         isLoadingList.set(false)
 
         withContext(Dispatchers.EDT) {
-          AsyncUtils.restartInspection(ApplicationManager.getApplication())
+          AsyncUtils.restartInspection(ApplicationManager.getApplication(), "WordListLoader.load")
         }
       }
     }

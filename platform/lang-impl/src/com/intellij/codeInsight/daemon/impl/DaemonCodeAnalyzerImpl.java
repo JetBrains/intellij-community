@@ -444,6 +444,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   @Override
   protected void progressIsAdvanced(@NotNull HighlightingSession session, Editor editor, double progress) {
+    assertFileFromMyProject(session.getProject(),session.getPsiFile());
     if (editor != null) {
       repaintIconHelper.repaintTrafficIcon(session.getPsiFile(), editor, progress);
     }
@@ -855,11 +856,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     return isHighlightingAvailable(psiFile) && !(psiFile instanceof PsiCompiledElement);
   }
 
-  @Override
-  public void restart() {
-    restart("Global restart");
-  }
-
   @NotNull
   private static List<HighlightInfo> getFileLevelHighlights(@NotNull FileEditor textEditor) {
     List<HighlightInfo> highlights = textEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
@@ -873,15 +869,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   @Override
-  public void restart(@NotNull PsiFile psiFile) {
+  public void restart(@NotNull PsiFile psiFile, @NotNull Object reason) {
     assertFileFromMyProject(psiFile.getProject(), psiFile);
     Document document = psiFile.getViewProvider().getDocument();
-    if (document == null) {
-      return;
+    if (document != null) {
+      String r = "Psi file restart: " + psiFile.getName() + ": " + reason;
+      myFileStatusMap.markWholeFileScopeDirty(document, r);
+      stopProcess(true, r);
     }
-    String reason = "Psi file restart: " + psiFile.getName();
-    myFileStatusMap.markWholeFileScopeDirty(document, reason);
-    stopProcess(true, reason);
   }
 
   public @NotNull List<ProgressableTextEditorHighlightingPass> getPassesToShowProgressFor(@NotNull Document document) {

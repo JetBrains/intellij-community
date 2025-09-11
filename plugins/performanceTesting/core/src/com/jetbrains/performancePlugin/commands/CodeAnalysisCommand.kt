@@ -118,7 +118,7 @@ class CodeAnalysisCommand(text: String, line: Int) : AbstractCommand(text, line)
     DumbService.getInstance(project).smartInvokeLater {
       PsiManager.getInstance(project).dropPsiCaches()
       context.message("Code highlighting started", line)
-      DaemonCodeAnalyzer.getInstance(project).restart()
+      DaemonCodeAnalyzer.getInstance(project).restart(this)
     }
     return actionCallback.toPromise()
   }

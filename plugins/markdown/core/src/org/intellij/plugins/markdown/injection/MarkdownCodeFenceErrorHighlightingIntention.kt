@@ -42,7 +42,7 @@ internal class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
               continue
             }
             val psi = psiManager.findFile(file) ?: continue
-            codeAnalyzer.restart(psi)
+            codeAnalyzer.restart(psi, this)
           }
         }
       }

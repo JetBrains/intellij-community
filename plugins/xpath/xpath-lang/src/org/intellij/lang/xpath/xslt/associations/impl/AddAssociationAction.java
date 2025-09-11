@@ -49,7 +49,7 @@ class AddAssociationAction extends AnAction {
         if (psiFile == null) return;
 
         addAssociation(psiFile);
-        DaemonCodeAnalyzer.getInstance(psiFile.getProject()).restart(psiFile);
+        DaemonCodeAnalyzer.getInstance(psiFile.getProject()).restart(psiFile, this);
     }
 
     protected void addAssociation(final PsiFile psiFile) {

@@ -36,9 +36,6 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return (DaemonCodeAnalyzerEx)getInstance(project);
   }
 
-  @ApiStatus.Internal
-  public abstract void restart(@NotNull Object reason);
-
   // todo IJPL-339 mark deprecated
   /**
    * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock

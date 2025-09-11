@@ -143,7 +143,7 @@ public class JavaAutoImportOptions(public val project: Project) : UiDslUnnamedCo
     }
     onApply {
       for (project in ProjectManager.getInstance().openProjects) {
-        DaemonCodeAnalyzer.getInstance(project).restart()
+        DaemonCodeAnalyzer.getInstance(project).restart("JavaAutoImportOptions.update")
       }
     }
   }

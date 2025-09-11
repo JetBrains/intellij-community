@@ -53,7 +53,7 @@ public class ShDisableInspectionIntention implements IntentionAction, LowPriorit
         tool.disableInspection(myInspectionCode);
       }
     });
-    DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
+    DaemonCodeAnalyzer.getInstance(project).restart(psiFile, this);
   }
 
   @Override

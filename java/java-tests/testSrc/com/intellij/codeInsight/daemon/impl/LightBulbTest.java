@@ -265,7 +265,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
         caretRight();
         UIUtil.dispatchAllInvocationEvents();
         caretLeft();
-        myDaemonCodeAnalyzer.restart();
+        myDaemonCodeAnalyzer.restart(this);
         assertFalse(myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(myEditor.getDocument(), EditorContextManager.getEditorContext(myEditor, myProject)));
         long daemonStartDeadline = System.currentTimeMillis() + 5000;
         while (!myDaemonCodeAnalyzer.isRunning() && !myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(myEditor.getDocument(), EditorContextManager.getEditorContext(myEditor, myProject)) && System.currentTimeMillis() < daemonStartDeadline) { // wait until the daemon started

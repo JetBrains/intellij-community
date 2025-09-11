@@ -285,7 +285,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
           // rerun code-insight after popup close
           PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
           if (psiFile != null) {
-            DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
+            DaemonCodeAnalyzer.getInstance(project).restart(psiFile, this);
           }
         }
       })

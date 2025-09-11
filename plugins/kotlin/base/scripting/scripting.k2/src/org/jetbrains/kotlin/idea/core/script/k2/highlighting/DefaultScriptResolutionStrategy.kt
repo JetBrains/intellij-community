@@ -106,7 +106,7 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
                 if (ktFile.alwaysVirtualFile !in filesInEditors) continue
                 if (project.isOpen && !project.isDisposed) {
                     readAction {
-                        DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
+                        DaemonCodeAnalyzer.getInstance(project).restart(ktFile, this)
                     }
                 }
             }

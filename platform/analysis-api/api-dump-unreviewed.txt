@@ -409,8 +409,6 @@ a:com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 - a:isAutohintsAvailable(com.intellij.psi.PsiFile):Z
 - a:isHighlightingAvailable(com.intellij.psi.PsiFile):Z
 - a:isImportHintsEnabled(com.intellij.psi.PsiFile):Z
-- a:restart():V
-- a:restart(com.intellij.psi.PsiFile):V
 - a:setHighlightingEnabled(com.intellij.psi.PsiFile,Z):V
 - a:setImportHintsEnabled(com.intellij.psi.PsiFile,Z):V
 - a:settingsChanged():V

@@ -32,7 +32,7 @@ class ScratchFileModuleInfoProvider : ScratchFileListener {
             // Drop caches for old module
             ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
             // Force re-highlighting
-            runReadAction { DaemonCodeAnalyzer.getInstance(project).restart(psiFile) }
+            runReadAction { DaemonCodeAnalyzer.getInstance(project).restart(psiFile, this) }
         }
 
         val module = ScriptRelatedModuleNameFile[project, virtualFile]?.let { ModuleManager.getInstance(project).findModuleByName(it) } ?: return

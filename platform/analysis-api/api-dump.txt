@@ -22,6 +22,11 @@ a:com.intellij.codeInsight.completion.PrefixMatcher
 - getMatchingFragments(java.lang.String):java.util.List
 com.intellij.codeInsight.daemon.ChangeLocalityDetector
 - a:getChangeHighlightingDirtyScopeFor(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+a:com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+- restart():V
+- restart(com.intellij.psi.PsiFile):V
+- restart(com.intellij.psi.PsiFile,java.lang.Object):V
+- restart(java.lang.Object):V
 com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener
 - daemonCancelEventOccurred(java.lang.String):V
 - daemonCanceled(java.lang.String,java.util.Collection):V

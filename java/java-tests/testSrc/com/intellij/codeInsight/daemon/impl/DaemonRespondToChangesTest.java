@@ -2159,7 +2159,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
               }
             });
             //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
-            myDaemonCodeAnalyzer.restart(myFile);
+            myDaemonCodeAnalyzer.restart(myFile, this);
             List<HighlightInfo> errorsFromMarkup = getErrorsFromMarkup(markupModel);
             //updater.assertNoDuplicates(myFile, errorsFromMarkup, "errors from markup ");
             //((HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(getProject())).assertMarkupDataConsistent(myFile);

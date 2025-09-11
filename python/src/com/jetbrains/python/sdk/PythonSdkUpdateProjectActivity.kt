@@ -28,12 +28,12 @@ class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
     messageBusConnection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
       override fun packagesChanged(sdk: Sdk) {
         PyPackageCoroutine.launch(project) {
-          refreshPaths(project, sdk)
+          refreshPaths(project, sdk, "PythonSdkUpdateProjectActivity.packagesChanged")
         }.cancelOnDispose(messageBusConnection)
       }
 
       override fun outdatedPackagesChanged(sdk: Sdk) {
-        DaemonCodeAnalyzer.getInstance(project).restart()
+        DaemonCodeAnalyzer.getInstance(project).restart("PythonSdkUpdateProjectActivity.outdatedPackagesChanged")
       }
     })
 
@@ -49,7 +49,7 @@ class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
 }
 
 @ApiStatus.Internal
-suspend fun refreshPaths(project: Project, sdk: Sdk): Unit = edtWriteAction {
+suspend fun refreshPaths(project: Project, sdk: Sdk, reason: Any): Unit = edtWriteAction {
   // Background refreshing breaks structured concurrency: there is a some activity in background that locks files.
   // Temporary folders can't be deleted on Windows due to that.
   // That breaks tests.
@@ -62,7 +62,7 @@ suspend fun refreshPaths(project: Project, sdk: Sdk): Unit = edtWriteAction {
   sdk.associatedModuleDir?.refresh(true, false)
 
   //Restart all inspections because packages are changed
-  DaemonCodeAnalyzer.getInstance(project).restart()
+  DaemonCodeAnalyzer.getInstance(project).restart(reason)
   PythonSdkUpdater.scheduleUpdate(sdk, project, false)
 }
 

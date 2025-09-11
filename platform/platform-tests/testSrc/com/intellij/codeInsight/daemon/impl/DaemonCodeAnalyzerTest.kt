@@ -52,7 +52,7 @@ class DaemonCodeAnalyzerTest {
     while (!ApplicationManagerEx.getApplicationEx().isWriteActionPending) {
       Thread.sleep(10)
     }
-    analyzer.restart()
+    analyzer.restart(this)
     Thread.sleep(DaemonCodeAnalyzerSettings.getInstance().autoReparseDelay.times(2).toLong())
     UIUtil.dispatchAllInvocationEvents()
     assertFalse(listenerInvoked.get())

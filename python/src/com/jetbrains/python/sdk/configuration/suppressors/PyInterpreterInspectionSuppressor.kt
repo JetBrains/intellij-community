@@ -30,7 +30,7 @@ internal class PyInterpreterInspectionSuppressor : PyInspectionExtension() {
     private var suppress = false
 
     fun suppress(project: Project): Disposable? {
-      DaemonCodeAnalyzer.getInstance(project).restart()
+      DaemonCodeAnalyzer.getInstance(project).restart("PyInterpreterInspectionSuppressor.Suppress for $project")
       return if (suppress) null else Suppressor()
     }
   }
