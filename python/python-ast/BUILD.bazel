@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.python.ast` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "ast_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ast",
+  module_name = "intellij.python.ast",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//python/python-parser:parser",
+    "//platform/core-impl",
+    "@lib//:stream_ex",
+  ],
+  runtime_deps = [":ast_resources"]
+)
+### auto-generated section `build intellij.python.ast` end

@@ -1,0 +1,43 @@
+### auto-generated section `local-libs` start
+load("@rules_java//java:defs.bzl", "java_import", "java_library")
+
+java_import(
+  name = "ant-antlr",
+  jars = [
+    "ant-antlr.jar",
+    "ant-apache-bcel.jar",
+    "ant-apache-bsf.jar",
+    "ant-apache-log4j.jar",
+    "ant-apache-oro.jar",
+    "ant-apache-regexp.jar",
+    "ant-apache-resolver.jar",
+    "ant-apache-xalan2.jar",
+    "ant-commons-logging.jar",
+    "ant-commons-net.jar",
+    "ant-imageio.jar",
+    "ant-jai.jar",
+    "ant-jakartamail.jar",
+    "ant-javamail.jar",
+    "ant-jdepend.jar",
+    "ant-jmf.jar",
+    "ant-jsch.jar",
+    "ant-junit.jar",
+    "ant-junit4.jar",
+    "ant-junitlauncher.jar",
+    "ant-launcher.jar",
+    "ant-netrexx.jar",
+    "ant-swing.jar",
+    "ant-testutil.jar",
+    "ant-xz.jar",
+    "ant.jar",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "ant-antlr-provided",
+  exports = [":ant-antlr"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+### auto-generated section `local-libs` end

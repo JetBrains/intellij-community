@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.platform.vcs.log` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "vcs-log",
+  module_name = "intellij.platform.vcs.log",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util-rt",
+    "//platform/vcs-log/graph-api:vcs-log-graph",
+    "//platform/core-api:core",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/util",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/vcs-api:vcs",
+    "@lib//:kotlin-stdlib",
+    "//platform/ide-core",
+    "//platform/core-ui",
+    "//platform/diff-api:diff",
+  ],
+  exports = ["//platform/vcs-log/graph-api:vcs-log-graph"]
+)
+### auto-generated section `build intellij.platform.vcs.log` end

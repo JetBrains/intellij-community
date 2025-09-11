@@ -1,0 +1,47 @@
+### auto-generated section `build intellij.tools.ide.starter.bus` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "tools-ide-starter-bus_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "tools-ide-starter-bus",
+  module_name = "intellij.tools.ide.starter.bus",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jackson",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:jackson-databind",
+    "@lib//:kotlin-reflect",
+  ],
+  runtime_deps = [":tools-ide-starter-bus_resources"]
+)
+
+jvm_library(
+  name = "tools-ide-starter-bus_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [":tools-ide-starter-bus"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:junit5",
+    "@lib//:jackson",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:jackson-databind",
+    "@lib//:kotlin-reflect",
+  ],
+  runtime_deps = [":tools-ide-starter-bus_resources"]
+)
+
+jvm_test(
+  name = "tools-ide-starter-bus_test",
+  runtime_deps = [":tools-ide-starter-bus_test_lib"]
+)
+### auto-generated section `build intellij.tools.ide.starter.bus` end

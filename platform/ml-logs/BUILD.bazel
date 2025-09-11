@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.platform.ml.logs` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "ml-logs_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ml-logs",
+  module_name = "intellij.platform.ml.logs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/statistics",
+    "@lib//:jetbrains-annotations",
+    "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
+    "@lib//:jetbrains-mlapi-ml-api",
+    "@lib//:jetbrains-mlapi-ml-tools",
+  ],
+  exports = [
+    "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
+    "@lib//:jetbrains-mlapi-ml-api",
+    "@lib//:jetbrains-mlapi-ml-tools",
+  ],
+  runtime_deps = [":ml-logs_resources"]
+)
+### auto-generated section `build intellij.platform.ml.logs` end

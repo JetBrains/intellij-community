@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.junit.v5.rt` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "junit-v5-rt",
+  module_name = "intellij.junit.v5.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//plugins/junit_rt:junit-rt",
+    "//java/java-runtime:rt",
+    "@lib//:junit5Launcher-provided",
+    "@lib//:junit5-provided",
+  ]
+)
+### auto-generated section `build intellij.junit.v5.rt` end

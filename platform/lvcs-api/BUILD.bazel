@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.platform.lvcs` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "lvcs",
+  module_name = "intellij.platform.lvcs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+### auto-generated section `build intellij.platform.lvcs` end

@@ -1,0 +1,17 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "zip",
+  kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/*.kt"]),
+  deps = [
+    "//:kotlin-stdlib",
+    "//:netty-buffer",
+    "//:netty-common",
+    "//:intellij-deps-fastutil",
+    "//:hash4j",
+  ]
+)
+
+### skip generation section `build intellij.idea.community.build.zip`

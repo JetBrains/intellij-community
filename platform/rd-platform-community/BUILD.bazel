@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.platform.rd.community` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "rd-community",
+  module_name = "intellij.platform.rd.community",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/platform-api:ide",
+    "@lib//:rd-core",
+    "@lib//:rd-framework",
+    "@lib//:rd-text",
+    "@lib//:rd-swing",
+    "//platform/util/progress",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+  ],
+  exports = [
+    "@lib//:rd-core",
+    "@lib//:rd-framework",
+    "@lib//:rd-swing",
+  ]
+)
+### auto-generated section `build intellij.platform.rd.community` end

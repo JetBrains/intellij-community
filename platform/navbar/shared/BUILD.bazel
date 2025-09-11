@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.platform.navbar` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "navbar_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "navbar",
+  module_name = "intellij.platform.navbar",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/core-ui",
+    "//platform/util",
+    "//platform/ide-core-impl",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+  ],
+  exports = ["@lib//:kotlin-stdlib"],
+  runtime_deps = [":navbar_resources"]
+)
+### auto-generated section `build intellij.platform.navbar` end

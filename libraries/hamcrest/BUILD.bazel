@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.libraries.hamcrest` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "hamcrest_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "hamcrest",
+  visibility = ["//visibility:public"],
+  exports = ["@lib//:hamcrest"],
+  runtime_deps = [
+    ":hamcrest_resources",
+    "@lib//:hamcrest",
+  ]
+)
+### auto-generated section `build intellij.libraries.hamcrest` end

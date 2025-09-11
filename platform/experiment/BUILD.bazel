@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.platform.experiment` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "experiment_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "experiment",
+  module_name = "intellij.platform.experiment",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/statistics",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/platform-impl:ide-impl",
+  ],
+  runtime_deps = [":experiment_resources"]
+)
+### auto-generated section `build intellij.platform.experiment` end

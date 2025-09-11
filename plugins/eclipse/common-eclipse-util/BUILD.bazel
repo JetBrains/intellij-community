@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.eclipse.common` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "common",
+  module_name = "intellij.eclipse.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "//platform/util",
+    "//platform/util/jdom",
+    "//jps/model-serialization",
+  ]
+)
+### auto-generated section `build intellij.eclipse.common` end

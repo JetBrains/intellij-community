@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.kotlin.dev` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "kotlin-dev_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-dev",
+  module_name = "intellij.kotlin.dev",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/dev/intellij.dev.codeInsight:codeInsight",
+    "//plugins/dev/intellij.dev.psiViewer:psiViewer",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//platform/platform-api:ide",
+    "//platform/util:util-ui",
+    "//java/java-psi-api:psi",
+    "@lib//:kotlinc-analysis-api-provided",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+  ],
+  runtime_deps = [":kotlin-dev_resources"]
+)
+### auto-generated section `build intellij.kotlin.dev` end

@@ -1,0 +1,21 @@
+### auto-generated section `build kotlin.plugin.common` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "common_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "common",
+  module_name = "kotlin.plugin.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+  ],
+  runtime_deps = [":common_resources"]
+)
+### auto-generated section `build kotlin.plugin.common` end

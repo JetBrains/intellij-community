@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.platform.locking.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "locking.impl",
+  module_name = "intellij.platform.locking.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "//platform/util-rt",
+    "//platform/util",
+    "//platform/util/coroutines",
+    "@lib//:jetbrains-intellij-deps-rwmutex-idea",
+    "//platform/core-api:core",
+  ]
+)
+### auto-generated section `build intellij.platform.locking.impl` end

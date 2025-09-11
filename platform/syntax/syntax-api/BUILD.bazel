@@ -1,0 +1,43 @@
+### auto-generated section `build intellij.platform.syntax` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_test")
+
+jvm_provided_library(
+  name = "multiplatformSupport_provided",
+  lib = "//platform/syntax/syntax-multiplatformSupport:multiplatformSupport"
+)
+
+jvm_library(
+  name = "syntax",
+  module_name = "intellij.platform.syntax",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvm/**/*.kt", "srcJvm/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/multiplatform",
+    ":multiplatformSupport_provided",
+  ]
+)
+
+jvm_library(
+  name = "syntax_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testJvm/**/*.kt", "testJvm/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  associates = [":syntax"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/multiplatform",
+    "//platform/syntax/syntax-multiplatformSupport:multiplatformSupport",
+    "@lib//:junit5",
+    "@lib//:kotlin-test",
+  ]
+)
+
+jvm_test(
+  name = "syntax_test",
+  runtime_deps = [":syntax_test_lib"]
+)
+### auto-generated section `build intellij.platform.syntax` end

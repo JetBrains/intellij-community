@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.libraries.microba` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "microba_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "microba",
+  module_name = "intellij.libraries.microba",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  runtime_deps = [":microba_resources"]
+)
+### auto-generated section `build intellij.libraries.microba` end

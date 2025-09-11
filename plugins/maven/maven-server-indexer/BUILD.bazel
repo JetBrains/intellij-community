@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.maven.server.indexer` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "server-indexer",
+  module_name = "intellij.maven.server.indexer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//plugins/maven-server-api:maven-server",
+    "@lib//:maven-server-indexer-apache-maven-indexer-core-6-2-2-provided",
+    "@lib//:maven-server-indexer-apache-maven-core-3-8-3",
+    "@lib//:maven-server-indexer-apache-maven-wagon-provider-api-3-5-2",
+    "@lib//:maven-server-indexer-apache-maven-archetype-common-no-trans-3-2-1",
+    "@lib//:maven-server-indexer-apache-maven-archetype-catalog-no-trans-321",
+  ]
+)
+### auto-generated section `build intellij.maven.server.indexer` end

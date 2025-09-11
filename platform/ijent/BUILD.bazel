@@ -1,0 +1,49 @@
+### auto-generated section `build intellij.platform.ijent` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "ijent_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ijent",
+  module_name = "intellij.platform.ijent",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/util",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util/coroutines",
+    "//platform/eel",
+  ],
+  exports = ["//platform/eel"],
+  runtime_deps = [":ijent_resources"]
+)
+
+jvm_library(
+  name = "ijent_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = [":ijent"],
+  deps = [
+    "@lib//:junit5",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "//platform/core-api:core",
+    "//platform/util",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util/coroutines",
+    "//platform/eel",
+  ],
+  runtime_deps = [":ijent_resources"]
+)
+
+jvm_test(
+  name = "ijent_test",
+  runtime_deps = [":ijent_test_lib"]
+)
+### auto-generated section `build intellij.platform.ijent` end

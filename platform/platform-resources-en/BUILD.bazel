@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.platform.resources.en` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "resources-en_resources",
+  files = glob(["src/**/*"]),
+  strip_prefix = "src"
+)
+
+java_library(
+  name = "resources-en",
+  visibility = ["//visibility:public"],
+  runtime_deps = [":resources-en_resources"]
+)
+### auto-generated section `build intellij.platform.resources.en` end

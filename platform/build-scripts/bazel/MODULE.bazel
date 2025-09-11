@@ -1,0 +1,53 @@
+module(
+    name = "jps_to_bazel",
+    version = "0.1",
+)
+
+bazel_dep(name = "rules_java", version = "8.11.0")
+bazel_dep(name = "rules_kotlin", version = "2.1.3")
+bazel_dep(name = "rules_jvm_external", version = "6.7")
+
+# https://github.com/JetBrains/rules_jvm_external/commits/no-windows-check
+# https://github.com/JetBrains/rules_jvm_external/commit/4d575639286760f67ae1ce416c4e922dc269851c
+# differs from released version of rules_jvm_external by two things
+#  - uses copyfile instead of genrule (platform independent, already in upstream master), https://github.com/bazel-contrib/rules_jvm_external/commit/6dda4baeb438117480e40b1844b48da2dd8043ff
+#  - disables check for bash presence since it's not used for dependency resolution anyway, https://github.com/JetBrains/rules_jvm_external/commit/4d575639286760f67ae1ce416c4e922dc269851c
+archive_override(
+  module_name = "rules_jvm_external",
+  url = "https://github.com/JetBrains/rules_jvm_external/archive/4d575639286760f67ae1ce416c4e922dc269851c.zip",
+  sha256 = "bca26ef5cdaff94991c0ddf3e77b6811f4226816045aab5e70212c9426ae99f9",
+  strip_prefix = "rules_jvm_external-4d575639286760f67ae1ce416c4e922dc269851c",
+)
+
+intellij_version = "251.21223"
+
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+maven.install(
+    name = "j2b_maven",
+    artifacts = [
+        "com.jetbrains.intellij.platform:jps-model-impl:" + intellij_version,
+        "com.jetbrains.intellij.platform:build-scripts-downloader:" + intellij_version,
+        "com.jetbrains.intellij.platform:jps-model-serialization:" + intellij_version,
+        "org.jetbrains.kotlin:kotlin-jps-plugin:2.1.20",
+        "org.jetbrains.teamcity:serviceMessages:2024.07",
+    ],
+    fail_if_repin_required = True,
+    fetch_sources = True,
+    lock_file = "//:maven_install.json",
+    repositories = [
+        "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2",
+        "https://cache-redirector.jetbrains.com/intellij-dependencies",
+        "https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository",
+    ],
+)
+use_repo(maven, "j2b_maven")
+
+bazel_dep(name = "hermetic_cc_toolchain", version = "3.2.0")
+
+toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
+use_repo(toolchains, "zig_sdk", "zig_sdk-linux-amd64", "zig_sdk-linux-arm64", "zig_sdk-macos-amd64", "zig_sdk-macos-arm64", "zig_sdk-windows-amd64")
+
+register_toolchains(
+    "@zig_sdk//toolchain/...",
+    "@zig_sdk//libc_aware/toolchain/...",
+)

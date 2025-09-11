@@ -1,0 +1,15 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("//:jvm.bzl", "jvm_import")
+
+kt_jvm_library(
+    name = "mvstore-data-types",
+    srcs = glob(["*.kt"]),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//:h2-mvstore",
+        "//:hash4j",
+        "//:kotlin-stdlib",
+        "//:kotlinx-collections-immutable",
+    ],
+)

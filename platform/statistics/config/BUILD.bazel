@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.platform.statistics.config` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "config",
+  module_name = "intellij.platform.statistics.config",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+  ]
+)
+### auto-generated section `build intellij.platform.statistics.config` end

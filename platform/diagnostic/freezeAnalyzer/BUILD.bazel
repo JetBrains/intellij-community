@@ -1,0 +1,52 @@
+### auto-generated section `build intellij.platform.diagnostic.freezeAnalyzer` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "freezeAnalyzer_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_resources(
+  name = "freezeAnalyzer_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_library(
+  name = "freezeAnalyzer",
+  module_name = "intellij.platform.diagnostic.freezeAnalyzer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/threadDumpParser",
+    "@lib//:jetbrains-annotations",
+  ],
+  runtime_deps = [":freezeAnalyzer_resources"]
+)
+
+jvm_library(
+  name = "freezeAnalyzer_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [":freezeAnalyzer"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/threadDumpParser",
+    "//platform/threadDumpParser:threadDumpParser_test_lib",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "@lib//:junit5",
+    "@lib//:jetbrains-annotations",
+  ],
+  runtime_deps = [
+    ":freezeAnalyzer_resources",
+    ":freezeAnalyzer_test_resources",
+  ]
+)
+
+jvm_test(
+  name = "freezeAnalyzer_test",
+  runtime_deps = [":freezeAnalyzer_test_lib"]
+)
+### auto-generated section `build intellij.platform.diagnostic.freezeAnalyzer` end

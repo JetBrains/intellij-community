@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.libraries.skiko` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "skiko_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "skiko",
+  visibility = ["//visibility:public"],
+  exports = [
+    "@lib//:libraries-skiko-jetbrains-skiko-awt-compose",
+    "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all",
+  ],
+  runtime_deps = [
+    ":skiko_resources",
+    "@lib//:libraries-skiko-jetbrains-skiko-awt-compose",
+    "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all",
+  ]
+)
+### auto-generated section `build intellij.libraries.skiko` end

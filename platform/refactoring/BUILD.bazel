@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.platform.refactoring` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "refactoring_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "refactoring",
+  module_name = "intellij.platform.refactoring",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util",
+    "//platform/util/jdom",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "//platform/util-ex",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/analysis-api:analysis",
+    "//platform/ide-core",
+    "//platform/analysis-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/statistics",
+    "@lib//:fastutil-min",
+    "//platform/ide-core-impl",
+    "//platform/code-style-api:codeStyle",
+    "//platform/usageView",
+    "//platform/lvcs-api:lvcs",
+  ],
+  runtime_deps = [":refactoring_resources"]
+)
+### auto-generated section `build intellij.platform.refactoring` end

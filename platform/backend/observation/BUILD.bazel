@@ -1,0 +1,35 @@
+### auto-generated section `build intellij.platform.backend.observation` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+jvm_library(
+  name = "observation",
+  module_name = "intellij.platform.backend.observation",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/core-api:core",
+    "//platform/util",
+  ]
+)
+
+jvm_library(
+  name = "observation_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":observation"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/core-api:core",
+    "//platform/util",
+    "@lib//:junit5",
+  ]
+)
+
+jvm_test(
+  name = "observation_test",
+  runtime_deps = [":observation_test_lib"]
+)
+### auto-generated section `build intellij.platform.backend.observation` end

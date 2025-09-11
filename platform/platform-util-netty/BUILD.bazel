@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.platform.ide.util.netty` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "ide-util-netty",
+  module_name = "intellij.platform.ide.util.netty",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "@lib//:guava",
+    "@lib//:fastutil-min",
+    "@lib//:netty-buffer",
+    "//platform/util",
+    "@lib//:netty-codec-http",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:kotlinx-coroutines-core",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.util.netty` end

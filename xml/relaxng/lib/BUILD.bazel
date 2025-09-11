@@ -1,0 +1,15 @@
+### auto-generated section `local-libs` start
+load("@rules_java//java:defs.bzl", "java_import")
+
+java_import(
+  name = "rngom-20051226-patched",
+  jars = ["rngom-20051226-patched.jar"],
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "trang-core",
+  jars = ["trang-core.jar"],
+  visibility = ["//visibility:public"]
+)
+### auto-generated section `local-libs` end

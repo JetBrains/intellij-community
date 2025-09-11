@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.platform.settings` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "settings",
+  module_name = "intellij.platform.settings",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "//platform/util",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+  ]
+)
+### auto-generated section `build intellij.platform.settings` end

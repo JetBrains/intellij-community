@@ -1,0 +1,14 @@
+### auto-generated section `local-libs` start
+load("@rules_java//java:defs.bzl", "java_import")
+
+java_import(
+  name = "axis-1-4",
+  jars = [
+    "axis-1.4.jar",
+    "axis-jaxrpc-1.4.jar",
+    "wsdl4j-1.4.jar",
+    "axis-saaj-1.3.jar",
+  ],
+  visibility = ["//visibility:public"]
+)
+### auto-generated section `local-libs` end

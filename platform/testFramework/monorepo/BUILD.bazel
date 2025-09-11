@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.platform.testFramework.monorepo` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "monorepo",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "monorepo_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:junit5Jupiter",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/coroutines",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-coroutines-test",
+    "@lib//:jetbrains-annotations",
+    "//jps/model-api:model",
+    "//tools/apiDump",
+    "//platform/util/diff",
+    "//platform/util-ex",
+    "@lib//:junit5",
+    "//platform/util",
+    "//platform/testFramework/core",
+    "//jps/jps-builders:build",
+    "//jps/model-serialization",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ]
+)
+
+jvm_test(
+  name = "monorepo_test",
+  runtime_deps = [":monorepo_test_lib"]
+)
+### auto-generated section `build intellij.platform.testFramework.monorepo` end

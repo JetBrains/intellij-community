@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.tools.devLauncher` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "devLauncher",
+  module_name = "intellij.tools.devLauncher",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/runtime/loader",
+    "//platform/runtime/repository",
+    "//platform/runtime/product",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+### auto-generated section `build intellij.tools.devLauncher` end

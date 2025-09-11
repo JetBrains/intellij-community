@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.xml.psi` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "psi_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "psi",
+  module_name = "intellij.xml.psi",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//xml/xml-parser:parser",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-api:analysis",
+    "//platform/util",
+    "//platform/editor-ui-api:editor-ui",
+    "@lib//:kotlin-stdlib",
+  ],
+  runtime_deps = [":psi_resources"]
+)
+### auto-generated section `build intellij.xml.psi` end

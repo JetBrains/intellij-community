@@ -1,0 +1,43 @@
+### auto-generated section `build intellij.xslt.debugger.impl.rt` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+jvm_library(
+  name = "xslt-debugger-impl-rt",
+  module_name = "intellij.xslt.debugger.impl.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//plugins/xpath/xslt-rt:rt",
+    "//plugins/xslt-debugger/engine:xslt-debugger-rt",
+    "//plugins/xslt-debugger/engine/impl/lib:saxon9he",
+    "//plugins/xslt-debugger/engine/impl/lib:saxon",
+    "@lib//:xslt-debugger-impl-rt-_xalan-2-7-3",
+    "@lib//:xslt-debugger-impl-rt-_serializer-2-7-3",
+  ]
+)
+
+jvm_library(
+  name = "xslt-debugger-impl-rt_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  associates = [":xslt-debugger-impl-rt"],
+  deps = [
+    "//plugins/xpath/xslt-rt:rt",
+    "//plugins/xslt-debugger/engine:xslt-debugger-rt",
+    "//plugins/xslt-debugger/engine/impl/lib:saxon9he",
+    "//plugins/xslt-debugger/engine/impl/lib:saxon",
+    "@lib//:xslt-debugger-impl-rt-_xalan-2-7-3",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:junit4",
+    "@lib//:xslt-debugger-impl-rt-_serializer-2-7-3",
+  ]
+)
+
+jvm_test(
+  name = "xslt-debugger-impl-rt_test",
+  runtime_deps = [":xslt-debugger-impl-rt_test_lib"]
+)
+### auto-generated section `build intellij.xslt.debugger.impl.rt` end

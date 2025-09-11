@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.groovy.rt` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "rt",
+  module_name = "intellij.groovy.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:org-codehaus-groovy-groovy",
+    "@lib//:jetbrains-annotations-java5",
+    "//plugins/groovy/rt-constants:constants-rt",
+  ],
+  exports = [
+    "@lib//:org-codehaus-groovy-groovy",
+    "//plugins/groovy/rt-constants:constants-rt",
+  ]
+)
+### auto-generated section `build intellij.groovy.rt` end

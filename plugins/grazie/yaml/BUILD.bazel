@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.grazie.yaml` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "yaml_resources",
+  files = glob(["main/resources/**/*"]),
+  strip_prefix = "main/resources"
+)
+
+jvm_library(
+  name = "yaml",
+  module_name = "intellij.grazie.yaml",
+  visibility = ["//visibility:public"],
+  srcs = glob(["main/kotlin/**/*.kt", "main/kotlin/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/grazie/src:core",
+    "//plugins/yaml/backend",
+    "//platform/util",
+    "//plugins/yaml",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/util-ex",
+  ],
+  runtime_deps = [":yaml_resources"]
+)
+### auto-generated section `build intellij.grazie.yaml` end

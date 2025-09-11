@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.groovy.spock.rt` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "spock-rt",
+  module_name = "intellij.groovy.spock.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//plugins/junit_rt:junit-rt",
+    "@lib//:junit4-provided",
+    "@lib//:groovy-spock-rt-spockframework-spock-core-provided",
+    "@lib//:opentest4j-provided",
+  ]
+)
+### auto-generated section `build intellij.groovy.spock.rt` end

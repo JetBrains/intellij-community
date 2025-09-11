@@ -1,0 +1,15 @@
+### auto-generated section `build intellij.platform.externalSystem.rt` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "externalSystem-rt",
+  module_name = "intellij.platform.externalSystem.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//platform/object-serializer:objectSerializer-annotations",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+### auto-generated section `build intellij.platform.externalSystem.rt` end

@@ -1,0 +1,15 @@
+### auto-generated section `build intellij.xslt.debugger.rt` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "xslt-debugger-rt",
+  module_name = "intellij.xslt.debugger.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//plugins/xpath/xslt-rt:rt",
+    "//plugins/xslt-debugger/engine/lib:rmi-stubs",
+  ]
+)
+### auto-generated section `build intellij.xslt.debugger.rt` end

@@ -1,0 +1,35 @@
+### auto-generated section `build intellij.platform.scopes.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.scopes.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/scopes",
+    "//platform/project/shared:project",
+    "//platform/kernel/backend",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//platform/util/coroutines",
+    "//platform/analysis-api:analysis",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/jdom",
+    "//platform/platform-impl:ide-impl",
+  ],
+  runtime_deps = [
+    ":backend_resources",
+    "//platform/backend",
+  ]
+)
+### auto-generated section `build intellij.platform.scopes.backend` end

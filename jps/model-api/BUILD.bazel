@@ -1,0 +1,15 @@
+### auto-generated section `build intellij.platform.jps.model` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "model",
+  module_name = "intellij.platform.jps.model",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "//platform/util",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+### auto-generated section `build intellij.platform.jps.model` end

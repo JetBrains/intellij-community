@@ -1,0 +1,16 @@
+### auto-generated section `build kotlin.plugin` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "plugin_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "plugin",
+  visibility = ["//visibility:public"],
+  runtime_deps = [":plugin_resources"]
+)
+### auto-generated section `build kotlin.plugin` end

@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.platform.distributionContent.testFramework` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = ["kotlinx.serialization.ExperimentalSerializationApi"]
+)
+
+jvm_library(
+  name = "distributionContent-testFramework",
+  module_name = "intellij.platform.distributionContent.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kaml",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+### auto-generated section `build intellij.platform.distributionContent.testFramework` end

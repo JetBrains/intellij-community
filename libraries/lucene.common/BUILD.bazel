@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.libraries.lucene.common` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "lucene.common_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "lucene.common",
+  visibility = ["//visibility:public"],
+  exports = [
+    "@lib//:lucene-analysis-common",
+    "@lib//:lucene-core",
+  ],
+  runtime_deps = [
+    ":lucene.common_resources",
+    "@lib//:lucene-analysis-common",
+    "@lib//:lucene-core",
+  ]
+)
+### auto-generated section `build intellij.libraries.lucene.common` end

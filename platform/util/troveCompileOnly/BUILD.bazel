@@ -1,0 +1,12 @@
+### auto-generated section `build intellij.platform.util.troveCompileOnly` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "troveCompileOnly",
+  module_name = "intellij.platform.util.troveCompileOnly",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = ["@lib//:jetbrains-annotations"]
+)
+### auto-generated section `build intellij.platform.util.troveCompileOnly` end
