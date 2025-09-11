@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.components.ExpandMacroToPathMap
@@ -7,7 +9,6 @@ import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.bridge.impl.serialization.DefaultImlNormalizer
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
@@ -32,11 +33,12 @@ class CachingJpsFileContentReader(private val configLocation: JpsProjectConfigLo
     val content = fileContentCache.computeIfAbsent(fileUrl + customModuleFilePath) {
       loadComponents(fileUrl, customModuleFilePath)
     }
-    return content[componentName]
+    return content.get(componentName)
   }
 
-  override fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap =
-    getMacroManager(fileUrl = fileUrl, customModuleFilePath = null).expandMacroMap
+  override fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap {
+    return getMacroManager(fileUrl = fileUrl, customModuleFilePath = null).expandMacroMap
+  }
 
   private fun loadComponents(fileUrl: String, customModuleFilePath: String?): Map<String, Element> {
     val macroManager = getMacroManager(fileUrl = fileUrl, customModuleFilePath = customModuleFilePath)
@@ -46,17 +48,17 @@ class CachingJpsFileContentReader(private val configLocation: JpsProjectConfigLo
 
   private fun getMacroManager(fileUrl: String, customModuleFilePath: String?): PathMacroManager {
     val path = JpsPathUtil.urlToPath(fileUrl)
-    return if (fileUrl.endsWith(".iml") || isExternalModuleFile(path)) {
-      ModulePathMacroManager.createInstance(configLocation::projectFilePath) { customModuleFilePath ?: path }
+    if (fileUrl.endsWith(".iml") || isExternalModuleFile(path)) {
+      return ModulePathMacroManager.createInstance(configLocation::projectFilePath) { customModuleFilePath ?: path }
     }
     else {
-      projectPathMacroManager
+      return projectPathMacroManager
     }
   }
 
   private fun loadStorageFile(xmlFile: Path, pathMacroManager: PathMacroManager): Map<String, Element> {
     val rootElement = JDOMUtil.load(xmlFile)
-    if (Strings.endsWith(xmlFile.toString(), ".iml")) {
+    if (xmlFile.toString().endsWith(".iml")) {
       DefaultImlNormalizer.normalize(rootElement)
     }
     return ComponentStorageUtil.loadComponents(rootElement, pathMacroManager)

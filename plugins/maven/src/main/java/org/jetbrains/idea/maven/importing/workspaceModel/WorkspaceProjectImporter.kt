@@ -6,6 +6,7 @@ import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -57,7 +58,7 @@ import java.nio.file.Path
 import java.util.function.Function
 import kotlin.coroutines.cancellation.CancellationException
 
-internal val AFTER_IMPORT_CONFIGURATOR_EP: ExtensionPointName<MavenAfterImportConfigurator> = ExtensionPointName.create(
+internal val AFTER_IMPORT_CONFIGURATOR_EP: ExtensionPointName<MavenAfterImportConfigurator> = ExtensionPointName(
   "org.jetbrains.idea.maven.importing.afterImportConfigurator")
 
 @TestOnly
@@ -83,13 +84,15 @@ internal open class WorkspaceProjectImporter(
 
     val migratedToExternalStorage = migrateToExternalStorageIfNeeded()
 
-    val storageBeforeImport = WorkspaceModel.getInstance(myProject).currentSnapshot
+    val storageBeforeImport = myProject.serviceAsync<WorkspaceModel>().currentSnapshot
 
     val projectChangesInfo = tracer.spanBuilder("collectProjectChanges").use {
       collectProjectChanges(storageBeforeImport, projectsToImport, migratedToExternalStorage)
     }
 
-    if (!projectChangesInfo.hasChanges) return emptyList()
+    if (!projectChangesInfo.hasChanges) {
+      return emptyList()
+    }
 
     val postTasks = ArrayList<MavenProjectsProcessorTask>()
     val stats = WorkspaceImportStats.start(myProject)
@@ -144,24 +147,23 @@ internal open class WorkspaceProjectImporter(
   }
 
   private fun migrateToExternalStorageIfNeeded(): Boolean {
-    var migratedToExternalStorage = false
     val externalStorageManager = ExternalStorageConfigurationManager.getInstance(myProject)
-    if (!externalStorageManager.isEnabled) {
-      ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true)
-      migratedToExternalStorage = true
-
-      if (!externalStorageManager.isEnabled) {
-        MavenLog.LOG.error(
-          "Can't migrate the project to external project files storage: ExternalStorageConfigurationManager.isEnabled=false")
-      }
-      else if (!myProject.isExternalStorageEnabled) {
-        MavenLog.LOG.warn("Can't migrate the project to external project files storage: Project.isExternalStorageEnabled=false")
-      }
-      else {
-        MavenLog.LOG.info("Project has been migrated to external project files storage")
-      }
+    if (externalStorageManager.isEnabled) {
+      return false
     }
-    return migratedToExternalStorage
+
+    ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true)
+
+    if (!externalStorageManager.isEnabled) {
+      MavenLog.LOG.error("Can't migrate the project to external project files storage: ExternalStorageConfigurationManager.isEnabled=false")
+    }
+    else if (!myProject.isExternalStorageEnabled) {
+      MavenLog.LOG.warn("Can't migrate the project to external project files storage: Project.isExternalStorageEnabled=false")
+    }
+    else {
+      MavenLog.LOG.info("Project has been migrated to external project files storage")
+    }
+    return true
   }
 
   private data class ProjectChangesInfo(val hasChanges: Boolean, val allProjectsToChanges: Map<MavenProject, MavenProjectModifications>) {

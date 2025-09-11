@@ -133,10 +133,11 @@ internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: St
   }
 }
 
-internal fun isSpecialOrNonRoamableStorage(collapsedPath: String): Boolean =
-  collapsedPath == StoragePathMacros.WORKSPACE_FILE ||
-  collapsedPath == StoragePathMacros.NON_ROAMABLE_FILE ||
-  isSpecialStorage(collapsedPath)
+internal fun isSpecialOrNonRoamableStorage(collapsedPath: String): Boolean {
+  return collapsedPath == StoragePathMacros.WORKSPACE_FILE ||
+         collapsedPath == StoragePathMacros.NON_ROAMABLE_FILE ||
+         isSpecialStorage(collapsedPath)
+}
 
 internal fun isSpecialStorage(collapsedPath: String): Boolean {
   return collapsedPath == StoragePathMacros.CACHE_FILE || collapsedPath == StoragePathMacros.PRODUCT_WORKSPACE_FILE

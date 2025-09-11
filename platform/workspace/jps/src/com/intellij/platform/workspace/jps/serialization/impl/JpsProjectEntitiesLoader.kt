@@ -59,23 +59,27 @@ object JpsProjectEntitiesLoader {
                           orphanage: MutableEntityStorage,
                           errorReporter: ErrorReporter,
                           context: SerializationContext) {
-    val reader = context.fileContentReader
-    val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(context.virtualFileUrlManager),
-                                                                             null, source, context)
-    val newEntities = serializer.loadEntities(reader, errorReporter, context.virtualFileUrlManager)
+    val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(
+      fileUrl = moduleFile.toVirtualFileUrl(context.virtualFileUrlManager),
+      moduleGroup = null,
+      source = source,
+      context = context,
+    )
+    val newEntities = serializer.loadEntities(context.fileContentReader, errorReporter, context.virtualFileUrlManager)
     serializer.checkAndAddToBuilder(builder, orphanage, newEntities.data)
     newEntities.exception?.let { throw it }
   }
 
-  fun createProjectSerializers(configLocation: JpsProjectConfigLocation,
-                                       externalStoragePath: Path,
-                                       context: SerializationContext): JpsProjectSerializers {
+  fun createProjectSerializers(
+    configLocation: JpsProjectConfigLocation,
+    externalStoragePath: Path,
+    context: SerializationContext,
+  ): JpsProjectSerializers {
     val externalStorageRoot = externalStoragePath.toVirtualFileUrl(context.virtualFileUrlManager)
     val externalStorageMapping = JpsExternalStorageMappingImpl(externalStorageRoot, configLocation)
     return when (configLocation) {
       is JpsProjectConfigLocation.FileBased -> createIprProjectSerializers(configLocation, externalStorageMapping, context)
       is JpsProjectConfigLocation.DirectoryBased -> createDirectoryProjectSerializers(configLocation, externalStorageMapping, context)
-      else -> error("Unexpected state")
     }
   }
 

@@ -23,8 +23,9 @@ internal class ExternalModuleStorage(private val module: Module, storageManager:
 
   override fun loadLocalData(): Element? = manager.readModuleData(module.name)
 
-  override fun createSaveSession(states: StateMap): SaveSessionProducer =
-    ExternalStorageSaveSessionProducer(states, storage = this, manager.moduleStorage, module.name)
+  override fun createSaveSession(states: StateMap): SaveSessionProducer {
+    return ExternalStorageSaveSessionProducer(states, storage = this, manager.moduleStorage, module.name)
+  }
 }
 
 internal open class ExternalProjectStorage(
@@ -40,8 +41,9 @@ internal open class ExternalProjectStorage(
 
   override fun loadLocalData(): Element? = manager.fileStorage.read(fileSpec)
 
-  override fun createSaveSession(states: StateMap): SaveSessionProducer =
-    ExternalStorageSaveSessionProducer(states, storage = this, manager.fileStorage, name = fileSpec)
+  override fun createSaveSession(states: StateMap): SaveSessionProducer {
+    return ExternalStorageSaveSessionProducer(states, storage = this, manager.fileStorage, name = fileSpec)
+  }
 
   override fun toString(): String = "ExternalProjectStorage(fileSpec=${fileSpec})"
 }
@@ -64,19 +66,22 @@ internal class ExternalProjectFilteringStorage(
     override fun hasData(element: Element): Boolean = element.children.any { elementOutputFilter.accept(it, 1) }
   }
 
-  override fun loadLocalData(): Element? =
-    JDOMUtil.merge(
+  override fun loadLocalData(): Element? {
+    return JDOMUtil.merge(
       super.loadLocalData(),
       internalStorage.getSerializedState(internalStorage.loadData(), component = null, componentName, archive = true)
     )
+  }
 
-  override fun createSaveSession(states: StateMap): SaveSessionProducer =
-    ExternalStorageSaveSessionProducer(states, storage = this, manager.fileStorage, name = fileSpec, filter)
+  override fun createSaveSession(states: StateMap): SaveSessionProducer {
+    return ExternalStorageSaveSessionProducer(states, storage = this, manager.fileStorage, name = fileSpec, filter)
+  }
 }
 
-private fun findExternalSystemStreamProviderFactory(project: Project): ExternalSystemStreamProviderFactory =
-  StreamProviderFactory.EP_NAME.getExtensions(project)
+private fun findExternalSystemStreamProviderFactory(project: Project): ExternalSystemStreamProviderFactory {
+  return StreamProviderFactory.EP_NAME.getExtensions(project)
     .first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
+}
 
 private class ExternalStorageSaveSessionProducer(
   states: StateMap,

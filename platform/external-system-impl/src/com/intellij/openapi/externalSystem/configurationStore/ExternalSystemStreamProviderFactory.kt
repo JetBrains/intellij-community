@@ -15,7 +15,6 @@ import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.util.Function
 import org.jdom.Element
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -32,7 +31,7 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
   private val storages = HashMap<String, Storage>()
 
   init {
-    project.messageBus.connect().subscribe(ModuleListener.TOPIC, object : ModuleListener {
+    project.messageBus.simpleConnect().subscribe(ModuleListener.TOPIC, object : ModuleListener {
       override fun moduleRemoved(project: Project, module: Module) {
         moduleStorage.remove(module.name)
       }
@@ -45,7 +44,13 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
     })
   }
 
-  override fun customizeStorageSpecs(component: PersistentStateComponent<*>, storageManager: StateStorageManager, stateSpec: State, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
+  override fun customizeStorageSpecs(
+    component: PersistentStateComponent<*>,
+    storageManager: StateStorageManager,
+    stateSpec: State,
+    storages: List<Storage>,
+    operation: StateStorageOperation,
+  ): List<Storage>? {
     val componentManager = storageManager.componentManager ?: return null
     val project = componentManager as? Project ?: (componentManager as Module).project
 

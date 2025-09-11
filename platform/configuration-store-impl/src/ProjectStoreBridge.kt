@@ -21,7 +21,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -86,7 +85,7 @@ class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(project), 
     saveSessions: MutableList<SaveSession>,
     saveResult: SaveResult,
     forceSavingAllSettings: Boolean,
-    projectSessionManager: ProjectSaveSessionProducerManager
+    projectSessionManager: ProjectSaveSessionProducerManager,
   ) {
     projectSessionManager as ProjectWithModulesSaveSessionProducerManager
     val workspaceModel = project.serviceAsync<WorkspaceModel>()
@@ -376,16 +375,14 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project, isU
   fun commitComponents(moduleStore: ComponentStoreImpl, moduleSaveSessionManager: SaveSessionProducerManager) {
     fun commitToStorage(storageSpec: Storage, componentToElement: Map<String, Element>) {
       val storage = moduleStore.storageManager.getStateStorage(storageSpec)
-      val producer = moduleSaveSessionManager.getProducer(storage)
-      if (producer != null) {
-        for ((componentName, componentTag) in componentToElement) {
-          producer.setState(
-            component = null,
-            componentName = componentName,
-            pluginId = PluginManagerCore.CORE_ID,
-            state = if (componentTag === NULL_ELEMENT) null else componentTag,
-          )
-        }
+      val producer = moduleSaveSessionManager.getProducer(storage) ?: return
+      for ((componentName, componentTag) in componentToElement) {
+        producer.setState(
+          component = null,
+          componentName = componentName,
+          pluginId = PluginManagerCore.CORE_ID,
+          state = if (componentTag === NULL_ELEMENT) null else componentTag,
+        )
       }
     }
 
@@ -415,40 +412,40 @@ internal class StorageJpsConfigurationReader(private val project: Project, priva
     if (ProjectUtil.isRemotePath(FileUtilRt.toSystemDependentName(filePath)) && !TrustedProjects.isProjectTrusted(project)) {
       throw IOException(ConfigurationStoreBundle.message("error.message.details.configuration.files.from.remote.locations.in.safe.mode"))
     }
-    if (componentName.isEmpty()) {
-      //this is currently used for loading Eclipse project configuration from the.classpath file
-      val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl)
-      val component = file?.inputStream?.use { JDOMUtil.load(it) }
-      return@addMeasuredTime component
-    }
-    if (isExternalMiscFile(filePath)) {
-      // this is a workaround to make a working scenario when the whole .idea is moved to external configuration dir
-      // see com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader.isExternalStorageEnabled
-      val component = getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
-      return@addMeasuredTime component
-    }
-    if (filePath.endsWith(".iml") || isExternalModuleFile(filePath)) {
-      //todo fetch data from ModuleStore (IJPL-15992)
-      val component = getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
-      return@addMeasuredTime component
-    }
-    else {
-      val storage = getProjectStateStorage(filePath, project.stateStore, project)
-      val stateMap = storage.getStorageData()
-      val component = if (storage is DirectoryBasedStorage) {
-        val elementContent = stateMap.getElement(PathUtilRt.getFileName(filePath))
-        if (elementContent == null) {
-          null
+
+    when {
+      componentName.isEmpty() -> {
+        // this is currently used for loading Eclipse project configuration from the.classpath file
+        val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl)
+        file?.inputStream?.use { JDOMUtil.load(it) }
+      }
+      isExternalMiscFile(filePath) -> {
+        // this is a workaround to make a working scenario when the whole .idea is moved to external configuration dir
+        // see com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader.isExternalStorageEnabled
+        getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
+      }
+      filePath.endsWith(".iml") || isExternalModuleFile(filePath) -> {
+        //todo fetch data from ModuleStore (IJPL-15992)
+        getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
+      }
+      else -> {
+        val storage = getProjectStateStorage(filePath, project.stateStore, project)
+        val stateMap = storage.getStorageData()
+        val component = if (storage is DirectoryBasedStorage) {
+          val elementContent = stateMap.getElement(PathUtilRt.getFileName(filePath))
+          if (elementContent == null) {
+            null
+          }
+          else {
+            Element(ComponentStorageUtil.COMPONENT).setAttribute(ComponentStorageUtil.NAME, componentName).addContent(elementContent)
+          }
         }
         else {
-          Element(ComponentStorageUtil.COMPONENT).setAttribute(ComponentStorageUtil.NAME, componentName).addContent(elementContent)
+          stateMap.getElement(componentName)
         }
-      }
-      else {
-        stateMap.getElement(componentName)
-      }
 
-      return@addMeasuredTime component
+        component
+      }
     }
   }
 
@@ -493,19 +490,18 @@ internal class StorageJpsConfigurationReader(private val project: Project, priva
 }
 
 internal fun getProjectStateStorage(filePath: String, store: IProjectStore, project: Project): StateStorageBase<StateMap> {
-  val storageSpec = getStorageSpec(filePath, project)
   @Suppress("UNCHECKED_CAST")
-  return store.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
+  return store.storageManager.getStateStorage(getStorageSpec(filePath, project)) as StateStorageBase<StateMap>
 }
 
 private fun getStorageSpec(filePath: String, project: Project): Storage {
   val collapsedPath: String
   val splitterClass: Class<out StateSplitterEx>
-  val fileName = PathUtil.getFileName(filePath)
-  val parentPath = PathUtil.getParentPath(filePath)
-  val parentFileName = PathUtil.getFileName(parentPath)
-  if (filePath.endsWith(".ipr") || fileName == "misc.xml" && parentFileName == Project.DIRECTORY_STORE_FOLDER) {
-    collapsedPath = "\$PROJECT_FILE$"
+  val fileName = PathUtilRt.getFileName(filePath)
+  val parentPath = PathUtilRt.getParentPath(filePath)
+  val parentFileName = PathUtilRt.getFileName(parentPath)
+  if (filePath.endsWith(".ipr") || (fileName == "misc.xml" && parentFileName == Project.DIRECTORY_STORE_FOLDER)) {
+    collapsedPath = $$"$PROJECT_FILE$"
     splitterClass = StateSplitterEx::class.java
   }
   else {
@@ -514,13 +510,13 @@ private fun getStorageSpec(filePath: String, project: Project): Storage {
       splitterClass = StateSplitterEx::class.java
     }
     else {
-      val grandParentPath = PathUtil.getParentPath(parentPath)
+      val grandParentPath = PathUtilRt.getParentPath(parentPath)
       collapsedPath = parentFileName
       splitterClass = FakeDirectoryBasedStateSplitter::class.java
       if (PathUtil.getFileName(grandParentPath) != Project.DIRECTORY_STORE_FOLDER) {
         if (parentFileName == "project") {
           if (fileName == "libraries.xml" || fileName == "artifacts.xml") {
-            val inProjectStorage = FileStorageAnnotation(FileUtil.getNameWithoutExtension(fileName), false, splitterClass)
+            val inProjectStorage = FileStorageAnnotation(FileUtilRt.getNameWithoutExtension(fileName), false, splitterClass)
             val componentName = if (fileName == "libraries.xml") "libraryTable" else "ArtifactManager"
             StreamProviderFactory.EP_NAME.computeSafeIfAny(project) {
               it.getOrCreateStorageSpec(fileName, StateAnnotation(componentName, inProjectStorage))
