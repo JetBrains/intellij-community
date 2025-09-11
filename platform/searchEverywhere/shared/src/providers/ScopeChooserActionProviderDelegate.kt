@@ -1,12 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.backend.providers
+package com.intellij.platform.searchEverywhere.providers
 
 import com.intellij.ide.actions.searcheverywhere.ScopeChooserAction
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.application.readAction
 import com.intellij.platform.scopes.SearchScopeData
 import com.intellij.platform.scopes.SearchScopesInfo
-import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.suspendLazy
 import org.jetbrains.annotations.ApiStatus
@@ -35,7 +34,7 @@ class ScopeChooserActionProviderDelegate(private val contributorWrapper: SeAsync
       scopeChooserAction.scopesWithSeparators
     }.mapNotNull { scope ->
       val key = UUID.randomUUID().toString()
-      val data = SearchScopeData.from(scope, key)
+      val data = SearchScopeData.Companion.from(scope, key)
       if (data != null) all[key] = scope
       data
     }

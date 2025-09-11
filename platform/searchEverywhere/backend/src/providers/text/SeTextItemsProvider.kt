@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
-import com.intellij.platform.searchEverywhere.backend.providers.ScopeChooserActionProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

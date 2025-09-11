@@ -8,7 +8,6 @@ import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
-import com.intellij.platform.searchEverywhere.backend.providers.ScopeChooserActionProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.*
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
@@ -53,7 +52,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
       SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, targetsFilter.hiddenTypes)
       targetsFilter.selectedScopeId
     }
-    applyScope(scopeToApply)
+    scopeProviderDelegate.applyScope(scopeToApply)
 
     contributorWrapper.fetchElements(inputQuery, object : AsyncProcessor<Any> {
       override suspend fun process(item: Any, weight: Int): Boolean {
@@ -85,10 +84,6 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
     val namePattern = contributor.filterControlSymbols(rawPattern)
     val matcher = NameUtil.buildMatcherWithFallback("*$rawPattern", "*$namePattern", NameUtil.MatchingCaseSensitivity.NONE)
     return ItemMatchers(matcher, null)
-  }
-
-  private fun applyScope(scopeId: String?) {
-    scopeProviderDelegate.applyScope(scopeId)
   }
 
   suspend fun getSearchScopesInfo(): SearchScopesInfo? {

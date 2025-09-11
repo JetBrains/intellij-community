@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.vm
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereToggleAction
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.rpc.ThrottledItems
@@ -21,6 +22,7 @@ import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
+import com.intellij.platform.searchEverywhere.providers.SeAdaptedItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
@@ -38,6 +40,7 @@ class SeTabVm(
   coroutineScope: CoroutineScope,
   private val tab: SeTab,
   private val searchPattern: StateFlow<String>,
+  private val availableLegacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>
 ) {
   val searchResults: StateFlow<SeSearchContext?> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
@@ -112,13 +115,17 @@ class SeTabVm(
           val params = SeParams(searchPattern, filterData)
           val searchId = UUID.randomUUID().toString()
 
-          val resultsFlow = tab.getItems(params).let {
+          val resultsFlow = tab.getItems(params).let { resultsFlow ->
+            val resultsFlowWithAdaptedPresentations = resultsFlow.mapNotNull {
+              checkAndAddMissingPresentationIfPossible(it)
+            }
+
             val essential = tab.essentialProviderIds()
             if (essential.isEmpty()) {
-              if (shouldThrottle.load()) it.throttledWithAccumulation(shouldPassItem = { item -> item !is SeResultEndEvent })
-              else it.map { event -> ThrottledOneItem(event) }
+              if (shouldThrottle.load()) resultsFlowWithAdaptedPresentations.throttledWithAccumulation(shouldPassItem = { item -> item !is SeResultEndEvent })
+              else resultsFlowWithAdaptedPresentations.map { event -> ThrottledOneItem(event) }
             }
-            else it.throttleUntilEssentialsArrive(essential)
+            else resultsFlowWithAdaptedPresentations.throttleUntilEssentialsArrive(essential)
           }.map { item ->
             if (!shouldLoadMoreFlow.value) _resultsHitBackPressureFlow.emit(searchId to true)
             shouldLoadMoreFlow.first { it }
@@ -175,6 +182,28 @@ class SeTabVm(
     SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ITEM_SELECTED.log(project, data)
   }
 
+  private fun checkAndAddMissingPresentationIfPossible(resultEvent: SeResultEvent): SeResultEvent? {
+    val itemData = resultEvent.itemDataOrNull() ?: return resultEvent
+
+    return if (itemData.presentation is SeAdaptedItemEmptyPresentation) {
+      availableLegacyContributors[itemData.providerId]?.let { contributor ->
+        val fetchedItem = itemData.fetchItemIfExists() as? SeAdaptedItem ?: return null
+        val newItemData = itemData.withPresentation(SeAdaptedItemPresentation(itemData.presentation.isMultiSelectionSupported, fetchedItem.rawObject) {
+          contributor.elementsRenderer
+        })
+
+        when (resultEvent) {
+          is SeResultEndEvent -> resultEvent
+          is SeResultAddedEvent -> SeResultAddedEvent(newItemData)
+          is SeResultReplacedEvent -> SeResultReplacedEvent(resultEvent.uuidsToReplace, newItemData)
+        }
+      }
+    }
+    else {
+      resultEvent
+    }
+  }
+
   suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? {
     return tab.getEmptyResultInfo(context)
   }
@@ -196,6 +225,7 @@ class SeTabVm(
   }
 
   suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
+    if (item.presentation is SeAdaptedItemPresentation) return null
     return tab.getUpdatedPresentation(item)
   }
 
@@ -252,6 +282,12 @@ private fun SeResultEvent.providerId() = when (this) {
   is SeResultAddedEvent -> itemData.providerId
   is SeResultReplacedEvent -> newItemData.providerId
   is SeResultEndEvent -> providerId
+}
+
+private fun SeResultEvent.itemDataOrNull(): SeItemData? = when (this) {
+  is SeResultAddedEvent -> itemData
+  is SeResultReplacedEvent -> newItemData
+  is SeResultEndEvent -> null
 }
 
 private fun SeProviderId.shouldIgnoreThrottling(): Boolean =

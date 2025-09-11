@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.asRef
@@ -85,8 +86,9 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
       try {
         popupSemaphore.withPermit {
-          localProvidersHolder = SeProvidersHolder.initialize(initEvent, project, session, "Frontend")
-          val completable = doShowPopup(popupFuture, tabId, searchText, initEvent, popupScope, session)
+          val providersHolder = SeProvidersHolder.initialize(initEvent, project, session, "Frontend", false)
+          localProvidersHolder = providersHolder
+          val completable = doShowPopup(popupFuture, tabId, searchText, initEvent, popupScope, session, providersHolder.legacyAllTabContributors)
           completable.await()
         }
       }
@@ -116,6 +118,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     initEvent: AnActionEvent,
     popupScope: CoroutineScope,
     session: SeSession,
+    availableLegacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>
   ): CompletableDeferred<Unit> {
     val startTime = System.currentTimeMillis()
     val tabInitializationTimoutMillis: Long = 50
@@ -158,7 +161,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     val deferredTabs = tabsOrDeferredTabs.filterIsInstance<SuspendLazyProperty<SeTab?>>()
 
     var popup: JBPopup? = null
-    val popupVm = SePopupVm(popupScope, project, tabs, deferredTabs, searchText, tabId, historyList) {
+    val popupVm = SePopupVm(popupScope, project, tabs, deferredTabs, searchText, tabId, historyList, availableLegacyContributors) {
       popup?.cancel()
       popup = null
     }

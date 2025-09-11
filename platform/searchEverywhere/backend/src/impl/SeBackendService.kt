@@ -102,7 +102,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
   ) : Map<String, Set<SeProviderId>> {
     val providersHolder = getProvidersHolder(session, dataContextId) ?: return emptyMap()
     return providersHolder.splitToEssentialAndNonEssential(
-      SeItemsProviderFactory.EP_NAME.extensionList.map { it.id.toProviderId() }
+      SeItemsProviderFactory.EP_NAME.extensionList.map { it.id.toProviderId() } + providersHolder.legacyAllTabContributors.map { it.key }
     )
   }
 
@@ -133,7 +133,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
       }
 
       val actionEvent = AnActionEvent.createEvent(dataContext, null, "", ActionUiKind.NONE, null)
-      val providersHolder = SeProvidersHolder.initialize(actionEvent, project, session, "Backend")
+      val providersHolder = SeProvidersHolder.initialize(actionEvent, project, session, "Backend", true)
       sessionIdToProviderHolders[sessionEntity.eid] = providersHolder
 
       sessionEntity.onDispose(coroutineScope.coroutineContext[Rete]!!) {

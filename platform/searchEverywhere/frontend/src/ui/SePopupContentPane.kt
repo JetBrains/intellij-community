@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 import com.intellij.ide.actions.searcheverywhere.HintHelper
+import com.intellij.ide.actions.searcheverywhere.SEResultsListFactory
 import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
@@ -21,9 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.searchEverywhere.SeActionItemPresentation
-import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
-import com.intellij.platform.searchEverywhere.SeTextSearchItemPresentation
+import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
@@ -100,6 +99,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   private var extendedInfoComponent: ExtendedInfoComponent? = null
 
   private val isSearchCompleted: AtomicBoolean = AtomicBoolean(false)
+  private val adaptedProviderRenderersCache = mutableMapOf<SeProviderId, ListCellRenderer<Any>>()
 
   var isCompactViewMode: Boolean = true
     private set
@@ -124,6 +124,14 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
         }
         is SeResultListItemRow if value.item.presentation is SeTextSearchItemPresentation -> {
           textSearchItemListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        }
+        is SeResultListItemRow if value.item.presentation is SeAdaptedItemPresentation -> {
+          val adaptedPresentation = value.item.presentation as SeAdaptedItemPresentation
+          SEResultsListFactory.getNonMoreElementRenderer(null, null, resultList, adaptedPresentation.fetchedItem, index, isSelected) {
+            adaptedProviderRenderersCache.computeIfAbsent(value.item.providerId) {
+              adaptedPresentation.rendererProvider()
+            }
+          }
         }
         else -> {
           defaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
