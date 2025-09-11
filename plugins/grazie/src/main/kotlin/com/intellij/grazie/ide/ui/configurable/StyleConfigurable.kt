@@ -3,7 +3,10 @@ package com.intellij.grazie.ide.ui.configurable
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.utils.nativeName
 import ai.grazie.rules.Rule
-import ai.grazie.rules.settings.*
+import ai.grazie.rules.settings.RuleSetting
+import ai.grazie.rules.settings.Setting
+import ai.grazie.rules.settings.SettingComponent
+import ai.grazie.rules.settings.TextStyle
 import ai.grazie.rules.toolkit.LanguageToolkit
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
@@ -21,11 +24,13 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.getParentOfType
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.pom.Navigatable
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBEmptyBorder
@@ -35,8 +40,8 @@ import com.intellij.util.ui.UIUtil.FontSize
 import com.intellij.util.ui.update.UiNotifyConnector
 import java.awt.BorderLayout
 import java.awt.Image
+import java.awt.Rectangle
 import java.net.URL
-import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.JPanel
@@ -52,6 +57,16 @@ class StyleConfigurable:
 
   private var langData = LinkedHashMap<Language, LangData>()
   private val langComboModel = CollectionComboBoxModel(ArrayList<Language>())
+
+  private val filterComponent: SearchTextField = SearchTextField(false).also {
+    it.textEditor.emptyText.text = GrazieBundle.message("grazie.settings.style.search.placeholder")
+    it.textEditor.document.addDocumentListener(object : DocumentAdapter() {
+      override fun textChanged(e: DocumentEvent) {
+        updateFilter()
+      }
+    })
+    it.border = JBEmptyBorder(5)
+  }
 
   private val settingWrapper by lazy {
     JPanel(BorderLayout()).also { it.add(langData[Language.ENGLISH]!!.component) }
@@ -107,7 +122,11 @@ class StyleConfigurable:
       }
 
       row {
-        cell(settingWrapper).resizableColumn().align(Align.FILL)
+        cell(filterComponent).resizableColumn().align(Align.FILL)
+      }
+
+      row {
+        scrollCell(settingWrapper).resizableColumn().align(Align.FILL)
         resizableRow()
       }
     }
@@ -179,18 +198,6 @@ class StyleConfigurable:
         return separator
       }
 
-      override fun createFilterComponent(doFilter: Consumer<String>): JComponent {
-        val field = SearchTextField(false)
-        field.textEditor.emptyText.text = GrazieBundle.message("grazie.settings.style.search.placeholder")
-        field.textEditor.document.addDocumentListener(object : DocumentAdapter() {
-          override fun textChanged(e: DocumentEvent) {
-            doFilter.accept(field.text)
-          }
-        })
-        field.border = JBEmptyBorder(5)
-        return field
-      }
-
       override fun customizeSettingSection(setting: Setting, section: JComponent) {
         section.border = JBEmptyBorder(0, spacing.horizontalIndent, spacing.verticalComponentGap, 0)
       }
@@ -199,8 +206,6 @@ class StyleConfigurable:
         pane.font = JBFont.medium()
         pane.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
       }
-
-      override fun shouldShowNavBar(groups: MutableList<SettingGroup>) = false
     }
     val comp = SettingComponent(toolkit, RuleIdeClient.INSTANCE, ui)
 
@@ -214,12 +219,17 @@ class StyleConfigurable:
     langComboModel.add(lang)
   }
 
+  private fun updateFilter() {
+    langData[langComboModel.selected!!]!!.component.filter(filterComponent.text)
+  }
+
   private fun selectLanguage(lang: Language) {
     langCombo.selectedItem = lang
     languageChanged(lang)
   }
 
   private fun languageChanged(lang: Language) {
+    updateFilter()
     settingWrapper.removeAll()
     settingWrapper.add(langData[lang]!!.component)
     settingWrapper.repaint()
@@ -323,7 +333,8 @@ class StyleConfigurable:
                 conf.selectLanguage(lang)
                 UiNotifyConnector.doWhenFirstShown(data.component) {
                   SwingUtilities.invokeLater {
-                    data.component.scrollComponentToVisible(settingComponent)
+                    val scrollPane = settingComponent.getParentOfType<JBScrollPane>()!!
+                    settingComponent.scrollRectToVisible(Rectangle(settingComponent.width, scrollPane.height))
                     IdeFocusManager.getInstance(contextProject).requestFocus(paramComponent, true)
                   }
                 }
