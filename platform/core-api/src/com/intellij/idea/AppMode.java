@@ -60,6 +60,9 @@ public final class AppMode {
     return isRemoteDevHost;
   }
 
+  /**
+   * See also {@link com.intellij.ide.plugins.PluginManagerCore#isRunningFromSources}
+   */
   public static boolean isDevServer() {
     return Boolean.getBoolean("idea.use.dev.build.server");
   }

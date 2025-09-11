@@ -109,6 +109,9 @@ object PluginManagerCore {
   @Volatile
   private var thirdPartyPluginsNoteAccepted: Boolean? = null
 
+  /**
+   * See also [AppMode.isDevServer]
+   */
   @JvmStatic
   fun isRunningFromSources(): Boolean {
     var result = isRunningFromSources
