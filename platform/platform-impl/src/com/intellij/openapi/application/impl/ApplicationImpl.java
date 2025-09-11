@@ -781,6 +781,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         return null;
       }
 
+      var canRestart = restart && Restarter.isSupported();  // `Restarter` might load a service; calling before everything's disposed
+
       AppLifecycleListener lifecycleListener = getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
       lifecycleListener.appClosing();
 
@@ -870,7 +872,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
       IdeEventQueue.applicationClose();
 
-      //noinspection SpellCheckingInspection
       if (Boolean.getBoolean("idea.test.guimode")) {
         //noinspection TestOnlyProblems
         ShutDownTracker.getInstance().run();
@@ -879,7 +880,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
       IdeaLogger.dropFrequentExceptionsCaches();
       if (restart) {
-        if (Restarter.isSupported()) {
+        if (canRestart) {
           try {
             Restarter.scheduleRestart(BitUtil.isSet(flags, ELEVATE), beforeRestart);
           }
