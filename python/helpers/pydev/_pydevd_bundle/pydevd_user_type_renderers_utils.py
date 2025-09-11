@@ -33,7 +33,7 @@ def _by_type_entities(cls, renderers_dict):
         try:
             for name_type in ('type_canonical_import_path','type_qualified_name'):
                 target = _resolve_type(getattr(render, name_type, None))
-                if cls is target or (isinstance(target, type) and  getattr(render, 'heirs', False) and issubclass(cls, target)):
+                if cls is target or (isinstance(target, type) and getattr(render, 'heirs', False) and not inspect.isbuiltin(target) and issubclass(cls, target)):
                     return render
         except:
             pass

@@ -289,6 +289,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
     private lateinit var myRbListChildrenRenderer: JRadioButton
 
     private var myTypeNamePanel: JPanel
+    private var mySubclassPanel: JPanel
     private val myTypeNameTextField = TextFieldWithCompletion(
       myProject,
       TypeNameCompletionProvider(myProject),
@@ -297,6 +298,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       true,
       true
     )
+    private var myTypeNameValidator: ComponentValidator
     private var myEnableSubclassMatching: JCheckBox
 
     private val myNodeValueExpressionEditor = XDebuggerExpressionEditor(
@@ -326,10 +328,16 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       myNodeValueExpressionEditor.component.repaint()
 
       myTypeNamePanel = JPanel(BorderLayout())
-      myTypeNamePanel.add(myTypeNameTextField, BorderLayout.CENTER)
-      myTypeNamePanel.add(myEnableSubclassMatching, BorderLayout.EAST)
+      mySubclassPanel = JPanel(BorderLayout(JBUI.scale(5), 0))
 
-      setupTypeNameEditor()
+      mySubclassPanel.add(myEnableSubclassMatching, BorderLayout.CENTER)
+      mySubclassPanel.add(ContextHelpLabel.create(PyBundle.message("form.debugger.variables.view.user.type.renderers.help.no.builtin.superclass")), BorderLayout.EAST)
+      myTypeNamePanel.add(myTypeNameTextField, BorderLayout.CENTER)
+      myTypeNamePanel.add(mySubclassPanel, BorderLayout.EAST)
+
+      myTypeNameValidator = setupTypeNameEditor()
+      myTypeNameValidator.revalidate()
+
       myPanel = createSettingsPanel()
       setupPanelComponents()
       add(myPanel, BorderLayout.NORTH)
@@ -404,16 +412,21 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       })
     }
 
-    private fun setupTypeNameEditor() {
+    private fun setupTypeNameEditor(): ComponentValidator {
       val myTypeNameFieldValidator = ComponentValidator(this).withValidator(
         Supplier<ValidationInfo?> {
           val text: String = myTypeNameTextField.text
-          return@Supplier if (!isValidTypeName(text)) {
-            ValidationInfo(PyBundle.message("form.debugger.variables.view.user.type.renderers.class.not.found"),
-                           myTypeNameTextField)
-          }
-          else {
-            null
+          return@Supplier when {
+            text.isBlank() ->
+              ValidationInfo(PyBundle.message("form.debugger.variables.view.user.type.renderers.empty.target"),
+                             myTypeNameTextField)
+            !isValidTypeName(text) ->
+              ValidationInfo(PyBundle.message("form.debugger.variables.view.user.type.renderers.class.not.found"),
+                             myTypeNameTextField)
+            myEnableSubclassMatching.isSelected && isPythonBuiltin(text) ->
+              ValidationInfo(PyBundle.message("form.debugger.variables.view.user.type.renderers.builtin.superclass"),
+                             myTypeNameTextField)
+            else -> null
           }
         }).installOn(myTypeNameTextField)
 
@@ -422,12 +435,23 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
           myTypeNameFieldValidator.revalidate()
         }
       })
-
       myTypeNameTextField.addDocumentListener(object : DocumentListener {
         override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
           updateSelfType()
         }
       })
+      myEnableSubclassMatching.addActionListener(ActionListener { e ->
+        when (e.source) {
+          myEnableSubclassMatching -> {
+            myTypeNameFieldValidator.revalidate()
+          }
+        }
+      })
+      return myTypeNameFieldValidator
+    }
+
+    private fun isPythonBuiltin(typeName: String): Boolean {
+      return PyTypeNameResolver(myProject).isPythonBuiltinsModule(typeName)
     }
 
     private fun isValidTypeName(typeName: String): Boolean {
@@ -449,6 +473,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       val offset = contextText.indexOf("def")
       val srcPosition = XSourcePositionImpl.createByOffset(contextWithSelf.virtualFile, offset)
       myNodeValueExpressionEditor.setSourcePosition(srcPosition)
+      myTypeNameValidator.revalidate()
     }
 
     private fun setupRadioButtons() {
