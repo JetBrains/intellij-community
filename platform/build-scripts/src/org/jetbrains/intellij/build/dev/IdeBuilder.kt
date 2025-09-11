@@ -193,7 +193,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     val searchableOptionSet = getSearchableOptionSet(context)
 
     val platformDistributionEntriesDeferred = async(CoroutineName("platform distribution entries")) {
-      launch(Dispatchers.IO) {
+      val generateFilesInBinDirJob = launch(Dispatchers.IO) {
         // PathManager.getBinPath() is used as a working dir for maven
         val binDir = Files.createDirectories(runDir.resolve("bin"))
         val oldFiles = Files.newDirectoryStream(binDir).use { it.toCollection(HashSet()) }
@@ -235,6 +235,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         }
       }
 
+      generateFilesInBinDirJob.join()
       request.platformClassPathConsumer?.invoke(context.ideMainClassName, classPath, runDir)
       platformDistributionEntries
     }
