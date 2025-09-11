@@ -404,6 +404,10 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     if (sdkName != null) {
       return lookupGradleJdkByName(sdkName);
     }
+    var projectSdkName = ideaModule.getProject().getJdkName();
+    if (projectSdkName != null) {
+      return lookupGradleJdkByName(projectSdkName);
+    }
     return null;
   }
 
@@ -415,6 +419,10 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     var javaToolchainHome = ObjectUtils.doIfNotNull(sourceSet, it -> it.getJavaToolchainHome());
     if (javaToolchainHome != null) {
       return lookupGradleJdkByPath(NioPathUtil.toCanonicalPath(javaToolchainHome.toPath()));
+    }
+    var projectSdkName = ideaModule.getProject().getJdkName();
+    if (projectSdkName != null) {
+      return lookupGradleJdkByName(projectSdkName);
     }
     return null;
   }

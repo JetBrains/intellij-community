@@ -5,6 +5,8 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.INHERITED_SDK
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.MODULE_SOURCE
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.assertDependencies
+import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.assertLibraryDependencies
+import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.assertModuleDependencies
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModuleEntity
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.useProjectAsync
@@ -42,8 +44,8 @@ class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrati
 
       assertModules(project, "workspace", "maven-app", "maven-lib")
       assertModuleEntity(project, "maven-app") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "maven-lib")
+        assertModuleDependencies(module, "maven-lib")
+        assertLibraryDependencies(module, emptyList())
       }
     }
   }
@@ -69,8 +71,8 @@ class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrati
 
       assertModules(project, "workspace", "maven-app")
       assertModuleEntity(project, "maven-app") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "Maven: org.example:maven-lib:1.0-SNAPSHOT")
+        assertModuleDependencies(module, emptyList())
+        assertLibraryDependencies(module, "Maven: org.example:maven-lib:1.0-SNAPSHOT")
       }
     }
   }
@@ -96,9 +98,10 @@ class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrati
 
       assertModules(project, "workspace", "maven-app")
       assertModuleEntity(project, "maven-app") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "Maven: org.example:maven-lib:1.0-SNAPSHOT",
-                           "Maven: org.example:maven-super-lib:1.0-SNAPSHOT")
+        assertModuleDependencies(module, emptyList())
+        assertLibraryDependencies(module,
+                                  "Maven: org.example:maven-lib:1.0-SNAPSHOT",
+                                  "Maven: org.example:maven-super-lib:1.0-SNAPSHOT")
       }
 
       createMavenConfigFile("workspace/maven-lib", "--settings=" + MavenConstants.SETTINGS_XML)
@@ -114,9 +117,8 @@ class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrati
 
       assertModules(project, "workspace", "maven-app", "maven-lib")
       assertModuleEntity(project, "maven-app") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "maven-lib",
-                           "Maven: org.example:maven-super-lib:1.0-SNAPSHOT")
+        assertModuleDependencies(module, "maven-lib")
+        assertLibraryDependencies(module, "Maven: org.example:maven-super-lib:1.0-SNAPSHOT")
       }
       assertModuleEntity(project, "maven-lib") { module ->
         assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
@@ -127,12 +129,12 @@ class MavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrati
 
       assertModules(project, "workspace", "maven-app", "maven-lib", "maven-super-lib")
       assertModuleEntity(project, "maven-app") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "maven-lib", "maven-super-lib")
+        assertModuleDependencies(module, "maven-lib", "maven-super-lib")
+        assertLibraryDependencies(module, emptyList())
       }
       assertModuleEntity(project, "maven-lib") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "maven-super-lib")
+        assertModuleDependencies(module, "maven-super-lib")
+        assertLibraryDependencies(module, emptyList())
       }
     }
   }
