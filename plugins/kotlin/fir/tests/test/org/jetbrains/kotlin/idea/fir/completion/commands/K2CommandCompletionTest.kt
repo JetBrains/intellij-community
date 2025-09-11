@@ -594,6 +594,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         )
 
         val elements = myFixture.completeBasic()
+        assertNull(elements.firstOrNull { element -> element.lookupString.contains("Introduce local variable", ignoreCase = true) })
         selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 

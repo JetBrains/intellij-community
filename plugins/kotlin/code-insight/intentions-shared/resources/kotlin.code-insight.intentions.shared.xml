@@ -440,5 +440,9 @@
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
+
+    <codeInsight.completion.intention.skipper
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.intentions.shared.KotlinIntentionCommandSkipper"
+            language="kotlin"/>
   </extensions>
 </idea-plugin>
