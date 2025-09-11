@@ -40,6 +40,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.lang.documentation.DocumentationMarkup.*;
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 public final class PyDocumentationBuilder {
   private final PsiElement myElement;
@@ -566,28 +567,117 @@ public final class PyDocumentationBuilder {
     return myElement instanceof PyTargetExpression && PyUtil.isAttribute((PyTargetExpression)myElement);
   }
 
+  // Helper: check if given expression is used as a callee in a call like `expr(...)`
+  private boolean isCallCallee(@NotNull PsiElement expr) {
+    PsiElement parent = expr.getParent();
+    return parent instanceof PyCallExpression && ((PyCallExpression)parent).getCallee() == expr;
+  }
+
+  // Helper: find attribute target in class by name considering methods, properties and class attributes
+  private @Nullable PsiElement findAttributeTargetInClass(@NotNull PyClass cls, @NotNull String attrName) {
+    PyFunction method = cls.findMethodByName(attrName, true, myContext);
+    if (method != null) return method;
+
+    Property property = cls.findProperty(attrName, true, myContext);
+    if (property != null) {
+      Maybe<PyCallable> getter = property.getGetter();
+      PyCallable callable = getter.valueOrNull();
+      return callable instanceof PsiElement ? (PsiElement)callable : property.getDefinitionSite();
+    }
+
+    PyTargetExpression classAttr = cls.findClassAttribute(attrName, true, myContext);
+    if (classAttr != null) return classAttr;
+
+    return null;
+  }
+
+  // Helper: for a union qualifier type, ensure every non-None class member has the same attribute target
+  private boolean hasConsistentAttributeTargetAcrossUnion(@NotNull PyUnionType unionType, @NotNull String attrName) {
+    PsiElement sameTarget = null;
+    for (PyType member : unionType.getMembers()) {
+      if (isNoneType(member)) continue; // Optional[X]
+      if (!(member instanceof PyClassType)) return false;
+      PyClass cls = ((PyClassType)member).getPyClass();
+      PsiElement target = findAttributeTargetInClass(cls, attrName);
+      if (target == null) return false;
+      if (sameTarget == null) {
+        sameTarget = target;
+      }
+      else if (!sameTarget.isEquivalentTo(target)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Helper: decide whether it's safe to resolve a qualified attribute reference for documentation purposes
+  private boolean isQualifiedAttrResolutionSafe(@NotNull PyReferenceExpression ref) {
+    if (!ref.isQualified()) return true;
+    PyExpression qualifier = ref.getQualifier();
+    if (qualifier == null) return true;
+
+    PyType qType = myContext.getType(qualifier);
+    if (qType instanceof PyClassType || qType instanceof PyModuleType) return true;
+
+    if (qType instanceof PyUnionType) {
+      String attrName = ref.getReferencedName();
+      if (attrName != null) {
+        return hasConsistentAttributeTargetAcrossUnion((PyUnionType)qType, attrName);
+      }
+    }
+    return false;
+  }
+
+  // Helper: if a target name is assigned from a reference whose resolved element has a docstring, use that owner
+  private @Nullable PsiElement resolveAssignedDocStringOwnerFromTarget(@NotNull PyTargetExpression target) {
+    if (target.getDocStringValue() != null) return null;
+    final PyExpression assignedValue = target.findAssignedValue();
+    if (assignedValue instanceof PyReferenceExpression) {
+      final PsiElement resolved = resolve((PyReferenceExpression)assignedValue);
+      if (resolved instanceof PyDocStringOwner) {
+        String name = target.getName();
+        if (name != null) {
+          mySectionsMap.get(PyPsiBundle.message("QDOC.assigned.to")).append(HtmlChunk.text(name).code());
+        }
+        return resolved;
+      }
+    }
+    return null;
+  }
+
   private @NotNull PsiElement resolveToDocStringOwner() {
-    // here the ^Q target is already resolved; the resolved element may point to intermediate assignments
-    if (myElement instanceof PyTargetExpression && ((PyTargetExpression)myElement).getDocStringValue() == null) {
-      final PyExpression assignedValue = ((PyTargetExpression)myElement).findAssignedValue();
-      if (assignedValue instanceof PyReferenceExpression) {
-        final PsiElement resolved = resolve((PyReferenceExpression)assignedValue);
-        if (resolved instanceof PyDocStringOwner) {
-          String name = ((PyTargetExpression)myElement).getName();
-          if (name != null) {
-            mySectionsMap.get(PyPsiBundle.message("QDOC.assigned.to")).append(HtmlChunk.text(name).code());
-          }
-          return resolved;
+    // If the original element is an attribute reference with unknown/Any qualifier type,
+    // do not resolve for documentation — show neutral/empty docs instead of unrelated ones.
+    if (myOriginalElement != null) {
+      final PsiElement parent = myOriginalElement.getParent();
+      if (parent instanceof PyReferenceExpression ref && ref.isQualified()) {
+        if (!isQualifiedAttrResolutionSafe(ref) && !isCallCallee(parent)) {
+          return ref;
         }
       }
     }
+
+    // here the ^Q target is already resolved; the resolved element may point to intermediate assignments
+    if (myElement instanceof PyTargetExpression) {
+      PsiElement owner = resolveAssignedDocStringOwnerFromTarget((PyTargetExpression)myElement);
+      if (owner != null) return owner;
+    }
+
     // Reference expression can be passed as the target element in Python console
-    if (myElement instanceof PyReferenceExpression) {
-      final PsiElement resolved = resolve((PyReferenceExpression)myElement);
+    if (myElement instanceof PyReferenceExpression ref) {
+      // If it's a qualified reference like `qual.attr` and the qualifier type is not a concrete class or module type,
+      // do not resolve for documentation purposes to avoid picking unrelated symbols.
+      if (ref.isQualified()) {
+        if (!isQualifiedAttrResolutionSafe(ref) && !isCallCallee(ref)) {
+          return myElement;
+        }
+      }
+      final PsiElement resolved = resolve(ref);
       if (resolved != null) {
         return resolved;
       }
     }
+
     // Return wrapped function for functools.wraps decorated function
     if (myElement instanceof PyFunction function) {
       PyType type = new PyFunctoolsWrapsDecoratedFunctionTypeProvider().getCallableType(function, myContext);
