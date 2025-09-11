@@ -132,6 +132,8 @@
       }
     },
 
+    "EditorPane.inactiveBackground": "BackgroundDark",
+
     "Code.Block": {
       "borderColor": "BorderLight",
       "EditorPane.borderColor": "BorderLight"
