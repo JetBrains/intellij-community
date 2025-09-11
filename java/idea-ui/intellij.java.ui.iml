@@ -58,5 +58,7 @@
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="jackson-databind" level="project" />
   </component>
 </module>

@@ -62,6 +62,8 @@ jvm_library(
     "@lib//:slf4j-api",
     "//xml/xml-psi-api:psi",
     "@lib//:asm",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
   ],
   runtime_deps = [":ui_resources"]
 )
