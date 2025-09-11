@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
@@ -205,6 +205,26 @@ class LoggerCompletionTest : LightFixtureCompletionTestCase() {
   fun testNoAutoCompletionAfterNewExpression() {
     JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
     doAntiTest("logMethod", "anotherLogMethod", "clone")
+  }
+
+  @NeedsIndex.SmartMode(reason = SMART_MODE_REASON_MESSAGE)
+  fun testNoAutoCompletionAfterErrorElementWithDot() {
+    JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
+    doAntiTest()
+  }
+
+  @NeedsIndex.SmartMode(reason = SMART_MODE_REASON_MESSAGE)
+  fun testNoAutoCompletionAfterExpressionWithDot() {
+    JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
+    doAntiTest("equals",
+                 "hashCode",
+                 "toString",
+                 "getClass",
+                 "notify",
+                 "notifyAll",
+                 "wait",
+                 "wait",
+                 "wait")
   }
 
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/logger"

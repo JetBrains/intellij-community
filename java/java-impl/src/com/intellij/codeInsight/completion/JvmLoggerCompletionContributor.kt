@@ -1,9 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
 import com.intellij.lang.logging.JvmLogger
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.patterns.PlatformPatterns.psiElement
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.util.ProcessingContext
@@ -12,8 +14,11 @@ import com.siyeh.ig.psiutils.ExpressionUtils
 public class JvmLoggerCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC,
-           psiElement().withParent(PsiReferenceExpression::class.java).andNot(
-             psiElement().withParent(psiElement(PsiReferenceExpression::class.java).withChild(psiElement(PsiExpression::class.java)))),
+           psiElement().withParent(PsiReferenceExpression::class.java).andNot(psiElement().andOr(
+             psiElement().withParent(psiElement(PsiReferenceExpression::class.java).withChild(psiElement(PsiExpression::class.java))),
+             psiElement().afterLeaf(psiElement(JavaTokenType.DOT).withParent(PsiErrorElement::class.java)),
+             )
+           ),
            object : CompletionProvider<CompletionParameters>() {
              override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
                val parent = parameters.position.parent ?: return
@@ -37,9 +42,5 @@ public class JvmLoggerCompletionContributor : CompletionContributor() {
                }
              }
            })
-  }
-
-  override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-    super.fillCompletionVariants(parameters, result)
   }
 }
