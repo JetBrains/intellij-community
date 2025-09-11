@@ -10,8 +10,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.elementType
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
 internal class KotlinExtractParameterCompletionCommandProvider : AbstractExtractParameterCompletionCommandProvider() {
@@ -39,6 +41,23 @@ internal class KotlinExtractMethodCompletionCommandProvider : AbstractExtractMet
     presentableName = KotlinBundle.message("action.ExtractFunction.text"),
     previewText = KotlinBundle.message("action.ExtractFunction.command.completion.description"),
 ) {
+
+    override fun findControlFlowStatement(offset: Int, psiFile: PsiFile): PsiElement? {
+        val element = getCommandContext(offset, psiFile) ?: return null
+        val elementType = element.elementType
+        if (elementType != KtTokens.LBRACE && elementType != KtTokens.RBRACE) return null
+
+        val parent = element.parent
+        if (parent !is KtBlockExpression) return null
+
+        val containerNode = parent.parent
+        if (containerNode !is KtContainerNodeForControlStructureBody) return null
+
+        val controlFlow = containerNode.parent
+        if (controlFlow is KtLoopExpression || controlFlow is KtIfExpression) return controlFlow
+        return null
+    }
+
     override fun findOutermostExpression(
         offset: Int,
         psiFile: PsiFile,

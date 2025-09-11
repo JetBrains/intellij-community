@@ -7,6 +7,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.elementType
 import com.intellij.psi.util.findParentOfType
 
 internal class JavaExtractConstantCompletionCommandProvider : AbstractExtractConstantCompletionCommandProvider() {
@@ -44,6 +45,22 @@ internal class JavaExtractMethodCompletionCommandProvider : AbstractExtractMetho
   previewText = ActionsBundle.message("action.ExtractMethod.description"),
   synonyms = listOf("Extract method", "Introduce method")
 ) {
+  override fun findControlFlowStatement(offset: Int, psiFile: PsiFile): PsiStatement? {
+    val element = getCommandContext(offset, psiFile) ?: return null
+    val elementType = element.elementType
+    if (elementType != JavaTokenType.RBRACE && elementType != JavaTokenType.LBRACE) return null
+
+    val parent = element.parent
+    if (parent !is PsiCodeBlock) return null
+
+    val blockParent = parent.parent
+    if (blockParent !is PsiBlockStatement) return null
+
+    val controlFlowStatement = blockParent.parent
+    if (controlFlowStatement is PsiLoopStatement || controlFlowStatement is PsiIfStatement) return controlFlowStatement
+    return null
+  }
+
   override fun findOutermostExpression(offset: Int, psiFile: PsiFile, editor: Editor?): PsiElement? {
     val expression = findExpressionInsideMethod(offset, psiFile)
     if (expression?.findParentOfType<PsiMethod>() != null || expression?.findParentOfType<PsiLocalVariable>() != null) return expression
