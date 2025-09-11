@@ -846,6 +846,17 @@ public final class HighlightFixUtil {
         }
       }
     }
+    if (anchor instanceof PsiNewExpression newExpression) {
+      PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
+      factory.createReplaceTypeWithWrongImportFixes(classReference).forEach(sink);
+    }
+    if (anchor.getParent() instanceof PsiVariable variable && variable.getTypeElement() != null &&
+        !variable.getTypeElement().isInferredType()) {
+      PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement != null) {
+        factory.createReplaceTypeWithWrongImportFixes(typeElement.getInnermostComponentReferenceElement()).forEach(sink);
+      }
+    }
     registerChangeParameterClassFix(sink, lType, rType);
   }
 

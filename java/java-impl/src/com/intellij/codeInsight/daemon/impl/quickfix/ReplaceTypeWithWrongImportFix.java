@@ -26,6 +26,7 @@ import java.util.List;
 /**
  * The `ReplaceTypeWithWrongImportFix` class provides a quick fix action for replacing
  * incorrect imported references in Java code with the correct corresponding class type.
+ * Mostly, it supports variable and new expression types.
  */
 public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<PsiJavaCodeReferenceElement> {
 
@@ -79,8 +80,14 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
     JavaCodeStyleManager.getInstance(context.project()).shortenClassReferences(replaced.getParent());
   }
 
+  /**
+   * Creates a list of ReplaceTypeWithWrongImportFix instances for the given PsiJavaCodeReferenceElement.
+   * @see ReplaceTypeWithWrongImportFix
+   * @param ref the PsiJavaCodeReferenceElement to create fixes for
+   * @return a list of ReplaceTypeWithWrongImportFix instances
+   */
   @NotNull
-  static List<@NotNull ReplaceTypeWithWrongImportFix> create(@NotNull PsiJavaCodeReferenceElement ref) {
+  public static List<@NotNull ReplaceTypeWithWrongImportFix> createFixes(@NotNull PsiJavaCodeReferenceElement ref) {
     List<ReplaceTypeWithWrongImportFix> result = new ArrayList<>();
     if (ref.resolve() == null ||
         ref.isQualified()) {
@@ -117,7 +124,7 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
   }
 
   private static @NotNull List<@NotNull ReplaceTypeWithWrongImportFix> processVariable(@NotNull PsiVariable variable,
-                                                                              @NotNull List<ReplaceTypeWithWrongImportFix> result) {
+                                                                                       @NotNull List<ReplaceTypeWithWrongImportFix> result) {
     PsiTypeElement typeElement = variable.getTypeElement();
     if (typeElement == null) return Collections.emptyList();
     PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
@@ -148,6 +155,7 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
     if (expectedClass == null) return null;
     PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(name, scope);
     if (classes.length == 0) return null;
+    if (classes.length > 4) return null;
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
 
     Condition<PsiClass> accessiblePredicate = aClass -> {
@@ -171,13 +179,14 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
       return null;
     }
     PsiClass aClass = filtered.getFirst();
-    if (aClass.getQualifiedName() == null) {
+    String targetClassType = aClass.getQualifiedName();
+    if (targetClassType == null) {
       return null;
     }
-    String targetClassType = aClass.getQualifiedName();
     PsiReferenceParameterList refParameterList = ref.getParameterList();
     if (refParameterList == null) return null;
     if (refParameterList.getTypeArgumentCount() != 0 &&
+        refParameterList.getTypeArgumentCount() == refParameterList.getTypeParameterElements().length &&
         !HighlightFixUtil.isPotentiallyCompatible(aClass, refParameterList)) {
       return null;
     }
@@ -188,7 +197,7 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
       if (!(ref.getParent() instanceof PsiNewExpression newExpression)) return null;
       PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null) return null;
-      if (newExpressionGenericCompatible(ref, aClass, argumentList, aClassSubstitutor)) return null;
+      if (!newExpressionGenericCompatible(ref, aClass, argumentList, aClassSubstitutor)) return null;
       targetClassType += refParameterList.getText();
     }
     if (leftActualAssignableType) {
@@ -227,15 +236,21 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
                                                         @NotNull PsiSubstitutor aClassSubstitutor) {
     boolean foundCompatibleConstructor = false;
 
+    if (argumentList.isEmpty() && PsiUtil.hasDefaultConstructor(aClass)) {
+      return true;
+    }
     for (PsiMethod method : aClass.getMethods()) {
       if (!method.isConstructor()) continue;
       if (!PsiUtil.isAccessible(method, ref, null)) continue;
       PsiParameterList parameterList = method.getParameterList();
+      PsiType[] argumentTypes = argumentList.getExpressionTypes();
+      PsiParameter[] parameters = parameterList.getParameters();
+      if (argumentTypes.length != parameters.length) continue;
       if (argumentList.getExpressionCount() != parameterList.getParametersCount()) continue;
       boolean parametersAssignable = true;
-      for (int i = 0; i < parameterList.getParametersCount(); i++) {
-        PsiType argumentType = argumentList.getExpressionTypes()[i];
-        PsiParameter parameter = parameterList.getParameters()[i];
+      for (int i = 0; i < argumentTypes.length; i++) {
+        PsiType argumentType = argumentTypes[i];
+        PsiParameter parameter = parameters[i];
         PsiType parameterType = parameter.getType();
         if (!TypeConversionUtil.isAssignable(aClassSubstitutor.substitute(parameterType), argumentType)) {
           parametersAssignable = false;
@@ -248,7 +263,6 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
       foundCompatibleConstructor = true;
       break;
     }
-    if (!foundCompatibleConstructor) return true;
-    return false;
+    return foundCompatibleConstructor;
   }
 }

@@ -1169,4 +1169,10 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     LiftThrowOutOfSwitchExpressionFix fix = LiftThrowOutOfSwitchExpressionFix.create(psiSwitchExpression);
     return fix != null ? fix.asIntention() : null;
   }
+
+  @Override
+  public @NotNull List<? extends @NotNull ModCommandAction> createReplaceTypeWithWrongImportFixes(@Nullable PsiJavaCodeReferenceElement reference) {
+    if(reference == null) return List.of();
+    return ReplaceTypeWithWrongImportFix.createFixes(reference);
+  }
 }

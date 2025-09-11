@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
 import com.intellij.util.ui.JBUI;
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
@@ -173,26 +171,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       .or(() -> error.psiForKind(ACCESS_PRIVATE, ACCESS_PACKAGE_LOCAL, ACCESS_PROTECTED).map(psi -> tryCast(psi, PsiJavaCodeReferenceElement.class)))
       .or(() -> error.psiForKind(TYPE_UNKNOWN_CLASS).map(PsiTypeElement::getInnermostComponentReferenceElement))
       .or(() -> error.psiForKind(CALL_AMBIGUOUS_NO_MATCH, CALL_UNRESOLVED).map(PsiMethodCallExpression::getMethodExpression))
-      .or(() -> {
-        Optional<PsiElement> element = error.psiForKind(TYPE_INCOMPATIBLE);
-        return element.map(t -> t instanceof PsiNewExpression newExpression ?
-                                newExpression.getClassOrAnonymousClassReference() : null)
-          .filter(t -> {
-            PsiElement resolved = t.resolve();
-            return resolved instanceof PsiClass psiClass && PsiUtil.isAccessible(psiClass, t, null);
-          });
-      })
-      .or(() -> {
-        Optional<PsiElement> element = error.psiForKind(TYPE_INCOMPATIBLE);
-        return element.map(t -> t.getParent() instanceof PsiVariable variable && variable.getTypeElement() != null &&
-                                !variable.getTypeElement().isInferredType() ?
-                                variable.getTypeElement() : null)
-          .map(PsiTypeElement::getInnermostComponentReferenceElement)
-          .filter(t -> {
-            PsiElement resolved = t.resolve();
-            return resolved instanceof PsiClass psiClass && PsiUtil.isAccessible(psiClass, t, null);
-          });
-      })
       .ifPresent(ref -> UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, info));
     holder.add(info.create());
   }

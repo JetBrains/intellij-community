@@ -841,6 +841,12 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
         HighlightFixUtil.registerFixesOnInvalidConstructorCall(sink, constructorCall, aClass, methodCandidates);
         HighlightFixUtil.registerMethodReturnFixAction(sink, candidate, constructorCall);
       }
+      for (PsiExpression expression : context.mismatchedExpressions()) {
+        if (expression instanceof PsiNewExpression newExpression) {
+          PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
+          myFactory.createReplaceTypeWithWrongImportFixes(classReference).forEach(sink);
+        }
+      }
     });
     fix(TYPE_ARGUMENT_PRIMITIVE, error -> {
       PsiTypeElement typeElement = error.psi();
