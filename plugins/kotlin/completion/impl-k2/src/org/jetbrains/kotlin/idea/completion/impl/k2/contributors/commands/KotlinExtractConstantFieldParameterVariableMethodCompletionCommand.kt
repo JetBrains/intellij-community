@@ -12,9 +12,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.*
 
 internal class KotlinExtractParameterCompletionCommandProvider : AbstractExtractParameterCompletionCommandProvider() {
     override fun findOffsetToCall(offset: Int, psiFile: PsiFile): Int? {
@@ -28,7 +26,11 @@ internal class KotlinExtractLocalVariableCompletionCommandProvider : AbstractExt
         psiFile: PsiFile,
         editor: Editor?
     ): KtExpression? {
-        return findExpressionInsideMethod(offset, psiFile)
+        val expression = findExpressionInsideMethod(offset, psiFile)
+        if (expression?.findParentOfType<KtFunction>() != null &&
+            (expression.findParentOfType<KtProperty>() != null || expression is KtCallExpression || expression is KtDotQualifiedExpression)
+        )return expression
+        return null
     }
 }
 
@@ -42,27 +44,28 @@ internal class KotlinExtractMethodCompletionCommandProvider : AbstractExtractMet
         psiFile: PsiFile,
         editor: Editor?
     ): PsiElement? {
-        return findExpressionInsideMethod(offset, psiFile)
+        val expression = findExpressionInsideMethod(offset, psiFile)
+        if (expression?.findParentOfType<KtFunction>() != null || expression?.findParentOfType<KtProperty>() != null) return expression
+        return null
     }
 }
 
 private fun findExpressionInsideMethod(offset: Int, psiFile: PsiFile): KtExpression? {
     val element = getCommandContext(offset, psiFile) ?: return null
     var expression = element.findParentOfType<KtExpression>() ?: return null
+
     while (true) {
-        val parent = expression.findParentOfType<KtExpression>()
-        if (parent is KtExpression && parent !is KtProperty && parent.textRange.endOffset == offset) {
+        val parent = PsiTreeUtil.getParentOfType(expression, KtExpression::class.java, true, KtValueArgumentList::class.java)
+        if (parent is KtExpression && parent !is KtProperty && parent.textRange.endOffset == offset || parent is KtCallExpression) {
             expression = parent
         } else {
-            if (expression.textRange.endOffset == offset) {
-                break
+            if (expression.textRange.endOffset == offset || expression is KtCallExpression) {
+                return expression
             } else {
                 return null
             }
         }
     }
-    if (expression.findParentOfType<KtProperty>() == null && expression.findParentOfType<KtFunction>() == null) return null
-    return expression
 }
 
 private fun findOffsetForLocalVariable(offset: Int, psiFile: PsiFile): Int? {

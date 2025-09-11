@@ -454,6 +454,73 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
+    fun testExtractVariableInNewGenericType() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            class A<T>
+            fun foo() {
+                A<String.<caret>>()
+            }
+            """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+        myFixture.checkResult(
+            """
+            class A<T>
+            fun foo() {
+                val a = A<String>()
+            }
+            """.trimIndent())
+    }
+
+    fun testExtractVariableAfterNewGenericType() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            class A<T>
+            fun foo() {
+                A<String>().<caret>
+            }
+            """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+        myFixture.checkResult(
+            """
+            class A<T>
+            fun foo() {
+                val a = A<String>()
+            }
+            """.trimIndent())
+    }
+
+    fun testExtractVariableGenericTypeInsideGenericType() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            class A<T>(a : A<T>? = null)
+            fun foo() {
+                A<String>(A<String.<caret>>())
+            }
+            """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+        myFixture.checkResult(
+            """
+            class A<T>(a : A<T>? = null)
+            fun foo() {
+                val a = A<String>()
+                A<String>(a)
+            }
+            """.trimIndent())
+    }
+
     fun testExtractLocalVariableLiteral() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(

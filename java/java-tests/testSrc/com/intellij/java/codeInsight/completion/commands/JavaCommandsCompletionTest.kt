@@ -1094,6 +1094,132 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     """.trimIndent())
   }
 
+
+  fun testExtractVariableInsideNewGenericType() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      package org.example;
+
+      import java.util.ArrayList;
+      
+      public class A {
+          void foo() {
+              new ArrayList<String.<caret>>()
+          }
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+
+    myFixture.checkResult("""
+    package org.example;
+
+    import java.util.ArrayList;
+    
+    public class A {
+        void foo() {
+            ArrayList<String> strings = new ArrayList<String>();
+        }
+    }
+    """.trimIndent())
+  }
+
+  fun testExtractVariableGenericTypeInsideGenericType() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      package org.example;
+
+      import java.util.ArrayList;
+      
+      public class A {
+          void foo() {
+              new ArrayList<String>(new ArrayList<String.<caret>>());
+          }
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+
+    myFixture.checkResult("""
+    package org.example;
+
+    import java.util.ArrayList;
+    
+    public class A {
+        void foo() {
+            ArrayList<String> strings = new ArrayList<String>();
+            new ArrayList<String>(strings);
+        }
+    }
+    """.trimIndent())
+  }
+
+  fun testExtractVariableAfterNewGenericTypeWithError() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      package org.example;
+
+      import java.util.ArrayList;
+      
+      public class A {
+          void foo() {
+              new ArrayList<String>().<caret>
+          }
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertNull(elements.firstOrNull { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
+    // from error quick fix
+    selectItem(elements.first { element -> element.lookupString.contains("Introduce local variable", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+
+    myFixture.checkResult("""
+    package org.example;
+
+    import java.util.ArrayList;
+    
+    public class A {
+        void foo() {
+            ArrayList<String> strings = new ArrayList<String>();
+        }
+    }
+    """.trimIndent())
+  }
+
+  fun testExtractVariableAfterNewGenericType() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      package org.example;
+
+      import java.util.ArrayList;
+      
+      public class A {
+          void foo() {
+              new ArrayList<String>().<caret>;
+          }
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+
+    selectItem(elements.first { element -> element.lookupString.contains("Introduce variable", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+
+    myFixture.checkResult("""
+    package org.example;
+
+    import java.util.ArrayList;
+    
+    public class A {
+        void foo() {
+            ArrayList<String> strings = new ArrayList<String>();
+        }
+    }
+    """.trimIndent())
+  }
+
+
   fun testExtractLocalVariableLiteral() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """

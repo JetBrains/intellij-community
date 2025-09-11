@@ -29,7 +29,12 @@ internal class JavaExtractParameterCompletionCommandProvider : AbstractExtractPa
 
 internal class JavaExtractLocalVariableCompletionCommandProvider : AbstractExtractLocalVariableCompletionCommandProvider() {
   override fun findOutermostExpression(offset: Int, psiFile: PsiFile, editor: Editor?): PsiExpression? {
-    return findExpressionInsideMethod(offset, psiFile)
+    val expression = findExpressionInsideMethod(offset, psiFile)
+    if (
+      expression?.findParentOfType<PsiMethod>() != null &&
+      (expression.findParentOfType<PsiLocalVariable>() != null || isApplicableCallExpression(expression, offset))
+    ) return expression
+    return null
   }
 }
 
@@ -40,7 +45,9 @@ internal class JavaExtractMethodCompletionCommandProvider : AbstractExtractMetho
   synonyms = listOf("Extract method", "Introduce method")
 ) {
   override fun findOutermostExpression(offset: Int, psiFile: PsiFile, editor: Editor?): PsiElement? {
-    return findExpressionInsideMethod(offset, psiFile)
+    val expression = findExpressionInsideMethod(offset, psiFile)
+    if (expression?.findParentOfType<PsiMethod>() != null || expression?.findParentOfType<PsiLocalVariable>() != null) return expression
+    return expression
   }
 }
 
@@ -53,17 +60,19 @@ private fun findExpressionInsideMethod(offset: Int, psiFile: PsiFile): PsiExpres
       expression = parent
     }
     else {
-      if (expression.textRange.endOffset == offset) {
-        break
+      if (expression.textRange.endOffset == offset || expression is PsiNewExpression) {
+        return expression
       }
       else {
         return null
       }
     }
   }
+}
 
-  if (expression.findParentOfType<PsiLocalVariable>() == null && expression.findParentOfType<PsiMethod>() == null) return null
-  return expression
+private fun isApplicableCallExpression(expression: PsiExpression?, offset: Int): Boolean {
+  return expression is PsiMethodCallExpression
+         || expression is PsiNewExpression && (expression.textRange.endOffset != offset || PsiTreeUtil.skipWhitespacesForward(expression) !is PsiErrorElement)
 }
 
 private fun findOffsetForLocalVariable(offset: Int, psiFile: PsiFile): Int? {
