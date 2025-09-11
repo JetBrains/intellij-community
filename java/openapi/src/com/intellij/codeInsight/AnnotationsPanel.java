@@ -16,7 +16,7 @@ import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UI;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -39,7 +39,7 @@ public class AnnotationsPanel {
   private final TableRowSorter<DefaultTableModel> mySorter;
 
   public AnnotationsPanel(Project project,
-                          @NonNls String name,
+                          @Nls String name,
                           List<String> annotations,
                           List<String> defaultAnnotations) {
     myProject = project;
