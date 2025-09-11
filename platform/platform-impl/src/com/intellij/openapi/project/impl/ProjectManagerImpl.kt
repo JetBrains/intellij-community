@@ -3,6 +3,9 @@
 
 package com.intellij.openapi.project.impl
 
+import com.intellij.CommonBundle
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.configurationStore.ProjectStorePathManager
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.saveSettings
@@ -220,7 +223,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     @Suppress("DEPRECATION")
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
     return runBlockingCancellable {
-      withContext(modalityState.asContextElement()) {
+      withContext(modalityState.asContextElement() + ClientId.localId.asContextElement()) {
         prepareProject(projectIdentityFile = path,
                        projectName = null,
                        beforeInit = null,
@@ -554,6 +557,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   final override suspend fun openProjectAsync(projectIdentityFile: Path, options: OpenProjectTask): Project? {
+    return withContext(ClientId.localId.asContextElement()) {
+      openProjectAsyncImpl(projectIdentityFile, options)
+    }
+  }
+
+  private suspend fun openProjectAsyncImpl(projectIdentityFile: Path, options: OpenProjectTask): Project? {
     if (projectIdentityFile.fileSystem.javaClass.name == MultiRoutingFileSystem::javaClass.name) {
       span("EelInitialization.runEelInitialization") {
         try {
@@ -844,9 +853,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   final override suspend fun newProjectAsync(file: Path, options: OpenProjectTask): Project {
-    TrustedProjects.setProjectTrusted(file, true)
-    return prepareNewProject(
-      file,
+    return withContext(ClientId.localId.asContextElement()) {
+      TrustedProjects.setProjectTrusted(file, true)
+     prepareNewProject(
+        file,
       options.projectName,
       options.beforeInit,
       options.useDefaultProjectAsTemplate,
@@ -855,6 +865,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       markAsNew = false
     ).also { project ->
       TrustedProjects.setProjectTrusted(project, true)
+      }
     }
   }
 
