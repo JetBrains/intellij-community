@@ -1,5 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.lookup.Lookup;
@@ -17,21 +16,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseCodeInsightAction extends CodeInsightAction {
-  private final boolean myLookForInjectedEditor;
+  private final boolean lookForInjectedEditor;
 
   protected BaseCodeInsightAction() {
     this(true);
   }
 
   protected BaseCodeInsightAction(boolean lookForInjectedEditor) {
-    myLookForInjectedEditor = lookForInjectedEditor;
+    this.lookForInjectedEditor = lookForInjectedEditor;
   }
 
   @Override
   protected @Nullable Editor getEditor(final @NotNull DataContext dataContext, final @NotNull Project project, boolean forUpdate) {
     Editor editor = getBaseEditor(dataContext, project);
-    if (!myLookForInjectedEditor) return editor;
-    return getInjectedEditor(project, editor, !forUpdate);
+    return lookForInjectedEditor ? getInjectedEditor(project, editor, !forUpdate) : editor;
   }
 
   public static Editor getInjectedEditor(@NotNull Project project, final Editor editor) {
@@ -39,19 +37,23 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
   }
 
   public static Editor getInjectedEditor(@NotNull Project project, final Editor editor, boolean commit) {
-    Editor injectedEditor = editor;
-    if (editor != null) {
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      PsiFile psiFile = documentManager.getCachedPsiFile(editor.getDocument());
-      if (psiFile != null) {
-        if (commit) documentManager.commitAllDocuments();
-        injectedEditor = InjectedLanguageEditorUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile);
-      }
+    if (editor == null) {
+      return editor;
     }
-    return injectedEditor;
+
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    PsiFile psiFile = documentManager.getCachedPsiFile(editor.getDocument());
+    if (psiFile == null) {
+      return editor;
+    }
+
+    if (commit) {
+      documentManager.commitAllDocuments();
+    }
+    return InjectedLanguageEditorUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile);
   }
 
-  protected @Nullable Editor getBaseEditor(final @NotNull DataContext dataContext, final @NotNull Project project) {
+  protected @Nullable Editor getBaseEditor(@NotNull DataContext dataContext, @NotNull Project project) {
     return super.getEditor(dataContext, project, true);
   }
 
@@ -60,17 +62,17 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null){
+    if (project == null) {
       presentation.setEnabled(false);
       return;
     }
 
-    final Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
-    if (activeLookup != null){
-      presentation.setEnabled(isValidForLookup());
+    Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
+    if (activeLookup == null) {
+      super.update(event);
     }
     else {
-      super.update(event);
+      presentation.setEnabled(isValidForLookup());
     }
   }
 

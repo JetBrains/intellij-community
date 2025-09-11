@@ -1,76 +1,63 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.intention.actions
 
-package com.intellij.codeInsight.intention.actions;
+import com.intellij.codeInsight.actions.BaseCodeInsightAction
+import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.icons.AllIcons
+import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification.FrontendThenBackend
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.DumbAware
+import com.intellij.psi.util.PsiUtilBase
 
-import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
-import org.jetbrains.annotations.NotNull;
-
-public final class ShowIntentionActionsAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore,
-                                                                                       LightEditCompatible,
-                                                                                       DumbAware,
-                                                                                       ActionRemoteBehaviorSpecification.FrontendThenBackend {
-  public ShowIntentionActionsAction() {
-    setEnabledInModalContext(true);
+internal class ShowIntentionActionsAction : BaseCodeInsightAction(), ActionToIgnore, LightEditCompatible, DumbAware, FrontendThenBackend {
+  init {
+    isEnabledInModalContext = true
   }
 
-  @Override
-  public void update(@NotNull AnActionEvent event) {
-    Project project = event.getProject();
-    Presentation presentation = event.getPresentation();
+  override fun update(event: AnActionEvent) {
+    val project = event.project
+    val presentation = event.presentation
     if (LightEdit.owns(project)) {
-      presentation.setEnabledAndVisible(!ActionPlaces.EDITOR_POPUP.equals(event.getPlace()));
-      return;
+      presentation.setEnabledAndVisible(ActionPlaces.EDITOR_POPUP != event.place)
+      return
     }
-    super.update(event);
-    boolean isInFloatingToolbar = ActionPlaces.EDITOR_FLOATING_TOOLBAR.equals(event.getPlace());
-    if (isInFloatingToolbar || ActionPlaces.EDITOR_HINT.equals(event.getPlace())) {
-      presentation.setIcon(AllIcons.Actions.IntentionBulb);
+
+    super.update(event)
+
+    val isInFloatingToolbar = ActionPlaces.EDITOR_FLOATING_TOOLBAR == event.place
+    if (isInFloatingToolbar || ActionPlaces.EDITOR_HINT == event.place) {
+      presentation.setIcon(AllIcons.Actions.IntentionBulb)
     }
     if (isInFloatingToolbar) {
-      presentation.setPopupGroup(true);
+      presentation.isPopupGroup = true
     }
   }
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) return;
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
+    val editor = getEditor(e.dataContext, project, false) ?: return
 
-    Editor editor = getEditor(e.getDataContext(), project, false);
-    if (editor == null) return;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) {
+      return
+    }
 
-    PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-    if (psiFile == null) return;
-
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
-    getHandler(e.getDataContext()).invoke(project, editor, psiFile, e.isFromContextMenu());
+    val psiFile = PsiUtilBase.getPsiFileInEditor(editor, project) ?: return
+    getHandler(e.dataContext).invoke(project, editor, psiFile, e.isFromContextMenu)
   }
 
-  @Override
-  protected boolean isValidForLookup() {
-    return true;
+  override fun isValidForLookup(): Boolean = true
+
+  override fun getHandler(): ShowIntentionActionsHandler {
+    return ShowIntentionActionsHandler()
   }
 
-  @Override
-  protected @NotNull ShowIntentionActionsHandler getHandler() {
-    return new ShowIntentionActionsHandler();
-  }
-
-  @Override
-  protected @NotNull ShowIntentionActionsHandler getHandler(@NotNull DataContext dataContext) {
-    return new ShowIntentionActionsHandler();
+  override fun getHandler(dataContext: DataContext): ShowIntentionActionsHandler {
+    return ShowIntentionActionsHandler()
   }
 }
