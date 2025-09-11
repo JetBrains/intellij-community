@@ -87,10 +87,10 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
 
   /**
    * Invoke the surrounder directly without showing a UI. Does nothing if the supplied surrounder is not applicable at a given point.
-   * 
+   *
    * @param project context project
    * @param editor editor to show the UI in, based on the caret positions
-   * @param file PSI file 
+   * @param file PSI file
    * @param surrounder template surrounder. The available surrounder of a given type will be executed.
    */
   @TestOnly
@@ -276,7 +276,6 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
                                                                  @NotNull Editor editor,
                                                                  @NotNull PsiFile file,
                                                                  @NotNull Map<Surrounder, PsiElement[]> surrounders) {
-    if (surrounders.isEmpty()) return null;
     List<AnAction> applicable = new ArrayList<>();
 
     Set<Character> usedMnemonicsSet = new HashSet<>();
