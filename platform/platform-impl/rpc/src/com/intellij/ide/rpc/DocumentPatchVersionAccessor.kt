@@ -4,6 +4,7 @@ package com.intellij.ide.rpc
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.NonExtendable
@@ -27,4 +28,5 @@ interface DocumentPatchVersionAccessor {
 }
 
 @ApiStatus.Internal
+@Serializable
 data class DocumentPatchVersion(private val version: Int, private val hash: Long)

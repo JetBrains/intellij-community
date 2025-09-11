@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.rpc
 
+import com.intellij.ide.rpc.DocumentPatchVersion
+import com.intellij.ide.rpc.DocumentPatchVersionAccessor
 import com.intellij.ide.rpc.FrontendDocumentId
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.project.Project
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
@@ -44,9 +48,17 @@ interface XBreakpointApi : RemoteApi<Unit> {
 
   suspend fun setGroup(breakpointId: XBreakpointId, requestId: Long, group: String?)
 
-  suspend fun updatePosition(breakpointId: XBreakpointId, requestId: Long)
   suspend fun setFileUrl(breakpointId: XBreakpointId, requestId: Long, fileUrl: String?)
-  suspend fun setLine(breakpointId: XBreakpointId, requestId: Long, line: Int)
+
+  /**
+   * Returns `true` on success, `false` if the request should be retried later due to version mismatch.
+   */
+  suspend fun updatePosition(breakpointId: XBreakpointId, requestId: Long, documentPatchVersion: DocumentPatchVersion?): Boolean
+
+  /**
+   * Returns `true` on success, `false` if the request should be retried later due to version mismatch.
+   */
+  suspend fun setLine(breakpointId: XBreakpointId, requestId: Long, line: Int, documentPatchVersion: DocumentPatchVersion?): Boolean
 
   suspend fun createDocument(frontendDocumentId: FrontendDocumentId, breakpointId: XBreakpointId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto?
 
@@ -56,4 +68,10 @@ interface XBreakpointApi : RemoteApi<Unit> {
       return RemoteApiProviderService.resolve(remoteApiDescriptor<XBreakpointApi>())
     }
   }
+}
+
+
+@ApiStatus.Internal
+fun Document.patchVersion(project: Project): DocumentPatchVersion? {
+  return DocumentPatchVersionAccessor.getDocumentVersion(this, project)
 }

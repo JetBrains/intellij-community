@@ -1,19 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
+import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findDocument
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
-import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
@@ -25,25 +28,37 @@ internal enum class RegistrationStatus {
   NOT_STARTED, IN_PROGRESS, REGISTERED, DEREGISTERED
 }
 
+private suspend fun XLineBreakpointProxy.document(): Document? {
+  return readAction { getFile()?.findDocument() }
+}
+
+private suspend fun retryUntilVersionMatchBool(project: Project, document: Document?, request: suspend (DocumentPatchVersion?) -> Boolean) {
+  retryUntilVersionMatch(project, document) { if (request(it)) true else null }
+}
+
 private sealed interface BreakpointRequest {
   val requestId: Long
-  suspend fun sendRequest(breakpointId: XBreakpointId, requestId: Long)
+  suspend fun sendRequest(breakpoint: XLineBreakpointProxy, requestId: Long)
 
   class SetLine(override val requestId: Long, val line: Int, private val redraw: () -> Unit) : BreakpointRequest {
-    override suspend fun sendRequest(breakpointId: XBreakpointId, requestId: Long) {
-      XBreakpointApi.getInstance().setLine(breakpointId, requestId, line)
+    override suspend fun sendRequest(breakpoint: XLineBreakpointProxy, requestId: Long) {
+      retryUntilVersionMatchBool(breakpoint.project, breakpoint.document()) { version ->
+        XBreakpointApi.getInstance().setLine(breakpoint.id, requestId, line, version)
+      }
       redraw()
     }
   }
 
   class UpdatePosition(override val requestId: Long) : BreakpointRequest {
-    override suspend fun sendRequest(breakpointId: XBreakpointId, requestId: Long) {
-      XBreakpointApi.getInstance().updatePosition(breakpointId, requestId)
+    override suspend fun sendRequest(breakpoint: XLineBreakpointProxy, requestId: Long) {
+      retryUntilVersionMatchBool(breakpoint.project, breakpoint.document()) { version ->
+        XBreakpointApi.getInstance().updatePosition(breakpoint.id, requestId, version)
+      }
     }
   }
 }
 
-private class RequestsDebouncer(cs: CoroutineScope, private val breakpointId: XBreakpointId) {
+private class RequestsDebouncer(cs: CoroutineScope, private val breakpoint: XLineBreakpointProxy) {
   private val debouncedRequests = Channel<BreakpointRequest>(Channel.UNLIMITED)
 
   init {
@@ -60,7 +75,7 @@ private class RequestsDebouncer(cs: CoroutineScope, private val breakpointId: XB
     val channel = Channel<BreakpointRequest>()
     launch {
       channel.consumeAsFlow().collectLatest {
-        it.sendRequest(breakpointId, it.requestId)
+        it.sendRequest(breakpoint, it.requestId)
       }
     }
     return channel
@@ -79,7 +94,7 @@ internal class FrontendXLineBreakpointProxy(
   manager: FrontendXBreakpointManager,
   onBreakpointChange: (XBreakpointProxy) -> Unit,
 ) : FrontendXBreakpointProxy(project, parentCs, dto, type, manager.breakpointRequestCounter, onBreakpointChange), XLineBreakpointProxy {
-  private val debouncer = RequestsDebouncer(cs, id)
+  private val debouncer = RequestsDebouncer(cs, this)
 
   private var lineSourcePosition: XSourcePosition? = null
 

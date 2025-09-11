@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.rpc
 
+import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.editor.impl.EditorId
@@ -46,7 +47,12 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
 
   suspend fun copyLineBreakpoint(breakpointId: XBreakpointId, fileId: VirtualFileId, line: Int)
 
-  suspend fun computeInlineBreakpointVariants(projectId: ProjectId, fileId: VirtualFileId, onlyLine: Int?): List<InlineBreakpointVariantsOnLine>
+  /**
+   * Computes inline breakpoint variants.
+   *
+   * @return `null` if the request should be retried later due to version mismatch, or inline variants for the lines in the file.
+   */
+  suspend fun computeInlineBreakpointVariants(projectId: ProjectId, fileId: VirtualFileId, onlyLine: Int?, documentPatchVersion: DocumentPatchVersion?): List<InlineBreakpointVariantsOnLine>?
   suspend fun createVariantBreakpoint(projectId: ProjectId, fileId: VirtualFileId, line: Int, variantIndex: Int)
 }
 

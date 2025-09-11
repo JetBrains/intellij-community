@@ -188,6 +188,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     if (postponeOnChanged()) return
 
     readAndEdtWriteAction {
+      if (onlyLine != null && !DocumentUtil.isValidLine(onlyLine, document)) return@readAndEdtWriteAction value(Unit)
       if (postponeOnChanged()) return@readAndEdtWriteAction value(Unit)
       val inlays = variants.flatMap { (line, variants) ->
         collectInlayData(document, line, variants)
@@ -252,6 +253,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
 
   private fun getBreakpointRangeStartOffset(breakpoint: XLineBreakpointProxy, lineRange: IntRange): Int {
     val range = breakpoint.getHighlightRange()
+    // TODO postpone instead
     if (range !is XLineBreakpointHighlighterRange.Available) return lineRange.first
     return getBreakpointRangeStartNormalized(range.range, lineRange)
   }

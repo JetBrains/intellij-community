@@ -351,7 +351,9 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
 
   override suspend fun getBreakpointVariants(document: Document, onlyLine: Int?): Map<Int, List<InlineVariantWithMatchingBreakpointProxy>> {
     val file = FileDocumentManager.getInstance().getFile(document) ?: return emptyMap()
-    val variantsOnLines = XBreakpointTypeApi.getInstance().computeInlineBreakpointVariants(project.projectId(), file.rpcId(), onlyLine)
+    val variantsOnLines = retryUntilVersionMatch(project, document) { version ->
+      XBreakpointTypeApi.getInstance().computeInlineBreakpointVariants(project.projectId(), file.rpcId(), onlyLine, version)
+    }
     return variantsOnLines.associate { (line, variants) ->
       line to variants.mapIndexed { index, dto ->
         val (variantDto, breakpointId) = dto
