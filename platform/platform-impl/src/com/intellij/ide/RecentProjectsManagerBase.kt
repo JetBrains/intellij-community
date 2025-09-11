@@ -3,6 +3,7 @@
 
 package com.intellij.ide
 
+import com.intellij.configurationStore.ProjectStorePathManager
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.RecentProjectsManager.RecentProjectsChange
 import com.intellij.ide.impl.OpenProjectTask
@@ -29,7 +30,6 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.createIdeFrame
 import com.intellij.openapi.util.ModificationTracker

@@ -707,7 +707,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="projectStorePathCustomizer"
-                    interface="com.intellij.openapi.project.ProjectStorePathCustomizer"
+                    interface="com.intellij.configurationStore.ProjectStorePathCustomizer"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

@@ -10,6 +10,8 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.project.ProjectStoreOwner
+import com.intellij.project.stateStore
 import com.intellij.util.xmlb.annotations.Property
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -26,16 +28,19 @@ internal class ExternalStorageConfiguration : BaseState() {
 @State(name = "ExternalStorageConfigurationManager")
 private class ExternalStorageConfigurationManagerImpl(private val project: Project, private val coroutineScope: CoroutineScope)
   : SimplePersistentStateComponent<ExternalStorageConfiguration>(ExternalStorageConfiguration()), ExternalStorageConfigurationManager {
-  override fun isEnabled(): Boolean = state.enabled
+  override fun isEnabled(): Boolean {
+    return project is ProjectStoreOwner && project.componentStore.isExternalStorageSupported && state.enabled
+  }
 
   /**
    * Internal use only. Call ExternalProjectsManagerImpl.setStoreExternally instead.
    */
   override fun setEnabled(value: Boolean) {
     state.enabled = value
-    if (project.isDefault) {
+    if (project.isDefault || !project.stateStore.isExternalStorageSupported) {
       return
     }
+
     val app = ApplicationManager.getApplication()
     val workspaceModel = WorkspaceModel.getInstance(project)
     app.invokeAndWait { app.runWriteAction { updateEntitySource(workspaceModel) } }
@@ -44,7 +49,7 @@ private class ExternalStorageConfigurationManagerImpl(private val project: Proje
   override fun loadState(state: ExternalStorageConfiguration) {
     super.loadState(state)
 
-    if (project.isDefault) {
+    if (project.isDefault || !project.stateStore.isExternalStorageSupported) {
       return
     }
 

@@ -124,9 +124,10 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
   }
 
   public void setStoreExternally(boolean value) {
-    ExternalStorageConfigurationManager externalStorageConfigurationManager =
-      ExternalStorageConfigurationManager.getInstance(myProject);
-    if (externalStorageConfigurationManager.isEnabled() == value) return;
+    ExternalStorageConfigurationManager externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(myProject);
+    if (externalStorageConfigurationManager.isEnabled() == value) {
+      return;
+    }
     externalStorageConfigurationManager.setEnabled(value);
 
     // force re-save

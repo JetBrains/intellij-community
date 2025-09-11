@@ -50,7 +50,7 @@ import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeIntern
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.project.stateStore
+import com.intellij.project.ProjectStoreOwner
 import com.intellij.util.PlatformUtils.*
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.workspaceModel.ide.EntitiesOrphanage
@@ -495,11 +495,16 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private suspend fun createSerializers(): JpsProjectSerializers {
     val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
 
-    val configLocation = getJpsProjectConfigLocation(project, workspaceModel.virtualFileManager)!!
-    fileContentReader = (project.stateStore as ProjectStoreWithJpsContentReader).createContentReader()
+    val componentStore = (project as ProjectStoreOwner).componentStore
+    fileContentReader = (componentStore as ProjectStoreWithJpsContentReader).createContentReader()
     val externalStoragePath = project.getExternalConfigurationDir()
-    val externalStorageConfigurationManager = (project as ComponentManagerEx)
-      .getServiceAsyncIfDefined(ExternalStorageConfigurationManager::class.java)
+    val externalStorageConfigurationManager = if (componentStore.isExternalStorageSupported) {
+      (project as ComponentManagerEx)
+        .getServiceAsyncIfDefined(ExternalStorageConfigurationManager::class.java)
+    }
+    else {
+      null
+    }
     val fileInDirectorySourceNames = FileInDirectorySourceNames.from(workspaceModel.currentSnapshot)
     val context = IdeSerializationContext(
       virtualFileUrlManager = workspaceModel.virtualFileManager,
@@ -507,6 +512,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       fileInDirectorySourceNames = fileInDirectorySourceNames,
       externalStorageConfigurationManager = externalStorageConfigurationManager,
     )
+
+    val configLocation = getJpsProjectConfigLocation(project, workspaceModel.virtualFileManager)!!
     return createProjectSerializers(configLocation, externalStoragePath, context)
   }
 

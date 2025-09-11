@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.project
+package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -9,8 +9,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * An application service for interacting with project configuration store without an instance of a [Project]
- * In all but a limited number of cases you should use [Project.componentStore]
+ * An application service for interacting with project configuration store without an instance of a [com.intellij.openapi.project.Project]
+ * In all but a limited number of cases you should use [com.intellij.openapi.project.Project.componentStore]
  */
 @ApiStatus.Internal
 interface ProjectStorePathManager {
@@ -19,7 +19,7 @@ interface ProjectStorePathManager {
    *
    * @param projectRoot root directory of the project
    */
-  fun getStoreDescriptor(projectRoot: Path): ProjectStorePathCustomizer.StoreDescriptor
+  fun getStoreDescriptor(projectRoot: Path): ProjectStoreDescriptor
 
   /**
    * Query the filesystem for an existing project store directory

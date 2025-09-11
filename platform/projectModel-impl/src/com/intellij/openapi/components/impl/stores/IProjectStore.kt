@@ -5,14 +5,17 @@ import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
 interface IProjectStore : IComponentStore {
+  @get:Internal
+  val isExternalStorageSupported: Boolean
+
   val projectBasePath: Path
 
-  @get:ApiStatus.Internal
+  @get:Internal
   val locationHash: String
 
   val projectName: String
@@ -28,11 +31,11 @@ interface IProjectStore : IComponentStore {
 
   val workspacePath: Path
 
-  @ApiStatus.Internal
+  @Internal
   fun clearStorages()
 
-  @get:ApiStatus.Internal
-  @set:ApiStatus.Internal
+  @get:Internal
+  @set:Internal
   var isOptimiseTestLoadSpeed: Boolean
 
   fun isProjectFile(file: VirtualFile): Boolean
@@ -42,12 +45,12 @@ interface IProjectStore : IComponentStore {
    */
   val directoryStorePath: Path?
 
-  @ApiStatus.Internal
+  @Internal
   fun setPath(file: Path, template: Project?)
 
   val projectWorkspaceId: String?
 
-  @ApiStatus.Internal
+  @Internal
   companion object {
     @TestOnly
     @JvmField

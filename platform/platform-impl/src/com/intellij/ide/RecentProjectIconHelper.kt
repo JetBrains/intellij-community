@@ -3,10 +3,10 @@
 
 package com.intellij.ide
 
+import com.intellij.configurationStore.ProjectStorePathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
-import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor

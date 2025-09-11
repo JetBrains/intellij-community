@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.project.impl
 
+import com.intellij.configurationStore.ProjectStorePathManager
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
