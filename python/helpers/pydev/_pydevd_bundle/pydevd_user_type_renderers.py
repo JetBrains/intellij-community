@@ -4,6 +4,11 @@ from _pydevd_bundle.pydevd_user_type_renderers_utils import TypeRenderersConstan
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
 
 try:
+    from _pydevd_bundle.pydevd_user_type_renderers_utils import resolve_type
+except:
+    resolve_type = lambda *_,**__: None
+
+try:
     from collections import OrderedDict
 except:
     OrderedDict = dict
@@ -29,6 +34,7 @@ class UserTypeRenderer(object):
         self.type_canonical_import_path = type_canonical_import_path
         self.type_qualified_name = type_qualified_name
         self.type_src_file = type_src_file
+        self.resolved_type = resolve_type(type_canonical_import_path) or resolve_type(type_qualified_name)
         self.module_root_has_one_type_with_same_name = \
             module_root_has_one_type_with_same_name
         self.is_default_value = is_default_value
