@@ -672,6 +672,78 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         assertTrue(elements.any { element -> element.lookupString.contains("Extract function", ignoreCase = true) })
     }
 
+    fun testExtractMethodInControlFlowForAfterLBrace() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() {
+                for (i in 1..10) {.<caret>
+                    println(i)
+                }
+            }
+        """.trimIndent())
+        val elements = myFixture.completeBasic()
+        assertTrue(elements.any { element -> element.lookupString.contains("Extract function", ignoreCase = true) })
+    }
+
+    fun testExtractMethodInControlFlowForAfterRBrace() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() {
+                for (i in 1..10) {
+                }.<caret>
+            }
+            """
+        )
+        val elements = myFixture.completeBasic()
+        assertTrue(elements.any { element -> element.lookupString.contains("Extract function", ignoreCase = true) })
+    }
+
+    fun testExtractMethodInControlFlowIf() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() {
+                if(true) {.<caret>
+                }
+            }
+            """
+        )
+        val elements = myFixture.completeBasic()
+        assertTrue(elements.any { element -> element.lookupString.contains("Extract function", ignoreCase = true) })
+    }
+
+    fun testExtractMethodInControlFlowIfElse() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() {
+                if(true) {
+                } else {.<caret>
+                }
+            }
+            """
+        )
+        val elements = myFixture.completeBasic()
+        assertTrue(elements.any { element -> element.lookupString.contains("Extract function", ignoreCase = true) })
+    }
+
+    fun testExtractMethodInControlFlowIfElseIf() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() {
+                if(true) {
+                } else if (true) {
+                } else if (true) {.<caret>
+                } else {
+                }
+            }
+            """
+        )
+    }
+
     fun testInlineMethod() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(

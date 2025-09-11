@@ -1392,6 +1392,78 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertTrue(elements.any { element -> element.lookupString.contains("Extract method", ignoreCase = true) })
   }
 
+  fun testExtractMethodControlFlowForStatementLBrace() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          void foo() {
+              for(;;) {.<caret>
+              
+              }
+          }
+      }""".trimIndent())
+
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.any { element -> element.lookupString.contains("Extract method", ignoreCase = true) })
+  }
+
+  fun testExtractMethodControlFlowForStatementRBrace() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          void foo() {
+              for(;;) {
+              
+              }.<caret>
+          }
+      }""".trimIndent())
+
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.any { element -> element.lookupString.contains("Extract method", ignoreCase = true) })
+  }
+
+  fun testExtractMethodControlFlowIfStatement() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          void foo() {
+              if(true) {.<caret>
+              
+              }
+          }
+    """)
+  }
+
+  fun testExtractMethodControlFlowIfElseStatement() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          void foo() {
+              if(true) {
+              
+              } else {.<caret>
+              
+              }
+          }
+    """)
+  }
+
+  fun testExtractMethodControlFlowIfElseIfStatement() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          void foo() {
+              if(true) {
+              
+              } else if(true) {
+              
+              } else if (true) {
+              } else {.<caret>
+              }
+          }
+    """)
+  }
+
   fun testMoveMethod() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """

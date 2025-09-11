@@ -53,8 +53,16 @@ internal class KotlinExtractMethodCompletionCommandProvider : AbstractExtractMet
         val containerNode = parent.parent
         if (containerNode !is KtContainerNodeForControlStructureBody) return null
 
-        val controlFlow = containerNode.parent
-        if (controlFlow is KtLoopExpression || controlFlow is KtIfExpression) return controlFlow
+        val controlFlowExpression = containerNode.parent
+        if (controlFlowExpression is KtLoopExpression) return controlFlowExpression
+        else if (controlFlowExpression is KtIfExpression) {
+            var expression = controlFlowExpression
+            while (true) {
+                val parent = expression.parent
+                val grandParent = parent?.parent
+                if (parent is KtContainerNodeForControlStructureBody && grandParent is KtIfExpression) expression = grandParent else return expression
+            }
+        }
         return null
     }
 

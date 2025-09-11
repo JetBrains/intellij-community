@@ -45,7 +45,7 @@ internal class JavaExtractMethodCompletionCommandProvider : AbstractExtractMetho
   previewText = ActionsBundle.message("action.ExtractMethod.description"),
   synonyms = listOf("Extract method", "Introduce method")
 ) {
-  override fun findControlFlowStatement(offset: Int, psiFile: PsiFile): PsiStatement? {
+  override fun findControlFlowStatement(offset: Int, psiFile: PsiFile): PsiElement? {
     val element = getCommandContext(offset, psiFile) ?: return null
     val elementType = element.elementType
     if (elementType != JavaTokenType.RBRACE && elementType != JavaTokenType.LBRACE) return null
@@ -57,7 +57,14 @@ internal class JavaExtractMethodCompletionCommandProvider : AbstractExtractMetho
     if (blockParent !is PsiBlockStatement) return null
 
     val controlFlowStatement = blockParent.parent
-    if (controlFlowStatement is PsiLoopStatement || controlFlowStatement is PsiIfStatement) return controlFlowStatement
+    if (controlFlowStatement is PsiLoopStatement) return controlFlowStatement
+    else if (controlFlowStatement is PsiIfStatement) {
+      var expression = controlFlowStatement
+      while(true) {
+        val parent = expression.parent
+        if (parent is PsiIfStatement) expression = parent else return expression
+      }
+    }
     return null
   }
 

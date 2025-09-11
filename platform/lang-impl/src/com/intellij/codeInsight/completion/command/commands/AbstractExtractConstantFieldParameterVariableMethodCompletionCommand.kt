@@ -101,9 +101,13 @@ abstract class AbstractExtractMethodCompletionCommandProvider(
     synonyms = synonyms,
   ) {
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
-    if (findControlFlowStatement(offset, psiFile) != null) return true
-
-    return findOutermostExpression(offset, psiFile, editor) != null && super.isApplicable(offset, psiFile, editor)
+    val controlFlowStatement = findControlFlowStatement(offset, psiFile)
+    if (controlFlowStatement != null) {
+      editor?.selectionModel?.setSelection(controlFlowStatement.textRange.startOffset, controlFlowStatement.textRange.endOffset)
+      return super.isApplicable(offset, psiFile, editor)
+    } else {
+      return findOutermostExpression(offset, psiFile, editor) != null && super.isApplicable(offset, psiFile, editor)
+    }
   }
 
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand {
