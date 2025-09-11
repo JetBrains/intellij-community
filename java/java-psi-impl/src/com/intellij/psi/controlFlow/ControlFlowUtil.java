@@ -14,6 +14,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.UnmodifiableHashMap;
 import it.unimi.dsi.fastutil.ints.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -2588,7 +2589,9 @@ public final class ControlFlowUtil {
 
         if (latestWriteVarExpression == null) {
           final PsiReferenceExpression expression = getExpression(myFlow.getElement(offset));
-          writeVars = writeVars.with(variable, expression);
+          if (expression != null) {
+            writeVars = writeVars.with(variable, expression);
+          }
         }
         else {
           writeTwiceVars = writeTwiceVars.with(variable, latestWriteVarExpression);
@@ -2615,12 +2618,8 @@ public final class ControlFlowUtil {
       if (writeVars.isEmpty()) return null;
 
       PsiManager psiManager = variable.getManager();
-      for (Map.Entry<PsiVariable, PsiReferenceExpression> variableInfo : writeVars.entrySet()) {
-        if (psiManager.areElementsEquivalent(variableInfo.getKey(), variable)) {
-          return variableInfo.getValue();
-        }
-      }
-      return null;
+      return StreamEx.ofValues(writeVars, v -> psiManager.areElementsEquivalent(v, variable))
+        .findFirst().orElse(null);
     }
 
     @Override
