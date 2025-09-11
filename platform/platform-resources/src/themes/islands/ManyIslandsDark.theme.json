@@ -351,6 +351,11 @@
       }
     },
 
-    "VersionControl.MarkerPopup.borderColor": "Gray4"
+    "VersionControl.MarkerPopup.borderColor": "Gray4",
+
+    "NewClass": {
+      "Panel.background": "PopupBackground",
+      "SearchField.background": "PopupBackground"
+    }
   }
 }
