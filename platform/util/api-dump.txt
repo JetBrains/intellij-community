@@ -184,6 +184,7 @@ Fc:com.intellij.openapi.util.io.FileUtil
 - s:findPathsByMask(java.util.regex.Pattern,java.nio.file.Path):java.util.List
 f:com.intellij.openapi.util.io.NioFiles
 - sf:BROKEN_SYMLINK:java.nio.file.attribute.BasicFileAttributes
+- s:copyRecursively(java.nio.file.Path,java.nio.file.Path):V
 - s:createDirectories(java.nio.file.Path):java.nio.file.Path
 - s:createIfNotExists(java.nio.file.Path):java.nio.file.Path
 - s:createParentDirectories(java.nio.file.Path):java.nio.file.Path

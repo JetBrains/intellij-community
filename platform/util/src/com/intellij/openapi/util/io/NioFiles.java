@@ -18,6 +18,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.*;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static java.nio.file.attribute.PosixFilePermission.*;
 
@@ -287,9 +288,8 @@ public final class NioFiles {
   }
 
   /**
-   * See {@link #copyRecursively(Path, Path, Consumer)}.
+   * See {@link #copyRecursively(Path, Path, Predicate)}.
    */
-  @ApiStatus.Experimental
   public static void copyRecursively(@NotNull Path from, @NotNull Path to) throws IOException {
     copyRecursively(from, to, null);
   }
@@ -298,25 +298,30 @@ public final class NioFiles {
    * <p>Recursively copies the given directory or file; for files, copies attributes.
    * Does not follow symlinks (i.e., copies just links, not targets).
    * Merges with an existing directory structure under {@code to} (if any), but does not overwrite existing files.
-   * Invokes the callback before copying a file or a directory.
+   * Checks the filter before copying a file or a directory.
    * Fails fast (throws an exception right after meeting a problematic file or directory); does not try to delete an incomplete copy.</p>
    */
   @ApiStatus.Experimental
-  public static void copyRecursively(@NotNull Path from, @NotNull Path to, @Nullable Consumer<? super Path> callback) throws IOException {
+  public static void copyRecursively(@NotNull Path from, @NotNull Path to, @Nullable Predicate<? super Path> filter) throws IOException {
     Files.walkFileTree(from, new SimpleFileVisitor<Path>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-        if (callback != null) callback.accept(dir);
-        Path copy = dir == from ? to : to.resolve(from.relativize(dir));
-        createDirectories(copy);
-        return FileVisitResult.CONTINUE;
+        if (filter == null || filter.test(dir)) {
+          Path copy = dir == from ? to : to.resolve(from.relativize(dir));
+          createDirectories(copy);
+          return FileVisitResult.CONTINUE;
+        }
+        else {
+          return FileVisitResult.SKIP_SUBTREE;
+        }
       }
 
       @Override
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        if (callback != null) callback.accept(file);
-        Path copy = file == from ? to : to.resolve(from.relativize(file));
-        Files.copy(file, copy, LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES);
+        if (filter == null || filter.test(file)) {
+          Path copy = file == from ? to : to.resolve(from.relativize(file));
+          Files.copy(file, copy, LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES);
+        }
         return FileVisitResult.CONTINUE;
       }
     });
