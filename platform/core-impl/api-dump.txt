@@ -165,6 +165,7 @@ com.intellij.psi.impl.PsiDocumentTransactionListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - transactionCompleted(com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile):V
 - a:transactionStarted(com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile):V
+a:com.intellij.psi.impl.PsiElementBase
 com.intellij.psi.impl.PsiFileEx
 - com.intellij.psi.PsiFile
 - sf:BATCH_REFERENCE_PROCESSING:com.intellij.openapi.util.Key

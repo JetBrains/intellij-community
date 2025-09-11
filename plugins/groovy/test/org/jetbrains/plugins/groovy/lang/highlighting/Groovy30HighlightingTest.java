@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -258,7 +258,7 @@ public class Groovy30HighlightingTest extends GroovyVersionBasedTest {
                        class A {}
                        
                        static void main(String[] args) {
-                          def a = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new String[]{
+                          def a = <error descr="Multi-dimensional array initializers are available in Groovy 5.0 or later">new String[]{
                           {"a"},
                           {},
                           "foo"
@@ -270,17 +270,17 @@ public class Groovy30HighlightingTest extends GroovyVersionBasedTest {
                           <warning descr="Cannot assign 'Integer' to 'A'">1</warning>
                           }
                        
-                          def d = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new A[][]{
+                          def d = <error descr="Multi-dimensional array initializers are available in Groovy 5.0 or later">new A[][]{
                           {},
                           {<warning descr="Cannot assign 'Object' to 'A'">new Object()</warning>}
                           }</error>
                        
-                          def e = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new String[][]{"str", 1, {"strInsideInitializer"}}</error>
+                          def e = <error descr="Multi-dimensional array initializers are available in Groovy 5.0 or later">new String[][]{"str", 1, {"strInsideInitializer"}}</error>
                        }
                        
                        @CompileStatic
                        void anotherMain() {
-                          def a = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new String[]{
+                          def a = <error descr="Multi-dimensional array initializers are available in Groovy 5.0 or later">new String[]{
                           {"a"},
                           {},
                           "foo"
@@ -292,12 +292,12 @@ public class Groovy30HighlightingTest extends GroovyVersionBasedTest {
                           <error descr="Cannot assign 'Integer' to 'A'">1</error>
                           }
                        
-                          def d = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new A[][]{
+                          def d = <error descr="Multi-dimensional array initializers are available in Groovy 5.0 or later">new A[][]{
                           {},
                           {<error descr="Cannot assign 'Object' to 'A'">new Object()</error>}
                           }</error>
                        
-                          def e = <error descr="Multi-dimensional array initializer is available in Groovy 5.0 or later">new String[][]{
+                          def e = <error descr="Multi-dimensional array initializers are available in Groovy 5.0 or later">new String[][]{
                           <error descr="Cannot assign 'String' to 'String[]'">"str"</error>,
                           <error descr="Cannot assign 'Integer' to 'String[]'">1</error>,
                           {"strInsideInitializer"}

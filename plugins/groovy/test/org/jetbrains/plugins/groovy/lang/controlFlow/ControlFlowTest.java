@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.controlFlow;
 
 import com.intellij.openapi.editor.SelectionModel;
@@ -31,6 +31,8 @@ public class ControlFlowTest extends LightJavaCodeInsightFixtureTestCase {
   public void testFor2() { doTest(); }
 
   public void testForeach1() { doTest(); }
+
+  public void testForeach2() { doTest(); }
 
   public void testGrvy1497() { doTest(); }
 

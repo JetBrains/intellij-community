@@ -808,8 +808,10 @@ for_statement ::= 'for' (for_header mb_nl for_body) { pin('.*') = 1 }
 private for_header ::= '(' mb_nl for_clause mb_nl ')' { pin = 1 }
 private for_clause ::= for_in_clause | traditional_for_clause
 
-for_in_clause ::= for_in_parameter (':' | 'in') expression { consumeTokenMethod = 'consumeTokenFast' }
-for_in_parameter ::= modifier_list mb_type_element (weak_keyword | IDENTIFIER) | clear_variants_and_fail { elementType = parameter }
+for_in_clause ::= (two_for_in_parameters | single_for_in_parameter) (':' | 'in') mb_nl expression { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
+private two_for_in_parameters ::= for_in_parameter ',' mb_nl for_in_parameter
+private single_for_in_parameter ::= for_in_parameter !(',')
+for_in_parameter ::= (modifier_list mb_nl mb_type_element) (weak_keyword | IDENTIFIER) mb_nl !('=' | ';') | clear_variants_and_fail { elementType = parameter }
 
 traditional_for_clause ::= empty for_clause_initialization? mb_nl ';' mb_nl expression? mb_nl ';' mb_nl for_clause_update? { pin = 1 }
 private for_clause_initialization ::= for_variable_declaration | expression | clear_variants_and_fail

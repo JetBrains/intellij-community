@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
@@ -60,6 +60,10 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     final PsiType declaredType = getDeclaredType();
     if (declaredType != null) return declaredType;
 
+    if (isIndexVariable()) {
+      return PsiTypes.intType();
+    }
+
     if (isVarArgs()) {
       PsiClassType type = TypesUtil.getJavaLangObject(this);
       return new PsiEllipsisType(type);
@@ -103,6 +107,11 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     else {
       return super.getType();
     }
+  }
+
+  private boolean isIndexVariable() {
+    if (!(getParent() instanceof GrForInClause closure)) return false;
+    return closure.getIndexVariable() == this;
   }
 
   private boolean isMainMethodFirstUntypedParameter() {

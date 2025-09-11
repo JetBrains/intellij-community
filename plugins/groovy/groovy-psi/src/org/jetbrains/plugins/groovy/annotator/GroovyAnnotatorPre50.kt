@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mIMPL
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrPatternVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 
@@ -34,6 +35,11 @@ class GroovyAnnotatorPre50(val holder : AnnotationHolder) : GroovyElementVisitor
     }
   }
 
+  override fun visitForInClause(forInClause: GrForInClause) {
+    val indexVariable = forInClause.indexVariable ?: return
+    error(indexVariable, Groovy5Features.INDEX_VARIABLE_IN_FOREACH_LOOP)
+  }
+
   private fun error(element: PsiElement, feature: Groovy5Features) {
     val message = GroovyBundle.message(feature.messageKey)
     holder.newAnnotation(
@@ -45,6 +51,7 @@ class GroovyAnnotatorPre50(val holder : AnnotationHolder) : GroovyElementVisitor
   }
 
   private enum class Groovy5Features(val messageKey: @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) String) {
+    INDEX_VARIABLE_IN_FOREACH_LOOP("index.variable.in.foreach.loop"),
     PATTERN_MATCHING("instanceof.pattern.variable.feature"),
     LOGICAL_IMPLICATION("logical.implication.feature"),
     MULTI_DIMENSIONAL_ARRAY_INITIALIZER("multi.dimensional.array.initializer.feature")

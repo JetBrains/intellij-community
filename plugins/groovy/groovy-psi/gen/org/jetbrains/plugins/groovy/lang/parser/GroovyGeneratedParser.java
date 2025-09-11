@@ -4143,15 +4143,26 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // for_in_parameter (':' | 'in') expression
+  // (two_for_in_parameters | single_for_in_parameter) (':' | 'in') mb_nl expression
   public static boolean for_in_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_in_clause")) return false;
-    boolean r;
+    boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, FOR_IN_CLAUSE, "<for in clause>");
-    r = for_in_parameter(b, l + 1);
-    r = r && for_in_clause_1(b, l + 1);
-    r = r && expression(b, l + 1, -1);
-    exit_section_(b, l, m, r, false, null);
+    r = for_in_clause_0(b, l + 1);
+    p = r; // pin = 1
+    r = r && report_error_(b, for_in_clause_1(b, l + 1));
+    r = p && report_error_(b, mb_nl(b, l + 1)) && r;
+    r = p && expression(b, l + 1, -1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // two_for_in_parameters | single_for_in_parameter
+  private static boolean for_in_clause_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_in_clause_0")) return false;
+    boolean r;
+    r = two_for_in_parameters(b, l + 1);
+    if (!r) r = single_for_in_parameter(b, l + 1);
     return r;
   }
 
@@ -4165,7 +4176,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // modifier_list mb_type_element (weak_keyword | IDENTIFIER) | clear_variants_and_fail
+  // (modifier_list mb_nl mb_type_element) (weak_keyword | IDENTIFIER) mb_nl !('=' | ';') | clear_variants_and_fail
   public static boolean for_in_parameter(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_in_parameter")) return false;
     boolean r;
@@ -4176,24 +4187,56 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // modifier_list mb_type_element (weak_keyword | IDENTIFIER)
+  // (modifier_list mb_nl mb_type_element) (weak_keyword | IDENTIFIER) mb_nl !('=' | ';')
   private static boolean for_in_parameter_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_in_parameter_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
+    r = for_in_parameter_0_0(b, l + 1);
+    r = r && for_in_parameter_0_1(b, l + 1);
+    r = r && mb_nl(b, l + 1);
+    r = r && for_in_parameter_0_3(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // modifier_list mb_nl mb_type_element
+  private static boolean for_in_parameter_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_in_parameter_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
     r = modifier_list(b, l + 1);
+    r = r && mb_nl(b, l + 1);
     r = r && mb_type_element(b, l + 1);
-    r = r && for_in_parameter_0_2(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // weak_keyword | IDENTIFIER
-  private static boolean for_in_parameter_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "for_in_parameter_0_2")) return false;
+  private static boolean for_in_parameter_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_in_parameter_0_1")) return false;
     boolean r;
     r = weak_keyword(b, l + 1);
     if (!r) r = consumeToken(b, IDENTIFIER);
+    return r;
+  }
+
+  // !('=' | ';')
+  private static boolean for_in_parameter_0_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_in_parameter_0_3")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !for_in_parameter_0_3_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // '=' | ';'
+  private static boolean for_in_parameter_0_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_in_parameter_0_3_0")) return false;
+    boolean r;
+    r = consumeToken(b, T_ASSIGN);
+    if (!r) r = consumeToken(b, T_SEMI);
     return r;
   }
 
@@ -6872,6 +6915,28 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // for_in_parameter !(',')
+  static boolean single_for_in_parameter(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "single_for_in_parameter")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = for_in_parameter(b, l + 1);
+    r = r && single_for_in_parameter_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // !(',')
+  private static boolean single_for_in_parameter_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "single_for_in_parameter_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NOT_);
+    r = !consumeToken(b, T_COMMA);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
   // expression_single_parameter_lambda_body | lazy_block_lambda_body
   static boolean single_parameter_lambda_body(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "single_parameter_lambda_body")) return false;
@@ -7927,6 +7992,20 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = weak_keyword(b, l + 1);
     if (!r) r = consumeToken(b, IDENTIFIER);
     exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // for_in_parameter ',' mb_nl for_in_parameter
+  static boolean two_for_in_parameters(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "two_for_in_parameters")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = for_in_parameter(b, l + 1);
+    r = r && consumeToken(b, T_COMMA);
+    r = r && mb_nl(b, l + 1);
+    r = r && for_in_parameter(b, l + 1);
+    exit_section_(b, m, null, r);
     return r;
   }
 

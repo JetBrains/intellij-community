@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.style
 
 import com.intellij.codeInspection.options.OptPane.checkbox
@@ -41,7 +41,7 @@ class GrUnnecessaryDefModifierInspection : GrUnnecessaryModifierInspection("def"
         val parent = owner.parent
         if (owner.typeElementGroovy != null) return true
         if (reportExplicitTypeOnly) return false
-        parent is GrParameterList || parent is GrForInClause && parent.delimiter.node.elementType == kIN
+        parent is GrParameterList || parent is GrForInClause && parent.delimiter?.node?.elementType == kIN
       }
       is GrMethod -> isDefUnnecessary(owner)
       is GrVariable -> owner.typeElementGroovy != null
