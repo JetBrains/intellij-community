@@ -490,7 +490,7 @@ private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob:
       val toolWindow = toolWindowManager.getToolWindow("Project")
       if (toolWindow != null) {
         // maybe readAction
-        withContext(Dispatchers.UiWithModelAccess) {
+        withContext(Dispatchers.EDT) {
           toolWindow.activate(null, !AppMode.isRemoteDevHost())
         }
       }
