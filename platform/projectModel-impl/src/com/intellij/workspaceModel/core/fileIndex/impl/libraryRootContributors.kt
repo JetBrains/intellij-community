@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,9 +28,11 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
 
   override fun registerFileSets(entity: LibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
     val libraryId = entity.symbolicId
-    if (libraryId.tableId !is LibraryTableId.ModuleLibraryTableId &&
-        storage.referrers(libraryId, ModuleEntity::class.java).none()) {
-      return
+    if (Registry.`is`("use.workspace.file.index.for.partial.scanning", true)) {
+      if (libraryId.tableId !is LibraryTableId.ModuleLibraryTableId &&
+          !storage.hasReferrers(libraryId, ModuleEntity::class.java)) {
+        return
+      }
     }
     val compiledRootsData = LibraryRootFileSetData(libraryId)
     val sourceRootFileSetData = LibrarySourceRootFileSetData(libraryId)
