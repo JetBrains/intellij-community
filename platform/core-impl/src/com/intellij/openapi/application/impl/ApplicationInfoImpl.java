@@ -7,6 +7,7 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -34,6 +37,7 @@ import java.util.*;
 public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
   public static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
+  public static final String FREE_MODE_SPLASH_MARKER_FILE_NAME = "splash-free-mode.txt";
 
   private static final String IDEA_APPLICATION_INFO_DEFAULT_DARK_LAF = "idea.application.info.default.dark.laf";
   private static final String IDEA_APPLICATION_INFO_DEFAULT_CLASSIC_DARK_LAF = "idea.application.info.default.classic.dark.laf";
@@ -57,6 +61,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
   private @Nullable String splashImageUrl;
+  private @Nullable String freeModeSplashImageUrl;
   private @Nullable String eapSplashImageUrl;
   private String svgIconUrl;
   private String mySvgEapIconUrl;
@@ -141,6 +146,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
         case "logo-eap": {
           eapSplashImageUrl = getAttributeValue(child, "url");
+        }
+        break;
+
+        case "logo-free-mode": {
+          freeModeSplashImageUrl = getAttributeValue(child, "url");
         }
         break;
 
@@ -432,7 +442,16 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public @Nullable String getSplashImageUrl() {
-    return isEap && eapSplashImageUrl != null ? eapSplashImageUrl : splashImageUrl;
+    if (isEap && eapSplashImageUrl != null) return eapSplashImageUrl;
+
+    if (freeModeSplashImageUrl != null) {
+      Path markerFile = PathManager.getConfigDir().resolve(FREE_MODE_SPLASH_MARKER_FILE_NAME);
+      if (Files.exists(markerFile)) {
+        return freeModeSplashImageUrl;
+      }
+    }
+
+    return splashImageUrl;
   }
 
   @Override
