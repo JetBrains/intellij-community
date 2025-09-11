@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 @Serializable
 @ApiStatus.Experimental
 @ApiStatus.Internal
-class SeItemData(
+class SeItemData private constructor(
   val uuid: String,
   val providerId: SeProviderId,
   val weight: Int,
