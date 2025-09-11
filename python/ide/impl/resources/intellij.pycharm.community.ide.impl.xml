@@ -161,6 +161,12 @@
 
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>
+
+    <!--Non Modal Welcome Screen customization-->
+    <action id="welcome.screen.left.tab.new.py.script"
+            class="com.intellij.pycharm.community.ide.impl.miscProject.impl.PyNewMiscScriptAction">
+      <add-to-group group-id="NonModalWelcomeScreen.LeftTabActions.New"/>
+    </action>
   </actions>
 
 </idea-plugin>

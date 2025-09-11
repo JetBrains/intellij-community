@@ -7,11 +7,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 import com.intellij.pycharm.community.ide.impl.miscProject.PyMiscService
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Action displayed on welcome screen to create a project by [miscFileType]
  */
-internal class PyMiscFileAction(private val miscFileType: MiscFileType) : AnAction(
+@ApiStatus.Internal
+open class PyMiscFileAction(private val miscFileType: MiscFileType) : AnAction(
   miscFileType.title,
   null,
   miscFileType.icon

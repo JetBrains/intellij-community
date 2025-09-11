@@ -6,39 +6,42 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectUsageCollector
 import com.jetbrains.python.Result
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.APP)
-internal class PyMiscService(private val scope: CoroutineScope) {
-  fun createMiscProject(project: Project, miscFileType: MiscFileType) {
-    val projectCreationResult = com.intellij.pycharm.community.ide.impl.miscProject.impl.createMiscProject(
-      miscFileType,
-      confirmInstallation = {
-        withContext(Dispatchers.EDT) {
-          MessageDialogBuilder.yesNo(
-            PyCharmCommunityCustomizationBundle.message("misc.no.python.found"),
-            PyCharmCommunityCustomizationBundle.message("misc.install.python.question")
-          ).ask(project)
-        }
-      },
-      scopeProvider = { scope }
-    )
+@ApiStatus.Internal
+class PyMiscService(private val scope: CoroutineScope) {
+  fun createMiscProject(project: Project, miscFileType: MiscFileType): Unit {
+    scope.launch {
+      val projectCreationResult = com.intellij.pycharm.community.ide.impl.miscProject.impl.createMiscProject(
+        miscFileType,
+        confirmInstallation = {
+          withContext(Dispatchers.EDT) {
+            MessageDialogBuilder.yesNo(
+              PyCharmCommunityCustomizationBundle.message("misc.no.python.found"),
+              PyCharmCommunityCustomizationBundle.message("misc.install.python.question")
+            ).ask(project)
+          }
+        },
+        scopeProvider = { scope }
+      )
 
-    when (val r = projectCreationResult) {
-      is Result.Success -> {
-        MiscProjectUsageCollector.projectCreated(miscFileType)
-      }
-      is Result.Failure -> {
-        runWithModalProgressBlocking(ModalTaskOwner.guess(), "..") {
-          ShowingMessageErrorSync.emit(r.error)
+      when (projectCreationResult) {
+        is Result.Success -> {
+          MiscProjectUsageCollector.projectCreated(miscFileType)
+        }
+        is Result.Failure -> {
+          withContext(Dispatchers.EDT) {
+            ShowingMessageErrorSync.emit(projectCreationResult.error)
+          }
         }
       }
     }

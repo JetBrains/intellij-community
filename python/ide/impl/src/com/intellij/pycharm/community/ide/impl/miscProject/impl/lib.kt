@@ -32,6 +32,7 @@ import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.mapResult
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
@@ -48,26 +49,25 @@ internal val miscProjectDefaultPath: Lazy<Path> = lazy { Path.of(SystemPropertie
  *
  * Pythons are obtained with [systemPythonService]
  */
-@RequiresEdt
-fun createMiscProject(
+@ApiStatus.Internal
+suspend fun createMiscProject(
   miscFileType: MiscFileType,
   scopeProvider: (Project) -> CoroutineScope,
   confirmInstallation: suspend () -> Boolean,
   projectPath: Path = miscProjectDefaultPath.value,
   systemPythonService: SystemPythonService = SystemPythonService(),
-): PyResult<Job> =
-  runWithModalProgressBlocking(ModalTaskOwner.guess(),
-                               PyCharmCommunityCustomizationBundle.message("misc.project.generating.env"),
-                               TaskCancellation.cancellable()) {
-    createProjectAndSdk(projectPath, confirmInstallation = confirmInstallation, systemPythonService = systemPythonService)
-  }.mapResult { (project, sdk) ->
+): PyResult<Job> {
+  return createProjectAndSdk(projectPath,
+                             confirmInstallation = confirmInstallation,
+                             systemPythonService = systemPythonService
+  ).mapResult { (project, sdk) ->
     Result.Success(scopeProvider(project).launch {
       withBackgroundProgress(project, PyCharmCommunityCustomizationBundle.message("misc.project.filling.file")) {
         generateAndOpenFile(projectPath, project, miscFileType, sdk)
       }
     })
   }
-
+}
 
 private suspend fun generateAndOpenFile(projectPath: Path, project: Project, fileType: MiscFileType, sdk: Sdk): PsiFile {
   val generateFile = generateFile(projectPath, fileType.fileName)
@@ -135,7 +135,16 @@ private suspend fun createProjectAndSdk(
 ): PyResult<Pair<Project, Sdk>> {
   val vfsProjectPath = createProjectDir(projectPath).getOr { return it }
   val project = openProject(projectPath)
-  val sdk = createVenvAndSdk(project, confirmInstallation, systemPythonService, vfsProjectPath).getOr(PyBundle.message("project.error.cant.venv")) { return it }
+  val sdkResult = withContext(Dispatchers.EDT) {
+    runWithModalProgressBlocking(
+      owner = ModalTaskOwner.guess(),
+      title = PyCharmCommunityCustomizationBundle.message("misc.project.generating.env"),
+      cancellation = TaskCancellation.cancellable()
+    ) {
+      createVenvAndSdk(project, confirmInstallation, systemPythonService, vfsProjectPath)
+    }
+  }
+  val sdk = sdkResult.getOr(PyBundle.message("project.error.cant.venv")) { return it }
   return Result.success(Pair(project, sdk))
 }
 
