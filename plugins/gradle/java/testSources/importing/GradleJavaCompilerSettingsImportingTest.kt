@@ -235,8 +235,6 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
   @Test
   @TargetVersions("6.7+")
   fun `test Java toolchain support (simple)`() {
-    val javaSdkVersion = JavaSdkVersion.fromJavaVersion(gradleJvmInfo.version)!!
-
     createJavaGradleSubProject(
       projectToolchainLanguage = 8
     )
@@ -245,7 +243,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
 
     assertModules("project", "project.main", "project.test")
 
-    assertProjectSdk(javaSdkVersion) // Bug should be JDK_1_8
+    assertProjectSdk(JavaSdkVersion.JDK_1_8)
     assertModuleSdk("project", JavaSdkVersion.JDK_1_8)
     assertModuleSdk("project.main", JavaSdkVersion.JDK_1_8)
     assertModuleSdk("project.test", JavaSdkVersion.JDK_1_8)
@@ -282,8 +280,6 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
   @Test
   @TargetVersions("6.7+")
   fun `test Java toolchain support (mixed)`() {
-    val javaSdkVersion = JavaSdkVersion.fromJavaVersion(gradleJvmInfo.version)!!
-
     createJavaGradleSubProject(
       projectToolchainLanguage = 17,
       mainToolchainLanguage = 8,
@@ -294,7 +290,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
 
     assertModules("project", "project.main", "project.test")
 
-    assertProjectSdk(javaSdkVersion) // Bug should be JDK_17
+    assertProjectSdk(JavaSdkVersion.JDK_17)
     assertModuleSdk("project", JavaSdkVersion.JDK_17)
     assertModuleSdk("project.main", JavaSdkVersion.JDK_1_8)
     assertModuleSdk("project.test", JavaSdkVersion.JDK_11)
@@ -307,8 +303,6 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
   @Test
   @TargetVersions("6.7+")
   fun `test Java toolchain support (update)`() {
-    val javaSdkVersion = JavaSdkVersion.fromJavaVersion(gradleJvmInfo.version)!!
-
     createJavaGradleSubProject(
       projectToolchainLanguage = 8,
     )
@@ -317,7 +311,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
 
     assertModules("project", "project.main", "project.test")
 
-    assertProjectSdk(javaSdkVersion) // Bug should be JDK_1_8
+    assertProjectSdk(JavaSdkVersion.JDK_1_8)
     assertModuleSdk("project", JavaSdkVersion.JDK_1_8)
     assertModuleSdk("project.main", JavaSdkVersion.JDK_1_8)
     assertModuleSdk("project.test", JavaSdkVersion.JDK_1_8)
@@ -334,7 +328,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
 
     assertModules("project", "project.main", "project.test")
 
-    assertProjectSdk(javaSdkVersion) // Bug IDEA-258496 should be JDK_11
+    assertProjectSdk(JavaSdkVersion.JDK_1_8) // Bug IDEA-258496 should be JDK_11
     assertModuleSdk("project", JavaSdkVersion.JDK_11)
     assertModuleSdk("project.main", JavaSdkVersion.JDK_11)
     assertModuleSdk("project.test", JavaSdkVersion.JDK_11)

@@ -15,6 +15,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
@@ -392,6 +393,14 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   }
 
   private @Nullable Sdk lookupProjectSdk(@NotNull IdeaProject ideaProject) {
+    var sdk = collectAllSourceSetModels(ideaProject)
+      .map(it -> lookupHolderModuleSdk(it.first, it.second))
+      .filter(Objects::nonNull)
+      .min(JavaSdkVersionUtil.naturalJavaSdkOrder(false))
+      .orElse(null);
+    if (sdk != null) {
+      return sdk;
+    }
     var sdkName = ideaProject.getJdkName();
     if (sdkName != null) {
       return lookupGradleJdkByName(sdkName);
