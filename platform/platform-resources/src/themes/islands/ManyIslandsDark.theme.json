@@ -151,7 +151,8 @@
       "Header.activeBackground": "PopupBackground",
       "Advertiser.background": "PopupBackgroundLight",
       "Advertiser.borderColor": "PopupBackgroundLight",
-      "borderColor": "PopupBorder"
+      "borderColor": "PopupBorder",
+      "Toolbar.background": "PopupBackground"
     },
     "ComplexPopup.Header.background": "PopupBackgroundLight",
     "CompletionPopup.Advertiser.background": "PopupBackgroundLight",
