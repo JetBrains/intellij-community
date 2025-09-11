@@ -12,6 +12,7 @@ import kotlinx.io.asSource
 import kotlinx.io.buffered
 
 private const val IJ_MCP_PREFIX = "IJ_MCP_"
+const val IJ_MCP_HEADER_PREFIX: String = "${IJ_MCP_PREFIX}HEADER_"
 val IJ_MCP_SERVER_PORT: String = ::IJ_MCP_SERVER_PORT.name
 val IJ_MCP_SERVER_PROJECT_PATH: String = ::IJ_MCP_SERVER_PROJECT_PATH.name
 
@@ -33,7 +34,7 @@ suspend fun main() {
 
   val envsToPass = System.getenv().filter { (key, _) -> key.startsWith(IJ_MCP_PREFIX) }
   val sseClientTransport = SseClientTransport(httpClient, "http://localhost:$port/sse") {
-    envsToPass.forEach { (key, value) -> header(key, value)}
+    envsToPass.forEach { (key, value) -> header(key.removePrefix(IJ_MCP_HEADER_PREFIX), value)}
   }
 
   stdioServerTransport.onMessage {
