@@ -6,6 +6,7 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
+import com.intellij.driver.sdk.ui.components.elements.WindowUiComponent
 import com.intellij.driver.sdk.ui.components.elements.tree
 import com.intellij.driver.sdk.ui.ui
 
@@ -18,7 +19,7 @@ fun Driver.welcomeScreen(action: WelcomeScreenUI.() -> Unit = {}): WelcomeScreen
   return this.ui.welcomeScreen(action)
 }
 
-open class WelcomeScreenUI(data: ComponentData) : UiComponent(data) {
+open class WelcomeScreenUI(data: ComponentData) : WindowUiComponent(data) {
   open val createNewProjectButton: UiComponent = x("//div[(@accessiblename='New Project' and @class='JButton') or (@visible_text='New Project' and @class!='JBLabel')]")
   open val openProjectButton: UiComponent = x("//div[(@accessiblename='Open' and @class='JButton')  or (@visible_text='Open' and @class!='JBLabel')]")
   val fromVcsButton: UiComponent = x("//div[@accessiblename='Clone Repository' and @class='JButton']")

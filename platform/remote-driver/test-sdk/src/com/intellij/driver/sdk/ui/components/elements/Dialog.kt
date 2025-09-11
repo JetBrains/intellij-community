@@ -44,26 +44,19 @@ fun Finder.waitForNoOpenedDialogs(timeout: Duration = 100.seconds) {
 
 fun WelcomeScreenUI.aboutDialog(action: AboutDialogUi.() -> Unit) = x(AboutDialogUi::class.java) { contains(byTitle("About")) }.apply(action)
 
-class AboutDialogUi(data: ComponentData) : UiComponent(data) {
+class AboutDialogUi(data: ComponentData) : DialogUiComponent(data) {
   val closeButton: UiComponent
     get() = x { byAccessibleName("Close") }
 }
 
-open class DialogUiComponent(data: ComponentData) : UiComponent(data) {
-  private val windowComponent by lazy {
-    driver.cast(component, Window::class)
-  }
+open class DialogUiComponent(data: ComponentData) : WindowUiComponent(data) {
   val okButton = x { byAccessibleName("OK") }
   val cancelButton = x { byAccessibleName("Cancel") }
-
-  fun setBounds(bounds: Rectangle) = windowComponent.setBounds(bounds.x, bounds.y, bounds.width, bounds.height)
 
   fun pressButton(text: String) = x("//div[@class='JButton' and @visible_text='$text']").click()
 
   fun closeDialog() {
-    driver.withContext(OnDispatcher.EDT) {
-      windowComponent.dispose()
-    }
+    super.dispose()
   }
 }
 
