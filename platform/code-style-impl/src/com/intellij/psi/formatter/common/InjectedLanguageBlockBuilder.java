@@ -158,6 +158,14 @@ public abstract class InjectedLanguageBlockBuilder {
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childLanguage, childPsi);
     LOG.assertTrue(builder != null);
     final FormattingModel childModel = builder.createModel(FormattingContext.create(childPsi, getSettings()));
+    if (!childPsi.getTextRange().contains(childModel.getRootBlock().getTextRange())) {
+      LOG.error("Invalid formatter model created for injected language fragment. Node rage: " + childPsi.getTextRange() +
+                "; created model range: " + childModel.getRootBlock().getTextRange() +
+                "; builder: " + builder.getClass().getName() +
+                "; injected language: " + childLanguage.getID() +
+                "; file: " + childPsi.getContainingFile().getName());
+      return;
+    }
     Block original = childModel.getRootBlock();
 
     if (original.isLeaf() && !injectedNode.getText().trim().isEmpty() || !original.getSubBlocks().isEmpty()) {
