@@ -47,7 +47,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
@@ -296,7 +296,7 @@ open class ShowIntentionActionsHandler : CodeInsightActionHandler {
     }
 
     private fun checkPsiTextConsistency(hostFile: PsiFile) {
-      if (`is`("ide.check.stub.text.consistency") ||
+      if (Registry.`is`("ide.check.stub.text.consistency") ||
           ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
         if (hostFile.isValid()) {
           StubTextInconsistencyException.checkStubTextConsistency(hostFile, SourceOfCheck.DeliberateAdditionalCheckInIntentions)
@@ -344,8 +344,9 @@ open class ShowIntentionActionsHandler : CodeInsightActionHandler {
     }
 
     if (!LightEdit.owns(project)) {
-      val codeAnalyzer = DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl
-      letAutoImportComplete(editor, file, codeAnalyzer)
+      val codeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
+      // let auto import complete
+      CommandProcessor.getInstance().runUndoTransparentAction { codeAnalyzer.autoImportReferenceAtCursor(editor, file) }
     }
 
     IntentionsUI.getInstance(project).hide()
@@ -354,10 +355,10 @@ open class ShowIntentionActionsHandler : CodeInsightActionHandler {
       return
     }
 
-    //intentions check isWritable before modification: if (!file.isWritable()) return;
+    // intentions check isWritable before modification: if (!file.isWritable()) return;
     val state = TemplateManagerImpl.getTemplateState(editor)
     if (state != null && !state.isFinished) {
-      CommandProcessor.getInstance().executeCommand(project, Runnable { state.gotoEnd(false) },
+      CommandProcessor.getInstance().executeCommand(project, { state.gotoEnd(false) },
                                                     LangBundle.message("command.name.finish.template"), null)
     }
 
@@ -386,10 +387,6 @@ open class ShowIntentionActionsHandler : CodeInsightActionHandler {
   }
 
   override fun startInWriteAction(): Boolean = false
-}
-
-private fun letAutoImportComplete(editor: Editor, file: PsiFile, codeAnalyzer: DaemonCodeAnalyzerImpl) {
-  CommandProcessor.getInstance().runUndoTransparentAction { codeAnalyzer.autoImportReferenceAtCursor(editor, file) }
 }
 
 private fun showEmptyMenuFeedback(editor: Editor, showFeedbackOnEmptyMenu: Boolean) {
