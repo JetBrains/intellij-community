@@ -271,6 +271,14 @@ public final class ExternalSystemJdkUtil {
     });
   }
 
+  @ApiStatus.Internal
+  public static boolean matchJavaVersion(@NotNull JavaVersion versionRequirement, @Nullable String versionString) {
+    var version = JavaVersion.tryParse(versionString);
+    return version != null &&
+           version.compareTo(versionRequirement) >= 0 &&
+           version.feature == versionRequirement.feature;
+  }
+
   @RequiresWriteLock
   private static @NotNull Sdk createJdk(@NotNull String sdkHome) {
     var sdkTable = ProjectJdkTable.getInstance();
