@@ -647,6 +647,9 @@
     <extensionPoint name="customTypeRpcSerializer" interface="com.intellij.ide.rpc.CustomTypeRpcSerializer" dynamic="true"/>
     <extensionPoint name="anActionSerializer" interface="com.intellij.ide.rpc.AnActionSerializer" dynamic="true"/>
 
+    <extensionPoint name="rpc.documentVersionAccessor"
+                    interface="com.intellij.ide.rpc.DocumentPatchVersionAccessor" dynamic="true"/>
+
     <extensionPoint name="frontendDocumentIdRegistry" interface="com.intellij.ide.rpc.FrontendDocumentIdRegistry"
                     dynamic="true"/>
 
