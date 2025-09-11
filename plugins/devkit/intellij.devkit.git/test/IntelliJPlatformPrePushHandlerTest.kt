@@ -221,6 +221,7 @@ class IntelliJPlatformPrePushHandlerTest {
           "format thing", "format: thing", "[format] thing",
           "style thing", "style: thing", "[style] thing",
           "refactor this thing", "refactor: this thing",
+          "WIP", "[WIP] do stuff", "Add thingies WIP", "wip", "(wip) hoho", "wip: haha",
 
           "Cleanup (reason)",
           "[subsystem][tests] new tests",
@@ -284,6 +285,7 @@ class IntelliJPlatformPrePushHandlerTest {
           "stuff", "stuff:", "[stuff]", "very important stuff",
           "refactor", "refactor:", "[refactor]",
           "refactoring", "refactoring:", "[refactoring]",
+          "wipe", "swipe", "wipe the db",
 
           "[subsystem] Do very important stuff very very important",
           "platform: add 'thing' here and there",
