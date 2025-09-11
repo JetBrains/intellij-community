@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,8 @@ public class PsiTypeTestPatternImpl extends CompositePsiElement implements PsiTy
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     
     PsiPatternVariable variable = getPatternVariable();
-    if (variable != null && variable != lastParent && !variable.isUnnamed()) {
+    if (variable != null && variable != lastParent && 
+        !(variable.isUnnamed() && !Boolean.TRUE.equals(processor.getHint(ElementClassHint.PROCESS_UNNAMED_VARIABLES)))) {
       return processor.execute(variable, state);
     }
     return true;
