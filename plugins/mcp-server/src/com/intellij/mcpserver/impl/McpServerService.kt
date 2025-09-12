@@ -383,14 +383,24 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
                   }
                   is VFileCreateEvent -> {
                     val virtualFile = event.file ?: continue
-                    val newContent = readAction { FileDocumentManager.getInstance().getDocument(virtualFile)?.text } ?: continue
-                    sideEffectEvents.add(FileCreatedEvent(virtualFile, newContent))
+                    if (event.isDirectory) {
+                      sideEffectEvents.add(DirectoryCreatedEvent(virtualFile))
+                    }
+                    else {
+                      val newContent = readAction { FileDocumentManager.getInstance().getDocument(virtualFile)?.text } ?: continue
+                      sideEffectEvents.add(FileCreatedEvent(virtualFile, newContent))
+                    }
                   }
                   is VFileDeleteEvent -> {
                     val virtualFile = event.file
-                    val document = readAction { FileDocumentManager.getInstance().getDocument(virtualFile) } ?: continue
-                    val oldContent = initialDocumentContents[document]
-                    sideEffectEvents.add(FileDeletedEvent(virtualFile, oldContent))
+                    if (virtualFile.isDirectory) {
+                      sideEffectEvents.add(DirectoryDeletedEvent(virtualFile))
+                    }
+                    else {
+                      val document = readAction { FileDocumentManager.getInstance().getDocument(virtualFile) } ?: continue
+                      val oldContent = initialDocumentContents[document]
+                      sideEffectEvents.add(FileDeletedEvent(virtualFile, oldContent))
+                    }
                   }
                   is VFileCopyEvent -> {
                     val createdFile = event.findCreatedFile() ?: continue
