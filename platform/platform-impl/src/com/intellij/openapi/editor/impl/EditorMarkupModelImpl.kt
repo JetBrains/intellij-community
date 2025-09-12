@@ -234,9 +234,11 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     connection.subscribe(LafManagerListener.TOPIC, LafManagerListener { trafficLightPopup.updateUI() })
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun selectionChanged(event: FileEditorManagerEvent) {
-        showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget && analyzerStatus.controller.isToolbarEnabled
+        if (isErrorStripeVisible) {
+          showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget && analyzerStatus.controller.isToolbarEnabled
 
-        updateTrafficLightVisibility()
+          updateTrafficLightVisibility()
+        }
       }
     })
 
