@@ -68,12 +68,6 @@ public abstract class SvnConfigurable extends ConfigurableBase<ConfigurableUi<Sv
     }
   }
 
-  public static class Presentation extends SvnConfigurable {
-    public Presentation(@NotNull Project project) {
-      super(project, "Presentation", message("configurable.name.svn.presentation"), () -> new PresentationSettingsPanel(project));
-    }
-  }
-
   public static class Ssh extends SvnConfigurable {
     public Ssh(@NotNull Project project) {
       super(project, "SSH", message("configurable.name.svn.ssh"), () -> new SshSettingsPanel(project));
