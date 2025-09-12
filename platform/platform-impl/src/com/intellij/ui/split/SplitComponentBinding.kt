@@ -96,7 +96,7 @@ fun <T : Id> SplitComponentBinding<T>.createComponent(project: Project, scope: C
   }
   else {
     logger.debug("Creating component in-place")
-    return SplitComponentProvider.createComponent(project, scope, placeId, modelId.uid)
+    return SplitComponentProvider.createComponent(project, scope, this, modelId)
   }
 }
 

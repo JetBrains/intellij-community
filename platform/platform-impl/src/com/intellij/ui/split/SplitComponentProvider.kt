@@ -40,13 +40,40 @@ interface SplitComponentProvider<T : Id> {
 
     @ApiStatus.Internal
     fun createComponent(project: Project, cs: CoroutineScope, placeId: String, modelUid: UID): JComponent {
+      return createComponent(placeId, modelUid) { provider ->
+        provider.createComponentByUid(project, cs, modelUid)
+      }
+    }
+
+    // The separate method with [binding] is needed for the local case when modelId won't be serialized/deserialized by Rd models
+    internal fun <T : Id> createComponent(project: Project, cs: CoroutineScope, binding: SplitComponentBinding<T>, modelId: T): JComponent {
+      return createComponent(binding.placeId, modelId.uid) { provider ->
+        // provider should have generic of type T because it has the same binding as the passed one
+        @Suppress("UNCHECKED_CAST")
+        (provider as SplitComponentProvider<T>).createComponent(project, cs, modelId)
+      }
+    }
+
+    private fun <T : Id> SplitComponentProvider<T>.createComponentByUid(
+      project: Project,
+      cs: CoroutineScope,
+      modelUId: UID,
+    ): JComponent? {
+      return createComponent(project, cs, binding.deserializeModelId(modelUId))
+    }
+
+    private fun createComponent(
+      placeId: String,
+      modelUid: UID,
+      componentFactory: (SplitComponentProvider<*>) -> JComponent?,
+    ): JComponent {
       val extensions = EP.extensionList.filter { it.binding.placeId == placeId }
       val provider = extensions.firstOrNull()
       if (extensions.size > 1) {
         fileLogger().warn("Multiple provider for place: $placeId are registered. First one ($provider) is used")
       }
       if (provider != null) {
-        val component = createComponent(project, cs, provider, modelUid)
+        val component = componentFactory(provider)
         if (component != null) {
           return component
         }
@@ -59,11 +86,6 @@ interface SplitComponentProvider<T : Id> {
       }
       val component = JBLabel(IdeBundle.message("split.component.missing", "$placeId/$modelUid"))
       return component
-    }
-
-    private fun <T : Id> createComponent(project: Project, cs: CoroutineScope, provider: SplitComponentProvider<T>, modelUid: UID): JComponent? {
-      val modelId = provider.binding.deserializeModelId(modelUid)
-      return provider.createComponent(project, cs, modelId)
     }
   }
 }

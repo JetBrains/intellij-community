@@ -10,7 +10,12 @@ internal sealed interface BuildTreeViewModelProxy {
   companion object {
     fun getInstance(buildViewId: BuildViewId): BuildTreeViewModelProxy {
       val modelIsLocal = buildViewId.modelIsOnClient == PlatformUtils.isJetBrainsClient()
-      val localModel = buildViewId.findValue()?.takeIf { modelIsLocal }
+      val localModel = if (modelIsLocal) {
+        buildViewId.findValue()
+      }
+      else {
+        null
+      }
       if (localModel != null) {
         return Local(localModel)
       }
