@@ -47,6 +47,11 @@ public class PyAsyncCallInspectionTest extends PyInspectionTestCase {
     doMultiFileTest("a.py");
   }
 
+  // PY-84027
+  public void testCreateTaskIsOk() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
