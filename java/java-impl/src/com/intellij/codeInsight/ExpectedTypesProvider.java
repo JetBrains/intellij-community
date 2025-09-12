@@ -236,9 +236,8 @@ public final class ExpectedTypesProvider {
 
       List<PsiPrimitiveType> primitiveTypes = PsiTypes.primitiveTypes();
       Stack<PsiType> stack = new Stack<>();
-      for (int i = primitiveTypes.size() - 1; i >= 0; i--) {
-        PsiPrimitiveType primitiveType = primitiveTypes.get(i);
-        if (primitiveTypes.get(i).equals(type)) break;
+      for (PsiPrimitiveType primitiveType : primitiveTypes.reversed()) {
+        if (primitiveType.equals(type)) break;
         //it is already processed before
         if (primitiveType.equals(PsiTypes.booleanType())) continue;
         stack.push(primitiveType);

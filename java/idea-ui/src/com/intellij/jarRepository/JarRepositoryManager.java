@@ -590,11 +590,7 @@ public final class JarRepositoryManager {
                                                                 @NotNull ArtifactRepositoryManager manager) throws Exception {
     try {
       List<Version> versions = new ArrayList<>(manager.getAvailableVersions(groupId, artifactId, "[0,)", ArtifactKind.ARTIFACT));
-      ArrayList<String> strings = new ArrayList<>(versions.size());
-      for (int i = versions.size() - 1; i >= 0; i--) {
-        strings.add(versions.get(i).toString());
-      }
-      return strings;
+      return ContainerUtil.map(versions.reversed(), Version::toString);
     }
     catch (TransferCancelledException e) {
       throw new ProcessCanceledException(e);

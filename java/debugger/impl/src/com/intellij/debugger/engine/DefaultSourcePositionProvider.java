@@ -97,8 +97,8 @@ public final class DefaultSourcePositionProvider extends SourcePositionProvider 
           // important: use the last location to be sure the position will be within the anonymous class
           // and do not use type.allLineLocations as it fetches line tables for all methods
           List<Method> methods = type.methods();
-          for (int i = methods.size() - 1; i >= 0; i--) {
-            List<Location> locations = methods.get(i).allLineLocations();
+          for (Method m : methods.reversed()) {
+            List<Location> locations = m.allLineLocations();
             if (!locations.isEmpty()) {
               aClass = JVMNameUtil.getClassAt(debugProcess.getPositionManager().getSourcePosition(ContainerUtil.getLastItem(locations)));
               break;

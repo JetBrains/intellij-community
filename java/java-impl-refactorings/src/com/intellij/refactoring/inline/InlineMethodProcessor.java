@@ -707,8 +707,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static void replaceWithAccessors(PsiReferenceExpression ref, PsiCodeBlock block) {
     List<PsiReferenceExpression> list = SyntaxTraverser.psiTraverser(block).filter(PsiReferenceExpression.class).toList();
     // Iterate in opposite order, so in case of nested accessors, we first replace method arguments, then methods itself
-    for (int i = list.size() - 1; i >= 0; i--) {
-      PsiReferenceExpression r = list.get(i);
+    for (PsiReferenceExpression r: list.reversed()) {
       if (!r.isValid()) continue;
       FieldAccessFixer fixer = FieldAccessFixer.create(r, r.resolve(), ref);
       // Name-based is too risky for inline

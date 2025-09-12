@@ -174,14 +174,11 @@ public final class MagicConstantUtils {
       if (remainingFlags == 0) {
         // found flags to combine with OR, suggest the fix
         if (flags.size() > 1) {
-          for (int i = flags.size() - 1; i >= 0; i--) {
-            PsiAnnotationMemberValue flag = flags.get(i);
+          flags.removeIf(flag -> {
             Long flagValue = evaluateLongConstant((PsiExpression)flag);
-            if (flagValue != null && flagValue == 0) {
-              // no sense in ORing with '0'
-              flags.remove(i);
-            }
-          }
+            // no sense in ORing with '0'
+            return flagValue != null && flagValue == 0;
+          });
         }
         if (!flags.isEmpty()) {
           return StreamEx.of(flags)
