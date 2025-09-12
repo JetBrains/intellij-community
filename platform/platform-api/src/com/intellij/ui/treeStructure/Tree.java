@@ -1404,6 +1404,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       if (cachedPresentation != null) {
         var rootPath = getRootPath();
         if (rootPath != null) {
+          presentation.rootLoaded(rootPath.getLastPathComponent()); // in case the root managed to load very quickly
           cachedPresentation.updateExpandedNodes(rootPath);
         }
       }
