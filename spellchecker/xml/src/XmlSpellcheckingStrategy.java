@@ -19,6 +19,7 @@ import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.util.XmlEnumeratedValueReference;
@@ -225,6 +226,11 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
       final String valueTextTrimmed = element.getValue().trim();
       // do not inspect colors like #00aaFF
       if (valueTextTrimmed.startsWith("#") && valueTextTrimmed.length() <= 9 && isHexString(valueTextTrimmed.substring(1))) {
+        return;
+      }
+
+      // Do not inspect data URIs
+      if (URLUtil.isDataUri(ElementManipulators.getValueText(element))) {
         return;
       }
 
