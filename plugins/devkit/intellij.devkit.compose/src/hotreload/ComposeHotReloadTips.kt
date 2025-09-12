@@ -1,32 +1,34 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package training.onboarding
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.devkit.compose.hotreload
 
-import com.intellij.lang.documentation.DocumentationProvider
+import com.intellij.codeInsight.documentation.render.DocRenderManager
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.IntelliJProjectUtil.isIntelliJPlatformProject
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.FakePsiElement
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.kotlin.lexer.KtTokens
 import java.util.function.Consumer
 
-abstract class AbstractOnboardingTipsDocumentationProvider(private val commentTokenType: IElementType) : DocumentationProvider {
-  protected open val tipPrefix: String = "//TIP"
-  protected val enabled: Boolean
-    get() = renderedOnboardingTipsEnabled
+private const val tipPrefix: String = "//TIP"
+private const val MAGIC_SANDBOX_FILENAME = "ComposeSandbox.kt"
 
-  protected abstract fun isLanguageFile(file: PsiFile): Boolean
+internal class ComposeHotReloadTips : com.intellij.lang.documentation.DocumentationProvider {
+
+  private val commentTokenType: IElementType = KtTokens.EOL_COMMENT
 
   private fun isEnabledForFile(file: PsiFile): Boolean {
-    return enabled && isLanguageFile(file)
+    if (!isIntelliJPlatformProject(file.project)) return false
+
+    val filePath = file.virtualFile?.path ?: return false
+    return filePath.endsWith(MAGIC_SANDBOX_FILENAME)
   }
 
   override fun collectDocComments(file: PsiFile, sink: Consumer<in PsiDocCommentBase>) {
     if (!isEnabledForFile(file)) return
-
-    val filePath = file.virtualFile?.path ?: return
-    val onboardingTipsDebugPath = file.project.filePathWithOnboardingTips
-    if (filePath != onboardingTipsDebugPath) {
-      return
-    }
 
     val visitedComments = mutableSetOf<PsiElement>()
 
@@ -36,7 +38,7 @@ abstract class AbstractOnboardingTipsDocumentationProvider(private val commentTo
         if (comment.node.elementType != commentTokenType) return
 
         if (comment.text.startsWith(tipPrefix)) {
-          val wrapper = createOnboardingTipComment(comment, visitedComments, commentTokenType)
+          val wrapper = createTipComment(comment, visitedComments, commentTokenType)
           sink.accept(wrapper)
         }
       }
@@ -45,11 +47,13 @@ abstract class AbstractOnboardingTipsDocumentationProvider(private val commentTo
 
   override fun findDocComment(file: PsiFile, range: TextRange): PsiDocCommentBase? {
     if (isEnabledForFile(file)) return null
+
     var result: PsiDocCommentBase? = null
     file.accept(object: PsiRecursiveElementVisitor() {
       override fun visitComment(comment: PsiComment) {
         if (comment.textRange.startOffset != range.startOffset) return
-        result = OnboardingTipComment(comment.parent, range, commentTokenType)
+
+        result = TipComment(comment.parent, range, commentTokenType)
       }
     })
 
@@ -57,7 +61,7 @@ abstract class AbstractOnboardingTipsDocumentationProvider(private val commentTo
   }
 
   override fun generateRenderedDoc(comment: PsiDocCommentBase): String? {
-    if (!enabled || comment !is OnboardingTipComment) return null
+    if (comment !is TipComment) return null
 
     @Suppress("HardCodedStringLiteral")
     val result = comment.text
@@ -72,7 +76,7 @@ abstract class AbstractOnboardingTipsDocumentationProvider(private val commentTo
     return "<p>$result"
   }
 
-  private fun createOnboardingTipComment(start: PsiComment, visitedComments: MutableSet<PsiElement>, commentTokenType: IElementType): OnboardingTipComment {
+  private fun createTipComment(start: PsiComment, visitedComments: MutableSet<PsiElement>, commentTokenType: IElementType): TipComment {
     var current: PsiElement = start
     while(true) {
       var nextSibling = current.nextSibling
@@ -81,22 +85,35 @@ abstract class AbstractOnboardingTipsDocumentationProvider(private val commentTo
       visitedComments.add(nextSibling)
       current = nextSibling
     }
-    return OnboardingTipComment(current.parent, TextRange(start.textRange.startOffset, current.textRange.endOffset), commentTokenType)
+    return TipComment(current.parent, TextRange(start.textRange.startOffset, current.textRange.endOffset), commentTokenType)
   }
 
-  private class OnboardingTipComment(
+  private class TipComment(
     private val parent: PsiElement,
     private val range: TextRange,
     private val commentTokenType: IElementType
   ): FakePsiElement(), PsiDocCommentBase {
     override fun getParent() = parent
-
     override fun getTokenType(): IElementType = commentTokenType
 
     override fun getTextRange() = range
-
     override fun getText() = range.substring(parent.containingFile.text)
-
     override fun getOwner() = parent
+  }
+}
+
+internal class ToggleComposeSandboxTipsEditorListener : EditorFactoryListener {
+  override fun editorCreated(event: EditorFactoryEvent) {
+    val editor = event.editor
+    val project = editor.project ?: return
+
+    if (!isIntelliJPlatformProject(project)) return
+
+    val doc = editor.getDocument()
+    val virtualFile = FileDocumentManager.getInstance().getFile(doc)
+
+    if (virtualFile?.name == MAGIC_SANDBOX_FILENAME) {
+      DocRenderManager.setDocRenderingEnabled(editor, true)
+    }
   }
 }

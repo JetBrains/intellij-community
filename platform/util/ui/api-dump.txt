@@ -321,6 +321,7 @@ f:com.intellij.icons.AllIcons$Debugger
 - sf:Db_verified_no_suspend_field_breakpoint:javax.swing.Icon
 - sf:Db_verified_no_suspend_method_breakpoint:javax.swing.Icon
 - sf:Db_watch:javax.swing.Icon
+- sf:DebuggerSync:javax.swing.Icon
 - sf:EvaluateExpression:javax.swing.Icon
 - sf:EvaluationResult:javax.swing.Icon
 - sf:ForceRunToCursor:javax.swing.Icon

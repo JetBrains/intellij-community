@@ -3,6 +3,7 @@ package com.intellij.devkit.compose.hotreload
 
 import com.intellij.devkit.compose.DevkitComposeBundle
 import com.intellij.facet.FacetManager
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.DumbAware
@@ -66,10 +67,11 @@ internal class ComposeHotReloadSuggester : EditorNotificationProvider, DumbAware
            && segments[2].identifier == "runtime"
   }
 
-  private inner class Banner(val project: Project, val file: VirtualFile) : EditorNotificationPanel(Status.Info) {
+  private inner class Banner(val project: Project, val file: VirtualFile) : EditorNotificationPanel(Status.Success) {
     init {
       @Suppress("DialogTitleCapitalization")
       text = DevkitComposeBundle.message("label.compose.hot.reload.available.banner")
+      icon(AllIcons.Debugger.DebuggerSync)
 
       @Suppress("DialogTitleCapitalization")
       createActionLabel(DevkitComposeBundle.message("link.label.enable.hot.reload")) {

@@ -13,14 +13,14 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.Text
 
+//TIP Go to <b>Tools — Compose Prototyping Sandbox</b> to run the demo.
 @Composable
 internal fun ComposeSandbox() {
-  // IMPLEMENT YOUR DEMO HERE
-
-  // Enable `devkit.compose.hot.reload.enabled` registry key
-  // Hit `Code Changed` toolbar in the editor to Apply changes on the fly, without restarting debug sessions
+  //TIP Click <b>Code Changed</b> <icon src="AllIcons.Debugger.DebuggerSync"/> toolbar to apply changes without restart
+  // or hit <shortcut actionId="CompileFile"/>
 
   val btnText = remember { mutableStateOf("Awesome, I can do that!") }
+
   Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
     Text("Here is your Compose UI playground:", fontStyle = FontStyle.Italic)
 

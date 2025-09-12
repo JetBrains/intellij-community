@@ -968,6 +968,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey Db_watch = new IntelliJIconKey("debugger/db_watch.svg", "expui/debugger/watch.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey DebuggerSync = new IntelliJIconKey("expui/debugger/debuggerSync.svg", "expui/debugger/debuggerSync.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey EvaluateExpression = new IntelliJIconKey("debugger/evaluateExpression.svg", "expui/run/evaluateExpression.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources

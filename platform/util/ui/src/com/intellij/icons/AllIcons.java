@@ -347,6 +347,7 @@ public class AllIcons {
     /** 12x12 */ public static final @NotNull Icon Db_verified_no_suspend_field_breakpoint = load("expui/breakpoints/breakpointFieldUnsuspendentValid.svg", "debugger/db_verified_no_suspend_field_breakpoint.svg", 668596864, 2);
     /** 12x12 */ public static final @NotNull Icon Db_verified_no_suspend_method_breakpoint = load("expui/breakpoints/breakpointMethodUnsuspendentValid.svg", "debugger/db_verified_no_suspend_method_breakpoint.svg", 1053525169, 2);
     /** 16x16 */ public static final @NotNull Icon Db_watch = load("expui/debugger/watch.svg", "debugger/db_watch.svg", -1666860072, 0);
+    /** 16x16 */ public static final @NotNull Icon DebuggerSync = load("expui/debugger/debuggerSync.svg", -370007676, 2);
     /** 16x16 */ public static final @NotNull Icon EvaluateExpression = load("expui/run/evaluateExpression.svg", "debugger/evaluateExpression.svg", -1762455063, 2);
     /** 16x16 */ public static final @NotNull Icon EvaluationResult = load("expui/debugger/evaluationResult.svg", "debugger/evaluationResult.svg", 1466088690, 2);
     /** 16x16 */ public static final @NotNull Icon ForceRunToCursor = load("expui/run/forceRunToCursor.svg", "debugger/forceRunToCursor.svg", 1765887966, 2);

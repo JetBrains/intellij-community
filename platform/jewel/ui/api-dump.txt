@@ -2580,6 +2580,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Debugger
 - sf:Db_verified_no_suspend_field_breakpoint:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Db_verified_no_suspend_method_breakpoint:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Db_watch:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:DebuggerSync:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:EvaluateExpression:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:EvaluationResult:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ForceRunToCursor:org.jetbrains.jewel.ui.icon.IntelliJIconKey
