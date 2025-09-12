@@ -14400,65 +14400,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inspectionsLocal/safeCastWithReturn")
-    public static class SafeCastWithReturn extends AbstractLocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("castNeverSucceeds.kt")
-        public void testCastNeverSucceeds() throws Exception {
-            runTest("testData/inspectionsLocal/safeCastWithReturn/castNeverSucceeds.kt");
-        }
-
-        @TestMetadata("castNeverSucceedsK2Version.kt")
-        public void testCastNeverSucceedsK2Version() throws Exception {
-            runTest("testData/inspectionsLocal/safeCastWithReturn/castNeverSucceedsK2Version.kt");
-        }
-
-        @TestMetadata("hasParenthesize.kt")
-        public void testHasParenthesize() throws Exception {
-            runTest("testData/inspectionsLocal/safeCastWithReturn/hasParenthesize.kt");
-        }
-
-        @TestMetadata("labeledReturn.kt")
-        public void testLabeledReturn() throws Exception {
-            runTest("testData/inspectionsLocal/safeCastWithReturn/labeledReturn.kt");
-        }
-
-        @TestMetadata("lambdaLastStatement.kt")
-        public void testLambdaLastStatement() throws Exception {
-            runTest("testData/inspectionsLocal/safeCastWithReturn/lambdaLastStatement.kt");
-        }
-
-        @TestMetadata("lambdaLastStatement2.kt")
-        public void testLambdaLastStatement2() throws Exception {
-            runTest("testData/inspectionsLocal/safeCastWithReturn/lambdaLastStatement2.kt");
-        }
-
-        @TestMetadata("lambdaLastStatement3.kt")
-        public void testLambdaLastStatement3() throws Exception {
-            runTest("testData/inspectionsLocal/safeCastWithReturn/lambdaLastStatement3.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/inspectionsLocal/safeCastWithReturn/simple.kt");
-        }
-
-        @TestMetadata("usedAsExpression.kt")
-        public void testUsedAsExpression() throws Exception {
-            runTest("testData/inspectionsLocal/safeCastWithReturn/usedAsExpression.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/scopeFunctions")
     public abstract static class ScopeFunctions extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
