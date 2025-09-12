@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  */
 public interface ExternalProjectsManager {
-
   static ExternalProjectsManager getInstance(@NotNull Project project) {
     return project.getService(ExternalProjectsManager.class);
   }
