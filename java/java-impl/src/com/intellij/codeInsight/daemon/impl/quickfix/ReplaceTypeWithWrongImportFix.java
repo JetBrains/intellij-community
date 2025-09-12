@@ -15,6 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,18 +31,25 @@ import java.util.List;
  */
 public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<PsiJavaCodeReferenceElement> {
 
-  @NotNull
-  private final String myTargetClassName;
+  private final @NotNull String myShortName;
+  private final @NotNull String myExpectedType;
+  private final boolean myLeftActualAssignableType;
 
   private ReplaceTypeWithWrongImportFix(@NotNull PsiJavaCodeReferenceElement element,
-                                        @NotNull String targetClass) {
+                                        @NotNull String shortName,
+                                        @NotNull PsiType expectedType,
+                                        boolean leftActualAssignableType) {
     super(element);
-    myTargetClassName = targetClass;
+    myShortName = shortName;
+    myExpectedType = expectedType.getCanonicalText();
+    myLeftActualAssignableType = leftActualAssignableType;
   }
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context,
                                                    @NotNull PsiJavaCodeReferenceElement reference) {
+    String myTargetClassName = getTargetClassName(reference);
+    if (myTargetClassName == null) return null;
     PsiElement parent = reference.getParent();
     if (parent instanceof PsiNewExpression) {
       return Presentation.of(
@@ -53,13 +61,91 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
       .withPriority(PriorityAction.Priority.HIGH);
   }
 
+  @Nullable
+  private String getTargetClassName(@NotNull PsiJavaCodeReferenceElement ref) {
+    PsiElement refOriginalElement = ref.getOriginalElement();
+    return CachedValuesManager.getCachedValue(refOriginalElement, () -> {
+      Project project = refOriginalElement.getProject();
+      GlobalSearchScope scope = refOriginalElement.getResolveScope();
+      PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(myShortName, scope);
+      if (classes.length == 0) return null;
+      if (classes.length > 50) return null;
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      PsiType expectedType = factory.createTypeFromText(myExpectedType, ref);
+      if (!(expectedType instanceof PsiClassType classType)) {
+        return null;
+      }
+      PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(classType);
+      if (expectedClass == null) return null;
+
+      Condition<PsiClass> accessiblePredicate = aClass -> {
+        if (facade.arePackagesTheSame(aClass, ref) ||
+            PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class) != null ||
+            !PsiUtil.isAccessible(aClass, ref, null)) {
+          return false;
+        }
+        if (myLeftActualAssignableType &&
+            !InheritanceUtil.isInheritorOrSelf(expectedClass, aClass, true)) {
+          return false;
+        }
+        if (!myLeftActualAssignableType &&
+            !InheritanceUtil.isInheritorOrSelf(aClass, expectedClass, true)) {
+          return false;
+        }
+        return true;
+      };
+      List<PsiClass> filtered = ContainerUtil.filter(classes, accessiblePredicate);
+      if (filtered.size() != 1) {
+        return null;
+      }
+      PsiClass aClass = filtered.getFirst();
+      String targetClassType = aClass.getQualifiedName();
+      if (targetClassType == null) {
+        return null;
+      }
+      PsiReferenceParameterList refParameterList = ref.getParameterList();
+      if (refParameterList == null) return null;
+      if (refParameterList.getTypeArgumentCount() != 0 &&
+          refParameterList.getTypeArgumentCount() == refParameterList.getTypeParameterElements().length &&
+          !HighlightFixUtil.isPotentiallyCompatible(aClass, refParameterList)) {
+        return null;
+      }
+
+      PsiSubstitutor aClassSubstitutor = inferSubstitutor(refParameterList, aClass);
+
+      if (!myLeftActualAssignableType) {
+        if (!(ref.getParent() instanceof PsiNewExpression newExpression)) return null;
+        PsiExpressionList argumentList = newExpression.getArgumentList();
+        if (argumentList == null) return null;
+        if (!newExpressionGenericCompatible(ref, aClass, argumentList, aClassSubstitutor)) return null;
+        targetClassType += refParameterList.getText();
+      }
+      if (myLeftActualAssignableType) {
+        GlobalSearchScope resolvedClassScope = aClass.getResolveScope();
+        PsiSubstitutor substitutor = classType.resolveGenerics().getSubstitutor();
+        PsiSubstitutor superClassSubstitutor =
+          JavaClassSupers.getInstance().getSuperClassSubstitutor(aClass, expectedClass, resolvedClassScope, substitutor);
+        if (superClassSubstitutor == null) {
+          return null;
+        }
+        //can be broken, but let's keep the user's choice
+        PsiSubstitutor combinedSubstitutor = superClassSubstitutor.putAll(aClassSubstitutor);
+        PsiClassType superType = PsiElementFactory.getInstance(project).createType(aClass, combinedSubstitutor);
+        targetClassType = superType.getCanonicalText();
+      }
+      return CachedValueProvider.Result.create(targetClassType, refOriginalElement);
+    });
+  }
+
   @Override
   protected @NotNull IntentionPreviewInfo generatePreview(ActionContext context, PsiJavaCodeReferenceElement originalElement) {
-
+    String targetClassName = getTargetClassName(originalElement);
+    if (targetClassName == null) return IntentionPreviewInfo.EMPTY;
     ModCommand command = ModCommand.psiUpdate(originalElement, (e, upd) -> {
       PsiJavaCodeReferenceElement newReference =
-        JavaPsiFacade.getElementFactory(context.project()).createReferenceFromText(myTargetClassName, e);
-      e.replace(newReference);
+        JavaPsiFacade.getElementFactory(context.project()).createReferenceFromText(targetClassName, e);
+      new CommentTracker().replaceAndRestoreComments(e, newReference);
     });
 
     return IntentionPreviewUtils.getModCommandPreview(command, context);
@@ -74,17 +160,22 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
   protected void invoke(@NotNull ActionContext context,
                         @NotNull PsiJavaCodeReferenceElement element,
                         @NotNull ModPsiUpdater updater) {
+    String targetClassName = getTargetClassName(element);
+    if (targetClassName == null) {
+      return;
+    }
     PsiJavaCodeReferenceElement newReference =
-      JavaPsiFacade.getElementFactory(context.project()).createReferenceFromText(myTargetClassName, element);
+      JavaPsiFacade.getElementFactory(context.project()).createReferenceFromText(targetClassName, element);
     PsiElement replaced = element.replace(newReference);
     JavaCodeStyleManager.getInstance(context.project()).shortenClassReferences(replaced.getParent());
   }
 
   /**
    * Creates a list of ReplaceTypeWithWrongImportFix instances for the given PsiJavaCodeReferenceElement.
-   * @see ReplaceTypeWithWrongImportFix
+   *
    * @param ref the PsiJavaCodeReferenceElement to create fixes for
    * @return a list of ReplaceTypeWithWrongImportFix instances
+   * @see ReplaceTypeWithWrongImportFix
    */
   @NotNull
   public static List<@NotNull ReplaceTypeWithWrongImportFix> createFixes(@NotNull PsiJavaCodeReferenceElement ref) {
@@ -146,75 +237,14 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
                                                                         boolean leftActualAssignableType) {
     PsiFile psiFile = ref.getContainingFile();
     if (psiFile == null) return null;
-    Project project = psiFile.getProject();
-    GlobalSearchScope scope = psiFile.getResolveScope();
     if (!(expectedType instanceof PsiClassType classType)) {
       return null;
     }
     PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(classType);
     if (expectedClass == null) return null;
-    PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(name, scope);
-    if (classes.length == 0) return null;
-    if (classes.length > 4) return null;
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-
-    Condition<PsiClass> accessiblePredicate = aClass -> {
-      if (facade.arePackagesTheSame(aClass, ref) ||
-          PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class) != null ||
-          !PsiUtil.isAccessible(aClass, ref, null)) {
-        return false;
-      }
-      if (leftActualAssignableType &&
-          !InheritanceUtil.isInheritorOrSelf(expectedClass, aClass, true)) {
-        return false;
-      }
-      if (!leftActualAssignableType &&
-          !InheritanceUtil.isInheritorOrSelf(aClass, expectedClass, true)) {
-        return false;
-      }
-      return true;
-    };
-    List<PsiClass> filtered = ContainerUtil.filter(classes, accessiblePredicate);
-    if (filtered.size() != 1) {
-      return null;
-    }
-    PsiClass aClass = filtered.getFirst();
-    String targetClassType = aClass.getQualifiedName();
-    if (targetClassType == null) {
-      return null;
-    }
-    PsiReferenceParameterList refParameterList = ref.getParameterList();
-    if (refParameterList == null) return null;
-    if (refParameterList.getTypeArgumentCount() != 0 &&
-        refParameterList.getTypeArgumentCount() == refParameterList.getTypeParameterElements().length &&
-        !HighlightFixUtil.isPotentiallyCompatible(aClass, refParameterList)) {
-      return null;
-    }
-
-    PsiSubstitutor aClassSubstitutor = inferSubstitutor(refParameterList, aClass);
-
-    if (!leftActualAssignableType) {
-      if (!(ref.getParent() instanceof PsiNewExpression newExpression)) return null;
-      PsiExpressionList argumentList = newExpression.getArgumentList();
-      if (argumentList == null) return null;
-      if (!newExpressionGenericCompatible(ref, aClass, argumentList, aClassSubstitutor)) return null;
-      targetClassType += refParameterList.getText();
-    }
-    if (leftActualAssignableType) {
-      GlobalSearchScope resolvedClassScope = aClass.getResolveScope();
-      PsiSubstitutor substitutor = classType.resolveGenerics().getSubstitutor();
-      PsiSubstitutor superClassSubstitutor =
-        JavaClassSupers.getInstance().getSuperClassSubstitutor(aClass, expectedClass, resolvedClassScope, substitutor);
-      if (superClassSubstitutor == null) {
-        return null;
-      }
-      //can be broken, but let's keep the user's choice
-      PsiSubstitutor combinedSubstitutor = superClassSubstitutor.putAll(aClassSubstitutor);
-      PsiClassType superType = PsiElementFactory.getInstance(project).createType(aClass, combinedSubstitutor);
-      targetClassType = superType.getCanonicalText();
-    }
-
-    return new ReplaceTypeWithWrongImportFix(ref, targetClassType);
+    String expectedClassQualifiedName = expectedClass.getQualifiedName();
+    if (expectedClassQualifiedName == null) return null;
+    return new ReplaceTypeWithWrongImportFix(ref, name, expectedType, leftActualAssignableType);
   }
 
   private static @NotNull PsiSubstitutor inferSubstitutor(@NotNull PsiReferenceParameterList refParameterList,
