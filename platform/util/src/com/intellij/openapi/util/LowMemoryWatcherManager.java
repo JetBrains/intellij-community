@@ -74,7 +74,6 @@ public final class LowMemoryWatcherManager {
   private final NotificationListener lowMemoryListener = new NotificationListener() {
     @Override
     public void handleNotification(Notification notification, Object __) {
-      if (LowMemoryWatcher.notificationsSuppressed()) return;
       boolean memoryThreshold = MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(notification.getType());
       boolean memoryCollectionThreshold = MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(notification.getType());
 
@@ -88,9 +87,9 @@ public final class LowMemoryWatcherManager {
         //This is not just 'after GC', it is 'memory subsystem is overloaded':
         //  (a lot of time spent on GC recently) AND (memory still low after GC)
         boolean afterGC = (gcLoadScore > GC_LOAD_THRESHOLD) && memoryCollectionThreshold;
-        if (afterGC) {
-          gcTracker.reset();
-        }
+        //if (afterGC) {
+        //  gcTracker.reset();
+        //}
         synchronized (watcherNotificationTask) {
           if (watcherNotificationTaskSubmitted == null) {
             watcherNotificationTaskSubmitted = watcherNotificationPool.submit(() -> watcherNotificationTask.accept(afterGC));
