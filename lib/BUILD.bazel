@@ -3273,6 +3273,72 @@ java_library(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "junit6",
+  exports = [
+    ":junit-jupiter-api-6_0_0-RC2_http_import",
+    ":opentest4j-1_3_0_http_import",
+    ":junit-platform-commons-6_0_0-RC2_http_import",
+    ":apiguardian-api-1_1_2_http_import",
+    ":jspecify-1_0_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "junit-jupiter-api-6_0_0-RC2_http_import",
+  jar = "@junit-jupiter-api-6_0_0-RC2_http//file",
+  source_jar = "@junit-jupiter-api-6_0_0-RC2-sources_http//file"
+)
+
+jvm_import(
+  name = "junit-platform-commons-6_0_0-RC2_http_import",
+  jar = "@junit-platform-commons-6_0_0-RC2_http//file",
+  source_jar = "@junit-platform-commons-6_0_0-RC2-sources_http//file"
+)
+
+jvm_import(
+  name = "jspecify-1_0_0_http_import",
+  jar = "@jspecify-1_0_0_http//file",
+  source_jar = "@jspecify-1_0_0-sources_http//file"
+)
+
+java_library(
+  name = "junit6-provided",
+  exports = [":junit6"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "junit6Launcher",
+  exports = [
+    ":junit-platform-launcher-6_0_0-RC2_http_import",
+    ":junit-platform-engine-6_0_0-RC2_http_import",
+    ":jspecify-1_0_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "junit-platform-launcher-6_0_0-RC2_http_import",
+  jar = "@junit-platform-launcher-6_0_0-RC2_http//file",
+  source_jar = "@junit-platform-launcher-6_0_0-RC2-sources_http//file"
+)
+
+jvm_import(
+  name = "junit-platform-engine-6_0_0-RC2_http_import",
+  jar = "@junit-platform-engine-6_0_0-RC2_http//file",
+  source_jar = "@junit-platform-engine-6_0_0-RC2-sources_http//file"
+)
+
+java_library(
+  name = "junit6Launcher-provided",
+  exports = [":junit6Launcher"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
 jvm_import(
   name = "jvm-native-trusted-roots",
   jar = "@jvm-native-trusted-roots-1_1_7_http//file",
@@ -4667,12 +4733,6 @@ jvm_import(
   name = "lifecycle-common-jvm-2_9_2_http_import",
   jar = "@lifecycle-common-jvm-2_9_2_http//file",
   source_jar = "@lifecycle-common-jvm-2_9_2-sources_http//file"
-)
-
-jvm_import(
-  name = "jspecify-1_0_0_http_import",
-  jar = "@jspecify-1_0_0_http//file",
-  source_jar = "@jspecify-1_0_0-sources_http//file"
 )
 
 jvm_import(
