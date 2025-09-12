@@ -16,8 +16,6 @@
 package com.intellij.xdebugger.impl.actions.handlers
 
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
-import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerProxySuspendedActionHandler
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
@@ -33,7 +31,7 @@ class XDebuggerRunToCursorActionHandler(private val myIgnoreBreakpoints: Boolean
   override fun perform(session: XDebugSessionProxy, dataContext: DataContext) {
     val position = XDebuggerUtilImpl.getCaretPosition(session.project, dataContext) ?: return
     performDebuggerActionAsync(session.project, dataContext) {
-      XDebugSessionApi.getInstance().runToPosition(session.id, position.toRpc(), myIgnoreBreakpoints)
+      session.runToPosition(position, myIgnoreBreakpoints)
     }
   }
 }

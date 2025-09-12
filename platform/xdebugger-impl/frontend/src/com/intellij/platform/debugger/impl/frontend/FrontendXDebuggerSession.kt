@@ -413,6 +413,39 @@ class FrontendXDebuggerSession private constructor(
     return activeNonLineBreakpoint.value
   }
 
+  override suspend fun stepOver(ignoreBreakpoints: Boolean) {
+    XDebugSessionApi.getInstance().stepOver(id, ignoreBreakpoints)
+  }
+
+  override suspend fun stepOut() {
+    XDebugSessionApi.getInstance().stepOut(id)
+  }
+
+  override suspend fun stepInto(ignoreBreakpoints: Boolean) {
+    if (ignoreBreakpoints) {
+      XDebugSessionApi.getInstance().forceStepInto(id)
+    }
+    else {
+      XDebugSessionApi.getInstance().stepInto(id)
+    }
+  }
+
+  override suspend fun runToPosition(position: XSourcePosition, ignoreBreakpoints: Boolean) {
+    XDebugSessionApi.getInstance().runToPosition(id, position.toRpc(), ignoreBreakpoints)
+  }
+
+  override suspend fun pause() {
+    XDebugSessionApi.getInstance().pause(id)
+  }
+
+  override suspend fun resume() {
+    XDebugSessionApi.getInstance().resume(id)
+  }
+
+  override suspend fun switchToTopFrame() {
+    XDebugSessionApi.getInstance().switchToTopFrame(id)
+  }
+
   companion object {
 
     suspend fun create(

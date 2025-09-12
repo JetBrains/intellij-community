@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
@@ -34,6 +35,8 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.event.HyperlinkListener
 
@@ -100,6 +103,14 @@ interface XDebugSessionProxy {
   fun isInactiveSlaveBreakpoint(breakpoint: XBreakpointProxy): Boolean
   fun getDropFrameHandler(): XDropFrameHandler?
   fun getActiveNonLineBreakpoint(): XBreakpointProxy?
+
+  suspend fun stepOver(ignoreBreakpoints: Boolean)
+  suspend fun stepOut()
+  suspend fun stepInto(ignoreBreakpoints: Boolean)
+  suspend fun runToPosition(position: XSourcePosition, ignoreBreakpoints: Boolean)
+  suspend fun resume()
+  suspend fun pause()
+  suspend fun switchToTopFrame()
 
   companion object {
     @JvmField
@@ -285,6 +296,53 @@ interface XDebugSessionProxy {
       val breakpoint = (session as XDebugSessionImpl).activeNonLineBreakpoint ?: return null
       if (breakpoint !is XBreakpointBase<*, *, *>) return null
       return breakpoint.asProxy()
+    }
+
+    override suspend fun stepOver(ignoreBreakpoints: Boolean) {
+      withContext(Dispatchers.EDT) {
+        session.stepOver(ignoreBreakpoints)
+      }
+    }
+
+    override suspend fun stepOut() {
+      withContext(Dispatchers.EDT) {
+        session.stepOut()
+      }
+    }
+
+    override suspend fun stepInto(ignoreBreakpoints: Boolean) {
+      withContext(Dispatchers.EDT) {
+        if (ignoreBreakpoints) {
+          session.forceStepInto()
+        }
+        else {
+          session.stepInto()
+        }
+      }
+    }
+
+    override suspend fun runToPosition(position: XSourcePosition, ignoreBreakpoints: Boolean) {
+      withContext(Dispatchers.EDT) {
+        session.runToPosition(position, ignoreBreakpoints)
+      }
+    }
+
+    override suspend fun pause() {
+      withContext(Dispatchers.EDT) {
+        session.pause()
+      }
+    }
+
+    override suspend fun resume() {
+      withContext(Dispatchers.EDT) {
+        session.resume()
+      }
+    }
+
+    override suspend fun switchToTopFrame() {
+      withContext(Dispatchers.EDT) {
+        session.showExecutionPoint()
+      }
     }
 
     override fun equals(other: Any?): Boolean {

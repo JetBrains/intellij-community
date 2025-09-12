@@ -97,7 +97,7 @@ internal open class XDebuggerSmartStepIntoHandler : XDebuggerProxySuspendedActio
           return@performDebuggerActionAsync
         }
       }
-      XDebugSessionApi.getInstance().stepInto(session.id)
+      session.stepInto(ignoreBreakpoints = false)
     }
   }
 
@@ -120,7 +120,7 @@ internal open class XDebuggerSmartStepIntoHandler : XDebuggerProxySuspendedActio
         }
       }
       catch (_: Throwable) {
-        XDebugSessionApi.getInstance().stepInto(session.id)
+        session.stepInto(ignoreBreakpoints = false)
       }
     }
   }
