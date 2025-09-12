@@ -1,5 +1,6 @@
 package com.jetbrains.lsp.protocol
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -15,21 +16,17 @@ value class OrBoolean<T>(val value: JsonElement) {
     constructor(boolean: Boolean) : this(JsonPrimitive(boolean))
 
     companion object {
-        inline fun <reified T> of(value: T): OrBoolean<T> {
-            val serializer = kotlinx.serialization.serializer<T>()
+        fun <T> of(serializer: KSerializer<T>, value: T): OrBoolean<T> {
             val encoded = LSP.json.encodeToJsonElement(serializer, value)
             return OrBoolean(encoded)
         }
     }
 }
 
-inline fun <reified T> OrBoolean<T>.getOrElse(f: (T) -> Boolean) : Boolean =
-    if (value is JsonPrimitive && value.booleanOrNull != null) value.boolean else f(LSP.json.decodeFromJsonElement<T>(value))
-
-inline fun <reified T, R> OrBoolean<T>.map(mapBoolean: (Boolean) -> R, mapOtherwise: (T) -> R): R {
+fun <T, R> OrBoolean<T>.map(serializer: KSerializer<T>, mapBoolean: (Boolean) -> R, mapOtherwise: (T) -> R): R {
     return when  {
         value is JsonPrimitive && value.booleanOrNull != null -> mapBoolean(value.boolean)
-        else -> mapOtherwise(LSP.json.decodeFromJsonElement<T>(value))
+        else -> mapOtherwise(LSP.json.decodeFromJsonElement(serializer, value))
     }
 }
 
@@ -39,18 +36,17 @@ value class OrString<T>(val value: JsonElement) {
     constructor(string: String) : this(JsonPrimitive(string))
 
     companion object {
-        inline fun <reified T> of(value: T): OrString<T> {
-            val serializer = kotlinx.serialization.serializer<T>()
-            val encoded = LSP.json.encodeToJsonElement(serializer, value)
-            return OrString(encoded)
-        }
+       fun <T> of(serializer: KSerializer<T>, value: T): OrString<T> {
+           val encoded = LSP.json.encodeToJsonElement(serializer, value)
+           return OrString(encoded)
+       }
     }
 }
 
-inline fun <reified T, R> OrString<T>.map(mapString: (String) -> R, mapOtherwise: (T) -> R): R {
+fun <T, R> OrString<T>.map(serializer: KSerializer<T>, mapString: (String) -> R, mapOtherwise: (T) -> R): R {
     return when  {
         value is JsonPrimitive && value.isString -> mapString(value.content)
-        else -> mapOtherwise(LSP.json.decodeFromJsonElement<T>(value))
+        else -> mapOtherwise(LSP.json.decodeFromJsonElement(serializer,value))
     }
 }
 
