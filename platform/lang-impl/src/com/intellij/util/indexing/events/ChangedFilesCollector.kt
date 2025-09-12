@@ -184,13 +184,13 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
             fileBasedIndex.doTransientStateChangeForFile(fileId, file, dirtyQueueProjects)
           }
           if (info.isContentChanged) {
-            fileBasedIndex.scheduleFileForIndexing(fileId, file, true, dirtyQueueProjects)
+            fileBasedIndex.scheduleFileForIncrementalIndexing(fileId, file, true, dirtyQueueProjects)
           }
           if (info.isFileRemoved) {
             fileBasedIndex.doInvalidateIndicesForFile(fileId, file, emptySet(), dirtyQueueProjects)
           }
           if (info.isFileAdded) {
-            fileBasedIndex.scheduleFileForIndexing(fileId, file, false, dirtyQueueProjects)
+            fileBasedIndex.scheduleFileForIncrementalIndexing(fileId, file, false, dirtyQueueProjects)
           }
           if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
             StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
