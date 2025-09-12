@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.pom.AsyncNavigatable
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 import kotlin.math.min
@@ -28,7 +27,7 @@ open class OpenFileDescriptor private constructor(
   val column: Int,
   private val myOffset: Int,
   persistent: Boolean,
-) : FileEditorNavigatable, AsyncNavigatable, Comparable<OpenFileDescriptor> {
+) : FileEditorNavigatable, Comparable<OpenFileDescriptor> {
   val rangeMarker: RangeMarker?
 
   private var myUseCurrentWindow = false
@@ -73,10 +72,6 @@ open class OpenFileDescriptor private constructor(
 
   override fun navigate(requestFocus: Boolean) {
     FileNavigator.getInstance().navigate(this, requestFocus)
-  }
-
-  override suspend fun navigateAsync(requestFocus: Boolean) {
-    FileNavigator.getInstance().navigateAsync(this, requestFocus)
   }
 
   open fun navigateInEditor(project: Project, requestFocus: Boolean): Boolean {
@@ -147,11 +142,9 @@ open class OpenFileDescriptor private constructor(
      * Tells descriptor to navigate in specific editor rather than file editor in the main IDE window.
      * For example, if you want to navigate in an editor embedded into modal dialog, you should provide this data.
      */
-    @JvmField
-    val NAVIGATE_IN_EDITOR: DataKey<Editor> = create<Editor>("NAVIGATE_IN_EDITOR")
+    val NAVIGATE_IN_EDITOR: DataKey<Editor?> = create<Editor?>("NAVIGATE_IN_EDITOR")
 
     @ApiStatus.Internal
-    @JvmStatic
     fun navigateInEditor(descriptor: OpenFileDescriptor, e: Editor) {
       val offset = descriptor.offset
       val caretModel = e.getCaretModel()
@@ -188,7 +181,6 @@ open class OpenFileDescriptor private constructor(
     }
 
     @ApiStatus.Internal
-    @JvmStatic
     fun unfoldCurrentLine(editor: Editor) {
       val allRegions = editor.getFoldingModel().getAllFoldRegions()
       val range: TextRange = getRangeToUnfoldOnNavigation(editor)
@@ -201,7 +193,6 @@ open class OpenFileDescriptor private constructor(
       })
     }
 
-    @JvmStatic
     fun getRangeToUnfoldOnNavigation(editor: Editor): TextRange {
       val offset = editor.getCaretModel().getOffset()
       val line = editor.getDocument().getLineNumber(offset)
