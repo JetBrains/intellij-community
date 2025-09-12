@@ -621,6 +621,36 @@ f:org.jetbrains.jewel.foundation.modifier.ModifierExtensionsKt
 f:org.jetbrains.jewel.foundation.modifier.PointerModifiersKt
 - sf:onHover(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
 - sf:onMove(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
+e:org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity
+- java.lang.Enum
+- sf:All:org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity
+- sf:FirstLetter:org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity
+- sf:None:org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity
+- s:values():org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity[]
+org.jetbrains.jewel.foundation.search.SpeedSearchMatcher
+- sf:Companion:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$Companion
+- a:matches(java.lang.String):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
+f:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$Companion
+- f:exactSubstringMatcher(java.lang.String,Z):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher
+- bs:exactSubstringMatcher$default(org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$Companion,java.lang.String,Z,I,java.lang.Object):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher
+- f:patternMatcher(java.lang.String,Z,org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity,java.lang.String):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher
+- bs:patternMatcher$default(org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$Companion,java.lang.String,Z,org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity,java.lang.String,I,java.lang.Object):org.jetbrains.jewel.foundation.search.SpeedSearchMatcher
+org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
+- sf:Companion:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult$Companion
+f:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult$Companion
+f:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult$Match
+- org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
+- sf:$stable:I
+- <init>(java.util.List):V
+- equals(java.lang.Object):Z
+- f:getRanges():java.util.List
+- hashCode():I
+f:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult$NoMatch
+- org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult$NoMatch
 f:org.jetbrains.jewel.foundation.state.CommonStateBitMask
 - sf:$stable:I
 - sf:FIRST_AVAILABLE_OFFSET:I
