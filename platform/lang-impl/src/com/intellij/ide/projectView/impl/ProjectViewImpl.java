@@ -14,6 +14,7 @@ import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.TreeChildrenPreloaderKt;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.ClassEventField;
@@ -916,6 +917,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       myAutoScrollToSourceHandler.install(newPane.myTree);
       myAutoScrollToSourceHandler.onMouseClicked(newPane.myTree);
       newPane.myTree.setToggleClickCount(myOpenDirectoriesWithSingleClick.isSelected() ? 1 : 2);
+      TreeChildrenPreloaderKt.setChildrenPreloadingEnabled(newPane.myTree, ProjectViewPreloadMode.isEnabled());
     }
 
     newPane.restoreExpandedPaths();

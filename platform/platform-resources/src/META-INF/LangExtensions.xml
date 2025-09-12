@@ -984,6 +984,8 @@
                  description="Use the new experimental coroutine-based Project View implementation"/>
     <registryKey defaultValue="true" description="Show the new file or directory button in the project view title"
                  key="ide.project.view.show.new.element.button" />
+    <registryKey defaultValue="[Off|RemDev*|On]" description="Show the new file or directory button in the project view title"
+                 key="ide.project.view.preload.mode" />
     <pathMacroFilter implementation="com.intellij.ide.projectView.impl.ProjectViewPathMacroFilter"/>
     <projectService serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewState"/>
 
