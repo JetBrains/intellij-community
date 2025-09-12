@@ -3,7 +3,10 @@
 
 package com.intellij.platform.workspace.storage.impl.containers
 
+import com.intellij.platform.workspace.storage.impl.clazz
 import com.intellij.util.containers.CollectionFactory
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.longs.*
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import java.util.*
@@ -17,8 +20,8 @@ internal class BidirectionalLongMultiMap<V> {
   // Value is either Long or LongOpenHashSet
   private val valueToKeys: MutableMap<V, Any>
 
-  internal val addedValues: Long2ObjectMap<ObjectOpenHashSet<V>> = Long2ObjectOpenHashMap()
-  internal val removedValues: Long2ObjectMap<ObjectOpenHashSet<V>> = Long2ObjectOpenHashMap()
+  internal val addedValues: Int2ObjectMap<ObjectOpenHashSet<V>> = Int2ObjectOpenHashMap()
+  internal val removedValues: Int2ObjectMap<ObjectOpenHashSet<V>> = Int2ObjectOpenHashMap()
 
   constructor() {
     keyToValues = Long2ObjectOpenHashMap()
@@ -166,11 +169,11 @@ internal class BidirectionalLongMultiMap<V> {
 
   private fun trackAddedValue(key: Long, value: V) {
     @Suppress("SSBasedInspection")
-    addedValues.computeIfAbsent(key) { ObjectOpenHashSet() }.add(value)
+    addedValues.computeIfAbsent(key.clazz) { ObjectOpenHashSet() }.add(value)
   }
 
   private fun trackRemovedValue(key: Long, value: V) {
     @Suppress("SSBasedInspection")
-    removedValues.computeIfAbsent(key) { ObjectOpenHashSet() }.add(value)
+    removedValues.computeIfAbsent(key.clazz) { ObjectOpenHashSet() }.add(value)
   }
 }

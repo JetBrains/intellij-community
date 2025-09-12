@@ -915,10 +915,10 @@ internal class MutableEntityStorageImpl(
 
   internal fun trackChangedSoftLinks() {
     indexes.softLinks.addedValues().forEach { (k, v) ->
-      changeLog.addAddedIds(k.clazz.findWorkspaceEntity(), v)
+      changeLog.addAddedIds(k.findWorkspaceEntity(), v)
     }
     indexes.softLinks.removedValues().forEach { (k, v) ->
-      changeLog.addRemovedIds(k.clazz.findWorkspaceEntity(), v)
+      changeLog.addRemovedIds(k.findWorkspaceEntity(), v)
     }
     indexes.softLinks.clearTrackedValues()
   }

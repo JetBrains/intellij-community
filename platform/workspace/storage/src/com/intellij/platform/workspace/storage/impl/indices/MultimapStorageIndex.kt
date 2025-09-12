@@ -98,9 +98,9 @@ internal class MutableMultimapStorageIndex private constructor(
     this.remove(id, data)
   }
 
-  internal fun addedValues(): Map<Long, Set<SymbolicEntityId<*>>> = index.addedValues
+  internal fun addedValues(): Map<Int, Set<SymbolicEntityId<*>>> = index.addedValues
 
-  internal fun removedValues(): Map<Long, Set<SymbolicEntityId<*>>> = index.removedValues
+  internal fun removedValues(): Map<Int, Set<SymbolicEntityId<*>>> = index.removedValues
 
   internal fun clearTrackedValues() {
     index.clearTrackedValues()
