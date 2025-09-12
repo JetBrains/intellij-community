@@ -86,7 +86,7 @@ object TestKotlinArtifacts {
             ?: error("Unable to find URL for '${label.asLabel}'")
     }
 
-    private val cooperativeRepoRoot = PathManager.getHomeDir().parent.resolve("build/repo")
+    private val cooperativeRepoRoot = communityRoot.communityRoot.resolve("lib/kotlin-snapshot")
 
     private fun downloadFile(label: BazelLabel): Path {
         val downloadFile = findDownloadFile(label)
