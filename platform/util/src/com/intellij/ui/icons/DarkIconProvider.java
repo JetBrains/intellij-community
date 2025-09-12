@@ -3,6 +3,7 @@ package com.intellij.ui.icons;
 
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.Icon;
 import javax.swing.*;
 
 public interface DarkIconProvider {

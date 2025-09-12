@@ -74,6 +74,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.icons.api" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
   </component>
 </module>

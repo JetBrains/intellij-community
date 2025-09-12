@@ -19,9 +19,15 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBScalableIcon
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.icons.api.DynamicIcon
+import org.jetbrains.icons.api.DefaultIconState
+import org.jetbrains.icons.api.IconIdentifier
+import org.jetbrains.icons.api.PaintingApi
+import org.jetbrains.icons.api.IconState
 import java.awt.Component
 import java.awt.Graphics
 import java.util.*
@@ -33,7 +39,9 @@ import kotlin.coroutines.resume
 
 private val repaintScheduler = DeferredIconRepaintScheduler()
 
-class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconWithToolTip, CopyableIcon {
+object DeferredIconState : IconState
+
+class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconWithToolTip, CopyableIcon, DynamicIcon {
   companion object {
     internal val EMPTY_ICON: Icon by lazy { EmptyIcon.create(16).withIconPreScaled(false) }
 
@@ -43,6 +51,11 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       return DeferredIconImpl(baseIcon = baseIcon, param = param, needReadAction = false, evaluator = evaluator, listener = null)
     }
   }
+
+  override val onUpdate: MutableStateFlow<IconState> = MutableStateFlow(DefaultIconState)
+  override val state: IconState
+    get() = onUpdate.value
+  override val identifier: IconIdentifier
 
   private val delegateIcon: Icon
 
@@ -78,6 +91,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     asyncEvaluator = icon.asyncEvaluator
     isScheduled.set(icon.isScheduled.get())
     param = icon.param
+    identifier = icon.identifier
     isNeedReadAction = icon.isNeedReadAction
     isDone = icon.isDone
     evaluatedListener = icon.evaluatedListener
@@ -90,6 +104,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
                        evaluator: (T) -> Icon?,
                        listener: ((DeferredIconImpl<T>, Icon) -> Unit)?) {
     this.param = param
+    identifier = FallbackIconIdentifier(param as Any)
     delegateIcon = baseIcon ?: EMPTY_ICON
     scaledDelegateIcon = delegateIcon
     cachedScaledIcon = null
@@ -106,6 +121,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   @ApiStatus.Internal
   constructor(baseIcon: Icon?, param: T, asyncEvaluator: suspend (T) -> Icon, listener: ((DeferredIconImpl<T>, Icon) -> Unit)?) {
     this.param = param
+    identifier = FallbackIconIdentifier(param as Any)
     delegateIcon = baseIcon ?: EMPTY_ICON
     scaledDelegateIcon = delegateIcon
     cachedScaledIcon = null
@@ -148,6 +164,27 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     }
     if (depth >= 50) {
       logger<DeferredIconImpl<*>>().error("Too deep deferred icon nesting")
+    }
+  }
+
+  override fun render(api: PaintingApi) {
+    val scaledDelegateIcon = scaledDelegateIcon
+    val swing = api.swing()
+    if (!(scaledDelegateIcon is DeferredIconImpl<*> && scaledDelegateIcon.containsDeferredIconsRecursively(2))) {
+      //SOE protection
+      SwingIconImpl.renderOldIcon(scaledDelegateIcon, api)
+    }
+    else {
+      logger<DeferredIconImpl<*>>().warn("Not painted, too many deferrals")
+    }
+
+    // TODO Migrate repaint logic to DynamicIcon api
+    if (swing != null) {
+      if (needScheduleEvaluation()) {
+        scheduleEvaluation(swing.c, swing.x, swing.y)
+      }
+    } else {
+      scheduleCalculationIfNeeded()
     }
   }
 
@@ -237,8 +274,9 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       scaledDelegateIcon = result
       modificationCount.incrementAndGet()
       checkDelegationDepth()
-
       evaluatedListener?.invoke(this@DeferredIconImpl, result)
+
+      onUpdate.emit(DeferredIconState)
 
       processRepaints(oldWidth = oldWidth, result = result)
       setDone(result)
