@@ -29,6 +29,7 @@ public class PyUserTypeRenderersSettings implements PersistentStateComponent<Ele
   private static final String IS_DEFAULT = "isDefault";
   private static final String EXPRESSION = "expression";
   private static final String TO_TYPE = "toType";
+  private static final String MATCH_SUBCLASS = "subclassMatch";
   private static final String TYPE_CANONICAL_IMPORT_PATH = "typeCanonicalImportPath";
   private static final String TYPE_QUALIFIED_NAME = "typeQualifiedName";
   private static final String TYPE_SOURCE_FILE = "typeSourceFile";
@@ -82,6 +83,7 @@ public class PyUserTypeRenderersSettings implements PersistentStateComponent<Ele
     JDOMExternalizerUtil.writeField(rendererElement, NAME, renderer.getName());
     JDOMExternalizerUtil.writeField(rendererElement, IS_ENABLED, String.valueOf(renderer.isEnabled()));
     JDOMExternalizerUtil.writeField(rendererElement, TO_TYPE, renderer.getToType());
+    JDOMExternalizerUtil.writeField(rendererElement, MATCH_SUBCLASS, String.valueOf(renderer.getSubclassMatch()));
     JDOMExternalizerUtil.writeField(rendererElement, TYPE_CANONICAL_IMPORT_PATH, renderer.getTypeCanonicalImportPath());
     JDOMExternalizerUtil.writeField(rendererElement, TYPE_QUALIFIED_NAME, renderer.getTypeQualifiedName());
     JDOMExternalizerUtil.writeField(rendererElement, TYPE_SOURCE_FILE, renderer.getTypeSourceFile());
@@ -123,12 +125,14 @@ public class PyUserTypeRenderersSettings implements PersistentStateComponent<Ele
     String name = toString(JDOMExternalizerUtil.readField(element, NAME));
     boolean isEnabled = toBoolean(JDOMExternalizerUtil.readField(element, IS_ENABLED));
     @NotNull String toType = toString(JDOMExternalizerUtil.readField(element, TO_TYPE));
+    boolean subclassMatch = toBoolean(JDOMExternalizerUtil.readField(element, MATCH_SUBCLASS));
     @NotNull String typeCanonicalImportPath = toString(JDOMExternalizerUtil.readField(element, TYPE_CANONICAL_IMPORT_PATH));
     @NotNull String typeQualifiedName = toString(JDOMExternalizerUtil.readField(element, TYPE_QUALIFIED_NAME));
     @NotNull String typeSourceFile = toString(JDOMExternalizerUtil.readField(element, TYPE_SOURCE_FILE));
     renderer.setName(name);
     renderer.setEnabled(isEnabled);
     renderer.setToType(toType);
+    renderer.setSubclassMatch(subclassMatch);
     renderer.setTypeCanonicalImportPath(typeCanonicalImportPath);
     renderer.setTypeQualifiedName(typeQualifiedName);
     renderer.setTypeSourceFile(typeSourceFile);
