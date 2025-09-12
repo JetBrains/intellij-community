@@ -1352,6 +1352,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/smartCastIntersectionTypesCase.kt");
         }
 
+        @TestMetadata("smartCastParameterType.kt")
+        public void testSmartCastParameterType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/smartCastParameterType.kt");
+        }
+
         @TestMetadata("smartCastSimpleCase.kt")
         public void testSmartCastSimpleCase() throws Exception {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/smartCastSimpleCase.kt");

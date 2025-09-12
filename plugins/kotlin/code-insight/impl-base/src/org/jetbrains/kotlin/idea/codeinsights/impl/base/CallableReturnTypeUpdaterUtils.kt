@@ -232,10 +232,12 @@ object CallableReturnTypeUpdaterUtils {
         val declarationTypes = buildList {
             if (useSmartCastType) {
                 val smartCastInfo = (declaration as? KtProperty)?.initializer?.smartCastInfo
-                when (val smartCastType = smartCastInfo?.takeIf { it.isStable }?.smartCastType) {
-                    is KaIntersectionType -> addAll(smartCastType.conjuncts)
-                    is KaUsualClassType -> add(smartCastType)
+                val smartCastTypes = when (val stableSmartCastType = smartCastInfo?.takeIf { it.isStable }?.smartCastType) {
+                    is KaIntersectionType -> stableSmartCastType.conjuncts
+                    is KaUsualClassType, is KaTypeParameterType -> listOf(stableSmartCastType)
+                    else -> emptyList()
                 }
+                addAll(smartCastTypes)
             }
             if (this.isEmpty()) {
                 add(declaration.returnType)
@@ -334,7 +336,7 @@ object CallableReturnTypeUpdaterUtils {
             it.text.startsWith("// CHOOSE_ELEMENT:")
         }
         if (chooseElement != null) {
-            val index = chooseElement.text.replace("// CHOOSE_ELEMENT:", "").toIntOrNull() ?: return null
+            val index = chooseElement.text.removePrefix("// CHOOSE_ELEMENT:").trim().toIntOrNull() ?: return null
             val targetType = allTypes[index]
             return createByKtTypes(targetType)
         }
