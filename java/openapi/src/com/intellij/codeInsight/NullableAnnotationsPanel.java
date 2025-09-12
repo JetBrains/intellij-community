@@ -2,7 +2,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
@@ -253,13 +252,8 @@ public class NullableAnnotationsPanel {
 
   private void chooseAnnotation(@NlsSafe String title) {
     final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject)
-      .createNoInnerClassesScopeChooser(JavaBundle.message("dialog.title.choose.annotation", title), GlobalSearchScope.allScope(myProject), new ClassFilter() {
-        @Override
-        public boolean isAccepted(PsiClass aClass) {
-          if (!aClass.isAnnotationType()) return false;
-          return true;
-        }
-      }, null);
+      .createNoInnerClassesScopeChooser(JavaBundle.message("dialog.title.choose.annotation", title), GlobalSearchScope.allScope(myProject),
+                                        PsiClass::isAnnotationType, null);
     chooser.showDialog();
     final PsiClass selected = chooser.getSelected();
     if (selected == null) {

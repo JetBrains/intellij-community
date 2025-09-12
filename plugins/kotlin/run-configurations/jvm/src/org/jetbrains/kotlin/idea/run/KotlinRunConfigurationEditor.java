@@ -21,12 +21,10 @@ import com.intellij.openapi.ui.LabeledComponentNoThrow;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.asJava.classes.KtLightClass;
 
 import javax.swing.*;
@@ -52,17 +50,11 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
             Computable<? extends Module> moduleSelector,
             LabeledComponent<ModuleDescriptionsComboBox> moduleChooser
     ) {
-        ClassFilter applicationClass = new ClassFilter() {
-            @Override
-            public boolean isAccepted(PsiClass aClass) {
-                return aClass instanceof KtLightClass && ConfigurationUtil.MAIN_CLASS.value(aClass) && findMainMethod(aClass) != null;
-            }
-
-            private static @Nullable PsiMethod findMainMethod(PsiClass aClass) {
-                return ReadAction.compute(() -> PsiMethodUtil.findMainMethod(aClass));
-            }
-        };
-        return new ClassBrowser.MainClassBrowser(project, moduleSelector, ExecutionBundle.message("choose.main.class.dialog.title")) {
+        ClassFilter applicationClass =
+                aClass -> aClass instanceof KtLightClass &&
+                          ConfigurationUtil.MAIN_CLASS.value(aClass) &&
+                          ReadAction.compute(() -> PsiMethodUtil.findMainMethod(aClass)) != null;
+        return new ClassBrowser.MainClassBrowser<>(project, moduleSelector, ExecutionBundle.message("choose.main.class.dialog.title")) {
             @Override
             protected ClassFilter createFilter(Module module) {
                 return applicationClass;
@@ -116,7 +108,7 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
         commonProgramParameters.reset(configuration);
         moduleSelector.reset(configuration);
         String runClass = configuration.getRunClass();
-        mainClass.getComponent().setText(runClass != null ? runClass.replaceAll("\\$", "\\.") : "");
+        mainClass.getComponent().setText(runClass != null ? runClass.replaceAll("\\$", ".") : "");
         jrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
         shortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
     }

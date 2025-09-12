@@ -2,7 +2,6 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -148,12 +147,10 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
         final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).createWithInnerClassesScopeChooser(
           UIDesignerBundle.message("title.choose.class.to.bind"),
           GlobalSearchScope.projectScope(project),
-          new ClassFilter() { // we need show classes from the sources roots only
-            @Override
-            public boolean isAccepted(final PsiClass aClass) {
-              final VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
-              return vFile != null && fileIndex.isUnderSourceRootOfType(vFile, JavaModuleSourceRootTypes.SOURCES);
-            }
+          cls -> {
+            // we need show classes from the sources roots only
+            final VirtualFile vFile = cls.getContainingFile().getVirtualFile();
+            return vFile != null && fileIndex.isUnderSourceRootOfType(vFile, JavaModuleSourceRootTypes.SOURCES);
           },
           aClass
         );

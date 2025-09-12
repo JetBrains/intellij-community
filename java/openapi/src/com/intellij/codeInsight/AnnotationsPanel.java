@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
@@ -155,12 +154,8 @@ public class AnnotationsPanel {
 
   private void chooseAnnotation(@NlsSafe String title) {
     final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject)
-      .createNoInnerClassesScopeChooser(JavaBundle.message("dialog.title.choose.annotation", title), GlobalSearchScope.allScope(myProject), new ClassFilter() {
-        @Override
-        public boolean isAccepted(PsiClass aClass) {
-          return aClass.isAnnotationType() && isAnnotationAccepted(aClass);
-        }
-      }, null);
+      .createNoInnerClassesScopeChooser(JavaBundle.message("dialog.title.choose.annotation", title), GlobalSearchScope.allScope(myProject),
+                                        aClass -> aClass.isAnnotationType() && isAnnotationAccepted(aClass), null);
     chooser.showDialog();
     final PsiClass selected = chooser.getSelected();
     if (selected == null) {
