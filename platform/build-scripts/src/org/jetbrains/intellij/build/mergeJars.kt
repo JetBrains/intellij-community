@@ -338,7 +338,7 @@ private fun getIgnoredNames(): Set<String> {
     }
   }
 
-  set.add("kotlinx/coroutines/debug/internal/ByteBuddyDynamicAttach.class")
+  set.add("kotlinx/coroutines/debug/ByteBuddyDynamicAttach.class")
   set.add("kotlin/coroutines/jvm/internal/DebugProbesKt.class")
 
   /**
