@@ -7,12 +7,20 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.project.ex.ProjectNameProvider
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
 import org.jdom.Element
+import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.jps.util.JpsPathUtil
+import java.nio.file.AccessDeniedException
+import java.nio.file.Files
 import java.nio.file.Path
 
 private val EP_NAME: ExtensionPointName<ProjectStorePathCustomizer> = ExtensionPointName("com.intellij.projectStorePathCustomizer")
@@ -50,6 +58,8 @@ internal class NestedProjectStorePathManager : ProjectStorePathManager {
     val useParent = System.getProperty("store.basedir.parent.detection", "true").toBoolean() &&
                     (projectRoot.fileName?.toString()?.startsWith("${Project.DIRECTORY_STORE_FOLDER}.") == true)
     return object : ProjectStoreDescriptor {
+      private var lastSavedProjectName: String? = null
+
       override val projectIdentityDir = projectRoot
       override val historicalProjectBasePath = if (useParent) projectRoot.parent.parent else projectRoot
       override val dotIdea = projectRoot.resolve(Project.DIRECTORY_STORE_FOLDER)
@@ -87,6 +97,55 @@ internal class NestedProjectStorePathManager : ProjectStorePathManager {
           // if we create project from default, component state written not to own storage file, but to project file,
           // we don't have time to fix it properly, so, ancient hack restored
           return storages + DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION
+        }
+      }
+
+      override fun getProjectName(): String {
+        val storedName = JpsPathUtil.readProjectName(dotIdea)
+        if (storedName != null) {
+          lastSavedProjectName = storedName
+          return storedName
+        }
+
+        return NioFiles.getFileName(historicalProjectBasePath)
+      }
+
+      override suspend fun saveProjectName(project: Project) {
+        try {
+          val currentProjectName = project.name
+          if (lastSavedProjectName == currentProjectName) {
+            return
+          }
+
+          lastSavedProjectName = currentProjectName
+
+          val nameFile = getNameFileForDotIdeaProject(project, dotIdea)
+
+          fun doSave() {
+            val basePath = historicalProjectBasePath
+            if (currentProjectName == basePath.fileName?.toString()) {
+              // name equals to base path name - remove name
+              Files.deleteIfExists(nameFile)
+            }
+            else if (Files.isDirectory(basePath)) {
+              NioFiles.createParentDirectories(nameFile)
+              Files.write(nameFile, currentProjectName.toByteArray())
+            }
+          }
+
+          try {
+            doSave()
+          }
+          catch (e: AccessDeniedException) {
+            val status = ensureFilesWritable(project, listOf(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(nameFile)!!))
+            if (status.hasReadonlyFiles()) {
+              throw e
+            }
+            doSave()
+          }
+        }
+        catch (e: Throwable) {
+          LOG.error("Unable to store project name", e)
         }
       }
     }
@@ -138,6 +197,16 @@ internal fun doGetJpsBridgeAwareStorageSpec(filePath: String, project: Project):
     }
   }
   return FileStorageAnnotation(/* path = */ collapsedPath, /* deprecated = */ false, /* splitterClass = */ splitterClass)
+}
+
+@VisibleForTesting
+internal fun getNameFileForDotIdeaProject(project: Project, dotIdea: Path): Path {
+  for (projectNameProvider in ProjectNameProvider.EP_NAME.lazySequence()) {
+    runCatching { projectNameProvider.getNameFile(project) }
+      .getOrLogException(LOG)
+      ?.let { return it }
+  }
+  return dotIdea.resolve(ProjectEx.NAME_FILE)
 }
 
 /**

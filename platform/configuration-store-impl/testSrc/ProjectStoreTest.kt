@@ -117,15 +117,18 @@ class ProjectStoreTest {
       it.toNioPath()
     }) { project ->
       val store = project.stateStore as ProjectStoreImpl
-      assertThat(store.getNameFile()).doesNotExist()
+
+      fun getNameFile() = getNameFileForDotIdeaProject(project, store.directoryStorePath!!)
+
+      assertThat(getNameFile()).doesNotExist()
       val newName = "Foo"
       val oldName = project.name
       (project as ProjectEx).setProjectName(newName)
       project.stateStore.save()
-      assertThat(store.getNameFile()).hasContent(newName)
+      assertThat(getNameFile()).hasContent(newName)
 
       project.setProjectName("clear-read-only")
-      File(store.getNameFile().toUri()).setReadOnly()
+      File(getNameFile().toUri()).setReadOnly()
 
       val handler = ReadonlyStatusHandler.getInstance(project) as ReadonlyStatusHandlerImpl
       try {
@@ -135,11 +138,11 @@ class ProjectStoreTest {
       finally {
         handler.setClearReadOnlyInTests(false)
       }
-      assertThat(store.getNameFile()).hasContent("clear-read-only")
+      assertThat(getNameFile()).hasContent("clear-read-only")
 
       project.setProjectName(oldName)
       project.stateStore.save()
-      assertThat(store.getNameFile()).doesNotExist()
+      assertThat(getNameFile()).doesNotExist()
     }
   }
 
@@ -153,30 +156,33 @@ class ProjectStoreTest {
       it.toNioPath()
     }) { project ->
       val store = project.stateStore as ProjectStoreImpl
-      assertThat(store.getNameFile()).hasContent(name)
+
+      fun getNameFile() = getNameFileForDotIdeaProject(project, store.directoryStorePath!!)
+
+      assertThat(getNameFile()).hasContent(name)
 
       project.stateStore.save()
-      assertThat(store.getNameFile()).hasContent(name)
+      assertThat(getNameFile()).hasContent(name)
 
       (project as ProjectEx).setProjectName(name)
       project.stateStore.save()
-      assertThat(store.getNameFile()).hasContent(name)
+      assertThat(getNameFile()).hasContent(name)
 
       project.setProjectName("foo")
       project.stateStore.save()
-      assertThat(store.getNameFile()).hasContent("foo")
+      assertThat(getNameFile()).hasContent("foo")
 
       project.setProjectName(name)
       project.stateStore.save()
-      assertThat(store.getNameFile()).doesNotExist()
+      assertThat(getNameFile()).doesNotExist()
 
       project.setProjectName("<html><img src=http:ip:port/attack.png> </html>")
       project.stateStore.save()
-      assertThat(store.getNameFile()).doesNotExist()
+      assertThat(getNameFile()).doesNotExist()
 
       project.setProjectName("a < b or b > c")
       project.stateStore.save()
-      assertThat(store.getNameFile()).hasContent("a b or b > c")
+      assertThat(getNameFile()).hasContent("a b or b > c")
     }
   }
 

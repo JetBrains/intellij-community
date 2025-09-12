@@ -33,6 +33,10 @@ interface ProjectStoreDescriptor {
   // where we do store project files (misc.xml and so on), for historical reasons, it must be named as `.idea`
   val dotIdea: Path?
 
+  fun getProjectName(): String
+
+  suspend fun saveProjectName(project: Project)
+
   fun customMacros(): Map<String, Path> = emptyMap()
 
   fun getJpsBridgeAwareStorageSpec(filePath: String, project: Project): Storage

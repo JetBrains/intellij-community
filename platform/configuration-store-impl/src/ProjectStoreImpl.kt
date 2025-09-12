@@ -13,11 +13,7 @@ import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.project.*
-import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.openapi.project.ex.ProjectNameProvider
-import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -31,8 +27,6 @@ import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.jps.util.JpsPathUtil
-import java.nio.file.AccessDeniedException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -52,23 +46,12 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
 
   lateinit var storeDescriptor: ProjectStoreDescriptor
 
-  private var lastSavedProjectName: String? = null
-
   init {
     assert(!project.isDefault)
   }
 
   override val serviceContainer: ComponentManagerEx
     get() = project as ComponentManagerEx
-
-  internal fun getNameFile(): Path {
-    for (projectNameProvider in ProjectNameProvider.EP_NAME.lazySequence()) {
-      runCatching { projectNameProvider.getNameFile(project) }
-        .getOrLogException(LOG)
-        ?.let { return it }
-    }
-    return directoryStorePath!!.resolve(ProjectEx.NAME_FILE)
-  }
 
   final override var loadPolicy: StateLoadPolicy = StateLoadPolicy.LOAD
 
@@ -144,6 +127,13 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
 
         override val dotIdea: Path?
           get() = null
+
+        override fun getProjectName(): String {
+          return file.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
+        }
+
+        override suspend fun saveProjectName(project: Project) {
+        }
 
         override fun getJpsBridgeAwareStorageSpec(filePath: String, project: Project): Storage {
           return doGetJpsBridgeAwareStorageSpec(filePath, project)
@@ -334,62 +324,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   }
 
   final override val projectName: String
-    get() {
-      if (!storeDescriptor.isDirectoryBased) {
-        return storageManager.expandMacro(PROJECT_FILE).fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
-      }
-
-      val storedName = JpsPathUtil.readProjectName(directoryStorePath!!)
-      if (storedName != null) {
-        lastSavedProjectName = storedName
-        return storedName
-      }
-
-      return NioFiles.getFileName(projectBasePath)
-    }
-
-  private suspend fun saveProjectName() {
-    try {
-      if (!storeDescriptor.isDirectoryBased) {
-        return
-      }
-
-      val currentProjectName = project.name
-      if (lastSavedProjectName == currentProjectName) {
-        return
-      }
-
-      lastSavedProjectName = currentProjectName
-
-      val nameFile = getNameFile()
-
-      fun doSave() {
-        val basePath = projectBasePath
-        if (currentProjectName == basePath.fileName?.toString()) {
-          // name equals to base path name - remove name
-          Files.deleteIfExists(nameFile)
-        }
-        else if (Files.isDirectory(basePath)) {
-          NioFiles.createParentDirectories(nameFile)
-          Files.write(nameFile, currentProjectName.toByteArray())
-        }
-      }
-
-      try {
-        doSave()
-      }
-      catch (e: AccessDeniedException) {
-        val status = ensureFilesWritable(project, listOf(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(nameFile)!!))
-        if (status.hasReadonlyFiles()) {
-          throw e
-        }
-        doSave()
-      }
-    }
-    catch (t: Throwable) {
-      LOG.error("Unable to store project name", t)
-    }
-  }
+    get() = storeDescriptor.getProjectName()
 
   final override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
     coroutineScope {
@@ -406,7 +341,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       }
 
       launch {
-        saveProjectName()
+        storeDescriptor.saveProjectName(project)
       }
     }
   }
