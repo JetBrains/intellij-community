@@ -138,7 +138,6 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         @Override
         public void computed(XSourcePosition position) {
           if (isObsolete() || position == null) return;
-          LOG.info("Inline debugger data computed: " + position.getLine() + " " + position.getFile());
           VirtualFile file = position.getFile();
           // filter out values from other files
           VirtualFile mainFile = mainPosition != null ? mainPosition.getFile() : null;
