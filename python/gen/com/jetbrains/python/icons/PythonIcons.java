@@ -47,6 +47,7 @@ public final class PythonIcons {
     /** 13x13 */ public static final @NotNull Icon PythonConsoleToolWindow = load("icons/com/jetbrains/pythonCore/python/expui/pythonConsoleToolWindow.svg", "icons/com/jetbrains/pythonCore/python/pythonConsoleToolWindow.svg", 1833337589, 2);
     /** 13x13 */ public static final @NotNull Icon PythonPackages = load("icons/com/jetbrains/pythonCore/python/expui/pythonPackages.svg", "icons/com/jetbrains/pythonCore/python/pythonPackages.svg", 272044150, 2);
     /** 16x16 */ public static final @NotNull Icon PythonTests = load("icons/com/jetbrains/pythonCore/python/expui/pythonTests.svg", "icons/com/jetbrains/pythonCore/python/pythonTests.svg", 1252990498, 0);
+    /** 16x16 */ public static final @NotNull Icon ReferencedFile = load("icons/com/jetbrains/pythonCore/python/referencedFile.svg", 701028925, 2);
     /** 16x16 */ public static final @NotNull Icon RemoteInterpreter = load("icons/com/jetbrains/pythonCore/python/expui/remoteInterpreter.svg", "icons/com/jetbrains/pythonCore/python/RemoteInterpreter.svg", 60369309, 0);
     /** 16x16 */ public static final @NotNull Icon Ssh = load("icons/com/jetbrains/pythonCore/python/expui/ssh.svg", "icons/com/jetbrains/pythonCore/python/ssh.svg", 1941773502, 0);
     /** 16x16 */ public static final @NotNull Icon TemplateRoot = load("icons/com/jetbrains/pythonCore/python/expui/templateRoot.svg", "icons/com/jetbrains/pythonCore/python/templateRoot.svg", 6261950, 0);
