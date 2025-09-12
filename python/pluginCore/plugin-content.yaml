@@ -35,6 +35,9 @@
   module: intellij.python.community.impl
   files:
   - name: $MAVEN_REPOSITORY$/completion/ml/python/features/ml-completion-prev-exprs-models/1/ml-completion-prev-exprs-models-1.jar
+- name: lib/modules/intellij.platform.ide.nonModalWelcomeScreen.jar
+  contentModules:
+  - name: intellij.platform.ide.nonModalWelcomeScreen
 - name: lib/modules/intellij.python.ml.features.jar
   contentModules:
   - name: intellij.python.ml.features
