@@ -12,19 +12,13 @@ class ClasspathTableItem<T extends OrderEntry> {
   private final boolean myRemovable;
 
   public static @Nullable ClasspathTableItem<?> createItem(OrderEntry orderEntry, StructureConfigurableContext context) {
-    if (orderEntry instanceof JdkOrderEntry) {
-      return new ClasspathTableItem<>(orderEntry, false);
-    }
-    else if (orderEntry instanceof LibraryOrderEntry) {
-      return createLibItem((LibraryOrderEntry)orderEntry, context);
-    }
-    else if (orderEntry instanceof ModuleOrderEntry) {
-      return new ClasspathTableItem<>(orderEntry, true);
-    }
-    else if (orderEntry instanceof ModuleSourceOrderEntry) {
-      return new ClasspathTableItem<>(orderEntry, false);
-    }
-    return null;
+    return switch (orderEntry) {
+      case JdkOrderEntry entry -> new ClasspathTableItem<>(entry, false);
+      case LibraryOrderEntry entry -> createLibItem(entry, context);
+      case ModuleOrderEntry entry -> new ClasspathTableItem<>(entry, true);
+      case ModuleSourceOrderEntry entry -> new ClasspathTableItem<>(entry, false);
+      case null, default -> null;
+    };
   }
 
   public static ClasspathTableItem<LibraryOrderEntry> createLibItem(final LibraryOrderEntry orderEntry, final StructureConfigurableContext context) {

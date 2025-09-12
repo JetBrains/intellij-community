@@ -347,17 +347,11 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
   }
 
   private static @Nullable @NlsContexts.DialogMessage String verifyDestinationForElement(@NotNull PsiElement element, @NotNull MoveDestination moveDestination) {
-    final String message;
-    if (element instanceof PsiDirectory) {
-      message = moveDestination.verify((PsiDirectory)element);
-    }
-    else if (element instanceof PsiPackage) {
-      message = moveDestination.verify((PsiPackage)element);
-    }
-    else {
-      message = moveDestination.verify(element.getContainingFile());
-    }
-    return message;
+    return switch (element) {
+      case PsiDirectory directory -> moveDestination.verify(directory);
+      case PsiPackage aPackage -> moveDestination.verify(aPackage);
+      default -> moveDestination.verify(element.getContainingFile());
+    };
   }
 
   @Override

@@ -49,16 +49,12 @@ public class SourceItemFindUsagesAction extends ArtifactEditorFindUsagesActionBa
     if (sourceItem == null) return null;
 
     final StructureConfigurableContext context = getContext();
-    if (sourceItem instanceof ModuleOutputSourceItem) {
-      return new ModuleProjectStructureElement(context, ((ModuleOutputSourceItem)sourceItem).getModule());
-    }
-    else if (sourceItem instanceof LibrarySourceItem) {
-      return new LibraryProjectStructureElement(context, ((LibrarySourceItem)sourceItem).getLibrary());
-    }
-    else if (sourceItem instanceof ArtifactSourceItem) {
-      return myArtifactContext.getOrCreateArtifactElement(((ArtifactSourceItem)sourceItem).getArtifact());
-    }
-    return null;
+    return switch (sourceItem) {
+      case ModuleOutputSourceItem item -> new ModuleProjectStructureElement(context, item.getModule());
+      case LibrarySourceItem item -> new LibraryProjectStructureElement(context, item.getLibrary());
+      case ArtifactSourceItem item -> myArtifactContext.getOrCreateArtifactElement(item.getArtifact());
+      default -> null;
+    };
   }
 
   @Override

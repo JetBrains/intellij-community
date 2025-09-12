@@ -125,30 +125,21 @@ final class ExpressionStatisticsAction extends AnAction {
   }
 
   private static void classifyTarget(Data data, PsiElement target) {
-    if (target instanceof PsiLocalVariable) {
-      data.localVars++;
-    }
-    else if (target instanceof PsiParameter) {
-      data.parameters++;
-    }
-    else if (target instanceof PsiMethod) {
-      data.methods++;
-    }
-    else if (target instanceof PsiClass) {
-      data.classes++;
-    }
-    else if (target instanceof PsiPackage) {
-      data.packages++;
-    }
-    else if (target instanceof PsiField) {
-      if (((PsiField)target).hasModifierProperty(PsiModifier.STATIC) && ((PsiField)target).hasModifierProperty(PsiModifier.FINAL)) {
-        data.constants++;
-      } else {
-        data.fields++;
+    switch (target) {
+      case PsiLocalVariable ignored -> data.localVars++;
+      case PsiParameter ignored -> data.parameters++;
+      case PsiMethod ignored -> data.methods++;
+      case PsiClass ignored -> data.classes++;
+      case PsiPackage ignored -> data.packages++;
+      case PsiField field -> {
+        if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL)) {
+          data.constants++;
+        }
+        else {
+          data.fields++;
+        }
       }
-    }
-    else {
-      data.other++;
+      case null, default -> data.other++;
     }
   }
 

@@ -36,20 +36,25 @@ public class ExcludeFromValidationAction extends AnAction {
   private static @Nullable Pair<ExcludesConfiguration, VirtualFile> getExcludedConfigurationAndFile(final AnActionEvent event, Project project) {
     Navigatable navigatable = event.getData(CommonDataKeys.NAVIGATABLE);
     if (project == null) return null;
-    final VirtualFile file;
-    if (navigatable instanceof OpenFileDescriptor) {
-      file = ((OpenFileDescriptor)navigatable).getFile();
-    }
-    else if (navigatable instanceof FileNavigatable) {
-      OpenFileDescriptor fileDescriptor = ((FileNavigatable)navigatable).getFileDescriptor();
-      file = fileDescriptor != null ? fileDescriptor.getFile() : null;
-    }
-    else {
-      file = null;
-    }
+    final VirtualFile file = getTargetFile(navigatable);
     if (file == null) return null;
     final ExcludesConfiguration configuration = ValidationConfiguration.getExcludedEntriesConfiguration(project);
     return Pair.create(configuration, file);
+  }
+
+  /**
+   * @param navigatable navigatable to retrieve the target file from
+   * @return target file or null if unable to find the file
+   */
+  public static @Nullable VirtualFile getTargetFile(@Nullable Navigatable navigatable) {
+    return switch (navigatable) {
+      case OpenFileDescriptor descriptor -> descriptor.getFile();
+      case FileNavigatable fileNavigatable -> {
+        OpenFileDescriptor fileDescriptor = fileNavigatable.getFileDescriptor();
+        yield fileDescriptor != null ? fileDescriptor.getFile() : null;
+      }
+      case null, default -> null;
+    };
   }
 
   @Override

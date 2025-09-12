@@ -231,13 +231,13 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
   }
 
   private static String getResourceName(PsiResourceListElement resource) {
-    if (resource instanceof PsiResourceVariable) {
-      return ((PsiResourceVariable)resource).getName();
-    }
-    else if (resource instanceof PsiResourceExpression) {
-      return ((PsiResourceExpression)resource).getExpression().getText();
-    }
-    LOG.error("Unknown PsiResourceListElement type: " + resource.getClass());
-    return null;
+    return switch (resource) {
+      case PsiResourceVariable variable -> variable.getName();
+      case PsiResourceExpression expression -> expression.getExpression().getText();
+      default -> {
+        LOG.error("Unknown PsiResourceListElement type: " + resource.getClass());
+        yield null;
+      }
+    };
   }
 }

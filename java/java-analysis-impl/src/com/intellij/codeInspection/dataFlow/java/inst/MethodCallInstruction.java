@@ -17,7 +17,10 @@ import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfStreamStateType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -301,13 +304,11 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
 
   private PsiMethod findSpecificMethod(@Nullable PsiType qualifierType) {
     if (myTargetMethod == null || qualifierType == null || !PsiUtil.canBeOverridden(myTargetMethod)) return myTargetMethod;
-    PsiExpression qualifierExpression = null;
-    if (myContext instanceof PsiMethodCallExpression) {
-      qualifierExpression = ((PsiMethodCallExpression)myContext).getMethodExpression().getQualifierExpression();
-    }
-    else if (myContext instanceof PsiMethodReferenceExpression) {
-      qualifierExpression = ((PsiMethodReferenceExpression)myContext).getQualifierExpression();
-    }
+    PsiExpression qualifierExpression = switch (myContext) {
+      case PsiMethodCallExpression expression -> expression.getMethodExpression().getQualifierExpression();
+      case PsiMethodReferenceExpression expression -> expression.getQualifierExpression();
+      default -> null;
+    };
     if (qualifierExpression instanceof PsiSuperExpression) return myTargetMethod; // non-virtual call
     return MethodUtils.findSpecificMethod(myTargetMethod, qualifierType);
   }

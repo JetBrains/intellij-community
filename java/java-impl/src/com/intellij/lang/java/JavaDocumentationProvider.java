@@ -587,24 +587,14 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   private static @Nullable @NonNls String findTemplateNameByElement(PsiJavaDocumentedElement commentOwner){
-    if (commentOwner instanceof PsiMethod method) {
-      if (method.isConstructor()) {
-        return JavaTemplateUtil.TEMPLATE_JAVADOC_CONSTRUCTOR;
-      }
-      else if (method.findSuperMethods().length > 0) {
-        return JavaTemplateUtil.TEMPLATE_JAVADOC_OVERRIDING_METHOD;
-      }
-      else {
-        return JavaTemplateUtil.TEMPLATE_JAVADOC_METHOD;
-      }
-    }
-    else if (commentOwner instanceof PsiField) {
-      return JavaTemplateUtil.TEMPLATE_JAVADOC_FIELD;
-    }
-    else if (commentOwner instanceof PsiClass) {
-      return JavaTemplateUtil.TEMPLATE_JAVADOC_CLASS;
-    }
-    return null;
+    return switch (commentOwner) {
+      case PsiMethod method -> method.isConstructor() ? JavaTemplateUtil.TEMPLATE_JAVADOC_CONSTRUCTOR :
+                               method.findSuperMethods().length > 0 ? JavaTemplateUtil.TEMPLATE_JAVADOC_OVERRIDING_METHOD
+                                                                    : JavaTemplateUtil.TEMPLATE_JAVADOC_METHOD;
+      case PsiField ignored -> JavaTemplateUtil.TEMPLATE_JAVADOC_FIELD;
+      case PsiClass ignored -> JavaTemplateUtil.TEMPLATE_JAVADOC_CLASS;
+      case null, default -> null;
+    };
   }
 
   @Override

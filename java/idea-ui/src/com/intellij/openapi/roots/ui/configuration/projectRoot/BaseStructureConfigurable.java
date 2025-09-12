@@ -131,7 +131,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     myTree.setCellRenderer(new ProjectStructureElementRenderer(myContext));
   }
 
-  protected @NotNull String getTextForSpeedSearch(MyNode node) {
+  protected @NotNull String getTextForSpeedSearch(@NotNull MyNode node) {
     return node.getDisplayName();
   }
 

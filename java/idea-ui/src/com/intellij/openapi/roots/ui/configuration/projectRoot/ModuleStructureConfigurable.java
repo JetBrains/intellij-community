@@ -126,16 +126,12 @@ public final class ModuleStructureConfigurable extends BaseStructureConfigurable
   }
 
   @Override
-  protected @NotNull String getTextForSpeedSearch(MyNode node) {
-    if (node instanceof ModuleNode) {
-      return ((ModuleNode)node).getFullModuleName();
-    }
-    else if (node instanceof ModuleGroupNodeImpl) {
-      return ((ModuleGroupNodeImpl)node).getModuleGroup().getQualifiedName();
-    }
-    else {
-      return super.getTextForSpeedSearch(node);
-    }
+  protected @NotNull String getTextForSpeedSearch(@NotNull MyNode node) {
+    return switch (node) {
+      case ModuleNode moduleNode -> moduleNode.getFullModuleName();
+      case ModuleGroupNodeImpl groupNode -> groupNode.getModuleGroup().getQualifiedName();
+      default -> super.getTextForSpeedSearch(node);
+    };
   }
 
   @Override

@@ -9,6 +9,7 @@ import com.intellij.build.progress.BuildProgressDescriptor;
 import com.intellij.compiler.impl.CompilerPropertiesAction;
 import com.intellij.compiler.impl.ExcludeFromCompileAction;
 import com.intellij.compiler.impl.ExitStatus;
+import com.intellij.compiler.options.ExcludeFromValidationAction;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.execution.filters.UrlFilter;
@@ -93,15 +94,8 @@ public class BuildOutputService implements BuildViewService {
             protected @Nullable VirtualFile getFile() {
               List<Navigatable> navigatables = node.getNavigatables();
               if (navigatables.size() != 1) return null;
-              Navigatable navigatable = navigatables.get(0);
-              if (navigatable instanceof OpenFileDescriptor) {
-                return ((OpenFileDescriptor)navigatable).getFile();
-              }
-              else if (navigatable instanceof FileNavigatable) {
-                OpenFileDescriptor fileDescriptor = ((FileNavigatable)navigatable).getFileDescriptor();
-                return fileDescriptor != null ? fileDescriptor.getFile() : null;
-              }
-              return null;
+              Navigatable navigatable = navigatables.getFirst();
+              return ExcludeFromValidationAction.getTargetFile(navigatable);
             }
           };
         })
