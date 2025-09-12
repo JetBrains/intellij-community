@@ -58,7 +58,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
     @NotNull PlatformUpdates.Loaded platformUpdate,
     boolean addConfigureUpdatesLink,
     @Nullable Collection<PluginDownloader> updatesForPlugins,
-    @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins
+    @Nullable List<String> incompatiblePluginNames
   ) {
     super(project, addConfigureUpdatesLink);
     myProject = project;
@@ -69,11 +69,9 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
     myLicenseInfo = getLicensingInfo(myPlatformUpdate);
     myTestPatch = null;
     init();
-    if (!ContainerUtil.isEmpty(incompatiblePlugins)) {
-      var names = incompatiblePlugins.stream()
-        .map(IdeaPluginDescriptor::getName)
-        .collect(Collectors.joining("<br/>"));
-      setErrorText(IdeBundle.message("updates.incompatible.plugins.found", incompatiblePlugins.size(), names));
+    if (!ContainerUtil.isEmpty(incompatiblePluginNames)) {
+      var names = String.join("<br/>", incompatiblePluginNames);
+      setErrorText(IdeBundle.message("updates.incompatible.plugins.found", incompatiblePluginNames.size(), names));
     }
     IdeUpdateUsageTriggerCollector.triggerUpdateDialog(patches, ApplicationManager.getApplication().isRestartCapable());
   }

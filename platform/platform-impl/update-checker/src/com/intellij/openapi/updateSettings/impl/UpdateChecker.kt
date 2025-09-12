@@ -785,7 +785,7 @@ private fun doUpdateAndShowResult(
         project = project,
         platformUpdates = platformUpdates,
         updatesForPlugins = updatesForPlugins,
-        incompatiblePlugins = pluginUpdates.incompatible,
+        incompatiblePluginNames = pluginUpdates.incompatible.map { it.name },
         showNotification = userInitiated || WelcomeFrame.getInstance() != null,
         forceDialog = forceDialog,
         showSettingsLink = showSettingsLink,
@@ -921,7 +921,7 @@ private fun showResults(
   project: Project?,
   platformUpdates: PlatformUpdates.Loaded,
   updatesForPlugins: List<PluginDownloader>,
-  incompatiblePlugins: Collection<IdeaPluginDescriptor>,
+  incompatiblePluginNames: List<String>,
   showNotification: Boolean,
   forceDialog: Boolean,
   showSettingsLink: Boolean,
@@ -936,7 +936,7 @@ private fun showResults(
       platformUpdates,
       showSettingsLink,
       updatesForPlugins,
-      incompatiblePlugins,
+      incompatiblePluginNames,
     ).show()
   }
 
@@ -944,7 +944,7 @@ private fun showResults(
     showUpdateDialog()
   }
   else {
-    UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatesForPlugins, incompatiblePlugins)
+    UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatesForPlugins, incompatiblePluginNames)
 
     if (showNotification) {
       IdeUpdateUsageTriggerCollector.NOTIFICATION_SHOWN.log(project)
