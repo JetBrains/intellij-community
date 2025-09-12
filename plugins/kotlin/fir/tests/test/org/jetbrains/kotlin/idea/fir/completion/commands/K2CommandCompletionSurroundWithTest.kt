@@ -20,6 +20,20 @@ class K2CommandCompletionSurroundWithTest : KotlinLightCodeInsightFixtureTestCas
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     }
 
+    fun testNoExceptionForPackages() {
+        myFixture.configureByText(
+            "x.kt", """
+        package a.b.c.<caret>
+        class A { 
+            fun foo(a: String) {
+                println(a)
+            } 
+        }
+      """.trimIndent()
+        )
+        myFixture.completeBasic()
+    }
+
     fun testSurroundWithIf() {
         myFixture.configureByText(
             "x.kt", """
