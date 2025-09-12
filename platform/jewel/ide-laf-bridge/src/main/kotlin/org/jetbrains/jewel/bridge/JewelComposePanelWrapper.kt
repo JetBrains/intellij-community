@@ -7,11 +7,16 @@ import androidx.compose.ui.awt.ComposePanel
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.PathManager
+import java.awt.AWTEvent
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.Toolkit
+import java.awt.event.AWTEventListener
+import java.awt.event.MouseEvent
 import java.io.File
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.actionSystem.ComponentDataProviderBridge
 import org.jetbrains.jewel.bridge.component.JBPopupRenderer
@@ -114,32 +119,38 @@ private fun createJewelComposePanel(config: ComposePanel.(JewelComposePanelWrapp
         }
     }
     val jewelPanel = JewelComposePanelWrapper()
-    jewelPanel.layout = BorderLayout()
-    val composePanel = ComposePanel()
-    jewelPanel.add(composePanel, BorderLayout.CENTER)
-    composePanel.config(jewelPanel)
+    jewelPanel.composePanel.config(jewelPanel)
     ComposeUiInspector(jewelPanel)
     return jewelPanel
 }
 
-internal class JewelComposePanelWrapper : JPanel(), UiDataProvider {
+internal class JewelComposePanelWrapper : JPanel(BorderLayout()), UiDataProvider {
     internal var targetProvider: UiDataProvider? = null
+    private val listener = AWTEventListener { event ->
+        if (event !is MouseEvent || event.button == MouseEvent.NOBUTTON) return@AWTEventListener
+        if (!isFocusOwner && SwingUtilities.isDescendingFrom(event.component, this)) {
+            composePanel.requestFocus()
+        }
+    }
 
-    val composePanel: ComposePanel
-        get() =
-            components.singleOrNull() as? ComposePanel
-                ?: error("JewelComposePanelWrapper was not initialized with a ComposePanel")
+    val composePanel: ComposePanel = ComposePanel()
+
+    init {
+        super.addImpl(composePanel, BorderLayout.CENTER, -1)
+    }
 
     override fun addImpl(comp: Component, constraints: Any?, index: Int) {
-        require(components.isEmpty()) {
-            "JewelComposePanelWrapper can only contain a single ComposePanel, attempt to add another component"
-        }
+        error("JewelComposePanelWrapper can only contain ComposePanel, attempt to add ${comp::class.java.name}")
+    }
 
-        require(comp is ComposePanel) {
-            "JewelComposePanelWrapper can only contain ComposePanel, attempt to add ${comp::class.java.name}"
-        }
+    override fun addNotify() {
+        super.addNotify()
+        Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_EVENT_MASK)
+    }
 
-        super.addImpl(comp, constraints, index)
+    override fun removeNotify() {
+        super.removeNotify()
+        Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
     }
 
     override fun uiDataSnapshot(sink: DataSink) {
