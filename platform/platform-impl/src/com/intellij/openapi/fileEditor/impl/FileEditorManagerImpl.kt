@@ -115,7 +115,6 @@ import java.util.concurrent.atomic.LongAdder
 import javax.swing.JComponent
 import javax.swing.JTabbedPane
 import javax.swing.KeyStroke
-import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<FileEditorManagerImpl>()
@@ -2506,12 +2505,13 @@ fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
         job.invokeOnCompletion {
           EventQueue.invokeLater(EmptyRunnable.getInstance())
         }
-
         IdeEventQueue.getInstance().pumpEventsForHierarchy {
           job.isCompleted
         }
+        job.join()
       }
-    } finally {
+    }
+    finally {
       cleanup()
     }
   }
