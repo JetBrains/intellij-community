@@ -367,7 +367,7 @@ private fun getIgnoredNames(): Set<String> {
       set.add("META-INF/$name.md")
     }
   }
-  set.add("kotlinx/coroutines/debug/internal/ByteBuddyDynamicAttach.class")
+  set.add("kotlinx/coroutines/debug/ByteBuddyDynamicAttach.class")
   set.add("kotlin/coroutines/jvm/internal/DebugProbesKt.class")
   /**
    * A merging build politic breaks Graal VM Truffle-based plugins in an inconsistant way, so it's better
