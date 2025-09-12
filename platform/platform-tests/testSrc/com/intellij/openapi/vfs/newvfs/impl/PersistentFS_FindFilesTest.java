@@ -318,7 +318,6 @@ public class PersistentFS_FindFilesTest {
     }
     finally {
       pool.shutdown();
-      //noinspection ResultOfMethodCallIgnored
       pool.awaitTermination(1, MINUTES);
     }
   }
