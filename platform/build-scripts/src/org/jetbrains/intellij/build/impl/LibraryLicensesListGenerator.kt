@@ -24,10 +24,6 @@ internal suspend fun createLibraryLicensesListGenerator(
   usedModulesNames: Set<String>,
   allowEmpty: Boolean = false,
 ): LibraryLicensesListGenerator {
-  val licences = generateLicenses(project = context.project, licensesList = licenseList, usedModulesNames = usedModulesNames)
-  check(allowEmpty || !licences.isEmpty()) {
-    "Empty licenses table for ${licenseList.size} licenses and ${usedModulesNames.size} used modules names"
-  }
   val generator = createLibraryLicensesListGenerator(context.project, licenseList, usedModulesNames, allowEmpty)
   checkLibraryUrls(context, generator.libraryLicenses)
   return generator
