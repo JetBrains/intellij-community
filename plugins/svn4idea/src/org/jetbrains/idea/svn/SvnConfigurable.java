@@ -62,12 +62,6 @@ public abstract class SvnConfigurable extends ConfigurableBase<ConfigurableUi<Sv
     return SvnConfiguration.getInstance(myProject);
   }
 
-  public static class General extends SvnConfigurable {
-    public General(@NotNull Project project) {
-      super(project, ID, getGroupDisplayName(), () -> new GeneralSettingsPanel(project), HELP_ID);
-    }
-  }
-
   public static class Ssh extends SvnConfigurable {
     public Ssh(@NotNull Project project) {
       super(project, "SSH", message("configurable.name.svn.ssh"), () -> new SshSettingsPanel(project));
