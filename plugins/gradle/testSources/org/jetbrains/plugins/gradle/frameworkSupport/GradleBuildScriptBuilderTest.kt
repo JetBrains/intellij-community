@@ -262,7 +262,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
     val junit5 = getJunit5Version()
 
     assertBuildScript(
-      GradleVersion.current() to ("""
+      GradleVersion.version("8.2") to ("""
         repositories {
             mavenCentral()
         }
@@ -285,6 +285,34 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
             testImplementation(platform("org.junit:junit-bom:$junit5"))
             testImplementation("org.junit.jupiter:junit-jupiter")
             testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+        }
+        
+        tasks.test {
+            useJUnitPlatform()
+        }
+      """.trimIndent()),
+
+      GradleVersion.version("5.0") to ("""
+        repositories {
+            mavenCentral()
+        }
+        
+        dependencies {
+            testImplementation platform('org.junit:junit-bom:$junit5')
+            testImplementation 'org.junit.jupiter:junit-jupiter'
+        }
+        
+        test {
+            useJUnitPlatform()
+        }
+      """.trimIndent() to """
+        repositories {
+            mavenCentral()
+        }
+        
+        dependencies {
+            testImplementation(platform("org.junit:junit-bom:$junit5"))
+            testImplementation("org.junit.jupiter:junit-jupiter")
         }
         
         tasks.test {
@@ -382,103 +410,122 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
     }
   }
 
-  @Test
-  fun `test tasks registration`() {
-    assertBuildScript(
-      GradleVersion.current() to ("""
-        |tasks.register 'myTask'
-      """.trimMargin() to """
-        |tasks.register("myTask")
-      """.trimMargin()),
+  @Nested
+  inner class TaskRegistration {
 
-      GradleVersion.version("4.5") to (
-        """
+    @Test
+    fun `test task registration without configuration`() {
+      assertBuildScript(
+        GradleVersion.version("4.9") to ("""
+          |tasks.register 'myTask'
+        """.trimMargin() to """
+          |tasks.register("myTask")
+        """.trimMargin()),
+
+        GradleVersion.version("4.5") to ("""
           |tasks.create 'myTask'
         """.trimMargin() to """
           |tasks.create("myTask")
         """.trimMargin())
-    ) {
-      registerTask("myTask")
-    }
-
-    assertBuildScript(
-      GradleVersion.current() to ("""
-        |tasks.register 'myTask', MyTask
-      """.trimMargin() to """
-        |tasks.register<MyTask>("myTask")
-      """.trimMargin()),
-
-      GradleVersion.version("4.5") to ("""
-        |tasks.create 'myTask', MyTask
-      """.trimMargin() to """
-        |tasks.create("myTask", MyTask::class.java)
-      """.trimMargin())
-    ) {
-      registerTask("myTask", "MyTask") {
-        // no configuration
+      ) {
+        registerTask("myTask")
       }
     }
 
-    assertBuildScript(
-      GradleVersion.current() to ("""
-        |tasks.register('myTask', MyTask) {
-        |    myConfiguration()
-        |}
-      """.trimMargin() to """
-        |tasks.register<MyTask>("myTask") {
-        |    myConfiguration()
-        |}
-      """.trimMargin()),
+    @Test
+    fun `test task registration with empty configuration block`() {
+      assertBuildScript(
+        GradleVersion.version("4.9") to ("""
+          |tasks.register 'myTask', MyTask
+        """.trimMargin() to """
+          |tasks.register<MyTask>("myTask")
+        """.trimMargin()),
 
-      GradleVersion.version("4.5") to ("""
-        |tasks.create('myTask', MyTask) {
-        |    myConfiguration()
-        |}
-      """.trimMargin() to """
-        |tasks.create("myTask", MyTask::class.java) {
-        |    myConfiguration()
-        |}
-      """.trimMargin())
-    ) {
-      registerTask("myTask", "MyTask") {
-        call("myConfiguration")
+        GradleVersion.version("4.5") to ("""
+          |tasks.create 'myTask', MyTask
+        """.trimMargin() to """
+          |tasks.create("myTask", MyTask::class.java)
+        """.trimMargin())
+      ) {
+        registerTask("myTask", "MyTask") {
+          // no configuration
+        }
+      }
+    }
+
+    @Test
+    fun `test simple task registration`() {
+      assertBuildScript(
+        GradleVersion.version("4.9") to ("""
+          |tasks.register('myTask', MyTask) {
+          |    myConfiguration()
+          |}
+        """.trimMargin() to """
+          |tasks.register<MyTask>("myTask") {
+          |    myConfiguration()
+          |}
+        """.trimMargin()),
+
+        GradleVersion.version("4.5") to ("""
+          |tasks.create('myTask', MyTask) {
+          |    myConfiguration()
+          |}
+        """.trimMargin() to """
+          |tasks.create("myTask", MyTask::class.java) {
+          |    myConfiguration()
+          |}
+        """.trimMargin())
+      ) {
+        registerTask("myTask", "MyTask") {
+          call("myConfiguration")
+        }
       }
     }
   }
 
-  @Test
-  fun `test tasks configuration`() {
-    assertBuildScript("""
-      |test {
-      |    myConfiguration()
-      |}
-    """.trimMargin(), """
-      |tasks.test {
-      |    myConfiguration()
-      |}
-    """.trimMargin()) {
-      configureTask("test", "Test") {
-        call("myConfiguration")
+  @Nested
+  inner class TaskConfiguration {
+
+    @Test
+    fun `test predefined task configuration`() {
+      assertBuildScript("""
+        |test {
+        |    myConfiguration()
+        |}
+      """.trimMargin(), """
+        |tasks.test {
+        |    myConfiguration()
+        |}
+      """.trimMargin()) {
+        configureTask("test", "Test") {
+          call("myConfiguration")
+        }
       }
     }
 
-    assertBuildScript("""
-      |tasks.named('myTask', MyTask) {
-      |    myConfiguration()
-      |}
-    """.trimMargin(), """
-      |tasks.named<MyTask>("myTask") {
-      |    myConfiguration()
-      |}
-    """.trimMargin()) {
-      configureTask("myTask", "MyTask") {
-        call("myConfiguration")
+    @Test
+    fun `test simple task configuration`() {
+      assertBuildScript("""
+        |tasks.named('myTask', MyTask) {
+        |    myConfiguration()
+        |}
+      """.trimMargin(), """
+        |tasks.named<MyTask>("myTask") {
+        |    myConfiguration()
+        |}
+      """.trimMargin()) {
+        configureTask("myTask", "MyTask") {
+          call("myConfiguration")
+        }
       }
     }
 
-    assertBuildScript("", "") {
-      configureTask("myTask", "MyTask") {
-        // no configuration
+    @Test
+    fun `test task configuration with empty configuration block`() {
+      assertBuildScript("", "") {
+        configureTask("myTask", "MyTask") {
+          // no configuration
+        }
       }
     }
   }
