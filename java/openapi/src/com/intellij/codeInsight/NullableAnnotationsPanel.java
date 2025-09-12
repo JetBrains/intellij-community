@@ -101,7 +101,7 @@ public class NullableAnnotationsPanel {
 
       TableColumn checkColumn = new TableColumn(1, 100, new BooleanTableCellRenderer(), new BooleanTableCellEditor());
       columnModel.addColumn(checkColumn);
-      checkColumn.setHeaderValue(" Instrument ");
+      checkColumn.setHeaderValue(" " + JavaBundle.message("nullable.notnull.annotations.panel.column.instrument") + " ");
 
       TableCellRenderer headerRenderer = createHeaderRenderer();
       myTable.getTableHeader().setDefaultRenderer(headerRenderer);
