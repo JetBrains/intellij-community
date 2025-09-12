@@ -33,7 +33,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 
 open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSettings?)
   : BasePsiNode<PsiFile>(project, value, viewSettings), NavigatableWithText, AsyncNavigatable {
@@ -110,7 +109,6 @@ open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSett
     super<BasePsiNode>.navigate(requestFocus)
   }
 
-  @ApiStatus.Experimental
   override suspend fun navigateAsync(requestFocus: Boolean) {
     val jarRoot = jarRoot
     val project = project

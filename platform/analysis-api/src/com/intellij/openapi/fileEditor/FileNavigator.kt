@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -22,7 +23,9 @@ interface FileNavigator {
   @ApiStatus.Experimental
   suspend fun navigateAsync(descriptor: OpenFileDescriptor, requestFocus: Boolean) {
     withContext(Dispatchers.EDT) {
-      navigate(descriptor, requestFocus)
+      writeIntentReadAction {
+        navigate(descriptor, requestFocus)
+      }
     }
   }
 
@@ -31,7 +34,9 @@ interface FileNavigator {
   @ApiStatus.Experimental
   suspend fun navigateInEditorAsync(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
     return withContext(Dispatchers.EDT) {
-      navigateInEditor(descriptor, requestFocus)
+      writeIntentReadAction {
+        navigateInEditor(descriptor, requestFocus)
+      }
     }
   }
 }
