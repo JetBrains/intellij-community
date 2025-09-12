@@ -410,7 +410,7 @@ public final class PluginDownloader {
 
   @ApiStatus.Internal
   public static @NotNull PluginDownloader createDownloader(@NotNull PluginUiModel pluginUiModel,
-                                                           @Nullable String host,
+                                                           @Nullable String host, // FIXME this should come from pluginUiModel (there is repositoryName)
                                                            @Nullable BuildNumber buildNumber) throws IOException {
     return createDownloader(pluginUiModel, host, buildNumber, pluginUiModel.getDownloadUrl(),
                             pluginUiModel.isFromMarketplace());
