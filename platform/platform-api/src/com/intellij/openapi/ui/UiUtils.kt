@@ -21,14 +21,18 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.awt.MouseInfo
 import java.awt.Rectangle
 import java.awt.event.ActionEvent
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import java.awt.event.MouseEvent
 import java.io.File
 import javax.swing.*
+import javax.swing.text.DefaultCaret
 import javax.swing.text.JTextComponent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
@@ -250,6 +254,22 @@ fun shortenText(
   return shortedText
 }
 
+@ApiStatus.Internal
+fun JEditorPane.setCopyable(copyable: Boolean = true) {
+  if (copyable) {
+    if (!focusListeners.contains(CopyableFocusAdapter)) {
+      addFocusListener(CopyableFocusAdapter)
+    }
+    isFocusable = true
+    putClientProperty("caretWidth", 1)
+    (caret as? DefaultCaret)?.setUpdatePolicy(DefaultCaret.NEVER_UPDATE)
+  } else {
+    removeFocusListener(CopyableFocusAdapter)
+    CopyableFocusAdapter.resetSelection(this)
+    isFocusable = false
+  }
+}
+
 private fun shortenText(
   text: String,
   maxTextLength: Int,
@@ -284,5 +304,18 @@ private fun binarySearch(
   return when (condition(rightIndex)) {
     true -> rightIndex
     else -> leftIndex
+  }
+}
+
+private object CopyableFocusAdapter: FocusAdapter() {
+
+  fun resetSelection(editorPane: JEditorPane) {
+    val caretPosition = editorPane.caretPosition
+    editorPane.select(caretPosition, caretPosition)
+  }
+
+  override fun focusLost(e: FocusEvent?) {
+    val editorPane = e?.component as? JEditorPane ?: return
+    resetSelection(editorPane)
   }
 }
