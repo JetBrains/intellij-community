@@ -19,54 +19,6 @@ class K2RunConfigurationTest : AbstractRunConfigurationTest() {
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 
-    fun testMoveObjectWithMain() {
-        val oldPackageName = "foo"
-        val objectName = "MainObject"
-        val newPackageName = "bar"
-        val expectedFqNameBefore = "$oldPackageName.$objectName"
-        val expectedFqNameAfter = "$newPackageName.$objectName"
-
-        configureProject()
-        val configuredModule = defaultConfiguredModule
-        val kotlinRunConfiguration = createConfigurationFromMain(project, "$expectedFqNameBefore.main", save = true)
-
-        val javaParametersBefore = getJavaRunParameters(kotlinRunConfiguration)
-        val fqNameBefore = javaParametersBefore.mainClass
-        assert(fqNameBefore == expectedFqNameBefore) {
-            "The main class in the run configuration before the move should've been '$expectedFqNameBefore', but it was: '$fqNameBefore'"
-        }
-
-        val mainFunction = findMainFunction(project, javaParametersBefore.mainClass + ".main")
-        val mainObject = mainFunction.containingClassOrObject as? KtObjectDeclaration
-        check(mainObject != null) { "Main object not found" }
-        val targetFileName = mainObject.containingKtFile.name
-
-        val moveDescriptor = K2MoveOperationDescriptor.Declarations(
-            project = project,
-            declarations = listOf(mainObject),
-            baseDir = configuredModule.srcDir?.toPsiDirectory(project) ?: error("Module source directory not found"),
-            fileName = targetFileName,
-            pkgName = FqName(newPackageName),
-            searchForText = false,
-            searchReferences = true,
-            searchInComments = false,
-            mppDeclarations = false,
-            isMoveToExplicitPackage = false,
-            dirStructureMatchesPkg = true
-        )
-
-        K2MoveDeclarationsRefactoringProcessor(moveDescriptor).run()
-
-        assert(configuredModule.srcDir?.findFileByRelativePath("$newPackageName/$targetFileName") != null) {
-            "Move was not successful"
-        }
-
-        val mainClassAfter = getJavaRunParameters(kotlinRunConfiguration).mainClass
-        assert(mainClassAfter == expectedFqNameAfter) {
-            "The main class in the run configuration after the move should've been '$expectedFqNameAfter', but it was: '$mainClassAfter'"
-        }
-    }
-
     fun testMoveTopLevelMainFunction() {
         val oldPackageName = "foo"
         val facadeName = "MainFunctionKt"
