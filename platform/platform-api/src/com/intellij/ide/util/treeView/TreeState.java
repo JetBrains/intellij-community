@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
@@ -1118,33 +1117,22 @@ public final class TreeState implements JDOMExternalizable {
   }
 
   private Promise<List<TreePath>> expand(@NotNull JTree tree) {
-    if (TreeUtil.isBulkExpandCollapseSupported(tree) && tree instanceof Tree jbTree && Registry.is("ide.tree.bulk.expand.tree.state", false)) {
-      var promise = new AsyncPromise<List<TreePath>>();
-      var bulkExpandVisitor = new MultiplePathsVisitor(myExpandedPaths);
-      TreeUtil.promiseVisit(tree, bulkExpandVisitor).onProcessed(lastPathFound -> {
-        jbTree.expandPaths(bulkExpandVisitor.pathsFound);
-        promise.setResult(bulkExpandVisitor.pathsFound);
-      });
-      return promise;
+    if (myPresentationData == null) {
+      LOG.debug("Restoring the expanded paths");
+      return TreeUtil.promiseExpand(tree, myExpandedPaths.stream().map(elements -> new SinglePathVisitor(elements)));
     }
     else {
-      if (myPresentationData == null) {
-        LOG.debug("Restoring the expanded paths");
-        return TreeUtil.promiseExpand(tree, myExpandedPaths.stream().map(elements -> new SinglePathVisitor(elements)));
-      }
-      else {
-        // If we have cached presentation data, then everything is already shown and expanded,
-        // and if the user collapses one of those nodes, we don't want to expand it again here,
-        // as that looks and feels weird.
-        // So instead, only load these nodes so they can replace the cached ones.
-        LOG.debug("Loading the expanded paths to replace the cached presentation");
-        var promise = new AsyncPromise<List<TreePath>>();
-        var visitor = new MultiplePathsVisitor(myExpandedPaths);
-        TreeUtil.promiseVisit(tree, visitor).onProcessed(lastPathFound -> {
-          promise.setResult(visitor.pathsFound);
-        });
-        return promise;
-      }
+      // If we have cached presentation data, then everything is already shown and expanded,
+      // and if the user collapses one of those nodes, we don't want to expand it again here,
+      // as that looks and feels weird.
+      // So instead, only load these nodes so they can replace the cached ones.
+      LOG.debug("Loading the expanded paths to replace the cached presentation");
+      var promise = new AsyncPromise<List<TreePath>>();
+      var visitor = new MultiplePathsVisitor(myExpandedPaths);
+      TreeUtil.promiseVisit(tree, visitor).onProcessed(lastPathFound -> {
+        promise.setResult(visitor.pathsFound);
+      });
+      return promise;
     }
   }
 
