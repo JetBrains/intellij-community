@@ -24,10 +24,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.psi.PsiFile
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.application
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.ContainerUtil.createConcurrentSoftKeySoftValueMap
@@ -38,7 +35,7 @@ import org.languagetool.language.English
 
 object DependencyParser {
   private val LOG = Logger.getInstance(DependencyParser::class.java)
-  private val cachedTreesKey = Key.create<MutableMap<String, Tree>>("DependencyParser tree cache")
+  private val cachedTrees: MutableMap<String, Tree> = createConcurrentSoftKeySoftValueMap()
 
   @JvmStatic
   fun getParser(text: TextContent, minimal: Boolean): AsyncBatchParser<Tree>? {
@@ -47,7 +44,7 @@ object DependencyParser {
     val file = text.containingFile
 
     if (!GrazieCloudConnector.seemsCloudConnected()) {
-      return getLocalParser(file, language)
+      return getLocalParser(language)
     }
     val batcher = getBatcher(language) ?: return null
     val cloud = when {
@@ -57,18 +54,17 @@ object DependencyParser {
     return CloudOrLocalBatchParser(
       project = file.project,
       cloud = cloud,
-      local = { getLocalParser(file, language) }
+      local = { getLocalParser(language) }
     )
   }
 
-  private fun getLocalParser(psiFile: PsiFile, language: Language): AsyncBatchParser<Tree> {
+  private fun getLocalParser(language: Language): AsyncBatchParser<Tree> {
     return object : AsyncBatchParser<Tree> {
       override suspend fun parseAsync(sentences: List<SentenceWithExclusions>): LinkedHashMap<SentenceWithExclusions, Tree?> {
         val support = obtainSupport(language)
         if (support != null) {
           @Suppress("UNCHECKED_CAST")
           return sentences.associateWith {
-            val cachedTrees = ConcurrencyUtil.computeIfAbsent(psiFile, cachedTreesKey) { createConcurrentSoftKeySoftValueMap() }
             cachedTrees.getOrPut(it.sentence) {
               Tree.createFlatTree(support, it.sentence)
             }
