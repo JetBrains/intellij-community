@@ -14,6 +14,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
@@ -132,7 +133,7 @@ class SoftwareBillOfMaterialsImpl(
   }
 
   /**
-   * See [com.intellij.ide.gdpr.EndUserAgreement]
+   * See https://github.com/JetBrains/intellij-community/blob/master/platform/platform-impl/src/com/intellij/ide/gdpr/EndUserAgreement.java
    */
   private val jetBrainsOwnLicense: Options.DistributionLicense by lazy {
     val eula = context.paths.communityHomeDir
@@ -230,7 +231,7 @@ class SoftwareBillOfMaterialsImpl(
       distributions.associateWith { distribution ->
         getFiles(distribution)
           .map { async(CoroutineName("checksums for $it")) { Checksums(it) } }
-          .map { it.await() }
+          .awaitAll()
       }
     }.flatMap { (distribution, filesWithChecksums) ->
       filesWithChecksums.map {
@@ -446,7 +447,7 @@ class SoftwareBillOfMaterialsImpl(
         .filterNot { it.startsWith(context.paths.tempDir) }
         .toList().map {
           async(CoroutineName("checksums for $it")) { Checksums(it) }
-        }.map { it.await() }
+        }.awaitAll()
     }
   }
 
