@@ -3,72 +3,67 @@ package com.intellij.ui.split
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.extensions.RequiredElement
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComponentContainer
-import com.intellij.openapi.util.KeyedExtensionCollector
-import com.intellij.serviceContainer.BaseKeyedLazyInstance
+import com.intellij.platform.rpc.Id
+import com.intellij.platform.rpc.UID
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.KeyedLazyInstance
+import com.intellij.ui.split.SplitComponentProvider.Companion.createComponent
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 /**
- * Creates a UI component, that receives its data from a [SplitComponentModel] object. Provider should be registered in XML with id
- * matching the corresponding model's one. 'Attached' model can be obtained on the backend side using [SplitComponentFactory.getModel].
+ * Creates a frontend's UI component that is going to be inserted into LUX/BeControls.
+ * Its content is based on the backend's model which id (of type [T]) is provided in the [createComponent] function.
+ *
+ * To make the binding between frontend and the backend type-safe [binding] should be provided.
+ * Typically, it should be a global object shared between frontend and backend.
+ *
+ * @see SplitComponentBinding.createComponent
  */
 @ApiStatus.Experimental
-interface SplitComponentProvider {
-  companion object {
-    private val EP = KeyedExtensionCollector<SplitComponentProvider, String>("com.intellij.frontend.splitComponentProvider")
-
-    @ApiStatus.Internal
-    fun createComponent(project: Project, cs: CoroutineScope, id: SplitComponentIdWithProvider): JComponent {
-      val provider = EP.findSingle(id.providerId)
-      if (provider != null) {
-        val component = provider.createComponent(project, cs, id.componentId)
-        if (component != null) {
-          return component
-        }
-        else {
-          fileLogger().warn("Provider ($provider) couldn't create component for id=$id")
-        }
-      }
-      else {
-        fileLogger().warn("Couldn't find provider for id=$id")
-      }
-      val component = JBLabel(IdeBundle.message("split.component.missing", id))
-      return component
-    }
-  }
+interface SplitComponentProvider<T : Id> {
+  val binding: SplitComponentBinding<T>
 
   /**
-   * [ComponentContainer.getPreferredFocusableComponent] in the result is not used currently in rem-dev scenarios. It can only be useful
-   * in monolith mode now.
+   * Creates frontend's UI component based on the backend model with id: [modelId]
    *
    * @param scope that is going to be canceled when [CoroutineScope] passed to [SplitComponentFactory.createComponent] is canceled.
    */
   @RequiresEdt
-  fun createComponent(project: Project, scope: CoroutineScope, id: SplitComponentId): JComponent?
-}
+  fun createComponent(project: Project, scope: CoroutineScope, modelId: T): JComponent?
 
-private class SplitComponentProviderBean : BaseKeyedLazyInstance<SplitComponentProvider>(), KeyedLazyInstance<SplitComponentProvider> {
-  @Attribute("id")
-  @RequiredElement
-  var id : String = ""
+  companion object {
+    private val EP = ExtensionPointName<SplitComponentProvider<*>>("com.intellij.frontend.splitComponentProvider")
 
-  @Attribute("implementation")
-  @RequiredElement
-  var implementation: String = ""
+    @ApiStatus.Internal
+    fun createComponent(project: Project, cs: CoroutineScope, placeId: String, modelUid: UID): JComponent {
+      val extensions = EP.extensionList.filter { it.binding.placeId == placeId }
+      val provider = extensions.firstOrNull()
+      if (extensions.size > 1) {
+        fileLogger().warn("Multiple provider for place: $placeId are registered. First one ($provider) is used")
+      }
+      if (provider != null) {
+        val component = createComponent(project, cs, provider, modelUid)
+        if (component != null) {
+          return component
+        }
+        else {
+          fileLogger().warn("Provider ($provider) couldn't create component for id ${modelUid}")
+        }
+      }
+      else {
+        fileLogger().warn("Couldn't find provider for place: $placeId")
+      }
+      val component = JBLabel(IdeBundle.message("split.component.missing", "$placeId/$modelUid"))
+      return component
+    }
 
-  override fun getKey(): String {
-    return id
-  }
-
-  override fun getImplementationClassName(): String {
-    return implementation
+    private fun <T : Id> createComponent(project: Project, cs: CoroutineScope, provider: SplitComponentProvider<T>, modelUid: UID): JComponent? {
+      val modelId = provider.binding.deserializeModelId(modelUid)
+      return provider.createComponent(project, cs, modelId)
+    }
   }
 }

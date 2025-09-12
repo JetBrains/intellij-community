@@ -697,10 +697,8 @@
 
     <extensionPoint name="editorSkeletonPolicy" interface="com.intellij.openapi.fileEditor.impl.EditorSkeletonPolicy" dynamic="true"/>
 
-    <extensionPoint qualifiedName="com.intellij.frontend.splitComponentProvider"
-                    beanClass="com.intellij.ui.split.SplitComponentProviderBean">
-      <with attribute="implementation" implements="com.intellij.ui.split.SplitComponentProvider"/>
-    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.frontend.splitComponentProvider" interface="com.intellij.ui.split.SplitComponentProvider"
+                    dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.ide.gdpr.traceConsentManager"
                     interface="com.intellij.ide.gdpr.trace.TraceConsentManager"

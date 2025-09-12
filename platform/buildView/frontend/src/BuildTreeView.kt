@@ -5,7 +5,6 @@ import com.intellij.build.*
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.OccurenceNavigatorSupport
 import com.intellij.ide.actions.OccurenceNavigatorActionBase
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.rpc.NavigatableId
 import com.intellij.ide.rpc.navigatable
@@ -32,7 +31,6 @@ import com.intellij.pom.Navigatable
 import com.intellij.ui.*
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.render.RenderingHelper
-import com.intellij.ui.split.SplitComponentId
 import com.intellij.ui.tree.TreePathUtil
 import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
@@ -57,7 +55,7 @@ import javax.swing.tree.*
 
 private val LOG = fileLogger()
 
-internal class BuildTreeView(private val project: Project, parentScope: CoroutineScope, private val buildViewId: SplitComponentId)
+internal class BuildTreeView(private val project: Project, parentScope: CoroutineScope, private val buildViewId: BuildViewId)
   : JPanel(), UiDataProvider, ComponentContainer {
   private val uiScope = parentScope.childScope("BuildTreeView", Dispatchers.UI + ModalityState.any().asContextElement())
   private val model = BuildTreeViewModelProxy.getInstance(buildViewId)

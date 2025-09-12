@@ -6,7 +6,6 @@ import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.ui.split.SplitComponentModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -18,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger
 private val LOG = fileLogger()
 
 @ApiStatus.Internal
-class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private val scope: CoroutineScope) : SplitComponentModel {
+class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private val scope: CoroutineScope) {
   // sequential execution ensures consistent snapshot construction
   private val sequentialDispatcher = Dispatchers.Default.limitedParallelism(1)
   // buffering is important to ensure proper ordering between events emission and 'onSubscription' execution
@@ -33,6 +32,8 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
   private val navigationFlow = MutableSharedFlow<BuildTreeNavigationRequest>(extraBufferCapacity = Int.MAX_VALUE)
   private val filteringStateFlow = MutableStateFlow(BuildTreeFilteringState(false, false))
 
+  val id: BuildViewId = this.storeGlobally(scope)
+
   @Volatile
   private var hasSelection = false
   @Volatile
@@ -43,8 +44,6 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
   private var hasAnyNode = false
   @Volatile
   private var clearingSelection = false
-
-  override val providerId: String = "BuildTree"
 
   fun getTreeEventsFlow(): Flow<BuildTreeEvent> {
     return flow {

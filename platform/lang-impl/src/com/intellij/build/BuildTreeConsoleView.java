@@ -54,7 +54,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.ui.render.RenderingHelper;
-import com.intellij.ui.split.SplitComponentFactory;
+import com.intellij.ui.split.SplitComponentBindingKt;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
@@ -177,7 +177,10 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     if (mySplitImplementation) {
       myScope = CoroutineScopeKt.childScope(ScopeHolder.getScope(project), "BuildTreeConsoleView", EmptyCoroutineContext.INSTANCE, true);
       myTreeVm = new BuildTreeViewModel(this, myScope);
-      mySplitComponent = SplitComponentFactory.getInstance().createComponent(myProject, myScope, myTreeVm);
+      mySplitComponent = SplitComponentBindingKt.createComponent(
+        BuildTreeSplitComponentBindingKt.getBuildTreeSplitComponentBinding(),
+        myProject, myScope, myTreeVm.getId()
+      );
 
       treeComponent = mySplitComponent;
 

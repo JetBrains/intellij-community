@@ -3,17 +3,19 @@ package com.intellij.platform.buildView.frontend
 
 import com.intellij.build.*
 import com.intellij.platform.buildView.BuildTreeApi
-import com.intellij.ui.split.SplitComponentFactory
-import com.intellij.ui.split.SplitComponentId
+import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.flow.Flow
 
 internal sealed interface BuildTreeViewModelProxy {
   companion object {
-    fun getInstance(viewId: SplitComponentId): BuildTreeViewModelProxy =
-      when(val localModel = SplitComponentFactory.getInstance().getModel<BuildTreeViewModel>(viewId)) {
-        null -> Remote(viewId)
-        else -> Local(localModel)
+    fun getInstance(buildViewId: BuildViewId): BuildTreeViewModelProxy {
+      val modelIsLocal = buildViewId.modelIsOnClient == PlatformUtils.isJetBrainsClient()
+      val localModel = buildViewId.findValue()?.takeIf { modelIsLocal }
+      if (localModel != null) {
+        return Local(localModel)
       }
+      return Remote(buildViewId)
+    }
   }
 
   suspend fun getTreeEventsFlow(): Flow<BuildTreeEvent>
@@ -40,7 +42,7 @@ internal sealed interface BuildTreeViewModelProxy {
     }
   }
 
-  class Remote(private val viewId: SplitComponentId) : BuildTreeViewModelProxy {
+  class Remote(private val viewId: BuildViewId) : BuildTreeViewModelProxy {
     override suspend fun getTreeEventsFlow(): Flow<BuildTreeEvent> {
       return BuildTreeApi.getInstance().getTreeEventsFlow(viewId)
     }
