@@ -5311,6 +5311,11 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/safeCastWithReturn/simple.kt");
         }
 
+        @TestMetadata("unsafeCastToIsCheck.kt")
+        public void testUnsafeCastToIsCheck() throws Exception {
+            runTest("../testData/inspectionsLocal/safeCastWithReturn/unsafeCastToIsCheck.kt");
+        }
+
         @TestMetadata("usedAsExpression.kt")
         public void testUsedAsExpression() throws Exception {
             runTest("../testData/inspectionsLocal/safeCastWithReturn/usedAsExpression.kt");

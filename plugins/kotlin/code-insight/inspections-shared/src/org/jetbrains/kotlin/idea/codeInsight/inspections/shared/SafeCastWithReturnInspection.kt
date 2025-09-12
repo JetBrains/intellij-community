@@ -62,12 +62,12 @@ class SafeCastWithReturnInspection : KotlinApplicableInspectionBase.Simple<KtBin
         val left = expression.left?.safeDeparenthesize() as? KtBinaryExpressionWithTypeRHS ?: return false
 
         if (left.right == null) return false
-        if (left.operationReference.getReferencedName() != "as?") return false
 
         if (expression.operationReference.getReferencedName() != "?:") return false
         if (KtPsiUtil.deparenthesize(expression.right) !is KtReturnExpression) return false
 
-        return true
+        val leftExpressionReferenceName = left.operationReference.getReferencedName()
+        return !(leftExpressionReferenceName != "as?" && leftExpressionReferenceName != "as")
     }
 
     @OptIn(KaExperimentalApi::class)
