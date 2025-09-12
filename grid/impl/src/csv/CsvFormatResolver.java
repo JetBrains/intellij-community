@@ -74,6 +74,16 @@ public final class CsvFormatResolver extends CsvFormatResolverCore {
     }
   }
 
+  public static void saveCsvFormatAndUpdateEditor(@Nullable Project project, @NotNull CsvFormat format, @NotNull VirtualFile file) {
+    saveCsvFormat(format, file);
+    if (project != null) {
+      CsvTableFileEditor csvEditor = ContainerUtil.findInstance(FileEditorManager.getInstance(project).getEditors(file), CsvTableFileEditor.class);
+      if (csvEditor != null) {
+        csvEditor.setFormat(format);
+      }
+    }
+  }
+
   public static @Nullable CsvFormat readCsvFormat(@Nullable FileEditorState state) {
     State csvState = ObjectUtils.tryCast(state, State.class);
     return csvState != null ? csvState.format.immutable() : null;
