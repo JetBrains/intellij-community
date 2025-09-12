@@ -90,5 +90,6 @@
     <orderEntry type="module" module-name="kotlin.base.facet" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.code-insight-common" />
     <orderEntry type="module" module-name="intellij.kotlin.code-insight.k2" />
+    <orderEntry type="module" module-name="intellij.kotlin.code-insight.impl-base" />
   </component>
 </module>

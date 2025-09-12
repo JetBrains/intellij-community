@@ -8,7 +8,9 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForBinaryExpression
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 
@@ -46,11 +48,18 @@ private class GradleDependencyNamedArgumentsFix() : KotlinModCommandQuickFix<KtV
     }
 
     override fun applyFix(project: Project, element: KtValueArgumentList, updater: ModPsiUpdater) {
-        val group = findNamedOrPositionalArgument(element, "group", 0)?.text?.removeSurrounding("\"") ?: return
-        val name = findNamedOrPositionalArgument(element, "name", 1)?.text?.removeSurrounding("\"") ?: return
-        val version = findNamedOrPositionalArgument(element, "version", 2)?.text?.removeSurrounding("\"")
+        val group = findNamedOrPositionalArgument(element, "group", 0)?.text ?: return
+        val name = findNamedOrPositionalArgument(element, "name", 1)?.text ?: return
+        val version = findNamedOrPositionalArgument(element, "version", 2)?.text
+
+        val factory = KtPsiFactory(project, true)
+        val concatExpr =
+            if (version != null) factory.createExpression("$group + \":\" + $name + \":\" + $version") as KtBinaryExpression
+            else factory.createExpression("$group + \":\" + $name") as KtBinaryExpression
+        val newArgument = analyze(concatExpr) {
+            buildStringTemplateForBinaryExpression(concatExpr)
+        }
         element.arguments.forEach { element.removeArgument(it) }
-        val stringNotationArgument = if (version != null) "\"$group:$name:$version\"" else "\"$group:$name\""
-        element.addArgument(KtPsiFactory(project, true).createArgument(stringNotationArgument))
+        element.addArgument(factory.createArgument(newArgument))
     }
 }

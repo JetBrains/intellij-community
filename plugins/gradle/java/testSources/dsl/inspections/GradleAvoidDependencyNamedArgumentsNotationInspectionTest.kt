@@ -28,7 +28,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
       testHighlighting(
         """
         dependencies {
-          implementation 'org.gradle:gradle-core:1.0'
+          implementation "org.gradle:gradle-core:1.0"
         }
         """.trimIndent()
       )
@@ -54,7 +54,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
         """.trimIndent(),
         """
         dependencies {
-          implementation 'org.gradle:gradle-core:1.0'
+          implementation "org.gradle:gradle-core:1.0"
         }
         """.trimIndent(),
         "Simplify"
@@ -81,7 +81,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
         """.trimIndent(),
         """
         dependencies {
-          implementation('org.gradle:gradle-core:1.0')
+          implementation("org.gradle:gradle-core:1.0")
         }
         """.trimIndent(),
         "Simplify"
@@ -108,7 +108,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
         """.trimIndent(),
         """
         dependencies {
-          implementation 'org.gradle:gradle-core:1.0'
+          implementation "org.gradle:gradle-core:1.0"
         }
         """.trimIndent(),
         "Simplify"
@@ -150,7 +150,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
         """.trimIndent(),
         """
         dependencies { 
-          customConf 'org.gradle:gradle-core:1.0'
+          customConf "org.gradle:gradle-core:1.0"
         }
         """.trimIndent(),
         "Simplify"
@@ -181,6 +181,61 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
         var verRef = '1.0'
         dependencies { 
           implementation "org.gradle:gradle-core:$verRef"
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testTripleQuoteArguments(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testHighlighting("""
+        dependencies {
+          implementation ${WARNING_START}group: ${'"'}""org.gradle""${'"'}, name: '''gradle-core''', version: '1.0'$WARNING_END
+        }
+        """.trimIndent()
+      )
+      testIntention("""
+        dependencies {
+          implementation group: ${'"'}""org.gradle""${'"'},<caret> name: '''gradle-core''', version: '1.0'
+        }
+        """.trimIndent(),
+                    """
+        dependencies {
+          implementation "org.gradle:gradle-core:1.0"
+        }
+        """.trimIndent(),
+                    "Simplify"
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testTripleQuoteArgumentsWithInterpolation(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testHighlighting(
+        $$"""
+        def gradle = "org.gradle"
+        dependencies {
+          implementation $${WARNING_START}group: $${'"'}""$gradle""$${'"'}, name: '''gr\$dle-core''', version: "1.0"$$WARNING_END
+        }
+        """.trimIndent()
+      )
+      testIntention(
+        $$"""
+        def gradle = "org.gradle"
+        dependencies {
+          implementation group: $${'"'}""$gradle""$${'"'},<caret> name: '''gr\$dle-core''', version: "1.0"
+        }
+        """.trimIndent(),
+        $$"""
+        def gradle = "org.gradle"
+        dependencies {
+          implementation "$gradle:gr\$dle-core:1.0"
         }
         """.trimIndent(),
         "Simplify"
@@ -221,7 +276,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
         """.trimIndent(),
         """
         dependencies { 
-          implementation 'org.gradle:gradle-core'
+          implementation "org.gradle:gradle-core"
         }
         """.trimIndent(),
         "Simplify"
@@ -266,7 +321,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
         """.trimIndent(),
         """
         dependencies { 
-          implementation('org.gradle:gradle-core:1.0') {
+          implementation("org.gradle:gradle-core:1.0") {
             exclude(group: 'com.google.guava', module: 'guava')
           }
         }
@@ -295,7 +350,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
         """.trimIndent(),
         """
         dependencies { 
-          implementation 'org.gradle:gradle-core:1.0'
+          implementation "org.gradle:gradle-core:1.0"
         }
         """.trimIndent(),
         "Simplify"
@@ -331,7 +386,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
         """
         dependencies { 
           implementation(
-                  'org.gradle:gradle-core:1.0',
+                  "org.gradle:gradle-core:1.0",
                   'com.fasterxml.jackson.core:jackson-databind:2.17.0',
                   [group: 'com.google.guava', name: 'guava', version: '32.1.3-jre']
           )
@@ -369,7 +424,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
         dependencies { 
           implementation(
                   [name: 'gradle-core', group: 'org.gradle', version: '1.0'],
-                  'com.google.guava:guava:32.1.3-jre'
+                  "com.google.guava:guava:32.1.3-jre"
           )
         }
         """.trimIndent(),
@@ -405,7 +460,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
         dependencies { 
           implementation(
                   [name: 'gradle-core', group: 'org.gradle'],
-                  'com.google.guava:guava'
+                  "com.google.guava:guava"
           )
         }
         """.trimIndent(),

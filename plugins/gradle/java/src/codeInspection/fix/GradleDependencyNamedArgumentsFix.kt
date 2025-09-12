@@ -8,10 +8,13 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertConcatenationToGstringIntention
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil
 
 /**
  * Provides a quick fix for simplifying Gradle dependency syntax in Groovy build scripts
@@ -34,25 +37,19 @@ class GradleDependencyNamedArgumentsFix() : PsiUpdateModCommandQuickFix() {
       is GrListOrMap -> element.namedArguments
       else -> return
     }
-    val group = namedArguments.find {
-      it.labelName == "group"
-    }?.expression?.text?.removeSurrounding("'")?.removeSurrounding("\"") ?: return
-    val name = namedArguments.find {
-      it.labelName == "name"
-    }?.expression?.text?.removeSurrounding("'")?.removeSurrounding("\"") ?: return
-    val version = namedArguments.find {
-      it.labelName == "version"
-    }?.expression?.text?.removeSurrounding("'")?.removeSurrounding("\"")
-    val dependency = if (version != null) "$group:$name:$version" else "$group:$name"
+    val group = namedArguments.find { it.labelName == "group" }?.expression?.text ?: return
+    val name = namedArguments.find { it.labelName == "name" }?.expression?.text ?: return
+    val version = namedArguments.find { it.labelName == "version" }?.expression?.text
 
-    val types = namedArguments.mapNotNull { it.expression?.type }
-    val newArgument = if (types.any { it.equalsToText(GroovyCommonClassNames.GROOVY_LANG_GSTRING) }) {
-      // if any of the named arguments were of type GString, the new argument should also be a GString
-      GroovyPsiElementFactory.getInstance(project).createExpressionFromText("\"$dependency\"")
-    } else {
-      // else single quoted string literal
-      GroovyPsiElementFactory.getInstance(project).createLiteralFromValue(dependency)
-    }
+    val factory = GroovyPsiElementFactory.getInstance(project)
+    val concatExpr =
+      if (version != null) factory.createExpressionFromText("$group + ':' + $name + ':' + $version", element) as GrBinaryExpression
+      else factory.createExpressionFromText("$group + ':' + $name", element) as GrBinaryExpression
+    val builder = StringBuilder(concatExpr.text.length)
+    // assuming the named arguments resolve to strings, reuse ConvertConcatenationToGstringIntention
+    ConvertConcatenationToGstringIntention.performIntention(concatExpr, builder, false)
+    val newArgument = factory.createExpressionFromText(GrStringUtil.addQuotes(builder.toString(), true))
+    if (newArgument is GrString) GrStringUtil.removeUnnecessaryBracesInGString(newArgument)
 
     when (element) {
       is GrArgumentList -> {

@@ -295,6 +295,55 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
 
     @ParameterizedTest
     @BaseGradleVersionSource
+    fun testRawStringArguments(gradleVersion: GradleVersion) {
+        runTest(
+            gradleVersion,
+            """
+            dependencies { 
+                implementation$WARNING_START(group = ${'"'}""org.gradle""${'"'}, name = ${'"'}""gradle-core""${'"'}, version = ${'"'}""1.0""${'"'})$WARNING_END
+            }
+            """.trimIndent(),
+            """
+            dependencies { 
+                implementation(group = ${'"'}""org.gradle""${'"'},<caret> name = ${'"'}""gradle-core""${'"'}, version = ${'"'}""1.0""${'"'})
+            }
+            """.trimIndent(),
+            """
+            dependencies { 
+                implementation("org.gradle:gradle-core:1.0")
+            }
+            """.trimIndent()
+        )
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testMultiDollarInterpolation(gradleVersion: GradleVersion) {
+        runTest(
+            gradleVersion,
+            $$$"""
+            val gradle = "org.gradle"
+            dependencies { 
+                implementation$$$WARNING_START(group = $$${'"'}""$gradle""$$${'"'}, name = $$$$${'"'}""gr$dle-core""$$${'"'}, version = "1.0")$$$WARNING_END
+            }
+            """.trimIndent(),
+            $$$"""
+            val gradle = "org.gradle"
+            dependencies { 
+                implementation(group = $$${'"'}""$gradle""$$${'"'},<caret> name = $$$$${'"'}""gr$dle-core""$$${'"'}, version = "1.0")
+            }
+            """.trimIndent(),
+            $$$"""
+            val gradle = "org.gradle"
+            dependencies { 
+                implementation("$gradle:gr${'$'}dle-core:1.0")
+            }
+            """.trimIndent()
+        )
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
     fun testPositionalArguments(gradleVersion: GradleVersion) {
         runTest(
             gradleVersion,

@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
@@ -158,7 +159,8 @@ public final class ConvertConcatenationToGstringIntention extends Intention {
     return result.get();
   }
 
-  private static void performIntention(GrBinaryExpression expr, StringBuilder builder, boolean multiline) {
+  @ApiStatus.Internal
+  public static void performIntention(GrBinaryExpression expr, StringBuilder builder, boolean multiline) {
     GrExpression left = (GrExpression)PsiUtil.skipParentheses(expr.getLeftOperand(), false);
     GrExpression right = (GrExpression)PsiUtil.skipParentheses(expr.getRightOperand(), false);
     getOperandText(left, builder, multiline);

@@ -80,6 +80,7 @@ jvm_library(
     "//plugins/gradle/java",
     "//plugins/kotlin/gradle/code-insight-common",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
+    "//plugins/kotlin/code-insight/impl-base",
   ]
 )
 
@@ -169,6 +170,7 @@ jvm_library(
     "//plugins/kotlin/gradle/code-insight-common",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2_test_lib",
+    "//plugins/kotlin/code-insight/impl-base",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting` end
