@@ -14,7 +14,6 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.*
-import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
@@ -452,20 +451,20 @@ object ProjectUtil {
     }
 
     if (Files.isDirectory(projectFile)) {
-      return try {
-        Files.isSameFile(projectFile, existingBaseDirPath)
+      try {
+        return Files.isSameFile(projectFile, existingBaseDirPath)
       }
       catch (_: IOException) {
-        false
+        return false
       }
     }
 
-    if (projectStore.storageScheme == StorageScheme.DEFAULT) {
-      return try {
-        Files.isSameFile(projectFile, projectStore.projectFilePath)
+    if (projectStore.directoryStorePath == null) {
+      try {
+        return Files.isSameFile(projectFile, projectStore.projectFilePath)
       }
       catch (_: IOException) {
-        false
+        return false
       }
     }
 
@@ -473,6 +472,7 @@ object ProjectUtil {
     if (projectFile.startsWith(storeDir)) {
       return true
     }
+
     val parent = projectFile.parent ?: return false
     return projectFile.fileName.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) &&
            FileUtil.pathsEqual(parent.toString(), existingBaseDirPath.toString())

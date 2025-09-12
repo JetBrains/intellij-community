@@ -239,7 +239,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     get() {
       val prefix: String
       val path: Path
-      if (storageScheme == StorageScheme.DIRECTORY_BASED) {
+      if (storeDescriptor.isDirectoryBased) {
         path = storeDescriptor.projectIdentityDir
         prefix = ""
       }

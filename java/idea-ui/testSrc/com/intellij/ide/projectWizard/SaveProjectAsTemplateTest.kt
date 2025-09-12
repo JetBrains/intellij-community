@@ -11,7 +11,6 @@ import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
-import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.module.BasePackageParameterFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -95,7 +94,7 @@ public class Bar {
   }
 
   private suspend fun doTest(shouldEscape: Boolean, replaceParameters: Boolean, initialText: String, expected: String) {
-    assertThat(project.stateStore.storageScheme).isEqualTo(StorageScheme.DIRECTORY_BASED)
+    assertThat(project.stateStore.directoryStorePath).isNotNull()
     val root = ProjectRootManager.getInstance(project).contentRoots[0]
     val rootFile = root.toNioPath().resolve(FOO_BAR_JAVA)
     rootFile.createParentDirectories().createFile()
