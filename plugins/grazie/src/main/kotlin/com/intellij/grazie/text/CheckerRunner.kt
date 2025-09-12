@@ -21,7 +21,6 @@ import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -35,10 +34,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.startOffset
 import com.intellij.util.progress.withLockCancellable
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.yield
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
@@ -70,7 +66,7 @@ class CheckerRunner(val text: TextContent) {
     return lock.withLockCancellable {
       cachedProblems = getCachedProblems(configStamp)
       if (cachedProblems != null) return@withLockCancellable cachedProblems
-      cachedProblems = doRun(TextChecker.allCheckers())
+      cachedProblems = filter(doRun(TextChecker.allCheckers()))
       text.putUserData(problemsKey, CachedResults(configStamp, cachedProblems!!))
       return@withLockCancellable cachedProblems
     } ?: emptyList()
@@ -98,18 +94,16 @@ class CheckerRunner(val text: TextContent) {
           job.start()
         }
       }
-
-      val filtered = ArrayList<TextProblem>()
-      for (job in deferred) {
-        val problems = job.await()
-        coroutineToIndicator {
-          for (problem in problems) {
-            processProblem(problem, filtered)
-          }
-        }
-      }
-      filtered
+      deferred.awaitAll().flatten()
     }
+  }
+
+  private fun filter(problems: List<TextProblem>): List<TextProblem> {
+    val filtered = ArrayList<TextProblem>()
+    problems.forEach { problem ->
+      processProblem(problem, filtered)
+    }
+    return filtered
   }
 
   private fun processProblem(problem: TextProblem, filtered: MutableList<TextProblem>): Boolean {
