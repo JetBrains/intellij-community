@@ -3,7 +3,6 @@ package git4idea.rebase.log.squash
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.ui.table.size
@@ -62,16 +61,16 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
     newMessage: String,
   ): GitCommitEditingOperationResult {
     return withBackgroundProgress(commitEditingData.project, GitBundle.message("rebase.log.squash.progress.indicator.title")) {
-      if (Registry.`is`("git.in.memory.commit.editing.operations.enabled")) {
-        val inMemoryResult = InMemoryRebaseOperations.squash(commitEditingData.repository, commitEditingData.logData, commitsToSquash, newMessage)
-        if (inMemoryResult is GitCommitEditingOperationResult.Complete) {
-          return@withBackgroundProgress inMemoryResult
+      executeInMemoryWithFallback(
+        inMemoryOperation = {
+          InMemoryRebaseOperations.squash(commitEditingData.repository, commitEditingData.logData, commitsToSquash, newMessage)
+        },
+        fallbackOperation = {
+          coroutineToIndicator {
+            GitSquashOperation(commitEditingData.repository).execute(commitsToSquash, newMessage)
+          }
         }
-      }
-
-      coroutineToIndicator {
-        GitSquashOperation(commitEditingData.repository).execute(commitsToSquash, newMessage)
-      }
+      )
     }
   }
 

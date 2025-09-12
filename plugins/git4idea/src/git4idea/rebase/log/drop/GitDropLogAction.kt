@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
@@ -21,6 +20,7 @@ import git4idea.i18n.GitBundle
 import git4idea.inMemory.rebase.log.InMemoryRebaseOperations
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.rebase.log.GitMultipleCommitEditingAction
+import git4idea.rebase.log.executeInMemoryWithFallback
 import git4idea.rebase.log.getOrLoadDetails
 import git4idea.rebase.log.notifySuccess
 import git4idea.ui.branch.GitBranchPopupActions
@@ -63,16 +63,16 @@ internal class GitDropLogAction : GitMultipleCommitEditingAction() {
     commitsToDrop: List<VcsCommitMetadata>,
   ): GitCommitEditingOperationResult {
     return withBackgroundProgress(commitEditingData.project, GitBundle.message("rebase.log.drop.progress.indicator.title", commitsToDrop.size)) {
-      if (Registry.`is`("git.in.memory.commit.editing.operations.enabled")) {
-        val inMemoryResult = InMemoryRebaseOperations.drop(commitEditingData.repository, commitEditingData.logData, commitsToDrop)
-        if (inMemoryResult is GitCommitEditingOperationResult.Complete) {
-          return@withBackgroundProgress inMemoryResult
+      executeInMemoryWithFallback(
+        inMemoryOperation = {
+          InMemoryRebaseOperations.drop(commitEditingData.repository, commitEditingData.logData, commitsToDrop)
+        },
+        fallbackOperation = {
+          coroutineToIndicator {
+            GitDropOperation(commitEditingData.repository).execute(commitsToDrop)
+          }
         }
-      }
-
-      coroutineToIndicator {
-        GitDropOperation(commitEditingData.repository).execute(commitsToDrop)
-      }
+      )
     }
   }
 

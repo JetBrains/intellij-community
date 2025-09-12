@@ -2,11 +2,8 @@
 package git4idea.rebase
 
 import com.intellij.dvcs.repo.Repository
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -17,6 +14,7 @@ import git4idea.inMemory.GitObjectRepository
 import git4idea.inMemory.rebase.log.reword.GitInMemoryRewordOperation
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.rebase.log.GitNewCommitMessageActionDialog
+import git4idea.rebase.log.executeInMemoryWithFallback
 import git4idea.rebase.log.getOrLoadDetails
 import git4idea.rebase.log.notifySuccess
 import git4idea.repo.GitRepository
@@ -60,27 +58,37 @@ internal class GitRewordAction : GitSingleCommitEditingAction() {
 
   private fun rewordInBackground(project: Project, commit: VcsCommitMetadata, repository: GitRepository, newMessage: String) {
     GitDisposable.getInstance(project).coroutineScope.launch {
-      withBackgroundProgress(project, GitBundle.message("rebase.log.reword.action.progress.indicator.title")) {
-        val operationResult = if (Registry.`is`("git.in.memory.commit.editing.operations.enabled")) {
+      val operationResult = executeRewordOperation(repository, commit, newMessage)
+      if (operationResult is GitCommitEditingOperationResult.Complete) {
+        operationResult.notifySuccess(
+          GitBundle.message("rebase.log.reword.action.notification.successful.title"),
+          null,
+          GitBundle.message("rebase.log.reword.action.progress.indicator.undo.title"),
+          GitBundle.message("rebase.log.reword.action.notification.undo.not.allowed.title"),
+          GitBundle.message("rebase.log.reword.action.notification.undo.failed.title")
+        )
+        ChangeListManagerImpl.getInstanceImpl(project).replaceCommitMessage(commit.fullMessage, newMessage)
+      }
+    }
+  }
+
+  private suspend fun executeRewordOperation(
+    repository: GitRepository,
+    commit: VcsCommitMetadata,
+    newMessage: String,
+  ): GitCommitEditingOperationResult {
+    return withBackgroundProgress(repository.project, GitBundle.message("rebase.log.reword.action.progress.indicator.title")) {
+      executeInMemoryWithFallback(
+        inMemoryOperation = {
           val objectRepo = GitObjectRepository(repository)
           GitInMemoryRewordOperation(objectRepo, commit, newMessage).execute()
-        }
-        else {
+        },
+        fallbackOperation = {
           coroutineToIndicator {
             GitRewordOperation(repository, commit, newMessage).execute()
           }
         }
-        if (operationResult is GitCommitEditingOperationResult.Complete) {
-          operationResult.notifySuccess(
-            GitBundle.message("rebase.log.reword.action.notification.successful.title"),
-            null,
-            GitBundle.message("rebase.log.reword.action.progress.indicator.undo.title"),
-            GitBundle.message("rebase.log.reword.action.notification.undo.not.allowed.title"),
-            GitBundle.message("rebase.log.reword.action.notification.undo.failed.title")
-          )
-          ChangeListManagerImpl.getInstanceImpl(project).replaceCommitMessage(commit.fullMessage, newMessage)
-        }
-      }
+      )
     }
   }
 
