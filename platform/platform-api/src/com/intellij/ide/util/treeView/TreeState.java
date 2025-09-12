@@ -268,6 +268,12 @@ public final class TreeState implements JDOMExternalizable {
     boolean fullyMatched() {
       return matchedSoFar == serializedPath.length;
     }
+    
+    boolean isParentOf(@NotNull TreePath path) {
+      var parent = path.getParentPath();
+      if (parent == null) return false; // No path can be the root's parent.
+      return Objects.equals(matchedPath, parent);
+    }
 
     boolean tryAdvance(@NotNull Object node) {
       return tryAdvanceWithParent(null, node, -1) != null;
@@ -1198,9 +1204,12 @@ public final class TreeState implements JDOMExternalizable {
       private PathMatchState(PathElement[] elements) { this.matcher = new PathMatcher(elements, null, null); }
 
       @NotNull PathMatch match(@NotNull TreePath path) {
-        if (Objects.equals(path.getParentPath(), matcher.matchedPath())) {
+        if (matcher.fullyMatched()) {
+          return matcher.isParentOf(path) ? PathMatch.CHILD : PathMatch.NONE;
+        }
+        else if (Objects.equals(path.getParentPath(), matcher.matchedPath())) {
           if (matcher.tryAdvance(path.getLastPathComponent())) {
-            return matcher.fullyMatched() ? PathMatch.FULL : PathMatch.PARTIAL;
+            return matcher.fullyMatched() ? PathMatch.FULL : PathMatch.ANCESTOR;
           }
           else {
             return PathMatch.NONE;
@@ -1214,17 +1223,20 @@ public final class TreeState implements JDOMExternalizable {
 
     private enum PathMatch {
       FULL,
-      PARTIAL,
+      ANCESTOR,
+      CHILD,
       NONE
     }
 
-    private final List<PathMatchState> matchStates = new ArrayList<>();
+    private final List<Set<PathMatchState>> matchStatesPerLevel = new ArrayList<>();
     private final List<TreePath> pathsFound = new ArrayList<>();
 
     MultiplePathsVisitor(List<PathElement[]> paths) {
+      matchStatesPerLevel.add(new HashSet<>());
       for (PathElement[] path : paths) {
-        matchStates.add(new PathMatchState(path));
+        matchStatesPerLevel.getFirst().add(new PathMatchState(path));
       }
+      push(1, new HashSet<>(matchStatesPerLevel.getFirst()));
     }
 
     @Override
@@ -1234,32 +1246,71 @@ public final class TreeState implements JDOMExternalizable {
 
     @Override
     public @NotNull Action visit(@NotNull TreePath path) {
-      boolean foundPartialMatch = false;
+      var level = path.getPathCount();
+      pop(level);
+      var matchStates = matchStatesPerLevel.get(level);
+      @Nullable Set<PathMatchState> matchStatesForNextLevel = null;
       for (Iterator<PathMatchState> iterator = matchStates.iterator(); iterator.hasNext(); ) {
         PathMatchState state = iterator.next();
+        boolean needToGoDeeper = false;
         switch (state.match(path)) {
           case FULL -> {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Found a path using a multi-path visitor: " + path);
             }
             pathsFound.add(path);
+            // We've found an expanded path, but we still need to load its children.
+            needToGoDeeper = true;
+          }
+          case ANCESTOR -> {
+            // We've found an ancestor of an expanded path, so we need to keep looking into this subtree.
+            needToGoDeeper = true;
+          }
+          case CHILD -> {
+            // A fully matched path, and we've found its first child.
+            // This means its children have been loaded, so we're done with it.
             iterator.remove();
+            removeFromUpperLevels(level, state);
           }
-          case PARTIAL -> {
-            foundPartialMatch = true;
+        }
+        if (needToGoDeeper) {
+          if (matchStatesForNextLevel == null) {
+            matchStatesForNextLevel = new HashSet<>();
           }
+          matchStatesForNextLevel.add(state);
         }
       }
       if (matchStates.isEmpty()) {
-        return Action.INTERRUPT;
+        // Nothing more to look for at this level.
+        return Action.SKIP_SIBLINGS;
       }
-      else if (foundPartialMatch) {
+      else if (matchStatesForNextLevel != null) {
+        // Either this path is an ancestor of a path we're looking for,
+        // or that it IS a path we're looking for, but we still need to load its children.
+        push(level + 1, matchStatesForNextLevel);
         return Action.CONTINUE;
       }
       else {
+        // No need to go deeper, but we might still find something on this level because matchStates is not empty yet.
         return Action.SKIP_CHILDREN;
+      }
+    }
+
+    private void push(int level, @NotNull Set<PathMatchState> matchStates) {
+      assert level == matchStatesPerLevel.size();
+      matchStatesPerLevel.add(matchStates);
+    }
+
+    private void pop(int level) {
+      while (level < matchStatesPerLevel.size() - 1) {
+        matchStatesPerLevel.removeLast();
+      }
+    }
+
+    private void removeFromUpperLevels(int level, PathMatchState state) {
+      for (int i = 0; i < level; ++i) {
+        matchStatesPerLevel.get(i).remove(state);
       }
     }
   }
 }
-
