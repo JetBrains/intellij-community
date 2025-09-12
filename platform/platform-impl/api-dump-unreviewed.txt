@@ -1820,8 +1820,8 @@ c:com.intellij.ide.actions.CutAction
 - getRequiredPermissions():java.util.Collection
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.DeleteAction
-- com.intellij.openapi.actionSystem.AnAction
 - com.intellij.ide.lightEdit.LightEditCompatible
+- com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
 - <init>():V
 - <init>(java.lang.String,java.lang.String,javax.swing.Icon):V
