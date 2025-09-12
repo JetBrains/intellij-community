@@ -504,4 +504,9 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     public void testUnresolvedAnnotation() throws Exception {
         runTest("testData/editor/quickDoc/UnresolvedAnnotation.kt");
     }
+
+    @TestMetadata("UnusedVariable.kt")
+    public void testUnusedVariable() throws Exception {
+        runTest("testData/editor/quickDoc/UnusedVariable.kt");
+    }
 }

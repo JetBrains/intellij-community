@@ -63,6 +63,7 @@ import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.renderer.KeywordStringsGenerated
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.renderer.render as renderName
@@ -765,8 +766,10 @@ internal class KotlinIdeDeclarationRenderer(
                     printer.append(highlight("enum entry") { asKeyword })
                     printer.append(" ")
                 }
-                printer.append(highlight(name.renderName()) {
-                    when (symbol) {
+                printer.append(highlight(render(name)) {
+                    if (name.isSpecial && (symbol is KaParameterSymbol || symbol is KaLocalVariableSymbol)) {
+                        asInfo
+                    } else when (symbol) {
                         is KaClassSymbol -> {
                             if (symbol.classKind.isObject) {
                                 asObjectName
@@ -782,6 +785,7 @@ internal class KotlinIdeDeclarationRenderer(
                         is KaTypeParameterSymbol -> asTypeParameterName
                         is KaTypeAliasSymbol -> asTypeAlias
                         is KaPropertySymbol -> asInstanceProperty
+                        is KaLocalVariableSymbol -> asLocalVarOrVal
                         else -> asFunDeclaration
                     }
                 })
@@ -942,3 +946,20 @@ internal class KotlinIdeDeclarationRenderer(
 }
 
 private fun String.escape(): String = HtmlEscapers.htmlEscaper().escape(this)
+
+private fun render(name: Name): String {
+    val string = name.asStringStripSpecialMarkers()
+    return if (!name.isSpecial && shouldBeEscaped(string)) {
+        '`' + string + '`'
+    } else {
+        string
+    }
+}
+
+private fun shouldBeEscaped(string: String): Boolean {
+    return string in KeywordStringsGenerated.KEYWORDS ||
+            string.any { !Character.isLetterOrDigit(it) && it != '_' } ||
+            string.isEmpty() ||
+            !Character.isJavaIdentifierStart(string.codePointAt(0))
+}
+
