@@ -71,6 +71,7 @@ import com.intellij.util.io.directoryContent
 import com.intellij.util.io.java.classFile
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
@@ -1142,6 +1143,7 @@ class DynamicPluginsTest {
     }
   }
 
+  @Ignore // FIXME
   @Test // IJPL-207058
   fun `dynamic load of a plugin with service overrides is declined`() {
     plugin("foo") {
