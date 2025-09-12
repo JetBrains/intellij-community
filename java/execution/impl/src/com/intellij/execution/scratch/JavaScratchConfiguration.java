@@ -34,8 +34,8 @@ import java.io.File;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaScratchConfiguration extends ApplicationConfiguration {
-  protected JavaScratchConfiguration(String name, @NotNull Project project, @NotNull ConfigurationFactory factory) {
+public final class JavaScratchConfiguration extends ApplicationConfiguration {
+  JavaScratchConfiguration(String name, @NotNull Project project, @NotNull ConfigurationFactory factory) {
     super(name, project, factory);
   }
 
