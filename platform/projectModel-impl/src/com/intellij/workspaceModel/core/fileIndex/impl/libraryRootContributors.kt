@@ -26,16 +26,27 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEntity>, PlatformInternalWorkspaceFileIndexContributor {
   override val entityClass: Class<LibraryEntity> get() = LibraryEntity::class.java
 
+  private val useWfiForPartialScanning: Boolean = Registry.`is`("use.workspace.file.index.for.partial.scanning", true)
+
   override fun registerFileSets(entity: LibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
     val libraryId = entity.symbolicId
-    if (Registry.`is`("use.workspace.file.index.for.partial.scanning", true)) {
+    if (useWfiForPartialScanning) {
       if (libraryId.tableId !is LibraryTableId.ModuleLibraryTableId &&
           !storage.hasReferrers(libraryId, ModuleEntity::class.java)) {
         return
       }
     }
-    val compiledRootsData = LibraryRootFileSetData(libraryId)
-    val sourceRootFileSetData = LibrarySourceRootFileSetData(libraryId)
+    val compiledRootsData: LibraryRootFileSetData
+    val sourceRootFileSetData: LibraryRootFileSetData
+
+    if (useWfiForPartialScanning) {
+      compiledRootsData = LibraryRootFileSetData(libraryId)
+      sourceRootFileSetData = LibrarySourceRootFileSetData(libraryId)
+    } else {
+      compiledRootsData = UnloadableLibraryRootFileSetData(libraryId)
+      sourceRootFileSetData = UnloadableLibrarySourceRootFileSetData(libraryId)
+    }
+
     for (root in entity.roots) {
       val data: LibraryRootFileSetData
       val kind: WorkspaceFileKind
@@ -112,16 +123,20 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
   }
 }
 
-internal class LibrarySourceRootFileSetData(libraryId: LibraryId?)
-  : LibraryRootFileSetData(libraryId), ModuleOrLibrarySourceRootData, JvmPackageRootDataInternal
+internal open class LibraryRootFileSetData(internal val libraryId: LibraryId?): JvmPackageRootDataInternal {
+  override val packagePrefix: String = ""
+}
 
-internal open class LibraryRootFileSetData(internal val libraryId: LibraryId?) : UnloadableFileSetData, JvmPackageRootDataInternal {
+internal class LibrarySourceRootFileSetData(libraryId: LibraryId?)
+  : LibraryRootFileSetData(libraryId), ModuleOrLibrarySourceRootData
+
+internal open class UnloadableLibraryRootFileSetData(libraryId: LibraryId?): LibraryRootFileSetData(libraryId), UnloadableFileSetData {
   override fun isUnloaded(project: Project): Boolean {
     return libraryId != null && !ModuleDependencyIndex.getInstance(project).hasDependencyOn(libraryId)
   }
-
-  override val packagePrefix: String = ""
 }
+
+internal class UnloadableLibrarySourceRootFileSetData(libraryId: LibraryId?): UnloadableLibraryRootFileSetData(libraryId), ModuleOrLibrarySourceRootData
 
 /**
  * Provides a way to exclude [WorkspaceFileSet] with custom data from [WorkspaceFileIndex] based on some condition. This is a temporary
