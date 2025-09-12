@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.MathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -270,8 +269,8 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
         if (myDescriptor.getStartElement() == null) return null;
         ActionContext descriptorContext = ActionContext.from(myDescriptor);
         return myUnwrappedAction.getPresentation(
-          descriptorContext.withOffset(MathUtil.clamp(context.offset(), descriptorContext.selection().getStartOffset(),
-                                                      descriptorContext.selection().getEndOffset())));
+          descriptorContext.withOffset(Math.clamp(context.offset(), descriptorContext.selection().getStartOffset(),
+                                                  descriptorContext.selection().getEndOffset())));
       }
       PsiElement psiElement = myDescriptor.getPsiElement();
       if (psiElement == null || !psiElement.isValid()) return null;

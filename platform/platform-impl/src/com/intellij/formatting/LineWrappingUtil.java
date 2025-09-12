@@ -19,7 +19,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.MathUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -86,8 +85,8 @@ public final class LineWrappingUtil {
   public static void doWrapLongLinesIfNecessary(final @NotNull Editor editor, final @NotNull Project project, @NotNull Document document,
                                                 int startOffset, int endOffset, List<? extends TextRange> enabledRanges, int rightMargin) {
     // Normalization.
-    int startOffsetToUse = MathUtil.clamp(startOffset, 0, document.getTextLength());
-    int endOffsetToUse = MathUtil.clamp(endOffset, 0, document.getTextLength());
+    int startOffsetToUse = Math.clamp(startOffset, 0, document.getTextLength());
+    int endOffsetToUse = Math.clamp(endOffset, 0, document.getTextLength());
 
     LineWrapPositionStrategy strategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(editor);
     CharSequence text = document.getCharsSequence();
