@@ -1347,7 +1347,6 @@ Fc:com.intellij.openapi.util.text.StringUtil
 - s:countChars(java.lang.CharSequence,C,I,I,Z):I
 - s:countChars(java.lang.CharSequence,C,I,Z):I
 - s:countNewLines(java.lang.CharSequence):I
-- s:createToStringFunction(java.lang.Class):com.intellij.util.Function
 - s:decapitalize(java.lang.String):java.lang.String
 - s:defaultIfEmpty(java.lang.String,java.lang.String):java.lang.String
 - s:detectSeparators(java.lang.CharSequence):com.intellij.util.LineSeparator

@@ -8,14 +8,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.CountingGZIPInputStream;
-import com.intellij.util.io.IoKt;
 import com.intellij.util.io.IoService;
-import kotlin.coroutines.Continuation;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,7 +99,7 @@ public final class NetUtils {
 
   private static boolean canBindToLocalSocket(String host, int port) {
     try (ServerSocket socket = new ServerSocket()) {
-      //it looks like this flag should be set but it leads to incorrect results for NodeJS under Windows
+      // it looks like this flag should be set, but it leads to incorrect results for Node.js under Windows
       //socket.setReuseAddress(true);
       socket.bind(new InetSocketAddress(host, port));
       return true;
@@ -162,17 +160,16 @@ public final class NetUtils {
   }
 
   public static int[] findAvailableSocketPorts(int capacity) throws IOException {
-    final int[] ports = new int[capacity];
-    final ServerSocket[] sockets = new ServerSocket[capacity];
+    int[] ports = new int[capacity];
+    ServerSocket[] sockets = new ServerSocket[capacity];
 
     for (int i = 0; i < capacity; i++) {
-      @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed", "SocketOpenedButNotSafelyClosed"})
+      @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed", "SocketOpenedButNotSafelyClosed", "resource"})
       ServerSocket serverSocket = new ServerSocket(0);
       sockets[i] = serverSocket;
       ports[i] = serverSocket.getLocalPort();
     }
-    //workaround for linux : calling close() immediately after opening socket
-    //may result that socket is not closed
+    // workaround for Linux: calling close() immediately after opening  may result in socket not being closed
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (sockets) {
       try {
@@ -184,73 +181,60 @@ public final class NetUtils {
       }
     }
 
-    for (ServerSocket socket : sockets) {
-      socket.close();
-    }
+    for (ServerSocket socket : sockets) socket.close();
+
     return ports;
   }
 
   public static String getLocalHostString() {
-    // HACK for Windows with ipv6
-    @NlsSafe String localHostString = "localhost";
+    @NlsSafe String localHostString = "localhost";  // a hack for Windows with IPv6
     try {
-      final InetAddress localHost = InetAddress.getByName(localHostString);
-      if ((localHost.getAddress().length != 4 && SystemInfo.isWindows) ||
-          (localHost.getAddress().length == 4 && SystemInfo.isMac)) {
+      InetAddress localHost = InetAddress.getByName(localHostString);
+      if ((localHost.getAddress().length != 4 && OS.CURRENT == OS.Windows) || (localHost.getAddress().length == 4 && OS.CURRENT == OS.macOS)) {
         localHostString = "127.0.0.1";
       }
     }
-    catch (UnknownHostException ignored) {
-    }
+    catch (UnknownHostException ignored) { }
     return localHostString;
   }
 
   private static void updateIndicator(ProgressIndicator indicator, long downloadSpeed, long bytesDownloaded, long contentLength, boolean progressDescription) {
     double fraction = (double)bytesDownloaded / contentLength;
     if (progressDescription) {
-      int rankForContentLength = StringUtilRt.rankForFileSize(contentLength);
-      String formattedDownloadSpeed =
-        StringUtilRt.formatFileSize(downloadSpeed) + "⧸s";
-      String formattedContentLength =
-        StringUtilRt.formatFileSize(contentLength, " ", rankForContentLength);
-      String formattedTotalProgress =
-        StringUtilRt.formatFileSize(bytesDownloaded, " ", rankForContentLength);
-
-      @NlsSafe
-      String indicatorText = String.format("<html><code>%.0f%% · %s⧸%s · %s</code></html>", fraction * 100,
-                                           formattedTotalProgress,
-                                           formattedContentLength,
-                                           formattedDownloadSpeed);
+      int rankForContentLength = StringUtil.rankForFileSize(contentLength);
+      String formattedDownloadSpeed = StringUtil.formatFileSize(downloadSpeed) + "⧸s";
+      String formattedContentLength = StringUtil.formatFileSize(contentLength, " ", rankForContentLength);
+      String formattedTotalProgress = StringUtil.formatFileSize(bytesDownloaded, " ", rankForContentLength);
+      @NlsSafe String indicatorText = String.format(
+        "<html><code>%.0f%% · %s⧸%s · %s</code></html>", fraction * 100,
+        formattedTotalProgress, formattedContentLength, formattedDownloadSpeed);
       indicator.setText2(indicatorText);
     }
     indicator.setFraction(fraction);
   }
 
-  /**
-   * @deprecated use {@link #copyStreamContent(ProgressIndicator, InputStream, OutputStream, long)} instead
-   * @see IoKt#copyToAsync(InputStream, OutputStream, int, long, Continuation)
-   */
-  @Deprecated
-  public static int copyStreamContent(@Nullable ProgressIndicator indicator,
-                                      @NotNull InputStream inputStream,
-                                      @NotNull OutputStream outputStream,
-                                      int expectedContentLength) throws IOException, ProcessCanceledException {
+  /** @deprecated use {@link #copyStreamContent(ProgressIndicator, InputStream, OutputStream, long)} instead */
+  @Deprecated(forRemoval = true)
+  public static int copyStreamContent(
+    @Nullable ProgressIndicator indicator,
+    @NotNull InputStream inputStream,
+    @NotNull OutputStream outputStream,
+    int expectedContentLength
+  ) throws IOException, ProcessCanceledException {
     return (int)copyStreamContent(indicator, inputStream, outputStream, (long)expectedContentLength);
   }
 
-  /**
-   * @see IoKt#copyToAsync(InputStream, OutputStream, int, long, Continuation)
-   */
-  public static long copyStreamContent(@Nullable ProgressIndicator indicator,
-                                       @NotNull InputStream inputStream,
-                                       @NotNull OutputStream outputStream,
-                                       long expectedContentLength) throws IOException, ProcessCanceledException {
+  /** @see #copyStreamContent(ProgressIndicator, InputStream, OutputStream, long, boolean) */
+  public static long copyStreamContent(
+    @Nullable ProgressIndicator indicator,
+    @NotNull InputStream inputStream,
+    @NotNull OutputStream outputStream,
+    long expectedContentLength
+  ) throws IOException, ProcessCanceledException {
     return copyStreamContent(indicator, inputStream, outputStream, expectedContentLength, false);
   }
 
   /**
-   * @see IoKt#copyToAsync(InputStream, OutputStream, int, long, Continuation)
-   *
    * @param indicator             progress indicator
    * @param inputStream           source stream
    * @param outputStream          destination stream
@@ -263,11 +247,13 @@ public final class NetUtils {
    * @throws IOException              if IO error occur
    * @throws ProcessCanceledException if process was canceled.
    */
-  public static long copyStreamContent(@Nullable ProgressIndicator indicator,
-                                       @NotNull InputStream inputStream,
-                                       @NotNull OutputStream outputStream,
-                                       long expectedContentLength,
-                                       boolean progressDescription) throws IOException, ProcessCanceledException {
+  public static long copyStreamContent(
+    @Nullable ProgressIndicator indicator,
+    @NotNull InputStream inputStream,
+    @NotNull OutputStream outputStream,
+    long expectedContentLength,
+    boolean progressDescription
+  ) throws IOException, ProcessCanceledException {
     if (indicator != null) {
       indicator.checkCanceled();
       indicator.setIndeterminate(expectedContentLength <= 0);
