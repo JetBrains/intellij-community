@@ -1077,7 +1077,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           FileContentImpl newFc = getUnsavedDocContent(document, project, vFile, currentDocStamp, contentText);
           tuneFileContent(document, dominantContentFile, content, newFc);
 
-          markFileIndexed(vFile, newFc);
+          markFileBeingIndexed(vFile, newFc);
           try {
             updateIndexInNonCancellableSection(requestedIndexId, inputId, newFc);
           }
@@ -1665,7 +1665,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       IndexedHashesSupport.getOrInitIndexedHash((FileContentImpl)currentFC);
     }
 
-    markFileIndexed(file, currentFC);
+    markFileBeingIndexed(file, currentFC);
     try {
       StorageUpdate storageUpdate;
       long evaluatingIndexValueApplierTime = System.nanoTime();
@@ -1754,8 +1754,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     );
   }
 
-  public static void markFileIndexed(@Nullable VirtualFile file,
-                                     @Nullable FileContent fc) {
+  public static void markFileBeingIndexed(@Nullable VirtualFile file,
+                                          @Nullable FileContent fc) {
     // TODO restore original assertion
     if (fc != null && ourIndexedFile.get() != null) {
       throw new AssertionError("Reentrant indexing");
