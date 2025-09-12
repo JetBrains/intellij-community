@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
@@ -67,7 +67,7 @@ public class TestPackage extends TestObject {
   }
 
   @Override
-  public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment remoteEnvironment) throws ExecutionException {
+  public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment remoteEnvironment) {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Module module = getConfiguration().getConfigurationModule().getModule();
     return new SearchForTestsTask(getConfiguration().getProject(), getServerSocket()) {
@@ -78,7 +78,7 @@ public class TestPackage extends TestObject {
         myClasses.clear();
         final SourceScope sourceScope = getSourceScope();
         if (sourceScope != null) {
-          if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
+          if (JUPITER_RUNNERS.contains(getRunner())) {
             searchTests5(module, myClasses);
           }
           else {
@@ -95,7 +95,7 @@ public class TestPackage extends TestObject {
         try {
           String packageName = getPackageName(data);
           String filters = getFilters(myClasses, packageName);
-          if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner()) && module != null && filterOutputByDirectoryForJunit5(myClasses)) {
+          if (JUPITER_RUNNERS.contains(getRunner()) && module != null && filterOutputByDirectoryForJunit5(myClasses)) {
             JUnitStarter.printClassesList(composeDirectoryFilter(getModuleWithTestsToFilter(module)), packageName, "", filters, myTempFile);
           }
           else {
@@ -148,7 +148,7 @@ public class TestPackage extends TestObject {
   }
 
   protected boolean requiresSmartMode() {
-    return !JUnitStarter.JUNIT5_PARAMETER.equals(getRunner());
+    return !JUPITER_RUNNERS.contains(getRunner());
   }
 
   protected boolean filterOutputByDirectoryForJunit5(final Set<Location<?>> classNames) {
@@ -167,7 +167,7 @@ public class TestPackage extends TestObject {
       collectClassesRecursively(classFilter, acceptClassCondition, classes);
     }
     else {
-      LinkedHashSet<PsiClass> psiClasses = new LinkedHashSet<>();
+      Set<PsiClass> psiClasses = new LinkedHashSet<>();
       ConfigurationUtil.findAllTestClasses(classFilter, module, psiClasses);
       psiClasses.stream().map(PsiLocation::fromPsiElement).forEach(classes::add);
     }
@@ -198,7 +198,7 @@ public class TestPackage extends TestObject {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Project project = getConfiguration().getProject();
     final SourceScope sourceScope = data.getScope().getSourceScope(getConfiguration());
-    if (sourceScope == null || !JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) { //check for junit 5
+    if (sourceScope == null || !JUPITER_RUNNERS.contains(getRunner())) { //check for junit 5/6
       ReadAction.run(() -> JUnitUtil.checkTestCase(sourceScope, project));
     }
     createTempFiles(javaParameters);

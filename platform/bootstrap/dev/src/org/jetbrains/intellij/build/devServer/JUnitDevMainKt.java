@@ -10,7 +10,9 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Path;
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 // in java - don't use kotlin to avoid loading non-JDK classes
 @ApiStatus.Internal
@@ -83,21 +85,15 @@ public final class JUnitDevMainKt {
 
     String result = null;
 
-    String junitRtJar = File.separator + "junit-rt.jar";
-    String junitRtPackage = File.separator + "intellij.junit.rt";
-    for (String s : testEntryPointClasspath.split(File.pathSeparator)) {
-      if (s.endsWith(junitRtJar) || s.endsWith(junitRtPackage)) {
-        result = s;
-        break;
-      }
-    }
-
-    String junit5RtJar = File.separator + "junit5-rt.jar";
-    String junit5RtPackage = File.separator + "intellij.junit.v5.rt";
-    for (String s : testEntryPointClasspath.split(File.pathSeparator)) {
-      if (s.endsWith(junit5RtJar) || s.endsWith(junit5RtPackage)) {
-        result = result == null ? s : result + File.pathSeparator + s;
-        break;
+    List<String> versions = Arrays.asList("", "5", "6");
+    for (String version : versions) {
+      String junitRtJar = File.separator + "junit" + version + "-rt.jar";
+      String junitRtPackage = File.separator + "intellij.junit" + (version.isEmpty() ? "" : ".v" + version) + ".rt";
+      for (String s : testEntryPointClasspath.split(File.pathSeparator)) {
+        if (s.endsWith(junitRtJar) || s.endsWith(junitRtPackage)) {
+          result = result == null ? s : result + File.pathSeparator + s;
+          break;
+        }
       }
     }
 

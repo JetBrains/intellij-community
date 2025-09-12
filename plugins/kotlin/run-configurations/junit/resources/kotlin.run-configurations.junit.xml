@@ -13,6 +13,8 @@
                    order="before junit4"/>
     <testFramework implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnit5Framework"
                    order="before junit5"/>
+    <testFramework implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnit6Framework"
+                   order="before junit6"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">

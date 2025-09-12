@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.junit;
 
 import com.intellij.rt.execution.junit.RepeatCount;
@@ -7,6 +7,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,7 +15,6 @@ import java.util.List;
 /**
  * Before rename or move
  *
- * @noinspection HardCodedStringLiteral
  * @see com.intellij.execution.junit.JUnitConfiguration#JUNIT_START_CLASS
  */
 public final class JUnitStarter {
@@ -24,12 +24,14 @@ public final class JUnitStarter {
   public static final String JUNIT3_PARAMETER = "-junit3";
   public static final String JUNIT4_PARAMETER = "-junit4";
   public static final String JUNIT5_PARAMETER = "-junit5";
+  public static final String JUNIT6_PARAMETER = "-junit6";
   private static final String JUNIT5_KEY = "idea.is.junit5";
 
   private static final String SOCKET = "-socket";
   private static final String JUNIT3_RUNNER_NAME = "com.intellij.junit3.JUnit3IdeaTestRunner";
   private static final String JUNIT4_RUNNER_NAME = "com.intellij.junit4.JUnit4IdeaTestRunner";
   private static final String JUNIT5_RUNNER_NAME = "com.intellij.junit5.JUnit5IdeaTestRunner";
+  private static final String JUNIT6_RUNNER_NAME = "com.intellij.junit6.JUnit6IdeaTestRunner";
   private static String ourForkMode;
   private static String ourCommandFileName;
   private static String ourWorkingDirs;
@@ -44,13 +46,14 @@ public final class JUnitStarter {
 
     String agentName = processParameters(argList, listeners, name);
 
-    if (!JUNIT5_RUNNER_NAME.equals(agentName) && !canWorkWithJUnitVersion(System.err, agentName)) {
+    if (!Arrays.asList(JUNIT5_RUNNER_NAME, JUNIT6_RUNNER_NAME).contains(agentName) && !canWorkWithJUnitVersion(System.err, agentName)) {
       System.exit(-3);
     }
     if (!checkVersion(args, System.err)) {
       System.exit(-3);
     }
 
+    @SuppressWarnings("SSBasedInspection")
     String[] array = argList.toArray(new String[0]);
     int exitCode = prepareStreamsAndStart(array, agentName, listeners, name[0]);
     System.exit(exitCode);
@@ -71,6 +74,9 @@ public final class JUnitStarter {
       }
       else if (arg.equals(JUNIT5_PARAMETER)) {
         agentName = JUNIT5_RUNNER_NAME;
+      }
+      else if (arg.equals(JUNIT6_PARAMETER)) {
+        agentName = JUNIT6_RUNNER_NAME;
       }
       else {
         if (arg.startsWith("@name")) {
@@ -243,7 +249,7 @@ public final class JUnitStarter {
   public static void printClassesList(List<String> classNames, String packageName, String category, String filters, File tempFile)
     throws IOException {
 
-    try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(tempFile), StandardCharsets.UTF_8))) {
+    try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(Files.newOutputStream(tempFile.toPath()), StandardCharsets.UTF_8))) {
       writer.println(packageName); //package name
       writer.println(category); //category
       writer.println(filters); //patterns

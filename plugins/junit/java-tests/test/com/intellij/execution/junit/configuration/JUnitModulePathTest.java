@@ -151,8 +151,8 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
                           " --add-modules org.junit.platform.launcher", moduleOptions.getParametersList().getParametersString());
 
     PathsList classPath = params4Tests.getClassPath();
-    assertContainsElements(classPath.getPathList(), PathUtil.getJarPathForClass(JUnitStarter.class));
-    assertContainsElements(classPath.getPathList(), TestObject.getJUnit5RtFile().getPath());
+    assertContainsElements(classPath.getPathList(), TestObject.getJUnitRtPath().getPath());
+    assertContainsElements(classPath.getPathList(), TestObject.getJUnitRtFile(JUnitStarter.JUNIT5_PARAMETER).getPath());
 
     PathsList modulePath = params4Tests.getModulePath();
     checkLibrariesOnPathList(module, modulePath);
@@ -174,7 +174,7 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
       model.addModuleOrderEntry(module1);
     });
     JpsMavenRepositoryLibraryDescriptor nonModularizedJupiterDescription =
-      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.5.2");
+      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "6.0.0-RC2");
     JUnitConfiguration configuration = setupConfiguration(nonModularizedJupiterDescription, "modulePath/test2", module);
     JavaParameters params4Tests = configuration.getTestObject().createJavaParameters4Tests();
     ParamsGroup moduleOptions = JavaTestFrameworkRunnableState.getJigsawOptions(params4Tests);
@@ -183,8 +183,8 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
                           " --add-modules org.junit.platform.launcher", moduleOptions.getParametersList().getParametersString());
 
     PathsList classPath = params4Tests.getClassPath();
-    assertContainsElements(classPath.getPathList(), PathUtil.getJarPathForClass(JUnitStarter.class));
-    assertContainsElements(classPath.getPathList(), TestObject.getJUnit5RtFile().getPath());
+    assertContainsElements(classPath.getPathList(), TestObject.getJUnitRtPath().getPath());
+    assertContainsElements(classPath.getPathList(), TestObject.getJUnitRtFile(JUnitStarter.JUNIT6_PARAMETER).getPath());
 
     PathsList modulePath = params4Tests.getModulePath();
     checkLibrariesOnPathList(module, modulePath);

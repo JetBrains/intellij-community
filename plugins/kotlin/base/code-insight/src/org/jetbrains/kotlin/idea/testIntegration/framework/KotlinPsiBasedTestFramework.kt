@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
 import com.intellij.codeInsight.TestFrameworks
@@ -39,10 +39,10 @@ interface KotlinPsiBasedTestFramework {
     fun findTearDown(classOrObject: KtClassOrObject): KtNamedFunction? = null
 
     companion object {
-        const val KOTLIN_TEST_TEST = "kotlin.test.Test"
-        const val KOTLIN_TEST_IGNORE = "kotlin.test.Ignore"
-        const val KOTLIN_TEST_BEFORE_TEST = "kotlin.test.BeforeTest"
-        const val KOTLIN_TEST_AFTER_TEST = "kotlin.test.AfterTest"
+        const val KOTLIN_TEST_TEST: String = "kotlin.test.Test"
+        const val KOTLIN_TEST_IGNORE: String = "kotlin.test.Ignore"
+        const val KOTLIN_TEST_BEFORE_TEST: String = "kotlin.test.BeforeTest"
+        const val KOTLIN_TEST_AFTER_TEST: String = "kotlin.test.AfterTest"
 
         fun PsiElement?.asKtClassOrObject(): KtClassOrObject? =
             when (this) {

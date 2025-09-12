@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -16,6 +16,11 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.List;
+
+import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_PLATFORM_SUITE_API_SUITE;
+
 public class JUnit5Framework extends JUnitTestFramework {
 
   @Override
@@ -29,17 +34,13 @@ public class JUnit5Framework extends JUnitTestFramework {
   }
 
   @Override
-  protected String getMarkerClassFQName() {
-    return JUnitUtil.TEST5_ANNOTATION;
+  protected Collection<String> getMarkerClassFQNames() {
+    return List.of(JUnitUtil.TEST5_ANNOTATION, JUnitUtil.CUSTOM_TESTABLE_ANNOTATION);
   }
 
   @Override
-  public boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
-    return callWithAlternateResolver(clazz.getProject(), ()->{
-      return isFrameworkApplicable(clazz, JUnitUtil.CUSTOM_TESTABLE_ANNOTATION) ||
-             //check explicit jupiter to support library with broken dependency
-             isFrameworkApplicable(clazz, JUnitUtil.TEST5_ANNOTATION);
-    }, false);
+  protected String getMarkerClassFQName() {
+    return JUnitUtil.TEST5_ANNOTATION;
   }
 
   @Override
@@ -196,7 +197,7 @@ public class JUnit5Framework extends JUnitTestFramework {
   public boolean isSuiteClass(PsiClass psiClass) {
     if (psiClass == null) return false;
     return callWithAlternateResolver(psiClass.getProject(), () -> {
-      return AnnotationUtil.isAnnotated(psiClass, "org.junit.platform.suite.api.Suite", AnnotationUtil.CHECK_HIERARCHY);
+      return AnnotationUtil.isAnnotated(psiClass, ORG_JUNIT_PLATFORM_SUITE_API_SUITE, AnnotationUtil.CHECK_HIERARCHY);
     }, false);
   }
 }

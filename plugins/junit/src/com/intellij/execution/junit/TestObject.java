@@ -39,8 +39,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -79,6 +78,10 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
+import static com.intellij.execution.junit.JUnitExternalLibraryDescriptor.JUNIT5;
+import static com.intellij.execution.junit.JUnitExternalLibraryDescriptor.JUNIT6;
+import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_METHOD_ORDERER_DEFAULT;
+
 public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> implements PossiblyDumbAware {
   private static final String LAUNCHER_MODULE_NAME = "org.junit.platform.launcher";
   private static final String JUPITER_ENGINE_NAME  = "org.junit.jupiter.engine";
@@ -96,6 +99,14 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   protected File myListenersFile;
 
   private final Map<Module, JavaParameters> myAdditionalJarsForModuleFork = new HashMap<>();
+
+  private static final Map<String, String> RUNNER_VERSIONS = Map.of(
+    JUnitStarter.JUNIT3_PARAMETER, "3",
+    JUnitStarter.JUNIT4_PARAMETER, "4",
+    JUnitStarter.JUNIT5_PARAMETER, "5",
+    JUnitStarter.JUNIT6_PARAMETER, "6"
+  );
+  protected static final Set<String> JUPITER_RUNNERS = Set.of(JUnitStarter.JUNIT5_PARAMETER, JUnitStarter.JUNIT6_PARAMETER);
 
   protected TestObject(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(environment);
@@ -177,7 +188,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     Set<Module> result = new HashSet<>();
     final SourceScope sourceScope = getSourceScope();
     final Project project = getConfiguration().getProject();
-    if (sourceScope != null && packageName != null && JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
+    if (sourceScope != null && packageName != null && JUPITER_RUNNERS.contains(getRunner())) {
       final PsiPackage aPackage = JavaPsiFacade.getInstance(getConfiguration().getProject()).findPackage(packageName);
       if (aPackage != null) {
         final TestSearchScope scope = getScope();
@@ -224,12 +235,14 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   @Override
-  protected void configureRTClasspath(JavaParameters javaParameters, Module module) {
+  protected void configureRTClasspath(JavaParameters javaParameters, Module module) throws CantRunException {
     final String path = System.getProperty(DEBUG_RT_PATH);
-    javaParameters.getClassPath().addFirst(path != null ? path : PathUtil.getJarPathForClass(JUnitStarter.class));
+    javaParameters.getClassPath().addFirst(path != null ? path : getJUnitRtPath().getAbsolutePath());
 
     //include junit5 listeners for the case custom junit 5 engines would be detected on runtime
-    javaParameters.getClassPath().addFirst(getJUnit5RtFile());
+    javaParameters.getClassPath().addFirst(getJUnitRtFile(JUnitStarter.JUNIT5_PARAMETER));
+    //include junit6 listeners for the case custom junit 6 engines would be detected on runtime
+    javaParameters.getClassPath().addFirst(getJUnitRtFile(JUnitStarter.JUNIT6_PARAMETER));
 
     appendDownloadedDependenciesForForkedConfigurations(javaParameters, module);
   }
@@ -252,30 +265,44 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
-  public static File getJUnit5RtFile() {
-    File junit4Rt = new File(PathUtil.getJarPathForClass(JUnit4IdeaTestRunner.class));
+  public static File getJUnitRtFile(@NotNull String runner) {
+    String version = RUNNER_VERSIONS.getOrDefault(runner, "5");
+    File junit4Rt = getJUnitRtPath();
     String junit4Name = junit4Rt.getName();
-    String junit5Name;
+    String junitCurrentName;
     if (junit4Rt.isDirectory()) {
-      junit5Name = junit4Name.replace("junit", "junit.v5");
+      junitCurrentName = junit4Name.replace("junit", "junit.v" + version);
     }
     else {
       var relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
       Map<String, String> mapping = PathManager.getArchivedCompiledClassesMapping();
       if (relevantJarsRoot != null && junit4Rt.toPath().startsWith(relevantJarsRoot) && mapping != null) {
-        return new File(mapping.get("production/intellij.junit.v5.rt"));
+        return new File(mapping.get("production/intellij.junit.v" + version + ".rt"));
       }
       else {
-        junit5Name = junit4Name.replace("junit", "junit5");
+        junitCurrentName = junit4Name.replace("junit", "junit" + version);
       }
     }
-    return new File(junit4Rt.getParent(), junit5Name);
+    return new File(junit4Rt.getParent(), junitCurrentName);
+
+  }
+
+  public static File getJUnitRtPath() {
+    String currentPath = PathUtil.getJarPathForClass(TestObject.class);
+    String currentUrl = VfsUtil.getUrlForLibraryRoot(new File(currentPath));
+    if (StandardFileSystems.FILE_PROTOCOL.equals(VirtualFileManager.extractProtocol(currentUrl))) {
+      File rtDir = new File(new File(currentPath).getParentFile(), "intellij.junit.rt");
+      if (rtDir.exists()) {
+        return rtDir;
+      }
+    }
+    return new File(PathUtil.getJarPathForClass(JUnit4IdeaTestRunner.class));
   }
 
   /**
-   * Junit 5 searches for tests in the classpath.
-   * When 2 modules have e.g. the same package, one depends on another, and tests have to run in single module only,
-   * by configuration settings or to avoid repetition in fork by module mode, additional filters per output directories are required.
+   * Junit 5/6 searches for tests in the classpath.
+   * When 2 modules have e.g. the same package, one depends on another, and tests have to run in a single module only,
+   * by configuration settings or to avoid repetition in fork by module mode; additional filters per output directories are required.
    */
   protected static @Unmodifiable List<String> composeDirectoryFilter(@NotNull Module module) {
     return ContainerUtil.map(OrderEnumerator.orderEntries(module)
@@ -320,17 +347,17 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return parameters;
   }
 
-  public void appendJUnit5LauncherClasses(JavaParameters javaParameters,
-                                          Project project,
-                                          GlobalSearchScope globalSearchScope,
-                                          boolean ensureOnModulePath) throws CantRunException {
-
+  public void appendJUnitLauncherClasses(String runnerName,
+                                         JavaParameters javaParameters,
+                                         Project project,
+                                         GlobalSearchScope globalSearchScope,
+                                         boolean ensureOnModulePath) throws CantRunException {
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     DumbService dumbService = DumbService.getInstance(project);
 
     String launcherVersion = getLibraryVersion("org.junit.platform.commons.JUnitException", globalSearchScope, project);
     if (launcherVersion == null) {
-      LOG.info("Failed to detect junit 5 launcher version, please configure explicit dependency");
+      LOG.info("Failed to detect junit " + RUNNER_VERSIONS.getOrDefault(runnerName, "5") + " launcher version, please configure explicit dependency");
       return;
     }
 
@@ -341,7 +368,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                               .isEmpty()).executeSynchronously() &&
                             VersionComparatorUtil.compare(launcherVersion, "1.5.0") >= 0;
 
-    if (isModularized) { //for modularized junit ensure launcher is included in the module graph
+    if (isModularized) { //for modularized junit ensure the launcher is included in the module graph
       ParamsGroup group = getOrCreateJigsawOptions(javaParameters);
       ParametersList vmParametersList = group.getParametersList();
       if (!vmParametersList.hasParameter(LAUNCHER_MODULE_NAME)) {
@@ -359,8 +386,12 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
 
     //add standard engines only if no engine api is present
-    if (!hasJUnit5EnginesAPI(globalSearchScope, psiFacade) || !isCustomJUnit5(globalSearchScope)) {
-      String jupiterVersion = ObjectUtils.notNull(getLibraryVersion(JUnitUtil.TEST5_ANNOTATION, globalSearchScope, project), "5.0.0");
+    if (!hasJupiterEnginesAPI(globalSearchScope, psiFacade) || !isCustomJUnit(globalSearchScope,
+                                                                            JUnitStarter.JUNIT6_PARAMETER.equals(runnerName)
+                                                                            ? JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_CANCELLATION_TOKEN
+                                                                            : JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE)) {
+      String defaultMinVersion =  JUnitStarter.JUNIT6_PARAMETER.equals(runnerName) ? JUNIT6.getMinVersion() : JUNIT5.getMinVersion();
+      String jupiterVersion = ObjectUtils.notNull(getLibraryVersion(JUnitUtil.TEST5_ANNOTATION, globalSearchScope, project), defaultMinVersion);
       if (JUnitUtil.hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
         if (!JUnitUtil.hasPackageWithDirectories(psiFacade, JUPITER_ENGINE_NAME, globalSearchScope)) {
           downloadDependenciesWhenRequired(project, additionalDependencies,
@@ -373,7 +404,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
       if (JUnitUtil.hasPackageWithDirectories(psiFacade, "org.junit.platform.suite.api", globalSearchScope)) {
         if (!JUnitUtil.hasPackageWithDirectories(psiFacade, SUITE_ENGINE_NAME, globalSearchScope)) {
-          String suiteVersion = getLibraryVersion("org.junit.platform.suite.api.Suite", globalSearchScope, project);
+          String suiteVersion = getLibraryVersion(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_SUITE_API_SUITE, globalSearchScope, project);
           if (suiteVersion != null && VersionComparatorUtil.compare(suiteVersion, "1.8.0") >= 0) {
             downloadDependenciesWhenRequired(project, additionalDependencies,
                                              new RepositoryLibraryProperties("org.junit.platform", "junit-platform-suite-engine", suiteVersion));
@@ -424,8 +455,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   /**
-   * junit 4.12+ must be on the classpath for vintage engine to work correctly.
-   * Don't add engine when it will fail to detect tests anyway.
+   * junit 4.12+ must be on the classpath for the vintage engine to work correctly.
+   * Don't add engine when it fails to detect tests anyway.
    * <p>
    * Reflection is needed for the case when no sources are attached
    */
@@ -443,7 +474,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
-  public static boolean hasJUnit5EnginesAPI(GlobalSearchScope globalSearchScope, JavaPsiFacade psiFacade) {
+  public static boolean hasJupiterEnginesAPI(GlobalSearchScope globalSearchScope, JavaPsiFacade psiFacade) {
     return JUnitUtil.hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope);
   }
 
@@ -539,7 +570,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   @Override
   protected boolean isIdBasedTestTree() {
-    return JUnitStarter.JUNIT5_PARAMETER.equals(getRunner());
+    return JUPITER_RUNNERS.contains(getRunner());
   }
 
   @Override
@@ -562,14 +593,14 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     super.downloadAdditionalDependencies(javaParameters);
 
     String preferredRunner = getRunner();
-    if (JUnitStarter.JUNIT5_PARAMETER.equals(preferredRunner)) {
+    if (JUPITER_RUNNERS.contains(preferredRunner)) {
       JUnitConfiguration configuration = getConfiguration();
       final Project project = configuration.getProject();
       Module module = configuration.getConfigurationModule().getModule();
       ThrowableComputable<Void, ExecutionException> downloader = () -> {
-        appendJUnit5LauncherClasses(javaParameters, project,
-                                    getScopeForJUnit(module, project),
-                                    useModulePath() && module != null && ReadAction.compute(() -> findJavaModule(module, true)) != null);
+        appendJUnitLauncherClasses(preferredRunner, javaParameters, project,
+                                   getScopeForJUnit(module, project),
+                                   useModulePath() && module != null && ReadAction.compute(() -> findJavaModule(module, true)) != null);
         if (forkPerModule()) {
           for (Module packageModule : ReadAction.compute(() -> collectPackageModules(configuration.getPackage()))) {
             JavaParameters parameters = new JavaParameters();
@@ -578,12 +609,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
               parameters.getVMParametersList().addParamsGroup(group.clone());
             }
             parameters.setJdk(javaParameters.getJdk());
-            appendJUnit5LauncherClasses(parameters,
-                                        project,
-                                        getScopeForJUnit(packageModule, project),
-                                        useModulePath() &&
-                                        packageModule != null &&
-                                        ReadAction.compute(() -> findJavaModule(packageModule, true)) != null);
+            appendJUnitLauncherClasses(preferredRunner, parameters, project,
+                                       getScopeForJUnit(packageModule, project),
+                                       useModulePath() && packageModule != null && ReadAction.compute(() -> findJavaModule(packageModule, true)) != null);
             myAdditionalJarsForModuleFork.put(packageModule, parameters);
           }
         }
@@ -719,6 +747,20 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
+  private String getRunner(@NotNull GlobalSearchScope scope, @NotNull Project project) {
+    if (JavaPsiFacade.getInstance(project).findClass(ORG_JUNIT_JUPITER_API_METHOD_ORDERER_DEFAULT, scope) != null ||
+        isCustomJUnit(scope, JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_CANCELLATION_TOKEN)) {
+      return JUnitStarter.JUNIT6_PARAMETER;
+    }
+    else if (JUnitUtil.isJUnit5(scope, project) ||
+             isCustomJUnit(scope, JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE)) {
+      return JUnitStarter.JUNIT5_PARAMETER;
+    }
+    else {
+      return DEFAULT_RUNNER;
+    }
+  }
+
   private @NotNull String getRunnerInner() {
     Project project = myConfiguration.getProject();
     LOG.assertTrue(!DumbService.getInstance(project).isAlternativeResolveEnabled());
@@ -728,7 +770,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       return JUnitStarter.JUNIT4_PARAMETER;
     }
     if (JUnitConfiguration.TEST_TAGS.equals(data.TEST_OBJECT)) {
-      return JUnitStarter.JUNIT5_PARAMETER;
+      return getRunner(globalSearchScope, project);
     }
     boolean isMethodConfiguration = JUnitConfiguration.TEST_METHOD.equals(data.TEST_OBJECT);
     boolean isClassConfiguration = JUnitConfiguration.TEST_CLASS.equals(data.TEST_OBJECT);
@@ -737,6 +779,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (psiClass != null) {
       Set<TestFramework> testFrameworks = TestFrameworks.detectApplicableFrameworks(psiClass);
       TestFramework testFramework = ContainerUtil.getFirstItem(testFrameworks);
+      if (testFramework instanceof JUnit6Framework ||
+          testFrameworks.size() > 1 && ContainerUtil.find(testFrameworks, f -> f instanceof JUnit6Framework) != null) {
+        return JUnitStarter.JUNIT6_PARAMETER;
+      }
       if (testFramework instanceof JUnit5Framework ||
           testFrameworks.size() > 1 && ContainerUtil.find(testFrameworks, f -> f instanceof JUnit5Framework) != null) {
         return JUnitStarter.JUNIT5_PARAMETER;
@@ -751,28 +797,28 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         return JUnitStarter.JUNIT4_PARAMETER;
       }
     }
-    return JUnitUtil.isJUnit5(globalSearchScope, project) || isCustomJUnit5(globalSearchScope) ? JUnitStarter.JUNIT5_PARAMETER : DEFAULT_RUNNER;
+    return getRunner(globalSearchScope, project);
   }
 
-  private boolean isCustomJUnit5(GlobalSearchScope globalSearchScope) {
+  private boolean isCustomJUnit(GlobalSearchScope globalSearchScope, String jupiterClassName) {
     Project project = myConfiguration.getProject();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
 
-    Boolean isCustomJUnit5UsingPsi =
+    Boolean isCustomJUnitUsingPsi =
       ReadAction.nonBlocking(() -> {
         if (DumbService.isDumb(project)) {
           return null;
         }
-        return findCustomJunit5TestEngineUsingPsi(globalSearchScope, project, psiFacade);
+        return hasCustomJupiterTestEngineUsingPsi(globalSearchScope, project, psiFacade, jupiterClassName);
       }).executeSynchronously();
-    if (isCustomJUnit5UsingPsi != null) {
-      return isCustomJUnit5UsingPsi;
+    if (isCustomJUnitUsingPsi != null) {
+      return isCustomJUnitUsingPsi;
     }
-    return findCustomJUnit5TestEngineUsingClassLoader(globalSearchScope, psiFacade);
+    return findCustomJupiterTestEngineUsingClassLoader(globalSearchScope, psiFacade);
   }
 
-  private boolean findCustomJUnit5TestEngineUsingClassLoader(@NotNull GlobalSearchScope globalSearchScope,
-                                                             @NotNull JavaPsiFacade psiFacade) {
+  private boolean findCustomJupiterTestEngineUsingClassLoader(@NotNull GlobalSearchScope globalSearchScope,
+                                                              @NotNull JavaPsiFacade psiFacade) {
     boolean hasPlatformEngine = ReadAction.compute(() -> {
         PsiPackage aPackage = psiFacade.findPackage(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE);
         return aPackage != null && aPackage.getDirectories(globalSearchScope).length > 0;
@@ -784,7 +830,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         serviceLoader = ServiceLoader.load(Class.forName(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, false, loader), loader);
       for (Object engine : serviceLoader) {
         String engineClassName = engine.getClass().getName();
-        if (isCustomJunit5TestEngineName(engineClassName)) {
+        if (isCustomJupiterTestEngineName(engineClassName)) {
           return true;
         }
       }
@@ -795,10 +841,11 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
-  private static boolean findCustomJunit5TestEngineUsingPsi(@NotNull GlobalSearchScope globalSearchScope,
+  private static boolean hasCustomJupiterTestEngineUsingPsi(@NotNull GlobalSearchScope globalSearchScope,
                                                             @NotNull Project project,
-                                                            @NotNull JavaPsiFacade psiFacade) {
-    PsiClass testEngine = psiFacade.findClass(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, globalSearchScope);
+                                                            @NotNull JavaPsiFacade psiFacade,
+                                                            @NotNull String jupiterClassName) {
+    PsiClass testEngine = psiFacade.findClass(jupiterClassName, globalSearchScope);
     if (testEngine == null) return false;
     Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(PsiJavaModule.MODULE_INFO_FILE, globalSearchScope);
     if (!files.isEmpty() && ReferencesSearch.search(testEngine, GlobalSearchScope.filesScope(project, files)).anyMatch(ref -> isCustomEngineProvided(testEngine, ref))) {
@@ -806,7 +853,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
     PsiManager psiManager = PsiManager.getInstance(project);
     GlobalSearchScope scope = GlobalSearchScope.getScopeRestrictedByFileTypes(globalSearchScope, SPIFileType.INSTANCE);
-    return FilenameIndex.getVirtualFilesByName(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, scope)
+    return FilenameIndex.getVirtualFilesByName(jupiterClassName, scope)
       .stream()
       .map(f -> psiManager.findFile(f))
       .filter(Objects::nonNull)
@@ -814,7 +861,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       .map(r -> r.resolve())
       .filter(e -> e instanceof PsiClass)
       .map(e -> (PsiClass)e)
-      .filter(c -> isCustomJunit5TestEngineName(c.getQualifiedName()))
+      .filter(c -> isCustomJupiterTestEngineName(c.getQualifiedName()))
       .anyMatch(c -> InheritanceUtil.isInheritorOrSelf(c, testEngine, true));
   }
 
@@ -829,7 +876,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return false;
   }
 
-  private static boolean isCustomJunit5TestEngineName(@Nullable String engineImplClassName) {
+  private static boolean isCustomJupiterTestEngineName(@Nullable String engineImplClassName) {
     return !"org.junit.jupiter.engine.JupiterTestEngine".equals(engineImplClassName) &&
            !"org.junit.vintage.engine.VintageTestEngine".equals(engineImplClassName);
   }
