@@ -3,6 +3,7 @@ package com.intellij.execution.configuration;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.util.EnvVariables;
 import com.intellij.execution.util.EnvVariablesTable;
 import com.intellij.execution.util.EnvironmentVariable;
 import com.intellij.icons.AllIcons;
@@ -28,14 +29,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.nio.file.Path;
 import java.util.*;
 
 public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton.NoPathCompletion implements UserActivityProviderComponent {
   protected EnvironmentVariablesData myData = EnvironmentVariablesData.DEFAULT;
   protected final Map<String, String> myParentDefaults = new LinkedHashMap<>();
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private @NotNull List<String> myEnvFilePaths = new ArrayList<>(); // TODO: Do we need to keep this? Maybe we should use the EnvironmentVariablesData?
+  private @NotNull List<String> myEnvFilePaths = new ArrayList<>();
   private ExtendableTextComponent.Extension myEnvFilesExtension;
   private final List<ChangeListener> myEnvFilePathsChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -52,9 +52,9 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
         if (!StringUtil.equals(getEnvText(), getText())) {
-          var parsedEnvsAndFiles = EnvVariablesTable.parseEnvsAndFilesFromText(getText());
-          myData = myData.with(parsedEnvsAndFiles.getFirst());
-          updateEnvFiles(parsedEnvsAndFiles.getSecond());
+          var parsedEnvsAndFiles = EnvVariables.parseFromText(getText());
+          myData = myData.with(parsedEnvsAndFiles.getEnvs());
+          updateEnvFiles(parsedEnvsAndFiles.getEnvFiles());
           fireStateChanged();
         }
       }
@@ -228,10 +228,10 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     return myEnvFilePaths;
   }
 
-  private void updateEnvFiles(List<Path> files) {
-    if (myEnvFilePaths.isEmpty() || files.isEmpty()) return; //TODO: ensure that this check makes sense
+  private void updateEnvFiles(List<String> files) {
+    if (myEnvFilePaths.isEmpty() || files.isEmpty()) return;
     for (int i = 0; i < Math.min(myEnvFilePaths.size(), files.size()); i++) {
-      myEnvFilePaths.set(i, files.get(i).toString());
+      myEnvFilePaths.set(i, files.get(i));
     }
     fireEnvFilePathsChanged();
   }

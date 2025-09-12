@@ -358,6 +358,22 @@ com.intellij.execution.testframework.PoolOfTestIcons
 - sf:SKIPPED_ICON:javax.swing.Icon
 - sf:TEAR_DOWN_FAILURE:javax.swing.Icon
 - sf:TERMINATED_ICON:javax.swing.Icon
+f:com.intellij.execution.util.EnvVariables
+- sf:Companion:com.intellij.execution.util.EnvVariables$Companion
+- <init>():V
+- <init>(java.util.Map,java.util.List):V
+- b:<init>(java.util.Map,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.util.Map
+- f:component2():java.util.List
+- f:copy(java.util.Map,java.util.List):com.intellij.execution.util.EnvVariables
+- bs:copy$default(com.intellij.execution.util.EnvVariables,java.util.Map,java.util.List,I,java.lang.Object):com.intellij.execution.util.EnvVariables
+- equals(java.lang.Object):Z
+- f:getEnvFiles():java.util.List
+- f:getEnvs():java.util.Map
+- hashCode():I
+- sf:parseFromText(java.lang.String):com.intellij.execution.util.EnvVariables
+f:com.intellij.execution.util.EnvVariables$Companion
+- f:parseFromText(java.lang.String):com.intellij.execution.util.EnvVariables
 c:com.intellij.execution.util.EnvVariablesTable
 - sf:Companion:com.intellij.execution.util.EnvVariablesTable$Companion
 - f:editVariableName(com.intellij.execution.util.EnvironmentVariable):V

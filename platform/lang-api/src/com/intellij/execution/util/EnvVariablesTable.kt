@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil
@@ -16,7 +15,6 @@ import com.intellij.util.ui.ListTableModel
 import java.awt.GridLayout
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
-import java.nio.file.Path
 import javax.swing.*
 import javax.swing.table.TableCellEditor
 
@@ -284,111 +282,7 @@ open class EnvVariablesTable : ListTableWithButtons<EnvironmentVariable>() {
      */
     @JvmStatic
     fun parseEnvsFromText(content: String?): MutableMap<String, String> {
-      return parseEnvsAndFilesFromText(content).first
-    }
-
-    @JvmStatic
-    fun parseEnvsAndFilesFromText(content: String?): Pair<MutableMap<String, String>, List<Path>> {
-      val parsedEnvs = mutableMapOf<String, String>()
-      val parsedFiles = mutableListOf<Path>()
-
-      if (content == null) {
-        return Pair(parsedEnvs, parsedFiles)
-      }
-
-      var index = 0
-      while (index < content.length) {
-        fun readItem(endOnEqualSign: Boolean): String {
-          if (index >= content.length) {
-            return ""
-          }
-          val buffer = StringBuilder()
-
-          val firstCharacter = content[index]
-          if (firstCharacter == '"') {
-            while (index + 1 < content.length) {
-              index += 1
-              var c = content[index]
-              if (c == '\\') {
-                index += 1
-                if (index >= content.length) {
-                  // Escape character is present but there's no escaped character. Add slash and exit.
-                  buffer.append('\\')
-                  break
-                }
-
-                val next = content[index]
-                buffer.append(next)
-                continue
-              }
-
-              if (c == '"') {
-                // We found the closing quote.
-                index += 1
-                if (index >= content.length) break
-                val next = content[index]
-                if ((endOnEqualSign && next == '=') || next == ';') {
-                  break
-                }
-
-                // At this point, we found the closing quote, but next to it there are some characters other than = or ;
-                // Means we should treat the remaining text literally as the fallback.
-                while (index < content.length) {
-                  c = content[index]
-                  if ((endOnEqualSign && c == '=') || c == ';') break
-                  buffer.append(c)
-                  index += 1
-                }
-
-                break
-              }
-
-              buffer.append(c)
-            }
-          }
-          else {
-            while (index < content.length) {
-              val c = content[index]
-              if ((endOnEqualSign && c == '=') || c == ';') break
-              buffer.append(c)
-              index += 1
-            }
-          }
-
-          return buffer.toString()
-        }
-
-        fun readKey() = readItem(true)
-        fun readValue() = readItem(false)
-
-        val key = readKey()
-        if (index >= content.length) {
-          if (key.isNotBlank()) {
-            key.toNioPathOrNull()?.let { parsedFiles.add(it) } ?: parsedEnvs.put(key, "")
-          }
-          break
-        }
-
-        when (content[index]) {
-          '=' -> {
-            index += 1 // eat '='
-
-            val value = readValue()
-            parsedEnvs.put(key, value)
-          }
-          ';' -> {
-            if (key.isNotBlank()) {
-              key.toNioPathOrNull()?.let { parsedFiles.add(it) } ?: parsedEnvs.put(key, "")
-            }
-          }
-          else -> {
-            throw RuntimeException("Parse error at " + index)
-          }
-        }
-        index += 1
-      }
-
-      return Pair(parsedEnvs, parsedFiles)
+      return EnvVariables.parseFromText(content).envs.toMutableMap()
     }
   }
 }
