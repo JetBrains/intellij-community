@@ -123,16 +123,16 @@ public final class JVMNameUtil {
     public JVMName toName() {
       final List<JVMName> optimised = new ArrayList<>();
       for (JVMName evaluator : myList) {
-        if (evaluator instanceof JVMRawText && !optimised.isEmpty() &&
-            optimised.get(optimised.size() - 1) instanceof JVMRawText nameEvaluator) {
-          nameEvaluator.setName(nameEvaluator.getName() + ((JVMRawText)evaluator).getName());
+        if (evaluator instanceof JVMRawText rawText && !optimised.isEmpty() &&
+            optimised.getLast() instanceof JVMRawText nameEvaluator) {
+          nameEvaluator.setName(nameEvaluator.getName() + rawText.getName());
         }
         else {
           optimised.add(evaluator);
         }
       }
 
-      if (optimised.size() == 1) return optimised.get(0);
+      if (optimised.size() == 1) return optimised.getFirst();
       if (optimised.isEmpty()) return new JVMRawText("");
 
       return new JVMName() {
@@ -173,7 +173,7 @@ public final class JVMNameUtil {
     }
 
     @Override
-    public String getName(DebugProcessImpl process) throws EvaluateException {
+    public String getName(DebugProcessImpl process) {
       return myText;
     }
 
@@ -227,7 +227,7 @@ public final class JVMNameUtil {
         }
       }
       if (!allClasses.isEmpty()) {
-        return allClasses.get(0).name();
+        return allClasses.getFirst().name();
       }
 
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("error.class.not.loaded", getDisplayName(process)));
@@ -388,7 +388,7 @@ public final class JVMNameUtil {
     if (res.second && debugProcess != null && debugProcess.isAttached()) {
       List<ReferenceType> allClasses = debugProcess.getPositionManager().getAllClasses(position);
       if (!allClasses.isEmpty()) {
-        return allClasses.get(0).name();
+        return allClasses.getFirst().name();
       }
     }
     return res.first;
@@ -463,7 +463,7 @@ public final class JVMNameUtil {
     if (res == null && debugProcess != null && debugProcess.isAttached()) {
       List<ReferenceType> allClasses = debugProcess.getPositionManager().getAllClasses(position);
       if (!allClasses.isEmpty()) {
-        final String className = allClasses.get(0).name();
+        final String className = allClasses.getFirst().name();
         int dotIndex = className.lastIndexOf('.');
         if (dotIndex >= 0) {
           return className.substring(0, dotIndex);

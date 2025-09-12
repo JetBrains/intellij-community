@@ -371,7 +371,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (elements.isEmpty()) {
       return false;
     }
-    final PsiElement firstElement = elements.get(0);
+    final PsiElement firstElement = elements.getFirst();
     if (firstElement instanceof PsiDeclarationStatement && firstElement.getFirstChild() instanceof PsiClass) {
       return true;
     }
@@ -379,7 +379,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
       return false;
     }
     final PsiElement secondElement = elements.get(1);
-    final PsiElement lastElement = elements.get(elements.size() - 1);
+    final PsiElement lastElement = elements.getLast();
 
     if (firstElement instanceof PsiDocComment) {
       // might be method with javadoc

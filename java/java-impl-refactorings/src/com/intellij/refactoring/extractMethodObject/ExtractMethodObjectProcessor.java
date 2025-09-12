@@ -287,7 +287,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
 
       LOG.assertTrue(!returnStatements.isEmpty());
-      final PsiReturnStatement returnStatement = returnStatements.get(returnStatements.size() - 1);
+      final PsiReturnStatement returnStatement = returnStatements.getLast();
       final PsiElement container = returnStatement.getParent();
       LOG.assertTrue(myResultFieldName != null);
       final PsiStatement resultStmt = myElementFactory.createStatementFromText(myResultFieldName + " = false;", container);

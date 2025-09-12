@@ -343,7 +343,7 @@ public class JavaKeywordCompletion {
     if (switchBlock == null) return;
     List<PsiSwitchLabelStatementBase> allBranches =
       PsiTreeUtil.getChildrenOfTypeAsList(switchBlock.getBody(), PsiSwitchLabelStatementBase.class);
-    if (allBranches.isEmpty() || allBranches.get(allBranches.size() - 1).getCaseLabelElementList() != labels) {
+    if (allBranches.isEmpty() || allBranches.getLast().getCaseLabelElementList() != labels) {
       return;
     }
     if (JavaPsiSwitchUtil.findDefaultElement(switchBlock) != null) {

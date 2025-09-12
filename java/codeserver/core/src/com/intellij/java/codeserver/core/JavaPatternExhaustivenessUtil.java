@@ -638,7 +638,7 @@ public final class JavaPatternExhaustivenessUtil {
       ClassWithDependencies peeked = nonVisited.peek();
       if (!visited.add(peeked)) continue;
       PsiClass psiClass = peeked.mainClass;
-      PsiClass selectorClass = peeked.dependencies.get(peeked.dependencies.size() - 1);
+      PsiClass selectorClass = peeked.dependencies.getLast();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       if (sealedUpperClasses.contains(psiClass) ||
           //used to generate missed classes when the switch is empty
@@ -786,7 +786,7 @@ public final class JavaPatternExhaustivenessUtil {
   /**
    * Pattern descriptor
    */
-  sealed private interface PatternDescriptor permits PatternDeconstructionDescriptor, PatternTypeTestDescriptor {
+  private sealed interface PatternDescriptor permits PatternDeconstructionDescriptor, PatternTypeTestDescriptor {
     @NotNull
     PsiType type();
   }

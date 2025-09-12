@@ -502,7 +502,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       LOG.assertTrue(containingMethodCopy != null);
       final List<PsiMethod> enclosingMethodsInCopy = CommonJavaRefactoringUtil.getEnclosingMethods(containingMethodCopy);
       final MyExtractMethodProcessor processor = new MyExtractMethodProcessor(project, editor, elementsCopy,
-                                                                              enclosingMethodsInCopy.get(enclosingMethodsInCopy.size() - 1));
+                                                                              enclosingMethodsInCopy.getLast());
       try {
         if (!processor.prepare()) return false;
         processor.showDialog();

@@ -52,7 +52,7 @@ public final class MoveIntoIfBranchesAction implements ModCommandAction {
   }
 
   private static boolean hasConflictingDeclarations(@NotNull PsiIfStatement ifStatement, @NotNull List<PsiStatement> statements) {
-    PsiStatement lastStatement = statements.get(statements.size() - 1);
+    PsiStatement lastStatement = statements.getLast();
     List<PsiElement> afterLast = new ArrayList<>();
     for (PsiElement e = lastStatement.getNextSibling(); e != null; e = e.getNextSibling()) {
       if (!(e instanceof PsiComment) && !(e instanceof PsiWhiteSpace)) {
@@ -83,7 +83,7 @@ public final class MoveIntoIfBranchesAction implements ModCommandAction {
     if (!BaseIntentionAction.canModify(context.file())) return null;
     List<PsiStatement> statements = extractStatements(context);
     if (statements.isEmpty()) return null;
-    PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statements.get(0));
+    PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statements.getFirst());
     if (!(prev instanceof PsiIfStatement ifStatement) || hasConflictingDeclarations(ifStatement, statements)) return null;
     return Presentation.of(getFamilyName());
   }
@@ -96,7 +96,7 @@ public final class MoveIntoIfBranchesAction implements ModCommandAction {
   private static void invoke(@NotNull ActionContext context) {
     List<PsiStatement> statements = extractStatements(context);
     if (statements.isEmpty()) return;
-    PsiIfStatement ifStatement = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(statements.get(0)), PsiIfStatement.class);
+    PsiIfStatement ifStatement = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(statements.getFirst()), PsiIfStatement.class);
     if (ifStatement == null || hasConflictingDeclarations(ifStatement, statements)) return;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
     PsiStatement thenBranch = ifStatement.getThenBranch();
@@ -120,8 +120,8 @@ public final class MoveIntoIfBranchesAction implements ModCommandAction {
     PsiJavaToken thenBrace = thenBlock.getRBrace();
     PsiJavaToken elseBrace = elseBlock.getRBrace();
     if (thenBrace == null || elseBrace == null) return;
-    thenBlock.addRangeBefore(statements.get(0), statements.get(statements.size() - 1), thenBrace);
-    elseBlock.addRangeBefore(statements.get(0), statements.get(statements.size() - 1), elseBrace);
-    ifStatement.getParent().deleteChildRange(statements.get(0), statements.get(statements.size() - 1));
+    thenBlock.addRangeBefore(statements.getFirst(), statements.getLast(), thenBrace);
+    elseBlock.addRangeBefore(statements.getFirst(), statements.getLast(), elseBrace);
+    ifStatement.getParent().deleteChildRange(statements.getFirst(), statements.getLast());
   }
 }

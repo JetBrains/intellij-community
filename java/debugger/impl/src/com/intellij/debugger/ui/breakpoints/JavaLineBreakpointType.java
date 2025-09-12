@@ -166,7 +166,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
           PsiElement body = lambda.getBody();
           LOG.assertTrue(body != null, "if we got an element, there must be a body");
           if (startMethodIsOuterLambda && lambda == startMethod) {
-            res.add(0, new LineJavaBreakpointVariant(elementPosition, body, ordinal));
+            res.addFirst(new LineJavaBreakpointVariant(elementPosition, body, ordinal));
             mainMethodAdded = true;
           }
           else if (lambda != outerMethod) {
@@ -338,7 +338,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     if (visitor.lastAddedReturnIsLastInstruction && visitor.returnOffsets.size() >= 2) {
       // Return at the end of the method is likely to be implicitly generated,
       // it is not the conditional return we were looking for, drop it.
-      visitor.returnOffsets.remove(visitor.returnOffsets.size() - 1);
+      visitor.returnOffsets.removeLast();
     }
     return visitor.returnOffsets.stream().map(offs -> method.locationOfCodeIndex(offs));
   }

@@ -44,7 +44,7 @@ public final class Util {
         }
       }
       //TODO Dmitry Batkovich multiple result is possible
-      return normalized.isEmpty() ? element : normalized.get(normalized.size() - 1);
+      return normalized.isEmpty() ? element : normalized.getLast();
     }
     else if (element instanceof PsiParameter && element.getParent() instanceof PsiParameterList) {
       final PsiElement declarationScope = ((PsiParameter)element).getDeclarationScope();

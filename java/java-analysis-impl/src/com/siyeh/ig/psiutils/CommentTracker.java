@@ -402,7 +402,7 @@ public final class CommentTracker {
         addIgnored(comment);
         trailingComments.add(comment.copy());
       }
-      if (isEndOfLineComment(trailingComments.get(trailingComments.size() - 1))) {
+      if (isEndOfLineComment(trailingComments.getLast())) {
         PsiElement next = expression.getNextSibling();
         if (next instanceof PsiErrorElement) next = next.getNextSibling();
         if (isEndOfLineComment(next) ||
