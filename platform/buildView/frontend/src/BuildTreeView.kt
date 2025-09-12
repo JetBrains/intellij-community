@@ -36,6 +36,8 @@ import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
+import com.intellij.util.asDisposable
+import com.intellij.util.disposeOnCompletion
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
@@ -90,6 +92,7 @@ internal class BuildTreeView(private val project: Project, parentScope: Coroutin
 
   init {
     LOG.debug { "Creating BuildTreeView(id=$buildViewId)" }
+    this.disposeOnCompletion(uiScope)
     uiScope.launch {
       val nodeMap = mutableMapOf(buildProgressRootNode.id to buildProgressRootNode)
       model.getTreeEventsFlow().collect { event ->
