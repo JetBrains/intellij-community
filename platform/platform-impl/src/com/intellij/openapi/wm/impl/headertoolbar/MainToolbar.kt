@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.toolbarLayout.CompressingLayoutStrategy
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiDispatcherKind
 import com.intellij.openapi.application.ui
@@ -289,6 +290,7 @@ class MainToolbar(
     super.paintComponent(g)
     if (!CustomWindowHeaderUtil.isToolbarInHeader(UISettings.getInstance(), isFullScreen())) {
       ProjectWindowCustomizerService.getInstance().paint(frame, this, g as Graphics2D)
+      InternalUICustomization.getInstance()?.paintFrameBackground(frame, this, g)
     }
   }
 

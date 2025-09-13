@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl.islands
 
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
@@ -578,6 +579,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
       glassPane.addFallbackBackgroundPainter(IslandsGradientPainter(frame, getMainBackgroundColor()) {
         isManyIslandEnabled && isIslandsGradientEnabled
       })
+    }
+  }
+
+  override fun paintFrameBackground(frame: Window, component: Component, g: Graphics2D) {
+    if (isManyIslandEnabled && isIslandsGradientEnabled) {
+      islandsGradientPaint(frame as IdeFrame, getMainBackgroundColor(), ProjectWindowCustomizerService.getInstance(), component, g)
     }
   }
 
