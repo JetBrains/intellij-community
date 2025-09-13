@@ -138,4 +138,8 @@ open class InternalUICustomization {
   open fun createProjectTab(frame: JFrame) {}
 
   open fun paintProjectTab(frame: JFrame, label: TabLabel, g: Graphics, tabs: JBTabsImpl, selected: Boolean, index: Int, lastIndex: Int): Boolean = false
+
+  open fun paintTab(g: Graphics, rect: Rectangle, hovered: Boolean, selected: Boolean): Boolean = false
+
+  open fun paintTabBorder(g: Graphics, tabPlacement: Int, tabIndex: Int, x: Int, y: Int, w: Int, h: Int, isSelected: Boolean): Boolean = false
 }
