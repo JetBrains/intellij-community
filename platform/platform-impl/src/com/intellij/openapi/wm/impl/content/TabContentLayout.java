@@ -492,7 +492,17 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     HIDE
   }
 
-  public static int getTabLayoutStart() {
+  public int getTabLayoutStart() {
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+
+    if (customization != null) {
+      return customization.getTabLayoutStart(this);
+    }
+
+    return defaultTabLayoutStart();
+  }
+
+  public static int defaultTabLayoutStart() {
     return ExperimentalUI.isNewUI() ? 0 : TAB_LAYOUT_START;
   }
 }

@@ -2,13 +2,10 @@
 package com.intellij.ui.dsl.builder.components
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTabbedPaneUI
-import com.intellij.openapi.application.impl.InternalUICustomization.Companion.getInstance
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Rectangle
 
 @Suppress("ReplaceRangeToWithRangeUntil")
 @ApiStatus.Internal
@@ -53,22 +50,6 @@ internal class TabbedPaneHeader : JBTabbedPane() {
 }
 
 private class HeaderTabbedPaneUI : DarculaTabbedPaneUI() {
-  override fun paintTabBackground(g: Graphics, tabPlacement: Int, tabIndex: Int, x: Int, y: Int, w: Int, h: Int, isSelected: Boolean) {
-    val customization = getInstance()
-    if (customization != null && customization.paintTab(g, Rectangle(x, y, w, h), tabIndex == hoverTab, isSelected)) {
-      return
-    }
-    super.paintTabBackground(g, tabPlacement, tabIndex, x, y, w, h, isSelected)
-  }
-
-  override fun paintTabBorder(g: Graphics, tabPlacement: Int, tabIndex: Int, x: Int, y: Int, w: Int, h: Int, isSelected: Boolean) {
-    val customization = getInstance()
-    if (customization != null && customization.paintTabBorder(g, tabPlacement, tabIndex, x, y, w, h, isSelected)) {
-      return
-    }
-    super.paintTabBorder(g, tabPlacement, tabIndex, x, y, w, h, isSelected)
-  }
-
   fun getTabsWidth(): Int {
     val metrics = tabPane.getFontMetrics(tabPane.font)
     return (0 until tabPane.tabCount).sumOf { calculateTabWidth(tabPane.tabPlacement, it, metrics) }

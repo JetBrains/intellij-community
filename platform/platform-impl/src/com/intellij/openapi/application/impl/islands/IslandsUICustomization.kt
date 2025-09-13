@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.content.ContentLayout
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
@@ -443,14 +444,14 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
     override fun paintTab(g: Graphics2D, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean, selected: Boolean) {
       JBInsets.removeFrom(rect, JBInsets(6, 4, 6, 4))
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       super.paintTab(g, rect, tabColor, active, hovered, selected)
     }
   }
 
   override fun paintTab(g: Graphics, rect: Rectangle, hovered: Boolean, selected: Boolean): Boolean {
     if (isManyIslandEnabled) {
-      (g as Graphics2D).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      toolWindowTabPainter.paintTab(g, rect, null, true, hovered, selected)
+      toolWindowTabPainter.paintTab(g as Graphics2D, rect, null, true, hovered, selected)
       return true
     }
     return true
@@ -458,6 +459,13 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
   override fun paintTabBorder(g: Graphics, tabPlacement: Int, tabIndex: Int, x: Int, y: Int, w: Int, h: Int, isSelected: Boolean): Boolean {
     return isManyIslandEnabled
+  }
+
+  override fun getTabLayoutStart(layout: ContentLayout): Int {
+    if (isManyIslandEnabled && !layout.isIdVisible) {
+      return JBUI.scale(4)
+    }
+    return 0
   }
 
   private fun getMainBackgroundColor(): Color {

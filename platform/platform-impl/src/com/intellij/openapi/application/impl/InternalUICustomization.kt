@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splittable
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.IdeGlassPane
+import com.intellij.openapi.wm.impl.content.ContentLayout
 import com.intellij.toolWindow.StripesUxCustomizer
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.xNext.XNextStripesUxCustomizer
@@ -142,4 +143,6 @@ open class InternalUICustomization {
   open fun paintTab(g: Graphics, rect: Rectangle, hovered: Boolean, selected: Boolean): Boolean = false
 
   open fun paintTabBorder(g: Graphics, tabPlacement: Int, tabIndex: Int, x: Int, y: Int, w: Int, h: Int, isSelected: Boolean): Boolean = false
+
+  open fun getTabLayoutStart(layout: ContentLayout): Int = 0
 }
