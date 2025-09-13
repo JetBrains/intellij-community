@@ -347,7 +347,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
       if (!window.isActive) {
         g as Graphics2D
         g.color = getMainBackgroundColor()
-        g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f)
+        g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, JBUI.getFloat("Island.inactiveAlpha", 0.5f))
 
         g.fillRect(0, 0, component.width, component.height)
       }
