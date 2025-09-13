@@ -83,9 +83,15 @@ internal class IslandsUICustomization : InternalUICustomization() {
     isIslandsGradientEnabledCache = null
   }
 
-  override val isProjectCustomDecorationGradientPaint: Boolean = !isManyIslandEnabled || !isIslandsGradientEnabled
+  override val isProjectCustomDecorationGradientPaint: Boolean
+    get() {
+      return !isManyIslandEnabled
+    }
 
-  override val shouldPaintEditorFadeout: Boolean = !isManyIslandEnabled
+  override val shouldPaintEditorFadeout: Boolean
+    get() {
+      return !isManyIslandEnabled
+    }
 
   override val toolWindowUIDecorator: ToolWindowUIDecorator = object : ToolWindowUIDecorator() {
     override fun decorateAndReturnHolder(divider: JComponent, child: JComponent, toolWindow: ToolWindow, originalBorderBuilder: () -> Border): JComponent {
