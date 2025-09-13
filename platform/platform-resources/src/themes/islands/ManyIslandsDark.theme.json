@@ -61,7 +61,8 @@
     "Island": {
       "arc": 20,
       "border1.insets": "6,6,6,6",
-      "inactiveAlpha": 0.44
+      "inactiveAlpha": 0.44,
+      "inactiveAlphaInStatusBar": 0.2
     },
 
     "MainWindow.background": "BackgroundLight",

@@ -353,9 +353,11 @@ internal class IslandsUICustomization : InternalUICustomization() {
     override fun paintAfterChildren(component: JComponent, g: Graphics) {
       val window = UIUtil.getWindow(component) ?: return
       if (!window.isActive) {
+        val alphaKey = if (component is IdeStatusBarImpl) "Island.inactiveAlphaInStatusBar" else "Island.inactiveAlpha"
+
         g as Graphics2D
         g.color = getMainBackgroundColor()
-        g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, JBUI.getFloat("Island.inactiveAlpha", 0.5f))
+        g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, JBUI.getFloat(alphaKey, 0.5f))
 
         g.fillRect(0, 0, component.width, component.height)
       }
