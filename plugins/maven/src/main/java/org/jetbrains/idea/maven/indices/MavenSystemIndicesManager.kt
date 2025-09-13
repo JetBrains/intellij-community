@@ -35,6 +35,7 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.net.URI
 import java.net.URISyntaxException
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -184,7 +185,12 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
 
 
   private fun getCanonicalUrl(repo: MavenRepositoryInfo): String {
-    if (Path.of(repo.url).isDirectory()) return Path.of(repo.url).toCanonicalPath()
+    try {
+      if (Path.of(repo.url).isDirectory()) return Path.of(repo.url).toCanonicalPath()
+    } catch (e: InvalidPathException) {
+      // Path.of() may throw InvalidPathException on Windows for URLs containing ':' character, continue with URI parsing
+    }
+    
     try {
       val uri = URI(repo.url)
       if (uri.scheme == null || uri.scheme.lowercase() == "file") {
