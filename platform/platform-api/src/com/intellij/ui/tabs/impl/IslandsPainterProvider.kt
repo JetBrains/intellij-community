@@ -7,11 +7,13 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-open class TabsPainterProvider {
+open class IslandsPainterProvider {
   companion object {
     @JvmStatic
-    fun getInstance(): TabsPainterProvider? = ApplicationManager.getApplication()?.serviceOrNull()
+    fun getInstance(): IslandsPainterProvider? = ApplicationManager.getApplication()?.serviceOrNull()
   }
 
   open fun createCommonTabPainter(): TabPainterAdapter? = null
+
+  open fun useMacScrollBar(): Boolean = false
 }
