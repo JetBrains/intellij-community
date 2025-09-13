@@ -20,9 +20,13 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.content.ContentLayout
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.MacToolbarFrameHeader
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
+import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.*
 import com.intellij.ui.paint.LinePainter2D
@@ -39,6 +43,8 @@ import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.HierarchyEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
@@ -155,8 +161,14 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
     // XXX: dialogs
 
-    for (frame in WindowManager.getInstance().allProjectFrames) {
-      UIUtil.forEachComponentInHierarchy(frame.component) {
+    for (frameHelper in WindowManager.getInstance().allProjectFrames) {
+      if (frameHelper is ProjectFrameHelper) {
+        configureMainFrame(frameHelper.frame, true)
+      }
+
+      UIUtil.forEachComponentInHierarchy(frameHelper.component) {
+        configureMainFrameChildren(it, true)
+
         when (it) {
           is EditorsSplitters -> {
             createEditorBorderPainter(it)
@@ -173,7 +185,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
         }
       }
 
-      val project = frame.project
+      val project = frameHelper.project
       if (project != null) {
         val manager = ToolWindowManager.getInstance(project) as ToolWindowManagerEx
         updateToolStripesVisibility(manager)
@@ -196,8 +208,14 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
     // XXX: dialogs
 
-    for (frame in WindowManager.getInstance().allProjectFrames) {
-      UIUtil.forEachComponentInHierarchy(frame.component) {
+    for (frameHelper in WindowManager.getInstance().allProjectFrames) {
+      if (frameHelper is ProjectFrameHelper) {
+        configureMainFrame(frameHelper.frame, false)
+      }
+
+      UIUtil.forEachComponentInHierarchy(frameHelper.component) {
+        configureMainFrameChildren(it, false)
+
         if (it is JComponent) {
           ClientProperty.removeRecursive(it, IdeBackgroundUtil.NO_BACKGROUND)
         }
@@ -212,7 +230,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
         }
       }
 
-      val project = frame.project
+      val project = frameHelper.project
       if (project != null) {
         val manager = ToolWindowManager.getInstance(project) as ToolWindowManagerEx
         updateToolStripesVisibility(manager)
@@ -323,7 +341,66 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
-  override fun createCustomDivider(isVertical: Boolean, splitter: Splittable): Divider? {
+  private val inactivePainter = object : DefaultBorderPainter() {
+    override fun paintAfterChildren(component: JComponent, g: Graphics) {
+      val window = UIUtil.getWindow(component) ?: return
+      if (!window.isActive) {
+        g as Graphics2D
+        g.color = getMainBackgroundColor()
+        g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f)
+
+        g.fillRect(0, 0, component.width, component.height)
+      }
+    }
+  }
+
+  private val frameActiveListener = object : WindowAdapter() {
+    override fun windowActivated(e: WindowEvent) {
+      e.window?.repaint()
+    }
+
+    override fun windowDeactivated(e: WindowEvent) {
+      e.window?.repaint()
+    }
+  }
+
+  override fun configureMainFrame(frame: IdeFrameImpl) {
+    if (isManyIslandEnabled) {
+      configureMainFrame(frame, true)
+
+      UIUtil.forEachComponentInHierarchy(frame.component) {
+        configureMainFrameChildren(it, true)
+      }
+    }
+  }
+
+  private fun configureMainFrame(frame: IdeFrameImpl, install: Boolean) {
+    if (install) {
+      frame.addWindowListener(frameActiveListener)
+    }
+    else {
+      frame.removeWindowListener(frameActiveListener)
+    }
+  }
+
+  private fun configureMainFrameChildren(component: Component, install: Boolean) {
+    when (component) {
+      is ToolWindowToolbar -> {
+        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
+      }
+      is CustomHeader -> {
+        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
+      }
+      is MacToolbarFrameHeader -> {
+        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
+      }
+      is IdeStatusBarImpl -> {
+        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
+      }
+    }
+  }
+
+  override fun createCustomDivider(isVertical: Boolean, splitter: Splittable): Divider {
     return ManyIslandDivider(isVertical, splitter).also {
       it.configure(isManyIslandEnabled)
     }

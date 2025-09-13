@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splittable
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.IdeGlassPane
+import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.content.ContentLayout
 import com.intellij.toolWindow.StripesUxCustomizer
 import com.intellij.toolWindow.ToolWindowButtonManager
@@ -81,6 +82,8 @@ open class InternalUICustomization {
     XNextStripesUxCustomizer()
   else
     StripesUxCustomizer()
+
+  open fun configureMainFrame(frame: IdeFrameImpl) {}
 
   open fun configureButtonLook(look: ActionButtonLook, g: Graphics): Graphics? = null
 
