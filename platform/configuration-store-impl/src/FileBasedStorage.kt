@@ -65,11 +65,11 @@ abstract class FileBasedStorage(
   protected open val isUseXmlProlog: Boolean
     get() = false
 
+  // only ApplicationStore doesn't use an XML prolog
   private val isUseUnixLineSeparator: Boolean
-    // only ApplicationStore doesn't use xml prolog
     get() = !isUseXmlProlog
 
-  // we never set I/O file to null
+  // we never set an I/O file to null
   fun setFile(virtualFile: VirtualFile?, ioFileIfChanged: Path?) {
     cachedVirtualFile = virtualFile
     if (ioFileIfChanged != null) {
@@ -215,7 +215,7 @@ abstract class FileBasedStorage(
 
   private fun processReadException(e: Exception?) {
     if (e != null &&
-        (fileSpec == PROJECT_FILE || fileSpec.startsWith(PROJECT_CONFIG_DIR) ||
+        (fileSpec == StoragePathMacros.PROJECT_FILE || fileSpec.startsWith(PROJECT_CONFIG_DIR) ||
          fileSpec == StoragePathMacros.MODULE_FILE || fileSpec == StoragePathMacros.WORKSPACE_FILE)) {
       blockSaving = e.toString()
     }

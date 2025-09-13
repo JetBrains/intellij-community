@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -22,15 +24,15 @@ interface ProjectStoreDescriptor {
   val isExternalStorageSupported: Boolean
     get() = false
 
-  // project dir as passed to setPath if dir (for example, for bazel it is BUILD.bazel, for JPS, it is a parent of .idea)
-  val projectIdentityDir: Path
+  // project file as passed to setPath (for example, for bazel it is BUILD.bazel, for JPS, it is a parent of .idea)
+  val projectIdentityFile: Path
   // project dir as it is expected by a user (e.g., parent of BUILD.bazel)
   val historicalProjectBasePath: Path
 
   val isDirectoryBased: Boolean
     get() = true
 
-  // where we do store project files (misc.xml and so on), for historical reasons, it must be named as `.idea`
+  // where we do store project files (misc.xml and so on)
   val dotIdea: Path?
 
   fun getProjectName(): String
@@ -41,14 +43,33 @@ interface ProjectStoreDescriptor {
 
   fun getJpsBridgeAwareStorageSpec(filePath: String, project: Project): Storage
 
-  /**
-   * `storages` are preprocessed by component store - not raw from state spec.
-   */
-  fun customizeStorageSpecs(
-    component: PersistentStateComponent<*>,
-    storageManager: StateStorageManager,
+  fun <T : Any> getStorageSpecs(
+    component: PersistentStateComponent<T>,
     stateSpec: State,
-    storages: List<Storage>,
     operation: StateStorageOperation,
-  ): List<Storage> = storages
+    storageManager: StateStorageManager,
+  ): List<Storage>
+}
+
+@Internal
+val deprecatedStorageComparator: Comparator<Storage> = Comparator { o1, o2 ->
+  val w1 = if (o1.deprecated) 1 else 0
+  val w2 = if (o2.deprecated) 1 else 0
+  w1 - w2
+}
+
+@Internal
+fun sortStoragesByDeprecated(storages: List<Storage>): List<Storage> {
+  if (storages.size < 2) {
+    return storages.toList()
+  }
+
+  if (!storages.first().deprecated) {
+    val othersAreDeprecated = (1 until storages.size).any { storages.get(it).deprecated }
+    if (othersAreDeprecated) {
+      return storages
+    }
+  }
+
+  return storages.sortedWith(deprecatedStorageComparator)
 }

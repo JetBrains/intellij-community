@@ -12,13 +12,13 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
+import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
@@ -54,12 +54,6 @@ private val SAVE_MOD_LOG = Logger.getInstance("#configurationStore.save.skip")
 
 private val isUseLoadedStateAsExistingVmProperty = System.getProperty("use.loaded.state.as.existing", "true").toBoolean()
 
-internal val deprecatedComparator: Comparator<Storage> = Comparator { o1, o2 ->
-  val w1 = if (o1.deprecated) 1 else 0
-  val w2 = if (o2.deprecated) 1 else 0
-  w1 - w2
-}
-
 private class PersistenceStateAdapter(val component: Any) : PersistentStateComponent<Any> {
   override fun getState() = component
 
@@ -83,7 +77,7 @@ internal fun setRoamableComponentSaveThreshold(thresholdInSeconds: Int) {
 
 private class ComponentStoreImplReloadListener : ConfigFolderChangedListener {
   override fun onChange(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>) {
-    val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
+    val componentStore = (ApplicationManager.getApplication() as ComponentStoreOwner).componentStore as ComponentStoreImpl
     componentStore.reloadComponents(changedFileSpecs, deletedFileSpecs)
   }
 }
@@ -634,14 +628,14 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun <T> getStorageSpecs(
+  protected open fun <T : Any> getStorageSpecs(
     component: PersistentStateComponent<T>,
     stateSpec: State,
     operation: StateStorageOperation,
   ): List<Storage> {
     val storages = getWithPerOsStorages(stateSpec.storages)
     if (storages.size == 1 || component is StateStorageChooserEx) {
-      return storages.toList()
+      return storages
     }
 
     if (storages.isEmpty()) {
@@ -823,21 +817,6 @@ private val ignoredDeprecatedJDomExternalizableComponents = java.util.Set.of(
   "jetbrains.buildServer.codeInspection.InspectionPassRegistrar", //TW-82189
 )
 
-internal fun sortStoragesByDeprecated(storages: List<Storage>): List<Storage> {
-  if (storages.size < 2) {
-    return storages.toList()
-  }
-
-  if (!storages.first().deprecated) {
-    val othersAreDeprecated = (1 until storages.size).any { storages[it].deprecated }
-    if (othersAreDeprecated) {
-      return storages.toList()
-    }
-  }
-
-  return storages.sortedWith(deprecatedComparator)
-}
-
 private fun notifyUnknownMacros(store: IComponentStore, project: Project, componentName: String) {
   val substitutor = store.storageManager.macroSubstitutor as? TrackingPathMacroSubstitutor ?: return
 
@@ -847,7 +826,7 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
   }
 
   val macros = LinkedHashSet(immutableMacros)
-  project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
+  project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.ui(UiDispatcherKind.RELAX)) {
     var notified: MutableList<String>? = null
     val manager = NotificationsManager.getNotificationsManager()
     for (notification in manager.getNotificationsOfType(
@@ -875,7 +854,7 @@ internal suspend fun getStateForComponent(component: PersistentStateComponent<*>
   return when {
     component is SerializablePersistentStateComponent<*> -> component.state
     // maybe read action
-    stateSpec.getStateRequiresEdt -> withContext(Dispatchers.EDT) { writeIntentReadAction { component.state } }
+    stateSpec.getStateRequiresEdt -> withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) { component.state }
     else -> readAction { component.state }
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
@@ -24,7 +25,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 private val EP_NAME: ExtensionPointName<ProjectStorePathCustomizer> = ExtensionPointName("com.intellij.projectStorePathCustomizer")
-private val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, true)
+private val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.PROJECT_FILE, true)
 
 /**
  * For cases when the project configuration store resides in the project root directory - the default
@@ -57,102 +58,122 @@ internal class NestedProjectStorePathManager : ProjectStorePathManager {
 
     val useParent = System.getProperty("store.basedir.parent.detection", "true").toBoolean() &&
                     (projectRoot.fileName?.toString()?.startsWith("${Project.DIRECTORY_STORE_FOLDER}.") == true)
-    return object : ProjectStoreDescriptor {
-      private var lastSavedProjectName: String? = null
-
-      override val projectIdentityDir = projectRoot
-      override val historicalProjectBasePath = if (useParent) projectRoot.parent.parent else projectRoot
-      override val dotIdea = projectRoot.resolve(Project.DIRECTORY_STORE_FOLDER)
-
-      override fun getJpsBridgeAwareStorageSpec(filePath: String, project: Project): Storage {
-        return doGetJpsBridgeAwareStorageSpec(filePath, project)
-      }
-
-      override val isExternalStorageSupported: Boolean
-        get() = true
-
-      override fun customizeStorageSpecs(
-        component: PersistentStateComponent<*>,
-        storageManager: StateStorageManager,
-        stateSpec: State,
-        storages: List<Storage>,
-        operation: StateStorageOperation,
-      ): List<Storage> {
-        val project = storageManager.componentManager as Project
-        for (providerFactory in StreamProviderFactory.EP_NAME.asSequence(project)) {
-          val customizedSpecs = runCatching {
-            // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
-            providerFactory.customizeStorageSpecs(component = component, storageManager = storageManager, stateSpec = stateSpec, storages = storages, operation = operation)
-          }.getOrLogException(LOG)
-          if (customizedSpecs != null) {
-            return customizedSpecs
-          }
-        }
-
-        @Suppress("GrazieInspection")
-        if (isSpecialStorage(storages.first().path)) {
-          return storages
-        }
-        else {
-          // if we create project from default, component state written not to own storage file, but to project file,
-          // we don't have time to fix it properly, so, ancient hack restored
-          return storages + DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION
-        }
-      }
-
-      override fun getProjectName(): String {
-        val storedName = JpsPathUtil.readProjectName(dotIdea)
-        if (storedName != null) {
-          lastSavedProjectName = storedName
-          return storedName
-        }
-
-        return NioFiles.getFileName(historicalProjectBasePath)
-      }
-
-      override suspend fun saveProjectName(project: Project) {
-        try {
-          val currentProjectName = project.name
-          if (lastSavedProjectName == currentProjectName) {
-            return
-          }
-
-          lastSavedProjectName = currentProjectName
-
-          val nameFile = getNameFileForDotIdeaProject(project, dotIdea)
-
-          fun doSave() {
-            val basePath = historicalProjectBasePath
-            if (currentProjectName == basePath.fileName?.toString()) {
-              // name equals to base path name - remove name
-              Files.deleteIfExists(nameFile)
-            }
-            else if (Files.isDirectory(basePath)) {
-              NioFiles.createParentDirectories(nameFile)
-              Files.write(nameFile, currentProjectName.toByteArray())
-            }
-          }
-
-          try {
-            doSave()
-          }
-          catch (e: AccessDeniedException) {
-            val status = ensureFilesWritable(project, listOf(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(nameFile)!!))
-            if (status.hasReadonlyFiles()) {
-              throw e
-            }
-            doSave()
-          }
-        }
-        catch (e: Throwable) {
-          LOG.error("Unable to store project name", e)
-        }
-      }
-    }
+    return DotIdeProjectStoreDescriptor(projectRoot = projectRoot, historicalProjectBasePath = if (useParent) projectRoot.parent.parent else projectRoot)
   }
 
   override fun getStoreDirectory(projectRoot: VirtualFile): VirtualFile? {
     return if (projectRoot.isDirectory) projectRoot.findChild(Project.DIRECTORY_STORE_FOLDER) else null
+  }
+}
+
+private class DotIdeProjectStoreDescriptor(
+  projectRoot: Path,
+  override val historicalProjectBasePath: Path,
+) : ProjectStoreDescriptor {
+  private var lastSavedProjectName: String? = null
+
+  override val projectIdentityFile = projectRoot
+  override val dotIdea: Path = projectRoot.resolve(Project.DIRECTORY_STORE_FOLDER)
+
+  override fun getJpsBridgeAwareStorageSpec(filePath: String, project: Project): Storage {
+    return doGetJpsBridgeAwareStorageSpec(filePath, project)
+  }
+
+  override val isExternalStorageSupported: Boolean
+    get() = true
+
+  override fun <T : Any> getStorageSpecs(
+    component: PersistentStateComponent<T>,
+    stateSpec: State,
+    operation: StateStorageOperation,
+    storageManager: StateStorageManager,
+  ): List<Storage> {
+    val storages = stateSpec.storages
+    if (storages.size == 2 && ApplicationManager.getApplication().isUnitTestMode &&
+        isSpecialStorage(storages.first().path) &&
+        storages[1].path == StoragePathMacros.WORKSPACE_FILE) {
+      return listOf(storages.first())
+    }
+
+    val result = mutableListOf<Storage>()
+    for (storage in storages) {
+      if (storage.path != StoragePathMacros.PROJECT_FILE) {
+        result.add(storage)
+      }
+    }
+    if (result.isEmpty()) {
+      result.add(FileStorageAnnotation.PROJECT_FILE_STORAGE_ANNOTATION)
+    }
+    else {
+      result.sortWith(deprecatedStorageComparator)
+    }
+
+    val project = storageManager.componentManager as Project
+    for (providerFactory in StreamProviderFactory.EP_NAME.asSequence(project)) {
+      val customizedSpecs = runCatching {
+        // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
+        providerFactory.customizeStorageSpecs(component = component, storageManager = storageManager, stateSpec = stateSpec, storages = result, operation = operation)
+      }.getOrLogException(LOG)
+      if (customizedSpecs != null) {
+        return customizedSpecs
+      }
+    }
+
+    if (!isSpecialStorage(result.first().path)) {
+      // if we create a project from a default template, component state written not to own storage file, but to project file,
+      // we don't have time to fix it properly, so, ancient hack restored
+      result.add(DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION)
+    }
+    return result
+  }
+
+  override fun getProjectName(): String {
+    val storedName = JpsPathUtil.readProjectName(dotIdea)
+    if (storedName != null) {
+      lastSavedProjectName = storedName
+      return storedName
+    }
+
+    return NioFiles.getFileName(historicalProjectBasePath)
+  }
+
+  override suspend fun saveProjectName(project: Project) {
+    try {
+      val currentProjectName = project.name
+      if (lastSavedProjectName == currentProjectName) {
+        return
+      }
+
+      lastSavedProjectName = currentProjectName
+
+      val nameFile = getNameFileForDotIdeaProject(project, dotIdea)
+
+      fun doSave() {
+        val basePath = historicalProjectBasePath
+        if (currentProjectName == basePath.fileName?.toString()) {
+          // name equals to base path name - remove name
+          Files.deleteIfExists(nameFile)
+        }
+        else if (Files.isDirectory(basePath)) {
+          NioFiles.createParentDirectories(nameFile)
+          Files.write(nameFile, currentProjectName.toByteArray())
+        }
+      }
+
+      try {
+        doSave()
+      }
+      catch (e: AccessDeniedException) {
+        val status = ensureFilesWritable(project, listOf(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(nameFile)!!))
+        if (status.hasReadonlyFiles()) {
+          throw e
+        }
+        doSave()
+      }
+    }
+    catch (e: Throwable) {
+      LOG.error("Unable to store project name", e)
+    }
   }
 }
 
