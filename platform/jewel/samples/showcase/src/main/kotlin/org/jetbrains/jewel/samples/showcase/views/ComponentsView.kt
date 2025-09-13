@@ -18,6 +18,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration.Companion.milliseconds
 import org.jetbrains.jewel.foundation.modifier.trackActivation
@@ -43,7 +45,11 @@ public fun ComponentsView(
     toolbarButtonMetrics: IconButtonMetrics,
     modifier: Modifier = Modifier,
 ) {
-    Row(modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {
+    Row(
+        modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground).semantics {
+            isTraversalGroup = true
+        }
+    ) {
         ComponentsToolBar(
             buttonMetrics = toolbarButtonMetrics,
             views = viewModel.getViews(),
