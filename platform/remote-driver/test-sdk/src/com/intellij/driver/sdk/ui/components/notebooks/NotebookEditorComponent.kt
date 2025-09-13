@@ -119,19 +119,19 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     driver.ui.pasteText(content)
   }
 
-  fun runAllCells(): Unit = runAllCells.click()
+  fun runAllCells(): Unit = runAllCells.strictClick()
 
-  fun runCell(): Unit = runAndSelectNext.click()
+  fun runCell(): Unit = runAndSelectNext.strictClick()
 
-  fun clearAllOutputs(): Unit = clearOutputs.click()
+  fun clearAllOutputs(): Unit = clearOutputs.strictClick()
 
-  fun restartKernel(): Unit = restartKernel.click()
+  fun restartKernel(): Unit = restartKernel.strictClick()
 
-  fun interruptKernel(): Unit = interruptKernel.click()
+  fun interruptKernel(): Unit = interruptKernel.strictClick()
 
   fun deleteFirstCell() {
-    notebookCellEditors.first().click()
-    deleteCell.click()
+    notebookCellEditors.first().strictClick()
+    deleteCell.strictClick()
   }
 
   fun restartHighlighting() {
@@ -172,7 +172,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   fun clickOnCell(cellSelector: CellSelector) {
     val cellEditors = notebookCellEditors
     val cell = cellSelector(cellEditors)
-    cell.click()
+    cell.strictClick()
   }
 
   fun typeInCell(
@@ -239,14 +239,14 @@ fun Driver.createNewNotebook(name: String = "New Notebook", type: NotebookType) 
         waitFor("wait for project tree to load", 30.seconds) {
           getAllTexts().isNotEmpty()
         }
-        getAllTexts().first().click()
+        getAllTexts().first().strictClick()
       }
     }
 
     invokeAction(type.newNotebookActionId, false)
 
     popup().run {
-      x("//div[@accessiblename='Name']", JTextFieldUI::class.java).click()
+      x("//div[@accessiblename='Name']", JTextFieldUI::class.java).strictClick()
 
       keyboard {
         waitFor("expect $name in the popup") {
@@ -279,10 +279,10 @@ fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: Noteb
     waitFor {
       newFileButton.present()
     }
-    newFileButton.click()
+    newFileButton.strictClick()
 
     popup().run {
-      waitOneText("${type.typeName} Notebook").click()
+      waitOneText("${type.typeName} Notebook").strictClick()
 
       keyboard {
         waitFor("expect $name in the popup") {
