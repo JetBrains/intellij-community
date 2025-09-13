@@ -29,10 +29,7 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getAdjustedRatio
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getRegisteredMutableInfoOrLogError
 import com.intellij.openapi.wm.impl.WindowInfoImpl
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.JBColor
-import com.intellij.ui.OnePixelSplitter
-import com.intellij.ui.ScreenUtil
+import com.intellij.ui.*
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.JBUIScale
@@ -128,6 +125,7 @@ class ToolWindowPane private constructor(
 
   internal val frame: JFrame
 
+  internal var borderPainter: BorderPainter = DefaultBorderPainter()
   /**
    * This panel is the layered pane where all sliding tool windows are located. The DEFAULT
    * layer contains splitters. The PALETTE layer contains all sliding tool windows.
@@ -400,6 +398,11 @@ class ToolWindowPane private constructor(
       revalidate()
       repaint()
     }
+  }
+
+  override fun paintChildren(g: Graphics) {
+    super.paintChildren(g)
+    borderPainter.paintAfterChildren(this, g)
   }
 
   val bottomHeight: Int
