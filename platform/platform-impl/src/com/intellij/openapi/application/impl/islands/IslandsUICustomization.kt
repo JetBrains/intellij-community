@@ -5,6 +5,7 @@ import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.experimental.ExperimentalUiCollector
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalUICustomization
@@ -217,6 +218,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
         }
       }
     }
+
+    ExperimentalUiCollector.islandsThemeOn.log()
   }
 
   private fun disableManyIslands() {
@@ -263,6 +266,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
         }
       }
     }
+
+    ExperimentalUiCollector.islandsThemeOff.log()
   }
 
   private fun setOriginalToolWindowBorder(holder: XNextIslandHolder) {
