@@ -231,8 +231,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             val lowercase = otherName.lowercase()
             val name = parameterName.lowercase()
             // avoid cases like "`type = Type(...)`" and "`value =` myValue"
-            val bool = lowercase.startsWith(name) || lowercase.endsWith(name)
-            bool
+            lowercase.startsWith(name) || lowercase.endsWith(name)
         } else {
             false
         }
