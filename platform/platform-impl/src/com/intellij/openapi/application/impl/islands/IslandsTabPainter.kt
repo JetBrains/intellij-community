@@ -19,8 +19,8 @@ import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
 
-internal class IslandsTabPainterAdapter(isDefault: Boolean, var isEnabled: Boolean) : TabPainterAdapter {
-  private val editorAdapter = if (isDefault) DefaultTabPainterAdapter(JBTabPainter.DEFAULT) else EditorTabPainterAdapter()
+internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, var isEnabled: Boolean) : TabPainterAdapter {
+  private val editorAdapter = if (isDefault) DefaultTabPainterAdapter(if (debugger) JBTabPainter.DEBUGGER else JBTabPainter.DEFAULT) else EditorTabPainterAdapter()
   private val islandsAdapter = IslandsTabPainter(isDefault)
 
   override val tabPainter: JBTabPainter
