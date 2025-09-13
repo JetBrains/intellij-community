@@ -14,6 +14,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.idea.AppMode
 import com.intellij.idea.AppMode.isLightEdit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
@@ -1029,7 +1030,14 @@ abstract class ComponentManagerImpl(
           }
           else if (!isKnown || !impl.startsWith("com.intellij.")) {
             val application = ApplicationManager.getApplication()
-            if (application == null || application.isUnitTestMode || application.isInternal) {
+
+            if (impl.startsWith("com.intellij.")) {
+              // logged only in the IJ project, let's not spam developers of plugins
+              if (AppMode.isDevServer() || PluginManagerCore.isRunningFromSources()) {
+                LOG.warn(message)
+              }
+            }
+            else if (application == null || application.isUnitTestMode || application.isInternal) {
               // logged only during development, let's not spam users
               LOG.warn(message)
             }
