@@ -107,7 +107,11 @@ class SoftwareBillOfMaterialsImpl(
 ) : SoftwareBillOfMaterials {
   private companion object {
     val JETBRAINS_GITHUB_ORGANIZATIONS: Set<String> = setOf("JetBrains", "Kotlin")
-    val STRICT_MODE: Boolean = System.getProperty("intellij.build.sbom.strictMode").toBoolean()
+    /**
+     * Cannot be enabled by default because the Maven resolver doesn't resolve pom.xml reproducibly, see IJI-1882.
+     * It may resolve nothing, hence no metadata like a supplier value, hence sporadic failures of [checkNtiaConformance].
+     */
+    val STRICT_MODE: Boolean = System.getProperty("intellij.build.sbom.strictMode", "false").toBoolean()
   }
 
   private val specVersion: String = Version.TWO_POINT_THREE_VERSION
@@ -980,7 +984,7 @@ class SoftwareBillOfMaterialsImpl(
    * See https://pypi.org/project/ntia-conformance-checker/
    */
   private suspend fun checkNtiaConformance(documents: List<Path>, context: BuildContext) {
-    if (!Docker.isAvailable || SystemInfoRt.isWindows) {
+    if (!STRICT_MODE || !Docker.isAvailable || SystemInfoRt.isWindows) {
       return
     }
 
