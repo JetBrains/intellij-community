@@ -132,6 +132,8 @@
       }
     },
 
+    "EditorPane.inactiveBackground": "BackgroundDark",
+
     "Code.Block": {
       "borderColor": "BorderLight",
       "EditorPane.borderColor": "BorderLight"
@@ -149,7 +151,8 @@
       "Header.activeBackground": "PopupBackground",
       "Advertiser.background": "PopupBackgroundLight",
       "Advertiser.borderColor": "PopupBackgroundLight",
-      "borderColor": "PopupBorder"
+      "borderColor": "PopupBorder",
+      "Toolbar.background": "PopupBackground"
     },
     "ComplexPopup.Header.background": "PopupBackgroundLight",
     "CompletionPopup.Advertiser.background": "PopupBackgroundLight",
@@ -217,7 +220,7 @@
     "TipOfTheDay.Image.borderColor": "Gray3",
 
     "OnePixelDivider.background": "BorderLight",
-    "Plugins.SectionHeader.background": "PanelBackground",
+    "Plugins.SectionHeader.background": "Gray1.5",
     "Debugger.EvaluateExpression.background": "Gray3",
     "NewUiOnboarding.Dialog.background": "PanelBackground",
     "WelcomeScreen.Details.background": "BackgroundDark",
@@ -258,7 +261,11 @@
       "Default.background": "#27282E",
       "Active.background": "#273828",
       "Alert.background": "#3D3223",
-      "Expiring.background": "#CC3645"
+      "Expiring.background": "#CC3645",
+      "Default.borderColor": "#B4B8BF",
+      "Active.borderColor": "#4E8052",
+      "Alert.borderColor": "#826A41",
+      "Expiring.borderColor": "#DB5C5C"
     },
 
     "Bookmark": {
@@ -344,6 +351,11 @@
       }
     },
 
-    "VersionControl.MarkerPopup.borderColor": "Gray4"
+    "VersionControl.MarkerPopup.borderColor": "Gray4",
+
+    "NewClass": {
+      "Panel.background": "PopupBackground",
+      "SearchField.background": "PopupBackground"
+    }
   }
 }
