@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
+import com.intellij.openapi.editor.impl.EditorHeaderComponent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
@@ -34,6 +35,7 @@ import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.*
+import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
@@ -625,6 +627,25 @@ internal class IslandsUICustomization : InternalUICustomization() {
   override fun paintFrameBackground(frame: Window, component: Component, g: Graphics2D) {
     if (isManyIslandEnabled && isIslandsGradientEnabled) {
       islandsGradientPaint(frame as IdeFrame, getMainBackgroundColor(), ProjectWindowCustomizerService.getInstance(), component, g)
+    }
+  }
+
+  override fun configureSearchReplaceComponentBorder(component: EditorHeaderComponent) {
+    component.border = object : CustomLineBorder(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 1, 0) {
+      override fun getBorderInsets(c: Component): Insets {
+        if (isManyIslandEnabled) {
+          return JBUI.insets(1, 0)
+        }
+        return super.getBorderInsets(c)
+      }
+
+      override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, w: Int, h: Int) {
+        super.paintBorder(c, g, x, y, w, h)
+        if (isManyIslandEnabled) {
+          g.color = color
+          g.fillRect(x, y, w, JBUI.scale(1))
+        }
+      }
     }
   }
 
