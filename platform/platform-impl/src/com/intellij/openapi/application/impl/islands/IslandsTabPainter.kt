@@ -7,9 +7,11 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.paint.RectanglePainter2D
 import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition
+import com.intellij.ui.tabs.impl.DefaultTabPainterAdapter
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.TabPainterAdapter
+import com.intellij.ui.tabs.impl.themes.DefaultTabTheme
 import com.intellij.ui.tabs.impl.themes.TabTheme
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
@@ -17,9 +19,9 @@ import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
 
-internal class IslandsTabPainterAdapter(var isEnabled: Boolean) : TabPainterAdapter {
-  private val editorAdapter = EditorTabPainterAdapter()
-  private val islandsAdapter = IslandsTabPainter()
+internal class IslandsTabPainterAdapter(isDefault: Boolean, var isEnabled: Boolean) : TabPainterAdapter {
+  private val editorAdapter = if (isDefault) DefaultTabPainterAdapter(JBTabPainter.DEFAULT) else EditorTabPainterAdapter()
+  private val islandsAdapter = IslandsTabPainter(isDefault)
 
   override val tabPainter: JBTabPainter
     get() {
@@ -88,12 +90,12 @@ private class IslandsTabTheme : TabTheme {
     get() = JBColor.namedColor("EditorTabs.underlinedTabInactiveForeground", JBColor(0x000000, 0xFFFFFF))
 }
 
-internal open class IslandsTabPainter : JBTabPainter {
-  private val myTheme = IslandsTabTheme()
+internal open class IslandsTabPainter(isDefault: Boolean) : JBTabPainter {
+  private val myTheme = if (isDefault) DefaultTabTheme() else IslandsTabTheme()
 
   override fun getTabTheme(): TabTheme = myTheme
 
-  override fun getBackgroundColor(): Color = myTheme.background
+  override fun getBackgroundColor(): Color = myTheme.background!!
 
   override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
     paintTab(g, rect, tabColor, active, hovered, false)

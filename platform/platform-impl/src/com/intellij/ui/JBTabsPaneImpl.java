@@ -2,12 +2,14 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.ui.tabs.impl.TabPainterAdapter;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +27,19 @@ public class JBTabsPaneImpl implements TabbedPane {
   private final CopyOnWriteArraySet<ChangeListener> listeners = new CopyOnWriteArraySet<>();
 
   public JBTabsPaneImpl(@Nullable Project project, int tabPlacement, @NotNull Disposable parent) {
-    tabs = new JBEditorTabs(project, parent);
+    tabs = new JBEditorTabs(project, parent) {
+      @Override
+      protected @NotNull TabPainterAdapter createTabPainterAdapter() {
+        InternalUICustomization customization = InternalUICustomization.getInstance();
+        if (customization != null) {
+          TabPainterAdapter painterAdapter = customization.getCommonTabPainterAdapter();
+          if (painterAdapter != null) {
+            return painterAdapter;
+          }
+        }
+        return super.createTabPainterAdapter();
+      }
+    };
     tabs.getPresentation()
       .setAlphabeticalMode(false)
       .setPaintFocus(true)
