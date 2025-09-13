@@ -1,12 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Processor;
+import com.intellij.util.Processors;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -66,7 +70,13 @@ public final class FilenameIndex {
     return getVirtualFilesByName(name, scope);
   }
 
-  public static @NotNull @Unmodifiable Collection<VirtualFile> getVirtualFilesByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
+  /**
+   * BEWARE: if you use this method to check if _any_ matching file exist, or to get the _first_ file -- consider using
+   * {@link #hasVirtualFileWithName(String, boolean, GlobalSearchScope, IdFilter)} or {@link #firstVirtualFileWithName(String, boolean, GlobalSearchScope, IdFilter)}
+   * methods instead
+   */
+  public static @NotNull @Unmodifiable Collection<VirtualFile> getVirtualFilesByName(@NotNull String name,
+                                                                                     @NotNull GlobalSearchScope scope) {
     return getVirtualFilesByNames(Set.of(name), scope, null);
   }
 
@@ -231,5 +241,26 @@ public final class FilenameIndex {
       })
     );
     return files;
+  }
+
+  @ApiStatus.Experimental
+  public static boolean hasVirtualFileWithName(@NotNull String name,
+                                               boolean caseSensitively,
+                                               @NotNull GlobalSearchScope scope,
+                                               @Nullable IdFilter filter) {
+    return !processFilesByNames(Set.of(name), caseSensitively, scope, filter, file -> false);
+  }
+
+  @ApiStatus.Experimental
+  public static @Nullable VirtualFile firstVirtualFileWithName(@NotNull String name,
+                                                               boolean caseSensitively,
+                                                               @NotNull GlobalSearchScope scope,
+                                                               @Nullable IdFilter filter) {
+    Ref<VirtualFile> found = new Ref<>(null);
+    processFilesByNames(Set.of(name), caseSensitively, scope, filter, file -> {
+      found.set(file);
+      return false;
+    });
+    return found.get();
   }
 }
