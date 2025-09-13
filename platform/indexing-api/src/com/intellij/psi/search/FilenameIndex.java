@@ -126,6 +126,7 @@ public final class FilenameIndex {
     return result[0];
   }
 
+  /** @return true if all the matching files were scanned, false if scanning was stopped early because the processor returns false */
   public static boolean processFilesByName(@NotNull String name,
                                            boolean caseSensitively,
                                            @NotNull GlobalSearchScope scope,
@@ -133,15 +134,24 @@ public final class FilenameIndex {
     return processFilesByNames(Set.of(name), caseSensitively, scope, null, processor);
   }
 
+  /** @return true if all the matching files were scanned, false if scanning was stopped early because the processor returns false */
   public static boolean processFilesByNames(@NotNull Set<String> names,
                                             boolean caseSensitively,
                                             @NotNull GlobalSearchScope scope,
                                             @Nullable IdFilter idFilter,
                                             @NotNull Processor<? super VirtualFile> processor) {
     if (names.isEmpty()) return true;
-    Collection<VirtualFile> files = caseSensitively ? getVirtualFilesByNames(names, scope, idFilter) :
-                                    getVirtualFilesByNamesIgnoringCase(names, scope, idFilter);
-    return ContainerUtil.process(files, processor);
+
+    if (caseSensitively) {
+      return FileBasedIndex.getInstance().processFilesContainingAnyKey(
+        NAME, names, scope, idFilter, /*valueChecker: */null,
+        new ProcessorWithThrottledCancellationCheck<>(processor)
+      );
+    }
+    else {
+      Collection<VirtualFile> files = getVirtualFilesByNamesIgnoringCase(names, scope, idFilter);
+      return ContainerUtil.process(files, processor);
+    }
   }
 
   private static @NotNull @Unmodifiable Set<VirtualFile> getVirtualFilesByNamesIgnoringCase(@NotNull Set<String> names,
