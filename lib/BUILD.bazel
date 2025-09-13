@@ -9285,6 +9285,13 @@ jvm_import(
 )
 
 java_library(
+  name = "tuweni-toml-provided",
+  exports = [":tuweni-toml"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
   name = "vavr",
   exports = [
     ":vavr-0_10_4_http_import",

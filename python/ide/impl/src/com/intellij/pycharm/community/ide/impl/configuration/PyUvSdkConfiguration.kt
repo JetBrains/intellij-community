@@ -10,6 +10,7 @@ import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBund
 import com.intellij.python.pyproject.PyProjectToml
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.projectModel.uv.UvProjectModelService
 import com.jetbrains.python.sdk.*
@@ -25,9 +26,15 @@ import java.nio.file.Path
 @ApiStatus.Internal
 class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
   override suspend fun getIntention(module: Module): @IntentionName String? {
-    return PyProjectToml.findFile(module)?.let { toml ->
-      getUvExecutable()?.let { PyCharmCommunityCustomizationBundle.message("sdk.set.up.uv.environment", toml.name) }
-    }
+    val tomlFile = PyProjectToml.findFile(module) ?: return null
+    getUvExecutable() ?: return null
+
+    val tomlContentResult = PyProjectToml.parse(tomlFile.inputStream)
+    val tomlContent = tomlContentResult.getOrNull() ?: return null
+    val project  = tomlContent.project ?: return null
+
+
+    return PyCharmCommunityCustomizationBundle.message("sdk.set.up.uv.environment", project.name ?: tomlFile.inputStream)
   }
 
   override suspend fun createAndAddSdkForConfigurator(module: Module): PyResult<Sdk> = createUv(module)

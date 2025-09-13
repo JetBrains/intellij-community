@@ -134,7 +134,7 @@
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyPipfileSdkConfiguration"
                                       id="pipfile" order="before requirementsTxtOrSetupPy"/>
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyPoetrySdkConfiguration"
-                                      id="poetry"/>
+                                      id="poetry"/>"/>
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyHatchSdkConfiguration"
                                       id="hatch" order="after poetry"/>
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyUvSdkConfiguration"
