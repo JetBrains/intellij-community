@@ -130,7 +130,7 @@ data class BuildRequest(
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal suspend fun buildProduct(request: BuildRequest, createProductProperties: suspend (CompilationContext) -> ProductProperties): Path {
+internal suspend fun buildProduct(request: BuildRequest, createProductProperties: suspend (CompilationContext) -> ProductProperties ): Path {
   val rootDir = withContext(Dispatchers.IO) {
     val rootDir = request.devRootDir
     // if symlinked to RAM disk, use a real path for performance reasons and avoid any issues in ant/other code
@@ -221,7 +221,13 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
       val platformLayoutAwaited = platformLayout.await()
       val (platformDistributionEntries, classPath) = spanBuilder("layout platform").use {
-        layoutPlatform(runDir, platformLayoutAwaited, searchableOptionSet, context, moduleOutputPatcher)
+        layoutPlatform(
+          runDir = runDir,
+          platformLayout = platformLayoutAwaited,
+          searchableOptionSet = searchableOptionSet,
+          context = context,
+          moduleOutputPatcher = moduleOutputPatcher,
+        )
       }
 
       if (request.writeCoreClasspath) {
@@ -248,7 +254,16 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     }
 
     val pluginDistributionEntriesDeferred = async(CoroutineName("build plugins")) {
-      buildPlugins(request, context, runDir, platformLayout, artifactTask, searchableOptionSet, platformDistributionEntriesDeferred, moduleOutputPatcher)
+      buildPlugins(
+        request = request,
+        context = context,
+        runDir = runDir,
+        platformLayout = platformLayout,
+        artifactTask = artifactTask,
+        searchableOptionSet = searchableOptionSet,
+        buildPlatformJob = platformDistributionEntriesDeferred,
+        moduleOutputPatcher = moduleOutputPatcher,
+      )
     }
 
     launch {
@@ -261,7 +276,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         val out = DataOutputStream(byteOut)
         val pluginCount = pluginEntries.size + (additionalEntries?.size ?: 0)
         platformDistributionEntriesDeferred.join()
-        writePluginClassPathHeader(out, isJarOnly = !request.isUnpackedDist, pluginCount, moduleOutputPatcher, context)
+        writePluginClassPathHeader(out = out, isJarOnly = !request.isUnpackedDist, pluginCount = pluginCount, moduleOutputPatcher = moduleOutputPatcher, context = context)
         out.write(mainData)
         additionalData?.let { out.write(it) }
         out.close()
@@ -271,9 +286,8 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
     if (context.generateRuntimeModuleRepository) {
       launch {
-        val allDistributionEntries =
-          platformDistributionEntriesDeferred.await().asSequence() +
-          pluginDistributionEntriesDeferred.await().first.asSequence().flatMap { it.second }
+        val allDistributionEntries = platformDistributionEntriesDeferred.await().asSequence() +
+                                     pluginDistributionEntriesDeferred.await().first.asSequence().flatMap { it.second }
         spanBuilder("generate runtime repository").use(Dispatchers.IO) {
           generateRuntimeModuleRepositoryForDevBuild(allDistributionEntries, runDir, context)
         }
@@ -281,7 +295,12 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     }
 
     launch {
-      computeIdeFingerprint(platformDistributionEntriesDeferred, pluginDistributionEntriesDeferred, runDir, homePath = request.projectDir)
+      computeIdeFingerprint(
+        platformDistributionEntriesDeferred = platformDistributionEntriesDeferred,
+        pluginDistributionEntriesDeferred = pluginDistributionEntriesDeferred,
+        runDir = runDir,
+        homePath = request.projectDir,
+      )
     }
 
     launch(Dispatchers.IO) {
@@ -293,7 +312,13 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       spanBuilder("scramble platform").use{
         request.scrambleTool?.scramble(platformLayout.await(), context)
       }
-      copyDistFiles(context, runDir, request.os, JvmArchitecture.currentJvmArch, LibcImpl.current(OsFamily.currentOs))
+      copyDistFiles(
+        context = context,
+        newDir = runDir,
+        os = request.os,
+        arch = JvmArchitecture.currentJvmArch,
+        libcImpl = LibcImpl.current(OsFamily.currentOs),
+      )
     }
   }.invokeOnCompletion {
     // close debug logging to prevent locking of the output directory on Windows
