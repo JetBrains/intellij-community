@@ -7,6 +7,7 @@ import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -36,8 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 class TabContentLayout extends ContentLayout implements MorePopupAware {
   static final int MORE_ICON_BORDER = 6;
@@ -350,7 +351,12 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     }
   }
 
-  protected final JBTabPainter tabPainter = JBTabPainter.getTOOL_WINDOW();
+  protected final JBTabPainter tabPainter = createTabPainter();
+
+  private static @NotNull JBTabPainter createTabPainter() {
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    return customization == null ? JBTabPainter.getTOOL_WINDOW() : customization.getToolWindowTabPainter();
+  }
 
   @Override
   public void paintComponent(Graphics g) {

@@ -14,6 +14,7 @@ import com.intellij.toolWindow.StripesUxCustomizer
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.xNext.XNextStripesUxCustomizer
 import com.intellij.ui.JBColor
+import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.TabPainterAdapter
@@ -54,6 +55,8 @@ open class InternalUICustomization {
   open val shouldPaintEditorFadeout: Boolean = true
 
   open val toolWindowUIDecorator: ToolWindowUIDecorator = ToolWindowUIDecorator()
+
+  open val toolWindowTabPainter: JBTabPainter = JBTabPainter.TOOL_WINDOW
 
   open val isProjectCustomDecorationActive: Boolean = true
 

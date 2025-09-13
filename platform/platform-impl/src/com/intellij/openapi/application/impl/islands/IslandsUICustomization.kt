@@ -26,9 +26,12 @@ import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.*
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.tabs.JBTabPainter
+import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -416,6 +419,33 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   override val editorTabPainterAdapter: IslandsTabPainterAdapter = IslandsTabPainterAdapter(isManyIslandEnabled)
+
+  override val toolWindowTabPainter: JBTabPainter = object : IslandsTabPainter() {
+    private val defaultPainter = JBTabPainter.TOOL_WINDOW
+
+    override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
+      if (isManyIslandEnabled) {
+        super.paintTab(position, g, rect, borderThickness, tabColor, active, hovered)
+      }
+      else {
+        defaultPainter.paintTab(position, g, rect, borderThickness, tabColor, active, hovered)
+      }
+    }
+
+    override fun paintSelectedTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
+      if (isManyIslandEnabled) {
+        super.paintSelectedTab(position, g, rect, borderThickness, tabColor, active, hovered)
+      }
+      else {
+        defaultPainter.paintSelectedTab(position, g, rect, borderThickness, tabColor, active, hovered)
+      }
+    }
+
+    override fun paintTab(g: Graphics2D, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean, selected: Boolean) {
+      JBInsets.removeFrom(rect, JBInsets(6, 4, 6, 4))
+      super.paintTab(g, rect, tabColor, active, hovered, selected)
+    }
+  }
 
   private fun getMainBackgroundColor(): Color {
     return JBColor.namedColor("MainWindow.background", JBColor.PanelBackground)

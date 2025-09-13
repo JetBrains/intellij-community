@@ -88,7 +88,7 @@ private class IslandsTabTheme : TabTheme {
     get() = JBColor.namedColor("EditorTabs.underlinedTabInactiveForeground", JBColor(0x000000, 0xFFFFFF))
 }
 
-private class IslandsTabPainter : JBTabPainter {
+internal open class IslandsTabPainter : JBTabPainter {
   private val myTheme = IslandsTabTheme()
 
   override fun getTabTheme(): TabTheme = myTheme
@@ -114,7 +114,7 @@ private class IslandsTabPainter : JBTabPainter {
     RectanglePainter2D.FILL.paint(g, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble())
   }
 
-  fun paintTab(g: Graphics2D, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean, selected: Boolean) {
+  open fun paintTab(g: Graphics2D, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean, selected: Boolean) {
     val arc = JBUI.CurrentTheme.MainToolbar.Button.hoverArc().float
     val shape = RoundRectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(), rect.width.toFloat(), rect.height.toFloat(), arc, arc)
 
