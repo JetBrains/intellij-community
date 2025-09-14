@@ -2956,14 +2956,6 @@ public final class AllIconsKeys {
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey InspectionResults = new IntelliJIconKey("nodes/inspectionResults.svg", "nodes/inspectionResults.svg", AllIconsKeys.class);
 
-    /** @deprecated to be removed (Use AllIcons.Nodes.ClassInitializer instead) */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey J2eeParameter = new IntelliJIconKey("nodes/j2eeParameter.svg", "nodes/j2eeParameter.svg", AllIconsKeys.class);
-
     /** @deprecated to be removed without replacement */
     @SuppressWarnings("unused")
     @Deprecated

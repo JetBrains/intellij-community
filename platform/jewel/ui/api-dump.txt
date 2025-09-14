@@ -3161,7 +3161,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Nodes
 - sf:Include:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:InspectionResults:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Interface:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- sf:J2eeParameter:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:JarDirectory:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:JavaDocFolder:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:JavaModule:org.jetbrains.jewel.ui.icon.IntelliJIconKey

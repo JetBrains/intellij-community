@@ -902,7 +902,6 @@ f:com.intellij.icons.AllIcons$Nodes
 - sf:Include:javax.swing.Icon
 - sf:InspectionResults:javax.swing.Icon
 - sf:Interface:javax.swing.Icon
-- sf:J2eeParameter:javax.swing.Icon
 - sf:JarDirectory:javax.swing.Icon
 - sf:JavaDocFolder:javax.swing.Icon
 - sf:JavaModule:javax.swing.Icon

@@ -1,3 +1,2 @@
-deprecated: j2eeParameter.svg; to be removed (Use AllIcons.Nodes.ClassInitializer instead)
 deprecated: inspectionResults.svg; to be removed without replacement
 deprecated: weblistener.svg; to be removed without replacement

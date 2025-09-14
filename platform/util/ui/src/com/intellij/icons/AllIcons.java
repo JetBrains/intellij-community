@@ -1061,12 +1061,6 @@ public class AllIcons {
     @ScheduledForRemoval
     public static final @NotNull Icon InspectionResults = load("nodes/inspectionResults.svg", 0, 0);
 
-    /** @deprecated to be removed (Use AllIcons.Nodes.ClassInitializer instead) */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    public static final @NotNull Icon J2eeParameter = load("nodes/j2eeParameter.svg", 0, 0);
-
     /** @deprecated to be removed without replacement */
     @SuppressWarnings("unused")
     @Deprecated
