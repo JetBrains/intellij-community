@@ -24,7 +24,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.pydev.ProtocolParser;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
-import com.jetbrains.python.icons.PythonIcons;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -177,7 +176,7 @@ public class PyStackFrame extends XStackFrame {
     }
     if (!isSpecialEmpty) {
       addGroupValues(PyBundle.message("debugger.stack.frame.special.variables"),
-                     PythonIcons.Python.Debug.SpecialVar, node, null, myDebugProcess, ProcessDebugger.GROUP_TYPE.SPECIAL, null);
+                     AllIcons.Debugger.SpecialVar, node, null, myDebugProcess, ProcessDebugger.GROUP_TYPE.SPECIAL, null);
     }
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).stackFrameRefreshed();
   }

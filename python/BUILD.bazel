@@ -217,6 +217,12 @@ jvm_resources(
 )
 
 jvm_resources(
+  name = "python-community-impl_resources_1",
+  files = glob(["compatibilityResources/**/*"]),
+  strip_prefix = "compatibilityResources"
+)
+
+jvm_resources(
   name = "python-community-impl_test_resources",
   files = glob(["testData/**/*"]),
   strip_prefix = "testData"
@@ -353,6 +359,7 @@ jvm_library(
   ],
   runtime_deps = [
     ":python-community-impl_resources",
+    ":python-community-impl_resources_1",
     "//python:python-helpers",
     "//commandInterface",
   ]

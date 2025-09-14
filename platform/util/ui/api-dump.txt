@@ -215,6 +215,7 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:Unselectall:javax.swing.Icon
 - sf:Unshare:javax.swing.Icon
 - sf:Upload:javax.swing.Icon
+- sf:ViewAsImage:javax.swing.Icon
 - sf:Words:javax.swing.Icon
 - sf:WordsHovered:javax.swing.Icon
 - sf:WordsSelected:javax.swing.Icon
@@ -324,6 +325,7 @@ f:com.intellij.icons.AllIcons$Debugger
 - sf:DebuggerSync:javax.swing.Icon
 - sf:EvaluateExpression:javax.swing.Icon
 - sf:EvaluationResult:javax.swing.Icon
+- sf:ExecuteCurrentStatement:javax.swing.Icon
 - sf:ForceRunToCursor:javax.swing.Icon
 - sf:ForceStepInto:javax.swing.Icon
 - sf:ForceStepOver:javax.swing.Icon
@@ -345,6 +347,8 @@ f:com.intellij.icons.AllIcons$Debugger
 - sf:Selfreference:javax.swing.Icon
 - sf:ShowCurrentFrame:javax.swing.Icon
 - sf:SmartStepInto:javax.swing.Icon
+- sf:SpecialVar:javax.swing.Icon
+- sf:StepIntoMyCode:javax.swing.Icon
 - sf:Thaw:javax.swing.Icon
 - sf:ThawAll:javax.swing.Icon
 - sf:ThreadAtBreakpoint:javax.swing.Icon
@@ -968,6 +972,7 @@ f:com.intellij.icons.AllIcons$Nodes
 - sf:Servlet:javax.swing.Icon
 - sf:Shared:javax.swing.Icon
 - sf:SortBySeverity:javax.swing.Icon
+- sf:Ssh:javax.swing.Icon
 - sf:Static:javax.swing.Icon
 - sf:StaticMark:javax.swing.Icon
 - sf:Symlink:javax.swing.Icon
@@ -976,6 +981,7 @@ f:com.intellij.icons.AllIcons$Nodes
 - sf:Tag:javax.swing.Icon
 - sf:Target:javax.swing.Icon
 - sf:Template:javax.swing.Icon
+- sf:TemplateRoot:javax.swing.Icon
 - sf:Test:javax.swing.Icon
 - sf:TestGroup:javax.swing.Icon
 - sf:TestIgnored:javax.swing.Icon
@@ -1145,6 +1151,7 @@ f:com.intellij.icons.AllIcons$Providers
 - sf:Tair:javax.swing.Icon
 - sf:Tarantool:javax.swing.Icon
 - sf:TaurusDB:javax.swing.Icon
+- sf:TensorFlow:javax.swing.Icon
 - sf:Teradata:javax.swing.Icon
 - sf:Tibero:javax.swing.Icon
 - sf:Tidb:javax.swing.Icon

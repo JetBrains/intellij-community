@@ -2474,6 +2474,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Actions
 - sf:Unselectall:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Unshare:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Upload:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ViewAsImage:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Words:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:WordsHovered:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:WordsSelected:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -2583,6 +2584,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Debugger
 - sf:DebuggerSync:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:EvaluateExpression:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:EvaluationResult:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:ExecuteCurrentStatement:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ForceRunToCursor:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ForceStepInto:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ForceStepOver:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -2604,6 +2606,8 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Debugger
 - sf:Selfreference:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ShowCurrentFrame:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:SmartStepInto:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:SpecialVar:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:StepIntoMyCode:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Thaw:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ThawAll:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ThreadAtBreakpoint:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3227,6 +3231,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Nodes
 - sf:Servlet:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Shared:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:SortBySeverity:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Ssh:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Static:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:StaticMark:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Symlink:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3235,6 +3240,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Nodes
 - sf:Tag:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Target:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Template:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:TemplateRoot:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Test:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:TestGroup:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:TestIgnored:org.jetbrains.jewel.ui.icon.IntelliJIconKey
@@ -3404,6 +3410,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Providers
 - sf:Tair:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Tarantool:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:TaurusDB:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:TensorFlow:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Teradata:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Tibero:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Tidb:org.jetbrains.jewel.ui.icon.IntelliJIconKey

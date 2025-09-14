@@ -76,7 +76,6 @@ import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyVariableViewSettings;
 import com.jetbrains.python.debugger.ValuesPolicy;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
-import com.jetbrains.python.icons.PythonIcons;
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -222,7 +221,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     // Execute
     actions.add(
       new ConsoleExecuteAction(myConsoleView, myConsoleExecuteActionHandler, myConsoleExecuteActionHandler.getEmptyExecuteAction(),
-                               myConsoleExecuteActionHandler, PythonIcons.Python.ExecuteCurrentStatement));
+                               myConsoleExecuteActionHandler, AllIcons.Debugger.ExecuteCurrentStatement));
     toolbarActions.addAll(actions);
     // Attach Debugger
     toolbarActions.add(new ConnectDebuggerAction());
@@ -1215,7 +1214,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     ConnectDebuggerAction() {
       super(PyBundle.messagePointer("console.attach.debugger"), PyBundle.messagePointer("console.attach.debugger.description"),
-            PythonIcons.Python.AttachDebugger);
+            AllIcons.Debugger.AttachToProcess);
     }
 
     @Override
