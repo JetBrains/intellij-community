@@ -765,6 +765,7 @@
       "type.svg": "nodes/type.svg",
       "unloadedModule.svg": "modules/unloadedModule.svg",
       "unknown.svg": "nodes/unknown.svg",
+      "ppInvalid.svg": ["nodes/unknownJdk.svg", "nodes/ppInvalid.svg"],
       "upFolder.svg": "nodes/upFolder.svg",
       "variable.svg": "nodes/variable.svg",
       "warningIntroduction.svg": "nodes/warningIntroduction.svg",

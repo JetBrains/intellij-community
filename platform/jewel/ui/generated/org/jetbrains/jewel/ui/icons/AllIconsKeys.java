@@ -2774,7 +2774,7 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey PluginRestart = new IntelliJIconKey("nodes/pluginRestart.svg", "expui/nodes/plugin.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey PpInvalid = new IntelliJIconKey("nodes/ppInvalid.svg", "nodes/ppInvalid.svg", AllIconsKeys.class);
+    public static final @NotNull IntelliJIconKey PpInvalid = new IntelliJIconKey("nodes/ppInvalid.svg", "expui/nodes/ppInvalid.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey PpJar = new IntelliJIconKey("nodes/ppJar.svg", "expui/fileTypes/archive.svg", AllIconsKeys.class);
@@ -2916,7 +2916,7 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey Unknown = new IntelliJIconKey("nodes/unknown.svg", "expui/nodes/unknown.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey UnknownJdk = new IntelliJIconKey("nodes/unknownJdk.svg", "nodes/unknownJdk.svg", AllIconsKeys.class);
+    public static final @NotNull IntelliJIconKey UnknownJdk = new IntelliJIconKey("nodes/unknownJdk.svg", "expui/nodes/ppInvalid.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey UnloadedProject = new IntelliJIconKey("expui/nodes/unloadedProject.svg", "expui/nodes/unloadedProject.svg", AllIconsKeys.class);

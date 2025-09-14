@@ -996,7 +996,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Pluginnotinstalled = load("expui/nodes/plugin.svg", "nodes/pluginnotinstalled.svg", -75865196, 0);
     /** 16x16 */ public static final @NotNull Icon Pluginobsolete = load("expui/nodes/plugin.svg", "nodes/pluginobsolete.svg", -1473078649, 0);
     /** 16x16 */ public static final @NotNull Icon PluginRestart = load("expui/nodes/plugin.svg", "nodes/pluginRestart.svg", -60848417, 0);
-    /** 16x16 */ public static final @NotNull Icon PpInvalid = load("nodes/ppInvalid.svg", -908667763, 0);
+    /** 16x16 */ public static final @NotNull Icon PpInvalid = load("expui/nodes/ppInvalid.svg", "nodes/ppInvalid.svg", -908667763, 0);
     /** 16x16 */ public static final @NotNull Icon PpJar = load("expui/fileTypes/archive.svg", "nodes/ppJar.svg", 571724618, 0);
     /** 16x16 */ public static final @NotNull Icon PpJdk = load("expui/nodes/jdk.svg", "nodes/ppJdk.svg", 436331905, 0);
     /** 16x16 */ public static final @NotNull Icon PpLib = load("expui/nodes/library.svg", "nodes/ppLib.svg", 1687530585, 0);
@@ -1043,7 +1043,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Type = load("expui/nodes/type.svg", "nodes/type.svg", 1771437316, 0);
     /** 16x16 */ public static final @NotNull Icon Undeploy = load("expui/actions/undeploy.svg", "nodes/undeploy.svg", -1692132469, 0);
     /** 16x16 */ public static final @NotNull Icon Unknown = load("expui/nodes/unknown.svg", "nodes/unknown.svg", 1061055855, 0);
-    /** 16x16 */ public static final @NotNull Icon UnknownJdk = load("nodes/unknownJdk.svg", 1986945606, 0);
+    /** 16x16 */ public static final @NotNull Icon UnknownJdk = load("expui/nodes/ppInvalid.svg", "nodes/unknownJdk.svg", 1986945606, 0);
     /** 16x16 */ public static final @NotNull Icon UnloadedProject = load("expui/nodes/unloadedProject.svg", 793315583, 2);
     /** 16x16 */ public static final @NotNull Icon UpFolder = load("expui/nodes/upFolder.svg", "nodes/upFolder.svg", -98764899, 0);
     /** 16x16 */ public static final @NotNull Icon UpLevel = load("expui/nodes/upLevel.svg", "nodes/upLevel.svg", -1993017141, 0);
