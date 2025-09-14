@@ -121,6 +121,15 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
 
   boolean containsClassNamed(@NotNull String shortName);
 
+  /**
+   * Returns classes with short name {@code shortName} in {@code scope}.
+   * NOTE that the result CAN contain classes outside the scope.
+   *
+   * @param shortName short name of the classes to find.
+   * @param scope scope to limit the query to, though the result can contain classes outside the scope.
+   *
+   * @return the array of classes with the specified short name.
+   */
   PsiClass @NotNull [] findClassByShortName(@NotNull String shortName, @NotNull GlobalSearchScope scope);
 
   /**

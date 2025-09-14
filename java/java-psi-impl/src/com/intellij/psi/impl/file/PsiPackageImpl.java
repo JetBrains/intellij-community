@@ -191,8 +191,11 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return getCachedClassesInDumbMode(shortName, scope);
     }
 
-    // if shared source support is enabled, we need to use the real scope,
-    // because we need to specify the proper context for files with several contexts
+    // if shared source support is enabled, we need to use the real scope
+    // because we need to specify the proper context for files with several contexts.
+    //
+    // if shared source support is disabled, we DO NOT use the real scope for historical reasons (see the file history).
+    // Instead, we just cache all classes from the everythingScope scope.
     boolean sharedSourceSupportEnabled = CodeInsightContexts.isSharedSourceSupportEnabled(getProject());
     GlobalSearchScope effectiveScope = sharedSourceSupportEnabled ? scope : GlobalSearchScope.everythingScope(getProject());
 
