@@ -76,7 +76,7 @@ import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyVariableViewSettings;
 import com.jetbrains.python.debugger.ValuesPolicy;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
+import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSocketToLocalHostProvider;
@@ -1262,7 +1262,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
 
     return XDebuggerManager.getInstance(myProject).
-      startSessionAndShowTab(PyBundle.message("pydev.console.runner.python.console.debugger"), PythonPsiApiIcons.Python, null, true,
+      startSessionAndShowTab(PyBundle.message("pydev.console.runner.python.console.debugger"), PythonParserIcons.PythonFile, null, true,
                              new XDebugProcessStarter() {
                                @Override
                                public @NotNull XDebugProcess start(final @NotNull XDebugSession session) {

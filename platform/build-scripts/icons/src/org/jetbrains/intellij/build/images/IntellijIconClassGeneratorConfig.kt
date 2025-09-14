@@ -72,7 +72,6 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         iconDirectory = "icons/com/jetbrains/python/psi",
       )
 
-
       "intellij.python" -> IntellijIconClassGeneratorModuleConfig(
         className = "PythonUltimateIcons",
         packageName = "com.intellij.python.pro.icons",

@@ -12,14 +12,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons
+import com.jetbrains.python.parser.icons.PythonParserIcons
 
 fun completePackageNames(project: Project, sdk: Sdk, result: CompletionResultSet) {
   val repositoryManager = PythonPackageManager.forSdk(project, sdk).repositoryManager
   val packages = repositoryManager.allPackages()
   val maxPriority = packages.size
   packages.asSequence().map {
-    LookupElementBuilder.create(it.lowercase()).withIcon(PythonPsiApiIcons.Python)
+    LookupElementBuilder.create(it.lowercase()).withIcon(PythonParserIcons.PythonFile)
   }.mapIndexed { index, lookupElementBuilder ->
     PrioritizedLookupElement.withPriority(lookupElementBuilder, (maxPriority - index).toDouble())
   }.forEach { result.addElement(it) }

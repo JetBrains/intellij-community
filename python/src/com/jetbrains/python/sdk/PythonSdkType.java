@@ -34,8 +34,8 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteInterpreterUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -95,7 +95,7 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public Icon getIcon() {
-    return PythonPsiApiIcons.Python;
+    return PythonParserIcons.PythonFile;
   }
 
   @Override
