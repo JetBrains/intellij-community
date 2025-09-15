@@ -19,7 +19,7 @@ import javax.swing.SwingConstants
 import kotlin.properties.Delegates.observable
 
 @ApiStatus.Internal
-class ChangesViewPanel(val changesView: ChangesListView, parentDisposable: Disposable) : BorderLayoutPanel() {
+class ChangesViewPanel(val changesView: ChangesListView) : BorderLayoutPanel() {
   val toolbarActionGroup = DefaultActionGroup()
 
   var isToolbarHorizontal: Boolean by observable(false) { _, oldValue, newValue ->

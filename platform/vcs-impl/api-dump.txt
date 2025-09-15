@@ -4172,19 +4172,6 @@ f:com.intellij.vcs.commit.CommitStatusPanel
 - com.intellij.openapi.vcs.changes.InclusionListener
 - <init>(com.intellij.vcs.commit.CommitWorkflowUi):V
 - inclusionChanged():V
-c:com.intellij.vcs.commit.CommitTabTitleUpdater
-- com.intellij.openapi.Disposable
-- sf:Companion:com.intellij.vcs.commit.CommitTabTitleUpdater$Companion
-- <init>(com.intellij.openapi.vcs.changes.ui.ChangesTree,java.lang.String,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0):V
-- dispose():V
-- f:getDefaultTitle():kotlin.jvm.functions.Function0
-- f:getProject():com.intellij.openapi.project.Project
-- f:getTabName():java.lang.String
-- f:getTree():com.intellij.openapi.vcs.changes.ui.ChangesTree
-- start():V
-- updateTab():V
-f:com.intellij.vcs.commit.CommitTabTitleUpdater$Companion
-- f:getDisplayTabName(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):java.lang.String
 com.intellij.vcs.commit.CommitWorkflowListener
 - java.util.EventListener
 - beforeCommitChecksEnded(com.intellij.vcs.commit.CommitSessionInfo,com.intellij.vcs.commit.CommitChecksResult):V

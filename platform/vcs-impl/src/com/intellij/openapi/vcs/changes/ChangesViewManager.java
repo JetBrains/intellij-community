@@ -97,7 +97,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     if (myChangesPanel == null) {
       Activity activity = StartUpMeasurer.startActivity("ChangesViewPanel initialization");
       ChangesListView tree = new LocalChangesListView(myProject);
-      myChangesPanel = new ChangesViewPanel(tree, this);
+      myChangesPanel = new ChangesViewPanel(tree);
       activity.end();
     }
     return myChangesPanel;

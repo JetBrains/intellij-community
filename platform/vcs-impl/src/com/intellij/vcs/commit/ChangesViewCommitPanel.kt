@@ -5,15 +5,15 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangesViewManager
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
+import com.intellij.openapi.vcs.changes.ui.isCommitToolWindowShown
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.vcsUtil.VcsUtil.getFilePath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.await
 import kotlin.coroutines.coroutineContext
@@ -25,7 +25,7 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(
   private var isHideToolWindowOnCommit = false
 
   init {
-    ChangesViewCommitTabTitleUpdater(changesView, this, this).start()
+    ChangesViewCommitTabTitleUpdater(project).initSubscription(this)
   }
 
   override val isActive: Boolean get() = component.isVisible
@@ -77,26 +77,15 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(
   }
 }
 
-private class ChangesViewCommitTabTitleUpdater(tree: ChangesTree, workflowUi: CommitWorkflowUi, disposable: Disposable)
-  : CommitTabTitleUpdater(tree, LOCAL_CHANGES, { message("local.changes.tab") },
-                          pathsProvider = {
-                            val singleRoot = ProjectLevelVcsManager.getInstance(tree.project).getAllVersionedRoots().singleOrNull()
-                            if (singleRoot != null) listOf(getFilePath(singleRoot)) else workflowUi.getDisplayedPaths()
-                          }),
-    ChangesViewContentManagerListener {
-  init {
-    Disposer.register(disposable, this)
+private class ChangesViewCommitTabTitleUpdater(private val project: Project) : ChangesViewContentManagerListener {
+  fun initSubscription(disposable: Disposable) {
+    project.messageBus.connect(disposable).subscribe(ChangesViewContentManagerListener.TOPIC, this)
   }
 
-  override fun start() {
-    super.start()
-    project.messageBus.connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, this)
-  }
-
-  override fun toolWindowMappingChanged() = updateTab()
-
-  override fun updateTab() {
-    if (!project.isCommitToolWindowShown) return
-    super.updateTab()
+  override fun toolWindowMappingChanged() {
+    val tabContent = ChangesViewContentManager.getInstance(project).findContent(LOCAL_CHANGES)
+    if (tabContent != null) {
+        tabContent.displayName = if (project.isCommitToolWindowShown) message("tab.title.commit") else message("local.changes.tab")
+      }
   }
 }

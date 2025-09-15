@@ -30,7 +30,7 @@ internal class LocalChangesViewContentProvider : FrontendChangesViewContentProvi
 
   override fun initTabContent(project: Project, content: Content) {
     val tree = LocalChangesListView(project)
-    val changesViewPanel = ChangesViewPanel(tree, content)
+    val changesViewPanel = ChangesViewPanel(tree)
     changesViewPanel.isToolbarHorizontal = true
 
     content.component = changesViewPanel
