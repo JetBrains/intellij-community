@@ -34,7 +34,7 @@ object FreezeAnalyzer {
       else -> null
     }
 
-  private fun isWaitingOnSuvorod(edt: ThreadState): Boolean{
+  private fun isWaitingOnSuvorod(edt: ThreadState): Boolean {
     return getMethodList(edt.stackTrace).any { it.contains("SuvorovProgress") }
   }
 
@@ -45,7 +45,7 @@ object FreezeAnalyzer {
   private fun analyzeLock(edt: ThreadState, threadDumpParsed: List<ThreadState>): FreezeAnalysisResult? {
     val relevantMethodFromEdt = findFirstRelevantMethod(edt.stackTrace)
     if (relevantMethodFromEdt == null) return null
-    if (edt.stackTrace != null && edt.stackTrace.contains("on kotlinx.coroutines.BlockingCoroutine") && getMethodList(edt.stackTrace).any { it.contains("BlockingCoroutine.joinBlocking") }) return FreezeAnalysisResult("EDT is blocked on $relevantMethodFromEdt which called runBlocking", listOf(edt),)
+    if (edt.stackTrace != null && edt.stackTrace.contains("on kotlinx.coroutines.BlockingCoroutine") && getMethodList(edt.stackTrace).any { it.contains("BlockingCoroutine.joinBlocking") }) return FreezeAnalysisResult("EDT is blocked on $relevantMethodFromEdt which called runBlocking", listOf(edt))
     var possibleThreadWithLock: ThreadState? = null
     for (it in getPotentialMethodsWithLock(edt.stackTrace)) {
       val clazz = extractClassFromMethod(it)
@@ -160,15 +160,43 @@ object FreezeAnalyzer {
       "at com.intellij.openapi.application.",
       "at platform/jdk.zipfs",
       "at net.jpountz.lz4.",
-      "at com.intellij.concurrency."
+      "at com.intellij.concurrency.",
+      "at com.intellij.platform.locking."
     )
+    if(this.contains("\$\$Lambda")) return false
     return !isJDKMethod() && irrelevantStarts.none { this.startsWith(it) }
   }
 
   private fun findFirstRelevantMethod(stackTrace: String): String? {
-    val methodList = getMethodList(stackTrace)
-    return (methodList.firstOrNull { it.isRelevantMethod() } ?: methodList.firstOrNull { !it.isJDKMethod() })?.let { extractMethodName(it) }
+    val methodList = getMethodList(stackTrace).toList()
+    if (methodList.isEmpty()) return null
 
+
+    val readActions = listOf(
+      "at com.intellij.openapi.application.impl.ApplicationImpl.runReadAction",
+      "at com.intellij.openapi.application.ActionsKt.runReadAction",
+      "at com.intellij.openapi.application.ReadAction.compute",
+      "at com.intellij.openapi.application.ReadAction.run",
+      "at com.intellij.openapi.application.rw.InternalReadAction.insideReadAction"
+    )
+
+
+    var blockingMethod: String? = null
+    methodList.forEachIndexed { i, line ->
+      if (readActions.any { line.startsWith(it) }) {
+        for (j in i - 1 downTo 0) {
+          val candidate = methodList[j]
+          if (candidate.isRelevantMethod()) {
+            blockingMethod = candidate
+            break
+          }
+        }
+        if (blockingMethod != null) return@forEachIndexed
+      }
+    }
+    if (blockingMethod != null) return extractMethodName(blockingMethod)
+
+    return (methodList.firstOrNull { it.isRelevantMethod() } ?: methodList.firstOrNull { !it.isJDKMethod() })?.let { extractMethodName(it) }
   }
 
   private fun getMethodList(stackTrace: String) = stackTrace.lineSequence()
