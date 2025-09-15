@@ -88,6 +88,7 @@ data class ExecutionEnvironmentId(override val uid: UID) : Id
 
 @ApiStatus.Internal
 @Serializable
+@Deprecated("Let's try using the RunContentDescriptorIdImpl instead which is declared and accessible outside debugger code")
 data class RunContentDescriptorId(override val uid: UID) : Id
 
 @ApiStatus.Internal
