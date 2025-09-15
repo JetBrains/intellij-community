@@ -180,6 +180,7 @@ object OperatorToFunctionConverter {
                 appendFixedText("set(")
                 appendExpressions(element.indexExpressions)
                 appendFixedText(",")
+                appendIfVarargType(element, this)
                 appendExpression(parent.right)
             } else {
                 appendFixedText("get(")
@@ -191,6 +192,22 @@ object OperatorToFunctionConverter {
 
         return expressionToReplace.replace(transformed) as KtExpression
     }
+
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+    private fun appendIfVarargType(element: KtArrayAccessExpression, pattern: BuilderByPattern<KtExpression>) {
+        allowAnalysisOnEdt {
+            allowAnalysisFromWriteAction {
+                analyze(element) {
+                    val argumentMapping = element.resolveToCall()?.singleFunctionCallOrNull()?.argumentMapping.orEmpty()
+                    if (argumentMapping[element.indexExpressions.firstOrNull()]?.symbol?.isVararg == true) {
+                        argumentMapping[(element.parent as KtBinaryExpression).right]?.symbol?.name?.asString()
+                            .let { pattern.appendFixedText("$it = ") }
+                    }
+                }
+            }
+        }
+    }
+
 
     private fun isAssignmentLeftSide(element: KtArrayAccessExpression): Boolean {
         val parent = element.parent
