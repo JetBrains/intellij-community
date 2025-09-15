@@ -66,12 +66,13 @@ class XmlElementStorageTest {
 
     override fun loadLocalData() = element
 
-    override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSessionProducer<MyXmlElementStorage>(states, this) {
-      override fun saveLocally(dataWriter: DataWriter?, useVfs: Boolean, events: MutableList<VFileEvent>?) {
-        if (dataWriter == null) {
+    override fun createSaveSession(states: StateMap): XmlElementStorageSaveSessionProducer<MyXmlElementStorage> {
+      return object : XmlElementStorageSaveSessionProducer<MyXmlElementStorage>(states, this) {
+        override fun remove(events: MutableList<VFileEvent>?) {
           savedElement = null
         }
-        else {
+
+        override fun saveLocally(dataWriter: DataWriter, events: MutableList<VFileEvent>?) {
           savedElement = JDOMUtil.load(dataWriter.toBufferExposingByteArray(LineSeparator.LF).toByteArray().inputStream())
         }
       }
