@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.stubindex
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
@@ -16,8 +15,6 @@ import com.intellij.util.indexing.ProcessorWithThrottledCancellationCheck
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.indices.*
 
-private val isNestedIndexAccessEnabled: Boolean by lazy { Registry.`is`("kotlin.indices.nested.access.enabled") }
-
 abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private val valueClass: Class<Key>) {
     private val logger = Logger.getInstance(this.javaClass)
     abstract val indexKey: StubIndexKey<String, Key>
@@ -27,7 +24,7 @@ abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private 
         val results = mutableListOf<Key>()
         val processor = cancelableCollectFilterProcessor(results)
         getByKeyAndMeasure(indexKey, logger) {
-            stubIndex.processElements(indexKey, fqName, project, scope, null,valueClass, processor)
+            stubIndex.processElements(indexKey, fqName, project, scope, null, valueClass, processor)
         }
         return results
     }
@@ -49,6 +46,7 @@ abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private 
         processElements(key, project, scope, null, processor)
         return results.asSequence() // todo move valueFilter out
     }
+
     /**
      * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
      */
@@ -97,33 +95,25 @@ abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private 
     ) {
         val stubIndex = StubIndex.getInstance()
 
-        if (isNestedIndexAccessEnabled) {
-            stubIndex.processAllKeys(indexKey, project, CancelableDelegateFilterProcessor(filter) { key ->
-                // process until the 1st negative result of processor
-                stubIndex.processElements(indexKey, key, project, scope, valueClass, processor)
-            })
-        } else {
-            // collect all keys, collect all values those fulfill filter into a single collection, process values after that
+        // collect all keys, collect all values those fulfill filter into a single collection, process values after that
+        val allKeys = HashSet<String>()
+        val processAllKeys = processAllKeysAndMeasure(indexKey, logger) {
+            stubIndex.processAllKeys(indexKey, cancelableCollectFilterProcessor(allKeys, filter), scope)
+        }
+        if (!processAllKeys) return
 
-            val allKeys = HashSet<String>()
-            val processAllKeys = processAllKeysAndMeasure(indexKey, logger) {
-                stubIndex.processAllKeys(indexKey, cancelableCollectFilterProcessor(allKeys, filter), scope)
-            }
-            if (!processAllKeys) return
-
-            if (allKeys.isNotEmpty()) {
-                checkCollectionSize(indexKey, "processAllElements", logger, allKeys)
-                val values = HashSet<Key>(allKeys.size)
-                val collectProcessor = ProcessorWithThrottledCancellationCheck(CommonProcessors.CollectProcessor(values))
-                allKeys.forEach { s ->
-                    val processElements = processElementsAndMeasure(indexKey, logger) {
-                        stubIndex.processElements(indexKey, s, project, scope, valueClass, collectProcessor)
-                    }
-                    if (!processElements) return
+        if (allKeys.isNotEmpty()) {
+            checkCollectionSize(indexKey, "processAllElements", logger, allKeys)
+            val values = HashSet<Key>(allKeys.size)
+            val collectProcessor = ProcessorWithThrottledCancellationCheck(CommonProcessors.CollectProcessor(values))
+            allKeys.forEach { s ->
+                val processElements = processElementsAndMeasure(indexKey, logger) {
+                    stubIndex.processElements(indexKey, s, project, scope, valueClass, collectProcessor)
                 }
-                // process until the 1st negative result of the processor
-                values.all(processor::process)
+                if (!processElements) return
             }
+            // process until the 1st negative result of the processor
+            values.all(processor::process)
         }
     }
 
