@@ -251,7 +251,7 @@ fun tryCheckingFileInScope(
         return true
       }
       else {
-        fileLogger().warn("Unexpected context $actualCodeInsightContext for $context for $viewProvider", Throwable())
+        fileLogger().warn(Throwable("Nondeterministic context assignment: $actualCodeInsightContext vs $context for $viewProvider"))
 
         return globalScope.contains(file, actualCodeInsightContext)
       }
