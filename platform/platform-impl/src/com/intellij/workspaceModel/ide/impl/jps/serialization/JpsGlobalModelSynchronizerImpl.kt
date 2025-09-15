@@ -34,7 +34,6 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.nio.file.Path
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -123,7 +122,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
     val globalWorkspaceModels = GlobalWorkspaceModel.getInstances()
     for (globalWorkspaceModel in globalWorkspaceModels) {
       setVirtualFileUrlManager(globalWorkspaceModel.getVirtualFileUrlManager())
-      val entityStorage = globalWorkspaceModel.entityStorage.current
+      val entityStorage = globalWorkspaceModel.currentSnapshot
       val serializers = createSerializers()
       val contentWriter = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentWriter()
       for (serializer in serializers) {
@@ -145,7 +144,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
     ) as JpsFileEntityTypeSerializer<WorkspaceEntity>
     val contentWriter = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentWriter()
     for (globalWorkspaceModel in GlobalWorkspaceModel.getInstances()) {
-      val entityStorage = globalWorkspaceModel.entityStorage.current
+      val entityStorage = globalWorkspaceModel.currentSnapshot
       serializeEntities(entityStorage, sdkSerializer, contentWriter)
       contentWriter.saveSession()
     }

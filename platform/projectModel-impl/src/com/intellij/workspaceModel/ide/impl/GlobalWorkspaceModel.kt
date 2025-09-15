@@ -129,7 +129,7 @@ class GlobalWorkspaceModel internal constructor(
     val initializingTimeMillis: Long
     val toSnapshotTimeMillis: Long
     val generalTime = measureTimeMillis {
-      val before = entityStorage.current
+      val before = currentSnapshot
       val builder = MutableEntityStorage.from(before)
       updateTimeMillis = measureTimeMillis {
         updater(builder)
@@ -226,7 +226,7 @@ class GlobalWorkspaceModel internal constructor(
     }
 
     val workspaceModel = WorkspaceModel.getInstance(targetProject)
-    val entitiesCopyAtBuilder = copyEntitiesToEmptyStorage(entityStorage.current, workspaceModel.getVirtualFileUrlManager())
+    val entitiesCopyAtBuilder = copyEntitiesToEmptyStorage(currentSnapshot, workspaceModel.getVirtualFileUrlManager())
     workspaceModel.updateProjectModel("Sync global entities with project: ${targetProject.name}") { builder ->
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
@@ -239,7 +239,7 @@ class GlobalWorkspaceModel internal constructor(
     LOG.info("Sync global entities with mutable entity storage")
     targetBuilder.replaceBySource(
       sourceFilter = globalEntitiesFilter,
-      replaceWith = copyEntitiesToEmptyStorage(entityStorage.current, workspaceModel.getVirtualFileUrlManager()),
+      replaceWith = copyEntitiesToEmptyStorage(currentSnapshot, workspaceModel.getVirtualFileUrlManager()),
     )
   }
 
