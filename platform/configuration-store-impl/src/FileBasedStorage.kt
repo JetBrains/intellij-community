@@ -286,9 +286,7 @@ internal fun writeFile(
         else -> dataWriterOrByteArray as BufferExposingByteArrayOutputStream
       }
       throw ReadOnlyModificationException(file, object : SaveSession {
-        override suspend fun save(events: MutableList<VFileEvent>?) = throw IllegalStateException()
-
-        override fun saveBlocking() {
+        override suspend fun save(events: MutableList<VFileEvent>?) {
           doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog)
         }
       })
