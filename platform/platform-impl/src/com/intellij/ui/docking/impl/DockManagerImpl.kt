@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.executeOnCancelInEdt
 import com.intellij.platform.util.coroutines.childScope
@@ -35,6 +36,8 @@ import com.intellij.ui.docking.*
 import com.intellij.ui.docking.DockContainer.ContentResponse
 import com.intellij.ui.drag.DialogDragImageView
 import com.intellij.ui.drag.DialogWithImage
+import com.intellij.ui.drag.DragImageView
+import com.intellij.ui.drag.GlassPaneDragImageView
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.ui.EdtInvocationManager
@@ -192,7 +195,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     get() = busyObject.getReady(this)
 
   private inner class MyDragSession(mouseEvent: MouseEvent, private val content: DockableContent<*>) : DragSession {
-    private val view: DialogDragImageView
+    private val view: DragImageView
     private var dragImage: Image?
     private val defaultDragImage: Image
     val startDragContainer: DockContainer? = getContainerFor(mouseEvent.component) { true }
@@ -206,7 +209,12 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
       val ratio = if (width > height) requiredSize / width else requiredSize / height
       defaultDragImage = buffer.getScaledInstance((width * ratio).toInt(), (height * ratio).toInt(), Image.SCALE_SMOOTH)
       dragImage = defaultDragImage
-      view = DialogDragImageView(DragImageDialog(ComponentUtil.getWindow(mouseEvent.component), defaultDragImage))
+      view = if (StartupUiUtil.isWaylandToolkit()) {
+        GlassPaneDragImageView(IdeGlassPaneUtil.find(mouseEvent.component))
+      }
+      else {
+        DialogDragImageView(DragImageDialog(ComponentUtil.getWindow(mouseEvent.component), defaultDragImage))
+      }
       setLocationFrom(mouseEvent)
       view.show()
     }
