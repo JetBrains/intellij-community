@@ -28,7 +28,8 @@ private fun isFrontend(): Boolean {
   return PlatformUtils.isJetBrainsClient()
 }
 
-private fun isMonolith(): Boolean {
+@ApiStatus.Internal
+fun isMonolith(): Boolean {
   // returns true in split mode backend 0_o
   return FrontendApplicationInfo.getFrontendType() is FrontendType.Monolith && !isBackend() && !isFrontend()
 }

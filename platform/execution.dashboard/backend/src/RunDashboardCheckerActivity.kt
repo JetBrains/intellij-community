@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.execution.dashboard
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.execution.dashboard.backend
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManagerListener
@@ -82,7 +82,7 @@ internal class RunDashboardCheckerActivity : ProjectActivity {
 
       PropertiesComponent.getInstance(project).setValue(RUN_CONFIGURATIONS_INCLUDED_IN_SERVICES, true, false)
       val types = showInServices(CHECKER_EP_NAME.extensionList.map { it.typeId })
-      typesToDisplay.retainAll(types)
+      typesToDisplay.retainAll(types.toSet())
       if (typesToDisplay.isEmpty()) return
 
       val typeDisplayNames = StringUtil.join(typesToDisplay.map { getTypeDisplayName(it) }, ", ")
@@ -111,7 +111,7 @@ internal class RunDashboardCheckerActivity : ProjectActivity {
     private fun removeFromServices(types: Collection<String>) {
       val dashboardManager = RunDashboardManager.getInstance(project)
       val newTypes = HashSet(dashboardManager.types)
-      newTypes.removeAll(types)
+      newTypes.removeAll(types.toSet())
       dashboardManager.setTypes(newTypes)
     }
 
