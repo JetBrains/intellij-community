@@ -547,13 +547,13 @@ public final class TypeConstraints {
 
     @Override
     public boolean isAssignableFrom(@NotNull Exact other) {
-      return other instanceof ExactArray exactArray && component.isAssignableFrom(exactArray.component);
+      return other instanceof ExactArray(Exact otherComponent) && component.isAssignableFrom(otherComponent);
     }
 
     @Override
     public boolean isConvertibleFrom(@NotNull Exact other) {
-      if (other instanceof ExactArray exactArray) {
-        return component.isConvertibleFrom(exactArray.component);
+      if (other instanceof ExactArray(Exact otherComponent)) {
+        return component.isConvertibleFrom(otherComponent);
       }
       if (other instanceof ArraySuperInterface) return true;
       if (other == EXACTLY_OBJECT) return true;
