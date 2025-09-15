@@ -136,6 +136,15 @@ public abstract class StubIndexEx extends StubIndex {
                                                                @Nullable IdFilter idFilter,
                                                                @NotNull Class<Psi> requiredClass,
                                                                @NotNull Processor<? super Psi> processor) {
+    if (!canUpdateAllIndexes() || !getStubUpdatingIndex().canUpdate()) {
+      var exception = new IllegalStateException("Nesting processElements call under other stub index operation can lead to a deadlock.");
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw exception;
+      }
+      else {
+        getLogger().error(exception);
+      }
+    }
     var trace = lookupStubEntriesStarted(indexKey)
       .withProject(project);
 
@@ -241,6 +250,8 @@ public abstract class StubIndexEx extends StubIndex {
   @ApiStatus.Experimental
   @ApiStatus.Internal
   protected abstract <Key> UpdatableIndex<Key, Void, FileContent, ?> getIndex(@NotNull StubIndexKey<Key, ?> indexKey);
+
+  protected abstract boolean canUpdateAllIndexes();
 
   // Self repair for IDEA-181227, caused by (yet) unknown file event processing problem in indices
   // FileBasedIndex.requestReindex doesn't handle the situation properly because update requires old data that was lost

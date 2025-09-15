@@ -367,6 +367,11 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
 
   protected abstract void requestRebuild(@NotNull Throwable e);
 
+  @Internal
+  public boolean canUpdate() {
+    return !myStorage.isReadLockHeldByCurrentThread();
+  }
+
   private final UpdatedEntryProcessor<Key, Value> changedEntriesProcessor = new UpdatedEntryProcessor<Key, Value>() {
     @Override
     public void process(@NotNull UpdateKind kind, Key key, Value value, int inputId) throws StorageException {
