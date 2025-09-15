@@ -28,7 +28,15 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/platform-impl/concurrency",
     "//platform/navbar/frontend",
+    "//fleet/rpc",
+    "//platform/kernel/rpc",
+    "//platform/platform-impl/rpc",
+    "//platform/project/shared:project",
+    "//platform/object-serializer",
     "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/kernel/shared:kernel",
   ],
   runtime_deps = [":execution.serviceView_resources"]
 )

@@ -449,6 +449,7 @@ platform/execution.dashboard
 platform/execution.dashboard/backend
 platform/execution.dashboard/frontend
 platform/execution.serviceView
+platform/execution.serviceView/backend
 platform/execution.serviceView/frontend
 platform/experiment
 platform/extensions
