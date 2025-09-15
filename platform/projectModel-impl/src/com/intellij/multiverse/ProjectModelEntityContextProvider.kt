@@ -92,7 +92,7 @@ internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
   }
 
   override fun invalidationRequestFlow(project: Project): Flow<Unit> {
-    val eventLog = WorkspaceModel.Companion.getInstance(project).eventLog
+    val eventLog = WorkspaceModel.getInstance(project).eventLog
     return eventLog.mapNotNull { change ->
       Unit.takeIf { change.getChanges(ModuleEntity::class.java).isNotEmpty() }
     }
