@@ -823,9 +823,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
                          ? myHeader.getSelectedTab().getContributors().get(0).filterControlSymbols(rawPattern)
                          : rawPattern;
 
-    MinusculeMatcher matcher =
-      NameUtil.buildMatcherWithFallback("*" + rawPattern, "*" + namePattern, NameUtil.MatchingCaseSensitivity.NONE);
-    MatcherHolder.associateMatcher(myResultsList, matcher);
+    associateMatcherToResultsList(myResultsList, rawPattern, namePattern);
 
     Map<SearchEverywhereContributor<?>, Integer> contributorsMap = new HashMap<>();
 
@@ -890,6 +888,13 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
     myHintHelper.setSearchInProgress(StringUtil.isNotEmpty(getSearchPattern()));
     mySearchProgressIndicator = mySearcher.search(contributorsMap, rawPattern);
+  }
+
+  @ApiStatus.Internal
+  public static void associateMatcherToResultsList(JComponent resultsList, String rawPattern, String namePattern) {
+    MinusculeMatcher matcher =
+      NameUtil.buildMatcherWithFallback("*" + rawPattern, "*" + namePattern, NameUtil.MatchingCaseSensitivity.NONE);
+    MatcherHolder.associateMatcher(resultsList, matcher);
   }
 
   private void initSearchActions() {
