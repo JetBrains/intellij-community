@@ -239,10 +239,9 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
     return instance
   }
 
-  private fun getAllProductCodes(): List<String> {
+  private fun getAllProductCodes(): Set<String> {
     val ideProductCode = LicenseManager.getInstance().platformLicenseInfo.productDescriptor.productCode
-    val pluginProductCodes = PluginManagerCore.loadedPlugins.mapNotNull { it.getProductCode() }
-    return (listOf(ideProductCode) + pluginProductCodes).distinct()
+    return PluginManagerCore.loadedPlugins.mapNotNullTo(mutableSetOf(ideProductCode)) { it.getProductCode() }
   }
 
   private suspend fun shouldShowCheckLicenses(): Boolean = coroutineScope {
