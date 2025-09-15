@@ -14,8 +14,9 @@ import java.awt.Rectangle
 class InlineCompletionShortcutAfterLineElement(
   lineNumber: Int,
   val isMultiline: Boolean,
-  insertActionId: String
-) : InlineCompletionShortcutHintElementBase(lineNumber, insertActionId) {
+  insertActionId: String,
+  forcedHint: InlineCompletionShortcutHint? = null,
+) : InlineCompletionShortcutHintElementBase(lineNumber, insertActionId, forcedHint) {
 
   override fun toPresentable(): InlineCompletionElement.Presentable {
     return Presentable(element = this, hint)
