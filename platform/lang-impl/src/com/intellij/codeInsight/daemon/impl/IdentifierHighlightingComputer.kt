@@ -36,6 +36,8 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Computes identifier highlighting ranges by doing find usages/calling [com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase.computeUsages]
+ * @param myPsiFile may be injected fragment, in which case the `editor` must be corresponding injected editor and  `visibleRange` must have consistent offsets inside the injected document.
+ * In both cases, [computeRanges] will produce and apply HighlightInfos to the host file.
  */
 @ApiStatus.Internal
 class IdentifierHighlightingComputer(
@@ -46,10 +48,6 @@ class IdentifierHighlightingComputer(
 ) {
   private val myEnabled: Boolean
 
-  /**
-   * @param myPsiFile may be injected fragment, in which case the `editor` must be corresponding injected editor and  `visibleRange` must have consistent offsets inside the injected document.
-   * In both cases, [.doCollectInformation] will produce and apply HighlightInfos to the host file.
-   */
   init {
     val model = myEditor.getCaretModel()
     val highlightSelectionOccurrences = myEditor.getSettings().isHighlightSelectionOccurrences()
