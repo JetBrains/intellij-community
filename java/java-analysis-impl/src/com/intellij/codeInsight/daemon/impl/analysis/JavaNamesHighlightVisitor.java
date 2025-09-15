@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.javadoc.JavaDocFragmentAnchorCacheKt;
-import com.intellij.codeInsight.javadoc.JavaDocFragmentData;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.project.DumbAware;
@@ -17,7 +16,6 @@ import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,9 +100,7 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
       }
     }
     else if (value instanceof PsiDocFragmentName docFragmentName) {
-      final Pair<PsiClass, JavaDocFragmentData> fragmentData = computeIfSmartMode(value.getProject(), () -> {
-        return JavaDocFragmentAnchorCacheKt.resolveJavaDocFragment(value.getProject(), docFragmentName);
-      });
+      final var fragmentData = JavaDocFragmentAnchorCacheKt.resolveJavaDocFragment(value.getProject(), docFragmentName);
       if (fragmentData != null) {
         myHolder.add(HighlightNamesUtil.highlightFragmentReference(docFragmentName));
       }
