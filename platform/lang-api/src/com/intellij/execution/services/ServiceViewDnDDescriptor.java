@@ -2,6 +2,7 @@
 package com.intellij.execution.services;
 
 import com.intellij.ide.dnd.DnDEvent;
+import kotlinx.serialization.Serializable;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
@@ -29,6 +30,7 @@ public interface ServiceViewDnDDescriptor {
    */
   void drop(@NotNull DnDEvent event, @NotNull Position position);
 
+  @Serializable
   enum Position {
     ABOVE, INTO, BELOW
   }
