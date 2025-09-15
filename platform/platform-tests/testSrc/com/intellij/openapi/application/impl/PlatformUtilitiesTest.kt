@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
@@ -439,6 +440,32 @@ class PlatformUtilitiesTest {
       }
       dialog.show()
     }
+  }
+
+  @Test
+  fun `yieldToPendingWriteAction does not cause thread starvation`() : Unit = timeoutRunBlocking {
+    val job = Job(coroutineContext.job)
+    val edtCanFinish = Job(coroutineContext.job)
+    launch(Dispatchers.UiWithModelAccess) {
+      WriteIntentReadAction.run {
+        job.complete()
+        edtCanFinish.asCompletableFuture().join()
+      }
+    }
+    job.join()
+    launch(Dispatchers.Default) {
+      backgroundWriteAction {
+
+      }
+    }
+    delay(50)
+    repeat(Runtime.getRuntime().availableProcessors()) {
+      launch(Dispatchers.Default) {
+        ProgressIndicatorUtils.yieldToPendingWriteActions()
+      }
+    }
+    delay(50)
+    edtCanFinish.complete()
   }
 
 }

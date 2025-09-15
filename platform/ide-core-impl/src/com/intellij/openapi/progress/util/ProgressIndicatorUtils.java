@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.codeWithMe.ClientId;
@@ -279,7 +279,9 @@ public final class ProgressIndicatorUtils {
     application.assertIsNonDispatchThread();
     Semaphore semaphore = new Semaphore(1);
     application.invokeLater(semaphore::up, ModalityState.any());
-    awaitWithCheckCanceled(semaphore, indicator);
+    UtilKt.waitWithParallelismCompensation(() -> {
+      awaitWithCheckCanceled(semaphore, indicator);
+    });
   }
 
   /**
