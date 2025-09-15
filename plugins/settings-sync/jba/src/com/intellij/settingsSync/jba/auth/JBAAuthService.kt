@@ -48,7 +48,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.SettingsSyncIcons
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.future.await
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ActionEvent
@@ -242,7 +242,7 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
   private fun getAllProductCodes(): List<String> {
     val ideProductCode = LicenseManager.getInstance().platformLicenseInfo.productDescriptor.productCode
     val pluginProductCodes = PluginManagerCore.loadedPlugins.mapNotNull { it.getProductCode() }
-    return listOf(ideProductCode) + pluginProductCodes
+    return (listOf(ideProductCode) + pluginProductCodes).distinct()
   }
 
   private suspend fun shouldShowCheckLicenses(): Boolean = coroutineScope {
@@ -250,37 +250,33 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
     val allProductCodes = getAllProductCodes()
     return@coroutineScope allProductCodes.map { productCode ->
       async {
-        productCode to service.getAvailableLicenses(productCode).asDeferred().await()
-      }
-    }.awaitAll().any { (productCode, result) ->
-      when (result) {
-        is JBAccountInfoService.LicenseListResult.LicenseList -> {
-          LOG.warn("checkHaveActiveLicenses :: got licenses $productCode ${result.licenses}")
-          result.licenses.isNotEmpty()
-        }
-        is JBAccountInfoService.LicenseListResult.RequestFailed -> {
-          LOG.warn("License request failed for $productCode: ${result.errorMessage}")
-          true
-        }
-        is JBAccountInfoService.LicenseListResult.RequestDeclined -> {
-          LOG.warn("License request declined for $productCode: ${result.message}")
-          true
-        }
-        is JBAccountInfoService.AuthRequired -> {
-          LOG.warn("Authentication required for license check for $productCode")
-          true
+        when (val result = service.getAvailableLicenses(productCode).await()) {
+          is JBAccountInfoService.LicenseListResult.LicenseList -> {
+            result.licenses.isNotEmpty()
+          }
+          is JBAccountInfoService.LicenseListResult.RequestFailed -> {
+            LOG.warn("License request failed for $productCode: ${result.errorMessage}")
+            true
+          }
+          is JBAccountInfoService.LicenseListResult.RequestDeclined -> {
+            LOG.warn("License request declined for $productCode: ${result.message}")
+            true
+          }
+          is JBAccountInfoService.AuthRequired -> {
+            LOG.warn("Authentication required for license check for $productCode")
+            true
+          }
         }
       }
-    }
+    }.awaitAll().any()
   }
 
-  override val logoutFunction: (suspend (Component?) -> Unit)?
+  override val logoutFunction: (suspend (Component) -> Unit)?
     get() {
       if (RemoteCommunicatorHolder.getExternalProviders().isEmpty())
         return null
 
       return lambda@{ component ->
-        if (component == null) return@lambda
         val shouldShowCheckLicenses = try {
           withModalProgress(
             ModalTaskOwner.component(component),
