@@ -16,11 +16,15 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author konstantin.aleev
  */
 public interface RunDashboardListener {
+  Topic<RunDashboardListener> DASHBOARD_TOPIC =
+    Topic.create("run dashboard", RunDashboardListener.class, Topic.BroadcastDirection.TO_PARENT);
+
   void configurationChanged(@NotNull RunConfiguration configuration, boolean withStructure);
 }
