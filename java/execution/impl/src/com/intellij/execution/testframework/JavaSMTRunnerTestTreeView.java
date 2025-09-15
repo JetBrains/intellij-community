@@ -71,7 +71,7 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
           long durationSeconds = TimeUnit.MILLISECONDS.toSeconds(durationMillis);
           if (durationSeconds == 0) return null;
           durationMillis = TimeUnit.SECONDS.toMillis(durationSeconds);
-          return NlsMessages.formatDurationApproximateNarrow(durationMillis);
+          return formatPaddedMillis(durationMillis);
         }
         if (testProxy.isSuite() &&
             testProxy.isFinal() &&
@@ -80,10 +80,18 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
           Long startTime = testProxy.getStartTimeMillis();
           Long endTime = testProxy.getEndTimeMillis();
           if (startTime != null && endTime != null && startTime < endTime) {
-            return NlsMessages.formatDurationApproximateNarrow(endTime - startTime);
+            return formatPaddedMillis(endTime - startTime);
           }
         }
         return testProxy.getDurationString(consoleProperties);
+      }
+
+      private static @Nls @NotNull String formatPaddedMillis(long durationMillis) {
+        return new NlsMessages.NlsDurationFormatter()
+          .setMaxFragments(2)
+          // avoid annoying text twitching when duration rolls from "1m 59s" to "2m 0s"
+          .setPadded(true)
+          .formatDuration(durationMillis);
       }
 
       private static @Nullable Long getFirstChildStartedAt(@NotNull SMTestProxy testProxy) {
