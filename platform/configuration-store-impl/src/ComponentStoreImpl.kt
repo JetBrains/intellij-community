@@ -221,19 +221,19 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   final override fun initPersistencePlainComponent(component: Any, key: String, pluginId: PluginId) {
     val stateSpec = StateAnnotation(key, FileStorageAnnotation(StoragePathMacros.WORKSPACE_FILE, false))
-    val componentInfo = createComponentInfo(PersistenceStateAdapter(component), stateSpec, serviceDescriptor = null, pluginId)
+    val componentInfo = createComponentInfo(component = PersistenceStateAdapter(component), stateSpec = stateSpec, serviceDescriptor = null, pluginId = pluginId)
     registerComponent(stateSpec.name, componentInfo)
   }
 
-  override suspend fun save(forceSavingAllSettings: Boolean) {
+  final override suspend fun save(forceSavingAllSettings: Boolean) {
     val saveResult = SaveResult()
-    doSave(saveResult, forceSavingAllSettings)
+    doSave(saveResult = saveResult, forceSavingAllSettings = forceSavingAllSettings)
     saveResult.rethrow()
   }
 
   internal open suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
     val saveSessionManager = createSaveSessionProducerManager()
-    commitComponents(forceSavingAllSettings, saveSessionManager, saveResult)
+    commitComponents(isForce = forceSavingAllSettings, sessionManager = saveSessionManager, saveResult = saveResult)
     saveSessionManager.save(saveResult)
   }
 
@@ -366,7 +366,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  internal open fun createSaveSessionProducerManager(): SaveSessionProducerManager = SaveSessionProducerManager(isUseVfsForWrite = false, collectVfsEvents = false)
+  internal open fun createSaveSessionProducerManager(): SaveSessionProducerManager = SaveSessionProducerManager(collectVfsEvents = false)
 
   private suspend fun commitComponent(
     sessionManager: SaveSessionProducerManager,
