@@ -70,10 +70,23 @@ private class CommitValidationDialog(
     const val EDIT_EXIT_CODE = NEXT_USER_EXIT_CODE + 1
   }
 
+  private val editAction = object : DialogWrapperAction(DevKitGitBundle.message("push.commit.message.lacks.issue.reference.edit")) {
+    override fun doAction(e: java.awt.event.ActionEvent) {
+      close(EDIT_EXIT_CODE)
+    }
+  }
+
+  private val commitAction = object : DialogWrapperAction(DevKitGitBundle.message("push.commit.message.lacks.issue.reference.commit")) {
+    override fun doAction(e: java.awt.event.ActionEvent) {
+      close(OK_EXIT_CODE)
+    }
+  }
+
   init {
     title = DevKitGitBundle.message("push.commit.intellij.platform.handler.title")
     isResizable = true
     init()
+    rootPane.defaultButton = getButton(editAction)
   }
 
   override fun createCenterPanel(): JComponent {
@@ -98,30 +111,10 @@ private class CommitValidationDialog(
 
   override fun createActions(): Array<Action> {
     return arrayOf(
-      createCommitAction(),
-      createEditAction(),
+      commitAction,
+      editAction,
       cancelAction
     )
-  }
-
-  private fun createCommitAction(): Action {
-    return object : DialogWrapperAction(DevKitGitBundle.message("push.commit.message.lacks.issue.reference.commit")) {
-      override fun doAction(e: java.awt.event.ActionEvent) {
-        close(OK_EXIT_CODE)
-      }
-    }
-  }
-
-  private fun createEditAction(): Action {
-    return object : DialogWrapperAction(DevKitGitBundle.message("push.commit.message.lacks.issue.reference.edit")) {
-      override fun doAction(e: java.awt.event.ActionEvent) {
-        close(EDIT_EXIT_CODE)
-      }
-    }
-  }
-
-  override fun getPreferredFocusedComponent(): JComponent? {
-    return null // Let the dialog decide focus automatically
   }
 
   override fun getDimensionServiceKey(): String {
