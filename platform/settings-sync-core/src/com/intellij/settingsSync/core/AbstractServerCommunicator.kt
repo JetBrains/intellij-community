@@ -8,14 +8,12 @@ import com.intellij.util.io.delete
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.io.InputStream
-import java.util.UUID
+import java.util.*
 import kotlin.io.path.inputStream
 
-abstract class AbstractServerCommunicator() : SettingsSyncRemoteCommunicator, Disposable {
-  companion object {
-    private val LOG = logger<AbstractServerCommunicator>()
-  }
+private val LOG = logger<AbstractServerCommunicator>()
 
+abstract class AbstractServerCommunicator : SettingsSyncRemoteCommunicator, Disposable {
   private var myTemporary = false
 
   override fun setTemporary(isTemporary: Boolean) {
@@ -66,7 +64,7 @@ abstract class AbstractServerCommunicator() : SettingsSyncRemoteCommunicator, Di
    * Fetches the latest version identifier for the file at the specified file path.
    *
    * This version is compared against SettingsSyncLocalSettings.getKnownAndAppliedServerId
-   * to check whether settings version on server is different from the local one.
+   * to check whether a settings version on server is different from the local one.
    *
    * @param filePath The path to the file whose latest version is to be retrieved.
    * @return The latest version identifier of the file, or null if no version information is available.
@@ -142,7 +140,7 @@ abstract class AbstractServerCommunicator() : SettingsSyncRemoteCommunicator, Di
       }
 
       val pushedVersion = writeFileInternal(snapshotFilePath, versionToPush, inputStream)
-      // errors are thrown as exceptions, and are handled above
+      // errors are thrown as exceptions and are handled above
       return SettingsSyncPushResult.Success(pushedVersion)
     }
     catch (e: Throwable) {
