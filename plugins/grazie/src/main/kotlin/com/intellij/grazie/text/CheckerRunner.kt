@@ -72,6 +72,13 @@ class CheckerRunner(val text: TextContent) {
     } ?: emptyList()
   }
 
+  @Suppress("unused")
+  @Deprecated("This method is deprecated and does nothing. Use run() instead.")
+  @ApiStatus.ScheduledForRemoval
+  fun run(checkers: List<TextChecker>, consumer: (List<TextProblem>) -> Unit) {
+    // No-op implementation to prevent NoSuchMethodError
+  }
+
   private fun getCachedProblems(configStamp: Long): List<TextProblem>? {
     val cache = text.getUserData(problemsKey)
     if (cache != null && cache.configStamp == configStamp) {
