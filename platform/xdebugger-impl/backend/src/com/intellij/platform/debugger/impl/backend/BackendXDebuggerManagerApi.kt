@@ -69,6 +69,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     val cs = currentSession.coroutineScope
     return XDebugSessionDto(
       currentSession.id,
+      currentSession.runContentDescriptor.id,
       debugProcess.editorsProvider.toRpc(),
       initialSessionState,
       currentSession.suspendData(),

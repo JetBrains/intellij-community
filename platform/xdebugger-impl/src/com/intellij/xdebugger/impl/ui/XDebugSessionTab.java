@@ -273,6 +273,18 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getProcessHandler(),
                                                       myUi.getComponent(), session.getSessionName(), icon, this::computeWatches,
                                                       restartActions);
+    if (!(session instanceof XDebugSessionProxy.Monolith)) {
+      // Session Proxy is not fully initialized in the Monolith,
+      // For the Monolith we incorporate the legacy happy execution path in ExecutionManagerImpl to assign run content descriptor id.
+      myRunContentDescriptor.setId(session.getRunContentDescriptorId());
+    }
+
+    String toolWindowId = myEnvironmentProxy.getContentDescriptorToolWindowId();
+    if (toolWindowId != null) {
+      myRunContentDescriptor.setContentToolWindowId(toolWindowId);
+    }
+    myRunContentDescriptor.setRunConfigurationName(myEnvironmentProxy.getRunProfileName());
+    myRunContentDescriptor.setRunConfigurationTypeId(myEnvironmentProxy.getRunConfigurationTypeId());
     myRunContentDescriptor.setRunnerLayoutUi(myUi);
     Disposer.register(myRunContentDescriptor, this);
     Disposer.register(myProject, myRunContentDescriptor);

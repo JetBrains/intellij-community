@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
+import com.intellij.execution.RunContentDescriptorIdType
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunProfile
@@ -481,6 +482,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
         Disposer.register(mockDescriptor, runTab)
         val descriptorId = mockDescriptor.storeGlobally(localTabScope)
         runContentDescriptorId.complete(descriptorId)
+        mockDescriptor.id = contentToReuse?.id ?: storeValueGlobally(debuggerManager.coroutineScope, mockDescriptor, RunContentDescriptorIdType)
         debuggerManager.coroutineScope.launch(Dispatchers.EDT) {
           tabClosedChannel.consumeEach {
             tabCoroutineScope.cancel()

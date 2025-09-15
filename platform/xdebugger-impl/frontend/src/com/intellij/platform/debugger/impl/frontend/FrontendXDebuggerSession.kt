@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
+import com.intellij.execution.RunContentDescriptorId
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.ide.rpc.action
@@ -70,6 +71,7 @@ class FrontendXDebuggerSession private constructor(
   private var tabInfoInitialized = false
 
   private val eventsDispatcher = EventDispatcher.create(XDebugSessionListener::class.java)
+  override val runContentDescriptorId: RunContentDescriptorId? = sessionDto.runContentDescriptorId
   override val id: XDebugSessionId = sessionDto.id
 
   private val sourcePositionFlow = MutableStateFlow<XSourcePosition?>(null)
