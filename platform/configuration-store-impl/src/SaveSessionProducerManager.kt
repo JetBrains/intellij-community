@@ -3,7 +3,6 @@
 
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
@@ -46,63 +45,35 @@ internal open class SaveSessionProducerManager {
 
 internal suspend fun saveSessions(saveSessions: Collection<SaveSession>, saveResult: SaveResult, collectVfsEvents: Boolean) {
   if (EDT.isCurrentThreadEdt()) {
-    ApplicationManager.getApplication().runWriteAction {
-      for (saveSession in saveSessions) {
-        saveSessionBlocking(saveSession, saveResult)
-      }
-    }
+    LOG.error("saveSessions can't be used on EDT")
   }
-  else {
-    val events = if (collectVfsEvents) ArrayList<VFileEvent>() else null
-    val syncList = if (events == null) null else Collections.synchronizedList(events)
-    for (saveSession in saveSessions) {
-      try {
-        saveSession.save(syncList)
-      }
-      catch (e: ReadOnlyModificationException) {
-        LOG.warn(e)
-        saveResult.addReadOnlyFile(SaveSessionAndFile(session = e.session ?: saveSession, file = e.file))
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Exception) {
-        val sessionAndFile = processAccessDeniedException(saveSession, e)
-        if (sessionAndFile == null) {
-          saveResult.addError(e)
-        }
-        else {
-          saveResult.addReadOnlyFile(sessionAndFile)
-        }
-      }
-    }
 
-    if (!events.isNullOrEmpty()) {
-      RefreshQueue.getInstance().processEvents(events)
+  val events = if (collectVfsEvents) ArrayList<VFileEvent>() else null
+  val syncList = if (events == null) null else Collections.synchronizedList(events)
+  for (saveSession in saveSessions) {
+    try {
+      saveSession.save(syncList)
+    }
+    catch (e: ReadOnlyModificationException) {
+      LOG.warn(e)
+      saveResult.addReadOnlyFile(SaveSessionAndFile(session = e.session ?: saveSession, file = e.file))
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Exception) {
+      val sessionAndFile = processAccessDeniedException(saveSession, e)
+      if (sessionAndFile == null) {
+        saveResult.addError(e)
+      }
+      else {
+        saveResult.addReadOnlyFile(sessionAndFile)
+      }
     }
   }
-}
 
-
-private fun saveSessionBlocking(saveSession: SaveSession, saveResult: SaveResult) {
-  try {
-    saveSession.saveBlocking()
-  }
-  catch (e: ReadOnlyModificationException) {
-    LOG.warn(e)
-    saveResult.addReadOnlyFile(SaveSessionAndFile(e.session ?: saveSession, e.file))
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Exception) {
-    val sessionAndFile = processAccessDeniedException(saveSession, e)
-    if (sessionAndFile == null) {
-      saveResult.addError(e)
-    }
-    else {
-      saveResult.addReadOnlyFile(sessionAndFile)
-    }
+  if (!events.isNullOrEmpty()) {
+    RefreshQueue.getInstance().processEvents(events)
   }
 }
 
