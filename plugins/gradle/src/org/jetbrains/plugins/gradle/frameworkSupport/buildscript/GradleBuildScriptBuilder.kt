@@ -21,7 +21,21 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
 
   fun configureTask(name: String, type: String, configure: Consumer<GradleScriptTreeBuilder>): Self = configureTask(name, type, configure::accept)
   fun configureTask(name: String, type: String, configure: GradleScriptTreeBuilder.() -> Unit): Self
-  fun configureTestTask(configure: GradleScriptTreeBuilder.() -> Unit): Self
+
+  @Deprecated("Renamed, use the [test] function instead.")
+  fun configureTestTask(configure: GradleScriptTreeBuilder.() -> Unit): Self = test(configure)
+
+  fun test(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun test(configure: Consumer<GradleScriptTreeBuilder>): Self =
+    test(configure::accept)
+
+  fun compileJava(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun compileJava(configure: Consumer<GradleScriptTreeBuilder>): Self =
+    compileJava(configure::accept)
+
+  fun compileTestJava(configure: GradleScriptTreeBuilder.() -> Unit): Self
+  fun compileTestJava(configure: Consumer<GradleScriptTreeBuilder>): Self =
+    compileTestJava(configure::accept)
 
   fun addDependency(scope: String, dependency: String): Self = addDependency(scope, dependency, null)
   fun addDependency(scope: String, dependency: Expression): Self = addDependency(scope, dependency, null)

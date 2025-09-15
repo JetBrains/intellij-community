@@ -168,7 +168,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   public void testCompilerArguments() {
     createProjectConfig(script(it -> it
       .withJavaPlugin()
-      .configureTask("compileTestJava", "JavaCompile", task -> {
+      .compileTestJava(task -> {
         task.code("options.compilerArgs << '-param1' << '-param2'");
       })
     ));
@@ -181,10 +181,10 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
     createProjectConfig(script(it -> it
       .withJavaPlugin()
-      .configureTask("compileJava", "JavaCompile", task -> {
+      .compileJava(task -> {
         task.code("options.compilerArgs << '-param'");
       })
-      .configureTask("compileTestJava", "JavaCompile", task -> {
+      .compileTestJava(task -> {
         task.code("options.compilerArgs << '-param'");
       })
     ));
@@ -221,7 +221,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
                        }
                    }
                    """)
-      .configureTask("compileJava", "JavaCompile", task -> {
+      .compileJava(task -> {
         task.code("options.compilerArgumentProviders.add(new GStringArgumentProvider(value: \"Str1\"))");
         task.code("options.compilerArgumentProviders.add(new JavaStringArgumentProvider(value: \"Str2\"))");
       })

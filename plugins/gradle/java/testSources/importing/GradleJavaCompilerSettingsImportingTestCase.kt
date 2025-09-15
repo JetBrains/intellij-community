@@ -44,14 +44,14 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
           assignIfNotNull("sourceCompatibility", projectSourceCompatibility)
           assignIfNotNull("targetCompatibility", projectTargetCompatibility)
         }
-        call("compileJava") {
+        compileJava {
           assignIfNotNull("sourceCompatibility", mainSourceCompatibility)
           assignIfNotNull("targetCompatibility", mainTargetCompatibility)
           if (mainSourceCompatibilityEnablePreview) {
             call("options.compilerArgs.add", "--enable-preview")
           }
         }
-        call("compileTestJava") {
+        compileTestJava {
           assignIfNotNull("sourceCompatibility", testSourceCompatibility)
           assignIfNotNull("targetCompatibility", testTargetCompatibility)
           if (testSourceCompatibilityEnablePreview) {

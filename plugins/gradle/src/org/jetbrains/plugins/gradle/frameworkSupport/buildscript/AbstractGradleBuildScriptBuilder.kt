@@ -74,8 +74,14 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
       }
     }
 
-  override fun configureTestTask(configure: GradleScriptTreeBuilder.() -> Unit): Self =
+  override fun test(configure: GradleScriptTreeBuilder.() -> Unit): Self =
     configureTask("test", "Test", configure)
+
+  override fun compileJava(configure: GradleScriptTreeBuilder.() -> Unit): Self =
+    configureTask("compileJava", "JavaCompile", configure)
+
+  override fun compileTestJava(configure: GradleScriptTreeBuilder.() -> Unit): Self =
+    configureTask("compileTestJava", "JavaCompile", configure)
 
   override fun addDependency(scope: String, dependency: String, sourceSet: String?): Self =
     addDependency(scope, string(dependency), sourceSet)
@@ -263,14 +269,14 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
         withMavenCentral()
         // The kotlin-test dependency version is inherited from the Kotlin plugin
         addTestImplementationDependency("org.jetbrains.kotlin:kotlin-test")
-        configureTestTask {
+        test {
           call("useJUnitPlatform")
         }
       }
       GradleDsl.KOTLIN -> {
         withMavenCentral()
         addTestImplementationDependency(call("kotlin", "test"))
-        configureTestTask {
+        test {
           call("useJUnitPlatform")
         }
       }
@@ -306,7 +312,7 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
         addTestRuntimeOnlyDependency("org.junit.jupiter:junit-jupiter-engine:$junit5Version")
       }
     }
-    configureTestTask {
+    test {
       call("useJUnitPlatform")
     }
   }
