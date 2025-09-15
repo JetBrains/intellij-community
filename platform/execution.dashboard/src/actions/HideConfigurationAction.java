@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,6 +45,6 @@ final class HideConfigurationAction
 
     List<RunDashboardRunConfigurationNode> nodes = RunDashboardActionUtils.getTargets(e);
     Set<RunConfiguration> configurations = ContainerUtil.map2Set(nodes, node -> node.getConfigurationSettings().getConfiguration());
-    ((RunDashboardManagerImpl)RunDashboardManager.getInstance(project)).hideConfigurations(configurations);
+    RunDashboardManager.getInstance(project).hideConfigurations(configurations);
   }
 }
