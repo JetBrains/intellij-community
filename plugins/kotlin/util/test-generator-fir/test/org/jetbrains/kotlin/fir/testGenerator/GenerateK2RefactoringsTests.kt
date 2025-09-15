@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToEl
 import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToFqnTest
 import org.jetbrains.kotlin.idea.k2.refactoring.copy.AbstractK2CopyTest
 import org.jetbrains.kotlin.idea.k2.refactoring.copy.AbstractK2MultiModuleCopyTest
-import org.jetbrains.kotlin.idea.k2.refactoring.inline.AbstractKotlinFirInlineTest
+import org.jetbrains.kotlin.idea.k2.refactoring.inline.*
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.*
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.AbstractK2IntroduceVariableTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.*
@@ -67,6 +67,10 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
     testGroup("refactorings/kotlin.refactorings.tests.k2", category = INLINE_REFACTORING, testDataPath = "../../idea/tests/testData") {
         testClass<AbstractKotlinFirInlineTest> {
             model("refactoring/inline", pattern = Patterns.KT_WITHOUT_DOTS, excludedDirectories = listOf("withFullJdk"))
+        }
+
+        testClass<AbstractKotlinFirMultiplatformTest> {
+            model("refactoring/inlineMultiModule", pattern = Patterns.KT_WITHOUT_DOTS)
         }
     }
     testGroup("refactorings/kotlin.refactorings.tests.k2", category = EXTRACT_REFACTORING, testDataPath = "../../idea/tests/testData") {
