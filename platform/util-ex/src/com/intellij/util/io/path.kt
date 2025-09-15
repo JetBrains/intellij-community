@@ -26,15 +26,25 @@ fun Path.createDirectories(): Path = NioFiles.createDirectories(this)
 /** See [NioFiles.createParentDirectories] */
 fun Path.createParentDirectories(): Path = NioFiles.createParentDirectories(this)
 
-/** Use standard extensions [kotlin.io.path.createParentDirectories] and [kotlin.io.path.outputStream]. */
-@ApiStatus.Obsolete
-@JvmOverloads
-fun Path.outputStream(append: Boolean = false, vararg options: OpenOption): OutputStream {
+/**
+ * Opposite to Java, parent directories will be created
+ */
+fun Path.outputStream(append: Boolean): OutputStream {
   parent?.createDirectories()
-  return when {
-    append -> Files.newOutputStream(this, StandardOpenOption.APPEND, StandardOpenOption.CREATE, *options)
-    else -> Files.newOutputStream(this)
+  if (append) {
+    return Files.newOutputStream(this, StandardOpenOption.APPEND, StandardOpenOption.CREATE)
   }
+  else {
+    return Files.newOutputStream(this)
+  }
+}
+
+/**
+ * Opposite to Java, parent directories will be created
+ */
+fun Path.outputStream(): OutputStream {
+  parent?.createDirectories()
+  return Files.newOutputStream(this)
 }
 
 fun Path.safeOutputStream(): OutputStream = SafeFileOutputStream(this.createParentDirectories())
