@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,19 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                 
                                 void call(B<String> b){}
                                 """);
-    myFixture.launchAction(myFixture.findSingleIntention("Replace a constructor call type to 'bar.p2.A<String>'"));
+    IntentionAction intention = myFixture.findSingleIntention("Replace a constructor call type to 'bar.p2.A<String>'");
+    assertEquals(myFixture.getIntentionPreviewText(intention),
+                 """
+                   import bar.p1.A;
+                   import bar.p2.B;
+                   
+                   void main(String[] args) {
+                      call(new bar.p2.A<String>("1"));
+                   }
+                   
+                   void call(B<String> b){}
+                   """);
+    myFixture.launchAction(intention);
     myFixture.checkResult("""
                             import bar.p2.A;
                             import bar.p2.B;

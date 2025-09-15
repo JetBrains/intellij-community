@@ -4,9 +4,11 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightFixUtil;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -14,7 +16,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.Processor;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The `ReplaceTypeWithWrongImportFix` class provides a quick fix action for replacing
@@ -67,16 +70,13 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
     return CachedValuesManager.getCachedValue(refOriginalElement, () -> {
       Project project = refOriginalElement.getProject();
       GlobalSearchScope scope = refOriginalElement.getResolveScope();
-      PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(myShortName, scope);
-      if (classes.length == 0) return null;
-      if (classes.length > 50) return null;
       JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       PsiType expectedType = factory.createTypeFromText(myExpectedType, ref);
       if (!(expectedType instanceof PsiClassType classType)) {
         return null;
       }
-      PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(classType);
+      PsiClass expectedClass = classType.resolve();
       if (expectedClass == null) return null;
 
       Condition<PsiClass> accessiblePredicate = aClass -> {
@@ -95,7 +95,23 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
         }
         return true;
       };
-      List<PsiClass> filtered = ContainerUtil.filter(classes, accessiblePredicate);
+
+      AtomicInteger counter = new AtomicInteger();
+      List<PsiClass> filtered = new ArrayList<>();
+
+      Processor<PsiClass> processor = psiClass -> {
+        int count = counter.incrementAndGet();
+        if (count > 5) {
+          return false;
+        }
+        if (accessiblePredicate.test(psiClass)) {
+          filtered.add(psiClass);
+        }
+        return true;
+      };
+
+      PsiShortNamesCache.getInstance(project).processClassesWithName(myShortName, processor, scope, null);
+
       if (filtered.size() != 1) {
         return null;
       }
@@ -138,17 +154,11 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
     });
   }
 
-  @Override
-  protected @NotNull IntentionPreviewInfo generatePreview(ActionContext context, PsiJavaCodeReferenceElement originalElement) {
-    String targetClassName = getTargetClassName(originalElement);
-    if (targetClassName == null) return IntentionPreviewInfo.EMPTY;
-    ModCommand command = ModCommand.psiUpdate(originalElement, (e, upd) -> {
-      PsiJavaCodeReferenceElement newReference =
-        JavaPsiFacade.getElementFactory(context.project()).createReferenceFromText(targetClassName, e);
-      new CommentTracker().replaceAndRestoreComments(e, newReference);
-    });
-
-    return IntentionPreviewUtils.getModCommandPreview(command, context);
+  private static PsiElement replace(@NotNull PsiJavaCodeReferenceElement e,
+                                    @NotNull String targetClassName) {
+    PsiJavaCodeReferenceElement newReference =
+      JavaPsiFacade.getElementFactory(e.getProject()).createReferenceFromText(targetClassName, e);
+    return new CommentTracker().replaceAndRestoreComments(e, newReference);
   }
 
   @Override
@@ -164,10 +174,10 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
     if (targetClassName == null) {
       return;
     }
-    PsiJavaCodeReferenceElement newReference =
-      JavaPsiFacade.getElementFactory(context.project()).createReferenceFromText(targetClassName, element);
-    PsiElement replaced = element.replace(newReference);
-    JavaCodeStyleManager.getInstance(context.project()).shortenClassReferences(replaced.getParent());
+    PsiElement replaced = replace(element, targetClassName);
+    if (!IntentionPreviewUtils.isIntentionPreviewActive()) {
+      JavaCodeStyleManager.getInstance(context.project()).shortenClassReferences(replaced.getParent());
+    }
   }
 
   /**
