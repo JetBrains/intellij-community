@@ -7,6 +7,7 @@ import com.intellij.configurationStore.saveSettings
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
@@ -93,16 +94,22 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
         isNewProject = true
       }
       val newProject = ProjectManagerEx.getInstanceEx().newProjectAsync(file = projectDir, options = options)
-      PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
-        baseDir = projectDir,
-        project = newProject,
-        newProject = true,
-        createModule = true,
-      )
-      runInAutoSaveDisabledMode {
-        saveSettings(newProject)
+      try {
+        PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
+          baseDir = projectDir,
+          project = newProject,
+          newProject = true,
+          createModule = true,
+        )
+        runInAutoSaveDisabledMode {
+          saveSettings(newProject)
+        }
       }
-      edtWriteAction { Disposer.dispose(newProject) }
+      finally {
+        withContext(Dispatchers.EDT) {
+          ApplicationManager.getApplication().runWriteAction { Disposer.dispose(newProject) }
+        }
+      }
     }
 
     val newModule = try {

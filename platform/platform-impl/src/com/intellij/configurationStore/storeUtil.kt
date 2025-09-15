@@ -94,7 +94,7 @@ object StoreUtil {
 }
 
 suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false): Boolean {
-  val storeReloadManager = if (componentManager is Project) StoreReloadManager.getInstance(componentManager) else null
+  val storeReloadManager = if (componentManager is Project) componentManager.serviceAsync<StoreReloadManager>() else null
   storeReloadManager?.reloadChangedStorageFiles()
   storeReloadManager?.blockReloadingProjectOnExternalChanges()
   try {

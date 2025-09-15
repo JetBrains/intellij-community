@@ -2,9 +2,7 @@
 package com.intellij.platform
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.ApplicationRule
@@ -38,12 +36,10 @@ internal class ModuleAttachProcessorTest {
     var existingProjectDir: String by Delegates.notNull()
     createOrLoadProject(tempDirManager) { existingProject ->
       existingProjectDir = existingProject.basePath!!
-      withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
-        runWriteAction {
-          ModuleManager.getInstance(existingProject).newModule("$existingProjectDir/test.iml", WEB_MODULE_ENTITY_TYPE_ID_NAME)
-        }
-        existingProject.stateStore.save()
+      backgroundWriteAction {
+        ModuleManager.getInstance(existingProject).newModule("$existingProjectDir/test.iml", WEB_MODULE_ENTITY_TYPE_ID_NAME)
       }
+      existingProject.stateStore.save()
     }
 
     createOrLoadProject(tempDirManager) { currentProject ->
