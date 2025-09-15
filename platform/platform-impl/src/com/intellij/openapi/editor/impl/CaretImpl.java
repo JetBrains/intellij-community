@@ -1326,9 +1326,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
       int padding = selectionMarker.endVirtualOffset - selectionMarker.startVirtualOffset;
       StringBuilder builder = new StringBuilder(selectedText.length() + padding);
       builder.append(selectedText);
-      for (int i = 0; i < padding; i++) {
-        builder.append(' ');
-      }
+      builder.repeat(' ', padding);
       return builder.toString();
     }
     else {

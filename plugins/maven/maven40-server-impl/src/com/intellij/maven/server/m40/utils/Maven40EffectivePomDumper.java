@@ -16,12 +16,7 @@ import org.apache.maven.project.ProjectBuildingResult;
 import org.codehaus.plexus.util.xml.PrettyPrintXMLWriter;
 import org.codehaus.plexus.util.xml.XMLWriter;
 import org.codehaus.plexus.util.xml.XmlWriterUtil;
-import org.jdom.Content;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.Namespace;
-import org.jdom.Text;
+import org.jdom.*;
 import org.jdom.filter2.ElementFilter;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
@@ -32,21 +27,10 @@ import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicatorImpl;
 import org.jetbrains.idea.maven.server.security.ChecksumUtil;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 public final class Maven40EffectivePomDumper {
 
@@ -130,7 +114,7 @@ public final class Maven40EffectivePomDumper {
 
         MavenProject project = buildingResult.getProject();
 
-        XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
+        XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), " ".repeat(XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
                                                     "\n", null, null);
 
         writeHeader(writer);
@@ -143,14 +127,6 @@ public final class Maven40EffectivePomDumper {
     });
 
     return w.toString();
-  }
-
-  private static String repeat(String str, int repeat) {
-    StringBuilder buffer = new StringBuilder(repeat * str.length());
-    for (int i = 0; i < repeat; i++) {
-      buffer.append(str);
-    }
-    return buffer.toString();
   }
 
   /**
