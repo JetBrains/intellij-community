@@ -26,9 +26,7 @@ internal class ModuleStoreImpl(module: Module, private val pathMacroManager: Pat
 
   override val storageManager: StateStorageManagerImpl = ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
 
-  override fun createSaveSessionProducerManager(): SaveSessionProducerManager {
-    return SaveSessionProducerManager(isUseVfsForWrite = storageManager.isUseVfsForWrite, collectVfsEvents = true)
-  }
+  override fun createSaveSessionProducerManager(): SaveSessionProducerManager = SaveSessionProducerManager(collectVfsEvents = true)
 
   override fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean = false
 
@@ -182,9 +180,6 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
 
   override val isExternalSystemStorageEnabled: Boolean
     get() = (componentManager as Module?)?.project?.isExternalStorageEnabled == true
-
-  override val isUseVfsForWrite: Boolean
-    get() = !useBackgroundSave()
 
   override fun createFileBasedStorage(
     file: Path,
