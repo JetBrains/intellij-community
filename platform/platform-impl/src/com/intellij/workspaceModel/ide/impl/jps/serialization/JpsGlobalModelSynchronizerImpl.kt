@@ -34,7 +34,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import kotlin.io.path.Path
+import java.nio.file.Path
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -275,7 +275,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
   private fun createSerializers(): List<JpsFileEntityTypeSerializer<WorkspaceEntity>> {
     if (isSerializationProhibited) return emptyList()
     val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
-    return JpsGlobalEntitiesSerializers.createApplicationSerializers(virtualFileUrlManager, sortedRootTypes, Path(PathManager.getOptionsPath()))
+    return JpsGlobalEntitiesSerializers.createApplicationSerializers(virtualFileUrlManager, sortedRootTypes, PathManager.getOptionsDir())
   }
 
   private fun bridgesInitializationCallback(
