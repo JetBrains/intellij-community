@@ -253,12 +253,6 @@ abstract class XmlElementStorage protected constructor(
       private val stateMap: StateMap
     ) : SaveSession, SafeWriteRequestor, LargeFileWriteRequestor {
       override suspend fun save(events: MutableList<VFileEvent>?) {
-        doSave(events)
-      }
-
-      override fun saveBlocking() = doSave(events = null)
-
-      private fun doSave(events: MutableList<VFileEvent>?) {
         var isSavedLocally = false
         val provider = storage.provider
 
