@@ -58,6 +58,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.function.Function;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor {
   protected final Project myProject;
@@ -264,7 +265,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   @ApiStatus.Internal
   public CompletableFuture<Void> getInitFuture() {
-    return myInitFuture;
+    // return a new derived future to avoid undesired cancellations
+    return myInitFuture.thenApply(Function.identity());
   }
 
   private static @Nullable ObjectReference getTargetExceptionWithStackTraceFilled(@Nullable EvaluationContextImpl evaluationContext,
