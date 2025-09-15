@@ -103,6 +103,9 @@ object K2UnusedSymbolUtil {
                     if (isExpectedOrActual(containingClass)) return false
                 }
             } else if (ownerFunction is KtFunction) {
+                if (ownerFunction.name == null) {
+                    return false
+                }
                 if (ownerFunction.hasModifier(KtTokens.OPERATOR_KEYWORD)) {
                     // operator parameters are hardcoded to be used since they can't be removed at will, because operator convention would break
                     return false

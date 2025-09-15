@@ -16610,6 +16610,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/annotationWithUseSiteTarget.kt");
             }
 
+            @TestMetadata("anonymousFunction.kt")
+            public void testAnonymousFunction() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/anonymousFunction.kt");
+            }
+
+            @TestMetadata("anonymousFunction1.kt")
+            public void testAnonymousFunction1() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/anonymousFunction1.kt");
+            }
+
             @TestMetadata("arrayAccessOperator.kt")
             public void testArrayAccessOperator() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/arrayAccessOperator.kt");

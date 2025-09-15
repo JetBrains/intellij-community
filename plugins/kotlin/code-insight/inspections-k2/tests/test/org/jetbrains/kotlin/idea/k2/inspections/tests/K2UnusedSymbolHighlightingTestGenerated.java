@@ -202,6 +202,16 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/annotationWithUseSiteTarget.kt");
         }
 
+        @TestMetadata("anonymousFunction.kt")
+        public void testAnonymousFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/anonymousFunction.kt");
+        }
+
+        @TestMetadata("anonymousFunction1.kt")
+        public void testAnonymousFunction1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/anonymousFunction1.kt");
+        }
+
         @TestMetadata("arrayAccessOperator.kt")
         public void testArrayAccessOperator() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/arrayAccessOperator.kt");
