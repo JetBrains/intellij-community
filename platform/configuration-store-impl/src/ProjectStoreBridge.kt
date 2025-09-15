@@ -109,9 +109,6 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
 
   final override fun createSaveSessionProducerManager(): SaveSessionProducerManager = ProjectWithModulesSaveSessionProducerManager(project)
 
-  final override val collectVfsEventsDuringSave: Boolean
-    get() = true
-
   override fun createContentReader(): JpsFileContentReaderWithCache {
     return StorageJpsConfigurationReader(project = project, projectStore = this, configLocation = getJpsProjectConfigLocation(project)!!)
   }

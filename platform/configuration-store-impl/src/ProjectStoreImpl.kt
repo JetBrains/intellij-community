@@ -157,7 +157,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       loadProjectFromTemplate(template, iprFile)
     }
 
-    val projectIdManager = ProjectIdManager.getInstance(project)
+    val projectIdManager = project.service<ProjectIdManager>()
     var projectWorkspaceId = projectIdManager.id
     if (projectWorkspaceId == null) {
       // do not use the project name as part of id, to ensure a project dir rename does not cause data loss
@@ -174,9 +174,8 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
         PathManager.getConfigDir()
       }
       val productWorkspaceFile = basePath.resolve("workspace/$projectWorkspaceId.xml")
+      // storageManager.setMacros(macros) was called before, because we need to read `ProjectIdManager` state to get projectWorkspaceId
       macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
-      /// todo why we call it the second time?
-      storageManager.setMacros(macros)
     }
     isStoreInitialized = true
     LOG.info("Project store initialized with paths: $macros")
@@ -190,7 +189,8 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       }
       else {
         moveComponentConfiguration(
-          defaultProject, element,
+          defaultProject = defaultProject,
+          element = element,
           storagePathResolver = { StoragePathMacros.PROJECT_FILE },  // doesn't matter; any path will be resolved as projectFilePath (see `fileResolver`)
           fileResolver = { if (it == "workspace.xml") workspacePath else iprFile },
         )
@@ -227,7 +227,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     }
 
   override val projectWorkspaceId: String?
-    get() = ProjectIdManager.getInstance(project).id
+    get() = project.service<ProjectIdManager>().id
 
   final override fun <T : Any> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
     return storeDescriptor.getStorageSpecs(component = component, stateSpec = stateSpec, operation = operation, storageManager = storageManager)
@@ -284,7 +284,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   ) {
   }
 
-  override val collectVfsEventsDuringSave: Boolean
+  final override val collectVfsEventsDuringSave: Boolean
     get() = true
 
   final override fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {

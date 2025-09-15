@@ -21,15 +21,15 @@ import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Files
 import java.nio.file.Path
 
-@ApiStatus.Internal
+@Internal
 const val APP_CONFIG: String = $$"$APP_CONFIG$"
 
-@ApiStatus.Internal
+@Internal
 @VisibleForTesting
 @Suppress("NonDefaultConstructor")
 open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
@@ -92,10 +92,10 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
   final override fun toString(): String = "app"
 }
 
-@ApiStatus.Internal
+@Internal
 @VisibleForTesting
 class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null, controller: SettingsController?)
-  : StateStorageManagerImpl(rootTagName = "application", pathMacroManager?.createTrackingSubstitutor(), componentManager = null, controller)
+  : StateStorageManagerImpl(rootTagName = "application", macroSubstitutor = pathMacroManager?.createTrackingSubstitutor(), componentManager = null, controller = controller)
 {
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String = StoragePathMacros.NON_ROAMABLE_FILE
 
@@ -110,7 +110,7 @@ class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null,
           Files.deleteIfExists(storage.file)
         }
         else {
-          writer.writeTo(storage.file, requestor = null, LineSeparator.LF, isUseXmlProlog)
+          writer.writeTo(file = storage.file, requestor = null, lineSeparator = LineSeparator.LF, useXmlProlog = isUseXmlProlog)
         }
       }.getOrLogException(LOG)
     }
@@ -131,5 +131,5 @@ class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null,
 
 private class ApplicationPathMacroManager : PathMacroManager(null)
 
-@ApiStatus.Internal
+@Internal
 fun removeMacroIfStartsWith(path: String, macro: String): String = path.removePrefix("$macro/")
