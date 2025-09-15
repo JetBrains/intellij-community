@@ -247,7 +247,7 @@ fun tryCheckingFileInScope(
       val context = contextInfo.contexts.first()
       @Suppress("DEPRECATION")
       val actualCodeInsightContext = contextManager.getOrSetContext(viewProvider, context)
-      if (actualCodeInsightContext === context) {
+      if (actualCodeInsightContext == context) {
         return true
       }
       else {
