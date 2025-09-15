@@ -1,6 +1,3 @@
-@:com.intellij.openapi.components.State
-- java.lang.annotation.Annotation
-- *a:getStateRequiresEdt():Z
 com.intellij.openapi.module.ModifiableModuleModel
 - *:newNonPersistentModule(java.lang.String,java.lang.String):com.intellij.openapi.module.Module
 *a:com.intellij.openapi.module.ModuleGrouper
