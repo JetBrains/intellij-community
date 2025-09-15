@@ -78,6 +78,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.OS;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -3026,7 +3027,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
             .createHtmlTextBalloonBuilder(content, messageType, null)
             .setHideOnClickOutside(true)
-            .setDisposable(disposable)
+            .setDisposable(createEdtDisposable())
             .setHideOnFrameResize(false);
           Balloon balloon = balloonBuilder.createBalloon();
           balloon.show(new AnchoredPoint(AnchoredPoint.Anchor.TOP, target), Balloon.Position.above);
@@ -3056,6 +3057,25 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private record VirtualMachineData(VirtualMachineProxyImpl vm, RemoteConnection connection,
                                     DebuggerManagerThreadImpl debuggerManagerThread) {
+  }
+
+  private @NotNull Disposable createEdtDisposable() {
+    EDT.assertIsEdt();
+    Disposable result = Disposer.newCheckedDisposable();
+    boolean isSuccess = Disposer.tryRegister(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          Disposer.dispose(result);
+        });
+      }
+    });
+    if (!isSuccess) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Disposer.dispose(result);
+      });
+    }
+    return result;
   }
 
   public void logError(@NotNull String message, @NotNull Attachment attachment) {
