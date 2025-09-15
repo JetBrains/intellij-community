@@ -8,9 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.UnableToSaveProjectNotification
 import com.intellij.openapi.vfs.VirtualFile
 
-internal open class ProjectSaveSessionProducerManager(@JvmField protected val project: Project) : SaveSessionProducerManager(collectVfsEvents = true) {
-}
-
 internal suspend fun validateSaveResult(saveResult: SaveResult, project: Project) {
   val notifications = getUnableToSaveNotifications(project)
   val readonlyFiles = saveResult.readonlyFiles

@@ -14,7 +14,7 @@ import kotlinx.coroutines.CancellationException
 import java.nio.file.AccessDeniedException
 import java.util.*
 
-internal open class SaveSessionProducerManager(private val collectVfsEvents: Boolean) {
+internal open class SaveSessionProducerManager {
   private val producers = Collections.synchronizedMap(LinkedHashMap<StateStorage, SaveSessionProducer>())
 
   fun getProducer(storage: StateStorage): SaveSessionProducer? {
@@ -33,7 +33,7 @@ internal open class SaveSessionProducerManager(private val collectVfsEvents: Boo
     }
   }
 
-  suspend fun save(saveResult: SaveResult) {
+  suspend fun save(saveResult: SaveResult, collectVfsEvents: Boolean) {
     if (producers.isNotEmpty()) {
       val saveSessions = ArrayList<SaveSession>()
       collectSaveSessions(saveSessions)
@@ -56,8 +56,27 @@ internal suspend fun saveSessions(saveSessions: Collection<SaveSession>, saveRes
     val events = if (collectVfsEvents) ArrayList<VFileEvent>() else null
     val syncList = if (events == null) null else Collections.synchronizedList(events)
     for (saveSession in saveSessions) {
-      saveSession(saveSession, syncList, saveResult)
+      try {
+        saveSession.save(syncList)
+      }
+      catch (e: ReadOnlyModificationException) {
+        LOG.warn(e)
+        saveResult.addReadOnlyFile(SaveSessionAndFile(session = e.session ?: saveSession, file = e.file))
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Exception) {
+        val sessionAndFile = processAccessDeniedException(saveSession, e)
+        if (sessionAndFile == null) {
+          saveResult.addError(e)
+        }
+        else {
+          saveResult.addReadOnlyFile(sessionAndFile)
+        }
+      }
     }
+
     if (!events.isNullOrEmpty()) {
       RefreshQueue.getInstance().processEvents(events)
     }
@@ -72,28 +91,6 @@ private fun saveSessionBlocking(saveSession: SaveSession, saveResult: SaveResult
   catch (e: ReadOnlyModificationException) {
     LOG.warn(e)
     saveResult.addReadOnlyFile(SaveSessionAndFile(e.session ?: saveSession, e.file))
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Exception) {
-    val sessionAndFile = processAccessDeniedException(saveSession, e)
-    if (sessionAndFile == null) {
-      saveResult.addError(e)
-    }
-    else {
-      saveResult.addReadOnlyFile(sessionAndFile)
-    }
-  }
-}
-
-private suspend fun saveSession(saveSession: SaveSession, events: MutableList<VFileEvent>?, saveResult: SaveResult) {
-  try {
-    saveSession.save(events)
-  }
-  catch (e: ReadOnlyModificationException) {
-    LOG.warn(e)
-    saveResult.addReadOnlyFile(SaveSessionAndFile(session = e.session ?: saveSession, file = e.file))
   }
   catch (e: CancellationException) {
     throw e

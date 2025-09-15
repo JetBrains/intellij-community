@@ -60,7 +60,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
     val sessionManager = createSaveSessionProducerManager()
     saveSettingsAndCommitComponents(saveResult = saveResult, forceSavingAllSettings = forceSavingAllSettings, sessionManager = sessionManager)
-    sessionManager.save(saveResult)
+    sessionManager.save(saveResult, collectVfsEventsDuringSave)
   }
 
   internal suspend fun saveSettingsAndCommitComponents(

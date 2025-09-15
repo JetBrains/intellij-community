@@ -7,6 +7,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
@@ -56,7 +57,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Supplier
-import kotlin.io.path.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.nameWithoutExtension
 
@@ -108,6 +108,9 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
   }
 
   final override fun createSaveSessionProducerManager(): SaveSessionProducerManager = ProjectWithModulesSaveSessionProducerManager(project)
+
+  final override val collectVfsEventsDuringSave: Boolean
+    get() = true
 
   override fun createContentReader(): JpsFileContentReaderWithCache {
     return StorageJpsConfigurationReader(project = project, projectStore = this, configLocation = getJpsProjectConfigLocation(project)!!)
@@ -172,12 +175,16 @@ private class DirectJpsStorageContentWriter(
   }
 
   override suspend fun writeFilesToDisk() {
-    val exceptions = CopyOnWriteArrayList<IOException>()
+    if (filesWithComponents.isEmpty()) {
+      return
+    }
 
+    val exceptions = CopyOnWriteArrayList<IOException>()
+    val globalPathMacros = PathMacros.getInstance()
     // todo (IJPL-157852): we can use several threads
-    for ((_, components) in filesWithComponents) {
+    for (components in filesWithComponents.values) {
       try {
-        components.flush(moduleManager)
+        components.flush(moduleManager, globalPathMacros = globalPathMacros)
       }
       catch (e: IOException) {
         exceptions.add(e)
@@ -192,9 +199,7 @@ private class DirectJpsStorageContentWriter(
   }
 
   // This class is not thread-safe. The same file should not be populated from different threads.
-  private class WritableImlFileContent(
-    private val filePath: String,
-  ) {
+  private class WritableImlFileContent(private val filePath: String) {
     private val components = /*sorted*/TreeMap</*componentName*/String, /*componentTag*/Element>()
 
     fun saveComponent(componentName: String, componentTag: Element?) {
@@ -207,19 +212,19 @@ private class DirectJpsStorageContentWriter(
       }
     }
 
-    fun flush(moduleManager: ModuleManager) {
-      val path = Path(filePath)
+    fun flush(moduleManager: ModuleManager, globalPathMacros: PathMacros) {
+      val path = Path.of(filePath)
       val moduleName = path.nameWithoutExtension
       val module = moduleManager.findModuleByName(moduleName)
-      val pathMacroManager = if (module != null) {
-        PathMacroManager.getInstance(module)
-      }
-      else {
+      val pathMacroManager = if (module == null) {
         LOG.error("Could not find module with name $moduleName. Paths will not be substituted.")
         null
       }
+      else {
+        ModulePathMacroManager(module, globalPathMacros)
+      }
       val writer = XmlDataWriter("module", components.values.toList(), rootAttributes = emptyMap(), pathMacroManager, filePath)
-      writer.writeTo(path, requestor = null, LineSeparator.getSystemLineSeparator(), false)
+      writer.writeTo(file = path, requestor = null, lineSeparator = LineSeparator.getSystemLineSeparator(), useXmlProlog = false)
     }
   }
 
@@ -232,7 +237,7 @@ private class DirectJpsStorageContentWriter(
     }
 
     override fun close() {
-      delegate.flush(moduleManager)
+      delegate.flush(moduleManager = moduleManager, globalPathMacros = PathMacros.getInstance())
     }
   }
 }
@@ -244,11 +249,11 @@ private class ComponentStoreContentWriter(
 ) : JpsStorageContentWriter(session, store, project) {
 
   override fun saveInternalFileModuleComponent(filePath: @NlsSafe String, componentName: String, componentTag: Element?) {
-    session.setModuleComponentState(filePath, componentName, componentTag)
+    session.setModuleComponentState(imlFilePath = filePath, componentName = componentName, componentTag = componentTag)
   }
 
   override fun saveExternalFileModuleComponent(filePath: @NlsSafe String, componentName: String, componentTag: Element?) {
-    session.setModuleComponentState(filePath, componentName, componentTag)
+    session.setModuleComponentState(imlFilePath = filePath, componentName = componentName, componentTag = componentTag)
   }
 
   override suspend fun writeFilesToDisk() {}
@@ -266,11 +271,11 @@ private class HalfDirectJpsStorageContentWriter(
   private val internalWriter = ComponentStoreContentWriter(session, store, project)
 
   override fun saveInternalFileModuleComponent(filePath: @NlsSafe String, componentName: String, componentTag: Element?) {
-    internalWriter.saveComponent(filePath, componentName, componentTag)
+    internalWriter.saveComponent(fileUrl = filePath, componentName = componentName, componentTag = componentTag)
   }
 
   override fun saveExternalFileModuleComponent(filePath: @NlsSafe String, componentName: String, componentTag: Element?) {
-    externalWriter.saveComponent(filePath, componentName, componentTag)
+    externalWriter.saveComponent(fileUrl = filePath, componentName = componentName, componentTag = componentTag)
   }
 
   override fun saveFile(fileUrl: String, writer: (WritableJpsFileContent) -> Unit) {
@@ -283,7 +288,6 @@ private class HalfDirectJpsStorageContentWriter(
     }
   }
 
-  @Throws(IOException::class)
   override suspend fun writeFilesToDisk() {
     externalWriter.writeFilesToDisk()
   }
@@ -296,14 +300,10 @@ private abstract class JpsStorageContentWriter(
 ) : JpsFileContentWriter {
   override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
-    if (FileUtilRt.extensionEquals(filePath, "iml")) {
-      saveInternalFileModuleComponent(filePath, componentName, componentTag)
-    }
-    else if (isExternalModuleFile(filePath)) {
-      saveExternalFileModuleComponent(filePath, componentName, componentTag)
-    }
-    else {
-      saveNonModuleComponent(filePath, componentName, componentTag)
+    when {
+      FileUtilRt.extensionEquals(filePath, "iml") -> saveInternalFileModuleComponent(filePath, componentName, componentTag)
+      isExternalModuleFile(filePath) -> saveExternalFileModuleComponent(filePath, componentName, componentTag)
+      else -> saveNonModuleComponent(filePath, componentName, componentTag)
     }
   }
 
@@ -341,8 +341,7 @@ private abstract class JpsStorageContentWriter(
 private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
 private val NULL_ELEMENT = Element("null")
 
-private class ProjectWithModulesSaveSessionProducerManager(private val project: Project)
-  : SaveSessionProducerManager(collectVfsEvents = true) {
+private class ProjectWithModulesSaveSessionProducerManager(private val project: Project) : SaveSessionProducerManager() {
   private val internalModuleComponents: ConcurrentMap<String, ConcurrentHashMap<String, Element>> =
     if (SystemInfoRt.isFileSystemCaseSensitive) {
       ConcurrentCollectionFactory.createConcurrentMap()

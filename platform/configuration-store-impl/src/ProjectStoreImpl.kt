@@ -284,7 +284,8 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   ) {
   }
 
-  override fun createSaveSessionProducerManager(): SaveSessionProducerManager = ProjectSaveSessionProducerManager(project)
+  override val collectVfsEventsDuringSave: Boolean
+    get() = true
 
   final override fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
     if (storeDescriptor.isDirectoryBased) {

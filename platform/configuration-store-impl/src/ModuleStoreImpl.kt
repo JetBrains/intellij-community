@@ -26,7 +26,8 @@ internal class ModuleStoreImpl(module: Module, private val pathMacroManager: Pat
 
   override val storageManager: StateStorageManagerImpl = ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
 
-  override fun createSaveSessionProducerManager(): SaveSessionProducerManager = SaveSessionProducerManager(collectVfsEvents = true)
+  override val collectVfsEventsDuringSave: Boolean
+    get() = true
 
   override fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean = false
 

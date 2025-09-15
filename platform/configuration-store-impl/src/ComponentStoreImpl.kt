@@ -234,8 +234,11 @@ abstract class ComponentStoreImpl : IComponentStore {
   internal open suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
     val saveSessionManager = createSaveSessionProducerManager()
     commitComponents(isForce = forceSavingAllSettings, sessionManager = saveSessionManager, saveResult = saveResult)
-    saveSessionManager.save(saveResult)
+    saveSessionManager.save(saveResult, collectVfsEventsDuringSave)
   }
+
+  protected open val collectVfsEventsDuringSave: Boolean
+    get() = false
 
   private fun getClientAwareComponentInfo(name: String): ComponentInfo? {
     val info = components.get(name) ?: return null
@@ -360,13 +363,13 @@ abstract class ComponentStoreImpl : IComponentStore {
           isExternalSystemStorageEnabled = storageManager.isExternalSystemStorageEnabled,
         )
         val saveResult = SaveResult()
-        saveManager.save(saveResult)
+        saveManager.save(saveResult, collectVfsEventsDuringSave)
         saveResult.rethrow()
       }
     }
   }
 
-  internal open fun createSaveSessionProducerManager(): SaveSessionProducerManager = SaveSessionProducerManager(collectVfsEvents = false)
+  internal open fun createSaveSessionProducerManager(): SaveSessionProducerManager = SaveSessionProducerManager()
 
   private suspend fun commitComponent(
     sessionManager: SaveSessionProducerManager,

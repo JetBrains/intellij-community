@@ -64,11 +64,11 @@ class DirectoryBasedStorageTest {
   }
 
   private suspend fun setStateAndSave(storage: StateStorageBase<*>, componentName: String, state: String?) {
-    val sessionManager = SaveSessionProducerManager(collectVfsEvents = true)
+    val sessionManager = SaveSessionProducerManager()
     val sessionProducer = sessionManager.getProducer(storage)!!
     val state = if (state == null) Element("state") else JDOMUtil.load(state)
     sessionProducer.setState(component = null, componentName, PluginManagerCore.CORE_ID, state)
-    sessionManager.save(SaveResult())
+    sessionManager.save(SaveResult(), collectVfsEvents = true)
   }
 
   private fun generateData(name: String, extra: String = ""): String {
