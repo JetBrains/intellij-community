@@ -1218,8 +1218,8 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
 
 private class ScalableCounterIconComponent : JComponent(), UISettingsListener {
   private val icon: CounterIcon = CounterIcon(1,
-                                              JBColor.WHITE,
-                                              JBUI.CurrentTheme.StatusBar.Progresses.COUNTER)
+                                              JBUI.CurrentTheme.StatusBar.Progresses.COUNTER_FOREGROUND,
+                                              JBUI.CurrentTheme.StatusBar.Progresses.COUNTER_BACKGROUND)
 
 
   fun setNumber(value: Int) {

@@ -1055,7 +1055,8 @@ public final class JBUI {
       }
 
       public interface Progresses {
-        Color COUNTER = JBColor.namedColor("ProgressBar.counterColor", new JBColor(0x3574F0, 0x3574F0));
+        Color COUNTER_BACKGROUND = JBColor.namedColor("ProgressBar.progressCounterBackground", ProgressBar.PROGRESS);
+        Color COUNTER_FOREGROUND = JBColor.namedColor("ProgressBar.progressCounterForeground", JBColor.WHITE);
       }
     }
 
