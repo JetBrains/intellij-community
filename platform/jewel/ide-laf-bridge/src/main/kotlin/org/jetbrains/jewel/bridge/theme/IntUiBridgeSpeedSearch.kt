@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.bridge.theme
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.unit.dp
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.jewel.bridge.retrieveColor
@@ -35,6 +37,6 @@ internal fun readSpeedSearchStyle(): SpeedSearchStyle =
                         retrieveColor("SearchField.errorForeground", JBColor.RED.toComposeColor())
                     },
             ),
-        metrics = SpeedSearchMetrics(contentPadding = retrieveInsetsAsPaddingValues("SpeedSearch.borderInsets")),
+        metrics = SpeedSearchMetrics(retrieveInsetsAsPaddingValues("SpeedSearch.borderInsets", PaddingValues(4.dp))),
         icons = SpeedSearchIcons(AllIconsKeys.Actions.Search),
     )

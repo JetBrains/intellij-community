@@ -40,6 +40,7 @@ f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - sf:retrieveEditorColorScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
 - sf:retrieveInsetsAsPaddingValues(java.lang.String,androidx.compose.foundation.layout.PaddingValues):androidx.compose.foundation.layout.PaddingValues
 - bs:retrieveInsetsAsPaddingValues$default(java.lang.String,androidx.compose.foundation.layout.PaddingValues,I,java.lang.Object):androidx.compose.foundation.layout.PaddingValues
+- sf:retrieveInsetsAsPaddingValuesOrNull(java.lang.String):androidx.compose.foundation.layout.PaddingValues
 - sf:retrieveIntAsDp-3F_vd3o(java.lang.String,androidx.compose.ui.unit.Dp):F
 - bs:retrieveIntAsDp-3F_vd3o$default(java.lang.String,androidx.compose.ui.unit.Dp,I,java.lang.Object):F
 - sf:retrieveIntAsDpOrUnspecified(java.lang.String):F
