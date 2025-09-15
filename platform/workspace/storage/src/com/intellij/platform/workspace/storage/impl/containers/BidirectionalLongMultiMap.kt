@@ -3,10 +3,7 @@
 
 package com.intellij.platform.workspace.storage.impl.containers
 
-import com.intellij.platform.workspace.storage.impl.clazz
 import com.intellij.util.containers.CollectionFactory
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.longs.*
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import java.util.*
@@ -19,9 +16,6 @@ internal class BidirectionalLongMultiMap<V> {
 
   // Value is either Long or LongOpenHashSet
   private val valueToKeys: MutableMap<V, Any>
-
-  internal val addedValues: Int2ObjectMap<ObjectOpenHashSet<V>> = Int2ObjectOpenHashMap()
-  internal val removedValues: Int2ObjectMap<ObjectOpenHashSet<V>> = Int2ObjectOpenHashMap()
 
   constructor() {
     keyToValues = Long2ObjectOpenHashMap()
@@ -47,25 +41,29 @@ internal class BidirectionalLongMultiMap<V> {
   fun containsKey(key: Long): Boolean = keyToValues.containsKey(key)
   fun containsValue(value: V): Boolean = valueToKeys.containsKey(value)
 
+  /**
+   * Returns true if [value] was added to the map for the first time, otherwise returns false.
+   */
   fun put(key: Long, value: V): Boolean {
+    val addedFirstTime: Boolean
     when (val keys = valueToKeys.get(value)) {
       null -> {
+        addedFirstTime = true
         valueToKeys[value] = key
-        trackAddedValue(key, value)
       }
       is Long -> {
+        addedFirstTime = false
         val myKeys = if (keys != key) {
-          trackAddedValue(key, value)
           LongOpenHashSet.of(keys, key)
-        } else {
+        }
+        else {
           LongOpenHashSet.of(key)
         }
         valueToKeys[value] = myKeys
       }
       is LongOpenHashSet -> {
-        if (keys.add(key)) {
-          trackAddedValue(key, value)
-        }
+        addedFirstTime = false
+        keys.add(key)
       }
       else -> error("Unexpected type of key $keys")
     }
@@ -75,56 +73,69 @@ internal class BidirectionalLongMultiMap<V> {
       values = ObjectOpenHashSet()
       keyToValues.put(key, values)
     }
-    return values.add(value)
+    values.add(value)
+    return addedFirstTime
   }
 
-  fun removeKey(key: Long): Boolean {
-    val values = keyToValues[key] ?: return false
+  /**
+   * Returns a set of values that have been deleted from the map.
+   * That is, only this [key] had this value, and when [key] is deleted, no key has this value anymore.
+   **/
+  fun removeKey(key: Long): Set<V> {
+    val values = keyToValues[key] ?: return emptySet()
+
+    @Suppress("SSBasedInspection")
+    val lastRemovedValues: MutableSet<V> = ObjectOpenHashSet()
     for (v in values) {
       when (val keys = valueToKeys.get(v)!!) {
         is LongOpenHashSet -> {
-          if (keys.remove(key)) {
-            trackRemovedValue(key, v)
-          }
+          keys.remove(key)
           if (keys.isEmpty()) {
             valueToKeys.remove(v)
+            lastRemovedValues.add(v)
           }
         }
         is Long -> {
           valueToKeys.remove(v)
-          trackRemovedValue(key, v)
+          lastRemovedValues.add(v)
         }
         else -> error("Unexpected type of key $keys")
       }
     }
     keyToValues.remove(key)
-    return true
+    return lastRemovedValues
   }
 
-  fun remove(key: Long, value: V) {
-    val values = keyToValues[key]
-    val keys: Any? = valueToKeys[value]
-    if (keys != null && values != null) {
-      when (keys) {
-        is LongOpenHashSet -> {
-          if (keys.remove(key)) {
-            trackRemovedValue(key, value)
-          }
-          if (keys.isEmpty()) {
-            valueToKeys.remove(value)
-          }
-        }
-        is Long -> {
+  /**
+   * Returns true if the [value] was removed from the map, false otherwise
+   * That is, only this [key] had this value, and when [key] is deleted, no key has this value anymore.
+   */
+  fun remove(key: Long, value: V): Boolean {
+    val values = keyToValues[key] ?: return false
+    val keys: Any = valueToKeys[value] ?: return false
+    val lastRemoved: Boolean
+    when (keys) {
+      is LongOpenHashSet -> {
+        keys.remove(key)
+        if (keys.isEmpty()) {
+          lastRemoved = true
           valueToKeys.remove(value)
-          trackRemovedValue(key, value)
         }
-        else -> error("Unexpected type of key $keys")
+        else {
+          lastRemoved = false
+        }
       }
-      values.remove(value)
-      if (values.isEmpty()) {
-        keyToValues.remove(key)
+      is Long -> {
+        valueToKeys.remove(value)
+        lastRemoved = true
       }
+      else -> error("Unexpected type of key $keys")
     }
+    values.remove(value)
+    if (values.isEmpty()) {
+      keyToValues.remove(key)
+    }
+    return lastRemoved
   }
 
   fun isEmpty(): Boolean {
@@ -134,8 +145,6 @@ internal class BidirectionalLongMultiMap<V> {
   fun clear() {
     keyToValues.clear()
     valueToKeys.clear()
-    addedValues.clear()
-    removedValues.clear()
   }
 
   val keys: LongSet
@@ -158,22 +167,7 @@ internal class BidirectionalLongMultiMap<V> {
     return BidirectionalLongMultiMap(newKeyToValues, newValuesToKeys)
   }
 
-  internal fun clearTrackedValues() {
-    addedValues.clear()
-    removedValues.clear()
-  }
-
   internal fun toMap(): Map<Long, Set<V>> {
     return keyToValues
-  }
-
-  private fun trackAddedValue(key: Long, value: V) {
-    @Suppress("SSBasedInspection")
-    addedValues.computeIfAbsent(key.clazz) { ObjectOpenHashSet() }.add(value)
-  }
-
-  private fun trackRemovedValue(key: Long, value: V) {
-    @Suppress("SSBasedInspection")
-    removedValues.computeIfAbsent(key.clazz) { ObjectOpenHashSet() }.add(value)
   }
 }

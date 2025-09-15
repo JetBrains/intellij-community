@@ -112,10 +112,8 @@ sealed interface DependencyDescription<E : WorkspaceEntity> {
    * or remove the last reference to [E].
    */
   @ApiStatus.Experimental
-  data class OnReference<E: WorkspaceEntityWithSymbolicId, R: WorkspaceEntity>(
-    /** Type that contains references to [E] */
-    val referenceHolderClass: Class<R>,
-    /** Type of [SymbolicEntityId] which is referenced by [referenceHolderClass] */
+  data class OnReference<E: WorkspaceEntityWithSymbolicId>(
+    /** The type [SymbolicEntityId] for which the corresponding [WorkspaceFileIndexContributor] should be called */
     val referenceSymbolicEntityIdClass: Class<out SymbolicEntityId<E>>
   ): DependencyDescription<E>
 }

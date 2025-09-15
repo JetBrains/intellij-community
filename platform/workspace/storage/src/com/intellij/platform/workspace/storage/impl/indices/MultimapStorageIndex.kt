@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
 import com.intellij.platform.workspace.storage.impl.containers.putAll
+import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.TestOnly
 
 private typealias BidirectionalMap = BidirectionalLongMultiMap<SymbolicEntityId<*>>
@@ -37,23 +38,28 @@ internal class MutableMultimapStorageIndex private constructor(
   override var index: BidirectionalMap,
 ) : AbstractMultimapStorageIndex(index), WorkspaceMutableIndex<SymbolicEntityId<*>> {
 
+  private val firstAddedValues: MutableSet<SymbolicEntityId<*>> = CollectionFactory.createSmallMemoryFootprintSet()
+  private val lastRemovedValues: MutableSet<SymbolicEntityId<*>> = CollectionFactory.createSmallMemoryFootprintSet()
+
   private var freezed = true
 
   internal fun index(id: EntityId, elements: Set<SymbolicEntityId<*>>? = null) {
     startWrite()
-    index.removeKey(id)
+    lastRemovedValues.addAll(index.removeKey(id))
     if (elements == null) return
     elements.forEach { index.put(id, it) }
   }
 
   internal fun index(id: EntityId, element: SymbolicEntityId<*>) {
     startWrite()
-    index.put(id, element)
+    val firstAddedValue = index.put(id, element)
+    if (firstAddedValue) firstAddedValues.add(element)
   }
 
   internal fun remove(id: EntityId, element: SymbolicEntityId<*>) {
     startWrite()
-    index.remove(id, element)
+    val lastRemovedValue = index.remove(id, element)
+    if (lastRemovedValue) lastRemovedValues.add(element)
   }
 
   @TestOnly
@@ -98,12 +104,13 @@ internal class MutableMultimapStorageIndex private constructor(
     this.remove(id, data)
   }
 
-  internal fun addedValues(): Map<Int, Set<SymbolicEntityId<*>>> = index.addedValues
+  internal fun addedValues(): Set<SymbolicEntityId<*>> = firstAddedValues
 
-  internal fun removedValues(): Map<Int, Set<SymbolicEntityId<*>>> = index.removedValues
+  internal fun removedValues(): Set<SymbolicEntityId<*>> = lastRemovedValues
 
   internal fun clearTrackedValues() {
-    index.clearTrackedValues()
+    firstAddedValues.clear()
+    lastRemovedValues.clear()
   }
 }
 

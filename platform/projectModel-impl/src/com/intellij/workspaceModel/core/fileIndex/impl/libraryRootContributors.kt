@@ -31,8 +31,7 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
   override fun registerFileSets(entity: LibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
     val libraryId = entity.symbolicId
     if (useWfiForPartialScanning) {
-      if (libraryId.tableId !is LibraryTableId.ModuleLibraryTableId &&
-          !storage.hasReferrers(libraryId, ModuleEntity::class.java)) {
+      if (libraryId.tableId !is LibraryTableId.ModuleLibraryTableId && !storage.hasReferrers(libraryId)) {
         return
       }
     }
@@ -72,7 +71,7 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
   override val dependenciesOnOtherEntities: List<DependencyDescription<LibraryEntity>>
     get() {
       return listOf(
-        DependencyDescription.OnReference(ModuleEntity::class.java, LibraryId::class.java)
+        DependencyDescription.OnReference(LibraryId::class.java)
       )
     }
 

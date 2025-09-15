@@ -63,13 +63,6 @@ internal class ReadTracker private constructor(
     return super.referrers(id, entityClass)
   }
 
-  override fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> hasReferrers(id: SymbolicEntityId<E>, entityClass: Class<R>): Boolean {
-    val trace = ReadTrace.HasSymbolicLinkTo(id, entityClass)
-    log.trace { "Read trace of `hasReferrers` function: $trace" }
-    onRead(trace)
-    return super.hasReferrers(id, entityClass)
-  }
-
   override fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E? {
     val trace = ReadTrace.Resolve(id)
     log.trace { "Read trace of `resolve` function: $trace" }

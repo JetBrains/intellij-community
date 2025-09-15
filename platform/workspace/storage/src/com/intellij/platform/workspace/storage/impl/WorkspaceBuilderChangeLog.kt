@@ -19,8 +19,8 @@ internal class WorkspaceBuilderChangeLog {
   var modificationCount: Long = 0
 
   internal val changeLog: ChangeLog = LinkedHashMap()
-  internal val addedSymbolicIds = mutableMapOf<Class<*>, MutableSet<SymbolicEntityId<*>>>()
-  internal val removedSymbolicIds = mutableMapOf<Class<*>, MutableSet<SymbolicEntityId<*>>>()
+  internal val addedSymbolicIds = CollectionFactory.createSmallMemoryFootprintSet<SymbolicEntityId<*>>()
+  internal val removedSymbolicIds = CollectionFactory.createSmallMemoryFootprintSet<SymbolicEntityId<*>>()
 
   internal fun clear() {
     modificationCount++
@@ -471,26 +471,20 @@ internal class WorkspaceBuilderChangeLog {
     }
   }
 
-  internal fun addAddedIds(entityInterface: Class<*>, addedIds: Set<SymbolicEntityId<*>>) {
+  internal fun addAddedIds(addedIds: Set<SymbolicEntityId<*>>) {
     if (addedIds.isEmpty()) return
-    val removedIdsSet = removedSymbolicIds[entityInterface]
-    val addedIdsSet = addedSymbolicIds.computeIfAbsent(entityInterface) { CollectionFactory.createSmallMemoryFootprintSet() }
     addedIds.forEach { addedId ->
-      addedIdsSet.add(addedId)
-      removedIdsSet?.remove(addedId)
+      addedSymbolicIds.add(addedId)
+      removedSymbolicIds.remove(addedId)
     }
-    if (removedIdsSet?.isEmpty() == true) removedSymbolicIds.remove(entityInterface)
   }
 
-  internal fun addRemovedIds(entityInterface: Class<*>, removedIds: Set<SymbolicEntityId<*>>) {
+  internal fun addRemovedIds(removedIds: Set<SymbolicEntityId<*>>) {
     if (removedIds.isEmpty()) return
-    val addedIdsSet = addedSymbolicIds[entityInterface]
-    val removedIdsSet = removedSymbolicIds.computeIfAbsent(entityInterface) { CollectionFactory.createSmallMemoryFootprintSet() }
     removedIds.forEach { removedId ->
-      removedIdsSet.add(removedId)
-      addedIdsSet?.remove(removedId)
+      removedSymbolicIds.add(removedId)
+      addedSymbolicIds.remove(removedId)
     }
-    if (addedIdsSet?.isEmpty() == true) addedSymbolicIds.remove(entityInterface)
   }
 
   companion object {

@@ -18,7 +18,7 @@ public class StorageReplacement internal constructor(
   public val version: Long,
   public val builder: MutableEntityStorage,
   public val changes: Map<Class<*>, List<EntityChange<*>>>,
-  public val symbolicEntityIdChanges: Map<Class<*>, Set<ReferenceChange<*>>>,
+  public val symbolicEntityIdChanges: Set<ReferenceChange<*>>,
 )
 
 /**

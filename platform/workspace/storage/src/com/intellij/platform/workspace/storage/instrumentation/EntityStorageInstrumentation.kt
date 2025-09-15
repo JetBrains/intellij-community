@@ -88,7 +88,7 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
   public fun collectChanges(): Map<Class<*>, List<EntityChange<*>>>
 
   @ApiStatus.Internal
-  public fun collectSymbolicEntityIdsChanges(): Map<Class<*>, Set<ReferenceChange<*>>>
+  public fun collectSymbolicEntityIdsChanges(): Set<ReferenceChange<*>>
 
   /**
    * Replaces existing children of a given parent with a new list of children.
