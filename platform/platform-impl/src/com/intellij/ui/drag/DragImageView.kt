@@ -14,6 +14,8 @@ import java.awt.Rectangle
  * 
  * In most cases it's implemented using [DialogDragImageView], which wraps some undecorated dialog
  * with the image inside.
+ * But for Wayland, because it doesn't support moving windows,
+ * [GlassPaneDragImageView] is used instead.
  */
 internal interface DragImageView {
   var location: Point
