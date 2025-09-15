@@ -18,6 +18,7 @@ import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.awt.DevicePoint
+import com.intellij.ui.drag.asDragButton
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
@@ -201,7 +202,7 @@ class StripeButton internal constructor(@JvmField internal val toolWindow: ToolW
       if (lastStripe != null && lastStripe !== stripe) {
         lastStripe!!.resetDrop()
       }
-      stripe.processDropButton(dragButton!!, dragButtonImage!!, devicePoint)
+      stripe.processDropButton(dragButton!!, dragButtonImage!!.asDragButton(), devicePoint)
     }
     lastStripe = stripe
   }
