@@ -52,16 +52,17 @@ private class JavaDocFragmentCacheService {
   }
 
   private fun findIdsFromText(docText: String): List<JavaDocFragmentData> {
-    return ID_PATTERN.matcher(docText).results()
-      .map { result ->
-        val id = result.group(1)
-        when (id != null && !id.isBlank()) {
-          true -> JavaDocFragmentData(id, result.start(1))
-          false -> null
-        }
+    val results = ArrayList<JavaDocFragmentData>()
+    val matcher = ID_PATTERN.matcher(docText)
+
+    while (matcher.find()) {
+      val id = matcher.group(1)
+      if (id != null && !id.isBlank()) {
+        results.add(JavaDocFragmentData(id, matcher.start(1)))
       }
-      .toList()
-      .filterNotNull()
+    }
+
+    return results
   }
 }
 
