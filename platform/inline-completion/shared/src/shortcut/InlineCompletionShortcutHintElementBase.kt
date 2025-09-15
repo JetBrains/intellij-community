@@ -18,7 +18,11 @@ import java.awt.Rectangle
 import kotlin.random.Random
 
 @ApiStatus.Internal
-sealed class InlineCompletionShortcutHintElementBase(val lineNumber: Int, private val insertActionId: String) : InlineCompletionElement {
+sealed class InlineCompletionShortcutHintElementBase(
+  val lineNumber: Int,
+  private val insertActionId: String,
+  private val forcedHint: InlineCompletionShortcutHint? = null,
+) : InlineCompletionElement {
 
   override val text: String
     get() = ""
@@ -32,6 +36,8 @@ sealed class InlineCompletionShortcutHintElementBase(val lineNumber: Int, privat
       IdeActions.ACTION_INSERT_INLINE_COMPLETION -> InlineCompletionShortcutHint.entries
       else -> return InlineCompletionShortcutHint.INSERT_TERMINAL
     }
+
+    forcedHint?.let { return it }
 
     var randomPoint = Random.nextInt(entries.sumOf { getHintWeight(it) }) + 1
     return entries.firstOrNull {
