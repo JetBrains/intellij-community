@@ -130,7 +130,7 @@ object LangTool : GrazieStateLifecycle {
         }
       }
 
-      this.language.disambiguator
+      language.disambiguator = CachingDisambiguator(language.disambiguator)
     }
   }
 
