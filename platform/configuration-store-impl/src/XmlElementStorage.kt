@@ -4,11 +4,7 @@ package com.intellij.configurationStore
 import com.fasterxml.aalto.UncheckedStreamException
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.HandledByWSM
-import com.intellij.openapi.components.PathMacroManager
-import com.intellij.openapi.components.PathMacroSubstitutor
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
@@ -181,7 +177,7 @@ abstract class XmlElementStorage protected constructor(
       }
 
       val stateMap = StateMap.fromMap(copiedStates!!)
-      val elements = save(stateMap, newLiveStates ?: throw IllegalStateException("createSaveSession was already called"))
+      val elements = save(states = stateMap, newLiveStates = newLiveStates ?: throw IllegalStateException("createSaveSession was already called"))
       newLiveStates = null
 
       val writer = if (elements == null) {
@@ -252,23 +248,29 @@ abstract class XmlElementStorage protected constructor(
 
     private inner class XmlSaveSession(
       private val elements: MutableList<Element>?,
+      // null only when elements is null
       private val writer: DataWriter?,
       private val stateMap: StateMap
     ) : SaveSession, SafeWriteRequestor, LargeFileWriteRequestor {
       override suspend fun save(events: MutableList<VFileEvent>?) {
-        doSave(useVfs = false, events = events)
+        doSave(events)
       }
 
-      override fun saveBlocking() = doSave(useVfs = true, events = null)
+      override fun saveBlocking() = doSave(events = null)
 
-      private fun doSave(useVfs: Boolean, events: MutableList<VFileEvent>?) {
+      private fun doSave(events: MutableList<VFileEvent>?) {
         var isSavedLocally = false
         val provider = storage.provider
 
         if (elements == null) {
           if (provider == null || !provider.delete(storage.fileSpec, storage.roamingType)) {
             isSavedLocally = true
-            saveLocally(writer, useVfs, events)
+            if (writer == null) {
+              remove(events)
+            }
+            else {
+              saveLocally(dataWriter = writer, events = events)
+            }
           }
         }
         else if (provider != null && provider.isApplicable(storage.fileSpec, storage.roamingType)) {
@@ -281,11 +283,16 @@ abstract class XmlElementStorage protected constructor(
         }
         else {
           isSavedLocally = true
-          saveLocally(writer, useVfs, events)
+          if (writer == null) {
+            remove(events)
+          }
+          else {
+            saveLocally(dataWriter = writer, events = events)
+          }
         }
 
         if (!isSavedLocally) {
-          storage.providerDataStateChanged(writer, DataStateChanged.SAVED)
+          storage.providerDataStateChanged(writer = writer, type = DataStateChanged.SAVED)
         }
 
         storage.setStates(originalStates, stateMap)
@@ -296,19 +303,21 @@ abstract class XmlElementStorage protected constructor(
       val newLiveStates = newLiveStates ?: throw IllegalStateException("createSaveSession was already called")
       val normalized = element?.let { normalizeRootName(it) }
       if (copiedStates == null) {
-        copiedStates = setStateAndCloneIfNeeded(key = componentName, newState = normalized, oldStates = originalStates, newLiveStates)
+        copiedStates = setStateAndCloneIfNeeded(key = componentName, newState = normalized, oldStates = originalStates, newLiveStates = newLiveStates)
       }
       else {
-        updateState(states = copiedStates!!, key = componentName, newState = normalized, newLiveStates)
+        updateState(states = copiedStates!!, key = componentName, newState = normalized, newLiveStates = newLiveStates)
       }
     }
 
-    protected abstract fun saveLocally(dataWriter: DataWriter?, useVfs: Boolean, events: MutableList<VFileEvent>?)
+    protected abstract fun remove(events: MutableList<VFileEvent>?)
+
+    protected abstract fun saveLocally(dataWriter: DataWriter, events: MutableList<VFileEvent>?)
   }
 
-  protected open fun beforeElementLoaded(element: Element) { }
+  protected open fun beforeElementLoaded(element: Element) {}
 
-  protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) { }
+  protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {}
 
   fun updatedFromStreamProvider(changedComponentNames: MutableSet<String>, deleted: Boolean) {
     val newElement = if (deleted) null else loadElement()
