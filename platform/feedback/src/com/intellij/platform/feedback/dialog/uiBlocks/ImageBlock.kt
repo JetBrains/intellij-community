@@ -5,7 +5,9 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.util.ui.JBUI
 import javax.swing.Icon
+import javax.swing.border.Border
 
 /**
  * Adds the row with the image to the feedback form.
@@ -13,13 +15,23 @@ import javax.swing.Icon
  * Use [com.intellij.openapi.util.IconLoader.getIcon] to create the [Icon] instance.
  */
 class ImageBlock(private val icon: Icon) : FeedbackBlock {
+  private var border: Border = JBUI.Borders.empty()
+
   override fun addToPanel(panel: Panel) {
     panel.apply {
       row {
         icon(icon)
           .align(AlignX.CENTER)
           .gap(RightGap.SMALL)
+          .applyToComponent {
+            border = this@ImageBlock.border
+          }
       }.bottomGap(BottomGap.SMALL)
     }
+  }
+
+  fun withBorder(border: Border): ImageBlock {
+    this.border = border
+    return this
   }
 }
