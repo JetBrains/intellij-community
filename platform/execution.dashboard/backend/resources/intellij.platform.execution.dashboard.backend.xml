@@ -1,8 +1,25 @@
 <idea-plugin>
   <dependencies>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.execution.dashboard"/>
+    <module name="intellij.platform.execution.serviceView.backend"/>
   </dependencies>
 
+  <extensionPoints>
+    <extensionPoint name="runDashboardChecker" interface="com.intellij.execution.dashboard.RunDashboardChecker" dynamic="true"/>
+  </extensionPoints>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <!--<projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardManager"-->
+    <!--                serviceImplementation="com.intellij.platform.execution.dashboard.RunDashboardManagerImpl"/>-->
+
+    <runDashboardManagerProxy implementation="com.intellij.platform.execution.dashboard.backend.BackendRunDashboardManagerProxy"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.execution.dashboard.backend.BackendRunDashboardApiProviderApiProvider"/>
+    <serviceViewLocatableSearcher implementation="com.intellij.platform.execution.dashboard.backend.RunDashboardLocatableSearcher"/>
+    <backgroundPostStartupActivity implementation="com.intellij.platform.execution.dashboard.backend.RunDashboardCheckerActivity"/>
+    <notificationGroup id="Services Tool Window" displayType="BALLOON" isLogByDefault="true" bundle="messages.ExecutionBundle"
+                       key="notification.group.services"
+                       notificationIds="run.dashboard.multiple.run.configurations"/>
+  </extensions>
 </idea-plugin>

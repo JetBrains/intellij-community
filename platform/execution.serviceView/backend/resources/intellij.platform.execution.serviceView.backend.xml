@@ -1,0 +1,15 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.execution.serviceView"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint name="serviceViewLocatableSearcher" interface="com.intellij.platform.execution.serviceView.backend.ServiceViewLocatableSearcher" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.execution.serviceView.backend.BackendServiceViewRpcApiProvider"/>
+  </extensions>
+</idea-plugin>
