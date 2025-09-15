@@ -82,7 +82,7 @@ final class CopyConfigurationAction extends DumbAwareAction implements ActionRem
     RunConfiguration copiedConfiguration = copiedSettings.getConfiguration();
     RunDashboardManager runDashboardManager = RunDashboardManager.getInstance(project);
     if (!runDashboardManager.isShowInDashboard(copiedConfiguration)) {
-      ((RunDashboardManagerImpl)runDashboardManager).restoreConfigurations(Collections.singletonList(copiedConfiguration));
+      runDashboardManager.restoreConfigurations(Collections.singletonList(copiedConfiguration));
     }
   }
 }

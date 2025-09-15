@@ -20,12 +20,14 @@ public interface RunDashboardService extends RunDashboardRunConfigurationNode {
     return configuration.getType().getId() + "/" + configuration.getName();
   }
 
+  @Override
   @NotNull
   RunnerAndConfigurationSettings getConfigurationSettings();
 
   @Nullable
   RunContentDescriptorId getDescriptorId();
 
+  @Override
   @Nullable
   RunContentDescriptor getDescriptor();
 }
