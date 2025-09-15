@@ -13,9 +13,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.locking.impl.listeners.ErrorHandler
 import com.intellij.platform.locking.impl.listeners.LegacyProgressIndicatorProvider
 import com.intellij.platform.locking.impl.listeners.LockAcquisitionListener
+import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.ReflectionUtil
 import kotlinx.coroutines.*
-import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
@@ -1673,7 +1673,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   @OptIn(InternalCoroutinesApi::class)
   fun <T> runSuspendMaybeConsuming(tryCompensateParallelism: Boolean, block: suspend () -> T): T {
     return if (tryCompensateParallelism && readLockCompensationTimeout != -1) {
-      IntellijCoroutines.runAndCompensateParallelism(readLockCompensationTimeout.toDuration(DurationUnit.MILLISECONDS)) {
+      IntelliJCoroutinesFacade.runAndCompensateParallelism(readLockCompensationTimeout.toDuration(DurationUnit.MILLISECONDS)) {
         runSuspendWithWaitingConsumer(block, myLockInterceptor.get())
       }
     }

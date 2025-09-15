@@ -8,6 +8,7 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.Processor
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
@@ -19,7 +20,6 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.ThreadContextElement
-import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -35,17 +35,17 @@ private const val category = "#com.intellij.concurrency"
 private val LOG: Logger = Logger.getInstance(category)
 
 /**
- * This class contains an overriding coroutine context for [IntellijCoroutines.currentThreadCoroutineContext].
+ * This class contains an overriding coroutine context for [kotlinx.coroutines.internal.intellij.IntellijCoroutines.currentThreadCoroutineContext].
  *
  * ## Rule
  * The rule of selection is the following:
- * [context] is taken only if [snapshot] is equal to [IntellijCoroutines.currentThreadCoroutineContext] __as a pointer__.
+ * [context] is taken only if [snapshot] is equal to [kotlinx.coroutines.internal.intellij.IntellijCoroutines.currentThreadCoroutineContext] __as a pointer__.
  *
  * The idea is that we can perform a one-direction transition from the suspending to the non-suspending execution context.
- * When the transition occurs, we remember [IntellijCoroutines.currentThreadCoroutineContext] of this transition,
+ * When the transition occurs, we remember [kotlinx.coroutines.internal.intellij.IntellijCoroutines.currentThreadCoroutineContext] of this transition,
  * and all later thread context modifications happen witnessed by this remembered coroutine context.
- * If [IntellijCoroutines.currentThreadCoroutineContext] changes, then the overriding thread context is no longer valid,
- * hence we prioritize [IntellijCoroutines.currentThreadCoroutineContext] again.
+ * If [kotlinx.coroutines.internal.intellij.IntellijCoroutines.currentThreadCoroutineContext] changes, then the overriding thread context is no longer valid,
+ * hence we prioritize [kotlinx.coroutines.internal.intellij.IntellijCoroutines.currentThreadCoroutineContext] again.
  *
  * ## Motivation
  * In suspending code, thread context must be taken from coroutines:
@@ -76,9 +76,9 @@ private val LOG: Logger = Logger.getInstance(category)
  */
 private data class InstalledThreadContext(
   /**
-   * - [snapshot] === `null`: [IntellijCoroutines.currentThreadCoroutineContext] is not installed,
+   * - [snapshot] === `null`: [kotlinx.coroutines.internal.intellij.IntellijCoroutines.currentThreadCoroutineContext] is not installed,
    *   i.e., the computation does not originate in coroutines;
-   * - [snapshot] !== `null`: we override [IntellijCoroutines.currentThreadCoroutineContext] which is equal to [snapshot].
+   * - [snapshot] !== `null`: we override [kotlinx.coroutines.internal.intellij.IntellijCoroutines.currentThreadCoroutineContext] which is equal to [snapshot].
    */
   val snapshot: CoroutineContext?,
   /**
@@ -98,7 +98,7 @@ private val tlCoroutineContext: ThreadLocal<InstalledThreadContext> = ThreadLoca
 
 private inline fun currentThreadContextOrFallback(getter: (CoroutineContext?) -> CoroutineContext?): CoroutineContext? {
   @OptIn(InternalCoroutinesApi::class)
-  val suspendingContext = IntellijCoroutines.currentThreadCoroutineContext()
+  val suspendingContext = IntelliJCoroutinesFacade.currentThreadCoroutineContext()
   val (snapshot, overridingContext) = tlCoroutineContext.get()
   if (suspendingContext === snapshot) {
     return overridingContext
@@ -254,7 +254,7 @@ internal fun warnAccidentalCancellation() {
     return
   }
   @OptIn(InternalCoroutinesApi::class)
-  val kotlinCoroutineContext = IntellijCoroutines.currentThreadCoroutineContext()
+  val kotlinCoroutineContext = IntelliJCoroutinesFacade.currentThreadCoroutineContext()
   val (snapshot, _) = tlCoroutineContext.get()
   if (snapshot === kotlinCoroutineContext) {
     // someone installed the context before, so no regressions here are expected
@@ -278,7 +278,7 @@ If this behavior is unexpected, please consult the documentation for com.intelli
 fun resetThreadContext(): AccessToken {
   return withThreadLocal(tlCoroutineContext) { _ ->
     @OptIn(InternalCoroutinesApi::class)
-    val currentSnapshot = IntellijCoroutines.currentThreadCoroutineContext()
+    val currentSnapshot = IntelliJCoroutinesFacade.currentThreadCoroutineContext()
     InstalledThreadContext(currentSnapshot, null)
   }
 }
@@ -316,7 +316,7 @@ fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = 
   val applyToken = applyThreadContextElements(coroutineContext)
   val tlToken = withThreadLocal(tlCoroutineContext) { previousContext ->
     @OptIn(InternalCoroutinesApi::class)
-    val currentSnapshot = IntellijCoroutines.currentThreadCoroutineContext()
+    val currentSnapshot = IntelliJCoroutinesFacade.currentThreadCoroutineContext()
     if (!replace && previousContext.snapshot === currentSnapshot && previousContext.context != null) {
       LOG.error(Throwable("Thread context was already set: $previousContext. \n " +
                           "Most likely, you are using 'runBlocking' instead of 'runBlockingCancellable' somewhere in the asynchronous stack. \n" +

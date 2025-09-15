@@ -40,6 +40,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.platform.instanceContainer.internal.*
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.UList
@@ -51,7 +52,6 @@ import com.intellij.util.messages.impl.*
 import com.intellij.util.runSuppressing
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -1663,7 +1663,7 @@ private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X
         NestedBlockingEventLoop(Thread.currentThread()) // avoid processing events from outer runBlocking (if any)
       resetThreadLocalEventLoop {
         @OptIn(InternalCoroutinesApi::class)
-        IntellijCoroutines.runBlockingWithParallelismCompensation(contextForInitializer, action)
+        IntelliJCoroutinesFacade.runBlockingWithParallelismCompensation(contextForInitializer, action)
       }
     }
     catch (e: ProcessCanceledException) {
