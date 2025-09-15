@@ -24,7 +24,7 @@ import org.jetbrains.jewel.ui.ComponentStyling
 @Suppress("UnstableApiUsage")
 internal class SwingBridgeReader {
     private val scrollbarHelper = ScrollbarHelper.getInstance()
-    private val settingsFlow: Flow<UISettings> =
+    private val uiSettingsChangeFlow: Flow<UISettings> =
         ApplicationManager.getApplication()
             .messageBus
             .subscribeAsFlow(UISettingsListener.TOPIC) { UISettingsListener { uiSettings -> trySend(uiSettings) } }
@@ -42,7 +42,7 @@ internal class SwingBridgeReader {
                 lafChangeFlow,
                 scrollbarHelper.scrollbarVisibilityStyleFlow,
                 scrollbarHelper.trackClickBehaviorFlow,
-                settingsFlow,
+                uiSettingsChangeFlow,
                 editorSchemeChangeFlow,
             ) { _, _, _, _, _ ->
                 tryGettingThemeData()
