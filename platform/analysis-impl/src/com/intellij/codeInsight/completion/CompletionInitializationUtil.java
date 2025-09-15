@@ -121,12 +121,11 @@ public final class CompletionInitializationUtil {
     OffsetsInFile topLevelOffsets = indicator.getHostOffsets();
     final Consumer<Supplier<Disposable>> registerDisposable = supplier -> indicator.registerChildDisposable(supplier);
 
-    return doInsertDummyIdentifier(initContext, topLevelOffsets, false, registerDisposable);
+    return doInsertDummyIdentifier(initContext, topLevelOffsets, registerDisposable);
   }
 
   private static Supplier<OffsetsInFile> doInsertDummyIdentifier(@NotNull CompletionInitializationContext initContext,
                                                                  @NotNull OffsetsInFile topLevelOffsets,
-                                                                 boolean noWriteLock,
                                                                  @NotNull Consumer<? super Supplier<Disposable>> registerDisposable) {
 
     CompletionAssertions.checkEditorValid(initContext.getEditor());
@@ -138,7 +137,7 @@ public final class CompletionInitializationUtil {
     Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     OffsetMap hostMap = topLevelOffsets.getOffsets();
 
-    PsiFile hostCopy = obtainFileCopy(topLevelOffsets.getFile(), noWriteLock);
+    PsiFile hostCopy = obtainFileCopy(topLevelOffsets.getFile());
     Document copyDocument = Objects.requireNonNull(hostCopy.getViewProvider().getDocument());
 
     String dummyIdentifier = initContext.getDummyIdentifier();
@@ -153,23 +152,16 @@ public final class CompletionInitializationUtil {
 
     //kskrygan: this check is non-relevant for CWM (quick doc and other features work separately)
     //and we are trying to avoid useless write locks during completion
-    return skipWriteLockIfNeeded(noWriteLock, () -> {
-      registerDisposable.accept((Supplier<Disposable>)() -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier));
+    return () -> WriteAction.compute(() -> {
+      registerDisposable.accept((Supplier<Disposable>)() -> {
+        return new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier);
+      });
       OffsetsInFile copyOffsets = apply.get();
 
       registerDisposable.accept((Supplier<Disposable>)() -> copyOffsets.getOffsets());
 
       return copyOffsets;
     });
-  }
-
-  private static Supplier<OffsetsInFile> skipWriteLockIfNeeded(boolean skipWriteLock, Supplier<OffsetsInFile> toWrap) {
-    if (skipWriteLock) {
-      return toWrap;
-    }
-    else {
-      return () -> WriteAction.compute(() -> toWrap.get());
-    }
   }
 
   public static @NotNull OffsetsInFile toInjectedIfAny(@NotNull PsiFile originalFile, @NotNull OffsetsInFile hostCopyOffsets) {
@@ -258,10 +250,10 @@ public final class CompletionInitializationUtil {
     return insertedElement;
   }
 
-  private static @NotNull PsiFile obtainFileCopy(@NotNull PsiFile file, boolean forbidCaching) {
+  private static @NotNull PsiFile obtainFileCopy(@NotNull PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
-    boolean mayCacheCopy = !forbidCaching && file.isPhysical() &&
-                           // we don't want to cache code fragment copies even if they appear to be physical
+    // we don't want to cache code fragment copies even if they appear to be physical
+    boolean mayCacheCopy = file.isPhysical() &&
                            virtualFile != null && virtualFile.isInLocalFileSystem();
     if (mayCacheCopy) {
       final Pair<PsiFile, Document> cached = dereference(file.getUserData(FILE_COPY_KEY));
