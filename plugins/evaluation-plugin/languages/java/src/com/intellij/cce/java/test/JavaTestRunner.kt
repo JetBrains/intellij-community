@@ -34,7 +34,11 @@ class JavaTestRunner : TestRunner {
         else throw IllegalArgumentException("Test name has invalid format: $test")
       }
       .groupBy { it.first }
-      .map { ModuleTests(it.key, it.value.map { it.second }) }
+      .map {
+        ModuleTests(it.key, it.value
+          .map { it.second }
+          .filter { it != "gradle_test_execution" })   // just a command to run all the tests (no specific)
+      }
 
     if (isMaven(request.project)) {
       return JavaTestRunnerForMaven.run(request.project, moduleTests)

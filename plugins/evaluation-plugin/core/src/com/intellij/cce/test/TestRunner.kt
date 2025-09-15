@@ -24,7 +24,12 @@ class TestRunResult(
 
   val allExpectedHavePassed: Boolean = uniqueExpected.all { it in passed }
 
-  val passedFraction: Double = if (expected.isEmpty()) 1.0 else uniqueExpected.count(passed::contains).toDouble() / uniqueExpected.size
+  val passedFraction: Double =
+    when {
+      expected.isEmpty() && exitCode != 0 -> 0.0
+      expected.isEmpty() -> 1.0
+      else -> uniqueExpected.count(passed::contains).toDouble() / uniqueExpected.size
+    }
 }
 
 interface TestRunner {
