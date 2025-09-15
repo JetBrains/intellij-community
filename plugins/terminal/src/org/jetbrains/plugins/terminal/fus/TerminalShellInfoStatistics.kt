@@ -10,10 +10,12 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.PathUtil
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.shellVersionField
 import java.util.*
 
-internal object TerminalShellInfoStatistics {
+@ApiStatus.Internal
+object TerminalShellInfoStatistics {
   private val knownPromptThemes: List<String> = getKnownPromptThemes()
 
   val shellVersionField: StringEventField = EventFields.StringValidatedByRegexpReference("shell_version", "version")
@@ -30,46 +32,46 @@ internal object TerminalShellInfoStatistics {
   val isOhMyBashField: BooleanEventField = EventFields.Boolean("is_oh_my_bash", "Bash only")
   val isBashItField: BooleanEventField = EventFields.Boolean("is_bash_it", "Bash only")
 
-  val KNOWN_SHELLS = setOf("unspecified",
-                           "other",
-                           "activate",
-                           "anaconda3",
-                           "ash",
-                           "bash",
-                           "bbsh",
-                           "cexec",
-                           "cmd",
-                           "cmder",
-                           "cmder_shell",
-                           "csh",
-                           "cygwin",
-                           "dash",
-                           "es",
-                           "eshell",
-                           "fish",
-                           "fsh",
-                           "git",
-                           "git-bash",
-                           "git-cmd",
-                           "hamilton",
-                           "init",
-                           "ion",
-                           "ksh",
-                           "miniconda3",
-                           "mksh",
-                           "msys2_shell",
-                           "nushell",
-                           "powershell",
-                           "pwsh",
-                           "rc",
-                           "scsh",
-                           "sh",
-                           "tcsh",
-                           "ubuntu",
-                           "ubuntu1804",
-                           "wsl",
-                           "xonsh",
-                           "zsh")
+  val KNOWN_SHELLS: Set<String> = setOf("unspecified",
+                                        "other",
+                                        "activate",
+                                        "anaconda3",
+                                        "ash",
+                                        "bash",
+                                        "bbsh",
+                                        "cexec",
+                                        "cmd",
+                                        "cmder",
+                                        "cmder_shell",
+                                        "csh",
+                                        "cygwin",
+                                        "dash",
+                                        "es",
+                                        "eshell",
+                                        "fish",
+                                        "fsh",
+                                        "git",
+                                        "git-bash",
+                                        "git-cmd",
+                                        "hamilton",
+                                        "init",
+                                        "ion",
+                                        "ksh",
+                                        "miniconda3",
+                                        "mksh",
+                                        "msys2_shell",
+                                        "nushell",
+                                        "powershell",
+                                        "pwsh",
+                                        "rc",
+                                        "scsh",
+                                        "sh",
+                                        "tcsh",
+                                        "ubuntu",
+                                        "ubuntu1804",
+                                        "wsl",
+                                        "xonsh",
+                                        "zsh")
 
   private val KNOWN_EXTENSIONS = setOf("exe", "bat", "cmd")
 

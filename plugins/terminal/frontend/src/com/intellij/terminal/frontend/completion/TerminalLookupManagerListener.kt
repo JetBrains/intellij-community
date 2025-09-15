@@ -16,6 +16,7 @@ import com.intellij.terminal.frontend.TerminalInput
 import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
+import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import kotlin.math.max
@@ -97,11 +98,18 @@ private class TerminalLookupListener : LookupListener {
     if (canExecuteWithChosenItem(chosenItem.lookupString, typedString)) {
       executeCommand(lookup)
     }
+    else {
+      TerminalUsageLocalStorage.getInstance().recordCompletionItemChosen()
+    }
   }
 
   private fun executeCommand(lookup: Lookup) {
     val terminalInput = lookup.editor.getUserData(TerminalInput.Companion.KEY) ?: return
     terminalInput.sendEnter()
+  }
+
+  override fun firstElementShown() {
+    TerminalUsageLocalStorage.getInstance().recordCompletionPopupShown()
   }
 }
 

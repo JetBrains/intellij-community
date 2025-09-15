@@ -42,6 +42,9 @@ jvm_library(
     "//platform/eel-provider",
     "@lib//:caffeine",
     "//platform/observable",
+    "@lib//:kotlinx-datetime-jvm",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
   ],
   runtime_deps = [":frontend_resources"]
 )

@@ -11,6 +11,8 @@ import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.client.sessions
@@ -67,6 +69,8 @@ import org.jetbrains.plugins.terminal.TerminalBundle.message
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode.ALWAYS
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode.ONLY_PARAMETERS
+import org.jetbrains.plugins.terminal.block.completion.feedback.TerminalCompletionFeedbackSurvey
+import org.jetbrains.plugins.terminal.block.feedback.TerminalFeedbackUtils
 import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
@@ -138,7 +142,19 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
             row {
               completionEnabledCheckBox = checkBox(message("terminal.command.completion.show"))
-                .bindSelected(optionsProvider::showCompletionPopupAutomatically)
+                .bindSelected(
+                  getter = { optionsProvider.showCompletionPopupAutomatically },
+                  setter = {
+                    optionsProvider.showCompletionPopupAutomatically = it
+                    if (!it) {
+                      ApplicationManager.getApplication().invokeLater(
+                        { TerminalFeedbackUtils.showFeedbackNotificationOnDemand(project, TerminalCompletionFeedbackSurvey::class) },
+                        ModalityState.nonModal(), // show the notification after settings dialog is closed
+                        project.disposed
+                      )
+                    }
+                  },
+                )
                 .component
             }
             indent {

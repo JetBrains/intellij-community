@@ -176,6 +176,8 @@
 
     <action id="Terminal.ShowFeedbackNotification" internal="true"
             class="org.jetbrains.plugins.terminal.block.feedback.ShowReworkedTerminalFeedbackNotificationAction"/>
+    <action id="Terminal.Completion.ShowFeedbackNotification" internal="true"
+            class="org.jetbrains.plugins.terminal.block.completion.feedback.ShowTerminalCompletionFeedbackNotificationAction"/>
   </actions>
 
 </idea-plugin>
