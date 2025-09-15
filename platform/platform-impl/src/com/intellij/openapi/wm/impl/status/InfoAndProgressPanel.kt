@@ -249,7 +249,6 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       infos.add(info)
       val expanded = createInlineDelegate(info = info, original = original, compact = false)
       val compact = createInlineDelegate(info = info, original = original, compact = true)
-      IntegrationTestsProgressesTracker.progressStarted(original)
       getPopup().addIndicator(expanded)
       balloon.addIndicator(rootPane, compact)
       updateProgressIcon()
@@ -262,7 +261,6 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
         // already finished, progress might not send another finished message
         removeProgress(expanded)
         removeProgress(compact)
-        IntegrationTestsProgressesTracker.progressStopped(original)
         return
       }
       coroutineScope.launch {
@@ -294,7 +292,6 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
         return
       }
       mainPanel.removeProgress(progress, last)
-      IntegrationTestsProgressesTracker.progressStopped(original)
       coroutineScope.launch {
         runQuery()
       }
