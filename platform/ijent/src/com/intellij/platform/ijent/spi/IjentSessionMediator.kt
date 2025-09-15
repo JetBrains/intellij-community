@@ -225,8 +225,8 @@ private val ijentLogMessageRegex = Regex(
 )
 
 private val logTargets: Map<String, Logger> by lazy {
-  IjentLogger.ALL_LOGGERS.associateByTo(hashMapOf()) { logger ->
-    (logger as JulLogger).loggerName.removePrefix("#com.intellij.platform.ijent.")
+  IjentLogger.ALL_LOGGERS.mapKeys { (loggerName, _) ->
+    loggerName.removePrefix("#com.intellij.platform.ijent.")
   }
 }
 
