@@ -6,13 +6,19 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageConstants
-import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.rebase.GitInteractiveRebaseService
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
+import java.awt.Dimension
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JEditorPane
+import javax.swing.JPanel
 
 internal class IntelliJPlatformPrePushHandler : IssueIDPrePushHandler() {
   override val paths: List<String> = listOf("/community/platform/", "remote-dev")
@@ -36,17 +42,12 @@ internal class IntelliJPlatformPrePushHandler : IssueIDPrePushHandler() {
     val commitsInfo = commitsToWarnAbout.toHtml()
 
     val result = invokeAndWait(modalityState) {
-      MessageDialogBuilder.yesNoCancel(
-        DevKitGitBundle.message("push.commit.intellij.platform.handler.title"),
-        DevKitGitBundle.message("push.commit.intellij.platform.message.lacks.issue.reference.body", commitsInfo)
-      )
-        .yesText(DevKitGitBundle.message("push.commit.message.lacks.issue.reference.commit"))
-        .noText(DevKitGitBundle.message("push.commit.message.lacks.issue.reference.edit"))
-        .asWarning()
-        .show(project)
+      val dialog = CommitValidationDialog(project, commitsInfo)
+      dialog.show()
+      dialog.exitCode
     }
 
-    if (result == MessageConstants.NO) {
+    if (result == CommitValidationDialog.EDIT_EXIT_CODE) {
       val repository = info.repository as? GitRepository ?: run {
         thisLogger().error("Unexpected repository type: ${info.repository}")
         return false
@@ -54,6 +55,76 @@ internal class IntelliJPlatformPrePushHandler : IssueIDPrePushHandler() {
       project.service<GitInteractiveRebaseService>().launchRebase(repository, commitsToWarnAbout.first())
     }
 
-    return result == MessageConstants.OK
+    return result == DialogWrapper.OK_EXIT_CODE
+  }
+}
+
+
+// AI-generated
+private class CommitValidationDialog(
+  project: Project,
+  private val commitsInfo: String
+) : DialogWrapper(project) {
+
+  companion object {
+    const val EDIT_EXIT_CODE = NEXT_USER_EXIT_CODE + 1
+  }
+
+  init {
+    title = DevKitGitBundle.message("push.commit.intellij.platform.handler.title")
+    isResizable = true
+    init()
+  }
+
+  override fun createCenterPanel(): JComponent {
+    val panel = JPanel(BorderLayout())
+    val editorPane = JEditorPane("text/html", 
+      DevKitGitBundle.message("push.commit.intellij.platform.message.lacks.issue.reference.body", commitsInfo)
+    ).apply {
+      isEditable = false
+      background = panel.background
+      // Enable proper HTML rendering with word wrapping
+      putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
+    }
+    val scrollPane = JBScrollPane(editorPane).apply {
+      minimumSize = Dimension(400, 200)
+      preferredSize = Dimension(600, 450)
+      verticalScrollBarPolicy = JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+      horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+    }
+    panel.add(scrollPane, BorderLayout.CENTER)
+    return panel
+  }
+
+  override fun createActions(): Array<Action> {
+    return arrayOf(
+      createCommitAction(),
+      createEditAction(),
+      cancelAction
+    )
+  }
+
+  private fun createCommitAction(): Action {
+    return object : DialogWrapperAction(DevKitGitBundle.message("push.commit.message.lacks.issue.reference.commit")) {
+      override fun doAction(e: java.awt.event.ActionEvent) {
+        close(OK_EXIT_CODE)
+      }
+    }
+  }
+
+  private fun createEditAction(): Action {
+    return object : DialogWrapperAction(DevKitGitBundle.message("push.commit.message.lacks.issue.reference.edit")) {
+      override fun doAction(e: java.awt.event.ActionEvent) {
+        close(EDIT_EXIT_CODE)
+      }
+    }
+  }
+
+  override fun getPreferredFocusedComponent(): JComponent? {
+    return null // Let the dialog decide focus automatically
+  }
+
+  override fun getDimensionServiceKey(): String {
+    return "IntelliJPlatformCommitValidationDialog"
   }
 }
