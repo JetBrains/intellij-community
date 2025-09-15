@@ -3,7 +3,6 @@ package com.intellij.spellchecker.inspections;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
@@ -13,6 +12,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValuesManager;
@@ -104,19 +104,10 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
 
       @Override
       public void visitElement(final @NotNull PsiElement element) {
-        if (holder.getResultCount() > 1000) return;
-
-        ASTNode node = element.getNode();
-        if (node == null) {
-          return;
-        }
+        if (holder.getResultCount() > 1000 || element.getNode() == null) return;
 
         var strategy = getSpellcheckingStrategy(element);
-        if (strategy == null) {
-          return;
-        }
-
-        if (!strategy.elementFitsScope(element, scopes)) {
+        if (strategy == null || !strategy.elementFitsScope(element, scopes) || isCopyrightComment(strategy, element)) {
           return;
         }
 
@@ -350,6 +341,18 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
       }
     }
     return false;
+  }
+
+  private static boolean isCopyrightComment(SpellcheckingStrategy strategy, PsiElement psi) {
+    return strategy.elementFitsScope(psi, Set.of(SpellCheckingScope.Comments))
+           && StringUtil.containsIgnoreCase(psi.getText(), "Copyright")
+           && isAtFileStart(psi);
+  }
+
+  private static boolean isAtFileStart(PsiElement psi) {
+    PsiFile file = psi.getContainingFile();
+    int textStart = psi.getTextRange().getStartOffset();
+    return file.getViewProvider().getContents().subSequence(0, textStart).chars().noneMatch(Character::isLetterOrDigit);
   }
 
   private static void registerProblem(@NotNull SpellingTypo typo, @NotNull ProblemsHolder holder) {
