@@ -1679,7 +1679,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
       }
 
-      //noinspection HardCodedStringLiteral T should be inferred to `@Nls String`
       return ReadAction.nonBlocking(() -> doGetDocumentation(element)).executeSynchronously();
     }
 
@@ -1861,7 +1860,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   @Internal
   @Contract(pure = true)
   public static @Nls String decorate(@Nls @NotNull String text, @Nullable HtmlChunk location, @Nullable HtmlChunk links,
