@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.debugger.test.sequence.dsl
 
 import com.intellij.debugger.streams.core.trace.dsl.impl.DslImpl
 import com.intellij.debugger.streams.test.DslTestCase
+import com.intellij.testFramework.common.BazelTestUtil
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinCollectionsPeekCallFactory
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinStatementFactory
@@ -13,6 +15,10 @@ import java.io.File
 @RunWith(JUnit38ClassRunner::class)
 class KotlinDslTest : DslTestCase(DslImpl(KotlinStatementFactory(KotlinCollectionsPeekCallFactory()))) {
     override fun getTestDataPath(): String {
-        return File(KotlinRoot.DIR, "jvm-debugger/test/testData/sequence/dsl").absolutePath
+        return if (BazelTestUtil.isUnderBazelTest) {
+            TestKotlinArtifacts.kotlinJvmDebuggerTestData.resolve("sequence").resolve("dsl").toString()
+        } else {
+            File(KotlinRoot.DIR, "jvm-debugger/test/testData/sequence/dsl").absolutePath
+        }
     }
 }
