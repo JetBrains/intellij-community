@@ -109,7 +109,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private volatile boolean myCalculating;
   private final Advertiser myAdComponent;
   private int myGuardedChanges;
-  private volatile LookupArranger myArranger;
+  private volatile @NotNull LookupArranger myArranger;
   private LookupArranger myPresentableArranger;
   private boolean myStartCompletionWhenNothingMatches;
   boolean myResizePending;
@@ -188,16 +188,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return (CollectionListModelWithBatchUpdate<LookupElement>)list.getModel();
   }
 
-  @SuppressWarnings("unused") // used plugins
-  public LookupArranger getArranger() {
+  public @NotNull LookupArranger getArranger() {
     return myArranger;
   }
 
-  public void setArranger(LookupArranger arranger) {
-    Predicate<LookupElement> previousMatcher = null;
-    if (myArranger != null) {
-      previousMatcher = myArranger.getAdditionalMatcher();
-    }
+  public void setArranger(@NotNull LookupArranger arranger) {
+    Predicate<LookupElement> previousMatcher = myArranger.getAdditionalMatcher();
     myArranger = arranger;
     if (previousMatcher != null) {
       myArranger.registerAdditionalMatcher(previousMatcher);
