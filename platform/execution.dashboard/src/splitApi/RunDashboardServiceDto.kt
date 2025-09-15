@@ -5,7 +5,9 @@ import com.intellij.execution.RunContentDescriptorId
 import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.ide.ui.icons.IconId
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Serializable
 sealed interface RunDashboardServiceDto {
   val uuid: RunDashboardServiceId
@@ -27,6 +29,7 @@ sealed interface RunDashboardServiceDto {
   val isFocusToolWindowBeforeRun: Boolean
 }
 
+@ApiStatus.Internal
 @Serializable
 data class RunDashboardMainServiceDto(
   override val uuid: RunDashboardServiceId,
@@ -44,6 +47,7 @@ data class RunDashboardMainServiceDto(
   override val isFocusToolWindowBeforeRun: Boolean,
 ) : RunDashboardServiceDto
 
+@ApiStatus.Internal
 @Serializable
 data class RunDashboardAdditionalServiceDto(
   override val uuid: RunDashboardServiceId,
@@ -61,6 +65,7 @@ data class RunDashboardAdditionalServiceDto(
   override val isFocusToolWindowBeforeRun: Boolean,
 ) : RunDashboardServiceDto
 
+@ApiStatus.Internal
 fun RunDashboardMainServiceDto.toAdditionalServiceDto(contentId: RunContentDescriptorId): RunDashboardAdditionalServiceDto {
   return RunDashboardAdditionalServiceDto(
     uuid = uuid,

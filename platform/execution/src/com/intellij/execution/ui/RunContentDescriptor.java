@@ -242,6 +242,7 @@ public class RunContentDescriptor implements Disposable {
     myContent = content;
   }
 
+  @ApiStatus.Internal
   public RunContentDescriptorId getId() {
     return myId;
   }
@@ -252,6 +253,7 @@ public class RunContentDescriptor implements Disposable {
     myId = id;
   }
 
+  @ApiStatus.Internal
   public String getRunConfigurationName() {
     return myRunConfigurationName;
   }
@@ -261,6 +263,7 @@ public class RunContentDescriptor implements Disposable {
     myRunConfigurationName = runConfigurationName;
   }
 
+  @ApiStatus.Internal
   public String getRunConfigurationTypeId() {
     return myRunConfigurationTypeId;
   }

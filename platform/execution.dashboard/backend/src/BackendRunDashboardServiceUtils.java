@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl;
 import com.intellij.execution.dashboard.RunDashboardService;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+@ApiStatus.Internal
 public final class BackendRunDashboardServiceUtils {
   public static void reorderConfigurations(@NotNull Project project,
                                            @NotNull RunDashboardService target,

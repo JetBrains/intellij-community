@@ -11,6 +11,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +32,10 @@ public interface RunContentManager {
     return project.getServiceIfCreated(RunContentManager.class);
   }
 
+  @ApiStatus.Internal
   void registerRunContentDescriptor(@NotNull RunContentDescriptor descriptor);
 
+  @ApiStatus.Internal
   @NotNull Collection<RunContentDescriptor> getRunContentDescriptors();
 
   /**

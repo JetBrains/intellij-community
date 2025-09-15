@@ -3,7 +3,9 @@ package com.intellij.platform.execution.serviceView.backend
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface ServiceViewLocatableSearcher {
   /**
    * Searches for and returns a list of identifiers (IDs) of services contributed by a specific `ServiceViewContributor`.

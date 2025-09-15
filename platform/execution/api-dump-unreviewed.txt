@@ -712,10 +712,6 @@ f:com.intellij.execution.configurations.UnknownRunConfiguration
 - writeExternal(org.jdom.Element):V
 com.intellij.execution.dashboard.RunDashboardListener
 - a:configurationChanged(com.intellij.execution.configurations.RunConfiguration,Z):V
-com.intellij.execution.dashboard.RunDashboardManager$RunDashboardService
-- a:getContent():com.intellij.ui.content.Content
-- a:getDescriptor():com.intellij.execution.ui.RunContentDescriptor
-- a:getSettings():com.intellij.execution.RunnerAndConfigurationSettings
 c:com.intellij.execution.executors.DefaultRunExecutor
 - com.intellij.execution.Executor
 - sf:EXECUTOR_ID:java.lang.String

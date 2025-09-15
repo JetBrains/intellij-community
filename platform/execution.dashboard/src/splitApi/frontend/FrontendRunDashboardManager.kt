@@ -21,7 +21,9 @@ import com.intellij.ui.content.Content
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class FrontendRunDashboardManager(private val project: Project) : RunDashboardManager {
   private val frontendSettings = MutableStateFlow(RunDashboardSettingsDto())

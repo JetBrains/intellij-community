@@ -26,12 +26,14 @@ interface ServiceViewRpc : RemoteApi<Unit> {
   suspend fun saveConfigurationTypes(projectId: ProjectId, includedTypes: Set<String>)
 }
 
+@ApiStatus.Internal
 @Serializable
 data class ServiceViewConfigurationTypeSettings(
   val included: List<ServiceViewConfigurationType>,
   val excluded: List<ServiceViewConfigurationType>,
 )
 
+@ApiStatus.Internal
 @Serializable
 data class ServiceViewConfigurationType(
   val typeId: String,

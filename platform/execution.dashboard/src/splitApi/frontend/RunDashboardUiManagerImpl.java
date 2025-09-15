@@ -52,6 +52,7 @@ import static com.intellij.platform.execution.dashboard.splitApi.frontend.RunDas
 import static com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardUiUtils.updateContentToolbar;
 import static com.intellij.platform.execution.serviceView.ServiceViewImplementationChooserKt.isMonolith;
 
+@ApiStatus.Internal
 public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
   private final Project myProject;
   private final ContentManager myContentManager;

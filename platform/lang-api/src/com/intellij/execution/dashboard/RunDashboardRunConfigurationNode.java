@@ -18,6 +18,7 @@ package com.intellij.execution.dashboard;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author konstantin.aleev

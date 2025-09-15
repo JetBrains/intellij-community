@@ -263,14 +263,23 @@ com.intellij.codeInspection.RefactoringQuickFix
 com.intellij.codeInspection.ui.StringValidatorWithSwingSelector
 - com.intellij.codeInspection.options.StringValidator
 - a:select(com.intellij.openapi.project.Project):java.lang.String
+com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
+- a:addLink(java.lang.String,java.lang.Runnable):com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
+- a:addText(java.lang.String,com.intellij.ui.SimpleTextAttributes):com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
+- a:setClearText():com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
+- a:setIcon(javax.swing.Icon):com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
+a:com.intellij.execution.dashboard.RunDashboardCustomizer
+- sf:CUSTOMIZER_EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- getPsiElement(com.intellij.execution.configurations.RunConfiguration):com.intellij.psi.PsiElement
+- updatePresentation(com.intellij.execution.dashboard.RunDashboardCustomizationBuilder,com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.ui.RunContentDescriptor):Z
 com.intellij.execution.dashboard.RunDashboardDefaultTypesProvider
 - a:getDefaultTypeIds(com.intellij.openapi.project.Project):java.util.Collection
 com.intellij.execution.dashboard.RunDashboardRunConfigurationNode
-- com.intellij.execution.dashboard.RunDashboardNode
-- com.intellij.openapi.util.UserDataHolder
 - a:getConfigurationSettings():com.intellij.execution.RunnerAndConfigurationSettings
-- a:getCustomizers():java.util.List
-- a:getStatus():com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
+- a:getContent():com.intellij.ui.content.Content
+- a:getDescriptor():com.intellij.execution.ui.RunContentDescriptor
+c:com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
+- s:getStatus(com.intellij.execution.ui.RunContentDescriptor):com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
 com.intellij.execution.filters.ConsoleFilterProvider
 - sf:FILTER_PROVIDERS:com.intellij.openapi.extensions.ExtensionPointName
 - a:getDefaultFilters(com.intellij.openapi.project.Project):com.intellij.execution.filters.Filter[]

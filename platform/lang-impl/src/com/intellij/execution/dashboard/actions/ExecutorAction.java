@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,6 +78,7 @@ public abstract class ExecutorAction extends DumbAwareAction implements ActionRe
     presentation.setVisible(!targetNodes.isEmpty());
   }
 
+  @ApiStatus.Internal
   public static boolean isRunning(@Nullable RunDashboardRunConfigurationNode node) {
     if (node == null) return false;
     var contentDescriptor = node.getDescriptor();
@@ -106,6 +108,7 @@ public abstract class ExecutorAction extends DumbAwareAction implements ActionRe
                   getExecutor());
   }
 
+  @ApiStatus.Internal
   public static boolean canRun(@NotNull RunnerAndConfigurationSettings settings,
                                @Nullable ExecutionTarget target,
                                boolean isDumb,
@@ -183,6 +186,7 @@ public abstract class ExecutorAction extends DumbAwareAction implements ActionRe
     }
   }
 
+  @ApiStatus.Internal
   public static void run(RunnerAndConfigurationSettings settings,
                          RunContentDescriptor descriptor,
                          @NotNull DataContext context,

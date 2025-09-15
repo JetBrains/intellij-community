@@ -18,6 +18,7 @@ package com.intellij.platform.execution.dashboard.splitApi.frontend;
 import com.intellij.execution.dashboard.RunDashboardGroup;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.FrontendRunConfigurationNode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * Action for grouping items in a run dashboard (services) tree.
  * Grouping rules are applied to dashboard nodes according to their order defined in plug-in configuration.
  */
+@ApiStatus.Internal
 public interface RunDashboardGroupingRule {
   ExtensionPointName<RunDashboardGroupingRule> GROUPING_RULE_EP_NAME = new ExtensionPointName<>("com.intellij.runDashboardGroupingRule");
 

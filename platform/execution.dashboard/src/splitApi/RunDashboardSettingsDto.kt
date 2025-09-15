@@ -2,7 +2,9 @@
 package com.intellij.platform.execution.dashboard.splitApi
 
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Serializable
 data class RunDashboardSettingsDto(
   val openRunningConfigInTab: Boolean = false,

@@ -145,11 +145,13 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     })
   }
 
+  @ApiStatus.Internal
   override fun registerRunContentDescriptor(descriptor: RunContentDescriptor) {
     descriptors[descriptor.id] = descriptor
     Disposer.register(descriptor, Disposable { descriptors.remove(descriptor.id) })
   }
 
+  @ApiStatus.Internal
   override fun getRunContentDescriptors(): Collection<RunContentDescriptor> {
     return descriptors.values
   }

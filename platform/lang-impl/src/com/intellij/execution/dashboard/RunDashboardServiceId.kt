@@ -21,4 +21,5 @@ fun RunDashboardServiceId.findValue(): RunDashboardService? {
 object RunDashboardServiceIdType : BackendValueIdType<RunDashboardServiceId, RunDashboardService>(::RunDashboardServiceId)
 
 @JvmField
+@ApiStatus.Internal
 val SELECTED_DASHBOARD_SERVICE_ID: DataKey<RunDashboardServiceId> = DataKey.create("com.intellij.platform.execution.dashboard.RunDashboardServiceId")

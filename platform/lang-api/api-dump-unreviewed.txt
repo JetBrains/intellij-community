@@ -1285,24 +1285,15 @@ a:com.intellij.execution.actions.RunConfigurationProducer
 a:com.intellij.execution.dashboard.RunDashboardCustomizer
 - sf:NODE_LINKS:com.intellij.openapi.util.Key
 - <init>():V
-- canDrop(com.intellij.execution.dashboard.RunDashboardRunConfigurationNode,com.intellij.ide.dnd.DnDEvent):Z
-- drop(com.intellij.execution.dashboard.RunDashboardRunConfigurationNode,com.intellij.ide.dnd.DnDEvent):V
-- getChildren(com.intellij.execution.dashboard.RunDashboardRunConfigurationNode):java.util.Collection
-- getPsiElement(com.intellij.execution.dashboard.RunDashboardRunConfigurationNode):com.intellij.psi.PsiElement
-- getStatus(com.intellij.execution.dashboard.RunDashboardRunConfigurationNode):com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
 - a:isApplicable(com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.ui.RunContentDescriptor):Z
 - updatePresentation(com.intellij.ide.projectView.PresentationData,com.intellij.execution.dashboard.RunDashboardRunConfigurationNode):Z
 com.intellij.execution.dashboard.RunDashboardGroup
 - a:getIcon():javax.swing.Icon
 - a:getName():java.lang.String
-com.intellij.execution.dashboard.RunDashboardGroupingRule
-- a:getGroup(com.intellij.ide.util.treeView.AbstractTreeNode):com.intellij.execution.dashboard.RunDashboardGroup
-- a:getName():java.lang.String
 com.intellij.execution.dashboard.RunDashboardNode
 - getContent():com.intellij.ui.content.Content
 - getDescriptor():com.intellij.execution.ui.RunContentDescriptor
 - a:getProject():com.intellij.openapi.project.Project
-- getRemover():java.lang.Runnable
 c:com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
 - com.intellij.ide.util.treeView.WeighedItem
 - sf:CONFIGURED:com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
@@ -1313,7 +1304,6 @@ c:com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
 - getIcon():javax.swing.Icon
 - getId():java.lang.String
 - getName():java.lang.String
-- s:getStatus(com.intellij.execution.dashboard.RunDashboardRunConfigurationNode):com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
 - s:getStatusById(java.lang.String):com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus
 - getWeight():I
 c:com.intellij.execution.filters.CompositeFilter

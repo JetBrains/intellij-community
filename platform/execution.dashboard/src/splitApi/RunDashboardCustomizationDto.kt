@@ -6,7 +6,9 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.SimpleTextAttributes
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Serializable
 data class ServiceCustomizationDto(
   val id: RunDashboardServiceId,
@@ -16,18 +18,21 @@ data class ServiceCustomizationDto(
   val shouldClearTextAttributes: Boolean,
 )
 
+@ApiStatus.Internal
 @Serializable
 data class CustomLinkDto(
   val presentableText: @NlsSafe String,
   @kotlinx.serialization.Transient var callback: Runnable? = null,
 )
 
+@ApiStatus.Internal
 @Serializable
 data class TextSegmentWithAttributesDto(
   val value: @NlsSafe String,
   val attributes: SerializableTextAttributesType,
 )
 
+@ApiStatus.Internal
 @Serializable
 enum class SerializableTextAttributesType(@kotlinx.serialization.Transient val simpleTextAttributes: SimpleTextAttributes) {
   REGULAR_ATTRIBUTES(SimpleTextAttributes.REGULAR_ATTRIBUTES),

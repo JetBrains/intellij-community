@@ -14,6 +14,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +23,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class RunDashboardUiUtils {
   private RunDashboardUiUtils() {
   }
