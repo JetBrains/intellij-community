@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.terminal.TerminalShellCommandHandler
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.feedback.TerminalFeedbackMoment
 import org.jetbrains.plugins.terminal.util.ShellType
 import kotlin.time.Duration
 
@@ -198,10 +199,6 @@ enum class BlockTerminalSwitchPlace {
 
 internal enum class TerminalFeedbackEvent {
   NOTIFICATION_SHOWN, DIALOG_SHOWN, FEEDBACK_SENT
-}
-
-internal enum class TerminalFeedbackMoment {
-  ON_DISABLING, AFTER_USAGE
 }
 
 @ApiStatus.Internal
