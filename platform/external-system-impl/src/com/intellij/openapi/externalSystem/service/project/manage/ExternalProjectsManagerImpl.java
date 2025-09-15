@@ -38,7 +38,6 @@ import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -307,12 +306,11 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
 
   @ApiStatus.Internal
   @Override
-  @RequiresReadLock
   public @NotNull ExternalProjectsState getState() {
     for (ExternalProjectsView externalProjectsView : myProjectsViews) {
       if (externalProjectsView instanceof ExternalProjectsViewImpl) {
-        final ExternalProjectsViewState externalProjectsViewState = ((ExternalProjectsViewImpl)externalProjectsView).getState();
-        final ExternalProjectsState.State state = myState.getExternalSystemsState().get(externalProjectsView.getSystemId().getId());
+        ExternalProjectsViewState externalProjectsViewState = ((ExternalProjectsViewImpl)externalProjectsView).getState();
+        ExternalProjectsState.State state = myState.getExternalSystemsState().get(externalProjectsView.getSystemId().getId());
         assert state != null;
         state.setProjectsViewState(externalProjectsViewState);
       }
