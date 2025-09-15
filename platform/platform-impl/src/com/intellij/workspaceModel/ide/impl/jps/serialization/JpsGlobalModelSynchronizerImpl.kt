@@ -11,7 +11,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.eel.provider.EelProvider
-import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
@@ -39,7 +38,6 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -147,7 +145,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
     val sdkSerializer = JpsGlobalEntitiesSerializers.createSdkSerializer(
       virtualFileUrlManager = virtualFileUrlManager,
       sortedRootTypes = sortedRootTypes,
-      optionsDir = Path.of(PathManager.getOptionsPath()),
+      optionsDir = PathManager.getOptionsDir(),
     ) as JpsFileEntityTypeSerializer<WorkspaceEntity>
     val contentWriter = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentWriter()
     for (globalWorkspaceModel in GlobalWorkspaceModel.getInstances()) {
