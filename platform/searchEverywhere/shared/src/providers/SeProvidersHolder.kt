@@ -28,6 +28,9 @@ class SeProvidersHolder(
   val legacyAllTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
   private val legacySeparateTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>
 ) : Disposable {
+  val adaptedAllTabProviders: Set<SeProviderId> =
+    allTabProviders.values.mapNotNull { it.takeIf { it.isAdapted }?.id }.toSet()
+
   fun get(providerId: SeProviderId, isAllTab: Boolean): SeLocalItemDataProvider? =
     if (isAllTab) allTabProviders[providerId]
     else separateTabProviders[providerId] ?: allTabProviders[providerId]
@@ -48,7 +51,7 @@ class SeProvidersHolder(
 
   fun getEssentialAllTabProviderIds(): Set<SeProviderId> =
     legacyAllTabContributors.filter {
-      allTabProviders.contains(it.key) && EssentialContributor.checkEssential(it.value)
+      (allTabProviders[it.key]?.isAdapted == false) && EssentialContributor.checkEssential(it.value)
     }.keys
 
   companion object {

@@ -6,6 +6,7 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.providers.SeSortedProviderIds
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -70,11 +71,12 @@ interface SeRemoteApi : RemoteApi<Unit> {
     isAllTab: Boolean
   ): Boolean
 
+  @ApiStatus.Internal
   suspend fun getAvailableProviderIds(
     projectId: ProjectId,
     session: SeSession,
     dataContextId: DataContextId
-  ): Map<String, Set<SeProviderId>>
+  ): SeSortedProviderIds?
 
   suspend fun getSearchScopesInfoForProviders(
     projectId: ProjectId,

@@ -16,6 +16,7 @@ import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
+import com.intellij.platform.searchEverywhere.providers.SeSortedProviderIds
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.platform.searchEverywhere.utils.SeResultsCountBalancer
 import com.jetbrains.rhizomedb.EID
@@ -55,11 +56,11 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
       }
     }
 
-    val splitProviderIds = providerHolder.splitToEssentialAndNonEssential(providerIds)
+    val sortedProviderIds = SeSortedProviderIds.create(providerIds, providerHolder)
     val resultsBalancer = SeResultsCountBalancer("BE",
                                                  nonBlockedProviderIds = emptyList(),
-                                                 highPriorityProviderIds = splitProviderIds[SeProviderIdUtils.ESSENTIAL_KEY]!!,
-                                                 lowPriorityProviderIds = splitProviderIds[SeProviderIdUtils.NON_ESSENTIAL_KEY]!!)
+                                                 highPriorityProviderIds = sortedProviderIds.essential,
+                                                 lowPriorityProviderIds = sortedProviderIds.nonEssential)
 
     SeLog.log(SeLog.ITEM_EMIT) { "Backend will request items from providers: ${providerIds.joinToString(", ")}" }
 
@@ -99,17 +100,10 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
   suspend fun getAvailableProviderIds(
     session: SeSession,
     dataContextId: DataContextId
-  ) : Map<String, Set<SeProviderId>> {
-    val providersHolder = getProvidersHolder(session, dataContextId) ?: return emptyMap()
-    return providersHolder.splitToEssentialAndNonEssential(
-      SeItemsProviderFactory.EP_NAME.extensionList.map { it.id.toProviderId() } + providersHolder.legacyAllTabContributors.map { it.key }
-    )
-  }
-
-  private fun SeProvidersHolder.splitToEssentialAndNonEssential(providerIds: List<SeProviderId>): Map<String, Set<SeProviderId>> {
-    val essential = getEssentialAllTabProviderIds().filter { it in providerIds }.toSet()
-    val nonEssential = providerIds.filter { it !in essential }.toSet()
-    return mapOf(SeProviderIdUtils.ESSENTIAL_KEY to essential, SeProviderIdUtils.NON_ESSENTIAL_KEY to nonEssential)
+  ) : SeSortedProviderIds? {
+    val providersHolder = getProvidersHolder(session, dataContextId) ?: return null
+    val allProviderIds = SeItemsProviderFactory.EP_NAME.extensionList.map { it.id.toProviderId() } + providersHolder.legacyAllTabContributors.map { it.key }
+    return SeSortedProviderIds.create(allProviderIds, providersHolder)
   }
 
   private suspend fun getProvidersHolder(

@@ -31,6 +31,8 @@ class SeLocalItemDataProvider(
     get() = SeProviderId(provider.id)
   val displayName: @Nls String
     get() = provider.displayName
+  val isAdapted: Boolean
+    get() = provider is SeAdaptedItemsProvider
 
   private val infoWithReportableId = mapOf(
     SeItemDataKeys.REPORTABLE_PROVIDER_ID to
