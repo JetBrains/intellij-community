@@ -52,7 +52,11 @@ internal fun readDefaultComboBoxStyle(): ComboBoxStyle {
                 arrowAreaSize = DpSize(arrowWidth, minimumSize.height),
                 minSize = DpSize(minimumSize.width + arrowWidth, minimumSize.height),
                 cornerSize = componentArc,
-                contentPadding = retrieveInsetsAsPaddingValues("ComboBox.padding"),
+                contentPadding =
+                    retrieveInsetsAsPaddingValues(
+                        "ComboBox.padding",
+                        PaddingValues(horizontal = 6.dp, vertical = 3.dp),
+                    ),
                 popupContentPadding = PaddingValues(vertical = 6.dp),
                 borderWidth = borderWidth,
                 maxPopupHeight = Dp.Unspecified,

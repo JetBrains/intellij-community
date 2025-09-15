@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.bridge.theme
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
@@ -48,7 +49,7 @@ internal fun readDefaultTabStyle(): TabStyle {
             TabMetrics(
                 underlineThickness =
                     retrieveIntAsNonNegativeDpOrUnspecified("TabbedPane.tabSelectionHeight").takeOrElse { 2.dp },
-                tabPadding = retrieveInsetsAsPaddingValues("TabbedPane.tabInsets"),
+                tabPadding = retrieveInsetsAsPaddingValues("TabbedPane.tabInsets", PaddingValues(horizontal = 8.dp)),
                 closeContentGap = 4.dp,
                 tabContentSpacing = 4.dp,
                 tabHeight = retrieveIntAsNonNegativeDpOrUnspecified("TabbedPane.tabHeight").takeOrElse { 24.dp },
@@ -102,7 +103,7 @@ internal fun readEditorTabStyle(): TabStyle {
             TabMetrics(
                 underlineThickness =
                     retrieveIntAsNonNegativeDpOrUnspecified("TabbedPane.tabSelectionHeight").takeOrElse { 2.dp },
-                tabPadding = retrieveInsetsAsPaddingValues("TabbedPane.tabInsets"),
+                tabPadding = retrieveInsetsAsPaddingValues("TabbedPane.tabInsets", PaddingValues(horizontal = 8.dp)),
                 closeContentGap = 4.dp,
                 tabContentSpacing = 4.dp,
                 tabHeight = retrieveIntAsNonNegativeDpOrUnspecified("TabbedPane.tabHeight").takeOrElse { 24.dp },
