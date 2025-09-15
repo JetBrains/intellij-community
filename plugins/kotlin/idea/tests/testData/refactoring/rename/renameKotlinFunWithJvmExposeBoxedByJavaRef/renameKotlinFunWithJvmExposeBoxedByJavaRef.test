@@ -1,0 +1,9 @@
+{
+  "type": "MARKED_ELEMENT",
+  "mainFile": "test/JavaClient.java",
+  "newName": "bar",
+  "withRuntime": "true",
+  "byRef": "true",
+  "enabledInK2": true,
+  "enabledInK1": false
+}

@@ -950,6 +950,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinFile/renameFile.test");
     }
 
+    @TestMetadata("renameKotlinFunWithJvmExposeBoxedByJavaRef/renameKotlinFunWithJvmExposeBoxedByJavaRef.test")
+    public void testRenameKotlinFunWithJvmExposeBoxedByJavaRef_RenameKotlinFunWithJvmExposeBoxedByJavaRef() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameKotlinFunWithJvmExposeBoxedByJavaRef/renameKotlinFunWithJvmExposeBoxedByJavaRef.test");
+    }
+
     @TestMetadata("renameKotlinFunWithJvmNameByJavaRef/renameKotlinFunWithJvmNameByJavaRef.test")
     public void testRenameKotlinFunWithJvmNameByJavaRef_RenameKotlinFunWithJvmNameByJavaRef() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinFunWithJvmNameByJavaRef/renameKotlinFunWithJvmNameByJavaRef.test");
