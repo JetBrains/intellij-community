@@ -6,7 +6,11 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
@@ -40,12 +44,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.jetbrains.python.statistics.CythonWarningIdsHolder.CYTHON_EXTENSION_SPEEDS_UP_PYTHON_DEBUGGING;
 
-public final class PyCythonExtensionWarning {
-  private static final Logger LOG = Logger.getInstance(PyCythonExtensionWarning.class);
+public final class PyDebugNotificationForCythonExtension {
+  private static final Logger LOG = Logger.getInstance(PyDebugNotificationForCythonExtension.class);
 
   private static final String CYTHON_WARNING_GROUP_ID = "CythonWarning";
   public static final String SETUP_CYTHON_PATH = "pydev/setup_cython.py";
