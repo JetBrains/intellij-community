@@ -3,13 +3,10 @@ package com.intellij.codeInsight.javadoc
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.impl.source.javadoc.PsiDocFragmentName
 import com.intellij.psi.javadoc.PsiDocComment
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
@@ -28,10 +25,7 @@ private class JavaDocFragmentCacheService {
   // Matches any HTML opening tag with an id attribute
   private val ID_PATTERN: Pattern = Pattern.compile("<[a-zA-Z0-9\\-]*[^>] id=[\"']?([^\"'> ]+)[\"']?[^>]*>", Pattern.CASE_INSENSITIVE)
 
-  fun getAnchors(project: Project, fqn: String): LinkedHashSet<JavaDocFragmentData> {
-    val psiClass = JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.projectScope(project))
-                    ?: return LinkedHashSet()
-
+  fun getAnchors(project: Project, psiClass: PsiClass): LinkedHashSet<JavaDocFragmentData> {
     val manager = CachedValuesManager.getManager(project)
     return manager.getCachedValue(psiClass) {
       val result = LinkedHashSet<JavaDocFragmentData>().apply {
@@ -67,10 +61,10 @@ private class JavaDocFragmentCacheService {
 }
 
 /**
- * Resolves all fragment data for the class corresponding to the given fully qualified name.
+ * Resolves all fragment data for the class corresponding to the given [PsiClass].
  */
-fun getJavaDocFragmentsForClass(project: Project, fqn: String): LinkedHashSet<JavaDocFragmentData> {
-  return project.service<JavaDocFragmentCacheService>().getAnchors(project, fqn)
+fun getJavaDocFragmentsForClass(project: Project, psiClass: PsiClass): LinkedHashSet<JavaDocFragmentData> {
+  return project.service<JavaDocFragmentCacheService>().getAnchors(project, psiClass)
 }
 
 /**
@@ -78,12 +72,9 @@ fun getJavaDocFragmentsForClass(project: Project, fqn: String): LinkedHashSet<Ja
  * returns the fragment data and its containing class if found.
  */
 fun resolveJavaDocFragment(project: Project, fragmentName: PsiDocFragmentName): Pair<PsiClass, JavaDocFragmentData>? {
-  if (DumbService.getInstance(project).isDumb) return null
-
-  val psiClass = fragmentName.getScope()
-  val fqn = psiClass?.qualifiedName ?: return null
-
-  val data = getJavaDocFragmentsForClass(project, fqn).firstOrNull { data: JavaDocFragmentData? -> data!!.name == fragmentName.text }
+  val psiClass = fragmentName.getScope() ?: return null
+  val data = getJavaDocFragmentsForClass(project, psiClass)
+               .firstOrNull { data: JavaDocFragmentData? -> data!!.name == fragmentName.text }
              ?: return null
 
   return psiClass to data

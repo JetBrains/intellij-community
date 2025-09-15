@@ -4,6 +4,9 @@ package com.intellij.java.indexing;
 import com.intellij.codeInsight.javadoc.JavaDocFragmentAnchorCacheKt;
 import com.intellij.codeInsight.javadoc.JavaDocFragmentData;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.intellij.lang.annotations.Language;
 
@@ -35,7 +38,10 @@ public class JavaDocFragmentAnchorCacheTest extends LightJavaCodeInsightTestCase
 
     Project project = getProject();
 
-    Collection<JavaDocFragmentData> anchors = JavaDocFragmentAnchorCacheKt.getJavaDocFragmentsForClass(project, "p.A");
+    PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass("p.A", GlobalSearchScope.projectScope(project));
+    assertNotNull(psiClass);
+
+    Collection<JavaDocFragmentData> anchors = JavaDocFragmentAnchorCacheKt.getJavaDocFragmentsForClass(project, psiClass);
     assertNotNull(anchors);
     assertContainsElements(anchors,
                            new JavaDocFragmentData("equivalenceRelation", 25),

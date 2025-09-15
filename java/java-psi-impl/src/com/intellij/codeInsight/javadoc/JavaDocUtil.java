@@ -153,10 +153,8 @@ public final class JavaDocUtil {
                                                    String refTextCorrected,
                                                    int fragmentIndex,
                                                    @NotNull PsiManager manager) {
-    String fqn = aClass.getQualifiedName();
-    if (fqn == null) { return null; }
     String fragmentName = refTextCorrected.substring(fragmentIndex + 2);
-    for (JavaDocFragmentData fragmentData : JavaDocFragmentAnchorCacheKt.getJavaDocFragmentsForClass(manager.getProject(), fqn)) {
+    for (JavaDocFragmentData fragmentData : JavaDocFragmentAnchorCacheKt.getJavaDocFragmentsForClass(manager.getProject(), aClass)) {
       if (fragmentName.equals(fragmentData.getName())) {
         PsiElement ref = PsiUtilCore.getElementAtOffset(aClass.getContainingFile(), fragmentData.getOffset());
         PsiDocComment docComment = PsiTreeUtil.getParentOfType(ref, PsiDocComment.class, false);
