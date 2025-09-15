@@ -5,6 +5,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.dashboard.RunDashboardUiManager;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,7 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -28,6 +30,10 @@ public interface RunContentManager {
   static @Nullable RunContentManager getInstanceIfCreated(@NotNull Project project) {
     return project.getServiceIfCreated(RunContentManager.class);
   }
+
+  void registerRunContentDescriptor(@NotNull RunContentDescriptor descriptor);
+
+  @NotNull Collection<RunContentDescriptor> getRunContentDescriptors();
 
   /**
    * Returns the content descriptor for the selected run configuration in the last activated Run/Debug toolwindow.
@@ -74,6 +80,8 @@ public interface RunContentManager {
    * @return Tool window id where content should be shown. Null if content tool window is determined by executor.
    */
   default @Nullable String getContentDescriptorToolWindowId(@NotNull ExecutionEnvironment environment) {
+    if (!RunDashboardUiManager.getInstance(environment.getProject()).isSupported(environment.getExecutor())) return null;
+
     RunProfile runProfile = environment.getRunProfile();
     if (runProfile instanceof RunConfiguration) {
       return getContentDescriptorToolWindowId((RunConfiguration)runProfile);
