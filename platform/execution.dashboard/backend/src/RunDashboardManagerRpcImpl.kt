@@ -133,7 +133,7 @@ internal class RunDashboardManagerRpcImpl : RunDashboardManagerRpc {
     return null
   }
 
-  override suspend fun attachRunContentDescriptorId(projectId: ProjectId, oldDescriptorId: RunContentDescriptorId?, newDescriptorId: RunContentDescriptorId) {
+  override suspend fun attachRunContentDescriptorId(projectId: ProjectId, oldDescriptorId: RunContentDescriptorIdImpl?, newDescriptorId: RunContentDescriptorIdImpl) {
     val project = projectId.findProjectOrNull() ?: return
     if (oldDescriptorId != null) {
       RunDashboardManagerImpl.getInstance(project).updateServiceRunContentDescriptor(oldDescriptorId, newDescriptorId)
@@ -143,7 +143,7 @@ internal class RunDashboardManagerRpcImpl : RunDashboardManagerRpc {
     }
   }
 
-  override suspend fun detachRunContentDescriptorId(projectId: ProjectId, descriptorId: RunContentDescriptorId) {
+  override suspend fun detachRunContentDescriptorId(projectId: ProjectId, descriptorId: RunContentDescriptorIdImpl) {
     val project = projectId.findProjectOrNull() ?: return
     RunDashboardManagerImpl.getInstance(project).detachServiceRunContentDescriptor(descriptorId);
   }

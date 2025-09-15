@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.dashboard.splitApi
 
-import com.intellij.execution.RunContentDescriptorId
+import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
@@ -28,7 +28,7 @@ interface RunDashboardManagerRpc : RemoteApi<Unit> {
   suspend fun addServiceToFolder(projectId: ProjectId, dropId: RunDashboardServiceId, targetFolderName: String)
   suspend fun tryNavigateLink(projectId: ProjectId, link: String, serviceId: RunDashboardServiceId)
   suspend fun attachRunContentDescriptorId(projectId: ProjectId,
-                                           oldDescriptorId: RunContentDescriptorId?,
-                                           newDescriptorId: RunContentDescriptorId)
-  suspend fun detachRunContentDescriptorId(projectId: ProjectId, descriptorId: RunContentDescriptorId)
+                                           oldDescriptorId: RunContentDescriptorIdImpl?,
+                                           newDescriptorId: RunContentDescriptorIdImpl)
+  suspend fun detachRunContentDescriptorId(projectId: ProjectId, descriptorId: RunContentDescriptorIdImpl)
 }

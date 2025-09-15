@@ -2,6 +2,7 @@
 package com.intellij.platform.execution.dashboard
 
 import com.intellij.execution.RunContentDescriptorId
+import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.dashboard.RunDashboardGroup
 import com.intellij.execution.services.ServiceViewDnDDescriptor
 import com.intellij.openapi.project.Project
@@ -74,6 +75,9 @@ internal object RunDashboardServiceViewContributorHelper {
     project: Project,
     oldDescriptorId: RunContentDescriptorId?, newDescriptorId: RunContentDescriptorId,
   ) {
+    // cast because the execution module does not allow using serialization library, and the id interface must be there (it is used in api methods declared there as well)
+    oldDescriptorId as RunContentDescriptorIdImpl?
+    newDescriptorId as RunContentDescriptorIdImpl
     RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
       RunDashboardManagerRpc.getInstance().attachRunContentDescriptorId(project.projectId(),
                                                                         oldDescriptorId, newDescriptorId)
@@ -82,6 +86,7 @@ internal object RunDashboardServiceViewContributorHelper {
 
   @JvmStatic
   fun scheduleDetachRunContentDescriptorId(project: Project, descriptorId: RunContentDescriptorId) {
+    descriptorId as RunContentDescriptorIdImpl
     RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
       RunDashboardManagerRpc.getInstance().detachRunContentDescriptorId(project.projectId(), descriptorId)
     }
