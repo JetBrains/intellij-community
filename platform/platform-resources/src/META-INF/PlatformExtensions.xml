@@ -145,7 +145,7 @@
     <ApplicationLoadListener implementation="com.intellij.openapi.project.impl.shared.P3SharedConfigFolderApplicationLoadListener"/>
     <applicationActivity implementation="com.intellij.openapi.project.impl.shared.ProcessPerProjectSharedConfigFolderApplicationInitializedListener"/>
 
-    <!-- listen VFS_CHANGES - it is core service, so, don't want use lazy message bus listener without a reason -->
+    <!-- listen VFS_CHANGES - it is a core service, so, don't want to use a lazy message bus listener without a reason -->
     <applicationService serviceInterface="com.intellij.openapi.command.undo.DocumentReferenceManager"
                         serviceImplementation="com.intellij.openapi.command.impl.DocumentReferenceManagerImpl"/>
 
@@ -1783,7 +1783,7 @@
                        key="presentation.assistant.notification"/>
 
     <!-- Minimap -->
-    <registryKey key="editor.minimap.enabled" defaultValue="false" description="Enables Minimap"/>
+    <registryKey key="editor.minimap.enabled" defaultValue="false" description="Enables minimap"/>
     <editorFactoryListener implementation="com.intellij.ide.minimap.MinimapEditorFactoryListener"/>
     <applicationService serviceImplementation="com.intellij.ide.minimap.settings.MinimapSettings"/>
     <applicationConfigurable id="com.intellij.minimap" parentId="editor"
@@ -1991,6 +1991,9 @@
     <diagnostic.specialPathsProvider implementation="com.intellij.diagnostic.specialPaths.ApplicationSpecialPathsProvider"/>
 
     <!--<editor.rd.localSupport filetype="PLAIN_TEXT"/> IJPL-189393 -->
+
+    <registryKey key="ide.suppress.low.memory.notifications.when.dumb" defaultValue="true"
+                 description="Disables Low Memory notifications during indexing for the sake of less false-positive detection for users" />
   </extensions>
 
   <applicationListeners>
