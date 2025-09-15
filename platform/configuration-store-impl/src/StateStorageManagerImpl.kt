@@ -246,9 +246,6 @@ open class StateStorageManagerImpl(
     return storage
   }
 
-  internal open val isUseVfsForWrite: Boolean
-    get() = false
-
   protected open fun createFileBasedStorage(
     file: Path,
     collapsedPath: String,
