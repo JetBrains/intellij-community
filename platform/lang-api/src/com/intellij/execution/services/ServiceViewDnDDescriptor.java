@@ -2,7 +2,6 @@
 package com.intellij.execution.services;
 
 import com.intellij.ide.dnd.DnDEvent;
-import kotlinx.serialization.Serializable;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
@@ -16,7 +15,7 @@ public interface ServiceViewDnDDescriptor {
   /**
    * Determines if a drop operation can be performed for the given DnD event at the specified position.
    *
-   * @param event The DnDEvent associated with the drop.
+   * @param event    The DnDEvent associated with the drop.
    * @param position The position where the drop occurs.
    * @return {@code true} if drop operation can be performed, otherwise {@code false}
    */
@@ -25,12 +24,11 @@ public interface ServiceViewDnDDescriptor {
   /**
    * Handles the drop action in a drag-and-drop operation.
    *
-   * @param event The DnDEvent associated with the drop.
+   * @param event    The DnDEvent associated with the drop.
    * @param position The position where the drop occurs.
    */
   void drop(@NotNull DnDEvent event, @NotNull Position position);
 
-  @Serializable
   enum Position {
     ABOVE, INTO, BELOW
   }
