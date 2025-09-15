@@ -16,7 +16,6 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
@@ -108,8 +107,9 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
   catch (e: UnresolvedReadOnlyFilesException) {
     LOG.info(e)
   }
-  catch (e: CancellationException) { throw e }
-  catch (e: ProcessCanceledException) { throw e }
+  catch (e: CancellationException) {
+    throw e
+  }
   catch (e: Throwable) {
     LOG.error("Save settings failed, please restart application", e)
   }

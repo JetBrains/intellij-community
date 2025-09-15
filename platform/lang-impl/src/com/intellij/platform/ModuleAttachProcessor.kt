@@ -87,13 +87,18 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
                                             beforeOpen: (suspend (Project) -> Boolean)?): Boolean {
     LOG.info("Attaching directory: $projectDir")
     val dotIdeaDir = projectDir.resolve(Project.DIRECTORY_STORE_FOLDER)
-    if (!Files.exists(dotIdeaDir)) {
-      val options = OpenProjectTask { useDefaultProjectAsTemplate = true; isNewProject = true }
+    if (Files.notExists(dotIdeaDir)) {
+      val options = OpenProjectTask {
+        useDefaultProjectAsTemplate = true
+        isNewProject = true
+      }
       val newProject = ProjectManagerEx.getInstanceEx().newProjectAsync(file = projectDir, options = options)
-      PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir = projectDir,
-                                                                    project = newProject,
-                                                                    newProject = true,
-                                                                    createModule = true)
+      PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
+        baseDir = projectDir,
+        project = newProject,
+        newProject = true,
+        createModule = true,
+      )
       runInAutoSaveDisabledMode {
         saveSettings(newProject)
       }

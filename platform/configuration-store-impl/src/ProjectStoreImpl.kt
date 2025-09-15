@@ -174,7 +174,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
         PathManager.getConfigDir()
       }
       val productWorkspaceFile = basePath.resolve("workspace/$projectWorkspaceId.xml")
-      // storageManager.setMacros(macros) was called before, because we need to read `ProjectIdManager` state to get projectWorkspaceId
+      // storageManager.setMacros(macros) was called before, because we need to read a `ProjectIdManager` state to get projectWorkspaceId
       macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
     }
     isStoreInitialized = true
