@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.Disposable;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.PropertyChangeListener;
 
 public abstract class LookupManager {
-  public static LookupManager getInstance(@NotNull Project project){
+  public static LookupManager getInstance(@NotNull Project project) {
     return project.getService(LookupManager.class);
   }
 
@@ -65,5 +65,8 @@ public abstract class LookupManager {
   @Deprecated(forRemoval = true)
   public abstract void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
-  public abstract @NotNull Lookup createLookup(@NotNull Editor editor, LookupElement @NotNull [] items, final @NotNull String prefix, @NotNull LookupArranger arranger);
+  public abstract @NotNull Lookup createLookup(@NotNull Editor editor,
+                                               @NotNull LookupElement @NotNull [] items,
+                                               @NotNull String prefix,
+                                               @NotNull LookupArranger arranger);
 }
