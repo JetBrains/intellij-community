@@ -571,10 +571,6 @@
     <extensionPoint name="activityTracker" interface="com.intellij.platform.backend.observation.ActivityTracker"
                     dynamic="true"/>
 
-    <extensionPoint name="internal.ml.featureProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.MLFeatureProvider"/>
-    </extensionPoint>
-
     <extensionPoint qualifiedName="com.intellij.platform.ml.environmentExtender"
                     interface="com.intellij.platform.ml.environment.EnvironmentExtender"
                     dynamic="true"/>
