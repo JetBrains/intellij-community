@@ -11,7 +11,6 @@ f:com.intellij.configurationStore.ComponentSerializationUtil
 - a:ignore():Z
 com.intellij.configurationStore.SaveSession
 - a:save(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
-- a:saveBlocking():V
 com.intellij.configurationStore.SaveSessionProducer
 - a:createSaveSession():com.intellij.configurationStore.SaveSession
 - a:setState(java.lang.Object,java.lang.String,com.intellij.openapi.extensions.PluginId,java.lang.Object):V

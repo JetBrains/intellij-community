@@ -129,9 +129,9 @@ com.intellij.openapi.components.PathMacroSubstitutor
 - collapsePathsRecursively(org.jdom.Element):V
 - a:expandPath(java.lang.String):java.lang.String
 - a:expandPaths(org.jdom.Element):V
-c:com.intellij.openapi.components.impl.ModulePathMacroManager
+f:com.intellij.openapi.components.impl.ModulePathMacroManager
 - com.intellij.openapi.components.PathMacroManager
-- <init>(com.intellij.openapi.module.Module):V
+- <init>(com.intellij.openapi.module.Module,com.intellij.openapi.application.PathMacros):V
 - computeReplacePathMap():com.intellij.application.options.ReplacePathToMacroMap
 - s:createInstance(java.util.function.Supplier,java.util.function.Supplier):com.intellij.openapi.components.impl.ModulePathMacroManager
 - getExpandMacroMap():com.intellij.openapi.components.ExpandMacroToPathMap

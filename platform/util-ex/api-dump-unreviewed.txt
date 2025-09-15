@@ -131,9 +131,6 @@ f:com.intellij.util.io.PathKt
 - sf:lastModified(java.nio.file.Path):java.nio.file.attribute.FileTime
 - sf:makeFilter(kotlin.jvm.functions.Function1):java.nio.file.DirectoryStream$Filter
 - sf:move(java.nio.file.Path,java.nio.file.Path):java.nio.file.Path
-- sf:outputStream(java.nio.file.Path,Z,java.nio.file.OpenOption[]):java.io.OutputStream
-- sf:outputStream(java.nio.file.Path,java.nio.file.OpenOption[]):java.io.OutputStream
-- bs:outputStream$default(java.nio.file.Path,Z,java.nio.file.OpenOption[],I,java.lang.Object):java.io.OutputStream
 - sf:readBytes(java.nio.file.Path):B[]
 - sf:readChars(java.nio.file.Path):java.lang.CharSequence
 - sf:readText(java.nio.file.Path):java.lang.String
