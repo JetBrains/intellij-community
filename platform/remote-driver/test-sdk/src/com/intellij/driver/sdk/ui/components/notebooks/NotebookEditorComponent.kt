@@ -156,7 +156,9 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     waitFor(timeout = timeout) {
       // TODO: what if we have some cells that were executed before, and their checkmarks are still there,
       //  while new execution labels are not yet created?
-      notebookCellExecutionInfos.isNotEmpty() && notebookCellExecutionInfos.all {
+      notebookCellExecutionInfos.isNotEmpty()
+      && notebookCellExecutionInfos.size == notebookCellEditors.size
+      && notebookCellExecutionInfos.all {
         it.getParent().x { contains(byAttribute("defaulticon", "greenCheckmark.svg")) }.present()
       }
     }
@@ -195,6 +197,10 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
           .//div[contains(@class, 'NotebookAboveCellDelimiterPanel')] 
             or 
           .//div[contains(@class, 'NotebookBelowLastCellPanel')]
+            or
+          .//div[contains(@class, 'OutputComponent')]
+            or
+          .//div[contains(@class, 'LetsPlotComponent')]
         ) 
       ]
     """.trimIndent()
