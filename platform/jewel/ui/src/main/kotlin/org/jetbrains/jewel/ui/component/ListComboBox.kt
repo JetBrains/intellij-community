@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -187,6 +188,7 @@ public fun <T : Any> ListComboBox(
         popupContent = {
             PopupContent(
                 items = items,
+                currentlySelectedIndex = selectedIndex,
                 previewSelectedItemIndex = previewSelectedIndex,
                 listState = listState,
                 popupMaxHeight = popupMaxHeight,
@@ -334,6 +336,7 @@ public fun ListComboBox(
     ) {
         PopupContent(
             items = items,
+            currentlySelectedIndex = selectedIndex,
             previewSelectedItemIndex = previewSelectedIndex,
             listState = listState,
             popupMaxHeight = popupMaxHeight,
@@ -491,6 +494,7 @@ public fun EditableListComboBox(
         popupContent = {
             PopupContent(
                 items = items,
+                currentlySelectedIndex = selectedIndex,
                 previewSelectedItemIndex = previewSelectedIndex,
                 listState = listState,
                 popupMaxHeight = popupMaxHeight,
@@ -554,6 +558,7 @@ public fun <T> SelectableLazyListState.selectedItemIndex(items: List<T>, itemKey
 @Composable
 private fun <T : Any> PopupContent(
     items: List<T>,
+    currentlySelectedIndex: Int,
     previewSelectedItemIndex: Int,
     listState: SelectableLazyListState,
     popupMaxHeight: Dp,
@@ -605,4 +610,6 @@ private fun <T : Any> PopupContent(
             )
         }
     }
+
+    DisposableEffect(Unit) { onDispose { listState.lazyListState.requestScrollToItem(currentlySelectedIndex) } }
 }
