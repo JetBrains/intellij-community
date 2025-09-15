@@ -726,10 +726,10 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull List<@NotNull LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference,
-                                                                       @NotNull PsiMember target,
-                                                                       @NotNull List<? super IntentionAction> registrar) {
-    return OrderEntryFix.registerFixes(reference, target, registrar);
+  public void registerOrderEntryFixes(@NotNull PsiReference reference,
+                                      @NotNull PsiMember target,
+                                      @NotNull List<? super IntentionAction> registrar) {
+    OrderEntryFix.registerFixes(reference, target, registrar);
   }
 
   @Override

@@ -313,9 +313,16 @@ public abstract class QuickFixFactory {
   public abstract @NotNull List<@NotNull LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference,
                                                                                 @NotNull List<? super IntentionAction> registrar);
 
-  public abstract @NotNull List<@NotNull LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference,
-                                                                                @NotNull PsiMember target,
-                                                                                @NotNull List<? super IntentionAction> registrar);
+  /**
+   * Add fixes that modify the project structure to satisfy the missing dependency (e.g., add module dependency, or library dependency).
+   * 
+   * @param reference a reference to an inaccessible target (due to a missing dependency)
+   * @param target a desired target
+   * @param registrar list of fixes to add new fixes to
+   */
+  public abstract void registerOrderEntryFixes(@NotNull PsiReference reference,
+                                               @NotNull PsiMember target,
+                                               @NotNull List<? super IntentionAction> registrar);
 
   /**
    * @param annotationMethods unused, could be empty array
