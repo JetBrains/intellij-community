@@ -45,6 +45,16 @@ private val stringItems =
         "Serendipity lorem ipsum",
         "Umbrella",
         "Joy",
+        "Mountain",
+        "Harmony",
+        "Starlight",
+        "Meadow",
+        "Thunder",
+        "River",
+        "Galaxy",
+        "Breeze",
+        "Twilight",
+        "Aurora",
     )
 
 private val languageOptions =

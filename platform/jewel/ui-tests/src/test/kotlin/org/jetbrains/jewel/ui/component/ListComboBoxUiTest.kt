@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -946,10 +947,11 @@ class ListComboBoxUiTest {
     private fun injectListComboBox(focusRequester: FocusRequester, isEnabled: Boolean) {
         composeRule.setContent {
             IntUiTheme {
+                var selectedIndex by remember { mutableIntStateOf(0) }
                 ListComboBox(
                     items = comboBoxItems,
-                    selectedIndex = 0,
-                    onSelectedItemChange = {},
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { selectedIndex = it },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
                     enabled = isEnabled,
                     itemKeys = { index: Int, _: String -> index },
@@ -961,10 +963,11 @@ class ListComboBoxUiTest {
     private fun injectEditableListComboBox(focusRequester: FocusRequester, isEnabled: Boolean) {
         composeRule.setContent {
             IntUiTheme {
+                var selectedIndex by remember { mutableIntStateOf(0) }
                 EditableListComboBox(
                     items = comboBoxItems,
-                    selectedIndex = 0,
-                    onSelectedItemChange = { _: Int -> },
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { selectedIndex = it },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
                     enabled = isEnabled,
                     itemKeys = { index: Int, _: String -> index },
