@@ -7021,6 +7021,21 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createVariable/parameter/fromDelegateConstructorCall.kt");
                 }
 
+                @TestMetadata("fromUnqualifiedCallExpression.kt")
+                public void testFromUnqualifiedCallExpression() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/parameter/fromUnqualifiedCallExpression.kt");
+                }
+
+                @TestMetadata("fromUnqualifiedCallExpressionNoExpectType.kt")
+                public void testFromUnqualifiedCallExpressionNoExpectType() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/parameter/fromUnqualifiedCallExpressionNoExpectType.kt");
+                }
+
+                @TestMetadata("fromUnqualifiedCallExpressionWithUnknownParam.kt")
+                public void testFromUnqualifiedCallExpressionWithUnknownParam() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/parameter/fromUnqualifiedCallExpressionWithUnknownParam.kt");
+                }
+
                 @TestMetadata("inAccessorInClass.kt")
                 public void testInAccessorInClass() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/parameter/inAccessorInClass.kt");

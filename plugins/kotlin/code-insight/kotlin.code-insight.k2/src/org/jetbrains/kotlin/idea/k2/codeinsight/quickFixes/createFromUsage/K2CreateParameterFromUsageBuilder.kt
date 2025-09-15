@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.builtinTypes
 import org.jetbrains.kotlin.analysis.api.components.expectedType
 import org.jetbrains.kotlin.analysis.api.components.expressionType
@@ -24,7 +25,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.computeExpectedParams
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toKtTypeWithNullability
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.approximateWithResolvableType
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinFirIntroduceParameterHandler
@@ -34,6 +37,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.IntroduceParameterDescriptor
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.KotlinIntroduceParameterHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.substringContextOrThis
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
@@ -43,10 +47,9 @@ object K2CreateParameterFromUsageBuilder {
     fun generateCreateParameterAction(element: KtElement): List<IntentionAction>? {
         val refExpr = element.findParentOfType<KtNameReferenceExpression>(strict = false) ?: return null
         if (refExpr.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference } != null) return null
-        if (refExpr.getParentOfTypeAndBranch<KtCallExpression> { calleeExpression } != null) return null
 
         val qualifiedElement = refExpr.getQualifiedElement()
-        if (qualifiedElement == refExpr) {
+        if (qualifiedElement == refExpr || qualifiedElement is KtCallExpression) {
             //unqualified reference
             val varExpected = refExpr.getAssignmentByLHS() != null
             val containers = CreateParameterUtil.chooseContainers(refExpr, varExpected)
@@ -64,6 +67,7 @@ object K2CreateParameterFromUsageBuilder {
             }.toList()
         }
 
+        if (refExpr.getParentOfTypeAndBranch<KtCallExpression> { calleeExpression } != null) return null
         if (qualifiedElement !is KtQualifiedExpression) return null
         val container = analyze(refExpr) {
             qualifiedElement.receiverExpression.expressionType?.symbol?.psi as? KtClass
@@ -150,7 +154,19 @@ object K2CreateParameterFromUsageBuilder {
             val right = binaryExpression?.right
             right?.expressionType.withResolvableApproximation()?.let { return it }
             right?.expectedType?.let { return it }
-            (expression.parent as? KtDeclarationWithReturnType)?.returnType.withResolvableApproximation()?.let { return it }
+
+            val parent = expression.parent
+            if (parent is KtCallExpression) {
+                val expectedParameters = computeExpectedParams(parent)
+                return buildClassType(StandardClassIds.FunctionN(expectedParameters.size)) {
+                    for (parameter in expectedParameters) {
+                        argument(parameter.expectedTypes.firstOrNull()?.toKtTypeWithNullability(parent) ?: builtinTypes.nullableAny)
+                    }
+                    argument(parent.expectedType ?: builtinTypes.unit)
+                }
+            }
+
+            (parent as? KtDeclarationWithReturnType)?.returnType.withResolvableApproximation()?.let { return it }
             return builtinTypes.any
         }
 
