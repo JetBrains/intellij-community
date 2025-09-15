@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.project.stateStore
@@ -11,9 +10,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.createOrLoadProject
 import com.intellij.util.io.createDirectories
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.WEB_MODULE_ENTITY_TYPE_ID_NAME
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -44,9 +41,7 @@ internal class ModuleAttachProcessorTest {
 
     createOrLoadProject(tempDirManager) { currentProject ->
       currentProject.stateStore.save()
-      withContext(Dispatchers.EDT) {
-        assertThat(ModuleAttachProcessor().attachToProjectAsync(currentProject, Paths.get(existingProjectDir), null)).isTrue()
-      }
+      assertThat(ModuleAttachProcessor().attachToProjectAsync(currentProject, Paths.get(existingProjectDir), null)).isTrue()
     }
   }
 
@@ -55,9 +50,7 @@ internal class ModuleAttachProcessorTest {
     createOrLoadProject(tempDirManager) { currentProject ->
       currentProject.stateStore.save()
       val existingProjectDir = tempDirManager.newPath().createDirectories()
-      withContext(Dispatchers.EDT) {
-        assertThat(ModuleAttachProcessor().attachToProjectAsync(currentProject, existingProjectDir, null)).isTrue()
-      }
+      assertThat(ModuleAttachProcessor().attachToProjectAsync(currentProject, existingProjectDir, null)).isTrue()
     }
   }
 }
