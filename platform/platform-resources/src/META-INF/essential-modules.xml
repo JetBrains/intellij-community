@@ -33,6 +33,7 @@
 
     <module name="intellij.platform.execution.serviceView"/>
     <module name="intellij.platform.execution.serviceView.frontend"/>
+    <module name="intellij.platform.execution.serviceView.backend"/>
     <module name="intellij.platform.execution.dashboard"/>
     <module name="intellij.platform.execution.dashboard.frontend"/>
     <module name="intellij.platform.execution.dashboard.backend"/>
