@@ -1204,6 +1204,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     List<InvalidPsi> recycledInvalidPsiHighlightersToBeRemovedFromData = new ArrayList<>(newInfos.size());
     List<? extends HighlightInfo> sorted = ContainerUtil.sorted(newInfos, Segment.BY_START_OFFSET_THEN_END_OFFSET);
     FreezableArrayList<HighlightInfo> newInfosToStore = new FreezableArrayList<>(sorted.size());
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < sorted.size(); i++) {
       HighlightInfo newInfo = sorted.get(i);
       //todo fails because of ProblemDescriptorWithReporterName
@@ -1222,10 +1223,10 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       int infoStartOffset = TextRangeScalarUtil.startOffset(finalInfoRange);
       int infoEndOffset = TextRangeScalarUtil.endOffset(finalInfoRange);
 
-      InvalidPsi recycled = recycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
+      InvalidPsi recycled = recycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer, newInfo.getDescription());
       String from;
       if (recycled == null) {
-        recycled = invalidElementRecycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
+        recycled = invalidElementRecycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer, newInfo.getDescription());
         if (recycled != null) {
           recycledInvalidPsiHighlightersToBeRemovedFromData.add(recycled);
         }
@@ -1274,9 +1275,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                                                        @NotNull SeverityRegistrar severityRegistrar) {
     CodeInsightContext context = session.getCodeInsightContext();
     TextAttributes infoAttributes = newInfo.getTextAttributes(psiFile, session.getColorsScheme());
-    com.intellij.util.Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
+    com.intellij.util.Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter ->
       BackgroundUpdateHighlightersUtil.changeAttributes(finalHighlighter, newInfo, session.getColorsScheme(), psiFile, infoAttributes, context);
-    };
+
     if (LOG.isDebugEnabled()) {
       LOG.debug("remap: create " + (recycled == null ? "(new RH)" : "(recycled)") + newInfo + " "+session.getProgressIndicator());
     }
