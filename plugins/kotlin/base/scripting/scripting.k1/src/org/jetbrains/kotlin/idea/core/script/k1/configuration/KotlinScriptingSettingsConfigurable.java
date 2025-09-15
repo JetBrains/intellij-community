@@ -17,11 +17,11 @@ import org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager;
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl;
 import org.jetbrains.kotlin.idea.core.script.v1.IdeScriptDefinitionProvider;
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition;
+import org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptingSetttingsIdKt;
 
 import javax.swing.*;
 
 public class KotlinScriptingSettingsConfigurable implements SearchableConfigurable {
-    public static final String ID = "preferences.language.Kotlin.scripting";
 
     private JPanel root;
     private JPanel panelScriptDefinitionsChooser;
@@ -106,6 +106,6 @@ public class KotlinScriptingSettingsConfigurable implements SearchableConfigurab
 
     @Override
     public @NotNull String getId() {
-        return ID;
+        return KotlinScriptingSetttingsIdKt.KOTLIN_SCRIPTING_SETTINGS_ID;
     }
 }

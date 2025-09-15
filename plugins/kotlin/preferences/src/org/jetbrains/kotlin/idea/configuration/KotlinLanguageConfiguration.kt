@@ -2,11 +2,17 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.ide.DataManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.ex.Settings
+import com.intellij.ui.HyperlinkAdapter
+import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.kotlin.idea.core.script.shared.KOTLIN_SCRIPTING_SETTINGS_ID
 import org.jetbrains.kotlin.idea.preferences.KotlinPreferencesBundle
 import javax.swing.JComponent
+import javax.swing.event.HyperlinkEvent
 
 internal class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScroll {
     companion object {
@@ -37,6 +43,7 @@ internal class KotlinLanguageConfiguration : SearchableConfigurable, Configurabl
     }
 
     override fun createComponent(): JComponent {
+        val kotlinScriptingSettingsLink = createKotlinScriptingSettingsHyperlink()
         return panel {
             experimentalFeaturesPanel?.let { experimentalFeaturesPanel ->
                 group(KotlinPreferencesBundle.message("experimental.features")) {
@@ -45,6 +52,23 @@ internal class KotlinLanguageConfiguration : SearchableConfigurable, Configurabl
                     }
                 }
             }
+            row {
+                cell(kotlinScriptingSettingsLink)
+            }
         }
+    }
+
+    private fun createKotlinScriptingSettingsHyperlink(): JComponent {
+        @Suppress("DialogTitleCapitalization") // It is properly capitalized
+        val scriptingLink = HyperlinkLabel(KotlinPreferencesBundle.message("kotlin.scripting.configurable"))
+        scriptingLink.addHyperlinkListener(object : HyperlinkAdapter() {
+            override fun hyperlinkActivated(e: HyperlinkEvent) {
+                val dataContext = DataManager.getInstance().getDataContext(scriptingLink)
+                val settings = Settings.KEY.getData(dataContext) ?: return
+                val kotlinScriptingConfigurable = settings.find(KOTLIN_SCRIPTING_SETTINGS_ID)
+                settings.select(kotlinScriptingConfigurable)
+            }
+        })
+        return scriptingLink
     }
 }

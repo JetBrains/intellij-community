@@ -15,18 +15,16 @@ import com.intellij.ui.table.TableView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle.message
-import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptTemplatesFromDependenciesDefinitionSource
+import org.jetbrains.kotlin.idea.core.script.shared.KOTLIN_SCRIPTING_SETTINGS_ID
+import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.shared.scriptDefinitionsSourceOfType
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
 
 internal class KotlinScriptingSettingsConfigurable(val project: Project, val coroutineScope: CoroutineScope) : SearchableConfigurable {
-    companion object {
-        const val ID: String = "preferences.language.Kotlin.scripting"
-    }
 
     private var model = calculateModel()
     private val definitionsFromClassPathTitle: AtomicProperty<String> = AtomicProperty("")
@@ -133,5 +131,5 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project, val cor
 
     override fun getDisplayName(): String = message("script.name.kotlin.scripting")
 
-    override fun getId(): String = ID
+    override fun getId(): String = KOTLIN_SCRIPTING_SETTINGS_ID
 }
