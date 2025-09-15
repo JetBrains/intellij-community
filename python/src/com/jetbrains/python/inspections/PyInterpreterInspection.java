@@ -43,6 +43,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
+import com.jetbrains.python.projectModel.ProjectModelKt;
 import com.jetbrains.python.projectModel.uv.UvProjectModelService;
 import com.jetbrains.python.projectModel.uv.UvProjectModelService.UvWorkspace;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -131,7 +132,7 @@ public final class PyInterpreterInspection extends PyInspection {
           boolean isAlreadyUsedByModule = (PySdkExtKt.getPythonSdk(module) == sdk);
           boolean isAssociatedWithThisModule = associatedModulePath != null && associatedModulePath.equals(BasePySdkExtKt.getBasePath(module));
           // TODO: this logic should be generalized via the workspace manager
-          boolean isAssociatedWithUvRoot = associatedModulePath != null && Registry.is("python.project.model.uv", false) &&
+          boolean isAssociatedWithUvRoot = associatedModulePath != null && ProjectModelKt.getEnablePyProjectToml() &&
                                            isAssociatedWithUvWorkspaceRootModule(associatedModulePath, module);
 
           if (!isAlreadyUsedByModule && !isAssociatedWithThisModule && !isAssociatedWithUvRoot &&

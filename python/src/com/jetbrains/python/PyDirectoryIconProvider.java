@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.projectModel.ProjectModelKt;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +37,7 @@ public final class PyDirectoryIconProvider extends IconProvider {
   }
 
   private static boolean isMultimoduleProjectDetectionEnabled() {
-    return Registry.is("python.project.model.uv") || Registry.is("python.project.model.poetry");
+    return ProjectModelKt.getEnablePyProjectToml();
   }
 
   private static boolean isSpecialDirectory(@NotNull PsiDirectory directory) {

@@ -8,8 +8,8 @@ import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjec
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.python.projectModel.enablePyProjectToml
 import java.nio.file.Path
 
 internal class PoetryUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
@@ -18,7 +18,7 @@ internal class PoetryUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
   override val systemId: ProjectSystemId = PoetryConstants.SYSTEM_ID
 
   override fun isBuildFile(project: Project, buildFile: VirtualFile): Boolean {
-    return Registry.`is`("python.project.model.poetry") && openProvider.canOpenProject(buildFile)
+    return enablePyProjectToml && openProvider.canOpenProject(buildFile)
   }
 
   override fun isLinkedProject(project: Project, externalProjectPath: String): Boolean {

@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.writeText
 
-@RegistryKey("python.project.model.uv", "true")
+@RegistryKey("python.pyproject.model", "true")
 @TestApplication
 class UvProjectSyncIntegrationTest {
   private val testRootFixture = tempPathFixture()

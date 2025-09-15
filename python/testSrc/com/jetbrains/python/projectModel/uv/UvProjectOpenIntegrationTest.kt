@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test
 import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.seconds
 
-@RegistryKey("python.project.model.uv", "true")
+@RegistryKey("python.pyproject.model", "true")
 @TestApplication
 class UvProjectOpenIntegrationTest {
   private val testRoot by tempPathFixture()

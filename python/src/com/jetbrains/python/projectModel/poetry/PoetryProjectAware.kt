@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.autoimport.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
@@ -18,6 +17,7 @@ import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.workspaceModel.ide.toPath
+import com.jetbrains.python.projectModel.enablePyProjectToml
 import com.jetbrains.python.projectModel.poetry.PoetryProjectAware.CoroutineScopeService.Companion.coroutineScope
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
@@ -42,7 +42,7 @@ internal class PoetryProjectAware(
   }
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
-    project.coroutineScope.launchTracked { 
+    project.coroutineScope.launchTracked {
       PoetryProjectModelService.syncProjectModelRoot(project, Path.of(projectId.externalProjectPath))
     }
   }
@@ -70,14 +70,14 @@ internal class PoetryProjectAware(
         get() = service<CoroutineScopeService>().coroutineScope
     }
   }
-  
-  internal class PoetrySyncStartupActivity: ProjectActivity {
+
+  internal class PoetrySyncStartupActivity : ProjectActivity {
     init {
-      if (!Registry.`is`("python.project.model.poetry")) {
+      if (!enablePyProjectToml) {
         throw ExtensionNotApplicableException.create()
       }
     }
-    
+
     override suspend fun execute(project: Project) {
       val projectTracker = ExternalSystemProjectTracker.getInstance(project)
       project.service<PoetrySettings>().getLinkedProjects().forEach { projectRoot ->
@@ -89,13 +89,13 @@ internal class PoetryProjectAware(
     }
   }
 
-  internal class PoetryListener(private val project: Project): PoetrySettingsListener {
+  internal class PoetryListener(private val project: Project) : PoetrySettingsListener {
     init {
-      if (!Registry.`is`("python.project.model.poetry")) {
+      if (!enablePyProjectToml) {
         throw ExtensionNotApplicableException.create()
       }
     }
-    
+
     override fun onLinkedProjectAdded(projectRoot: Path) {
       val projectTracker = ExternalSystemProjectTracker.getInstance(project)
       val projectId = ExternalSystemProjectId(PoetryConstants.SYSTEM_ID, projectRoot.toCanonicalPath())

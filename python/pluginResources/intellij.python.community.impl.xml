@@ -659,10 +659,8 @@
     <!-- Setting up cross-module dependencies -->
     <registryKey key="python.detect.cross.module.dependencies" defaultValue="false"
                  description="Try to detect and automatically set-up module dependencies in a multi-module project"/>
-    <registryKey key="python.project.model.poetry" defaultValue="false" restartRequired="true"
-                 description="Automatically set up multi-module Poetry projects"/>
-    <registryKey key="python.project.model.uv" defaultValue="false" restartRequired="true"
-                 description="Automatically set up multi-module uv projects"/>
+    <registryKey key="python.pyproject.model" defaultValue="true" restartRequired="true"
+                 description="Automatically set up multi-module pyproject.toml-based projects"/>
 
     <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PythonJobSurvey"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.statistics.feedback.PythonJobStatisticsCollector"/>

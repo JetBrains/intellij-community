@@ -2,6 +2,7 @@
 package com.jetbrains.python.projectModel
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -9,6 +10,12 @@ import java.nio.file.FileVisitResult
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.visitFileTree
+
+
+/**
+ * Convert `pyproject.toml` to modules
+ */
+val enablePyProjectToml: Boolean get() = Registry.`is`("python.pyproject.model")
 
 /**
  * Represents a graph of modules residing under a common root directory.

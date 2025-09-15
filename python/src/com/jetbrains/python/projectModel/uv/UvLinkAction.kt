@@ -12,6 +12,7 @@ import com.intellij.platform.backend.observation.ActivityKey
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.projectModel.enablePyProjectToml
 import com.jetbrains.python.projectModel.uv.UvLinkAction.CoroutineScopeService.Companion.coroutineScope
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
@@ -32,7 +33,7 @@ internal class UvLinkAction : AnAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = Registry.`is`("python.project.model.uv")
+    e.presentation.isEnabledAndVisible = enablePyProjectToml
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

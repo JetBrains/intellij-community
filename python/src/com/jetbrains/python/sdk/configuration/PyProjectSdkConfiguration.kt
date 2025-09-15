@@ -21,6 +21,7 @@ import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.jetbrains.python.projectModel.enablePyProjectToml
 import com.jetbrains.python.projectModel.uv.UvProjectModelService
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.configuration.suppressors.PyInterpreterInspectionSuppressor
@@ -62,7 +63,7 @@ object PyProjectSdkConfiguration {
     } ?: return false
 
     // TODO Move this to PyUvSdkConfiguration, show better notification
-    if (sdk.isUv && Registry.`is`("python.project.model.uv", false)) {
+    if (sdk.isUv && enablePyProjectToml) {
       val ws = UvProjectModelService.findWorkspace(module)
       if (ws != null) {
         for (wsModule in ws.members + ws.root) {

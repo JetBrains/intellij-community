@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import kotlin.io.path.writeText
 
-@RegistryKey("python.project.model.poetry", "true")
+@RegistryKey("python.pyproject.model", "true")
 @TestApplication
 class PoetryProjectSyncIntegrationTest {
   private val testRootFixture = tempPathFixture()
@@ -125,7 +125,7 @@ class PoetryProjectSyncIntegrationTest {
       DependencyAssertions.assertDependencies(module, INHERITED_SDK, MODULE_SOURCE)
     }
   }
-  
+
   suspend fun syncAllProjects(project: Project) {
     multiprojectFixture.awaitProjectConfiguration(project) {
       PoetryProjectModelService.syncAllProjectModelRoots(project)

@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test
 import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.seconds
 
-@RegistryKey("python.project.model.poetry", "true")
+@RegistryKey("python.pyproject.model", "true")
 @TestApplication
 class PoetryProjectOpenIntegrationTest {
   private val testRoot by tempPathFixture()
@@ -57,7 +57,7 @@ class PoetryProjectOpenIntegrationTest {
   @Test
   fun `project with top-level PEP-621 pyproject-toml containing tool-poetry table is automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
     val projectPath = testRoot.resolve("project")
-    
+
     projectPath.createFile(PY_PROJECT_TOML).writeText("""
       [project]
       name = "project"
@@ -76,7 +76,7 @@ class PoetryProjectOpenIntegrationTest {
   @Test
   fun `project with top-level poetry-lock is automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
     val projectPath = testRoot.resolve("project")
-    
+
     projectPath.createFile("poetry.lock").writeText("""""")
 
     projectPath.createFile(PY_PROJECT_TOML).writeText("""

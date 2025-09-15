@@ -12,6 +12,7 @@ import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onSuccess
+import com.jetbrains.python.projectModel.enablePyProjectToml
 import com.jetbrains.python.projectModel.uv.UvProjectModelService
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -45,7 +46,7 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   private suspend fun createUv(module: Module): PyResult<Sdk> {
     val sdkAssociatedModule: Module
-    if (Registry.`is`("python.project.model.uv", false)) {
+    if (enablePyProjectToml) {
       val uvWorkspace = UvProjectModelService.findWorkspace(module)
       sdkAssociatedModule = uvWorkspace?.root ?: module
     }
