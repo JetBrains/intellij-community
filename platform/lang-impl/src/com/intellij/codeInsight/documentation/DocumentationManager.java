@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -1173,13 +1173,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           return;
         }
         if (text == null) {
-          component.setText(decoratedText, element, provider);
+          component.setText(Objects.requireNonNull(decoratedText), element, provider);
         }
         else if (text.isEmpty()) {
           component.setText(component.getDecoratedText(), element, provider);
         }
         else {
-          component.setData(element, decoratedText, collector.effectiveUrl, collector.ref, provider);
+          component.setData(element, Objects.requireNonNull(decoratedText), collector.effectiveUrl, collector.ref, provider);
         }
         if (wasEmpty) {
           component.clearHistory();
