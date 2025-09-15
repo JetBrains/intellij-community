@@ -68,11 +68,10 @@ public class TestStatusLine extends NonOpaquePanel {
 
     myConverter = new HtmlToSimpleColoredComponentConverter((tag, attr) -> {
       final String className = (String) attr.getAttribute(HTML.Attribute.CLASS);
-      if (className == null) return SimpleTextAttributes.REGULAR_ATTRIBUTES;
       return switch (className) {
         case "failed" -> FAILED_ATTRIBUTES;
         case "ignored" -> IGNORED_ATTRIBUTES;
-        default -> SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        case null, default -> SimpleTextAttributes.REGULAR_ATTRIBUTES;
       };
     });
   }

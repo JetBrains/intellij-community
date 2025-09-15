@@ -357,7 +357,6 @@ public final class TypeConstraints {
     @Override
     public DfType getUnboxedType() {
       String name = classDef.getQualifiedName();
-      if (name == null) return DfType.BOTTOM;
       return switch (name) {
         case JAVA_LANG_BOOLEAN -> DfTypes.BOOLEAN;
         case JAVA_LANG_INTEGER -> DfTypes.INT;
@@ -367,7 +366,7 @@ public final class TypeConstraints {
         case JAVA_LANG_BYTE -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiTypes.byteType())));
         case JAVA_LANG_SHORT -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiTypes.shortType())));
         case JAVA_LANG_CHARACTER -> DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiTypes.charType())));
-        default -> DfType.BOTTOM;
+        case null, default -> DfType.BOTTOM;
       };
     }
 

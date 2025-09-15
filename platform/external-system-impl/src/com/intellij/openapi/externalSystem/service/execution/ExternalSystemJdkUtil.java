@@ -51,8 +51,8 @@ public final class ExternalSystemJdkUtil {
 
   @Contract("_, null -> null")
   public static @Nullable Sdk resolveJdkName(@Nullable Sdk projectSdk, @Nullable String jdkName) throws ExternalSystemJdkException {
-    if (jdkName == null) return null;
     return switch (jdkName) {
+      case null -> null;
       case USE_INTERNAL_JAVA -> getInternalJdk();
       case USE_PROJECT_JDK -> {
         if (projectSdk == null) {

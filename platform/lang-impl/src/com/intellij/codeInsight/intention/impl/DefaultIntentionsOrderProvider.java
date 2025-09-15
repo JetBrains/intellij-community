@@ -50,13 +50,12 @@ public final class DefaultIntentionsOrderProvider implements IntentionsOrderProv
   }
 
   public static int getPriorityWeight(@Nullable Priority priority) {
-    if (priority == null) return 0;
     return switch (priority) {
       case TOP -> 20;
       case HIGH -> 3;
       case LOW -> -3;
       case BOTTOM -> -20;
-      default -> 0;
+      case null, default -> 0;
     };
   }
 }

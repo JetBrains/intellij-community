@@ -504,7 +504,6 @@ public final class HardcodedContracts {
     if (!(expr instanceof PsiMethodCallExpression call)) return null;
     String calledName = call.getMethodExpression().getReferenceName();
     PsiExpression[] args = call.getArgumentList().getExpressions();
-    if (calledName == null) return null;
     return switch (calledName) {
       case "array", "arrayWithSize", "arrayContaining", "arrayContainingInAnyOrder", "contains", "containsInAnyOrder", "containsString",
         "endsWith", "startsWith", "stringContainsInOrder", "empty", "emptyArray", "emptyCollectionOf", "emptyIterable", "emptyIterableOf",
@@ -531,7 +530,7 @@ public final class HardcodedContracts {
         }
         yield null;
       }
-      default -> null;
+      case null, default -> null;
     };
   }
 

@@ -463,8 +463,8 @@ public class GridUtil extends GridUtilCore {
   }
 
   public static @Nullable CellAttributesKey getMutationCellAttributes(@Nullable MutationType type) {
-    if (type == null) return null;
     return switch (type) {
+      case null -> null;
       case MODIFY -> CellColors.REPLACE;
       case INSERT -> CellColors.INSERT;
       case DELETE -> CellColors.REMOVE;
