@@ -129,7 +129,7 @@ internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Co
   val pathToCompiledClassArchiveMetadata = context.options.pathToCompiledClassesArchivesMetadata
   when {
     context.options.useCompiledClassesFromProjectOutput -> {
-      check(isBazelTestRun() || context.classesOutputDirectory.exists() || ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping() != null || isRunningFromBazelOut()) {
+      check(isBazelTestRun() || context.classesOutputDirectory.exists() || ArchivedCompilationContextUtil.archivedCompiledClassesMapping != null || isRunningFromBazelOut()) {
         "${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled but the classes output directory ${context.classesOutputDirectory} doesn't exist"
       }
       val production = context.classesOutputDirectory.resolve("production")

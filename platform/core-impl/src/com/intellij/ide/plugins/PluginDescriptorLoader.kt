@@ -1244,7 +1244,7 @@ private fun loadDescriptorFromResource(
         closeable = resolver as? Closeable
         val loader = ImmutableZipFileDataLoader(resolver = resolver, zipPath = file)
 
-        val relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation()
+        val relevantJarsRoot = ArchivedCompilationContextUtil.archivedCompiledClassesLocation
         if (pathResolver.isRunningFromSourcesWithoutDevBuild || (relevantJarsRoot != null && file.startsWith(relevantJarsRoot))) {
           // support for archived compile outputs (each module in a separate jar)
           basePath = file.parent

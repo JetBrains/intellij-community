@@ -126,7 +126,7 @@ private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libra
 
   val classpathRootVirtualFiles = mutableListOf<VirtualFile>()
 
-  val mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping()
+  val mapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
   if (mapping != null) {
     (mapping["production/$classpathFolder"] ?: error("No jars found for $classpathFolder production classes")).mapTo(classpathRootVirtualFiles) { jar ->
       val classpathRootVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.pathToUrl(jar))

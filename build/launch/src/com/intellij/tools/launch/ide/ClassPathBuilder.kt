@@ -66,7 +66,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
     JpsProjectLoader.loadProject(model.project, pathVariables, paths.sourcesRootFolder.toPath())
 
     val productionOutput = paths.outputRootFolder.resolve("production")
-    if (!productionOutput.isDirectory && ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping() == null) {
+    if (!productionOutput.isDirectory && ArchivedCompilationContextUtil.archivedCompiledClassesMapping == null) {
       error("Production classes output directory is missing: $productionOutput")
     }
 
@@ -113,7 +113,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
   }
 
   private fun Collection<Path>.replaceWithArchivedIfNeeded(): Collection<Path> {
-    val mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping() ?: return this
+    val mapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping ?: return this
     return flatMap { path ->
       if (Files.isRegularFile(path)) listOf(path)
       // path is absolute, mapping contains only the last two path elements

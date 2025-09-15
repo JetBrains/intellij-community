@@ -1010,7 +1010,7 @@ fun getPluginDistDirByClass(aClass: Class<*>): Path? {
 
   val jarInsideLib = PathManager.getJarForClass(aClass) ?: error("Can't find plugin dist home for ${aClass.simpleName}")
   if (jarInsideLib.fileName.toString().endsWith("jar", ignoreCase = true)) {
-    ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation()?.let {
+    ArchivedCompilationContextUtil.archivedCompiledClassesLocation?.let {
       if (jarInsideLib.startsWith(it)) return null
     }
     return jarInsideLib

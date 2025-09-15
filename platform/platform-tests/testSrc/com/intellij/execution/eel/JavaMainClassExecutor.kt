@@ -80,7 +80,7 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
     private fun getJpsModuleNameForClass(clazz: Class<*>): String {
       val jarPathForClass = PathUtil.getJarPathForClass(clazz)
       val path = Path.of(jarPathForClass)
-      val relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation()
+      val relevantJarsRoot = ArchivedCompilationContextUtil.archivedCompiledClassesLocation
 
       if (Files.isDirectory(path)) {
         // plain compilation output
@@ -88,7 +88,7 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
       }
       else if (relevantJarsRoot != null && jarPathForClass.startsWith(relevantJarsRoot)) {
         // archived compilation output
-        val mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping()
+        val mapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
         checkNotNull(mapping) { "Mapping cannot be null at this point" }
         val key = mapping.entries.firstOrNull { (_, value) -> value.contains(jarPathForClass) }?.key
         if (key == null) {
@@ -105,7 +105,7 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
     private fun getJpsModulesOutput(clazz: Class<*>, moduleNames: List<@NlsSafe String>): List<Path> {
       val jarPathForClass = PathUtil.getJarPathForClass(clazz)
       val path = Path.of(jarPathForClass)
-      val relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation()
+      val relevantJarsRoot = ArchivedCompilationContextUtil.archivedCompiledClassesLocation
 
       if (Files.isDirectory(path)) {
         // plain compilation output
@@ -113,7 +113,7 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
       }
       else if (relevantJarsRoot != null && jarPathForClass.startsWith(relevantJarsRoot)) {
         // archived compilation output, assume we need 'production' output
-        val mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping()
+        val mapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
         checkNotNull(mapping) { "Mapping cannot be null at this point" }
         return moduleNames.flatMap {
           val key = "production/$it"

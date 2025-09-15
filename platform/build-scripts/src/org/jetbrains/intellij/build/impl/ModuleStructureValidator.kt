@@ -323,7 +323,7 @@ class ModuleStructureValidator(private val context: BuildContext, private val al
  * Works both when module output is located in a directory and when it's packed in a JAR.
  */
 private fun <T> JpsModule.processProductionOutput(processor: (outputRoots: List<Path>) -> T): T {
-  val archivedCompiledClassesMapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping()
+  val archivedCompiledClassesMapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
   val outputJarPaths = archivedCompiledClassesMapping?.get("production/$name")
   if (outputJarPaths == null) {
     val outputDirectoryPath = JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, false)

@@ -37,7 +37,7 @@ fun JpsModule.hasProductionSources(): Boolean = getSourceRoots(JavaSourceRootTyp
  * Works both when module output is located in a directory and when it's packed in JARs.
  */
 fun <T> JpsModule.processProductionOutputs(processor: (outputRoots: List<Path>) -> T): T {
-  val archivedCompiledClassesMapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping()
+  val archivedCompiledClassesMapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
   val outputJarPaths = archivedCompiledClassesMapping?.get("production/$name")
   if (outputJarPaths == null) {
     val outputDirectoryPath = JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, false)
@@ -58,7 +58,7 @@ fun <T> JpsModule.processProductionOutputs(processor: (outputRoots: List<Path>) 
 
 val JpsModule.productionOutputPaths: List<Path>
   get() {
-    val archivedCompiledClassesMapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping()
+    val archivedCompiledClassesMapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
     val outputJarPath = archivedCompiledClassesMapping?.get("production/$name")
     return outputJarPath?.map(Path::of) ?: listOf(JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, false)
                                         ?: error("Output directory is not specified for '$name'"))
@@ -66,7 +66,7 @@ val JpsModule.productionOutputPaths: List<Path>
 
 val JpsModule.testOutputPaths: List<Path>
   get() {
-    val archivedCompiledClassesMapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping()
+    val archivedCompiledClassesMapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping
     val outputJarPath = archivedCompiledClassesMapping?.get("test/$name")
     return outputJarPath?.map(Path::of) ?: listOf(JpsJavaExtensionService.getInstance().getOutputDirectoryPath(this, true)
                                         ?: error("Test output directory is not specified for '$name'"))
