@@ -3,7 +3,6 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.components.serviceOrNull
-import com.intellij.openapi.editor.impl.EditorHeaderComponent
 import com.intellij.openapi.fileEditor.impl.EditorTabPainterAdapter
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.project.Project
@@ -92,8 +91,6 @@ open class InternalUICustomization {
   open fun configureMainFrame(frame: IdeFrameImpl) {}
 
   open fun configureMainToolbar(toolbar: MainToolbar) {}
-
-  open fun configureSearchReplaceComponentBorder(component: EditorHeaderComponent) {}
 
   open fun configureButtonLook(look: ActionButtonLook, g: Graphics): Graphics? = null
 

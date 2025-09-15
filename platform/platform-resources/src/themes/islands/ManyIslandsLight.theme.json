@@ -157,6 +157,8 @@
       }
     },
 
+    "SearchEverywhere.Header.insets": "0,4,0,9",
+
     "HelpBrowser.UserMessage.background": "#DFE1E5CC",
 
     "RecentProject.Color1.MainToolbarGradientStart": "#f7d7cb",

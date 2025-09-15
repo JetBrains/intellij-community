@@ -195,6 +195,8 @@
       "borderColor": "BorderLight"
     },
 
+    "SearchEverywhere.Header.insets": "0,4,0,9",
+
     "Button": {
       "startBackground": "PanelBackground",
       "endBackground": "PanelBackground"

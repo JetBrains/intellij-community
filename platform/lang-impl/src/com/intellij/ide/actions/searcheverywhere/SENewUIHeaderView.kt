@@ -43,7 +43,7 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
       }
     }
 
-    val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets()
+    val headerInsets = JBUI.insets("SearchEverywhere.Header.insets", JBUI.CurrentTheme.ComplexPopup.headerInsets())
     @Suppress("UseDPIAwareBorders")
     panel.border = JBUI.Borders.compound(
       JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
