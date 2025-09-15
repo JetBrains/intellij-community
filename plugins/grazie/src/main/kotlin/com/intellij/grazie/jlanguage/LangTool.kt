@@ -8,6 +8,7 @@ import com.intellij.grazie.jlanguage.broker.GrazieDynamicDataBroker
 import com.intellij.grazie.jlanguage.filters.UppercaseMatchFilter
 import com.intellij.grazie.jlanguage.hunspell.LuceneHunspellDictionary
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil
 import org.apache.commons.text.similarity.LevenshteinDistance
 import org.languagetool.JLanguageTool
@@ -22,6 +23,7 @@ import org.languagetool.rules.patterns.RepeatedPatternRuleTransformer
 import org.languagetool.rules.spelling.hunspell.Hunspell
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.max
 
 object LangTool : GrazieStateLifecycle {
   private val langs: MutableMap<Lang, JLanguageTool> = Collections.synchronizedMap(ContainerUtil.createSoftValueMap())
@@ -183,10 +185,17 @@ object LangTool : GrazieStateLifecycle {
   }
 
   private const val MINIMUM_EXAMPLE_SIMILARITY = 0.2
-  private val levenshtein = LevenshteinDistance()
 
   private fun CharSequence.isSimilarTo(sequence: CharSequence): Boolean {
-    return levenshtein.apply(this, sequence).toDouble() / length < MINIMUM_EXAMPLE_SIMILARITY
+    val prefixLength = StringUtil.commonPrefixLength(this, sequence)
+    val suffixLength = StringUtil.commonSuffixLength(this, sequence)
+
+    val maxLength = max(this.length, sequence.length)
+    val commonPartLength = suffixLength + prefixLength
+    if (commonPartLength.toDouble() / maxLength < MINIMUM_EXAMPLE_SIMILARITY) return false
+
+    return LevenshteinDistance(maxLength)
+      .apply(this, sequence).toDouble() / maxLength < MINIMUM_EXAMPLE_SIMILARITY
   }
 
   internal fun isRuleEnabledByDefault(lang: Lang, ruleId: String): Boolean {
