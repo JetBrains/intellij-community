@@ -5,11 +5,17 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 
+/**
+ * Manages active lookups.
+ *
+ * @see Lookup
+ */
 public abstract class LookupManager {
   public static LookupManager getInstance(@NotNull Project project) {
     return project.getService(LookupManager.class);
@@ -35,6 +41,10 @@ public abstract class LookupManager {
     return showLookup(editor, items, prefix, new LookupArranger.DefaultArranger());
   }
 
+  /**
+   * Creates and shows a lookup with the specified items.
+   */
+  @RequiresEdt
   public abstract @Nullable LookupEx showLookup(@NotNull Editor editor,
                                                 LookupElement @NotNull [] items,
                                                 @NotNull String prefix,
@@ -65,6 +75,10 @@ public abstract class LookupManager {
   @Deprecated(forRemoval = true)
   public abstract void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
+  /**
+   * Creates a lookup with the specified items. Does not show it.
+   */
+  @RequiresEdt
   public abstract @NotNull Lookup createLookup(@NotNull Editor editor,
                                                @NotNull LookupElement @NotNull [] items,
                                                @NotNull String prefix,
