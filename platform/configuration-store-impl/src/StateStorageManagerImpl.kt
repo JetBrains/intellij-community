@@ -307,7 +307,6 @@ open class StateStorageManagerImpl(
 
     override fun providerDataStateChanged(writer: DataWriter?, type: DataStateChanged) {
       storageManager.providerDataStateChanged(storage = this, writer = writer, type = type)
-      super.providerDataStateChanged(writer, type)
     }
 
     override fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation, isExternalSystemStorageEnabled: Boolean): Resolution {
@@ -319,11 +318,11 @@ open class StateStorageManagerImpl(
   }
 
   // the function must be pure and do not use anything outside passed arguments
-  protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) { }
+  protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {}
 
-  protected open fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) { }
+  protected open fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) {}
 
-  protected open fun beforeElementLoaded(element: Element) { }
+  protected open fun beforeElementLoaded(element: Element) {}
 
   final override fun clearStorages() {
     storageLock.write {

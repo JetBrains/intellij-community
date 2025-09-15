@@ -48,11 +48,11 @@ internal suspend fun saveSessions(saveSessions: Collection<SaveSession>, saveRes
     LOG.error("saveSessions can't be used on EDT")
   }
 
-  val events = if (collectVfsEvents) ArrayList<VFileEvent>() else null
-  val syncList = if (events == null) null else Collections.synchronizedList(events)
+  val threadUnsafeEventList = if (collectVfsEvents) ArrayList<VFileEvent>() else null
+  val events = if (threadUnsafeEventList == null) null else Collections.synchronizedList(threadUnsafeEventList)
   for (saveSession in saveSessions) {
     try {
-      saveSession.save(syncList)
+      saveSession.save(events)
     }
     catch (e: ReadOnlyModificationException) {
       LOG.warn(e)
@@ -72,8 +72,8 @@ internal suspend fun saveSessions(saveSessions: Collection<SaveSession>, saveRes
     }
   }
 
-  if (!events.isNullOrEmpty()) {
-    RefreshQueue.getInstance().processEvents(events)
+  if (!threadUnsafeEventList.isNullOrEmpty()) {
+    RefreshQueue.getInstance().processEvents(threadUnsafeEventList)
   }
 }
 

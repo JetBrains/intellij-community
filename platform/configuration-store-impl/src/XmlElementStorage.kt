@@ -24,14 +24,14 @@ import org.jdom.Attribute
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jdom.JDOMInterner
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.io.Writer
 import javax.xml.stream.XMLStreamException
 import kotlin.math.min
 
-@ApiStatus.Internal
+@Internal
 abstract class XmlElementStorage protected constructor(
   @JvmField val fileSpec: String,
   @JvmField protected val rootElementName: String?,
@@ -73,18 +73,20 @@ abstract class XmlElementStorage protected constructor(
         isLoadLocalData = !provider.read(fileSpec, roamingType) { inputStream ->
           inputStream?.let {
             element = loadFromStreamProvider(inputStream)
-            val writer = object : StringDataWriter() {
-              override fun hasData(filter: DataWriterFilter) = filter.hasData(element!!)
+            providerDataStateChanged(
+              writer = object : StringDataWriter() {
+                override fun hasData(filter: DataWriterFilter) = filter.hasData(element!!)
 
-              override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
-                JbXmlOutputter(
-                  lineSeparator = lineSeparator,
-                  elementFilter = filter?.toElementFilter(),
-                  storageFilePathForDebugPurposes = toString()
-                ).output(element!!, writer)
-              }
-            }
-            providerDataStateChanged(writer, DataStateChanged.LOADED)
+                override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
+                  JbXmlOutputter(
+                    lineSeparator = lineSeparator,
+                    elementFilter = filter?.toElementFilter(),
+                    storageFilePathForDebugPurposes = toString(),
+                  ).output(element!!, writer)
+                }
+              },
+              type = DataStateChanged.LOADED,
+            )
           }
         }
       }
@@ -101,7 +103,7 @@ abstract class XmlElementStorage protected constructor(
     return element
   }
 
-  protected open fun providerDataStateChanged(writer: DataWriter?, type: DataStateChanged) { }
+  protected open fun providerDataStateChanged(writer: DataWriter?, type: DataStateChanged) {}
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
@@ -505,10 +507,10 @@ private fun normalizeRootName(element: Element): Element {
   }
 }
 
-@ApiStatus.Internal
+@Internal
 enum class DataStateChanged { LOADED, SAVED }
 
-@ApiStatus.Internal
+@Internal
 interface StateGetter<S : Any> {
   fun getState(mergeInto: S? = null): S?
 
