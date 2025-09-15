@@ -1,8 +1,5 @@
 <idea-plugin>
   <actions>
-    <group id="XDebugger.Frames.Tree.Popup.Frontend">
-      <reference ref="Debugger.PopFrame"/>
-    </group>
     <group id="XDebugger.Threads.View.Popup">
       <reference ref="Debugger.PopFrame"/>
     </group>
@@ -148,9 +145,7 @@
 
     <group id="XDebugger.Frames.Tree.Popup">
       <reference ref="Debugger.PopFrame" />
-      <reference ref="Debugger.CopyStack">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend"/>
-      </reference>
+      <reference ref="Debugger.CopyStack"/>
     </group>
 
     <group id="XDebugger.Frames.TopToolbar">

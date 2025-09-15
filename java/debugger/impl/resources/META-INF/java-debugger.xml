@@ -252,7 +252,6 @@
 
       <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend" anchor="last"/>
       </action>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
       <action id="Debugger.FilterArray" class="com.intellij.debugger.actions.ArrayAction$FilterArrayAction">
@@ -352,7 +351,6 @@
 
     <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.ToolbarDecorator.Export">
       <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
-      <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend"/>
       <add-to-group group-id="XDebugger.Threads.View.Popup"/>
       <add-to-group group-id="XDebugger.Actions"/>
     </action>
@@ -388,7 +386,6 @@
 
     <reference ref="Debugger.ShowLibraryFrames">
       <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="before" relative-to-action="Debugger.AsyncStacks"/>
-      <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend" anchor="before" relative-to-action="Debugger.AsyncStacks"/>
     </reference>
   </actions>
 </idea-plugin>
