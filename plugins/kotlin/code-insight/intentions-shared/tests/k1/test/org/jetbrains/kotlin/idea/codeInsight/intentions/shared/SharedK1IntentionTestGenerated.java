@@ -1773,6 +1773,16 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
         public void testWithCommentAfterExpression() throws Exception {
             runTest("../testData/intentions/objectLiteralToLambda/WithCommentAfterExpression.kt");
         }
+
+        @TestMetadata("WithContextParameters.kt")
+        public void testWithContextParameters() throws Exception {
+            runTest("../testData/intentions/objectLiteralToLambda/WithContextParameters.kt");
+        }
+
+        @TestMetadata("WithContextParametersImplicitUsed.kt")
+        public void testWithContextParametersImplicitUsed() throws Exception {
+            runTest("../testData/intentions/objectLiteralToLambda/WithContextParametersImplicitUsed.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
@@ -195,7 +196,7 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
     override fun getReceiverTypeSearcherInfo(psiElement: PsiElement, isDestructionDeclarationSearch: Boolean): ReceiverTypeSearcherInfo? {
         return when (psiElement) {
             is KtCallableDeclaration -> {
-                analyze(psiElement) {
+                allowAnalysisFromWriteActionInEdt(psiElement) {
                     fun resolveKtClassOrObject(ktType: KaType): KtClassOrObject? {
                         return (ktType as? KaClassType)?.symbol?.psiSafe<KtClassOrObject>()
                     }
@@ -204,12 +205,12 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
                         is KaValueParameterSymbol -> {
                             // TODO: The following code handles only constructors. Handle other cases e.g.,
                             //       look for uses of component functions cf [isDestructionDeclarationSearch]
-                            val ktClass = PsiTreeUtil.getParentOfType(psiElement, KtClassOrObject::class.java) ?: return@analyze null
+                            val ktClass = PsiTreeUtil.getParentOfType(psiElement, KtClassOrObject::class.java) ?: return@allowAnalysisFromWriteActionInEdt null
 
                             val classPointer = ktClass.createSmartPointer()
                             ReceiverTypeSearcherInfo(ktClass) { declaration ->
                                 runReadAction {
-                                    analyze(declaration) {
+                                    allowAnalysisFromWriteActionInEdt(declaration) {
                                         fun KaType.containsClassType(clazz: KtClassOrObject?): Boolean {
                                             if (clazz == null) return false
                                             return this is KaClassType && (clazz.isEquivalentTo(symbol.psi) ||
