@@ -59,8 +59,6 @@ internal class IntelliJPlatformPrePushHandler : IssueIDPrePushHandler() {
   }
 }
 
-
-// AI-generated
 private class CommitValidationDialog(
   project: Project,
   private val commitsInfo: String
@@ -91,20 +89,25 @@ private class CommitValidationDialog(
 
   override fun createCenterPanel(): JComponent {
     val panel = JPanel(BorderLayout())
-    val editorPane = JEditorPane("text/html", 
-      DevKitGitBundle.message("push.commit.intellij.platform.message.lacks.issue.reference.body", commitsInfo)
-    ).apply {
+    val explanationPane = JEditorPane("text/html", DevKitGitBundle.message("push.commit.intellij.platform.message.lacks.issue.reference.body", commitsInfo)).apply {
       isEditable = false
       background = panel.background
-      // Enable proper HTML rendering with word wrapping
       putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true)
+      border = null
     }
-    val scrollPane = JBScrollPane(editorPane).apply {
-      minimumSize = Dimension(400, 200)
-      preferredSize = Dimension(600, 450)
+    @Suppress("HardCodedStringLiteral")
+    val commitInfoPane = JEditorPane("text/html", "<pre>${commitsInfo.replace("\n", "<br/>")}</pre>").apply {
+      isEditable = false
+      background = panel.background
+    }
+    val scrollPane = JBScrollPane(commitInfoPane).apply {
+      minimumSize = Dimension(400, 150)
+      preferredSize = Dimension(600, 300)
       verticalScrollBarPolicy = JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
       horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+      border = null
     }
+    panel.add(explanationPane, BorderLayout.NORTH)
     panel.add(scrollPane, BorderLayout.CENTER)
     return panel
   }
