@@ -30,7 +30,6 @@ f:com.intellij.BundleBase
 - sf:replaceMnemonicAmpersand(java.lang.String):java.lang.String
 - sf:setTranslationConsumer(java.util.function.BiConsumer):V
 f:com.intellij.Patches
-- sf:IBM_JDK_DISABLE_COLLECTION_BUG:Z
 - sf:JDK_BUG_ID_21275177:Z
 - sf:JDK_BUG_ID_8032832:Z
 - sf:JDK_BUG_WITH_TRACE_SEND:Z

@@ -1425,10 +1425,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       context.getManagerThread().startLongProcessAndFork(() -> {
         try {
           try {
-            if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-              // ensure args are not collected
-              StreamEx.of(myArgs).select(ObjectReference.class).forEach(DebuggerUtilsEx::disableCollection);
-            }
+            // ensure args are not collected
+            StreamEx.of(myArgs).select(ObjectReference.class).forEach(DebuggerUtilsEx::disableCollection);
 
             if (Patches.JDK_BUG_ID_21275177 && (ourTraceMask & VirtualMachine.TRACE_SENDS) != 0) {
               //noinspection ResultOfMethodCallIgnored
@@ -1453,11 +1451,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             if (Patches.JDK_BUG_WITH_TRACE_SEND && (getTraceMask() & VirtualMachine.TRACE_SENDS) != 0) {
               myMethod.virtualMachine().setDebugTraceMode(getTraceMask());
             }
-            //  assertThreadSuspended(thread, context);
-            if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-              // ensure args are not collected
-              StreamEx.of(myArgs).select(ObjectReference.class).forEach(DebuggerUtilsEx::enableCollection);
-            }
+            // ensure args are not collected
+            StreamEx.of(myArgs).select(ObjectReference.class).forEach(DebuggerUtilsEx::enableCollection);
           }
         }
         catch (Exception e) {

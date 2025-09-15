@@ -1,19 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.Patches;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.JavaValue;
-import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.utils.NamesUtils;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -35,7 +31,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.ui.JBColor;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
@@ -169,36 +164,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   @Override
   public Value getValue() {
-    // the following code makes sense only if we do not use ObjectReference.enableCollection() / disableCollection()
-    // to keep temporary objects
-    if (Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-      final EvaluationContextImpl evalContext = myStoredEvaluationContext;
-      if (evalContext != null && !evalContext.getSuspendContext().isResumed() &&
-          myValue instanceof ObjectReference && VirtualMachineProxyImpl.isCollected((ObjectReference)myValue)) {
-
-        final Semaphore semaphore = new Semaphore();
-        semaphore.down();
-        evalContext.getManagerThread().invoke(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
-          @Override
-          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-            // re-setting the context will cause value recalculation
-            try {
-              setContext(myStoredEvaluationContext);
-            }
-            finally {
-              semaphore.up();
-            }
-          }
-
-          @Override
-          protected void commandCancelled() {
-            semaphore.up();
-          }
-        });
-        semaphore.waitFor();
-      }
-    }
-
     assertValueReady();
     return myValue;
   }
