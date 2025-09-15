@@ -11,7 +11,11 @@ import java.awt.Graphics
 import java.awt.Rectangle
 
 @ApiStatus.Internal
-class InlineCompletionShortcutBelowLineElement(lineNumber: Int, insertActionId: String) : InlineCompletionShortcutHintElementBase(lineNumber, insertActionId) {
+class InlineCompletionShortcutBelowLineElement(
+  lineNumber: Int,
+  insertActionId: String,
+  forcedHint: InlineCompletionShortcutHint? = null,
+) : InlineCompletionShortcutHintElementBase(lineNumber, insertActionId, forcedHint) {
 
   override fun toPresentable(): InlineCompletionElement.Presentable {
     return Presentable(this, hint)
