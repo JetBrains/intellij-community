@@ -207,7 +207,7 @@ class RpcExecutor private constructor(
                 Json.encodeToJsonElement(InstanceId.serializer(), remoteObjectId)
               }
               else {
-                val (resultSerialized, streamDescriptors) = withSerializationContext("Result of ${message.requestId}", null, serviceScope) {
+                val (resultSerialized, streamDescriptors) = withSerializationContext("Result of ${message.displayName}", null, serviceScope) {
                   val kserializer = returnType.serializer(message.classMethodDisplayName())
                   json.encodeToJsonElement(kserializer, result)
                 }
