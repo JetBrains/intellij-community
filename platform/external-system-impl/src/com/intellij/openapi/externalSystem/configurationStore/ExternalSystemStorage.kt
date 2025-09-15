@@ -15,7 +15,12 @@ import org.jdom.Element
 import org.jetbrains.jps.model.serialization.SerializationConstants
 
 internal class ExternalModuleStorage(private val module: Module, storageManager: StateStorageManager)
-  : XmlElementStorage(StoragePathMacros.MODULE_FILE, "module", storageManager.macroSubstitutor, RoamingType.DISABLED) {
+  : XmlElementStorage(
+  fileSpec = StoragePathMacros.MODULE_FILE,
+  rootElementName = "module",
+  pathMacroSubstitutor = storageManager.macroSubstitutor,
+  storageRoamingType = RoamingType.DISABLED,
+) {
   override val controller: SettingsController?
     get() = null
 
@@ -24,7 +29,7 @@ internal class ExternalModuleStorage(private val module: Module, storageManager:
   override fun loadLocalData(): Element? = manager.readModuleData(module.name)
 
   override fun createSaveSession(states: StateMap): SaveSessionProducer {
-    return ExternalStorageSaveSessionProducer(states, storage = this, manager.moduleStorage, module.name)
+    return ExternalStorageSaveSessionProducer(states = states, storage = this, fileStorage = manager.moduleStorage, name = module.name)
   }
 }
 
@@ -42,7 +47,7 @@ internal open class ExternalProjectStorage(
   override fun loadLocalData(): Element? = manager.fileStorage.read(fileSpec)
 
   override fun createSaveSession(states: StateMap): SaveSessionProducer {
-    return ExternalStorageSaveSessionProducer(states, storage = this, manager.fileStorage, name = fileSpec)
+    return ExternalStorageSaveSessionProducer(states = states, storage = this, fileStorage = manager.fileStorage, name = fileSpec)
   }
 
   override fun toString(): String = "ExternalProjectStorage(fileSpec=${fileSpec})"
@@ -74,7 +79,13 @@ internal class ExternalProjectFilteringStorage(
   }
 
   override fun createSaveSession(states: StateMap): SaveSessionProducer {
-    return ExternalStorageSaveSessionProducer(states, storage = this, manager.fileStorage, name = fileSpec, filter)
+    return ExternalStorageSaveSessionProducer(
+      states = states,
+      storage = this,
+      fileStorage = manager.fileStorage,
+      name = fileSpec,
+      filter = filter,
+    )
   }
 }
 
@@ -90,7 +101,11 @@ private class ExternalStorageSaveSessionProducer(
   private val name: String,
   private val filter: DataWriterFilter? = null
 ) : XmlElementStorageSaveSessionProducer<XmlElementStorage>(states, storage) {
-  override fun saveLocally(dataWriter: DataWriter?, useVfs: Boolean, events: MutableList<VFileEvent>?) {
+  override fun remove(events: MutableList<VFileEvent>?) {
+    fileStorage.write(name, null, filter)
+  }
+
+  override fun saveLocally(dataWriter: DataWriter, events: MutableList<VFileEvent>?) {
     fileStorage.write(name, dataWriter, filter)
   }
 }
