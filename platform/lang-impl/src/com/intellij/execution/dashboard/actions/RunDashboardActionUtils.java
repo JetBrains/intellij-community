@@ -14,6 +14,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.SELECTED_DASHBOARD_SERVICE_ID;
+import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.findValue;
+
 @Internal
 public final class RunDashboardActionUtils {
   private RunDashboardActionUtils() {
@@ -31,7 +34,9 @@ public final class RunDashboardActionUtils {
     Project project = e.getProject();
     if (project == null) return JBIterable.empty();
 
-    JBIterable<Object> roots = JBIterable.of(e.getData(PlatformCoreDataKeys.SELECTED_ITEMS));
+    var selectedServiceId = e.getData(SELECTED_DASHBOARD_SERVICE_ID);
+    var selectedService = selectedServiceId == null ? null : findValue(selectedServiceId);
+    JBIterable<Object> roots = JBIterable.of(selectedService);
     Set<RunDashboardRunConfigurationNode> result = new LinkedHashSet<>();
     if (!getLeaves(project, e, roots.toList(), Collections.emptyList(), result)) return JBIterable.empty();
 
