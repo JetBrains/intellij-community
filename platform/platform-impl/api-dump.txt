@@ -291,8 +291,33 @@ bf:com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate$$serializer
 - f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 - f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate):V
+f:com.intellij.ide.startup.StartupActionScriptManager
+- s:addActionCommand(com.intellij.ide.startup.StartupActionScriptManager$ActionCommand):V
+- s:addActionCommands(java.util.List):V
 com.intellij.ide.startup.StartupActionScriptManager$ActionCommand
-- a:execute():V
+- execute():V
+- a:execute(java.nio.file.FileSystem):V
+f:com.intellij.ide.startup.StartupActionScriptManager$CopyCommand
+- com.intellij.ide.startup.StartupActionScriptManager$ActionCommand
+- java.io.Serializable
+- <init>(java.io.File,java.io.File):V
+- <init>(java.nio.file.Path,java.nio.file.Path):V
+- execute(java.nio.file.FileSystem):V
+- getSource():java.lang.String
+f:com.intellij.ide.startup.StartupActionScriptManager$DeleteCommand
+- com.intellij.ide.startup.StartupActionScriptManager$ActionCommand
+- java.io.Serializable
+- <init>(java.io.File):V
+- <init>(java.nio.file.Path):V
+- execute(java.nio.file.FileSystem):V
+f:com.intellij.ide.startup.StartupActionScriptManager$UnzipCommand
+- com.intellij.ide.startup.StartupActionScriptManager$ActionCommand
+- java.io.Serializable
+- <init>(java.io.File,java.io.File):V
+- <init>(java.nio.file.Path,java.nio.file.Path):V
+- <init>(java.nio.file.Path,java.nio.file.Path,java.util.function.Predicate):V
+- execute(java.nio.file.FileSystem):V
+- getSource():java.lang.String
 com.intellij.ide.trustedProjects.TrustedProjectsLocator
 - sf:Companion:com.intellij.ide.trustedProjects.TrustedProjectsLocator$Companion
 - a:getProjectRoots(com.intellij.openapi.project.Project):java.util.List

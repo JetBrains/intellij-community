@@ -79,6 +79,8 @@ f:com.intellij.ide.plugins.PluginNode
 - com.intellij.ide.plugins.IdeaPluginDescriptor
 - *:getChannel():java.lang.String
 - *:setChannel(java.lang.String):V
+f:com.intellij.ide.startup.StartupActionScriptManager
+- *s:addActionCommandsToBeginning(java.util.List):V
 *:com.intellij.ide.trustedProjects.TrustedProjectsListener
 - *sf:Companion:com.intellij.ide.trustedProjects.TrustedProjectsListener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
