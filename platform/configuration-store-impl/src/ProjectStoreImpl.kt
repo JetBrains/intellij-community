@@ -265,7 +265,8 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
         saveSettingsAndCommitComponents(saveResult = saveResult, forceSavingAllSettings = forceSavingAllSettings, sessionManager = projectSessionManager)
         projectSessionManager.collectSaveSessions(saveSessions)
         if (saveSessions.isNotEmpty()) {
-          projectSessionManager.saveAndValidate(saveSessions, saveResult)
+          saveSessions(saveSessions = saveSessions, saveResult = saveResult, collectVfsEvents = true)
+          validateSaveResult(saveResult, project)
         }
       }
 
@@ -279,11 +280,11 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     saveSessions: MutableList<SaveSession>,
     saveResult: SaveResult,
     forceSavingAllSettings: Boolean,
-    projectSessionManager: ProjectSaveSessionProducerManager,
+    projectSessionManager: SaveSessionProducerManager,
   ) {
   }
 
-  override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager = ProjectSaveSessionProducerManager(project, storageManager.isUseVfsForWrite)
+  override fun createSaveSessionProducerManager(): SaveSessionProducerManager = ProjectSaveSessionProducerManager(project)
 
   final override fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
     if (storeDescriptor.isDirectoryBased) {
@@ -299,9 +300,6 @@ private class ProjectStateStorageManager(private val project: Project, private v
   controller = ApplicationManager.getApplication().getService(SettingsController::class.java)?.createChild(project),
 ) {
   private var customMacros: Map<String, Path> = emptyMap()
-
-  override val isUseVfsForWrite: Boolean
-    get() = !useBackgroundSave()
 
   override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(path = super.normalizeFileSpec(fileSpec), macro = PROJECT_CONFIG_DIR)
 
@@ -339,5 +337,3 @@ internal suspend fun ensureFilesWritable(project: Project, files: Collection<Vir
     ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files)
   }
 }
-
-internal fun useBackgroundSave(): Boolean = Registry.`is`("ide.background.save.settings", true)
