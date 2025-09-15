@@ -98,7 +98,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     myProject.getMessageBus().connect(myModel).subscribe(ServiceEventListener.TOPIC, e -> {
       myModel.handle(e).onSuccess(o -> eventHandled(e));
     });
-    CONTRIBUTOR_EP_NAME.addExtensionPointListener(new ServiceViewExtensionPointListener(), myProject);
+    CONTRIBUTOR_EP_NAME.addExtensionPointListener(new ServiceViewExtensionPointListener(), myModel);
   }
 
   private void eventHandled(@NotNull ServiceEvent e) {
