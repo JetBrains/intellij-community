@@ -258,7 +258,7 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  private @NotNull LookupImpl obtainLookup(Editor editor, Project project) {
+  private @NotNull LookupImpl obtainLookup(@NotNull Editor editor, @NotNull Project project) {
     CompletionAssertions.checkEditorValid(editor);
     LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (existing != null && existing.isCompletion()) {
