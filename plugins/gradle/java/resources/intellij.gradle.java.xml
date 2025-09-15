@@ -167,5 +167,11 @@
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArgumentsNotationInspection"
                      isInternal="true"/>
 
+    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidApplyPluginSyntax"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.avoid.apply.plugin.notation" groupKey="inspection.best.practises"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidApplyPluginSyntaxInspection"/>
   </extensions>
 </idea-plugin>

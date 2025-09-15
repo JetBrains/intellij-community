@@ -50,4 +50,10 @@ interface GradleDslInspectionProvider {
    */
   fun isRedundantKotlinStdLibInspectionAvailable(file: PsiFile): Boolean
   fun getRedundantKotlinStdLibInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
+
+  /**
+   * @see GradleAvoidApplyPluginSyntaxInspection
+   */
+  fun isAvoidApplyPluginSyntaxInspectionAvailable(file: PsiFile): Boolean
+  fun getAvoidApplyPluginSyntaxInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
 }

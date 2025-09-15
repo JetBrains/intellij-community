@@ -1,0 +1,21 @@
+<html>
+<body>
+<p>Detects usage of legacy <code>apply</code> plugin syntax in Gradle build scripts.</p>
+<p>
+  Offers a quick fix to convert the legacy syntax to the preferred <code>plugins</code> block syntax.
+</p>
+<p><b>Example:</b></p>
+<pre><code lang="kotlin">
+apply(plugin = "java") // highlights this line
+</code></pre>
+<p>After the quick fix is applied:</p>
+<pre><code lang="kotlin">
+plugins {
+    id("java")
+}
+</code></pre>
+
+<p>Best practice described <a
+  href="https://docs.gradle.org/current/userguide/best_practices_general.html#use_the_plugins_block">here</a>.</p>
+</body>
+</html>
