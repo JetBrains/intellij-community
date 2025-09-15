@@ -22,13 +22,15 @@ object FreezeAnalyzer {
     return edtThread?.let { analyzeEDThread(it, threadDumpParsed, testName) }
   }
 
+  private fun ThreadState.isEdtWaiting() = this.isWaiting || isWaitingOnSuvorod(this)
+
   private fun analyzeEDThread(edt: ThreadState, threadDumpParsed: List<ThreadState>, testName: String?): FreezeAnalysisResult? =
     when {
-      !edt.isWaiting && !edt.isSleeping && !isWaitingOnSuvorod(edt) -> findFirstRelevantMethod(edt.stackTrace)?.let { FreezeAnalysisResult("EDT is busy with $it", listOf(edt)) }
-      edt.isWaiting && isWriteLockWait(edt) -> findThreadThatTookReadWriteLock(threadDumpParsed)?.let { FreezeAnalysisResult(it.message, it.threads + listOf(edt), it.additionalMessage) }
-      edt.isWaiting && !isEDTFreezed(edt) && testName == null -> null
-      edt.isWaiting && !isEDTFreezed(edt) && testName != null -> FreezeAnalysisResult("${testName}: EDT is not blocked/busy (freeze can be the result of extensive GC)", listOf(edt))
-      edt.isWaiting -> analyzeLock(edt, threadDumpParsed)
+      !edt.isEdtWaiting() && !edt.isSleeping -> findFirstRelevantMethod(edt.stackTrace)?.let { FreezeAnalysisResult("EDT is busy with $it", listOf(edt)) }
+      edt.isEdtWaiting() && isWriteLockWait(edt) -> findThreadThatTookReadWriteLock(threadDumpParsed)?.let { FreezeAnalysisResult(it.message, it.threads + listOf(edt), it.additionalMessage) }
+      edt.isEdtWaiting() && !isEDTFreezed(edt) && testName == null -> null
+      edt.isEdtWaiting() && !isEDTFreezed(edt) && testName != null -> FreezeAnalysisResult("${testName}: EDT is not blocked/busy (freeze can be the result of extensive GC)", listOf(edt))
+      edt.isEdtWaiting() -> analyzeLock(edt, threadDumpParsed)
       else -> null
     }
 
@@ -84,6 +86,7 @@ object FreezeAnalyzer {
     threadDumpParsed.asSequence()
       .filter { it.name != "Coroutine dump" }
       .filter { !isWaitingOnReadWriteLock(it) && !it.isKnownJDKThread }
+      .filter { !it.isEDT }
       .firstOrNull { isReadWriteLockTaken(it.stackTrace) }
       ?.let { threadState ->
         threadDumpParsed.firstOrNull { it.isAwaitedBy(threadState) }?.let {
@@ -156,7 +159,8 @@ object FreezeAnalyzer {
       "at com.intellij.openapi.progress.",
       "at com.intellij.openapi.application.",
       "at platform/jdk.zipfs",
-      "at net.jpountz.lz4."
+      "at net.jpountz.lz4.",
+      "at com.intellij.concurrency."
     )
     return !isJDKMethod() && irrelevantStarts.none { this.startsWith(it) }
   }

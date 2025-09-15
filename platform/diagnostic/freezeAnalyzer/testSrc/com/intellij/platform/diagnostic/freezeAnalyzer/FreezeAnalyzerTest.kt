@@ -41,6 +41,13 @@ class FreezeAnalyzerTest {
   }
 
   @Test
+  fun testSuvorovIndicator2() {
+    val threadDump = getResourceContent("freezes/readWriteLock/suvorov-indicator-2.txt")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl.initializeEntity")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.threads?.first()?.stackTrace?.lineSequence()?.first().shouldBe("\"DefaultDispatcher-worker-2\" prio=0 tid=0x0 nid=0x0 runnable")
+  }
+
+  @Test
   fun testAWTFreeze1() {
     val threadDump = getResourceContent("freezes/awtFreeze/IDEA-344485.txt")
     FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("EDT is busy with com.intellij.vcs.log.data.VcsLogUserResolverBase.resolveCurrentUser")
