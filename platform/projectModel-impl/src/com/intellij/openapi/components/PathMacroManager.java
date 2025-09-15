@@ -23,7 +23,7 @@ import java.util.Map;
 public class PathMacroManager implements PathMacroSubstitutor {
   public static @NotNull PathMacroManager getInstance(@NotNull ComponentManager componentManager) {
     if (componentManager instanceof Module module) {
-      return getInstance(module);
+      return new ModulePathMacroManager(module, PathMacros.getInstance());
     }
     else {
       return componentManager.getService(PathMacroManager.class);
@@ -31,7 +31,7 @@ public class PathMacroManager implements PathMacroSubstitutor {
   }
 
   public static @NotNull PathMacroManager getInstance(@NotNull Module module) {
-    return new ModulePathMacroManager(module);
+    return new ModulePathMacroManager(module, PathMacros.getInstance());
   }
 
   private PathMacrosImpl pathMacros;
