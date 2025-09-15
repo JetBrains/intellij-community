@@ -25,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 interface XDebugManagerProxy {
   fun isEnabled(): Boolean
 
-  suspend fun <T> withId(value: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T
+  suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T
   fun getCurrentSessionProxy(project: Project): XDebugSessionProxy?
   fun getSessionIdByContentDescriptor(project: Project, descriptor: RunContentDescriptor): XDebugSessionId?
   fun getCurrentSessionFlow(project: Project): Flow<XDebugSessionProxy?>

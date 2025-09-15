@@ -2,7 +2,6 @@
 package com.intellij.debugger.actions
 
 import com.intellij.debugger.engine.JavaValue
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
@@ -13,9 +12,11 @@ internal fun findJavaValue(xValue: XValue, sessionProxy: XDebugSessionProxy): Ja
   if (xValue is JavaValue) return xValue
   if (!XDebugSessionProxy.useFeProxy()) return null // should be a JavaValue otherwise
   if (!MonolithUtils.isMonolith()) return null
+  val managerProxy = XDebugManagerProxy.getInstance()
+  if (!managerProxy.hasBackendCounterpart(xValue)) return null
   @Suppress("RAW_RUN_BLOCKING") // no actual suspend inside runBlocking
   return runBlocking {
-    XDebugManagerProxy.getInstance().withId(xValue, sessionProxy) { xValueId ->
+    managerProxy.withId(xValue, sessionProxy) { xValueId ->
       MonolithUtils.findXValueById(xValueId) as? JavaValue
     }
   }

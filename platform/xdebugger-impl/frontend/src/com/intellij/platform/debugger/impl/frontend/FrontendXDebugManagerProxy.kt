@@ -25,12 +25,12 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
-    val valueId = FrontendXValue.extract(value)!!.xValueDto.id
+    val valueId = FrontendXValue.asFrontendXValue(value).xValueDto.id
     return block(valueId)
   }
 
-  override suspend fun <T> withId(executionStack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T {
-    val executionStackId = (executionStack as FrontendXExecutionStack).id
+  override suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T {
+    val executionStackId = (stack as FrontendXExecutionStack).id
     return block(executionStackId)
   }
 
@@ -55,6 +55,6 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override fun hasBackendCounterpart(xValue: XValue): Boolean {
-    return FrontendXValue.extract(xValue) != null
+    return FrontendXValue.asFrontendXValueOrNull(xValue) != null
   }
 }
