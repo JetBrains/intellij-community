@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.impl.source.javadoc.PsiDocFragmentRef;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetDocTagImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -2297,7 +2298,9 @@ public class JavaDocInfoGenerator {
     String label = getLinkLabel(tagElements, ref);
     StringBuilder b = new StringBuilder();
     collectElementText(b, ref != null ? ref : tag);
-    generateLink(buffer, b.toString(), label, tag, plainLink, !hasLinkLabel(tagElements, ref));
+    PsiElement context = tag;
+    if (ref instanceof PsiDocFragmentRef) context = ref;
+    generateLink(buffer, b.toString(), label, context, plainLink, !hasLinkLabel(tagElements, ref));
   }
 
   private void generateMarkdownLinkValue(PsiMarkdownReferenceLink referenceLink, StringBuilder buffer) {
@@ -2386,21 +2389,16 @@ public class JavaDocInfoGenerator {
    * @return true if {@code element} is the reference from a link. E.g. {@code String} in {@code {@link String myLink}}.
    */
   protected boolean isRefElement(PsiElement element) {
-    if (element instanceof PsiDocMethodOrFieldRef) {
-      return true;
-    }
-    // JavaDoc references
-    if (element instanceof TreeElement treeElement && treeElement.getTokenType() == JavaDocElementType.DOC_REFERENCE_HOLDER) {
-      return true;
-    }
-    // JavaDoc module references
-    if (element instanceof PsiDocTagValue docTagValue) {
-      PsiElement firstChild = docTagValue.getFirstChild();
-      if (firstChild instanceof PsiJavaModuleReferenceElement || firstChild instanceof PsiJavaModuleReference) {
-        return true;
+    return switch (element) {
+      case PsiDocMethodOrFieldRef ignored -> true;
+      case PsiDocFragmentRef ignored -> true;
+      case TreeElement treeElement when treeElement.getTokenType() == JavaDocElementType.DOC_REFERENCE_HOLDER -> true;
+      case PsiDocTagValue docTagValue -> {
+        PsiElement firstChild = docTagValue.getFirstChild();
+        yield firstChild instanceof PsiJavaModuleReferenceElement || firstChild instanceof PsiJavaModuleReference;
       }
-    }
-    return false;
+      default -> false;
+    };
   }
 
   /**
