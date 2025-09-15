@@ -80,10 +80,9 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
     saveSessions: MutableList<SaveSession>,
     saveResult: SaveResult,
     forceSavingAllSettings: Boolean,
-    projectSessionManager: ProjectSaveSessionProducerManager,
+    projectSessionManager: SaveSessionProducerManager,
   ) {
     projectSessionManager as ProjectWithModulesSaveSessionProducerManager
-    val workspaceModel = project.serviceAsync<WorkspaceModel>()
 
     val writer = if (shouldWriteExternalFilesDirectly()) {
       val moduleManager = project.serviceAsync<ModuleManager>()
@@ -93,7 +92,7 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
       DelegatingJpsStorageContentWriter(session = projectSessionManager, store = this, project = project)
     }
 
-    project.serviceAsync<JpsProjectModelSynchronizer>().saveChangedProjectEntities(writer, workspaceModel)
+    project.serviceAsync<JpsProjectModelSynchronizer>().saveChangedProjectEntities(writer, project.serviceAsync<WorkspaceModel>())
     (project.serviceAsync<WorkspaceModelCache>() as WorkspaceModelCacheImpl).doCacheSavingOnProjectClose()
 
     val entityStorage = (project.serviceAsync<WorkspaceModel>() as WorkspaceModelInternal).entityStorage
@@ -108,9 +107,7 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
     writer.writeFilesToDisk()
   }
 
-  final override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager {
-    return ProjectWithModulesSaveSessionProducerManager(project, storageManager.isUseVfsForWrite)
-  }
+  final override fun createSaveSessionProducerManager(): SaveSessionProducerManager = ProjectWithModulesSaveSessionProducerManager(project)
 
   override fun createContentReader(): JpsFileContentReaderWithCache {
     return StorageJpsConfigurationReader(project = project, projectStore = this, configLocation = getJpsProjectConfigLocation(project)!!)
@@ -174,7 +171,6 @@ private class DirectJpsStorageContentWriter(
     }
   }
 
-  @Throws(IOException::class)
   override suspend fun writeFilesToDisk() {
     val exceptions = CopyOnWriteArrayList<IOException>()
 
@@ -266,7 +262,6 @@ private class HalfDirectJpsStorageContentWriter(
   project: Project,
   moduleManager: ModuleManager,
 ) : JpsStorageContentWriter(session, store, project) {
-
   private val externalWriter = DirectJpsStorageContentWriter(session, store, project, moduleManager)
   private val internalWriter = ComponentStoreContentWriter(session, store, project)
 
@@ -295,9 +290,9 @@ private class HalfDirectJpsStorageContentWriter(
 }
 
 private abstract class JpsStorageContentWriter(
-  val session: ProjectWithModulesSaveSessionProducerManager,
-  val store: ProjectStoreImpl,
-  val project: Project,
+  @JvmField val session: ProjectWithModulesSaveSessionProducerManager,
+  @JvmField val store: ProjectStoreImpl,
+  @JvmField val project: Project,
 ) : JpsFileContentWriter {
   override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
@@ -346,8 +341,8 @@ private abstract class JpsStorageContentWriter(
 private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
 private val NULL_ELEMENT = Element("null")
 
-private class ProjectWithModulesSaveSessionProducerManager(project: Project, isUseVfsForWrite: Boolean)
-  : ProjectSaveSessionProducerManager(project, isUseVfsForWrite) {
+private class ProjectWithModulesSaveSessionProducerManager(private val project: Project)
+  : SaveSessionProducerManager(collectVfsEvents = true) {
   private val internalModuleComponents: ConcurrentMap<String, ConcurrentHashMap<String, Element>> =
     if (SystemInfoRt.isFileSystemCaseSensitive) {
       ConcurrentCollectionFactory.createConcurrentMap()
