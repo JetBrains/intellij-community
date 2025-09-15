@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.documentation.ide.impl
 
@@ -55,7 +55,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
   }
 
   // separate scope is needed for the ability to cancel its children
-  private val popupScope: CoroutineScope = cs.childScope()
+  private val popupScope: CoroutineScope = cs.childScope("${javaClass}::popupScope")
 
   override fun dispose() {
     cs.cancel()
