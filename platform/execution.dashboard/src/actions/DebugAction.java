@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author konstantin.aleev
  */
-// fixme - tbd, ask Lera?
 public final class DebugAction extends ExecutorAction {
   @Override
   protected Executor getExecutor() {

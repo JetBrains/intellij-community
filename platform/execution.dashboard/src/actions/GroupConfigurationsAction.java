@@ -53,7 +53,6 @@ final class GroupConfigurationsAction
 
     String groupName = value.isEmpty() ? null : value; // If input value is empty then ungroup nodes.
 
-    // fixme - delegate to backend following part, ask Lera?
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
     runManager.fireBeginUpdate();
     try {

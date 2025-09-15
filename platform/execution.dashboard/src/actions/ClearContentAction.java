@@ -67,7 +67,6 @@ final class ClearContentAction extends DumbAwareAction
       RunContentDescriptor descriptor = node.getDescriptor();
       if (descriptor == null) continue;
 
-      // fixme executor proxy - ask Lera?
       Executor executor = RunContentManagerImpl.getExecutorByContent(content);
       if (executor == null) continue;
 

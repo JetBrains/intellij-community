@@ -114,7 +114,6 @@ private fun addRunConfiguration(type: ConfigurationType, project: Project): RunC
   runManager.setUniqueNameIfNeeded(settings)
   callNewConfigurationCreated(settings.getFactory(), settings.getConfiguration())
 
-  // fixme ask Lera?
   val added = RunDialog.editConfiguration(project, settings,
                                           ExecutionBundle.message("add.new.run.configuration.action2.name"))
   if (added) {

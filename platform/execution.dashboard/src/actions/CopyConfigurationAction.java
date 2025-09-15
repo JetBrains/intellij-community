@@ -73,11 +73,9 @@ final class CopyConfigurationAction extends DumbAwareAction implements ActionRem
       ((RunConfigurationBase<?>)configuration).onConfigurationCopied();
     }
 
-    // fixme: action touches backend state and triggers client dialog - ask Lera?
     if (RunDialog.editConfiguration(project, copiedSettings,
                                     ExecutionBundle.message("run.dashboard.edit.configuration.dialog.title"))) {
 
-      // todo rpc to backend
       runManager.addConfiguration(copiedSettings);
     }
 
