@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.execution.dashboard.tree;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.execution.dashboard.splitApi.frontend.tree;
 
 import com.intellij.execution.dashboard.RunDashboardGroup;
 import com.intellij.execution.dashboard.RunDashboardNode;
@@ -38,10 +38,6 @@ public final class GroupingNode extends AbstractTreeNode<Pair<Object, RunDashboa
   @Override
   public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
     return myChildren;
-  }
-
-  public void addChildren(Collection<? extends AbstractTreeNode<?>> children) {
-    myChildren.addAll(children);
   }
 
   @Override

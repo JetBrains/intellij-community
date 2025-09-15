@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.dashboard;
+package com.intellij.platform.execution.dashboard.splitApi.frontend;
 
-import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.execution.dashboard.RunDashboardGroup;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.FrontendRunConfigurationNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,12 +26,14 @@ import org.jetbrains.annotations.Nullable;
  * Grouping rules are applied to dashboard nodes according to their order defined in plug-in configuration.
  */
 public interface RunDashboardGroupingRule {
+  ExtensionPointName<RunDashboardGroupingRule> GROUPING_RULE_EP_NAME = new ExtensionPointName<>("com.intellij.runDashboardGroupingRule");
+
   /**
    * @param node node which should be grouped by this grouping rule.
    * @return a group which node belongs to or {@code null} if node could not be grouped by this rule.
    */
   @Nullable
-  RunDashboardGroup getGroup(AbstractTreeNode<?> node);
+  RunDashboardGroup getGroup(FrontendRunConfigurationNode node);
 
   /**
    * Returns a unique identifier for the rule.

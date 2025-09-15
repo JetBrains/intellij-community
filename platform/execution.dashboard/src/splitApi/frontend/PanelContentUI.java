@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.execution.dashboard;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.execution.dashboard.splitApi.frontend;
 
 import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.ComponentUtil;

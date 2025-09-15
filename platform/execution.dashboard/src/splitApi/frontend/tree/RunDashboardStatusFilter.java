@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.execution.dashboard.tree;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.execution.dashboard.splitApi.frontend.tree;
 
-import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -16,10 +16,10 @@ public final class RunDashboardStatusFilter {
   private final Set<RunDashboardRunConfigurationStatus> myFilteredStatuses = new HashSet<>();
 
   public boolean isVisible(AbstractTreeNode<?> node) {
-    return !(node instanceof RunDashboardRunConfigurationNode) || isVisible(((RunDashboardRunConfigurationNode)node).getStatus());
+    return !(node instanceof FrontendRunConfigurationNode) || isVisible(((FrontendRunConfigurationNode)node).getStatus());
   }
 
-  public boolean isVisible(@NotNull RunDashboardRunConfigurationStatus status) {
+  public boolean isVisible(@Nullable RunDashboardRunConfigurationStatus status) {
     return !myFilteredStatuses.contains(status);
   }
 
