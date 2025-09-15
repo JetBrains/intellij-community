@@ -10,9 +10,7 @@ import com.intellij.grazie.text.*
 import com.intellij.grazie.utils.trimToNull
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.ClassLoaderUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Predicates
@@ -55,9 +53,16 @@ open class LanguageToolChecker : TextChecker() {
 
     val language = LangDetector.getLang(text) ?: return emptyList()
     try {
-      return runWithCheckCanceled {
-        ClassLoaderUtil.computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
-          collectLanguageToolProblems(extracted, text, language)
+      return runBlockingCancellable {
+        // LT will use indicator for cancelled checks
+        coroutineToIndicator {
+          val indicator = ProgressManager.getGlobalProgressIndicator()
+          checkNotNull(indicator) { "Indicator was not set for current job" }
+          runWithCheckCanceled(indicator) {
+            ClassLoaderUtil.computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
+              collectLanguageToolProblems(extracted, text, language)
+            }
+          }
         }
       }
     }
@@ -70,8 +75,8 @@ open class LanguageToolChecker : TextChecker() {
     return emptyList()
   }
 
-  private fun <T> runWithCheckCanceled(callable: Callable<out T>): T =
-    ApplicationUtil.runWithCheckCanceled(callable, EmptyProgressIndicator.notNullize(ProgressManager.getGlobalProgressIndicator()))
+  private fun <T> runWithCheckCanceled(indicator: ProgressIndicator, callable: Callable<out T>): T =
+    ApplicationUtil.runWithCheckCanceled(callable, indicator)
 
   private fun collectLanguageToolProblems(extracted: TextContent, text: String, lang: Lang): List<Problem> {
     val tool = LangTool.getTool(lang)
