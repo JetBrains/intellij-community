@@ -279,12 +279,14 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       myRunContentDescriptor.setId(session.getRunContentDescriptorId());
     }
 
-    String toolWindowId = myEnvironmentProxy.getContentDescriptorToolWindowId();
-    if (toolWindowId != null) {
-      myRunContentDescriptor.setContentToolWindowId(toolWindowId);
+    if (myEnvironmentProxy != null) {
+      String toolWindowId = myEnvironmentProxy.getContentDescriptorToolWindowId();
+      if (toolWindowId != null) {
+        myRunContentDescriptor.setContentToolWindowId(toolWindowId);
+      }
+      myRunContentDescriptor.setRunConfigurationName(myEnvironmentProxy.getRunProfileName());
+      myRunContentDescriptor.setRunConfigurationTypeId(myEnvironmentProxy.getRunConfigurationTypeId());
     }
-    myRunContentDescriptor.setRunConfigurationName(myEnvironmentProxy.getRunProfileName());
-    myRunContentDescriptor.setRunConfigurationTypeId(myEnvironmentProxy.getRunConfigurationTypeId());
     myRunContentDescriptor.setRunnerLayoutUi(myUi);
     Disposer.register(myRunContentDescriptor, this);
     Disposer.register(myProject, myRunContentDescriptor);
