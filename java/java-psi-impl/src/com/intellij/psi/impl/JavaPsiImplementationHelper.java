@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.javadoc.PsiDocFragmentName;
+import com.intellij.psi.javadoc.PsiDocFragmentName;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
 import org.jetbrains.annotations.NotNull;

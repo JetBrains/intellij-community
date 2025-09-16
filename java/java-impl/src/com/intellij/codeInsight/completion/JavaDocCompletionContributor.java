@@ -38,8 +38,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
-import com.intellij.psi.impl.source.javadoc.PsiDocFragmentName;
-import com.intellij.psi.impl.source.javadoc.PsiDocFragmentRef;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.*;
@@ -138,7 +136,8 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
         }
         else if (position.getParent() instanceof PsiDocFragmentName docFragmentName) {
           final PsiElement parent = docFragmentName.getParent();
-          final PsiClass classRef = parent instanceof PsiDocFragmentRef ? ((PsiDocFragmentRef)docFragmentName.getParent()).getScope() : null;
+          final PsiClass classRef = parent instanceof PsiDocFragmentRef
+                                    ? ((PsiDocFragmentRef)docFragmentName.getParent()).getScope() : null;
           if (classRef != null) {
             for (JavaDocFragmentData anchor : JavaDocFragmentAnchorCacheKt.getJavaDocFragmentsForClass(position.getProject(), classRef)) {
               result.addElement(LookupElementBuilder.create(anchor.getName()).withIcon(AllIcons.Nodes.Related));

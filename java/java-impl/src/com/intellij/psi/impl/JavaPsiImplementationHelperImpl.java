@@ -43,7 +43,6 @@ import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
-import com.intellij.psi.impl.source.javadoc.PsiDocFragmentName;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetAttributeValueImpl;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.search.GlobalSearchScope;

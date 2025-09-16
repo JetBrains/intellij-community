@@ -6,12 +6,12 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.javadoc.PsiDocFragmentRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiDocFragmentRef extends CompositePsiElement implements PsiDocTagValue, Constants {
-  public PsiDocFragmentRef() {
+public class PsiDocFragmentRefImpl extends CompositePsiElement implements PsiDocFragmentRef, Constants {
+  public PsiDocFragmentRefImpl() {
     super(DOC_FRAGMENT_REF);
   }
 
@@ -25,6 +25,7 @@ public class PsiDocFragmentRef extends CompositePsiElement implements PsiDocTagV
     }
   }
 
+  @Override
   public @Nullable PsiClass getScope() {
     return PsiDocMethodOrFieldRef.getScope(this);
   }

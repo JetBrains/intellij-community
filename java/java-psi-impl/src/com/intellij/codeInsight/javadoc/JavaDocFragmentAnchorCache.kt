@@ -5,8 +5,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
-import com.intellij.psi.impl.source.javadoc.PsiDocFragmentName
 import com.intellij.psi.javadoc.PsiDocComment
+import com.intellij.psi.javadoc.PsiDocFragmentName
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker

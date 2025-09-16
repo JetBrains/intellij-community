@@ -21,9 +21,9 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordField;
-import com.intellij.psi.impl.source.javadoc.PsiDocFragmentName;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.javadoc.PsiDocFragmentName;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -397,7 +397,7 @@ public final class HighlightNamesUtil {
   }
 
   static HighlightInfo highlightFragmentReference(@NotNull PsiDocFragmentName fragmentName) {
-    return nameBuilder(JavaHighlightInfoTypes.LOCAL_VARIABLE).range((PsiElement)fragmentName).create();
+    return nameBuilder(JavaHighlightInfoTypes.LOCAL_VARIABLE).range(fragmentName).create();
   }
 
   public static @NotNull @NlsSafe String formatClass(@NotNull PsiClass aClass) {
