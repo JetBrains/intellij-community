@@ -16,7 +16,6 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
-import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.ui.getCharSize
 import java.awt.BorderLayout
@@ -70,7 +69,6 @@ internal class SimpleTerminalView(
   private fun createEditor(): EditorImpl {
     val document = DocumentImpl("", true)
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = true)
-    editor.useTerminalDefaultBackground(this)
     editor.settings.isLineMarkerAreaShown = false
     editor.scrollPane.verticalScrollBarPolicy = if (withVerticalScroll) {
       JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
@@ -96,7 +94,7 @@ internal class SimpleTerminalView(
    */
   private inner class SimpleTerminalPanel(editor: Editor) : JPanel(), UiDataProvider {
     init {
-      background = TerminalUi.defaultBackground(editor)
+      background = TerminalUi.defaultBackgroundLazy()
       border = JBUI.Borders.emptyLeft(TerminalUi.alternateBufferLeftInset)
       layout = BorderLayout()
       add(editor.component, BorderLayout.CENTER)

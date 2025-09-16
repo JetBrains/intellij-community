@@ -20,7 +20,6 @@ import org.jetbrains.plugins.terminal.TerminalFontSettingsListener
 import org.jetbrains.plugins.terminal.TerminalFontSettingsService
 import org.jetbrains.plugins.terminal.TerminalFontSizeProviderImpl
 import org.jetbrains.plugins.terminal.block.ui.*
-import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
 import javax.swing.JScrollPane
 
@@ -99,7 +98,6 @@ object TerminalEditorFactory {
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = false)
     editor.contentComponent.focusTraversalKeysEnabled = false
     editor.contextMenuGroupId = "Terminal.ReworkedTerminalContextMenu"
-    editor.useTerminalDefaultBackground(parentDisposable)
     configureSoftWraps(editor)
     CopyOnSelectionHandler.install(editor, settings)
 

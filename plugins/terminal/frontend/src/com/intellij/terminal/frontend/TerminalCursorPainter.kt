@@ -20,14 +20,12 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.CursorShape
-import com.jediterm.terminal.ui.AwtTransformers
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
@@ -220,9 +218,8 @@ internal class TerminalCursorPainter private constructor(
 
     final override fun installCursorHighlighter(offset: Int): RangeHighlighter {
       val cursorAttributes = getCursorTextAttributes(offset)
-      val colorPalette = BlockTerminalColorPalette()
-      val foregroundColor = cursorAttributes.foregroundColor ?: AwtTransformers.toAwtColor(colorPalette.defaultForeground)!!
-      val backgroundColor = cursorAttributes.backgroundColor ?: AwtTransformers.toAwtColor(colorPalette.defaultBackground)!!
+      val foregroundColor = cursorAttributes.foregroundColor ?: editor.colorsScheme.defaultForeground
+      val backgroundColor = cursorAttributes.backgroundColor ?: editor.colorsScheme.defaultBackground
 
       val effectiveForeground = if (inverseForeground) backgroundColor else foregroundColor
       val attributes = TextAttributes(effectiveForeground, null, null, null, Font.PLAIN)
