@@ -505,6 +505,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
     return components.any { it is TransparentLayeredPane }
   }
 
+  @ApiStatus.Internal
   override fun isColorfulToolbar(): Boolean {
     return colorfulToolbar?.invoke() == true
   }
