@@ -151,10 +151,10 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
    * ensure you call {@link ProgressManager#checkCanceled()} often enough so that the completion process
    * can be canceled smoothly when the user begins to type in the editor.
    */
-  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(parameters.getCompletionType())) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+    for (var pair : myMap.get(parameters.getCompletionType())) {
       ProgressManager.checkCanceled();
-      final ProcessingContext context = new ProcessingContext();
+      ProcessingContext context = new ProcessingContext();
       if (pair.first.accepts(parameters.getPosition(), context)) {
         pair.second.addCompletionVariants(parameters, context, result);
         if (result.isStopped()) {
@@ -162,8 +162,8 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
         }
       }
     }
-    for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(null)) {
-      final ProcessingContext context = new ProcessingContext();
+    for (var pair : myMap.get(null)) {
+      ProcessingContext context = new ProcessingContext();
       if (pair.first.accepts(parameters.getPosition(), context)) {
         pair.second.addCompletionVariants(parameters, context, result);
         if (result.isStopped()) {
