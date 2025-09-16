@@ -26,6 +26,7 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.forEachLoggingErrors
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
+import kotlin.io.path.invariantSeparatorsPathString
 
 open class RecentProjectListActionProvider {
   companion object {
@@ -43,10 +44,10 @@ open class RecentProjectListActionProvider {
 
   private fun collectProjects(projectToFilterOut: Project?): List<RecentProjectTreeItem> {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
-    val openedPaths = ProjectManagerEx.getOpenProjects().mapNotNullTo(LinkedHashSet(), recentProjectManager::getProjectPath)
+    val openedPaths = ProjectManagerEx.getOpenProjects().mapNotNullTo(LinkedHashSet()) { recentProjectManager.getProjectPath(it)?.invariantSeparatorsPathString }
     val allRecentProjectPaths = LinkedHashSet(recentProjectManager.getRecentPaths())
     if (projectToFilterOut != null) {
-      allRecentProjectPaths.remove(recentProjectManager.getProjectPath(projectToFilterOut))
+      allRecentProjectPaths.remove(recentProjectManager.getProjectPath(projectToFilterOut)?.invariantSeparatorsPathString)
     }
 
     val duplicates = getDuplicateProjectNames(openedPaths, allRecentProjectPaths, recentProjectManager)
@@ -83,7 +84,7 @@ open class RecentProjectListActionProvider {
   open fun getActions(project: Project?): List<AnAction> = getActions(allowCustomProjectActions = true)
 
   /**
-   * @param useGroups Whether apply user-defined grouping for projects
+   * @param useGroups Whether to apply user-defined grouping for projects
    * @param allowCustomProjectActions Whether to include additional actions to the projects, if available (by turning them into an [ActionGroup])
    */
   @JvmOverloads
@@ -97,7 +98,7 @@ open class RecentProjectListActionProvider {
     val openedPaths = LinkedHashSet<String>()
     for (openProject in ProjectUtilCore.getOpenProjects()) {
       recentProjectManager.getProjectPath(openProject)?.let {
-        openedPaths.add(it)
+        openedPaths.add(it.invariantSeparatorsPathString)
       }
     }
 
