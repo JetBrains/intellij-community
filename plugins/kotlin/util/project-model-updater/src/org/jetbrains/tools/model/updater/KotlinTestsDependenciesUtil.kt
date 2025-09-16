@@ -149,11 +149,9 @@ object KotlinTestsDependenciesUtil {
     }
 
     private fun loadVersions(content: String): Map<String, String> {
-        val kotlinCompilerCliVersionRegex = Regex("""kotlinCompilerCliVersion\s*=\s*"(\S+)"""")
         val kotlinCompilerCliVersion = kotlinCompilerCliVersionRegex.find(content)?.groupValues[1]
             ?: error("cannot find kotlinCompilerCliVersion in content:\n$content")
 
-        val kotlincKotlinJpsPluginTestsVersionRegex = Regex("""kotlincKotlinJpsPluginTestsVersion\s*=\s*"(\S+)"""")
         val kotlincKotlinJpsPluginTestsVersion = kotlincKotlinJpsPluginTestsVersionRegex.find(content)?.groupValues[1]
             ?: error("cannot find kotlincKotlinJpsPluginTestsVersion in content:\n$content")
         return mapOf(

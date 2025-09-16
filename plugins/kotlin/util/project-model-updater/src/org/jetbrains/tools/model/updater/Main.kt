@@ -53,11 +53,12 @@ fun main(args: Array<String>) {
     val resolverSettings = readJpsResolverSettings(communityRoot, monorepoRoot)
 
     val kotlinDependenciesBazelFile = communityRoot.resolve("plugins/kotlin/kotlin_test_dependencies.bzl")
-    val kotlinCompilerCliVersionRegex = Regex("""kotlinCompilerCliVersion\s*=\s*"(\S+)"""")
     kotlinDependenciesBazelFile.writeText(
         kotlinDependenciesBazelFile.readText()
             .replace(kotlinCompilerCliVersionRegex, "kotlinCompilerCliVersion = \"${preferences.kotlincArtifactVersion}\"")
+            .replace(kotlincKotlinJpsPluginTestsVersionRegex, "kotlincKotlinJpsPluginTestsVersion = \"${preferences.jpsArtifactVersion}\"")
     )
+
     KotlinTestsDependenciesUtil.updateChecksum(isUpToDateCheck = false)
 
     fun processRoot(root: File, isCommunity: Boolean) {
@@ -144,6 +145,9 @@ private fun updateCoopRunConfiguration(monorepoRoot: File?, communityRoot: File)
 }
 
 private val bootstrapVersionRegex = Regex("(-P(deployVersion|build\\.number)=)(.+?)([ \"])")
+
+internal val kotlinCompilerCliVersionRegex: Regex = Regex("""kotlinCompilerCliVersion\s*=\s*"(\S+)"""")
+internal val kotlincKotlinJpsPluginTestsVersionRegex: Regex = Regex("""kotlincKotlinJpsPluginTestsVersion\s*=\s*"(\S+)"""")
 
 /**
  * Updates the `KotlinGradlePluginVersions.kt` source file to contain the latest [kotlinGradlePluginVersion]
