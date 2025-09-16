@@ -42,6 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
+import static com.intellij.execution.RunContentDescriptorIdImplKt.findContentValue;
 import static com.intellij.execution.dashboard.RunDashboardCustomizer.CUSTOMIZER_EP_NAME;
 import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.findValue;
 import static com.intellij.platform.kernel.ids.BackendGlobalIdsKt.storeValueGlobally;
@@ -619,9 +620,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   private @Nullable RunnerAndConfigurationSettings findSettings(@NotNull RunContentDescriptorId descriptorId) {
-    Collection<RunContentDescriptor> descriptors =
-      RunContentManager.getInstance(myProject).getRunContentDescriptors();
-    RunContentDescriptor descriptor = ContainerUtil.find(descriptors, it -> descriptorId.equals(it.getId()));
+    RunContentDescriptor descriptor = getDescriptorById(descriptorId, myProject);
     if (descriptor == null) return null;
 
     RunnerAndConfigurationSettings settings = findSettings(descriptor);
@@ -636,6 +635,20 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
 
     return settings;
+  }
+
+  private static @Nullable RunContentDescriptor getDescriptorById(@NotNull RunContentDescriptorId descriptorId, @NotNull Project project) {
+    RunContentDescriptor descriptor = null;
+    if (descriptorId instanceof RunContentDescriptorIdImpl impl) {
+      descriptor = findContentValue(impl);
+    }
+    if (descriptor == null) {
+      Collection<RunContentDescriptor> descriptors =
+        RunContentManager.getInstance(project).getRunContentDescriptors();
+      descriptor = ContainerUtil.find(descriptors, it -> descriptorId.equals(it.getId()));
+      if (descriptor == null) return null;
+    }
+    return descriptor;
   }
 
   private @Nullable RunnerAndConfigurationSettings findSettings(@NotNull RunContentDescriptor descriptor) {
@@ -896,9 +909,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       RunContentDescriptorId descriptorId = myDescriptorId;
       if (descriptorId == null) return null;
 
-      Collection<RunContentDescriptor> descriptors =
-        RunContentManager.getInstance(mySettings.getConfiguration().getProject()).getRunContentDescriptors();
-      return ContainerUtil.find(descriptors, descriptor -> descriptorId.equals(descriptor.getId()));
+      return getDescriptorById(descriptorId, mySettings.getConfiguration().getProject());
     }
 
     void setDescriptorId(@Nullable RunContentDescriptorId descriptorId) {
@@ -955,9 +966,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
     @Override
     public @Nullable RunContentDescriptor getDescriptor() {
-      Collection<RunContentDescriptor> descriptors =
-        RunContentManager.getInstance(mySettings.getConfiguration().getProject()).getRunContentDescriptors();
-      return ContainerUtil.find(descriptors, descriptor -> myDescriptorId.equals(descriptor.getId()));
+      return getDescriptorById(myDescriptorId, mySettings.getConfiguration().getProject());
     }
 
     @Override

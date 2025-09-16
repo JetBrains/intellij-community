@@ -56,7 +56,7 @@ public class RunContentDescriptor implements Disposable {
 
   private Content myContent;
   private String myContentToolWindowId;
-  private RunContentDescriptorId myId;
+  private RunContentDescriptorId myId = null;
   private final AnAction @NotNull [] myRestartActions;
 
   private final @Nullable Runnable myActivationCallback;

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -48,6 +49,7 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NotNull
 import java.awt.KeyboardFocusManager
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -146,9 +148,14 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   @ApiStatus.Internal
-  override fun registerRunContentDescriptor(descriptor: RunContentDescriptor) {
-    descriptors[descriptor.id] = descriptor
-    Disposer.register(descriptor, Disposable { descriptors.remove(descriptor.id) })
+  override fun registerRunContentDescriptor(@NotNull descriptor: RunContentDescriptor) {
+    val runContentDescriptorId = descriptor.id
+    if (runContentDescriptorId == null) {
+      thisLogger().warn("ContentDescriptorId was not assigned to descriptor $descriptor")
+      return
+    }
+    descriptors[runContentDescriptorId] = descriptor
+    Disposer.register(descriptor, Disposable { descriptors.remove(runContentDescriptorId) })
   }
 
   @ApiStatus.Internal
