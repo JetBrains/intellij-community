@@ -48,6 +48,7 @@ import org.junit.platform.suite.api.Suite
   LockDowngradingTest::class,
   PlatformUtilitiesTest::class,
   WriteIntentReadActionTest::class,
+  NonBlockingFlushQueueTest::class,
 
   // propagation
   ThreadContextPropagationTest::class,

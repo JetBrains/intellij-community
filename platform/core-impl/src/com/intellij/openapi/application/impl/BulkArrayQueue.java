@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -64,6 +64,13 @@ public final class BulkArrayQueue<T> {
     head = nextHead;
     return info;
   }
+
+  public T peekFirst() {
+    if (isEmpty()) return null;
+    //noinspection unchecked
+    return (T)myQueue[head];
+  }
+
 
   private @NotNull T getAndNullize(int head) {
     //noinspection unchecked
