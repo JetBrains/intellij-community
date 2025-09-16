@@ -2357,7 +2357,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       };
       var request = process.getRequestsManager().createMethodEntryRequest(requestor);
       request.setSuspendPolicy(EventRequest.SUSPEND_ALL);
-      request.setEnabled(true);
+      DebuggerUtilsAsync.setEnabled(request, true);
 
       long timeout = Registry.intValue("debugger.evaluate.on.pause.timeout.ms", 500);
       evaluatableContextObtained
