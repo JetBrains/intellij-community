@@ -133,7 +133,8 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
     new MultiMap<>();
 
   public final void extend(@Nullable CompletionType type,
-                           final @NotNull ElementPattern<? extends PsiElement> place, CompletionProvider<CompletionParameters> provider) {
+                           @NotNull ElementPattern<? extends PsiElement> place,
+                           @NotNull CompletionProvider<CompletionParameters> provider) {
     myMap.putValue(type, new Pair<>(place, provider));
   }
 
