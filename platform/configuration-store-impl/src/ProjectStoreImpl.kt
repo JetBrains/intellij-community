@@ -41,7 +41,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   override val isExternalStorageSupported: Boolean
     get() = storeDescriptor.isExternalStorageSupported
 
-  lateinit var storeDescriptor: ProjectStoreDescriptor
+  override lateinit var storeDescriptor: ProjectStoreDescriptor
 
   init {
     assert(!project.isDefault)
@@ -217,14 +217,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     }
 
   override val presentableUrl: String
-    get() {
-      if (storeDescriptor.isDirectoryBased) {
-        return storeDescriptor.projectIdentityFile.invariantSeparatorsPathString
-      }
-      else {
-        return projectFilePath.invariantSeparatorsPathString
-      }
-    }
+    get() = storeDescriptor.presentableUrl.invariantSeparatorsPathString
 
   override val projectWorkspaceId: String?
     get() = project.service<ProjectIdManager>().id
