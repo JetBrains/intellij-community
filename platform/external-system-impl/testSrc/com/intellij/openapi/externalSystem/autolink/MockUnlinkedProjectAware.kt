@@ -36,6 +36,10 @@ class MockUnlinkedProjectAware(
     listeners.forEach { it(externalProjectPath) }
   }
 
+  override suspend fun unlinkProject(project: Project, externalProjectPath: String) {
+    TODO("Not yet implemented")
+  }
+
   override fun subscribe(project: Project, listener: ExternalSystemProjectLinkListener, parentDisposable: Disposable) {
     listeners.add(listener::onProjectLinked, parentDisposable)
   }

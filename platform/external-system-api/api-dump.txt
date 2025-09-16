@@ -145,7 +145,7 @@ com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 - linkAndLoadProject(com.intellij.openapi.project.Project,java.lang.String):V
 - linkAndLoadProjectAsync(com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - a:subscribe(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.autolink.ExternalSystemProjectLinkListener,com.intellij.openapi.Disposable):V
-- unlinkProject(com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- a:unlinkProject(com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - f:getInstance(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
