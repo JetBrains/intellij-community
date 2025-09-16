@@ -1,4 +1,4 @@
-// "Rename unnamed variable|->Rename lambda parameter of type String" "true-preview"
+// "Rename unnamed variable|->Rename lambda parameter of type 'String'" "true-preview"
 import java.util.function.BiConsumer;
 
 public class JavaTest {

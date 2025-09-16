@@ -1,4 +1,4 @@
-// "Rename unnamed variable|->Rename 'for' loop parameter of type int" "true-preview"
+// "Rename unnamed variable|->Rename 'for' loop parameter of type 'int'" "true-preview"
 import java.util.function.BiConsumer;
 
 public class JavaTest {
