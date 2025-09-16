@@ -39,7 +39,7 @@ private fun isBackend(): Boolean {
 }
 
 private fun isNewFrontendServiceViewEnabled(): Boolean {
-  return Registry.`is`("services.view.split.enabled") && Registry.`is`("xdebugger.toolwindow.split.remdev")
+  return Registry.`is`("services.view.split.enabled") || Registry.`is`("xdebugger.toolwindow.split.remdev")
 }
 
 private fun isOldMonolithServiceViewEnabled(): Boolean {
