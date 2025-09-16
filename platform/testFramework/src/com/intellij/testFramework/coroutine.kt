@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.openapi.progress.withCurrentThreadCoroutineScopeBlocking
@@ -37,7 +37,7 @@ fun executeSomeCoroutineTasksAndDispatchAllInvocationEvents() {
   }
 }
 
-@Deprecated("use com.intellij.testFramework.common.waitUnti")
+@Deprecated("use com.intellij.testFramework.common.waitUntil")
 @TestOnly
 suspend fun waitUntil(message: String? = null, timeout: Duration = DEFAULT_TEST_TIMEOUT, condition: suspend CoroutineScope.() -> Boolean) {
   return com.intellij.testFramework.common.waitUntil(message, timeout, condition)
