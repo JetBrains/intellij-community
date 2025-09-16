@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.psi.KtPsiUtil
 
 /**
- * Analogous to `RemoveUnnecessaryParenthesesIntention`.
+ * Analogous to `RemoveUnnecessaryParenthesesInspection`.
  * Removes parentheses (conservatively) added by other steps.
  */
 class RemoveUnnecessaryParenthesesConversion(context: ConverterContext) : RecursiveConversion(context) {

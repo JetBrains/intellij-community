@@ -1,4 +1,4 @@
-// IS_APPLICABLE: false
+// PROBLEM: none
 fun main() {
     if (true) true
     else <caret>(1

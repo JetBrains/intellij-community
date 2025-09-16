@@ -1,4 +1,4 @@
-// IS_APPLICABLE: false
+// PROBLEM: none
 
 fun parenPB(p: (() -> Unit) -> Unit): (() -> Unit) -> Unit = p
 

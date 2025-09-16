@@ -739,5 +739,13 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.unsafe.cast.with.return.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RemoveUnnecessaryParenthesesInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.remove.unnecessary.parentheses.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>
