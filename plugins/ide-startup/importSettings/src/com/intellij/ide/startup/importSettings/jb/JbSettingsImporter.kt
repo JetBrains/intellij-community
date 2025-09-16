@@ -42,6 +42,8 @@ import com.intellij.serviceContainer.getComponentManagerEx
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.application
 import com.intellij.util.io.copy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.FileInputStream
 import java.io.InputStream
 import java.nio.file.FileVisitResult
@@ -264,7 +266,10 @@ class JbSettingsImporter(private val configDirPath: Path,
     for (storageManager in storageManagers) {
       storageManager.removeStreamProvider(provider::class.java)
     }
-    saveSettings(ApplicationManager.getApplication(), true)
+    // todo make sure that withExternalStreamProvider is not called in EDT
+    withContext(Dispatchers.Default) {
+      saveSettings(componentManager = ApplicationManager.getApplication(), forceSavingAllSettings = true)
+    }
   }
 
   private fun loadNotLoadedComponents(

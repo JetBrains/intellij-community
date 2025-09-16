@@ -8,13 +8,19 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.util.io.FileUtil
-import kotlinx.coroutines.*
+import com.intellij.openapi.util.io.FileUtilRt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.readLines
+import kotlin.io.path.writeText
 
 
-private class JbAfterRestartSettingsApplier(private val cs: CoroutineScope) : AppLifecycleListener {
+private class JbAfterRestartSettingsApplier(private val coroutineScope: CoroutineScope) : AppLifecycleListener {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment || !configPathFile.exists()) {
       throw ExtensionNotApplicableException.create()
@@ -25,9 +31,10 @@ private class JbAfterRestartSettingsApplier(private val cs: CoroutineScope) : Ap
     if (!configPathFile.exists()) {
       return
     }
+
     try {
       val configLines = configPathFile.readLines()
-      if (!FileUtil.delete(configPathFile.toFile())) {
+      if (!FileUtilRt.delete(configPathFile.toFile())) {
         logger.warn("Couldn't delete $configPathFile, won't process config import")
         return
       }
@@ -43,7 +50,7 @@ private class JbAfterRestartSettingsApplier(private val cs: CoroutineScope) : Ap
         }
       }
       val importer = JbSettingsImporter(oldConfDir, oldConfDir, null)
-      cs.launch {
+      coroutineScope.launch {
         withContext(Dispatchers.EDT) {
           importer.importOptionsAfterRestart(options, pluginIds)
         }
