@@ -961,7 +961,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
 
     for (panel in myDetailPanels) {
-      if (panel.descriptorForActions === descriptor) {
+      if (panel.isShowingPlugin(descriptor)) {
         panel.updateAfterUninstall(needRestartForUninstall)
       }
     }

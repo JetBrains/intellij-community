@@ -542,7 +542,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     if (uiModel.isBundled) return
     val component = gearButton ?: return
     val modalityState = ModalityState.stateForComponent(component)
-    val customizationModel = pluginManagerCustomizer.getDisableButtonCustomizationModel(pluginModel, uiModel, modalityState) ?: return
+    val customizationModel = pluginManagerCustomizer.getDisableButtonCustomizationModel(pluginModel, uiModel, installedDescriptorForMarketplace, modalityState)
+                             ?: return
     enableDisableController?.setOptions(customizationModel.additionalActions)
     val visible = customizationModel.isVisible && customizationModel.text == null
     component.isVisible = visible
@@ -1064,7 +1065,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     if (this@PluginDetailsPageComponent.pluginModel.isPluginInstallingOrUpdating(pluginModel) && indicator == null) {
       applyCustomization()
-      showInstallProgress( coroutineScope.childScope("Plugin ${pluginModel.pluginId} installation"))
+      showInstallProgress(coroutineScope.childScope("Plugin ${pluginModel.pluginId} installation"))
     }
     else {
       fullRepaint()
@@ -1409,6 +1410,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
+  fun isShowingPlugin(pluginModel: PluginUiModel): Boolean {
+    return descriptorForActions === pluginModel || plugin === pluginModel
+  }
+
   fun showProgress(storeIndicator: Boolean, installationScope: CoroutineScope, cancelRunnable: suspend () -> Unit) {
     indicator = OneLineProgressIndicatorWithAsyncCallback(installationScope, false, cancelRunnable)
     nameAndButtons!!.setProgressComponent(null, indicator!!.createBaselineWrapper())
@@ -1457,6 +1462,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       else {
         nameAndButtons!!.setProgressDisabledButton(gearButton!!)
       }
+    }
+
+    if (installButton?.isVisible() == true || gearButton?.isVisible == true) {
+      myEnableDisableButton?.isVisible = false
     }
   }
 

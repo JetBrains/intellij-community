@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.Component
 import javax.swing.JComponent
 
 @ApiStatus.Internal
@@ -29,6 +28,7 @@ interface PluginManagerCustomizer {
   suspend fun getDisableButtonCustomizationModel(
     pluginModelFacade: PluginModelFacade,
     pluginModel: PluginUiModel,
+    installedDescriptorForMarketplace: PluginUiModel?,
     modalityState: ModalityState,
   ): OptionsButonCustomizationModel?
 
