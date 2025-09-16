@@ -193,7 +193,7 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
    *
    * @return hint text to be shown if no variants are found, typically "No suggestions"
    */
-  public @Nullable @NlsContexts.HintText String handleEmptyLookup(@NotNull CompletionParameters parameters, final Editor editor) {
+  public @Nullable @NlsContexts.HintText String handleEmptyLookup(@NotNull CompletionParameters parameters, @NotNull Editor editor) {
     return null;
   }
 
