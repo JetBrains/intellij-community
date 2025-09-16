@@ -77,33 +77,24 @@ internal class BidirectionalLongMultiMap<V> {
     return addedFirstTime
   }
 
-  /**
-   * Returns a set of values that have been deleted from the map.
-   * That is, only this [key] had this value, and when [key] is deleted, no key has this value anymore.
-   **/
-  fun removeKey(key: Long): Set<V> {
-    val values = keyToValues[key] ?: return emptySet()
+  fun removeKey(key: Long) {
+    val values = keyToValues[key] ?: return
 
-    @Suppress("SSBasedInspection")
-    val lastRemovedValues: MutableSet<V> = ObjectOpenHashSet()
     for (v in values) {
       when (val keys = valueToKeys.get(v)!!) {
         is LongOpenHashSet -> {
           keys.remove(key)
           if (keys.isEmpty()) {
             valueToKeys.remove(v)
-            lastRemovedValues.add(v)
           }
         }
         is Long -> {
           valueToKeys.remove(v)
-          lastRemovedValues.add(v)
         }
         else -> error("Unexpected type of key $keys")
       }
     }
     keyToValues.remove(key)
-    return lastRemovedValues
   }
 
   /**
