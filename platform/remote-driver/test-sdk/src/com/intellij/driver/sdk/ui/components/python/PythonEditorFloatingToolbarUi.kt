@@ -16,6 +16,10 @@ class PythonEditorFloatingToolbarUi(data: ComponentData) : UiComponent(data) {
   val uvLockButton = x { byAccessibleName("uv Lock") }
   val uvSyncButton = x { byAccessibleName("uv Sync") }
 
+  // Conda floating toolbar actions
+  val condaUpdateFromEnvYmlButton = x { byAccessibleName("Conda Update from \"environment.yml\"") }
+  val condaExportToEnvYmlButton = x { byAccessibleName("Conda Export to \"environment.yml\"") }
+
   // Requirements floating toolbar actions
   val setAsEnvDependenciesButton = x { byAccessibleName("Set as the environment dependencies list") }
   val installAllButton = x { byAccessibleName("Install all") }
