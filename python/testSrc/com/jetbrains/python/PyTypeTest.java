@@ -2838,7 +2838,7 @@ public class PyTypeTest extends PyTestCase {
   public void testDunderInitSubclassFirstParameter() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
-      () -> doTest("Type[Self]",
+      () -> doTest("Type[Self@Foo]",
                    """
                      class Foo:
                          def __init_subclass__(cls):
@@ -2850,7 +2850,7 @@ public class PyTypeTest extends PyTestCase {
   public void testDunderClassGetItemFirstParameter() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
-      () -> doTest("Type[Self]",
+      () -> doTest("Type[Self@Foo]",
                    """
                      class Foo:
                          def __class_getitem__(cls, item):
@@ -4069,7 +4069,7 @@ public class PyTypeTest extends PyTestCase {
   public void testInferringAndMatchingCls() {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> doTest("Self",
+      () -> doTest("Self@Subclass",
                    """
                      class Subclass(dict):
                          def __new__(cls, *args, **kwargs):

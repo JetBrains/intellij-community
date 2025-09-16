@@ -526,8 +526,11 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   @Override
   public @NotNull HtmlChunk visitPySelfType(@NotNull PySelfType selfType) {
     // Don't render Self as a type parameter
-    HtmlChunk selfTypeRender = className(selfType.getName());
-    return selfType.isDefinition() ? wrapInTypingType(selfTypeRender) : selfTypeRender;
+    HtmlBuilder builder = new HtmlBuilder();
+    builder.append(className(selfType.getName()));
+    builder.append("@");
+    builder.append(render(selfType.getScopeClassType().toInstance()));
+    return selfType.isDefinition() ? wrapInTypingType(builder.toFragment()) : builder.toFragment();
   }
 
   @Override

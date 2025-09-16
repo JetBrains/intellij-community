@@ -2465,7 +2465,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testObjectDunderNewResult() {
-    doTest("Self",
+    doTest("Self@C",
            """
              class C(object):
                  def __new__(cls):

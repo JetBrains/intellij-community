@@ -1589,10 +1589,10 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    sh.difference(cir)
                    sh.difference(sh)
                    cir.difference(cir)
-                   cir.difference(<warning descr="Expected type 'Circle' (matched generic type 'Self'), got 'Shape' instead">sh</warning>)
+                   cir.difference(<warning descr="Expected type 'Circle' (matched generic type 'Self@Shape'), got 'Shape' instead">sh</warning>)
                    
                    cir.apply(fCircle)
-                   cir.apply(<warning descr="Expected type '(Circle) -> None' (matched generic type '(Self) -> None'), got '(sh: Shape) -> None' instead">fShape</warning>)
+                   cir.apply(<warning descr="Expected type '(Circle) -> None' (matched generic type '(Self@Shape) -> None'), got '(sh: Shape) -> None' instead">fShape</warning>)
                    sh.apply(fCircle)
                    sh.apply(fShape)""");
   }
@@ -1644,13 +1644,13 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    myClass.foo(subClass)
                    myClass.foo(42)
                    myClass.foo(None)
-                   myClass.foo(<warning descr="Expected type 'MyClass | None | int' (matched generic type 'Self | None | int'), got 'str' instead">""</warning>)
+                   myClass.foo(<warning descr="Expected type 'MyClass | None | int' (matched generic type 'Self@MyClass | None | int'), got 'str' instead">""</warning>)
                    
-                   subClass.foo(<warning descr="Expected type 'SubClass | None | int' (matched generic type 'Self | None | int'), got 'MyClass' instead">myClass</warning>)
+                   subClass.foo(<warning descr="Expected type 'SubClass | None | int' (matched generic type 'Self@MyClass | None | int'), got 'MyClass' instead">myClass</warning>)
                    subClass.foo(subClass)
                    subClass.foo(42)
                    subClass.foo(None)
-                   subClass.foo(<warning descr="Expected type 'SubClass | None | int' (matched generic type 'Self | None | int'), got 'str' instead">""</warning>)""");
+                   subClass.foo(<warning descr="Expected type 'SubClass | None | int' (matched generic type 'Self@MyClass | None | int'), got 'str' instead">""</warning>)""");
   }
 
   // PY-53104
@@ -1672,12 +1672,12 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    myClass.foo(myClass.foo(myClass))
                    myClass.foo(subClass.foo(subClass))
                    myClass.foo(myClass.foo(subClass))
-                   myClass.foo(subClass.foo(<warning descr="Expected type 'SubClass' (matched generic type 'Self'), got 'MyClass' instead">myClass</warning>))
+                   myClass.foo(subClass.foo(<warning descr="Expected type 'SubClass' (matched generic type 'Self@MyClass'), got 'MyClass' instead">myClass</warning>))
                    
-                   subClass.foo(<warning descr="Expected type 'SubClass' (matched generic type 'Self'), got 'MyClass' instead">myClass.foo(myClass)</warning>)
+                   subClass.foo(<warning descr="Expected type 'SubClass' (matched generic type 'Self@MyClass'), got 'MyClass' instead">myClass.foo(myClass)</warning>)
                    subClass.foo(subClass.foo(subClass))
-                   subClass.foo(<warning descr="Expected type 'SubClass' (matched generic type 'Self'), got 'MyClass' instead">myClass.foo(subClass)</warning>)
-                   subClass.foo(subClass.foo(<warning descr="Expected type 'SubClass' (matched generic type 'Self'), got 'MyClass' instead">myClass</warning>))""");
+                   subClass.foo(<warning descr="Expected type 'SubClass' (matched generic type 'Self@MyClass'), got 'MyClass' instead">myClass.foo(subClass)</warning>)
+                   subClass.foo(subClass.foo(<warning descr="Expected type 'SubClass' (matched generic type 'Self@MyClass'), got 'MyClass' instead">myClass</warning>))""");
   }
 
   // PY-53104
@@ -3416,7 +3416,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                   class Shape:
                      def method2(self) -> Self:
                          # This should result in a type error.
-                         return <warning descr="Expected type 'Self', got 'Shape' instead">Shape()</warning>  # E
+                         return <warning descr="Expected type 'Self@Shape', got 'Shape' instead">Shape()</warning>  # E
                   
                      def method3(self) -> Self:
                          return self # OK
@@ -3429,7 +3429,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                   from typing import Self
                   class Shape:
                      def method2(self):
-                         my_instance: Self = <warning descr="Expected type 'Self', got 'Shape' instead">Shape()</warning> # E
+                         my_instance: Self = <warning descr="Expected type 'Self@Shape', got 'Shape' instead">Shape()</warning> # E
                          my_instance: Self = self # OK
                   """);
   }
@@ -3445,7 +3445,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                   class Circle(Shape):
                       @override
                       def method2(self) -> Self:
-                          return <warning descr="Expected type 'Self', got 'Shape' instead">Shape()</warning>
+                          return <warning descr="Expected type 'Self@Circle', got 'Shape' instead">Shape()</warning>
                   """);
   }
 
@@ -3455,9 +3455,9 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                  from typing import Self
                  class Shape:
                      def method2(self):
-                         self.method3(<warning descr="Expected type 'Self', got 'Shape' instead">Shape()</warning>) # E
+                         self.method3(<warning descr="Expected type 'Self@Shape', got 'Shape' instead">Shape()</warning>) # E
                          self.method3(self) # OK
-                         self.method4(<warning descr="Expected type 'list[Self]', got 'list[Shape]' instead">[Shape()]</warning>) # E
+                         self.method4(<warning descr="Expected type 'list[Self@Shape]', got 'list[Shape]' instead">[Shape()]</warning>) # E
                          self.method4([self])  # OK
                          ...
                  
@@ -3469,21 +3469,21 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-76886
   public void testSelfInClassMethods() {
     doTestByText("""
-                  from typing import Self
-                  class Shape:
+                   from typing import Self
+                   class Shape:
                       @classmethod
                       def method1(cls) -> Self:
                           return cls() # OK
                       @classmethod
                       def method2(cls) -> Self:
-                          return <warning descr="Expected type 'Self', got 'type[Self]' instead">cls</warning> # E
+                          return <warning descr="Expected type 'Self@Shape', got 'type[Self@Shape]' instead">cls</warning> # E
                       @classmethod
                       def method3(cls) -> type[Self]:
-                          return <warning descr="Expected type 'type[Self]', got 'Self' instead">cls()</warning> # E
+                          return <warning descr="Expected type 'type[Self@Shape]', got 'Self@Shape' instead">cls()</warning> # E
                       @classmethod
                       def method4(cls) -> type[Self]:
                           return cls # OK
-                  """);
+                   """);
   }
 
   public void testSelfVsDunderClass() {
@@ -3507,8 +3507,8 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                          y3: Self | int = self
                          y4: Self | int = 3
                          y5: Self | int | list[Self] = [self]
-                         y6: Self | int | list[Self] = <warning descr="Expected type 'Self | int | list[Self]', got 'list[int]' instead">[3]</warning> # E
-                         y8: Self | int | list[Self] = <warning descr="Expected type 'Self | int | list[Self]', got 'str' instead">"str"</warning> # E
+                         y6: Self | int | list[Self] = <warning descr="Expected type 'Self@MyClass | int | list[Self@MyClass]', got 'list[int]' instead">[3]</warning> # E
+                         y7: Self | int | list[Self] = <warning descr="Expected type 'Self@MyClass | int | list[Self@MyClass]', got 'str' instead">"str"</warning> # E
                  """);
   }
 
@@ -3548,20 +3548,20 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    class Shape(Base):
                    
                        def bad_meth(self):
-                           y1: int = <warning descr="Expected type 'int', got 'Self' instead">self</warning>
-                           y2: type[Shape] = <warning descr="Expected type 'type[Shape]', got 'Self' instead">self</warning>
-                           y3: type["Circle"] = <warning descr="Expected type 'type[Circle]', got 'Self' instead">self</warning>
-                           y4: type[Self] = <warning descr="Expected type 'type[Self]', got 'Self' instead">self</warning>
-                           y5: "Circle" = <warning descr="Expected type 'Circle', got 'Self' instead">self</warning>
+                           y1: int = <warning descr="Expected type 'int', got 'Self@Shape' instead">self</warning>
+                           y2: type[Shape] = <warning descr="Expected type 'type[Shape]', got 'Self@Shape' instead">self</warning>
+                           y3: type["Circle"] = <warning descr="Expected type 'type[Circle]', got 'Self@Shape' instead">self</warning>
+                           y4: type[Self] = <warning descr="Expected type 'type[Self@Shape]', got 'Self@Shape' instead">self</warning>
+                           y5: "Circle" = <warning descr="Expected type 'Circle', got 'Self@Shape' instead">self</warning>
                    
                        @classmethod
                        def bad_cls(cls):
-                           y1: int = <warning descr="Expected type 'int', got 'type[Self]' instead">cls</warning>
-                           y2: Shape = <warning descr="Expected type 'Shape', got 'type[Self]' instead">cls</warning>
-                           y3: Base = <warning descr="Expected type 'Base', got 'type[Self]' instead">cls</warning>
-                           y4: "Circle" = <warning descr="Expected type 'Circle', got 'type[Self]' instead">cls</warning>
-                           y5: Self = <warning descr="Expected type 'Self', got 'type[Self]' instead">cls</warning>
-                           y6: "Circle" = <warning descr="Expected type 'Circle', got 'Self' instead">cls()</warning>
+                           y1: int = <warning descr="Expected type 'int', got 'type[Self@Shape]' instead">cls</warning>
+                           y2: Shape = <warning descr="Expected type 'Shape', got 'type[Self@Shape]' instead">cls</warning>
+                           y3: Base = <warning descr="Expected type 'Base', got 'type[Self@Shape]' instead">cls</warning>
+                           y4: "Circle" = <warning descr="Expected type 'Circle', got 'type[Self@Shape]' instead">cls</warning>
+                           y5: Self = <warning descr="Expected type 'Self@Shape', got 'type[Self@Shape]' instead">cls</warning>
+                           y6: "Circle" = <warning descr="Expected type 'Circle', got 'Self@Shape' instead">cls()</warning>
                    
                    class Circle(Shape): ...
                    """);
