@@ -19,6 +19,7 @@ import javax.swing.JComponent
 @Internal
 class SubscriptionExpirationDialog(
   project: Project?,
+  private val isEvaluation: Boolean,
   private val showPromise: Boolean,
   private val showContinueWithoutSubscription: Boolean,
 ) : LicenseExpirationDialog(project, getImagePath(), 433, 242) {
@@ -41,8 +42,8 @@ class SubscriptionExpirationDialog(
     }
 
     @JvmStatic
-    fun show(project: Project?, showPromise: Boolean, showContinueWithoutSubscription: Boolean): ResultState {
-      val dialog = SubscriptionExpirationDialog(project, showPromise, showContinueWithoutSubscription)
+    fun show(project: Project?, isEvaluation: Boolean, showPromise: Boolean, showContinueWithoutSubscription: Boolean): ResultState {
+      val dialog = SubscriptionExpirationDialog(project, isEvaluation, showPromise, showContinueWithoutSubscription)
       dialog.show()
 
       if (dialog.exitCode != OK_EXIT_CODE) {
@@ -55,16 +56,21 @@ class SubscriptionExpirationDialog(
         else -> ResultState.CONTINUE
       }
     }
+
+    private fun dialogTitle(isEvaluation: Boolean): @Nls String {
+      val key = if (isEvaluation) "subscription.dialog.title.evaluation" else "subscription.dialog.title.subscription"
+      return IdeBundle.message(key)
+    }
   }
 
   init {
-    initDialog(IdeBundle.message("subscription.dialog.title"))
+    initDialog(dialogTitle(isEvaluation))
   }
 
   override fun createPanel(): JComponent {
     val panel = panel {
       row {
-        label(IdeBundle.message("subscription.dialog.title")).component.font = JBFont.h1()
+        label(dialogTitle(isEvaluation)).component.font = JBFont.h1()
       }
       row {
         browserLink(IdeBundle.message("subscription.dialog.link", getPlatformName()), "https://www.jetbrains.com/idea/features")
