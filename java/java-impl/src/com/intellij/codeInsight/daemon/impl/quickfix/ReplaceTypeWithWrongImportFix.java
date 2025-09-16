@@ -79,12 +79,25 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
       PsiClass expectedClass = classType.resolve();
       if (expectedClass == null) return null;
 
+      PsiReferenceParameterList refParameterList = ref.getParameterList();
+      if (refParameterList == null) return null;
+
       Condition<PsiClass> accessiblePredicate = aClass -> {
         if (facade.arePackagesTheSame(aClass, ref) ||
             PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class) != null ||
             !PsiUtil.isAccessible(aClass, ref, null)) {
           return false;
         }
+
+        if (aClass.getQualifiedName() == null) {
+          return false;
+        }
+        if (refParameterList.getTypeArgumentCount() != 0 &&
+            refParameterList.getTypeArgumentCount() == refParameterList.getTypeParameterElements().length &&
+            !HighlightFixUtil.isPotentiallyCompatible(aClass, refParameterList)) {
+          return false;
+        }
+
         if (myLeftActualAssignableType &&
             !InheritanceUtil.isInheritorOrSelf(expectedClass, aClass, true)) {
           return false;
@@ -106,6 +119,7 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
         }
         if (accessiblePredicate.test(psiClass)) {
           filtered.add(psiClass);
+          return false;
         }
         return true;
       };
@@ -117,16 +131,6 @@ public class ReplaceTypeWithWrongImportFix extends PsiUpdateModCommandAction<Psi
       }
       PsiClass aClass = filtered.getFirst();
       String targetClassType = aClass.getQualifiedName();
-      if (targetClassType == null) {
-        return null;
-      }
-      PsiReferenceParameterList refParameterList = ref.getParameterList();
-      if (refParameterList == null) return null;
-      if (refParameterList.getTypeArgumentCount() != 0 &&
-          refParameterList.getTypeArgumentCount() == refParameterList.getTypeParameterElements().length &&
-          !HighlightFixUtil.isPotentiallyCompatible(aClass, refParameterList)) {
-        return null;
-      }
 
       PsiSubstitutor aClassSubstitutor = inferSubstitutor(refParameterList, aClass);
 
