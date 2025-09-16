@@ -59,7 +59,6 @@ jvm_library(
     "@lib//:mockito",
     "//platform/util/progress",
     "@lib//:kotlinx-coroutines-test",
-    "//licenseCommon:commercial-license",
   ],
   runtime_deps = [":settingsSync_resources"]
 )

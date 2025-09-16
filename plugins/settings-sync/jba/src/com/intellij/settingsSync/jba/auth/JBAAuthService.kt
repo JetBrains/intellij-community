@@ -2,11 +2,6 @@ package com.intellij.settingsSync.jba.auth
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
-import com.intellij.ide.license.LicenseManager
-import com.intellij.ide.license.impl.AuthClientContext
-import com.intellij.ide.license.impl.AuthManagerHolder.getJBAManager
-import com.intellij.ide.license.login.LicenseModelLoginManagerImpl
-import com.intellij.ide.license.login.LoginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.*
@@ -228,7 +223,7 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
     if (ApplicationManagerEx.isInIntegrationTest() || System.getProperty("settings.sync.test.auth") == "true") {
       return DummyJBAccountInfoService
     }
-    var instance = JBAccountInfoService.getInstance()
+    val instance = JBAccountInfoService.getInstance()
     if (instance == null && !AppMode.isRemoteDevHost()) {
       LOG.info("Attempting to load info service from plugin...")
       val descriptorImpl = PluginManagerCore.findPlugin(PluginId.getId("com.intellij.marketplace")) ?: return null
@@ -240,8 +235,7 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
   }
 
   private fun getAllProductCodes(): Set<String> {
-    val ideProductCode = LicenseManager.getInstance().platformLicenseInfo.productDescriptor.productCode
-    return PluginManagerCore.loadedPlugins.mapNotNullTo(mutableSetOf(ideProductCode)) { it.getProductCode() }
+    return PluginManagerCore.loadedPlugins.mapNotNullTo(mutableSetOf()) { it.getProductCode() }
   }
 
   private suspend fun shouldShowCheckLicenses(): Boolean = coroutineScope {
@@ -295,14 +289,24 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
 
         val dialog = ConfirmLogoutDialog(component, shouldShowCheckLicenses)
         if (dialog.showAndGet()) {
-          performLogout()
+          performLogout(component)
         }
       }
     }
 
-  private fun performLogout() {
-    val loginManager: LoginManager = LicenseModelLoginManagerImpl(getJBAManager(), AuthClientContext.OTHER)
-    loginManager.initiateLogout()
+  private fun performLogout(component: Component) {
+    if (RemoteCommunicatorHolder.getExternalProviders().isEmpty())
+      return
+    val accountInfoService = getAccountInfoService()
+    if (accountInfoService != null) {
+      if (AppMode.isRemoteDevHost()) {
+        showManageLicensesDialog(component)
+      }
+      accountInfoService.performLogout()
+    }
+    else {
+      LOG.error("JBA auth service is not available!")
+    }
   }
 
   internal var authRequiredAction: SettingsSyncAuthService.PendingUserAction? = null
