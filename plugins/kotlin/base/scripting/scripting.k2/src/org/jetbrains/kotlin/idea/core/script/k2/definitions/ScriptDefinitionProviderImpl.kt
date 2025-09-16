@@ -12,7 +12,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class ScriptDefinitionProviderImpl(val project: Project) : IdeScriptDefinitionProvider() {
     private val shouldReloadDefinitions = AtomicBoolean(true)
-    @Volatile private var _definitions: List<ScriptDefinition> = emptyList()
+
+    @Volatile
+    private var _definitions: List<ScriptDefinition> = emptyList()
 
     override fun getDefinitions(): List<ScriptDefinition> = _definitions
 
@@ -26,12 +28,11 @@ class ScriptDefinitionProviderImpl(val project: Project) : IdeScriptDefinitionPr
                 }
             }
 
-            val settingsByDefinitionId =
-                ScriptDefinitionPersistentSettings.getInstance(project).getIndexedSettingsPerDefinition()
+            val settingsProvider = ScriptDefinitionPersistentSettings.getInstance(project)
 
             return _definitions
-                .filter { settingsByDefinitionId[it.definitionId]?.setting?.enabled != false }
-                .sortedBy { settingsByDefinitionId[it.definitionId]?.index ?: it.order }
+                .filter { settingsProvider.isScriptDefinitionEnabled(it) }
+                .sortedBy { settingsProvider.getScriptDefinitionOrder(it) }
                 .asSequence()
         }
 
