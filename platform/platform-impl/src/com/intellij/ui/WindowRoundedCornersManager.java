@@ -106,6 +106,6 @@ public final class WindowRoundedCornersManager {
   }
 
   private static @NotNull String defaultCornerRadiusString() {
-    return "full";
+    return StartupUiUtil.isWaylandToolkit() ? "small" : "full";
   }
 }
