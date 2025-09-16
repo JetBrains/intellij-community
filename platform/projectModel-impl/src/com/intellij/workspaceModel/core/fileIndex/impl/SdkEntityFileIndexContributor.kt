@@ -56,15 +56,7 @@ class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, 
 
   override val dependenciesOnOtherEntities: List<DependencyDescription<SdkEntity>>
     get() = listOf(
-      DependencyDescription.OnArbitraryEntity(ProjectSettingsEntity::class.java) {
-        if (it is WorkspaceEntityBase) {
-          val jdk = it.projectSdk?.resolve(it.snapshot)
-          if (jdk != null) return@OnArbitraryEntity sequenceOf(jdk)
-        }
-
-        return@OnArbitraryEntity sequenceOf()
-      },
-      DependencyDescription.OnReference( SdkId::class.java),
+      DependencyDescription.OnReference(SdkId::class.java),
     )
 
   private fun isProjectSdk(entity: SdkEntity, storage: EntityStorage): Boolean {
