@@ -1971,7 +1971,7 @@ object MavenUtil {
       return mapping["production/$moduleName"]?.map(Path::of)
     }
     else {
-      return path?.resolve(moduleName)?.toList()
+      return path?.resolve(moduleName)?.let(::listOf)
     }
   }
 
