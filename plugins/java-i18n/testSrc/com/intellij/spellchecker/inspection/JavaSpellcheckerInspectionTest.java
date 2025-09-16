@@ -3,6 +3,7 @@ package com.intellij.spellchecker.inspection;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.grazie.spellchecker.inspection.SpellcheckerInspectionTestCase;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.DumbModeTestUtils;

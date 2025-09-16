@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker.inspection.quickfixes;
+package com.intellij.grazie.spellchecker.inspection.quickfixes;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.spellchecker.inspection.SpellcheckerInspectionTestCase;
+import com.intellij.grazie.spellchecker.inspection.SpellcheckerInspectionTestCase;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.quickfixes.ChangeTo;
 import com.intellij.util.containers.ContainerUtil;

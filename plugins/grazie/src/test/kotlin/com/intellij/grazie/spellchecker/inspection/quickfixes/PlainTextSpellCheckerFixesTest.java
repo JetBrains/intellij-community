@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker.inspection.quickfixes;
+package com.intellij.grazie.spellchecker.inspection.quickfixes;
 
 import com.intellij.spellchecker.quickfixes.ChangeTo;
 import com.intellij.spellchecker.quickfixes.RenameTo;

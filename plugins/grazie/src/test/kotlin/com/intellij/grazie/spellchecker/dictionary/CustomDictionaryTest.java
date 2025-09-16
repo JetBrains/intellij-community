@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.spellchecker.dictionary;
+package com.intellij.grazie.spellchecker.dictionary;
 
+import com.intellij.grazie.spellchecker.inspection.SpellcheckerInspectionTestCase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -8,7 +9,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.spellchecker.inspection.SpellcheckerInspectionTestCase;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.PathUtil;
@@ -20,7 +20,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 import static com.intellij.spellchecker.SpellCheckerManagerKt.isDic;
 
 public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {

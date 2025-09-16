@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker.inspection;
+package com.intellij.grazie.spellchecker.inspection;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;

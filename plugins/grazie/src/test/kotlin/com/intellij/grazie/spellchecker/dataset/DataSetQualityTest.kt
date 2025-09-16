@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.spellchecker.dataset
+package com.intellij.grazie.spellchecker.dataset
 
+import com.intellij.grazie.spellchecker.dataset.Datasets.WordWithMisspellings
+import com.intellij.grazie.spellchecker.inspection.SpellcheckerInspectionTestCase
 import com.intellij.spellchecker.SpellCheckerManager
-import com.intellij.spellchecker.dataset.Datasets.WordWithMisspellings
-import com.intellij.spellchecker.inspection.SpellcheckerInspectionTestCase
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -27,7 +27,7 @@ class DataSetQualityTest : SpellcheckerInspectionTestCase() {
       assertLessThanOrEqualMaxWordLength("${word.word} exceeds max word length $MAX_WORD_LENGTH", word.word.length)
 
       word.misspellings.forEach { misspelling ->
-        assertTrue(manager.hasProblem(misspelling), "$misspelling should be misspelled, but it is")
+        assertTrue(manager.hasProblem(misspelling), "$misspelling should be misspelled, but it is not")
         assertLessThanOrEqualMaxWordLength("$misspelling exceeds max word length $MAX_WORD_LENGTH", misspelling.length)
       }
     }

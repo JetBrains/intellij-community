@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.spellchecker.dataset
+package com.intellij.grazie.spellchecker.dataset
 
+import com.intellij.grazie.spellchecker.inspection.SpellcheckerInspectionTestCase
 import com.intellij.spellchecker.SpellCheckerManager
-import com.intellij.spellchecker.inspection.SpellcheckerInspectionTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 

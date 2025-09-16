@@ -1,4 +1,4 @@
-package com.intellij.spellchecker.dataset
+package com.intellij.grazie.spellchecker.dataset
 
 object Datasets {
   data class WordWithMisspellings(val word: String, val misspellings: LinkedHashSet<String>)

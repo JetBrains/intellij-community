@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker.inspection;
+package com.intellij.grazie.spellchecker.inspection.quickfixes;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class PropertiesTest extends SpellcheckerInspectionTestCase {
+public class JavaSpellCheckerFixesTest extends AbstractSpellCheckerFixesTest {
   @Override
-  protected String getBasePath() {
-    return getSpellcheckerTestDataPath() + "/inspection/propertiesWithMistakes";
+  protected String getExtension() {
+    return ".java";
   }
 
-  public void testProperties() {
-    doTest("test.properties");
+  public void testSimpleWordChangeTo() {
+    doChangeToTest();
+  }
+
+  public void testInjectionChangeTo() {
+    doChangeToTest();
   }
 }

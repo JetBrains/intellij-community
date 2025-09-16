@@ -6,6 +6,7 @@ import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextChecker
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.download.DownloadableFileService
@@ -24,6 +25,7 @@ class LanguageToolBundleInfoTest : BasePlatformTestCase() {
   override fun setUp() {
     super.setUp()
     GrazieTestBase.maskSaxParserFactory(testRootDisposable)
+    Disposer.register(testRootDisposable) { GrazieConfig.update { GrazieConfig.State() } }
   }
 
   /**
@@ -33,6 +35,8 @@ class LanguageToolBundleInfoTest : BasePlatformTestCase() {
    */
   @Test
   fun `check that all languages are loaded correctly`() {
+    // Do not run this test on build server, since artifact downloading will produce flaky failures
+    Assume.assumeTrue("Must not be run under TeamCity", !IS_UNDER_TEAMCITY)
     Lang.entries.filter { it.ltRemote != null }.map { lang ->
       var jLanguage = lang.jLanguage
       if (jLanguage == null) {
