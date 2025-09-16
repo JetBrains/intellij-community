@@ -1595,7 +1595,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     runSuppressing(
       () -> publisherBackgroundable.before(toSend),
       () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.before(toSend)),
-      () -> runActionOnEdtRegardlessOfCurrentThread(() -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend)),
+      () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend),
       EmptyRunnable.INSTANCE
     );
   }
