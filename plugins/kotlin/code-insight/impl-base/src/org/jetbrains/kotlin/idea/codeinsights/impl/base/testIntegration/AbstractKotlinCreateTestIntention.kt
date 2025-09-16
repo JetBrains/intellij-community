@@ -72,7 +72,7 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
             element is KtClassOrObject -> {
                 if (element.isLocal) return null
                 if (element is KtEnumEntry) return null
-                if (element is KtClass && (element.isAnnotation() || element.isInterface())) return null
+                if (element is KtClass && element.isAnnotation()) return null
 
                 if (!isResolvable(element)) return null
 
