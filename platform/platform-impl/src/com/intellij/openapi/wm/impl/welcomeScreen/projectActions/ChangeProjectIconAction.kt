@@ -9,7 +9,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -35,10 +34,7 @@ import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-/**
- * @author Konstantin Bulenkov
- */
-internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
+private class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
   init {
     isEnabledInModalContext = true  // To allow the action to be run in the Manage Recent Projects modal dialog, see IDEA-302750
   }
@@ -70,33 +66,7 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
     }
 
     if (dialog(IdeBundle.message("dialog.title.change.project.icon"), panel).showAndGet()) {
-      val iconSvg = basePath.resolve("icon.svg")
-      val iconPng = basePath.resolve("icon.png")
-
-      if (ui.pathToIcon != null) {
-        Path.of(ui.pathToIcon!!.path).copy(iconSvg)
-        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(iconSvg)?.let {
-          VfsUtil.markDirtyAndRefresh(/* async = */ false, /* recursive = */ false, /* reloadChildren = */ false, /* ...files = */ it)
-        }
-        Files.deleteIfExists(iconPng)
-        RecentProjectIconHelper.refreshProjectIcon(projectPath)
-        event.project?.let {
-          val customizer = ProjectWindowCustomizerService.getInstance()
-          customizer.dropProjectIconCache(it)
-          customizer.setIconMainColorAsProjectColor(it)
-        }
-      }
-      if (ui.iconRemoved) {
-        FileUtil.delete(ui.pathToIcon())
-        RecentProjectIconHelper.refreshProjectIcon(projectPath)
-        event.project?.let {
-          ProjectWindowCustomizerService.getInstance().dropProjectIconCache(it)
-        }
-      }
-      // Actually, we can try to drop the needed icon,
-      // but it is a very rare action and this whole cache drop will not have any performance impact.
-      // Moreover, VCS changes will drop the cache also.
-      IconDeferrer.getInstance().clearCache()
+      changeProjectIcon(basePath = basePath, ui = ui, projectPath = projectPath, event = event)
     }
   }
 
@@ -116,6 +86,42 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
     event.presentation.isEnabled = getProjectPath(project, selectedItem) != null
     event.presentation.isVisible = selectedItem !is ProviderRecentProjectItem
   }
+}
+
+private fun changeProjectIcon(
+  basePath: Path,
+  ui: ProjectIconUI,
+  projectPath: String,
+  event: AnActionEvent,
+) {
+  val pathToIcon = ui.pathToIcon?.toNioPath()
+  if (pathToIcon != null) {
+    val iconSvg = basePath.resolve("icon.svg")
+    pathToIcon.copy(iconSvg)
+    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(iconSvg)?.let {
+      VfsUtil.markDirtyAndRefresh(/* async = */ false, /* recursive = */ false, /* reloadChildren = */ false, /* ...files = */ it)
+    }
+
+    Files.deleteIfExists(basePath.resolve("icon.png"))
+    RecentProjectIconHelper.refreshProjectIcon(projectPath)
+    event.project?.let {
+      val customizer = ProjectWindowCustomizerService.getInstance()
+      customizer.dropProjectIconCache(it)
+      customizer.setIconMainColorAsProjectColor(it)
+    }
+  }
+
+  if (ui.iconRemoved) {
+    Files.deleteIfExists(ui.pathToIcon())
+    RecentProjectIconHelper.refreshProjectIcon(projectPath)
+    event.project?.let {
+      ProjectWindowCustomizerService.getInstance().dropProjectIconCache(it)
+    }
+  }
+  // Actually, we can try to drop the needed icon,
+  // but it is a very rare action and this whole cache drop will not have any performance impact.
+  // Moreover, VCS changes will drop the cache also.
+  IconDeferrer.getInstance().clearCache()
 }
 
 private class ChangeProjectIcon(private val ui: ProjectIconUI) : AnAction() {
