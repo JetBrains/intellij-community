@@ -1175,11 +1175,11 @@ public final class PluginManagerConfigurable
                 .filter(descriptor -> !myPluginModelFacade.getModel().isDisabled(descriptor.getPluginId()))
                 .count();
               downloaded.titleWithCount(Math.toIntExact(enabledNonBundledCount));
-              myInstalledPanel.addGroup(downloaded);
+              if (downloaded.ui == null) {
+                myInstalledPanel.addGroup(downloaded);
+              }
               myPluginModelFacade.getModel().addEnabledGroup(downloaded);
             }
-
-            myPluginModelFacade.getModel().setDownloadedGroup(myInstalledPanel, downloaded, installing);
 
             String defaultCategory = IdeBundle.message("plugins.configurable.other.bundled");
             visibleBundledPlugins

@@ -75,7 +75,7 @@ internal class DetectedPluginsPanel(project: Project?) : OrderPanel<PluginDownlo
       }
     })
     entryTable.getSelectionModel().addListSelectionListener {
-      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         val selectedRow = entryTable.selectedRow
         if (selectedRow != -1) {
           val plugin = getValueAt(selectedRow)!!.descriptor
