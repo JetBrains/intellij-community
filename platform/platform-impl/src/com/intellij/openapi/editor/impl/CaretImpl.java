@@ -1286,7 +1286,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
   public void selectWordAtCaret(final boolean honorCamelWordsSettings) {
     ThreadingAssertions.assertEventDispatchThread();
 
-    EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler("EditorSelectWordAtCurrentCaret");
+    EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CURRENT_CARET);
     DataContext context = AnActionEvent.getInjectedDataContext(EditorActionHandler.caretDataContext(myEditor.getDataContext(), this));
     DataContext customizedContext = CustomizedDataContext.withSnapshot(
       context,

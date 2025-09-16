@@ -250,6 +250,7 @@ com.intellij.openapi.actionSystem.IdeActions
 - sf:ACTION_EDITOR_REFORMAT:java.lang.String
 - sf:ACTION_EDITOR_REVERSE_LINES:java.lang.String
 - sf:ACTION_EDITOR_SELECT_WORD_AT_CARET:java.lang.String
+- sf:ACTION_EDITOR_SELECT_WORD_AT_CURRENT_CARET:java.lang.String
 - sf:ACTION_EDITOR_SHOW_PARAMETER_INFO:java.lang.String
 - sf:ACTION_EDITOR_SORT_LINES:java.lang.String
 - sf:ACTION_EDITOR_SPLIT:java.lang.String
