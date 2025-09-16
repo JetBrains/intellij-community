@@ -4,9 +4,10 @@ package com.intellij.codeInsight.completion.command
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
+import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService
 import com.intellij.codeInsight.editorActions.NonWriteAccessTypedHandler
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.injected.editor.DocumentWindow
+import com.intellij.idea.AppMode
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
@@ -21,12 +22,12 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.LanguageTextField
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,20 +43,18 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 internal class CommandCompletionNonWriteAccessTypedHandler : NonWriteAccessTypedHandler {
   override fun isApplicable(editor: Editor, charTyped: Char, dataContext: DataContext): Boolean {
-    if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return false
-    if (!Registry.`is`("ide.completion.command.support.read.only.files")) return false
-
+    if (!CommandCompletionSettingsService.getInstance().commandCompletionEnabled()) return false
+    if (!CommandCompletionSettingsService.getInstance().readOnlyEnabled()) return false
+    if (AppMode.isRemoteDevHost()) return false
+    if (PlatformUtils.isJetBrainsClient()) return false
     val project = editor.project ?: return false
     val commandCompletionService = project.getService(CommandCompletionService::class.java)
     if (commandCompletionService == null) return false
-    var targetFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) ?: return false
-    var offset = editor.caretModel.offset
+    val targetFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) ?: return false
+    val offset = editor.caretModel.offset
     val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
     val injectedElement = injectedLanguageManager.findInjectedElementAt(targetFile, offset)
-    if (injectedElement != null) {
-      targetFile = injectedElement.containingFile
-      offset = (targetFile.fileDocument as? DocumentWindow)?.hostToInjected(offset) ?: return false
-    }
+    if (injectedElement != null) return false
     val dumbService = DumbService.getInstance(project)
     val commandCompletionFactory = commandCompletionService.getFactory(targetFile.language)
     if (commandCompletionFactory == null) return false
@@ -66,8 +65,10 @@ internal class CommandCompletionNonWriteAccessTypedHandler : NonWriteAccessTyped
   }
 
   override fun handle(editor: Editor, charTyped: Char, dataContext: DataContext) {
-    if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
-    if (!Registry.`is`("ide.completion.command.support.read.only.files")) return
+    if (!CommandCompletionSettingsService.getInstance().commandCompletionEnabled()) return
+    if (!CommandCompletionSettingsService.getInstance().readOnlyEnabled()) return
+    if (AppMode.isRemoteDevHost()) return
+    if (PlatformUtils.isJetBrainsClient()) return
     val accessCommandCompletionService = editor.project?.getService(NonWriteAccessCommandCompletionService::class.java)
     if (accessCommandCompletionService == null) return
     accessCommandCompletionService.insertNewEditor(editor)

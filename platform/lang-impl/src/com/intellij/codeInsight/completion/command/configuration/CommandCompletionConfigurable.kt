@@ -52,6 +52,16 @@ class CommandCompletionConfigurableProvider : ConfigurableProvider() {
             }
           }
         }
+        indent {
+          row {
+            checkBox(CodeInsightBundle.message("options.command.completion.enabled.read.only.files"))
+              .bindSelected({ settings.state.myReadOnlyEnabled },
+                            { r -> settings.state.myReadOnlyEnabled = r })
+              .gap(RightGap.SMALL)
+              .enabledIf(completionEnabledCheckBox.selected)
+            icon(AllIcons.General.Beta)
+          }
+        }
       }
     }
   }

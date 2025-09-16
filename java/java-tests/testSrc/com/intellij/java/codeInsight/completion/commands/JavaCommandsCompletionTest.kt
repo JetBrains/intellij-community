@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.completion.commands
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.completion.command.CommandCompletionDocumentationProvider
 import com.intellij.codeInsight.completion.command.CommandCompletionLookupElement
+import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -1003,7 +1004,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
 
   fun testBinaryNotAllowedCalledCompletion() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-    Registry.get("ide.completion.command.support.read.only.files").setValue(true, getTestRootDisposable())
+    CommandCompletionSettingsService.getInstance().readOnlyEnabled(true)
     val psiClass = JavaPsiFacade.getInstance(project).findClass(JAVA_LANG_CLASS, GlobalSearchScope.allScope(project))
     val file = psiClass?.containingFile?.virtualFile
     assertNotNull(file)

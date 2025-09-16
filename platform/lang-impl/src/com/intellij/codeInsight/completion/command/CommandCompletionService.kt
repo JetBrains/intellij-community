@@ -279,6 +279,7 @@ private class CommandCompletionHighlightingListener(
   }
 
   private fun updatePromptHighlighting(item: CommandCompletionLookupElement) {
+    if (nonWrittenFiles) return
     val installed = ConcurrencyUtil.computeIfAbsent(lookup, INSTALLED_PROMPT_KEY) { AtomicBoolean(false) }
     val startOffset = lookup.lookupOriginalStart - findActualIndex(item.suffix, topLevelEditor.document.immutableCharSequence,
                                                                    lookup.lookupOriginalStart)
@@ -316,7 +317,7 @@ private class CommandCompletionHighlightingListener(
                                            lookup.lookupOriginalStart)
     val highlightInfo = element.highlighting ?: return
     val rangeHighlighters = mutableListOf<RangeHighlighter>()
-    if (highlightInfo.range.startOffset <= min(highlightInfo.range.endOffset, startOffset)) {
+    if (nonWrittenFiles || highlightInfo.range.startOffset <= min(highlightInfo.range.endOffset, startOffset)) {
       highlightManager.addRangeHighlight(topLevelEditor, highlightInfo.range.startOffset, highlightInfo.range.endOffset, EditorColors.SEARCH_RESULT_ATTRIBUTES, false, rangeHighlighters)
       highlightManager.addRangeHighlight(topLevelEditor, highlightInfo.range.startOffset, highlightInfo.range.endOffset, highlightInfo.attributesKey, false, rangeHighlighters)
     }
