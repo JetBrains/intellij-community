@@ -35,6 +35,9 @@ interface ProjectStoreDescriptor {
   // where we do store project files (misc.xml and so on)
   val dotIdea: Path?
 
+  val presentableUrl: Path
+    get() = projectIdentityFile
+
   fun getProjectName(): String
 
   suspend fun saveProjectName(project: Project)

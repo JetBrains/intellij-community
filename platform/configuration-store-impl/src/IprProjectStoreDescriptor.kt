@@ -20,6 +20,9 @@ internal class IprProjectStoreDescriptor(
   override val dotIdea: Path?
     get() = null
 
+  override val presentableUrl: Path
+    get() = file
+
   override fun getProjectName(): String {
     return file.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
   }
