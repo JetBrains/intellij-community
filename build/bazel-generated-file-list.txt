@@ -120,6 +120,7 @@ android/gradle-declarative-lang-flags
 android/gradle-declarative-lang-ide
 android/gradle-declarative-lang-sync
 android/gradle-dsl
+android/gradle-dsl-android
 android/gradle-dsl-declarative
 android/gradle-dsl-flags
 android/gradle-dsl-groovy
