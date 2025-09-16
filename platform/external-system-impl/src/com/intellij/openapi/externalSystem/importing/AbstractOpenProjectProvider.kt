@@ -52,9 +52,6 @@ abstract class AbstractOpenProjectProvider {
     ExternalSystemUnlinkedProjectAware.unlinkOtherLinkedProjects(project, externalProjectPath, systemId)
   }
 
-  open suspend fun unlinkProject(project: Project, externalProjectPath: String) {
-    throw UnsupportedOperationException()
-  }
 
   protected open suspend fun linkProject(projectFile: VirtualFile, project: Project) {
     linkToExistingProjectAsync(projectFile, project)
@@ -95,7 +92,9 @@ abstract class AbstractOpenProjectProvider {
   }
 
   @Deprecated("use async method instead", ReplaceWith("linkToExistingProjectAsync"), level = DeprecationLevel.ERROR)
-  fun linkToExistingProject(projectFilePath: String, project: Project):Unit = Unit
+  fun linkToExistingProject(projectFilePath: String, project: Project) {
+    throw NotImplementedError("Do not use")
+  }
 
   suspend fun linkToExistingProjectAsync(projectFilePath: String, project: Project) {
     linkToExistingProjectAsync(getProjectFile(projectFilePath), project)

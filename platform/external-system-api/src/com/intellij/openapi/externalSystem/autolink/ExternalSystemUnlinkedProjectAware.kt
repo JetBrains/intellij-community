@@ -24,14 +24,14 @@ interface ExternalSystemUnlinkedProjectAware {
 
   fun isLinkedProject(project: Project, externalProjectPath: String): Boolean
 
-  @Deprecated("use async method instead")
+  @Deprecated("use async method instead", level = DeprecationLevel.ERROR)
   fun linkAndLoadProject(project: Project, externalProjectPath: String) {
     throw UnsupportedOperationException()
   }
 
   suspend fun linkAndLoadProjectAsync(project: Project, externalProjectPath: String) {
     withContext(Dispatchers.EDT) {
-      @Suppress("DEPRECATION")
+      @Suppress("DEPRECATION_ERROR")
       linkAndLoadProject(project, externalProjectPath)
     }
   }

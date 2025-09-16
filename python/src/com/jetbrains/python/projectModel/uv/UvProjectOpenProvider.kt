@@ -29,7 +29,7 @@ internal class UvProjectOpenProvider() : AbstractOpenProjectProvider() {
     UvProjectModelService.syncProjectModelRoot(project, projectRootPath)
   }
 
-  override suspend fun unlinkProject(project: Project, externalProjectPath: String) {
+  suspend fun unlinkProject(project: Project, externalProjectPath: String) {
     UvProjectModelService.forgetProjectModelRoot(project, Path.of(externalProjectPath))
   }
 

@@ -33,6 +33,7 @@ class AntUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
       .any { FileUtil.pathsEqual(PathUtil.getParentPath(it), externalProjectPath) }
   }
 
+  @Deprecated("use async method instead", level = DeprecationLevel.ERROR)
   override fun linkAndLoadProject(project: Project, externalProjectPath: String) {
     val localFileSystem = LocalFileSystem.getInstance()
     val externalProjectDir = localFileSystem.findFileByPath(externalProjectPath)

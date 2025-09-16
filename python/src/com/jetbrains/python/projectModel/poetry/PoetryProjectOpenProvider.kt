@@ -29,7 +29,7 @@ internal class PoetryProjectOpenProvider() : AbstractOpenProjectProvider() {
     PoetryProjectModelService.syncProjectModelRoot(project, projectRootPath)
   }
 
-  override suspend fun unlinkProject(project: Project, externalProjectPath: String) {
+  suspend fun unlinkProject(project: Project, externalProjectPath: String) {
     PoetryProjectModelService.forgetProjectModelRoot(project, Path.of(externalProjectPath))
   }
   

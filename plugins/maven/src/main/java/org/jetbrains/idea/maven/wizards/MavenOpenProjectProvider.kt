@@ -46,7 +46,7 @@ class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
     doLinkToExistingProjectAsync(projectFile, project, syncProject)
   }
 
-  override suspend fun unlinkProject(project: Project, externalProjectPath: String) {
+  suspend fun unlinkProject(project: Project, externalProjectPath: String) {
     val projectsManager = MavenProjectsManager.getInstance(project)
     val folder = VirtualFileManager.getInstance().findFileByNioPath(Path.of(externalProjectPath)) ?: return
     val projectPomFile = projectsManager.projects.firstOrNull { it.file.parent == folder }?.file ?: return
