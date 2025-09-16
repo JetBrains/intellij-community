@@ -53,5 +53,6 @@ class PythonTestRunner : TestRunner {
   }
 
   private fun normalizeTestName(testName: String): String =
-    testName.replace("::", ":None:")
+    if (testName.indexOf("::") == testName.lastIndexOf("::")) testName.replace("::", ":None:")
+    else testName.replace("::", ":")
 }
