@@ -10,8 +10,13 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiDocFragmentRef extends PsiDocTagValue {
 
   /**
-   * Returns the class that contains the fragment reference.
+   * Returns the class that contains the fragment reference, e.g. {@code Foo} in {@code Foo##my-id}.
    */
   @Nullable PsiClass getScope();
+
+  /**
+   * Returns the name of the fragment reference, e.g. {@code my-id} in {@code Foo##my-id}.
+   */
+  @Nullable PsiDocFragmentName getFragmentName();
 
 }
