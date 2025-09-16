@@ -5,7 +5,7 @@ import com.intellij.ui.icons.ReplaceableIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * An icon wrapping and painting another icon.

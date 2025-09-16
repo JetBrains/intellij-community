@@ -37,6 +37,7 @@ jvm_library(
     "@lib//:hash4j",
     "//platform/workspace/storage",
     "//platform/backend/observation",
+    "//platform/jewel/icons",
   ],
   runtime_deps = [":ide-core-impl_resources"]
 )

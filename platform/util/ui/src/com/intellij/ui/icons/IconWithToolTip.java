@@ -3,7 +3,7 @@ package com.intellij.ui.icons;
 
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
-
+import javax.swing.Icon;
 import javax.swing.*;
 
 /**

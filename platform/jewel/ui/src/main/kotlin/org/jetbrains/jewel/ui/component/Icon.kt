@@ -6,6 +6,7 @@ package org.jetbrains.jewel.ui.component
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -27,13 +28,17 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.collect
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.decodeToImageBitmap
 import org.jetbrains.compose.resources.decodeToImageVector
 import org.jetbrains.compose.resources.decodeToSvgPainter
+import org.jetbrains.icons.api.DynamicIcon
+import org.jetbrains.icons.api.Icon
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.icon.LocalIconPainterProvider
 import org.jetbrains.jewel.ui.icon.newUiChecker
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
@@ -81,6 +86,18 @@ public fun Icon(
  * @param hint [PainterHint] to be passed to the painter.
  */
 @Suppress("ComposableParamOrder") // To fix in JEWEL-929
+@Composable
+public fun Icon(
+    icon: Icon,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    tint: Color = Color.Unspecified,
+    vararg hints: PainterHint,
+) {
+    val painter = LocalIconPainterProvider.current.getIconPainter(icon)
+    Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, tint = tint)
+}
+
 @Composable
 public fun Icon(
     key: IconKey,
@@ -298,8 +315,8 @@ private object ResourceLoader
 
 private fun readResourceBytes(resourcePath: String) =
     checkNotNull(ResourceLoader.javaClass.classLoader.getResourceAsStream(resourcePath)) {
-            "Could not load resource $resourcePath: it does not exist or can't be read."
-        }
+        "Could not load resource $resourcePath: it does not exist or can't be read."
+    }
         .readAllBytes()
 
 private fun Modifier.defaultSizeFor(painter: Painter) =

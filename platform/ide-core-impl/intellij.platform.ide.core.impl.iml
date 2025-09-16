@@ -32,5 +32,6 @@
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.icons" />
   </component>
 </module>

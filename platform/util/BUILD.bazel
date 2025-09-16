@@ -38,6 +38,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "//platform/util/coroutines",
     "//platform/util/multiplatform",
+    "//platform/jewel/icons",
     ":platform_util_troveCompileOnly_provided",
   ],
   exports = [
@@ -45,6 +46,7 @@ jvm_library(
     "//platform/util-rt",
     "//platform/util/base",
     "//platform/util/multiplatform",
+    "//platform/jewel/icons",
   ],
   runtime_deps = [
     ":util_resources",
