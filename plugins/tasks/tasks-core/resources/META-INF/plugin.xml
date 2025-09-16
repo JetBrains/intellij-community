@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
   <id>com.intellij.tasks</id>
   <name>Task Management</name>
   <category>Other Tools</category>
