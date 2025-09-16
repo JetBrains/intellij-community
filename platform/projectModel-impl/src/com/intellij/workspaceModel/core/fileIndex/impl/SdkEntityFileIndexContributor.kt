@@ -4,15 +4,14 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.workspaceModel.ide.WsmSingletonEntityUtils
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.core.fileIndex.*
+import com.intellij.workspaceModel.ide.WsmSingletonEntityUtils
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.customName
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 
@@ -33,7 +32,9 @@ class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, 
       sourceRootFileSetData = SdkSourceRootFileSetData(entity.symbolicId)
     }
     else if (useWfiForPartialScanning) {
-      if (!storage.hasReferrers(entity.symbolicId)) {
+      val enforced = WorkspaceFileIndexContributorEnforcer.EP_NAME
+        .extensionsIfPointIsRegistered.any { it.shouldContribute(entity, storage) }
+      if (!enforced && !storage.hasReferrers(entity.symbolicId)) {
         return
       }
       compiledRootsData = SdkRootFileSetData(entity.symbolicId)
