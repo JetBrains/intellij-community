@@ -96,7 +96,7 @@ public final class AbstractMethodOverridesAbstractMethodInspection extends BaseI
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new AbstractMethodOverridesAbstractMethodVisitor();
   }
 

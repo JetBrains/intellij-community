@@ -38,7 +38,7 @@ public final class NonSynchronizedMethodOverridesSynchronizedMethodInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NonSynchronizedMethodOverridesSynchronizedMethodVisitor();
   }
 }

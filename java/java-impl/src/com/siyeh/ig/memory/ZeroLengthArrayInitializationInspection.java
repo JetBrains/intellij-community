@@ -48,7 +48,7 @@ public final class ZeroLengthArrayInitializationInspection extends BaseInspectio
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ZeroLengthArrayInitializationVisitor();
   }
 

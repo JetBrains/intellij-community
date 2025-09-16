@@ -439,7 +439,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new TailRecursionVisitor();
   }
 

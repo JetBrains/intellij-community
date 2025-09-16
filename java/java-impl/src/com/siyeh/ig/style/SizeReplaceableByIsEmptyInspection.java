@@ -108,7 +108,7 @@ public final class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SizeReplaceableByIsEmptyVisitor();
   }
 

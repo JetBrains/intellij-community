@@ -113,7 +113,7 @@ public final class DanglingJavadocInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new DanglingJavadocVisitor();
   }
 

@@ -113,7 +113,7 @@ public final class ReflectionForUnavailableAnnotationInspection extends BaseInsp
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ReflectionForUnavailableAnnotationVisitor();
   }
 

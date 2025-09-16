@@ -44,7 +44,7 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new MarkdownDocumentationCommentsMigrationVisitor();
   }
 

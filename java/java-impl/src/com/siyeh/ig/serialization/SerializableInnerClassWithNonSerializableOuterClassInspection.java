@@ -28,7 +28,7 @@ public final class SerializableInnerClassWithNonSerializableOuterClassInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SerializableInnerClassWithNonSerializableOuterClassVisitor(this);
   }
 }

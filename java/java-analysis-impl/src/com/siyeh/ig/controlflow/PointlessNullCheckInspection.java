@@ -34,7 +34,7 @@ public final class PointlessNullCheckInspection extends BaseInspection implement
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new PointlessNullCheckVisitor();
   }
 

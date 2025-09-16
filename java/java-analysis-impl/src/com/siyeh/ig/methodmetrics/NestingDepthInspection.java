@@ -45,7 +45,7 @@ public final class NestingDepthInspection extends MethodMetricInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NestingDepthMethodVisitor();
   }
 

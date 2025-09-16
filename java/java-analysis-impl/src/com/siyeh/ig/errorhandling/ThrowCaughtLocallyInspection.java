@@ -48,7 +48,7 @@ public final class ThrowCaughtLocallyInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ThrowCaughtLocallyVisitor();
   }
 

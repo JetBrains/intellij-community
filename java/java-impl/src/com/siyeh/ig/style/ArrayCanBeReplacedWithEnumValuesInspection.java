@@ -32,7 +32,7 @@ public final class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspec
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ArrayCreationExpressionVisitor();
   }
 

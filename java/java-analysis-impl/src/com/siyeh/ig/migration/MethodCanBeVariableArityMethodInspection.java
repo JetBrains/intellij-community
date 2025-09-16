@@ -67,7 +67,7 @@ public final class MethodCanBeVariableArityMethodInspection extends BaseInspecti
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new MethodCanBeVariableArityMethodVisitor();
   }
 

@@ -32,7 +32,7 @@ public final class NonSerializableObjectPassedToObjectStreamInspection extends B
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NonSerializableObjectPassedToObjectStreamVisitor();
   }
 

@@ -33,7 +33,7 @@ public final class ArrayLengthInLoopConditionInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ArrayLengthInLoopConditionVisitor();
   }
 

@@ -59,7 +59,7 @@ public final class MultipleTopLevelClassesInFileInspection extends BaseInspectio
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new MultipleTopLevelClassesInFileVisitor();
   }
 

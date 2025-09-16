@@ -65,7 +65,7 @@ public final class EmptyInitializerInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new EmptyInitializerVisitor();
   }
 

@@ -56,7 +56,7 @@ public final class TypeParameterHidesVisibleTypeInspection extends BaseInspectio
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new TypeParameterHidesVisibleTypeVisitor();
   }
 

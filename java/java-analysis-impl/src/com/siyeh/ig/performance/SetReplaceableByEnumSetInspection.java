@@ -56,7 +56,7 @@ public final class SetReplaceableByEnumSetInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SetReplaceableByEnumSetVisitor();
   }
 

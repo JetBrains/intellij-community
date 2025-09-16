@@ -42,7 +42,7 @@ public final class LimitedScopeInnerClassInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new LimitedScopeInnerClassVisitor();
   }
 

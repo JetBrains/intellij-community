@@ -131,7 +131,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     });
   }
 
-  public abstract BaseInspectionVisitor buildVisitor();
+  public abstract @NotNull BaseInspectionVisitor buildVisitor();
 
   @Override
   public final @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

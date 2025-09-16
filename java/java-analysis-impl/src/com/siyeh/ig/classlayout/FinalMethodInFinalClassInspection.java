@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public final class FinalMethodInFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new FinalMethodInFinalClassVisitor();
   }
 

@@ -642,7 +642,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new IfCanBeSwitchVisitor();
   }
 

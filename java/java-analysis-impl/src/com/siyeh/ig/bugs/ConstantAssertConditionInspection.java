@@ -27,7 +27,7 @@ public final class ConstantAssertConditionInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ConstantAssertConditionVisitor();
   }
 

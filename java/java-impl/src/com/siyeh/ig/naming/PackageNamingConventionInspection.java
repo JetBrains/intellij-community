@@ -147,7 +147,7 @@ public final class PackageNamingConventionInspection extends PackageGlobalInspec
     }
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
+    public @NotNull BaseInspectionVisitor buildVisitor() {
       return new BaseInspectionVisitor() {
 
         @Override

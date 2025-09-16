@@ -31,7 +31,7 @@ public final class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInsp
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new JUnit3StyleTestMethodInJUnit4ClassInspectionVisitor();
   }
 

@@ -40,7 +40,7 @@ public final class StringBufferMustHaveInitialCapacityInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new StringBufferInitialCapacityVisitor();
   }
 
