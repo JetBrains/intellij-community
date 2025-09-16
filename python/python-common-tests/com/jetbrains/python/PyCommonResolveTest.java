@@ -1429,6 +1429,14 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     );
   }
 
+  public void testTopLevelNewStyleTypeAliasForwardReference() {
+    assertResolvesTo(PyClass.class, "MyClass");
+  }
+
+  public void testClassLevelNewStyleTypeAliasForwardReference() {
+    assertResolvesTo(PyClass.class, "MyClass");
+  }
+
   // PY-19890
   public void testUnboundVariableOnClassLevelDeclaredBelowAsTarget() {
     final PyTargetExpression foo = assertResolvesTo(PyTargetExpression.class, "foo");
