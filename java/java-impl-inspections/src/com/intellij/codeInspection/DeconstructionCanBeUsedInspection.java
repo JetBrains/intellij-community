@@ -66,16 +66,13 @@ public final class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLoc
         continue;
       }
       PsiRecordComponent component = getComponent(reference);
-      if (component == null) continue;
+      if (component == null) return Collections.emptyList();
       if (!used.add(component) && !shouldFindAll) continue;
       PsiElementFactory factory = PsiElementFactory.getInstance(reference.getProject());
       PsiExpression call = factory.createExpressionFromText(reference.getText() + "." + component.getName() + "()", reference);
       if (SideEffectChecker.mayHaveSideEffects(call)) return Collections.emptyList();
       int index = ArrayUtil.indexOf(components, component);
       result.get(index).add((PsiReferenceExpression)PsiUtil.skipParenthesizedExprUp(reference.getParent()));
-      if (!shouldFindAll && used.size() == components.length) {
-        return result;
-      }
     }
     return used.size() == components.length ? result : Collections.emptyList();
   }
