@@ -12821,6 +12821,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("constantConditionInSelectorExpression.kt")
+        public void testConstantConditionInSelectorExpression() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantConditionInSelectorExpression.kt");
+        }
+
         @TestMetadata("constantFalse.kt")
         public void testConstantFalse() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantFalse.kt");
