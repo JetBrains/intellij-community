@@ -143,7 +143,7 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
    * invoking {@link #extend(CompletionType, ElementPattern, CompletionProvider)} from your contributor constructor,
    * matches the desired completion type and {@link ElementPattern} with actual ones, and, depending on it, invokes those
    * completion providers.<p>
-   *
+   * <p>
    * If you want to implement this functionality directly by overriding this method, the following is for you.
    * Always check that parameters match your situation, and that completion type ({@link CompletionParameters#getCompletionType()}
    * is of your favourite kind. This method is run inside a read action. If you do any long activity non-related to PSI in it, please
@@ -180,8 +180,8 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
   }
 
   /**
-   * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    * @return text to be shown at the bottom of the lookup list
+   * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    */
   @Deprecated(forRemoval = true)
   public @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String advertise(@NotNull CompletionParameters parameters) {
@@ -217,7 +217,7 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
    * (see {@link CompletionInitializationContext#setReplacementOffset(int)})
    * if it takes too much time to spend it in {@link #beforeCompletion(CompletionInitializationContext)},
    * e.g., doing {@link com.intellij.psi.PsiFile#findReferenceAt(int)}
-   *
+   * <p>
    * Guaranteed to be invoked before any lookup element is selected
    *
    * @param context context
