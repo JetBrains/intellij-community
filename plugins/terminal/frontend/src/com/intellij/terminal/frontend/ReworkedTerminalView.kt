@@ -47,7 +47,6 @@ import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.ui.*
-import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
 import org.jetbrains.plugins.terminal.fus.FrontendLatencyService
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
@@ -367,7 +366,6 @@ internal class ReworkedTerminalView(
     val editor = createEditor(document, settings, parentDisposable)
     editor.putUserData(TerminalDataContextUtils.IS_OUTPUT_MODEL_EDITOR_KEY, true)
     editor.settings.isUseSoftWraps = true
-    editor.useTerminalDefaultBackground(parentDisposable = this)
 
     BackgroundHighlightingUtil.disableBackgroundHighlightingForeverIn(editor)
     TextEditorProvider.putTextEditor(editor, TerminalOutputTextEditor(editor))
@@ -382,7 +380,6 @@ internal class ReworkedTerminalView(
     val document = createDocument(withLanguage = false)
     val editor = createEditor(document, settings, parentDisposable)
     editor.putUserData(TerminalDataContextUtils.IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY, true)
-    editor.useTerminalDefaultBackground(parentDisposable = this)
     editor.scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_NEVER
     editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
 

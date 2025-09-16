@@ -308,7 +308,7 @@ class BlockTerminalView(
 
   private inner class BlockTerminalPanel : JPanel(), UiDataProvider, TerminalPanelMarker {
     init {
-      background = TerminalUi.defaultBackground(outputView.controller.outputModel.editor)
+      background = TerminalUi.defaultBackgroundLazy()
     }
 
     override fun uiDataSnapshot(sink: DataSink) {

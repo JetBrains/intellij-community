@@ -16,7 +16,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.TerminalFocusModel
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
-import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.ui.stickScrollBarToBottom
 import java.awt.Component
@@ -69,7 +68,6 @@ class TerminalOutputView(
     val document = DocumentImpl("", true)
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = true)
     editor.settings.isUseSoftWraps = true
-    editor.useTerminalDefaultBackground(this)
     stickScrollBarToBottom(editor.scrollPane.verticalScrollBar)
     return editor
   }
