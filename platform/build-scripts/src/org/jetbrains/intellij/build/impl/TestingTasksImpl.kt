@@ -309,7 +309,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         mainModule = runConfigurationProperties.moduleName,
         testGroups = null,
         testPatterns = runConfigurationProperties.testClassPatterns.joinToString(separator = ";"),
-        jvmArgs = removeStandardJvmOptions(runConfigurationProperties.vmParameters) + additionalJvmOptions,
+        jvmArgs = removeStandardJvmOptions(runConfigurationProperties.vmParameters) + additionalJvmOptions
+                  + "-Dintellij.build.run.configuration.name=${runConfigurationProperties.name}",
         systemProperties = systemProperties,
         envVariables = runConfigurationProperties.envVariables,
         remoteDebugging = false,
