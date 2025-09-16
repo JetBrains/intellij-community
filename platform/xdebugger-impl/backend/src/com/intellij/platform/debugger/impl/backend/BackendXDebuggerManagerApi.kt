@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
+import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.ide.rpc.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.impl.EditorId
@@ -69,7 +70,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     val cs = currentSession.coroutineScope
     return XDebugSessionDto(
       currentSession.id,
-      currentSession.runContentDescriptor.id,
+      currentSession.runContentDescriptor.id as RunContentDescriptorIdImpl,
       debugProcess.editorsProvider.toRpc(),
       initialSessionState,
       currentSession.suspendData(),
