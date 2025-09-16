@@ -6363,10 +6363,10 @@ http_file(
 )
 
 http_file(
-  name = "foundation-desktop-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/foundation/foundation-desktop/1.9.0-beta03/foundation-desktop-1.9.0-beta03.jar",
-  sha256 = "f955649e3779954edc8cc9e0d54a0f38bbd956bd944f7b1ade5cd60c92fd155c",
-  downloaded_file_path = "foundation-desktop-1.9.0-beta03.jar"
+  name = "foundation-desktop-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/foundation/foundation-desktop/1.9.0/foundation-desktop-1.9.0.jar",
+  sha256 = "0b3a1b5f085be6c0ce95354a4739b35e9ea82e00f790497c1f53c72ea51342f9",
+  downloaded_file_path = "foundation-desktop-1.9.0.jar"
 )
 
 http_file(
@@ -6384,38 +6384,38 @@ http_file(
 )
 
 http_file(
-  name = "animation-desktop-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/animation/animation-desktop/1.9.0-beta03/animation-desktop-1.9.0-beta03.jar",
+  name = "animation-desktop-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/animation/animation-desktop/1.9.0/animation-desktop-1.9.0.jar",
   sha256 = "f8b90b591d1f8c2c8b547cdddaea370a9989b0b2c71b42038b67fdb28f120b7d",
-  downloaded_file_path = "animation-desktop-1.9.0-beta03.jar"
+  downloaded_file_path = "animation-desktop-1.9.0.jar"
 )
 
 http_file(
-  name = "animation-core-desktop-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/animation/animation-core-desktop/1.9.0-beta03/animation-core-desktop-1.9.0-beta03.jar",
+  name = "animation-core-desktop-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/animation/animation-core-desktop/1.9.0/animation-core-desktop-1.9.0.jar",
   sha256 = "76cf4d09b5312f9a9e46e80a270c76a7157a93819493feb7076f9c8c98610605",
-  downloaded_file_path = "animation-core-desktop-1.9.0-beta03.jar"
+  downloaded_file_path = "animation-core-desktop-1.9.0.jar"
 )
 
 http_file(
-  name = "ui-geometry-desktop-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-geometry-desktop/1.9.0-beta03/ui-geometry-desktop-1.9.0-beta03.jar",
+  name = "ui-geometry-desktop-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-geometry-desktop/1.9.0/ui-geometry-desktop-1.9.0.jar",
   sha256 = "dea0f67524e4349637c985e0fa2204ff354922f38c65cc8f810649d0d8e9faea",
-  downloaded_file_path = "ui-geometry-desktop-1.9.0-beta03.jar"
+  downloaded_file_path = "ui-geometry-desktop-1.9.0.jar"
 )
 
 http_file(
-  name = "foundation-layout-desktop-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/foundation/foundation-layout-desktop/1.9.0-beta03/foundation-layout-desktop-1.9.0-beta03.jar",
+  name = "foundation-layout-desktop-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/foundation/foundation-layout-desktop/1.9.0/foundation-layout-desktop-1.9.0.jar",
   sha256 = "5950ce1e10259ae2198a46e1681d959f16bcd64d8b5d0289e17c50863af3f8ed",
-  downloaded_file_path = "foundation-layout-desktop-1.9.0-beta03.jar"
+  downloaded_file_path = "foundation-layout-desktop-1.9.0.jar"
 )
 
 http_file(
-  name = "ui-desktop-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-desktop/1.9.0-beta03/ui-desktop-1.9.0-beta03.jar",
-  sha256 = "03f48e5efd49b7d9e5a0573193b1927eeaa4c4e1e2a309b5758118184780dfa1",
-  downloaded_file_path = "ui-desktop-1.9.0-beta03.jar"
+  name = "ui-desktop-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-desktop/1.9.0/ui-desktop-1.9.0.jar",
+  sha256 = "7397253993e8d512c613b77239e20e5052da8218f6b0b64ccde2c37b14b540dc",
+  downloaded_file_path = "ui-desktop-1.9.0.jar"
 )
 
 http_file(
@@ -6468,59 +6468,59 @@ http_file(
 )
 
 http_file(
-  name = "lifecycle-runtime-compose-desktop-2_9_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.9.2/lifecycle-runtime-compose-desktop-2.9.2.jar",
-  sha256 = "f23ecb26579bb3f58dc453ce7a882a45fe95101de69c4573a204c7a85053fe74",
-  downloaded_file_path = "lifecycle-runtime-compose-desktop-2.9.2.jar"
+  name = "lifecycle-runtime-compose-desktop-2_9_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.9.4/lifecycle-runtime-compose-desktop-2.9.4.jar",
+  sha256 = "a078b441457ec0e10007dcd163ff9f2c0437f9b35fbc9ec6cead82f8e985894d",
+  downloaded_file_path = "lifecycle-runtime-compose-desktop-2.9.4.jar"
 )
 
 http_file(
-  name = "runtime-saveable-desktop-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/runtime/runtime-saveable-desktop/1.9.0-beta03/runtime-saveable-desktop-1.9.0-beta03.jar",
+  name = "runtime-saveable-desktop-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/runtime/runtime-saveable-desktop/1.9.0/runtime-saveable-desktop-1.9.0.jar",
   sha256 = "960a622fd875edc3c598f2692101e6f924ef78fbafbe9411e749d184afb8f62f",
-  downloaded_file_path = "runtime-saveable-desktop-1.9.0-beta03.jar"
+  downloaded_file_path = "runtime-saveable-desktop-1.9.0.jar"
 )
 
 http_file(
-  name = "savedstate-compose-desktop-1_3_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/androidx/savedstate/savedstate-compose-desktop/1.3.2/savedstate-compose-desktop-1.3.2.jar",
+  name = "savedstate-compose-desktop-1_3_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/androidx/savedstate/savedstate-compose-desktop/1.3.4/savedstate-compose-desktop-1.3.4.jar",
   sha256 = "5228d0732128011747c8d56f65156505a0b2d29b000d398c6f1979bc0ef42113",
-  downloaded_file_path = "savedstate-compose-desktop-1.3.2.jar"
+  downloaded_file_path = "savedstate-compose-desktop-1.3.4.jar"
 )
 
 http_file(
-  name = "ui-backhandler-desktop-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-backhandler-desktop/1.9.0-beta03/ui-backhandler-desktop-1.9.0-beta03.jar",
+  name = "ui-backhandler-desktop-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-backhandler-desktop/1.9.0/ui-backhandler-desktop-1.9.0.jar",
   sha256 = "37d369737c68efbd27b14b835ce288ccae45693cc1502cb5eb5831a34f44a3d0",
-  downloaded_file_path = "ui-backhandler-desktop-1.9.0-beta03.jar"
+  downloaded_file_path = "ui-backhandler-desktop-1.9.0.jar"
 )
 
 http_file(
-  name = "ui-graphics-desktop-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-graphics-desktop/1.9.0-beta03/ui-graphics-desktop-1.9.0-beta03.jar",
-  sha256 = "d455335f3e70d62958eae5a1527f02e3aef9669857039636b4a2f7ab7894df40",
-  downloaded_file_path = "ui-graphics-desktop-1.9.0-beta03.jar"
+  name = "ui-graphics-desktop-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-graphics-desktop/1.9.0/ui-graphics-desktop-1.9.0.jar",
+  sha256 = "0f8be5263684dd3ae03c23e8221a1e8e6972a508ec9aecd777f8984798f151f8",
+  downloaded_file_path = "ui-graphics-desktop-1.9.0.jar"
 )
 
 http_file(
-  name = "ui-unit-desktop-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-unit-desktop/1.9.0-beta03/ui-unit-desktop-1.9.0-beta03.jar",
+  name = "ui-unit-desktop-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-unit-desktop/1.9.0/ui-unit-desktop-1.9.0.jar",
   sha256 = "115f7d01367fe1d757f46f3e588257cc12d39a2222a6b3975487ca0eea8616e6",
-  downloaded_file_path = "ui-unit-desktop-1.9.0-beta03.jar"
+  downloaded_file_path = "ui-unit-desktop-1.9.0.jar"
 )
 
 http_file(
-  name = "ui-text-desktop-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-text-desktop/1.9.0-beta03/ui-text-desktop-1.9.0-beta03.jar",
+  name = "ui-text-desktop-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-text-desktop/1.9.0/ui-text-desktop-1.9.0.jar",
   sha256 = "3377200710146a353584eb73ebfeadd7d64100d356baf5bf860876e118228f42",
-  downloaded_file_path = "ui-text-desktop-1.9.0-beta03.jar"
+  downloaded_file_path = "ui-text-desktop-1.9.0.jar"
 )
 
 http_file(
-  name = "ui-util-desktop-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-util-desktop/1.9.0-beta03/ui-util-desktop-1.9.0-beta03.jar",
+  name = "ui-util-desktop-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-util-desktop/1.9.0/ui-util-desktop-1.9.0.jar",
   sha256 = "9cb002b892372fa203097ea11d2173df3e2710f640ccf78ad8d05f3e9af1f716",
-  downloaded_file_path = "ui-util-desktop-1.9.0-beta03.jar"
+  downloaded_file_path = "ui-util-desktop-1.9.0.jar"
 )
 
 http_file(
@@ -6531,10 +6531,10 @@ http_file(
 )
 
 http_file(
-  name = "foundation-desktop-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/foundation/foundation-desktop/1.9.0-beta03/foundation-desktop-1.9.0-beta03-sources.jar",
-  sha256 = "bfab2620c9a00953bc819cc515b0d6453455c14994af7610348e2d16ea97aa89",
-  downloaded_file_path = "foundation-desktop-1.9.0-beta03-sources.jar"
+  name = "foundation-desktop-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/foundation/foundation-desktop/1.9.0/foundation-desktop-1.9.0-sources.jar",
+  sha256 = "48a0d85923c4e212c9443171ae9a53615b39b35b559cb2943764a5a8f6c22cbb",
+  downloaded_file_path = "foundation-desktop-1.9.0-sources.jar"
 )
 
 http_file(
@@ -6552,38 +6552,38 @@ http_file(
 )
 
 http_file(
-  name = "animation-desktop-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/animation/animation-desktop/1.9.0-beta03/animation-desktop-1.9.0-beta03-sources.jar",
+  name = "animation-desktop-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/animation/animation-desktop/1.9.0/animation-desktop-1.9.0-sources.jar",
   sha256 = "8a3f8ef86ee3bfb22d22d569e19fb2c17651fd315e591515505b91498f0110f8",
-  downloaded_file_path = "animation-desktop-1.9.0-beta03-sources.jar"
+  downloaded_file_path = "animation-desktop-1.9.0-sources.jar"
 )
 
 http_file(
-  name = "animation-core-desktop-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/animation/animation-core-desktop/1.9.0-beta03/animation-core-desktop-1.9.0-beta03-sources.jar",
+  name = "animation-core-desktop-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/animation/animation-core-desktop/1.9.0/animation-core-desktop-1.9.0-sources.jar",
   sha256 = "3670839cd23f441c048b44e975f13c058d5869430c48bcf21e9dac2d0d5ccb79",
-  downloaded_file_path = "animation-core-desktop-1.9.0-beta03-sources.jar"
+  downloaded_file_path = "animation-core-desktop-1.9.0-sources.jar"
 )
 
 http_file(
-  name = "ui-geometry-desktop-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-geometry-desktop/1.9.0-beta03/ui-geometry-desktop-1.9.0-beta03-sources.jar",
+  name = "ui-geometry-desktop-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-geometry-desktop/1.9.0/ui-geometry-desktop-1.9.0-sources.jar",
   sha256 = "4d1dab1b80fc0a3a71db085c6cdfb7957a14f58e23686f2963a53968e51197d1",
-  downloaded_file_path = "ui-geometry-desktop-1.9.0-beta03-sources.jar"
+  downloaded_file_path = "ui-geometry-desktop-1.9.0-sources.jar"
 )
 
 http_file(
-  name = "foundation-layout-desktop-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/foundation/foundation-layout-desktop/1.9.0-beta03/foundation-layout-desktop-1.9.0-beta03-sources.jar",
+  name = "foundation-layout-desktop-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/foundation/foundation-layout-desktop/1.9.0/foundation-layout-desktop-1.9.0-sources.jar",
   sha256 = "5644e9ba756367093391b3793b198d66dfaff4544382a6220dc715e2a8304a74",
-  downloaded_file_path = "foundation-layout-desktop-1.9.0-beta03-sources.jar"
+  downloaded_file_path = "foundation-layout-desktop-1.9.0-sources.jar"
 )
 
 http_file(
-  name = "ui-desktop-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-desktop/1.9.0-beta03/ui-desktop-1.9.0-beta03-sources.jar",
-  sha256 = "085c75269b7c2b3827418df6875fdd4b9b49924812b2d007dd53ce2dd8d19092",
-  downloaded_file_path = "ui-desktop-1.9.0-beta03-sources.jar"
+  name = "ui-desktop-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-desktop/1.9.0/ui-desktop-1.9.0-sources.jar",
+  sha256 = "36acfd89da8e033fc42e6afa98cf4352e9e10cd924bcafb16ee03221e94928a8",
+  downloaded_file_path = "ui-desktop-1.9.0-sources.jar"
 )
 
 http_file(
@@ -6643,59 +6643,59 @@ http_file(
 )
 
 http_file(
-  name = "lifecycle-runtime-compose-desktop-2_9_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.9.2/lifecycle-runtime-compose-desktop-2.9.2-sources.jar",
+  name = "lifecycle-runtime-compose-desktop-2_9_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.9.4/lifecycle-runtime-compose-desktop-2.9.4-sources.jar",
   sha256 = "f89cde326bc05788d8cedfd2aa05fc1f7e405ca676c6425a1fd230edbd983b9d",
-  downloaded_file_path = "lifecycle-runtime-compose-desktop-2.9.2-sources.jar"
+  downloaded_file_path = "lifecycle-runtime-compose-desktop-2.9.4-sources.jar"
 )
 
 http_file(
-  name = "runtime-saveable-desktop-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/runtime/runtime-saveable-desktop/1.9.0-beta03/runtime-saveable-desktop-1.9.0-beta03-sources.jar",
+  name = "runtime-saveable-desktop-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/runtime/runtime-saveable-desktop/1.9.0/runtime-saveable-desktop-1.9.0-sources.jar",
   sha256 = "2b9b94a1bff4f76e88d9be1a2e51fb0b5204c78b6d55c3a86f6be024bbc915ad",
-  downloaded_file_path = "runtime-saveable-desktop-1.9.0-beta03-sources.jar"
+  downloaded_file_path = "runtime-saveable-desktop-1.9.0-sources.jar"
 )
 
 http_file(
-  name = "savedstate-compose-desktop-1_3_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/androidx/savedstate/savedstate-compose-desktop/1.3.2/savedstate-compose-desktop-1.3.2-sources.jar",
+  name = "savedstate-compose-desktop-1_3_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/androidx/savedstate/savedstate-compose-desktop/1.3.4/savedstate-compose-desktop-1.3.4-sources.jar",
   sha256 = "13b8b09c184d95f0b063964e9b4990a1680dbb8435561c7219578822d7fbb2ee",
-  downloaded_file_path = "savedstate-compose-desktop-1.3.2-sources.jar"
+  downloaded_file_path = "savedstate-compose-desktop-1.3.4-sources.jar"
 )
 
 http_file(
-  name = "ui-backhandler-desktop-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-backhandler-desktop/1.9.0-beta03/ui-backhandler-desktop-1.9.0-beta03-sources.jar",
+  name = "ui-backhandler-desktop-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-backhandler-desktop/1.9.0/ui-backhandler-desktop-1.9.0-sources.jar",
   sha256 = "fadddec18665bd2393cf845b68c412b648f4be78f31de9a73498df66d33a05ea",
-  downloaded_file_path = "ui-backhandler-desktop-1.9.0-beta03-sources.jar"
+  downloaded_file_path = "ui-backhandler-desktop-1.9.0-sources.jar"
 )
 
 http_file(
-  name = "ui-graphics-desktop-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-graphics-desktop/1.9.0-beta03/ui-graphics-desktop-1.9.0-beta03-sources.jar",
-  sha256 = "be437d13b7ca80310a94815ec56e7ce082e0391cd21bdc5007085b5614f35832",
-  downloaded_file_path = "ui-graphics-desktop-1.9.0-beta03-sources.jar"
+  name = "ui-graphics-desktop-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-graphics-desktop/1.9.0/ui-graphics-desktop-1.9.0-sources.jar",
+  sha256 = "a988ccdd772b590e5a35d811ca03ffc2fe5d53bfa3bea89e232f4da9664be751",
+  downloaded_file_path = "ui-graphics-desktop-1.9.0-sources.jar"
 )
 
 http_file(
-  name = "ui-unit-desktop-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-unit-desktop/1.9.0-beta03/ui-unit-desktop-1.9.0-beta03-sources.jar",
+  name = "ui-unit-desktop-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-unit-desktop/1.9.0/ui-unit-desktop-1.9.0-sources.jar",
   sha256 = "eead8dce6ba930471fa6ed9c666dfbba924aaa2e52ee8c21d3032b6f8b085a11",
-  downloaded_file_path = "ui-unit-desktop-1.9.0-beta03-sources.jar"
+  downloaded_file_path = "ui-unit-desktop-1.9.0-sources.jar"
 )
 
 http_file(
-  name = "ui-text-desktop-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-text-desktop/1.9.0-beta03/ui-text-desktop-1.9.0-beta03-sources.jar",
+  name = "ui-text-desktop-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-text-desktop/1.9.0/ui-text-desktop-1.9.0-sources.jar",
   sha256 = "5150f7b34bc891255a25506abacb83db3ac1ed1c0005ebfc60349a480a32dee1",
-  downloaded_file_path = "ui-text-desktop-1.9.0-beta03-sources.jar"
+  downloaded_file_path = "ui-text-desktop-1.9.0-sources.jar"
 )
 
 http_file(
-  name = "ui-util-desktop-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-util-desktop/1.9.0-beta03/ui-util-desktop-1.9.0-beta03-sources.jar",
+  name = "ui-util-desktop-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-util-desktop/1.9.0/ui-util-desktop-1.9.0-sources.jar",
   sha256 = "e9aca27e0526d5436cc8b9517fef22c09cc44afa9f96fce7d8973598bab71b25",
-  downloaded_file_path = "ui-util-desktop-1.9.0-beta03-sources.jar"
+  downloaded_file_path = "ui-util-desktop-1.9.0-sources.jar"
 )
 
 http_file(
@@ -6706,10 +6706,10 @@ http_file(
 )
 
 http_file(
-  name = "ui-test-junit4-desktop-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.9.0-beta03/ui-test-junit4-desktop-1.9.0-beta03.jar",
+  name = "ui-test-junit4-desktop-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.9.0/ui-test-junit4-desktop-1.9.0.jar",
   sha256 = "7d1244618abff60a17ba0c596cb13addeff74664acc8400d2b785bbd8ee66b52",
-  downloaded_file_path = "ui-test-junit4-desktop-1.9.0-beta03.jar"
+  downloaded_file_path = "ui-test-junit4-desktop-1.9.0.jar"
 )
 
 http_file(
@@ -6783,10 +6783,10 @@ http_file(
 )
 
 http_file(
-  name = "ui-test-desktop-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-desktop/1.9.0-beta03/ui-test-desktop-1.9.0-beta03.jar",
+  name = "ui-test-desktop-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-desktop/1.9.0/ui-test-desktop-1.9.0.jar",
   sha256 = "f25e0e5b778c6cb67c66f5bbb4c327f103ebddeac6ddf09a6f48bc900577e672",
-  downloaded_file_path = "ui-test-desktop-1.9.0-beta03.jar"
+  downloaded_file_path = "ui-test-desktop-1.9.0.jar"
 )
 
 http_file(
@@ -6818,10 +6818,10 @@ http_file(
 )
 
 http_file(
-  name = "ui-test-junit4-desktop-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.9.0-beta03/ui-test-junit4-desktop-1.9.0-beta03-sources.jar",
+  name = "ui-test-junit4-desktop-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.9.0/ui-test-junit4-desktop-1.9.0-sources.jar",
   sha256 = "4e902e5ac4e02a33101830c34f884feeba340ed01c4197bc80c0ccffd5eb97d3",
-  downloaded_file_path = "ui-test-junit4-desktop-1.9.0-beta03-sources.jar"
+  downloaded_file_path = "ui-test-junit4-desktop-1.9.0-sources.jar"
 )
 
 http_file(
@@ -6888,10 +6888,10 @@ http_file(
 )
 
 http_file(
-  name = "ui-test-desktop-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-desktop/1.9.0-beta03/ui-test-desktop-1.9.0-beta03-sources.jar",
+  name = "ui-test-desktop-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-test-desktop/1.9.0/ui-test-desktop-1.9.0-sources.jar",
   sha256 = "e05af8ed3ebd06b2a482adfc64ed7f2db7764d4af6e73f606b9ae3778b5b8150",
-  downloaded_file_path = "ui-test-desktop-1.9.0-beta03-sources.jar"
+  downloaded_file_path = "ui-test-desktop-1.9.0-sources.jar"
 )
 
 http_file(
@@ -6923,45 +6923,31 @@ http_file(
 )
 
 http_file(
-  name = "runtime-desktop-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/runtime/runtime-desktop/1.9.0-beta03/runtime-desktop-1.9.0-beta03.jar",
+  name = "runtime-desktop-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/runtime/runtime-desktop/1.9.0/runtime-desktop-1.9.0.jar",
   sha256 = "05f5570c0a7ea8addd6fe9507a70f293efa7f1450d8b9b16dc3c8fee21cc6127",
-  downloaded_file_path = "runtime-desktop-1.9.0-beta03.jar"
+  downloaded_file_path = "runtime-desktop-1.9.0.jar"
 )
 
 http_file(
-  name = "runtime-desktop-1_9_0-rc01_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/compose/runtime/runtime-desktop/1.9.0-rc01/runtime-desktop-1.9.0-rc01.jar",
-  sha256 = "ae657e4332fb72fa1b437ce5caa486c6b4a5e17588aaef0267aa92918bba7458",
-  downloaded_file_path = "runtime-desktop-1.9.0-rc01.jar"
-)
-
-http_file(
-  name = "runtime-annotation-jvm-1_9_0-rc01_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/compose/runtime/runtime-annotation-jvm/1.9.0-rc01/runtime-annotation-jvm-1.9.0-rc01.jar",
+  name = "runtime-annotation-jvm-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/compose/runtime/runtime-annotation-jvm/1.9.0/runtime-annotation-jvm-1.9.0.jar",
   sha256 = "989b2da28bf5ba7966c08ca2db3f48a607e684e4ab4ff0de80e9cd5ec663c076",
-  downloaded_file_path = "runtime-annotation-jvm-1.9.0-rc01.jar"
+  downloaded_file_path = "runtime-annotation-jvm-1.9.0.jar"
 )
 
 http_file(
-  name = "runtime-desktop-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/runtime/runtime-desktop/1.9.0-beta03/runtime-desktop-1.9.0-beta03-sources.jar",
+  name = "runtime-desktop-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/runtime/runtime-desktop/1.9.0/runtime-desktop-1.9.0-sources.jar",
   sha256 = "6f27472e1e5fe26259f156b498f6745feb57b651b673d65fe9938a7fec2d9065",
-  downloaded_file_path = "runtime-desktop-1.9.0-beta03-sources.jar"
+  downloaded_file_path = "runtime-desktop-1.9.0-sources.jar"
 )
 
 http_file(
-  name = "runtime-desktop-1_9_0-rc01-sources_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/compose/runtime/runtime-desktop/1.9.0-rc01/runtime-desktop-1.9.0-rc01-sources.jar",
-  sha256 = "91ffd519cc34239a1c12c458af7da564ed56565498d905353831bd45269842b8",
-  downloaded_file_path = "runtime-desktop-1.9.0-rc01-sources.jar"
-)
-
-http_file(
-  name = "runtime-annotation-jvm-1_9_0-rc01-sources_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/compose/runtime/runtime-annotation-jvm/1.9.0-rc01/runtime-annotation-jvm-1.9.0-rc01-sources.jar",
+  name = "runtime-annotation-jvm-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/compose/runtime/runtime-annotation-jvm/1.9.0/runtime-annotation-jvm-1.9.0-sources.jar",
   sha256 = "fb61a54502ea77472b8a2c751c5a62d0773389611b4987bdf63d1ad90f20209d",
-  downloaded_file_path = "runtime-annotation-jvm-1.9.0-rc01-sources.jar"
+  downloaded_file_path = "runtime-annotation-jvm-1.9.0-sources.jar"
 )
 
 http_file(
@@ -7112,31 +7098,31 @@ http_file(
 )
 
 http_file(
-  name = "skiko-awt-0_9_18_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/skiko/skiko-awt/0.9.18/skiko-awt-0.9.18.jar",
-  sha256 = "c4668e2a789ff6f2e59a72c0b3ac61540a69618b436c90a84ce2d3ed97786ad2",
-  downloaded_file_path = "skiko-awt-0.9.18.jar"
+  name = "skiko-awt-0_9_22_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/skiko/skiko-awt/0.9.22.2/skiko-awt-0.9.22.2.jar",
+  sha256 = "8cc7ed6c4ae2934cddf6502d17df30f3d1c235898c820b5062b930fea4b9d63c",
+  downloaded_file_path = "skiko-awt-0.9.22.2.jar"
 )
 
 http_file(
-  name = "skiko-awt-0_9_18-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/skiko/skiko-awt/0.9.18/skiko-awt-0.9.18-sources.jar",
-  sha256 = "90897e51c6d630eac192aeaa53da6364a73f273b6d5acf5107e33d20fee5c720",
-  downloaded_file_path = "skiko-awt-0.9.18-sources.jar"
+  name = "skiko-awt-0_9_22_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/skiko/skiko-awt/0.9.22.2/skiko-awt-0.9.22.2-sources.jar",
+  sha256 = "1b488bac0258d297649c8945424087c371c06c0a5d609baef463c27d246db95e",
+  downloaded_file_path = "skiko-awt-0.9.22.2-sources.jar"
 )
 
 http_file(
-  name = "skiko-awt-runtime-all-0_9_22_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/skiko/skiko-awt-runtime-all/0.9.22/skiko-awt-runtime-all-0.9.22.jar",
-  sha256 = "d80c10074a588ab03444e317cb2207fc399d22871024f05d739adeba28edeba4",
-  downloaded_file_path = "skiko-awt-runtime-all-0.9.22.jar"
+  name = "skiko-awt-runtime-all-0_9_22_2_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/skiko/skiko-awt-runtime-all/0.9.22.2/skiko-awt-runtime-all-0.9.22.2.jar",
+  sha256 = "d7e77c6d45fa55e8645031a1f98a3c0f042cdfc4191f3536abc50b021a9eef66",
+  downloaded_file_path = "skiko-awt-runtime-all-0.9.22.2.jar"
 )
 
 http_file(
-  name = "skiko-awt-runtime-all-0_9_22-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/skiko/skiko-awt-runtime-all/0.9.22/skiko-awt-runtime-all-0.9.22-sources.jar",
-  sha256 = "dc088eabbf42249387b9abf75eba7db5e776d1f5ab2cc4f62fb9ad4612e07280",
-  downloaded_file_path = "skiko-awt-runtime-all-0.9.22-sources.jar"
+  name = "skiko-awt-runtime-all-0_9_22_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/skiko/skiko-awt-runtime-all/0.9.22.2/skiko-awt-runtime-all-0.9.22.2-sources.jar",
+  sha256 = "b56544079bfb9643d9d0a6126d3d2b532e6dd74df232ee2ec27a26e14b7f593e",
+  downloaded_file_path = "skiko-awt-runtime-all-0.9.22.2-sources.jar"
 )
 
 http_file(
@@ -12292,31 +12278,31 @@ http_file(
 )
 
 http_file(
-  name = "components-resources-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/components/components-resources/1.9.0-beta03/components-resources-1.9.0-beta03.jar",
+  name = "components-resources-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/components/components-resources/1.9.0/components-resources-1.9.0.jar",
   sha256 = "558894a789d6a1c66b8845e471a03f01bc08ddcfe20fef8ffee925a36881ece4",
-  downloaded_file_path = "components-resources-1.9.0-beta03.jar"
+  downloaded_file_path = "components-resources-1.9.0.jar"
 )
 
 http_file(
-  name = "components-resources-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/components/components-resources/1.9.0-beta03/components-resources-1.9.0-beta03-sources.jar",
+  name = "components-resources-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/components/components-resources/1.9.0/components-resources-1.9.0-sources.jar",
   sha256 = "691b4b61b1ff6659dce35aff6cbda0cf8bb2a9bae29c890f7aa33d6a9ca36f08",
-  downloaded_file_path = "components-resources-1.9.0-beta03-sources.jar"
+  downloaded_file_path = "components-resources-1.9.0-sources.jar"
 )
 
 http_file(
-  name = "components-resources-desktop-1_9_0-beta03_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/components/components-resources-desktop/1.9.0-beta03/components-resources-desktop-1.9.0-beta03.jar",
+  name = "components-resources-desktop-1_9_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/components/components-resources-desktop/1.9.0/components-resources-desktop-1.9.0.jar",
   sha256 = "f3b8f331b6bb4312a74ed16d7bb3654427cfa73728a5817addbff64c6e77dfec",
-  downloaded_file_path = "components-resources-desktop-1.9.0-beta03.jar"
+  downloaded_file_path = "components-resources-desktop-1.9.0.jar"
 )
 
 http_file(
-  name = "components-resources-desktop-1_9_0-beta03-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/components/components-resources-desktop/1.9.0-beta03/components-resources-desktop-1.9.0-beta03-sources.jar",
+  name = "components-resources-desktop-1_9_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/components/components-resources-desktop/1.9.0/components-resources-desktop-1.9.0-sources.jar",
   sha256 = "6e49ef363220c04393c5021108a79f65e1a3006a575ca40b9918b19cde2a6b46",
-  downloaded_file_path = "components-resources-desktop-1.9.0-beta03-sources.jar"
+  downloaded_file_path = "components-resources-desktop-1.9.0-sources.jar"
 )
 
 http_file(
