@@ -214,6 +214,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       .setProject(project)
       .setModalContext(false)
       .setNormalWindowLevel(StartupUiUtil.isWaylandToolkit())
+      .setCancelOnWindowDeactivation(!StartupUiUtil.isWaylandToolkit())
       .setCancelOnClickOutside(true)
       .setRequestFocus(true)
       .setCancelKeyEnabled(false)

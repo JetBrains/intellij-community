@@ -106,6 +106,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
       .setProject(myProject)
       .setModalContext(false)
       .setNormalWindowLevel(StartupUiUtil.isWaylandToolkit())
+      .setCancelOnWindowDeactivation(!StartupUiUtil.isWaylandToolkit())
       .setCancelOnClickOutside(true)
       .setRequestFocus(true)
       .setCancelKeyEnabled(false)
