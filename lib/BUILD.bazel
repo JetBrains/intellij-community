@@ -5031,64 +5031,64 @@ jvm_import(
 
 jvm_import(
   name = "lucene-analysis-common",
-  jar = "@lucene-analysis-common-9_12_0_http//file",
-  source_jar = "@lucene-analysis-common-9_12_0-sources_http//file",
+  jar = "@lucene-analysis-common-10_3_0_http//file",
+  source_jar = "@lucene-analysis-common-10_3_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "lucene-codecs",
-  jar = "@lucene-codecs-9_12_0_http//file",
-  source_jar = "@lucene-codecs-9_12_0-sources_http//file",
+  jar = "@lucene-codecs-10_3_0_http//file",
+  source_jar = "@lucene-codecs-10_3_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "lucene-core",
-  jar = "@lucene-core-9_12_0_http//file",
-  source_jar = "@lucene-core-9_12_0-sources_http//file",
+  jar = "@lucene-core-10_3_0_http//file",
+  source_jar = "@lucene-core-10_3_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "lucene-highlighter",
-  jar = "@lucene-highlighter-9_12_0_http//file",
-  source_jar = "@lucene-highlighter-9_12_0-sources_http//file",
+  jar = "@lucene-highlighter-10_3_0_http//file",
+  source_jar = "@lucene-highlighter-10_3_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "lucene-memory",
-  jar = "@lucene-memory-9_12_0_http//file",
-  source_jar = "@lucene-memory-9_12_0-sources_http//file",
+  jar = "@lucene-memory-10_3_0_http//file",
+  source_jar = "@lucene-memory-10_3_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "lucene-queries",
-  jar = "@lucene-queries-9_12_0_http//file",
-  source_jar = "@lucene-queries-9_12_0-sources_http//file",
+  jar = "@lucene-queries-10_3_0_http//file",
+  source_jar = "@lucene-queries-10_3_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "lucene-queryparser",
-  jar = "@lucene-queryparser-9_12_0_http//file",
-  source_jar = "@lucene-queryparser-9_12_0-sources_http//file",
+  jar = "@lucene-queryparser-10_3_0_http//file",
+  source_jar = "@lucene-queryparser-10_3_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "lucene-sandbox",
-  jar = "@lucene-sandbox-9_12_0_http//file",
-  source_jar = "@lucene-sandbox-9_12_0-sources_http//file",
+  jar = "@lucene-sandbox-10_3_0_http//file",
+  source_jar = "@lucene-sandbox-10_3_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "lucene-suggest",
-  jar = "@lucene-suggest-9_12_0_http//file",
-  source_jar = "@lucene-suggest-9_12_0-sources_http//file",
+  jar = "@lucene-suggest-10_3_0_http//file",
+  source_jar = "@lucene-suggest-10_3_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

@@ -7182,129 +7182,129 @@ http_file(
 )
 
 http_file(
-  name = "lucene-analysis-common-9_12_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-analysis-common/9.12.0/lucene-analysis-common-9.12.0.jar",
-  sha256 = "8c79d8741f711cc6d7501805b03f7b5f505805d09cab1beb95f0be24b6d27655",
-  downloaded_file_path = "lucene-analysis-common-9.12.0.jar"
+  name = "lucene-analysis-common-10_3_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-analysis-common/10.3.0/lucene-analysis-common-10.3.0.jar",
+  sha256 = "124bddea3fa0683d3e174552fba5fcf0f24a2f57f1ccf6957010d010d246db8b",
+  downloaded_file_path = "lucene-analysis-common-10.3.0.jar"
 )
 
 http_file(
-  name = "lucene-analysis-common-9_12_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-analysis-common/9.12.0/lucene-analysis-common-9.12.0-sources.jar",
-  sha256 = "eb2e790a9259f1d066011462e969c682f8109eb161054a73b8cf4cfe569e88e8",
-  downloaded_file_path = "lucene-analysis-common-9.12.0-sources.jar"
+  name = "lucene-analysis-common-10_3_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-analysis-common/10.3.0/lucene-analysis-common-10.3.0-sources.jar",
+  sha256 = "07e7736ef3cfe2fca6795f0ec3755db720e09dcd3a2adab4ee39f3cec14d05d7",
+  downloaded_file_path = "lucene-analysis-common-10.3.0-sources.jar"
 )
 
 http_file(
-  name = "lucene-codecs-9_12_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-codecs/9.12.0/lucene-codecs-9.12.0.jar",
-  sha256 = "8173a45b87df23a6dd279916cf16b361c0dcfeff5927121b014d210b19f17555",
-  downloaded_file_path = "lucene-codecs-9.12.0.jar"
+  name = "lucene-codecs-10_3_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-codecs/10.3.0/lucene-codecs-10.3.0.jar",
+  sha256 = "0628a26040706fea7a222a91c8ca339aef9ea8ceda6d24527a817dc7e0ad5c92",
+  downloaded_file_path = "lucene-codecs-10.3.0.jar"
 )
 
 http_file(
-  name = "lucene-codecs-9_12_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-codecs/9.12.0/lucene-codecs-9.12.0-sources.jar",
-  sha256 = "7b1c2846ac648dd8f8093f25646fd13c95ca00df2ea9508327c1628aeb1d31da",
-  downloaded_file_path = "lucene-codecs-9.12.0-sources.jar"
+  name = "lucene-codecs-10_3_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-codecs/10.3.0/lucene-codecs-10.3.0-sources.jar",
+  sha256 = "dcd97624fc26c9bde237f9aad03a15d0ccf7fcb291c015d241898275a462ec90",
+  downloaded_file_path = "lucene-codecs-10.3.0-sources.jar"
 )
 
 http_file(
-  name = "lucene-core-9_12_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-core/9.12.0/lucene-core-9.12.0.jar",
-  sha256 = "6c7b774b75cd8f369e246f365a47caa54ae991cae6afa49c7f339e9921ca58a0",
-  downloaded_file_path = "lucene-core-9.12.0.jar"
+  name = "lucene-core-10_3_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-core/10.3.0/lucene-core-10.3.0.jar",
+  sha256 = "9d70afe194568ca0328b7f762e64eb8094a5e5a76ea3a30b7182f0e7d5f0dd35",
+  downloaded_file_path = "lucene-core-10.3.0.jar"
 )
 
 http_file(
-  name = "lucene-core-9_12_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-core/9.12.0/lucene-core-9.12.0-sources.jar",
-  sha256 = "19397280d1e53f015004fe0ac38a33c4a7e5079015d929589fbbd5e79e36ca84",
-  downloaded_file_path = "lucene-core-9.12.0-sources.jar"
+  name = "lucene-core-10_3_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-core/10.3.0/lucene-core-10.3.0-sources.jar",
+  sha256 = "717a276298c6ba99ffa9b4551c9bd17feebb32111237a5a3cf93a0d5219a050d",
+  downloaded_file_path = "lucene-core-10.3.0-sources.jar"
 )
 
 http_file(
-  name = "lucene-highlighter-9_12_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-highlighter/9.12.0/lucene-highlighter-9.12.0.jar",
-  sha256 = "5094e1b38f02eb72500a4283ac0f654e2e81943c5359b629567dd7900c935a59",
-  downloaded_file_path = "lucene-highlighter-9.12.0.jar"
+  name = "lucene-highlighter-10_3_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-highlighter/10.3.0/lucene-highlighter-10.3.0.jar",
+  sha256 = "acbf67631c42197791363ce8e8f155f62aeef51ade809e0847a89eba44785c7d",
+  downloaded_file_path = "lucene-highlighter-10.3.0.jar"
 )
 
 http_file(
-  name = "lucene-highlighter-9_12_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-highlighter/9.12.0/lucene-highlighter-9.12.0-sources.jar",
-  sha256 = "21216449f7e57c9444a6d2a249b02575b04f2a8e1445be2b10a3684fea2debe5",
-  downloaded_file_path = "lucene-highlighter-9.12.0-sources.jar"
+  name = "lucene-highlighter-10_3_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-highlighter/10.3.0/lucene-highlighter-10.3.0-sources.jar",
+  sha256 = "c9d84f836ecbd5333d5f692a17bae1114b4378c4ced8c39cd24bedbaa663e16c",
+  downloaded_file_path = "lucene-highlighter-10.3.0-sources.jar"
 )
 
 http_file(
-  name = "lucene-memory-9_12_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-memory/9.12.0/lucene-memory-9.12.0.jar",
-  sha256 = "fdbb9c9b3270ce06370d094f1a80dbbbf81b2638b55fa14cc817469092899f01",
-  downloaded_file_path = "lucene-memory-9.12.0.jar"
+  name = "lucene-memory-10_3_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-memory/10.3.0/lucene-memory-10.3.0.jar",
+  sha256 = "ea77d0b2eb0b3e1f7fa04f2fbe671f5af3ae836cc40320411e195bdc9421f17b",
+  downloaded_file_path = "lucene-memory-10.3.0.jar"
 )
 
 http_file(
-  name = "lucene-memory-9_12_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-memory/9.12.0/lucene-memory-9.12.0-sources.jar",
-  sha256 = "104ad8d38e5baf44e03430c62bc60a399ab3dc2cde3cdb83eed3fecef89bdcf3",
-  downloaded_file_path = "lucene-memory-9.12.0-sources.jar"
+  name = "lucene-memory-10_3_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-memory/10.3.0/lucene-memory-10.3.0-sources.jar",
+  sha256 = "98fe476bb723e2132242e4c5a6fd9af3fa7f4a56dc589626732dd9a90b1f90b8",
+  downloaded_file_path = "lucene-memory-10.3.0-sources.jar"
 )
 
 http_file(
-  name = "lucene-queries-9_12_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-queries/9.12.0/lucene-queries-9.12.0.jar",
-  sha256 = "3b4da6b1673e4edd141c7b86538cc61f6ff3386106f1f5e179c9fe2d30ea2fca",
-  downloaded_file_path = "lucene-queries-9.12.0.jar"
+  name = "lucene-queries-10_3_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-queries/10.3.0/lucene-queries-10.3.0.jar",
+  sha256 = "c0c5891b390759a0cf503c7864e6eb4d8447cc8df20806a4254bfdf3d2f43a91",
+  downloaded_file_path = "lucene-queries-10.3.0.jar"
 )
 
 http_file(
-  name = "lucene-queries-9_12_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-queries/9.12.0/lucene-queries-9.12.0-sources.jar",
-  sha256 = "d2046c1741aafb00b93137925b4087a8467b3cd09c791d410916d422a6a42677",
-  downloaded_file_path = "lucene-queries-9.12.0-sources.jar"
+  name = "lucene-queries-10_3_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-queries/10.3.0/lucene-queries-10.3.0-sources.jar",
+  sha256 = "7b25023ae67caade35fafc5a818e6dc5fb4b781d9784455179d86946dd0eaea9",
+  downloaded_file_path = "lucene-queries-10.3.0-sources.jar"
 )
 
 http_file(
-  name = "lucene-queryparser-9_12_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-queryparser/9.12.0/lucene-queryparser-9.12.0.jar",
-  sha256 = "fc866b7bbfc199436feb24be7dd5c575445342eb283bfe07dd519eab131d3675",
-  downloaded_file_path = "lucene-queryparser-9.12.0.jar"
+  name = "lucene-queryparser-10_3_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-queryparser/10.3.0/lucene-queryparser-10.3.0.jar",
+  sha256 = "b4b57bc3d56c5a1ccc674f55a16086c37700eb151fa749b45887e391ec0f26f9",
+  downloaded_file_path = "lucene-queryparser-10.3.0.jar"
 )
 
 http_file(
-  name = "lucene-queryparser-9_12_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-queryparser/9.12.0/lucene-queryparser-9.12.0-sources.jar",
-  sha256 = "d7f6f0d4b1cd3f562eaebe8569dd673cde2d5512c1d3b3245459fe6c063c1e14",
-  downloaded_file_path = "lucene-queryparser-9.12.0-sources.jar"
+  name = "lucene-queryparser-10_3_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-queryparser/10.3.0/lucene-queryparser-10.3.0-sources.jar",
+  sha256 = "ccb029aaca5b0ef696bd3fc0062ad90bed4227c486fa5e6c91deaecf12c35847",
+  downloaded_file_path = "lucene-queryparser-10.3.0-sources.jar"
 )
 
 http_file(
-  name = "lucene-sandbox-9_12_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-sandbox/9.12.0/lucene-sandbox-9.12.0.jar",
-  sha256 = "2262f39a241f435dba61f230e7528205c34f4bf0008faa57f0808476bb782996",
-  downloaded_file_path = "lucene-sandbox-9.12.0.jar"
+  name = "lucene-sandbox-10_3_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-sandbox/10.3.0/lucene-sandbox-10.3.0.jar",
+  sha256 = "00aa7be5c214bff31d62b489fbb5f0c389545e9f455324b2b92681956d37c94f",
+  downloaded_file_path = "lucene-sandbox-10.3.0.jar"
 )
 
 http_file(
-  name = "lucene-sandbox-9_12_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-sandbox/9.12.0/lucene-sandbox-9.12.0-sources.jar",
-  sha256 = "0d0bd56ac14b9ad9029eeef16679c997d18ee0c79645bf4a1e942bd7c53d2fca",
-  downloaded_file_path = "lucene-sandbox-9.12.0-sources.jar"
+  name = "lucene-sandbox-10_3_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-sandbox/10.3.0/lucene-sandbox-10.3.0-sources.jar",
+  sha256 = "3611ef48c9a256ac28f2511e59e621e8f5472e82cd07fae803cae73818fe574c",
+  downloaded_file_path = "lucene-sandbox-10.3.0-sources.jar"
 )
 
 http_file(
-  name = "lucene-suggest-9_12_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-suggest/9.12.0/lucene-suggest-9.12.0.jar",
-  sha256 = "1606fb9c7cf57d88b2824916c00280c92e14bcde798a6b78b27e0db8f13227f0",
-  downloaded_file_path = "lucene-suggest-9.12.0.jar"
+  name = "lucene-suggest-10_3_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-suggest/10.3.0/lucene-suggest-10.3.0.jar",
+  sha256 = "4b53bf7160e8cdf2ae6bf1a27018bb4fbfdb1841fbdad988c5ff71c7920f4a84",
+  downloaded_file_path = "lucene-suggest-10.3.0.jar"
 )
 
 http_file(
-  name = "lucene-suggest-9_12_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-suggest/9.12.0/lucene-suggest-9.12.0-sources.jar",
-  sha256 = "ee062cbadfeaa8de8a37e5b453075dfb2c6969e38af2fa462035488211d9809b",
-  downloaded_file_path = "lucene-suggest-9.12.0-sources.jar"
+  name = "lucene-suggest-10_3_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/lucene/lucene-suggest/10.3.0/lucene-suggest-10.3.0-sources.jar",
+  sha256 = "6233316234bb3621788316d31a209a8331108f2d5dbfb60e432ebd283a663b62",
+  downloaded_file_path = "lucene-suggest-10.3.0-sources.jar"
 )
 
 http_file(
