@@ -493,6 +493,9 @@ platform/code-style-impl
 platform/collaboration-tools
 platform/collaboration-tools/auth
 platform/collaboration-tools/auth-base
+platform/completion/backend
+platform/completion/common
+platform/completion/frontend
 platform/compose
 platform/compose/compiler-plugin
 platform/compose/markdown
