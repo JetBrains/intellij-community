@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.DynamicBundle
@@ -10,17 +10,15 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
-import com.intellij.util.io.copy
-import java.io.File
+import com.intellij.util.system.OS
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
 import javax.swing.UIManager
@@ -47,15 +45,13 @@ internal object UpdateInstaller {
       val patchFile = getTempDir().resolve("patch-${from.withoutProductCode().asString()}-${to.withoutProductCode().asString()}.jar")
       val url = ExternalProductResourceUrls.getInstance().computePatchUrl(from, to)
                 ?: error("Metadata contains information about patch '${from}' -> '${to}', but 'computePatchUrl' returns 'null'")
-      val partIndicator = object : DelegatingProgressIndicator(indicator) {
-        override fun setFraction(fraction: Double) {
-          super.setFraction((i - 1) * share + fraction / share)
-        }
+      val partIndicator = @Suppress("UsagesOfObsoleteApi") object : DelegatingProgressIndicator(indicator) {
+        override fun setFraction(fraction: Double) = super.setFraction((i - 1) * share + fraction / share)
       }
       LOG.info("downloading ${url}")
       HttpRequests.request(url).gzip(false).saveToFile(patchFile, partIndicator)
       try {
-        ZipFile(patchFile.toFile()).use {
+        ZipFile(@Suppress("IO_FILE_USAGE") patchFile.toFile()).use {
           if (it.getEntry(PATCH_FILE_NAME) == null || it.getEntry(UPDATER_ENTRY) == null) {
             throw IOException("Corrupted patch file: ${patchFile}")
           }
@@ -133,35 +129,27 @@ internal object UpdateInstaller {
     }
     Files.createDirectories(tempDir)
 
-    var java = Path.of(System.getProperty("java.home"))
-    if (PathManager.isUnderHomeDirectory(java)) {
-      val javaCopy = tempDir.resolve("jre")
-      NioFiles.deleteRecursively(javaCopy)
-      FileUtil.copyDir(java.toFile(), javaCopy.toFile())
-
-      val jnf = java.resolve("../Frameworks/JavaNativeFoundation.framework")
-      if (Files.isDirectory(jnf)) {
-        val jnfCopy = tempDir.resolve("Frameworks/JavaNativeFoundation.framework")
-        NioFiles.deleteRecursively(jnfCopy)
-        FileUtil.copyDir(jnf.toFile(), jnfCopy.toFile())
-      }
-
-      java = javaCopy
+    var jre = Path.of(System.getProperty("java.home"))
+    if (PathManager.isUnderHomeDirectory(jre)) {
+      val jreCopy = tempDir.resolve("jre")
+      NioFiles.deleteRecursively(jreCopy)
+      NioFiles.copyRecursively(jre, jreCopy)
+      jre = jreCopy
     }
 
     val args = mutableListOf<String>()
-    val ideHome = PathManager.getHomePath()
+    val ideHome = PathManager.getHomeDir()
 
-    if (SystemInfo.isWindows && !Files.isWritable(Path.of(ideHome))) {
+    if (OS.CURRENT == OS.Windows && !Files.isWritable(ideHome)) {
       val launcher = PathManager.findBinFile("launcher.exe")
       val elevator = PathManager.findBinFile("elevator.exe")  // "launcher" depends on "elevator"
       if (launcher != null && elevator != null) {
-        args.add(launcher.copy(tempDir.resolve(launcher.fileName)).toString())
-        elevator.copy(tempDir.resolve(elevator.fileName))
+        args.add(Files.copy(launcher, tempDir.resolve(launcher.fileName), StandardCopyOption.REPLACE_EXISTING).toString())
+        Files.copy(elevator, tempDir.resolve(elevator.fileName), StandardCopyOption.REPLACE_EXISTING)
       }
     }
 
-    args += java.resolve(if (SystemInfo.isWindows) "bin\\java.exe" else "bin/java").toString()
+    args += jre.resolve(if (OS.CURRENT == OS.Windows) "bin\\java.exe" else "bin/java").toString()
     args += "-Xmx${2000}m"
     args += "-cp"
     args += patchFiles.last().toString()
@@ -171,20 +159,20 @@ internal object UpdateInstaller {
     args += "-Djna.debug_load=true"
     args += "-Djna.debug_load.jna=true"
     args += "-Djava.io.tmpdir=${tempDir}"
-    args += "-Didea.updater.log=${PathManager.getLogPath()}"
+    args += "-Didea.updater.log=${PathManager.getLogDir()}"
     args += "-Dswing.defaultlaf=${UIManager.getSystemLookAndFeelClassName()}"
     args += "-Duser.language=${DynamicBundle.getLocale().language}"
     args += "-Duser.country=${DynamicBundle.getLocale().country}"
 
     args += UPDATER_MAIN_CLASS
     args += if (patchFiles.size == 1) "install" else "batch-install"
-    args += ideHome
+    args += ideHome.toString()
     if (patchFiles.size > 1) {
-      args += patchFiles.joinToString(File.pathSeparator)
+      args += patchFiles.joinToString(@Suppress("IO_FILE_USAGE") java.io.File.pathSeparator)
     }
 
     return args.toTypedArray()
   }
 
-  private fun getTempDir() = Path.of(PathManager.getTempPath(), "patch-update")
+  private fun getTempDir() = PathManager.getTempDir().resolve("patch-update")
 }
