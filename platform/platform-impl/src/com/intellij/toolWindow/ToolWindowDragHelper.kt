@@ -19,12 +19,14 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.drag.DialogDragImageView
 import com.intellij.ui.drag.DialogWithImage
 import com.intellij.ui.drag.DragImageView
+import com.intellij.ui.drag.GlassPaneDragImageView
 import com.intellij.ui.paint.RectanglePainter
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.MouseAdapter
@@ -178,7 +180,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         val dragImage = createStripeButtonDragImage(clickedComponent)
         if (dragImage != null) {
           dragSession = DragSession(
-            view = DialogDragImageView(DragImageDialog(dragSourcePane, this)),
+            view = createDragImageView(event),
             stripeButtonImage = dragImage,
             toolWindowThumbnailImage = null,
           )
@@ -220,7 +222,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
     if (dragImage != null) {
       dragSession = DragSession(
-        view = DialogDragImageView(DragImageDialog(dragSourcePane, this)),
+        view = createDragImageView(event),
         stripeButtonImage = dragImage,
         toolWindowThumbnailImage = dragOutImage
       )
@@ -231,6 +233,13 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     dragSession?.start()
     addDropTargetHighlighter(dragSourcePane)
     dragSourcePane.buttonManager.startDrag()
+  }
+
+  private fun createDragImageView(event: MouseEvent): DragImageView = if (StartupUiUtil.isWaylandToolkit()) {
+    GlassPaneDragImageView(IdeGlassPaneUtil.find(event.component))
+  }
+  else {
+    DialogDragImageView(DragImageDialog(dragSourcePane, this))
   }
 
   private fun setInitialOffsetFromStripeButton(relativePoint: RelativePoint, clickedComponent: Component) {
