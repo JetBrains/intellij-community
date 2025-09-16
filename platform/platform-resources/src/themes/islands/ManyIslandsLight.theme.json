@@ -157,7 +157,7 @@
       }
     },
 
-    "SearchEverywhere.Header.insets": "0,4,0,9",
+    "SearchEverywhere.Header.insets": "2,4,0,9",
 
     "HelpBrowser.UserMessage.background": "#DFE1E5CC",
 

@@ -1714,6 +1714,18 @@ public final class JBUI {
     }
 
     public static final class BigPopup {
+      public static @NotNull Border headerBorder() {
+        String key = "SearchEverywhere.Header.insets";
+        JBInsets insets = insets(key, ComplexPopup.headerInsets());
+
+        if (UIManager.getInsets(key) == null) {
+          //noinspection UseDPIAwareBorders
+          return new EmptyBorder(0, insets.left, 0, insets.right);
+        }
+
+        return new EmptyBorder(insets);
+      }
+
       public static @NotNull Color headerBackground() {
         return JBColor.namedColor("SearchEverywhere.Header.background", 0xf2f2f2);
       }

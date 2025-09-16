@@ -4174,6 +4174,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$BigPopup
 - s:advertiserBorderInsetsKey():java.lang.String
 - s:advertiserForeground():java.awt.Color
 - s:headerBackground():java.awt.Color
+- s:headerBorder():javax.swing.border.Border
 - s:listSeparatorColor():java.awt.Color
 - s:listTitleLabelForeground():java.awt.Color
 - s:maxListHeight():I

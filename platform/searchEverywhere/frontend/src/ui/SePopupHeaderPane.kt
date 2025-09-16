@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.border.EmptyBorder
 
 @Internal
 class SePopupHeaderPane(
@@ -78,11 +77,8 @@ class SePopupHeaderPane(
 
     panel.background = JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND
 
-    val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets()
-    @Suppress("UseDPIAwareBorders")
-    panel.border = JBUI.Borders.compound(
-      JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
-      EmptyBorder(0, headerInsets.left, 0, headerInsets.right))
+    panel.border = JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
+                                         JBUI.CurrentTheme.BigPopup.headerBorder())
 
     for (tab in tabInfos) {
       tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
