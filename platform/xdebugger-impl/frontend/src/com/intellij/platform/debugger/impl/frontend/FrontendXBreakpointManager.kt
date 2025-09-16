@@ -24,7 +24,7 @@ import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
-import fleet.rpc.client.durable
+import fleet.rpc.client.RpcClientException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -77,49 +77,56 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     cs.launch {
       FrontendXBreakpointTypesManager.getInstance(project).typesInitialized().await()
       initializeBreakpoints()
-      defaultGroup = durable { XBreakpointApi.getInstance().getDefaultGroup(project.projectId()) }
+      durableWithStateReset(block = {
+        defaultGroup = XBreakpointApi.getInstance().getDefaultGroup(project.projectId())
+      }, stateReset = {
+        defaultGroup = null
+      })
     }
   }
 
-  private suspend fun initializeBreakpoints() {
-    val (initialBreakpoints, breakpointEvents) = durable {
-      XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId())
-    }
-    for (breakpointDto in initialBreakpoints) {
-      try {
-        addBreakpoint(breakpointDto, updateUI = false)
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        log.error("Error during initial breakpoints creation from backend $breakpointDto", e)
-      }
-    }
-    lineBreakpointManager.queueAllBreakpointsUpdate()
-
-    breakpointEvents.toFlow().collect { event ->
-      try {
-        when (event) {
-          is XBreakpointEvent.BreakpointAdded -> {
-            log.info("Breakpoint add request from backend: ${event.breakpointDto.id}")
-            addBreakpoint(event.breakpointDto, updateUI = true)
-          }
-          is XBreakpointEvent.BreakpointRemoved -> {
-            log.info("Breakpoint removal request from backend: ${event.breakpointId}")
-            removeBreakpointLocally(event.breakpointId)
-            // breakpointRemoved event happened on the server, so we can remove id from the frontend
-            breakpointIdsRemovedLocally.remove(event.breakpointId)
-          }
+  private fun initializeBreakpoints() = cs.launch {
+    durableWithStateReset(block = {
+      val (initialBreakpoints, breakpointEvents) = XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId())
+      for (breakpointDto in initialBreakpoints) {
+        try {
+          addBreakpoint(breakpointDto, updateUI = false)
+        }
+        catch (e: Throwable) {
+          if (e is CancellationException || e is RpcClientException) throw e
+          log.error("Error during initial breakpoints creation from backend $breakpointDto", e)
         }
       }
-      catch (e: CancellationException) {
-        throw e
+
+      lineBreakpointManager.queueAllBreakpointsUpdate()
+
+      breakpointEvents.toFlow().collect { event ->
+        try {
+          when (event) {
+            is XBreakpointEvent.BreakpointAdded -> {
+              log.info("Breakpoint add request from backend: ${event.breakpointDto.id}")
+              addBreakpoint(event.breakpointDto, updateUI = true)
+            }
+            is XBreakpointEvent.BreakpointRemoved -> {
+              log.info("Breakpoint removal request from backend: ${event.breakpointId}")
+              removeBreakpointLocally(event.breakpointId)
+              // breakpointRemoved event happened on the server, so we can remove id from the frontend
+              breakpointIdsRemovedLocally.remove(event.breakpointId)
+            }
+          }
+        }
+        catch (e: Throwable) {
+          if (e is CancellationException || e is RpcClientException) throw e
+          log.error("Error during breakpoint event processing from backend: $event", e)
+        }
       }
-      catch (e: Throwable) {
-        log.error("Error during breakpoint event processing from backend: $event", e)
+    }, stateReset = {
+      for (breakpoint in breakpoints.values) {
+        removeBreakpointLocally(breakpoint.id)
       }
-    }
+      breakpointIdsRemovedLocally.clear()
+      breakpoints.clear()
+    })
   }
 
   /**

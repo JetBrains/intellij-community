@@ -5,6 +5,8 @@ import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.patchVersion
+import fleet.rpc.client.durable
+import kotlinx.coroutines.CoroutineScope
 
 internal suspend fun <T> retryUntilVersionMatch(project: Project, document: Document?, request: suspend (DocumentPatchVersion?) -> T?): T {
   while (true) {
@@ -12,4 +14,11 @@ internal suspend fun <T> retryUntilVersionMatch(project: Project, document: Docu
     val result = request(version)
     if (result != null) return result
   }
+}
+
+internal suspend fun durableWithStateReset(block: suspend CoroutineScope.() -> Unit, stateReset: suspend () -> Unit) = try {
+  durable(body = block)
+}
+finally {
+  stateReset()
 }
