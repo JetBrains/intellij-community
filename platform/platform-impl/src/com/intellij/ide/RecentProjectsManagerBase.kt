@@ -46,6 +46,7 @@ import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
+import com.intellij.project.ProjectStoreOwner
 import com.intellij.project.stateStore
 import com.intellij.ui.mac.createMacDelegate
 import com.intellij.ui.win.createWinDockDelegate
@@ -307,7 +308,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       }
 
       for (project in openProjects) {
-        val path = getProjectPath(project) ?: continue
+        val path = getProjectPath(project)?.invariantSeparatorsPathString ?: continue
         val info = state.additionalInfo.get(path) ?: continue
         info.opened = true
         info.displayName = getProjectDisplayName(project)
@@ -335,7 +336,12 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return RecentProjectListActionProvider.getInstance().getActions(addClearListItem = addClearListItem).toTypedArray()
   }
 
-  fun markPathRecent(path: String, project: Project): RecentProjectMetaInfo {
+  fun markPathRecent(project: Project): RecentProjectMetaInfo? {
+    val path = getProjectPath(project) ?: return null
+    return markPathRecent(path.invariantSeparatorsPathString, project)
+  }
+
+  private fun markPathRecent(path: String, project: Project): RecentProjectMetaInfo {
     synchronized(stateLock) {
       for (group in state.groups) {
         if (group.markProjectFirst(path)) {
@@ -372,12 +378,14 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   fun addRecentPath(path: String, info: RecentProjectMetaInfo) {
     synchronized(stateLock) {
       val presentInfo = state.additionalInfo.putIfAbsent(path, info)
-      if (presentInfo == null) modCounter.increment()
+      if (presentInfo == null) {
+        modCounter.increment()
+      }
     }
   }
 
   fun updateRecentMetadata(project: Project, metaInfoUpdater: RecentProjectMetaInfo.() -> Unit) {
-    val projectPath = getProjectPath(project) ?: return
+    val projectPath = getProjectPath(project)?.invariantSeparatorsPathString ?: return
     synchronized(stateLock) {
       val currentProjectMetaInfo = state.additionalInfo.get(projectPath) ?: return
       metaInfoUpdater(currentProjectMetaInfo)
@@ -390,8 +398,9 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return projectStoreBaseDir.invariantSeparatorsPathString
   }
 
-  open fun getProjectPath(project: Project): String? {
-    return FileUtilRt.toSystemIndependentName(project.presentableUrl ?: return null)
+  @Internal
+  open fun getProjectPath(project: Project): Path? {
+    return ((project as? ProjectStoreOwner)?.componentStore ?: return null).storeDescriptor.presentableUrl
   }
 
   @TestOnly
@@ -415,6 +424,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
+  @Suppress("GrazieInspection")
   private suspend fun openProjectWithEffectiveOptions(
     projectFile: Path,
     effectiveOptions: OpenProjectTask,
@@ -448,7 +458,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       return
     }
 
-    val projectPath = getProjectPath(project) ?: return
+    val projectPath = getProjectPath(project)?.invariantSeparatorsPathString ?: return
     synchronized(stateLock) {
       findAndRemoveNewlyClonedProject(projectPath)
       val info = state.additionalInfo.computeIfAbsent(projectPath) { RecentProjectMetaInfo() }
@@ -480,7 +490,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       return
     }
 
-    val projectPath = getProjectPath(project) ?: return
+    val projectPath = getProjectPath(project)?.invariantSeparatorsPathString ?: return
     synchronized(stateLock) {
       findAndRemoveNewlyClonedProject(projectPath)
       val info = markPathRecent(path = projectPath, project = project)
@@ -498,6 +508,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   @Internal
   @VisibleForTesting
   class MyProjectListener : ProjectCloseListener {
+    @Suppress("GrazieInspection")
     override fun projectClosingBeforeSave(project: Project) {
       val app = ApplicationManagerEx.getApplicationEx()
       if (app.isExitInProgress) {
@@ -506,17 +517,20 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       }
 
       val manager = getInstanceEx()
-      val path = manager.getProjectPath(project) ?: return
+      val path = manager.getProjectPath(project)?.invariantSeparatorsPathString ?: return
       if (!app.isHeadlessEnvironment) {
-        manager.updateProjectInfo(project = project,
-                                  windowManager = WindowManager.getInstance() as WindowManagerImpl,
-                                  writeLastProjectInfo = false,
-                                  appClosing = false)
+        manager.updateProjectInfo(
+          project = project,
+          windowManager = WindowManager.getInstance() as WindowManagerImpl,
+          writeLastProjectInfo = false,
+          appClosing = false,
+        )
       }
       manager.nameCache.put(path, project.name)
     }
 
     override fun projectClosed(project: Project) {
+      @Suppress("GrazieInspection")
       if (ApplicationManagerEx.getApplicationEx().isExitInProgress) {
         // `appClosing` handler updates project info (even more - on `projectClosed` the full-screen state maybe not correct)
         return
@@ -524,7 +538,9 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
       val manager = getInstanceEx()
       synchronized(manager.stateLock) {
-        manager.state.additionalInfo.get(manager.getProjectPath(project))?.opened = false
+        manager.getProjectPath(project)?.let {
+          manager.state.additionalInfo.get(it.invariantSeparatorsPathString)?.opened = false
+        }
       }
       manager.updateSystemDockMenu()
     }
@@ -729,6 +745,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       activeProject?.let { fireLastProjectsReopenedEvent(it) }
     }
     finally {
+      @Suppress("GrazieInspection")
       // cleanup unused pre-allocated frames if the operation failed or was canceled
       for (task in taskList) {
         task.task.frame?.dispose()
@@ -745,7 +762,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
    * Do not reopen a project on restart and do not show it in the recent projects list
    */
   fun setProjectHidden(project: Project, hidden: Boolean) {
-    val path = getProjectPath(project) ?: return
+    val path = getProjectPath(project)?.invariantSeparatorsPathString ?: return
     synchronized(stateLock) {
       val info = state.additionalInfo.computeIfAbsent(path) {
         // A new unopened project isn't in `state.additionalInfo` yet, because it will be
@@ -825,7 +842,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     val workspaceId = project.stateStore.projectWorkspaceId
 
     val frameInfo = ProjectFrameBounds.getInstance(project).getActualFrameInfoInDeviceSpace(frameHelper, frame, windowManager)
-    val path = getProjectPath(project)
+    val path = getProjectPath(project)?.invariantSeparatorsPathString
     synchronized(stateLock) {
       val info = state.additionalInfo.get(path)
       if (info == null) {
@@ -936,7 +953,7 @@ int32 "extendedState"
   fun updateProjectColor(project: Project) {
     val info = ProjectColorInfoManager.getInstance(project).recentProjectColorInfo
     val projectPath = ProjectWindowCustomizerService.projectPath(project) ?: return
-    updateProjectColor(projectPath, info)
+    updateProjectColor(projectPath.invariantSeparatorsPathString, info)
   }
 
   @Internal

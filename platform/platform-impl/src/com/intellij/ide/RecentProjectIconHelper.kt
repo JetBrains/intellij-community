@@ -39,23 +39,11 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
-import kotlin.io.path.Path
 
 @Internal
 fun unscaledProjectIconSize(): Int = Registry.intValue("ide.project.icon.size", 20)
 
 internal fun userScaledProjectIconSize() = JBUIScale.scale(unscaledProjectIconSize())
-
-private fun getDotIdeaPath(path: Path): Path {
-  if (Files.isDirectory(path) || path.parent == null) {
-    return ProjectStorePathManager.getInstance().getStoreDescriptor(path).dotIdea!!
-  }
-
-  val fileName = path.fileName.toString()
-  val dotIndex = fileName.lastIndexOf('.')
-  val fileNameWithoutExt = if (dotIndex == -1) fileName else fileName.take(dotIndex)
-  return path.parent.resolve("$DIRECTORY_STORE_FOLDER/$DIRECTORY_STORE_FOLDER.$fileNameWithoutExt/$DIRECTORY_STORE_FOLDER")
-}
 
 private val projectIconCache = ContainerUtil.createSoftValueMap<Pair<String, Int>, ProjectIcon>()
 
@@ -64,9 +52,16 @@ private val cacheEpoch = AtomicInteger()
 @Internal
 class RecentProjectIconHelper {
   companion object {
-    internal fun getDotIdeaPath(path: String): Path? {
+    internal fun getDotIdeaPath(file: Path): Path? {
       try {
-        return getDotIdeaPath(Path.of(path))
+        if (Files.isDirectory(file) || file.parent == null) {
+          return ProjectStorePathManager.getInstance().getStoreDescriptor(file).dotIdea!!
+        }
+
+        val fileName = file.fileName.toString()
+        val dotIndex = fileName.lastIndexOf('.')
+        val fileNameWithoutExt = if (dotIndex == -1) fileName else fileName.take(dotIndex)
+        return file.parent.resolve("$DIRECTORY_STORE_FOLDER/$DIRECTORY_STORE_FOLDER.$fileNameWithoutExt/$DIRECTORY_STORE_FOLDER")
       }
       catch (_: InvalidPathException) {
         return null
@@ -154,7 +149,13 @@ class RecentProjectIconHelper {
     if (!RecentProjectsManagerBase.isFileSystemPath(path)) {
       return EmptyIcon.create(iconSize)
     }
-    return createDeferredIcon(LocalProjectIconKey(cacheEpoch.get(), path, isProjectValid, iconSize, name))
+    return createDeferredIcon(LocalProjectIconKey(
+      cacheEpoch = cacheEpoch.get(),
+      path = path,
+      isProjectValid = isProjectValid,
+      iconSize = iconSize,
+      name = name,
+    ))
   }
 
   fun getNonLocalProjectIcon(
@@ -163,12 +164,18 @@ class RecentProjectIconHelper {
     iconSize: Int = unscaledProjectIconSize(),
     name: String? = null,
   ): Icon {
-    return createDeferredIcon(NonLocalProjectIconKey(cacheEpoch.get(), id, isProjectValid, iconSize, name))
+    return createDeferredIcon(NonLocalProjectIconKey(
+      cacheEpoch = cacheEpoch.get(),
+      id = id,
+      isProjectValid = isProjectValid,
+      iconSize = iconSize,
+      name = name,
+    ))
   }
 
-
-  fun hasCustomIcon(project: Project): Boolean =
-    ProjectWindowCustomizerService.projectPath(project)?.let { getCustomIconFileInfo(it) } != null
+  fun hasCustomIcon(project: Project): Boolean {
+    return RecentProjectsManagerBase.getInstanceEx().getProjectPath(project)?.let { getCustomIconFileInfo(it) } != null
+  }
 }
 
 private fun createDeferredIcon(key: DeferredIconKey): Icon {
@@ -210,13 +217,12 @@ private data class NonLocalProjectIconKey(
     getGeneratedProjectIcon(path = id, isProjectValid, iconSize, name)
 }
 
-private fun getCustomIconFileInfo(path: @SystemIndependent String): Pair<Path, BasicFileAttributes>? {
+private fun getCustomIconFileInfo(file: Path): Pair<Path, BasicFileAttributes>? {
   val file = sequenceOf("icon.svg", "icon.png")
-               .mapNotNull { RecentProjectIconHelper.getDotIdeaPath(path)?.resolve(it) }
+               .mapNotNull { RecentProjectIconHelper.getDotIdeaPath(file)?.resolve(it) }
                .firstOrNull { Files.exists(it) } ?: return null
 
   val fileInfo = file.basicAttributesIfExists() ?: return null
-
   return Pair(file, fileInfo)
 }
 
@@ -225,11 +231,12 @@ private fun getCustomIcon(path: @SystemIndependent String, isProjectValid: Boole
   // Avoid greedy I/O under non-local projects. For example, in the case of WSL:
   //	1.	it may trigger Ijent initialization for each recent project
   //	2.	with Ijent disabled, performance may degrade further — 9P is very slow and could lead to UI freezes
-  if (Path(path).getEelDescriptor() != LocalEelDescriptor) {
+  val projectFile = Path.of(path)
+  if (projectFile.getEelDescriptor() != LocalEelDescriptor) {
     return null
   }
 
-  val (file, fileInfo) = getCustomIconFileInfo(path) ?: return null
+  val (file, fileInfo) = getCustomIconFileInfo(projectFile) ?: return null
   val timestamp = fileInfo.lastModifiedTime().toMillis()
 
   var iconWrapper = projectIconCache.get(Pair(path, iconSize))
@@ -263,7 +270,7 @@ private fun getGeneratedProjectIcon(path: @SystemIndependent String,
   if (projectIcon != null && isCachedIcon(projectIcon, isProjectValid, name = name)) {
     return projectIcon.icon
   }
-  return RecentProjectIconHelper.generateProjectIcon(path, isProjectValid, size, projectName = name)
+  return RecentProjectIconHelper.generateProjectIcon(path = path, isProjectValid = isProjectValid, size = size, projectName = name)
 }
 
 private fun isCachedIcon(icon: ProjectIcon, isProjectValid: Boolean, timestamp: Long? = null, name: String? = null): Boolean {
@@ -286,7 +293,6 @@ private data class ProjectIcon(
 class ProjectFileIcon internal constructor(
   val iconData: IconData,
 ) : JBCachingScalableIcon<ProjectFileIcon>() {
-
   private var cachedIcon: Icon? = null
   private var cachedIconSysScale: Float? = null
   private var cachedIconPixScale: Float? = null
@@ -432,7 +438,7 @@ object ProjectIconPalette : ColorPalette {
 
   override fun gradient(seed: String?): Pair<Color, Color> {
     seed ?: return gradients[0]
-    return ProjectWindowCustomizerService.getInstance().getRecentProjectIconColor(seed)
+    return ProjectWindowCustomizerService.getInstance().getRecentProjectIconColor(Path.of(seed))
   }
 }
 
