@@ -143,11 +143,15 @@ public final class PyTypeChecker {
     }
 
     if (expected instanceof PySelfType selfType) {
-      return Optional.of(match(selfType, actual, context));
+      return Optional.of(matchSelf(selfType, actual, context));
     }
 
     if (actual instanceof PySelfType selfType && context.reversedSubstitutions) {
-      return Optional.of(match(selfType, expected, context));
+      return Optional.of(matchSelf(selfType, expected, context));
+    }
+
+    if (actual instanceof PySelfType selfType) {
+      return Optional.of(matchSelf(expected, selfType, context));
     }
 
     if (expected instanceof PyParamSpecType paramSpecType) {
@@ -358,10 +362,59 @@ public final class PyTypeChecker {
     }
   }
 
-  private static boolean match(@NotNull PySelfType expected, @Nullable PyType actual, @NotNull MatchContext context) {
-    if (!(actual instanceof PySelfType actualSelf)) return false;
-    return expected.isDefinition() == actualSelf.isDefinition() &&
-           match(expected.getScopeClassType(), actualSelf.getScopeClassType(), context).orElse(false);
+  private static boolean matchSelf(@Nullable PyType expected, @Nullable PyType actual, @NotNull MatchContext context) {
+    if (expected == null || actual == null) {
+      return true;
+    }
+    if (expected instanceof PySelfType expectedSelf) {
+      var substitutedExpected = substitute(expectedSelf, context.mySubstitutions, context.context);
+
+      if (substitutedExpected instanceof PySelfType expectedSelfAfterSubst) {  // no qualifier
+        // The presence of the matching scope indicates that we are within the function Self belongs to
+        if (expectedSelf.getMatchingScope() != null) {
+          if (actual instanceof PySelfType actualSelf) {
+            /*
+             x: Self = cls # Error
+             y: Self = cls() # OK
+             */
+            return expectedSelf.getMatchingScope().equals(actualSelf.getScopeClassType().getPyClass()) &&
+                   expectedSelf.isDefinition() == actualSelf.isDefinition();
+          }
+          /*
+           Other cases should fail, especially important for:
+           class MyClass:
+              def method(self) -> Self:
+                  return MyClass() <- Error, forbidden
+           */
+          return false;
+        }
+        return match(expectedSelfAfterSubst.getScopeClassType(), actual, context).orElse(false);
+      }
+      else { // qualifier is present, match the qualifier and the passed type
+        /*
+        class Z:
+          def method(self): ...
+
+        class A:
+          def method(self):
+              Z.method(self) # E, Self@A
+              Z.method(A()) # E, A
+         */
+        if (substitutedExpected instanceof PyClassType expectedClassType &&
+            PySelfType.extractScopeClassTypeIfNeeded(actual) instanceof PyClassType actualClassType) {
+          return match(expectedClassType, actualClassType, context).orElse(false);
+        }
+      }
+      return true;
+    }
+
+    if (actual instanceof PySelfType actualSelf) {
+      if (expected instanceof PyClassType expectedClassType) {
+        return match(expectedClassType, actualSelf.getScopeClassType(), context).orElse(false);
+      }
+    }
+    // fallback
+    return match(expected, actual, context).orElse(true);
   }
 
   private static @Nullable PyType toClass(@Nullable PyType type) {

@@ -3452,15 +3452,18 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-76860
   public void testSpecificClassInsteadOfSelfInCallExpr() {
     doTestByText("""
-                  from typing import Self
-                  class Shape:
-                      def method2(self):
-                          self.method3(<warning descr="Expected type 'Self', got 'Shape' instead">Shape()</warning>) # E
-                          self.method3(self) # OK
-                          ...
-                  
-                      def method3(self, x: Self): ...
-                  """);
+                 from typing import Self
+                 class Shape:
+                     def method2(self):
+                         self.method3(<warning descr="Expected type 'Self', got 'Shape' instead">Shape()</warning>) # E
+                         self.method3(self) # OK
+                         self.method4(<warning descr="Expected type 'list[Self]', got 'list[Shape]' instead">[Shape()]</warning>) # E
+                         self.method4([self])  # OK
+                         ...
+                 
+                     def method3(self, x: Self): ...
+                     def method4(self, x: list[Self]): ...
+                 """);
   }
 
   // PY-76886
@@ -3481,5 +3484,86 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                       def method4(cls) -> type[Self]:
                           return cls # OK
                   """);
+  }
+
+  public void testSelfVsDunderClass() {
+    doTestByText("""
+                  from typing import Self
+                  class ConcreteComparable:
+                      def clone(self) -> Self:
+                          return self.__class__() # OK
+                      def clone_cls(self) -> type[Self]:
+                          return self.__class__ # OK
+                  """);
+  }
+
+  public void testSelfInUnions() {
+    doTestByText("""
+                 from typing import Self
+                 class MyClass:
+                     def foo(self):
+                         y1: Self | None = self
+                         y2: Self | None = None
+                         y3: Self | int = self
+                         y4: Self | int = 3
+                         y5: Self | int | list[Self] = [self]
+                         y6: Self | int | list[Self] = <warning descr="Expected type 'Self | int | list[Self]', got 'list[int]' instead">[3]</warning> # E
+                         y8: Self | int | list[Self] = <warning descr="Expected type 'Self | int | list[Self]', got 'str' instead">"str"</warning> # E
+                 """);
+  }
+
+  public void testSelfAssignedToOtherTypeGood() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   class Base: ...
+                   
+                   class Shape(Base):
+                       def good_meth(self):
+                           #y1: Self = self
+                           #y2: Base = self # OK
+                           #y3: object = self
+                           #y5: Shape = self
+                           y6: Self | None = self
+                   
+                       @classmethod
+                       def good_cls(cls):
+                           y1: type[Self] = cls
+                           y2: type[Shape] = cls
+                           y3: type[Base] = cls
+                           y4: type[object] = cls
+                           y5: Self = cls()
+                           y6: Base = cls()
+                   
+                   class Circle(Shape): ...
+                   """);
+  }
+
+  public void testSelfAssignedToOtherTypeBad() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   class Base: ...
+                   
+                   class Shape(Base):
+                   
+                       def bad_meth(self):
+                           y1: int = <warning descr="Expected type 'int', got 'Self' instead">self</warning>
+                           y2: type[Shape] = <warning descr="Expected type 'type[Shape]', got 'Self' instead">self</warning>
+                           y3: type["Circle"] = <warning descr="Expected type 'type[Circle]', got 'Self' instead">self</warning>
+                           y4: type[Self] = <warning descr="Expected type 'type[Self]', got 'Self' instead">self</warning>
+                           y5: "Circle" = <warning descr="Expected type 'Circle', got 'Self' instead">self</warning>
+                   
+                       @classmethod
+                       def bad_cls(cls):
+                           y1: int = <warning descr="Expected type 'int', got 'type[Self]' instead">cls</warning>
+                           y2: Shape = <warning descr="Expected type 'Shape', got 'type[Self]' instead">cls</warning>
+                           y3: Base = <warning descr="Expected type 'Base', got 'type[Self]' instead">cls</warning>
+                           y4: "Circle" = <warning descr="Expected type 'Circle', got 'type[Self]' instead">cls</warning>
+                           y5: Self = <warning descr="Expected type 'Self', got 'type[Self]' instead">cls</warning>
+                           y6: "Circle" = <warning descr="Expected type 'Circle', got 'Self' instead">cls()</warning>
+                   
+                   class Circle(Shape): ...
+                   """);
   }
 }

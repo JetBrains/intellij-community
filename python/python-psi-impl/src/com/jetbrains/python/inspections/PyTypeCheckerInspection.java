@@ -127,6 +127,9 @@ public class PyTypeCheckerInspection extends PyInspection {
           }
 
           PyType actual = returnExpr != null ? tryPromotingType(returnExpr, expected) : PyBuiltinCache.getInstance(node).getNoneType();
+          if (returnExpr != null) {
+            expected = trySetSelfMatchingScope(expected, returnExpr, myTypeEvalContext);
+          }
 
           if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
             final String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
@@ -277,6 +280,9 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
 
       final PyType actual = tryPromotingType(value, expected);
+
+      expected = trySetSelfMatchingScope(expected, value, myTypeEvalContext);
+
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
         String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
         String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
@@ -348,6 +354,25 @@ public class PyTypeCheckerInspection extends PyInspection {
       final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(value, expected, myTypeEvalContext, null);
       if (promotedToLiteral != null) return promotedToLiteral;
       return myTypeEvalContext.getType(value);
+    }
+
+    private @Nullable PyType trySetSelfMatchingScope(@Nullable PyType type, @NotNull PyExpression anchor, @NotNull TypeEvalContext context) {
+      if (type != null) {
+        ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(anchor);
+        if (scopeOwner instanceof PyFunction function) {
+          scopeOwner = function.getContainingClass();
+        }
+        if (scopeOwner instanceof PyClass pyClass) {
+          return PyCloningTypeVisitor.clone(type, new PyCloningTypeVisitor(context) {
+            @Override
+            public PyType visitPySelfType(@NotNull PySelfType selfType) {
+              selfType.setMatchingScope(pyClass);
+              return super.visitPySelfType(selfType);
+            }
+          });
+        }
+      }
+      return type;
     }
 
     @Override
@@ -480,7 +505,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       for (Map.Entry<PyExpression, PyCallableParameter> entry : regularMappedParameters.entrySet()) {
         final PyExpression argument = entry.getKey();
         final PyCallableParameter parameter = entry.getValue();
-        final PyType expected = parameter.getArgumentType(myTypeEvalContext);
+        final PyType expected = trySetSelfMatchingScope(parameter.getArgumentType(myTypeEvalContext), argument, myTypeEvalContext);
         final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(argument, expected, myTypeEvalContext, substitutions);
         final var actual = promotedToLiteral != null ? promotedToLiteral : myTypeEvalContext.getType(argument);
 

@@ -15,6 +15,7 @@ import java.util.Set;
 
 public final class PySelfType implements PyTypeParameterType, PyClassLikeType {
   private final @NotNull PyClassType myScopeClassType;
+  private @Nullable PyClass matchingScope = null;
 
   public PySelfType(@NotNull PyClassType scopeClassType) {
     myScopeClassType = scopeClassType;
@@ -72,6 +73,29 @@ public final class PySelfType implements PyTypeParameterType, PyClassLikeType {
   @Override
   public @NotNull PySelfType toClass() {
     return new PySelfType(myScopeClassType.toClass());
+  }
+
+  /**
+   * The presense of this field indicates that we perform type-check inside the class that this type belongs to.
+   * It means that some special rules should be applied, e.g.:
+   * <pre>
+   * {@code
+   *   class Example:
+   *      def returns_instance(self) -> Self:
+   *          return Example() # Error
+   *
+   *       def returns_self(self) -> Self:
+   *          return self # OK
+   * }
+   * </pre>
+   */
+  @Nullable
+  public PyClass getMatchingScope() {
+    return matchingScope;
+  }
+
+  public void setMatchingScope(@Nullable PyClass matchingScopeClass) {
+    this.matchingScope = matchingScopeClass;
   }
 
   @Override
