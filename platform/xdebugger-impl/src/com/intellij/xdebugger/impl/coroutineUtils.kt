@@ -18,6 +18,7 @@ import com.intellij.xdebugger.frame.XInlineDebuggerDataCallback
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.xdebugger.impl.inline.InlineWatchNodeImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -87,6 +88,11 @@ private class FrontendDebuggerActionCoroutineScope(val cs: CoroutineScope)
 private class FrontendDebuggerActionProjectCoroutineScope(val cs: CoroutineScope)
 
 internal fun updateInlineDebuggerData(session: XDebugSessionProxy, xValue: XValue, callback: XInlineDebuggerDataCallback) {
+  if (xValue is InlineWatchNodeImpl.XInlineWatchValue) {
+    xValue.computeInlineDebuggerData(callback)
+    return
+  }
+
   val manager = XDebugManagerProxy.getInstance()
   if (!manager.hasBackendCounterpart(xValue)) {
     return
