@@ -11592,7 +11592,7 @@ f:com.intellij.ui.DeferredIconImpl
 - getModificationCount():J
 - getToolTip(Z):java.lang.String
 - hashCode():I
-- f:isDone():Z
+- isDone():Z
 - f:isNeedReadAction():Z
 - notifyPaint(java.awt.Component,I,I):V
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V

@@ -184,6 +184,7 @@ com.intellij.ui.DeferredIcon
 - com.intellij.ui.icons.UpdatableIcon
 - a:evaluate():javax.swing.Icon
 - a:getBaseIcon():javax.swing.Icon
+- a:isDone():Z
 f:com.intellij.ui.HighlightedRegion
 - endOffset:I
 - startOffset:I

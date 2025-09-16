@@ -64,7 +64,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   val isNeedReadAction: Boolean
 
   @get:RequiresEdt
-  var isDone: Boolean = false
+  override var isDone: Boolean = false
     private set
 
   private var modificationCount = AtomicLong(0)

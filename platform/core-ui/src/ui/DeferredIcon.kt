@@ -2,9 +2,15 @@
 package com.intellij.ui
 
 import com.intellij.ui.icons.UpdatableIcon
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 interface DeferredIcon : UpdatableIcon {
   val baseIcon: Icon
+
+  @get:RequiresEdt
+  val isDone: Boolean
+
   fun evaluate(): Icon
 }
