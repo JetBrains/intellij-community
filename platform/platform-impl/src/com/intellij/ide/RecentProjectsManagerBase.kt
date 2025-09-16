@@ -405,8 +405,9 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   }
 
   @TestOnly
-  fun openProjectSync(projectFile: Path, openProjectOptions: OpenProjectTask): Project? {
-    return runBlockingMaybeCancellable { openProject(projectFile, openProjectOptions) }
+  @Internal
+  fun openProjectSync(projectFile: Path): Project? {
+    return runBlockingMaybeCancellable { openProject(projectFile, OpenProjectTask()) }
   }
 
   open suspend fun openProject(projectFile: Path, options: OpenProjectTask): Project? {
@@ -459,14 +460,15 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       return
     }
 
-    val projectPath = getProjectPath(project)?.invariantSeparatorsPathString ?: return
+    val projectPath = getProjectPath(project) ?: return
     synchronized(stateLock) {
       findAndRemoveNewlyClonedProject(projectPath)
-      val info = state.additionalInfo.computeIfAbsent(projectPath) { RecentProjectMetaInfo() }
+      val pathString = projectPath.invariantSeparatorsPathString
+      val info = state.additionalInfo.computeIfAbsent(pathString) { RecentProjectMetaInfo() }
       info.activationTimestamp = timestamp
       info.opened = true
       info.displayName = getProjectDisplayName(project)
-      state.lastOpenedProject = projectPath
+      state.lastOpenedProject = pathString
     }
     modCounter.increment()
   }
@@ -491,15 +493,16 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       return
     }
 
-    val projectPath = getProjectPath(project)?.invariantSeparatorsPathString ?: return
+    val projectPath = getProjectPath(project)
+    val projectPathString = projectPath?.invariantSeparatorsPathString ?: return
     synchronized(stateLock) {
       findAndRemoveNewlyClonedProject(projectPath)
-      val info = markPathRecent(path = projectPath, project = project)
+      val info = markPathRecent(path = projectPathString, project = project)
       info.opened = true
       info.displayName = getProjectDisplayName(project)
       info.projectOpenTimestamp = openTimestamp
 
-      state.lastOpenedProject = projectPath
+      state.lastOpenedProject = projectPathString
       validateRecentProjects(modCounter, state.additionalInfo)
     }
 
@@ -876,12 +879,12 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
    *
    * @param projectPath path to file that opens project (may differ with directory specified during cloning)
    */
-  private fun findAndRemoveNewlyClonedProject(projectPath: String) {
-    if (state.additionalInfo.containsKey(projectPath)) {
+  private fun findAndRemoveNewlyClonedProject(projectPath: Path) {
+    if (state.additionalInfo.containsKey(projectPath.invariantSeparatorsPathString)) {
       return
     }
 
-    var file: Path? = Path.of(projectPath)
+    var file: Path? = projectPath
     while (file != null) {
       val projectMetaInfo = state.additionalInfo.remove(file.invariantSeparatorsPathString)
       if (projectMetaInfo != null) {
