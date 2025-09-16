@@ -51,6 +51,8 @@ import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.event.HyperlinkListener
 import kotlin.time.Duration.Companion.seconds
 
+private data class StackFrameUpdate(val frame: FrontendXStackFrame?, val isFrameChanged: Boolean)
+
 @VisibleForTesting
 @ApiStatus.Internal
 class FrontendXDebuggerSession private constructor(
@@ -75,7 +77,7 @@ class FrontendXDebuggerSession private constructor(
   private val sessionStateFlow = MutableStateFlow(sessionDto.initialSessionState)
   private val suspendContext = MutableStateFlow<FrontendXSuspendContext?>(null)
   private val currentExecutionStack = MutableStateFlow<FrontendXExecutionStack?>(null)
-  private val currentStackFrame = MutableStateFlow<FrontendXStackFrame?>(null)
+  private val currentStackFrame = MutableStateFlow<StackFrameUpdate>(StackFrameUpdate(null, false))
   private val activeNonLineBreakpoint: StateFlow<XBreakpointProxy?> = channelFlow {
     sessionDto.activeNonLineBreakpointIdFlow.toFlow().collectLatest { breakpointId ->
       if (breakpointId == null) {
@@ -90,7 +92,7 @@ class FrontendXDebuggerSession private constructor(
   // TODO Actually session could have a global evaluator, see
   //  com.intellij.xdebugger.XDebugProcess.getEvaluator overrides
   override val currentEvaluator: XDebuggerEvaluator?
-    get() = currentStackFrame.value?.evaluator
+    get() = currentStackFrame.value.frame?.evaluator
 
   override val isStopped: Boolean
     get() = sessionStateFlow.value.isStopped
@@ -175,9 +177,11 @@ class FrontendXDebuggerSession private constructor(
       }
     }
     cs.launch {
-      currentStackFrame.collectLatest {
-        withContext(Dispatchers.EDT) {
-          eventsDispatcher.multicaster.stackFrameChanged()
+      currentStackFrame.collectLatest { value ->
+        if (value.isFrameChanged) {
+          withContext(Dispatchers.EDT) {
+            eventsDispatcher.multicaster.stackFrameChanged()
+          }
         }
       }
     }
@@ -217,7 +221,7 @@ class FrontendXDebuggerSession private constructor(
         sourcePositionFlow.value = sourcePosition?.sourcePosition()
         stackFrame?.await()?.let {
           val suspendContext = suspendContext.value ?: return
-          currentStackFrame.value = suspendContext.getOrCreateStackFrame(it)
+          currentStackFrame.value = StackFrameUpdate(suspendContext.getOrCreateStackFrame(it), true)
         }
       }
       is XDebuggerSessionEvent.BreakpointsMuted -> {}
@@ -234,7 +238,7 @@ class FrontendXDebuggerSession private constructor(
     sourcePositionFlow.value = null
     topSourcePositionFlow.value = null
     currentExecutionStack.value = null
-    currentStackFrame.value = null
+    currentStackFrame.value = StackFrameUpdate(null, false)
   }
 
   private fun SuspendData.applyToCurrents() {
@@ -253,7 +257,7 @@ class FrontendXDebuggerSession private constructor(
       }
     }
     stackFrameDto?.let {
-      currentStackFrame.value = suspendContextLifetimeScope.getOrCreateStackFrame(it, project)
+      currentStackFrame.value = StackFrameUpdate(suspendContextLifetimeScope.getOrCreateStackFrame(it, project), false)
     }
     sourcePositionFlow.value = sourcePositionDto?.sourcePosition()
     topSourcePositionFlow.value = topSourcePositionDto?.sourcePosition()
@@ -336,13 +340,14 @@ class FrontendXDebuggerSession private constructor(
   }
 
   override fun getCurrentStackFrame(): XStackFrame? {
-    return currentStackFrame.value
+    return currentStackFrame.value.frame
   }
 
   override fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean) {
     cs.launch {
       currentExecutionStack.value = executionStack as FrontendXExecutionStack
-      currentStackFrame.value = frame as FrontendXStackFrame
+      currentStackFrame.value = StackFrameUpdate(frame as FrontendXStackFrame, true)
+
       XDebugSessionApi.getInstance().setCurrentStackFrame(id, executionStack.id,
                                                           frame.id, isTopFrame, changedByUser = true)
     }
