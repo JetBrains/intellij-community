@@ -18,22 +18,24 @@ public abstract class TracingFileSystemProvider<
   F extends DelegatingFileSystem<P>
   > extends DelegatingFileSystemProvider<P, F> {
 
-  private FileSystemTracingListener myListener = new FileSystemTracingListener.NoopFileSystemTracingListener();
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private FileSystemTracingListener<Object> myListener = (FileSystemTracingListener) new FileSystemTracingListener.NoopFileSystemTracingListener();
 
-  public void setTraceListener(FileSystemTracingListener listener) {
-    myListener = listener;
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  public void setTraceListener(FileSystemTracingListener<?> listener) {
+    myListener = (FileSystemTracingListener) listener;
   }
 
   @Override
   public void createSymbolicLink(Path link, Path target, FileAttribute<?>... attrs) throws IOException {
     FileSystemProvider delegate = getDelegate(link, target);
-    myListener.providerCreateSymbolicLinkStarted(delegate, link, target, attrs);
+    Object token = myListener.providerCreateSymbolicLinkStarted(delegate, link, target, attrs);
     try {
       delegate.createSymbolicLink(toDelegatePath(link), toDelegatePath(target), attrs);
-      myListener.providerCreateSymbolicLinkReturn(delegate, link, target, attrs);
+      myListener.providerGenericReturn(token);
     }
-    catch (IOException err) {
-      myListener.providerCreateSymbolicLinkError(delegate, err, link, target, attrs);
+    catch (Throwable err) {
+      myListener.providerGenericError(delegate, err);
       throw err;
     }
   }
@@ -41,13 +43,13 @@ public abstract class TracingFileSystemProvider<
   @Override
   public void createLink(Path link, Path existing) throws IOException {
     FileSystemProvider delegate = getDelegate(link, existing);
-    myListener.providerCreateLinkStarted(delegate, link, existing);
+    Object token = myListener.providerCreateLinkStarted(delegate, link, existing);
     try {
       delegate.createLink(toDelegatePath(link), toDelegatePath(existing));
-      myListener.providerCreateLinkReturn(delegate, link, existing);
+      myListener.providerGenericReturn(token);
     }
-    catch (IOException err) {
-      myListener.providerCreateLinkError(delegate, err, link, existing);
+    catch (Throwable err) {
+      myListener.providerGenericError(delegate, err);
       throw err;
     }
   }
@@ -55,14 +57,14 @@ public abstract class TracingFileSystemProvider<
   @Override
   public boolean deleteIfExists(Path path) throws IOException {
     FileSystemProvider delegate = getDelegate(path, null);
-    myListener.providerDeleteIfExistsStarted(delegate, path);
+    Object token = myListener.providerDeleteIfExistsStarted(delegate, path);
     try {
       boolean result = delegate.deleteIfExists(toDelegatePath(path));
-      myListener.providerDeleteIfExistsReturn(delegate, result, path);
+      myListener.providerGenericReturn(token);
       return result;
     }
-    catch (IOException err) {
-      myListener.providerDeleteIfExistsError(delegate, err, path);
+    catch (Throwable err) {
+      myListener.providerGenericError(delegate, err);
       throw err;
     }
   }
@@ -70,14 +72,14 @@ public abstract class TracingFileSystemProvider<
   @Override
   public Path readSymbolicLink(Path link) throws IOException {
     FileSystemProvider delegate = getDelegate(link, null);
-    myListener.providerReadSymbolicLinkStarted(delegate, link);
+    Object token = myListener.providerReadSymbolicLinkStarted(delegate, link);
     try {
       Path result = wrapDelegatePath(delegate.readSymbolicLink(toDelegatePath(link)));
-      myListener.providerReadSymbolicLinkReturn(delegate, result, link);
+      myListener.providerGenericReturn(token);
       return result;
     }
-    catch (IOException err) {
-      myListener.providerReadSymbolicLinkError(delegate, err, link);
+    catch (Throwable err) {
+      myListener.providerGenericError(delegate, err);
       throw err;
     }
   }
@@ -85,14 +87,14 @@ public abstract class TracingFileSystemProvider<
   @Override
   public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     FileSystemProvider delegate = getDelegate(path, null);
-    myListener.providerNewByteChannelStarted(delegate, path, options, attrs);
+    Object token = myListener.providerNewByteChannelStarted(delegate, path, options, attrs);
     try {
       SeekableByteChannel result = delegate.newByteChannel(toDelegatePath(path), options, attrs);
-      SeekableByteChannel wrappedResult = myListener.providerNewByteChannelReturn(delegate, result, path, options, attrs);
+      SeekableByteChannel wrappedResult = myListener.providerNewByteChannelReturn(token, result);
       return wrappedResult;
     }
-    catch (IOException err) {
-      myListener.providerNewByteChannelError(delegate, err, path, options, attrs);
+    catch (Throwable err) {
+      myListener.providerGenericError(token, err);
       throw err;
     }
   }
@@ -100,14 +102,14 @@ public abstract class TracingFileSystemProvider<
   @Override
   public DirectoryStream<Path> newDirectoryStream(Path dir, @Nullable DirectoryStream.Filter<? super Path> filter) throws IOException {
     FileSystemProvider delegate = getDelegate(dir, null);
-    myListener.providerNewDirectoryStreamStarted(delegate, dir, filter);
+    Object token = myListener.providerNewDirectoryStreamStarted(delegate, dir, filter);
     try {
       var result = delegateNewDirectoryStream(delegate, dir, filter);
-      DirectoryStream<Path> wrappedResult = myListener.providerNewDirectoryStreamReturn(delegate, result, dir, filter);
+      DirectoryStream<Path> wrappedResult = myListener.providerNewDirectoryStreamReturn(token, result);
       return wrappedResult;
     }
-    catch (IOException err) {
-      myListener.providerNewDirectoryStreamError(delegate, err, dir, filter);
+    catch (Throwable err) {
+      myListener.providerGenericError(token, err);
       throw err;
     }
   }
@@ -115,13 +117,13 @@ public abstract class TracingFileSystemProvider<
   @Override
   public void createDirectory(Path dir, FileAttribute<?>... attrs) throws IOException {
     FileSystemProvider delegate = getDelegate(dir, null);
-    myListener.providerCreateDirectoryStarted(delegate, dir, attrs);
+    Object token = myListener.providerCreateDirectoryStarted(delegate, dir, attrs);
     try {
       delegate.createDirectory(toDelegatePath(dir), attrs);
-      myListener.providerCreateDirectoryReturn(delegate, dir, attrs);
+      myListener.providerGenericReturn(token);
     }
-    catch (IOException err) {
-      myListener.providerCreateDirectoryError(delegate, err, dir, attrs);
+    catch (Throwable err) {
+      myListener.providerGenericError(token, err);
       throw err;
     }
   }
@@ -129,13 +131,13 @@ public abstract class TracingFileSystemProvider<
   @Override
   public void delete(Path path) throws IOException {
     FileSystemProvider delegate = getDelegate(path, null);
-    myListener.providerDeleteStarted(delegate, path);
+    Object token = myListener.providerDeleteStarted(delegate, path);
     try {
       delegate.delete(toDelegatePath(path));
-      myListener.providerDeleteReturn(delegate, path);
+      myListener.providerGenericReturn(token);
     }
-    catch (IOException err) {
-      myListener.providerDeleteError(delegate, err, path);
+    catch (Throwable err) {
+      myListener.providerGenericError(token, err);
       throw err;
     }
   }
@@ -143,13 +145,13 @@ public abstract class TracingFileSystemProvider<
   @Override
   public void copy(Path source, Path target, CopyOption... options) throws IOException {
     FileSystemProvider delegate = getDelegate(source, target);
-    myListener.providerCopyStarted(delegate, source, target, options);
+    Object token = myListener.providerCopyStarted(delegate, source, target, options);
     try {
       delegate.copy(toDelegatePath(source), toDelegatePath(target), options);
-      myListener.providerCopyReturn(delegate, source, target, options);
+      myListener.providerGenericReturn(token);
     }
-    catch (IOException err) {
-      myListener.providerCopyError(delegate, err, source, target, options);
+    catch (Throwable err) {
+      myListener.providerGenericError(token, err);
       throw err;
     }
   }
@@ -157,13 +159,13 @@ public abstract class TracingFileSystemProvider<
   @Override
   public void move(Path source, Path target, CopyOption... options) throws IOException {
     FileSystemProvider delegate = getDelegate(source, target);
-    myListener.providerMoveStarted(delegate, source, target, options);
+    Object token = myListener.providerMoveStarted(delegate, source, target, options);
     try {
       delegate.move(toDelegatePath(source), toDelegatePath(target), options);
-      myListener.providerMoveReturn(delegate, source, target, options);
+      myListener.providerGenericReturn(token);
     }
-    catch (IOException err) {
-      myListener.providerMoveError(delegate, err, source, target, options);
+    catch (Throwable err) {
+      myListener.providerGenericError(token, err);
       throw err;
     }
   }
@@ -171,14 +173,14 @@ public abstract class TracingFileSystemProvider<
   @Override
   public boolean isSameFile(Path path, Path path2) throws IOException {
     FileSystemProvider delegate = getDelegate(path, path2);
-    myListener.providerIsSameFileStarted(delegate, path, path2);
+    Object token = myListener.providerIsSameFileStarted(delegate, path, path2);
     try {
       boolean result = delegate.isSameFile(toDelegatePath(path), toDelegatePath(path2));
-      myListener.providerIsSameFileReturn(delegate, result, path, path2);
+      myListener.providerGenericReturn(token);
       return result;
     }
-    catch (IOException err) {
-      myListener.providerIsSameFileError(delegate, err, path, path2);
+    catch (Throwable err) {
+      myListener.providerGenericError(token, err);
       throw err;
     }
   }
@@ -186,14 +188,14 @@ public abstract class TracingFileSystemProvider<
   @Override
   public boolean isHidden(Path path) throws IOException {
     FileSystemProvider delegate = getDelegate(path, null);
-    myListener.providerIsHiddenStarted(delegate, path);
+    Object token = myListener.providerIsHiddenStarted(delegate, path);
     try {
       boolean result = delegate.isHidden(toDelegatePath(path));
-      myListener.providerIsHiddenReturn(delegate, result, path);
+      myListener.providerGenericReturn(token);
       return result;
     }
-    catch (IOException err) {
-      myListener.providerIsHiddenError(delegate, err, path);
+    catch (Throwable err) {
+      myListener.providerGenericError(token, err);
       throw err;
     }
   }
@@ -201,14 +203,14 @@ public abstract class TracingFileSystemProvider<
   @Override
   public FileStore getFileStore(Path path) throws IOException {
     FileSystemProvider delegate = getDelegate(path, null);
-    myListener.providerGetFileStoreStarted(delegate, path);
+    Object token = myListener.providerGetFileStoreStarted(delegate, path);
     try {
       FileStore result = delegate.getFileStore(toDelegatePath(path));
-      myListener.providerGetFileStoreReturn(delegate, result, path);
+      myListener.providerGenericReturn(token);
       return result;
     }
-    catch (IOException err) {
-      myListener.providerGetFileStoreError(delegate, err, path);
+    catch (Throwable err) {
+      myListener.providerGenericError(token, err);
       throw err;
     }
   }
@@ -216,13 +218,13 @@ public abstract class TracingFileSystemProvider<
   @Override
   public void checkAccess(Path path, AccessMode... modes) throws IOException {
     FileSystemProvider delegate = getDelegate(path, null);
-    myListener.providerCheckAccessStarted(delegate, path, modes);
+    Object token = myListener.providerCheckAccessStarted(delegate, path, modes);
     try {
       delegate.checkAccess(toDelegatePath(path), modes);
-      myListener.providerCheckAccessReturn(delegate, path, modes);
+      myListener.providerGenericReturn(token);
     }
-    catch (IOException err) {
-      myListener.providerCheckAccessError(delegate, err, path, modes);
+    catch (Throwable err) {
+      myListener.providerGenericError(token, err);
       throw err;
     }
   }
@@ -230,23 +232,29 @@ public abstract class TracingFileSystemProvider<
   @Override
   public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type, LinkOption... options) {
     FileSystemProvider delegate = getDelegate(path, null);
-    myListener.providerGetFileAttributeViewStarted(delegate, path, type, options);
-    V result = delegate.getFileAttributeView(toDelegatePath(path), type, options);
-    myListener.providerGetFileAttributeViewReturn(delegate, result, path, type, options);
-    return result;
+    Object token = myListener.providerGetFileAttributeViewStarted(delegate, path, type, options);
+    try {
+      V result = delegate.getFileAttributeView(toDelegatePath(path), type, options);
+      myListener.providerGenericReturn(token);
+      return result;
+    }
+    catch (Throwable err) {
+      myListener.providerGenericError(token, err);
+      throw err;
+    }
   }
 
   @Override
   public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options) throws IOException {
     FileSystemProvider delegate = getDelegate(path, null);
-    myListener.providerReadAttributesStarted(delegate, path, type, options);
+    Object token = myListener.providerReadAttributesStarted(delegate, path, type, options);
     try {
       A result = delegate.readAttributes(toDelegatePath(path), type, options);
-      myListener.providerReadAttributesReturn(delegate, result, path, type, options);
+      myListener.providerGenericReturn(token);
       return result;
     }
-    catch (IOException err) {
-      myListener.providerReadAttributesError(delegate, err, path, type, options);
+    catch (Throwable err) {
+      myListener.providerGenericError(token, err);
       throw err;
     }
   }
@@ -254,14 +262,14 @@ public abstract class TracingFileSystemProvider<
   @Override
   public Map<String, Object> readAttributes(Path path, String attributes, LinkOption... options) throws IOException {
     FileSystemProvider delegate = getDelegate(path, null);
-    myListener.providerReadAttributesStarted(delegate, path, attributes, options);
+    Object token = myListener.providerReadAttributesStarted(delegate, path, attributes, options);
     try {
       Map<String, Object> result = delegate.readAttributes(toDelegatePath(path), attributes, options);
-      myListener.providerReadAttributesReturn(delegate, result, path, attributes, options);
+      myListener.providerGenericReturn(token);
       return result;
     }
-    catch (IOException err) {
-      myListener.providerReadAttributesError(delegate, err, path, attributes, options);
+    catch (Throwable err) {
+      myListener.providerGenericError(token, err);
       throw err;
     }
   }
@@ -269,13 +277,13 @@ public abstract class TracingFileSystemProvider<
   @Override
   public void setAttribute(Path path, String attribute, Object value, LinkOption... options) throws IOException {
     FileSystemProvider delegate = getDelegate(path, null);
-    myListener.providerSetAttributeStarted(delegate, path, attribute, value, options);
+    Object token = myListener.providerSetAttributeStarted(delegate, path, attribute, value, options);
     try {
       delegate.setAttribute(toDelegatePath(path), attribute, value, options);
-      myListener.providerSetAttributeReturn(delegate, path, attribute, value, options);
+      myListener.providerGenericReturn(token);
     }
-    catch (IOException err) {
-      myListener.providerSetAttributeError(delegate, err, path, attribute, value, options);
+    catch (Throwable err) {
+      myListener.providerGenericError(token, err);
       throw err;
     }
   }

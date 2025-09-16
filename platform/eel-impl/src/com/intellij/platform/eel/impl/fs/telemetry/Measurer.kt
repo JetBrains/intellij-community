@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.fs.telemetry
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
@@ -18,7 +19,15 @@ import java.util.concurrent.atomic.AtomicReference
 @ApiStatus.Internal
 object Measurer {
 
+  internal val ijentMetricsScope = Scope("ijent", PlatformMetrics, verbose = true)
+  internal val ijentTracer by lazy { TelemetryManager.getTracer(ijentMetricsScope) }
+  internal val ijentMeter by lazy { TelemetryManager.getMeter(ijentMetricsScope) }
+
   internal val eventsCounter: AtomicLong = AtomicLong()
+
+  internal val extendedFsEventsCounter: Map<FsEventKey, AtomicLong> = FsEventKey.VALUES.associateWith { AtomicLong() }
+  internal val extendedFsEventsDurationNanos: Map<FsEventKey, AtomicLong> = FsEventKey.VALUES.associateWith { AtomicLong() }
+  internal val extendedFsEventsRepeatIntervalNanos: Map<FsEventKey, AtomicLong> = FsEventKey.VALUES.associateWith { AtomicLong() }
 
   @Suppress("EnumEntryName")
   enum class DelegateType() {
@@ -48,13 +57,26 @@ object Measurer {
     val delegateType: DelegateType,
     val operation: Operation,
     val success: Boolean,
-    val repeated: Boolean?,
+    val repeated: Boolean?
   ) {
+    override fun toString(): String {
+      val successKey = if (success) ".success" else ".failure"
+      val repeatedKey = when (repeated) {
+        true -> ".repeated"
+        false -> ".initial"
+        null -> ""
+      }
+      val keyString = "ijent.fs.events.${delegateType}.${operation}$successKey$repeatedKey"
+      return keyString
+    }
     companion object {
-      val VALUES: List<FsEventKey> = DelegateType.entries.flatMap { delegateType ->
+      val VALUES: List<FsEventKey> = DelegateType.entries.filter {
+        it != DelegateType.wsl || SystemInfo.isWindows
+      }.flatMap { delegateType ->
         Operation.entries.flatMap { operation ->
           listOf(true, false).flatMap { success ->
-            listOf(null, true, false).map { repeated ->
+            val repeatedChoices = if (fsQueryStatCounter == null) listOf(null) else listOf(null, true, false)
+            repeatedChoices.map { repeated ->
               FsEventKey(delegateType, operation, success, repeated)
             }
           }
@@ -63,35 +85,26 @@ object Measurer {
     }
   }
 
-  internal val extendedFsEventsCounter: Map<FsEventKey, AtomicLong> = FsEventKey.VALUES.associateWith { AtomicLong() }
-  internal val extendedFsEventsDurationNanos: Map<FsEventKey, AtomicLong> = FsEventKey.VALUES.associateWith { AtomicLong() }
-  internal val extendedFsEventsRepeatIntervalNanos: Map<FsEventKey, AtomicLong> = FsEventKey.VALUES.associateWith { AtomicLong() }
-
-  internal val ijentMetricsScope = Scope("ijent", PlatformMetrics, verbose = true)
-  internal val ijentTracer by lazy { TelemetryManager.getTracer(ijentMetricsScope) }
-  internal val ijentMeter by lazy { TelemetryManager.getMeter(ijentMetricsScope) }
-
   init {
-    ijentMeter.counterBuilder("ijent.events.count").buildObserver().also {
-      ijentMeter.batchCallback(
-        { it.record(eventsCounter.get()) },
-        it
-      )
+    for ((key, getter) in dumpCounters()) {
+      ijentMeter.counterBuilder(key).buildObserver().also {
+        ijentMeter.batchCallback({ it.record(getter()) }, it)
+      }
     }
-    for (key in FsEventKey.VALUES) {
-      val successKey = if (key.success) "success" else "failure"
-      val repeatedKey = key.repeated?.let { if (it) "repeated" else "initial" }
-      ijentMeter.counterBuilder("ijent.fs.events.${key.delegateType}.${key.operation}.$successKey.$repeatedKey.count").buildObserver().also {
-        ijentMeter.batchCallback({ it.record(extendedFsEventsCounter[key]!!.get()) }, it)
-      }
-      ijentMeter.counterBuilder("ijent.fs.events.${key.delegateType}.${key.operation}.$successKey.$repeatedKey.duration.nanos").buildObserver().also {
-        ijentMeter.batchCallback({ it.record(extendedFsEventsDurationNanos[key]!!.get() / 1000) }, it)
-      }
-      if (key.repeated == true) {
-        ijentMeter.counterBuilder("ijent.fs.events.${key.delegateType}.${key.operation}.$successKey.repeat.nanos").buildObserver().also {
-          ijentMeter.batchCallback({ it.record(extendedFsEventsRepeatIntervalNanos[key]!!.get() / 1000) }, it)
-        }
-      }
+  }
+
+  fun dumpCounters(): List<Pair<String, () -> Long>> {
+    return listOf("ijent.events.count" to {
+      eventsCounter.get()
+    }) + FsEventKey.VALUES.flatMap { key ->
+      val keyString = key.toString()
+      listOfNotNull("$keyString.count" to {
+        extendedFsEventsCounter[key]!!.get()
+      }, "$keyString.duration.nanos" to {
+        extendedFsEventsDurationNanos[key]!!.get()
+      }, ("$keyString.repeat.interval.nanos" to {
+        extendedFsEventsRepeatIntervalNanos[key]!!.get()
+      }).takeIf { key.repeated == true })
     }
   }
 
@@ -145,7 +158,7 @@ object Measurer {
       delegateType = delegateType,
       operation = operation,
       success = success,
-      repeated = repeated
+      repeated = repeated,
     )
     extendedFsEventsCounter[key]!!.incrementAndGet()
     extendedFsEventsDurationNanos[key]!!.addAndGet(Duration.between(startTime, endTime).toNanos())
