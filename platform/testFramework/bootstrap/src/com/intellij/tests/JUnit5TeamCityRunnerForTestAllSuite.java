@@ -34,7 +34,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.*;
 
-import static com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath.reportFailureAsBuildProblem;
+import static com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath.assertNoUnhandledExceptions;
 
 // Used to run JUnit 3/4 tests via JUnit 5 runtime
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -81,10 +81,11 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       }
     }
     catch (Throwable e) {
-      reportFailureAsBuildProblem(e);
+      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestAllSuite", e);
       System.exit(1);
     }
     finally {
+      assertNoUnhandledExceptions("JUnit5TeamCityRunnerForTestAllSuite",null);
       System.exit(0);
     }
   }
