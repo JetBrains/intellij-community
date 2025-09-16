@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -76,8 +75,6 @@ import javax.swing.JFrame
 import kotlin.collections.Map.Entry
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.io.path.Path
-import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeTo
 import kotlin.time.Duration.Companion.milliseconds
@@ -184,19 +181,23 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
    * See IJPL-179484 for details.
    */
   private fun transformFrontendPathIfNeeded(key: String): String {
-    LOG.runAndLogException {
+    runCatching {
       val configDir = PathManager.getConfigDir()
       val originalConfigDir = PathManager.getOriginalConfigDir()
 
       val projectDir = key.toNioPathOrNull() ?: return key
-      if (projectDir.exists()) return key
-      if (!projectDir.startsWith(configDir)) return key
+      if (Files.exists(projectDir)) {
+        return key
+      }
+      if (!projectDir.startsWith(configDir)) {
+        return key
+      }
 
       // `projectDir` is a valid path, leads to a non-existing location, inside the config folder
       val relativeProjectDir = projectDir.relativeTo(configDir)
       val fixedProjectDir = originalConfigDir.resolve(relativeProjectDir)
       return FileUtilRt.toSystemIndependentName(fixedProjectDir.toString())
-    }
+    }.getOrLogException(LOG)
     return key
   }
 
@@ -212,6 +213,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       // Remote Development: Restore correct paths after monolith settings save
       if (PlatformUtils.isJetBrainsClient()) {
         val newAdditionalInfo = linkedMapOf<String, RecentProjectMetaInfo>()
+        @Suppress("JavaMapForEach")
         state.additionalInfo.forEach { key, value ->
           newAdditionalInfo.put(transformFrontendPathIfNeeded(key), value)
         }
@@ -297,6 +299,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       LOG.info("Skipping last project path update for thin client")
       return
     }
+
     val openProjects = ProjectManagerEx.getOpenProjects()
     synchronized(stateLock) {
       for (info in state.additionalInfo.values) {
@@ -1009,7 +1012,7 @@ private fun readProjectName(path: String): String {
   // Avoid greedy I/O under non-local projects. For example, in the case of WSL:
   //	1.	it may trigger Ijent initialization for each recent project
   //	2.	with Ijent disabled, performance may degrade further — 9P is very slow and could lead to UI freezes
-  if (Path(path).getEelDescriptor() != LocalEelDescriptor) {
+  if (Path.of(path).getEelDescriptor() != LocalEelDescriptor) {
     return path
   }
 

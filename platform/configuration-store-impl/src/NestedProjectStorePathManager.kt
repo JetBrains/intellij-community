@@ -5,7 +5,6 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
@@ -36,9 +35,7 @@ internal class NestedProjectStorePathManager : ProjectStorePathManager {
     for (descriptor in EP_NAME.filterableLazySequence()) {
       val pluginId = descriptor.pluginDescriptor.pluginId
       if (!descriptor.pluginDescriptor.isBundled && pluginId.idString != "org.jetbrains.bazel") {
-        thisLogger().warn(
-          PluginException("ProjectStorePathCustomizer from '${descriptor.pluginDescriptor}' is not allowed (not in a whitelist)", pluginId),
-        )
+        LOG.warn(PluginException("ProjectStorePathCustomizer from '${descriptor.pluginDescriptor}' is not allowed (not in a whitelist)", pluginId))
         continue
       }
 

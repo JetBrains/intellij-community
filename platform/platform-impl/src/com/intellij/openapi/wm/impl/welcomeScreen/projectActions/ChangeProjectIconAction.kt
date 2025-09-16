@@ -70,8 +70,8 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
     }
 
     if (dialog(IdeBundle.message("dialog.title.change.project.icon"), panel).showAndGet()) {
-      val iconSvg = basePath.resolve("icon.svg").toFile()
-      val iconPng = basePath.resolve("icon.png").toFile()
+      val iconSvg = basePath.resolve("icon.svg")
+      val iconPng = basePath.resolve("icon.png")
 
       if (ui.pathToIcon != null) {
         FileUtil.copy(File(ui.pathToIcon!!.path), iconSvg)
