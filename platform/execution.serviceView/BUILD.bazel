@@ -28,6 +28,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/platform-impl/concurrency",
     "//platform/navbar/frontend",
+    "@lib//:kotlinx-serialization-core",
   ],
   runtime_deps = [":execution.serviceView_resources"]
 )

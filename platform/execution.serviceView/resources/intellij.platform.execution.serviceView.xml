@@ -2,6 +2,11 @@
   <dependencies>
     <module name="intellij.platform.navbar.frontend"/>
   </dependencies>
+  <extensionPoints>
+    <extensionPoint name="backendServiceViewNavigatableProvider"
+                    interface="com.intellij.platform.execution.serviceView.BackendServiceViewNavigatableProvider"
+                    dynamic="true"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="true" description="Enable monolith services toolwindow on backend"
                  key="services.view.monolith.enabled" restartRequired="true"/>
@@ -17,6 +22,8 @@
     <applicationService serviceInterface="com.intellij.execution.services.ServiceViewDefaultDeleteProvider"
                         serviceImplementation="com.intellij.platform.execution.serviceView.ServiceViewDeleteProvider"/>
     <postStartupActivity implementation="com.intellij.platform.execution.serviceView.ServiceViewStartupActivity"/>
+    <remote.customDataContextSerializer implementation="com.intellij.platform.execution.serviceView.ServiceViewDescriptorIdsSerializer"/>
+    <uiDataRule implementation="com.intellij.platform.execution.serviceView.ServiceViewNavigatablesDataRule"/>
   </extensions>
   <actions>
     <group id="ServiceViewTreeToolbar">

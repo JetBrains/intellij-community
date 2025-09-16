@@ -570,6 +570,8 @@ f:com.intellij.codeInsight.hints.declarative.InlayProviderOption
 *:com.intellij.execution.dashboard.RunDashboardChecker
 - a:countUniqueConfigurations(com.intellij.openapi.project.Project):I
 - a:getTypeId():java.lang.String
+com.intellij.execution.services.ServiceViewDescriptor
+- *:getUniqueId():java.lang.String
 *:com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 *f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult$Correction
 - com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
