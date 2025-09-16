@@ -584,11 +584,11 @@ public final class TreeRuleChecker {
     @Override
     public @NotNull List<LocalQuickFix> getCustomFixes() {
       return ContainerUtil.concat(customFixes, ContainerUtil.mapNotNull(match.actions(), sug -> {
-        if (sug instanceof ActionSuggestion.ChangeParameter cp) {
-          if (cp.parameter().id().equals(Parameter.LANGUAGE_VARIANT)) {
-            return ChangeLanguageVariant.create(match.rule().language(), Objects.requireNonNull(cp.suggestedValue()), cp.quickFixText());
+        if (sug instanceof ActionSuggestion.ChangeParameter(Parameter parameter, String suggestedValue, String quickFixText)) {
+          if (parameter.id().equals(Parameter.LANGUAGE_VARIANT)) {
+            return ChangeLanguageVariant.create(match.rule().language(), Objects.requireNonNull(suggestedValue), quickFixText);
           }
-          return new ConfigureSuggestedParameter(cp.parameter(), cp.quickFixText());
+          return new ConfigureSuggestedParameter(parameter, quickFixText);
         }
         if (sug == ActionSuggestion.REPHRASE) {
           return new RephraseAction();
