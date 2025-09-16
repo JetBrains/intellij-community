@@ -24,6 +24,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "//java/java-psi-api:psi",
     "//platform/lang-impl",
+    "//plugins/kotlin/kotlin.ide:ide",
   ],
   runtime_deps = [":kotlin-code-insight-k1_resources"]
 )
@@ -56,6 +57,7 @@ jvm_library(
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/plugin/k1",
     "//platform/lang-impl",
+    "//plugins/kotlin/kotlin.ide:ide",
   ],
   runtime_deps = [":kotlin-code-insight-k1_resources"]
 )
