@@ -31,6 +31,8 @@
                      groupKey="group.advanced.settings.welcome.screen"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector"/>
+
+    <internalFileTemplate name="Generic Empty File"/>
   </extensions>
 
   <actions resource-bundle="messages.NonModalWelcomeScreenBundle">
@@ -43,5 +45,8 @@
     </action>
     <action id="NonModalWelcomeScreen.LeftTabActions.New.Action" icon="AllIcons.General.Add"
             class="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftTabActionNew"/>
+    <action id="welcome.screen.left.tab.new.empty.file"
+            class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.CreateEmptyFileAction"
+            icon="AllIcons.FileTypes.Text"/>
   </actions>
 </idea-plugin>
