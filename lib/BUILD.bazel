@@ -4869,483 +4869,476 @@ jvm_import(
 java_library(
   name = "libraries-compose-foundation-desktop-compose-foundation-desktop",
   exports = [
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-annotation-jvm-1_9_1_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-collection-jvm-1_5_0_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-animation-desktop_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-animation-core-desktop_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-geometry-desktop_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-foundation-layout-desktop_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-desktop_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-common-jvm-2_9_2_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-jspecify-1_0_0_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-runtime-desktop-2_9_2_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-core-common-2_2_0_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-annotation-1_1_0_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-viewmodel-desktop-2_9_2_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-viewmodel-savedstate-desktop-2_9_2_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-savedstate-desktop-1_3_1_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-runtime-compose-desktop-2_9_2_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-runtime-saveable-desktop_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-savedstate-compose-desktop-1_3_2_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-backhandler-desktop_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-graphics-desktop_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-unit-desktop_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-text-desktop_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-util-desktop_http_import",
-    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-atomicfu-jvm-0_23_2_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-annotation-jvm-1_9_1_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-collection-jvm-1_5_0_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-animation-desktop_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-animation-core-desktop_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-geometry-desktop_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-foundation-layout-desktop_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-desktop_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-common-jvm-2_9_2_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-jspecify-1_0_0_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-runtime-desktop-2_9_2_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-core-common-2_2_0_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-annotation-1_1_0_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-viewmodel-desktop-2_9_2_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-viewmodel-savedstate-desktop-2_9_2_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-savedstate-desktop-1_3_1_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-runtime-compose-desktop-2_9_4_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-runtime-saveable-desktop_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-savedstate-compose-desktop-1_3_4_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-backhandler-desktop_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-graphics-desktop_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-unit-desktop_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-text-desktop_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-util-desktop_http_import",
+    ":org_jetbrains_compose_foundation-foundation-desktop-1_9_0-atomicfu-jvm-0_23_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-annotation-jvm-1_9_1_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-annotation-jvm-1_9_1_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-annotation-jvm-1_9_1_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-annotation-jvm-1_9_1_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-annotation-jvm-1_9_1_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-annotation-jvm-1_9_1_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-collection-jvm-1_5_0_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-collection-jvm-1_5_0_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-collection-jvm-1_5_0_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-collection-jvm-1_5_0_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-collection-jvm-1_5_0_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-collection-jvm-1_5_0_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-animation-desktop_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-animation-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-animation-desktop_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-animation-desktop_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-animation-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-animation-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-animation-core-desktop_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-animation-core-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-animation-core-desktop_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-animation-core-desktop_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-animation-core-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-animation-core-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-geometry-desktop_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-geometry-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-geometry-desktop_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-geometry-desktop_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-geometry-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-geometry-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-foundation-layout-desktop_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-foundation-layout-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-foundation-layout-desktop_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-foundation-layout-desktop_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-foundation-layout-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-foundation-layout-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-desktop_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-desktop_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-desktop_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-common-jvm-2_9_2_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-common-jvm-2_9_2_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-common-jvm-2_9_2_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-common-jvm-2_9_2_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-common-jvm-2_9_2_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-common-jvm-2_9_2_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-jspecify-1_0_0_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-jspecify-1_0_0_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-jspecify-1_0_0_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-jspecify-1_0_0_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-jspecify-1_0_0_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-jspecify-1_0_0_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-runtime-desktop-2_9_2_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-runtime-desktop-2_9_2_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-runtime-desktop-2_9_2_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-runtime-desktop-2_9_2_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-runtime-desktop-2_9_2_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-runtime-desktop-2_9_2_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-core-common-2_2_0_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-core-common-2_2_0_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-core-common-2_2_0_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-core-common-2_2_0_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-core-common-2_2_0_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-core-common-2_2_0_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-annotation-1_1_0_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-annotation-1_1_0_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-annotation-1_1_0_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-annotation-1_1_0_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-annotation-1_1_0_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-annotation-1_1_0_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-viewmodel-desktop-2_9_2_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-viewmodel-desktop-2_9_2_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-viewmodel-desktop-2_9_2_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-viewmodel-desktop-2_9_2_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-viewmodel-desktop-2_9_2_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-viewmodel-desktop-2_9_2_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-viewmodel-savedstate-desktop-2_9_2_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-viewmodel-savedstate-desktop-2_9_2_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-viewmodel-savedstate-desktop-2_9_2_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-viewmodel-savedstate-desktop-2_9_2_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-viewmodel-savedstate-desktop-2_9_2_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-viewmodel-savedstate-desktop-2_9_2_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-savedstate-desktop-1_3_1_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-savedstate-desktop-1_3_1_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-savedstate-desktop-1_3_1_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-savedstate-desktop-1_3_1_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-savedstate-desktop-1_3_1_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-savedstate-desktop-1_3_1_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-runtime-compose-desktop-2_9_2_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-runtime-compose-desktop-2_9_2_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-lifecycle-runtime-compose-desktop-2_9_2_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-runtime-compose-desktop-2_9_4_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-runtime-compose-desktop-2_9_4_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-lifecycle-runtime-compose-desktop-2_9_4_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-runtime-saveable-desktop_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-runtime-saveable-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-runtime-saveable-desktop_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-runtime-saveable-desktop_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-runtime-saveable-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-runtime-saveable-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-savedstate-compose-desktop-1_3_2_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-savedstate-compose-desktop-1_3_2_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-savedstate-compose-desktop-1_3_2_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-savedstate-compose-desktop-1_3_4_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-savedstate-compose-desktop-1_3_4_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-savedstate-compose-desktop-1_3_4_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-backhandler-desktop_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-backhandler-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-backhandler-desktop_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-backhandler-desktop_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-backhandler-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-backhandler-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-graphics-desktop_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-graphics-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-graphics-desktop_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-graphics-desktop_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-graphics-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-graphics-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-unit-desktop_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-unit-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-unit-desktop_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-unit-desktop_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-unit-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-unit-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-text-desktop_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-text-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-text-desktop_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-text-desktop_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-text-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-text-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-util-desktop_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-util-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-ui-util-desktop_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-util-desktop_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-util-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-ui-util-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-atomicfu-jvm-0_23_2_http_import",
-  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-atomicfu-jvm-0_23_2_http//file",
-  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-beta03-atomicfu-jvm-0_23_2_http//file"
+  name = "org_jetbrains_compose_foundation-foundation-desktop-1_9_0-atomicfu-jvm-0_23_2_http_import",
+  jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-atomicfu-jvm-0_23_2_http//file",
+  source_jar = "@org_jetbrains_compose_foundation-foundation-desktop-1_9_0-atomicfu-jvm-0_23_2_http//file"
 )
 
 java_library(
   name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
   exports = [
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-truth-1_0_1_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-guava-28_1-android_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-failureaccess-1_0_1_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-jsr305-3_0_2_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-j2objc-annotations-1_3_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-animal-sniffer-annotations-1_18_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-checker-compat-qual-2_5_5_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-diffutils-1_3_0_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-auto-value-annotations-1_6_3_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-error_prone_annotations-2_3_3_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-test-desktop_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-desktop_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-common-jvm-2_9_2_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-jspecify-1_0_0_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-runtime-desktop-2_9_2_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-core-common-2_2_0_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-annotation-1_1_0_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-viewmodel-desktop-2_9_2_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-viewmodel-savedstate-desktop-2_9_2_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-kotlinx-serialization-core-jvm-1_7_3_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-savedstate-desktop-1_3_1_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-runtime-compose-desktop-2_9_2_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-runtime-saveable-desktop_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-savedstate-compose-desktop-1_3_2_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-backhandler-desktop_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-geometry-desktop_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-graphics-desktop_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-kotlin-stdlib-jdk8-2_1_21_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-kotlin-stdlib-jdk7-2_1_21_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-text-desktop_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-unit-desktop_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-util-desktop_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-atomicfu-jvm-0_23_2_http_import",
-    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-kotlinx-coroutines-test-jvm-1_8_1_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-truth-1_0_1_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-guava-28_1-android_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-failureaccess-1_0_1_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-jsr305-3_0_2_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-j2objc-annotations-1_3_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-animal-sniffer-annotations-1_18_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-checker-compat-qual-2_5_5_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-diffutils-1_3_0_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-auto-value-annotations-1_6_3_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-error_prone_annotations-2_3_3_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-test-desktop_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-desktop_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-common-jvm-2_9_2_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-jspecify-1_0_0_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-runtime-desktop-2_9_2_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-core-common-2_2_0_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-annotation-1_1_0_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-viewmodel-desktop-2_9_2_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-viewmodel-savedstate-desktop-2_9_2_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-kotlinx-serialization-core-jvm-1_7_3_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-savedstate-desktop-1_3_1_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-runtime-compose-desktop-2_9_4_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-runtime-saveable-desktop_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-savedstate-compose-desktop-1_3_4_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-backhandler-desktop_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-geometry-desktop_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-graphics-desktop_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-kotlin-stdlib-jdk8-2_1_21_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-kotlin-stdlib-jdk7-2_1_21_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-text-desktop_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-unit-desktop_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-util-desktop_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-atomicfu-jvm-0_23_2_http_import",
+    ":org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-kotlinx-coroutines-test-jvm-1_8_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-truth-1_0_1_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-truth-1_0_1_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-truth-1_0_1_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-truth-1_0_1_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-truth-1_0_1_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-truth-1_0_1_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-guava-28_1-android_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-guava-28_1-android_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-guava-28_1-android_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-guava-28_1-android_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-guava-28_1-android_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-guava-28_1-android_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-failureaccess-1_0_1_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-failureaccess-1_0_1_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-failureaccess-1_0_1_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-failureaccess-1_0_1_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-failureaccess-1_0_1_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-failureaccess-1_0_1_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-jsr305-3_0_2_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-jsr305-3_0_2_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-jsr305-3_0_2_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-jsr305-3_0_2_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-jsr305-3_0_2_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-jsr305-3_0_2_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-j2objc-annotations-1_3_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-j2objc-annotations-1_3_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-j2objc-annotations-1_3_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-j2objc-annotations-1_3_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-j2objc-annotations-1_3_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-j2objc-annotations-1_3_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-animal-sniffer-annotations-1_18_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-animal-sniffer-annotations-1_18_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-animal-sniffer-annotations-1_18_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-animal-sniffer-annotations-1_18_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-animal-sniffer-annotations-1_18_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-animal-sniffer-annotations-1_18_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-checker-compat-qual-2_5_5_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-checker-compat-qual-2_5_5_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-checker-compat-qual-2_5_5_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-checker-compat-qual-2_5_5_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-checker-compat-qual-2_5_5_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-checker-compat-qual-2_5_5_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-diffutils-1_3_0_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-diffutils-1_3_0_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-diffutils-1_3_0_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-diffutils-1_3_0_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-diffutils-1_3_0_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-diffutils-1_3_0_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-auto-value-annotations-1_6_3_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-auto-value-annotations-1_6_3_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-auto-value-annotations-1_6_3_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-auto-value-annotations-1_6_3_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-auto-value-annotations-1_6_3_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-auto-value-annotations-1_6_3_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-error_prone_annotations-2_3_3_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-error_prone_annotations-2_3_3_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-error_prone_annotations-2_3_3_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-error_prone_annotations-2_3_3_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-error_prone_annotations-2_3_3_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-error_prone_annotations-2_3_3_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-test-desktop_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-test-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-test-desktop_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-test-desktop_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-test-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-test-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-desktop_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-desktop_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-desktop_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-common-jvm-2_9_2_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-common-jvm-2_9_2_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-common-jvm-2_9_2_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-common-jvm-2_9_2_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-common-jvm-2_9_2_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-common-jvm-2_9_2_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-jspecify-1_0_0_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-jspecify-1_0_0_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-jspecify-1_0_0_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-jspecify-1_0_0_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-jspecify-1_0_0_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-jspecify-1_0_0_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-runtime-desktop-2_9_2_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-runtime-desktop-2_9_2_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-runtime-desktop-2_9_2_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-runtime-desktop-2_9_2_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-runtime-desktop-2_9_2_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-runtime-desktop-2_9_2_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-core-common-2_2_0_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-core-common-2_2_0_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-core-common-2_2_0_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-core-common-2_2_0_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-core-common-2_2_0_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-core-common-2_2_0_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-annotation-1_1_0_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-annotation-1_1_0_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-annotation-1_1_0_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-annotation-1_1_0_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-annotation-1_1_0_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-annotation-1_1_0_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-viewmodel-desktop-2_9_2_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-viewmodel-desktop-2_9_2_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-viewmodel-desktop-2_9_2_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-viewmodel-desktop-2_9_2_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-viewmodel-desktop-2_9_2_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-viewmodel-desktop-2_9_2_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-viewmodel-savedstate-desktop-2_9_2_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-viewmodel-savedstate-desktop-2_9_2_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-viewmodel-savedstate-desktop-2_9_2_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-viewmodel-savedstate-desktop-2_9_2_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-viewmodel-savedstate-desktop-2_9_2_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-viewmodel-savedstate-desktop-2_9_2_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-kotlinx-serialization-core-jvm-1_7_3_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-kotlinx-serialization-core-jvm-1_7_3_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-kotlinx-serialization-core-jvm-1_7_3_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-kotlinx-serialization-core-jvm-1_7_3_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-kotlinx-serialization-core-jvm-1_7_3_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-kotlinx-serialization-core-jvm-1_7_3_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-savedstate-desktop-1_3_1_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-savedstate-desktop-1_3_1_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-savedstate-desktop-1_3_1_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-savedstate-desktop-1_3_1_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-savedstate-desktop-1_3_1_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-savedstate-desktop-1_3_1_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-runtime-compose-desktop-2_9_2_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-runtime-compose-desktop-2_9_2_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-lifecycle-runtime-compose-desktop-2_9_2_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-runtime-compose-desktop-2_9_4_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-runtime-compose-desktop-2_9_4_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-lifecycle-runtime-compose-desktop-2_9_4_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-runtime-saveable-desktop_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-runtime-saveable-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-runtime-saveable-desktop_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-runtime-saveable-desktop_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-runtime-saveable-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-runtime-saveable-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-savedstate-compose-desktop-1_3_2_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-savedstate-compose-desktop-1_3_2_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-savedstate-compose-desktop-1_3_2_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-savedstate-compose-desktop-1_3_4_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-savedstate-compose-desktop-1_3_4_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-savedstate-compose-desktop-1_3_4_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-backhandler-desktop_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-backhandler-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-backhandler-desktop_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-backhandler-desktop_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-backhandler-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-backhandler-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-geometry-desktop_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-geometry-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-geometry-desktop_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-geometry-desktop_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-geometry-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-geometry-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-graphics-desktop_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-graphics-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-graphics-desktop_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-graphics-desktop_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-graphics-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-graphics-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-kotlin-stdlib-jdk8-2_1_21_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-kotlin-stdlib-jdk8-2_1_21_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-kotlin-stdlib-jdk8-2_1_21_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-kotlin-stdlib-jdk8-2_1_21_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-kotlin-stdlib-jdk8-2_1_21_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-kotlin-stdlib-jdk8-2_1_21_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-kotlin-stdlib-jdk7-2_1_21_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-kotlin-stdlib-jdk7-2_1_21_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-kotlin-stdlib-jdk7-2_1_21_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-kotlin-stdlib-jdk7-2_1_21_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-kotlin-stdlib-jdk7-2_1_21_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-kotlin-stdlib-jdk7-2_1_21_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-text-desktop_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-text-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-text-desktop_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-text-desktop_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-text-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-text-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-unit-desktop_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-unit-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-unit-desktop_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-unit-desktop_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-unit-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-unit-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-util-desktop_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-util-desktop_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-ui-util-desktop_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-util-desktop_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-util-desktop_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-ui-util-desktop_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-atomicfu-jvm-0_23_2_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-atomicfu-jvm-0_23_2_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-atomicfu-jvm-0_23_2_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-atomicfu-jvm-0_23_2_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-atomicfu-jvm-0_23_2_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-atomicfu-jvm-0_23_2_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-kotlinx-coroutines-test-jvm-1_8_1_http_import",
-  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-kotlinx-coroutines-test-jvm-1_8_1_http//file",
-  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-beta03-kotlinx-coroutines-test-jvm-1_8_1_http//file"
+  name = "org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-kotlinx-coroutines-test-jvm-1_8_1_http_import",
+  jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-kotlinx-coroutines-test-jvm-1_8_1_http//file",
+  source_jar = "@org_jetbrains_compose_ui-ui-test-junit4-desktop-1_9_0-kotlinx-coroutines-test-jvm-1_8_1_http//file"
 )
 
 java_library(
   name = "libraries-compose-runtime-desktop-jetbrains-compose-runtime-desktop",
   exports = [
-    ":org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03_http_import",
-    ":org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03-1_9_0-rc01_http_import",
-    ":org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03-collection-jvm-1_5_0_http_import",
-    ":org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03-annotation-jvm-1_9_1_http_import",
-    ":org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03-runtime-annotation-jvm-1_9_0-rc01_http_import",
+    ":org_jetbrains_compose_runtime-runtime-desktop-1_9_0_http_import",
+    ":org_jetbrains_compose_runtime-runtime-desktop-1_9_0_http_import",
+    ":org_jetbrains_compose_runtime-runtime-desktop-1_9_0-collection-jvm-1_5_0_http_import",
+    ":org_jetbrains_compose_runtime-runtime-desktop-1_9_0-annotation-jvm-1_9_1_http_import",
+    ":org_jetbrains_compose_runtime-runtime-desktop-1_9_0-runtime-annotation-jvm_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03_http_import",
-  jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03_http//file",
-  source_jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03_http//file"
+  name = "org_jetbrains_compose_runtime-runtime-desktop-1_9_0_http_import",
+  jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03-1_9_0-rc01_http_import",
-  jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03-1_9_0-rc01_http//file",
-  source_jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03-1_9_0-rc01_http//file"
+  name = "org_jetbrains_compose_runtime-runtime-desktop-1_9_0-collection-jvm-1_5_0_http_import",
+  jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-collection-jvm-1_5_0_http//file",
+  source_jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-collection-jvm-1_5_0_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03-collection-jvm-1_5_0_http_import",
-  jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03-collection-jvm-1_5_0_http//file",
-  source_jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03-collection-jvm-1_5_0_http//file"
+  name = "org_jetbrains_compose_runtime-runtime-desktop-1_9_0-annotation-jvm-1_9_1_http_import",
+  jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-annotation-jvm-1_9_1_http//file",
+  source_jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-annotation-jvm-1_9_1_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03-annotation-jvm-1_9_1_http_import",
-  jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03-annotation-jvm-1_9_1_http//file",
-  source_jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03-annotation-jvm-1_9_1_http//file"
-)
-
-jvm_import(
-  name = "org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03-runtime-annotation-jvm-1_9_0-rc01_http_import",
-  jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03-runtime-annotation-jvm-1_9_0-rc01_http//file",
-  source_jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03-runtime-annotation-jvm-1_9_0-rc01_http//file"
+  name = "org_jetbrains_compose_runtime-runtime-desktop-1_9_0-runtime-annotation-jvm_http_import",
+  jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-runtime-annotation-jvm_http//file",
+  source_jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-runtime-annotation-jvm_http//file"
 )
 
 java_library(
@@ -5522,15 +5515,15 @@ java_library(
 
 jvm_import(
   name = "libraries-skiko-jetbrains-skiko-awt-compose",
-  jar = "@org_jetbrains_skiko-skiko-awt-0_9_18_http//file",
-  source_jar = "@org_jetbrains_skiko-skiko-awt-0_9_18_http//file",
+  jar = "@org_jetbrains_skiko-skiko-awt-0_9_22_2_http//file",
+  source_jar = "@org_jetbrains_skiko-skiko-awt-0_9_22_2_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-skiko-jetbrains-skiko-awt-runtime-all",
-  jar = "@org_jetbrains_skiko-skiko-awt-runtime-all-0_9_22_http//file",
-  source_jar = "@org_jetbrains_skiko-skiko-awt-runtime-all-0_9_22_http//file",
+  jar = "@org_jetbrains_skiko-skiko-awt-runtime-all-0_9_22_2_http//file",
+  source_jar = "@org_jetbrains_skiko-skiko-awt-runtime-all-0_9_22_2_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -10226,15 +10219,15 @@ jvm_import(
 
 jvm_import(
   name = "platform-jewel-ui-org-jetbrains-compose-components-components-resources",
-  jar = "@org_jetbrains_compose_components-components-resources-1_9_0-beta03_http//file",
-  source_jar = "@org_jetbrains_compose_components-components-resources-1_9_0-beta03_http//file",
+  jar = "@org_jetbrains_compose_components-components-resources-1_9_0_http//file",
+  source_jar = "@org_jetbrains_compose_components-components-resources-1_9_0_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
-  jar = "@org_jetbrains_compose_components-components-resources-desktop-1_9_0-beta03_http//file",
-  source_jar = "@org_jetbrains_compose_components-components-resources-desktop-1_9_0-beta03_http//file",
+  jar = "@org_jetbrains_compose_components-components-resources-desktop-1_9_0_http//file",
+  source_jar = "@org_jetbrains_compose_components-components-resources-desktop-1_9_0_http//file",
   visibility = ["//visibility:public"]
 )
 
