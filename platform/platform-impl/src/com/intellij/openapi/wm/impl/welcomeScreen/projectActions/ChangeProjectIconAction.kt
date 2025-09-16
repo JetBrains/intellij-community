@@ -10,6 +10,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
@@ -22,18 +23,17 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.io.copy
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Graphics
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
-import kotlin.io.path.Path
 
 /**
  * @author Konstantin Bulenkov
@@ -74,9 +74,11 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
       val iconPng = basePath.resolve("icon.png")
 
       if (ui.pathToIcon != null) {
-        FileUtil.copy(File(ui.pathToIcon!!.path), iconSvg)
-        VfsUtil.markDirtyAndRefresh(false, false, false, iconSvg)
-        FileUtil.delete(iconPng)
+        Path.of(ui.pathToIcon!!.path).copy(iconSvg)
+        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(iconSvg)?.let {
+          VfsUtil.markDirtyAndRefresh(/* async = */ false, /* recursive = */ false, /* reloadChildren = */ false, /* ...files = */ it)
+        }
+        Files.deleteIfExists(iconPng)
         RecentProjectIconHelper.refreshProjectIcon(projectPath)
         event.project?.let {
           val customizer = ProjectWindowCustomizerService.getInstance()
@@ -161,7 +163,7 @@ private class ProjectIconUI(private val projectPath: @SystemIndependent String) 
       .apply { targetComponent = iconLabel }
   }
 
-  fun pathToIcon() = RecentProjectIconHelper.getDotIdeaPath(projectPath)?.resolve("icon.svg") ?: Path("${projectPath}/.idea/icon.svg")
+  fun pathToIcon() = RecentProjectIconHelper.getDotIdeaPath(projectPath)?.resolve("icon.svg") ?: Path.of("${projectPath}/.idea/icon.svg")
 }
 
 private class IconPreviewPanel(component: JComponent) : JPanel(BorderLayout()) {
