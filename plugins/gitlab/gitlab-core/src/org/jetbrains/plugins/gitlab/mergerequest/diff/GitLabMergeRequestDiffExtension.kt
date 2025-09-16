@@ -3,15 +3,14 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff
 
 import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
 import com.intellij.collaboration.ui.codereview.diff.viewer.showCodeReview
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.util.Hideable
-import com.intellij.collaboration.util.RefComparisonChange
-import com.intellij.collaboration.util.getOrNull
-import com.intellij.collaboration.util.syncOrToggleAll
+import com.intellij.collaboration.util.*
 import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffExtension
 import com.intellij.diff.FrameDiffTool
@@ -23,6 +22,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.cancelOnDispose
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -77,9 +77,15 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
               changeVm.markViewed()
             }
 
-            viewer.showCodeReview({ locationToLine, lineToLocations ->
-                                    DiffEditorModel(this, changeVm, locationToLine, lineToLocations)
-                                  }, { createRenderer(it, changeVm.avatarIconsProvider) })
+            viewer.showCodeReview(
+              modelFactory = { _, _, locationToLine, lineToLocations, lineToUnified ->
+                DiffEditorModel(this, changeVm, locationToLine, lineToLocations) {
+                  val (leftLine, rightLine) = lineToUnified(it)
+                  UnifiedCodeReviewItemPosition(change, leftLine, rightLine)
+                }
+              },
+              rendererFactory = { createRenderer(it, changeVm.avatarIconsProvider) }
+            )
           }
         }
       }.cancelOnDispose(viewer)
@@ -103,28 +109,35 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
   }
 }
 
+internal interface GitLabReviewDiffEditorModel : CodeReviewEditorModel<GitLabMergeRequestEditorMappedComponentModel>,
+                                                 CodeReviewNavigableEditorViewModel
+
 private class DiffEditorModel(
   cs: CoroutineScope,
-  private val diffVm: GitLabMergeRequestDiffReviewViewModel,
+  private val diffReviewVm: GitLabMergeRequestDiffReviewViewModel,
   private val locationToLine: (DiffLineLocation) -> Int?,
   private val lineToLocation: (Int) -> DiffLineLocation?,
-) : CodeReviewEditorModel<GitLabMergeRequestEditorMappedComponentModel> {
+  @RequiresEdt private val lineToUnified: (Int) -> UnifiedCodeReviewItemPosition,
+) : GitLabReviewDiffEditorModel {
+  private val discussions = diffReviewVm.discussions
+    .transformConsecutiveSuccesses { mapStatefulToStateful { MappedDiscussion(it) } }
+    .stateInNow(cs, ComputedResult.loading())
+  private val drafts = diffReviewVm.draftDiscussions
+    .transformConsecutiveSuccesses { mapStatefulToStateful { MappedDraftNote(it) } }
+    .stateInNow(cs, ComputedResult.loading())
+  private val newDiscussions = diffReviewVm.newDiscussions
+    .mapStatefulToStateful { MappedNewDiscussion(it) }
+    .stateInNow(cs, emptyList())
 
-  override val inlays: StateFlow<Collection<GitLabMergeRequestEditorMappedComponentModel>> = combine(
-    diffVm.discussions.transformConsecutiveSuccesses { mapStatefulToStateful { MappedDiscussion(it) } },
-    diffVm.draftDiscussions.transformConsecutiveSuccesses { mapStatefulToStateful { MappedDraftNote(it) } },
-    diffVm.newDiscussions.mapStatefulToStateful { MappedNewDiscussion(it) }
-  ) { discussions, drafts, new ->
-    (discussionsResult.getOrNull() ?: emptyList()) +
-    (draftsResult.getOrNull() ?: emptyList()) +
-    new
+  override val inlays: StateFlow<Collection<GitLabMergeRequestEditorMappedComponentModel>> = combine(discussions, drafts, newDiscussions) { discussionsResult, draftsResult, new ->
+    (discussionsResult.getOrNull() ?: emptyList()) + (draftsResult.getOrNull() ?: emptyList()) + new
   }.stateInNow(cs, emptyList())
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =
     combine(
-      diffVm.locationsWithDiscussions,
-      diffVm.locationsWithNewDiscussions
+      diffReviewVm.locationsWithDiscussions,
+      diffReviewVm.locationsWithNewDiscussions
     ) { locationsWithDiscussions, locationsWithNewDiscussions ->
       val linesWithDiscussions = locationsWithDiscussions.mapNotNullTo(mutableSetOf(), locationToLine)
       val linesWithNewDiscussions = locationsWithNewDiscussions.mapNotNullTo(mutableSetOf(), locationToLine)
@@ -133,16 +146,53 @@ private class DiffEditorModel(
 
   override fun requestNewComment(lineIdx: Int) {
     val loc = lineToLocation(lineIdx) ?: return
-    diffVm.requestNewDiscussion(loc, true)
+    diffReviewVm.requestNewDiscussion(loc, true)
   }
 
   override fun cancelNewComment(lineIdx: Int) {
     val loc = lineToLocation(lineIdx) ?: return
-    diffVm.cancelNewDiscussion(loc)
+    diffReviewVm.cancelNewDiscussion(loc)
   }
 
   override fun toggleComments(lineIdx: Int) {
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
+  }
+
+  override fun canGotoNextComment(threadId: String): Boolean =
+    diffReviewVm.nextComment(threadId, ::additionalIsVisible) != null
+
+  override fun canGotoNextComment(line: Int): Boolean =
+    diffReviewVm.nextComment(lineToUnified(line), ::additionalIsVisible) != null
+
+  override fun canGotoPreviousComment(threadId: String): Boolean =
+    diffReviewVm.previousComment(threadId, ::additionalIsVisible) != null
+
+  override fun canGotoPreviousComment(line: Int): Boolean =
+    diffReviewVm.previousComment(lineToUnified(line), ::additionalIsVisible) != null
+
+  override fun gotoNextComment(threadId: String) {
+    val next = diffReviewVm.nextComment(threadId, ::additionalIsVisible) ?: return
+    diffReviewVm.showDiffAtComment(next)
+  }
+
+  override fun gotoNextComment(line: Int) {
+    val next = diffReviewVm.nextComment(lineToUnified(line), ::additionalIsVisible) ?: return
+    diffReviewVm.showDiffAtComment(next)
+  }
+
+  override fun gotoPreviousComment(threadId: String) {
+    val previous = diffReviewVm.previousComment(threadId, ::additionalIsVisible) ?: return
+    diffReviewVm.showDiffAtComment(previous)
+  }
+
+  override fun gotoPreviousComment(line: Int) {
+    val previous = diffReviewVm.previousComment(lineToUnified(line), ::additionalIsVisible) ?: return
+    diffReviewVm.showDiffAtComment(previous)
+  }
+
+  private fun additionalIsVisible(noteTrackingId: String): Boolean {
+    val inlay = inlays.value.find { it.vm.trackingId == noteTrackingId } ?: return true // it's not hidden
+    return inlay.isVisible.value
   }
 
   private inner class MappedDiscussion(vm: GitLabMergeRequestDiffDiscussionViewModel)
@@ -159,10 +209,13 @@ private class DiffEditorModel(
 
   private inner class MappedNewDiscussion(vm: GitLabMergeRequestDiffNewDiscussionViewModel)
     : GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<GitLabMergeRequestDiffNewDiscussionViewModel>(vm) {
-    override val key: Any = "NEW_${vm.originalLocation}"
+    override val key: Any = "NEW_${vm.location.value}"
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
     override val line: StateFlow<Int?> = vm.location.mapState { loc -> loc?.let { locationToLine(it) } }
-    override fun cancel() = diffVm.cancelNewDiscussion(vm.originalLocation)
+
+    override fun cancel() {
+      vm.location.value?.let(diffReviewVm::cancelNewDiscussion)
+    }
   }
 
   private data class GutterState(

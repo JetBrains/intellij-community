@@ -3,14 +3,12 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.editor.*
-import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
-import com.intellij.collaboration.util.Hideable
-import com.intellij.collaboration.util.getOrNull
-import com.intellij.collaboration.util.syncOrToggleAll
+import com.intellij.collaboration.util.*
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.openapi.Disposable
 import com.intellij.util.cancelOnDispose
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,10 +24,12 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   private val preferences: GitLabMergeRequestsPreferences,
   private val fileVm: GitLabMergeRequestEditorReviewFileViewModel,
   private val changesModel: MutableCodeReviewEditorGutterChangesModel = MutableCodeReviewEditorGutterChangesModel(),
+  @RequiresEdt private val showEditor: (RefComparisonChange, Int) -> Unit,
 ) : CodeReviewEditorGutterChangesModel by changesModel,
     CodeReviewEditorGutterActionableChangesModel,
     CodeReviewEditorInlaysModel<GitLabMergeRequestEditorMappedComponentModel>,
-    CodeReviewEditorGutterControlsModel {
+    CodeReviewEditorGutterControlsModel,
+    CodeReviewNavigableEditorViewModel {
 
   private val postReviewRanges = MutableStateFlow<List<Range>?>(null)
 
@@ -60,14 +60,18 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
       else null
     }.stateInNow(cs, null)
 
-  override val inlays: StateFlow<Collection<GitLabMergeRequestEditorMappedComponentModel>> = combine(
-    fileVm.discussions.transformConsecutiveSuccesses { mapStatefulToStateful { ShiftedDiscussion(it) } },
-    fileVm.draftNotes.transformConsecutiveSuccesses { mapStatefulToStateful { ShiftedDraftNote(it) } },
-    fileVm.newDiscussions.mapStatefulToStateful { ShiftedNewDiscussion(it) }
-  ) { discussionsResult, draftsResult, new ->
-    (discussionsResult.getOrNull() ?: emptyList()) +
-    (draftsResult.getOrNull() ?: emptyList()) +
-    new
+  private val discussions = fileVm.discussions
+    .transformConsecutiveSuccesses { mapStatefulToStateful { ShiftedDiscussion(it) } }
+    .stateInNow(cs, ComputedResult.loading())
+  private val drafts = fileVm.draftNotes
+    .transformConsecutiveSuccesses { mapStatefulToStateful { ShiftedDraftNote(it) } }
+    .stateInNow(cs, ComputedResult.loading())
+  private val newDiscussions = fileVm.newDiscussions
+    .mapStatefulToStateful { ShiftedNewDiscussion(it) }
+    .stateInNow(cs, emptyList())
+
+  override val inlays: StateFlow<Collection<GitLabMergeRequestEditorMappedComponentModel>> = combine(discussions, drafts, newDiscussions) { discussionsResult, draftsResult, new ->
+    (discussionsResult.getOrNull() ?: emptyList()) + (draftsResult.getOrNull() ?: emptyList()) + new
   }.stateInNow(cs, emptyList())
 
   override fun requestNewComment(lineIdx: Int) {
@@ -111,6 +115,53 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     changesModel.setChanges(ExcludingApproximateChangedRangesShifter.shift(fileVm.changedRanges, changedRanges).map(Range::asLst))
   }
 
+  override fun canGotoNextComment(threadId: String): Boolean = fileVm.lookupNextComment(threadId, ::additionalIsVisible) != null
+  override fun canGotoNextComment(line: Int): Boolean = fileVm.lookupNextComment(line.shiftLineFromAfterApproximate(), ::additionalIsVisible) != null
+  override fun canGotoPreviousComment(threadId: String): Boolean = fileVm.lookupPreviousComment(threadId, ::additionalIsVisible) != null
+  override fun canGotoPreviousComment(line: Int): Boolean = fileVm.lookupPreviousComment(line.shiftLineFromAfterApproximate(), ::additionalIsVisible) != null
+
+  override fun gotoNextComment(threadId: String) {
+    val noteId = fileVm.lookupNextComment(threadId, ::additionalIsVisible) ?: return
+    gotoComment(noteId)
+  }
+
+  override fun gotoNextComment(line: Int) {
+    val noteId = fileVm.lookupNextComment(line.shiftLineFromAfterApproximate(), ::additionalIsVisible) ?: return
+    gotoComment(noteId)
+  }
+
+  override fun gotoPreviousComment(threadId: String) {
+    val noteId = fileVm.lookupPreviousComment(threadId, ::additionalIsVisible) ?: return
+    gotoComment(noteId)
+  }
+
+  override fun gotoPreviousComment(line: Int) {
+    val noteId = fileVm.lookupPreviousComment(line.shiftLineFromAfterApproximate(), ::additionalIsVisible) ?: return
+    gotoComment(noteId)
+  }
+
+  @RequiresEdt
+  private fun gotoComment(threadId: String) {
+    val (change, unmappedLine) = fileVm.getThreadPosition(threadId) ?: return
+
+    val lineOrNull = if (change == fileVm.change) {
+      // Only shift the line if it comes from this file
+      unmappedLine.shiftLineToAfter()
+      // if the line number is from a different file, we can't currently easily access outside changes to shift with
+      // the current line would be a best-guess estimate
+    }
+    else unmappedLine
+    val line = lineOrNull ?: return
+
+    showEditor(change, line)
+    fileVm.requestThreadFocus(threadId)
+  }
+
+  private fun additionalIsVisible(noteTrackingId: String): Boolean {
+    val inlay = inlays.value.find { it.vm.trackingId == noteTrackingId } ?: return true // it's not hidden
+    return inlay.isVisible.value
+  }
+
   private fun StateFlow<Int?>.shiftLine(): StateFlow<Int?> =
     combineState(postReviewRanges) { line, ranges ->
       if (ranges != null && line != null) {
@@ -118,6 +169,16 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
       }
       else null
     }
+
+  private fun Int.shiftLineToAfter(): Int? {
+    val ranges = postReviewRanges.value ?: return null
+    return ReviewInEditorUtil.transferLineToAfter(ranges, this)
+  }
+
+  private fun Int.shiftLineFromAfterApproximate(): Int {
+    val ranges = postReviewRanges.value ?: return this
+    return ReviewInEditorUtil.transferLineFromAfter(ranges, this, approximate = true)!!
+  }
 
   private inner class ShiftedDiscussion(vm: GitLabMergeRequestEditorDiscussionViewModel)
     : GitLabMergeRequestEditorMappedComponentModel.Discussion<GitLabMergeRequestEditorDiscussionViewModel>(vm) {
@@ -136,7 +197,10 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     override val key: Any = vm.key
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
     override val line: StateFlow<Int?> = vm.line.shiftLine()
-    override fun cancel() = cancelNewDiscussion(vm.originalLine)
+
+    override fun cancel() {
+      vm.line.value?.let(::cancelNewDiscussion)
+    }
   }
 }
 

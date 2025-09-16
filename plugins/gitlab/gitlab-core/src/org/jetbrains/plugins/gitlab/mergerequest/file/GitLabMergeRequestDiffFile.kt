@@ -120,7 +120,11 @@ class GitLabMergeRequestDiffService(private val project: Project, private val cs
         putData(GitLabMergeRequestReviewViewModel.DATA_KEY, vm)
       }))
       add(KeyValuePair(DiffUserDataKeys.CONTEXT_ACTIONS,
-                       listOf(ActionManager.getInstance().getAction("GitLab.MergeRequest.Review.Submit"))))
+                       listOf(
+                         ActionManager.getInstance().getAction("GitLab.MergeRequest.Review.Submit"),
+                         ActionManager.getInstance().getAction("CodeReview.PreviousComment"),
+                         ActionManager.getInstance().getAction("CodeReview.NextComment"),
+                       )))
     }
 
     private fun getChangeDiffVmPresentation(changeVm: GitLabMergeRequestDiffChangeViewModel): PresentableChange =

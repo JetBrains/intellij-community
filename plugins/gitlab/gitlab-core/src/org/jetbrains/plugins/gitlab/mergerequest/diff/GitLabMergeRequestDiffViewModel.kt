@@ -3,8 +3,11 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff
 
 import com.intellij.collaboration.async.computationStateFlow
 import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.transformConsecutiveSuccesses
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
+import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
 import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffProcessorViewModel
 import com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest
 import com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate
@@ -22,28 +25,42 @@ import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
-import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffReviewViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffReviewViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.data.loadRevisionsAndParseChanges
+import org.jetbrains.plugins.gitlab.mergerequest.ui.createDiffDataFlow
+import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.minutes
 
+private typealias DiscussionsFlow = StateFlow<ComputedResult<Collection<GitLabMergeRequestDiffDiscussionViewModel>>>
+private typealias DraftDiscussionsFlow = StateFlow<ComputedResult<Collection<GitLabMergeRequestDiffDraftNoteViewModel>>>
+private typealias NewDiscussionsFlow = StateFlow<Collection<GitLabMergeRequestDiffNewDiscussionViewModel>>
+
 /**
  * A viewmodel for the merge request diff window capable of showing different file diffs
  */
 @ApiStatus.Internal
 interface GitLabMergeRequestDiffViewModel : GitLabMergeRequestReviewViewModel, CodeReviewDiffProcessorViewModel<GitLabMergeRequestDiffChangeViewModel> {
+  val discussions: DiscussionsFlow
+  val draftDiscussions: DraftDiscussionsFlow
+  val newDiscussions: NewDiscussionsFlow
+
   fun getViewModelFor(change: RefComparisonChange): Flow<GitLabMergeRequestDiffReviewViewModel?>
+
+  fun showDiffAtComment(commentId: String)
+
+  fun findNextComment(currentThreadId: String, additionalIsVisible: (String) -> Boolean): String?
+  fun findNextComment(cursorLocation: UnifiedCodeReviewItemPosition, additionalIsVisible: (String) -> Boolean): String?
+  fun findPreviousComment(currentThreadId: String, additionalIsVisible: (String) -> Boolean): String?
+  fun findPreviousComment(cursorLocation: UnifiedCodeReviewItemPosition, additionalIsVisible: (String) -> Boolean): String?
 
   companion object {
     val KEY: Key<GitLabMergeRequestDiffViewModel> = Key.create("GitLab.MergeRequest.Diff.ViewModel")
@@ -57,7 +74,7 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
   parentCs: CoroutineScope,
   currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
-  private val discussions: GitLabMergeRequestDiscussionsViewModels,
+  private val discussionsContainer: GitLabMergeRequestDiscussionsViewModels,
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
 ) : GitLabMergeRequestDiffViewModel, GitLabMergeRequestReviewViewModelBase(
   parentCs.childScope("GitLab Merge Request Diff Review VM"),
@@ -81,6 +98,50 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
   override val changes: StateFlow<ComputedResult<CodeReviewDiffProcessorViewModel.State<GitLabMergeRequestDiffChangeViewModel>>?> =
     delegate.changes.stateIn(cs, SharingStarted.Lazily, null)
 
+  // only the selected patches from the comparison changes
+  private val patchesByChangeFlow = combine(changesFetchFlow, changes) { changesResult, selectedChangesResult ->
+    val selectedChanges = selectedChangesResult?.getOrNull()?.selectedChanges?.list?.mapTo(mutableSetOf()) { it.change }
+                          ?: return@combine null
+    val changes = changesResult.getOrNull() ?: return@combine null
+
+    changes.patchesByChange.filterKeys { it in selectedChanges }
+  }.stateInNow(cs, null)
+
+  override val discussions: DiscussionsFlow =
+    discussionsContainer.discussions.transformConsecutiveSuccesses {
+      map { list ->
+        list.map { vm ->
+          val diffDataFlow = createDiffDataFlow(vm.position, patchesByChangeFlow)
+          GitLabMergeRequestDiffDiscussionViewModel(vm, diffDataFlow, discussionsViewOption)
+        }
+      }
+    }.stateInNow(cs, ComputedResult.loading())
+  override val draftDiscussions: DraftDiscussionsFlow =
+    discussionsContainer.draftNotes.transformConsecutiveSuccesses {
+      map { list ->
+        list.map { vm ->
+          val diffDataFlow = createDiffDataFlow(vm.position, patchesByChangeFlow)
+          GitLabMergeRequestDiffDraftNoteViewModel(vm, diffDataFlow, discussionsViewOption)
+        }
+      }
+    }.stateInNow(cs, ComputedResult.loading())
+  override val newDiscussions: NewDiscussionsFlow =
+    discussionsContainer.newDiscussions.map { list ->
+      list.mapNotNull { (position, vm) ->
+        val position = position.position
+        val diffDataFlow = createDiffDataFlow(position, patchesByChangeFlow)
+        GitLabMergeRequestDiffNewDiscussionViewModel(vm, diffDataFlow, position, discussionsViewOption)
+      }
+    }.stateInNow(cs, emptyList())
+
+  private val noteByTrackingId: StateFlow<Map<String, DiffDataMappedGitLabMergeRequestDiffInlayViewModel>> =
+    combine(discussions, draftDiscussions, newDiscussions) { discussionsResult, draftNotesResult, newDiscussions ->
+      val discussions = discussionsResult.getOrNull() ?: emptyList()
+      val draftNotes = draftNotesResult.getOrNull() ?: emptyList()
+
+      (discussions + draftNotes + newDiscussions).associateBy { it.trackingId }
+    }.stateInNow(cs, emptyMap())
+
   override fun showChange(change: GitLabMergeRequestDiffChangeViewModel, scrollRequest: DiffViewerScrollRequest?) =
     delegate.showChange(change.change, scrollRequest)
 
@@ -96,6 +157,16 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
 
   fun showChanges(changes: ListSelection<RefComparisonChange>, scrollLocation: DiffLineLocation? = null) =
     delegate.showChanges(changes, scrollLocation?.let(DiffViewerScrollRequest::toLine))
+
+  override fun showDiffAtComment(commentId: String) {
+    val mappedVm = noteByTrackingId.value[commentId] ?: return
+    val location = mappedVm.location.value
+
+    val change = mappedVm.diffData.value?.change ?: return
+
+    delegate.showChange(change, location?.let(DiffViewerScrollRequest::toLine))
+    mappedVm.requestFocus()
+  }
 
   suspend fun handleSelection(listener: (ListSelection<RefComparisonChange>?) -> Unit): Nothing = delegate.handleSelection(listener)
 
@@ -124,14 +195,27 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
     change: RefComparisonChange,
     diffData: GitTextFilePatchWithHistory,
   ) =
-    GitLabMergeRequestDiffReviewViewModelImpl(project, this, mergeRequest, changes, diffData, change, discussions,
-                                              discussionsViewOption, avatarIconsProvider)
-}
+    GitLabMergeRequestDiffReviewViewModelImpl(
+      project, this,
+      mergeRequest, changes, diffData, change,
+      this@GitLabMergeRequestDiffProcessorViewModelImpl,
+      discussionsContainer, discussionsViewOption, avatarIconsProvider
+    )
 
-private suspend fun GitLabMergeRequestChanges.loadRevisionsAndParseChanges(): GitBranchComparisonResult =
-  coroutineScope {
-    launch {
-      ensureAllRevisionsFetched()
-    }
-    getParsedChanges()
+  override fun findNextComment(currentThreadId: String, additionalIsVisible: (String) -> Boolean): String? =
+    discussionsContainer.lookupNextComment(currentThreadId) { isVisible(it) && additionalIsVisible(it) }
+
+  override fun findNextComment(cursorLocation: UnifiedCodeReviewItemPosition, additionalIsVisible: (String) -> Boolean): String? =
+    discussionsContainer.lookupNextComment(cursorLocation) { isVisible(it) && additionalIsVisible(it) }
+
+  override fun findPreviousComment(currentThreadId: String, additionalIsVisible: (String) -> Boolean): String? =
+    discussionsContainer.lookupPreviousComment(currentThreadId) { isVisible(it) && additionalIsVisible(it) }
+
+  override fun findPreviousComment(cursorLocation: UnifiedCodeReviewItemPosition, additionalIsVisible: (String) -> Boolean): String? =
+    discussionsContainer.lookupPreviousComment(cursorLocation) { isVisible(it) && additionalIsVisible(it) }
+
+  private fun isVisible(noteTrackingId: String): Boolean {
+    val note = noteByTrackingId.value[noteTrackingId] ?: return false
+    return note.isVisible.value && note.location.value != null
   }
+}

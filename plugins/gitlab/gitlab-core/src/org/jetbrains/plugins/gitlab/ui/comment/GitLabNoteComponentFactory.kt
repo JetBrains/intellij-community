@@ -9,10 +9,12 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
+import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.InlineIconButton
 import icons.CollaborationToolsIcons
@@ -35,13 +37,14 @@ import java.net.URL
 import javax.swing.JComponent
 
 internal object GitLabNoteComponentFactory {
-
-  fun create(componentType: ComponentType,
-             project: Project,
-             cs: CoroutineScope,
-             avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-             vm: GitLabNoteViewModel,
-             place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
+  fun create(
+    componentType: ComponentType,
+    project: Project,
+    cs: CoroutineScope,
+    avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+    vm: GitLabNoteViewModel,
+    place: GitLabStatistics.MergeRequestNoteActionPlace,
+  ): JComponent {
     val textPanel = createTextPanel(project, cs, vm.bodyHtml, vm.serverUrl).let { panel ->
       val actionsVm = vm.actionsVm ?: return@let panel
       EditableComponentFactory.wrapTextComponent(cs, panel, actionsVm.editVm) {
@@ -56,16 +59,21 @@ internal object GitLabNoteComponentFactory {
     }
 
     val actionsPanel = createActions(cs, flowOf(vm), project, place)
-    return CodeReviewChatItemUIUtil.build(componentType,
-                                          { avatarIconsProvider.getIcon(vm.author, it) },
-                                          contentPanel) {
-      withHeader(createTitle(cs, vm, project, place), actionsPanel)
-    }
+    return UiDataProvider.wrapComponent(
+      CodeReviewChatItemUIUtil.build(componentType,
+                                     { avatarIconsProvider.getIcon(vm.author, it) },
+                                     contentPanel) {
+        withHeader(createTitle(cs, vm, project, place), actionsPanel)
+      }, { sink ->
+      sink[CodeReviewTrackableItemViewModel.TRACKABLE_ITEM_KEY] = vm
+      })
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  fun createTitle(cs: CoroutineScope, vm: GitLabNoteViewModel,
-                  project: Project, place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
+  fun createTitle(
+    cs: CoroutineScope, vm: GitLabNoteViewModel,
+    project: Project, place: GitLabStatistics.MergeRequestNoteActionPlace,
+  ): JComponent {
     return HorizontalListPanel(CodeReviewCommentUIUtil.Title.HORIZONTAL_GAP).apply {
       add(CodeReviewTimelineUIUtil.createTitleTextPane(vm.author.name, vm.author.webUrl, vm.createdAt))
 
@@ -106,8 +114,10 @@ internal object GitLabNoteComponentFactory {
     }
   }
 
-  fun createActions(cs: CoroutineScope, note: Flow<GitLabNoteViewModel>,
-                    project: Project, place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
+  fun createActions(
+    cs: CoroutineScope, note: Flow<GitLabNoteViewModel>,
+    project: Project, place: GitLabStatistics.MergeRequestNoteActionPlace,
+  ): JComponent {
     val panel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
       cs.launchNow {
         note.collectScoped {

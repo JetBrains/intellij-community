@@ -2,13 +2,16 @@
 package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.collaboration.async.*
+import com.intellij.collaboration.ui.FocusableViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
+import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
 import com.intellij.collaboration.util.SingleCoroutineLauncher
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -19,8 +22,13 @@ import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewM
 import java.net.URL
 import java.util.*
 
-interface GitLabMergeRequestDiscussionViewModel : CodeReviewResolvableItemViewModel {
+interface GitLabMergeRequestDiscussionViewModel
+  : CodeReviewTrackableItemViewModel,
+    FocusableViewModel,
+    CodeReviewResolvableItemViewModel {
   val id: GitLabId
+  val createdAt: Date
+
   val notes: StateFlow<List<NoteItem>>
 
   val replyVm: StateFlow<GitLabDiscussionReplyViewModel?>
@@ -33,21 +41,20 @@ interface GitLabMergeRequestDiscussionViewModel : CodeReviewResolvableItemViewMo
   }
 }
 
-private val LOG = logger<GitLabMergeRequestDiscussionViewModel>()
-
 internal class GitLabMergeRequestDiscussionViewModelBase(
   project: Project,
   parentCs: CoroutineScope,
   projectData: GitLabProject,
   currentUser: GitLabUserDTO,
-  private val discussion: GitLabMergeRequestDiscussion
+  private val discussion: GitLabMergeRequestDiscussion,
 ) : GitLabMergeRequestDiscussionViewModel {
-
   private val cs = parentCs.childScope(this::class)
   private val taskLauncher = SingleCoroutineLauncher(cs)
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy
 
   override val id: GitLabId = discussion.id
+  override val trackingId: String = id.toString()
+  override val createdAt: Date = discussion.createdAt
 
   private val expandRequested = MutableStateFlow(false)
 
@@ -95,13 +102,20 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
       }
     }
   }
+
+  private val _focusRequestsChannel = Channel<Unit>(1, BufferOverflow.DROP_OLDEST)
+  override val focusRequests: Flow<Unit> get() = _focusRequestsChannel.receiveAsFlow()
+
+  override fun requestFocus() {
+    _focusRequestsChannel.trySend(Unit)
+  }
 }
 
 class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   project: Project,
   parentCs: CoroutineScope,
   note: GitLabMergeRequestDraftNote,
-  mr: GitLabMergeRequest
+  mr: GitLabMergeRequest,
 ) : GitLabNoteViewModel {
 
   private val cs = parentCs.childScope(this::class)
@@ -125,4 +139,11 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
     MutableStateFlow(GitLabDiscussionStateContainer.DEFAULT)
 
   val position: StateFlow<GitLabNotePosition?> = note.position
+
+  private val _focusRequestsChannel = Channel<Unit>(1, BufferOverflow.DROP_OLDEST)
+  override val focusRequests: Flow<Unit> get() = _focusRequestsChannel.receiveAsFlow()
+
+  override fun requestFocus() {
+    _focusRequestsChannel.trySend(Unit)
+  }
 }

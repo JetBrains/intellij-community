@@ -2,28 +2,36 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.combineStates
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.ui.FocusableViewModel
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel
 import com.intellij.diff.util.Side
-import git4idea.changes.GitTextFilePatchWithHistory
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
+import org.jetbrains.plugins.gitlab.mergerequest.ui.DiffDataMappedGitLabMergeRequestInlayModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestStandaloneDraftNoteViewModelBase
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 
-class GitLabMergeRequestEditorDiscussionViewModel internal constructor(
+@ApiStatus.Internal
+interface DiffDataMappedGitLabMergeRequestEditorViewModel
+  : CodeReviewInlayModel,
+    DiffDataMappedGitLabMergeRequestInlayModel,
+    FocusableViewModel
+
+@ApiStatus.Internal
+class GitLabMergeRequestEditorDiscussionViewModel(
   base: GitLabMergeRequestDiscussionViewModel,
-  diffData: GitTextFilePatchWithHistory,
-  discussionsViewOption: StateFlow<DiscussionsViewOption>
-) : GitLabMergeRequestDiscussionViewModel by base, CodeReviewInlayModel {
+  override val diffData: StateFlow<DiffDataMappedGitLabMergeRequestInlayModel.DiffData?>,
+  discussionsViewOption: StateFlow<DiscussionsViewOption>,
+) : GitLabMergeRequestDiscussionViewModel by base, DiffDataMappedGitLabMergeRequestEditorViewModel {
   override val key: Any = base.id
-  override val line: StateFlow<Int?> = base.position.mapState {
-    it?.mapToLocation(diffData, Side.RIGHT)?.takeIf { it.first == Side.RIGHT }?.second
-  }
+  override val line: StateFlow<Int?> = mapPositionToRightLine(base.position, diffData)
 
   override val isVisible: StateFlow<Boolean> = isResolved.combineState(discussionsViewOption) { isResolved, viewOption ->
     return@combineState when (viewOption) {
@@ -34,15 +42,14 @@ class GitLabMergeRequestEditorDiscussionViewModel internal constructor(
   }
 }
 
+@ApiStatus.Internal
 class GitLabMergeRequestEditorDraftNoteViewModel internal constructor(
   base: GitLabMergeRequestStandaloneDraftNoteViewModelBase,
-  diffData: GitTextFilePatchWithHistory,
-  discussionsViewOption: StateFlow<DiscussionsViewOption>
-) : GitLabNoteViewModel by base, CodeReviewInlayModel {
+  override val diffData: StateFlow<DiffDataMappedGitLabMergeRequestInlayModel.DiffData?>,
+  discussionsViewOption: StateFlow<DiscussionsViewOption>,
+) : GitLabNoteViewModel by base, DiffDataMappedGitLabMergeRequestEditorViewModel {
   override val key: Any = base.id
-  override val line: StateFlow<Int?> = base.position.mapState {
-    it?.mapToLocation(diffData, Side.RIGHT)?.takeIf { it.first == Side.RIGHT }?.second
-  }
+  override val line: StateFlow<Int?> = mapPositionToRightLine(base.position, diffData)
 
   override val isVisible: StateFlow<Boolean> = discussionsViewOption.mapState {
     when (it) {
@@ -52,12 +59,43 @@ class GitLabMergeRequestEditorDraftNoteViewModel internal constructor(
   }
 }
 
-class GitLabMergeRequestEditorNewDiscussionViewModel internal constructor(
+@ApiStatus.Internal
+class GitLabMergeRequestEditorNewDiscussionViewModel(
   base: NewGitLabNoteViewModel,
-  val originalLine: Int,
-  discussionsViewOption: StateFlow<DiscussionsViewOption>
-) : NewGitLabNoteViewModel by base, CodeReviewInlayModel {
-  override val key: Any = "NEW_${originalLine}"
-  override val line: StateFlow<Int?> = MutableStateFlow(originalLine)
-  override val isVisible: StateFlow<Boolean> = discussionsViewOption.mapState { it != DiscussionsViewOption.DONT_SHOW }
+  originalPosition: GitLabNotePosition,
+  override val diffData: StateFlow<DiffDataMappedGitLabMergeRequestInlayModel.DiffData?>,
+  discussionsViewOption: StateFlow<DiscussionsViewOption>,
+) : NewGitLabNoteViewModel by base, DiffDataMappedGitLabMergeRequestEditorViewModel {
+  override val key: Any = "NEW_${(originalPosition as? GitLabNotePosition.WithLine)?.lineIndexRight}"
+  override val line: StateFlow<Int?> = mapPositionToRightLine(originalPosition, diffData)
+
+  override val isVisible: StateFlow<Boolean> = discussionsViewOption.mapState {
+    when (it) {
+      DiscussionsViewOption.DONT_SHOW -> false
+      else -> true
+    }
+  }
 }
+
+private fun mapPositionToRightLine(
+  position: GitLabNotePosition?,
+  diffData: StateFlow<DiffDataMappedGitLabMergeRequestInlayModel.DiffData?>,
+): StateFlow<Int?> =
+  diffData.mapState { diffDataOrNull ->
+    val diffData = diffDataOrNull?.diffData ?: return@mapState null
+
+    position?.mapToLocation(diffData, Side.RIGHT)
+      ?.takeIf { it.first == Side.RIGHT }?.second
+  }
+
+private fun mapPositionToRightLine(
+  position: StateFlow<GitLabNotePosition?>,
+  diffData: StateFlow<DiffDataMappedGitLabMergeRequestInlayModel.DiffData?>,
+): StateFlow<Int?> =
+  combineStates(position, diffData) { positionOrNull, diffDataOrNull ->
+    val position = positionOrNull ?: return@combineStates null
+    val diffData = diffDataOrNull?.diffData ?: return@combineStates null
+
+    position.mapToLocation(diffData, Side.RIGHT)
+      ?.takeIf { it.first == Side.RIGHT }?.second
+  }

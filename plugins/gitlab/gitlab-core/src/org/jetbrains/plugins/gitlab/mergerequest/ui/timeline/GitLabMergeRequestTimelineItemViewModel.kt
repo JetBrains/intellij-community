@@ -7,10 +7,9 @@ import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
@@ -123,6 +122,13 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     val diffVm: Flow<GitLabDiscussionDiffViewModel?> =
       note.position.map { pos -> pos?.let { GitLabDiscussionDiffViewModelImpl(cs, mr, it) } }
         .modelFlow(cs, LOG)
+
+    private val _focusRequestsChannel = Channel<Unit>(1, BufferOverflow.DROP_OLDEST)
+    override val focusRequests: Flow<Unit> get() = _focusRequestsChannel.receiveAsFlow()
+
+    override fun requestFocus() {
+      _focusRequestsChannel.trySend(Unit)
+    }
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true

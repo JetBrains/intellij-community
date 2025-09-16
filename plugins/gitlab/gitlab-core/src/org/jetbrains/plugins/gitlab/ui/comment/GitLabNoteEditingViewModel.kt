@@ -3,10 +3,12 @@ package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.ui.FocusableViewModel
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModel
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingViewModel
 import com.intellij.collaboration.ui.codereview.comment.submitActionIn
+import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
@@ -22,6 +24,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
+import java.util.*
 import javax.swing.Action
 
 interface GitLabNoteEditingViewModel : CodeReviewSubmittableTextViewModel {
@@ -87,7 +90,10 @@ private class GitLabNoteEditingViewModelImpl(project: Project, parentCs: Corouti
   }
 }
 
-interface NewGitLabNoteViewModel : GitLabNoteEditingViewModel {
+interface NewGitLabNoteViewModel :
+  GitLabNoteEditingViewModel,
+  CodeReviewTrackableItemViewModel,
+  FocusableViewModel {
   val canSubmitAsDraft: Boolean
   val usedAsDraftSubmitActionLast: StateFlow<Boolean>
 
@@ -103,6 +109,8 @@ private abstract class NewGitLabNoteViewModelBase(
   initialText: String,
   override val currentUser: GitLabUserDTO
 ) : AbstractGitLabNoteEditingViewModel(project, parentCs, initialText), NewGitLabNoteViewModel {
+  override val trackingId: String = UUID.randomUUID().toString()
+
   private val preferences = project.service<GitLabMergeRequestsPreferences>()
 
   override val usedAsDraftSubmitActionLast: StateFlow<Boolean> = preferences.usedAsDraftSubmitActionLastState

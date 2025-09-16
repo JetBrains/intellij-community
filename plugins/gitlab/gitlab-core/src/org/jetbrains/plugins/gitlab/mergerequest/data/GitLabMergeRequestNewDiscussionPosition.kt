@@ -14,8 +14,14 @@ data class GitLabMergeRequestNewDiscussionPosition(
   val oldLineIndex: Int?,
   val headSha: String,
   val newLineIndex: Int?,
-  val paths: DiffPathsInput
-) {
+  val paths: DiffPathsInput,
+) : GitLabNotePosition.WithLine {
+  override val parentSha: String get() = startSha
+  override val sha: String get() = baseSha
+  override val filePathBefore: String? get() = paths.oldPath
+  override val filePathAfter: String? get() = paths.newPath
+  override val lineIndexLeft: Int? get() = oldLineIndex
+  override val lineIndexRight: Int? get() = newLineIndex
 
   companion object {
     fun calcFor(diffData: GitTextFilePatchWithHistory, location: DiffLineLocation): GitLabMergeRequestNewDiscussionPosition {

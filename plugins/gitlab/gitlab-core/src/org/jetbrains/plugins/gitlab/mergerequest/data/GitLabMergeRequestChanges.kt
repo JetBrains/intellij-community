@@ -48,12 +48,20 @@ fun GitBranchComparisonResult.findLatestCommitWithChangesTo(gitRepository: GitRe
   return commits.lastOrNull { commit -> commit.patches.any { it.filePath == relativePath } }?.sha
 }
 
+internal suspend fun GitLabMergeRequestChanges.loadRevisionsAndParseChanges(): GitBranchComparisonResult =
+  coroutineScope {
+    launch {
+      ensureAllRevisionsFetched()
+    }
+    getParsedChanges()
+  }
+
 class GitLabMergeRequestChangesImpl(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
   private val glMetadata: GitLabServerMetadata?,
   private val projectMapping: GitLabProjectMapping,
-  private val mergeRequestDetails: GitLabMergeRequestFullDetails
+  private val mergeRequestDetails: GitLabMergeRequestFullDetails,
 ) : GitLabMergeRequestChanges {
 
   private val cs = parentCs.childScope(this::class)
