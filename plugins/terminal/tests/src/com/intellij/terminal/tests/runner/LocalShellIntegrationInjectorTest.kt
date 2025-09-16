@@ -6,7 +6,6 @@ import com.intellij.util.system.OS
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector.findAbsolutePath
-import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -28,13 +27,13 @@ internal class LocalShellIntegrationInjectorTest {
     )
 
     assertEquals(listOf("/bin/zsh"), actual.shellCommand)
-    val expectedCommandBlockIntegration = expectedCommandBlockIntegration()
-    assertEquals(ShellIntegration(ShellType.ZSH, expectedCommandBlockIntegration), actual.shellIntegration)
+    val expectedCommandBlocks = expectedCommandBlocks()
+    assertEquals(ShellIntegration(ShellType.ZSH, expectedCommandBlocks), actual.shellIntegration)
     assertEquals(findAbsolutePath("shell-integrations/zsh/zsh-integration.zsh").parent.toString(), actual.envVariables[LocalShellIntegrationInjector.IJ_ZSH_DIR])
-    assertEquals("1".takeIf { expectedCommandBlockIntegration != null }, actual.envVariables["PROCESS_LAUNCHED_BY_CW"])
-    assertEquals("1".takeIf { expectedCommandBlockIntegration != null }, actual.envVariables["FIG_TERM"])
-    assertEquals("1".takeIf { expectedCommandBlockIntegration != null }, actual.envVariables["PROCESS_LAUNCHED_BY_Q"])
-    assertEquals("1".takeIf { expectedCommandBlockIntegration != null }, actual.envVariables["INTELLIJ_TERMINAL_COMMAND_BLOCKS"])
+    assertEquals("1".takeIf { expectedCommandBlocks }, actual.envVariables["PROCESS_LAUNCHED_BY_CW"])
+    assertEquals("1".takeIf { expectedCommandBlocks }, actual.envVariables["FIG_TERM"])
+    assertEquals("1".takeIf { expectedCommandBlocks }, actual.envVariables["PROCESS_LAUNCHED_BY_Q"])
+    assertEquals("1".takeIf { expectedCommandBlocks }, actual.envVariables["INTELLIJ_TERMINAL_COMMAND_BLOCKS"])
     assertEquals(findAbsolutePath("shell-integrations/zsh/zdotdir/.zshenv").parent.toString(), actual.envVariables["ZDOTDIR"])
     assertEquals("MY_CUSTOM_ENV_VALUE1", actual.envVariables["MY_CUSTOM_ENV1"])
   }
@@ -53,21 +52,20 @@ internal class LocalShellIntegrationInjectorTest {
     )
 
     assertEquals(listOf("/bin/bash", "--rcfile", findAbsolutePath("shell-integrations/bash/bash-integration.bash").toString()), actual.shellCommand)
-    val expectedCommandBlockIntegration = expectedCommandBlockIntegration()
-    assertEquals(ShellIntegration(ShellType.BASH, expectedCommandBlockIntegration), actual.shellIntegration)
-    assertEquals("1".takeIf { expectedCommandBlockIntegration != null }, actual.envVariables["PROCESS_LAUNCHED_BY_CW"])
-    assertEquals("1".takeIf { expectedCommandBlockIntegration != null }, actual.envVariables["FIG_TERM"])
-    assertEquals("1".takeIf { expectedCommandBlockIntegration != null }, actual.envVariables["PROCESS_LAUNCHED_BY_Q"])
-    assertEquals("1".takeIf { expectedCommandBlockIntegration != null }, actual.envVariables["INTELLIJ_TERMINAL_COMMAND_BLOCKS"])
+    val expectedCommandBlocks = expectedCommandBlocks()
+    assertEquals(ShellIntegration(ShellType.BASH, expectedCommandBlocks), actual.shellIntegration)
+    assertEquals("1".takeIf { expectedCommandBlocks }, actual.envVariables["PROCESS_LAUNCHED_BY_CW"])
+    assertEquals("1".takeIf { expectedCommandBlocks }, actual.envVariables["FIG_TERM"])
+    assertEquals("1".takeIf { expectedCommandBlocks }, actual.envVariables["PROCESS_LAUNCHED_BY_Q"])
+    assertEquals("1".takeIf { expectedCommandBlocks }, actual.envVariables["INTELLIJ_TERMINAL_COMMAND_BLOCKS"])
     assertEquals("MY_CUSTOM_ENV_VALUE1", actual.envVariables["MY_CUSTOM_ENV1"])
   }
 
 }
 
-private fun expectedCommandBlockIntegration(): CommandBlockIntegration? {
+private fun expectedCommandBlocks(): Boolean {
   // similar to LocalShellIntegrationInjector.isSystemCompatibleWithCommandBlocks
   // but adapted to the buildserver where CI agents have recent Windows 10
-  val supported = OS.CURRENT != OS.Windows ||
-                  System.getProperty("os.name") !in listOf("Windows Server 2016", "Windows Server 2019")
-  return if (supported) CommandBlockIntegration(false) else null
+  return OS.CURRENT != OS.Windows ||
+         System.getProperty("os.name") !in listOf("Windows Server 2016", "Windows Server 2019")
 }

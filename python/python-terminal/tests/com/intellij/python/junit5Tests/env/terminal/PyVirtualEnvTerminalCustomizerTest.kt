@@ -199,7 +199,7 @@ class PyVirtualEnvTerminalCustomizerTest {
     val options = ShellStartupOptions.Builder()
       .envVariables(env)
       .shellCommand(command.toList())
-      .shellIntegration(ShellIntegration(shellType, null))
+      .shellIntegration(ShellIntegration(shellType, false))
       .build()
     return LocalShellIntegrationInjector.injectShellIntegration(options, false, false)
   }

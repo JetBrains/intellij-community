@@ -65,7 +65,7 @@ internal class TerminalWidgetImpl(
   fun initialize(options: ShellStartupOptions): CompletableFuture<TermSize> {
     val oldView = view
 
-    view = if (options.shellIntegration?.commandBlockIntegration != null) {
+    view = if (options.shellIntegration?.commandBlocks == true) {
       createBlockTerminalView(options)
     }
     else OldPlainTerminalView(project, settings, terminalTitle)
