@@ -23,6 +23,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
@@ -723,6 +724,9 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   private void assertWriteAccess() {
     if (myAssertThreading) {
       Application application = ApplicationManager.getApplication();
+      // Document serves as a model for the Editor
+      // hence, due to IJPL-184084, it must be updated on EDT
+      ThreadingAssertions.assertEventDispatchThread();
       if (application != null) {
         application.assertWriteAccessAllowed();
         VirtualFile file = FileDocumentManager.getInstance().getFile(this);
