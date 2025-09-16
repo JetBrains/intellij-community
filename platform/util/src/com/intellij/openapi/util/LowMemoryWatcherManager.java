@@ -37,13 +37,13 @@ public final class LowMemoryWatcherManager {
   private static final float MEMORY_NOTIFICATION_THRESHOLD = getFloatProperty("low.memory.watcher.notification.threshold", 0.95f);
 
   /** Use exponentially smoothing GcTracker instead of WindowedSum one */
-  private static final boolean USE_EXPONENTIALLY_SMOOTHING_GC_TRACKING = getBooleanProperty("LowMemoryWatcherManager.USE_EXPONENTIALLY_SMOOTHING_GC_TRACKING", false);
+  private static final boolean USE_EXPONENTIALLY_SMOOTHING_GC_TRACKING = getBooleanProperty("LowMemoryWatcherManager.USE_EXPONENTIALLY_SMOOTHING_GC_TRACKING", true);
 
   /** Window size for {@link GcTracker} to accumulate GC durations over. */
-  private static final long WINDOW_SIZE_MS = getLongProperty("LowMemoryWatcherManager.WINDOW_SIZE_MS", SECONDS.toMillis(60));
+  private static final long WINDOW_SIZE_MS = getLongProperty("LowMemoryWatcherManager.WINDOW_SIZE_MS", SECONDS.toMillis(90));
   /**
    * GC load (returned by {@link GcTracker}) which is 'too much', i.e. GC is overloaded.
-   * Default 0.2 means that if GC takes > 20% of CPU time then it is considered overloaded.
+   * Default 0.1 means that if GC takes > 10% of CPU time then it is considered overloaded.
    */
   private static final double GC_LOAD_THRESHOLD = getFloatProperty("LowMemoryWatcherManager.GC_LOAD_THRESHOLD", 0.1f);
 
@@ -53,7 +53,7 @@ public final class LowMemoryWatcherManager {
   /** Whether LowMemoryWatcher runnables should be executed on the same thread that the low-memory events come */
   private static final boolean NOTIFY_LISTENERS_SYNCHRONOUSLY = getBooleanProperty("low.memory.watcher.sync", false);
 
-  /** Skip regular events if more often than this */
+  /** Skip same-priority events if more often than this */
   private static final long THROTTLING_PERIOD_MS = getLongProperty("LowMemoryWatcherManager.THROTTLING_PERIOD_MS", 200);
 
   //@formatter:on
