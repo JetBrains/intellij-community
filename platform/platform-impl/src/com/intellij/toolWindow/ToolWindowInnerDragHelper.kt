@@ -18,8 +18,10 @@ import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.drag.DialogDragImageView
 import com.intellij.ui.drag.DragImageView
+import com.intellij.ui.drag.GlassPaneDragImageView
 import com.intellij.ui.tabs.TabsUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.Image
@@ -84,7 +86,15 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     sourceTopDecorator = sourceDecorator?.let { findTopDecorator(it) }
     myInitialIndex = getInitialIndex(contentTabLabel)
     myCurrentDecorator = sourceDecorator
-    dragImageView = DialogDragImageView(MyDialog(pane, this, createThumbnailDragImage(contentTabLabel, -1)))
+    val tabImage = createThumbnailDragImage(contentTabLabel, -1)
+    dragImageView = if (StartupUiUtil.isWaylandToolkit()) {
+      GlassPaneDragImageView(IdeGlassPaneUtil.find(pane)).apply {
+        image = tabImage
+      }
+    }
+    else {
+      DialogDragImageView(MyDialog(pane, this, tabImage))
+    }
   }
 
   private fun getInitialIndex(tabLabel: ContentTabLabel): Int {
