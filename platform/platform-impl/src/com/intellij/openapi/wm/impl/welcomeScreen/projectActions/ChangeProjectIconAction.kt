@@ -33,6 +33,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.io.path.invariantSeparatorsPathString
 
 private class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
   init {
@@ -43,7 +44,7 @@ private class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() 
     val project = event.project
     val selectedItem = getSelectedItem(event)
     val projectPath = getProjectPath(project, selectedItem) ?: return
-    val basePath = RecentProjectIconHelper.getDotIdeaPath(projectPath) ?: return
+    val basePath = RecentProjectIconHelper.getDotIdeaPath(Path.of(projectPath)) ?: return
 
     val ui = ProjectIconUI(projectPath)
 
@@ -75,7 +76,7 @@ private class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() 
       return selectedItem.projectPath
     }
     if (project != null && selectedItem == null) {
-      return ProjectWindowCustomizerService.projectPath(project)
+      return ProjectWindowCustomizerService.projectPath(project)?.invariantSeparatorsPathString
     }
     return null
   }
@@ -136,7 +137,7 @@ private class ChangeProjectIcon(private val ui: ProjectIconUI) : AnAction() {
         ui.pathToIcon = files[0]
         ui.iconRemoved = false
       }
-      catch (ignore: Exception) {
+      catch (_: Exception) {
       }
     }
   }
@@ -169,7 +170,10 @@ private class ProjectIconUI(private val projectPath: @SystemIndependent String) 
       .apply { targetComponent = iconLabel }
   }
 
-  fun pathToIcon() = RecentProjectIconHelper.getDotIdeaPath(projectPath)?.resolve("icon.svg") ?: Path.of("${projectPath}/.idea/icon.svg")
+  fun pathToIcon(): Path {
+    val file = Path.of(projectPath)
+    return RecentProjectIconHelper.getDotIdeaPath(file)?.resolve("icon.svg") ?: file.resolve(".idea/icon.svg")
+  }
 }
 
 private class IconPreviewPanel(component: JComponent) : JPanel(BorderLayout()) {
