@@ -45,6 +45,7 @@ internal class IslandsFeedback : ProjectActivity {
       if (!ApplicationManager.getApplication().isUnitTestMode &&
           !ApplicationManager.getApplication().isHeadlessEnvironment &&
           !AppMode.isRemoteDevHost() &&
+          Registry.`is`("idea.islands.feedback2.enabled", true) &&
           !Registry.`is`("llm.riderNext.enabled", false) && ExperimentalUI.isNewUI()) {
         handleFeedback(project)
       }
