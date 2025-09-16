@@ -1,6 +1,7 @@
 package com.intellij.mcpserver
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.application
@@ -30,6 +31,6 @@ class FileMovedEvent(val file: VirtualFile, val oldParent: VirtualFile, val newP
 class FileContentChangeEvent(val file: VirtualFile, val oldContent: String?, val newContent: String) : FileEvent
 
 fun CoroutineContext.reportToolActivity(@NlsContexts.Label toolDescription: String) {
-  logger<ToolCallListener>().info("Tool '${currentToolDescriptor.name}' activity reported: $toolDescription")
+  logger<ToolCallListener>().trace { "Tool '${currentToolDescriptor.name}' activity reported: $toolDescription" }
   application.messageBus.syncPublisher(ToolCallListener.TOPIC).toolActivity(currentToolDescriptor, toolDescription, mcpCallInfo)
 }
