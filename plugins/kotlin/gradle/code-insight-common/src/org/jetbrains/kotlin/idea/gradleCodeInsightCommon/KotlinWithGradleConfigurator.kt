@@ -147,6 +147,8 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             OpenFileAction.openFile(file.virtualFile, project)
         }
 
+        queueSyncIfNeeded(project)
+
         KotlinAutoConfigurationNotificationHolder.getInstance(project).onManualConfigurationCompleted()
         result.collector.showNotification()
 
