@@ -12,6 +12,10 @@ class PythonEditorFloatingToolbarUi(data: ComponentData) : UiComponent(data) {
   val poetryUpdateButton = x { byAccessibleName("Poetry Update") }
   val poetryLockButton = x { byAccessibleName("Poetry Lock") }
 
+  // uv floating toolbar actions
+  val uvLockButton = x { byAccessibleName("uv Lock") }
+  val uvSyncButton = x { byAccessibleName("uv Sync") }
+
   // Requirements floating toolbar actions
   val setAsEnvDependenciesButton = x { byAccessibleName("Set as the environment dependencies list") }
   val installAllButton = x { byAccessibleName("Install all") }
