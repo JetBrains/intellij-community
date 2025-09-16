@@ -324,7 +324,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   }
 
   fun getProjectIcon(path: String, isProjectValid: Boolean, unscaledIconSize: Int, name: String? = null): Icon {
-    return projectIconHelper.getProjectIcon(path, isProjectValid, unscaledIconSize, name)
+    return projectIconHelper.getProjectIcon(path = path, isProjectValid = isProjectValid, iconSize = unscaledIconSize, name = name)
   }
 
   fun getNonLocalProjectIcon(id: String, isProjectValid: Boolean, unscaledIconSize: Int, name: String?): Icon {
@@ -774,7 +774,9 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
         // Add it to `state.additionalInfo` now to support new projects which are not opened yet.
         RecentProjectMetaInfo()
       }
-      if (info.hidden == hidden) return
+      if (info.hidden == hidden) {
+        return
+      }
 
       info.hidden = hidden
       modCounter.increment()
@@ -1099,7 +1101,7 @@ internal fun getProjectNameOnlyByPath(path: String): String {
 
 @JvmInline
 @Internal
-value class ProjectNameOrPathIfNotYetComputed(val nameOnlyByProjectPath: String)
+value class ProjectNameOrPathIfNotYetComputed(@JvmField val nameOnlyByProjectPath: String)
 
 @Internal
 data class OpenProjectImplOptions(

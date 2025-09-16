@@ -13,15 +13,13 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.ide.highlighter.ProjectFileType.DOT_DEFAULT_EXTENSION
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -81,13 +79,13 @@ import java.nio.file.Path
 import kotlin.Result
 import kotlin.getOrThrow
 
-private val LOG = Logger.getInstance(ProjectUtil::class.java)
+private val LOG = logger<ProjectUtil>()
 private var ourProjectPath: String? = null
 
-object ProjectUtil {
-  private const val PROJECTS_DIR = "projects"
-  private const val PROPERTY_PROJECT_PATH = "%s.project.path"
+private const val PROJECTS_DIR = "projects"
+private const val PROPERTY_PROJECT_PATH = "%s.project.path"
 
+object ProjectUtil {
   @JvmStatic
   fun updateLastProjectLocation(lastProjectLocation: Path) {
     var location: Path? = lastProjectLocation
@@ -142,6 +140,7 @@ object ProjectUtil {
    */
   @JvmStatic
   fun openOrImport(path: String, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+    @Suppress("DEPRECATION")
     return runUnderModalProgressIfIsEdt {
       openOrImportAsync(Path.of(path), OpenProjectTask {
         this.projectToClose = projectToClose
@@ -153,6 +152,7 @@ object ProjectUtil {
   @JvmStatic
   @JvmOverloads
   fun openOrImport(file: Path, options: OpenProjectTask = OpenProjectTask()): Project? {
+    @Suppress("DEPRECATION")
     return runUnderModalProgressIfIsEdt {
       openOrImportAsync(file, options)
     }
@@ -173,9 +173,7 @@ object ProjectUtil {
       }
 
       // `PlatformProjectOpenProcessor` is not a strong project info holder, so there is no need to optimize (VFS not required)
-      val virtualFile: VirtualFile = virtualFileResult?.getOrThrow() ?: blockingContext {
-        ProjectUtilCore.getFileAndRefresh(file)
-      }?.also {
+      val virtualFile: VirtualFile = virtualFileResult?.getOrThrow() ?: ProjectUtilCore.getFileAndRefresh(file)?.also {
         virtualFileResult = Result.success(it)
       } ?: return null
       if (provider.canOpenProject(virtualFile)) {
@@ -208,16 +206,14 @@ object ProjectUtil {
     }
 
     var nullableVirtualFileResult: Result<VirtualFile?>? = virtualFileResult
-    val processors = blockingContext {
-      computeProcessors(file) {
-        val capturedNullableVirtualFileResult = nullableVirtualFileResult
-        if (capturedNullableVirtualFileResult != null) {
-          capturedNullableVirtualFileResult.getOrThrow()
-        }
-        else {
-          ProjectUtilCore.getFileAndRefresh(file).also {
-            nullableVirtualFileResult = Result.success(it)
-          }
+    val processors = computeProcessors(file) {
+      val capturedNullableVirtualFileResult = nullableVirtualFileResult
+      if (capturedNullableVirtualFileResult != null) {
+        capturedNullableVirtualFileResult.getOrThrow()
+      }
+      else {
+        ProjectUtilCore.getFileAndRefresh(file).also {
+          nullableVirtualFileResult = Result.success(it)
         }
       }
     }
@@ -245,12 +241,10 @@ object ProjectUtil {
     else {
       val virtualFile = nullableVirtualFileResult?.let {
         it.getOrThrow() ?: return null
-      } ?: blockingContext {
-        ProjectUtilCore.getFileAndRefresh(file)
-      } ?: return null
+      } ?: ProjectUtilCore.getFileAndRefresh(file) ?: return null
       project = chooseProcessorAndOpenAsync(processors, virtualFile, options)
     }
-    return postProcess(project)
+    return project?.let { postProcess(it) }
   }
 
   private fun computeProcessors(file: Path, lazyVirtualFile: () -> VirtualFile?): MutableList<ProjectOpenProcessor> {
@@ -271,10 +265,7 @@ object ProjectUtil {
     return processors
   }
 
-  private fun postProcess(project: Project?): Project? {
-    if (project == null) {
-      return null
-    }
+  private fun postProcess(project: Project): Project {
     StartupManager.getInstance(project).runAfterOpened {
       ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), project.disposed) {
         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)
@@ -744,6 +735,7 @@ object ProjectUtil {
   @JvmStatic
   @JvmName("isValidProjectPath")
   fun isValidProjectPathBlocking(file: Path): Boolean {
+    @Suppress("DEPRECATION")
     return ProjectUtilCore.isValidProjectPath(file)
   }
 
@@ -753,7 +745,7 @@ object ProjectUtil {
     val storePathManager = serviceAsync<ProjectStorePathManager>()
     return withContext(Dispatchers.IO) {
       storePathManager.testStoreDirectoryExistsForProjectRoot(file) ||
-      (file.toString().endsWith(DOT_DEFAULT_EXTENSION) && Files.isRegularFile(file))
+      (file.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) && Files.isRegularFile(file))
     }
   }
 }
