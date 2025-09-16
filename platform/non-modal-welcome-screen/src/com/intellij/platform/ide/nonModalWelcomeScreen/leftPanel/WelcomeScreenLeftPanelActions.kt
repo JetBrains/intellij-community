@@ -1,117 +1,60 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel
 
-import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
 import com.intellij.ide.IdeView
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
-import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.PresentationFactory
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.openapi.ui.popup.ListPopupStep
-import com.intellij.openapi.util.NlsActions.ActionText
-import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.DisclosureButton
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.popup.list.ListPopupImpl
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
-import java.awt.Component
+import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
-import java.awt.Point
+import java.awt.Rectangle
+import java.awt.event.ActionEvent
 import java.util.function.Supplier
-import javax.swing.Icon
+import javax.swing.AbstractAction
 import javax.swing.JComponent
 
 internal class WelcomeScreenLeftPanelActions(val project: Project) {
-  internal val panelButtonModels: List<PanelButtonModel>
-    get() = listOfNotNull(
-      PanelButtonModel(NonModalWelcomeScreenBundle.message ("welcome.screen.action.open"), AllIcons.Nodes.Folder,
-                       runPlatformAction("OpenFile")),
-      PanelButtonModel(NonModalWelcomeScreenBundle.message("welcome.screen.action.new"), AllIcons.General.Add,
-                       showNewActionGroupDropDown()),
-      PanelButtonModel(NonModalWelcomeScreenBundle.message("welcome.screen.action.clone"), AllIcons.General.Vcs,
-                       runPlatformAction("Vcs.VcsClone")),
-      remoteDevelopmentButton()
-    )
+  fun createButtonsComponent(): JComponent {
+    val actionManager = ActionManager.getInstance()
 
-  internal data class PanelButtonModel(
-    @ActionText val text: String,
-    val icon: Icon,
-    val onClick: (JComponent) -> Unit,
-  )
+    // TODO: register group in xml
+    val group = DefaultActionGroup()
+    actionManager.getAction("WelcomeScreen.OpenDirectoryProject")?.let { group.add(it) }
+    actionManager.getAction("NonModalWelcomeScreen.LeftTabActions.New.Action")?.let { group.add(it) }
+    actionManager.getAction("ProjectFromVersionControl")?.let { group.add(it) }
+    actionManager.getAction("OpenRemoteDevelopment")?.let { group.add(it) }
 
-  private fun remoteDevelopmentButton(): PanelButtonModel? {
-    if (!AppModeAssertions.isMonolith()) return null
-    return PanelButtonModel(NonModalWelcomeScreenBundle.message("welcome.screen.action.remote.development"), AllIcons.Nodes.Plugin,
-                            runPlatformAction("OpenRemoteDevelopment"))
-  }
+    val toolbar = ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, LeftPanelActionGroupWrapper(group), false, false, false)
+    toolbar.isOpaque = false
+    toolbar.isReservePlaceAutoPopupIcon = false
+    toolbar.layoutStrategy = VerticalToolbarLayoutStrategy()
 
-  private fun runPlatformAction(name: String): (JComponent) -> Unit {
-    val action = ActionManager.getInstance().getAction(name)
-    val presentationFactory = PresentationFactory()
+    toolbar.targetComponent = toolbar
+    toolbar.border = JBUI.Borders.empty(0, 20)
 
-    return { component ->
-      val presentation = presentationFactory.getPresentation(action)
-      val dataContext = DataManager.getInstance().getDataContext(component)
-      val ev = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE, null)
-      ActionUtil.invokeAction(action, ev, null)
+    return UiDataProvider.wrapComponent(toolbar) { sink ->
+      sink[WelcomeScreenActionsUtil.NON_MODAL_WELCOME_SCREEN] = true
+      sink[CommonDataKeys.PROJECT] = project
+      sink[LangDataKeys.IDE_VIEW] = getIdeView(project)
     }
-  }
-
-  /**
-   * See com.intellij.ide.startup.importSettings.chooser.productChooser.ProductChooserAction.createPopup
-   */
-  private fun createPopup(step: ListPopupStep<Any>): ListPopup {
-    val result = object : ListPopupImpl(null, step) {
-      override fun createPopupComponent(content: JComponent?): JComponent {
-        return super.createPopupComponent(content).apply {
-          preferredSize = Dimension(JBUI.scale(DEFAULT_BUTTON_WIDTH)
-                                      .coerceAtLeast(preferredSize.width), preferredSize.height)
-        }
-      }
-    }
-    return result
-  }
-
-  private fun showNewActionGroupDropDown(): (JComponent) -> Unit {
-    val actionGroup = ActionManager.getInstance().getAction("NonModalWelcomeScreen.LeftTabActions.New") as ActionGroup
-
-    return { component ->
-      val dataContext = createDataContext(project, component)
-      val step = createStep(actionGroup, dataContext, component)
-      createPopup(step).show(
-        RelativePoint(component, Point(0, component.height + JBUI.scale(4)))
-      )
-    }
-  }
-
-  private fun createStep(actionGroup: ActionGroup, context: DataContext, widget: JComponent?): ListPopupStep<Any> {
-    return JBPopupFactory.getInstance().createActionsStep(actionGroup, context, ActionPlaces.PROJECT_WIDGET_POPUP, false, false,
-                                                          null, widget, false, 0, false)
-  }
-
-  fun createDataContext(project: Project, component: Component): DataContext {
-    return SimpleDataContext.builder()
-      .setParent(DataManager.getInstance().getDataContext(component))
-      .add<IdeView>(LangDataKeys.IDE_VIEW, getIdeView(project))
-      .build()
   }
 
   /**
    * Needed for new file creation actions as part of the context
    */
-  fun getIdeView(project: Project): IdeView {
+  private fun getIdeView(project: Project): IdeView {
     val projectViewPane = ProjectView.getInstance(project).getCurrentProjectViewPane()
     val baseView = IdeViewForProjectViewPane(Supplier { projectViewPane })
     return object : IdeView {
@@ -130,22 +73,80 @@ internal class WelcomeScreenLeftPanelActions(val project: Project) {
       }
     }
   }
+}
 
-  companion object {
-    private const val DEFAULT_BUTTON_WIDTH = 280
+private class LeftPanelDisclosureButtonAction(private val actionDelegate: AnAction) : CustomComponentAction {
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    val button = DisclosureButton()
+    button.arrowIcon = null
+    button.border = JBUI.Borders.empty(4, 0)
 
-    /**
-     * See com.jetbrains.ds.toolwindow.DataSpellDataPanelService.createEmptyStatePanel
-     */
-    fun Row.leftPanelActionButton(model: PanelButtonModel): Cell<DisclosureButton> {
-      return cell(DisclosureButton())
-        .applyToComponent {
-          this.text = model.text
-          this.icon = model.icon
-          this.arrowIcon = null
+    button.text = presentation.text
+    button.icon = presentation.icon
 
-          addActionListener { model.onClick(this) }
-        }
+    button.action = object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
+        performAction(button, presentation)
+      }
     }
+
+    return button
+  }
+
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    if (component !is DisclosureButton) return
+
+    component.text = presentation.text
+    component.icon = presentation.icon ?: EmptyIcon.ICON_16
+    UIUtil.setEnabled(component, presentation.isEnabled, true)
+  }
+
+  private fun performAction(component: JComponent, presentation: Presentation) {
+    val dataContext = ActionToolbar.getDataContextFor(component)
+    val ev = AnActionEvent.createEvent(actionDelegate, dataContext, presentation, ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE, null)
+    ActionUtil.invokeAction(actionDelegate, ev, null)
   }
 }
+
+private class LeftPanelActionGroupWrapper(group: ActionGroup) : ActionGroupWrapper(group) {
+  override fun postProcessVisibleChildren(e: AnActionEvent, visibleChildren: List<AnAction>): List<AnAction> {
+    visibleChildren.forEach { action ->
+      e.updateSession.presentation(action).putClientProperty(ActionUtil.COMPONENT_PROVIDER,
+                                                             LeftPanelDisclosureButtonAction(action))
+    }
+    return visibleChildren
+  }
+}
+
+private class VerticalToolbarLayoutStrategy : ToolbarLayoutStrategy {
+  override fun calculateBounds(toolbar: ActionToolbar): List<Rectangle> {
+    val res = mutableListOf<Rectangle>()
+
+    val bounds = toolbar.component.bounds
+    val insets = toolbar.component.insets
+
+    var yOffset = 0
+    for (child in toolbar.component.components) {
+      val d = if (child.isVisible) child.preferredSize else Dimension()
+      res.add(Rectangle(insets.left, insets.top + yOffset, bounds.width - insets.left - insets.right, d.height))
+      yOffset += d.height
+    }
+
+    return res;
+  }
+
+  override fun calcPreferredSize(toolbar: ActionToolbar): Dimension {
+    var width = 0
+    var height = 0
+
+    for (component in toolbar.component.components.filter { it.isVisible }) {
+      val preferredSize = component.preferredSize
+      width = maxOf(width, preferredSize.width)
+      height += preferredSize.height
+    }
+    return JBUI.size(width, height)
+  }
+
+  override fun calcMinimumSize(toolbar: ActionToolbar): Dimension = calcPreferredSize(toolbar)
+}
+

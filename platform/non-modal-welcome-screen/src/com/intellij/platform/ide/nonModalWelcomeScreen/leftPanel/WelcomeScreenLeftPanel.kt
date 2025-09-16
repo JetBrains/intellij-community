@@ -17,7 +17,6 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFi
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
 import com.intellij.platform.ide.nonModalWelcomeScreen.GoFileDragAndDropHandler
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
-import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelActions.Companion.leftPanelActionButton
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFile
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconManager
@@ -103,7 +102,7 @@ internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectVie
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
       border = JBUI.Borders.empty()
     }
-    topPanel.add(actionButtons())
+    topPanel.add(WelcomeScreenLeftPanelActions(project).createButtonsComponent())
     topPanel.add(separator { customize(UnscaledGapsY(top = 17)) })
     topPanel.add(searchPanel(projectFilteringTree))
     topPanel.add(separator())
@@ -122,16 +121,6 @@ internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectVie
   override fun dispose() {
     recentProjectTreeComponent = null
     super.dispose()
-  }
-
-  private fun actionButtons() = panel {
-    WelcomeScreenLeftPanelActions(project).panelButtonModels.forEach { model ->
-      row {
-        leftPanelActionButton(model)
-          .align(AlignX.FILL)
-          .customize(UnscaledGaps(top = 8, left = 20, right = 20))
-      }
-    }
   }
 
   private fun searchPanel(recentProjectTree: RecentProjectFilteringTree) = panel {

@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.projectImport.ProjectOpenProcessor.Companion.getImportProvider
@@ -119,7 +120,11 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
         return
       }
 
-      if (FlatWelcomeFrame.USE_TABBED_WELCOME_SCREEN) {
+      if (e.getData(WelcomeScreenActionsUtil.NON_MODAL_WELCOME_SCREEN) == true) {
+        presentation.icon = AllIcons.Nodes.Folder
+        presentation.text = ActionsBundle.message("action.Tabbed.WelcomeScreen.NonModal.OpenProject.text")
+      }
+      else if (FlatWelcomeFrame.USE_TABBED_WELCOME_SCREEN) {
         presentation.icon = AllIcons.Welcome.Open
         presentation.selectedIcon = AllIcons.Welcome.OpenSelected
         presentation.text = ActionsBundle.message("action.Tabbed.WelcomeScreen.OpenProject.text")

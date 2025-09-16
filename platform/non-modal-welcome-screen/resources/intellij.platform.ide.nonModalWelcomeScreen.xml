@@ -41,5 +41,7 @@
     <action id="OpenWelcome" class="com.intellij.platform.ide.nonModalWelcomeScreen.actions.OpenWelcomeScreenAction">
       <add-to-group group-id="HelpMenu" anchor="first"/>
     </action>
+    <action id="NonModalWelcomeScreen.LeftTabActions.New.Action" icon="AllIcons.General.Add"
+            class="com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftTabActionNew"/>
   </actions>
 </idea-plugin>
