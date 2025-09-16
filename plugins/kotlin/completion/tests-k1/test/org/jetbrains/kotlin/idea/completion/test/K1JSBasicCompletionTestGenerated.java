@@ -3267,6 +3267,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/ConsiderExtensionType.kt");
             }
 
+            @TestMetadata("ContextParameter.kt")
+            public void testContextParameter() throws Exception {
+                runTest("../testData/basic/common/ContextParameter.kt");
+            }
+
             @TestMetadata("CoroutineContextReleaseCoroutines.kt")
             public void testCoroutineContextReleaseCoroutines() throws Exception {
                 runTest("../testData/basic/common/CoroutineContextReleaseCoroutines.kt");

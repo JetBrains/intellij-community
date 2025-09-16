@@ -7,6 +7,7 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import com.intellij.ui.RowIcon
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -71,8 +72,9 @@ object KotlinIconProvider {
             }
         }
 
+        @OptIn(KaExperimentalApi::class)
         return when (symbol) {
-            is KaValueParameterSymbol -> KotlinIcons.PARAMETER
+            is KaValueParameterSymbol, is KaContextParameterSymbol -> KotlinIcons.PARAMETER
             is KaLocalVariableSymbol -> if (symbol.isVal) KotlinIcons.VAL else KotlinIcons.VAR
             is KaPropertySymbol -> if (symbol.isVal) KotlinIcons.FIELD_VAL else KotlinIcons.FIELD_VAR
             is KaTypeParameterSymbol -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Class)

@@ -3461,6 +3461,11 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/ConsiderExtensionType.kt");
         }
 
+        @TestMetadata("ContextParameter.kt")
+        public void testContextParameter() throws Exception {
+            runTest("../../completion/testData/basic/common/ContextParameter.kt");
+        }
+
         @TestMetadata("CoroutineContextReleaseCoroutines.kt")
         public void testCoroutineContextReleaseCoroutines() throws Exception {
             runTest("../../completion/testData/basic/common/CoroutineContextReleaseCoroutines.kt");
