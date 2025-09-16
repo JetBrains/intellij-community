@@ -36,6 +36,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -921,7 +922,7 @@ class LineStatusTrackerManager(
   class CheckinFactory : CheckinHandlerFactory() {
     override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
       val project = panel.project
-      return object : CheckinHandler() {
+      return object : CheckinHandler(), DumbAware {
         override fun checkinSuccessful() {
           resetExcludedFromCommit()
         }
