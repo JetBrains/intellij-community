@@ -686,6 +686,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
+  @Nullable
+  private String getConnectorArgument(String name) {
+    Connector.Argument argument = myArguments.get(name);
+    return argument != null ? argument.value() : null;
+  }
+
   private void setConnectorArgument(String name, String value) {
     Connector.Argument argument = myArguments.get(name);
     if (argument != null) {
@@ -720,7 +726,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         // It's a known macOS sandbox restriction.
         // https://github.com/bazelbuild/bazel/issues/5206#issuecomment-402398624
         // This code tries to keep involvement with production flow to a bare minimum
-        String localAddress = myArguments.get("localAddress").value();
+        String localAddress = getConnectorArgument("localAddress");
         if (BazelEnvironmentUtil.isBazelTestRun() &&
             OS.CURRENT == OS.macOS &&
             ("localhost".equals(localAddress) || "127.0.0.1".equals(localAddress))) {
@@ -770,7 +776,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       // It's a known macOS sandbox restriction.
       // https://github.com/bazelbuild/bazel/issues/5206#issuecomment-402398624
       // This code tries to keep involvement with production flow to a bare minimum
-      String localAddress = myArguments.get("hostname").value();
+      String localAddress = getConnectorArgument("hostname");
       if (BazelEnvironmentUtil.isBazelTestRun() &&
           OS.CURRENT == OS.macOS &&
           ("localhost".equals(localAddress) || "127.0.0.1".equals(localAddress))) {
