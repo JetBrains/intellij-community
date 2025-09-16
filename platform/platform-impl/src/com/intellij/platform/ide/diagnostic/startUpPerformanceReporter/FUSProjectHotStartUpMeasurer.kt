@@ -229,6 +229,7 @@ object FUSProjectHotStartUpMeasurer {
     if (!currentThreadContext().isProperContext()) {
       return block.invoke()
     }
+
     val projectId = ProjectId()
     val hasSettings = ProjectUtil.isValidProjectPath(projectFile)
     channel.trySend(Event.ProjectPathReportEvent(projectId, hasSettings))

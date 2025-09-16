@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
@@ -14,6 +14,10 @@ import java.nio.file.Path
  */
 @ApiStatus.Internal
 interface ProjectStorePathManager {
+  companion object {
+    fun getInstance(): ProjectStorePathManager = service()
+  }
+
   /**
    * Build a path to the project store directory
    *
@@ -55,10 +59,5 @@ interface ProjectStorePathManager {
    */
   fun testStoreDirectoryExistsForProjectRoot(projectRoot: VirtualFile): Boolean {
     return getStoreDirectory(projectRoot) != null
-  }
-
-  companion object {
-    @JvmStatic
-    fun getInstance(): ProjectStorePathManager = ApplicationManager.getApplication().getService(ProjectStorePathManager::class.java)
   }
 }

@@ -13,6 +13,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.highlighter.ProjectFileType.DOT_DEFAULT_EXTENSION
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -747,10 +748,12 @@ object ProjectUtil {
   }
 
   @JvmName("isValidProjectPathAsync")
-  @JvmStatic
+  @Internal
   suspend fun isValidProjectPath(file: Path): Boolean {
+    val storePathManager = serviceAsync<ProjectStorePathManager>()
     return withContext(Dispatchers.IO) {
-      ProjectUtilCore.isValidProjectPath(file)
+      storePathManager.testStoreDirectoryExistsForProjectRoot(file) ||
+      (file.toString().endsWith(DOT_DEFAULT_EXTENSION) && Files.isRegularFile(file))
     }
   }
 }
