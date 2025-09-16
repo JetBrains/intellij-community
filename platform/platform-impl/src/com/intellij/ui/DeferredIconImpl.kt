@@ -137,7 +137,8 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     return icon
   }
 
-  override fun getBaseIcon(): Icon = delegateIcon
+  override val baseIcon: Icon
+    get() = delegateIcon
 
   private fun checkDelegationDepth() {
     var depth = 0
