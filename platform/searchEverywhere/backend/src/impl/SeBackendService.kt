@@ -56,7 +56,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
       }
     }
 
-    val sortedProviderIds = SeSortedProviderIds.create(providerIds, providerHolder)
+    val sortedProviderIds = SeSortedProviderIds.create(providerIds, providerHolder, session)
     val resultsBalancer = SeResultsCountBalancer("BE",
                                                  nonBlockedProviderIds = emptyList(),
                                                  highPriorityProviderIds = sortedProviderIds.essential,
@@ -103,7 +103,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
   ) : SeSortedProviderIds? {
     val providersHolder = getProvidersHolder(session, dataContextId) ?: return null
     val allProviderIds = SeItemsProviderFactory.EP_NAME.extensionList.map { it.id.toProviderId() } + providersHolder.legacyAllTabContributors.map { it.key }
-    return SeSortedProviderIds.create(allProviderIds, providersHolder)
+    return SeSortedProviderIds.create(allProviderIds, providersHolder, session)
   }
 
   private suspend fun getProvidersHolder(

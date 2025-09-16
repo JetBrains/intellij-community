@@ -298,6 +298,7 @@ class SeTabDelegate(
       val frontendOnlyIds = localFactories.filter { it.value is SeFrontendOnlyItemsProviderFactory }.map { it.key }.toSet()
 
       val availableRemoteProviders = if (projectId != null) SeRemoteApi.getInstance().getAvailableProviderIds(projectId, session, dataContextId) else null
+      val adaptedRemoteProviderItemsAreFetchable = availableRemoteProviders?.isFetchable == true
 
       val essentialRemoteProviderIds = availableRemoteProviders?.essential?.filter {
         !frontendOnlyIds.contains(it)
@@ -307,11 +308,14 @@ class SeTabDelegate(
         !frontendOnlyIds.contains(it)
       }?.toSet() ?: emptySet()
 
-      val adaptedAndAvailableToRenderProviderIds = availableRemoteProviders?.adapted?.filter {
-        !frontendOnlyIds.contains(it) && localProvidersHolder.legacyAllTabContributors.containsKey(it)
-      } ?: emptySet()
+      val adaptedAndAvailableToRenderRemoteProviderIds = if (adaptedRemoteProviderItemsAreFetchable) {
+        availableRemoteProviders.adapted.filter {
+          !frontendOnlyIds.contains(it) && localProvidersHolder.legacyAllTabContributors.containsKey(it)
+        }
+      }
+      else emptySet()
 
-      val nonEssentialRemoteProviderIds = nonEssentialNonAdaptedRemoteProviderIds + adaptedAndAvailableToRenderProviderIds
+      val nonEssentialRemoteProviderIds = nonEssentialNonAdaptedRemoteProviderIds + adaptedAndAvailableToRenderRemoteProviderIds
 
       val remoteProviderIds = essentialRemoteProviderIds.union(nonEssentialRemoteProviderIds).filter { hasWildcard || providerIds.contains(it) }.toSet()
 
