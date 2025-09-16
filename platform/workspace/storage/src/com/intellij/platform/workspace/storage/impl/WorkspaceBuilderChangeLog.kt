@@ -19,8 +19,8 @@ internal class WorkspaceBuilderChangeLog {
   var modificationCount: Long = 0
 
   internal val changeLog: ChangeLog = LinkedHashMap()
-  internal val addedSymbolicIds = CollectionFactory.createSmallMemoryFootprintSet<SymbolicEntityId<*>>()
-  internal val removedSymbolicIds = CollectionFactory.createSmallMemoryFootprintSet<SymbolicEntityId<*>>()
+  private val addedSymbolicIds = CollectionFactory.createSmallMemoryFootprintSet<SymbolicEntityId<*>>()
+  private val removedSymbolicIds = CollectionFactory.createSmallMemoryFootprintSet<SymbolicEntityId<*>>()
 
   internal fun clear() {
     modificationCount++
@@ -485,6 +485,14 @@ internal class WorkspaceBuilderChangeLog {
       removedSymbolicIds.add(removedId)
       addedSymbolicIds.remove(removedId)
     }
+  }
+
+  internal fun addedSymbolicIds(): Set<SymbolicEntityId<*>> {
+    return addedSymbolicIds
+  }
+
+  internal fun removedSymbolicIds(): Set<SymbolicEntityId<*>> {
+    return removedSymbolicIds
   }
 
   companion object {

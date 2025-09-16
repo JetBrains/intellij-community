@@ -47,7 +47,11 @@ internal class MutableMultimapStorageIndex private constructor(
     startWrite()
     lastRemovedValues.addAll(index.removeKey(id))
     if (elements == null) return
-    elements.forEach { index.put(id, it) }
+    elements.forEach {
+      if (index.put(id, it)) {
+        firstAddedValues.add(it)
+      }
+    }
   }
 
   internal fun index(id: EntityId, element: SymbolicEntityId<*>) {
@@ -69,6 +73,9 @@ internal class MutableMultimapStorageIndex private constructor(
   }
 
   @TestOnly
+  /**
+   * Because this is TestOnly method we don't track firstAdded and lastRemoved values
+   */
   internal fun copyFrom(another: AbstractMultimapStorageIndex) {
     startWrite()
     this.index.putAll(another.index)
