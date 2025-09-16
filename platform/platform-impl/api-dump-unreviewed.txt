@@ -1555,7 +1555,6 @@ f:com.intellij.ide.ProjectWindowCustomizerService
 - dispose():V
 - f:enableIfNeeded():V
 - f:getProjectIcon(com.intellij.openapi.project.Project):javax.swing.Icon
-- f:getRecentProjectIconColor(java.lang.String):kotlin.Pair
 - f:isActive():Z
 - f:isAvailable():Z
 - f:paint(java.awt.Window,javax.swing.JComponent,java.awt.Graphics2D):Z
@@ -1645,7 +1644,6 @@ c:com.intellij.ide.RecentProjectsManagerBase
 - f:getProjectIcon(java.lang.String,Z,I,java.lang.String):javax.swing.Icon
 - bs:getProjectIcon$default(com.intellij.ide.RecentProjectsManagerBase,java.lang.String,Z,I,java.lang.String,I,java.lang.Object):javax.swing.Icon
 - f:getProjectName(java.lang.String):java.lang.String
-- getProjectPath(com.intellij.openapi.project.Project):java.lang.String
 - getProjectPath(java.nio.file.Path):java.lang.String
 - f:getRecentPaths():java.util.List
 - p:getRecentProjectMetadata(java.lang.String,com.intellij.openapi.project.Project):java.lang.String
@@ -1654,7 +1652,6 @@ c:com.intellij.ide.RecentProjectsManagerBase
 - hasPath(java.lang.String):Z
 - p:isOpenProjectsOneByOneRequired():Z
 - f:loadState(com.intellij.ide.RecentProjectManagerState):V
-- f:markPathRecent(java.lang.String,com.intellij.openapi.project.Project):com.intellij.ide.RecentProjectMetaInfo
 - moveProjectToGroup(java.lang.String,com.intellij.ide.ProjectGroup):V
 - openProject(java.nio.file.Path,com.intellij.ide.impl.OpenProjectTask,kotlin.coroutines.Continuation):java.lang.Object
 - f:openProjectSync(java.nio.file.Path,com.intellij.ide.impl.OpenProjectTask):com.intellij.openapi.project.Project

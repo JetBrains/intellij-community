@@ -336,6 +336,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return RecentProjectListActionProvider.getInstance().getActions(addClearListItem = addClearListItem).toTypedArray()
   }
 
+  @Internal
   fun markPathRecent(project: Project): RecentProjectMetaInfo? {
     val path = getProjectPath(project) ?: return null
     return markPathRecent(path.invariantSeparatorsPathString, project)

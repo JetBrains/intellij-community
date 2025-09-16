@@ -17,7 +17,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
@@ -62,7 +61,7 @@ import kotlin.math.abs
 @Service(Service.Level.PROJECT)
 @Internal
 private class ProjectWindowCustomizerIconCache(private val project: Project, coroutineScope: CoroutineScope) {
-  val cachedIcon: SynchronizedClearableLazy<Icon> = SynchronizedClearableLazy { getIconRaw() }
+  @JvmField val cachedIcon: SynchronizedClearableLazy<Icon> = SynchronizedClearableLazy { getIconRaw() }
 
   init {
     val projectConnection = project.messageBus.connect(coroutineScope)
@@ -178,6 +177,7 @@ class ProjectWindowCustomizerService : Disposable {
            ?: defaultColors.iconColorStart
   }
 
+  @Internal
   fun getRecentProjectIconColor(projectPath: Path): Pair<Color, Color> {
     val projectColors = getProjectColor(storageFor(projectPath))
     return Pair(projectColors.iconColorStart, projectColors.iconColorEnd)
