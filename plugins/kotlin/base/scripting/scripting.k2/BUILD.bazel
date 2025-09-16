@@ -71,6 +71,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":scripting.k2"],
   deps = [
+    "//plugins/kotlin/plugin/k2",
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
     "@lib//:kotlin-stdlib",
