@@ -4,15 +4,13 @@ package com.intellij.ide;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.function.BiConsumer;
 
-@ApiStatus.Internal
-public final class PlatformIdeServiceImpl extends PlatformIdeService {
+final class PlatformIdeServiceImpl extends PlatformIdeService {
   @Override
   public @NotNull BiConsumer<Object, HyperlinkEvent> createHyperlinkConsumer() {
     NotificationListener.UrlOpeningListener res = new NotificationListener.UrlOpeningListener(false);

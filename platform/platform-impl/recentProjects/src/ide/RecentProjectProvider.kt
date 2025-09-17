@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
 /**
- * See [com.intellij.ide.RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC]
+ * See [com.intellij.ide.RecentProjectsManager.Companion.RECENT_PROJECTS_CHANGE_TOPIC]
  */
 @ApiStatus.Internal
 interface RecentProjectProvider {

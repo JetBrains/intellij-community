@@ -51,7 +51,6 @@ import com.intellij.ui.mac.createMacDelegate
 import com.intellij.ui.win.createWinDockDelegate
 import com.intellij.util.PathUtilRt
 import com.intellij.util.PlatformUtils
-import com.intellij.util.application
 import com.intellij.util.io.createParentDirectories
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -473,8 +472,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
   fun getLastOpenedProject(): String? = state.lastOpenedProject
 
-  @Internal
-  class MyFrameStateListener : FrameStateListener {
+  internal class MyFrameStateListener : FrameStateListener {
     override fun onFrameActivated(frame: IdeFrame): Unit = frame.notifyProjectActivation()
   }
 
@@ -1014,7 +1012,7 @@ private fun fireChangeEvent() {
 
 private suspend fun fireLastProjectsReopenedEvent(activeProject: Project) {
   withContext(Dispatchers.EDT) {
-    application.messageBus.syncPublisher(RecentProjectsManager.LAST_PROJECTS_TOPIC).lastProjectsReopened(activeProject)
+    ApplicationManager.getApplication().messageBus.syncPublisher(RecentProjectsManager.LAST_PROJECTS_TOPIC).lastProjectsReopened(activeProject)
   }
 }
 

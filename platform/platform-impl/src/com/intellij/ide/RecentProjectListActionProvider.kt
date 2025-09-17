@@ -3,6 +3,7 @@ package com.intellij.ide
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.ide.vcs.RecentProjectsBranchesProvider
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -21,7 +22,6 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupIt
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProviderRecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
-import com.intellij.platform.ide.impl.recentProjects.com.intellij.ide.vcs.RecentProjectsBranchesProvider
 import com.intellij.ui.UIBundle
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.forEachLoggingErrors
