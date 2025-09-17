@@ -272,7 +272,8 @@ private fun RowScope.ColumnOne() {
                 }
             }
         }
-
+        
+        var selected by remember { mutableStateOf("") }
         DefaultSplitButton(
             onClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button clicked") },
             secondaryOnClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button chevron clicked") },
@@ -287,8 +288,9 @@ private fun RowScope.ColumnOne() {
 
                         if (stack.size == 4) {
                             selectableItem(
-                                selected = false,
+                                selected = selected == itemStr,
                                 onClick = {
+                                    selected = itemStr
                                     JewelLogger.getInstance("Jewel").warn("Item clicked: $itemStr") },
                             ) {
                                 Text("Item $itemStr")
@@ -303,12 +305,20 @@ private fun RowScope.ColumnOne() {
 
                     separator()
 
-                    items(
-                        10,
-                        isSelected = { false },
-                        onItemClick = { JewelLogger.getInstance("Jewel").warn("Item clicked: $it") },
-                        content = { Text("Other Item ${it + 1}") },
-                    )
+                    repeat(10) {
+                        val number = it + 1
+                        val itemStr = "${stackStr}other.$number"
+
+                        selectableItem(
+                            selected = selected == itemStr,
+                            onClick = {
+                                selected = itemStr
+                                JewelLogger.getInstance("Jewel").warn("Item clicked: $itemStr")
+                            },
+                        ) {
+                            Text("Other Item ${it + 1}")
+                        }
+                    }
                 }
 
                 buildSubmenus(emptyList())
