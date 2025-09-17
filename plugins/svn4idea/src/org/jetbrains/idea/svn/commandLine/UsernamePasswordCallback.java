@@ -20,7 +20,6 @@ import java.util.regex.Pattern;
 public class UsernamePasswordCallback extends AuthCallbackCase {
 
   private static final @NonNls String COULD_NOT_AUTHENTICATE_TO_SERVER_MESSAGE = "could not authenticate to server";
-  private static final @NonNls String UNABLE_TO_CONNECT_MESSAGE = "Unable to connect to a repository";
   private static final @NonNls String AUTHENTICATION_FAILED_MESSAGE = "Authentication failed";
   private static final @NonNls String INVALID_CREDENTIALS_FOR_SVN_PROTOCOL = "svn: E170001: Can't get";
   private static final @NonNls String PASSWORD_STRING = "password";
@@ -34,17 +33,15 @@ public class UsernamePasswordCallback extends AuthCallbackCase {
 
   @Override
   public boolean canHandle(String error) {
-    return
-      // http/https protocol invalid credentials
-      error.contains(AUTHENTICATION_FAILED_MESSAGE) ||
-      // svn protocol invalid credentials - messages could be "Can't get password", "Can't get username or password"
-      error.contains(INVALID_CREDENTIALS_FOR_SVN_PROTOCOL) && error.contains(PASSWORD_STRING) ||
-      // http/https protocol, svn 1.7, non-interactive
-      // we additionally check that error is not related to certificate verification - as CertificateCallbackCase could only handle
-      // untrusted but not invalid certificates
-      (error.contains(UNABLE_TO_CONNECT_MESSAGE) && !CertificateCallbackCase.isCertificateVerificationFailed(error)) ||
-      // http, svn 1.6, non-interactive
-      StringUtil.containsIgnoreCase(error, COULD_NOT_AUTHENTICATE_TO_SERVER_MESSAGE);
+    return isAuthenticationProblem(error);
+  }
+
+  public static boolean isAuthenticationProblem(String error) {
+    return error.contains(AUTHENTICATION_FAILED_MESSAGE) ||
+           // svn protocol invalid credentials - messages could be "Can't get password", "Can't get username or password"
+           error.contains(INVALID_CREDENTIALS_FOR_SVN_PROTOCOL) && error.contains(PASSWORD_STRING) ||
+           // http, svn 1.6, non-interactive
+           StringUtil.containsIgnoreCase(error, COULD_NOT_AUTHENTICATE_TO_SERVER_MESSAGE);
   }
 
   @Override
