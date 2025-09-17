@@ -38,9 +38,6 @@ public class JSpecifyFilteredAnnotationTest extends JSpecifyAnnotationTest {
           new Pair<>("DereferenceTypeVariable.java", 117),  // see: IDEA-377688
           new Pair<>("TypeVariableToObject.java", 104), // see: IDEA-377688
 
-          new Pair<>("IntersectionSupertype.java", 76), // see: IDEA-377689
-          new Pair<>("IntersectionSupertype.java", 84), // see: IDEA-377689
-
           new Pair<>("NullLiteralToTypeVariable.java", 58), // see: IDEA-377691
           new Pair<>("NullLiteralToTypeVariable.java", 78), // see: IDEA-377691
           new Pair<>("NullLiteralToTypeVariable.java", 98), // see: IDEA-377691
@@ -81,7 +78,7 @@ public class JSpecifyFilteredAnnotationTest extends JSpecifyAnnotationTest {
         )
       ),
       new SkipIndividuallyFilter( //cases to investigate. (line number starts from 0)
-        Set.<Pair<String, Integer>>of(
+        Set.of(
           new Pair<>("AnnotatedBoundsOfWildcard.java", 74), // @unspecified, skip
           new Pair<>("AnnotatedBoundsOfWildcard.java", 76), // @unspecified, skip
           new Pair<>("ComplexParametric.java", 158), // @unspecified, skip
@@ -90,8 +87,6 @@ public class JSpecifyFilteredAnnotationTest extends JSpecifyAnnotationTest {
           new Pair<>("ComplexParametric.java", 238), // @unspecified, skip
           new Pair<>("ComplexParametric.java", 246), // @unspecified, skip
           new Pair<>("DereferenceTypeVariable.java", 123), // @unspecified, skip
-          new Pair<>("IntersectionSupertype.java", 74), // @unspecified, skip
-          new Pair<>("IntersectionSupertype.java", 78), // @unspecified, skip
           new Pair<>("MultiBoundTypeVariableToObject.java", 43), // @unspecified, skip
           new Pair<>("MultiBoundTypeVariableToObject.java", 52), // @unspecified, skip
           new Pair<>("MultiBoundTypeVariableToOther.java", 43), // @unspecified, skip
