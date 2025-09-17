@@ -10,6 +10,7 @@ import com.intellij.codeInsight.completion.ml.MLWeigherUtil
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementWeigher
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.icons.AllIcons.Actions.IntentionBulbGrey
 import com.intellij.icons.AllIcons.Actions.Lightning
 import com.intellij.idea.AppMode
@@ -68,7 +69,8 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     if (parameters.completionType != CompletionType.BASIC) return
     if (parameters.position is PsiComment) return
     if (parameters.editor.caretModel.caretCount != 1) return
-
+    val templateState = TemplateManagerImpl.getTemplateState(parameters.editor)
+    if (templateState != null && !templateState.isFinished) return
     resultSet.runRemainingContributors(parameters) {
       resultSet.passResult(it)
     }
