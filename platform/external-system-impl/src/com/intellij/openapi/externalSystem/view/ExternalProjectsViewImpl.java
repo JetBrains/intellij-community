@@ -46,7 +46,7 @@ import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -435,7 +435,7 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
     return ref.get();
   }
 
-  @RequiresReadLock
+  @RequiresEdt
   public @Nullable ExternalProjectsViewState getState() {
     if (myStructure != null) {
       try {
