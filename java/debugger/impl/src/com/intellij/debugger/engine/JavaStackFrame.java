@@ -214,10 +214,8 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     if (methodValuePair != null && myDescriptor.getUiIndex() == 0) {
       Value returnValue = methodValuePair.getSecond();
       // try to keep the value as early as possible
-      try {
-        evaluationContext.keep(returnValue);
-      }
-      catch (ObjectCollectedException ignored) {
+      if (returnValue instanceof ObjectReference returnValueObject) {
+        evaluationContext.getSuspendContext().keepAsync(returnValueObject);
       }
       ValueDescriptorImpl returnValueDescriptor =
         myNodeManager.getMethodReturnValueDescriptor(myDescriptor, methodValuePair.getFirst(), returnValue);
