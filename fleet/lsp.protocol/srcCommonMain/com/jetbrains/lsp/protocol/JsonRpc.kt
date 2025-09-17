@@ -1,12 +1,10 @@
 package com.jetbrains.lsp.protocol
 
-import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonContentPolymorphicSerializer
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.jsonObject
+import kotlin.jvm.JvmInline
 
 data class Header(
     val contentLenght: Int,

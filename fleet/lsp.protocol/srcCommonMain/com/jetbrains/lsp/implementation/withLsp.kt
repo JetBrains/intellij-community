@@ -1,19 +1,18 @@
 package com.jetbrains.lsp.implementation
 
 import com.jetbrains.lsp.protocol.*
+import fleet.multiplatform.shims.ConcurrentHashMap
 import fleet.util.logging.logger
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -43,13 +42,13 @@ suspend fun withLsp(
 ) {
     coroutineScope {
         val outgoingRequests = ConcurrentHashMap<StringOrInt, OutgoingRequest>()
-        val idGen = AtomicInteger(0)
+        val idGen = AtomicInt(0)
         val lspClient = object : LspClient {
             override suspend fun <Params, Result, Error> request(
                 requestType: RequestType<Params, Result, Error>,
                 params: Params,
             ): Result {
-                val id = StringOrInt(JsonPrimitive(idGen.incrementAndGet()))
+                val id = StringOrInt(JsonPrimitive(idGen.incrementAndFetch()))
                 val deferred = CompletableDeferred<Any?>()
                 outgoingRequests[id] = OutgoingRequest(deferred, requestType)
                 val request = RequestMessage(
@@ -269,59 +268,6 @@ suspend fun withLsp(
             }
         }.use {
             body(lspHandlerContext.lspClient)
-        }
-    }
-}
-
-fun main() {
-    runBlocking(Dispatchers.Default) {
-        val clientToServer = Channel<JsonElement>(Channel.UNLIMITED)
-        val serverToClient = Channel<JsonElement>(Channel.UNLIMITED)
-        val HelloRequestType = RequestType("hello", String.serializer(), String.serializer(), Unit.serializer())
-        val HangRequestType = RequestType("hand", Unit.serializer(), Unit.serializer(), Unit.serializer())
-        val PrintHelloNotification = NotificationType("printHello", String.serializer())
-
-        withLsp(
-            incoming = clientToServer,
-            outgoing = serverToClient,
-            handlers = lspHandlers {
-                request(HelloRequestType) { str ->
-                    "Hello, $str"
-                }
-                notification(PrintHelloNotification) { str ->
-                    println("server: $str")
-                }
-                request(HangRequestType) {
-                    try {
-                        awaitCancellation()
-                    } catch (c: CancellationException) {
-                        println("cancelled by client")
-                        throw c
-                    }
-                }
-            },
-        ) { server ->
-            withLsp(
-                incoming = serverToClient,
-                outgoing = clientToServer,
-                handlers = lspHandlers {
-                    notification(PrintHelloNotification) { str ->
-                        println("client: $str")
-                    }
-                },
-            ) { client ->
-                println(client.request(HelloRequestType, "World"))
-                client.notify(PrintHelloNotification, "Hello World")
-                client.notify(PrintHelloNotification, "Hello World")
-                val hangingRequestJob = launch {
-                    client.request(HangRequestType, Unit)
-                }
-                delay(100)
-                hangingRequestJob.cancel()
-                println("request cancelled")
-                delay(100)
-                println("quitting")
-            }
         }
     }
 }

@@ -3,6 +3,7 @@ package com.jetbrains.lsp.protocol
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.Serializable
+import kotlin.jvm.JvmInline
 
 @Serializable
 data class NotebookDocumentClientCapabilities(

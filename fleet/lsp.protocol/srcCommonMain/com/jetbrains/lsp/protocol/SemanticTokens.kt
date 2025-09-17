@@ -8,6 +8,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonContentPolymorphicSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlin.jvm.JvmInline
 
 @Serializable
 data class SemanticTokensLegend(

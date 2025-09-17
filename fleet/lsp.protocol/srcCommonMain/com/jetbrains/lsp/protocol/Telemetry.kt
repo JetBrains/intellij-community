@@ -7,6 +7,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonContentPolymorphicSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlin.jvm.JvmInline
 
 @Serializable(with = JsonObjectOrArraySerializer::class)
 sealed interface JsonObjectOrArray {

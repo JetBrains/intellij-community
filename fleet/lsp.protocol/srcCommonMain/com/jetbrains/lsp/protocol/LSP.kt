@@ -1,5 +1,7 @@
 package com.jetbrains.lsp.protocol
 
+import fleet.util.isValidUriString
+import io.ktor.http.Url
 import kotlinx.serialization.*
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.PolymorphicKind
@@ -8,6 +10,7 @@ import kotlinx.serialization.descriptors.buildSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.*
+import kotlin.jvm.JvmInline
 
 /**
  * URI following the URI specification, so special spaces (like spaces) are encoded.
@@ -18,18 +21,21 @@ import kotlinx.serialization.json.*
 @JvmInline
 value class URI(val uri: String) {
     init {
-        require(isValidUriString(uri)) { "Invalid URI: $uri" }
+        /**
+         * We need to have consistent URIs as they are used as keys in the analyzer
+         */
+        require(uri.isValidUriString()) { "Invalid URI: $uri" }
     }
 
     /**
      * Returns the URI's schema without schema delimiter (`://`)
      */
-    val scheme: String get() = asJavaUri().scheme
+    val scheme: String get() = Url(uri).protocol.name
 
     /**
      * Returns the file name
      */
-    val fileName: String get() = asJavaUri().path.substringAfterLast('/')
+    val fileName: String get() = Url(uri).segments.last()
 
     /**
      * Returns the file extension (without dot) if present
@@ -41,24 +47,11 @@ value class URI(val uri: String) {
             return if (dotIndex > 0) name.substring(dotIndex + 1) else null
         }
 
-
-    fun asJavaUri(): java.net.URI = java.net.URI(uri)
-
     object Schemas {
         const val FILE: String = "file"
         const val JRT: String = "jrt"
         const val JAR: String = "jar"
         const val ZIP: String = "zip"
-    }
-
-    companion object {
-        /**
-         * We need to have consistent URIs as they are used as keys in the analyzer
-         */
-        fun isValidUriString(uriString: String): Boolean {
-            val javaUri = runCatching { java.net.URI(uriString) }.getOrNull() ?: return false
-            return javaUri.scheme != null
-        }
     }
 }
 
