@@ -26,6 +26,7 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.query.CollectionQuery
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.messages.impl.MessageBusImpl
@@ -42,7 +43,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
-import java.io.File
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
@@ -63,15 +63,15 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   private val unloadedEntitiesStorage: VersionedEntityStorageImpl
 
   /** replay = 1 is needed to send the very first state when the subscription fo the flow happens.
-       otherwise, the flow won't be emitted till the first update. Since we don't update the workspace model really often,
-       this may cause some unwanted delays for subscribers.
-     This is used in the [eventLog] method, where we send the first version of the storage
-       right after the subscription.
-     However, this means that this flow will keep two storages in the flow: the old and the new. This should be okay
-       since the storage is an effective structure, however, if this causes memory problems, we can switch to
-       replay = 0. In this case, no extra storage will be saved, but the event will be emitted after the first
-       update of the WorkspaceModel, what is probably also okay.
-  */
+  otherwise, the flow won't be emitted till the first update. Since we don't update the workspace model really often,
+  this may cause some unwanted delays for subscribers.
+  This is used in the [eventLog] method, where we send the first version of the storage
+  right after the subscription.
+  However, this means that this flow will keep two storages in the flow: the old and the new. This should be okay
+  since the storage is an effective structure, however, if this causes memory problems, we can switch to
+  replay = 0. In this case, no extra storage will be saved, but the event will be emitted after the first
+  update of the WorkspaceModel, what is probably also okay.
+   */
   private val updatesFlow = MutableSharedFlow<VersionedStorageChange>(replay = 1)
 
   // stored property
@@ -90,7 +90,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   private val updateModelMethodName = WorkspaceModelImpl::updateProjectModel.name
   private val updateModelSilentMethodName = WorkspaceModelImpl::updateProjectModelSilent.name
   private val onChangedMethodName = WorkspaceModelImpl::onChanged.name
-  
+
   constructor(project: Project, cs: CoroutineScope, storage: ImmutableEntityStorage, virtualFileUrlManager: VirtualFileUrlManager) {
     this.project = project
     this.coroutineScope = cs
@@ -274,7 +274,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
         before.assertConsistency()
         newStorage.assertConsistency()
       }
-      entityStorage.replace(newStorage, changes, builder.collectSymbolicEntityIdsChanges(),  {}, {})
+      entityStorage.replace(newStorage, changes, builder.collectSymbolicEntityIdsChanges(), {}, {})
     }.apply {
       updateTimePreciseMs.duration.addAndGet(updateTimeMillis)
       toSnapshotTimeMs.duration.addAndGet(toSnapshotTimeMillis)
@@ -361,7 +361,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       startPreUpdateHandlers(before, builder)
       val changes = builder.collectChanges()
       val newStorage = builder.toSnapshot()
-      unloadedEntitiesStorage.replace(newStorage, changes, builder.collectSymbolicEntityIdsChanges(),  {}, ::onUnloadedEntitiesChanged)
+      unloadedEntitiesStorage.replace(newStorage, changes, builder.collectSymbolicEntityIdsChanges(), {}, ::onUnloadedEntitiesChanged)
     }.apply { updateUnloadedEntitiesTimeMs.duration.addAndGet(this) }
 
     log.info("Unloaded entity storage updated in $time ms: $description")
@@ -602,6 +602,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
 }
 
 private fun isProjectCaseSensitive(project: Project): Boolean {
-  return project.basePath?.let { File(it) }?.let { FileSystemUtil.readParentCaseSensitivity(it) == FileAttributes.CaseSensitivity.SENSITIVE }
-         ?: false
+  @Suppress("IO_FILE_USAGE")
+  return project is ProjectStoreOwner && FileSystemUtil.readParentCaseSensitivity(project.componentStore.storeDescriptor.historicalProjectBasePath.toFile()) ==
+    FileAttributes.CaseSensitivity.SENSITIVE
 }

@@ -78,8 +78,7 @@ class LegacyBridgeJpsEntitySourceFactoryImpl(val project: Project) : LegacyBridg
       return null
     }
 
-    val configLocation = getJpsProjectConfigLocation(project)
-    return when (configLocation) {
+    return when (val configLocation = getJpsProjectConfigLocation(project)) {
       is JpsProjectConfigLocation.FileBased ->
         JpsProjectFileEntitySource.ExactFile(configLocation.iprFile, configLocation)
       is JpsProjectConfigLocation.DirectoryBased -> {
