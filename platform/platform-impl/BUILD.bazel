@@ -151,6 +151,7 @@ jvm_library(
     "//platform/locking.impl",
     "//platform/platform-impl/concurrency",
     "//platform/pratt",
+    "//platform/platform-impl/recentProjects",
   ],
   exports = [
     "//platform/platform-api:ide",
@@ -315,6 +316,7 @@ jvm_library(
     "//platform/locking.impl",
     "//platform/platform-impl/concurrency",
     "//platform/pratt",
+    "//platform/platform-impl/recentProjects",
   ],
   exports = [
     "//platform/platform-api:ide",

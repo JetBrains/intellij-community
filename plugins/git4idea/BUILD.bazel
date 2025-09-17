@@ -102,6 +102,7 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/eel",
     "//platform/eel-impl",
+    "//platform/platform-impl/recentProjects",
   ],
   exports = [
     "//platform/dvcs-api:vcs-dvcs",
@@ -218,6 +219,7 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/eel",
     "//platform/eel-impl",
+    "//platform/platform-impl/recentProjects",
   ],
   exports = [
     "//platform/dvcs-api:vcs-dvcs",

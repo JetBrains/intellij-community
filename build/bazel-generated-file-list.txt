@@ -549,6 +549,7 @@ platform/platform-impl/concurrency
 platform/platform-impl/designer
 platform/platform-impl/eel
 platform/platform-impl/internal
+platform/platform-impl/recentProjects
 platform/platform-impl/remote
 platform/platform-impl/rpc
 platform/platform-impl/ui
