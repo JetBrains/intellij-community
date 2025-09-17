@@ -68,6 +68,7 @@ e:com.intellij.credentialStore.ProviderType
 - sf:KEEPASS:com.intellij.credentialStore.ProviderType
 - sf:KEYCHAIN:com.intellij.credentialStore.ProviderType
 - sf:MEMORY_ONLY:com.intellij.credentialStore.ProviderType
+- sf:REMOTE:com.intellij.credentialStore.ProviderType
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.credentialStore.ProviderType
 - s:values():com.intellij.credentialStore.ProviderType[]
