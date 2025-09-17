@@ -85,7 +85,7 @@ public interface Lookup {
   boolean isCompletion();
 
   @Unmodifiable
-  List<LookupElement> getItems();
+  @NotNull List<LookupElement> getItems();
 
   boolean isFocused();
 
