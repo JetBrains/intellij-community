@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.icons.AllIcons
@@ -44,8 +46,6 @@ import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import kotlinx.coroutines.awaitCancellation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.event.ComponentAdapter
@@ -64,7 +64,7 @@ private val projectKey = Key.create<Project>("project-widget-project")
 internal class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelectionPredicateSupplier {
   override fun getPredicate(): Predicate<AnAction> {
     val openProjects = ProjectUtilCore.getOpenProjects()
-    val paths: List<@SystemIndependent @NonNls String?> = openProjects.map { it.basePath }
+    val paths = openProjects.map { it.basePath }
     return Predicate { action ->
       when (action) {
         is ReopenProjectAction -> action.projectPath in paths
@@ -77,7 +77,6 @@ internal class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelecti
 
 @ApiStatus.Internal
 open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
-
   override fun createPopup(event: AnActionEvent): JBPopup? {
     val step = createStep(createActionGroup(event), event.dataContext)
     return event.project?.let { createPopup(it = it, step = step) }
@@ -125,7 +124,9 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     val icons = buildList {
       UpdatesInfoProviderManager.getInstance().getUpdateIcons().let { updateIcons ->
         for (icon in updateIcons) {
-          if (isNotEmpty()) addGap()
+          if (isNotEmpty()) {
+            addGap()
+          }
           add(icon)
         }
       }
@@ -149,11 +150,13 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
       ListCellRenderer<PopupFactoryImpl.ActionItem> { list, value, index, isSelected, cellHasFocus ->
         val action = (value as PopupFactoryImpl.ActionItem).action
         if (action is ProjectToolbarWidgetPresentable) {
-          widgetRenderer.getListCellRendererComponent(list = list,
-                                                      value = value,
-                                                      index = index,
-                                                      isSelected = isSelected,
-                                                      cellHasFocus = cellHasFocus)
+          widgetRenderer.getListCellRendererComponent(
+            list = list,
+            value = value,
+            index = index,
+            isSelected = isSelected,
+            cellHasFocus = cellHasFocus,
+          )
         }
         else {
           base.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
@@ -202,12 +205,12 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
       .take(MAX_RECENT_COUNT)
       .groupBy { openProjectsPredicate.test(it) }
 
-    actionsMap[true]?.let {
+    actionsMap.get(true)?.let {
       result.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.open.projects"))
       result.addAll(it)
     }
 
-    actionsMap[false]?.let {
+    actionsMap.get(false)?.let {
       result.addSeparator(IdeUICustomization.getInstance().projectMessage("project.widget.recent.projects"))
       result.addAll(it)
     }
@@ -220,17 +223,24 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     val asyncDataContext: DataContext = Utils.createAsyncDataContext(context)
     val options = ActionPopupOptions.showDisabled()
       .withSpeedSearchFilter(ProjectWidgetSpeedsearchFilter())
-    return ActionPopupStep.createActionsStep(null, actionGroup, asyncDataContext, ActionPlaces.PROJECT_WIDGET_POPUP, presentationFactory,
-                                             Supplier { asyncDataContext }, options)
+    return ActionPopupStep.createActionsStep(
+      null,
+      actionGroup,
+      asyncDataContext,
+      ActionPlaces.PROJECT_WIDGET_POPUP,
+      presentationFactory,
+      Supplier { asyncDataContext },
+      options,
+    )
   }
 }
 
 private val widgetPositionListenersKey = Key.create<WidgetPositionListeners>("project-widget-position-listeners")
+
 private val ToolbarComboButton.positionListeners: WidgetPositionListeners?
   get() = getClientProperty(widgetPositionListenersKey) as WidgetPositionListeners?
 
 private class WidgetPositionListeners(private val widget: ToolbarComboButton, presentation: Presentation) {
-
   private val componentListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
       updatePosition() // resize shouldn't affect the position, but in theory it might move the project icon
@@ -474,7 +484,8 @@ interface ProjectToolbarWidgetPresentable {
   val activationTimestamp: Long?
 
   @get:ApiStatus.Internal
-  val status: ProjectStatus? get() = null
+  val status: ProjectStatus?
+    get() = null
 
   /**
    * Combined info to be used, when only a single-line-label is applicable.

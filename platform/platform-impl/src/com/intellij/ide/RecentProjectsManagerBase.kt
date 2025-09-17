@@ -226,7 +226,9 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       @Suppress("DEPRECATION")
       val recentPaths = state.recentPaths
       if (recentPaths.isNotEmpty()) {
-        convertToSystemIndependentPaths(recentPaths)
+        recentPaths.replaceAll {
+          FileUtilRt.toSystemIndependentName(it)
+        }
 
         // replace system-dependent paths to system-independent
         for (key in state.additionalInfo.keys.toList()) {
@@ -668,7 +670,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       return someProjectWasOpened || project != null
     }
     else {
-      return openOneByOne(openPaths, index = index + 1, someProjectWasOpened = someProjectWasOpened || project != null)
+      return openOneByOne(openPaths = openPaths, index = index + 1, someProjectWasOpened = someProjectWasOpened || project != null)
     }
   }
 
@@ -697,14 +699,16 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
           ideFrame.isVisible = true
 
           val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass()
-          val task = Setup(path,
-                           startUpContextElementToPass,
-                           OpenProjectTask {
-                             forceOpenInNewFrame = true
-                             showWelcomeScreen = false
-                             projectWorkspaceId = info.projectWorkspaceId
-                             implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frame = ideFrame)
-                           })
+          val task = Setup(
+            path = path,
+            elementToPass = startUpContextElementToPass,
+            task = OpenProjectTask {
+              forceOpenInNewFrame = true
+              showWelcomeScreen = false
+              projectWorkspaceId = info.projectWorkspaceId
+              implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frame = ideFrame)
+            },
+          )
 
           if (isActive) {
             activeTask = task
@@ -808,7 +812,8 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       group.removeProject(projectPath)
     }
     to.addProject(projectPath)
-    to.isExpanded = true // Save state for UI
+    // save state for UI
+    to.isExpanded = true
     fireChangeEvent()
   }
 
@@ -1042,12 +1047,6 @@ private fun readProjectName(path: String): String {
 }
 
 private fun getLastProjectFrameInfoFile() = getSystemDir().resolve("lastProjectFrameInfo")
-
-private fun convertToSystemIndependentPaths(list: MutableList<String>) {
-  list.replaceAll {
-    FileUtilRt.toSystemIndependentName(it)
-  }
-}
 
 private fun validateRecentProjects(modCounter: LongAdder, map: MutableMap<String, RecentProjectMetaInfo>) {
   val limit = AdvancedSettings.getInt("ide.max.recent.projects")
