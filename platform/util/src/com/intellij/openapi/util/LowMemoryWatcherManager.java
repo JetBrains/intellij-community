@@ -377,13 +377,14 @@ public final class LowMemoryWatcherManager {
     public synchronized double gcLoadScore(long currentTimeMs,
                                            long accumulatedGcDurationMs) {
       long gcDurationInLastMs = accumulatedGcDurationMs - previousAccumulatedGcDurationMs;
-      if (gcDurationInLastMs > 0) {
+      if (gcDurationInLastMs >= 0) {
         long sinceLastUpdateMs = currentTimeMs - previousUpdateTimestampMs;
 
-        double decayFactor = Math.exp((-1.0 * sinceLastUpdateMs) / windowSizeMs);
-        //MAYBE RC: actually, we should also discount gcDurationInLastMs for sinceLastUpdateMs/2 because it is accumulated
-        //          during sinceLastUpdateMs period!
-        ema = ema * decayFactor + gcDurationInLastMs;
+        double decayFactor1_2 = Math.exp((-1.0 * sinceLastUpdateMs) / windowSizeMs / 2);
+        //We discount previous ema for sinceLastUpdateMs, but we also discount gcDurationInLastMs for ~sinceLastUpdateMs/2
+        // because it is accumulated during sinceLastUpdateMs period -- this should improve approximation accuracy in case
+        // sinceLastUpdateMs is large:
+        ema = (ema * decayFactor1_2 + gcDurationInLastMs) * decayFactor1_2;
       }
 
       previousUpdateTimestampMs = currentTimeMs;
