@@ -16,11 +16,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * An extension that can provide a custom entry point for Java application (like a {@code main()} method).
  * For example, a custom framework (like JavaFX) may have a separate entry point.
- * These extensions used in some methods in {@link PsiMethodUtil}, like {@link PsiMethodUtil#hasMainMethod(PsiClass)},
+ * These extensions are used in some methods in {@link PsiMethodUtil}, like {@link PsiMethodUtil#hasMainMethod(PsiClass)},
  * and can affect the behavior of various IDE features.
  * <p>
- *   The methods of this extension might be called from {@linkplain com.intellij.openapi.project.DumbService dumb mode}.
- * </p>
+ * The methods of this extension might be called while the IDE is in {@linkplain com.intellij.openapi.project.DumbService dumb mode}.
  */
 public interface JavaMainMethodProvider extends PossiblyDumbAware {
 

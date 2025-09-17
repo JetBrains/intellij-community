@@ -20,6 +20,9 @@ import java.util.List;
 
 public final class PsiMethodUtil {
 
+  /// Returns a predicate that evaluates to true when passed a class that _can be_ a main class, i.e., a class that has a main method. 
+  /// 
+  /// It does not check whether the class actually has a main method. For that, use [#hasMainMethod(PsiClass)].
   public static final Condition<@NotNull PsiClass> MAIN_CLASS = psiClass -> {
     if (PsiUtil.isLocalOrAnonymousClass(psiClass)) return false;
     if (psiClass.isAnnotationType()) return false;
@@ -66,9 +69,12 @@ public final class PsiMethodUtil {
   }
 
   /**
-   * Finds the main method in the given class or its parents.
-   * ATTENTION: this method does not use implementations of {@link JavaMainMethodProvider}
-   * if you need to take into account custom entry points, use {@link #hasMainMethod(PsiClass)} or {@link #findMainMethod(PsiClass)}
+   * Finds the main method in the given class or its superclasses.
+   *
+   * <h3>ATTENTION</h3>
+   * This method does not use implementations of {@link JavaMainMethodProvider}.
+   * <p>
+   * If you need to take custom entry points into account, use {@link #hasMainMethod(PsiClass)} or {@link #findMainMethod(PsiClass)}.
    *
    * @param aClass the class in which to find the main method.
    * @return the main method if found, or null if not found or if an {@link IndexNotReadyException} occurs.
