@@ -1,5 +1,6 @@
 package com.jetbrains.lsp.protocol
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 
@@ -517,26 +518,28 @@ data class FoldingRangeClientCapabilities(
     )
 }
 
-@Serializable(with = FoldingRangeKind.Serializer::class)
-enum class FoldingRangeKind(val value: String) {
+@Serializable
+enum class FoldingRangeKind {
     /**
      * Folding range for a comment
      */
-    Comment("comment"),
+    @SerialName("comment")
+    Comment,
 
     /**
      * Folding range for imports or includes
      */
-    Imports("imports"),
+    @SerialName("imports")
+    Imports,
 
     /**
      * Folding range for a region (e.g. `#region`)
      */
-    Region("region"),
+    @SerialName("region")
+    Region,
 
     ;
 
-    class Serializer : EnumAsNameSerializer<FoldingRangeKind>(FoldingRangeKind::class, FoldingRangeKind::value)
 }
 
 typealias SelectionRangeClientCapabilities = Unknown
@@ -639,13 +642,12 @@ data class SemanticTokensClientCapabilities(
     }
 }
 
-@Serializable(with = TokenFormat.Serializer::class)
-enum class TokenFormat(val value: String) {
-    Relative("relative"),
+@Serializable
+enum class TokenFormat {
+    @SerialName("relative")
+    Relative,
 
     ;
-
-    class Serializer : EnumAsNameSerializer<TokenFormat>(TokenFormat::class, TokenFormat::value)
 }
 
 typealias MonikerClientCapabilities = Unknown
