@@ -4,17 +4,13 @@ package com.intellij.platform.ide.nonModalWelcomeScreen
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.ex.NoProjectStateHandler
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
-import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
-import com.intellij.util.concurrency.annotations.RequiresEdt
 
 private class WelcomeScreenNoProjectStateHandler : NoProjectStateHandler {
   override fun canHandle(): Boolean {
     return isNonModalWelcomeScreenEnabled && ProjectManager.getInstanceIfCreated()?.openProjects.isNullOrEmpty()
   }
 
-  @RequiresEdt
-  override fun handle() {
-    FUSProjectHotStartUpMeasurer.reportWelcomeScreenShown()
-    WelcomeScreenProjectProvider.createOrOpenWelcomeScreenProjectAsync()
+  override suspend fun handle() {
+    WelcomeScreenProjectProvider.createOrOpenWelcomeScreenProject()
   }
 }

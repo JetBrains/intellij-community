@@ -6,15 +6,11 @@ import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.util.TipAndTrickManager
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.PlatformProjectOpenProcessor
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -22,8 +18,21 @@ import kotlin.io.path.absolute
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 
-@Service(Service.Level.APP)
-private class WelcomeProjectScopeHolder(val coroutineScope: CoroutineScope)
+private val LOG = logger<WelcomeScreenProjectProvider>()
+private val EP_NAME: ExtensionPointName<WelcomeScreenProjectProvider> = ExtensionPointName("com.intellij.welcomeScreenProjectProvider")
+
+private fun getSingleExtension(): WelcomeScreenProjectProvider? {
+  val providers = EP_NAME.extensionList
+  if (providers.isEmpty()) {
+    return null
+  }
+
+  if (providers.size > 1) {
+    LOG.warn("Multiple WelcomeScreenProjectProvider extensions")
+    return null
+  }
+  return providers.first()
+}
 
 /**
  * Allows identifying projects that act as a welcome screen tab.
@@ -37,18 +46,6 @@ private class WelcomeProjectScopeHolder(val coroutineScope: CoroutineScope)
 @ApiStatus.Internal
 abstract class WelcomeScreenProjectProvider {
   companion object {
-    private val EP_NAME: ExtensionPointName<WelcomeScreenProjectProvider> = ExtensionPointName("com.intellij.welcomeScreenProjectProvider")
-
-    private fun getSingleExtension(): WelcomeScreenProjectProvider? {
-      val providers = EP_NAME.extensionList
-      if (providers.isEmpty()) return null
-      if (providers.size > 1) {
-        thisLogger().warn("Multiple WelcomeScreenProjectProvider extensions")
-        return null
-      }
-      return providers.first()
-    }
-
     fun isWelcomeScreenProject(project: Project): Boolean {
       val extension = getSingleExtension() ?: return false
       return extension.doIsWelcomeScreenProject(project)
@@ -88,15 +85,6 @@ abstract class WelcomeScreenProjectProvider {
 
       return project
     }
-
-    @JvmStatic
-    fun createOrOpenWelcomeScreenProjectAsync() {
-      service<WelcomeProjectScopeHolder>().coroutineScope.launch {
-         createOrOpenWelcomeScreenProject()
-      }
-    }
-
-    private val LOG = logger<WelcomeScreenProjectProvider>()
   }
 
   protected open fun getWelcomeScreenProjectPath(): Path {

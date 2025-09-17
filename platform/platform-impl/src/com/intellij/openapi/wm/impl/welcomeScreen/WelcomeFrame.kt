@@ -204,7 +204,9 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWi
 
       val customHandler = NoProjectStateHandler.EP_NAME.lazySequence().firstOrNull { it.canHandle() }
       if (customHandler != null) {
-        customHandler.handle()
+        service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+          customHandler.handle()
+        }
         return
       }
 
