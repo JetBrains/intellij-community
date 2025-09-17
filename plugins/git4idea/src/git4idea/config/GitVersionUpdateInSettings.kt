@@ -44,14 +44,25 @@ internal class GitVersionUpdateSettingsEntryProvider : SettingsEntryPointAction.
 
     override fun update(e: AnActionEvent) {
       val project = e.project
-      val versionToUpdate = project?.service<GitNewVersionChecker>()?.newAvailableVersion
       val presentation = e.presentation
 
-      if (project == null || versionToUpdate == null || versionToUpdate.isNull || versionToUpdate.isWSL) {
+      if (project == null) {
+        presentation.isEnabledAndVisible = false
+        return
+      }
+
+      val versionChecker = project.service<GitNewVersionChecker>()
+      val versionToUpdate = versionChecker.newAvailableVersion
+      val gitNotInstalled = versionChecker.gitNotInstalled
+
+      if (versionToUpdate == null || versionToUpdate.isNull || versionToUpdate.isWSL) {
         presentation.isEnabledAndVisible = false
       }
       else {
-        presentation.text = GitBundle.message("git.executable.new.version.update.available", versionToUpdate.presentation)
+        presentation.text =
+          if (gitNotInstalled) GitBundle.message("git.executable.install.available", versionToUpdate.presentation)
+          else GitBundle.message("git.executable.new.version.update.available", versionToUpdate.presentation)
+
         presentation.isEnabledAndVisible = true
       }
     }
@@ -85,6 +96,10 @@ internal class GitNewVersionChecker(private val project: Project, private val cs
   var newAvailableVersion: GitVersion? = null
     private set
 
+  @Volatile
+  var gitNotInstalled: Boolean = true
+    private set
+
   private val job = AtomicReference<Job?>(null)
 
   fun restart() {
@@ -99,6 +114,7 @@ internal class GitNewVersionChecker(private val project: Project, private val cs
 
   internal fun reset() {
     newAvailableVersion = null
+    gitNotInstalled = true
   }
 
   @OptIn(FlowPreview::class)
@@ -111,6 +127,7 @@ internal class GitNewVersionChecker(private val project: Project, private val cs
             if (newAvailableVersion.isNotNull) return@withContext
 
             val currentVersion = GitExecutableManager.getInstance().getVersionOrIdentifyIfNeeded(project)
+            gitNotInstalled = currentVersion.isNull
 
             if (currentVersion.isWSL) {
               newAvailableVersion = currentVersion
