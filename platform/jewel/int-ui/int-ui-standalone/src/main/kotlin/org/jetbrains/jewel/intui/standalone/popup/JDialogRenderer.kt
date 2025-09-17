@@ -272,6 +272,11 @@ private fun JPopupImpl(
             when (event) {
                 is MouseEvent -> {
                     if (event.button != MouseEvent.NOBUTTON && currentProperties.dismissOnClickOutside) {
+                        if (dialog.isAncestorOf(event.component)) {
+                            // When clicking a child popup (like a submenu), skip the click outside callback
+                            return@AWTEventListener
+                        }
+
                         val mousePosition = event.locationOnScreen
                         if (!dialog.bounds.contains(mousePosition)) {
                             currentOnDismissRequest?.invoke()
