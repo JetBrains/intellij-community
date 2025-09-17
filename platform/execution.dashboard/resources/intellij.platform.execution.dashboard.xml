@@ -47,7 +47,6 @@
     </action>
     <action id="RunDashboard.Stop" icon="AllIcons.Actions.Suspend" use-shortcut-of="Stop"
             class="com.intellij.platform.execution.dashboard.actions.StopAction">
-      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3"/>
     </action>
 
     <group id="RunDashboardContentToolbar">
