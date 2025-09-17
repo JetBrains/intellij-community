@@ -115,6 +115,7 @@ com.intellij.ide.wizard.Step
 com.intellij.ide.wizard.StepListener
 - java.util.EventListener
 - a:stateChanged():V
+c:com.intellij.notification.Notification
 com.intellij.notification.NotificationGroupManager
 - s:getInstance():com.intellij.notification.NotificationGroupManager
 - a:getNotificationGroup(java.lang.String):com.intellij.notification.NotificationGroup

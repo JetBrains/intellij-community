@@ -1004,7 +1004,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
    * reset {@link #myScheduledUpdateTimestamp} always, but re-schedule {@link #myUpdateRunnable} only rarely because of thread scheduling overhead
    */
   private synchronized void scheduleIfNotRunning() {
-    long autoReparseDelayNanos = TimeUnit.MILLISECONDS.toNanos(mySettings.getAutoReparseDelay());
+    long autoReparseDelayNanos = TimeUnit.MILLISECONDS.toNanos(mySettings.getEffectiveAutoReparseDelay());
     myScheduledUpdateTimestamp = System.nanoTime() + autoReparseDelayNanos;
     // optimization: this check is to avoid too many re-schedules in case of thousands of event spikes
     boolean isDone = myUpdateRunnableFuture.isDone();
