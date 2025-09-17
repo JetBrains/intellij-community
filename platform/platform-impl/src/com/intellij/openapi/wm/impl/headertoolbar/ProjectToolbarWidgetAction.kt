@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
+import com.intellij.project.ProjectStoreOwner
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBLabel
@@ -40,7 +42,6 @@ import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.util.maximumWidth
 import com.intellij.util.IconUtil
-import com.intellij.util.application
 import com.intellij.util.ui.*
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import kotlinx.coroutines.awaitCancellation
@@ -57,6 +58,7 @@ import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.swing.*
+import kotlin.io.path.invariantSeparatorsPathString
 
 private const val MAX_RECENT_COUNT = 100
 private val projectKey = Key.create<Project>("project-widget-project")
@@ -64,10 +66,12 @@ private val projectKey = Key.create<Project>("project-widget-project")
 internal class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelectionPredicateSupplier {
   override fun getPredicate(): Predicate<AnAction> {
     val openProjects = ProjectUtilCore.getOpenProjects()
-    val paths = openProjects.map { it.basePath }
+    val paths = openProjects.mapNotNullTo(HashSet(openProjects.size)) {
+      (it as? ProjectStoreOwner ?: return@mapNotNullTo null).componentStore.storeDescriptor.projectIdentityFile.invariantSeparatorsPathString
+    }
     return Predicate { action ->
       when (action) {
-        is ReopenProjectAction -> action.projectPath in paths
+        is ReopenProjectAction -> paths.contains(action.projectPath)
         is ProjectToolbarWidgetPresentable -> action.status?.isOpened == true
         else -> false
       }
@@ -169,7 +173,7 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     if (result is ListPopupImpl) {
       ClientProperty.put(result.list, AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
 
-      application.messageBus.connect(result).subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
+      ApplicationManager.getApplication().messageBus.connect(result).subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
         override fun change() {
           updateChildGroupAvailability(result)
 

@@ -4780,10 +4780,6 @@ f:com.intellij.ide.util.TipAndTrickBean
 f:com.intellij.ide.util.TipUIUtil
 - <init>():V
 - s:createBrowser():com.intellij.ide.util.TipUIUtil$Browser
-com.intellij.ide.vcs.RecentProjectsBranchesProvider
-- sf:Companion:com.intellij.ide.vcs.RecentProjectsBranchesProvider$Companion
-f:com.intellij.ide.vcs.RecentProjectsBranchesProvider$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 a:com.intellij.ide.wizard.AbstractNewProjectWizardBuilder
 - com.intellij.ide.util.projectWizard.ModuleBuilder
 - sf:Companion:com.intellij.ide.wizard.AbstractNewProjectWizardBuilder$Companion

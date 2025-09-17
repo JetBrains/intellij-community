@@ -10,6 +10,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.io.FileAttributes
+import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.*
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
@@ -31,7 +33,6 @@ import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.impl.reactive.WmReactive
-import com.intellij.workspaceModel.ide.isCaseSensitive
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -41,6 +42,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import java.io.File
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
@@ -101,7 +103,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   constructor(project: Project, cs: CoroutineScope) {
     this.project = project
     this.coroutineScope = cs
-    this.virtualFileManager = IdeVirtualFileUrlManagerImpl(project.isCaseSensitive)
+    this.virtualFileManager = IdeVirtualFileUrlManagerImpl(isProjectCaseSensitive(project))
     log.debug { "Loading workspace model" }
     val start = Milliseconds.now()
 
@@ -597,4 +599,9 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       setupOpenTelemetryReporting(workspaceModelMetrics.meter)
     }
   }
+}
+
+private fun isProjectCaseSensitive(project: Project): Boolean {
+  return project.basePath?.let { File(it) }?.let { FileSystemUtil.readParentCaseSensitivity(it) == FileAttributes.CaseSensitivity.SENSITIVE }
+         ?: false
 }

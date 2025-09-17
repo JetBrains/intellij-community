@@ -233,7 +233,9 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     return LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectBasePath)
   }
 
-  final override fun getBasePath(): String = componentStore.projectBasePath.invariantSeparatorsPathString
+  final override fun getBasePath(): String {
+    return componentStore.storeDescriptor.historicalProjectBasePath.invariantSeparatorsPathString
+  }
 
   final override fun getPresentableUrl(): String = componentStore.presentableUrl
 
@@ -241,7 +243,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
 
   /** Caches [Path] -(via [LocalFileSystem.findFileByNioFile])-> [VirtualFile]  resolution result */
-  private class CachedVirtualFile(val path: Path){
+  private class CachedVirtualFile(@JvmField val path: Path){
     val resolvedVirtualFile: VirtualFile? = LocalFileSystem.getInstance().findFileByNioFile(path)
   }
 
