@@ -1992,6 +1992,9 @@
     <diagnostic.specialPathsProvider implementation="com.intellij.diagnostic.specialPaths.ProjectSpecialPathsProvider"/>
     <diagnostic.specialPathsProvider implementation="com.intellij.diagnostic.specialPaths.ApplicationSpecialPathsProvider"/>
 
+    <openAnotherToolHandler implementation="com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.TryUltimateActionHandler"/>
+
+
     <!--<editor.rd.localSupport filetype="PLAIN_TEXT"/> IJPL-189393 -->
 
     <registryKey key="ide.suppress.low.memory.notifications.when.dumb" defaultValue="true"

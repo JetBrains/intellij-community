@@ -167,7 +167,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
 
       val installedPlugin = installedPlugin
       if (hasSuggestedIde) {
-        addSuggestedIdes(panel, label, pluginAdvertiserExtensionsState)
+        addSuggestedIdes(panel, label, pluginAdvertiserExtensionsState, fileEditor.file)
         return panel // Don't show the "Ignore extension" label
       }
       else if (installedPlugin != null) {
@@ -190,7 +190,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
         }
       }
       else if (suggestedIdes.isNotEmpty() && jbProduced.isEmpty()) {
-        addSuggestedIdes(panel, label, pluginAdvertiserExtensionsState)
+        addSuggestedIdes(panel, label, pluginAdvertiserExtensionsState, fileEditor.file)
         return panel    // Don't show the "Ignore extension" label
       }
       else if (thirdParty.isNotEmpty() || jbProduced.isNotEmpty()) {
@@ -226,6 +226,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       panel: EditorNotificationPanel,
       label: JLabel,
       pluginAdvertiserExtensionsState: ExtensionDataProvider,
+      currentFile: VirtualFile? = null,
     ) {
       logSuggestedProducts(project, suggestedIdes)
 
@@ -245,7 +246,12 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
 
       for (suggestedIde in suggestedIdes) {
         val pluginId = guessPluginIdFromFile(extensionOrFileName)?.let { PluginId.getId(it) }
-        panel.createTryUltimateActionLabel(suggestedIde, project, pluginId) {
+        panel.createTryUltimateActionLabel(
+          suggestedIde = suggestedIde,
+          project = project,
+          pluginId = pluginId,
+          currentFile = currentFile
+        ) {
           pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName)
         }
       }
