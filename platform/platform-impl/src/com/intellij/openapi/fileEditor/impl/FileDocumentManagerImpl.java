@@ -423,11 +423,15 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       ioException = e;
     }
     if (!saveNeeded) {
-      if (document instanceof DocumentEx docEx) {
-        docEx.setModificationStamp(file.getModificationStamp());
-      }
+      FileDocumentManagerListenerBackgroundableBridge.invokeOnEdt(() -> {
+        if (document instanceof DocumentEx docEx) {
+          docEx.setModificationStamp(file.getModificationStamp());
+        }
+      });
       removeFromUnsaved(document);
-      updateModifiedProperty(file);
+      FileDocumentManagerListenerBackgroundableBridge.invokeOnEdt(() -> {
+        updateModifiedProperty(file);
+      });
       if (ioException instanceof IOException ioe) throw ioe;
       if (ioException != null) throw (RuntimeException)ioException;
       return;
@@ -614,7 +618,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         unbindFileFromDocument(file, document);
         // to avoid weird inconsistencies when file opened in an editor tab got renamed to unknown extension and then typed into
         closeAllEditorsFor(file);
-        bridge.afterDocumentUnbound(file, document);
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
+          .afterDocumentUnbound(file, document);
       }
       else if (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor()) && isBinaryWithDecompiler(file)) {
         reloadFromDisk(document);
@@ -786,7 +791,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         unbindFileFromDocument(file, document);
         ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
           .fileWithNoDocumentChanged(file);
-        bridge.afterDocumentUnbound(file, document);
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
+          .afterDocumentUnbound(file, document);
       }
 
       myUnsavedDocuments.remove(document);
