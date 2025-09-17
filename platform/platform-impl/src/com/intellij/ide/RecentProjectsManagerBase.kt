@@ -150,7 +150,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       }
     }
 
-    application.messageBus.connect().subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
       override fun change() {
         updateSystemDockMenu()
       }
