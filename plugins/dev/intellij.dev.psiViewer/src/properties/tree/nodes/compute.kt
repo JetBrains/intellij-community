@@ -124,7 +124,7 @@ suspend fun psiViewerPropertyNodeForApiClass(
 ): PsiViewerPropertyNode? {
   val childrenNodesForApiClass = computePsiViewerPropertyNodesByCallingApiMethods(nodeContext, apiMethods)
     .map { it.withApiClass(apiClass) }
-  if (childrenNodesForApiClass.isEmpty()) return null
+  //if (childrenNodesForApiClass.isEmpty()) return null
 
   val presentation = PsiViewerPropertyNode.Presentation {
     it.icon = if (apiClass.isInterface) AllIcons.Nodes.Interface else AllIcons.Nodes.Class
