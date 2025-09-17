@@ -120,7 +120,9 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   @Override
   public @NotNull PsiClassType annotate(@NotNull TypeAnnotationProvider provider) {
     PsiClassReferenceType annotated = (PsiClassReferenceType)super.annotate(provider);
-    annotated.myNullability = null;
+    if (annotated != this) {
+      annotated.myNullability = null;
+    }
     return annotated;
   }
 

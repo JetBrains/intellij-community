@@ -153,6 +153,15 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   }
 
   @Override
+  public @NotNull PsiImmediateClassType annotate(@NotNull TypeAnnotationProvider provider) {
+    PsiImmediateClassType annotated = (PsiImmediateClassType)super.annotate(provider);
+    if (annotated != this) {
+      annotated.myNullability = null;
+    }
+    return annotated;
+  }
+
+  @Override
   public int getParameterCount() {
     PsiTypeParameterList list = myClass.getTypeParameterList();
     if (list == null) return 0;
