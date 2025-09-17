@@ -338,7 +338,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private void showErrorsInConsole(Exception e) {
-
+    fireConsoleInitializationErrorEvent(e);
     DefaultActionGroup actionGroup = new DefaultActionGroup(createRerunAction());
 
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("PydevConsoleRunnerErrors",
@@ -1115,6 +1115,14 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
   }
 
+  private void fireConsoleInitializationErrorEvent(@NotNull Throwable th) {
+    for (ConsoleListener listener : myConsoleListeners) {
+      if (listener instanceof ConsoleListenerEx l) {
+        l.handleInitializationError(th);
+      }
+    }
+  }
+
   @Override
   public PythonConsoleExecuteActionHandler getConsoleExecuteActionHandler() {
     return myConsoleExecuteActionHandler;
@@ -1477,5 +1485,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     public void setEnvFilePaths(@NotNull List<String> strings) {
       myEnvFiles = strings;
     }
+  }
+
+  @ApiStatus.Internal
+  public interface ConsoleListenerEx extends ConsoleListener {
+    void handleInitializationError(@NotNull Throwable th);
   }
 }
