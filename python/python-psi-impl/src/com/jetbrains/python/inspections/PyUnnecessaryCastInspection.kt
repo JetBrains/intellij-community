@@ -18,7 +18,7 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.PyType
-import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeUtil
 
 class PyUnnecessaryCastInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -37,7 +37,7 @@ class PyUnnecessaryCastInspection : PyInspection() {
         val targetType = Ref.deref(targetTypeRef)
         val actualType: PyType? = myTypeEvalContext.getType(args[1])
 
-        if (!PyTypeChecker.sameType(targetType, actualType, myTypeEvalContext)) return
+        if (!PyTypeUtil.isSameType(targetType, actualType, myTypeEvalContext)) return
         val toName = PythonDocumentationProvider.getTypeName(targetType, myTypeEvalContext)
         registerProblem(
           callExpression,
@@ -48,6 +48,16 @@ class PyUnnecessaryCastInspection : PyInspection() {
           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
           null,
           TextRange(0, callExpression.arguments[0].nextSibling.endOffset - callExpression.startOffset),
+          RemoveUnnecessaryCastQuickFix(),
+        )
+        registerProblem(
+          callExpression,
+          PyPsiBundle.message(
+            "INSP.unnecessary.cast.message",
+            toName
+          ),
+          ProblemHighlightType.INFORMATION,
+          null,
           RemoveUnnecessaryCastQuickFix(),
         )
       }

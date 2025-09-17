@@ -1,7 +1,14 @@
 <html>
 <body>
-<p>Reports calls to `typing.cast` where no possible value of the source type can be assignable to the target type. We can refer to this as "non overlapping" types</p>
-<p>This usually indicates a mistake. If the conversion is intentional, first convert the expression to the common parent type to make the intent explicit.</p>
+<p>Reports <code>typing.cast</code> calls where the source and target types are unrelated.</p>
+<p>An error is reported when neither the source type is a subtype of the target, nor the target type is a subtype of the source.
+  Such casts often indicate a logical error, as an instance of one type cannot be assumed to be an instance of the other,
+  and <code>typing.cast</code> does not dynamically validate the type.</p>
+
+<p>This check applies even to types that could theoretically have a common descendant.
+  For example, it will flag a cast between two sibling classes <code>Left</code> and <code>Right</code> that both inherit from <code>Top</code>,
+  because there is no direct inheritance relationship between them.</p>
+
 <p><b>Example:</b></p>
 <pre><code>
 from typing import cast

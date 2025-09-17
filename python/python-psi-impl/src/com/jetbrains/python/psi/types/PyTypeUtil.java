@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -32,6 +33,8 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import static com.jetbrains.python.psi.types.PyTypeChecker.match;
+
 /**
  * Tools and wrappers around {@link PyType} inheritors
  *
@@ -40,6 +43,42 @@ import java.util.stream.Collectors;
 @ApiStatus.Internal
 public final class PyTypeUtil {
   private PyTypeUtil() {
+  }
+
+  /**
+   * Checks if two types are both assignable to each other, does not check if two types are equal
+   */
+  public static boolean isSameType(@Nullable PyType type1, @Nullable PyType type2, @NotNull TypeEvalContext context) {
+    if ((type1 == null || type2 == null) && type1 != type2) return false;
+
+    return match(type1, type2, context)
+           && match(type2, type1, context);
+  }
+
+  /**
+   * Checks if two types have a direct inheritance relationship, meaning one is a
+   * subtype or supertype of the other.
+   * <p>
+   * This method handles {@link PyUnionType} by distributing the check across its
+   * members. The types are considered overlapping if the condition holds for any
+   * pair of members.
+   */
+  public static boolean isOverlappingWith(@Nullable PyType type1, @Nullable PyType type2, @NotNull TypeEvalContext context) {
+    // TODO: collapse this when PyUnionType and PyUnsafeUnionType have a common base
+    if (type1 instanceof PyUnionType unionType1) {
+      return ContainerUtil.exists(unionType1.getMembers(), t -> isOverlappingWith(t, type2, context));
+    }
+    if (type2 instanceof PyUnionType unionType2) {
+      return ContainerUtil.exists(unionType2.getMembers(), t -> isOverlappingWith(type1, t, context));
+    }
+    if (type1 instanceof PyUnsafeUnionType unionType1) {
+      return ContainerUtil.exists(unionType1.getMembers(), t -> isOverlappingWith(t, type2, context));
+    }
+    if (type2 instanceof PyUnsafeUnionType unionType2) {
+      return ContainerUtil.exists(unionType2.getMembers(), t -> isOverlappingWith(type1, t, context));
+    }
+    return match(type1, type2, context)
+           || match(type2, type1, context);
   }
 
   /**
