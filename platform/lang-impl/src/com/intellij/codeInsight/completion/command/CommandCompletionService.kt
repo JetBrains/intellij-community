@@ -85,11 +85,14 @@ internal class CommandCompletionService(
     val fullSuffix = completionFactory.suffix() + filterSuffix.toString()
     val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(originalEditor)
     if (!nonWrittenFiles) {
-      val index = findActualIndex(fullSuffix, topLevelEditor.document.immutableCharSequence, lookup.lookupOriginalStart)
+      val document = topLevelEditor.document
+      val index = findActualIndex(fullSuffix, document.immutableCharSequence, lookup.lookupOriginalStart)
       val offsetOfFullIndex = lookup.lookupOriginalStart - index
+      val currentOffset = topLevelEditor.caretModel.offset
       if (index == 0 || offsetOfFullIndex < 0 ||
-          offsetOfFullIndex >= topLevelEditor.document.textLength ||
-          !topLevelEditor.document.immutableCharSequence.substring(offsetOfFullIndex, topLevelEditor.caretModel.offset).startsWith(fullSuffix)) {
+          offsetOfFullIndex >= document.textLength ||
+          offsetOfFullIndex >= currentOffset ||
+          !document.immutableCharSequence.substring(offsetOfFullIndex, currentOffset).startsWith(fullSuffix)) {
         if (installed != true) return
         lookup.removeUserData(INSTALLED_ADDITIONAL_MATCHER_KEY)
         lookup.arranger.registerAdditionalMatcher { true }
