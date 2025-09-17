@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.spellchecker.settings;
+package com.intellij.grazie.spellcheck.settings;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
@@ -17,6 +17,7 @@ import com.intellij.spellchecker.DictionaryLayersProvider;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
+import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.statistics.SpellcheckerActionStatistics;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.*;

@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.spellchecker.settings;
+package com.intellij.grazie.spellcheck.settings;
 
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.options.Configurable;
@@ -7,6 +7,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
+import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;

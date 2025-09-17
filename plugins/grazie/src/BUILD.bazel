@@ -74,6 +74,7 @@ jvm_library(
     "//platform/util/progress",
     "//platform/util/text-matching",
     "//libraries/grpc",
+    "//platform/util/jdom",
   ],
   exports = [
     "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",

@@ -410,5 +410,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.libraries.grpc" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
   </component>
 </module>

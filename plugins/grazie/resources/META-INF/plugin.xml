@@ -48,6 +48,11 @@
       bundle="messages.GrazieBundle"
       id="reference.settings.grazie"/>
 
+    <projectConfigurable parentId="proofread" instance="com.intellij.grazie.spellcheck.settings.SpellCheckerSettingsManager"
+                         id="reference.settings.ide.settings.spelling"
+                         key="spelling"
+                         bundle="messages.SpellCheckerBundle" />
+
     <applicationService serviceImplementation="com.intellij.grazie.GrazieConfig"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.grazie.ide.notification.GrazieNotificationComponent"/>

@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.spellchecker.settings;
+package com.intellij.grazie.spellcheck.settings;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -8,6 +8,10 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
+import com.intellij.spellchecker.settings.BuiltInDictionariesProvider;
+import com.intellij.spellchecker.settings.BuiltInDictionary;
+import com.intellij.spellchecker.settings.CustomDictionarySettingsListener;
+import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.state.AppDictionaryState;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.*;
@@ -156,7 +160,8 @@ public final class CustomDictionariesPanel extends JPanel {
     }));
     mySettings.setCustomDictionariesPaths(newPaths);
     myManager.updateBundledDictionaries(ContainerUtil.filter(oldPaths, o -> !newPaths.contains(o)));
-    myProject.getMessageBus().syncPublisher(CustomDictionarySettingsListener.CUSTOM_DICTIONARY_SETTINGS_TOPIC).customDictionaryPathsChanged(newPaths);
+    myProject.getMessageBus().syncPublisher(
+      CustomDictionarySettingsListener.CUSTOM_DICTIONARY_SETTINGS_TOPIC).customDictionaryPathsChanged(newPaths);
   }
 
   public List<String> getValues() {
