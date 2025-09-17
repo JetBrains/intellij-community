@@ -5,29 +5,31 @@ import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPoint.Kind
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.registerServiceInstance
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionPersistentSettings
 import org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionPersistentSettings.ScriptDefinitionSetting
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettingsStorage
-import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinition
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
-import kotlin.collections.asSequence
-import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
-import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
-class ScriptDefinitionProviderImplTest : LightPlatformTestCase() {
+class ScriptDefinitionProviderImplTest : LightPlatformTestCase(), ExpectedPluginModeProvider {
+    override val pluginMode = KotlinPluginMode.K2
+
     private lateinit var provider: ScriptDefinitionProvider
     private lateinit var settings: ScriptDefinitionPersistentSettings
     private lateinit var definitionsSourcesPoint: ExtensionPoint<ScriptDefinitionsSource>
 
-    override fun setUp() {
+    override fun setUp() = setUpWithKotlinPlugin(testRootDisposable) {
         super.setUp()
+
 
         provider = ScriptDefinitionProviderImpl(project)
 
