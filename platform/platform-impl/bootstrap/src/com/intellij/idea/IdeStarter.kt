@@ -162,9 +162,7 @@ open class IdeStarter : ModernApplicationStarter() {
         return@span showWelcomeFrame(publisher)
       }
       else {
-        withContext(Dispatchers.EDT) {
-          customHandler.handle()
-        }
+        customHandler.handle()
         return@span false
       }
     }
