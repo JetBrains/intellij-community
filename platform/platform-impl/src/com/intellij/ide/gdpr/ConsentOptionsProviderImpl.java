@@ -2,6 +2,7 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.ConsentOptionsProvider;
+import com.intellij.ide.gdpr.ui.consents.AiDataCollectionExternalSettings;
 import com.intellij.ui.LicensingFacade;
 
 import java.util.Set;
@@ -49,6 +50,11 @@ final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
 
   @Override
   public boolean isTraceDataCollectionAllowed() {
-    return ConsentOptions.getInstance().getTraceDataCollectionPermission() == ConsentOptions.Permission.YES;
+    DataCollectionAgreement dataCollectionAgreement = DataCollectionAgreement.getInstance();
+    AiDataCollectionExternalSettings settings = AiDataCollectionExternalSettings.findSettingsImplementedByAiAssistant();
+    boolean isAllowed = dataCollectionAgreement == DataCollectionAgreement.YES ||
+                        ConsentOptions.getInstance().getTraceDataCollectionPermission() == ConsentOptions.Permission.YES;
+    boolean isDisabled = settings != null && settings.isForciblyDisabled();
+    return isAllowed && !isDisabled;
   }
 }
