@@ -73,13 +73,13 @@ final class UndoClientState implements Disposable {
   }
 
   private UndoClientState(@NotNull UndoManagerImpl undoManager, @NotNull ClientId clientId) {
+    this.clientId = clientId;
     this.project = undoManager.getProject();
     this.undoSpy = undoManager.getUndoSpy();
     this.isTransparentSupported = undoManager.isTransparentSupported();
     this.isConfirmationSupported = undoManager.isConfirmationSupported();
     this.isCompactSupported = undoManager.isCompactSupported();
     this.isGlobalSplitSupported = undoManager.isGlobalSplitSupported();
-    this.clientId = clientId;
     this.adjustableUndoableActionsHolder = undoManager.getAdjustableUndoableActionsHolder();
     this.sharedUndoStacksHolder = undoManager.getSharedUndoStacksHolder();
     this.sharedRedoStacksHolder = undoManager.getSharedRedoStacksHolder();
@@ -343,10 +343,7 @@ final class UndoClientState implements Disposable {
     commandMerger.clearDocumentReferences(document);
   }
 
-  @Nullable PerClientLocalUndoRedoSnapshot getUndoRedoSnapshotForDocument(
-    @NotNull DocumentReference reference,
-    @NotNull SharedAdjustableUndoableActionsHolder adjustableUndoableActionsHolder
-  ) {
+  @Nullable PerClientLocalUndoRedoSnapshot getUndoRedoSnapshotForDocument(@NotNull DocumentReference reference) {
     CommandMerger currentMerger = currentCommandMerger;
     if (currentMerger != null && currentMerger.hasActions()) {
       return null;
@@ -358,8 +355,7 @@ final class UndoClientState implements Disposable {
     return new PerClientLocalUndoRedoSnapshot(
       mergerSnapshot,
       undoStacksHolder.getStack(reference).snapshot(),
-      redoStacksHolder.getStack(reference).snapshot(),
-      adjustableUndoableActionsHolder.getStack(reference).snapshot()
+      redoStacksHolder.getStack(reference).snapshot()
     );
   }
 
