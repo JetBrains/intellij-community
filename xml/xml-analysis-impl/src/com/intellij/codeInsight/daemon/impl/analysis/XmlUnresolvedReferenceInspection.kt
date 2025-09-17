@@ -2,10 +2,11 @@
 package com.intellij.codeInsight.daemon.impl.analysis
 
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiReference
 import com.intellij.psi.xml.XmlElement
 
-class XmlUnresolvedReferenceInspection: XmlReferenceInspectionBase() {
+class XmlUnresolvedReferenceInspection: XmlReferenceInspectionBase(), DumbAware {
   override fun needToCheckRef(reference: PsiReference?) = !XmlHighlightVisitor.shouldCheckResolve(reference) &&
                                                           !XmlHighlightVisitor.isUrlReference(reference)
 
