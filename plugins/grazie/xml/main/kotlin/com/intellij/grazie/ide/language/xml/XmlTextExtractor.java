@@ -241,11 +241,7 @@ public class XmlTextExtractor extends TextExtractor {
     @Override
     protected @NotNull List<TextContent> buildTextContents(@NotNull PsiElement element,
                                                            @NotNull Set<TextContent.TextDomain> allowedDomains) {
-      if (PsiUtilCore.getElementType(element) == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN &&
-          element.getParent() instanceof XmlAttributeValue value &&
-          value.getParent() instanceof XmlAttribute attr) {
-        if ("class".equals(attr.getName()) || HtmlSpellcheckingStrategy.shouldBeIgnored(value)) return List.of();
-      }
+      if (HtmlSpellcheckingStrategy.shouldParentAttributeBeIgnored(element)) return List.of();
       return super.buildTextContents(element, allowedDomains);
     }
 

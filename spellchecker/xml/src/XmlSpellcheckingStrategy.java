@@ -2,6 +2,7 @@
 package com.intellij.spellchecker.xml;
 
 import com.intellij.codeInspection.SuppressQuickFix;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -39,8 +40,9 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
 
   @Override
   public @NotNull Tokenizer getTokenizer(PsiElement element) {
-    if (element instanceof XmlText) {
-      return myXmlTextTokenizer;
+    if (hasForeignLanguageChildren(element)) return EMPTY_TOKENIZER;
+    if (element instanceof XmlText text) {
+      return text.getText().isBlank() ? EMPTY_TOKENIZER : myXmlTextTokenizer;
     }
     if (isXmlComment(element)) {
       return myXmlCommentTokenizer;
@@ -51,10 +53,18 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
       // Special case for all other XML_DATA_CHARACTERS, which are not handled through parent PSI
       return isInTemplateLanguageFile(element) ? EMPTY_TOKENIZER : TEXT_TOKENIZER;
     }
-    if (element instanceof XmlAttributeValue) {
-      return myXmlAttributeTokenizer;
+    if (element instanceof XmlAttributeValue attribute) {
+      return attribute.getValue().isEmpty() ? EMPTY_TOKENIZER : myXmlAttributeTokenizer;
     }
     return super.getTokenizer(element);
+  }
+
+  private static boolean hasForeignLanguageChildren(PsiElement element) {
+    for (PsiElement child : element.getChildren()) {
+      if (child.getLanguage().isKindOf(XMLLanguage.INSTANCE)) continue;
+      if (child.getLanguage() != element.getLanguage()) return true;
+    }
+    return false;
   }
 
   @Override

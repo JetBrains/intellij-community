@@ -72,9 +72,6 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
    * @return {@link #EMPTY_TOKENIZER} to skip spellchecking, {@link #TEXT_TOKENIZER} for full element text or custom Tokenizer implementation.
    */
   public @NotNull Tokenizer getTokenizer(PsiElement element) {
-    if (element instanceof PsiWhiteSpace) {
-      return EMPTY_TOKENIZER;
-    }
     if (isInjectedLanguageFragment(element)) {
       return EMPTY_TOKENIZER;
     }

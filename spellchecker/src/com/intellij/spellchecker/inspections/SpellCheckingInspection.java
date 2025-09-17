@@ -107,9 +107,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
         if (holder.getResultCount() > 1000 || element.getNode() == null) return;
 
         var strategy = getSpellcheckingStrategy(element);
-        if (strategy == null || !strategy.elementFitsScope(element, scopes) || isCopyrightComment(strategy, element)) {
-          return;
-        }
+        if (strategy == null || !strategy.elementFitsScope(element, scopes) || isCopyrightComment(strategy, element)) return;
 
         SpellCheckingResult result = SpellcheckingExtension.Companion.spellcheck(
           element, strategy, session,
