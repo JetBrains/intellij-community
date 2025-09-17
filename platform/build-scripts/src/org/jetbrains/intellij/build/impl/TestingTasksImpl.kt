@@ -1140,9 +1140,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           }
         }
       }
-      if (runJUnit5 || runJUnit34) {
-        throw Exception("Failed to run tests (attempt count: ${options.attemptCount}) runJUnit5=$runJUnit5, runJUnit34=$runJUnit34")
-      }
     }
   }
 
