@@ -415,16 +415,8 @@ public class UndoManagerImpl extends UndoManager {
     return state != null && state.isUndoRedoAvailable(Collections.singleton(docRef), undo);
   }
 
-  @NotNull SharedAdjustableUndoableActionsHolder getAdjustableUndoableActionsHolder() {
-    return myUndoSharedState.getAdjustableActions();
-  }
-
-  @NotNull SharedUndoRedoStacksHolder getSharedUndoStacksHolder() {
-    return myUndoSharedState.getUndoStacks();
-  }
-
-  @NotNull SharedUndoRedoStacksHolder getSharedRedoStacksHolder() {
-    return myUndoSharedState.getRedoStacks();
+  @NotNull UndoSharedState getUndoSharedState() {
+    return myUndoSharedState;
   }
 
   @TestOnly
