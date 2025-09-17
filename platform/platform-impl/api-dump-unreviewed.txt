@@ -12177,6 +12177,7 @@ f:com.intellij.ui.LicensingFacade
 - confirmationStamps:java.util.Map
 - expirationDate:java.util.Date
 - expirationDates:java.util.Map
+- gracePeriodDays:java.lang.Integer
 - isEvaluation:Z
 - s:isUnusedSignalled:Z
 - licensedTo:java.lang.String

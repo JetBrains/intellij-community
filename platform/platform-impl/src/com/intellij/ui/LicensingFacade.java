@@ -21,6 +21,7 @@ public final class LicensingFacade {
   public boolean isEvaluation;
   public Date expirationDate;
   public Date perpetualFallbackDate;
+  public @Nullable Integer gracePeriodDays;
   public Map<String, Date> expirationDates;
   public Map<String, String> confirmationStamps;
   public Map<String, ProductLicenseData> productLicenses;
