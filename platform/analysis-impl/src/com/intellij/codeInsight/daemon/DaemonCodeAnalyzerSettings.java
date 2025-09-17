@@ -4,14 +4,20 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 public class DaemonCodeAnalyzerSettings {
+  public static final int AUTOREPARSE_DELAY_DEFAULT = 300;
+
   private boolean myNextErrorActionGoesToErrorsFirst = true;
-  private int myAutoReparseDelay = 300;
+  private int myAutoReparseDelay = AUTOREPARSE_DELAY_DEFAULT;
   private int myErrorStripeMarkMinHeight = 2;
 
   private boolean mySuppressWarnings = true;
+
+  @Transient
+  private volatile boolean myForceZeroAutoReparseDelay = false;
 
   public static DaemonCodeAnalyzerSettings getInstance() {
     return ApplicationManager.getApplication().getService(DaemonCodeAnalyzerSettings.class);
@@ -34,6 +40,19 @@ public class DaemonCodeAnalyzerSettings {
 
   public void setAutoReparseDelay(int millis) {
     myAutoReparseDelay = millis;
+  }
+
+  @ApiStatus.Internal
+  public void forceUseZeroAutoReparseDelay(boolean useZeroAutoReparseDelay) {
+    myForceZeroAutoReparseDelay = useZeroAutoReparseDelay;
+  }
+
+  @Transient
+  @ApiStatus.Internal
+  public int getEffectiveAutoReparseDelay() {
+    if (myForceZeroAutoReparseDelay) return 0;
+
+    return myAutoReparseDelay;
   }
 
   @OptionTag("ERROR_STRIPE_MARK_MIN_HEIGHT")
