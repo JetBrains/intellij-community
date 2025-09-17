@@ -3,10 +3,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 
 import javax.management.Notification;
 import javax.management.NotificationEmitter;
@@ -32,6 +29,10 @@ public final class LowMemoryWatcherManager {
   private static final Logger LOG = Logger.getInstance(LowMemoryWatcherManager.class);
 
   //@formatter:off
+
+  /** Change if G1 collector will be changed to another one! */
+  private static final String MAJOR_GC_PATTERN = "g1 old generation";
+
   private static final long MIN_MEMORY_MARGIN = 5 * MiB;
   private static final float MEMORY_NOTIFICATION_THRESHOLD = getFloatProperty("low.memory.watcher.notification.threshold", 0.95f);
 
@@ -42,50 +43,38 @@ public final class LowMemoryWatcherManager {
   private static final long WINDOW_SIZE_MS = getLongProperty("LowMemoryWatcherManager.WINDOW_SIZE_MS", SECONDS.toMillis(60));
   /**
    * GC load (returned by {@link GcTracker}) which is 'too much', i.e. GC is overloaded.
-   * Default 0.1 means that if GC takes > 10% of CPU time then it is considered overloaded.
+   * Default 0.2 means that if GC takes > 20% of CPU time then it is considered overloaded.
    */
   private static final double GC_LOAD_THRESHOLD = getFloatProperty("LowMemoryWatcherManager.GC_LOAD_THRESHOLD", 0.1f);
 
   /** Period of GC tracker updates. If <0 -- disable regular updates, update only on memory threshold violation (legacy behavior) */
-  private static final long REGULAR_TRACKER_UPDATE_PERIOD_MS = getLongProperty("LowMemoryWatcherManager.REGULAR_TRACKER_UPDATE_PERIOD_MS", SECONDS.toMillis(10));
+  private static final long REGULAR_TRACKER_UPDATE_PERIOD_MS = getLongProperty("LowMemoryWatcherManager.REGULAR_TRACKER_UPDATE_PERIOD_MS", SECONDS.toMillis(15));
 
   /** Whether LowMemoryWatcher runnables should be executed on the same thread that the low-memory events come */
   private static final boolean NOTIFY_LISTENERS_SYNCHRONOUSLY = getBooleanProperty("low.memory.watcher.sync", false);
+
+  /** Skip regular events if more often than this */
+  private static final long THROTTLING_PERIOD_MS = getLongProperty("LowMemoryWatcherManager.THROTTLING_PERIOD_MS", 200);
+
   //@formatter:on
+
 
   private final CopyOnWriteArraySet<Listener> listeners = new CopyOnWriteArraySet<>();
 
   /** Notify low-memory notifications will be delivered to {@link LowMemoryWatcher} via that pool, see listenersBroadcastingTask */
   private final ExecutorService listenersNotificationPool;
-  private Future<?> listenerNotificationTaskSubmitted; // guarded by listenersBroadcastingTask
-  private final Listener listenersBroadcastingTask = new Listener() {
-    @Override
-    public void memoryStatus(long notificationId,
-                             long accumulatedGcTimeMs,
-                             boolean lowMemoryThresholdBreached,
-                             boolean lowMemoryThresholdBreachedAfterGC,
-                             double gcLoadScore,
-                             boolean memorySubsystemOverloaded) {
-      // Clearing `listenerNotificationTaskSubmitted` before all listeners are called, to avoid data races when a listener is added
-      // in the middle of execution and is lost. This may, however, cause listeners to execute more than once (potentially even
-      // in parallel).
-      synchronized (listenersBroadcastingTask) {
-        listenerNotificationTaskSubmitted = null;
-      }
-      for (Listener listener : listeners) {
-        listener.memoryStatus(
-          notificationId,
-          accumulatedGcTimeMs,
-          lowMemoryThresholdBreached, lowMemoryThresholdBreachedAfterGC,
-          gcLoadScore,
-          memorySubsystemOverloaded
-        );
-      }
-    }
-  };
 
   private final Future<?> memoryPoolMXBeansInitializationFuture;
-  private ScheduledFuture<?> periodicGcTimeTrackingFuture;
+
+  private final Object broadcastingLock = new Object();
+  //@GuardedBy(broadcastingLock)
+  private Future<?> eventBroadcastingTaskSubmitted;
+  //@GuardedBy(broadcastingLock)
+  private LowMemoryEvent eventToBroadcast = null;
+  //@GuardedBy(broadcastingLock)
+  private boolean eventSent = true;
+  //@GuardedBy(broadcastingLock)
+  private Future<?> periodicGcTimeTrackingFuture;
 
   private final GcTracker gcTracker;
 
@@ -99,48 +88,26 @@ public final class LowMemoryWatcherManager {
       boolean memoryCollectionThreshold = MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(notification.getType());
 
       if (memoryThreshold || memoryCollectionThreshold) {
-        long currentGcTime = fetchMajorGcDurationAccumulated();
-        double gcLoadScore = gcTracker.gcLoadScore(System.currentTimeMillis(), currentGcTime);
-        LOG.info(
-          "LowMemoryNotification{gcTime: " + currentGcTime + "ms, GC load: " + gcLoadScore + "}" +
-          "{threshold: " + memoryThreshold + ", collectionThreshold: " + memoryCollectionThreshold + "}"
-        );
+        long accumulatedGcTime = fetchMajorGcDurationAccumulated();
+        double gcLoadScore = gcTracker.gcLoadScore(System.currentTimeMillis(), accumulatedGcTime);
         //Not just 'after GC', but 'memory subsystem is overloaded':
         //  (a lot of time spent on GC recently) AND (memory still low after GC)
         boolean gcOverloaded = (gcLoadScore > GC_LOAD_THRESHOLD) && memoryCollectionThreshold;
 
-        notifyListeners(currentGcTime, memoryThreshold, memoryCollectionThreshold, gcLoadScore, gcOverloaded);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(
+            "LowMemoryNotification{gcTime: " + accumulatedGcTime + "ms, GC load: " + gcLoadScore + "}" +
+            "{threshold: " + memoryThreshold + ", collectionThreshold: " + memoryCollectionThreshold + "}" +
+            " -> " + (gcOverloaded ? "overloaded" : "not overloaded")
+          );
+        }
+
+        notifyListeners(
+          lowMemoryEvent(accumulatedGcTime, memoryThreshold, memoryCollectionThreshold, gcLoadScore, gcOverloaded)
+        );
       }
     }
   };
-
-  private void notifyListeners(long currentGcTime,
-                               boolean memoryThreshold,
-                               boolean memoryCollectionThreshold,
-                               double gcLoadScore,
-                               boolean gcOverloaded) {
-    synchronized (listenersBroadcastingTask) {
-      //TODO RC: memoryCollectionThreshold=false and memoryCollectionThreshold=true often comes one-after-another, with
-      //         a very little delay, hence [memoryCollectionThreshold=true] is very likely to be 'throttled', while
-      //         it is more 'critical' event to deliver!
-      if (listenerNotificationTaskSubmitted == null) {
-        long id = idCounter.incrementAndGet();
-        listenerNotificationTaskSubmitted = listenersNotificationPool.submit(
-          () -> listenersBroadcastingTask.memoryStatus(
-            id,
-            currentGcTime,
-            memoryThreshold, memoryCollectionThreshold,
-            gcLoadScore,
-            gcOverloaded
-          )
-        );
-        // maybe it's executed too fast or even synchronously
-        if (listenerNotificationTaskSubmitted.isDone()) {
-          listenerNotificationTaskSubmitted = null;
-        }
-      }
-    }
-  }
 
   public LowMemoryWatcherManager(@NotNull ExecutorService backendExecutorService) {
     long gcDurationMs = fetchMajorGcDurationAccumulated();
@@ -161,31 +128,11 @@ public final class LowMemoryWatcherManager {
     memoryPoolMXBeansInitializationFuture = initializeMXBeanListenersLater(backendExecutorService);
 
     //add 'legacy' listener delivering low-memory signals to LowMemoryWatcher:
-    addListener(
-      (id, accumulatedGcTimeMs, lowMemoryThresholdBreached, lowMemoryThresholdBreachedAfterGC, gcLoadScore, memorySubsystemOverloaded) -> {
-        if (lowMemoryThresholdBreached || lowMemoryThresholdBreachedAfterGC) {
-          LowMemoryWatcher.onLowMemorySignalReceived(memorySubsystemOverloaded);
-        }
+    addListener(event -> {
+      if (event.memoryThresholdBreached || event.memoryThresholdBreachedAfterGC) {
+        LowMemoryWatcher.onLowMemorySignalReceived(event.gcOverloaded);
       }
-    );
-  }
-
-  public void addListener(@NotNull Listener listener) {
-    listeners.add(listener);
-  }
-
-  public void removeListener(@NotNull Listener listener) {
-    listeners.remove(listener);
-  }
-
-  /** @return accumulated duration of major GC collections since the application start, ms */
-  private static long fetchMajorGcDurationAccumulated() {
-    for (GarbageCollectorMXBean gc : ManagementFactory.getGarbageCollectorMXBeans()) {
-      if (gc.getName().toLowerCase().contains("g1 old generation")) {
-        return gc.getCollectionTime();
-      }
-    }
-    return 0;
+    });
   }
 
   private @NotNull Future<?> initializeMXBeanListenersLater(@NotNull ExecutorService backendExecutorService) {
@@ -198,7 +145,8 @@ public final class LowMemoryWatcherManager {
             if (bean.getType() == MemoryType.HEAP && bean.isCollectionUsageThresholdSupported() && bean.isUsageThresholdSupported()) {
               long maxPoolCapacity = bean.getUsage().getMax();
               long threshold = Math.min((long)(maxPoolCapacity * MEMORY_NOTIFICATION_THRESHOLD), maxPoolCapacity - MIN_MEMORY_MARGIN);
-              LOG.info("Subscribing to MemoryPool[" + bean.getName() + "]{max: " + maxPoolCapacity + ", threshold: " + threshold + "}");
+              LOG.info("Subscribing to MemoryPool[" + bean.getName() + "]" +
+                       "{max: " + maxPoolCapacity + ", threshold: " + threshold + " (" + MEMORY_NOTIFICATION_THRESHOLD + " * max)}");
               if (threshold > 0) {
                 bean.setUsageThreshold(threshold);
                 bean.setCollectionUsageThreshold(threshold);
@@ -220,23 +168,33 @@ public final class LowMemoryWatcherManager {
           if (REGULAR_TRACKER_UPDATE_PERIOD_MS > 0) {
             if (backendExecutorService instanceof ScheduledExecutorService) {
               ScheduledExecutorService scheduler = (ScheduledExecutorService)backendExecutorService;
-              LOG.info("Schedule GC time updating: each " + REGULAR_TRACKER_UPDATE_PERIOD_MS + "ms:");
-              periodicGcTimeTrackingFuture = scheduler.scheduleWithFixedDelay(
-                () -> {
-                  long currentGcTime = fetchMajorGcDurationAccumulated();
-                  double gcLoadScore = gcTracker.gcLoadScore(System.currentTimeMillis(), currentGcTime);
-                  notifyListeners(currentGcTime, false, false, gcLoadScore, false);
-                  if (LOG.isDebugEnabled()) {
-                    LOG.debug("GcTracker update: {gcTime: " + currentGcTime + "ms, GC load: " + gcLoadScore + "}");
-                  }
-                },
-                /*initialDelay: */ 10_000, /*period: */ REGULAR_TRACKER_UPDATE_PERIOD_MS, MILLISECONDS);
+              LOG.info("Schedule GC-time updating: each " + REGULAR_TRACKER_UPDATE_PERIOD_MS + "ms");
+              synchronized (broadcastingLock) {
+                periodicGcTimeTrackingFuture = scheduler.scheduleWithFixedDelay(
+                  () -> {
+                    long accumulatedGcTime = fetchMajorGcDurationAccumulated();
+                    double gcLoadScore = gcTracker.gcLoadScore(System.currentTimeMillis(), accumulatedGcTime);
+                    //give a chance to monitoring and other clients to observe gcLoadScore changes
+                    notifyListeners(
+                      lowMemoryEvent(accumulatedGcTime, false, false, gcLoadScore, false)
+                    );
+                  },
+                  /*initialDelay: */ REGULAR_TRACKER_UPDATE_PERIOD_MS,
+                  /*period: */ REGULAR_TRACKER_UPDATE_PERIOD_MS, MILLISECONDS
+                );
+              }
             }
+            else {
+              LOG.info("Skip regular GC time updating because " + backendExecutorService + "is not a ScheduledExecutorService");
+            }
+          }
+          else {
+            LOG.info("Regular GC time updating disabled (updatePeriod=" + REGULAR_TRACKER_UPDATE_PERIOD_MS + " < 0)");
           }
         }
         catch (Throwable e) {
           // should not happen normally
-          LOG.info("Errors initializing LowMemoryWatcher: ", e);
+          LOG.info("Errors initializing LowMemoryWatcher", e);
         }
       }
 
@@ -247,23 +205,100 @@ public final class LowMemoryWatcherManager {
     });
   }
 
+  public void addListener(@NotNull Listener listener) {
+    listeners.add(listener);
+  }
+
+  public void removeListener(@NotNull Listener listener) {
+    listeners.remove(listener);
+  }
+
+  private void notifyListeners(@NotNull LowMemoryEvent newEvent) {
+    synchronized (broadcastingLock) {
+      int newEventPriority = LowMemoryEvent.priorityOf(newEvent);
+      int currentEventPriority = LowMemoryEvent.priorityOf(eventToBroadcast);
+      if (eventSent) { // (initial eventToBroadcast=null also falls here)
+        long elapsedSinceLastEventMs = LowMemoryEvent.elapsedSinceMs(newEvent, eventToBroadcast);
+        boolean throttlingPeriodElapsed = elapsedSinceLastEventMs >= THROTTLING_PERIOD_MS;
+        if (newEventPriority > currentEventPriority || throttlingPeriodElapsed) {
+          eventToBroadcast = newEvent;
+          eventSent = false;
+          eventBroadcastingTaskSubmitted = listenersNotificationPool.submit(
+            () -> {
+              LowMemoryEvent eventToBroadcast;
+              synchronized (broadcastingLock) {
+                if (this.eventToBroadcast == null || this.eventSent) {
+                  return;
+                }
+                eventToBroadcast = this.eventToBroadcast;
+                this.eventSent = true;
+              }
+              for (Listener listener : listeners) {
+                listener.memoryStatus(eventToBroadcast);
+              }
+            }
+          );
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(newEvent + " submitted");
+          }
+        }
+        else {
+          //do not update event, keep .timestamp of the last issued event for throttling
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(newEvent + " is throttled out (" + elapsedSinceLastEventMs + "ms since last issued event)");
+          }
+        }
+      }
+      else {// eventSent=false:
+        if (newEventPriority >= currentEventPriority) {
+          eventToBroadcast = newEvent;
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(newEvent + " replaced the older event");
+          }
+          //eventSent=false => eventBroadcastingTask is already submitted here
+        }
+        else {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(newEvent + " is skipped (older " + eventToBroadcast + " is more important)");
+          }
+        }
+      }
+    }
+  }
+
+  /** @return accumulated duration of major GC collections since the application start, ms */
+  private static long fetchMajorGcDurationAccumulated() {
+    for (GarbageCollectorMXBean gc : ManagementFactory.getGarbageCollectorMXBeans()) {
+      if (gc.getName().toLowerCase().contains(MAJOR_GC_PATTERN)) {
+        return gc.getCollectionTime();
+      }
+    }
+    return 0;
+  }
+
   public void shutdown() {
     try {
       memoryPoolMXBeansInitializationFuture.get();
       ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).removeNotificationListener(mxLowMemoryListener);
-
-      if (periodicGcTimeTrackingFuture != null) {
-        periodicGcTimeTrackingFuture.cancel(false);
-        periodicGcTimeTrackingFuture = null;
-      }
     }
     catch (Exception e) {
       LOG.error(e);
     }
-    synchronized (listenersBroadcastingTask) {
-      if (listenerNotificationTaskSubmitted != null) {
-        listenerNotificationTaskSubmitted.cancel(false);
-        listenerNotificationTaskSubmitted = null;
+
+    synchronized (broadcastingLock) {
+      if (periodicGcTimeTrackingFuture != null) {
+        periodicGcTimeTrackingFuture.cancel(false);
+        periodicGcTimeTrackingFuture = null;
+      }
+
+      if (eventBroadcastingTaskSubmitted != null) {
+        try {
+          eventBroadcastingTaskSubmitted.get();
+          eventBroadcastingTaskSubmitted = null;
+        }
+        catch (Exception e) {
+          LOG.error("Can't wait listenerNotificationTaskSubmitted", e);
+        }
       }
     }
 
@@ -273,6 +308,18 @@ public final class LowMemoryWatcherManager {
   @TestOnly
   public void waitForInitComplete(int timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     memoryPoolMXBeansInitializationFuture.get(timeout, unit);
+  }
+
+  private @NotNull LowMemoryEvent lowMemoryEvent(long accumulatedGcTime,
+                                                 boolean memoryThresholdBreached,
+                                                 boolean memoryThresholdBreachedAfterGC,
+                                                 double gcLoadScore,
+                                                 boolean gcOverloaded) {
+    return new LowMemoryEvent(
+      idCounter.incrementAndGet(),
+      System.currentTimeMillis(),
+      accumulatedGcTime, memoryThresholdBreached, memoryThresholdBreachedAfterGC, gcLoadScore,
+      gcOverloaded);
   }
 
   @ApiStatus.Internal
@@ -400,14 +447,69 @@ public final class LowMemoryWatcherManager {
   }
 
   @ApiStatus.Internal
+  public static class LowMemoryEvent {
+    public final long id;
+    public final long timestampMs;
+
+    public final long accumulatedGcTimeMs;
+
+    public final boolean memoryThresholdBreached;
+    public final boolean memoryThresholdBreachedAfterGC;
+
+    public final double gcLoadScore;
+    public final boolean gcOverloaded;
+
+    private LowMemoryEvent(long id,
+                           long timestampMs,
+                           long accumulatedGcTimeMs,
+                           boolean memoryThresholdBreached,
+                           boolean memoryThresholdBreachedAfterGC,
+                           double gcLoadScore,
+                           boolean gcOverloaded) {
+      this.id = id;
+      this.timestampMs = timestampMs;
+      this.accumulatedGcTimeMs = accumulatedGcTimeMs;
+      this.memoryThresholdBreached = memoryThresholdBreached;
+      this.memoryThresholdBreachedAfterGC = memoryThresholdBreachedAfterGC;
+      this.gcLoadScore = gcLoadScore;
+      this.gcOverloaded = gcOverloaded;
+    }
+
+    @Override
+    public String toString() {
+      return "LowMemoryEvent{#" + id +
+             ", timestampMs=" + timestampMs +
+             ", accumulatedGcTimeMs=" + accumulatedGcTimeMs +
+             ", memoryThresholdBreached=" + memoryThresholdBreached +
+             ", memoryThresholdBreachedAfterGC=" + memoryThresholdBreachedAfterGC +
+             ", gcLoad=" + gcLoadScore +
+             ", gcOverloaded=" + gcOverloaded +
+             '}';
+    }
+
+    private static long elapsedSinceMs(@NotNull LowMemoryEvent newEvent,
+                                       @Nullable LowMemoryEvent oldEvent) {
+      if (oldEvent == null) {
+        return newEvent.timestampMs;
+      }
+      return newEvent.timestampMs - oldEvent.timestampMs;
+    }
+
+    private static int priorityOf(@Nullable LowMemoryEvent event) {
+      if (event == null) {
+        return 0; //nothing is the lowest priority
+      }
+      if (!event.gcOverloaded) {
+        return 1;
+      }
+      //gcOverloaded=true is more important to deliver:
+      return 2;
+    }
+  }
+
+
+  @ApiStatus.Internal
   public interface Listener {
-    void memoryStatus(
-      long notificationId,
-      long accumulatedGcTimeMs,
-      boolean lowMemoryThresholdBreached,
-      boolean lowMemoryThresholdBreachedAfterGC,
-      double gcLoadScore,
-      boolean memorySubsystemOverloaded
-    );
+    void memoryStatus(@NotNull LowMemoryEvent event);
   }
 }
