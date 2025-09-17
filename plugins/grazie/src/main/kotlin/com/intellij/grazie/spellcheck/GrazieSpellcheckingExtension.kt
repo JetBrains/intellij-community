@@ -21,11 +21,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import com.intellij.psi.PsiElement
-import com.intellij.psi.SyntaxTraverser
 import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
 import com.intellij.spellchecker.inspections.IdentifierSplitter.MINIMAL_TYPO_LENGTH
-import com.intellij.spellchecker.inspections.SpellCheckingInspection.SpellCheckingScope.Comments
-import com.intellij.spellchecker.inspections.SpellCheckingInspection.SpellCheckingScope.Literals
 import com.intellij.spellchecker.inspections.SpellcheckingExtension
 import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellCheckingResult
 import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellingTypo
@@ -46,10 +43,7 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
     ProgressManager.checkCanceled()
 
     val texts = sortByPriority(TextExtractor.findTextsExactlyAt(element, DOMAINS), session.priorityRange)
-    if (texts.isEmpty()) {
-      if (hasTextAround(element, strategy)) return SpellCheckingResult.Checked
-      return SpellCheckingResult.Ignored
-    }
+    if (texts.isEmpty()) return SpellCheckingResult.Ignored
 
     val textSpeller = getTextSpeller(element.project) ?: return SpellCheckingResult.Ignored
     texts.asSequence()
@@ -112,19 +106,6 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
         }
       })
     }
-  }
-
-  private fun hasTextAround(element: PsiElement, strategy: SpellcheckingStrategy): Boolean =
-    strategy.elementFitsScope(element, setOf(Literals, Comments)) && childHasText(element)
-
-  private fun childHasText(root: PsiElement): Boolean {
-    if (root.firstChild == null) return false
-    for (element in SyntaxTraverser.psiTraverser(root)) {
-      if (TextExtractor.findTextsExactlyAt(element, DOMAINS).isNotEmpty()) {
-        return true
-      }
-    }
-    return false
   }
 }
 
