@@ -4,6 +4,7 @@
     <plugin id="com.intellij.modules.python"/>
     <module name="intellij.platform.whatsNew"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
   </dependencies>
 
   <projectListeners>
