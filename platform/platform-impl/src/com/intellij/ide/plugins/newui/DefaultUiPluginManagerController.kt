@@ -666,7 +666,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override suspend fun isRestartRequired(sessionId: String): Boolean {
-    return findSession(sessionId)?.needRestart ?: false
+    return findSession(sessionId)?.needRestart == true || InstalledPluginsState.getInstance().installedPlugins.isNotEmpty()
   }
 
   override fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean {
