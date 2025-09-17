@@ -28,10 +28,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHe
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MacToolbarFrameHeader
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
-import com.intellij.toolWindow.ToolWindowButtonManager
-import com.intellij.toolWindow.ToolWindowPane
-import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
-import com.intellij.toolWindow.ToolWindowToolbar
+import com.intellij.toolWindow.*
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLayeredPane
@@ -42,6 +39,7 @@ import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -242,6 +240,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
         when (it) {
           is EditorsSplitters -> {
+            it.border = null
             it.borderPainter = DefaultBorderPainter()
           }
           is ManyIslandDivider -> {
@@ -456,6 +455,24 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
+  override fun configureToolWindowToolbarBorder(toolbar: ToolWindowToolbar, border: Border): Border {
+    val islandsBorder = if (toolbar is ToolWindowLeftToolbar) JBUI.Borders.emptyLeft(2) else JBUI.Borders.emptyRight(2)
+
+    return object : Border {
+      override fun paintBorder(component: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+        if (!isManyIslandEnabled) {
+          border.paintBorder(component, g, x, y, width, height)
+        }
+      }
+
+      override fun getBorderInsets(component: Component) = getCurrentBorder().getBorderInsets(component)
+
+      override fun isBorderOpaque() = getCurrentBorder().isBorderOpaque
+
+      private fun getCurrentBorder() = if (isManyIslandEnabled) islandsBorder else border
+    }
+  }
+
   override fun configureRendererComponent(component: JComponent) {
     if (isManyIslandEnabled) {
       ClientProperty.putRecursive(component, IdeBackgroundUtil.NO_BACKGROUND, true)
@@ -475,7 +492,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun createToolWindowBorderPainter(toolwindow: ToolWindow, component: XNextIslandHolder) {
-    component.border = null
+    component.border = JBEmptyBorder(JBUI.insets("Island.Editor.border", JBUI.insets(3)))
+
     component.borderPainter = object : AbstractBorderPainter() {
       override fun paintAfterChildren(component: JComponent, g: Graphics) {
         if (toolwindow.type.isInternal) {
@@ -486,7 +504,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun createEditorBorderPainter(component: EditorsSplitters) {
+    component.border = JBEmptyBorder(JBUI.insets("Island.ToolWindow.border", JBUI.insets(2)))
+
     ClientProperty.putRecursive(component, IdeBackgroundUtil.NO_BACKGROUND, true)
+
     component.borderPainter = object : AbstractBorderPainter() {
       override fun paintAfterChildren(component: JComponent, g: Graphics) {
         val fileEditorManager = ProjectUtil.getProjectForComponent(component)?.getServiceIfCreated(FileEditorManager::class.java)
