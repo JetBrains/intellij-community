@@ -9,9 +9,16 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lexer.FlexLexer;
+import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}, {@link com.intellij.java.syntax.lexer._JavaLexer}
+ *             This class is planned to be removed.
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval
 @SuppressWarnings("ALL")
-
 class _JavaLexer implements FlexLexer {
 
   /** This character denotes the end of file */
