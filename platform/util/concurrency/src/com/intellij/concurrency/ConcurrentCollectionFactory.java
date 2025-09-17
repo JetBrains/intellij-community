@@ -28,7 +28,7 @@ public final class ConcurrentCollectionFactory {
 
   @Contract(pure = true)
   public static @NotNull <T, V> ConcurrentMap<@NotNull T, @NotNull V> createConcurrentMap() {
-    return new ConcurrentHashMap<>(HashingStrategy.canonical());
+    return new java.util.concurrent.ConcurrentHashMap<>();
   }
 
   @Contract(pure = true)
