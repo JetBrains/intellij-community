@@ -7,13 +7,14 @@ supported as entry points.
   A safe object (in the same class) is:
 <ul>
   <li>a string literal, interface instance, or enum object</li>
-  <li>a result of a call of a method that is marked as <code>@Untainted</code></li>
+  <li>a call result of a method that is marked as <code>@Untainted</code></li>
   <li>a private field, which is assigned only with a string literal and has a safe initializer</li>
   <li>a final field, which has a safe initializer</li>
   <li>local variable or parameter that are marked as <code>@Untainted</code> and are not assigned from non-safe objects</li>
-  This field, local variable, or parameter must not be passed as arguments to methods or used as a qualifier or must be a primitive, its
-  wrapper or immutable.
 </ul>
+This field, local variable, or parameter must not be passed as arguments to methods or used as a qualifier or must be a primitive, its
+wrapper or immutable.
+
 Also static final fields are considered as safe.
 <p>
   The analysis is performed only inside one file. To process dependencies from other classes, use options.
