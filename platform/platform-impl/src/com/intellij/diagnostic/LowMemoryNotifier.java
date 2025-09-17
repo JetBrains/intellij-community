@@ -16,7 +16,10 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.containers.ContainerUtil;
+import io.opentelemetry.api.metrics.DoubleGauge;
+import io.opentelemetry.api.metrics.Meter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
@@ -24,6 +27,7 @@ import java.util.Queue;
 import java.util.Set;
 
 import static com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC;
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.PlatformMetrics;
 import static com.intellij.util.SystemProperties.getFloatProperty;
 import static com.intellij.util.SystemProperties.getLongProperty;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -40,33 +44,41 @@ final class LowMemoryNotifier implements Disposable {
   private static final double LONG_TERM_MEMORY_DEFICIT_THRESHOLD = getFloatProperty("LowMemoryNotifier.LONG_TERM_MEMORY_DEFICIT_THRESHOLD", 5);
   //@formatter:on
 
-  //MAYBE RC: Otel.Metrics for monitoring?
   private final ThrottlingWindowedFilter throttlingFilter = new ThrottlingWindowedFilter(
     System.currentTimeMillis(),
     SUMMARISING_WINDOW_MS,
     THROTTLING_PERIOD_MS
   );
 
-  private final LowMemoryWatcher watcher = LowMemoryWatcher.register(
-    () -> {
-      //We use low-memory notification to form a recommendation for the user to extend HEAP.
-      //The problem is: raw low-memory notifications could come frequently, if a short-but-intensive spike of activity is
-      // underway -- like indexing, or huge find usage, etc -- but such short spikes of low-memory conditions are not enough
-      // reason to annoy user to extend the heap. Only _regular_, relatively _long-term_ signs of a memory deficit are enough
-      // of a reason to extend the heap.
-      // Hence, we _throttle_ the raw signals (THROTTLING_PERIOD_MS) and sum the throttled signals over last (SUMMARISING_WINDOW_MS).
-      // I.e. the maximum sum = SUMMARISING_WINDOW_MS/THROTTLING_PERIOD_MS.
-      // If there are > LONG_TERM_MEMORY_DEFICIT_THRESHOLD throttled low-memory signals in a SUMMARISING_WINDOW_MS -- only when
-      // we recommend the user extending the heap.
-      double throttledSignals = throttlingFilter.throttledSum(System.currentTimeMillis());
-      LOG.info("Throttled low-memory signals: " + throttledSignals + ", threshold: " + LONG_TERM_MEMORY_DEFICIT_THRESHOLD);
-      if (throttledSignals > LONG_TERM_MEMORY_DEFICIT_THRESHOLD) {
-        throttlingFilter.reset();
-        showNotification(MemoryKind.HEAP, false);
-      }
-    },
-    ONLY_AFTER_GC
-  );
+  private final LowMemoryWatcher watcher;
+
+  LowMemoryNotifier() {
+    Meter otelMeter = TelemetryManager.getInstance().getMeter(PlatformMetrics);
+    DoubleGauge memoryDeficitScoreMetric = otelMeter.gaugeBuilder("LowMemory.memoryDeficitScore").build();
+
+    watcher = LowMemoryWatcher.register(
+      () -> {
+        //We use low-memory notification to form a recommendation for the user to extend HEAP.
+        //The problem is: raw low-memory notifications could come frequently, if a short-but-intensive spike of activity is
+        // underway -- like indexing, or huge find usage, etc -- but such short spikes of low-memory conditions are not enough
+        // reason to annoy user to extend the heap. Only _regular_, relatively _long-term_ signs of a memory deficit are enough
+        // of a reason to extend the heap.
+        // Hence, we _throttle_ the raw signals (THROTTLING_PERIOD_MS) and sum the throttled signals over last (SUMMARISING_WINDOW_MS).
+        // I.e. the maximum sum = SUMMARISING_WINDOW_MS/THROTTLING_PERIOD_MS.
+        // If there are > LONG_TERM_MEMORY_DEFICIT_THRESHOLD throttled low-memory signals in a SUMMARISING_WINDOW_MS -- only when
+        // we recommend the user extending the heap.
+        double memoryDeficitScore = throttlingFilter.throttledSum(System.currentTimeMillis());
+        memoryDeficitScoreMetric.set(memoryDeficitScore);
+
+        LOG.info("Memory deficit score: " + memoryDeficitScore + ", threshold: " + LONG_TERM_MEMORY_DEFICIT_THRESHOLD);
+        if (memoryDeficitScore > LONG_TERM_MEMORY_DEFICIT_THRESHOLD) {
+          throttlingFilter.reset();
+          showNotification(MemoryKind.HEAP, false);
+        }
+      },
+      ONLY_AFTER_GC
+    );
+  }
 
   @Override
   public void dispose() {
