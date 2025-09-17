@@ -103,8 +103,8 @@ public final class DefaultInferredAnnotationProvider implements InferredAnnotati
    */
   private boolean ignoreInference(@NotNull PsiModifierListOwner owner, @Nullable String annotationFQN) {
     if (annotationFQN == null) return true;
-    if (owner instanceof PsiMethod && PsiUtil.canBeOverridden((PsiMethod)owner)) {
-      if (!(owner instanceof PsiMethodImpl) || !JavaSourceInference.canInferFromSource((PsiMethodImpl)owner)) {
+    if (owner instanceof PsiMethod method && PsiUtil.canBeOverridden(method)) {
+      if (!(owner instanceof PsiMethodImpl methodImpl) || !JavaSourceInference.canInferFromSource(methodImpl)) {
         return true;
       }
     }
@@ -126,6 +126,12 @@ public final class DefaultInferredAnnotationProvider implements InferredAnnotati
     PsiModifierList modifiers = method.getModifierList();
     if (modifiers.hasAnnotation(Mutability.UNMODIFIABLE_ANNOTATION) ||
         modifiers.hasAnnotation(Mutability.UNMODIFIABLE_VIEW_ANNOTATION)) {
+      return null;
+    }
+    PsiType returnType = method.getReturnType();
+    if (returnType != null &&
+        (returnType.hasAnnotation(Mutability.UNMODIFIABLE_ANNOTATION) ||
+         returnType.hasAnnotation(Mutability.UNMODIFIABLE_VIEW_ANNOTATION))) {
       return null;
     }
     return JavaSourceInference.inferMutability(method).asAnnotation(myProject);

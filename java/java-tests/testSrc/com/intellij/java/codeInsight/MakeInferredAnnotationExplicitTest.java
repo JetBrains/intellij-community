@@ -2,8 +2,12 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixtureTestCase {
   public void test_contract_and_notNull() {
@@ -115,6 +119,29 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
           }
       }""");
     assert myFixture.filterAvailableIntentions("Insert '@MyNotNull'").isEmpty();
+  }
+
+  public void testNoUnmodifiableInferenceWhenTypeAnnotated() {
+    myFixture.configureByText("a.java", """
+       import java.util.List;
+       import org.jetbrains.annotations.NotNull;
+       import org.jetbrains.annotations.Unmodifiable;
+
+       public final class Example<A>
+       {
+           public <T> @Unmodifiable @NotNull List<T> <caret>genericInstanceMethod(T value)
+           {
+               return List.of(value);
+           }
+       }""");
+    List<IntentionAction> actions =
+      myFixture.filterAvailableIntentions("Insert '@Contract(value = \"_ -> new\", pure = true) @Unmodifiable'");
+    assertEmpty(actions);
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   @Override
