@@ -61,7 +61,6 @@ import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
@@ -1026,18 +1025,6 @@ private fun readProjectName(path: String): String {
     return path
   }
 
-  // IJPL-194035
-  // Avoid greedy I/O under non-local projects. For example, in the case of WSL:
-  //	1.	it may trigger Ijent initialization for each recent project
-  //	2.	with Ijent disabled, performance may degrade further — 9P is very slow and could lead to UI freezes
-  if (Path.of(path).getEelDescriptor() != LocalEelDescriptor) {
-    return path
-  }
-
-  if (path.endsWith(".ipr")) {
-    return FileUtilRt.getNameWithoutExtension(path)
-  }
-
   val file = try {
     Path.of(path)
   }
@@ -1045,8 +1032,15 @@ private fun readProjectName(path: String): String {
     return path
   }
 
-  val storePath = ProjectStorePathManager.getInstance().getStoreDescriptor(file).dotIdea!!
-  return JpsPathUtil.readProjectName(storePath) ?: PathUtilRt.getFileName(path)
+  // IJPL-194035
+  // Avoid greedy I/O under non-local projects. For example, in the case of WSL:
+  //	1.	it may trigger Ijent initialization for each recent project
+  //	2.	with Ijent disabled, performance may degrade further — 9P is very slow and could lead to UI freezes
+  if (file.getEelDescriptor() != LocalEelDescriptor) {
+    return path
+  }
+
+  return ProjectStorePathManager.getInstance().getStoreDescriptor(file).getProjectName()
 }
 
 private fun getLastProjectFrameInfoFile() = getSystemDir().resolve("lastProjectFrameInfo")
