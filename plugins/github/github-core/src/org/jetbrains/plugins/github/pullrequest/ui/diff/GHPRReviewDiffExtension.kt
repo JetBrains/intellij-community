@@ -114,7 +114,8 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
 
 internal interface GHPRReviewDiffEditorModel : CodeReviewEditorModel<GHPREditorMappedComponentModel>,
                                                CodeReviewCommentableEditorModel.WithMultilineComments,
-                                               CodeReviewNavigableEditorViewModel {
+                                               CodeReviewNavigableEditorViewModel,
+                                               CodeReviewEditorGutterControlsModel.WithMultilineComments {
   companion object {
     val KEY: Key<GHPRReviewDiffEditorModel> = Key.create("GitHub.PullRequest.Diff.Editor.Model")
   }
@@ -199,6 +200,10 @@ private class DiffEditorModel(
     diffVm.requestNewComment(loc, true)
   }
 
+  override fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange) {
+    TODO("Not yet implemented")
+  }
+
   override fun requestNewComment(lineIdx: Int) {
     val loc = lineToLocation(lineIdx) ?: return
     diffVm.requestNewComment(GHPRReviewCommentLocation.SingleLine(loc.first, loc.second), true)
@@ -206,7 +211,7 @@ private class DiffEditorModel(
 
   override fun cancelNewComment(lineIdx: Int) {
     val loc = lineToLocation(lineIdx) ?: return
-    diffVm.cancelNewComment(GHPRReviewCommentLocation.SingleLine(loc.first, loc.second))
+    diffVm.cancelNewComment(loc.first, loc.second)
   }
 
   override fun toggleComments(lineIdx: Int) {
@@ -259,8 +264,8 @@ private class DiffEditorModel(
 
   private inner class MappedNewComment(vm: GHPRNewCommentDiffViewModel)
     : GHPREditorMappedComponentModel.NewComment<GHPRReviewNewCommentEditorViewModel>(vm) {
-    private val location = vm.position.location.lineLocation.let { it.first to it.second }
-    override val key: Any = "NEW_${vm.position.location}"
+    private val location = vm.position.value.location.lineLocation.let { it.first to it.second }
+    override val key: Any = "NEW_${vm.position.value.location}"
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
     override val line: StateFlow<Int?> = MutableStateFlow(locationToLine(location))
     override val range: StateFlow<Pair<Side, IntRange>?> = MutableStateFlow(when (val loc = vm.location) {
@@ -271,6 +276,10 @@ private class DiffEditorModel(
                                                                                 loc.side to loc.startLineIdx..loc.lineIdx
                                                                               }
                                                                             })
+
+    override fun setRange(range: Pair<Side, IntRange>?) {
+      TODO("Not yet implemented")
+    }
   }
 
   private inner class MappedAIComment(vm: GHPRAICommentViewModel)

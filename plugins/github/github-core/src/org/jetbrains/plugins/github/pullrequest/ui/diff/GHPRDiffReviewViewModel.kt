@@ -11,6 +11,7 @@ import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.Range
+import com.intellij.diff.util.Side
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -45,7 +46,7 @@ interface GHPRDiffReviewViewModel {
   val locationsWithDiscussions: StateFlow<Set<DiffLineLocation>>
 
   fun requestNewComment(location: GHPRReviewCommentLocation, focus: Boolean)
-  fun cancelNewComment(location: GHPRReviewCommentLocation)
+  fun cancelNewComment(side: Side, lineIdx: Int)
 
   val isViewedState: StateFlow<ComputedResult<Boolean>>
   fun setViewedState(isViewed: Boolean)
@@ -96,7 +97,7 @@ internal class GHPRDiffReviewViewModelImpl(
 
   private val newCommentsContainer =
     MappingScopedItemsContainer.byIdentity<GHPRReviewNewCommentEditorViewModel, GHPRNewCommentDiffViewModelImpl>(cs) {
-      GHPRNewCommentDiffViewModelImpl(it.position.location, it)
+      GHPRNewCommentDiffViewModelImpl(it.position.value.location, it)
     }
   override val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>> =
     newCommentsContainer.mappingState.mapState { it.values }
@@ -110,7 +111,7 @@ internal class GHPRDiffReviewViewModelImpl(
   init {
     cs.launchNow {
       threadsVms.newComments.collect {
-        val commentForChange = it.values.filter { it.position.change == change }
+        val commentForChange = it.filter { it.position.value.change == change }
         newCommentsContainer.update(commentForChange)
       }
     }
@@ -126,10 +127,9 @@ internal class GHPRDiffReviewViewModelImpl(
     }
   }
 
-  override fun cancelNewComment(location: GHPRReviewCommentLocation) {
-    val position = GHPRReviewCommentPosition(change, location)
-    threadsVms.cancelNewComment(position)
-  }
+  override fun cancelNewComment(side: Side, lineIdx: Int) =
+    threadsVms.cancelNewComment(change, side, lineIdx)
+
 
   override val isViewedState: StateFlow<ComputedResult<Boolean>> =
     dataProvider.viewedStateData.viewedStateComputationState

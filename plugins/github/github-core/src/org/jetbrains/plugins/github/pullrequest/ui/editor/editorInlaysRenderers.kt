@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 import com.intellij.collaboration.ui.util.bindContent
 import com.intellij.openapi.observable.util.addMouseHoverListener
@@ -33,8 +34,13 @@ class GHPRNewCommentEditorInlayRenderer internal constructor(
   hoverableVm: GHPRHoverableReviewComment,
   vm: GHPRReviewNewCommentEditorViewModel,
 ) : CodeReviewComponentInlayRenderer(
-  GHPRReviewEditorComponentsFactory.createNewCommentIn(cs, vm).also {
+  GHPRReviewEditorComponentsFactory.createNewCommentIn(cs, vm).also { comp ->
     hoverableVm.showOutline(true)
+    cs.launchNow {
+      (hoverableVm as GHPREditorMappedComponentModel.NewComment<*>).isHidden.collect {
+        comp.isVisible = !it
+      }
+    }
   }
 )
 
