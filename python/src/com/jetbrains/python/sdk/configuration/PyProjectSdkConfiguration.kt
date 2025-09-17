@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
@@ -28,7 +27,6 @@ import com.jetbrains.python.sdk.configuration.suppressors.PyInterpreterInspectio
 import com.jetbrains.python.sdk.configuration.suppressors.PyPackageRequirementsInspectionSuppressor
 import com.jetbrains.python.sdk.configuration.suppressors.TipOfTheDaySuppressor
 import com.jetbrains.python.sdk.configurePythonSdk
-import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.uv.isUv
 import com.jetbrains.python.statistics.ConfiguredPythonInterpreterIdsHolder.Companion.SDK_HAS_BEEN_CONFIGURED_AS_THE_PROJECT_INTERPRETER
 import com.jetbrains.python.util.ShowingMessageErrorSync
@@ -86,8 +84,6 @@ object PyProjectSdkConfiguration {
     if (module.isDisposed) {
       return
     }
-
-    sdk.persist()
 
     configurePythonSdk(project, module, sdk)
     withContext(Dispatchers.EDT) {
