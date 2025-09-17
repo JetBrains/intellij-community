@@ -120,7 +120,7 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
   }
 
   companion object {
-    private val LOG = logger<GlobalWorkspaceModelCache>()
+    private val LOG = logger<GlobalWorkspaceModelCacheImpl>()
     internal const val DATA_DIR_NAME: String = "global-model-cache"
 
     private val cachesInvalidated = AtomicBoolean(false)
