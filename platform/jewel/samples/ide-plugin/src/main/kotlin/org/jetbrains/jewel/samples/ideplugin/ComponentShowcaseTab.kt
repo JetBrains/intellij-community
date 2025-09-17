@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -55,6 +56,7 @@ import org.jetbrains.jewel.markdown.Markdown
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.CheckboxRow
+import org.jetbrains.jewel.ui.component.Chip
 import org.jetbrains.jewel.ui.component.CircularProgressIndicator
 import org.jetbrains.jewel.ui.component.CircularProgressIndicatorBig
 import org.jetbrains.jewel.ui.component.DefaultButton
@@ -76,10 +78,12 @@ import org.jetbrains.jewel.ui.component.LazyTree
 import org.jetbrains.jewel.ui.component.ListComboBox
 import org.jetbrains.jewel.ui.component.MenuScope
 import org.jetbrains.jewel.ui.component.OutlinedButton
+import org.jetbrains.jewel.ui.component.RadioButtonChip
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 import org.jetbrains.jewel.ui.component.Slider
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
+import org.jetbrains.jewel.ui.component.ToggleableChip
 import org.jetbrains.jewel.ui.component.Tooltip
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.items
@@ -333,6 +337,33 @@ private fun RowScope.ColumnOne() {
                 buildSubmenus(emptyList())
             },
         )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            var selectedIndex by remember { mutableStateOf(-1) }
+            RadioButtonChip(selected = selectedIndex == 0, onClick = { selectedIndex = 0 }, enabled = true) {
+                Text("First")
+            }
+
+            RadioButtonChip(selected = selectedIndex == 1, onClick = { selectedIndex = 1 }, enabled = true) {
+                Text("Second")
+            }
+
+            RadioButtonChip(selected = selectedIndex == 2, onClick = { selectedIndex = 2 }, enabled = true) {
+                Text("Third")
+            }
+
+            Divider(Orientation.Vertical, Modifier.fillMaxHeight())
+
+            var isChecked by remember { mutableStateOf(false) }
+            ToggleableChip(checked = isChecked, onClick = { isChecked = it }, enabled = true) { Text("Toggleable") }
+
+            var count by remember { mutableIntStateOf(1) }
+            Chip(enabled = true, onClick = { count++ }) { Text("Clicks: $count") }
+
+            Divider(Orientation.Vertical, Modifier.fillMaxHeight())
+
+            Chip(enabled = false, onClick = {}) { Text("Disabled") }
+        }
     }
 }
 

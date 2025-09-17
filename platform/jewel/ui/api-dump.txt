@@ -1117,6 +1117,7 @@ f:org.jetbrains.jewel.ui.component.styling.ChipMetrics
 - f:getBorderWidth-D9Ej5fM():F
 - f:getBorderWidthSelected-D9Ej5fM():F
 - f:getCornerSize():androidx.compose.foundation.shape.CornerSize
+- f:getMinSize-MYxV2XQ():J
 - f:getPadding():androidx.compose.foundation.layout.PaddingValues
 - hashCode():I
 f:org.jetbrains.jewel.ui.component.styling.ChipMetrics$Companion
