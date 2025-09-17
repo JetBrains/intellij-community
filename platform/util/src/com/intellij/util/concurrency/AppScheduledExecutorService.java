@@ -62,6 +62,10 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     return (MyThreadFactory)((BackendThreadPoolExecutor)backendExecutorService).getThreadFactory();
   }
 
+  public LowMemoryWatcherManager getLowMemoryWatcherManager() {
+    return myLowMemoryWatcherManager;
+  }
+
   private static final class MyThreadFactory extends CountingThreadFactory {
     private BiConsumer<? super Thread, ? super Runnable> newThreadListener;
     private final ThreadFactory myThreadFactory = Executors.privilegedThreadFactory();
