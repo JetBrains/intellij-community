@@ -15,9 +15,11 @@ import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.util.execution.ParametersListUtil
 import kotlinx.coroutines.coroutineScope
+import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.cancellation.CancellationException
 
-internal class ShellCommandExecutorReworked(private val eelDescriptor: EelDescriptor) : ShellCommandExecutor {
+@ApiStatus.Internal
+class ShellCommandExecutorReworked(private val eelDescriptor: EelDescriptor) : ShellCommandExecutor {
   override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult {
     val commandList = ParametersListUtil.parse(command)
     val commandName = commandList.firstOrNull() ?: return emptyResult()

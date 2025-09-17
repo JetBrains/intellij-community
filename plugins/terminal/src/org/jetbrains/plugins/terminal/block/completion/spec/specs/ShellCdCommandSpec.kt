@@ -24,9 +24,9 @@ internal fun cdCommandSpec() = ShellCommandSpec("cd") {
       val directories = context.getChildFiles(path, onlyDirectories = true)
       val prefixReplacementIndex = path.length + if (context.typedPrefix.startsWith('"')) 1 else 0
       val suggestions = directories.flatMap {
-        val suggestion = ShellCompletionSuggestion(name = it, type = ShellSuggestionType.FOLDER, prefixReplacementIndex = prefixReplacementIndex)
+        val suggestion = ShellCompletionSuggestion(name = it.name + File.separator, type = ShellSuggestionType.FOLDER, prefixReplacementIndex = prefixReplacementIndex)
         val hiddenSuggestion = ShellCompletionSuggestion(
-          name = it.removeSuffix(File.separator),
+          name = it.name,
           type = ShellSuggestionType.FOLDER,
           prefixReplacementIndex = prefixReplacementIndex,
           isHidden = true

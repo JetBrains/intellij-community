@@ -28,6 +28,11 @@ interface ShellRuntimeContext {
   suspend fun runShellCommand(@Language("ShellScript") command: String): ShellCommandResult
 
   /**
+   * @param path absolute os-dependent path to the directory.
+   */
+  suspend fun listDirectoryFiles(path: String): List<ShellFileInfo>
+
+  /**
    * Used to implement custom extensions of [ShellRuntimeContext].
    * See the extensions in this [file][org.jetbrains.plugins.terminal.block.completion.spec.getFileSuggestions]
    */

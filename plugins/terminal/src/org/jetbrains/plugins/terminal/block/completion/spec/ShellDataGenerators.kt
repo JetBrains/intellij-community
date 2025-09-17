@@ -51,11 +51,12 @@ object ShellDataGenerators {
     replacementIndexDelta: Int = 0,
   ): List<ShellCompletionSuggestion> {
     val path = getParentPath(pathPrefix)
-    val files: List<String> = context.getChildFiles(path, onlyDirectories)
+    val files: List<ShellFileInfo> = context.getChildFiles(path, onlyDirectories)
     val prefixReplacementIndex = path.length + (if (isStartWithQuote(context.typedPrefix)) 1 else 0) + replacementIndexDelta
     val suggestions = files.flatMap {
-      val type = if (it.endsWith(File.separatorChar)) ShellSuggestionType.FOLDER else ShellSuggestionType.FILE
-      val suggestion = ShellCompletionSuggestion(name = it, type = type, prefixReplacementIndex = prefixReplacementIndex)
+      val type = if (it.type == ShellFileInfo.Type.DIRECTORY) ShellSuggestionType.FOLDER else ShellSuggestionType.FILE
+      val name = it.name + if (type == ShellSuggestionType.FOLDER) File.separator else ""
+      val suggestion = ShellCompletionSuggestion(name, type = type, prefixReplacementIndex = prefixReplacementIndex)
       if (type == ShellSuggestionType.FILE) {
         listOf(suggestion)
       }
@@ -63,7 +64,7 @@ object ShellDataGenerators {
         // Directory suggestion has a trailing file separator, but suggestion without it is also valid.
         // It is needed for the parser to consider it as a valid suggestion and not mark it as something unknown.
         val hiddenSuggestion = ShellCompletionSuggestion(
-          name = it.removeSuffix(File.separator),
+          name = it.name,
           type = ShellSuggestionType.FOLDER,
           prefixReplacementIndex = prefixReplacementIndex,
           isHidden = true
