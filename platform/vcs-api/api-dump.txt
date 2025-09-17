@@ -2129,6 +2129,9 @@ f:com.intellij.vcs.commit.CommitChecksResult$OnlyChecks
 f:com.intellij.vcs.commit.CommitChecksResult$Passed
 - com.intellij.vcs.commit.CommitChecksResult
 - sf:INSTANCE:com.intellij.vcs.commit.CommitChecksResult$Passed
+f:com.intellij.vcs.commit.CommitChecksResult$SmartModeRequired
+- com.intellij.vcs.commit.CommitChecksResult
+- sf:INSTANCE:com.intellij.vcs.commit.CommitChecksResult$SmartModeRequired
 com.intellij.vcs.commit.CommitExecutorListener
 - java.util.EventListener
 - a:executorCalled(com.intellij.openapi.vcs.changes.CommitExecutor):V

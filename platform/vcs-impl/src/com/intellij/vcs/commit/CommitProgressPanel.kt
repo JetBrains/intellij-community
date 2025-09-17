@@ -49,6 +49,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.event.ComponentAdapter
@@ -97,6 +98,7 @@ open class CommitProgressPanel(project: Project) : CommitProgressUi, InclusionLi
 
   private val dumbModeFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
   override var isDumbMode: Boolean by dumbModeFlow::value
+  private var shouldWarnAboutDumbMode: Boolean = false
 
   init {
     scope.launch {
@@ -238,11 +240,26 @@ open class CommitProgressPanel(project: Project) : CommitProgressUi, InclusionLi
     return failuresPanel.getFailures()
   }
 
+  @ApiStatus.Internal
+  override fun showWarningAboutDumbMode() {
+    shouldWarnAboutDumbMode = true
+    update()
+  }
+
+  @ApiStatus.Internal
+  override fun hideWarningAboutDumbMode() {
+    shouldWarnAboutDumbMode = false
+    update()
+  }
+
   override fun documentChanged(event: DocumentEvent) = clearError()
 
   override fun inclusionChanged() = clearError()
 
   protected fun update() {
+    if (!isDumbMode) {
+      shouldWarnAboutDumbMode = false
+    }
     val error = buildErrorText()
 
     when {
@@ -263,7 +280,7 @@ open class CommitProgressPanel(project: Project) : CommitProgressUi, InclusionLi
           announceCommitErrorAlarm?.cancelAndRequest()
         }
       }
-      isDumbMode -> label.setWarning(message("label.commit.checks.not.available.during.indexing"))
+      isDumbMode && shouldWarnAboutDumbMode -> label.setWarning(message("label.commit.checks.not.available.during.indexing"))
       else -> label.isVisible = false
     }
     revalidatePanel()
