@@ -10,13 +10,13 @@ import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 @TestDataPath($$"$CONTENT_ROOT/testData/threadingModelHelper/")
 class LockReqsUnitTest : BasePlatformTestCase() {
 
-  private lateinit var analyzerDFS: LockReqsAnalyzerDFS
-  private lateinit var analyzerBFS: LockReqsAnalyzerBFS
+  private lateinit var analyzerDFS: JavaLockReqAnalyzerDFS
+  private lateinit var analyzerBFS: JavaLockReqAnalyzerBFS
 
   override fun setUp() {
     super.setUp()
-    analyzerDFS = LockReqsAnalyzerDFS()
-    analyzerBFS = LockReqsAnalyzerBFS()
+    analyzerDFS = JavaLockReqAnalyzerDFS()
+    analyzerBFS = JavaLockReqAnalyzerBFS()
     myFixture.addFileToProject("com/intellij/util/concurrency/annotations.java", """
         package com.intellij.util.concurrency.annotations;
         public @interface RequiresReadLock {}

@@ -1,26 +1,32 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
+import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiMethod
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.SmartPsiElementPointer
 
+
+private val EP_NAME: ExtensionPointName<LockReqAnalyzer> = create("DevKit.lang.LockReqsAnalyzer")
+internal object LockReqAnalyzerProvider : LanguageExtension<LockReqAnalyzer>(EP_NAME.name)
+
 @Service(Service.Level.PROJECT)
 class LockReqsService(private val project: Project) {
 
-  private val analyzer = LockReqsAnalyzerBFS()
-  private var _currentResults: List<AnalysisResult?> = emptyList()
+  private  var _currentResults: List<AnalysisResult?> = emptyList()
   val currentResults: List<AnalysisResult?>
     get() = _currentResults
 
-
   suspend fun analyzeMethod(methodPtr: SmartPsiElementPointer<PsiMethod>) {
+    val analyzer = LockReqAnalyzerProvider.forLanguage(methodPtr.element?.language!!)
     withBackgroundProgress(project, "", true) {
       val result = smartReadAction(project) {
         val method = methodPtr.element ?: return@smartReadAction null
@@ -31,6 +37,7 @@ class LockReqsService(private val project: Project) {
   }
 
   suspend fun analyzeClass(psiPtr: SmartPsiElementPointer<PsiClass>) {
+    val analyzer = JavaLockReqAnalyzerBFS()
     withBackgroundProgress(project, "", true) {
       val results = smartReadAction(project) {
         val psiClass = psiPtr.element ?: return@smartReadAction emptyList()
@@ -44,6 +51,7 @@ class LockReqsService(private val project: Project) {
   }
 
   suspend fun analyzeFile(filePtr: SmartPsiElementPointer<PsiJavaFile>) {
+    val analyzer = JavaLockReqAnalyzerBFS()
     withBackgroundProgress(project, "", true) {
       val results = smartReadAction(project) {
         val psiFile = filePtr.element ?: return@smartReadAction emptyList()

@@ -4,9 +4,9 @@ package org.jetbrains.idea.devkit.threadingModelHelper
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 
-class LockReqsDetector(private val patterns: LockReqsRules = DefaultLockReqsRules()) {
+class JavaLockReqDetector(private val patterns: LockReqRules = BaseLockReqRules()) : LockReqDetector {
 
-  fun findAnnotationRequirements(method: PsiMethod): List<LockRequirement> {
+  override fun findAnnotationRequirements(method: PsiMethod): List<LockRequirement> {
     val requirements = mutableListOf<LockRequirement>()
     method.annotations.forEach { annotation ->
       patterns.lockAnnotations[annotation.qualifiedName]?.let { lockType ->
@@ -16,7 +16,7 @@ class LockReqsDetector(private val patterns: LockReqsRules = DefaultLockReqsRule
     return requirements
   }
 
-  fun findBodyRequirements(method: PsiMethod): List<LockRequirement> {
+  override fun findBodyRequirements(method: PsiMethod): List<LockRequirement> {
     val requirements = mutableListOf<LockRequirement>()
     val className = method.containingClass?.qualifiedName
     val methodName = method.name
@@ -33,28 +33,28 @@ class LockReqsDetector(private val patterns: LockReqsRules = DefaultLockReqsRule
     val containingClass = method.containingClass ?: return false
     val className = containingClass.qualifiedName ?: return false
     if (isSwingClass(className)) return method.name !in patterns.safeSwingMethods
-    return LockReqsPsiOps.inheritsFromAny(containingClass, patterns.edtRequiredClasses)
+    return JavaLockReqPsiOps.inheritsFromAny(containingClass, patterns.edtRequiredClasses)
   }
 
   private fun isSwingClass(className: String): Boolean {
     return patterns.edtRequiredClasses.contains(className) ||
-           LockReqsPsiOps.isInPackages(className, patterns.edtRequiredPackages)
+           JavaLockReqPsiOps.isInPackages(className, patterns.edtRequiredPackages)
   }
 
-  fun isAsyncDispatch(method: PsiMethod): Boolean {
+  override fun isAsyncDispatch(method: PsiMethod): Boolean {
     return method.name in patterns.asyncMethods &&
            method.containingClass?.qualifiedName in patterns.asyncClasses
   }
 
-  fun isMessageBusCall(method: PsiMethod): Boolean {
+  override fun isMessageBusCall(method: PsiMethod): Boolean {
     val containingClass = method.containingClass?.qualifiedName ?: return false
     return patterns.messageBusClasses.contains(containingClass) &&
            method.name in patterns.messageBusSyncMethods
   }
 
-  fun extractMessageBusTopic(method: PsiMethod): PsiClass? {
+  override fun extractMessageBusTopic(method: PsiMethod): PsiClass? {
     if (method.name in patterns.messageBusSyncMethods) {
-      return LockReqsPsiOps.resolveReturnType(method)
+      return JavaLockReqPsiOps.resolveReturnType(method)
     }
     return null
   }

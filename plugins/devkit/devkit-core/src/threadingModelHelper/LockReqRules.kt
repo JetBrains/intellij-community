@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
-interface LockReqsRules {
+interface LockReqRules {
   val assertionMethods: Map<String, Map<String, LockType>>
   val lockAnnotations: Map<String, LockType>
   val edtRequiredPackages: Set<String>
@@ -12,10 +12,10 @@ interface LockReqsRules {
   val messageBusSyncMethods: Set<String>
   val commonMethods: Set<String>
   val safeSwingMethods: Set<String>
-  val commonClassesQulified: Set<String>
+  val commonClassesQualified: Set<String>
 }
 
-class DefaultLockReqsRules : LockReqsRules {
+class BaseLockReqRules : LockReqRules {
 
   override val assertionMethods: Map<String, Map<String, LockType>> = mapOf(
     "com.intellij.util.concurrency.ThreadingAssertions" to mapOf(
@@ -75,7 +75,7 @@ class DefaultLockReqsRules : LockReqsRules {
     "syncPublisher"
   )
 
-  override val commonClassesQulified: Set<String> = setOf()
+  override val commonClassesQualified: Set<String> = setOf()
 
     override val commonMethods: Set<String> = setOf(
     "equals", "hashCode", "toString", "getMessagesBus","getFile", "getService", "getName"

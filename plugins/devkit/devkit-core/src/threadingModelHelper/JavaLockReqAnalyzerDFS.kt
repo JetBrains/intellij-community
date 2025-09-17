@@ -4,7 +4,7 @@ package org.jetbrains.idea.devkit.threadingModelHelper
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiClass
 
-class LockReqsAnalyzerDFS(private val detector: LockReqsDetector = LockReqsDetector()) {
+class JavaLockReqAnalyzerDFS(private val detector: JavaLockReqDetector = JavaLockReqDetector()) : LockReqAnalyzer {
 
   private data class TraversalContext(
     val config: AnalysisConfig,
@@ -16,8 +16,10 @@ class LockReqsAnalyzerDFS(private val detector: LockReqsDetector = LockReqsDetec
   )
 
   private lateinit var context: TraversalContext
+  private val psiOps = JavaLockReqPsiOps()
 
-  fun analyzeMethod(method: PsiMethod, config: AnalysisConfig = AnalysisConfig.forProject(method.project)): AnalysisResult {
+  override fun analyzeMethod(method: PsiMethod): AnalysisResult {
+    val config = AnalysisConfig.forProject(method.project)
     context = TraversalContext(config)
     traverseMethod(method)
     return AnalysisResult(method, context.paths, context.messageBusTopics, context.swingComponents)
@@ -32,7 +34,7 @@ class LockReqsAnalyzerDFS(private val detector: LockReqsDetector = LockReqsDetec
 
     val annotationRequirement = detector.findAnnotationRequirements(method)
     annotationRequirement.forEach { context.paths.add(ExecutionPath(context.currentPath.toList(), it)) }
-    LockReqsPsiOps.getMethodCallees(method).forEach { processCallee(it) }
+    psiOps.getMethodCallees(method).forEach { processCallee(it) }
 
     context.currentPath.removeLast()
   }
@@ -51,14 +53,14 @@ class LockReqsAnalyzerDFS(private val detector: LockReqsDetector = LockReqsDetec
   }
 
   private fun handlePolymorphic(method: PsiMethod) {
-    val overrides = LockReqsPsiOps.findInheritors(method, context.config.scope, context.config.maxImplementations)
+    val overrides = psiOps.findInheritors(method, context.config.scope, context.config.maxImplementations)
     overrides.forEach { traverseMethod(it) }
   }
 
   private fun handleMessageBusCall(method: PsiMethod) {
     val topicClass = detector.extractMessageBusTopic(method) ?: return
     context.messageBusTopics.add(topicClass)
-    val listeners = LockReqsPsiOps.findImplementations(topicClass, context.config.scope, context.config.maxImplementations)
+    val listeners = psiOps.findImplementations(topicClass, context.config.scope, context.config.maxImplementations)
     listeners.forEach { it.methods.forEach { method -> traverseMethod(method) } }
   }
 }

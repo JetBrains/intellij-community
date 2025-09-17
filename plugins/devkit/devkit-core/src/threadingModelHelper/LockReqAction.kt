@@ -17,7 +17,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class LockReqsAction : AnAction() {
+class LockReqAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     currentThreadCoroutineScope().launch(Dispatchers.Default) {

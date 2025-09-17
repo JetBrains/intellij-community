@@ -17,9 +17,9 @@ import com.intellij.util.Processor
 import kotlin.time.measureTime
 
 
-object LockReqsPsiOps {
+class JavaLockReqPsiOps : LockReqPsiOps {
 
-  fun getMethodCallees(method: PsiMethod): List<PsiMethod> {
+  override fun getMethodCallees(method: PsiMethod): List<PsiMethod> {
     val callees = mutableListOf<PsiMethod>()
 
     method.body?.accept(object : JavaRecursiveElementVisitor() {
@@ -39,10 +39,9 @@ object LockReqsPsiOps {
       }
     })
 
-    return callees
-  }
+    return callees  }
 
-  fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImpl: Int): List<PsiMethod> {
+  override fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImpl: Int): List<PsiMethod> {
     val inheritors = mutableListOf<PsiMethod>()
     if (method.body != null) {
       inheritors.add(method)
@@ -58,7 +57,7 @@ object LockReqsPsiOps {
       return inheritors
     }
 
-    fun findImplementations(interfaceClass: PsiClass, scope: GlobalSearchScope, maxImpl: Int): List<PsiClass> {
+    override fun findImplementations(interfaceClass: PsiClass, scope: GlobalSearchScope, maxImpl: Int): List<PsiClass> {
       val implementations = mutableListOf<PsiClass>()
       val query = ClassInheritorsSearch.search(interfaceClass, scope, true)
       query.allowParallelProcessing().forEach(Processor { implementor ->
@@ -68,22 +67,22 @@ object LockReqsPsiOps {
       return implementations
     }
 
-    fun inheritsFromAny(psiClass: PsiClass, baseClassNames: Collection<String>): Boolean {
+    override fun inheritsFromAny(psiClass: PsiClass, baseClassNames: Collection<String>): Boolean {
       return baseClassNames.any { baseClassName ->
         InheritanceUtil.isInheritor(psiClass, baseClassName)
       }
     }
 
-    fun isInPackages(className: String, packagePrefixes: Collection<String>): Boolean {
+    override fun isInPackages(className: String, packagePrefixes: Collection<String>): Boolean {
       return packagePrefixes.any { prefix -> className.startsWith("$prefix.") }
     }
 
-    fun resolveReturnType(method: PsiMethod): PsiClass? {
+    override fun resolveReturnType(method: PsiMethod): PsiClass? {
       val returnType = method.returnType as? PsiClassType ?: return null
       return returnType.resolve()
     }
 
-    fun extractTypeArguments(type: PsiType): List<PsiType> {
+    override fun extractTypeArguments(type: PsiType): List<PsiType> {
       return (type as? PsiClassType)?.parameters?.toList() ?: emptyList()
     }
   }

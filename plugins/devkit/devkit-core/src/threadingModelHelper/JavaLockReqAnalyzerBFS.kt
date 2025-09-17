@@ -9,7 +9,7 @@ import com.intellij.openapi.progress.ProgressManager
 import java.util.concurrent.Callable
 
 
-class LockReqsAnalyzerBFS(private val detector: LockReqsDetector = LockReqsDetector()) {
+class JavaLockReqAnalyzerBFS(private val detector: JavaLockReqDetector = JavaLockReqDetector()) : LockReqAnalyzer {
 
   private data class TraversalContext(
     val config: AnalysisConfig,
@@ -20,10 +20,12 @@ class LockReqsAnalyzerBFS(private val detector: LockReqsDetector = LockReqsDetec
   )
 
   private val queue = ArrayDeque<Pair<PsiMethod, List<MethodCall>>>()
+  private val psiOps = JavaLockReqPsiOps()
 
   private lateinit var context: TraversalContext
 
-  fun analyzeMethod(method: PsiMethod, config: AnalysisConfig = AnalysisConfig.forProject(method.project)): AnalysisResult {
+  override fun analyzeMethod(method: PsiMethod): AnalysisResult {
+    val config = AnalysisConfig.forProject(method.project)
     println("Root: ${method.containingClass?.qualifiedName}.${method.name}")
     context = TraversalContext(config)
     traverseMethod(method)
@@ -46,7 +48,7 @@ class LockReqsAnalyzerBFS(private val detector: LockReqsDetector = LockReqsDetec
       }
 
       if (currentPath.size >= context.config.maxDepth) continue
-      LockReqsPsiOps.getMethodCallees(method).forEach { processCallee(it, currentPath) }
+      psiOps.getMethodCallees(method).forEach { processCallee(it, currentPath) }
 
     }
   }
@@ -67,7 +69,7 @@ class LockReqsAnalyzerBFS(private val detector: LockReqsDetector = LockReqsDetec
 
   private fun handlePolymorphic(method: PsiMethod, currentPath: List<MethodCall>) {
     val inheritors = ReadAction.nonBlocking(Callable {
-      LockReqsPsiOps.findInheritors(method, context.config.scope, context.config.maxImplementations)
+      psiOps.findInheritors(method, context.config.scope, context.config.maxImplementations)
     }).executeSynchronously()
     inheritors.forEach { inheritor -> addToQueueIfNotVisited(inheritor, currentPath) }
   }
@@ -77,7 +79,7 @@ class LockReqsAnalyzerBFS(private val detector: LockReqsDetector = LockReqsDetec
     detector.extractMessageBusTopic(method)?.let { topicClass ->
       context.messageBusTopics.add(topicClass)
       val listeners = ReadAction.nonBlocking(Callable {
-        LockReqsPsiOps.findImplementations(topicClass, context.config.scope, context.config.maxImplementations)
+        psiOps.findImplementations(topicClass, context.config.scope, context.config.maxImplementations)
       }).executeSynchronously()
       listeners.forEach { listener ->
         listener.methods.forEach { listenerMethod ->

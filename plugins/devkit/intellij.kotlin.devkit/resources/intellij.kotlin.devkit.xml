@@ -100,6 +100,15 @@
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
+    <LockReqAnalyzer
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.threadingModelHelper.KtLockReqAnalyzer"/>
+    <LockReqDetector
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.threadingModelHelper.KtLockReqDetector"/>
+    <LockReqPsiOps
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.threadingModelHelper.KtLockReqPsiOps"/>
     <cancellationCheckProvider
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCancellationCheckProvider"/>

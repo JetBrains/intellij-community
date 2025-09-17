@@ -10,10 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.Processor
 import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisResult
 import org.jetbrains.idea.devkit.threadingModelHelper.ExecutionPath
-import org.jetbrains.idea.devkit.threadingModelHelper.LockReqsAnalyzerBFS
+import org.jetbrains.idea.devkit.threadingModelHelper.JavaLockReqAnalyzerBFS
 import org.jetbrains.idea.devkit.threadingModelHelper.LockType
 
-class BFLReqsChecker(private val analyzer: LockReqsAnalyzerBFS = LockReqsAnalyzerBFS()) {
+class BFLReqsChecker(private val analyzer: JavaLockReqAnalyzerBFS = JavaLockReqAnalyzerBFS()) {
 
   data class CheckResult(
     val implementation: PsiClass,
