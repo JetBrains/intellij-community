@@ -8,6 +8,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
@@ -293,8 +295,10 @@ private fun ChipImpl(
     Row(
         modifier =
             modifier
+                .defaultMinSize(style.metrics.minSize.width)
+                .height(style.metrics.minSize.height)
                 .background(colors.backgroundFor(chipState).value, shape)
-                .thenIf(!chipState.isFocused) { border(Stroke.Alignment.Center, borderWidth, borderColor, shape) }
+                .thenIf(!chipState.isFocused) { border(Stroke.Alignment.Inside, borderWidth, borderColor, shape) }
                 .focusOutline(chipState, shape)
                 .padding(style.metrics.padding),
         verticalAlignment = Alignment.CenterVertically,

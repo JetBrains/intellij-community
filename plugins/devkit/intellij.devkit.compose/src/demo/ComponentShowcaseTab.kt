@@ -278,6 +278,33 @@ private fun RowScope.ColumnOne() {
         buildSubmenus(emptyList())
       },
     )
+
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+      var selectedIndex by remember { mutableStateOf(-1) }
+      RadioButtonChip(selected = selectedIndex == 0, onClick = { selectedIndex = 0 }, enabled = true) {
+        Text("First")
+      }
+
+      RadioButtonChip(selected = selectedIndex == 1, onClick = { selectedIndex = 1 }, enabled = true) {
+        Text("Second")
+      }
+
+      RadioButtonChip(selected = selectedIndex == 2, onClick = { selectedIndex = 2 }, enabled = true) {
+        Text("Third")
+      }
+
+      Divider(Orientation.Vertical, Modifier.fillMaxHeight())
+
+      var isChecked by remember { mutableStateOf(false) }
+      ToggleableChip(checked = isChecked, onClick = { isChecked = it }, enabled = true) { Text("Toggleable") }
+
+      var count by remember { mutableIntStateOf(1) }
+      Chip(enabled = true, onClick = { count++ }) { Text("Clicks: $count") }
+
+      Divider(Orientation.Vertical, Modifier.fillMaxHeight())
+
+      Chip(enabled = false, onClick = {}) { Text("Disabled") }
+    }
   }
 }
 
