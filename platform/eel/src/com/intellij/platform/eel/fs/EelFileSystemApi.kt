@@ -788,7 +788,7 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
   override suspend fun listDirectoryWithAttrs(@GeneratedBuilder args: EelFileSystemApi.ListDirectoryWithAttrsArgs): EelResult<
     Collection<Pair<String, EelPosixFileInfo>>,
     EelFileSystemApi.ListDirectoryError> =
-    listDirectoryWithAttrs(args)
+    listDirectoryWithAttrs(path = args.path, symlinkPolicy = args.symlinkPolicy)
 
   @Deprecated("Use the method with the builder")
   @CheckReturnValue
