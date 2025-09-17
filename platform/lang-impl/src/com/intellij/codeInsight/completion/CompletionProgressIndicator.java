@@ -864,7 +864,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       String customId = myEditor.getUserData(CUSTOM_CODE_COMPLETION_ACTION_ID);
       if (customId == null) {
-        customId = "CodeCompletion";
+        customId = IdeActions.ACTION_CODE_COMPLETION;
       }
       CodeCompletionHandlerBase handler = CodeCompletionHandlerBase.createHandler(myCompletionType, false, false, true, customId);
       handler.invokeCompletion(getProject(), myEditor, myInvocationCount);

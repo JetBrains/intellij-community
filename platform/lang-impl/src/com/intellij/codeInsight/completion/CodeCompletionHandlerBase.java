@@ -14,10 +14,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.OverridingAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -94,7 +91,7 @@ public class CodeCompletionHandlerBase {
                                                                  boolean invokedExplicitly,
                                                                  boolean autopopup,
                                                                  boolean synchronous) {
-    return createHandler(completionType, invokedExplicitly, autopopup, synchronous, "CodeCompletion");
+    return createHandler(completionType, invokedExplicitly, autopopup, synchronous, IdeActions.ACTION_CODE_COMPLETION);
   }
 
   public static @NotNull CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType,
