@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.spi
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -65,6 +66,10 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
         override fun run() {
           try {
             r.run()
+          }
+          catch (_: IjentUnavailableException) {
+            // This exception is already logged during its creation.
+            // No need to log it again.
           }
           finally {
             threads.remove(this)

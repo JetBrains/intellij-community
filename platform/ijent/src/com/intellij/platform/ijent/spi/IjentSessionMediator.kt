@@ -3,17 +3,20 @@
 
 package com.intellij.platform.ijent.spi
 
-import com.intellij.openapi.diagnostic.*
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.Cancellation.ensureActive
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.coroutineNameAppended
-import com.intellij.platform.ijent.spi.IjentSessionMediator.ProcessExitPolicy.*
+import com.intellij.platform.ijent.spi.IjentSessionMediator.ProcessExitPolicy.CHECK_CODE
+import com.intellij.platform.ijent.spi.IjentSessionMediator.ProcessExitPolicy.NORMAL
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -314,7 +317,7 @@ private suspend fun ijentProcessExitAwaiter(
     NORMAL -> true
   }
 
-  throw if (isExitExpected) {
+  val error = if (isExitExpected) {
     IjentUnavailableException.CommunicationFailure("IJent process exited successfully").apply { exitedExpectedly = true }
   }
   else {
@@ -333,6 +336,15 @@ private suspend fun ijentProcessExitAwaiter(
       Attachment("stderr", stderr.toString()),
     )
   }
+
+  // TODO IJPL-198706 When IJent unexpectedly terminates, users should be asked for further actions.
+  if (isExitExpected) {
+    LOG.info(error)
+  }
+  else {
+    LOG.warn(error)
+  }
+  throw error
 }
 
 private suspend fun collectLines(lastStderrMessages: SharedFlow<String?>, stderr: StringBuilder) {
