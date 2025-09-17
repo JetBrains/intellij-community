@@ -1,4 +1,4 @@
-package com.intellij.terminal.tests.reworked.frontend
+package com.intellij.terminal.tests.reworked.frontend.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
@@ -32,6 +32,7 @@ import org.junit.Assume
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.VK_UNDEFINED
 import java.util.concurrent.CompletableFuture
+import kotlin.text.iterator
 import kotlin.time.TimeSource
 
 class TerminalCompletionFixture(val project: Project, val testRootDisposable: Disposable) {

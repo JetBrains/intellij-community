@@ -1,4 +1,4 @@
-package com.intellij.terminal.tests.reworked.frontend
+package com.intellij.terminal.tests.reworked.frontend.completion
 
 import com.intellij.openapi.application.EDT
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
@@ -13,7 +13,7 @@ import org.junit.runners.JUnit4
 import java.awt.event.KeyEvent.*
 
 @RunWith(JUnit4::class)
-class TerminalCompletionTest : BasePlatformTestCase() {
+class TerminalCompletionPopupTest : BasePlatformTestCase() {
   override fun runInDispatchThread(): Boolean = false
 
   val testCommandSpec = ShellCommandSpec("test_cmd") {
