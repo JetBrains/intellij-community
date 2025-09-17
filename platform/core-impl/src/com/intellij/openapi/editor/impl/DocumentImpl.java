@@ -40,7 +40,10 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -556,6 +559,11 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public void setModificationStamp(long modificationStamp) {
+    if (myAssertThreading && ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      // document modification stamp can be accessed on EDT without any lock
+      // hence, we forbid to mutate it from background thread
+      ThreadingAssertions.assertEventDispatchThread();
+    }
     myModificationStamp = modificationStamp;
     myFrozen = null;
   }
