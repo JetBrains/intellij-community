@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
 class HighlightVisitorRunner {
@@ -130,6 +131,9 @@ class HighlightVisitorRunner {
                                               (result ? "" : " returned false") + "; holder: "+holder.size()+" results"+"; "+Thread.currentThread());
           }
           return result;
+        }
+        catch (CancellationException e) {
+          throw e;
         }
         catch (Exception e) {
           if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
