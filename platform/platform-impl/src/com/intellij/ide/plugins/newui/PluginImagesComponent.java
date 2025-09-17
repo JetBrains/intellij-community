@@ -25,13 +25,16 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -189,7 +192,12 @@ public final class PluginImagesComponent extends JPanel {
             return new Object();
           });
           Image image = Toolkit.getDefaultToolkit().getImage(imageFile.getAbsolutePath());
-          if (image == null) {
+          if (image == null || image.getWidth(null) <= 0 || image.getHeight(null) <= 0) {
+            try (InputStream stream = new FileInputStream(imageFile)) {
+              image = ImageIO.read(stream);
+            }
+          }
+          if (image == null || image.getWidth(null) <= 0 || image.getHeight(null) <= 0) {
             Logger.getInstance(PluginImagesComponent.class)
               .info("=== Plugin: " + model.getPluginId() + " screenshot: " + name + " not loaded ===");
           }
