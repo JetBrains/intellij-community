@@ -127,6 +127,11 @@ public final class UpdateHighlightersUtil {
   }
 
 
+  /**
+   * @deprecated please use {@link BackgroundUpdateHighlightersUtil#setHighlightersToEditor} instead for better responsiveness
+   */
+  @Deprecated
+  @RequiresEdt
   public static void setHighlightersToSingleEditor(@NotNull Project project,
                                                    @NotNull Editor editor,
                                                    int startOffset,
@@ -140,6 +145,11 @@ public final class UpdateHighlightersUtil {
     setHighlightersToEditor(project, document, startOffset, endOffset, highlights, colorsScheme, group, markup);
   }
 
+  /**
+   * @deprecated please use {@link BackgroundUpdateHighlightersUtil#setHighlightersToEditor} instead for better responsiveness
+   */
+  @Deprecated
+  @RequiresEdt
   public static void setHighlightersToEditor(@NotNull Project project,
                                              @NotNull Document document,
                                              int startOffset,
