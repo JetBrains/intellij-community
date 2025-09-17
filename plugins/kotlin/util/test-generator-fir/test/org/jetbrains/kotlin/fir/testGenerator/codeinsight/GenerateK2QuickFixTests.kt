@@ -39,7 +39,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/addIsToWhenCondition", pattern = pattern)
             model("$idea/quickfix/addJvmInline", pattern = pattern)
             model("$idea/quickfix/addJvmStaticAnnotation", pattern = pattern)
-            model("$idea/quickfix/addNewLineAfterAnnotations", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/addNewLineAfterAnnotations", pattern = pattern)
             model("$idea/quickfix/addNoinline", pattern = pattern)
             model("$idea/quickfix/addPropertyAccessors", pattern = pattern)
             model("$idea/quickfix/addReifiedToTypeParameterOfFunctionFix", pattern = pattern)
