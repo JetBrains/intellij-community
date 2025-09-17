@@ -28,8 +28,13 @@ internal class DebuggerThreadDispatcher(private val managerThread: DebuggerManag
    * The counter that helps to understand whether any task is going to be scheduled to DMT.
    *
    * Every [Job] started with this dispatcher should be taken into account by this counter.
+   *
+   * N.B. The counter is incremented on every dispatch and then decremented several times when a job completes.
+   * So, the counter does not reflect the number of tasks, but only the fact that there are dispatched commands.
    */
-  internal val dispatchedCommandsCounter = AtomicInteger()
+  private val dispatchedCommandsCounter = AtomicInteger()
+
+  internal fun hasDispatchedCommands(): Boolean = dispatchedCommandsCounter.get() > 0
 
   override fun dispatch(context: CoroutineContext, block: Runnable) {
     val debuggerCommand = createCommand(context, block)
