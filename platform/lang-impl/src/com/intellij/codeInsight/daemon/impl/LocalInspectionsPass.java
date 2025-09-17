@@ -54,7 +54,7 @@ import java.util.function.Function;
 @ApiStatus.Internal
 final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass implements PossiblyDumbAware {
   private static final Logger LOG = Logger.getInstance(LocalInspectionsPass.class);
-  private final TextRange myPriorityRange;
+  private final @NotNull TextRange myPriorityRange;
   private final boolean myIgnoreSuppressed;
   private final HighlightInfoUpdater myHighlightInfoUpdater;
   private volatile List<? extends HighlightInfo> myInfos = Collections.emptyList(); // updated atomically
@@ -101,6 +101,9 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
     DumbToolWrapperCondition dumbToolWrapperCondition = new DumbToolWrapperCondition(isDumbMode());
 
     if (!toolWrappers.isEmpty()) {
+      if (PassExecutorService.LOG.isDebugEnabled()) {
+        PassExecutorService.log(progress, this, "toolWrappers: ",toolWrappers.size());
+      }
       Consumer<? super ManagedHighlighterRecycler> withRecycler = invalidPsiRecycler -> {
         InspectionRunner.ApplyIncrementallyCallback applyIncrementallyCallback = (descriptors, holder, visitingPsiElement, shortName) -> {
           List<HighlightInfo> allInfos = descriptors.isEmpty() ? null : new ArrayList<>(descriptors.size());
@@ -200,7 +203,9 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
                                                             @Nullable EditorColorsScheme editorColorsScheme,
                                                             @NotNull SeverityRegistrar severityRegistrar) {
     TextRange textRange = ((ProblemDescriptorBase)problemDescriptor).getTextRange();
-    if (textRange == null) return null;
+    if (textRange == null) {
+      return null;
+    }
     boolean isFileLevel = psiElement instanceof PsiFile && textRange.equals(psiElement.getTextRange());
 
     HighlightSeverity severity = highlightInfoType.getSeverity(psiElement);
@@ -496,6 +501,11 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
   @Override
   public boolean isDumbAware() {
     return Registry.is("ide.dumb.aware.inspections");
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + (myPriorityRange.equals(myRestrictRange) ? "" : "; priorityRange="+myPriorityRange);
   }
 
   private static final class InspectionHighlightInfoType extends HighlightInfoType.HighlightInfoTypeImpl {

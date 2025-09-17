@@ -382,6 +382,6 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
 
   @Override
   public String toString() {
-    return super.toString() + " updateAll="+myUpdateAll+" range="+myRestrictRange;
+    return super.toString() + (myUpdateAll ? "" : "; updateAll=false")+ (myPriorityRange.equals(myRestrictRange) ? "" : "; priorityRange="+myPriorityRange);
   }
 }

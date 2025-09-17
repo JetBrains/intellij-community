@@ -290,6 +290,10 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     override fun getFile(): VirtualFile? {
       return FileDocumentManager.getInstance().getFile(editor.document)
     }
+
+    override fun toString(): String {
+      return "EditorWrapper for ${editor.document}"
+    }
   }
 }
 
