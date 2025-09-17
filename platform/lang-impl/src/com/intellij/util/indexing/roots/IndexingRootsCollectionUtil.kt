@@ -32,6 +32,7 @@ import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forLi
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forModuleRootsFileBased
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forSdkEntity
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.*
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor
@@ -493,6 +494,18 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
   fun cleanExcludedRoots() {
     excludedRoots.clear()
   }
+}
+
+internal fun processLibraryEntity(entity: LibraryEntity, fileSet: WorkspaceFileSet): Pair<LibraryOrigin, IndexableFilesIterator> {
+  val sourceRoot = fileSet.kind == WorkspaceFileKind.EXTERNAL_SOURCE
+  val origin = if (sourceRoot) {
+    LibraryOriginImpl(emptyList(), listOf(fileSet.root))
+  }
+  else {
+    LibraryOriginImpl(listOf(fileSet.root), emptyList())
+  }
+  val iterator = GenericDependencyIterator.forLibraryEntity(origin, entity.name, fileSet.root, sourceRoot)
+  return origin to iterator
 }
 
 private class MyWorkspaceFileSetRegistrar<E : WorkspaceEntity>(contributor: WorkspaceFileIndexContributor<E>,

@@ -136,19 +136,17 @@ public final class ReincludedRootsUtil {
           continue;
         }
 
-        if (!Registry.is("use.workspace.file.index.for.partial.scanning")) {
-          if (WorkspaceFileSetRecognizer.INSTANCE.isFromAdditionalLibraryRootsProvider(fileSet)) {
-            filesFromAdditionalLibraryRootsProviders.add(file);
-            continue;
-          }
+
+        if (WorkspaceFileSetRecognizer.INSTANCE.isFromAdditionalLibraryRootsProvider(fileSet)) {
+          filesFromAdditionalLibraryRootsProviders.add(file);
+          continue;
         }
 
-        if (!Registry.is("use.workspace.file.index.for.partial.scanning")) {
-          LibraryId libraryId = WorkspaceFileSetRecognizer.INSTANCE.getLibraryId(fileSet, entityStorage);
-          if (libraryId != null) {
-            addLibraryFile(libraryId, file, fileSet.getKind() == WorkspaceFileKind.EXTERNAL_SOURCE);
-            continue;
-          }
+
+        LibraryId libraryId = WorkspaceFileSetRecognizer.INSTANCE.getLibraryId(fileSet, entityStorage);
+        if (libraryId != null) {
+          addLibraryFile(libraryId, file, fileSet.getKind() == WorkspaceFileKind.EXTERNAL_SOURCE);
+          continue;
         }
 
         LOG.assertTrue(entityPointer != null, "External element's fileSet without entity reference, " + fileSet);

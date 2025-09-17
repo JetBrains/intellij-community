@@ -26,14 +26,10 @@ import com.intellij.util.indexing.EntityIndexingServiceImpl.WorkspaceEntitiesRoo
 import com.intellij.util.indexing.EntityIndexingServiceImpl.WorkspaceEventRescanningInfo
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark
-import com.intellij.util.indexing.roots.GenericDependencyIterator
-import com.intellij.util.indexing.roots.IndexableEntityProvider
+import com.intellij.util.indexing.roots.*
 import com.intellij.util.indexing.roots.IndexableEntityProvider.*
-import com.intellij.util.indexing.roots.IndexableFilesIterator
-import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
-import com.intellij.util.indexing.roots.origin.LibraryOriginImpl
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription.OnParent
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
@@ -143,14 +139,7 @@ class ProjectEntityIndexingService(
 
       val entity = entityPointer.resolve(storage) ?: continue
       if (entity is LibraryEntity) {
-        val sourceRoot = fileSet.kind == WorkspaceFileKind.EXTERNAL_SOURCE
-        val origin = if (sourceRoot) {
-          LibraryOriginImpl(emptyList(), listOf(fileSet.root))
-        }
-        else {
-          LibraryOriginImpl(listOf(fileSet.root), emptyList())
-        }
-        val iterator = GenericDependencyIterator.forLibraryEntity(origin, entity.name, fileSet.root, sourceRoot)
+        val (origin, iterator) = processLibraryEntity(entity, fileSet)
         if (libraryOrigins.add(origin)) {
           iterators.add(iterator)
         }
