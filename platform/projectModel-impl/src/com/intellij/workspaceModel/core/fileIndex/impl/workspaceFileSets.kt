@@ -105,17 +105,13 @@ internal class WorkspaceFileSetImpl(
 
   override val fileSets: List<WorkspaceFileSetWithCustomData<*>> get() = listOf(this)
 
-  fun isUnloaded(project: Project): Boolean {
-    return (data as? UnloadableFileSetData)?.isUnloaded(project) == true
-  }
-
   override fun add(fileSet: StoredFileSet): StoredFileSetCollection {
     return if (fileSet is WorkspaceFileSetImpl) TwoWorkspaceFileSets(this, fileSet) else MultipleStoredWorkspaceFileSets(mutableListOf(fileSet, this))
   }
 
   override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
     val acceptedKindMask = (currentMasks shr ACCEPTED_KINDS_MASK_SHIFT) and WorkspaceFileKindMask.ALL
-    val update = if (accepts(acceptedKindMask, project, file)) {
+    val update = if (accepts(acceptedKindMask, file)) {
       StoredFileSetKindMask.ACCEPTED_FILE_SET
     }
     else {
@@ -124,8 +120,8 @@ internal class WorkspaceFileSetImpl(
     return currentMasks or update
   }
 
-  fun accepts(acceptedKindMask: Int, project: Project, file: VirtualFile?): Boolean {
-    return acceptedKindMask and kind.toMask() != 0 && !isUnloaded(project) && (recursive || root == file)
+  fun accepts(acceptedKindMask: Int, file: VirtualFile?): Boolean {
+    return acceptedKindMask and kind.toMask() != 0 && (recursive || root == file)
   }
 
   override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? {
