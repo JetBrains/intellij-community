@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.ex
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -13,5 +12,5 @@ interface NoProjectStateHandler {
 
   fun canHandle(): Boolean
 
-  @RequiresEdt fun handle()
+  suspend fun handle()
 }
