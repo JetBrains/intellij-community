@@ -695,7 +695,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public @NotNull PsiSymbolReference findSingleReferenceAtCaret() {
     PsiFile file = getFile();
     assertNotNull(file);
-    return assertOneElement(ReferencesKt.referencesAt(file, getCaretOffset()));
+    return assertOneElement(ReadAction.compute(() -> ReferencesKt.referencesAt(file, getCaretOffset())));
   }
 
   @Override
