@@ -20,6 +20,9 @@ class PythonEditorFloatingToolbarUi(data: ComponentData) : UiComponent(data) {
   val condaUpdateFromEnvYmlButton = x { byAccessibleName("Conda Update from \"environment.yml\"") }
   val condaExportToEnvYmlButton = x { byAccessibleName("Conda Export to \"environment.yml\"") }
 
+  // Hatch floating toolbar actions
+  val hatchRunSyncDependenciesButton = x { byAccessibleName("Hatch Run (Sync Dependencies)") }
+
   // Requirements floating toolbar actions
   val setAsEnvDependenciesButton = x { byAccessibleName("Set as the environment dependencies list") }
   val installAllButton = x { byAccessibleName("Install all") }
