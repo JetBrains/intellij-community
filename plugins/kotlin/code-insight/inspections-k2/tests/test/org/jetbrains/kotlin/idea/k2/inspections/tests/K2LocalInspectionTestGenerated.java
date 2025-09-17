@@ -797,6 +797,105 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/emptyRange")
+    public static class EmptyRange extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("char.kt")
+        public void testChar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/char.kt");
+        }
+
+        @TestMetadata("double.kt")
+        public void testDouble() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/double.kt");
+        }
+
+        @TestMetadata("downTo.kt")
+        public void testDownTo() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/downTo.kt");
+        }
+
+        @TestMetadata("downTo2.kt")
+        public void testDownTo2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/downTo2.kt");
+        }
+
+        @TestMetadata("rangeUntil.kt")
+        public void testRangeUntil() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/rangeUntil.kt");
+        }
+
+        @TestMetadata("rangeUntil2.kt")
+        public void testRangeUntil2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/rangeUntil2.kt");
+        }
+
+        @TestMetadata("rangeUntilFloat.kt")
+        public void testRangeUntilFloat() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/rangeUntilFloat.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/simple.kt");
+        }
+
+        @TestMetadata("unsignedByte.kt")
+        public void testUnsignedByte() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/unsignedByte.kt");
+        }
+
+        @TestMetadata("unsignedInt.kt")
+        public void testUnsignedInt() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/unsignedInt.kt");
+        }
+
+        @TestMetadata("unsignedIntMinMax.kt")
+        public void testUnsignedIntMinMax() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/unsignedIntMinMax.kt");
+        }
+
+        @TestMetadata("unsignedLong.kt")
+        public void testUnsignedLong() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/unsignedLong.kt");
+        }
+
+        @TestMetadata("unsignedLongMinMax.kt")
+        public void testUnsignedLongMinMax() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/unsignedLongMinMax.kt");
+        }
+
+        @TestMetadata("unsignedShort.kt")
+        public void testUnsignedShort() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/unsignedShort.kt");
+        }
+
+        @TestMetadata("unsignedShortAribtrary.kt")
+        public void testUnsignedShortAribtrary() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/unsignedShortAribtrary.kt");
+        }
+
+        @TestMetadata("until.kt")
+        public void testUntil() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/until.kt");
+        }
+
+        @TestMetadata("until2.kt")
+        public void testUntil2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/emptyRange/until2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/safeCastWithReturn")
     public abstract static class SafeCastWithReturn extends AbstractK2LocalInspectionTest {
 
