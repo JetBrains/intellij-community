@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SimplifyBoole
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SimplifyBooleanWithConstantsUtils.removeRedundantAssertion
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 @ApiStatus.Internal
@@ -30,9 +29,7 @@ class SimplifyExpressionFix(
         updater: ModPsiUpdater,
     ) {
         val replacement = KtPsiFactory(element.project).createExpression(elementContext.toExpressionText())
-        val elementToReplace = element.takeIf { it is KtCallExpression }
-            ?.getParentOfTypeAndBranch<KtQualifiedExpression> { selectorExpression }
-            ?: element
+        val elementToReplace = element.parent.takeIf { (it as? KtQualifiedExpression)?.selectorExpression == element } ?: element
         val result = elementToReplace.replaced(replacement)
 
         val booleanExpression = result.getNonStrictParentOfType<KtBinaryExpression>()
