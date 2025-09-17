@@ -23,6 +23,7 @@ public final class InheritanceUtil {
    * @param checkDeep  true to check deeper than aClass.super (see {@linkplain PsiClass#isInheritor(PsiClass, boolean)}).
    * @return true if aClass is the baseClass or baseClass inheritor
    */
+  @Contract(value = "null, _, _ -> false; !null, null, _ -> false", pure = true)
   public static boolean isInheritorOrSelf(@Nullable PsiClass aClass, @Nullable PsiClass baseClass, boolean checkDeep) {
     if (aClass == null || baseClass == null) return false;
     PsiManager manager = aClass.getManager();
@@ -45,12 +46,12 @@ public final class InheritanceUtil {
     }
     final PsiClass superClass = aClass.getSuperClass();
     if (superClass != null) {
-      if (!superProcessor.process(superClass) || !processSupers(superClass, superProcessor, visited)) return false;
+      return superProcessor.process(superClass) && processSupers(superClass, superProcessor, visited);
     }
     return true;
   }
 
-  @Contract("null, _ -> false")
+  @Contract(value = "null, _ -> false", pure = true)
   public static boolean isInheritor(@Nullable PsiType type, final @NotNull @NonNls String baseClassName) {
     if (type instanceof PsiClassType) {
       PsiUtil.ensureValidType(type);
@@ -66,7 +67,7 @@ public final class InheritanceUtil {
     return false;
   }
 
-  @Contract("null, _ -> false")
+  @Contract(value = "null, _ -> false", pure = true)
   public static boolean isInheritor(@Nullable PsiClass psiClass, @NotNull @NonNls String baseClassName) {
     return isInheritor(psiClass, false, baseClassName);
   }
