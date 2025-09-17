@@ -278,7 +278,6 @@ c:com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 - removeRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.roots.OrderRootType):V
 - removeRoot(java.lang.String,com.intellij.openapi.roots.OrderRootType):V
 - removeRoots(com.intellij.openapi.roots.OrderRootType):V
-- f:resetVersionString():V
 - setHomePath(java.lang.String):V
 - setName(java.lang.String):V
 - setSdkAdditionalData(com.intellij.openapi.projectRoots.SdkAdditionalData):V
