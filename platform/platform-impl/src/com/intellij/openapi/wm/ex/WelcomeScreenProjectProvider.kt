@@ -12,7 +12,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.PlatformProjectOpenProcessor
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import kotlin.io.path.absolute
@@ -22,7 +22,8 @@ import kotlin.io.path.exists
 private val LOG = logger<WelcomeScreenProjectProvider>()
 private val EP_NAME: ExtensionPointName<WelcomeScreenProjectProvider> = ExtensionPointName("com.intellij.welcomeScreenProjectProvider")
 
-private fun getSingleExtension(): WelcomeScreenProjectProvider? {
+@Internal
+fun getWelcomeScreenProjectProvider(): WelcomeScreenProjectProvider? {
   val providers = EP_NAME.extensionList
   if (providers.isEmpty()) {
     return null
@@ -44,30 +45,29 @@ private fun getSingleExtension(): WelcomeScreenProjectProvider? {
  *
  * This customization is intended to be used per-IDE, not per language.
  */
-@ApiStatus.Internal
+@Internal
 abstract class WelcomeScreenProjectProvider {
   companion object {
     fun isWelcomeScreenProject(project: Project): Boolean {
-      val extension = getSingleExtension() ?: return false
+      val extension = getWelcomeScreenProjectProvider() ?: return false
       return extension.doIsWelcomeScreenProject(project)
     }
 
     fun isForceDisabledFileColors(): Boolean {
-      val extension = getSingleExtension() ?: return false
+      val extension = getWelcomeScreenProjectProvider() ?: return false
       return extension.doIsForceDisabledFileColors()
     }
 
     fun getCreateNewFileProjectPrefix(): String {
-      val extension = getSingleExtension() ?: return ""
+      val extension = getWelcomeScreenProjectProvider() ?: return ""
       return extension.doGetCreateNewFileProjectPrefix()
     }
 
     fun getWelcomeScreenProjectPath(): Path? {
-      return getSingleExtension()?.getWelcomeScreenProjectPath()
+      return getWelcomeScreenProjectProvider()?.getWelcomeScreenProjectPath()
     }
 
-    suspend fun createOrOpenWelcomeScreenProject(): Project? {
-      val extension = getSingleExtension() ?: return null
+    suspend fun createOrOpenWelcomeScreenProject(extension: WelcomeScreenProjectProvider): Project {
       val projectPath = extension.getWelcomeScreenProjectPath()
 
       if (!projectPath.exists(LinkOption.NOFOLLOW_LINKS)) {
@@ -76,7 +76,7 @@ abstract class WelcomeScreenProjectProvider {
       TrustedProjects.setProjectTrusted(projectPath, true)
       serviceAsync<WindowsDefenderChecker>().markProjectPath(projectPath, /*skip =*/ true)
 
-      val project = extension.doCreateOrOpenWelcomeScreenProject(projectPath) ?: return null
+      val project = extension.doCreateOrOpenWelcomeScreenProject(projectPath)
       LOG.info("Opened the welcome screen project at $projectPath")
       LOG.debug("Project: ", project)
 
@@ -100,7 +100,8 @@ abstract class WelcomeScreenProjectProvider {
 
   protected abstract fun doGetCreateNewFileProjectPrefix(): String
 
-  protected open suspend fun doCreateOrOpenWelcomeScreenProject(path: Path): Project? {
-    return PlatformProjectOpenProcessor.getInstance().openProjectAndFile(path, tempProject = false)
+  protected open suspend fun doCreateOrOpenWelcomeScreenProject(path: Path): Project {
+    return PlatformProjectOpenProcessor.openProjectAsync(path)
+           ?: throw IllegalStateException("Cannot open project at $path (not expected that user can cancel welcome-project loading)")
   }
 }

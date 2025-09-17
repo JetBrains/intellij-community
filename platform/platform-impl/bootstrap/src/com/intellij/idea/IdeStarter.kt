@@ -34,7 +34,7 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.migrateRegistryToAdvSettings
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.wm.ex.NoProjectStateHandler
+import com.intellij.openapi.wm.ex.findNoProjectStateHandler
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
@@ -157,12 +157,12 @@ open class IdeStarter : ModernApplicationStarter() {
         return@span true
       }
 
-      val customHandler = NoProjectStateHandler.EP_NAME.lazySequence().firstOrNull { it.canHandle() }
+      val customHandler = findNoProjectStateHandler()
       if (customHandler == null) {
         return@span showWelcomeFrame(publisher)
       }
       else {
-        customHandler.handle()
+        customHandler()
         return@span false
       }
     }

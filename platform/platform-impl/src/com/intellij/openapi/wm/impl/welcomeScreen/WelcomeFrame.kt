@@ -23,7 +23,7 @@ import com.intellij.openapi.util.DimensionService
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
-import com.intellij.openapi.wm.ex.NoProjectStateHandler
+import com.intellij.openapi.wm.ex.findNoProjectStateHandler
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
@@ -202,10 +202,10 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWi
         return
       }
 
-      val customHandler = NoProjectStateHandler.EP_NAME.lazySequence().firstOrNull { it.canHandle() }
+      val customHandler = findNoProjectStateHandler()
       if (customHandler != null) {
         service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
-          customHandler.handle()
+          customHandler()
         }
         return
       }
