@@ -54,7 +54,8 @@ public final class LocalShellIntegrationInjector {
   private static final Logger LOG = Logger.getInstance(LocalShellIntegrationInjector.class);
   private static final String LOGIN_SHELL = "LOGIN_SHELL";
   private static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
-  private static final String ZDOTDIR = "ZDOTDIR";
+  @VisibleForTesting
+  public static final String ZDOTDIR = "ZDOTDIR";
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
   private static final String BASH_RCFILE_OPTION = "--rcfile";
   private static final String SHELL_INTEGRATIONS_DIR_NAME = "shell-integrations";

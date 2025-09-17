@@ -17,25 +17,26 @@ internal class LocalShellIntegrationInjectorTest {
   fun testZsh() {
     val actual = LocalShellIntegrationInjector.injectShellIntegration(
       ShellStartupOptions.Builder()
-        .shellCommand(mutableListOf("/bin/zsh"))
+        .shellCommand(listOf("/bin/zsh"))
         .envVariables(buildMap {
-          put("MY_CUSTOM_ENV1", "MY_CUSTOM_ENV_VALUE1")
+          put(MY_CUSTOM_ENV_NAME, MY_CUSTOM_ENV_VALUE)
         })
         .build(),
-      true,
-      false
+      false,
+      true
     )
-
-    assertEquals(listOf("/bin/zsh"), actual.shellCommand)
     val expectedCommandBlocks = expectedCommandBlocks()
-    assertEquals(ShellIntegration(ShellType.ZSH, expectedCommandBlocks), actual.shellIntegration)
-    assertEquals(findAbsolutePath("shell-integrations/zsh/zsh-integration.zsh").parent.toString(), actual.envVariables[LocalShellIntegrationInjector.IJ_ZSH_DIR])
-    assertEquals("1".takeIf { expectedCommandBlocks }, actual.envVariables["PROCESS_LAUNCHED_BY_CW"])
-    assertEquals("1".takeIf { expectedCommandBlocks }, actual.envVariables["FIG_TERM"])
-    assertEquals("1".takeIf { expectedCommandBlocks }, actual.envVariables["PROCESS_LAUNCHED_BY_Q"])
-    assertEquals("1".takeIf { expectedCommandBlocks }, actual.envVariables["INTELLIJ_TERMINAL_COMMAND_BLOCKS"])
-    assertEquals(findAbsolutePath("shell-integrations/zsh/zdotdir/.zshenv").parent.toString(), actual.envVariables["ZDOTDIR"])
-    assertEquals("MY_CUSTOM_ENV_VALUE1", actual.envVariables["MY_CUSTOM_ENV1"])
+    val expected = ShellStartupOptions.Builder()
+      .shellCommand(listOf("/bin/zsh"))
+      .shellIntegration(ShellIntegration(ShellType.ZSH, expectedCommandBlocks))
+      .envVariables(getExpectedCommonEnv(expectedCommandBlocks) + buildMap {
+        val zDotDir = findAbsolutePath("shell-integrations/zsh/zdotdir/.zshenv").parent
+        put(LocalShellIntegrationInjector.ZDOTDIR, zDotDir.toString())
+        put(LocalShellIntegrationInjector.IJ_ZSH_DIR, zDotDir.parent.toString())
+        put(MY_CUSTOM_ENV_NAME, MY_CUSTOM_ENV_VALUE)
+      })
+      .build()
+    assertEquals(expected, actual)
   }
 
   @Test
@@ -44,28 +45,50 @@ internal class LocalShellIntegrationInjectorTest {
       ShellStartupOptions.Builder()
         .shellCommand(listOf("/bin/bash"))
         .envVariables(buildMap {
-          put("MY_CUSTOM_ENV1", "MY_CUSTOM_ENV_VALUE1")
+          put(MY_CUSTOM_ENV_NAME, MY_CUSTOM_ENV_VALUE)
         })
         .build(),
-      true,
-      false
+      false,
+      true
     )
 
-    assertEquals(listOf("/bin/bash", "--rcfile", findAbsolutePath("shell-integrations/bash/bash-integration.bash").toString()), actual.shellCommand)
     val expectedCommandBlocks = expectedCommandBlocks()
-    assertEquals(ShellIntegration(ShellType.BASH, expectedCommandBlocks), actual.shellIntegration)
-    assertEquals("1".takeIf { expectedCommandBlocks }, actual.envVariables["PROCESS_LAUNCHED_BY_CW"])
-    assertEquals("1".takeIf { expectedCommandBlocks }, actual.envVariables["FIG_TERM"])
-    assertEquals("1".takeIf { expectedCommandBlocks }, actual.envVariables["PROCESS_LAUNCHED_BY_Q"])
-    assertEquals("1".takeIf { expectedCommandBlocks }, actual.envVariables["INTELLIJ_TERMINAL_COMMAND_BLOCKS"])
-    assertEquals("MY_CUSTOM_ENV_VALUE1", actual.envVariables["MY_CUSTOM_ENV1"])
+    val expected = ShellStartupOptions.Builder()
+      .shellCommand(listOf("/bin/bash", "--rcfile", findAbsolutePath("shell-integrations/bash/bash-integration.bash").toString()))
+      .shellIntegration(ShellIntegration(ShellType.BASH, expectedCommandBlocks))
+      .envVariables(getExpectedCommonEnv(expectedCommandBlocks) + mapOf(MY_CUSTOM_ENV_NAME to MY_CUSTOM_ENV_VALUE))
+      .build()
+
+    assertEquals(expected, actual)
   }
 
-}
+  private fun assertEquals(expected: ShellStartupOptions, actual: ShellStartupOptions) {
+    assertEquals(expected.shellCommand, actual.shellCommand)
+    assertEquals(expected.shellIntegration, actual.shellIntegration)
+    assertEquals(expected.envVariables, actual.envVariables)
+    assertEquals(expected.workingDirectory, actual.workingDirectory)
+    assertEquals(expected.initialTermSize, actual.initialTermSize)
+  }
 
-private fun expectedCommandBlocks(): Boolean {
-  // similar to LocalShellIntegrationInjector.isSystemCompatibleWithCommandBlocks
-  // but adapted to the buildserver where CI agents have recent Windows 10
-  return OS.CURRENT != OS.Windows ||
-         System.getProperty("os.name") !in listOf("Windows Server 2016", "Windows Server 2019")
+  companion object {
+
+    private const val MY_CUSTOM_ENV_NAME: String = "MY_CUSTOM_ENV1"
+    private const val MY_CUSTOM_ENV_VALUE: String = "MY_CUSTOM_ENV_VALUE1"
+
+    private fun expectedCommandBlocks(): Boolean {
+      // similar to LocalShellIntegrationInjector.isSystemCompatibleWithCommandBlocks
+      // but adapted to the buildserver where CI agents have recent Windows 10
+      return OS.CURRENT != OS.Windows ||
+             System.getProperty("os.name") !in listOf("Windows Server 2016", "Windows Server 2019")
+    }
+
+    private fun getExpectedCommonEnv(commandBlocks: Boolean): Map<String, String> {
+      return listOf(
+        "PROCESS_LAUNCHED_BY_CW",
+        "FIG_TERM",
+        "PROCESS_LAUNCHED_BY_Q",
+        "INTELLIJ_TERMINAL_COMMAND_BLOCKS_REWORKED"
+      ).takeIf { commandBlocks }.orEmpty().associateWith { "1" }
+    }
+  }
 }
