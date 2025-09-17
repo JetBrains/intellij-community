@@ -361,7 +361,8 @@ enum class GutterIcon(val path: String) {
   BREAKPOINT_VALID("expui/breakpoints/breakpointValid.svg"),
   NEXT_STATEMENT("expui/debugger/nextStatement.svg"),
   GOTO("icons/expui/assocFile@14x14.svg"),
-  IMPLEMENT("expui/gutter/implementingMethod.svg")
+  IMPLEMENT("expui/gutter/implementingMethod.svg"),
+  CONSTEXPR_DEBUG("resharper/RunMarkers/DebugThis.svg")
 }
 
 data class GutterState(
