@@ -14,10 +14,7 @@ import com.intellij.platform.rpc.UID
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XDescriptor
-import com.intellij.xdebugger.impl.rpc.XBreakpointId
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XExecutionStackId
-import com.intellij.xdebugger.impl.rpc.XStackFrameId
+import com.intellij.xdebugger.impl.rpc.*
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.DeferredSerializer
@@ -67,7 +64,7 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun switchToTopFrame(sessionId: XDebugSessionId)
 
-  suspend fun muteBreakpoints(sessionId: XDebugSessionId, muted: Boolean)
+  suspend fun muteBreakpoints(sessionDataId: XDebugSessionDataId, muted: Boolean)
 
   companion object {
     @JvmStatic
@@ -127,6 +124,7 @@ data class KillableProcessInfo(
 @ApiStatus.Internal
 @Serializable
 data class XDebugSessionDataDto(
+  val id: XDebugSessionDataId,
   val configurationName: String,
   val initialBreakpointsMuted: Boolean,
   val breakpointsMutedFlow: RpcFlow<Boolean>,

@@ -50,6 +50,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     currentSession.sessionInitializedDeferred().await()
     val initialSessionState = currentSession.state()
     val sessionDataDto = XDebugSessionDataDto(
+      currentSession.sessionDataId,
       currentSession.sessionData.configurationName,
       currentSession.areBreakpointsMuted(),
       currentSession.getBreakpointsMutedFlow().toRpc(),

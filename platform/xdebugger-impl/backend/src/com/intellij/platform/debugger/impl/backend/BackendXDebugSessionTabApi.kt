@@ -14,8 +14,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 internal class BackendXDebugSessionTabApi : XDebugSessionTabApi {
-  override suspend fun sessionTabInfo(sessionId: XDebugSessionId): Flow<XDebuggerSessionTabDto> {
-    val session = sessionId.findValue() ?: return emptyFlow()
+  override suspend fun sessionTabInfo(sessionDataId: XDebugSessionDataId): Flow<XDebuggerSessionTabDto> {
+    val session = sessionDataId.findValue()?.session ?: return emptyFlow()
     return session.tabInitDataFlow.map {
       XDebuggerSessionTabDto(it, session.getPausedEventsFlow().toRpc())
     }

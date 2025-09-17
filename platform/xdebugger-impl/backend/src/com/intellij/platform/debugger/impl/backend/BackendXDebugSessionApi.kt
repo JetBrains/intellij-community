@@ -27,6 +27,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.frame.ColorState
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
+import com.intellij.xdebugger.impl.rpc.XDebugSessionDataId
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XExecutionStackId
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
@@ -233,8 +234,8 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
-  override suspend fun muteBreakpoints(sessionId: XDebugSessionId, muted: Boolean) {
-    val session = sessionId.findValue() ?: return
+  override suspend fun muteBreakpoints(sessionDataId: XDebugSessionDataId, muted: Boolean) {
+    val session = sessionDataId.findValue()?.session ?: return
     withContext(Dispatchers.EDT) {
       session.setBreakpointMuted(muted)
     }
