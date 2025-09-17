@@ -155,6 +155,69 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
       !it.password.isNullOrEmpty()
     } ?: false
   }
+
+  protected open fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
+    if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
+      return InMemoryCredentialStore()
+    }
+
+    fun showError(@NlsContexts.NotificationTitle title: String) {
+      @Suppress("HardCodedStringLiteral")
+      CredentialStoreUiService.getInstance().notify(
+        title = title,
+        content = CredentialStoreBundle.message("notification.content.in.memory.storage"),
+        project = null,
+        action = NotificationAction.createExpiring(CredentialStoreBundle.message("notification.content.password.settings.action"))
+        { e, _ -> CredentialStoreUiService.getInstance().openSettings(e.project) }
+      )
+    }
+
+    if (CredentialStoreManager.getInstance().isSupported(settings.providerType)) {
+      if (settings.providerType == ProviderType.KEEPASS) {
+        try {
+          val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultDbFile()
+          return KeePassCredentialStore(dbFile, getDefaultMainPasswordFile())
+        }
+        catch (e: IncorrectMainPasswordException) {
+          LOG.warn(e)
+          showError(if (e.isFileMissed) CredentialStoreBundle.message("notification.title.password.missing")
+                    else CredentialStoreBundle.message("notification.title.password.incorrect"))
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+          showError(CredentialStoreBundle.message("notification.title.database.error"))
+        }
+      }
+      else {
+        try {
+          val store = createPersistentCredentialStore()
+          if (store == null) {
+            showError(CredentialStoreBundle.message("notification.title.keychain.not.available"))
+          }
+          else {
+            return store
+          }
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+          showError(CredentialStoreBundle.message("notification.title.cannot.use.keychain"))
+        }
+      }
+    }
+    else {
+      LOG.error("Provider ${settings.providerType} is not supported in this environment")
+      showError(CredentialStoreBundle.message("notification.title.cannot.use.provider", settings.providerType))
+    }
+
+    settings.providerType = ProviderType.MEMORY_ONLY
+    return InMemoryCredentialStore()
+  }
 }
 
 @TestOnly
@@ -176,69 +239,6 @@ class TestPasswordSafeImpl @NonInjectable constructor(
 class PasswordSafeImpl(coroutineScope: CoroutineScope) : BasePasswordSafe(coroutineScope), SettingsSavingComponent {
   override val settings: PasswordSafeSettings
     get() = service<PasswordSafeSettings>()
-}
-
-private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
-  if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
-    return InMemoryCredentialStore()
-  }
-
-  fun showError(@NlsContexts.NotificationTitle title: String) {
-    @Suppress("HardCodedStringLiteral")
-    CredentialStoreUiService.getInstance().notify(
-      title = title,
-      content = CredentialStoreBundle.message("notification.content.in.memory.storage"),
-      project = null,
-      action = NotificationAction.createExpiring(CredentialStoreBundle.message("notification.content.password.settings.action"))
-      { e, _ -> CredentialStoreUiService.getInstance().openSettings(e.project) }
-    )
-  }
-
-  if (CredentialStoreManager.getInstance().isSupported(settings.providerType)) {
-    if (settings.providerType == ProviderType.KEEPASS) {
-      try {
-        val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultDbFile()
-        return KeePassCredentialStore(dbFile, getDefaultMainPasswordFile())
-      }
-      catch (e: IncorrectMainPasswordException) {
-        LOG.warn(e)
-        showError(if (e.isFileMissed) CredentialStoreBundle.message("notification.title.password.missing")
-                  else CredentialStoreBundle.message("notification.title.password.incorrect"))
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-        showError(CredentialStoreBundle.message("notification.title.database.error"))
-      }
-    }
-    else {
-      try {
-        val store = createPersistentCredentialStore()
-        if (store == null) {
-          showError(CredentialStoreBundle.message("notification.title.keychain.not.available"))
-        }
-        else {
-          return store
-        }
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-        showError(CredentialStoreBundle.message("notification.title.cannot.use.keychain"))
-      }
-    }
-  }
-  else {
-    LOG.error("Provider ${settings.providerType} is not supported in this environment")
-    showError(CredentialStoreBundle.message("notification.title.cannot.use.provider", settings.providerType))
-  }
-
-  settings.providerType = ProviderType.MEMORY_ONLY
-  return InMemoryCredentialStore()
 }
 
 @Internal
