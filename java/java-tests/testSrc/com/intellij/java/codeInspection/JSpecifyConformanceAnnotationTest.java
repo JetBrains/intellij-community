@@ -184,8 +184,8 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
                                                try (@Nullable AutoCloseable a = () -> {}) {}
                                            """),
                            """
-                                 // test:irrelevant-annotation:Nullable
-                                 try (@Nullable AutoCloseable a = () -> {}) {}
+                                 // test:irrelevant-annotation:NonNull
+                                 try (@NonNull AutoCloseable a = () -> {}) {}
                              """);
     text = JOIN_TEST_IRRELEVANT_ANNOTATIONS.matcher(text)
       .replaceAll("// test:irrelevant-annotation:Nullable & test:irrelevant-annotation:NonNull\n");
