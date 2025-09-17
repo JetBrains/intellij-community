@@ -9,16 +9,16 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import groovy.transform.Internal
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration.Companion.seconds
 
 @Service(Service.Level.PROJECT)
-@Internal
+@ApiStatus.Internal
 internal class ProjectViewVfsInfoUpdater(val project: Project, val scope: CoroutineScope) {
   val requests = Channel<Unit>()
 

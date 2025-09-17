@@ -59,7 +59,6 @@ jvm_library(
     "@lib//:commons-logging",
     "//platform/diff-impl",
     "//platform/built-in-server-api:builtInServer",
-    "@lib//:org-codehaus-groovy-groovy",
     "@lib//:x_stream",
     "@lib//:miglayout-swing",
     "//platform/ide-core/plugins",
