@@ -79,6 +79,10 @@ private class DotIdeProjectStoreDescriptor(
   override val isExternalStorageSupported: Boolean
     get() = true
 
+  override fun testStoreDirectoryExistsForProjectRoot(): Boolean {
+    return Files.isDirectory(dotIdea)
+  }
+
   override fun <T : Any> getStorageSpecs(
     component: PersistentStateComponent<T>,
     stateSpec: State,

@@ -5,7 +5,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Files
 import java.nio.file.Path
 
 /**
@@ -32,8 +31,7 @@ interface ProjectStorePathManager {
    */
   @RequiresBackgroundThread
   fun testStoreDirectoryExistsForProjectRoot(projectRoot: Path): Boolean {
-    val dotIdea = getStoreDescriptor(projectRoot).dotIdea
-    return dotIdea != null && Files.isDirectory(dotIdea)
+    return getStoreDescriptor(projectRoot).testStoreDirectoryExistsForProjectRoot()
   }
 
   /**

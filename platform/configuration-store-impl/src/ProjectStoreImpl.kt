@@ -59,7 +59,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     }
 
   override val storageScheme: StorageScheme
-    get() = if (storeDescriptor.isDirectoryBased) StorageScheme.DIRECTORY_BASED else StorageScheme.DEFAULT
+    get() = if (storeDescriptor.dotIdea == null) StorageScheme.DEFAULT else StorageScheme.DIRECTORY_BASED
 
   final override val storageManager: StateStorageManagerImpl = ProjectStateStorageManager(
     project = project,
@@ -205,13 +205,13 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     get() {
       val prefix: String
       val path: Path
-      if (storeDescriptor.isDirectoryBased) {
-        path = storeDescriptor.projectIdentityFile
-        prefix = ""
-      }
-      else {
+      if (storeDescriptor.dotIdea == null) {
         path = projectFilePath
         prefix = projectName
+      }
+      else {
+        path = storeDescriptor.projectIdentityFile
+        prefix = ""
       }
       return "$prefix${Integer.toHexString(path.invariantSeparatorsPathString.hashCode())}"
     }
@@ -232,7 +232,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     }
 
     val filePath = file.path
-    if (!storeDescriptor.isDirectoryBased) {
+    if (storeDescriptor.dotIdea == null) {
       return filePath == projectFilePath.invariantSeparatorsPathString || filePath == workspacePath.invariantSeparatorsPathString
     }
     return VfsUtilCore.isAncestorOrSelf(projectFilePath.parent.invariantSeparatorsPathString, file)
@@ -281,7 +281,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     get() = true
 
   final override fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
-    if (storeDescriptor.isDirectoryBased) {
+    if (storeDescriptor.dotIdea != null) {
       super.commitObsoleteComponents(session = session, isProjectLevel = true)
     }
   }

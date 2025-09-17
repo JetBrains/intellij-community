@@ -29,14 +29,13 @@ interface ProjectStoreDescriptor {
   // project dir as it is expected by a user (e.g., parent of BUILD.bazel)
   val historicalProjectBasePath: Path
 
-  val isDirectoryBased: Boolean
-    get() = true
-
   // where we do store project files (misc.xml and so on)
   val dotIdea: Path?
 
   val presentableUrl: Path
     get() = projectIdentityFile
+
+  fun testStoreDirectoryExistsForProjectRoot(): Boolean
 
   fun getProjectName(): String
 

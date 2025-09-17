@@ -745,8 +745,7 @@ object ProjectUtil {
   suspend fun isValidProjectPath(file: Path): Boolean {
     val storePathManager = serviceAsync<ProjectStorePathManager>()
     return withContext(Dispatchers.IO) {
-      storePathManager.testStoreDirectoryExistsForProjectRoot(file) ||
-      (file.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) && Files.isRegularFile(file))
+      storePathManager.getStoreDescriptor(file).testStoreDirectoryExistsForProjectRoot()
     }
   }
 }

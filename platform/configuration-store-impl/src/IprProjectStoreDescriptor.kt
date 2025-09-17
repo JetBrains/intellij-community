@@ -4,6 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import java.nio.file.Files
 import java.nio.file.Path
 
 internal class IprProjectStoreDescriptor(
@@ -14,14 +15,16 @@ internal class IprProjectStoreDescriptor(
     get() = userBaseDir
   override val historicalProjectBasePath: Path
     get() = userBaseDir
-  override val isDirectoryBased: Boolean
-    get() = false
 
   override val dotIdea: Path?
     get() = null
 
   override val presentableUrl: Path
     get() = file
+
+  override fun testStoreDirectoryExistsForProjectRoot(): Boolean {
+    return Files.isRegularFile(file)
+  }
 
   override fun getProjectName(): String {
     return file.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
