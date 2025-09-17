@@ -11,7 +11,6 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.ide.impl.ProjectUtilService
 import com.intellij.ide.lightEdit.LightEdit
-import com.intellij.ide.vcs.RecentProjectsBranchesProvider
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
@@ -567,10 +566,6 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     synchronized(stateLock) {
       return state.additionalInfo.get(path)?.activationTimestamp
     }
-  }
-
-  fun getCurrentBranch(path: String, nameIsDistinct: Boolean): String? {
-    return RecentProjectsBranchesProvider.getCurrentBranch(path, nameIsDistinct)
   }
 
   fun getProjectName(path: String): String {

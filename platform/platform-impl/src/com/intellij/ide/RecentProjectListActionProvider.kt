@@ -3,6 +3,7 @@ package com.intellij.ide
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.ide.vcs.RecentProjectsBranchesProvider
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -193,7 +194,7 @@ open class RecentProjectListActionProvider {
 
     if (displayName.isNullOrBlank()) {
       val nameIsDistinct = !duplicates.contains(ProjectNameOrPathIfNotYetComputed(projectName))
-      branch = recentProjectManager.getCurrentBranch(path, nameIsDistinct)
+      branch = getCurrentBranch(path, nameIsDistinct)
 
       displayName = if (!nameIsDistinct) {
         FileUtil.toSystemDependentName(path)
@@ -428,3 +429,15 @@ private val AnAction.activationTimestamp
     else -> null
   }
 
+private val EP_NAME: ExtensionPointName<RecentProjectsBranchesProvider> = ExtensionPointName("com.intellij.recentProjectsBranchesProvider")
+
+private fun getCurrentBranch(projectPath: String, nameIsDistinct: Boolean): String? {
+  EP_NAME.extensionList.forEach { provider ->
+    val branch = provider.getCurrentBranch(projectPath, nameIsDistinct)
+    if (branch != null) {
+      return branch
+    }
+  }
+
+  return null
+}
