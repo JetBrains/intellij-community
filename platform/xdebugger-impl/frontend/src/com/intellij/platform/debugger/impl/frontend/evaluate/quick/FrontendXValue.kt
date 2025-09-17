@@ -5,7 +5,6 @@ import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.rpc.*
@@ -127,8 +126,21 @@ class FrontendXValue private constructor(
   }
 
   override fun computeInlineDebuggerData(callback: XInlineDebuggerDataCallback): ThreeState {
-    thisLogger().error("#computeInlineDebuggerData should not be called for FrontendXValue, XValueApi.computeInlineData")
-    return super.computeInlineDebuggerData(callback)
+    cs.launch {
+      val (canCompute, positionFlow) = XValueApi.getInstance().computeInlineData(xValueDto.id) ?: return@launch
+      if (canCompute != ThreeState.UNSURE) {
+        positionFlow.toFlow().collect {
+          withContext(Dispatchers.EDT) {
+            val sourcePosition = it.sourcePosition()
+            callback.computed(sourcePosition)
+          }
+        }
+      }
+      else {
+        computeSourcePosition(callback::computed)
+      }
+    }
+    return ThreeState.YES
   }
 
   override fun computeSourcePosition(navigatable: XNavigatable) {

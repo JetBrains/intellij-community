@@ -97,8 +97,7 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     return XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowValuesInline();
   }
 
-  @ApiStatus.Internal
-  public static class XInlineWatchValue extends XNamedValue implements XValueTextProvider {
+  private static class XInlineWatchValue extends XNamedValue implements XValueTextProvider {
     private final XExpression myExpression;
     private final XDebuggerTree myTree;
     private final XStackFrame myStackFrame;
