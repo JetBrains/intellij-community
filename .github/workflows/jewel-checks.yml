@@ -100,23 +100,51 @@ jobs:
         run: ./scripts/validate-commit-message.sh
 
   annotate_breaking_api_changes:
-    name: Check for breaking API changes with IJP dumps
+    name: Annotate breaking API changes with IJP dumps
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
         with:
+          # We need fetch-depth: '2' so we get HEAD~1 in case this is missing the PR token
           fetch-depth: '2'
         name: Check out repository
 
       - name: Grant execute permission to the validation script
-        run: chmod +x ./scripts/validate-api-dump-changes.main.kts
+        run: chmod +x ./scripts/annotate-api-dump-changes.main.kts
 
       - name: Annotate breaking API changes
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ github.token }}
-        run: ./scripts/validate-api-dump-changes.main.kts
+        run: ./scripts/annotate-api-dump-changes.main.kts
+
+  check_ij_api_dumps:
+    name: Check that IJP API dumps are up-to-date
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - uses: actions/checkout@v4
+        name: Check out repository
+
+      - uses: actions/cache@v4
+        name: Cache for jps-bootstrap
+        with:
+          key: ${{ runner.os }}-jps-bootstrap-${{ hashFiles('platform/jps-bootstrap/**') }}
+          path: |
+            out
+            build/jps-bootstrap-work
+            build/download
+
+      - name: Grant execute permission to the validation script
+        run: chmod +x platform/jewel/scripts/check-api-dumps.main.kts
+
+      - name: Check that IJP API dumps are up-to-date
+        run: ./scripts/check-api-dumps.main.kts
+        working-directory: platform/jewel
 
   metalava:
     name: Check for breaking API changes with Metalava
@@ -124,8 +152,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: '1'
         name: Check out repository
 
       - name: Set up JBR 21
