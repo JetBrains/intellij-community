@@ -16652,7 +16652,6 @@ f:com.intellij.ui.tabs.FileColorManagerImpl
 - s:_isEnabled():Z
 - s:_isEnabledForProjectView():Z
 - addScopeColor(java.lang.String,java.lang.String,Z):V
-- getApplicationLevelConfigurations():java.util.List
 - getColor(java.lang.String):java.awt.Color
 - s:getColorID(java.awt.Color):java.lang.String
 - getColorIDs():java.util.Collection
@@ -16660,7 +16659,6 @@ f:com.intellij.ui.tabs.FileColorManagerImpl
 - getColorNames():java.util.Collection
 - getFileColor(com.intellij.openapi.vfs.VirtualFile):java.awt.Color
 - getProject():com.intellij.openapi.project.Project
-- getProjectLevelConfigurations():java.util.List
 - getRendererBackground(com.intellij.openapi.vfs.VirtualFile):java.awt.Color
 - getRendererBackground(com.intellij.psi.PsiFile):java.awt.Color
 - getScopeColor(java.lang.String):java.awt.Color
