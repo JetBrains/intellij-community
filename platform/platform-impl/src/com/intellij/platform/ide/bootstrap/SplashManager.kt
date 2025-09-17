@@ -39,7 +39,6 @@ import java.nio.channels.FileChannel
 import java.nio.file.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.coroutineContext
 
 @Volatile
 private var SPLASH_WINDOW: Splash? = null
@@ -239,7 +238,7 @@ internal suspend fun loadSplashImage(appInfo: ApplicationInfo): BufferedImage? {
     null
   }
 
-  coroutineContext.ensureActive()
+  currentCoroutineContext().ensureActive()
 
   if (file != null) {
     loadImageFromCache(file = file, scale = scale, isJreHiDPIEnabled = isJreHiDPIEnabled)?.let {
@@ -247,7 +246,7 @@ internal suspend fun loadSplashImage(appInfo: ApplicationInfo): BufferedImage? {
     }
   }
 
-  coroutineContext.ensureActive()
+  currentCoroutineContext().ensureActive()
 
   val path = appInfo.splashImageUrl
   val result = doLoadImage(path = splashImagePath, scale = scale, isJreHiDPIEnabled = isJreHiDPIEnabled)
@@ -337,7 +336,7 @@ private suspend fun readImage(file: Path, scale: Float, isJreHiDPIEnabled: Boole
     return null
   }
 
-  coroutineContext.ensureActive()
+  currentCoroutineContext().ensureActive()
 
   try {
     val intBuffer = buffer.asIntBuffer()
