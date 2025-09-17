@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.ide.IdleTracker
@@ -10,11 +10,14 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsListener
+import git4idea.GitVcs
 import git4idea.i18n.GitBundle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.debounce
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.minutes
 
 internal class GitVersionUpdateSettingsEntryProvider : SettingsEntryPointAction.ActionProvider {
@@ -67,22 +70,31 @@ internal class GitVersionUpdateSettingsEntryProvider : SettingsEntryPointAction.
   }
 }
 
-@Service(Service.Level.PROJECT)
-internal class GitNewVersionChecker(project: Project, cs: CoroutineScope) {
-  class Starter : ProjectActivity {
-    override suspend fun execute(project: Project) {
-      if (afterIdleCheckRegistryValue >= 0) {
-        project.service<GitNewVersionChecker>()
-      }
+internal class GitNewVersionCheckerStarter(private val project: Project) : VcsListener {
+  override fun directoryMappingChanged() {
+    if (afterIdleCheckRegistryValue >= 0) {
+      project.service<GitNewVersionChecker>().restart()
     }
   }
+}
+
+@Service(Service.Level.PROJECT)
+internal class GitNewVersionChecker(private val project: Project, private val cs: CoroutineScope) {
 
   @Volatile
   var newAvailableVersion: GitVersion? = null
     private set
 
-  init {
-    checkNewVersionPeriodicallyOnIdle(project, cs)
+  private val job = AtomicReference<Job?>(null)
+
+  fun restart() {
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    vcsManager.runAfterInitialization {
+      val haveGitMappings = vcsManager.getDirectoryMappings(GitVcs.getInstance(project)).isNotEmpty()
+      job.getAndSet(
+        if (haveGitMappings) checkNewVersionPeriodicallyOnIdle(project, cs) else null
+      )?.cancel()
+    }
   }
 
   internal fun reset() {
@@ -90,8 +102,8 @@ internal class GitNewVersionChecker(project: Project, cs: CoroutineScope) {
   }
 
   @OptIn(FlowPreview::class)
-  private fun checkNewVersionPeriodicallyOnIdle(project: Project, cs: CoroutineScope) {
-    cs.launch(CoroutineName("Git update present check")) {
+  private fun checkNewVersionPeriodicallyOnIdle(project: Project, cs: CoroutineScope): Job {
+    return cs.launch(CoroutineName("Git update present check")) {
       IdleTracker.getInstance().events
         .debounce(afterIdleCheckRegistryValue.minutes)
         .collect {

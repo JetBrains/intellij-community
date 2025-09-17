@@ -857,7 +857,6 @@
                  restartRequired="true"
                  description="Amount of time in minutes to check new Git version after IDE inactivity.\n
                              -1 to disable check."/>
-    <postStartupActivity os="windows" implementation="git4idea.config.GitNewVersionChecker$Starter"/>
     <settingsEntryPointActionProvider os="windows" implementation="git4idea.config.GitVersionUpdateSettingsEntryProvider"/>
 
     <history.activityPresentationProvider implementation="git4idea.GitActivityPresentationProvider"/>
@@ -927,5 +926,7 @@
               topic="com.intellij.ide.ui.UISettingsListener"/>
     <listener class="git4idea.config.GitBackendVcsSettingsListener"
               topic="git4idea.config.GitVcsSettings$GitVcsSettingsListener"/>
+    <listener os="windows" class="git4idea.config.GitNewVersionCheckerStarter"
+              topic="com.intellij.openapi.vcs.VcsMappingListener"/>
   </projectListeners>
 </idea-plugin>
