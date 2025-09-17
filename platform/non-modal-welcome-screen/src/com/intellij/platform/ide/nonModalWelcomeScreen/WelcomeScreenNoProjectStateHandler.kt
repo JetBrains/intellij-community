@@ -7,10 +7,9 @@ import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
-internal class WelcomeScreenNoProjectStateHandler : NoProjectStateHandler {
+private class WelcomeScreenNoProjectStateHandler : NoProjectStateHandler {
   override fun canHandle(): Boolean {
-    val openProjects = ProjectManager.getInstance().openProjects
-    return isNonModalWelcomeScreenEnabled && openProjects.isEmpty()
+    return isNonModalWelcomeScreenEnabled && ProjectManager.getInstanceIfCreated()?.openProjects.isNullOrEmpty()
   }
 
   @RequiresEdt
