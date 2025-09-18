@@ -204,7 +204,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       val path: Path
       if (storeDescriptor.dotIdea == null) {
         path = projectFilePath
-        prefix = projectName
+        prefix = storeDescriptor.getProjectName()
       }
       else {
         path = storeDescriptor.projectIdentityFile
@@ -241,9 +241,6 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   final override fun reloadStates(componentNames: Set<String>) {
     batchReloadStates(componentNames, project.messageBus)
   }
-
-  final override val projectName: String
-    get() = storeDescriptor.getProjectName()
 
   final override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
     coroutineScope {

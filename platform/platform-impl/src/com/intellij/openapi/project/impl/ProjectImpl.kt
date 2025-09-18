@@ -186,7 +186,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     if (result == null) {
       // ProjectPathMacroManager adds macro PROJECT_NAME_MACRO_NAME and so, a project name is required on each load of configuration file.
       // So the name is computed very early anyway.
-      result = componentStore.projectName
+      result = componentStore.storeDescriptor.getProjectName()
       cachedName = result
     }
     return result

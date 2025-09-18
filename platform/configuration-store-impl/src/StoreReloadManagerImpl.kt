@@ -297,7 +297,7 @@ private fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStor
 @ApiStatus.Internal
 fun askToRestart(store: IComponentStore, notReloadableComponents: Collection<String>, changedStorages: Set<StateStorage>?, isApp: Boolean): Boolean {
   val firstMessage = if (store is IProjectStore) {
-    ConfigurationStoreBundle.message("configuration.project.files.changed.message.start", store.projectName)
+    ConfigurationStoreBundle.message("configuration.project.files.changed.message.start", store.storeDescriptor.getProjectName())
   }
   else {
     ConfigurationStoreBundle.message("configuration.application.files.changed.message.start")
@@ -334,7 +334,7 @@ fun askToRestart(store: IComponentStore, notReloadableComponents: Collection<Str
   """.trimIndent()
 
   val title = if (store is IProjectStore)
-    ConfigurationStoreBundle.message("configuration.project.files.changed.restart.prompt.title", store.projectName)
+    ConfigurationStoreBundle.message("configuration.project.files.changed.restart.prompt.title", store.storeDescriptor.getProjectName())
     else ConfigurationStoreBundle.message("configuration.application.files.changed.restart.prompt.title")
 
   if (Messages.showYesNoDialog(message, title, Messages.getQuestionIcon()) != Messages.YES) {

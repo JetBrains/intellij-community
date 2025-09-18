@@ -19,8 +19,6 @@ interface IProjectStore : IComponentStore {
   @get:Internal
   val locationHash: String
 
-  val projectName: String
-
   val storageScheme: StorageScheme
 
   val presentableUrl: String
