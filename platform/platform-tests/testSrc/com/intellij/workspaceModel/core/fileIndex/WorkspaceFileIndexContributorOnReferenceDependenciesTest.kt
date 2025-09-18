@@ -325,10 +325,7 @@ class WorkspaceFileIndexContributorOnReferenceDependenciesTest {
 
     override fun registerFileSets(entity: ReferredTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
       numberOfCalls.incrementAndGet()
-      val hasRefs = storage.hasReferrers(entity.symbolicId) ||
-                    storage.hasReferrers(entity.symbolicId)
-
-      if (hasRefs) {
+      if (storage.hasReferrers(entity.symbolicId)) {
         registrar.registerFileSet(entity.file, WorkspaceFileKind.CUSTOM, entity, null)
       }
     }
