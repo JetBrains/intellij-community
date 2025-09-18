@@ -20,8 +20,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.github.api.data.pullrequest.getInEditorCommentRange
 import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
+import org.jetbrains.plugins.github.api.data.pullrequest.mapToInEditorRange
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -72,7 +72,7 @@ internal class GHPRReviewInEditorViewModelImpl(
 
         val diffData = mappingData.diffData
                        ?: return@mapValues MappedGHPRReviewEditorThreadViewModel.MappingData(isVisible, mappingData.change, null)
-        val commentRange = mappingData.threadData.getInEditorCommentRange(diffData)?.second
+        val commentRange = mappingData.threadData.mapToInEditorRange(diffData)?.second
 
         MappedGHPRReviewEditorThreadViewModel.MappingData(isVisible, mappingData.change, commentRange)
       }

@@ -102,7 +102,7 @@ fun GHPullRequestReviewThread.mapToLocation(diffData: GitTextFilePatchWithHistor
   return diffData.mapLine(fromCommitSha, lineIndex - 1, sideBias)
 }
 
-fun GHPullRequestReviewThread.getCommentRange(diffData: GitTextFilePatchWithHistory): Pair<Side, IntRange>? {
+fun GHPullRequestReviewThread.mapToRange(diffData: GitTextFilePatchWithHistory): Pair<Side, IntRange>? {
   val threadData = this
   val fromSha = fromCommitSha(diffData) ?: return null
 
@@ -121,7 +121,7 @@ fun GHPullRequestReviewThread.getCommentRange(diffData: GitTextFilePatchWithHist
 }
 
 
-fun GHPullRequestReviewThread.getInEditorCommentRange(diffData: GitTextFilePatchWithHistory): Pair<Side, IntRange>? {
+fun GHPullRequestReviewThread.mapToInEditorRange(diffData: GitTextFilePatchWithHistory): Pair<Side, IntRange>? {
   val threadData = this
   val fromCommitSha = fromCommitSha(diffData) ?: return null
   val endLine = threadData.mapToRightSideLine(diffData) ?: return null
