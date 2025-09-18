@@ -32,9 +32,7 @@ object ComponentStorageUtil {
     pathMacroSubstitutor?.expandPaths(rootElement)
 
     var children = rootElement.getChildren(COMPONENT)
-    if (children.isEmpty() &&
-        rootElement.name == COMPONENT &&
-        rootElement.getAttributeValue(NAME) != null) {
+    if (children.isEmpty() && rootElement.name == COMPONENT && rootElement.getAttributeValue(NAME) != null) {
       // must be modifiable
       children = SmartList(rootElement)
     }

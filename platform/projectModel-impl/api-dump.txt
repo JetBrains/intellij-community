@@ -4,12 +4,15 @@ f:com.intellij.application.options.PathMacroExpandableProtocolBean
 - <init>():V
 f:com.intellij.application.options.PathMacrosCollector
 - com.intellij.openapi.components.PathMacroMap
+- sf:Companion:com.intellij.application.options.PathMacrosCollector$Companion
 - sf:MACRO_FILTER_EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:MACRO_PATTERN:java.util.regex.Pattern
-- s:getMacroNames(org.jdom.Element):java.util.Set
+- equals(java.lang.Object):Z
 - hashCode():I
 - substitute(java.lang.String,Z):java.lang.String
 - substituteRecursively(java.lang.String,Z):java.lang.CharSequence
+f:com.intellij.application.options.PathMacrosCollector$Companion
+- f:getMacroNames(org.jdom.Element):java.util.Set
 f:com.intellij.application.options.ReplacePathToMacroMap
 - com.intellij.openapi.components.PathMacroMap
 - <init>():V
