@@ -855,14 +855,16 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   protected open suspend fun instantiateProject(
-    projectStoreBaseDir: Path,
+    identityFle: Path,
     projectName: String?,
     beforeInit: ((Project) -> Unit)?,
   ): ProjectImpl {
     val project = span("project instantiation") {
-      ProjectImpl(filePath = projectStoreBaseDir,
-                  projectName = projectName,
-                  parent = ApplicationManager.getApplication().getComponentManagerImpl())
+      ProjectImpl(
+        identityFle = identityFle,
+        projectName = projectName,
+        parent = ApplicationManager.getApplication().getComponentManagerImpl(),
+      )
     }
     beforeInit?.let { beforeInit ->
       span("options.beforeInit") {

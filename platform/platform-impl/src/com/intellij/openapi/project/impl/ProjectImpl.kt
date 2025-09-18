@@ -71,7 +71,7 @@ private val LOG = logger<ProjectImpl>()
 private val DISPOSE_EARLY_DISPOSABLE_TRACE = Key.create<String>("ProjectImpl.DISPOSE_EARLY_DISPOSABLE_TRACE")
 
 @Internal
-open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName: String?)
+open class ProjectImpl(parent: ComponentManagerImpl, identityFle: Path, projectName: String?)
   : ClientAwareComponentManager(parent), ProjectEx, ProjectStoreOwner {
   companion object {
     @Internal
@@ -138,7 +138,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     cachedName = projectName
     // a light project may be changed later during test, so we need to remember its initial state
     @Suppress("TestOnlyProblems")
-    isLight = ApplicationManager.getApplication().isUnitTestMode && filePath.toString().contains(LIGHT_PROJECT_NAME)
+    isLight = ApplicationManager.getApplication().isUnitTestMode && identityFle.toString().contains(LIGHT_PROJECT_NAME)
   }
 
   final override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {

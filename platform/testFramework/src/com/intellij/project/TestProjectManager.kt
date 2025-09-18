@@ -123,7 +123,7 @@ open class TestProjectManager : ProjectManagerImpl() {
         }
       }
     }
-    catch (e: ProcessCanceledException) {
+    catch (_: ProcessCanceledException) {
       app.invokeAndWait { closeProject(project, saveProject = false, checkCanClose = false) }
       app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
       return false
@@ -148,8 +148,8 @@ open class TestProjectManager : ProjectManagerImpl() {
     }
   }
 
-  override suspend fun instantiateProject(projectStoreBaseDir: Path, projectName: String?, beforeInit: ((Project) -> Unit)?): ProjectImpl {
-    val project = super.instantiateProject(projectStoreBaseDir, projectName, beforeInit)
+  override suspend fun instantiateProject(identityFle: Path, projectName: String?, beforeInit: ((Project) -> Unit)?): ProjectImpl {
+    val project = super.instantiateProject(identityFle, projectName, beforeInit)
     totalCreatedProjectCount++
     trackProject(project)
     return project
