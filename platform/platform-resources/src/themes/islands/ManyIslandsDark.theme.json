@@ -362,6 +362,11 @@
     "NewClass": {
       "Panel.background": "PopupBackground",
       "SearchField.background": "PopupBackground"
+    },
+
+    "ProgressBar": {
+      "progressCounterBackground": "Blue5",
+      "progressCounterForeground": "#000000"
     }
   }
 }

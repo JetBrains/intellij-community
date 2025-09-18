@@ -546,7 +546,9 @@
       "passedEndColor": "Green9",
       "failedColor": "Red6",
       "failedEndColor": "Red9",
-      "trackColor": "Gray4"
+      "trackColor": "Gray4",
+      "progressCounterBackground": "Blue5",
+      "progressCounterForeground": "#000000"
     },
 
     "RadioButton": {

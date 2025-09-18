@@ -176,6 +176,11 @@
     "RecentProject.Color9.MainToolbarGradientStart": "#ceedd4",
 
     "RecentProject.MainToolbarGradient.width": 600,
-    "RecentProject.MainToolbarGradient.height": 300
+    "RecentProject.MainToolbarGradient.height": 300,
+
+    "ProgressBar": {
+      "progressCounterBackground": "#5288f2",
+      "progressCounterForeground": "#FFFFFF"
+    }
   }
 }
