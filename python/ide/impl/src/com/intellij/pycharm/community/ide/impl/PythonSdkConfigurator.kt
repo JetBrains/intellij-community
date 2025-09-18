@@ -114,6 +114,10 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return@withContext
     }
 
+    if (setupFallbackSdk(module)) {
+      return@withContext
+    }
+
     findSystemWideSdk(module, existingSdks, context, project)
   }
 
@@ -171,6 +175,17 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     val preferred = mostPreferred(sharedCondaEnvs) ?: return@reportRawProgress false
     setReadyToUseSdk(project, module, preferred)
     return@reportRawProgress false
+  }
+
+  private suspend fun setupFallbackSdk(
+    module: Module,
+  ): Boolean  {
+    val fallback = PyCondaSdkCustomizer.instance.fallbackConfigurator
+    if (fallback == null) {
+      return false
+    }
+    fallback.createAndAddSdkForConfigurator(module)
+    return true
   }
 
   private suspend fun searchPreviousUsed(

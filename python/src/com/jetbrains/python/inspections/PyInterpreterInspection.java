@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.storage.EntityChange;
@@ -275,9 +274,12 @@ public final class PyInterpreterInspection extends PyInspection {
         return new UseExistingInterpreterFix(systemWideSdk, module);
       }
 
-      LocalQuickFix fallbackFix = PyCondaSdkCustomizer.Companion.getInstance().getFallbackInterpreterFix();
-      if (fallbackFix != null) {
-        return fallbackFix;
+      PyProjectSdkConfigurationExtension configurator = PyCondaSdkCustomizer.Companion.getInstance().getFallbackConfigurator();
+      if (configurator != null) {
+        String intentionName = PyCondaSdkCustomizer.Companion.getIntentionBlocking(configurator, module);
+        if (intentionName != null) {
+          return new UseProvidedInterpreterFix(module, configurator, intentionName);
+        }
       }
 
       final var detectedSystemWideSdk = ContainerUtil.getFirstItem(PySdkExtKt.detectSystemWideSdks(module, existingSdks));
