@@ -187,10 +187,11 @@ internal fun computeContainerChildren(
     }
     val addNextChildrenCallbackHandler = AddNextChildrenCallbackHandler(this@channelFlow)
 
-    var isObsolete = false
     val xCompositeBridgeNode = object : XCompositeNode {
+      @Volatile
+      var obsolete = false
       override fun isObsolete(): Boolean {
-        return isObsolete
+        return obsolete
       }
 
       override fun addChildren(children: XValueChildrenList, last: Boolean) {
@@ -222,20 +223,18 @@ internal fun computeContainerChildren(
       }
     }
 
-    xValueContainer.computeChildren(xCompositeBridgeNode)
-
-    // mark xCompositeBridgeNode as obsolete when the channel collection is canceled
     launch {
-      try {
-        awaitCancellation()
-      }
-      finally {
-        isObsolete = true
+      for (event in rawEvents) {
+        send(event.convertToRpcEvent(parentCs, session))
       }
     }
 
-    for (event in rawEvents) {
-      send(event.convertToRpcEvent(parentCs, session))
+    try {
+      xValueContainer.computeChildren(xCompositeBridgeNode)
+      awaitClose()
+    }
+    finally {
+      xCompositeBridgeNode.obsolete = true
     }
   }
 }
