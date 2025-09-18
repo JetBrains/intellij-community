@@ -28,6 +28,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
   val searchPluginTextField = textField { byAccessibleName("Search plugins") }
   val installedTab = x { and(byType(JLabel::class.java), byAccessibleName("Installed")) }
   val marketplaceTab = x { and(byType(JLabel::class.java), byAccessibleName ("Marketplace")) }
+  val gearButton = x { byAccessibleName("Manage Repositories, Configure Proxy or Install Plugin from Disk") }
 
   fun listPluginComponent(pluginName: String, action: ListPluginComponent.() -> Unit = {}): ListPluginComponent =
     x(ListPluginComponent::class.java) {
