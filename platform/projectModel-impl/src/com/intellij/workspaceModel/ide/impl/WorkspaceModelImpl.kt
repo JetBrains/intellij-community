@@ -602,7 +602,18 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
 }
 
 private fun isProjectCaseSensitive(project: Project): Boolean {
-  @Suppress("IO_FILE_USAGE")
-  return project is ProjectStoreOwner && FileSystemUtil.readParentCaseSensitivity(project.componentStore.storeDescriptor.historicalProjectBasePath.toFile()) ==
-    FileAttributes.CaseSensitivity.SENSITIVE
+  if (project !is ProjectStoreOwner) {
+    return false
+  }
+
+  val historicalProjectBasePath = project.componentStore.storeDescriptor.historicalProjectBasePath
+  val ioFile = try {
+    @Suppress("IO_FILE_USAGE")
+    historicalProjectBasePath.toFile()
+  }
+  catch (_: UnsupportedOperationException) {
+    // memory file system does not support #toFile()
+    return false
+  }
+  return FileSystemUtil.readParentCaseSensitivity(ioFile) == FileAttributes.CaseSensitivity.SENSITIVE
 }
