@@ -30,11 +30,7 @@ class ProjectWindowActionGroup : IdeDependentActionGroup(), ActionRemoteBehavior
 
     val projectLocation = project.componentStore.storeDescriptor.presentableUrl
     val projectName = getProjectDisplayName(project)
-    val windowAction = ProjectWindowAction(
-      projectName = projectName,
-      projectLocation = projectLocation,
-      previous = latest,
-    )
+    val windowAction = ProjectWindowAction(projectName = projectName, projectLocation = projectLocation, previous = latest)
     val duplicateWindowActions = findWindowActionsWithProjectName(projectName)
     if (!duplicateWindowActions.isEmpty()) {
       for (action in duplicateWindowActions) {
@@ -47,7 +43,8 @@ class ProjectWindowActionGroup : IdeDependentActionGroup(), ActionRemoteBehavior
   }
 
   fun removeProject(project: Project) {
-    val windowAction = findWindowAction((project as? ProjectStoreOwner ?: return).componentStore.storeDescriptor.presentableUrl) ?: return
+    val storeDescriptor = (project as? ProjectStoreOwner ?: return).componentStore.storeDescriptor
+    val windowAction = findWindowAction(storeDescriptor.presentableUrl) ?: return
     if (latest == windowAction) {
       val previous = latest?.previous
       latest = if (previous == latest) null else previous
@@ -118,12 +115,10 @@ class ProjectWindowActionGroup : IdeDependentActionGroup(), ActionRemoteBehavior
 @NlsActions.ActionText
 private fun getProjectDisplayName(project: Project): @NlsActions.ActionText String {
   if (LightEdit.owns(project)) {
-    @Suppress("HardCodedStringLiteral")
     return LightEditService.windowName
   }
 
-  val name = getMultiProjectDisplayName(project)
-  return name ?: project.getName()
+  return getMultiProjectDisplayName(project) ?: project.getName()
 }
 
 private fun getProjectName(action: AnAction?): String? {

@@ -12979,13 +12979,8 @@ f:com.intellij.openapi.wm.impl.ProjectWindowActionGroup
 f:com.intellij.openapi.wm.impl.WindowDressing
 - com.intellij.ide.lightEdit.LightEditServiceListener
 - com.intellij.openapi.project.ProjectCloseListener
-- sf:Companion:com.intellij.openapi.wm.impl.WindowDressing$Companion
 - <init>():V
-- lightEditWindowClosed(com.intellij.openapi.project.Project):V
-- lightEditWindowOpened(com.intellij.openapi.project.Project):V
 - projectClosed(com.intellij.openapi.project.Project):V
-f:com.intellij.openapi.wm.impl.WindowDressing$Companion
-- f:getWindowActionGroup():com.intellij.openapi.wm.impl.ProjectWindowActionGroup
 f:com.intellij.openapi.wm.impl.status.InspectionProfileWidgetFactory
 - com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory
 - <init>():V

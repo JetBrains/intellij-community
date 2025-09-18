@@ -930,6 +930,9 @@ f:com.intellij.openapi.wm.impl.ProjectWindowActionGroup
 - f:activatePreviousWindow(com.intellij.openapi.actionSystem.AnActionEvent):V
 - f:isEnabled():Z
 - f:removeProject(com.intellij.openapi.project.Project):V
+f:com.intellij.openapi.wm.impl.WindowDressing
+- lightEditWindowClosed(com.intellij.openapi.project.Project):V
+- lightEditWindowOpened(com.intellij.openapi.project.Project):V
 com.intellij.packageDependencies.ui.Marker
 - a:isMarked(com.intellij.openapi.vfs.VirtualFile):Z
 com.intellij.platform.ModuleAttachListener
