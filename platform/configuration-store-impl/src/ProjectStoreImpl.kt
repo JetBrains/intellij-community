@@ -93,7 +93,9 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
     val macros = ArrayList<Macro>(5)
     val iprFile: Path?
-    if (file.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+    val storeDescriptor = ProjectStorePathManager.getInstance().getStoreDescriptor(file)
+    this.storeDescriptor = storeDescriptor
+    if (storeDescriptor is IprProjectStoreDescriptor) {
       iprFile = file
 
       macros.add(Macro(StoragePathMacros.PROJECT_FILE, file))
@@ -113,14 +115,9 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
         }
         macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, workspacePath))
       }
-
-      storeDescriptor = IprProjectStoreDescriptor(userBaseDir, file)
     }
     else {
       iprFile = null
-
-      val storeDescriptor = ProjectStorePathManager.getInstance().getStoreDescriptor(file)
-      this.storeDescriptor = storeDescriptor
 
       // PROJECT_CONFIG_DIR must be the first macro
       val dotIdea = storeDescriptor.dotIdea!!

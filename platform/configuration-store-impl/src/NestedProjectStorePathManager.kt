@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -29,7 +30,7 @@ private val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(S
 /**
  * For cases when the project configuration store resides in the project root directory - the default
  */
-internal class NestedProjectStorePathManager : ProjectStorePathManager {
+private class NestedProjectStorePathManager : ProjectStorePathManager {
   override fun getStoreDescriptor(projectRoot: Path): ProjectStoreDescriptor {
     val suitableDescriptors = ArrayList<ProjectStoreDescriptor>()
     for (descriptor in EP_NAME.filterableLazySequence()) {
@@ -51,6 +52,12 @@ internal class NestedProjectStorePathManager : ProjectStorePathManager {
         "We cannot determine which one is suitable for $projectRoot"
       }
       return suitableDescriptors.single()
+    }
+
+    if (projectRoot.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+      // null parent - file in the root (for example, memory fs in tests)
+      val userBaseDir = projectRoot.parent ?: projectRoot.fileSystem.rootDirectories.first()
+      return IprProjectStoreDescriptor(userBaseDir, projectRoot)
     }
 
     val useParent = System.getProperty("store.basedir.parent.detection", "true").toBoolean() &&

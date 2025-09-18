@@ -181,6 +181,7 @@ object ProjectUtil {
         return chooseProcessorAndOpenAsync(mutableListOf(provider), virtualFile, options)
       }
     }
+
     if (isValidProjectPath(file)) {
       LOG.info("Opening existing project with .idea at $file")
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
