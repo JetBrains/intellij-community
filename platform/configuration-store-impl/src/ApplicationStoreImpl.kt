@@ -31,7 +31,7 @@ const val APP_CONFIG: String = $$"$APP_CONFIG$"
 @Suppress("NonDefaultConstructor")
 open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
   override val storageManager: StateStorageManagerImpl = ApplicationStateStorageManager(
-    pathMacroManager = PathMacroManager.getInstance(app),
+    pathMacroManager = app.service<PathMacroManager>(),
     controller = app.getService(SettingsController::class.java),
   )
 

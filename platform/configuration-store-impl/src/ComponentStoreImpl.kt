@@ -652,7 +652,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     // getting state after loading with an active controller can lead to unusual issues - disable write protection
     if (useLoadedStateAsExisting && storage is XmlElementStorage && (storage.controller == null || project != null) && isUseLoadedStateAsExisting(storage)) {
-      return storage.createGetSession(component, componentName, info.pluginId, stateClass, reloadData)
+      return storage.createGetSession(component = component, componentName = componentName, pluginId = info.pluginId, stateClass = stateClass, reload = reloadData)
     }
 
     return object : StateGetter<Any> {
@@ -745,7 +745,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val publisher = messageBus.syncPublisher(BatchUpdateListener.TOPIC)
     publisher.onBatchUpdateStarted()
     try {
-      reinitComponents(componentNames, changedStorages = emptySet(), notReloadableComponents = emptySet())
+      reinitComponents(componentNames = componentNames, changedStorages = emptySet(), notReloadableComponents = emptySet())
     }
     finally {
       publisher.onBatchUpdateFinished()

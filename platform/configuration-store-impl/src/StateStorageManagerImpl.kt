@@ -102,7 +102,7 @@ open class StateStorageManagerImpl(
     exclusive: Boolean = false,
     storageCustomizer: (StateStorage.() -> Unit)? = null,
     storageCreator: StorageCreator? = null,
-    usePathMacroManager: Boolean = true,
+    usePathMacroManager: Boolean,
   ): StateStorage {
     val normalizedCollapsedPath = normalizeFileSpec(collapsedPath)
     val key = computeStorageKey(
@@ -259,7 +259,6 @@ open class StateStorageManagerImpl(
         return it as StateStorage
       }
     }
-    val pathMacroManager = if (usePathMacroManager) macroSubstitutor else null
     val controller = controller?.takeIf { it.isPersistenceStateComponentProxy() }
     return TrackedFileStorage(
       storageManager = this,
@@ -267,7 +266,7 @@ open class StateStorageManagerImpl(
       fileSpec = collapsedPath,
       rootElementName = rootTagName,
       roamingType = roamingType,
-      pathMacroManager = pathMacroManager,
+      pathMacroManager = macroSubstitutor.takeIf { usePathMacroManager },
       provider = compoundStreamProvider,
       controller = controller,
     )
@@ -369,7 +368,7 @@ open class StateStorageManagerImpl(
 
   final override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? {
     val oldStorageSpec = getOldStorageSpec(component = component, componentName = componentName, operation = operation) ?: return null
-    return getOrCreateStorage(collapsedPath = oldStorageSpec, roamingType = RoamingType.DEFAULT)
+    return getOrCreateStorage(collapsedPath = oldStorageSpec, roamingType = RoamingType.DEFAULT, usePathMacroManager = true)
   }
 
   protected open fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? = null

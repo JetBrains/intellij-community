@@ -14,7 +14,7 @@ import kotlin.properties.Delegates
 
 class StorageManagerTest {
   companion object {
-    private const val MACRO = "\$MACRO1$"
+    private const val MACRO = $$"$MACRO1$"
 
     @JvmField @ClassRule val projectRule = ProjectRule()
   }
@@ -29,7 +29,7 @@ class StorageManagerTest {
 
   @Test
   fun createFileStateStorageMacroSubstituted() {
-    assertThat(storageManager.getOrCreateStorage("$MACRO/test.xml", RoamingType.DEFAULT)).isNotNull()
+    assertThat(storageManager.getOrCreateStorage("$MACRO/test.xml", RoamingType.DEFAULT, usePathMacroManager = true)).isNotNull()
   }
 
   @Test
@@ -40,14 +40,14 @@ class StorageManagerTest {
 
   @Test
   fun `create storage assertion thrown when unknown macro`() {
-    assertThatThrownBy { storageManager.getOrCreateStorage("\$UNKNOWN_MACRO$/test.xml", RoamingType.DEFAULT) }
+    assertThatThrownBy { storageManager.getOrCreateStorage($$"$UNKNOWN_MACRO$/test.xml", RoamingType.DEFAULT, usePathMacroManager = true) }
       .isInstanceOf(IllegalStateException::class.java)
-      .hasMessage("Cannot resolve \$UNKNOWN_MACRO\$/test.xml in [Macro(key=\$MACRO1\$, value=${FileUtil.toSystemDependentName("/temp/m1")})]")
+      .hasMessage($$"Cannot resolve $UNKNOWN_MACRO$/test.xml in [Macro(key=$MACRO1$, value=$${FileUtil.toSystemDependentName("/temp/m1")})]")
   }
 
   @Test
   fun `create file storage macro substituted when expansion has$`() {
-    storageManager.setMacros(listOf(Macro("\$DOLLAR_MACRO$", Path.of("/temp/d$"))))
-    assertThat(storageManager.getOrCreateStorage("\$DOLLAR_MACRO$/test.xml", RoamingType.DEFAULT)).isNotNull()
+    storageManager.setMacros(listOf(Macro($$"$DOLLAR_MACRO$", Path.of("/temp/d$"))))
+    assertThat(storageManager.getOrCreateStorage($$"$DOLLAR_MACRO$/test.xml", RoamingType.DEFAULT, usePathMacroManager = true)).isNotNull()
   }
 }

@@ -96,7 +96,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
       val bean = item.instance ?: continue
       if (bean.isProjectLevel != isProjectLevel) continue
       val collapsedPath = bean.file ?: continue
-      val storage = storageManager.getOrCreateStorage(collapsedPath, roamingType = RoamingType.DISABLED)
+      val storage = storageManager.getOrCreateStorage(collapsedPath, roamingType = RoamingType.DISABLED, usePathMacroManager = false)
       for (componentName in bean.components) {
         session.getProducer(storage)?.setState(component = null, componentName = componentName, pluginId = item.pluginDescriptor.pluginId, state = null)
       }
