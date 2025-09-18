@@ -18,6 +18,7 @@ import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.SELECTED_
 import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.findValue;
 
 @Internal
+@Deprecated(forRemoval = true)
 public final class RunDashboardActionUtils {
   private RunDashboardActionUtils() {
   }

@@ -341,7 +341,6 @@ public final class RunDashboardServiceViewContributor
 
     @Override
     public boolean isVisible() {
-      // todo split: introduce frontend private status service mirror or smth
       RunDashboardStatusFilter statusFilter =
         FrontendRunDashboardManager.getInstance(myNode.getProject()).getStatusFilter();
       return statusFilter.isVisible(myNode);

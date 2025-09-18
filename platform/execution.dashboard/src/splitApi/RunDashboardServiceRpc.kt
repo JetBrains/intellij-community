@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.dashboard.splitApi
 
+import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
@@ -23,4 +24,5 @@ interface RunDashboardServiceRpc : RemoteApi<Unit> {
   suspend fun getServices(projectId: ProjectId): Flow<List<RunDashboardServiceDto>>
   suspend fun getStatuses(projectId: ProjectId): Flow<ServiceStatusDto>
   suspend fun getCustomizations(projectId: ProjectId): Flow<ServiceCustomizationDto>
+  suspend fun updateConfigurationFolderName(serviceIds: List<RunDashboardServiceId>, newGroupName: String?, projectId: ProjectId)
 }
