@@ -26,6 +26,7 @@ import com.intellij.driver.sdk.ui.components.elements.NotebookTableOutputUi
 import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.ui
+import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForCodeAnalysis
 import org.intellij.lang.annotations.Language
@@ -153,6 +154,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
 
   fun runAllCellsAndWaitExecuted(timeout: Duration = 1.minutes): Unit = step("Executing all cells") {
     runAllCells()
+    //wait some time to be started
+    wait(2.seconds)
     waitFor(timeout = timeout) {
       // TODO: what if we have some cells that were executed before, and their checkmarks are still there,
       //  while new execution labels are not yet created?
@@ -162,6 +165,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
         it.getParent().x { contains(byAttribute("defaulticon", "greenCheckmark.svg")) }.present()
       }
     }
+    //Wait till kernel tasks will be finished
+    interruptKernel.waitNotFound(timeout)
   }
 
   fun clickOnCell(cellSelector: CellSelector) {
