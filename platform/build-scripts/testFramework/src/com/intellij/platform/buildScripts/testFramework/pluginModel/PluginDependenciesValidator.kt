@@ -306,6 +306,9 @@ class PluginDependenciesValidator private constructor(
       if (pattern.endsWith("*")) {
         return startsWith(pattern.removeSuffix("*"))
       }
+      else if (pattern.contains("*")) {
+        return startsWith(pattern.substringBefore("*")) && endsWith(pattern.substringAfter("*"))
+      }
       else {
         return this == pattern
       }

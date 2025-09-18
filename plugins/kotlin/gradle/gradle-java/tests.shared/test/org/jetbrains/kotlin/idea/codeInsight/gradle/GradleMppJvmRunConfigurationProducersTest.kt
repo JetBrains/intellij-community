@@ -4,9 +4,12 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.listRepositories
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.plugins.gradle.execution.test.producer.GradleTestRunConfigurationProducerTestCase
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer
@@ -20,11 +23,13 @@ import org.junit.Test
 /**
  * See paired [GradleMppNoJvmRunConfigurationProducersTest216]
  */
-class GradleMppJvmRunConfigurationProducersTest4 : GradleTestRunConfigurationProducerTestCase() {
+class GradleMppJvmRunConfigurationProducersTest4 : GradleTestRunConfigurationProducerTestCase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+
     private lateinit var projectData: ProjectData
 
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
         projectData = generateAndImportMppProject()
     }
 

@@ -150,11 +150,4 @@ abstract class JetBrainsProductProperties : ProductProperties() {
       else -> false
     }
   }
-
-  /**
-   * See KTIJ-30761, `org.jetbrains.intellij.build.sharedIndexes.PreSharedIndexesGenerator`.
-   */
-  protected fun enableKotlinPluginK2ByDefault() {
-    additionalVmOptions += "-Didea.kotlin.plugin.use.k2=true"
-  }
 }

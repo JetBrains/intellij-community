@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.idea.base.plugin.USE_K1_PLUGIN_PROPERTY_NAME
 import org.jetbrains.kotlin.idea.base.plugin.USE_K2_PLUGIN_PROPERTY_NAME
 
 class KotlinPluginKindSwitcherController {
@@ -29,4 +30,7 @@ class KotlinPluginKindSwitcherController {
     }
 }
 
+const val USE_K1_PLUGIN_VM_OPTION_PREFIX: @NonNls String = "-D$USE_K1_PLUGIN_PROPERTY_NAME="
+
+@Deprecated("Use USE_K1_PLUGIN_VM_OPTION_PREFIX instead")
 const val USE_K2_PLUGIN_VM_OPTION_PREFIX: @NonNls String = "-D$USE_K2_PLUGIN_PROPERTY_NAME="

@@ -43,9 +43,14 @@ class CommunityPluginModelTest {
       pluginVariantsWithDynamicIncludes = listOf(
         PluginVariantWithDynamicIncludes(
           mainModuleName = "kotlin.plugin",
-          systemPropertyName = "idea.kotlin.plugin.use.k2",
+          systemPropertyName = "idea.kotlin.plugin.use.k1",
+          systemPropertyValue = "false",
+        ),
+        PluginVariantWithDynamicIncludes(
+          mainModuleName = "kotlin.plugin",
+          systemPropertyName = "idea.kotlin.plugin.use.k1",
           systemPropertyValue = "true",
-        )
+        ),
       )
     )
     val result = validatePluginModel(communityPath, options)

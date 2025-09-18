@@ -39,7 +39,6 @@ jvm_library(
     "//plugins/kotlin/gradle/code-insight-common",
     "//plugins/kotlin/gradle/gradle-tooling/impl",
     "//plugins/kotlin/gradle/gradle-java",
-    "//plugins/groovy/groovy-psi:psi",
     "//plugins/gradle/java",
     "//libraries/kotlin-reflect",
     "//plugins/kotlin/native",

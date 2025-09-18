@@ -80,7 +80,6 @@ java_binary(
     # same as .idea/runConfigurations/IDEA.xml:
     "-Xmx2g",
     "-XX:MaxJavaStackTraceDepth=10000",
-    "-Didea.kotlin.plugin.use.k2=true",
     "-XX:+AllowEnhancedClassRedefinition",
     "-XX:PrintIdealGraphLevl=3",
     "-XX:+IgnoreUnrecognizedVMOptions",
