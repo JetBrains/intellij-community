@@ -20,7 +20,9 @@ public final class CompletionResult {
   public static final Key<Boolean> SHOULD_NOT_CHECK_WHEN_WRAP = Key.create("SHOULD_NOT_CHECK_WHEN_WRAP");
 
 
-  private CompletionResult(LookupElement lookupElement, PrefixMatcher matcher, CompletionSorter sorter) {
+  private CompletionResult(@NotNull LookupElement lookupElement,
+                           @NotNull PrefixMatcher matcher,
+                           @NotNull CompletionSorter sorter) {
     myLookupElement = lookupElement;
     myMatcher = matcher;
     mySorter = sorter;
