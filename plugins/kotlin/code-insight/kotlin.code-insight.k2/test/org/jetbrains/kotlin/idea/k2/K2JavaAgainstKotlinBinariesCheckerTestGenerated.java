@@ -181,6 +181,11 @@ public class K2JavaAgainstKotlinBinariesCheckerTestGenerated extends AbstractJav
         runTest("../../idea/tests/testData/kotlinAndJavaChecker/javaAgainstKotlin/ReturnInnerClasses.kt");
     }
 
+    @TestMetadata("SelfBoundedGenericWithWildcard.kt")
+    public void testSelfBoundedGenericWithWildcard() throws Exception {
+        runTest("../../idea/tests/testData/kotlinAndJavaChecker/javaAgainstKotlin/SelfBoundedGenericWithWildcard.kt");
+    }
+
     @TestMetadata("ThrowsOnGenericMethod.kt")
     public void testThrowsOnGenericMethod() throws Exception {
         runTest("../../idea/tests/testData/kotlinAndJavaChecker/javaAgainstKotlin/ThrowsOnGenericMethod.kt");
