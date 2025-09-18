@@ -12095,48 +12095,6 @@ http_file(
 )
 
 http_file(
-  name = "mpfilepicker-3_1_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/darkrockstudios/mpfilepicker/3.1.0/mpfilepicker-3.1.0.jar",
-  sha256 = "93e571b342f2bc87aa192fc7eb6d177ac5075415617824674b0d5fa063840f4e",
-  downloaded_file_path = "mpfilepicker-3.1.0.jar"
-)
-
-http_file(
-  name = "mpfilepicker-3_1_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/darkrockstudios/mpfilepicker/3.1.0/mpfilepicker-3.1.0-sources.jar",
-  sha256 = "d43eca88638794d8ff756d327ed1090632dcfed8ecc43424062932dba3cb212c",
-  downloaded_file_path = "mpfilepicker-3.1.0-sources.jar"
-)
-
-http_file(
-  name = "mpfilepicker-jvm-3_1_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/darkrockstudios/mpfilepicker-jvm/3.1.0/mpfilepicker-jvm-3.1.0.jar",
-  sha256 = "65bb8c814bc66faf28395e7f9d51c74f5cc35d70919c50ea8639388ec46cef2d",
-  downloaded_file_path = "mpfilepicker-jvm-3.1.0.jar"
-)
-
-http_file(
-  name = "mpfilepicker-jvm-3_1_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/darkrockstudios/mpfilepicker-jvm/3.1.0/mpfilepicker-jvm-3.1.0-sources.jar",
-  sha256 = "1f57b5586f0f260f71b073978d1075f40ec8e73c188975aaa99cbf8e8d7bd4a3",
-  downloaded_file_path = "mpfilepicker-jvm-3.1.0-sources.jar"
-)
-
-http_file(
-  name = "lwjgl-3_3_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1.jar",
-  sha256 = "cf83f90e32fb973ff5edfca4ef35f55ca51bb70a579b6a1f290744f552e8e484",
-  downloaded_file_path = "lwjgl-3.3.1.jar"
-)
-
-http_file(
-  name = "lwjgl-3_3_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1-sources.jar",
-  sha256 = "30cb8190660bcbe9ce5761690a5abbf45735c9af4d58f61bd568203025fd3a36",
-  downloaded_file_path = "lwjgl-3.3.1-sources.jar"
-)
-
-http_file(
   name = "lwjgl-tinyfd-3_3_1_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/lwjgl/lwjgl-tinyfd/3.3.1/lwjgl-tinyfd-3.3.1.jar",
   sha256 = "488f51ed95f0fac48d1d87cb0e3bac08c012dcbf6ef3c1688685d708cdbccd56",

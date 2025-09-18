@@ -8486,27 +8486,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "platform-jewel-samples-standalone-com-darkrockstudios-mpfilepicker",
-  jar = "@mpfilepicker-3_1_0_http//file",
-  source_jar = "@mpfilepicker-3_1_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "platform-jewel-samples-standalone-com-darkrockstudios-mpfilepicker-jvm",
-  jar = "@mpfilepicker-jvm-3_1_0_http//file",
-  source_jar = "@mpfilepicker-jvm-3_1_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "platform-jewel-samples-standalone-org-lwjgl-lwjgl",
-  jar = "@lwjgl-3_3_1_http//file",
-  source_jar = "@lwjgl-3_3_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "platform-jewel-samples-standalone-org-lwjgl-lwjgl-tinyfd",
   jar = "@lwjgl-tinyfd-3_3_1_http//file",
   source_jar = "@lwjgl-tinyfd-3_3_1-sources_http//file",

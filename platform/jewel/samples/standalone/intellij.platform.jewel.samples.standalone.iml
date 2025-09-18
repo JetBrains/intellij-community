@@ -32,42 +32,6 @@
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
-      <library name="com.darkrockstudios.mpfilepicker" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.darkrockstudios:mpfilepicker:3.1.0">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/darkrockstudios/mpfilepicker/3.1.0/mpfilepicker-3.1.0.jar">
-              <sha256sum>93e571b342f2bc87aa192fc7eb6d177ac5075415617824674b0d5fa063840f4e</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/darkrockstudios/mpfilepicker/3.1.0/mpfilepicker-3.1.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/darkrockstudios/mpfilepicker/3.1.0/mpfilepicker-3.1.0-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="com.darkrockstudios.mpfilepicker.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.darkrockstudios:mpfilepicker-jvm:3.1.0">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/darkrockstudios/mpfilepicker-jvm/3.1.0/mpfilepicker-jvm-3.1.0.jar">
-              <sha256sum>65bb8c814bc66faf28395e7f9d51c74f5cc35d70919c50ea8639388ec46cef2d</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/darkrockstudios/mpfilepicker-jvm/3.1.0/mpfilepicker-jvm-3.1.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/darkrockstudios/mpfilepicker-jvm/3.1.0/mpfilepicker-jvm-3.1.0-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.autolink" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
@@ -120,24 +84,7 @@
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
     <orderEntry type="module" module-name="intellij.platform.jewel.samples.showcase" />
     <orderEntry type="library" scope="RUNTIME" name="jna" level="project" />
-    <orderEntry type="module-library" scope="RUNTIME">
-      <library name="org.lwjgl.lwjgl" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.lwjgl:lwjgl:3.3.1">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1.jar">
-              <sha256sum>cf83f90e32fb973ff5edfca4ef35f55ca51bb70a579b6a1f290744f552e8e484</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.icons" />
+    <orderEntry type="library" name="jbr-api" level="project" />
   </component>
 </module>

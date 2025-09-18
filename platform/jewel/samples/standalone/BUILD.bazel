@@ -29,8 +29,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "@lib//:platform-jewel-samples-standalone-com-darkrockstudios-mpfilepicker",
-    "@lib//:platform-jewel-samples-standalone-com-darkrockstudios-mpfilepicker-jvm",
     "//platform/jewel/markdown/extensions/autolink",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
@@ -47,13 +45,13 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//platform/jewel/samples/showcase",
     "//platform/icons",
+    "@lib//:jbr-api",
   ],
   runtime_deps = [
     ":standalone_resources",
     "@lib//:platform-jewel-samples-standalone-org-lwjgl-lwjgl-tinyfd",
     "@lib//:platform-jewel-samples-standalone-org-nibor-autolink-autolink",
     "@lib//:jna",
-    "@lib//:platform-jewel-samples-standalone-org-lwjgl-lwjgl",
   ],
   plugins = ["@lib//:compose-plugin"]
 )
