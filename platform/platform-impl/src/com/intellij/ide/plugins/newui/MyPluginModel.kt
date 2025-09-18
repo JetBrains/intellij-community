@@ -42,19 +42,13 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
 import com.intellij.xml.util.XmlStringUtil
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Window
+import java.lang.Runnable
+import java.lang.ref.WeakReference
 import java.util.*
 import java.util.function.Consumer
 import javax.swing.Icon
@@ -75,7 +69,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   @JvmField
   var createShutdownCallback: Boolean = true
 
-  private val myStatusBar: StatusBarEx?
+  private val myInitialWindow: WeakReference<Window>
 
   private var myPluginUpdatesService: PluginUpdatesService? = null
 
@@ -317,8 +311,13 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
 
   fun toBackground(): Boolean {
+    val initialWindow = myInitialWindow.get()
+    val statusBar = getStatusBar(initialWindow)
+                    ?: getStatusBar(initialWindow?.owner)
+                    ?: getStatusBar(getActiveFrameOrWelcomeScreen())
+
     for (info in myInstallingInfos.values) {
-      info.toBackground(myStatusBar)
+      info.toBackground(statusBar)
     }
 
     if (FINISH_DYNAMIC_INSTALLATION_WITHOUT_UI) {
@@ -1025,8 +1024,8 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   init {
     val window = getActiveFrameOrWelcomeScreen()
-    val statusBar: StatusBarEx? = getStatusBar(window)
-    myStatusBar = if (statusBar != null || window == null) statusBar else getStatusBar(window.owner)
+    myInitialWindow = WeakReference(window)
+
     myPluginManagerCustomizer = PluginManagerCustomizer.getInstance()
   }
 
@@ -1055,7 +1054,11 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     internal val myInstallingInfos: MutableMap<PluginId, InstallPluginInfo> = mutableMapOf()
 
     private fun getStatusBar(frame: Window?): StatusBarEx? {
-      return if (frame is IdeFrame && frame !is WelcomeFrame) (frame as IdeFrame).getStatusBar() as StatusBarEx? else null
+      if (frame is WelcomeFrame) return null
+      if (frame is IdeFrame) {
+        return frame.statusBar as? StatusBarEx
+      }
+      return null
     }
 
     fun isInstallingOrUpdate(pluginId: PluginId?): Boolean {
