@@ -25,15 +25,15 @@ class PathMacrosCollector private constructor() : PathMacroMap() {
     val MACRO_PATTERN: Pattern = Pattern.compile("\\$([\\w\\-.]+?)\\$")
 
     fun getMacroNames(element: Element): Set<String> {
-      return getMacroNames(
-        root = element,
-        filter = CompositePathMacroFilter(MACRO_FILTER_EXTENSION_POINT_NAME.extensionList),
-        pathMacros = PathMacrosImpl.getInstanceEx(),
-      )
+      return getMacroNames(root = element, filter = CompositePathMacroFilter(MACRO_FILTER_EXTENSION_POINT_NAME.extensionList))
     }
 
     @ApiStatus.Internal
-    fun getMacroNames(root: Element, filter: PathMacroFilter?, pathMacros: PathMacrosImpl): Set<String> {
+    fun getMacroNames(
+      root: Element,
+      filter: PathMacroFilter?,
+      pathMacrosGetter: () -> PathMacrosImpl = { PathMacrosImpl.getInstanceEx() },
+    ): Set<String> {
       val collector = PathMacrosCollector()
       collector.substitute(root, true, false, filter)
       val preResult = collector.macroMap.keys
@@ -41,6 +41,7 @@ class PathMacrosCollector private constructor() : PathMacroMap() {
         return emptySet()
       }
 
+      val pathMacros = pathMacrosGetter()
       val result = HashSet<String>(preResult)
       result.removeAll(pathMacros.getSystemMacroNames())
       @Suppress("ConvertArgumentToSet")
