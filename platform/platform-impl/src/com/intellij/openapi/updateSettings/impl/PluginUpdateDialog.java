@@ -147,7 +147,7 @@ public class PluginUpdateDialog extends DialogWrapper {
         return component;
       }
     };
-    PluginManagerConfigurable.registerCopyProvider(myPluginsPanel);
+    PluginManagerConfigurablePanel.registerCopyProvider(myPluginsPanel);
     myPluginsPanel.setSelectionListener(__ -> myDetailsPage.showPlugins(myPluginsPanel.getSelection()));
 
     for (PluginDownloader plugin : downloaders) {
@@ -393,7 +393,7 @@ public class PluginUpdateDialog extends DialogWrapper {
     myGroup.ui.panel.setPreferredSize(new Dimension());
 
     JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.add(PluginManagerConfigurable.createScrollPane(myPluginsPanel, true));
+    leftPanel.add(PluginManagerConfigurablePanel.createScrollPane(myPluginsPanel, true));
 
     OpaquePanel titlePanel = new OpaquePanel(new BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR);
     titlePanel.setBorder(JBUI.Borders.empty(13, 12));
