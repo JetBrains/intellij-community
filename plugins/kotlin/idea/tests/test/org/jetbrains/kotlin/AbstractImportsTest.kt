@@ -39,7 +39,7 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     protected open fun doTest(unused: String) {
-        val testPath = dataFilePath(fileName())
+        val testFile = dataFile(fileName())
         configureCodeStyleAndRun(project) {
             val fixture = myFixture
             val dependencySuffixes = listOf(".dependency.kt", ".dependency.java", ".dependency1.kt", ".dependency2.kt")
@@ -95,10 +95,10 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
                 doTest(file)
             }
 
-            val afterFile = findAfterFile(File(testPath))
+            val afterFile = findAfterFile(testFile)
             KotlinTestUtils.assertEqualsToFile(afterFile, myFixture.file.text)
             if (log != null) {
-                val logFile = File("$testPath.log")
+                val logFile = testFile.resolveSibling(testFile.name + ".log")
                 if (log.isNotEmpty()) {
                     KotlinTestUtils.assertEqualsToFile(logFile, log)
                 } else {
