@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -77,6 +78,7 @@ abstract class WelcomeScreenProjectProvider {
       serviceAsync<WindowsDefenderChecker>().markProjectPath(projectPath, /*skip =*/ true)
 
       val project = extension.doCreateOrOpenWelcomeScreenProject(projectPath)
+      FUSProjectHotStartUpMeasurer.reportWelcomeScreenShown()
       LOG.info("Opened the welcome screen project at $projectPath")
       LOG.debug("Project: ", project)
 
