@@ -12,7 +12,6 @@ import com.intellij.util.JavaPsiConstructorUtil
 import com.intellij.util.MathUtil
 import com.siyeh.ig.psiutils.FinalUtils
 import com.siyeh.ig.psiutils.VariableAccessUtils
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.MINUSMINUS
@@ -273,7 +272,6 @@ private fun JKFieldAccessExpression.asQualifiedAssignmentFromTarget(): JKQualifi
                 (it.parent is JKKtAssignmentStatement || operatorToken == PLUSPLUS || operatorToken == MINUSMINUS)
     }
 
-context(_: KaSession)
 private fun JKVariable.findWritableUsages(scope: JKTreeElement, context: ConverterContext): List<JKFieldAccessExpression> =
     findUsages(scope, context).filter {
         it.asAssignmentFromTarget() != null
@@ -281,7 +279,6 @@ private fun JKVariable.findWritableUsages(scope: JKTreeElement, context: Convert
                 || it.asParenthesizedAssignmentFromTarget() != null
     }.distinct()
 
-context(_: KaSession)
 fun JKVariable.hasWritableUsages(scope: JKTreeElement, context: ConverterContext): Boolean =
     findWritableUsages(scope, context).isNotEmpty()
 

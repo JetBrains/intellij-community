@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
@@ -27,7 +26,6 @@ import org.jetbrains.kotlin.nj2k.types.JKType
  * with default parameters and `JvmOverloads` annotation.
  */
 class DefaultArgumentsConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKClassBody) return recurse(element)
         val methods = element.declarations.filterIsInstance<JKMethod>().sortedBy { it.parameters.size }
@@ -174,7 +172,7 @@ class DefaultArgumentsConversion(context: ConverterContext) : RecursiveConversio
 
     private fun JKType.isCompatible(other: JKType): Boolean {
         fun Nullability.isCompatible(other: Nullability): Boolean =
-            // If the source is not-null, target nullability can be anything.
+        // If the source is not-null, target nullability can be anything.
             // Otherwise, the source may be null, so the target should _not_ be non-null.
             this == NotNull || other != NotNull
 

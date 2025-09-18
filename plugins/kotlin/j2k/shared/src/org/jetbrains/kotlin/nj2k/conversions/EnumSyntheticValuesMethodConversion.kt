@@ -3,10 +3,12 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.SyntheticElement
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.LanguageFeature.EnumEntries
 import org.jetbrains.kotlin.j2k.ConverterContext
-import org.jetbrains.kotlin.nj2k.*
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
+import org.jetbrains.kotlin.nj2k.callOn
+import org.jetbrains.kotlin.nj2k.identifier
+import org.jetbrains.kotlin.nj2k.languageVersionSettings
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKMultiverseMethodSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
@@ -19,7 +21,6 @@ private const val ENUM_VALUES_METHOD_NAME = "values"
 private const val ENUM_ENTRIES_PROPERTY_NAME = "entries"
 
 class EnumSyntheticValuesMethodConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKQualifiedExpression && element !is JKCallExpression) return recurse(element)
         if (!languageVersionSettings.supportsFeature(EnumEntries)) return recurse(element)
@@ -33,7 +34,6 @@ class EnumSyntheticValuesMethodConversion(context: ConverterContext) : Recursive
     private fun JKTreeElement.selector(): JKTreeElement =
         if (this is JKQualifiedExpression) selector else this
 
-    context(_: KaSession)
     private fun JKTreeElement.isReceiverEnumType(): Boolean =
         when (this) {
             is JKQualifiedExpression ->

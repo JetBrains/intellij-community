@@ -2,11 +2,12 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.lang.BinaryOperationPrecedence
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.nj2k.*
+import org.jetbrains.kotlin.nj2k.RecursiveConversion
+import org.jetbrains.kotlin.nj2k.isAtomic
+import org.jetbrains.kotlin.nj2k.recursivelyContainsNewlineBeforeOperator
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.psi.KtPsiUtil
 
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.psi.KtPsiUtil
  */
 class RemoveUnnecessaryParenthesesConversion(context: ConverterContext) : RecursiveConversion(context) {
 
-    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKParenthesizedExpression) return recurse(element)
         if (areParenthesesNecessary(element)) return recurse(element)
