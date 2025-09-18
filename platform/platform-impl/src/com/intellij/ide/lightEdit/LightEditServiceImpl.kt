@@ -7,9 +7,7 @@ import com.intellij.ide.lightEdit.project.LightEditProjectManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -29,22 +27,25 @@ import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame.Companion.getInstance
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.disposeOnCompletion
 import com.intellij.util.ui.update.UiNotifyConnector
-import com.intellij.util.xmlb.XmlSerializerUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.lang.management.ManagementFactory
 import java.nio.file.Path
-import java.util.function.Consumer
 import kotlin.math.max
 import kotlin.system.exitProcess
 
 @ApiStatus.Internal
 @State(name = "LightEdit", storages = [Storage(value = "lightEdit.xml", roamingType = RoamingType.DISABLED)])
-class LightEditServiceImpl : LightEditService, Disposable, LightEditorListener, PersistentStateComponent<LightEditConfiguration> {
+class LightEditServiceImpl(private val coroutineScope: CoroutineScope)
+  : LightEditService, Disposable, LightEditorListener, PersistentStateComponent<LightEditConfiguration> {
   private var frameWrapper: LightEditFrameWrapper? = null
   private val editorManager = LightEditorManagerImpl(this)
-  private val configuration = LightEditConfiguration()
+  private var configuration = LightEditConfiguration()
   private val lightEditProjectManager = LightEditProjectManager()
   private var editorWindowClosing = false
   private var saveSession = false
@@ -52,26 +53,27 @@ class LightEditServiceImpl : LightEditService, Disposable, LightEditorListener, 
   override fun getState(): LightEditConfiguration = configuration
 
   override fun loadState(state: LightEditConfiguration) {
-    XmlSerializerUtil.copyBean<LightEditConfiguration>(state, configuration)
+    configuration = state
   }
 
   init {
     editorManager.addListener(this)
-    val connection = ApplicationManager.getApplication().getMessageBus().connect(this)
+    val connection = ApplicationManager.getApplication().getMessageBus().connect(coroutineScope)
     connection.subscribe<AppLifecycleListener>(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
       override fun appClosing() {
-        (EncodingManager.getInstance() as EncodingManagerImpl).clearDocumentQueue()
+        (serviceIfCreated<EncodingManager>() as? EncodingManagerImpl)?.clearDocumentQueue()
         if (frameWrapper != null) {
           closeAndDisposeFrame()
         }
         Disposer.dispose(editorManager)
       }
     })
-    Disposer.register(this, editorManager)
+
+    editorManager.disposeOnCompletion(coroutineScope)
   }
 
   private fun init(restoreSession: Boolean) {
-    val project = this.orCreateProject
+    val project = getOrCreateProject()
     invokeOnEdt(Runnable {
       var notify = false
       if (frameWrapper == null) {
@@ -109,19 +111,16 @@ class LightEditServiceImpl : LightEditService, Disposable, LightEditorListener, 
     }
   }
 
-  override fun getProject(): Project? {
-    return lightEditProjectManager.project
-  }
+  override fun getProject(): Project? = lightEditProjectManager.project
 
-  val orCreateProject: Project
-    get() = lightEditProjectManager.getOrCreateProject()
+  fun getOrCreateProject(): Project = lightEditProjectManager.getOrCreateProject()
 
   override fun openFile(file: VirtualFile): Project {
     val project = lightEditProjectManager.getOrCreateProject()
     val commandLineOptions = LightEditUtil.getCommandLineOptions()
-    doWhenActionManagerInitialized(Runnable {
+    doWhenActionManagerInitialized {
       doOpenFile(file, commandLineOptions == null || !commandLineOptions.shouldWait())
-    })
+    }
     return project
   }
 
@@ -136,7 +135,7 @@ class LightEditServiceImpl : LightEditService, Disposable, LightEditorListener, 
         if (file.getUserData(LightEditUtil.SUGGEST_SWITCH_TO_PROJECT) == true) {
           file.putUserData(LightEditUtil.SUGGEST_SWITCH_TO_PROJECT, null)
           if (LightEditConfiguration.PreferredMode.LightEdit != configuration.preferredMode) {
-            suggestSwitchToProject(orCreateProject, file)
+            suggestSwitchToProject(getOrCreateProject(), file)
           }
         }
       }
@@ -162,7 +161,7 @@ class LightEditServiceImpl : LightEditService, Disposable, LightEditorListener, 
       }
     }
     if (dialog.exitCode == LightEditConfirmationDialog.PROCEED_TO_PROJECT) {
-      LightEditOpenInProjectIntention.performOn(this.orCreateProject, file)
+      LightEditOpenInProjectIntention.performOn(getOrCreateProject(), file)
     }
   }
 
@@ -179,29 +178,29 @@ class LightEditServiceImpl : LightEditService, Disposable, LightEditorListener, 
     if (!ApplicationManager.getApplication().isUnitTestMode() && frameWrapper != null) {
       val info = editPanel.tabs.getSelectedInfo() ?: return
       @Suppress("UsagesOfObsoleteApi")
-      UiNotifyConnector.doWhenFirstShown(info.component, Runnable {
-        ApplicationManager.getApplication().invokeLater(Runnable {
+      UiNotifyConnector.doWhenFirstShown(info.component) {
+        coroutineScope.launch(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
           LOG.info("Startup took: ${ManagementFactory.getRuntimeMXBean().uptime} ms")
-        })
-      })
+        }
+      }
     }
   }
 
   private fun selectEditorTab(openEditorInfo: LightEditorInfo) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      this.editPanel.tabs.selectTab(openEditorInfo)
+      editPanel.tabs.selectTab(openEditorInfo)
     }
   }
 
   private fun addEditorTab(newEditorInfo: LightEditorInfo) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      this.editPanel.tabs.addEditorTab(newEditorInfo)
+      editPanel.tabs.addEditorTab(newEditorInfo)
     }
   }
 
   fun closeEditor(editorInfo: LightEditorInfo) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      this.editPanel.tabs.closeTab(editorInfo)
+      editPanel.tabs.closeTab(editorInfo)
     }
   }
 
@@ -266,13 +265,13 @@ class LightEditServiceImpl : LightEditService, Disposable, LightEditorListener, 
                }
 
                override fun onDiscard() {
-                 editorManager.getUnsavedEditors().forEach(Consumer { editorInfo: LightEditorInfo? ->
-                   val file = editorInfo!!.getFile()
+                 for (editorInfo in editorManager.getUnsavedEditors()) {
+                   val file = editorInfo.getFile()
                    val document = documentManager.getDocument(file)
                    if (document != null) {
                      documentManager.reloadFromDisk(document)
                    }
-                 })
+                 }
                }
              }
            )

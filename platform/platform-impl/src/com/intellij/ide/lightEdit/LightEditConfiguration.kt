@@ -15,8 +15,6 @@ class LightEditConfiguration {
   var autosaveMode: Boolean = false
   var sessionFiles: List<String> = emptyList()
 
-  var supportedFilePatterns: MutableList<String?>? = null
-
   var frameInfo: FrameInfo? = null
 
   var preferredMode: PreferredMode? = null
