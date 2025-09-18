@@ -39,6 +39,7 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -379,15 +380,14 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     if (project is ComponentManagerEx) {
-      (project as ComponentManagerEx).stopServicePreloading()
+      project.stopServicePreloading()
     }
     closePublisher.projectClosingBeforeSave(project)
     publisher.projectClosingBeforeSave(project)
 
     val projectSaveSettingsDurationMs = measureTimeMillis {
       if (saveProject) {
-        FileDocumentManager.getInstance().saveAllDocuments()
-        @Suppress("ForbiddenInSuspectContextMethod")
+        serviceOrNull<FileDocumentManager>()?.saveAllDocuments()
         SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project)
       }
     }
