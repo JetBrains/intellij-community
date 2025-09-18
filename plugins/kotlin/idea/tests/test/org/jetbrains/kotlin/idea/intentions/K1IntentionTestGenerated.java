@@ -11265,6 +11265,21 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/importAllMembers/TypeReference2.kt");
         }
 
+        @TestMetadata("typeReferenceAtStart.kt")
+        public void testTypeReferenceAtStart() throws Exception {
+            runTest("testData/intentions/importAllMembers/typeReferenceAtStart.kt");
+        }
+
+        @TestMetadata("typeReferenceLeftOfImportableSegment.kt")
+        public void testTypeReferenceLeftOfImportableSegment() throws Exception {
+            runTest("testData/intentions/importAllMembers/typeReferenceLeftOfImportableSegment.kt");
+        }
+
+        @TestMetadata("typeReferenceOnImportableSegment.kt")
+        public void testTypeReferenceOnImportableSegment() throws Exception {
+            runTest("testData/intentions/importAllMembers/typeReferenceOnImportableSegment.kt");
+        }
+
         @TestMetadata("UnresolvedMember.kt")
         public void testUnresolvedMember() throws Exception {
             runTest("testData/intentions/importAllMembers/UnresolvedMember.kt");

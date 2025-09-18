@@ -16,11 +16,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
 @OptIn(KaIdeApi::class)
@@ -118,10 +118,3 @@ private fun computeContext(file: KtFile, symbol: KaSymbol): ImportMemberIntentio
 
 private fun KaFileSymbol.isInSamePackage(file: KtFile): Boolean =
     (psi as? KtFile)?.packageFqName == file.packageFqName
-
-private val KtElement.actualReference: KtReference?
-    get() = when (this) {
-        is KtDotQualifiedExpression -> this.getQualifiedElementSelector()?.mainReference
-        is KtUserType -> referenceExpression?.mainReference
-        else -> null
-    }
