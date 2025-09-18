@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.providers.topHit
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -14,9 +15,15 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-class SeTopHitItem(val item: Any, private val weight: Int, private val project: Project, val extendedInfo: SeExtendedInfo?, val isMultiSelectionSupported: Boolean) : SeItem {
+class SeTopHitItem(
+  override val rawObject: Any,
+  override val contributor: SearchEverywhereContributor<*>,
+  private val weight: Int, private val project: Project,
+  val extendedInfo: SeExtendedInfo?,
+  val isMultiSelectionSupported: Boolean
+) : SeLegacyItem {
   override fun weight(): Int = weight
-  override suspend fun presentation(): SeItemPresentation = SeTopHitItemPresentationProvider.getPresentation(item, project, extendedInfo, isMultiSelectionSupported)
+  override suspend fun presentation(): SeItemPresentation = SeTopHitItemPresentationProvider.getPresentation(rawObject, project, extendedInfo, isMultiSelectionSupported)
 }
 
 @ApiStatus.Internal
@@ -35,13 +42,13 @@ open class SeTopHitItemsProvider(
 
     contributorWrapper.fetchElements(inputQuery, object : AsyncProcessor<Any> {
       override suspend fun process(item: Any, weight: Int): Boolean {
-        return collector.put(SeTopHitItem(item, weight + additionalWeight, project, contributor.getExtendedInfo(item), contributorWrapper.contributor.isMultiSelectionSupported))
+        return collector.put(SeTopHitItem(item, contributor, weight + additionalWeight, project, contributor.getExtendedInfo(item), contributorWrapper.contributor.isMultiSelectionSupported))
       }
     })
   }
 
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
-    val legacyItem = (item as? SeTopHitItem)?.item ?: return false
+    val legacyItem = (item as? SeTopHitItem)?.rawObject ?: return false
     return withContext(Dispatchers.EDT) {
       contributor.processSelectedItem(legacyItem, modifiers, searchText)
     }

@@ -67,6 +67,7 @@ class SeItemsProviderMock(
 class SeItemMock(val text: @NlsSafe String) : SeItem {
   private var presentationUpdateCounter = -1
 
+  override val rawObject: Any get() = text
   override fun weight(): Int = 0
   override suspend fun presentation(): SeItemPresentation {
     presentationUpdateCounter++

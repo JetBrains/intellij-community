@@ -27,13 +27,13 @@ class SeYAMLKeysProvider(private val contributorWrapper: SeAsyncContributorWrapp
     contributorWrapper.fetchElements(params.inputQuery, object : AsyncProcessor<Any> {
       override suspend fun process(item: Any, weight: Int): Boolean {
         if (item !is YAMLKeyNavigationItem) return true
-        return collector.put(SeNavigationItem(item, weight, contributor.getExtendedInfo(item), contributorWrapper.contributor.isMultiSelectionSupported))
+        return collector.put(SeNavigationItem(item, contributor, weight, contributor.getExtendedInfo(item), contributorWrapper.contributor.isMultiSelectionSupported))
       }
     })
   }
 
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
-    val legacyItem = (item as? SeNavigationItem)?.item ?: return false
+    val legacyItem = (item as? SeNavigationItem)?.rawObject ?: return false
     return withContext(Dispatchers.EDT) {
       contributor.processSelectedItem(legacyItem, modifiers, searchText)
     }

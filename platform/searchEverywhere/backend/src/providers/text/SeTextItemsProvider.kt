@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.backend.providers.text
 import com.intellij.find.FindManager
 import com.intellij.find.impl.JComboboxAction
 import com.intellij.find.impl.SearchEverywhereItem
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.toSerializableTextChunk
 import com.intellij.openapi.application.EDT
@@ -19,7 +20,13 @@ import org.jetbrains.annotations.Nls
 import java.awt.event.InputEvent
 
 @ApiStatus.Internal
-class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int, val extendedInfo: SeExtendedInfo, val isMultiSelectionSupported: Boolean) : SeItem {
+class SeTextSearchItem(
+  val item: SearchEverywhereItem,
+  override val contributor: SearchEverywhereContributor<*>,
+  private val weight: Int,
+  val extendedInfo: SeExtendedInfo,
+  val isMultiSelectionSupported: Boolean) : SeLegacyItem {
+  override val rawObject: Any get() = item
   override fun weight(): Int = weight
 
   override suspend fun presentation(): SeItemPresentation =
@@ -70,7 +77,7 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     contributorWrapper.fetchElements(inputQuery, object : AsyncProcessor<Any> {
       override suspend fun process(item: Any, weight: Int): Boolean {
         if (item !is SearchEverywhereItem) return true
-        return collector.put(SeTextSearchItem(item, weight, contributor.getExtendedInfo(item), contributorWrapper.contributor.isMultiSelectionSupported))
+        return collector.put(SeTextSearchItem(item, contributor, weight, contributor.getExtendedInfo(item), contributorWrapper.contributor.isMultiSelectionSupported))
       }
     })
   }

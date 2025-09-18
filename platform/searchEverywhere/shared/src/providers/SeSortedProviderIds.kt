@@ -33,6 +33,8 @@ class SeSortedProviderIds(
 @ApiStatus.Internal
 @Serializable
 class SeFetchTestItem : SeItem {
+  override val rawObject: Any get() = this
+
   override fun weight(): Int = 0
   override suspend fun presentation(): SeItemPresentation = SeAdaptedItemEmptyPresentation(false)
 }
