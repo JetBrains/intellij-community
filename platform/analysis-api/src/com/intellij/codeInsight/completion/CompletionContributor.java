@@ -162,14 +162,10 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
   private static boolean runProviders(@NotNull Collection<ProviderWithPattern> providers,
                                       @NotNull CompletionParameters parameters,
                                       @NotNull CompletionResultSet result) {
-    for (ProviderWithPattern providerWithPattern : providers) {
+    for (ProviderWithPattern provider : providers) {
       ProgressManager.checkCanceled();
-      ProcessingContext context = new ProcessingContext();
-      if (providerWithPattern.pattern().accepts(parameters.getPosition(), context)) {
-        providerWithPattern.provider().addCompletionVariants(parameters, context, result);
-        if (result.isStopped()) {
-          return false;
-        }
+      if (!provider.processCandidates(parameters, result)) {
+        return false;
       }
     }
     return true;
@@ -249,5 +245,16 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
   private record ProviderWithPattern(
     @NotNull ElementPattern<? extends PsiElement> pattern,
     @NotNull CompletionProvider<CompletionParameters> provider
-  ) {}
+  ) {
+
+    boolean processCandidates(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+      ProcessingContext context = new ProcessingContext();
+      if (!pattern.accepts(parameters.getPosition(), context)) {
+        return true;
+      }
+
+      provider.addCompletionVariants(parameters, context, result);
+      return !result.isStopped();
+    }
+  }
 }
