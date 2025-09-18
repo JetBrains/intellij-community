@@ -1,82 +1,73 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.lightEdit;
+package com.intellij.ide.lightEdit
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.nio.file.Path;
-import java.util.Collection;
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 @ApiStatus.Experimental
-public interface LightEditService {
-  static @NotNull String getWindowName() {
-    return "LightEdit";
-  }
+interface LightEditService {
+  companion object {
+    val windowName: String
+      get() = "LightEdit"
 
-  static LightEditService getInstance() {
-    return ApplicationManager.getApplication().getService(LightEditService.class);
+    @RequiresBlockingContext
+    @JvmStatic
+    fun getInstance(): LightEditService = service()
   }
 
   /**
-   * Creates an empty document with the specified {@code preferredSavePath} and opens an editor tab.
-   *
+   * Creates an empty document with the specified `preferredSavePath` and opens an editor tab.
+   * 
    * @param preferredSavePath The preferred path to save the document by default. The path must contain at least a file name. If the path
-   *                          is valid, it will be used to save the document without a file save dialog. If {@code preferredSavePath} is
-   *                          {@code null}, the new document will have a default name "untitled_...".
+   * is valid, it will be used to save the document without a file save dialog. If `preferredSavePath` is
+   * `null`, the new document will have a default name "untitled_...".
    * @return Editor info for the newly created document.
    */
-  LightEditorInfo createNewDocument(@Nullable Path preferredSavePath);
+  fun createNewDocument(preferredSavePath: Path?): LightEditorInfo?
 
-  void saveToAnotherFile(@NotNull VirtualFile file);
+  fun saveToAnotherFile(file: VirtualFile)
 
-  void showEditorWindow();
+  fun showEditorWindow()
 
-  @Nullable
-  Project getProject();
+  val project: Project?
 
-  @NotNull
-  Project openFile(@NotNull VirtualFile file);
+  fun openFile(file: VirtualFile): Project
 
-  @Nullable Project openFile(@NotNull Path path, boolean suggestSwitchToProject);
+  fun openFile(path: Path, suggestSwitchToProject: Boolean): Project?
 
-  boolean isAutosaveMode();
+  var isAutosaveMode: Boolean
 
-  void setAutosaveMode(boolean autosaveMode);
+  fun closeEditorWindow(): Boolean
 
-  boolean closeEditorWindow();
+  val editorManager: LightEditorManager
 
-  @NotNull
-  LightEditorManager getEditorManager();
+  fun getSelectedFile(): VirtualFile?
 
-  @Nullable
-  VirtualFile getSelectedFile();
+  fun getSelectedFileEditor(): FileEditor?
 
-  @Nullable
-  FileEditor getSelectedFileEditor();
-
-  void updateFileStatus(@NotNull Collection<? extends @NotNull VirtualFile> files);
+  fun updateFileStatus(files: Collection<VirtualFile>)
 
   /**
    * Prompt a user to save all new documents that haven't been written to files yet.
    */
-  void saveNewDocuments();
+  fun saveNewDocuments()
 
-  boolean isTabNavigationAvailable(@NotNull AnAction navigationAction);
+  fun isTabNavigationAvailable(navigationAction: AnAction): Boolean
 
-  void navigateToTab(@NotNull AnAction navigationAction);
+  fun navigateToTab(navigationAction: AnAction)
 
   /**
    * @return True if Project mode is preferred without a confirmation.
    */
-  boolean isPreferProjectMode();
+  val isPreferProjectMode: Boolean
 
-  boolean isLightEditEnabled();
+  fun isLightEditEnabled(): Boolean
 
-  boolean isForceOpenInLightEditMode();
+  fun isForceOpenInLightEditMode(): Boolean
 }

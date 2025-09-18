@@ -69,8 +69,8 @@ class ProjectWindowAction(
     get() = myNext
 
   private fun findProject(): Project? {
-    if (LightEditService.getWindowName() == this.projectName) {
-      return LightEditService.getInstance().getProject()
+    if (LightEditService.windowName == this.projectName) {
+      return LightEditService.getInstance().project
     }
 
     val projects = ProjectManager.getInstance().getOpenProjects()
@@ -105,12 +105,12 @@ class ProjectWindowAction(
     }
 
     projectFrame.toFront()
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(Runnable {
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
       val mostRecentFocusOwner = projectFrame.mostRecentFocusOwner
       if (mostRecentFocusOwner != null) {
         IdeFocusManager.getGlobalInstance().requestFocus(mostRecentFocusOwner, true)
       }
-    })
+    }
   }
 
   @NonNls

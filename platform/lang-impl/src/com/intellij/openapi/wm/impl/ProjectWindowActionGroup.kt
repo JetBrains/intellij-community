@@ -119,7 +119,7 @@ class ProjectWindowActionGroup : IdeDependentActionGroup(), ActionRemoteBehavior
 private fun getProjectDisplayName(project: Project): @NlsActions.ActionText String {
   if (LightEdit.owns(project)) {
     @Suppress("HardCodedStringLiteral")
-    return LightEditService.getWindowName()
+    return LightEditService.windowName
   }
 
   val name = getMultiProjectDisplayName(project)

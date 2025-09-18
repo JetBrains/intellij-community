@@ -106,7 +106,6 @@ import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.coroutines.coroutineContext
 import kotlin.system.measureTimeMillis
 
 @Internal
@@ -233,6 +232,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     get() = defaultProject.isCached
 
   override fun getDefaultProject(): Project {
+    @Suppress("GrazieInspection")
     LOG.assertTrue(!ApplicationManager.getApplication().isDisposed, "Application has already been disposed!")
     defaultProject.markRequested()
     return defaultProject
@@ -1335,7 +1335,7 @@ private suspend fun initProject(
       }
     }
 
-    coroutineContext.ensureActive()
+    currentCoroutineContext().ensureActive()
     project.componentStore.setPath(file, template)
 
     coroutineScope {

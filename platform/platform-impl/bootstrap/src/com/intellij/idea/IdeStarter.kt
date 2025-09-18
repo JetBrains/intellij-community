@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.idea
 
 import com.intellij.accessibility.enableScreenReaderSupportIfNeeded
@@ -45,12 +47,11 @@ import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.*
 import javax.swing.JOptionPane
 
 open class IdeStarter : ModernApplicationStarter() {
   companion object {
-    private var filesToLoad: List<Path> = Collections.emptyList()
+    private var filesToLoad: List<Path> = emptyList()
     private var uriToOpen: String? = null
 
     fun openFilesOnLoading(value: List<Path>) {
@@ -264,9 +265,7 @@ open class IdeStarter : ModernApplicationStarter() {
       }
     }
 
-    override fun shouldRunFusStartUpMeasurer(): Boolean {
-      return javaClass == StandaloneLightEditStarter::class.java
-    }
+    override fun shouldRunFusStartUpMeasurer(): Boolean = javaClass == StandaloneLightEditStarter::class.java
   }
 }
 
@@ -290,6 +289,7 @@ private fun postOpenUiTasks(scope: CoroutineScope) {
   }
 
   if (SystemInfoRt.isMac) {
+    @Suppress("GrazieInspection")
     scope.launch(CoroutineName("mac touchbar on app init")) {
       TouchbarSupport.onApplicationLoaded()
     }
@@ -333,8 +333,8 @@ private suspend fun reportPluginErrors() {
     val actions = linksToActions(pluginErrorMessages)
     val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrorMessages).toString()
     @Suppress("DEPRECATION")
-    serviceAsync<NotificationGroupManager>().getNotificationGroup(
-      "Plugin Error").createNotification(title, content, NotificationType.ERROR)
+    serviceAsync<NotificationGroupManager>().getNotificationGroup("Plugin Error")
+      .createNotification(title, content, NotificationType.ERROR)
       .setListener { notification, event ->
         notification.expire()
         PluginManagerMain.onEvent(event.description)
@@ -350,7 +350,7 @@ private fun linksToActions(errors: MutableList<HtmlChunk>): Collection<AnAction>
 
   while (!errors.isEmpty()) {
     val builder = StringBuilder()
-    errors[errors.lastIndex].appendTo(builder)
+    errors.get(errors.lastIndex).appendTo(builder)
     val error = builder.toString()
 
     if (error.startsWith(link)) {

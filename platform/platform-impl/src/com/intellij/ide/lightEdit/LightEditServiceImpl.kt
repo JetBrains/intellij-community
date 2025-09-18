@@ -44,7 +44,7 @@ import kotlin.system.exitProcess
 class LightEditServiceImpl(private val coroutineScope: CoroutineScope)
   : LightEditService, Disposable, LightEditorListener, PersistentStateComponent<LightEditConfiguration> {
   private var frameWrapper: LightEditFrameWrapper? = null
-  private val editorManager = LightEditorManagerImpl(this)
+  override val editorManager: LightEditorManagerImpl = LightEditorManagerImpl(this)
   private var configuration = LightEditConfiguration()
   private val lightEditProjectManager = LightEditProjectManager()
   private var editorWindowClosing = false
@@ -74,7 +74,7 @@ class LightEditServiceImpl(private val coroutineScope: CoroutineScope)
 
   private fun init(restoreSession: Boolean) {
     val project = getOrCreateProject()
-    invokeOnEdt(Runnable {
+    invokeOnEdt {
       var notify = false
       if (frameWrapper == null) {
         saveSession = restoreSession
@@ -95,10 +95,9 @@ class LightEditServiceImpl(private val coroutineScope: CoroutineScope)
 
       frameWrapper!!.setFrameTitle(appName)
       if (notify) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher<LightEditServiceListener>(
-          LightEditServiceListener.TOPIC).lightEditWindowOpened(project)
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(LightEditServiceListener.TOPIC).lightEditWindowOpened(project)
       }
-    })
+    }
   }
 
   override fun showEditorWindow() {
@@ -111,7 +110,8 @@ class LightEditServiceImpl(private val coroutineScope: CoroutineScope)
     }
   }
 
-  override fun getProject(): Project? = lightEditProjectManager.project
+  override val project: Project?
+    get() = lightEditProjectManager.project
 
   fun getOrCreateProject(): Project = lightEditProjectManager.getOrCreateProject()
 
@@ -231,8 +231,7 @@ class LightEditServiceImpl(private val coroutineScope: CoroutineScope)
     }
 
     LOG.info("Window closed")
-    ApplicationManager.getApplication().getMessageBus().syncPublisher<LightEditServiceListener>(
-      LightEditServiceListener.TOPIC).lightEditWindowClosed(project)
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(LightEditServiceListener.TOPIC).lightEditWindowClosed(project)
     if (ProjectManager.getInstance().getOpenProjects().size == 0 && getInstance() == null) {
       closeAndDisposeFrame()
       LOG.info("No open projects or welcome frame, exiting")
@@ -265,7 +264,7 @@ class LightEditServiceImpl(private val coroutineScope: CoroutineScope)
                }
 
                override fun onDiscard() {
-                 for (editorInfo in editorManager.getUnsavedEditors()) {
+                 for (editorInfo in editorManager.unsavedEditors) {
                    val file = editorInfo.getFile()
                    val document = documentManager.getDocument(file)
                    if (document != null) {
@@ -278,7 +277,7 @@ class LightEditServiceImpl(private val coroutineScope: CoroutineScope)
   }
 
   private fun autoSaveDocuments(): Boolean {
-    if (isAutosaveMode()) {
+    if (isAutosaveMode) {
       FileDocumentManager.getInstance().saveAllDocuments()
       return true
     }
@@ -341,13 +340,9 @@ class LightEditServiceImpl(private val coroutineScope: CoroutineScope)
   }
 
   override fun afterClose(editorInfo: LightEditorInfo) {
-    if (editorManager.getEditorCount() == 0 && !editorWindowClosing) {
+    if (editorManager.editorCount == 0 && !editorWindowClosing) {
       closeEditorWindow()
     }
-  }
-
-  override fun getEditorManager(): LightEditorManager {
-    return editorManager
   }
 
   private fun saveEditorAs(editorInfo: LightEditorInfo, targetFile: VirtualFile) {
@@ -356,21 +351,19 @@ class LightEditServiceImpl(private val coroutineScope: CoroutineScope)
   }
 
   override fun saveToAnotherFile(file: VirtualFile) {
-    val editorInfo: LightEditorInfo? = editorManager.getEditorInfo(file)
-    if (editorInfo != null) {
-      val targetFile = LightEditUtil.chooseTargetFile(frameWrapper!!.lightEditPanel, editorInfo)
-      if (targetFile != null) {
-        saveEditorAs(editorInfo, targetFile)
-      }
+    val editorInfo = editorManager.getEditorInfo(file) ?: return
+    val targetFile = LightEditUtil.chooseTargetFile(frameWrapper!!.lightEditPanel, editorInfo)
+    if (targetFile != null) {
+      saveEditorAs(editorInfo, targetFile)
     }
   }
 
-  override fun isAutosaveMode(): Boolean = configuration.autosaveMode
-
-  override fun setAutosaveMode(autosaveMode: Boolean) {
-    configuration.autosaveMode = autosaveMode
-    editorManager.fireAutosaveModeChanged(autosaveMode)
-  }
+  override var isAutosaveMode: Boolean
+    get() = configuration.autosaveMode
+    set(value) {
+      configuration.autosaveMode = value
+      editorManager.fireAutosaveModeChanged(value)
+    }
 
   @TestOnly
   fun disposeCurrentSession() {
@@ -390,7 +383,7 @@ class LightEditServiceImpl(private val coroutineScope: CoroutineScope)
   }
 
   private fun restoreSession() {
-    doWhenActionManagerInitialized(Runnable {
+    doWhenActionManagerInitialized {
       frameWrapper!!.setFrameTitleUpdateEnabled(false)
       for (path in configuration.sessionFiles) {
         VirtualFileManager.getInstance().findFileByUrl(path)?.let {
@@ -398,7 +391,7 @@ class LightEditServiceImpl(private val coroutineScope: CoroutineScope)
         }
       }
       frameWrapper!!.setFrameTitleUpdateEnabled(true)
-    })
+    }
   }
 
   fun setFrameInfo(frameInfo: FrameInfo) {
@@ -428,9 +421,8 @@ class LightEditServiceImpl(private val coroutineScope: CoroutineScope)
     this.editPanel.tabs.navigateToTab(navigationAction)
   }
 
-  override fun isPreferProjectMode(): Boolean {
-    return configuration.preferredMode != null && LightEditConfiguration.PreferredMode.Project == configuration.preferredMode
-  }
+  override val isPreferProjectMode: Boolean
+    get() = configuration.preferredMode != null && LightEditConfiguration.PreferredMode.Project == configuration.preferredMode
 
   override fun isLightEditEnabled(): Boolean {
     return LightEditUtil.isLightEditEnabled()
@@ -450,7 +442,7 @@ private val LOG = logger<LightEditServiceImpl>()
 private val appName: String
   get() = ApplicationInfo.getInstance().getVersionName()
 
-private fun doWhenActionManagerInitialized(callback: Runnable) {
+private fun doWhenActionManagerInitialized(callback: () -> Unit) {
   val created = serviceIfCreated<ActionManager>()
   if (created == null) {
     NonUrgentExecutor.getInstance().execute(Runnable {

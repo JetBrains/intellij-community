@@ -8,6 +8,7 @@ import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -190,7 +191,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       }
 
       var options = originalOptions
-      if (LightEditService.getInstance() != null && LightEditService.getInstance().isForceOpenInLightEditMode) {
+      val lightEditService = serviceOrNull<LightEditService>()
+      if (lightEditService != null && lightEditService.isForceOpenInLightEditMode()) {
         LightEditService.getInstance().openFile(file, false)?.let {
           FUSProjectHotStartUpMeasurer.lightEditProjectFound()
           return it
@@ -207,8 +209,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       // no reasonable directory -> create new temp one or use parent
       if (baseDirCandidate == null) {
         LOG.info("No project directory found")
-        if (LightEditService.getInstance() != null) {
-          if (LightEditService.getInstance().isLightEditEnabled && !LightEditService.getInstance().isPreferProjectMode) {
+        if (lightEditService != null) {
+          if (lightEditService.isLightEditEnabled() && !LightEditService.getInstance().isPreferProjectMode) {
             val lightEditProject = LightEditService.getInstance().openFile(file, true)
             if (lightEditProject != null) {
               FUSProjectHotStartUpMeasurer.lightEditProjectFound()
@@ -249,7 +251,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       }
 
       var options = originalOptions
-      if (LightEditService.getInstance() != null && LightEditService.getInstance().isForceOpenInLightEditMode) {
+      val lightEditService = serviceOrNull<LightEditService>()
+      if (lightEditService != null && lightEditService.isForceOpenInLightEditMode()) {
         LightEditService.getInstance().openFile(file, false)?.let {
           FUSProjectHotStartUpMeasurer.lightEditProjectFound()
           return it
@@ -266,8 +269,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       // no reasonable directory -> create new temp one or use parent
       if (baseDirCandidate == null) {
         LOG.info("No project directory found")
-        if (LightEditService.getInstance() != null) {
-          if (LightEditService.getInstance().isLightEditEnabled && !LightEditService.getInstance().isPreferProjectMode) {
+        if (lightEditService != null) {
+          if (lightEditService.isLightEditEnabled() && !LightEditService.getInstance().isPreferProjectMode) {
             val lightEditProject = LightEditService.getInstance().openFile(file, true)
             if (lightEditProject != null) {
               FUSProjectHotStartUpMeasurer.lightEditProjectFound()
