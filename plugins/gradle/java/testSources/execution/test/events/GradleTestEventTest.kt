@@ -168,7 +168,7 @@ class GradleTestEventTest : GradleTestExecutionTestCase() {
   @AllGradleVersionsSource
   fun `test parametrized test count`(gradleVersion: GradleVersion) {
     assumeThatGradleIsAtLeast(gradleVersion,"7.0")
-    testJunit5Project(gradleVersion) {
+    testJunitPlatformProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """
       | import org.junit.jupiter.params.ParameterizedTest;
       | import org.junit.jupiter.params.provider.ValueSource;
@@ -185,7 +185,10 @@ class GradleTestEventTest : GradleTestExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      val pattern = "[%d] %s"
+      val pattern = when {
+        gradleVersion >= GradleVersion.version("9.0.0") -> "[%d] \"%s\""
+        else -> "[%d] %s"
+      }
 
       assertTestEventCount("test(String)",1, 1, 0, 0, 0, 0)
       assertTestEventCount(String.format(pattern, 1, 'a'),0, 0, 1, 1, 0, 0)
