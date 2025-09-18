@@ -1,167 +1,123 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl;
+package com.intellij.openapi.wm.impl
 
-import com.intellij.ide.IdeDependentActionGroup;
-import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.ide.lightEdit.LightEditService;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.NaturalComparator;
-import com.intellij.platform.ModuleAttachProcessor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.IdeDependentActionGroup
+import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.ide.lightEdit.LightEditService
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.NaturalComparator
+import com.intellij.platform.ModuleAttachProcessor.Companion.getMultiProjectDisplayName
+import java.util.*
 
-import java.util.*;
+class ProjectWindowActionGroup : IdeDependentActionGroup(), ActionRemoteBehaviorSpecification.Frontend {
+  private var latest: ProjectWindowAction? = null
 
-/**
- * @author Bas Leijdekkers
- */
-public final class ProjectWindowActionGroup extends IdeDependentActionGroup implements ActionRemoteBehaviorSpecification.Frontend {
-  private ProjectWindowAction latest = null;
-
-  public void addProject(@NotNull Project project) {
-    String projectLocation = project.getPresentableUrl();
-    if (projectLocation == null) {
-      return;
-    }
-
-    String projectName = getProjectDisplayName(project);
-    ProjectWindowAction windowAction = new ProjectWindowAction(projectName, projectLocation, latest);
-    List<ProjectWindowAction> duplicateWindowActions = findWindowActionsWithProjectName(projectName);
+  fun addProject(project: Project) {
+    val projectLocation = project.presentableUrl ?: return
+    val projectName: String = getProjectDisplayName(project)
+    val windowAction = ProjectWindowAction(projectName, projectLocation, latest)
+    val duplicateWindowActions = findWindowActionsWithProjectName(projectName)
     if (!duplicateWindowActions.isEmpty()) {
-      for (ProjectWindowAction action : duplicateWindowActions) {
-        action.getTemplatePresentation().setText(FileUtil.getLocationRelativeToUserHome(action.getProjectLocation()));
+      for (action in duplicateWindowActions) {
+        action.getTemplatePresentation().setText(FileUtil.getLocationRelativeToUserHome(action.projectLocation))
       }
-      windowAction.getTemplatePresentation().setText(FileUtil.getLocationRelativeToUserHome(windowAction.getProjectLocation()));
+      windowAction.getTemplatePresentation().setText(FileUtil.getLocationRelativeToUserHome(windowAction.projectLocation))
     }
-    add(windowAction);
-    latest = windowAction;
+    add(windowAction)
+    latest = windowAction
   }
 
-  private static @NlsActions.ActionText String getProjectDisplayName(Project project) {
-    if (LightEdit.owns(project)) {
-      return LightEditService.getWindowName();
-    }
-
-    String name = ModuleAttachProcessor.getMultiProjectDisplayName(project);
-    return name == null ? project.getName() : name;
-  }
-
-  public void removeProject(@NotNull Project project) {
-    final ProjectWindowAction windowAction = findWindowAction(project.getPresentableUrl());
-    if (windowAction == null) {
-      return;
-    }
+  fun removeProject(project: Project) {
+    val windowAction = project.presentableUrl?.let { findWindowAction(it) } ?: return
     if (latest == windowAction) {
-      final ProjectWindowAction previous = latest.getPrevious();
-      if (previous != latest) {
-        latest = previous;
-      } else {
-        latest = null;
+      val previous = latest?.previous
+      latest = if (previous == latest) null else previous
+    }
+    remove(windowAction)
+    val projectName: String = getProjectDisplayName(project)
+    val duplicateWindowActions = findWindowActionsWithProjectName(projectName)
+    if (duplicateWindowActions.size == 1) {
+      duplicateWindowActions.first().getTemplatePresentation().setText(projectName)
+    }
+    windowAction.dispose()
+  }
+
+  val isEnabled: Boolean
+    get() = latest != null && latest?.previous != latest
+
+  override fun isDumbAware(): Boolean = true
+
+  fun activateNextWindow(e: AnActionEvent) {
+    val presentableUrl = e.getData(CommonDataKeys.PROJECT)?.presentableUrl ?: return
+    findWindowAction(presentableUrl)?.next?.setSelected(e, true)
+  }
+
+  fun activatePreviousWindow(e: AnActionEvent) {
+    val presentableUrl = e.getData(CommonDataKeys.PROJECT)?.presentableUrl?: return
+    val windowAction = findWindowAction(presentableUrl) ?: return
+    windowAction.previous?.setSelected(e, true)
+  }
+
+  private fun findWindowAction(projectLocation: String): ProjectWindowAction? {
+    val children = getChildren(ActionManager.getInstance())
+    for (child in children) {
+      if (child !is ProjectWindowAction) {
+        continue
+      }
+      if (projectLocation == child.projectLocation) {
+        return child
       }
     }
-    remove(windowAction);
-    final String projectName = getProjectDisplayName(project);
-    final List<ProjectWindowAction> duplicateWindowActions = findWindowActionsWithProjectName(projectName);
-    if (duplicateWindowActions.size() == 1) {
-      duplicateWindowActions.get(0).getTemplatePresentation().setText(projectName);
-    }
-    windowAction.dispose();
+    return null
   }
 
-  public boolean isEnabled() {
-    return latest != null && latest.getPrevious() != latest;
-  }
-
-  @Override
-  public boolean isDumbAware() {
-    return true;
-  }
-
-  public void activateNextWindow(@NotNull AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) {
-      return;
-    }
-    final ProjectWindowAction windowAction = findWindowAction(project.getPresentableUrl());
-    if (windowAction == null) {
-      return;
-    }
-    ProjectWindowAction next = windowAction.getNext();
-    if (next != null) {
-      next.setSelected(e, true);
-    }
-  }
-
-  public void activatePreviousWindow(@NotNull AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) {
-      return;
-    }
-    final ProjectWindowAction windowAction = findWindowAction(project.getPresentableUrl());
-    if (windowAction == null) {
-      return;
-    }
-    final ProjectWindowAction previous = windowAction.getPrevious();
-    if (previous != null) {
-      previous.setSelected(e, true);
-    }
-  }
-
-  private @Nullable ProjectWindowAction findWindowAction(String projectLocation) {
-    if (projectLocation == null) {
-      return null;
-    }
-    final AnAction[] children = getChildren(ActionManager.getInstance());
-    for (AnAction child : children) {
-      if (!(child instanceof ProjectWindowAction windowAction)) {
-        continue;
+  private fun findWindowActionsWithProjectName(projectName: String): List<ProjectWindowAction> {
+    var result: MutableList<ProjectWindowAction>? = null
+    val children = getChildren(ActionManager.getInstance())
+    for (child in children) {
+      if (child !is ProjectWindowAction) {
+        continue
       }
-      if (projectLocation.equals(windowAction.getProjectLocation())) {
-        return windowAction;
-      }
-    }
-    return null;
-  }
 
-  private List<ProjectWindowAction> findWindowActionsWithProjectName(String projectName) {
-    List<ProjectWindowAction> result = null;
-    final AnAction[] children = getChildren(ActionManager.getInstance());
-    for (AnAction child : children) {
-      if (!(child instanceof ProjectWindowAction windowAction)) {
-        continue;
-      }
-      if (projectName.equals(windowAction.getProjectName())) {
+      if (projectName == child.projectName) {
         if (result == null) {
-          result = new ArrayList<>();
+          result = ArrayList<ProjectWindowAction>()
         }
-        result.add(windowAction);
+        result.add(child)
       }
     }
-    if (result == null) {
-      return Collections.emptyList();
-    }
-    return result;
+    return result ?: emptyList()
   }
 
-  @Override
-  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent event) {
-    AnAction[] children = super.getChildren(event);
-    Arrays.sort(children, SORT_BY_NAME);
-    return children;
+  override fun getChildren(event: AnActionEvent?): Array<AnAction> {
+    val children = super.getChildren(event)
+    Arrays.sort(children, SORT_BY_NAME)
+    return children
+  }
+}
+
+@NlsActions.ActionText
+private fun getProjectDisplayName(project: Project): @NlsActions.ActionText String {
+  if (LightEdit.owns(project)) {
+    @Suppress("HardCodedStringLiteral")
+    return LightEditService.getWindowName()
   }
 
-  private static @Nullable String getProjectName(AnAction action) {
-    return action instanceof ProjectWindowAction ? ((ProjectWindowAction)action).getProjectName() : null;
-  }
+  val name = getMultiProjectDisplayName(project)
+  return name ?: project.getName()
+}
 
-  private static final Comparator<AnAction> SORT_BY_NAME = (action1, action2) -> {
-    return NaturalComparator.INSTANCE.compare(getProjectName(action1), getProjectName(action2));
-  };
+private fun getProjectName(action: AnAction?): String? {
+  return if (action is ProjectWindowAction) action.projectName else null
+}
+
+private val SORT_BY_NAME = Comparator { action1: AnAction?, action2: AnAction? ->
+  NaturalComparator.INSTANCE.compare(getProjectName(action1), getProjectName(action2))
 }
