@@ -62,6 +62,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles.deleteRecursively
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.ZipHandler
@@ -90,7 +91,6 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.delete
 import com.intellij.util.runSuppressing
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import kotlinx.coroutines.*
@@ -99,7 +99,6 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -653,7 +652,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             val project = when {
               options.project != null -> options.project!!
               options.isNewProject -> prepareNewProject(
-                projectStoreBaseDir = projectStoreBaseDir,
+                identityFle = projectStoreBaseDir,
                 projectName = options.projectName,
                 beforeInit = options.beforeInit,
                 useDefaultProjectAsTemplate = options.useDefaultProjectAsTemplate,
@@ -875,7 +874,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   private suspend fun prepareNewProject(
-    projectStoreBaseDir: Path,
+    identityFle: Path,
     projectName: String?,
     beforeInit: ((Project) -> Unit)?,
     useDefaultProjectAsTemplate: Boolean,
@@ -892,18 +891,26 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         null
       }
       withContext(Dispatchers.IO) {
-        removeProjectConfigurationAndCaches(projectStoreBaseDir)
+        launch {
+          try {
+            ProjectStorePathManager.getInstance().getStoreDescriptor(identityFle).removeProjectConfigurationAndCaches()
+          }
+          catch (_: IOException) {
+          }
+        }
+        launch {
+          try {
+            deleteRecursively(getProjectDataPathRoot(identityFle))
+          }
+          catch (_: IOException) {
+          }
+        }
       }
 
-      val project = instantiateProject(projectStoreBaseDir, projectName, beforeInit)
+      val project = instantiateProject(identityFle = identityFle, projectName = projectName, beforeInit = beforeInit)
       project.putUserData(PROJECT_NEWLY_OPENED, markAsNew)
       val template = templateAsync?.await()
-      initProject(
-        file = projectStoreBaseDir,
-        project = project,
-        preloadServices = preloadServices,
-        template = template,
-      )
+      initProject(file = identityFle, project = project, preloadServices = preloadServices, template = template)
       project
     }
   }
@@ -1257,28 +1264,6 @@ private fun toCanonicalName(filePath: String): Path {
   catch (_: IOException) {
   } // the file does not yet exist, so its canonical path will be equal to its original path
   return file
-}
-
-private fun removeProjectConfigurationAndCaches(projectFile: Path) {
-  try {
-    if (Files.isRegularFile(projectFile)) {
-      Files.deleteIfExists(projectFile)
-    }
-    else {
-      Files.newDirectoryStream(ProjectStorePathManager.getInstance().getStoreDescriptor(projectFile).dotIdea!!).use { directoryStream ->
-        for (file in directoryStream) {
-          file!!.delete()
-        }
-      }
-    }
-  }
-  catch (_: IOException) {
-  }
-  try {
-    getProjectDataPathRoot(projectFile).delete()
-  }
-  catch (_: IOException) {
-  }
 }
 
 private class ProjectInitHelper(

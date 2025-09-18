@@ -26,6 +26,10 @@ internal class IprProjectStoreDescriptor(
     return Files.isRegularFile(file)
   }
 
+  override fun removeProjectConfigurationAndCaches() {
+    Files.deleteIfExists(file)
+  }
+
   override fun getProjectName(): String {
     return file.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
   }

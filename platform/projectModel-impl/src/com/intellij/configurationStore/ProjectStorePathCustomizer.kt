@@ -8,6 +8,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.NioFiles
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -31,6 +32,12 @@ interface ProjectStoreDescriptor {
 
   // where we do store project files (misc.xml and so on)
   val dotIdea: Path?
+
+  fun removeProjectConfigurationAndCaches() {
+    for (file in NioFiles.list(dotIdea!!)) {
+      NioFiles.deleteRecursively(file)
+    }
+  }
 
   val presentableUrl: Path
     get() = projectIdentityFile
