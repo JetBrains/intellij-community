@@ -21,7 +21,6 @@ jvm_library(
     ":ai.grazie.spell.gec.engine.local_resources",
     "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-gec-engine-local",
     "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-hunspell-en",
-    "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-utils-lucene-lt-compatibility",
     "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-detect",
     "@lib//:libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-swagger-annotations-jvm",
   ]

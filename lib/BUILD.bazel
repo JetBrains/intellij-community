@@ -4361,12 +4361,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-utils-lucene-lt-compatibility",
-  jar = "@utils-lucene-lt-compatibility-0_8_48_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "libraries-cglib-cglib",
   jar = "@cglib-nodep-3_3_0_http//file",
   source_jar = "@cglib-nodep-3_3_0-sources_http//file",

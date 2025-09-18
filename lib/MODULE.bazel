@@ -6202,13 +6202,6 @@ http_file(
 )
 
 http_file(
-  name = "utils-lucene-lt-compatibility-0_8_48_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-lucene-lt-compatibility/0.8.48/utils-lucene-lt-compatibility-0.8.48.jar",
-  sha256 = "f611e36db480a7a08adef484a8a97ab389317422f24db317bbb4901da79416cb",
-  downloaded_file_path = "utils-lucene-lt-compatibility-0.8.48.jar"
-)
-
-http_file(
   name = "cglib-nodep-3_3_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/cglib/cglib-nodep/3.3.0/cglib-nodep-3.3.0.jar",
   sha256 = "3366d2c88fb576e486d830f521184e8f1839f8c15dcd2151a3f6e1f62b0b37a0",
