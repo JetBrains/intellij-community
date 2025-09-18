@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -33,7 +33,7 @@ public class CompletionLookupArrangerImpl extends BaseCompletionLookupArranger {
   }
 
   @Override
-  protected @NotNull List<LookupElement> getExactMatches(List<? extends LookupElement> items) {
+  protected @NotNull List<LookupElement> getExactMatches(@NotNull List<? extends LookupElement> items) {
     String selectedText =
       InjectedLanguageEditorUtil.getTopLevelEditor(myProcess.getParameters().getEditor()).getSelectionModel().getSelectedText();
     List<LookupElement> exactMatches = new SmartList<>();
@@ -61,7 +61,7 @@ public class CompletionLookupArrangerImpl extends BaseCompletionLookupArranger {
     AsyncRendering.Companion.cancelRendering(element);
   }
 
-  private static boolean isSuddenLiveTemplate(LookupElement element) {
+  private static boolean isSuddenLiveTemplate(@NotNull LookupElement element) {
     return element instanceof LiveTemplateLookupElement && ((LiveTemplateLookupElement)element).sudden;
   }
 }

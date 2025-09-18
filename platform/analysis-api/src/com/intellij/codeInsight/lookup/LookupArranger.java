@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup;
 
@@ -26,14 +26,14 @@ public abstract class LookupArranger implements WeighingContext {
   private final List<LookupElement> myTopPriorityItems = new ArrayList<>();
   private final Key<PrefixMatcher> myMatcherKey = Key.create("LookupArrangerMatcher");
   private volatile @Nullable Predicate<LookupElement> myAdditionalMatcher;
-  private volatile String myAdditionalPrefix = "";
+  private volatile @NotNull String myAdditionalPrefix = "";
 
-  public void addElement(LookupElement item, LookupElementPresentation presentation) {
+  public void addElement(@NotNull LookupElement item, @NotNull LookupElementPresentation presentation) {
     myItems.add(item);
     updateCache(item);
   }
 
-  private void updateCache(LookupElement item) {
+  private void updateCache(@NotNull LookupElement item) {
     if (!prefixMatches(item)) {
       return;
     }
@@ -99,7 +99,7 @@ public abstract class LookupArranger implements WeighingContext {
     return matcher;
   }
 
-  private boolean prefixMatches(LookupElement item) {
+  private boolean prefixMatches(@NotNull LookupElement item) {
     PrefixMatcher matcher = itemMatcher(item);
     Predicate<LookupElement> additionalMatcher = myAdditionalMatcher;
     if (additionalMatcher != null && !additionalMatcher.test(item)) {
@@ -130,7 +130,7 @@ public abstract class LookupArranger implements WeighingContext {
     prefixChanged(lookup);
   }
 
-  public void prefixChanged(Lookup lookup) {
+  public void prefixChanged(@NotNull Lookup lookup) {
     myAdditionalPrefix = ((LookupElementListPresenter)lookup).getAdditionalPrefix();
     rebuildItemCache();
   }
@@ -156,7 +156,7 @@ public abstract class LookupArranger implements WeighingContext {
     return false;
   }
 
-  protected List<LookupElement> retainItems(final Set<LookupElement> retained) {
+  protected List<LookupElement> retainItems(@NotNull Set<LookupElement> retained) {
     List<LookupElement> filtered = new ArrayList<>();
     List<LookupElement> removed = new ArrayList<>();
     for (LookupElement item : myItems) {
@@ -169,20 +169,20 @@ public abstract class LookupArranger implements WeighingContext {
     return removed;
   }
 
-  public abstract Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction);
+  public abstract @NotNull Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction);
 
-  public abstract LookupArranger createEmptyCopy();
+  public abstract @NotNull LookupArranger createEmptyCopy();
 
-  protected List<LookupElement> getPrefixItems(boolean exactly) {
+  protected @NotNull List<LookupElement> getPrefixItems(boolean exactly) {
     return Collections.unmodifiableList(exactly ? myExactPrefixItems : myInexactPrefixItems);
   }
 
   @ApiStatus.Internal
-  protected List<LookupElement> getTopPriorityItems() {
+  protected @NotNull List<LookupElement> getTopPriorityItems() {
     return Collections.unmodifiableList(myTopPriorityItems);
   }
 
-  protected boolean isPrefixItem(LookupElement item, final boolean exactly) {
+  protected boolean isPrefixItem(@NotNull LookupElement item, final boolean exactly) {
     final String pattern = itemPattern(item);
     for (String s : item.getAllLookupStrings()) {
       if (!s.equalsIgnoreCase(pattern)) continue;
@@ -194,7 +194,7 @@ public abstract class LookupArranger implements WeighingContext {
     return false;
   }
 
-  public List<LookupElement> getMatchingItems() {
+  public @NotNull List<LookupElement> getMatchingItems() {
     return myMatchingItems;
   }
 
@@ -205,7 +205,7 @@ public abstract class LookupArranger implements WeighingContext {
    * along with the objects representing the weights in these criteria
    */
   public @NotNull Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<? extends LookupElement> items,
-                                                                               boolean hideSingleValued) {
+                                                                                     boolean hideSingleValued) {
     return Collections.emptyMap();
   }
 
@@ -222,7 +222,7 @@ public abstract class LookupArranger implements WeighingContext {
 
   public static class DefaultArranger extends LookupArranger {
     @Override
-    public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
+    public @NotNull Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
       LinkedHashSet<LookupElement> result = new LinkedHashSet<>();
       result.addAll(getPrefixItems(true));
       result.addAll(getPrefixItems(false));
@@ -240,7 +240,7 @@ public abstract class LookupArranger implements WeighingContext {
     }
 
     @Override
-    public LookupArranger createEmptyCopy() {
+    public @NotNull LookupArranger createEmptyCopy() {
       return new DefaultArranger();
     }
   }

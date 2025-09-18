@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -271,7 +271,7 @@ public final class ListTemplatesHandler implements CodeInsightActionHandler {
   private static final class TemplatesArranger extends LookupArranger {
 
     @Override
-    public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
+    public @NotNull Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
       LinkedHashSet<LookupElement> result = new LinkedHashSet<>();
       List<LookupElement> items = getMatchingItems();
       for (LookupElement item : items) {
@@ -286,7 +286,7 @@ public final class ListTemplatesHandler implements CodeInsightActionHandler {
     }
 
     @Override
-    public LookupArranger createEmptyCopy() {
+    public @NotNull LookupArranger createEmptyCopy() {
       return new TemplatesArranger();
     }
   }
