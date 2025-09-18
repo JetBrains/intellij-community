@@ -756,12 +756,11 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
 
   @VisibleForTesting
   protected open fun onFirstLoadingStarted() {
-    SyntheticConfigurationTypeProvider.EP_NAME.point.addExtensionPointListener(
-      object : ExtensionPointListener<SyntheticConfigurationTypeProvider> {
-        override fun extensionAdded(extension: SyntheticConfigurationTypeProvider, pluginDescriptor: PluginDescriptor) {
-          extension.configurationTypes
-        }
-      }, true, this)
+    SyntheticConfigurationTypeProvider.EP_NAME.point.addExtensionPointListener(coroutineScope, true, object : ExtensionPointListener<SyntheticConfigurationTypeProvider> {
+      override fun extensionAdded(extension: SyntheticConfigurationTypeProvider, pluginDescriptor: PluginDescriptor) {
+        extension.configurationTypes
+      }
+    })
   }
 
   @VisibleForTesting
@@ -780,10 +779,10 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
       return
     }
 
-    ConfigurationType.CONFIGURATION_TYPE_EP.addExtensionPointListener(object : ExtensionPointListener<ConfigurationType> {
+    ConfigurationType.CONFIGURATION_TYPE_EP.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<ConfigurationType> {
       override fun extensionAdded(extension: ConfigurationType, pluginDescriptor: PluginDescriptor) {
         idToType.drop()
-        project.stateStore.reloadState(RunManagerImpl::class.java)
+        project.stateStore.scheduleReloadState(RunManagerImpl::class.java)
       }
 
       override fun extensionRemoved(extension: ConfigurationType, pluginDescriptor: PluginDescriptor) {
@@ -801,15 +800,15 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
           templateIdToConfiguration.values.removeIf(java.util.function.Predicate { it.type == extension })
         }
       }
-    }, this)
+    })
 
-    ProgramRunner.PROGRAM_RUNNER_EP.addExtensionPointListener(object : ExtensionPointListener<ProgramRunner<*>> {
+    ProgramRunner.PROGRAM_RUNNER_EP.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<ProgramRunner<*>> {
       override fun extensionRemoved(extension: ProgramRunner<*>, pluginDescriptor: PluginDescriptor) {
         for (settings in allSettings) {
           (settings as RunnerAndConfigurationSettingsImpl).handleRunnerRemoved(extension)
         }
       }
-    }, this)
+    })
   }
 
   override fun noStateLoaded() {

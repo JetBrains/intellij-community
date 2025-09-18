@@ -251,7 +251,7 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
     return retVal
   }
 
-  private suspend fun withExternalStreamProvider(storageManagers: Array<StateStorageManager>, action: () -> Unit) {
+  private suspend fun withExternalStreamProvider(storageManagers: Array<StateStorageManager>, action: suspend () -> Unit) {
     val provider = ImportStreamProvider(configDirPath)
     for (storageManager in storageManagers) {
       storageManager.addStreamProvider(provider)

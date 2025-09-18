@@ -774,7 +774,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     initComponentImpl(info = newInfo, changedStorages = changedStorages.ifEmpty { null }, reloadData = ThreeState.YES)
   }
 
-  final override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
+  final override suspend fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
     val stateSpec = getStateSpecOrError(componentClass)
     val info = components.get(stateSpec.name) ?: return
     (info.component as? PersistentStateComponent<*>)?.let {
@@ -784,6 +784,14 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
 
       initComponentImpl(info = info, changedStorages = emptySet(), reloadData = ThreeState.YES)
+    }
+  }
+
+  final override fun scheduleReloadState(componentClass: Class<out PersistentStateComponent<*>>, postAction: Runnable?) {
+    val componentManager = project ?: ApplicationManager.getApplication()
+    val pluginScope = (componentManager as ComponentManagerEx).instanceCoroutineScope(componentClass)
+    pluginScope.launch {
+      reloadState(componentClass)
     }
   }
 

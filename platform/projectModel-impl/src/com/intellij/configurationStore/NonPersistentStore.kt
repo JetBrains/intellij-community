@@ -28,7 +28,10 @@ object NonPersistentStore : IComponentStore {
 
   override fun reloadStates(componentNames: Set<String>) {}
 
-  override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
+  override fun scheduleReloadState(componentClass: Class<out PersistentStateComponent<*>>, postAction: Runnable?) {
+  }
+
+  override suspend fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
   }
 
   override fun isReloadPossible(componentNames: Set<String>): Boolean = true

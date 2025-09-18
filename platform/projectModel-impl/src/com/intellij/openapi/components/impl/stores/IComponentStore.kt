@@ -31,7 +31,9 @@ interface IComponentStore {
 
   fun reloadStates(componentNames: Set<String>)
 
-  fun reloadState(componentClass: Class<out PersistentStateComponent<*>>)
+  suspend fun reloadState(componentClass: Class<out PersistentStateComponent<*>>)
+
+  fun scheduleReloadState(componentClass: Class<out PersistentStateComponent<*>>, postAction: Runnable? = null)
 
   fun isReloadPossible(componentNames: Set<String>): Boolean
 
