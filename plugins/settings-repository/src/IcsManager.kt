@@ -44,10 +44,10 @@ internal val icsManager by lazy(LazyThreadSafetyMode.NONE) {
 @OptIn(FlowPreview::class)
 class IcsManager @JvmOverloads constructor(
   dir: Path,
-  coroutineScope: CoroutineScope,
+  @JvmField val coroutineScope: CoroutineScope,
   val schemeManagerFactory: Lazy<SchemeManagerFactoryBase> = lazy { (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase) },
 ) {
-  val credentialsStore = lazy { IcsCredentialsStore() }
+  internal val credentialsStore = lazy { IcsCredentialsStore() }
 
   val settingsFile: Path = dir.resolve("config.json")
 

@@ -21,13 +21,12 @@ object ApplicationNotificationsModel {
 
   private val notifications = ArrayList<Notification>()
   private val projectToModel = HashMap<Project, ProjectNotificationsModel>()
-  private val dataGuard = Object()
+  private val dataGuard = Any()
 
   @JvmField
   @Topic.AppLevel
-  val STATE_CHANGED: Topic<StateEventListener> = Topic.create("NOTIFICATION_MODEL_CHANGED",
-                                                              StateEventListener::class.java,
-                                                              Topic.BroadcastDirection.NONE)
+  val STATE_CHANGED: Topic<StateEventListener> =
+    Topic("NOTIFICATION_MODEL_CHANGED", StateEventListener::class.java, Topic.BroadcastDirection.NONE)
 
   @JvmStatic
   fun addNotification(project: Project?, notification: Notification) {

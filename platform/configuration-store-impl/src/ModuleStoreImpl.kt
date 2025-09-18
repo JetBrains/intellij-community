@@ -64,7 +64,7 @@ internal class ModuleStoreImpl(module: Module, private val pathMacroManager: Pat
     return result
   }
 
-  override fun reloadStates(componentNames: Set<String>) {
+  override suspend fun reloadStates(componentNames: Set<String>) {
     batchReloadStates(componentNames, project.messageBus)
   }
 

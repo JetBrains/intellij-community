@@ -39,7 +39,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.serviceContainer.getComponentManagerEx
 import com.intellij.ui.ExperimentalUI
-import com.intellij.util.application
 import com.intellij.util.io.copy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -217,16 +216,14 @@ class JbSettingsImporter(private val configDirPath: Path, private val pluginsPat
 
     withExternalStreamProvider(arrayOf(storageManager, defaultProjectStore.storageManager)) {
       progressIndicator.checkCanceled()
-      application.runReadAction {
-        componentStore.reloadComponents(changedFileSpecs = componentFiles + schemeFiles,
-                                        deletedFileSpecs = emptyList(),
-                                        componentNames2reload = appComponentNames,
-                                        forceReloadNonReloadable = true)
-      }
+      componentStore.reloadComponents(
+        changedFileSpecs = componentFiles + schemeFiles,
+        deletedFileSpecs = emptyList(),
+        componentNames2reload = appComponentNames,
+        forceReloadNonReloadable = true,
+      )
       progressIndicator.checkCanceled()
-      application.runReadAction {
-        defaultProjectStore.reinitComponents(projectDefaultComponentNames, setOf(defaultProjectStorage), emptySet())
-      }
+      defaultProjectStore.reinitComponents(projectDefaultComponentNames, setOf(defaultProjectStorage), emptySet())
     }
     progressIndicator.checkCanceled()
     JbImportSpecialHandler.postProcess(configDirPath)

@@ -77,7 +77,9 @@ internal fun setRoamableComponentSaveThreshold(thresholdInSeconds: Int) {
 private class ComponentStoreImplReloadListener : ConfigFolderChangedListener {
   override fun onChange(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>) {
     val componentStore = (ApplicationManager.getApplication() as ComponentStoreOwner).componentStore as ComponentStoreImpl
-    componentStore.reloadComponents(changedFileSpecs, deletedFileSpecs)
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+      componentStore.reloadComponents(changedFileSpecs, deletedFileSpecs)
+    }
   }
 }
 
@@ -737,11 +739,11 @@ abstract class ComponentStoreImpl : IComponentStore {
     return notReloadableComponents ?: emptySet()
   }
 
-  override fun reloadStates(componentNames: Set<String>) {
+  override suspend fun reloadStates(componentNames: Set<String>) {
     reinitComponents(componentNames = componentNames, changedStorages = emptySet(), notReloadableComponents = emptySet())
   }
 
-  internal fun batchReloadStates(componentNames: Set<String>, messageBus: MessageBus) {
+  internal suspend fun batchReloadStates(componentNames: Set<String>, messageBus: MessageBus) {
     val publisher = messageBus.syncPublisher(BatchUpdateListener.TOPIC)
     publisher.onBatchUpdateStarted()
     try {
@@ -752,7 +754,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  private fun reloadPerClientState(
+  private suspend fun reloadPerClientState(
     componentClass: Class<out PersistentStateComponent<*>>,
     info: ComponentInfo,
     changedStorages: Set<StateStorage>,
@@ -795,7 +797,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  private fun reloadState(componentName: String, changedStorages: Set<StateStorage>): Boolean {
+  private suspend fun reloadState(componentName: String, changedStorages: Set<StateStorage>): Boolean {
     val info = components.get(componentName) ?: return false
     val component = info.component
     if (component !is PersistentStateComponent<*>) {
@@ -815,7 +817,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   /**
    * `null` if reloaded, an empty list when nothing to reload, or a list of not reloadable components (reload is not performed)
    */
-  open fun reload(changedStorages: Set<StateStorage>): Collection<String>? {
+  open suspend fun reload(changedStorages: Set<StateStorage>): Collection<String>? {
     if (changedStorages.isEmpty()) {
       LOG.debug("There is no changed storages to reload")
       return emptySet()
@@ -836,12 +838,12 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     LOG.debug { "Reload components: $componentNames" }
     val notReloadableComponents = getNotReloadableComponents(componentNames)
-    reinitComponents(componentNames, changedStorages, notReloadableComponents)
+    reinitComponents(componentNames = componentNames, changedStorages = changedStorages, notReloadableComponents = notReloadableComponents)
     return notReloadableComponents.ifEmpty { null }
   }
 
   // used in settings repository plugin
-  open fun reinitComponents(componentNames: Set<String>, changedStorages: Set<StateStorage>, notReloadableComponents: Collection<String>) {
+  open suspend fun reinitComponents(componentNames: Set<String>, changedStorages: Set<StateStorage>, notReloadableComponents: Collection<String>) {
     for (componentName in componentNames) {
       if (!notReloadableComponents.contains(componentName)) {
         reloadState(componentName, changedStorages)

@@ -29,7 +29,7 @@ interface IComponentStore {
 
   fun initPersistencePlainComponent(component: Any, @NlsSafe key: String, pluginId: PluginId)
 
-  fun reloadStates(componentNames: Set<String>)
+  suspend fun reloadStates(componentNames: Set<String>)
 
   suspend fun reloadState(componentClass: Class<out PersistentStateComponent<*>>)
 

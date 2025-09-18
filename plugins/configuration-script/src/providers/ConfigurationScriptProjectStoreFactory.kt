@@ -107,7 +107,7 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
     }
   }
 
-  override fun reload(changedStorages: Set<StateStorage>): Collection<String>? {
+  override suspend fun reload(changedStorages: Set<StateStorage>): Collection<String>? {
     val result = super.reload(changedStorages)
     for (storage in changedStorages) {
       if (storage !is ReadOnlyStorage) {

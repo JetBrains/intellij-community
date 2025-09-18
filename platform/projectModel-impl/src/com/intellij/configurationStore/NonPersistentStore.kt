@@ -26,7 +26,7 @@ object NonPersistentStore : IComponentStore {
   override fun initPersistencePlainComponent(component: Any, key: String, pluginId: PluginId) {
   }
 
-  override fun reloadStates(componentNames: Set<String>) {}
+  override suspend fun reloadStates(componentNames: Set<String>) {}
 
   override fun scheduleReloadState(componentClass: Class<out PersistentStateComponent<*>>, postAction: Runnable?) {
   }

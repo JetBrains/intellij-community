@@ -696,10 +696,6 @@ f:com.intellij.configurationStore.StoreUtilKt
 - bs:saveProjectsAndApp$default(Z,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - sf:saveSettings(com.intellij.openapi.components.ComponentManager,Z,kotlin.coroutines.Continuation):java.lang.Object
 - bs:saveSettings$default(com.intellij.openapi.components.ComponentManager,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-f:com.intellij.configurationStore.UnknownMacroNotification
-- com.intellij.notification.Notification
-- <init>(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationType,com.intellij.notification.NotificationListener,java.util.Collection):V
-- f:getMacros():java.util.Collection
 f:com.intellij.conversion.CannotConvertException
 - java.lang.RuntimeException
 - <init>(java.lang.String,java.lang.Throwable):V

@@ -249,7 +249,7 @@ internal open class StoreReloadManagerImpl(protected val project: Project, corou
 }
 
 @ApiStatus.Internal
-fun reloadAppStore(changes: Set<StateStorage>): Boolean {
+suspend fun reloadAppStore(changes: Set<StateStorage>): Boolean {
   val status = reloadStore(changes, ApplicationManager.getApplication().stateStore as ComponentStoreImpl)
   if (status == ReloadComponentStoreStatus.RESTART_AGREED) {
     ApplicationManagerEx.getApplicationEx().restart(true)
@@ -260,7 +260,7 @@ fun reloadAppStore(changes: Set<StateStorage>): Boolean {
   }
 }
 
-private fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl): ReloadComponentStoreStatus {
+private suspend fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl): ReloadComponentStoreStatus {
   val notReloadableComponents: Collection<String>?
   var willBeReloaded = false
   try {
@@ -279,7 +279,7 @@ private fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStor
       return ReloadComponentStoreStatus.SUCCESS
     }
 
-    willBeReloaded = askToRestart(store, notReloadableComponents, changedStorages, store.project == null)
+    willBeReloaded = askToRestart(store = store, notReloadableComponents = notReloadableComponents, changedStorages = changedStorages, isApp = store.project == null)
     return if (willBeReloaded) ReloadComponentStoreStatus.RESTART_AGREED else ReloadComponentStoreStatus.RESTART_CANCELLED
   }
   finally {
