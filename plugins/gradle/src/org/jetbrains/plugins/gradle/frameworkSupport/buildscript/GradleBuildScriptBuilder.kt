@@ -115,6 +115,7 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
   fun withJUnit(): Self
   fun withJUnit4(): Self
   fun withJUnit5(): Self
+  fun withJUnit6(): Self
   fun targetCompatibility(level: String): Self
   fun sourceCompatibility(level: String): Self
 

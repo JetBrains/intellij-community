@@ -71,6 +71,10 @@ fun getJunit5Version(): String {
   return "5.10.0"
 }
 
+fun getJunit6Version(): String {
+  return "6.0.0"
+}
+
 fun isTaskConfigurationAvoidanceSupported(gradleVersion: GradleVersion): Boolean {
   return GradleVersionUtil.isGradleAtLeast(gradleVersion, "4.9")
 }
