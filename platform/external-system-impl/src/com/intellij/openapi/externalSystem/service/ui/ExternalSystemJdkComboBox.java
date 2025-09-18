@@ -278,6 +278,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
     }
   }
 
+  @ApiStatus.Internal
   public static class JdkComboBoxItem {
     final @NlsSafe String jdkName;
     final @NlsContexts.Label String label;

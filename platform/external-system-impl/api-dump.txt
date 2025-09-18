@@ -881,7 +881,6 @@ f:com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox
 - setProjectJdk(com.intellij.openapi.projectRoots.Sdk):V
 - setSetupButton(javax.swing.JButton,com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel,java.lang.String,com.intellij.openapi.util.Condition):V
 - setSetupButton(javax.swing.JButton,com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel,java.lang.String,com.intellij.openapi.util.Condition,com.intellij.ide.util.projectWizard.WizardContext):V
-c:com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox$JdkComboBoxItem
 c:com.intellij.openapi.externalSystem.service.ui.SelectExternalProjectDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>(com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.project.ProjectData):V
