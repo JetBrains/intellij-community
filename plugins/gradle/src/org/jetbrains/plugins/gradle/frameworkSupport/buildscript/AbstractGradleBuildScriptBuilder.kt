@@ -26,6 +26,7 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
   protected val groovyVersion: String = getGroovyVersion()
   protected val junit4Version: String = getJunit4Version()
   protected val junit5Version: String = getJunit5Version()
+  protected val junit6Version: String = getJunit6Version()
 
   override fun addGroup(group: String): Self =
     withPrefix { assign("group", group) }
@@ -298,18 +299,28 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
   override fun withJUnit5(): Self = apply {
     assert(isJunit5Supported(gradleVersion))
     withMavenCentral()
+    withJUnitJupiter(junit5Version)
+  }
+
+  override fun withJUnit6(): Self = apply {
+    assert(isJunit5Supported(gradleVersion))
+    withMavenCentral()
+    withJUnitJupiter(junit6Version)
+  }
+
+  private fun Self.withJUnitJupiter(platformVersion: String) {
     when (isPlatformDependencySupported(gradleVersion)) {
       true -> {
-        addTestImplementationDependency(call("platform", "org.junit:junit-bom:$junit5Version"))
+        addTestImplementationDependency(call("platform", "org.junit:junit-bom:$platformVersion"))
         addTestImplementationDependency("org.junit.jupiter:junit-jupiter")
         if (isExplicitTestFrameworkRuntimeDeclarationRequired(gradleVersion)) {
           addTestRuntimeOnlyDependency("org.junit.platform:junit-platform-launcher")
         }
       }
       else -> {
-        addTestImplementationDependency("org.junit.jupiter:junit-jupiter-api:$junit5Version")
-        addTestImplementationDependency("org.junit.jupiter:junit-jupiter-params:$junit5Version")
-        addTestRuntimeOnlyDependency("org.junit.jupiter:junit-jupiter-engine:$junit5Version")
+        addTestImplementationDependency("org.junit.jupiter:junit-jupiter-api:$platformVersion")
+        addTestImplementationDependency("org.junit.jupiter:junit-jupiter-params:$platformVersion")
+        addTestRuntimeOnlyDependency("org.junit.jupiter:junit-jupiter-engine:$platformVersion")
       }
     }
     test {
