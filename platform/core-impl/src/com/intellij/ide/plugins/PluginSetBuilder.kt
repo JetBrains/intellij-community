@@ -135,15 +135,19 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         continue@m
       }
 
-      if (module !is ContentModuleDescriptor) {
-        if (module.pluginId != PluginManagerCore.CORE_ID && (!module.isMarkedForLoading || (disabler != null && disabler(module, disabledModuleToProblematicPlugin)))) {
-          markRequiredModulesAsDisabled(module as PluginMainDescriptor)
-          continue
+      when (module) {
+        is PluginMainDescriptor -> {
+          if (module.pluginId != PluginManagerCore.CORE_ID && (!module.isMarkedForLoading || (disabler != null && disabler(module, disabledModuleToProblematicPlugin)))) {
+            markRequiredModulesAsDisabled(module)
+            continue
+          }
         }
-      }
-      else if (!module.isRequiredContentModule && !enabledPluginIds.containsKey(module.pluginId)) {
-        disabledModuleToProblematicPlugin.put(module.moduleId, module.pluginId)
-        continue
+        is ContentModuleDescriptor -> {
+          if (!module.isRequiredContentModule && !enabledPluginIds.containsKey(module.pluginId)) {
+            disabledModuleToProblematicPlugin.put(module.moduleId, module.pluginId)
+            continue
+          }
+        }
       }
 
       for (ref in module.moduleDependencies.modules) {
