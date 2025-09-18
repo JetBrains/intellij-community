@@ -11,12 +11,14 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.project.ProjectStoreOwner
 import com.intellij.util.BitUtil.isSet
 import com.intellij.util.BitUtil.set
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Frame
 import java.awt.event.KeyEvent
+import java.nio.file.Path
 
 /**
  * This class is programmatically instantiated and registered when opening and closing projects and therefore not registered in plugin.xml
@@ -24,7 +26,7 @@ import java.awt.event.KeyEvent
 @ApiStatus.Internal
 class ProjectWindowAction(
   @param:NlsSafe val projectName: @NlsSafe String,
-  val projectLocation: String,
+  val projectLocation: Path,
   previous: ProjectWindowAction?
 ) : ToggleAction(IdeBundle.message("action.switch.project.text")), DumbAware {
   private var myPrevious: ProjectWindowAction? = null
@@ -73,7 +75,7 @@ class ProjectWindowAction(
 
     val projects = ProjectManager.getInstance().getOpenProjects()
     for (project in projects) {
-      if (projectLocation == project.presentableUrl) {
+      if (projectLocation == (project as ProjectStoreOwner).componentStore.storeDescriptor.presentableUrl) {
         return project
       }
     }
@@ -82,8 +84,8 @@ class ProjectWindowAction(
 
   override fun isSelected(e: AnActionEvent): Boolean {
     // show check mark for active and visible project frame
-    val project = e.getData(CommonDataKeys.PROJECT) ?: return false
-    return projectLocation == project.presentableUrl
+    val project = e.getData(CommonDataKeys.PROJECT) as? ProjectStoreOwner ?: return false
+    return projectLocation == project.componentStore.storeDescriptor.presentableUrl
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

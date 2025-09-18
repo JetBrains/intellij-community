@@ -11,37 +11,49 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.platform.getMultiProjectDisplayName
+import com.intellij.project.ProjectStoreOwner
+import com.intellij.util.SystemProperties
+import java.io.File
+import java.nio.file.Path
 import java.util.*
 
 class ProjectWindowActionGroup : IdeDependentActionGroup(), ActionRemoteBehaviorSpecification.Frontend {
   private var latest: ProjectWindowAction? = null
 
   internal fun addProject(project: Project) {
-    val projectLocation = project.presentableUrl ?: return
+    if (project !is ProjectStoreOwner) {
+      return
+    }
+
+    val projectLocation = project.componentStore.storeDescriptor.presentableUrl
     val projectName = getProjectDisplayName(project)
-    val windowAction = ProjectWindowAction(projectName, projectLocation, latest)
+    val windowAction = ProjectWindowAction(
+      projectName = projectName,
+      projectLocation = projectLocation,
+      previous = latest,
+    )
     val duplicateWindowActions = findWindowActionsWithProjectName(projectName)
     if (!duplicateWindowActions.isEmpty()) {
       for (action in duplicateWindowActions) {
-        action.getTemplatePresentation().setText(FileUtil.getLocationRelativeToUserHome(action.projectLocation))
+        action.getTemplatePresentation().setText(getLocationRelativeToUserHome(action.projectLocation))
       }
-      windowAction.getTemplatePresentation().setText(FileUtil.getLocationRelativeToUserHome(windowAction.projectLocation))
+      windowAction.getTemplatePresentation().setText(getLocationRelativeToUserHome(windowAction.projectLocation))
     }
     add(windowAction)
     latest = windowAction
   }
 
   fun removeProject(project: Project) {
-    val windowAction = project.presentableUrl?.let { findWindowAction(it) } ?: return
+    val windowAction = findWindowAction((project as? ProjectStoreOwner ?: return).componentStore.storeDescriptor.presentableUrl) ?: return
     if (latest == windowAction) {
       val previous = latest?.previous
       latest = if (previous == latest) null else previous
     }
     remove(windowAction)
-    val projectName: String = getProjectDisplayName(project)
+    val projectName = getProjectDisplayName(project)
     val duplicateWindowActions = findWindowActionsWithProjectName(projectName)
     if (duplicateWindowActions.size == 1) {
       duplicateWindowActions.first().getTemplatePresentation().setText(projectName)
@@ -55,17 +67,17 @@ class ProjectWindowActionGroup : IdeDependentActionGroup(), ActionRemoteBehavior
   override fun isDumbAware(): Boolean = true
 
   fun activateNextWindow(e: AnActionEvent) {
-    val presentableUrl = e.getData(CommonDataKeys.PROJECT)?.presentableUrl ?: return
+    val presentableUrl = (e.getData(CommonDataKeys.PROJECT) as? ProjectStoreOwner ?: return).componentStore.storeDescriptor.presentableUrl
     findWindowAction(presentableUrl)?.next?.setSelected(e, true)
   }
 
   fun activatePreviousWindow(e: AnActionEvent) {
-    val presentableUrl = e.getData(CommonDataKeys.PROJECT)?.presentableUrl?: return
+    val presentableUrl = (e.getData(CommonDataKeys.PROJECT) as? ProjectStoreOwner ?: return).componentStore.storeDescriptor.presentableUrl
     val windowAction = findWindowAction(presentableUrl) ?: return
     windowAction.previous?.setSelected(e, true)
   }
 
-  private fun findWindowAction(projectLocation: String): ProjectWindowAction? {
+  private fun findWindowAction(projectLocation: Path): ProjectWindowAction? {
     val children = getChildren(ActionManager.getInstance())
     for (child in children) {
       if (child !is ProjectWindowAction) {
@@ -120,4 +132,12 @@ private fun getProjectName(action: AnAction?): String? {
 
 private val SORT_BY_NAME = Comparator { action1: AnAction?, action2: AnAction? ->
   NaturalComparator.INSTANCE.compare(getProjectName(action1), getProjectName(action2))
+}
+
+private fun getLocationRelativeToUserHome(file: Path): @NlsSafe String {
+  val userHomeDir = Path.of(SystemProperties.getUserHome())
+  if (file.startsWith(userHomeDir)) {
+    return "~${File.separator}${userHomeDir.relativize(file)}"
+  }
+  return file.toString()
 }
