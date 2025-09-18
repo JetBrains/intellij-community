@@ -63,7 +63,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySvgEapIconUrl;
   private String mySmallSvgIconUrl;
   private String mySmallSvgEapIconUrl;
-  private String myWelcomeScreenLogoUrl;
 
   private ZonedDateTime buildTime;
   private ZonedDateTime majorReleaseBuildDate;
@@ -158,11 +157,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         }
         break;
 
-        case "welcome-screen": {
-          myWelcomeScreenLogoUrl = child.getAttributeValue("logo-url");
-        }
-        break;
-
         case "productUrl": {
           myProductUrl = child.getAttributeValue("url");
         }
@@ -207,7 +201,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         }
         break;
 
-        //noinspection SpellCheckingInspection
         case "whatsnew": {
           myWhatsNewUrl = child.getAttributeValue("url");
           myShowWhatsNewOnUpdate = Boolean.parseBoolean(child.getAttributeValue("show-on-update"));
@@ -649,6 +642,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     String pluginManagerUrl = DEFAULT_PLUGINS_HOST;
     String pluginListUrl = null;
     pluginDownloadUrl = null;
+
     if (element != null) {
       String url = element.getAttributeValue("url");
       if (url != null) {
