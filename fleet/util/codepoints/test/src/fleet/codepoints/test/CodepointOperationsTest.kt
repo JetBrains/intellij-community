@@ -2,7 +2,7 @@ package fleet.codepoints.test
 
 import fleet.codepoints.Codepoint
 import fleet.codepoints.isCodepointInRanges
-import org.junit.Test
+import kotlin.test.Test
 import kotlin.test.fail
 
 class CodepointOperationsTest {

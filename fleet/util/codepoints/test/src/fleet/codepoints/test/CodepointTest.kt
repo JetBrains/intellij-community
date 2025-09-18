@@ -2,7 +2,7 @@ package fleet.codepoints.test
 
 import fleet.codepoints.isDoubleWidthCharacter
 import fleet.codepoints.isEmoji
-import org.junit.Test
+import kotlin.test.Test
 import kotlin.streams.toList
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
