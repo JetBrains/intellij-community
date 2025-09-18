@@ -2,7 +2,6 @@
 package com.intellij.debugger.engine
 
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
-import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.jdi.VirtualMachineImpl
@@ -24,9 +23,6 @@ abstract class PossiblySyncCommand protected constructor(suspendContext: Suspend
   }
 
   abstract fun syncAction(suspendContext: SuspendContextImpl)
-
-  final override val priority: PrioritizedTask.Priority
-    get() = PrioritizedTask.Priority.LOWEST
 
   private fun shouldBeRescheduled(suspendContext: SuspendContextImpl): Boolean {
     if (ApplicationManager.getApplication().isUnitTestMode()) return false
