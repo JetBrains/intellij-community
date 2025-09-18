@@ -30,7 +30,6 @@ object ProjectCoreUtil {
    * * project store directory
    * * file in the project store directory
    */
-  @JvmStatic
   fun isProjectOrWorkspaceFile(fileOrParent: VirtualFile, fileName: CharSequence): Boolean {
     // do not use file.getFileType() to avoid autodetection by content loading for arbitrary files
     val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName)

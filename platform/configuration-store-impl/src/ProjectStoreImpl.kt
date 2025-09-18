@@ -224,7 +224,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   }
 
   final override fun isProjectFile(file: VirtualFile): Boolean {
-    if (!file.isInLocalFileSystem || !ProjectCoreUtil.isProjectOrWorkspaceFile(file)) {
+    if (!file.isInLocalFileSystem || !ProjectCoreUtil.isProjectOrWorkspaceFile(file, file.nameSequence)) {
       return false
     }
 
