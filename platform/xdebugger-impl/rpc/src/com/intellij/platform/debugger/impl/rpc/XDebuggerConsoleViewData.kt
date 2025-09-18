@@ -4,6 +4,7 @@ package com.intellij.platform.debugger.impl.rpc
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.ide.rpc.AnActionId
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.project.ProjectId
 import com.intellij.xdebugger.XDebugProcess
@@ -25,6 +26,7 @@ data class RemoteXDebuggerConsoleViewData(
   val uniqueId: String,
   val consoleId: Int,
   val runnerLayoutUiId: Int?,
+  val actionIds: List<AnActionId> = emptyList(),
 )
 
 @ApiStatus.Internal
@@ -47,6 +49,14 @@ suspend fun XDebuggerConsoleViewData.consoleView(processHandler: ProcessHandler)
     it.convert(remoteData, processHandler)
   }
   return consoleView
+}
+
+/**
+ * Returns `null` if remote data is not available
+ */
+@ApiStatus.Internal
+fun XDebuggerConsoleViewData.actionIds(): List<AnActionId>? {
+  return remoteData?.actionIds
 }
 
 @ApiStatus.Internal

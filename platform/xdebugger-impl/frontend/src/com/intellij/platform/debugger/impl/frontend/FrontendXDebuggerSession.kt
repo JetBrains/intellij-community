@@ -149,6 +149,10 @@ class FrontendXDebuggerSession private constructor(
     get() = sessionDto.extraActions.mapNotNull { it.action() }
   override val extraStopActions: List<AnAction>
     get() = sessionDto.extraStopActions.mapNotNull { it.action() }
+  override val additionalConsoleActions: List<AnAction>
+    get() = sessionDto.consoleViewData?.actionIds()?.mapNotNull { it.action() }
+          ?: consoleView?.createConsoleActions()?.toList()
+          ?: emptyList()
   override val coroutineScope: CoroutineScope = cs
   override val currentStateMessage: String
     get() = if (isStopped) XDebuggerBundle.message("debugger.state.message.disconnected") else XDebuggerBundle.message("debugger.state.message.connected") // TODO

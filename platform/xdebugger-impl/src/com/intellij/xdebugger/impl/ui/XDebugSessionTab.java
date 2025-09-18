@@ -8,10 +8,7 @@ import com.intellij.execution.runners.BackendExecutionEnvironmentProxy;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentProxy;
 import com.intellij.execution.runners.RunContentBuilder;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
-import com.intellij.execution.ui.RunnerLayoutUi;
-import com.intellij.execution.ui.UIExperiment;
+import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
@@ -418,7 +415,12 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       attachNotificationTo(consoleContent);
       layouter.registerAdditionalContent(myUi);
 
-      RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
+      final DefaultActionGroup consoleActions = new DefaultActionGroup();
+      for (AnAction action : session.getAdditionalConsoleActions()) {
+        consoleActions.add(action);
+      }
+      consoleContent.setActions(consoleActions, ActionPlaces.RUNNER_TOOLBAR, myConsole.getComponent());
+
       consoleContent.setHelpId(DefaultDebugExecutor.getDebugExecutorInstance().getHelpId());
     }
     else {
