@@ -4,11 +4,13 @@ package com.intellij.ide.gdpr;
 import com.intellij.ide.ConsentOptionsProvider;
 import com.intellij.ide.gdpr.ui.consents.AiDataCollectionExternalSettings;
 import com.intellij.ui.LicensingFacade;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
   private static final Set<String> productsSupportingForcedConsent = Set.of("QA", "RR", "WS", "RD", "CL", "RM", "DB");
+  private static final int METADATA_LICENSE_TYPE_INDEX = 10;
 
   private volatile long myLastModificationCount = -1;
   private volatile boolean mySendingAllowed = false;
@@ -26,7 +28,7 @@ final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
       return false;
     }
     String meta = facade.metadata;
-    return meta != null && meta.length() > 10 && meta.charAt(10) == 'F';
+    return meta != null && meta.length() > METADATA_LICENSE_TYPE_INDEX && meta.charAt(METADATA_LICENSE_TYPE_INDEX) == 'F';
   }
 
   @Override
@@ -50,11 +52,29 @@ final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
 
   @Override
   public boolean isTraceDataCollectionAllowed() {
-    DataCollectionAgreement dataCollectionAgreement = DataCollectionAgreement.getInstance();
+    LicensingFacade facade = LicensingFacade.getInstance();
+    if (facade == null) {
+      return false;
+    }
+    String metadata = facade.metadata;
+    if (metadata == null) {
+      return false;
+    }
     AiDataCollectionExternalSettings settings = AiDataCollectionExternalSettings.findSettingsImplementedByAiAssistant();
-    boolean isAllowed = dataCollectionAgreement == DataCollectionAgreement.YES ||
-                        ConsentOptions.getInstance().getTraceDataCollectionPermission() == ConsentOptions.Permission.YES;
+    boolean isAllowed = isTraceDataCollectionAllowedByMetadata(metadata);
     boolean isDisabled = settings != null && settings.isForciblyDisabled();
     return isAllowed && !isDisabled;
+  }
+
+  private static boolean isTraceDataCollectionAllowedByMetadata(@NotNull String metadata) {
+    if (metadata.length() <= METADATA_LICENSE_TYPE_INDEX) {
+      return false;
+    }
+    DataCollectionAgreement dataCollectionAgreement = DataCollectionAgreement.getInstance();
+    ConsentOptions.Permission traceDataCollectionPermission = metadata.charAt(METADATA_LICENSE_TYPE_INDEX) == 'F'
+                                                              ? ConsentOptions.getInstance().getTraceDataCollectionNonComPermission()
+                                                              : ConsentOptions.getInstance().getTraceDataCollectionComPermission();
+    return dataCollectionAgreement == DataCollectionAgreement.YES ||
+           traceDataCollectionPermission == ConsentOptions.Permission.YES;
   }
 }

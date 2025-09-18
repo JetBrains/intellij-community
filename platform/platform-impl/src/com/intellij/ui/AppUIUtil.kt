@@ -185,6 +185,13 @@ fun isWindowIconAlreadyExternallySet(): Boolean {
   }
 }
 
+private fun removeTraceConsents(consents: MutableList<Consent>) {
+  consents.removeIf { consent ->
+    ConsentOptions.condTraceDataCollectionNonComConsent().test(consent) ||
+    ConsentOptions.condTraceDataCollectionComConsent().test(consent)
+  }
+}
+
 object AppUIUtil {
   @JvmStatic
   fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? {
@@ -354,7 +361,14 @@ object AppUIUtil {
       result.removeIf(isLegacyAiDataCollectionConsent) // IJPL-195651; AI data collection (LLMC) consent should not be present on UI while it's staying a default consent as a part of migration from LLMC to TRACE consent
     }
     if (traceConsentManager?.canDisplayTraceConsent() != true) {
-      result.removeIf(ConsentOptions.condTraceDataCollectionConsent())
+      removeTraceConsents(result)
+    } else {
+      val licenseTypeFlag = LicensingFacade.getInstance()?.metadata?.getOrNull(10)
+      when (licenseTypeFlag) {
+        'F' -> result.removeIf(ConsentOptions.condTraceDataCollectionComConsent())
+        null -> removeTraceConsents(result)
+        else -> result.removeIf(ConsentOptions.condTraceDataCollectionNonComConsent())
+      }
     }
     return result
   }
