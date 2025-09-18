@@ -2,6 +2,9 @@ com.intellij.codeInsight.completion.BatchConsumer
 - com.intellij.util.Consumer
 - endBatch():V
 - startBatch():V
+f:com.intellij.codeInsight.completion.CompletionConfidenceEP
+- com.intellij.lang.LanguageExtensionPoint
+- <init>():V
 com.intellij.codeInsight.completion.CompletionProcess
 - a:isAutopopupCompletion():Z
 a:com.intellij.codeInsight.completion.CompletionService

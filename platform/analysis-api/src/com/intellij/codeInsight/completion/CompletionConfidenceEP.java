@@ -10,10 +10,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-@ApiStatus.Internal
 public final class CompletionConfidenceEP extends LanguageExtensionPoint<CompletionConfidence> {
   private static final LanguageExtension<CompletionConfidence> INSTANCE = new LanguageExtensionWithAny<>("com.intellij.completion.confidence");
 
+  @ApiStatus.Internal
   public static List<CompletionConfidence> forLanguage(@NotNull Language language) {
     return INSTANCE.allForLanguage(language);
   }
