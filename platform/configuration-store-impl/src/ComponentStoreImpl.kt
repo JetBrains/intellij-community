@@ -497,7 +497,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  private fun initComponentImpl(info: ComponentInfo, changedStorages: Set<StateStorage>?, reloadData: ThreeState) {
+  private suspend fun initComponentImpl(info: ComponentInfo, changedStorages: Set<StateStorage>?, reloadData: ThreeState) {
     @Suppress("UNCHECKED_CAST")
     val component = info.component as PersistentStateComponent<Any>
     if (info.stateSpec == null) {
@@ -534,7 +534,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   protected open fun getReadOnlyStorage(componentClass: Class<Any>, stateClass: Class<Any>, configurationSchemaKey: String): StateStorage? = null
 
-  private inline fun doInitComponent(
+  private suspend inline fun doInitComponent(
     info: ComponentInfo,
     component: PersistentStateComponent<Any>,
     changedStorages: Set<StateStorage>?,
@@ -658,7 +658,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
 
     return object : StateGetter<Any> {
-      override fun getState(mergeInto: Any?): Any? {
+      override suspend fun getState(mergeInto: Any?): Any? {
         return storage.getState(component = component, componentName = componentName, pluginId = info.pluginId, stateClass = stateClass, mergeInto = mergeInto, reload = reloadData)
       }
 
@@ -819,6 +819,7 @@ abstract class ComponentStoreImpl : IComponentStore {
    */
   open suspend fun reload(changedStorages: Set<StateStorage>): Collection<String>? {
     if (changedStorages.isEmpty()) {
+      @Suppress("GrazieInspection")
       LOG.debug("There is no changed storages to reload")
       return emptySet()
     }

@@ -250,7 +250,7 @@ abstract class XmlElementStorage protected constructor(
 
     private inner class XmlSaveSession(
       private val elements: MutableList<Element>?,
-      // null only when elements is null
+      // null only when an element list is null
       private val writer: DataWriter?,
       private val stateMap: StateMap
     ) : SaveSession, SafeWriteRequestor, LargeFileWriteRequestor {
@@ -431,7 +431,7 @@ private class StateGetterImpl<S : Any>(
 ) : StateGetter<S> {
   private var serializedState: Element? = null
 
-  override fun getState(mergeInto: S?): S? {
+  override suspend fun getState(mergeInto: S?): S? {
     LOG.assertTrue(serializedState == null)
     serializedState = storage.getSerializedState(storageData = storageData, component = component, componentName = componentName, archive = false)
     return deserializeStateWithController(
@@ -512,7 +512,7 @@ enum class DataStateChanged { LOADED, SAVED }
 
 @Internal
 interface StateGetter<S : Any> {
-  fun getState(mergeInto: S? = null): S?
+  suspend fun getState(mergeInto: S? = null): S?
 
   fun archiveState(): S?
 }
