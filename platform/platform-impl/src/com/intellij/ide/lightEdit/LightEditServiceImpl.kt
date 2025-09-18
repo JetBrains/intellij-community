@@ -1,569 +1,516 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.lightEdit;
+package com.intellij.ide.lightEdit
 
-import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention;
-import com.intellij.ide.lightEdit.project.LightEditProjectManager;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.FrameInfo;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.update.UiNotifyConnector;
-import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-
-import java.lang.management.ManagementFactory;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention
+import com.intellij.ide.lightEdit.project.LightEditProjectManager
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx.Companion.getInstanceEx
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.encoding.EncodingManager
+import com.intellij.openapi.vfs.encoding.EncodingManagerImpl
+import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.openapi.wm.impl.FrameInfo
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame.Companion.getInstance
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.ui.update.UiNotifyConnector
+import com.intellij.util.xmlb.XmlSerializerUtil
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import java.lang.management.ManagementFactory
+import java.nio.file.Path
+import java.util.function.Consumer
+import kotlin.math.max
+import kotlin.system.exitProcess
 
 @ApiStatus.Internal
-@SuppressWarnings("SameParameterValue")
-@State(name = "LightEdit", storages =  @Storage(value = "lightEdit.xml", roamingType = RoamingType.DISABLED))
-public final class LightEditServiceImpl implements LightEditService,
-                                                   Disposable,
-                                                   LightEditorListener,
-                                                   PersistentStateComponent<LightEditConfiguration> {
-  private static final Logger LOG = Logger.getInstance(LightEditServiceImpl.class);
+@State(name = "LightEdit", storages = [Storage(value = "lightEdit.xml", roamingType = RoamingType.DISABLED)])
+class LightEditServiceImpl : LightEditService, Disposable, LightEditorListener, PersistentStateComponent<LightEditConfiguration> {
+  private var frameWrapper: LightEditFrameWrapper? = null
+  private val editorManager = LightEditorManagerImpl(this)
+  private val configuration = LightEditConfiguration()
+  private val lightEditProjectManager = LightEditProjectManager()
+  private var editorWindowClosing = false
+  private var saveSession = false
 
-  private LightEditFrameWrapper frameWrapper;
-  private final LightEditorManagerImpl editorManager;
-  private final LightEditConfiguration configuration = new LightEditConfiguration();
-  private final LightEditProjectManager lightEditProjectManager = new LightEditProjectManager();
-  private boolean editorWindowClosing = false;
-  private boolean saveSession;
+  override fun getState(): LightEditConfiguration = configuration
 
-  @Override
-  public @NotNull LightEditConfiguration getState() {
-    return configuration;
+  override fun loadState(state: LightEditConfiguration) {
+    XmlSerializerUtil.copyBean<LightEditConfiguration>(state, configuration)
   }
 
-  @Override
-  public void loadState(@NotNull LightEditConfiguration state) {
-    XmlSerializerUtil.copyBean(state, configuration);
-  }
-
-  public LightEditServiceImpl() {
-    editorManager = new LightEditorManagerImpl(this);
-    editorManager.addListener(this);
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
-    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-      @Override
-      public void appClosing() {
-        ((EncodingManagerImpl)EncodingManager.getInstance()).clearDocumentQueue();
+  init {
+    editorManager.addListener(this)
+    val connection = ApplicationManager.getApplication().getMessageBus().connect(this)
+    connection.subscribe<AppLifecycleListener>(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+      override fun appClosing() {
+        (EncodingManager.getInstance() as EncodingManagerImpl).clearDocumentQueue()
         if (frameWrapper != null) {
-          closeAndDisposeFrame();
+          closeAndDisposeFrame()
         }
-        Disposer.dispose(editorManager);
+        Disposer.dispose(editorManager)
       }
-    });
-    Disposer.register(this, editorManager);
+    })
+    Disposer.register(this, editorManager)
   }
 
-  private void init(boolean restoreSession) {
-    Project project = getOrCreateProject();
-    invokeOnEdt(() -> {
-      boolean notify = false;
+  private fun init(restoreSession: Boolean) {
+    val project = this.orCreateProject
+    invokeOnEdt(Runnable {
+      var notify = false
       if (frameWrapper == null) {
-        saveSession = restoreSession;
-        frameWrapper = LightEditFrameWrapperKt.allocateLightEditFrame(project, configuration.frameInfo);
-        LOG.info("Frame created");
+        saveSession = restoreSession
+        frameWrapper = allocateLightEditFrame(project, configuration.frameInfo)
+        LOG.info("Frame created")
         if (restoreSession) {
-          restoreSession();
+          restoreSession()
         }
-        notify = true;
+        notify = true
       }
-      IdeFrameImpl frame = frameWrapper.getFrame();
-      if (!frame.isVisible()) {
-        frame.setVisible(true);
-        LOG.info("Window opened");
-        notify = true;
+
+      val frame = frameWrapper!!.frame
+      if (!frame.isVisible) {
+        frame.setVisible(true)
+        LOG.info("Window opened")
+        notify = true
       }
-      frameWrapper.setFrameTitle(getAppName());
+
+      frameWrapper!!.setFrameTitle(appName)
       if (notify) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(LightEditServiceListener.TOPIC).lightEditWindowOpened(project);
+        ApplicationManager.getApplication().getMessageBus().syncPublisher<LightEditServiceListener>(
+          LightEditServiceListener.TOPIC).lightEditWindowOpened(project)
       }
-    });
+    })
   }
 
-  @Override
-  public void showEditorWindow() {
-    doShowEditorWindow(true);
+  override fun showEditorWindow() {
+    doShowEditorWindow(true)
   }
 
-  private void doShowEditorWindow(boolean restoreSession) {
+  private fun doShowEditorWindow(restoreSession: Boolean) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      init(restoreSession);
+      init(restoreSession)
     }
   }
 
-  private static String getAppName() {
-    return ApplicationInfo.getInstance().getVersionName();
+  override fun getProject(): Project? {
+    return lightEditProjectManager.project
   }
 
-  @Override
-  public @Nullable Project getProject() {
-    return lightEditProjectManager.getProject();
+  val orCreateProject: Project
+    get() = lightEditProjectManager.getOrCreateProject()
+
+  override fun openFile(file: VirtualFile): Project {
+    val project = lightEditProjectManager.getOrCreateProject()
+    val commandLineOptions = LightEditUtil.getCommandLineOptions()
+    doWhenActionManagerInitialized(Runnable {
+      doOpenFile(file, commandLineOptions == null || !commandLineOptions.shouldWait())
+    })
+    return project
   }
 
-  public @NotNull Project getOrCreateProject() {
-    return lightEditProjectManager.getOrCreateProject();
-  }
-
-  @Override
-  public @NotNull Project openFile(@NotNull VirtualFile file) {
-    Project project = lightEditProjectManager.getOrCreateProject();
-    LightEditUtil.LightEditCommandLineOptions commandLineOptions = LightEditUtil.getCommandLineOptions();
-    doWhenActionManagerInitialized(() -> {
-      doOpenFile(file, commandLineOptions == null || !commandLineOptions.shouldWait());
-    });
-    return project;
-  }
-
-  private static void doWhenActionManagerInitialized(@NotNull Runnable callback) {
-    ActionManager created = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
-    if (created == null) {
-      NonUrgentExecutor.getInstance().execute(() -> {
-        ActionManager.getInstance();
-        invokeOnEdt(callback);
-      });
-    }
-    else {
-      invokeOnEdt(callback);
-    }
-  }
-
-  private static void invokeOnEdt(@NotNull Runnable callback) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      callback.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(callback);
-    }
-  }
-
-  private void doOpenFile(@NotNull VirtualFile file, boolean restoreSession) {
-    doShowEditorWindow(restoreSession);
-    LightEditorInfo openEditorInfo = editorManager.findOpen(file);
+  private fun doOpenFile(file: VirtualFile, restoreSession: Boolean) {
+    doShowEditorWindow(restoreSession)
+    val openEditorInfo = editorManager.findOpen(file)
     if (openEditorInfo == null) {
-      LightEditorInfo newEditorInfo = editorManager.createEditor(file);
+      val newEditorInfo = editorManager.createEditor(file)
       if (newEditorInfo != null) {
-        addEditorTab(newEditorInfo);
-        LOG.info("Opened new tab for " + file.getPresentableUrl());
-        if (Boolean.TRUE.equals(file.getUserData(LightEditUtil.SUGGEST_SWITCH_TO_PROJECT))) {
-          file.putUserData(LightEditUtil.SUGGEST_SWITCH_TO_PROJECT, null);
-          if (!LightEditConfiguration.PreferredMode.LightEdit.equals(configuration.preferredMode)) {
-            suggestSwitchToProject(getOrCreateProject(), file);
+        addEditorTab(newEditorInfo)
+        LOG.info("Opened new tab for ${file.presentableUrl}")
+        if (file.getUserData(LightEditUtil.SUGGEST_SWITCH_TO_PROJECT) == true) {
+          file.putUserData(LightEditUtil.SUGGEST_SWITCH_TO_PROJECT, null)
+          if (LightEditConfiguration.PreferredMode.LightEdit != configuration.preferredMode) {
+            suggestSwitchToProject(orCreateProject, file)
           }
         }
       }
       else {
-        processNotOpenedFile(file);
+        processNotOpenedFile(file)
       }
     }
     else {
-      selectEditorTab(openEditorInfo);
-      LOG.info("Selected tab for " + file.getPresentableUrl());
+      selectEditorTab(openEditorInfo)
+      LOG.info("Selected tab for ${file.presentableUrl}")
     }
 
-    logStartupTime();
+    logStartupTime()
   }
 
-  private void suggestSwitchToProject(@NotNull Project project, @NotNull VirtualFile file) {
-    LightEditConfirmationDialog dialog = new LightEditConfirmationDialog(project);
-    dialog.show();
-    if (dialog.isDontAsk()) {
-      switch (dialog.getExitCode()) {
-        case LightEditConfirmationDialog.STAY_IN_LIGHT_EDIT ->
-          configuration.preferredMode = LightEditConfiguration.PreferredMode.LightEdit;
-        case LightEditConfirmationDialog.PROCEED_TO_PROJECT -> configuration.preferredMode = LightEditConfiguration.PreferredMode.Project;
+  private fun suggestSwitchToProject(project: Project, file: VirtualFile) {
+    val dialog = LightEditConfirmationDialog(project)
+    dialog.show()
+    if (dialog.isDontAsk) {
+      when (dialog.exitCode) {
+        LightEditConfirmationDialog.STAY_IN_LIGHT_EDIT -> configuration.preferredMode = LightEditConfiguration.PreferredMode.LightEdit
+        LightEditConfirmationDialog.PROCEED_TO_PROJECT -> configuration.preferredMode = LightEditConfiguration.PreferredMode.Project
       }
     }
-    if (dialog.getExitCode() == LightEditConfirmationDialog.PROCEED_TO_PROJECT) {
-      LightEditOpenInProjectIntention.performOn(getOrCreateProject(), file);
+    if (dialog.exitCode == LightEditConfirmationDialog.PROCEED_TO_PROJECT) {
+      LightEditOpenInProjectIntention.performOn(this.orCreateProject, file)
     }
   }
 
-  private void processNotOpenedFile(@NotNull VirtualFile file) {
-    FileType fileType = file.getFileType();
-    Project project = Objects.requireNonNull(getProject());
+  private fun processNotOpenedFile(file: VirtualFile) {
+    val fileType = file.fileType
+    val project = lightEditProjectManager.project!!
     Messages.showWarningDialog(project,
-                               ApplicationBundle.message("light.edit.unableToOpenFile.text", file.getPresentableName()),
-                               ApplicationBundle.message("light.edit.unableToOpenFile.title"));
-    LOG.info("Failed to open " + file.getPresentableUrl() + ", binary: " + fileType.isBinary());
+                               ApplicationBundle.message("light.edit.unableToOpenFile.text", file.presentableName),
+                               ApplicationBundle.message("light.edit.unableToOpenFile.title"))
+    LOG.info("Failed to open ${file.presentableUrl}, binary: ${fileType.isBinary()}")
   }
 
-  private void logStartupTime() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      if (frameWrapper != null) {
-        TabInfo info = getEditPanel().getTabs().getSelectedInfo();
-        if (info != null) {
-          UiNotifyConnector.doWhenFirstShown(info.getComponent(), () -> ApplicationManager.getApplication().invokeLater(() -> {
-            LOG.info("Startup took: " + ManagementFactory.getRuntimeMXBean().getUptime() + " ms");
-          }));
-        }
-      }
+  private fun logStartupTime() {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && frameWrapper != null) {
+      val info = editPanel.tabs.getSelectedInfo() ?: return
+      @Suppress("UsagesOfObsoleteApi")
+      UiNotifyConnector.doWhenFirstShown(info.component, Runnable {
+        ApplicationManager.getApplication().invokeLater(Runnable {
+          LOG.info("Startup took: ${ManagementFactory.getRuntimeMXBean().uptime} ms")
+        })
+      })
     }
   }
 
-  private void selectEditorTab(LightEditorInfo openEditorInfo) {
+  private fun selectEditorTab(openEditorInfo: LightEditorInfo) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      getEditPanel().getTabs().selectTab(openEditorInfo);
+      this.editPanel.tabs.selectTab(openEditorInfo)
     }
   }
 
-  private void addEditorTab(@NotNull LightEditorInfo newEditorInfo) {
+  private fun addEditorTab(newEditorInfo: LightEditorInfo) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      getEditPanel().getTabs().addEditorTab(newEditorInfo);
+      this.editPanel.tabs.addEditorTab(newEditorInfo)
     }
   }
 
-  public void closeEditor(@NotNull LightEditorInfo editorInfo) {
+  fun closeEditor(editorInfo: LightEditorInfo) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      getEditPanel().getTabs().closeTab(editorInfo);
+      this.editPanel.tabs.closeTab(editorInfo)
     }
   }
 
-  @Override
-  public LightEditorInfo createNewDocument(@Nullable Path preferredSavePath) {
-    showEditorWindow();
-    String preferredName = preferredSavePath == null ? null : preferredSavePath.getFileName().toString();
-    LightEditorInfo newEditorInfo = editorManager.createEmptyEditor(preferredName);
-    newEditorInfo.setPreferredSavePath(preferredSavePath);
-    addEditorTab(newEditorInfo);
-    return newEditorInfo;
+  override fun createNewDocument(preferredSavePath: Path?): LightEditorInfo {
+    showEditorWindow()
+    val preferredName = preferredSavePath?.fileName?.toString()
+    val newEditorInfo = editorManager.createEmptyEditor(preferredName)
+    newEditorInfo.setPreferredSavePath(preferredSavePath)
+    addEditorTab(newEditorInfo)
+    return newEditorInfo
   }
 
-  @Override
-  public boolean closeEditorWindow() {
+  override fun closeEditorWindow(): Boolean {
     if (!canClose()) {
-      LOG.info("Close cancelled");
-      return false;
+      LOG.info("Close canceled")
+      return false
     }
 
-    Project project = frameWrapper.getProject();
-    frameWrapper.getFrame().setVisible(false);
-    saveSession();
-    editorWindowClosing = true;
+    val project = frameWrapper!!.getProject()
+    frameWrapper!!.frame.setVisible(false)
+    saveSession()
+    editorWindowClosing = true
     try {
-      editorManager.closeAllEditors();
+      editorManager.closeAllEditors()
     }
     finally {
-      editorWindowClosing = false;
+      editorWindowClosing = false
     }
 
-    LOG.info("Window closed");
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(LightEditServiceListener.TOPIC).lightEditWindowClosed(project);
-    if (ProjectManager.getInstance().getOpenProjects().length == 0 && WelcomeFrame.getInstance() == null) {
-      closeAndDisposeFrame();
-      LOG.info("No open projects or welcome frame, exiting");
+    LOG.info("Window closed")
+    ApplicationManager.getApplication().getMessageBus().syncPublisher<LightEditServiceListener>(
+      LightEditServiceListener.TOPIC).lightEditWindowClosed(project)
+    if (ProjectManager.getInstance().getOpenProjects().size == 0 && getInstance() == null) {
+      closeAndDisposeFrame()
+      LOG.info("No open projects or welcome frame, exiting")
       try {
-        Disposer.dispose(editorManager);
-        ApplicationManager.getApplication().exit();
+        Disposer.dispose(editorManager)
+        ApplicationManager.getApplication().exit()
       }
-      catch (Throwable t) {
-        System.exit(1);
+      catch (e: Throwable) {
+        LOG.error(e)
+        exitProcess(1)
       }
     }
     else {
-      WindowManagerEx.getInstanceEx().releaseFrame(frameWrapper);
-      frameWrapper = null;
+      WindowManagerEx.getInstanceEx().releaseFrame(frameWrapper!!)
+      frameWrapper = null
     }
-    return false;
+    return false
   }
 
-  private boolean canClose() {
-    final FileDocumentManager documentManager = FileDocumentManager.getInstance();
+  private fun canClose(): Boolean {
+    val documentManager = FileDocumentManager.getInstance()
     return !editorManager.containsUnsavedDocuments() ||
            autoSaveDocuments() ||
            LightEditUtil.confirmClose(
              ApplicationBundle.message("light.edit.exit.message"),
              ApplicationBundle.message("light.edit.exit.title"),
-             new LightEditSaveConfirmationHandler() {
-
-               @Override
-               public void onSave() {
-                 documentManager.saveAllDocuments();
+             object : LightEditSaveConfirmationHandler {
+               override fun onSave() {
+                 documentManager.saveAllDocuments()
                }
 
-               @Override
-               public void onDiscard() {
-                 editorManager.getUnsavedEditors().forEach(editorInfo -> {
-                   VirtualFile file = editorInfo.getFile();
-                   Document document = documentManager.getDocument(file);
+               override fun onDiscard() {
+                 editorManager.getUnsavedEditors().forEach(Consumer { editorInfo: LightEditorInfo? ->
+                   val file = editorInfo!!.getFile()
+                   val document = documentManager.getDocument(file)
                    if (document != null) {
-                     documentManager.reloadFromDisk(document);
+                     documentManager.reloadFromDisk(document)
                    }
-                 });
+                 })
                }
              }
-           );
+           )
   }
 
-  private boolean autoSaveDocuments() {
+  private fun autoSaveDocuments(): Boolean {
     if (isAutosaveMode()) {
-      FileDocumentManager.getInstance().saveAllDocuments();
-      return true;
+      FileDocumentManager.getInstance().saveAllDocuments()
+      return true
     }
-    return false;
+    return false
   }
 
-  public LightEditPanel getEditPanel() {
-    assert !Disposer.isDisposed(frameWrapper.getLightEditPanel());
-    return frameWrapper.getLightEditPanel();
-  }
+  @Suppress("DEPRECATION")
+  val editPanel: LightEditPanel
+    get() {
+      assert(!Disposer.isDisposed(frameWrapper!!.lightEditPanel))
+      return frameWrapper!!.lightEditPanel
+    }
 
-  @Override
-  public @Nullable VirtualFile getSelectedFile() {
-    LightEditFrameWrapper frameWrapper = this.frameWrapper;
-    if (frameWrapper == null) return null;
-    LightEditPanel panel = frameWrapper.getLightEditPanel();
+  override fun getSelectedFile(): VirtualFile? {
+    val frameWrapper = frameWrapper ?: return null
+    val panel = frameWrapper.lightEditPanel
+    @Suppress("DEPRECATION")
     if (!Disposer.isDisposed(panel)) {
-      return panel.getTabs().getSelectedFile();
+      return panel.tabs.getSelectedFile()
     }
-    return null;
+    return null
   }
 
-  @Override
-  public @Nullable FileEditor getSelectedFileEditor() {
-    LightEditFrameWrapper frameWrapper = this.frameWrapper;
-    if (frameWrapper == null) return null;
-    LightEditPanel panel = frameWrapper.getLightEditPanel();
+  override fun getSelectedFileEditor(): FileEditor? {
+    val frameWrapper = frameWrapper ?: return null
+    val panel = frameWrapper.lightEditPanel
+    @Suppress("DEPRECATION")
     if (!Disposer.isDisposed(panel)) {
-      return panel.getTabs().getSelectedFileEditor();
+      return panel.tabs.getSelectedFileEditor()
     }
-    return null;
+    return null
   }
 
-  @Override
-  public void updateFileStatus(@NotNull Collection<? extends VirtualFile> files) {
-    List<LightEditorInfo> editors = ContainerUtil.mapNotNull(files, editorManager::findOpen);
+  override fun updateFileStatus(files: Collection<VirtualFile>) {
+    val editors = files.mapNotNull { editorManager.findOpen(it) }
     if (!editors.isEmpty()) {
-      editorManager.fireFileStatusChanged(editors);
+      editorManager.fireFileStatusChanged(editors)
     }
   }
 
-  @Override
-  public void dispose() {
+  override fun dispose() {
     if (frameWrapper != null) {
-      closeAndDisposeFrame();
+      closeAndDisposeFrame()
     }
   }
 
-  private void closeAndDisposeFrame() {
+  private fun closeAndDisposeFrame() {
     if (frameWrapper != null) {
-      Disposer.dispose(frameWrapper);
-      LOG.info("Frame disposed");
+      Disposer.dispose(frameWrapper!!)
+      LOG.info("Frame disposed")
     }
   }
 
-  void frameDisposed() {
-    frameWrapper = null;
+  fun frameDisposed() {
+    frameWrapper = null
   }
 
-  @Override
-  public void afterSelect(@Nullable LightEditorInfo editorInfo) {
-    if (frameWrapper != null) {
-      frameWrapper.setFrameTitle(editorInfo == null ? getAppName() : getFileTitle(editorInfo));
-    }
+  override fun afterSelect(editorInfo: LightEditorInfo?) {
+    frameWrapper?.setFrameTitle(if (editorInfo == null) appName else getFileTitle(editorInfo))
   }
 
-  private static String getFileTitle(@NotNull LightEditorInfo editorInfo) {
-    VirtualFile file = editorInfo.getFile();
-    StringBuilder titleBuilder = new StringBuilder();
-    titleBuilder.append(file.getPresentableName());
-    String parentPath = getPresentablePath(editorInfo);
-    if (parentPath != null) {
-      titleBuilder.append(" - ").append(truncateUrl(parentPath));
-    }
-    return titleBuilder.toString();
-  }
-
-  private static @Nullable String getPresentablePath(@NotNull LightEditorInfo editorInfo) {
-    VirtualFile file = editorInfo.getFile();
-    if (file instanceof LightVirtualFile) {
-      Path preferredPath = editorInfo.getPreferredSavePath();
-      if (preferredPath != null && preferredPath.getParent() != null) {
-        return preferredPath.getParent().toString();
-      }
-    }
-    else {
-      VirtualFile parent = file.getParent();
-      if (parent != null) {
-        return parent.getPresentableUrl();
-      }
-    }
-    return null;
-  }
-
-  private static String truncateUrl(@NotNull String url) {
-    int slashPos = Math.max(url.lastIndexOf('\\'), url.lastIndexOf('/'));
-    if (slashPos >= 0) {
-      String withoutLast = url.substring(0, slashPos);
-      int prevSlashPos = Math.max(withoutLast.lastIndexOf('\\'), withoutLast.lastIndexOf('/'));
-      if (prevSlashPos >= 0) {
-        String truncated = url.substring(prevSlashPos);
-        if (!url.equals(truncated)) {
-          return "..." + url.substring(prevSlashPos);
-        }
-      }
-    }
-    return url;
-  }
-
-  @Override
-  public void afterClose(@NotNull LightEditorInfo editorInfo) {
+  override fun afterClose(editorInfo: LightEditorInfo) {
     if (editorManager.getEditorCount() == 0 && !editorWindowClosing) {
-      closeEditorWindow();
+      closeEditorWindow()
     }
   }
 
-  @Override
-  public @NotNull LightEditorManager getEditorManager() {
-    return editorManager;
+  override fun getEditorManager(): LightEditorManager {
+    return editorManager
   }
 
-  private void saveEditorAs(@NotNull LightEditorInfo editorInfo, @NotNull VirtualFile targetFile) {
-    LightEditorInfo newInfo = editorManager.saveAs(editorInfo, targetFile);
-    getEditPanel().getTabs().replaceTab(editorInfo, newInfo);
+  private fun saveEditorAs(editorInfo: LightEditorInfo, targetFile: VirtualFile) {
+    val newInfo = editorManager.saveAs(editorInfo, targetFile)
+    this.editPanel.tabs.replaceTab(editorInfo, newInfo)
   }
 
-  @Override
-  public void saveToAnotherFile(@NotNull VirtualFile file) {
-    LightEditorInfo editorInfo = editorManager.getEditorInfo(file);
+  override fun saveToAnotherFile(file: VirtualFile) {
+    val editorInfo: LightEditorInfo? = editorManager.getEditorInfo(file)
     if (editorInfo != null) {
-      VirtualFile targetFile = LightEditUtil.chooseTargetFile(frameWrapper.getLightEditPanel(), editorInfo);
+      val targetFile = LightEditUtil.chooseTargetFile(frameWrapper!!.lightEditPanel, editorInfo)
       if (targetFile != null) {
-        saveEditorAs(editorInfo, targetFile);
+        saveEditorAs(editorInfo, targetFile)
       }
     }
   }
 
-  @Override
-  public boolean isAutosaveMode() {
-    return configuration.autosaveMode;
-  }
+  override fun isAutosaveMode(): Boolean = configuration.autosaveMode
 
-  @Override
-  public void setAutosaveMode(boolean autosaveMode) {
-    configuration.autosaveMode = autosaveMode;
-    editorManager.fireAutosaveModeChanged(autosaveMode);
+  override fun setAutosaveMode(autosaveMode: Boolean) {
+    configuration.autosaveMode = autosaveMode
+    editorManager.fireAutosaveModeChanged(autosaveMode)
   }
 
   @TestOnly
-  public void disposeCurrentSession() {
-    editorManager.releaseEditors();
-    Project project = lightEditProjectManager.getProject();
+  fun disposeCurrentSession() {
+    editorManager.releaseEditors()
+    val project = lightEditProjectManager.project
     if (project != null) {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(project);
+      getInstanceEx().forceCloseProject(project)
     }
   }
 
-  private void saveSession() {
+  private fun saveSession() {
     if (saveSession) {
-      LightEditTabs tabs = frameWrapper.getLightEditPanel().getTabs();
-      List<VirtualFile> openFiles = tabs.getOpenFiles();
-      configuration.sessionFiles.clear();
-      configuration.sessionFiles.addAll(ContainerUtil.map(openFiles, openFile -> VfsUtilCore.pathToUrl(openFile.getPath())));
+      val tabs = frameWrapper!!.lightEditPanel.tabs
+      val openFiles = tabs.openFiles
+      configuration.sessionFiles = openFiles.map { VfsUtilCore.pathToUrl(it.getPath()) }
     }
   }
 
-  private void restoreSession() {
-    doWhenActionManagerInitialized(() -> {
-      frameWrapper.setFrameTitleUpdateEnabled(false);
-      configuration.sessionFiles.forEach(
-        path -> {
-          VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(path);
-          if (file != null) {
-            doOpenFile(file, false);
-          }
+  private fun restoreSession() {
+    doWhenActionManagerInitialized(Runnable {
+      frameWrapper!!.setFrameTitleUpdateEnabled(false)
+      for (path in configuration.sessionFiles) {
+        VirtualFileManager.getInstance().findFileByUrl(path)?.let {
+          doOpenFile(file = it, restoreSession = false)
         }
-      );
-      frameWrapper.setFrameTitleUpdateEnabled(true);
-    });
+      }
+      frameWrapper!!.setFrameTitleUpdateEnabled(true)
+    })
   }
 
-  void setFrameInfo(@NotNull FrameInfo frameInfo) {
-    configuration.frameInfo = frameInfo;
+  fun setFrameInfo(frameInfo: FrameInfo) {
+    configuration.frameInfo = frameInfo
   }
 
-  @Override
-  public void saveNewDocuments() {
-    for(VirtualFile virtualFile : editorManager.getOpenFiles()) {
-      LightEditorInfo editorInfo = Objects.requireNonNull(editorManager.getEditorInfo(virtualFile));
+  override fun saveNewDocuments() {
+    for (virtualFile in editorManager.openFiles) {
+      val editorInfo = editorManager.getEditorInfo(virtualFile)!!
       if (editorInfo.isNew()) {
-        VirtualFile preferredTarget = LightEditUtil.getPreferredSaveTarget(editorInfo);
-        if (preferredTarget != null) {
-          saveEditorAs(editorInfo, preferredTarget);
+        val preferredTarget = LightEditUtil.getPreferredSaveTarget(editorInfo)
+        if (preferredTarget == null) {
+          saveToAnotherFile(virtualFile)
         }
         else {
-          saveToAnotherFile(virtualFile);
+          saveEditorAs(editorInfo, preferredTarget)
         }
       }
     }
   }
 
-  @Override
-  public boolean isTabNavigationAvailable(@NotNull AnAction navigationAction) {
-    return getEditPanel().getTabs().isTabNavigationAvailable(navigationAction);
+  override fun isTabNavigationAvailable(navigationAction: AnAction): Boolean {
+    return this.editPanel.tabs.isTabNavigationAvailable(navigationAction)
   }
 
-  @Override
-  public void navigateToTab(@NotNull AnAction navigationAction) {
-    getEditPanel().getTabs().navigateToTab(navigationAction);
+  override fun navigateToTab(navigationAction: AnAction) {
+    this.editPanel.tabs.navigateToTab(navigationAction)
   }
 
-  @Override
-  public boolean isPreferProjectMode() {
-    return configuration.preferredMode != null && LightEditConfiguration.PreferredMode.Project.equals(configuration.preferredMode);
+  override fun isPreferProjectMode(): Boolean {
+    return configuration.preferredMode != null && LightEditConfiguration.PreferredMode.Project == configuration.preferredMode
   }
 
-  @Override
-  public boolean isLightEditEnabled() {
-    return LightEditUtil.isLightEditEnabled();
+  override fun isLightEditEnabled(): Boolean {
+    return LightEditUtil.isLightEditEnabled()
   }
 
-  @Override
-  public @Nullable Project openFile(@NotNull Path path, boolean suggestSwitchToProject) {
-    return LightEditUtil.openFile(path, suggestSwitchToProject);
+  override fun openFile(path: Path, suggestSwitchToProject: Boolean): Project? {
+    return LightEditUtil.openFile(path, suggestSwitchToProject)
   }
 
-  @Override
-  public boolean isForceOpenInLightEditMode() {
-    return LightEditUtil.isForceOpenInLightEditMode();
+  override fun isForceOpenInLightEditMode(): Boolean {
+    return LightEditUtil.isForceOpenInLightEditMode()
   }
+}
+
+private val LOG = logger<LightEditServiceImpl>()
+
+private val appName: String
+  get() = ApplicationInfo.getInstance().getVersionName()
+
+private fun doWhenActionManagerInitialized(callback: Runnable) {
+  val created = serviceIfCreated<ActionManager>()
+  if (created == null) {
+    NonUrgentExecutor.getInstance().execute(Runnable {
+      ActionManager.getInstance()
+      invokeOnEdt(callback)
+    })
+  }
+  else {
+    invokeOnEdt(callback)
+  }
+}
+
+private fun invokeOnEdt(callback: Runnable) {
+  if (ApplicationManager.getApplication().isDispatchThread()) {
+    callback.run()
+  }
+  else {
+    ApplicationManager.getApplication().invokeLater(callback)
+  }
+}
+
+private fun getFileTitle(editorInfo: LightEditorInfo): String {
+  val file = editorInfo.getFile()
+  val titleBuilder = StringBuilder()
+  titleBuilder.append(file.presentableName)
+  val parentPath: String? = getPresentablePath(editorInfo)
+  if (parentPath != null) {
+    titleBuilder.append(" - ").append(truncateUrl(parentPath))
+  }
+  return titleBuilder.toString()
+}
+
+private fun getPresentablePath(editorInfo: LightEditorInfo): String? {
+  val file = editorInfo.getFile()
+  if (file is LightVirtualFile) {
+    val preferredPath = editorInfo.getPreferredSavePath()
+    preferredPath?.parent?.let {
+      return it.toString()
+    }
+  }
+  else {
+    file.getParent()?.let {
+      return it.presentableUrl
+    }
+  }
+  return null
+}
+
+private fun truncateUrl(url: String): String {
+  val slashPos = max(url.lastIndexOf('\\'), url.lastIndexOf('/'))
+  if (slashPos >= 0) {
+    val withoutLast = url.take(slashPos)
+    val prevSlashPos = max(withoutLast.lastIndexOf('\\'), withoutLast.lastIndexOf('/'))
+    if (prevSlashPos >= 0) {
+      val truncated = url.substring(prevSlashPos)
+      if (url != truncated) {
+        return "..." + url.substring(prevSlashPos)
+      }
+    }
+  }
+  return url
 }
