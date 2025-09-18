@@ -816,35 +816,40 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     val currentReadState = myTopmostReadAction.get()
     myTopmostReadAction.set(true)
 
-    val computationState = getComputationState()
-    val currentPermit = computationState.getThisThreadPermit()
-    var readPermitToRelease: ReadPermit? = null
-
-    when (currentPermit) {
-      is ParallelizablePermit.Read, is ParallelizablePermit.Write, is ParallelizablePermit.WriteIntent -> {}
-      null -> {
-        readPermitToRelease = smartAcquireReadPermit(computationState)
-      }
-    }
-
-    // For diagnostic purposes register that we in read action, even if we use stronger lock
-    myReadActionsInThread.set(myReadActionsInThread.get() + 1)
-
     try {
-      fireReadActionStarted(frozenListeners, clazz)
-      val rv = action()
-      return rv
+      val computationState = getComputationState()
+      val currentPermit = computationState.getThisThreadPermit()
+      var readPermitToRelease: ReadPermit? = null
+
+      when (currentPermit) {
+        is ParallelizablePermit.Read, is ParallelizablePermit.Write, is ParallelizablePermit.WriteIntent -> {}
+        null -> {
+          readPermitToRelease = smartAcquireReadPermit(computationState)
+        }
+      }
+
+      // For diagnostic purposes register that we in read action, even if we use stronger lock
+      myReadActionsInThread.set(myReadActionsInThread.get() + 1)
+
+      try {
+        fireReadActionStarted(frozenListeners, clazz)
+        val rv = action()
+        return rv
+      }
+      finally {
+        fireReadActionFinished(frozenListeners, clazz)
+
+        myReadActionsInThread.set(myReadActionsInThread.get() - 1)
+        if (readPermitToRelease != null) {
+          computationState.releaseReadPermit(readPermitToRelease)
+        }
+      }
     }
     finally {
-      fireReadActionFinished(frozenListeners, clazz)
-
-      myReadActionsInThread.set(myReadActionsInThread.get() - 1)
-      if (readPermitToRelease != null) {
-        computationState.releaseReadPermit(readPermitToRelease)
-      }
       myTopmostReadAction.set(currentReadState)
       fireAfterReadActionFinished(frozenListeners, clazz)
     }
+
   }
 
   override fun tryRunReadAction(action: Runnable): Boolean {
