@@ -115,7 +115,8 @@ internal class GHPRMetricsLoader(private val project: Project) {
     val nonFork = withContext(Dispatchers.IO) {
       knownRepos.firstOrNull { repo ->
         val executor = getExecutor(repo.repository.serverPath) ?: return@firstOrNull false
-        executor.executeSuspend(GHGQLRequests.Repo.find(repo.repository))?.isFork == false
+        runCatching { executor.executeSuspend(GHGQLRequests.Repo.find(repo.repository))?.isFork == false }
+          .getOrElse { false }
       }
     }
     if (nonFork != null) return nonFork
