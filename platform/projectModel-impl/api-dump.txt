@@ -144,7 +144,6 @@ c:com.intellij.openapi.components.impl.ProjectPathMacroManager
 com.intellij.openapi.components.impl.stores.IProjectStore
 - sf:COMPONENT_STORE_LOADING_ENABLED:com.intellij.openapi.util.Key
 - a:getDirectoryStorePath():java.nio.file.Path
-- a:getPresentableUrl():java.lang.String
 - a:getProjectBasePath():java.nio.file.Path
 - a:getProjectFilePath():java.nio.file.Path
 - a:getProjectWorkspaceId():java.lang.String

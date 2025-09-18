@@ -213,9 +213,6 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       return "$prefix${Integer.toHexString(path.invariantSeparatorsPathString.hashCode())}"
     }
 
-  override val presentableUrl: String
-    get() = storeDescriptor.presentableUrl.invariantSeparatorsPathString
-
   override val projectWorkspaceId: String?
     get() = project.service<ProjectIdManager>().id
 

@@ -237,7 +237,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     return componentStore.storeDescriptor.historicalProjectBasePath.invariantSeparatorsPathString
   }
 
-  final override fun getPresentableUrl(): String = componentStore.presentableUrl
+  final override fun getPresentableUrl(): String = componentStore.storeDescriptor.presentableUrl.invariantSeparatorsPathString
 
   override fun getLocationHash(): String = componentStore.locationHash
 

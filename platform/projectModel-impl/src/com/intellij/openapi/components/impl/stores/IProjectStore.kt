@@ -21,8 +21,6 @@ interface IProjectStore : IComponentStore {
 
   val storageScheme: StorageScheme
 
-  val presentableUrl: String
-
   /**
    * The path to project configuration file - `misc.xml` for directory-based and `*.ipr` for file-based.
    */
