@@ -108,7 +108,7 @@ sealed interface DependencyDescription<E : WorkspaceEntity> {
   ) : DependencyDescription<E>
 
   /**
-   * Indicates that the contributor must be called for the entities [E] when any entity of type [R] adds the first
+   * Indicates that the contributor must be called for the entities [E] when any entity adds the first
    * or remove the last reference to [E].
    */
   @ApiStatus.Experimental
