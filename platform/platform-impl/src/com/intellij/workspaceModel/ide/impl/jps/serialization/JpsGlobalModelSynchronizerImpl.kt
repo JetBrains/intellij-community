@@ -123,7 +123,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
     }
   }
 
-  suspend fun saveGlobalEntities(): Unit = jpsSaveGlobalEntitiesMs.addMeasuredTime {
+  override suspend fun saveGlobalEntities(): Unit = jpsSaveGlobalEntitiesMs.addMeasuredTime {
     val globalWorkspaceModels = GlobalWorkspaceModel.getInstances()
     for (globalWorkspaceModel in globalWorkspaceModels) {
       setVirtualFileUrlManager(globalWorkspaceModel.getVirtualFileUrlManager())

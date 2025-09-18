@@ -5,7 +5,6 @@ import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PathManager.getSystemDir
-import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -16,9 +15,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.ApplicationStoreJp
 import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import com.intellij.util.LineSeparator
-import com.intellij.util.asSafely
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -65,10 +62,7 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
   }
 
   final override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
-    app.asSafely<ApplicationImpl>()
-      ?.getServiceAsyncIfDefined(JpsGlobalModelSynchronizer::class.java)
-      ?.asSafely<JpsGlobalModelSynchronizerImpl>()
-      ?.saveGlobalEntities()
+    ((app as? ComponentManagerEx)?.getServiceAsyncIfDefined(JpsGlobalModelSynchronizer::class.java))?.saveGlobalEntities()
 
     coroutineScope {
       launch {

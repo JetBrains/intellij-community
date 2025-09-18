@@ -555,7 +555,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val defaultState = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
     if (loadPolicy == StateLoadPolicy.LOAD || info.stateSpec?.allowLoadInTests == true) {
       val storageChooser = component as? StateStorageChooserEx
-      for (storageSpec in getStorageSpecs(component, stateSpec, StateStorageOperation.READ)) {
+      for (storageSpec in getStorageSpecs(component = component, stateSpec = stateSpec, operation = StateStorageOperation.READ)) {
         if (storageChooser?.getResolution(storageSpec, StateStorageOperation.READ) == Resolution.SKIP) {
           continue
         }
@@ -570,7 +570,14 @@ abstract class ComponentStoreImpl : IComponentStore {
           reloadData.toBoolean()
         }
 
-        val stateGetter = doCreateStateGetter(isReloadDataForStorage, storage, info, name, stateClass, stateSpec.useLoadedStateAsExisting)
+        val stateGetter = doCreateStateGetter(
+          reloadData = isReloadDataForStorage,
+          storage = storage,
+          info = info,
+          componentName = name,
+          stateClass = stateClass,
+          useLoadedStateAsExisting = stateSpec.useLoadedStateAsExisting,
+        )
         var state = stateGetter.getState(defaultState)
         if (state == null) {
           if (changedStorages != null && isStorageChanged(changedStorages, storage)) {

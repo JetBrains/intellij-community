@@ -214,7 +214,9 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     myLastDisposable = null;
   }
 
-  private final SynchronizedClearableLazy<IComponentStore> componentStoreValue = new SynchronizedClearableLazy<>(() -> getService(IComponentStore.class));
+  private final SynchronizedClearableLazy<IComponentStore> componentStoreValue = new SynchronizedClearableLazy<>(() -> {
+    return getService(IComponentStore.class);
+  });
 
   @Override
   public @NotNull IComponentStore getComponentStore() {
