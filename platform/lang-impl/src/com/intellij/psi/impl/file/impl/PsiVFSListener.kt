@@ -751,31 +751,33 @@ private class PsiVfsInitProjectActivity : InitProjectActivity {
   override val isParallelExecution: Boolean
     get() = true
 
+  private fun processFileTypesChanged(project: Project, clearViewProviders: Boolean = true) {
+    (PsiManagerEx.getInstanceEx(project).fileManagerEx).processFileTypesChanged(clearViewProviders)
+  }
+
   override suspend fun run(project: Project) {
     val connection = project.messageBus.simpleConnect()
 
     @Suppress("UsagesOfObsoleteApi")
     serviceAsync<LanguageSubstitutors>().point?.addChangeListener((project as ComponentManagerEx).getCoroutineScope()) {
-      if (!project.isDisposed) {
-        (PsiManagerEx.getInstanceEx(project).fileManager as FileManagerEx).processFileTypesChanged(true)
-      }
+      processFileTypesChanged(project)
     }
 
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC, PsiVfsAdditionalLibraryRootListener(project))
     connection.subscribe(FileTypeManager.TOPIC, object : FileTypeListener {
       override fun fileTypesChanged(e: FileTypeEvent) {
-        (PsiManagerEx.getInstanceEx(project).fileManager as FileManagerEx).processFileTypesChanged(e.removedFileType != null)
+        processFileTypesChanged(project, clearViewProviders = e.removedFileType != null)
       }
     })
     connection.subscribe(FileDocumentManagerListener.TOPIC, MyFileDocumentManagerListener(project))
 
     connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-        (PsiManagerEx.getInstanceEx(project).fileManager as FileManagerEx).processFileTypesChanged(true)
+        processFileTypesChanged(project)
       }
 
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-        (PsiManagerEx.getInstanceEx(project).fileManager as FileManagerEx).processFileTypesChanged(true)
+        processFileTypesChanged(project)
       }
     })
 
