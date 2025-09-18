@@ -20,7 +20,9 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.containers.ContainerUtil;
 import io.opentelemetry.api.metrics.DoubleGauge;
 import io.opentelemetry.api.metrics.Meter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -33,7 +35,9 @@ import static com.intellij.util.SystemProperties.getLongProperty;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-final class LowMemoryNotifier implements Disposable {
+@ApiStatus.Internal
+@VisibleForTesting
+public final class LowMemoryNotifier implements Disposable {
   private static final Logger LOG = Logger.getInstance(LowMemoryNotifier.class);
 
   private static final Set<MemoryKind> notifications = ConcurrentCollectionFactory.createConcurrentSet();
@@ -45,7 +49,6 @@ final class LowMemoryNotifier implements Disposable {
   //@formatter:on
 
   private final ThrottlingWindowedFilter throttlingFilter = new ThrottlingWindowedFilter(
-    System.currentTimeMillis(),
     SUMMARISING_WINDOW_MS,
     THROTTLING_PERIOD_MS
   );
@@ -140,37 +143,33 @@ final class LowMemoryNotifier implements Disposable {
    * 2. Sums up all the (throttled) signals inside {@link #windowSizeMs}.
    * This way short bursts of signals are dampened, but signals that are more evenly spaced are not.
    */
-  private static class ThrottlingWindowedFilter {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static class ThrottlingWindowedFilter {
     private final long windowSizeMs;
     private final long throttlingPeriodMs;
 
-    private long recentUpdateTimestampMs;
+    private long recentUpdateTimestampMs = 0;
     private final Queue<DataPoint> history = new ArrayDeque<>();
 
-    public ThrottlingWindowedFilter(long initialTimestampMs,
-                                    long windowSizeMs,
+    public ThrottlingWindowedFilter(long windowSizeMs,
                                     long throttlingPeriodMs) {
-      this.recentUpdateTimestampMs = initialTimestampMs;
       this.windowSizeMs = windowSizeMs;
       this.throttlingPeriodMs = throttlingPeriodMs;
     }
 
     public synchronized double throttledSum(long currentTimeMs) {
-      if (recentUpdateTimestampMs < currentTimeMs - windowSizeMs) {
-        recentUpdateTimestampMs = currentTimeMs;
-        history.clear();
-        return 0;
-      }
-
       if (history.isEmpty()
-          || recentUpdateTimestampMs < currentTimeMs - throttlingPeriodMs) {
+          || currentTimeMs - recentUpdateTimestampMs > throttlingPeriodMs) {
+
         history.offer(new DataPoint(currentTimeMs, /*value:*/ 1));
         recentUpdateTimestampMs = currentTimeMs;
-      }//else: throttle the update out
 
-      while (!history.isEmpty() && history.peek().timestamp < currentTimeMs - windowSizeMs) {
-        history.poll();
-      }
+        //drop points older than windowSize:
+        while (!history.isEmpty() && history.peek().timestamp < currentTimeMs - windowSizeMs) {
+          history.poll();
+        }
+      }//else: throttle the update out
 
       return history.stream()
         .mapToLong(period -> period.value)
