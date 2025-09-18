@@ -185,7 +185,8 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
     myAdvertiserChanges.offer(() -> this.lookup.getAdvertiser().clearAdvertisements());
 
-    myArranger = GroupedCompletionContributor.isGroupEnabledInApp() ? new GroupCompletionLookupArrangerImpl(this) : new CompletionLookupArrangerImpl(this);
+    myArranger = GroupedCompletionContributor.isGroupEnabledInApp() ? new GroupCompletionLookupArrangerImpl(this)
+                                                                    : new CompletionLookupArrangerImpl(this);
     this.lookup.setArranger(myArranger);
 
     this.lookup.addLookupListener(myLookupListener);

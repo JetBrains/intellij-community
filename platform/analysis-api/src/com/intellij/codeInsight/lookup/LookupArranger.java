@@ -64,10 +64,22 @@ public abstract class LookupArranger implements WeighingContext {
     return false;
   }
 
+  /**
+   * Registers a custom matcher for the specified lookup element.
+   *
+   * @param item    the lookup element to register the matcher for
+   * @param matcher the matcher to register
+   */
   public void registerMatcher(@NotNull LookupElement item, @NotNull PrefixMatcher matcher) {
     item.putUserData(myMatcherKey, matcher);
   }
 
+  /**
+   * Registers an additional matcher for the lookup.
+   * Every item is checked by this matcher.
+   *
+   * @param matcher an additional matcher to register
+   */
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public void registerAdditionalMatcher(@NotNull Predicate<LookupElement> matcher) {
@@ -169,6 +181,14 @@ public abstract class LookupArranger implements WeighingContext {
     return removed;
   }
 
+  /**
+   * Returns a pair of lists: the first one contains the sorted items to be shown in the lookup,
+   * the second one contains the index of the item to be selected.
+   *
+   * @param lookup the lookup to arrange items for
+   *
+   * @return a pair of lists containing the sorted items to be shown in the lookup and the index of the item to be selected
+   */
   public abstract @NotNull Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction);
 
   public abstract @NotNull LookupArranger createEmptyCopy();

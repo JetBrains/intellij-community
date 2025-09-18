@@ -73,8 +73,11 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     myProcess = process;
   }
 
+  /**
+   * @return a multimap of sorters to items, where items are sorted by {@link #sortByPresentation}.
+   */
   @ApiStatus.Internal
-  protected MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(@NotNull Iterable<? extends LookupElement> source) {
+  protected final MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(@NotNull Iterable<? extends LookupElement> source) {
     MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = MultiMap.createLinked();
     for (LookupElement element : source) {
       inputBySorter.putValue(obtainSorter(element), element);
@@ -86,7 +89,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     return inputBySorter;
   }
 
-  private @NotNull CompletionSorterImpl obtainSorter(LookupElement element) {
+  private @NotNull CompletionSorterImpl obtainSorter(@NotNull LookupElement element) {
     //noinspection ConstantConditions
     return element.getUserData(mySorterKey);
   }
