@@ -11,4 +11,3 @@ fun buz() {
 // EXIST: toString
 // EXIST: hashCode
 // EXIST: equals
-// NOTHING_ELSE

@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.singleReturnExpressionOrNull
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WithImportInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaParameterNameWeigher.isTrailingLambdaParameter
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionLookupElementFactory
@@ -243,7 +244,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
                 }
 
                 createCompoundLookupElement(suggestedNames, isDestructuring = true)?.withChainedInsertHandler(
-                    K2TrailingFunctionParameterNameCompletionContributorBase.WithImportInsertionHandler(fqNames)
+                    WithImportInsertionHandler(fqNames)
                 )?.let { yield(it) }
 
                 val lookupObject = classSymbol.psi
