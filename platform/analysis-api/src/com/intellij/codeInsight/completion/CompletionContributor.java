@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -152,25 +153,27 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
    * can be canceled smoothly when the user begins to type in the editor.
    */
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    for (var pair : myMap.get(parameters.getCompletionType())) {
+    if (!runProviders(myMap.get(parameters.getCompletionType()), parameters, result)) {
+      return;
+    }
+
+    runProviders(myMap.get(null), parameters, result);
+  }
+
+  private static boolean runProviders(@NotNull Collection<Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>> providers,
+                                      @NotNull CompletionParameters parameters,
+                                      @NotNull CompletionResultSet result) {
+    for (var pair : providers) {
       ProgressManager.checkCanceled();
       ProcessingContext context = new ProcessingContext();
       if (pair.first.accepts(parameters.getPosition(), context)) {
         pair.second.addCompletionVariants(parameters, context, result);
         if (result.isStopped()) {
-          return;
+          return false;
         }
       }
     }
-    for (var pair : myMap.get(null)) {
-      ProcessingContext context = new ProcessingContext();
-      if (pair.first.accepts(parameters.getPosition(), context)) {
-        pair.second.addCompletionVariants(parameters, context, result);
-        if (result.isStopped()) {
-          return;
-        }
-      }
-    }
+    return true;
   }
 
   /**
