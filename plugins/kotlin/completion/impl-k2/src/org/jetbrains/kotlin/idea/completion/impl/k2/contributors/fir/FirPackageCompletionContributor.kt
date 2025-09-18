@@ -11,15 +11,30 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOri
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveReceiverToSymbols
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributorBase
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2PackageCompletionContributor.Companion.shouldCompleteTopLevelPackages
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinImportDirectivePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinPackageDirectivePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 
 internal class FirPackageCompletionContributor(
     sink: LookupElementSink,
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinRawPositionContext>(sink, priority) {
+
+    private fun KotlinRawPositionContext.isAppropriateContext(): Boolean {
+        if (shouldCompleteTopLevelPackages()) return true
+        return when (this) {
+            is KotlinPackageDirectivePositionContext,
+            is KotlinImportDirectivePositionContext,
+            is KotlinTypeNameReferencePositionContext -> true
+            else -> position.parent?.parent is KtDotQualifiedExpression
+        }
+    }
 
     context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
@@ -27,6 +42,10 @@ internal class FirPackageCompletionContributor(
         positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
     ) {
+        // Allow disabling top-level package completion for LSP: KTIJ-35650
+        if (!positionContext.isAppropriateContext()) {
+            return
+        }
         val rootSymbol = positionContext.resolveReceiverToSymbols()
             .filterIsInstance<KaPackageSymbol>()
             .singleOrNull()
