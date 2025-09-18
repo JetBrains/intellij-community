@@ -1,0 +1,28 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.projectView.window
+
+import com.intellij.icons.AllIcons
+import com.intellij.ide.projectView.impl.ProjectViewImpl
+import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowFactory
+import javax.swing.Icon
+
+internal class ProjectViewToolWindowFactory : ToolWindowFactory, DumbAware {
+  override val icon: Icon
+    get() = AllIcons.Toolwindows.ToolWindowProject
+
+  override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+    if (Registry.`is`("project.view.toolwindow.split", defaultValue = false)) {
+      // In the split tool window mode we only create the tool window on the frontend (or in the monolith), hence serviceOrNull.
+      project.serviceOrNull<ProjectViewToolWindowService>()?.setupToolWindow(toolWindow)
+    }
+    else {
+      val legacyProjectView = ProjectViewImpl.getInstance(project) as ProjectViewImpl
+      legacyProjectView.setupImpl(toolWindow)
+    }
+  }
+}

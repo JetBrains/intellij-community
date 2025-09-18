@@ -21,6 +21,20 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
+    "//platform/platform-api:ide",
+    "//platform/core-api:core",
+    "//platform/util:util-ui",
+    "//platform/lang-impl",
+    "//fleet/rpc",
+    "//platform/kernel/rpc",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/core-ui",
+    "//platform/kernel/shared:kernel",
+    "//platform/project/shared:project",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/rpc",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/jdom",
   ]
 )
 

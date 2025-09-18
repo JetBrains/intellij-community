@@ -4,4 +4,10 @@
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
   </dependencies>
   <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindow id="Project" anchor="left" icon="AllIcons.Toolwindows.ToolWindowProject"
+                factoryClass="com.intellij.platform.projectView.window.ProjectViewToolWindowFactory"/>
+    <registryKey key="project.view.toolwindow.split" defaultValue="false" restartRequired="true"
+                 description="Enables the new experimental split Project View tool window" />
+  </extensions>
 </idea-plugin>

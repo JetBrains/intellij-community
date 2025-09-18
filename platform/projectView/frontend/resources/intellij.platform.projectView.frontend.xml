@@ -5,4 +5,11 @@
     <module name="intellij.platform.projectView"/>
     <!-- endregion -->
   </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <!--suppress PluginXmlRegistrationCheck --> <!-- (false positive, IJPL-149684) -->
+    <projectService
+      serviceInterface="com.intellij.platform.projectView.window.ProjectViewToolWindowService"
+      serviceImplementation="com.intellij.platform.projectView.frontend.window.ProjectViewToolWindowServiceImpl"
+    />
+  </extensions>
 </idea-plugin>
