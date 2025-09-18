@@ -107,7 +107,9 @@ enum class Lang(val displayName: String, val className: String, val iso: Languag
       if (shouldDisableChunker(it)) {
         it.chunker = NoopChunker()
       }
+      it.disambiguator = LazyCachingDisambiguator(it)
       _jLanguage = it
+      
     }
 
   fun isAvailable() = GrazieRemote.isAvailableLocally(this)

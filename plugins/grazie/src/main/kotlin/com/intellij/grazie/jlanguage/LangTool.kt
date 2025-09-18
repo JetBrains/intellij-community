@@ -129,8 +129,6 @@ object LangTool : GrazieStateLifecycle {
           prepareForNoChunkTags(rule)
         }
       }
-
-      language.disambiguator = CachingDisambiguator(language.disambiguator)
     }
   }
 

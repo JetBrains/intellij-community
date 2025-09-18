@@ -11,6 +11,7 @@ import ai.grazie.rules.uk.UkrainianTreeSupport
 import ai.grazie.text.exclusions.SentenceWithExclusions
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.jlanguage.LazyCachingDisambiguator
 import com.intellij.grazie.rule.CloudOrLocalBatchParser
 import com.intellij.grazie.rule.SentenceBatcher
 import com.intellij.grazie.rule.SentenceBatcher.AsyncBatchParser
@@ -63,6 +64,8 @@ object DependencyParser {
       override suspend fun parseAsync(sentences: List<SentenceWithExclusions>): LinkedHashMap<SentenceWithExclusions, Tree?> {
         val support = obtainSupport(language)
         if (support != null) {
+          val ltLanguage = SentenceBatcher.findInstalledLTLanguage(language)
+          (ltLanguage?.disambiguator as? LazyCachingDisambiguator)?.ensureInitialized()
           @Suppress("UNCHECKED_CAST")
           return sentences.associateWith {
             cachedTrees.getOrPut(it.sentence) {
