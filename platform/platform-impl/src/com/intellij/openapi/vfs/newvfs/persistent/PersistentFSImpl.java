@@ -912,14 +912,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       else {
         //just actualise the length:
         vfsPeer.updateRecordFields(fileId, record -> {
-          record.setLength(content.length);
+          boolean lengthChanged = record.setLength(content.length);
           int oldFlags = record.getFlags();
           int flags = oldFlags & ~Flags.MUST_RELOAD_LENGTH;
-
-          if (oldFlags != flags) {
-            record.setFlags(flags);
-          }
-          return true;
+          boolean flagsChanged = record.setFlags(flags);
+          return lengthChanged || flagsChanged;
         });
       }
 
