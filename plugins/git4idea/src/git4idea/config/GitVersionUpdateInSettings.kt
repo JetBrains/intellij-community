@@ -55,7 +55,7 @@ internal class GitVersionUpdateSettingsEntryProvider : SettingsEntryPointAction.
       val versionToUpdate = versionChecker.newAvailableVersion
       val gitNotInstalled = versionChecker.gitNotInstalled
 
-      if (versionToUpdate == null || versionToUpdate.isNull || versionToUpdate.isWSL) {
+      if (versionToUpdate.isNull || versionToUpdate.isWSL) {
         presentation.isEnabledAndVisible = false
       }
       else {
@@ -93,7 +93,7 @@ internal class GitNewVersionCheckerStarter(private val project: Project) : VcsLi
 internal class GitNewVersionChecker(private val project: Project, private val cs: CoroutineScope) {
 
   @Volatile
-  var newAvailableVersion: GitVersion? = null
+  var newAvailableVersion: GitVersion = GitVersion.NULL
     private set
 
   @Volatile
@@ -113,7 +113,7 @@ internal class GitNewVersionChecker(private val project: Project, private val cs
   }
 
   internal fun reset() {
-    newAvailableVersion = null
+    newAvailableVersion = GitVersion.NULL
     gitNotInstalled = true
   }
 
