@@ -229,10 +229,14 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     }
 
     val filePath = file.path
-    if (storeDescriptor.dotIdea == null) {
-      return filePath == projectFilePath.invariantSeparatorsPathString || filePath == workspacePath.invariantSeparatorsPathString
+    val dotIdea = storeDescriptor.dotIdea
+    if (dotIdea == null) {
+      return filePath == storeDescriptor.presentableUrl.invariantSeparatorsPathString ||
+             filePath == storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE).invariantSeparatorsPathString
     }
-    return VfsUtilCore.isAncestorOrSelf(projectFilePath.parent.invariantSeparatorsPathString, file)
+    else {
+      return VfsUtilCore.isAncestorOrSelf(dotIdea.invariantSeparatorsPathString, file)
+    }
   }
 
   final override val directoryStorePath: Path?
