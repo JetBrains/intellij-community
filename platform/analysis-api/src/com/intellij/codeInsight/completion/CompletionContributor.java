@@ -14,7 +14,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -131,13 +130,12 @@ import java.util.List;
 public abstract class CompletionContributor implements PossiblyDumbAware {
   public static final ExtensionPointName<CompletionContributorEP> EP = new ExtensionPointName<>("com.intellij.completion.contributor");
 
-  private final MultiMap<CompletionType, Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>> myMap =
-    new MultiMap<>();
+  private final MultiMap<CompletionType, ProviderWithPattern> myMap = new MultiMap<>();
 
   public final void extend(@Nullable CompletionType type,
                            @NotNull ElementPattern<? extends PsiElement> place,
                            @NotNull CompletionProvider<CompletionParameters> provider) {
-    myMap.putValue(type, new Pair<>(place, provider));
+    myMap.putValue(type, new ProviderWithPattern(place, provider));
   }
 
   /**
@@ -161,14 +159,14 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
     runProviders(myMap.get(null), parameters, result);
   }
 
-  private static boolean runProviders(@NotNull Collection<Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>>> providers,
+  private static boolean runProviders(@NotNull Collection<ProviderWithPattern> providers,
                                       @NotNull CompletionParameters parameters,
                                       @NotNull CompletionResultSet result) {
-    for (var pair : providers) {
+    for (ProviderWithPattern providerWithPattern : providers) {
       ProgressManager.checkCanceled();
       ProcessingContext context = new ProcessingContext();
-      if (pair.first.accepts(parameters.getPosition(), context)) {
-        pair.second.addCompletionVariants(parameters, context, result);
+      if (providerWithPattern.pattern().accepts(parameters.getPosition(), context)) {
+        providerWithPattern.provider().addCompletionVariants(parameters, context, result);
         if (result.isStopped()) {
           return false;
         }
@@ -247,4 +245,9 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
   }
 
   private static final LanguageExtension<CompletionContributor> INSTANCE = new LanguageExtensionWithAny<>(EP.getName());
+
+  private record ProviderWithPattern(
+    @NotNull ElementPattern<? extends PsiElement> pattern,
+    @NotNull CompletionProvider<CompletionParameters> provider
+  ) {}
 }
