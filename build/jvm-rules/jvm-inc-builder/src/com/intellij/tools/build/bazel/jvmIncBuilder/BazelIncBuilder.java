@@ -96,6 +96,16 @@ public class BazelIncBuilder {
               }
 
               if (!changedLibNodeSources.isEmpty() || !deletedLibNodeSources.isEmpty()) {
+
+                // Add to 'pastLibGraphs' all previously available graph parts, even if they are not changed. Reason: need full nodes info for graph node traversals
+                for (NodeSource lib : libsSnapshotDelta.getBaseSnapshot().getElements()) {
+                  if (!contains(libsSnapshotDelta.getModified(), lib)) {
+                    pastLibGraphs.add(
+                      LibraryGraphLoader.getLibraryGraph(lib, presentState.getLibraries().getDigest(lib), context.getPathMapper().toPath(lib)).second
+                    );
+                  }
+                }
+
                 try {
                   Delta libDelta = new DeltaView(changedLibNodeSources, deletedLibNodeSources, CompositeGraph.create(presentLibGraphs));
                   srcSnapshotDelta = graphUpdater.updateBeforeCompilation(storageManager.getGraph(), srcSnapshotDelta, libDelta, pastLibGraphs);
