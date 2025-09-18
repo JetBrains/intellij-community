@@ -172,14 +172,17 @@ public final class AboutDialog extends DialogWrapper {
       lines.add(branchInfo.first);
       myInfo.add(branchInfo.second);
     }
-    lines.add("");
 
     CustomProperty revision = ContainerUtil.find(
       IdeProductInfo.getInstance().getCurrentProductInfo()
         .getCustomProperties(), o -> CustomPropertyNames.GIT_REVISION.equals(o.getKey()));
     if (revision != null) {
+      if (branchInfo != null) {
+        lines.add(IdeBundle.message("about.box.build.revision", revision.getValue()));
+      }
       myInfo.add("Source revision: " + revision.getValue());
     }
+    lines.add("");
 
     LicensingFacade la = LicensingFacade.getInstance();
     if (la != null) {
