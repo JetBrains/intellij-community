@@ -1,0 +1,23 @@
+// COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution
+// IGNORE_K1
+package test
+
+import test.MyResult.Err
+import test.MyResult.Ok
+
+
+sealed class MyResult {
+    class Ok : MyResult()
+    class Err : MyResult()
+}
+
+fun take(color: MyResult) {}
+
+fun usage(c: MyResult) {
+    if (c is Ok) {}
+
+    when (c) {
+        is Ok -> {}
+        is Err -> {}
+    }
+}
