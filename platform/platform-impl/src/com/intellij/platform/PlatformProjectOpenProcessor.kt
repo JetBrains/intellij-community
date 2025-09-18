@@ -176,7 +176,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
       )
       TrustedPaths.getInstance().setProjectPathTrusted(path = baseDir, value = true)
-      val project = ProjectManagerEx.getInstanceEx().openProjectAsync(projectStoreBaseDir = baseDir, options = copy) ?: return null
+      val project = ProjectManagerEx.getInstanceEx().openProjectAsync(projectIdentityFile = baseDir, options = copy) ?: return null
       openFileFromCommandLine(project = project, file = file, line = copy.line, column = copy.column)
       return project
     }
@@ -245,7 +245,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
       if (Files.isDirectory(file)) {
         return ProjectManagerEx.getInstanceEx().openProjectAsync(
-          projectStoreBaseDir = file,
+          projectIdentityFile = file,
           options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null),
         )
       }
@@ -291,7 +291,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       }
 
       val project = ProjectManagerEx.getInstanceEx().openProjectAsync(
-        projectStoreBaseDir = baseDir,
+        projectIdentityFile = baseDir,
         options = if (baseDir == file) options else options.copy(projectName = file.fileName.toString())
       )
       if (project != null && file != baseDir) {

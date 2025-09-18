@@ -71,7 +71,7 @@ private val LOG = logger<ProjectImpl>()
 private val DISPOSE_EARLY_DISPOSABLE_TRACE = Key.create<String>("ProjectImpl.DISPOSE_EARLY_DISPOSABLE_TRACE")
 
 @Internal
-open class ProjectImpl(parent: ComponentManagerImpl, identityFle: Path, projectName: String?)
+open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProject: Boolean, projectName: String?)
   : ClientAwareComponentManager(parent), ProjectEx, ProjectStoreOwner {
   companion object {
     @Internal
@@ -116,8 +116,6 @@ open class ProjectImpl(parent: ComponentManagerImpl, identityFle: Path, projectN
   var isTemporarilyDisposed: Boolean = false
     private set
 
-  private val isLight: Boolean
-
   private var cachedName: String?
 
   private val componentStoreValue = SynchronizedClearableLazy {
@@ -136,9 +134,6 @@ open class ProjectImpl(parent: ComponentManagerImpl, identityFle: Path, projectN
     registerServiceInstance(Project::class.java, this, fakeCorePluginDescriptor)
 
     cachedName = projectName
-    // a light project may be changed later during test, so we need to remember its initial state
-    @Suppress("TestOnlyProblems")
-    isLight = ApplicationManager.getApplication().isUnitTestMode && identityFle.toString().contains(LIGHT_PROJECT_NAME)
   }
 
   final override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
@@ -264,7 +259,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, identityFle: Path, projectN
     return cachedVirtualFile.resolvedVirtualFile
   }
 
-  final override fun isLight(): Boolean = isLight
+  final override fun isLight(): Boolean = isLightTestProject
 
   @Internal
   final override fun activityNamePrefix(): String = "project "
@@ -357,7 +352,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, identityFle: Path, projectN
 
   @TestOnly
   fun setLightProjectName(name: String) {
-    assert(isLight)
+    assert(isLightTestProject)
     setProjectName(name)
     storeCreationTrace()
   }

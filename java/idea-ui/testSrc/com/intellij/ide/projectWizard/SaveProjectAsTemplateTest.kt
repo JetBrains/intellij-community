@@ -161,7 +161,7 @@ public class Bar {
     val projectFile = getProjectDirOrFile(true)
     Files.createDirectories(projectFile.parent.resolve(Project.DIRECTORY_STORE_FOLDER))
     return runBlocking {
-      ProjectManagerEx.getInstanceEx().openProjectAsync(projectStoreBaseDir = projectFile.parent, options = OpenProjectTask {})!!
+      ProjectManagerEx.getInstanceEx().openProjectAsync(projectIdentityFile = projectFile.parent, options = OpenProjectTask {})!!
     }
   }
 

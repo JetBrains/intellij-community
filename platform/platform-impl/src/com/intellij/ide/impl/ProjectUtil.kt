@@ -227,7 +227,7 @@ object ProjectUtil {
     val project: Project?
     if (processors.size == 1 && processors[0] is PlatformProjectOpenProcessor) {
       project = (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(
-        projectStoreBaseDir = file,
+        projectIdentityFile = file,
         options = options.copy(
           isNewProject = true,
           useDefaultProjectAsTemplate = true,
@@ -675,7 +675,7 @@ object ProjectUtil {
       return null
     }
 
-    return projectManager.openProjectAsync(projectStoreBaseDir = projectFile, options = OpenProjectTask {
+    return projectManager.openProjectAsync(projectIdentityFile = projectFile, options = OpenProjectTask {
       runConfigurators = true
       isProjectCreatedWithWizard = true
     })

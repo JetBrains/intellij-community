@@ -25,7 +25,7 @@ import java.nio.file.Path
 internal class LightEditProjectImpl private constructor(identityFle: Path) :
   ProjectImpl(
     parent = ApplicationManager.getApplication().getComponentManagerImpl(),
-    identityFle = identityFle,
+    isLightTestProject = false,
     projectName = PROJECT_NAME,
   ), LightEditCompatible {
   constructor() : this(PathManager.getConfigDir().resolve("light-edit"))
