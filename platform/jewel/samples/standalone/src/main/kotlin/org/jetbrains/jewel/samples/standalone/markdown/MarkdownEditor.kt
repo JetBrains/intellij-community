@@ -14,14 +14,17 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.darkrockstudios.libraries.mpfilepicker.FilePicker
-import com.darkrockstudios.libraries.mpfilepicker.JvmFile
+import com.jetbrains.JBRFileDialog
+import java.awt.Component
+import java.awt.FileDialog
+import java.awt.Frame
+import java.io.File
+import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.Divider
@@ -44,24 +47,19 @@ internal fun MarkdownEditor(state: TextFieldState, modifier: Modifier = Modifier
 
 @Composable
 private fun ControlsRow(onLoadMarkdown: (String) -> Unit, modifier: Modifier = Modifier) {
+    val component = LocalComponent.current
     Row(modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
-        var showFilePicker by remember { mutableStateOf(false) }
-        OutlinedButton(onClick = { showFilePicker = true }, modifier = Modifier.padding(start = 2.dp)) {
+        OutlinedButton(
+            onClick = {
+                val file = pickMarkdownFile(component)
+                if (file != null) onLoadMarkdown(file.readText())
+            },
+            modifier = Modifier.padding(start = 2.dp),
+        ) {
             Text("Load file...")
         }
 
         Spacer(Modifier.width(10.dp))
-
-        FilePicker(show = showFilePicker, fileExtensions = listOf("md")) { platformFile ->
-            showFilePicker = false
-
-            if (platformFile != null) {
-                val jvmFile = platformFile as JvmFile
-                val contents = jvmFile.platformFile.readText()
-
-                onLoadMarkdown(contents)
-            }
-        }
 
         OutlinedButton(onClick = { onLoadMarkdown("") }) { Text("Clear") }
 
@@ -94,3 +92,22 @@ private fun Editor(state: TextFieldState, modifier: Modifier = Modifier) {
         )
     }
 }
+
+private fun pickMarkdownFile(component: Component): File? {
+    val dialog =
+        FileDialog(component.frame, "Select a Markdown file", FileDialog.LOAD).apply {
+            isMultipleMode = false
+
+            JBRFileDialog.get(this).apply {
+                hints = hints or JBRFileDialog.SELECT_FILES_HINT
+                setFileFilterExtensions("Markdown Files", arrayOf("md"))
+            }
+        }
+
+    dialog.isVisible = true
+
+    return dialog.file?.let(::File)
+}
+
+private val Component.frame: Frame
+    get() = this as? Frame ?: parent.frame
