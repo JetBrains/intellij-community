@@ -56,21 +56,16 @@ class SubscriptionExpirationDialog(
         else -> ResultState.CONTINUE
       }
     }
-
-    private fun dialogTitle(isEvaluation: Boolean): @Nls String {
-      val key = if (isEvaluation) "subscription.dialog.title.evaluation" else "subscription.dialog.title.subscription"
-      return IdeBundle.message(key)
-    }
   }
 
   init {
-    initDialog(dialogTitle(isEvaluation))
+    initDialog(dialogTitle())
   }
 
   override fun createPanel(): JComponent {
     val panel = panel {
       row {
-        label(dialogTitle(isEvaluation)).component.font = JBFont.h1()
+        label(dialogTitle()).component.font = JBFont.h1()
       }
       row {
         browserLink(IdeBundle.message("subscription.dialog.link", getPlatformName()), "https://www.jetbrains.com/idea/features")
@@ -112,6 +107,11 @@ class SubscriptionExpirationDialog(
       1 -> IdeBundle.message("subscription.dialog.promise.ok.text")
       else -> IdeBundle.message("subscription.dialog.continue.ok.text")
     }
+  }
+
+  private fun dialogTitle(): @Nls String {
+    val key = if (isEvaluation) "subscription.dialog.title.evaluation" else "subscription.dialog.title.subscription"
+    return IdeBundle.message(key, getPlatformName())
   }
 
   override fun getCancelActionText(): @Nls String = IdeBundle.message("subscription.dialog.cancel.button", getApplicationName())
