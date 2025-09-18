@@ -32,11 +32,14 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.GoFileDragAndDropHandler
 import com.intellij.platform.ide.nonModalWelcomeScreen.NON_MODAL_WELCOME_SCREEN_SETTING_ID
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector
+import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider.FeatureButtonModelWithBackend
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.KeymapModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.ThemeModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.components.WelcomeScreenCustomButton
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.components.WelcomeScreenCustomListComboBox
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.JewelComposePanel
@@ -138,12 +141,24 @@ class WelcomeScreenRightTab(
 
   @Composable
   fun FeatureGrid(modifier: Modifier = Modifier) {
+    val coroutineScope = contentProvider.coroutineScope
+    var backendFeatureIds by remember { mutableStateOf(emptySet<String>()) }
+    LaunchedEffect(true) {
+      coroutineScope.launch {
+        backendFeatureIds = WelcomeScreenFeatureApi.getInstance().getAvailableFeatureIds().toSet()
+      }
+    }
+
     Column(modifier = modifier.wrapContentSize(Alignment.Center), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-      val featureModels = contentProvider.getFeatureButtonModels(project)
+      // Show only available backend features (and all non-backend features)
+      val featureModels = contentProvider.getFeatureButtonModels(project).filter {
+        it !is FeatureButtonModelWithBackend || it.featureKey in backendFeatureIds
+      }
+
       for (row in featureModels.chunked(3)) {
         Row(modifier = Modifier.wrapContentSize(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
           for (model in row) {
-            FeatureButton(model)
+            FeatureButton(model, coroutineScope)
           }
         }
       }
@@ -151,10 +166,10 @@ class WelcomeScreenRightTab(
   }
 
   @Composable
-  private fun FeatureButton(model: WelcomeRightTabContentProvider.FeatureButtonModel) {
+  private fun FeatureButton(model: WelcomeRightTabContentProvider.FeatureButtonModel, scope: CoroutineScope) {
     WelcomeScreenCustomButton(
       onClick = {
-        model.onClick()
+        model.onClick(project, scope)
       },
       style = CustomButtonStyle(),
       modifier = Modifier.size(112.dp, 87.dp),

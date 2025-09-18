@@ -12,6 +12,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 internal class BackendWelcomeScreenFeatureApi : WelcomeScreenFeatureApi {
+  override suspend fun getAvailableFeatureIds(): List<String> {
+    return WelcomeScreenFeatureBackend.getFeatureIds()
+  }
+
   override suspend fun onClick(projectId: ProjectId, featureKey: String) {
     val project = projectId.findProject()
     val feature = WelcomeScreenFeatureBackend.getForFeatureKey(featureKey) ?: run {

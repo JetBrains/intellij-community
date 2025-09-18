@@ -23,6 +23,10 @@ abstract class WelcomeScreenFeatureBackend {
     private val EP_NAME: ExtensionPointName<WelcomeScreenFeatureBackend> =
       ExtensionPointName.create("com.intellij.platform.ide.welcomeScreenFeatureBackend")
 
+    fun getFeatureIds(): List<String> {
+      return EP_NAME.extensionList.map { it.featureKey }
+    }
+
     fun getForFeatureKey(featureKey: String): WelcomeScreenFeatureBackend? {
       return EP_NAME.lazySequence().firstOrNull { it.featureKey == featureKey }
     }

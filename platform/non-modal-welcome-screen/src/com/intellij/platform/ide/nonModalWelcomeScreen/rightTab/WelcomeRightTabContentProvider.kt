@@ -7,6 +7,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.platform.project.projectId
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.ui.icon.IconKey
@@ -15,6 +18,8 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 interface WelcomeRightTabContentProvider {
+  val coroutineScope: CoroutineScope
+
   // Use Valkyrie IDEA plugin to generate the ImageVector
   val backgroundImageVectorLight: ImageVector
   val backgroundImageVectorDark: ImageVector
@@ -28,12 +33,33 @@ interface WelcomeRightTabContentProvider {
   @Composable
   fun getFeatureButtonModels(project: Project): List<FeatureButtonModel>
 
-  data class FeatureButtonModel(
+  /**
+   * Base feature button model. Use for frontend-only features.
+   * For backend-based features, use [FeatureButtonModelWithBackend] and
+   * register a `WelcomeScreenFeatureBackend` implementation.
+   */
+  open class FeatureButtonModel(
     val text: String,
     val icon: IconKey,
     val tint: Color = Color.Unspecified,
-    val onClick: () -> Unit,
+    val onClick: (Project, CoroutineScope) -> Unit,
   )
+
+  /**
+   * Feature button backed by a `WelcomeScreenFeatureBackend` implementation.
+   */
+  class FeatureButtonModelWithBackend(
+    val featureKey: String,
+    text: String,
+    icon: IconKey,
+    tint: Color = Color.Unspecified,
+    val beforeOnClick: suspend (Project) -> Unit = {}
+  ) : FeatureButtonModel(text, icon, tint, { project, coroutineScope ->
+    coroutineScope.launch {
+      beforeOnClick(project)
+      WelcomeScreenFeatureApi.getInstance().onClick(project.projectId(), featureKey)
+    }
+  })
 
   companion object {
     private val EP_NAME: ExtensionPointName<WelcomeRightTabContentProvider> = ExtensionPointName("com.intellij.platform.ide.welcomeScreenContentProvider")

@@ -11,6 +11,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface WelcomeScreenFeatureApi : RemoteApi<Unit> {
+  suspend fun getAvailableFeatureIds(): List<String>
+
   suspend fun onClick(projectId: ProjectId, featureKey: String)
 
   companion object {
