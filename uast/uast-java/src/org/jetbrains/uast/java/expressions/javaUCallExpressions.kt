@@ -177,7 +177,7 @@ class JavaConstructorUCallExpression(
       return when {
         initializer != null -> initializer.initializers.size
         sourcePsi.arrayDimensions.isNotEmpty() -> sourcePsi.arrayDimensions.size
-        else -> sourcePsi.argumentList?.expressions?.size ?: 0
+        else -> sourcePsi.argumentList?.expressionCount ?: 0
       }
     }
 
@@ -196,7 +196,7 @@ class JavaConstructorUCallExpression(
   override val typeArgumentCount: Int
     get() {
       if (typeArgumentCountLazy == Int.MIN_VALUE) {
-        typeArgumentCountLazy = sourcePsi.classReference?.typeParameters?.size ?: 0
+        typeArgumentCountLazy = sourcePsi.classReference?.typeParameterCount ?: 0
       }
 
       return typeArgumentCountLazy
