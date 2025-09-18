@@ -3,6 +3,7 @@ package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.components.impl.stores.IComponentStoreKt;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +28,7 @@ final class PackageSetFactoryImpl extends PackageSetFactory {
     PackageSetParserExtension.EP_NAME.addExtensionPointListener(coroutineScope, new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull PackageSetParserExtension extension, @NotNull PluginDescriptor pluginDescriptor) {
-        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        for (Project project : ProjectUtil.getOpenProjects()) {
           for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
             IComponentStoreKt.getStateStore(project).reloadState(holder.getClass());
             holder.fireScopeListeners();
