@@ -246,6 +246,15 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     return myCardPanel;
   }
 
+
+  public boolean isMarketplaceTabShowing() {
+    return myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB;
+  }
+
+  public boolean isInstalledTabShowing() {
+    return myTabHeaderComponent.getSelectionTab() == INSTALLED_TAB;
+  }
+
   private @NotNull DefaultActionGroup createGearActions() {
     DefaultActionGroup actions = new DefaultActionGroup();
     if (PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed()) {

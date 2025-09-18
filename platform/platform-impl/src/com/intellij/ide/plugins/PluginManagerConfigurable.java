@@ -271,6 +271,14 @@ public final class PluginManagerConfigurable
     return createPanelIfNeeded().enableSearch(option, ignoreTagMarketplaceTab);
   }
 
+  public boolean isMarketplaceTabShowing() {
+    return myPanel != null && myPanel.isMarketplaceTabShowing();
+  }
+
+  public boolean isInstalledTabShowing() {
+    return myPanel != null && myPanel.isInstalledTabShowing();
+  }
+
   public void openMarketplaceTab(@NotNull String option) {
     createPanelIfNeeded().openMarketplaceTab(option);
   }
