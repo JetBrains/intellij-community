@@ -157,16 +157,16 @@ jvm_import(
 java_library(
   name = "ai-grazie-rule-engine",
   exports = [
-    ":grazie-rule-engine-0_2_84_http_import",
+    ":grazie-rule-engine-0_2_85_http_import",
     ":jemoji-1_3_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "grazie-rule-engine-0_2_84_http_import",
-  jar = "@grazie-rule-engine-0_2_84_http//file",
-  source_jar = "@grazie-rule-engine-0_2_84-sources_http//file"
+  name = "grazie-rule-engine-0_2_85_http_import",
+  jar = "@grazie-rule-engine-0_2_85_http//file",
+  source_jar = "@grazie-rule-engine-0_2_85-sources_http//file"
 )
 
 jvm_import(

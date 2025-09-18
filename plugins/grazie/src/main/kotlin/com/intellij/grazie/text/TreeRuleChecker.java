@@ -238,12 +238,14 @@ public final class TreeRuleChecker {
   }
 
   private static List<MatchingResult> matchTrees(List<Tree> trees, List<ai.grazie.rules.Rule> rules) {
-    return StreamEx.of(trees)
-      .map(tree -> MatchingResult.concat(rules.stream().map(rule -> {
+    return ContainerUtil.map(trees, tree -> {
+      List<MatchingResult> mrs = new ArrayList<>(rules.size());
+      for (var rule : rules) {
         ProgressManager.checkCanceled();
-        return rule.match(List.of(tree));
-      })))
-      .toList();
+        mrs.add(rule.match(List.of(tree)));
+      }
+      return MatchingResult.concat(mrs);
+    });
   }
 
   private static ParameterValues calcParameters(List<ParsedSentence> sentences) {
