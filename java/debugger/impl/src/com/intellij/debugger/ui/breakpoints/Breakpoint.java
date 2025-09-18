@@ -216,7 +216,14 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   public abstract void reload();
 
   void scheduleReload() {
-    ReadAction.nonBlocking(this::reload)
+    ReadAction.nonBlocking(() -> {
+        // TODO on paper, implementations of reload can be asynchronous,
+        //   so emitting a change here might still be too early.
+        //   In reality, though, there's no asynchronous implementation yet.
+        reload();
+        XBreakpointBase<?, ?, ?> breakpoint = (XBreakpointBase<?, ?, ?>)getXBreakpoint();
+        breakpoint.emitBreakpointChanged();
+      })
       .coalesceBy(myProject, this)
       .expireWith(myProject)
       .submit(RELOAD_EXECUTOR);
