@@ -21,6 +21,7 @@ class PluginSetTestBuilder private constructor(
   private var productBuildNumber = PluginManagerCore.buildNumber
   private var customCoreLoader: UrlClassLoader? = null
   private var productMode: ProductMode = ProductMode.MONOLITH
+  private var explicitPluginSubsetToLoad: Set<PluginId>? = null
 
   companion object {
     @JvmStatic
@@ -60,6 +61,10 @@ class PluginSetTestBuilder private constructor(
     this.productMode = productMode
   }
 
+  fun withExplicitPluginSubsetToLoad(pluginsToLoad: Set<PluginId>): PluginSetTestBuilder = apply {
+    this.explicitPluginSubsetToLoad = pluginsToLoad
+  }
+
   var buildNumber: String
     get() = productBuildNumber.toString()
     set(value) {
@@ -77,7 +82,7 @@ class PluginSetTestBuilder private constructor(
       getProductBuildNumber = { buildNumber },
       requirePlatformAliasDependencyForLegacyPlugins = false,
       checkEssentialPlugins = false,
-      explicitPluginSubsetToLoad = null,
+      explicitPluginSubsetToLoad = explicitPluginSubsetToLoad,
       disablePluginLoadingCompletely = false,
       currentProductModeId = productMode.id,
     )

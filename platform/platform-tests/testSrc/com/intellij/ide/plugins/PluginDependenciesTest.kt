@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.plugins.*
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -778,6 +779,30 @@ internal class PluginDependenciesTest {
       .doesNotHaveTransitiveParentClassloaders(baz, bazModule)
     assertThat(barSub.moduleDependencies.modules).hasSize(1)
     assertThat(err).hasMessageContainingAll("'depends' sub-descriptor", "bar", "<dependencies><module>")
+  }
+
+  @Test
+  fun `content module is not loaded if it depends on module from plugin which was not included in explicit loaded subset`() {
+    plugin("foo") {
+      content {
+        module("foo.embedded", ModuleLoadingRule.EMBEDDED) {}
+      }
+    }.buildDir(pluginDirPath.resolve("foo"))
+    plugin("bar") {
+      content {
+        module("bar.optional") {}
+        module("bar.foo.optional") {
+          dependencies {
+            module("foo.embedded")
+          }
+        }
+      }
+    }.buildDir(pluginDirPath.resolve("bar"))
+    val pluginSet = PluginSetTestBuilder.fromPath(pluginDirPath)
+      .withExplicitPluginSubsetToLoad(setOf(PluginId("bar")))
+      .build()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
+    assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("bar.optional")
   }
 
   @Test

@@ -113,6 +113,14 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         errors = emptyMap(),
         isNotifyUser = !plugin.isImplementationDetail))
     }
+    fun markRequiredModulesAsDisabled(plugin: PluginMainDescriptor) {
+      for (module in plugin.contentModules) {
+        if (module.moduleLoadingRule.required && enabledRequiredContentModules.remove(module.moduleId) != null) {
+          module.isMarkedForLoading = false
+          logMessages.add("Module ${module.moduleId} is disabled because the containing plugin ${plugin.pluginId} won't be loaded")
+        }
+      }
+    }
 
     m@ for (module in sortedModulesWithDependencies.modules) {
       if (module is ContentModuleDescriptor && module.moduleId == moduleIncompatibleWithCurrentMode) {
@@ -129,6 +137,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
 
       if (module !is ContentModuleDescriptor) {
         if (module.pluginId != PluginManagerCore.CORE_ID && (!module.isMarkedForLoading || (disabler != null && disabler(module, disabledModuleToProblematicPlugin)))) {
+          markRequiredModulesAsDisabled(module as PluginMainDescriptor)
           continue
         }
       }
@@ -140,9 +149,10 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       for (ref in module.moduleDependencies.modules) {
         if (!enabledModuleV2Ids.containsKey(ref) && !enabledRequiredContentModules.containsKey(ref)) {
           logMessages.add("Module ${module.contentModuleId ?: module.pluginId} is not enabled because dependency ${ref.id} is not available")
-          if (module is ContentModuleDescriptor) {
-            disabledModuleToProblematicPlugin.put(module.moduleId, disabledModuleToProblematicPlugin.get(ref)
-                                                                   ?: PluginId.getId(ref.id))
+          when (module) {
+            is ContentModuleDescriptor -> disabledModuleToProblematicPlugin.put(module.moduleId, disabledModuleToProblematicPlugin.get(ref)
+                                                                                                 ?: PluginId.getId(ref.id))
+            is PluginMainDescriptor -> markRequiredModulesAsDisabled(module)
           }
           continue@m
         }
@@ -150,8 +160,9 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       for (ref in module.moduleDependencies.plugins) {
         if (!enabledPluginIds.containsKey(ref)) {
           logMessages.add("Module ${module.contentModuleId ?: module.pluginId} is not enabled because dependency ${ref} is not available")
-          if (module is ContentModuleDescriptor) {
-            disabledModuleToProblematicPlugin.put(module.moduleId, ref)
+          when (module) {
+            is ContentModuleDescriptor -> disabledModuleToProblematicPlugin.put(module.moduleId, ref)
+            is PluginMainDescriptor -> markRequiredModulesAsDisabled(module)
           }
           continue@m
         }
@@ -182,6 +193,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
                 } else {
                   registerLoadingError(module, contentModule)
                 }
+                markRequiredModulesAsDisabled(module)
                 continue@m
               }
             }
