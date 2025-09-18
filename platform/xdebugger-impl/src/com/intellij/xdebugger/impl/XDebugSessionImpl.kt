@@ -60,13 +60,10 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.getShortText
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointListener
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController
-import com.intellij.xdebugger.impl.frame.FileColorsComputer
+import com.intellij.xdebugger.impl.frame.*
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.showFeWarnings
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeper
-import com.intellij.xdebugger.impl.frame.XValueMarkers
-import com.intellij.xdebugger.impl.frame.asProxy
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess
@@ -113,7 +110,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val myInactiveSlaveBreakpoints: MutableSet<XBreakpoint<*>?> = Collections.synchronizedSet<XBreakpoint<*>?>(HashSet())
   private var myBreakpointsDisabled = false
   private val myDebuggerManager: XDebuggerManagerImpl = debuggerManager
-  private val myExecutionPointManager: XDebuggerExecutionPointManager = debuggerManager.executionPointManager
   private var myBreakpointListenerDisposable: Disposable? = null
 
   @get:ApiStatus.Internal
@@ -363,7 +359,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     LOG.assertTrue(myDebugProcess == null)
     myDebugProcess = process
     myAlternativeSourceHandler = process.alternativeSourceHandler
-    myExecutionPointManager.alternativeSourceKindFlow = this.alternativeSourceKindState
+    XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(project)?.alternativeSourceKindFlow = this.alternativeSourceKindState
 
     if (process.checkCanInitBreakpoints()) {
       ReadAction.run<RuntimeException?>(ThrowableRunnable { initBreakpoints() })
@@ -791,7 +787,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
       val isTopFrame = this.isTopFrameSelected
       val mainSourcePosition = getFrameSourcePosition(currentStackFrame, XSourceKind.MAIN)
       val alternativeSourcePosition = getFrameSourcePosition(currentStackFrame, XSourceKind.ALTERNATIVE)
-      myExecutionPointManager.setExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame, navigationSourceKind)
+      XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(project)?.setExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame, navigationSourceKind)
       updateExecutionPointGutterIconRenderer()
     }
   }
@@ -805,7 +801,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     val executionStack = currentSuspendContext.activeExecutionStack ?: return
     val topFrame = executionStack.getTopFrame() ?: return
     setCurrentStackFrame(executionStack, topFrame, true)
-    myExecutionPointManager.showExecutionPosition()
+    XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(project)?.showExecutionPosition()
   }
 
   override fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean) {
@@ -836,7 +832,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
       updateExecutionPosition()
     }
     else {
-      myExecutionPointManager.showExecutionPosition()
+      XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(project)?.showExecutionPosition()
     }
   }
 
@@ -859,7 +855,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     if (myDebuggerManager.currentSession == this) {
       val isTopFrame = this.isTopFrameSelected
       val renderer = getPositionIconRenderer(isTopFrame)
-      myExecutionPointManager.gutterIconRenderer = renderer
+      XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(project)?.gutterIconRenderer = renderer
     }
   }
 

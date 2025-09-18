@@ -8,6 +8,7 @@ import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValu
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.impl.XDebuggerExecutionPointManager
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
@@ -49,6 +50,10 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
 
   override fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy {
     return FrontendXDebuggerManager.getInstance(project).breakpointsManager
+  }
+
+  override fun getDebuggerExecutionPointManager(project: Project): XDebuggerExecutionPointManager? {
+    return XDebuggerExecutionPointManager.getInstance(project)
   }
 
   override fun hasBackendCounterpart(xValue: XValue): Boolean {
