@@ -29,6 +29,8 @@ f:com.intellij.openapi.application.PathManager
 - s:findBinFileWithException(java.lang.String):java.nio.file.Path
 - s:getBinDir():java.nio.file.Path
 - s:getBinPath():java.lang.String
+- s:getBundledPluginsDir():java.nio.file.Path
+- s:getBundledRuntimeDir():java.nio.file.Path
 - s:getCommonDataPath():java.nio.file.Path
 - s:getConfigDir():java.nio.file.Path
 - s:getConfigPath():java.lang.String

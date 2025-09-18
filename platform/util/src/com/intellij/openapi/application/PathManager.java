@@ -380,13 +380,25 @@ public final class PathManager {
   /**
    * Returns the path to the directory where bundled plugins are located.
    */
+  public static @NotNull Path getBundledPluginsDir() {
+    return getHomeDir().resolve(PLUGINS_DIRECTORY);
+  }
+
+  /** Prefer {@link #getBundledPluginsDir()}. */
+  @ApiStatus.Obsolete
   public static @NotNull String getPreInstalledPluginsPath() {
-    return getHomePath() + '/' + PLUGINS_DIRECTORY;
+    return getBundledPluginsDir().toString();
   }
 
   /** <b>Note</b>: on macOS, the method returns a "functional" home, pointing to a JRE subdirectory inside a bundle. */
+  public static @NotNull Path getBundledRuntimeDir() {
+    return getHomeDir().resolve(JRE_DIRECTORY + (OS.CURRENT == OS.macOS ? "/Contents/Home" : ""));
+  }
+
+  /** Prefer {@link #getBundledRuntimeDir()}. */
+  @ApiStatus.Obsolete
   public static @NotNull String getBundledRuntimePath() {
-    return getHomePath() + '/' + JRE_DIRECTORY + (OS.CURRENT == OS.macOS ? "/Contents/Home" : "");
+    return getBundledRuntimeDir().toString();
   }
 
   /**
