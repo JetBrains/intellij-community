@@ -265,4 +265,11 @@ class SeAdaptedItemPresentation(
   val rendererProvider: () -> ListCellRenderer<Any>,
 ) : SeItemPresentation {
   override val text: String get() = ""
+
+  override fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (this === other) return true
+    if (other !is SeAdaptedItemPresentation) return false
+
+    return super.contentEquals(other) && fetchedItem == other.fetchedItem
+  }
 }
