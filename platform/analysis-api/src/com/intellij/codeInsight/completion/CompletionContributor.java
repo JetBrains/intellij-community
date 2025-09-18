@@ -20,6 +20,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -152,23 +153,21 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
    * can be canceled smoothly when the user begins to type in the editor.
    */
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    if (!runProviders(myMap.get(parameters.getCompletionType()), parameters, result)) {
-      return;
-    }
-
-    runProviders(myMap.get(null), parameters, result);
-  }
-
-  private static boolean runProviders(@NotNull Collection<ProviderWithPattern> providers,
-                                      @NotNull CompletionParameters parameters,
-                                      @NotNull CompletionResultSet result) {
+    Iterable<ProviderWithPattern> providers = getProviders(parameters);
     for (ProviderWithPattern provider : providers) {
       ProgressManager.checkCanceled();
-      if (!provider.processCandidates(parameters, result)) {
-        return false;
+      provider.processCandidates(parameters, result);
+      if (result.isStopped()) {
+        return;
       }
     }
-    return true;
+  }
+
+  private @NotNull Iterable<ProviderWithPattern> getProviders(@NotNull CompletionParameters parameters) {
+    Collection<ProviderWithPattern> providers1 = myMap.get(parameters.getCompletionType());
+    Collection<ProviderWithPattern> providers2 = myMap.get(null);
+    Iterable<ProviderWithPattern> allProviders = ContainerUtil.concat(providers1, providers2);
+    return allProviders;
   }
 
   /**
@@ -246,15 +245,11 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
     @NotNull ElementPattern<? extends PsiElement> pattern,
     @NotNull CompletionProvider<CompletionParameters> provider
   ) {
-
-    boolean processCandidates(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+    void processCandidates(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
       ProcessingContext context = new ProcessingContext();
-      if (!pattern.accepts(parameters.getPosition(), context)) {
-        return true;
+      if (pattern.accepts(parameters.getPosition(), context)) {
+        provider.addCompletionVariants(parameters, context, result);
       }
-
-      provider.addCompletionVariants(parameters, context, result);
-      return !result.isStopped();
     }
   }
 }
