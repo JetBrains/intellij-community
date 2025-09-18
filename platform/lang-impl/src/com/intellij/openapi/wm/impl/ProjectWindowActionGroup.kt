@@ -13,15 +13,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.NaturalComparator
-import com.intellij.platform.ModuleAttachProcessor.Companion.getMultiProjectDisplayName
+import com.intellij.platform.getMultiProjectDisplayName
 import java.util.*
 
 class ProjectWindowActionGroup : IdeDependentActionGroup(), ActionRemoteBehaviorSpecification.Frontend {
   private var latest: ProjectWindowAction? = null
 
-  fun addProject(project: Project) {
+  internal fun addProject(project: Project) {
     val projectLocation = project.presentableUrl ?: return
-    val projectName: String = getProjectDisplayName(project)
+    val projectName = getProjectDisplayName(project)
     val windowAction = ProjectWindowAction(projectName, projectLocation, latest)
     val duplicateWindowActions = findWindowActionsWithProjectName(projectName)
     if (!duplicateWindowActions.isEmpty()) {

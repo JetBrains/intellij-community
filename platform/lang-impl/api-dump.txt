@@ -925,6 +925,11 @@ com.intellij.openapi.roots.ui.distribution.FileChooserInfo
 - a:getFileChooserDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
 - a:getFileChooserMacroFilter():kotlin.jvm.functions.Function1
 - getFileChooserTitle():java.lang.String
+f:com.intellij.openapi.wm.impl.ProjectWindowActionGroup
+- f:activateNextWindow(com.intellij.openapi.actionSystem.AnActionEvent):V
+- f:activatePreviousWindow(com.intellij.openapi.actionSystem.AnActionEvent):V
+- f:isEnabled():Z
+- f:removeProject(com.intellij.openapi.project.Project):V
 com.intellij.packageDependencies.ui.Marker
 - a:isMarked(com.intellij.openapi.vfs.VirtualFile):Z
 com.intellij.platform.ModuleAttachListener
@@ -933,6 +938,8 @@ com.intellij.platform.ModuleAttachListener
 - beforeDetach(com.intellij.openapi.module.Module):V
 f:com.intellij.platform.ModuleAttachProcessor
 - attachToProjectAsync(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ModuleAttachProcessorKt
+- sf:getMultiProjectDisplayName(com.intellij.openapi.project.Project):java.lang.String
 com.intellij.platform.backend.documentation.DocumentationContent
 - s:content(java.lang.String):com.intellij.platform.backend.documentation.DocumentationContent
 - s:content(java.lang.String,java.util.Map):com.intellij.platform.backend.documentation.DocumentationContent

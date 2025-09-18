@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ModuleAttachProcessor.Companion.getPrimaryModule
 import com.intellij.projectImport.ProjectAttachProcessor
+import com.intellij.projectImport.ProjectAttachProcessor.Companion.canAttachToProject
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.util.io.directoryStreamIfExists
 import kotlinx.coroutines.CancellationException
@@ -41,44 +42,6 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
     @JvmStatic
     fun getPrimaryModule(project: Project): Module? {
       return if (canAttachToProject()) PrimaryModuleManager.findPrimaryModule(project) else null
-    }
-
-    @JvmStatic
-    fun getSortedModules(project: Project): List<Module> {
-      val primaryModule = getPrimaryModule(project)
-      val result = ArrayList<Module>()
-      ModuleManager.getInstance(project).modules.filterTo(result) { it !== primaryModule}
-      result.sortBy(Module::getName)
-      primaryModule?.let {
-        result.add(0, it)
-      }
-      return result
-    }
-
-    /**
-     * @param project the project
-     * @return `null` if either multi-projects are not enabled or the project has only one module
-     */
-    @JvmStatic
-    @NlsSafe
-    fun getMultiProjectDisplayName(project: Project): String? {
-      if (!canAttachToProject()) {
-        return null
-      }
-
-      val modules = ModuleManager.getInstance(project).modules
-      if (modules.size <= 1) {
-        return null
-      }
-
-      val primaryModule = getPrimaryModule(project) ?: modules.first()
-      val result = StringBuilder(primaryModule.name)
-        .append(", ")
-        .append(modules.asSequence().filter { it !== primaryModule }.first().name)
-      if (modules.size > 2) {
-        result.append("...")
-      }
-      return result.toString()
     }
   }
 
@@ -184,4 +147,40 @@ private fun addPrimaryModuleDependency(project: Project, newModule: Module): Mod
     return module
   }
   return null
+}
+
+/**
+ * @param project the project
+ * @return `null` if either multi-projects are not enabled or the project has only one module
+ */
+@NlsSafe
+fun getMultiProjectDisplayName(project: Project): String? {
+  if (!canAttachToProject()) {
+    return null
+  }
+
+  val modules = ModuleManager.getInstance(project).modules
+  if (modules.size <= 1) {
+    return null
+  }
+
+  val primaryModule = getPrimaryModule(project) ?: modules.first()
+  val result = StringBuilder(primaryModule.name)
+    .append(", ")
+    .append(modules.asSequence().filter { it !== primaryModule }.first().name)
+  if (modules.size > 2) {
+    result.append("...")
+  }
+  return result.toString()
+}
+
+internal fun getSortedModules(project: Project): List<Module> {
+  val primaryModule = getPrimaryModule(project)
+  val result = ArrayList<Module>()
+  ModuleManager.getInstance(project).modules.filterTo(result) { it !== primaryModule}
+  result.sortBy(Module::getName)
+  primaryModule?.let {
+    result.add(0, it)
+  }
+  return result
 }

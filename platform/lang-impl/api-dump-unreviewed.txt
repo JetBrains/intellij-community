@@ -12974,13 +12974,8 @@ com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 f:com.intellij.openapi.wm.impl.ProjectWindowActionGroup
 - com.intellij.ide.IdeDependentActionGroup
 - <init>():V
-- activateNextWindow(com.intellij.openapi.actionSystem.AnActionEvent):V
-- activatePreviousWindow(com.intellij.openapi.actionSystem.AnActionEvent):V
-- addProject(com.intellij.openapi.project.Project):V
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
 - isDumbAware():Z
-- isEnabled():Z
-- removeProject(com.intellij.openapi.project.Project):V
 f:com.intellij.openapi.wm.impl.WindowDressing
 - com.intellij.ide.lightEdit.LightEditServiceListener
 - com.intellij.openapi.project.ProjectCloseListener
@@ -13309,13 +13304,9 @@ f:com.intellij.platform.ModuleAttachProcessor
 - sf:Companion:com.intellij.platform.ModuleAttachProcessor$Companion
 - <init>():V
 - beforeDetach(com.intellij.openapi.module.Module):V
-- sf:getMultiProjectDisplayName(com.intellij.openapi.project.Project):java.lang.String
 - sf:getPrimaryModule(com.intellij.openapi.project.Project):com.intellij.openapi.module.Module
-- sf:getSortedModules(com.intellij.openapi.project.Project):java.util.List
 f:com.intellij.platform.ModuleAttachProcessor$Companion
-- f:getMultiProjectDisplayName(com.intellij.openapi.project.Project):java.lang.String
 - f:getPrimaryModule(com.intellij.openapi.project.Project):com.intellij.openapi.module.Module
-- f:getSortedModules(com.intellij.openapi.project.Project):java.util.List
 f:com.intellij.platform.backend.documentation.DocumentationResult$Companion
 - f:asyncDocumentation(java.util.function.Supplier):com.intellij.platform.backend.documentation.DocumentationResult
 - f:asyncDocumentation(kotlin.jvm.functions.Function1):com.intellij.platform.backend.documentation.DocumentationResult
