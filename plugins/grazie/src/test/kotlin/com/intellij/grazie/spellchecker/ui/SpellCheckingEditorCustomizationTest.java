@@ -16,13 +16,13 @@
 package com.intellij.grazie.spellchecker.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.EditorTextFieldProvider;
@@ -48,7 +48,7 @@ public class SpellCheckingEditorCustomizationTest extends BasePlatformTestCase {
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     try {
       myFixture.configureByText(PlainTextFileType.INSTANCE, document);
-      myFixture.enableInspections(new SpellCheckingInspection());
+      myFixture.enableInspections(new GrazieSpellCheckingInspection());
 
       EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getCustomization(enabled);
       assertNotNull(customization);
@@ -62,7 +62,7 @@ public class SpellCheckingEditorCustomizationTest extends BasePlatformTestCase {
   }
 
   public void testHighlightingWorksInEditorTextFieldWithCustomization() {
-    myFixture.enableInspections(new SpellCheckingInspection());
+    myFixture.enableInspections(new GrazieSpellCheckingInspection());
 
     var customization = SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization();
     assertNotNull(customization);

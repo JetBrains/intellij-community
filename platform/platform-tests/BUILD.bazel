@@ -63,6 +63,7 @@ jvm_library(
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
     "@lib//:http-client",
     "//jps/model-impl",
     "@lib//:gson",

@@ -34,6 +34,7 @@ jvm_library(
     "//platform/util/diff",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
     "//java/openapi:java",
     "//xml/impl",
     "//plugins/properties:properties-backend",

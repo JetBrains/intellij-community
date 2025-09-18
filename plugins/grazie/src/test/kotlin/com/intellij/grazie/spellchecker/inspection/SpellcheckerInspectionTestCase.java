@@ -2,7 +2,7 @@
 package com.intellij.grazie.spellchecker.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.spellchecker.inspections.SpellCheckingInspection;
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 public abstract class SpellcheckerInspectionTestCase extends BasePlatformTestCase {
@@ -22,6 +22,6 @@ public abstract class SpellcheckerInspectionTestCase extends BasePlatformTestCas
   }
 
   public static LocalInspectionTool[] getInspectionTools() {
-    return new LocalInspectionTool[]{new SpellCheckingInspection()};
+    return new LocalInspectionTool[]{new GrazieSpellCheckingInspection()};
   }
 }

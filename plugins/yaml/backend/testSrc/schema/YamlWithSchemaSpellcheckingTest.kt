@@ -2,10 +2,10 @@
 package org.jetbrains.yaml.schema
 
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase
 import org.jetbrains.yaml.YAMLLanguage
 import java.util.function.Predicate
@@ -31,7 +31,7 @@ class YamlWithSchemaSpellcheckingTest : JsonSchemaHighlightingTestBase() {
   }
 
   fun testYamlSpellcheckingWithSchema() {
-    myFixture.enableInspections(SpellCheckingInspection::class.java)
+    myFixture.enableInspections(GrazieSpellCheckingInspection::class.java)
     val schema = """
     {
       "properties": {

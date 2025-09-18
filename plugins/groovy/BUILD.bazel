@@ -146,6 +146,7 @@ jvm_library(
     "//jps/jps-builders:build",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
     "//plugins/junit",
     "//plugins/junit_rt:junit-rt",
     "//java/java-indexing-api:indexing",

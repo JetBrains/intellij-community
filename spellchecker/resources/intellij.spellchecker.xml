@@ -28,11 +28,6 @@
     <fileType name="Dictionary" implementationClass="com.intellij.spellchecker.DictionaryFileType" extensions="dic"/>
     <postStartupActivity implementation="com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine$SpellerLoadActivity"/>
 
-    <localInspection shortName="SpellCheckingInspection" bundle="messages.SpellCheckerBundle"
-                     key="spellchecking.inspection.name" groupKey="proofread" enabledByDefault="true" level="TYPO"
-                     language=""
-                     implementationClass="com.intellij.spellchecker.inspections.SpellCheckingInspection"/>
-
     <nameSuggestionProvider id="SpellcheckingSuggestionProvider" implementation="com.intellij.spellchecker.quickfixes.SpellcheckingNameSuggestionProvider" order="first"/>
     <severitiesProvider implementation="com.intellij.spellchecker.SpellCheckerSeveritiesProvider"/>
 

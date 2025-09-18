@@ -2,8 +2,8 @@
 package com.jetbrains.python.inspections.flake8;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
 import com.intellij.psi.PsiFile;
-import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyComparisonWithNoneInspection;
@@ -39,7 +39,7 @@ public class Flake8InspectionSuppressorTest extends PyTestCase {
 
   public void testSuppressingNonPythonSpecificInspections() {
     doTestByText("s = 'ipaddress' # noqa",
-                 SpellCheckingInspection.class);
+                 GrazieSpellCheckingInspection.class);
   }
 
   public void testTopLevelCommentsIgnored() {

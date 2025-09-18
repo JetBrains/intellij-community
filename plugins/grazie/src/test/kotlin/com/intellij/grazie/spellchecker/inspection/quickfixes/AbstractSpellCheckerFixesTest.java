@@ -16,8 +16,8 @@
 package com.intellij.grazie.spellchecker.inspection.quickfixes;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
 import com.intellij.grazie.spellchecker.inspection.SpellcheckerInspectionTestCase;
-import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.quickfixes.ChangeTo;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -33,7 +33,7 @@ public abstract class AbstractSpellCheckerFixesTest extends SpellcheckerInspecti
 
   private void doChangeToTest(int toSelect) {
     myFixture.configureByFile(getBeforeFile());
-    myFixture.enableInspections(SpellCheckingInspection.class);
+    myFixture.enableInspections(GrazieSpellCheckingInspection.class);
     final IntentionAction intention = ContainerUtil.filter(
       myFixture.getAvailableIntentions(), (it) -> it.getFamilyName().equals(ChangeTo.getFixName())
     ).get(toSelect + 1);
@@ -44,7 +44,7 @@ public abstract class AbstractSpellCheckerFixesTest extends SpellcheckerInspecti
 
   protected void doNoQuickFixTest(String quickfix) {
     myFixture.configureByFile(getBeforeFile());
-    myFixture.enableInspections(SpellCheckingInspection.class);
+    myFixture.enableInspections(GrazieSpellCheckingInspection.class);
     assertNull(myFixture.getAvailableIntention(quickfix));
   }
 

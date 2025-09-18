@@ -8,6 +8,7 @@ import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.HunspellDescriptor
 import com.intellij.grazie.spellcheck.GrazieCheckers
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.grazie.style.StyleInspection
 import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
@@ -25,7 +26,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPlainText
 import com.intellij.spellchecker.SpellCheckerManager.Companion.getInstance
-import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -37,7 +37,7 @@ import kotlin.io.path.Path
 abstract class GrazieTestBase : BasePlatformTestCase() {
   companion object {
     val inspectionTools by lazy {
-      arrayOf<LocalInspectionTool>(GrazieInspection(), SpellCheckingInspection(), StyleInspection())
+      arrayOf<LocalInspectionTool>(GrazieInspection(), GrazieSpellCheckingInspection(), StyleInspection())
     }
 
     /**

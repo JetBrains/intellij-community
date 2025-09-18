@@ -53,6 +53,7 @@
     <orderEntry type="module" module-name="intellij.xml.langInjection" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
+    <orderEntry type="module" module-name="intellij.grazie.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit" />
     <orderEntry type="module" module-name="intellij.junit.rt" />
     <orderEntry type="module" module-name="intellij.java.indexing" />

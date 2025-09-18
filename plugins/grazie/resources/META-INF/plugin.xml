@@ -67,6 +67,11 @@
                      implementationClass="com.intellij.grazie.ide.inspection.detection.LanguageDetectionInspection"
                      level="WEAK WARNING" key="grazie.detection.inspection.text" language=""/>
 
+    <localInspection shortName="SpellCheckingInspection" bundle="messages.SpellCheckerBundle"
+                     key="spellchecking.inspection.name" groupKey="proofread" enabledByDefault="true" level="TYPO"
+                     language=""
+                     implementationClass="com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection"/>
+
     <applicationConfigurable parentId="editor" instance="com.intellij.grazie.ide.ui.proofreading.ProofreadConfigurable" id="proofread"
                              key="configurable.group.proofread.settings.display.name" bundle="messages.OptionsBundle"/>
 

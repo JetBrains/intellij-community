@@ -1,5 +1,5 @@
 // "Suppress 'SpellCheckingInspection' for val str" "true"
-// TOOL: com.intellij.spellchecker.inspections.SpellCheckingInspection
+// TOOL: com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 
 @Suppress("SpellCheckingInspection")
 val str = "kjsghkjshtiurhuig"
