@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.completion.lookups.factories
 
 import com.intellij.codeInsight.completion.InsertionContext
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
@@ -11,7 +10,6 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.QualifierToShortenInfo
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ThisLabelToShortenInfo
@@ -73,24 +71,33 @@ internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySu
     val rangeMarker = document.createRangeMarker(startOffset, fqNameEndOffset + temporarySuffix.length)
     val fqNameRangeMarker = document.createRangeMarker(startOffset, fqNameEndOffset)
 
-    if (shortenCommand != null
-        && editor.caretModel.caretCount == 1 &&
-        temporarySuffix.isEmpty()
-    ) {
-        // We can only use the existing shortenCommand if the temporarySuffix is null.
-        // Otherwise, the PSI structure might be different compared to before, which can cause exceptions.
-        ShortenCommandWrapper(
-            delegate = shortenCommand,
-            copy = file,
-        )
-    } else {
+    val defaultReferenceShortening by lazy {
         allowAnalysisFromWriteActionInEdt(file) {
             collectPossibleReferenceShortenings(
                 file = file,
                 selection = TextRange(startOffset, fqNameEndOffset),
             )
         }
-    }.invokeShortening()
+    }
+
+    val shortenCommand = if (shortenCommand != null
+        && editor.caretModel.caretCount == 1
+    ) {
+        try {
+            ShortenCommandWrapper(
+                delegate = shortenCommand,
+                copy = file,
+            )
+        } catch (_: IllegalStateException) {
+            // We can only use the existing shortenCommand if the file structure is unaffected by the temporarySuffix.
+            // Otherwise, the PSI structure might be different compared to before, which can cause this exception.
+            defaultReferenceShortening
+        }
+    } else {
+        defaultReferenceShortening
+    }
+
+    shortenCommand.invokeShortening()
 
     commitDocument()
     doPostponedOperationsAndUnblockDocument()
@@ -175,12 +182,8 @@ private class ShortenCommandWrapper(
         delegate.kDocQualifiersToShorten
             .mapNotNull { it.findSameElementInCopy() }
 
-    private fun <T : KtElement> T.findSameElementInCopy(): T? = try {
+    private fun <T : KtElement> T.findSameElementInCopy(): T? =
         PsiTreeUtil.findSameElementInCopy(this, copy)
-    } catch (e: IllegalStateException) {
-        logger<ShortenCommandWrapper>().error(e)
-        null
-    }
 
     private fun <T : KtElement> SmartPsiElementPointer<T>.findSameElementInCopy(): SmartPsiElementPointer<T>? =
         element?.findSameElementInCopy()
