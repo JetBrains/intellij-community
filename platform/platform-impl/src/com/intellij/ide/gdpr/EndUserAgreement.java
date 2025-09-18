@@ -29,6 +29,8 @@ public final class EndUserAgreement {
   private static final String CWM_GUEST_EULA_NAME = "cwmGuestEua";
   private static final String EULA_DOCUMENT_NAME = "eua";
   private static final String EULA_COMMUNITY_DOCUMENT_NAME = "euaCommunity";
+  private static final String EULA_MPS_DOCUMENT_NAME = "euaMps";
+  private static final String EULA_MPS_CUSTOM_DOCUMENT_KEY = "mps.eua.document.name";
   private static final String EULA_EAP_DOCUMENT_NAME = EULA_DOCUMENT_NAME + "Eap";
 
   private static final String PRIVACY_POLICY_CONTENT_FILE_NAME = "Cached";
@@ -200,6 +202,12 @@ public final class EndUserAgreement {
     if (!PlatformUtils.isCommercialEdition()) {
       if (PlatformUtils.isCommunityEdition()) {
         return shouldUseEAPAgreement()? DEFAULT_DOC_EAP_NAME : EULA_COMMUNITY_DOCUMENT_NAME;
+      }
+      if (PlatformUtils.isMPS()) {
+        if (isValidFileName(System.getProperty(EULA_MPS_CUSTOM_DOCUMENT_KEY))) {
+          return System.getProperty(EULA_MPS_CUSTOM_DOCUMENT_KEY);
+        }
+        return shouldUseEAPAgreement()? DEFAULT_DOC_EAP_NAME : EULA_MPS_DOCUMENT_NAME;
       }
       if (PlatformUtils.isJetBrainsClient()) {
         return CWM_GUEST_EULA_NAME;
