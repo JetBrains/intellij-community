@@ -1050,7 +1050,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                       @Nullable Throwable cause,
                                       @NonNls @NotNull String reason) {
     if (!indicator.isCanceled()) {
-      PassExecutorService.log(indicator, null, "Cancel (reason:", reason, ")", toRestartAlarm);
+      PassExecutorService.log(indicator, null, "Cancel (reason:'", reason, "')", toRestartAlarm);
       if (cause == null) {
         indicator.cancel(reason);
       }
@@ -1463,7 +1463,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                                   @NotNull Map<? super Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses) {
     ThreadingAssertions.assertEventDispatchThread();
     BackgroundEditorHighlighter highlighter;
-
     // since we are running on EDT under write-intent lock, write action can be either absent or pending (if it was invoked on background)
     // in this case, the progress indicator needs to be canceled.
     if (ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
@@ -1527,19 +1526,19 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         });
         return null;
       }
-      TextRange compositeDocumentDirtyRange = ObjectUtils.notNull(myFileStatusMap.getCompositeDocumentDirtyRange(document), TextRange.EMPTY_RANGE);
-      session = HighlightingSessionImpl.createHighlightingSession(psiFileToSubmit, context, editor, scheme, progress, daemonCancelEventCount, compositeDocumentDirtyRange);
+      session = HighlightingSessionImpl.createHighlightingSession(psiFileToSubmit, context, editor, scheme, progress, daemonCancelEventCount);
       JobLauncher.getInstance().submitToJobThread(ThreadContext.captureThreadContext(Context.current().wrap(() ->
             submitInBackground(fileEditor, document, virtualFile, psiFileToSubmit, highlighter, passesToIgnore, progress, session, mainDocumentPasses))),
             // manifest exceptions in EDT to avoid storing them in the Future and abandoning
             task -> ApplicationManager.getApplication().invokeLater(() -> ConcurrencyUtil.manifestExceptionsIn(task)));
     }
     if (PassExecutorService.LOG.isDebugEnabled()) {
-      PassExecutorService.log(progress, null, "queuePassesCreation completed. session=", session);
+      PassExecutorService.log(progress, null, "queuePassesCreation completed. session=", session, "; fileStatusMap:",  (editor == null ? null : myFileStatusMap.toString(editor.getDocument())));
     }
     return session;
   }
 
+  @RequiresBackgroundThread
   private void submitInBackground(@NotNull FileEditor fileEditor,
                                   @NotNull Document document,
                                   @NotNull VirtualFile virtualFile,
@@ -1672,11 +1671,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
     @Override
     public void onStop() {
-      Document document = myFileEditor instanceof TextEditor text ? text.getEditor().getDocument() : FileDocumentManager.getInstance().getCachedDocument(myFileEditor.getFile());
-      if (document != null && myFileStatusMap.allDirtyScopesAreNull(document)) {
-        // dispose composite dirty range before firing daemon listeners because some of them count on the getfileDirtyRange()==null (e.g. OptimizeImportRestarter)
-        myFileStatusMap.disposeDirtyDocumentRangeStorage(document);
-      }
       removeIndicatorFromMap(myFileEditor, this);
       myDaemonListenerPublisher.daemonFinished(List.of(myFileEditor));
       HighlightingSessionImpl.clearAllHighlightingSessions(this);

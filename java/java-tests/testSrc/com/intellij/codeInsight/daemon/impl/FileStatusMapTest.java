@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorMouseHoverPopupManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -58,7 +57,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @SkipSlowTestLocally
 @DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 public class FileStatusMapTest extends DaemonAnalyzerTestCase {
-  static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/typing/";
+  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/typing/";
 
   private DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
 
@@ -249,31 +248,18 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
   }
 
   public void testFileStatusMapDirtyDocumentRangeWorks() {
-    configureByText(PlainTextFileType.INSTANCE, "class <caret>S { int ffffff =  0;}");
+    configureByText(JavaFileType.INSTANCE, "class <caret>S { int ffffff =  0;}");
     UIUtil.dispatchAllInvocationEvents();
-
+    doHighlighting();
     Document document = myEditor.getDocument();
     FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
-    fileStatusMap.disposeDirtyDocumentRangeStorage(document);
-    assertNull(fileStatusMap.getCompositeDocumentDirtyRange(document));
+    assertNull(fileStatusMap.getFileDirtyScope(document, myFile, Pass.LOCAL_INSPECTIONS));
 
     int offset = myEditor.getCaretModel().getOffset();
     type(' ');
-    assertEquals(new TextRange(offset, offset+1), fileStatusMap.getCompositeDocumentDirtyRange(document));
-
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(10, 11, "xxx"));
-    assertEquals(new TextRange(offset, 13), fileStatusMap.getCompositeDocumentDirtyRange(document));
-
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.setText("  "));
-    assertEquals(new TextRange(0, 2), fileStatusMap.getCompositeDocumentDirtyRange(document));
-    fileStatusMap.disposeDirtyDocumentRangeStorage(document);
-    assertNull(fileStatusMap.getCompositeDocumentDirtyRange(document));
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0,"x"));
-    assertEquals(new TextRange(0, 1), fileStatusMap.getCompositeDocumentDirtyRange(document));
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(1,"x"));
-    assertEquals(new TextRange(0, 2), fileStatusMap.getCompositeDocumentDirtyRange(document));
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(4,"x"));
-    assertEquals(new TextRange(0, 5), fileStatusMap.getCompositeDocumentDirtyRange(document));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // reset "defensively marked"
+    myDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
+    assertEquals(new TextRange(offset-1, offset+1), fileStatusMap.getFileDirtyScope(document, myFile, Pass.LOCAL_INSPECTIONS));
   }
 
   public void testDefensivelyDirtyFlagDoesNotClearPrematurely() {

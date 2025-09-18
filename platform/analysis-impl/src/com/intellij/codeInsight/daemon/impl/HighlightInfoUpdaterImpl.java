@@ -331,7 +331,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                                                       @NotNull HighlightingSession session,
                                                       @NotNull ManagedHighlighterRecycler invalidPsiRecycler,
                                                       @NotNull WhatTool toolIdPredicate) {
-    TextRange compositeDocumentDirtyRange = session instanceof HighlightingSessionImpl impl ? impl.getCompositeDocumentDirtyRange() : TextRange.EMPTY_RANGE;
     disposeEvictedInfos(session, toolIdPredicate);
     collectPsiElements(psiFile, requestor, session, toolIdPredicate,
         psiElement -> psiElement != FAKE_ELEMENT && !psiElement.isValid(), // find invalid PSI
@@ -341,7 +340,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
           // if however, that invalid PSI highlighter wasn't recycled after a short delay, kill it (runWithInvalidPsiRecycler()) to improve responsiveness to outdated infos
           if (LOG.isDebugEnabled()) {
             LOG.debug("recycleInvalidPsiElements (predicate=" + toolIdPredicate + ") " + info.getHighlighter() +
-                      "; compositeDocumentDirtyRange=" + compositeDocumentDirtyRange +
                       "; toolIdPredicate=" + toolIdPredicate +
                       " for invalid " + psiElement + " from " + requestor +
                       " " +session.getProgressIndicator());
@@ -870,27 +868,37 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                                         @NotNull Consumer<? super ManagedHighlighterRecycler> invalidPsiRecyclerConsumer) {
     ManagedHighlighterRecycler.runWithRecycler(session, invalidPsiRecycler -> {
       recycleInvalidPsiElements(session.getPsiFile(), this, session, invalidPsiRecycler, toolIdPredicate);
-      ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() ->
-        ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-          // grab RA first, to avoid deadlock when InvalidPsi.toString() tries to obtain RA again from within this monitor
-          ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
-            // do not incinerate when the session is canceled because even though all RHs here need to be disposed eventually, the new restarted session might have used them to reduce flicker
-            if (session.isCanceled() || session.getProgressIndicator().isCanceled()) {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("runWithInvalidPsiRecycler: recycler(" + toolIdPredicate + ") abandoned because the session was canceled: " + invalidPsiRecycler+" "+session.getProgressIndicator());
+      ScheduledFuture<?> future;
+      if (invalidPsiRecycler.forAllInGarbageBin().isEmpty()) {
+        future = null;
+      }
+      else {
+        // after some time kill highlighters for invalid elements automatically, because it seems they are not going to be reused
+        future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() ->
+          ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+            // grab RA first, to avoid deadlock when InvalidPsi.toString() tries to obtain RA again from within this monitor
+            ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
+              // do not incinerate when the session is canceled because even though all RHs here need to be disposed eventually, the new restarted session might have used them to reduce flicker
+              if (session.isCanceled() || session.getProgressIndicator().isCanceled()) {
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("runWithInvalidPsiRecycler: recycler(" + toolIdPredicate + ") abandoned because the session was canceled: " + invalidPsiRecycler+" "+session.getProgressIndicator());
+                }
               }
-            }
-            else {
-              incinerateAndRemoveFromDataAtomically(invalidPsiRecycler);
-            }
-          });
-        }, session.getProgressIndicator())
-      , Registry.intValue("highlighting.delay.invalid.psi.info.kill.ms"), TimeUnit.MILLISECONDS);
+              else {
+                incinerateAndRemoveFromDataAtomically(invalidPsiRecycler);
+              }
+            });
+          }, session.getProgressIndicator())
+          , Registry.intValue("highlighting.delay.invalid.psi.info.kill.ms"), TimeUnit.MILLISECONDS);
+      }
+
       try {
         invalidPsiRecyclerConsumer.accept(invalidPsiRecycler);
       }
       finally {
-        future.cancel(false);
+        if (future != null) {
+          future.cancel(false);
+        }
       }
     });
   }

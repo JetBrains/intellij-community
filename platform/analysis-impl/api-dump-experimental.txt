@@ -22,7 +22,6 @@ f:com.intellij.codeInsight.daemon.impl.FileStatusMap
 - *s:getDirtyTextRange(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.psi.PsiFile,I):com.intellij.openapi.util.TextRange
 - *:getFileDirtyScope(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.psi.PsiFile,I):com.intellij.openapi.util.TextRange
 - *:markFileUpToDate(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext,I,com.intellij.openapi.progress.ProgressIndicator):V
-- *:setErrorFoundFlag(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext,Z):V
 com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - *:registerFix(com.intellij.modcommand.ModCommandAction,java.util.List,java.lang.String,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - *a:registerLazyFixes(java.util.function.Consumer):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder

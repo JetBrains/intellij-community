@@ -26,6 +26,8 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -68,11 +70,6 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     // don't create PSI for files in other projects
     PsiFile psiFile = getRawCachedPsiFile(document);
     if (psiFile != null) {
-      if (daemonCodeAnalyzerEx instanceof DaemonCodeAnalyzerImpl impl && impl.isUpdateByTimerEnabled()) {
-        // even though there maybe no PSI events, we need to re-highlight the changed range
-        // e.g. when the user backspace-d and the quickly re-typed back, or modified and then quickly undid
-        addChangesFromCompositeDirtyRange(psiFile, document, UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document));
-      }
       synchronized (changedElements) {
         List<Change> toUpdate = changedElements.get(document);
         if (toUpdate == null) {
@@ -112,21 +109,6 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   private PsiFile getRawCachedPsiFile(@NotNull Document document) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     return virtualFile == null || !virtualFile.isValid() ? null : TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, CodeInsightContexts.anyContext());
-  }
-
-  private void addChangesFromCompositeDirtyRange(@NotNull PsiFile psiFile,
-                                                 @NotNull Document document, boolean whiteSpaceOptimizationAllowed) {
-    TextRange compositeDirtyRange = myFileStatusMap.getCompositeDocumentDirtyRange(document);
-    if (compositeDirtyRange != null) {
-      PsiElement startElement = psiFile.findElementAt(Math.min(psiFile.getTextLength(), compositeDirtyRange.getStartOffset()));
-      PsiElement endElement = psiFile.findElementAt(Math.min(psiFile.getTextLength(), compositeDirtyRange.getEndOffset()));
-      if (startElement != null) {
-        storeChangedElement(startElement, document, whiteSpaceOptimizationAllowed);
-      }
-      if (endElement != null && startElement != endElement) {
-        storeChangedElement(endElement, document,  whiteSpaceOptimizationAllowed);
-      }
-    }
   }
 
   @Override
@@ -236,6 +218,8 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     });
   }
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
   void flushUpdateFileStatusQueue() {
     ApplicationManager.getApplication().assertReadAccessAllowed(); // only inside read/write action we can modify changedUpdate
     ApplicationManager.getApplication().assertIsNonDispatchThread();
@@ -253,6 +237,8 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     }
   }
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
   private void doUpdateChild(@NotNull Document document, @NotNull PsiElement child, boolean whitespaceOptimizationAllowed) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (myProject.isDisposed() /*|| !child.isValid()*//* || document.getModificationStamp() != documentOldModificationStamp*/) {

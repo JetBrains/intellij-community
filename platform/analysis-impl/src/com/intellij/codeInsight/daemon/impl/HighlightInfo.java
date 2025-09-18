@@ -152,7 +152,8 @@ public class HighlightInfo implements Segment {
     @NotNull OffsetStore withLazyQuickFixes(@NotNull @Unmodifiable List<LazyFixDescription> newLazyQuickFixes) {
       return new OffsetStore(highlighter(), fixMarker(), intentionActionDescriptors(), newLazyQuickFixes);
     }
-    @NotNull OffsetStore withIntentionDescriptorsAndFixMarker(@NotNull @Unmodifiable List<IntentionActionDescriptor> newIntentionDescriptors, @Nullable RangeMarker fixMarker) {
+    @NotNull OffsetStore withIntentionDescriptorsAndFixMarker(@NotNull @Unmodifiable List<IntentionActionDescriptor> newIntentionDescriptors,
+                                                              @Nullable RangeMarker fixMarker) {
       return new OffsetStore(highlighter(), fixMarker, newIntentionDescriptors, lazyQuickFixes());
     }
     @NotNull OffsetStore withHighlighter(@NotNull RangeHighlighterEx highlighter) {
@@ -448,14 +449,14 @@ public class HighlightInfo implements Segment {
   }
 
   public final void setHighlighter(@NotNull RangeHighlighterEx highlighter) {
-    update(oldStore -> {
+    updateOffsetStore(oldStore -> {
       if (oldStore.highlighter() != null) {
         throw new IllegalStateException("Cannot set highlighter to " + highlighter + " because it already set: " +
                                         oldStore.highlighter() + ". Maybe this HighlightInfo was (incorrectly) stored and reused?");
       }
-      OffsetStore newFixes = oldStore.withHighlighter(highlighter);
+      OffsetStore newStore = oldStore.withHighlighter(highlighter);
       // as soon as the HighlightInfo is bound to the document, we can replace TextRanges in IntentionActionDescriptor with RangeMarkers
-      return updateFields(newFixes, highlighter.getDocument());
+      return updateFields(newStore, highlighter.getDocument());
     });
     assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors(offsetStore));
   }
@@ -1131,7 +1132,7 @@ public class HighlightInfo implements Segment {
     if (fixes.isEmpty()) {
       return;
     }
-    update(oldStore -> {
+    updateOffsetStore(oldStore -> {
       List<IntentionActionDescriptor> newDescriptors = List.copyOf(ContainerUtil.concat(oldStore.intentionActionDescriptors(), fixes));
       OffsetStore newStore = oldStore.withIntentionDescriptorsAndFixMarker(newDescriptors, oldStore.fixMarker());
       return updateFields(newStore, document);
@@ -1143,7 +1144,7 @@ public class HighlightInfo implements Segment {
    */
   @ApiStatus.Internal
   public final void updateLazyFixesPsiTimeStamp(long psiTimeStamp) {
-    update(store -> store.withLazyQuickFixes(ContainerUtil.map(store.lazyQuickFixes(),
+    updateOffsetStore(store -> store.withLazyQuickFixes(ContainerUtil.map(store.lazyQuickFixes(),
                                                          d -> d.psiModificationStamp() == 0
                                                               ? new LazyFixDescription(d.fixesComputer(), psiTimeStamp, d.future(), d.progressIndicator())
                                                               : d)));
@@ -1200,7 +1201,7 @@ public class HighlightInfo implements Segment {
   }
 
   public final void unregisterQuickFix(@NotNull Condition<? super IntentionAction> condition) {
-    update(oldStore -> oldStore.withIntentionDescriptorsAndFixMarker(List.copyOf(ContainerUtil.filter(oldStore.intentionActionDescriptors(), descriptor -> !condition.value(descriptor.getAction()))), oldStore.fixMarker()));
+    updateOffsetStore(oldStore -> oldStore.withIntentionDescriptorsAndFixMarker(List.copyOf(ContainerUtil.filter(oldStore.intentionActionDescriptors(), descriptor -> !condition.value(descriptor.getAction()))), oldStore.fixMarker()));
   }
 
   public final IntentionAction getSameFamilyFix(@NotNull IntentionActionWithFixAllOption action) {
@@ -1244,7 +1245,7 @@ public class HighlightInfo implements Segment {
   final void updateQuickFixFields(@NotNull Document document,
                                   @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
                                   long finalHighlighterRange) {
-    update(oldStore -> {
+    updateOffsetStore(oldStore -> {
       long fixTextRange = TextRangeScalarUtil.coerceRange(getFixTextRangeScalar(oldStore), 0, document.getTextLength());
       RangeMarker newFixMarker = updateFixMarker(document, range2markerCache, fixTextRange, finalHighlighterRange);
       List<IntentionActionDescriptor> newDescriptors = toRangeMarkerFixRanges(getIntentionActionDescriptors(oldStore), document, range2markerCache, fixTextRange);
@@ -1363,9 +1364,9 @@ public class HighlightInfo implements Segment {
     return XmlStringUtil.wrapInHtml(result);
   }
 
-  private void update(@NotNull Function<? super OffsetStore, OffsetStore> computation) {
+  private void updateOffsetStore(@NotNull Function<? super @NotNull OffsetStore, @NotNull OffsetStore> computation) {
     while (true) {
-      OffsetStore oldStore = (OffsetStore)OFFSET_STORE_HANDLE.getVolatile(this);
+      OffsetStore oldStore = offsetStore;
       OffsetStore newStore = computation.apply(oldStore);
       if (oldStore.fixMarker() == newStore.fixMarker() &&
           oldStore.highlighter() == newStore.highlighter() &&
@@ -1374,6 +1375,8 @@ public class HighlightInfo implements Segment {
         // optimization: it does happen when we try to update with the same value
         break;
       }
+      // invariant: the highlighter can only be written once, in a 'null -> notnull' way
+      assert oldStore.highlighter() == null || oldStore.highlighter() == newStore.highlighter() : "Trying overwrite '"+oldStore+"' with '"+newStore+"'";
       if (OFFSET_STORE_HANDLE.compareAndSet(this, oldStore, newStore)) {
         break;
       }
@@ -1386,7 +1389,7 @@ public class HighlightInfo implements Segment {
 
     // store results of computation here to avoid re-computing when the CAS fails, because it can be extremely expensive
     Map<Consumer<? super QuickFixActionRegistrar>, @NotNull List<IntentionActionDescriptor>> computerToResult = new IdentityHashMap<>();
-    update(oldStore -> {
+    updateOffsetStore(oldStore -> {
       List<LazyFixDescription> newLazies = ContainerUtil.map(oldStore.lazyQuickFixes(), desc -> {
         Future<List<IntentionActionDescriptor>> future = desc.future();
         if (future != null && future.isDone()) {
@@ -1461,7 +1464,7 @@ public class HighlightInfo implements Segment {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     AtomicReference<ProgressIndicator> progressIndicator = new AtomicReference<>(new DaemonProgressIndicator());
-    update(oldStore -> {
+    updateOffsetStore(oldStore -> {
       progressIndicator.get().cancel(); // cancel the previous computations started before but not stored in the "future" field because the CAS failed
       progressIndicator.set(new DaemonProgressIndicator());
       List<LazyFixDescription> newLazyFixes = ContainerUtil.map(oldStore.lazyQuickFixes(), description -> {
@@ -1485,7 +1488,7 @@ public class HighlightInfo implements Segment {
   }
 
   final void copyComputedLazyFixesTo(@NotNull HighlightInfo newInfo, @NotNull Document document) {
-    newInfo.update(store -> {
+    newInfo.updateOffsetStore(store -> {
       List<LazyFixDescription> oldFixes = this.offsetStore.lazyQuickFixes();
       List<LazyFixDescription> newFixes = store.lazyQuickFixes();
       if (newFixes.size() == oldFixes.size() && psiModificationStampIsTheSame(newFixes, oldFixes)) {
@@ -1515,7 +1518,7 @@ public class HighlightInfo implements Segment {
       @Override
       public @NotNull HighlightInfo createUnconditionally() {
         HighlightInfo newInfo = super.createUnconditionally();
-        newInfo.update(oldStore -> {
+        newInfo.updateOffsetStore(oldStore -> {
           OffsetStore myStore = offsetStore;
           return (copyFlagsAndFixes ?
                   oldStore.withIntentionDescriptorsAndFixMarker(myStore.intentionActionDescriptors(), myStore.fixMarker()) :
