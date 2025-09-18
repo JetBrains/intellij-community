@@ -21,8 +21,8 @@ class GradleTestAssertionTest : GradleTestExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `test assertion result of Junit 5`(gradleVersion: GradleVersion) {
-    testJunit5Project(gradleVersion) {
+  fun `test assertion result of Junit Platform`(gradleVersion: GradleVersion) {
+    testJunitPlatformProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """
         |package org.example;
         |
@@ -293,8 +293,8 @@ class GradleTestAssertionTest : GradleTestExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `test assertion result of Junit 5 (Opentest4j)`(gradleVersion: GradleVersion) {
-    testJunit5Project(gradleVersion) {
+  fun `test assertion result of Junit Platform (Opentest4j)`(gradleVersion: GradleVersion) {
+    testJunitPlatformProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """
         |package org.example;
         |
@@ -1961,11 +1961,11 @@ class GradleTestAssertionTest : GradleTestExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `test assertion result of Junit 5 (Opentest4j FileComparisonFailure)`(gradleVersion: GradleVersion) {
+  fun `test assertion result of Junit Platform (Opentest4j FileComparisonFailure)`(gradleVersion: GradleVersion) {
     assumeThatGradleIsAtLeast(gradleVersion, "7.6") {
       "Integration between Intellij and Gradle ${gradleVersion.version} doesn't support custom assertion exceptions."
     }
-    testJunit5Project(gradleVersion) {
+    testJunitPlatformProject(gradleVersion) {
       val expectedPath = writeText("expected.txt", "Expected text.").path
       val actualPath = writeText("actual.txt", "Actual text.").path
 
@@ -2056,8 +2056,8 @@ class GradleTestAssertionTest : GradleTestExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `test assertion result of Junit 5 (Opentest4j FileInfo)`(gradleVersion: GradleVersion) {
-    testJunit5Project(gradleVersion) {
+  fun `test assertion result of Junit Platform (Opentest4j FileInfo)`(gradleVersion: GradleVersion) {
+    testJunitPlatformProject(gradleVersion) {
       val expectedPath = writeText("expected.txt", "Expected text.").path
       val actualPath = writeText("actual.txt", "Actual text.").path
 

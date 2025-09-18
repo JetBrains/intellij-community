@@ -285,8 +285,9 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
   }
 
   override fun withJUnit(): Self = apply {
-    when (isJunit5Supported(gradleVersion)) {
-      true -> withJUnit5()
+    when {
+      isJunit6Supported(gradleVersion) -> withJUnit6()
+      isJunit5Supported(gradleVersion) -> withJUnit5()
       else -> withJUnit4()
     }
   }
