@@ -348,7 +348,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     PsiFile psiFile = getPsiFile();
     boolean shouldUpdate = !fileLevelHighlights.isEmpty() || codeAnalyzer.hasFileLevelHighlights(group, psiFile);
     if (shouldUpdate) {
-      List<RangeHighlighter> reusedHighlighters = ContainerUtil.map(fileLevelHighlights, __->recycler.pickupFileLevelRangeHighlighter(psiFile.getTextLength()));
+      List<RangeHighlighter> reusedHighlighters = ContainerUtil.map(fileLevelHighlights, info->recycler.pickupFileLevelRangeHighlighter(psiFile.getTextLength(), info.getDescription()));
 
       Future<?> future = EdtExecutorService.getInstance().submit(() -> {
         if (project.isDisposed() || isCanceled()) return;
