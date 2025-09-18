@@ -433,7 +433,7 @@ private val KaType.text: String
         position = Variance.INVARIANT,
     )
 
-context(_: KaCompletionCandidateChecker)
+context(_: KaSession)
 private fun createExtensionCandidateChecker(
     bodyExpression: KtBlockExpression,
 ): KtCompletionExtensionCandidateChecker? {
