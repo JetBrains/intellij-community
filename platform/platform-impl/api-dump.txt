@@ -349,6 +349,46 @@ com.intellij.ide.ui.customization.ToolbarQuickActionInsertStrategy
 - a:addActions(java.util.List,com.intellij.ide.ui.customization.CustomActionsSchema):Z
 - a:checkExists(java.lang.String,com.intellij.ide.ui.customization.CustomActionsSchema):Z
 - orElse(com.intellij.ide.ui.customization.ToolbarQuickActionInsertStrategy):com.intellij.ide.ui.customization.ToolbarQuickActionInsertStrategy
+c:com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
+- javax.swing.plaf.basic.BasicButtonUI
+- sf:DEFAULT_STYLE_KEY:com.intellij.openapi.util.Key
+- ps:HELP_BUTTON_DIAMETER:com.intellij.util.ui.JBValue
+- ps:HORIZONTAL_PADDING:com.intellij.util.ui.JBValue
+- pf:iconRect:java.awt.Rectangle
+- pf:textRect:java.awt.Rectangle
+- pf:viewRect:java.awt.Rectangle
+- <init>():V
+- s:createUI(javax.swing.JComponent):javax.swing.plaf.ComponentUI
+- p:getBackground(javax.swing.JComponent,java.awt.Rectangle):java.awt.Paint
+- p:getButtonColorEnd():java.awt.Color
+- p:getButtonColorStart():java.awt.Color
+- p:getButtonTextColor(javax.swing.AbstractButton):java.awt.Color
+- s:getCustomButtonInsets(java.awt.Component):java.awt.Insets
+- p:getDarculaButtonSize(javax.swing.JComponent,java.awt.Dimension):java.awt.Dimension
+- p:getDefaultButtonColorEnd():java.awt.Color
+- p:getDefaultButtonColorStart():java.awt.Color
+- s:getDisabledTextColor():java.awt.Color
+- p:getMnemonicIndex(javax.swing.AbstractButton):I
+- f:getPreferredSize(javax.swing.JComponent):java.awt.Dimension
+- installDefaults(javax.swing.AbstractButton):V
+- s:isComboAction(java.awt.Component):Z
+- s:isContrastGotIt(java.awt.Component):Z
+- s:isContrastGotItOnlyButton(java.awt.Component):Z
+- s:isDefaultButton(javax.swing.JComponent):Z
+- s:isGotItButton(java.awt.Component):Z
+- s:isSmallVariant(java.awt.Component):Z
+- s:isSquare(java.awt.Component):Z
+- s:isTag(java.awt.Component):Z
+- p:layout(javax.swing.AbstractButton,java.lang.String,javax.swing.Icon,java.awt.FontMetrics,I,I):java.lang.String
+- p:modifyViewRect(javax.swing.AbstractButton,java.awt.Rectangle):V
+- paint(java.awt.Graphics,javax.swing.JComponent):V
+- p:paintContents(java.awt.Graphics,javax.swing.AbstractButton):V
+- p:paintDecorations(java.awt.Graphics2D,javax.swing.JComponent):Z
+- p:paintDisabledText(java.awt.Graphics,java.lang.String,javax.swing.JComponent,java.awt.Rectangle,java.awt.FontMetrics):V
+- p:paintText(java.awt.Graphics,javax.swing.JComponent,java.awt.Rectangle,java.lang.String):V
+- p:setupDefaultButton(javax.swing.JComponent,java.awt.Graphics):V
+- p:textIconGap():I
+- update(java.awt.Graphics,javax.swing.JComponent):V
 com.intellij.ide.util.ElementsChooser$ElementsMarkListener
 - a:elementMarkChanged(java.lang.Object,Z):V
 com.intellij.ide.util.ElementsChooser$StatisticsCollector
