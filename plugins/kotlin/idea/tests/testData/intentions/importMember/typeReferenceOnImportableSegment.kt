@@ -1,9 +1,8 @@
 // PRIORITY: HIGH
 // INTENTION_TEXT: "Add import for 'pack.name.Fixtures.Register'"
+// AFTER-WARNING: Variable 'ur' is never used
 
 package pack.name
-
-import pack.name.Fixtures.Register
 
 class Fixtures {
     class Register {
@@ -17,7 +16,5 @@ class Fixtures {
 }
 
 fun test() {
-    Register.Domain.UserRepository.authSuccess
+    val ur: pack.name.Fixtures.Regi<caret>ster.Domain.UserRepository? = null
 }
-
-// IGNORE_K1

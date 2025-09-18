@@ -3,8 +3,6 @@
 
 package pack.name
 
-import pack.name.Fixtures.Register
-
 class Fixtures {
     class Register {
         class Domain {
@@ -17,7 +15,7 @@ class Fixtures {
 }
 
 fun test() {
-    Register.Domain.UserRepository.authSuccess
+    val ur: <caret>pack.name.Fixtures.Register.Domain.UserRepository? = null
 }
 
 // IGNORE_K1

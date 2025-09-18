@@ -1664,6 +1664,26 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         public void testTopLevelFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/importMember/TopLevelFun.kt");
         }
+
+        @TestMetadata("typeReferenceAtStart.kt")
+        public void testTypeReferenceAtStart() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importMember/typeReferenceAtStart.kt");
+        }
+
+        @TestMetadata("typeReferenceLeftOfImportableSegment.kt")
+        public void testTypeReferenceLeftOfImportableSegment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importMember/typeReferenceLeftOfImportableSegment.kt");
+        }
+
+        @TestMetadata("typeReferenceOnImportableSegment.kt")
+        public void testTypeReferenceOnImportableSegment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importMember/typeReferenceOnImportableSegment.kt");
+        }
+
+        @TestMetadata("typeReferenceOnLastSegment.kt")
+        public void testTypeReferenceOnLastSegment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/importMember/typeReferenceOnLastSegment.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

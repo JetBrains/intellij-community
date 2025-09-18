@@ -17,7 +17,7 @@ class Fixtures {
 }
 
 fun test() {
-    Register.Domain.UserRepository.authSuccess
+    val ur: Register.Domain.UserRepository? = null
 }
 
 // IGNORE_K1
