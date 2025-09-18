@@ -73,7 +73,7 @@ import java.util.List;
  * the deleting range end offset, do it in {@link CompletionContributor#beforeCompletion(CompletionInitializationContext)}
  * by putting new offset to {@link CompletionInitializationContext#getOffsetMap()} as {@link CompletionInitializationContext#IDENTIFIER_END_OFFSET}.<p>
  *
- * <b>Q: I know more about my environment than the IDE does, and I can swear that those 239 variants it suggests me in some places aren't all that relevant,
+ * <b>Q: I know more about my environment than the IDE does, and I can swear that those 239 variants it suggests to me in some places aren't all that relevant,
  * so I'd be happy to filter out 42 of them. How do I do this?</b><br>
  * A: This is a bit harder than just adding variants. First, you should invoke
  * {@link CompletionResultSet#runRemainingContributors(CompletionParameters, Consumer)}.
@@ -82,7 +82,7 @@ import java.util.List;
  * ordered to invoke remaining contributors yourself, they won't be invoked automatically after yours finishes (see
  * {@link CompletionResultSet#stopHere()} and {@link CompletionResultSet#isStopped()}).
  * Calling {@link CompletionResultSet#stopHere()} explicitly will stop other contributors (which happened to be loaded after yours)
- * from execution, and the user will never see their so useful and precious completion variants, so please be careful with this method.<p>
+ * from execution, and the user will never see their such useful and precious completion variants, so please be careful with this method.<p>
  *
  * <b>Q: How are lookup elements sorted?</b><br>
  * A: Basically in lexicographic order, ascending, by lookup string ({@link LookupElement#getLookupString()}).
@@ -92,7 +92,7 @@ import java.util.List;
  * shown (Ctrl+Alt+Shift+W / Cmd+Alt+Shift+W), the action also copies the debug info to the Clipboard.<p>
  *
  * <b>Q: Elements in the lookup are sorted unexpectedly, the weights I provide are not honored, why?</b><br>
- * A: To be more responsive, when first lookup elements are produced, the completion infrastructure waits for some short time
+ * A: To be more responsive, when the first lookup elements are produced, the completion infrastructure waits for some short time
  * and then displays the lookup with whatever items are ready. After that, few of the most relevant displayed items
  * are considered "frozen" and not re-sorted anymore, to avoid changes around the selected item that the user already sees
  * and can interact with. Even if new, more relevant items are added, they won't make it to the top of the list anymore.
@@ -103,7 +103,7 @@ import java.util.List;
  * <b>Q: My completion is not working! How do I debug it?</b><br>
  * A: One source of common errors is that the pattern you gave to {@link #extend(CompletionType, ElementPattern, CompletionProvider)} method
  * may be incorrect. To debug this problem you can still override {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} in
- * your contributor, make it only call its super and put a breakpoint there.<br>
+ * your contributor, make it only call its super method, and put a breakpoint there.<br>
  * If you want to know which contributor added a particular lookup element, the best place for a breakpoint will be
  * {@link CompletionService#performCompletion(CompletionParameters, Consumer)}. The consumer passed there
  * is the 'final' consumer, it will pass your lookup elements directly to the lookup.<br>
@@ -127,6 +127,7 @@ import java.util.List;
  * but I want completion to keep going, matching against the typed character.</b><br>
  * A: See {@link com.intellij.codeInsight.lookup.CharFilter#acceptChar(char, int, com.intellij.codeInsight.lookup.Lookup)}.
  */
+@SuppressWarnings("JavadocReference")
 public abstract class CompletionContributor implements PossiblyDumbAware {
   public static final ExtensionPointName<CompletionContributorEP> EP = new ExtensionPointName<>("com.intellij.completion.contributor");
 
@@ -140,7 +141,7 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
   }
 
   /**
-   * The main contributor method that is supposed to provide completion variants to result, based on completion parameters.
+   * The main contributor method that is supposed to provide completion variants to the result, based on completion parameters.
    * The default implementation looks for {@link CompletionProvider}s you could register by
    * invoking {@link #extend(CompletionType, ElementPattern, CompletionProvider)} from your contributor constructor,
    * matches the desired completion type and {@link ElementPattern} with actual ones, and, depending on it, invokes those
