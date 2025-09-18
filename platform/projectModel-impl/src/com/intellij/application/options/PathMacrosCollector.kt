@@ -1,103 +1,113 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.application.options;
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
-import com.intellij.openapi.application.PathMacroFilter;
-import com.intellij.openapi.components.CompositePathMacroFilter;
-import com.intellij.openapi.components.PathMacroMap;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.text.Strings;
-import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.application.options
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.intellij.application.options.PathMacroProtocolHolder.protocols
+import com.intellij.openapi.application.PathMacroFilter
+import com.intellij.openapi.components.CompositePathMacroFilter
+import com.intellij.openapi.components.PathMacroMap
+import com.intellij.openapi.extensions.ExtensionPointName
+import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
+import java.util.regex.Pattern
 
-/**
- * @author Eugene Zhuravlev
- */
-public final class PathMacrosCollector extends PathMacroMap {
-  public static final ExtensionPointName<PathMacroFilter> MACRO_FILTER_EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.pathMacroFilter");
-  public static final Pattern MACRO_PATTERN = Pattern.compile("\\$([\\w\\-.]+?)\\$");
+class PathMacrosCollector private constructor() : PathMacroMap() {
+  private val matcher = MACRO_PATTERN.matcher("")
+  private val macroMap = LinkedHashMap<String, String?>()
 
-  private final Matcher myMatcher;
-  private final Map<String, String> myMacroMap = new LinkedHashMap<>();
+  companion object {
+    @JvmField
+    val MACRO_FILTER_EXTENSION_POINT_NAME: ExtensionPointName<PathMacroFilter> =
+      ExtensionPointName<PathMacroFilter>("com.intellij.pathMacroFilter")
 
-  private PathMacrosCollector() {
-    myMatcher = MACRO_PATTERN.matcher("");
-  }
+    @JvmField
+    val MACRO_PATTERN: Pattern = Pattern.compile("\\$([\\w\\-.]+?)\\$")
 
-  public static @NotNull Set<String> getMacroNames(final @NotNull Element e) {
-    return getMacroNames(e, new CompositePathMacroFilter(MACRO_FILTER_EXTENSION_POINT_NAME.getExtensionList()),
-                         PathMacrosImpl.getInstanceEx());
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull Set<String> getMacroNames(@NotNull Element root, @Nullable PathMacroFilter filter, @NotNull PathMacrosImpl pathMacros) {
-    PathMacrosCollector collector = new PathMacrosCollector();
-    collector.substitute(root, true, false, filter);
-    Set<String> preResult = collector.myMacroMap.keySet();
-    if (preResult.isEmpty()) {
-      return Collections.emptySet();
+    fun getMacroNames(element: Element): Set<String> {
+      return getMacroNames(
+        root = element,
+        filter = CompositePathMacroFilter(MACRO_FILTER_EXTENSION_POINT_NAME.extensionList),
+        pathMacros = PathMacrosImpl.getInstanceEx(),
+      )
     }
 
-    Set<String> result = new HashSet<>(preResult);
-    result.removeAll(pathMacros.getSystemMacroNames());
-    result.removeAll(pathMacros.getLegacyMacroNames());
-    pathMacros.removeToolMacroNames(result);
-    result.removeAll(pathMacros.getIgnoredMacroNames());
-    return result;
+    @ApiStatus.Internal
+    fun getMacroNames(root: Element, filter: PathMacroFilter?, pathMacros: PathMacrosImpl): Set<String> {
+      val collector = PathMacrosCollector()
+      collector.substitute(root, true, false, filter)
+      val preResult = collector.macroMap.keys
+      if (preResult.isEmpty()) {
+        return emptySet()
+      }
+
+      val result = HashSet<String>(preResult)
+      result.removeAll(pathMacros.getSystemMacroNames())
+      @Suppress("ConvertArgumentToSet")
+      result.removeAll(pathMacros.getLegacyMacroNames())
+      pathMacros.removeToolMacroNames(result)
+      for (string in pathMacros.getIgnoredMacroNames()) {
+        result.remove(string)
+      }
+      return result
+    }
   }
 
-  @Override
-  public @NotNull CharSequence substituteRecursively(@NotNull String text, boolean caseSensitive) {
-    if (Strings.isEmpty(text)) {
-      return text;
+  override fun substituteRecursively(text: String, caseSensitive: Boolean): CharSequence {
+    if (text.isEmpty()) {
+      return text
     }
 
-    myMatcher.reset(text);
-    while (myMatcher.find()) {
-      myMacroMap.put(myMatcher.group(1), null);
+    matcher.reset(text)
+    while (matcher.find()) {
+      macroMap.put(matcher.group(1), null)
     }
 
-    return text;
+    return text
   }
 
-  @Override
-  public @NotNull String substitute(@NotNull String text, boolean caseSensitive) {
-    if (Strings.isEmpty(text)) {
-      return text;
+  override fun substitute(text: String, caseSensitive: Boolean): String {
+    if (text.isEmpty()) {
+      return text
     }
 
-    int startPos = -1;
-    if (text.charAt(0) == '$') {
-      startPos = 0;
+    var startPos = -1
+    if (text.get(0) == '$') {
+      startPos = 0
     }
     else {
-      for (String protocol : PathMacroProtocolHolder.getProtocols()) {
-        if (text.length() > protocol.length() + 4 && text.startsWith(protocol) && text.charAt(protocol.length()) == ':') {
-          startPos = protocol.length() + 1;
-          if (text.charAt(startPos) == '/') startPos++;
-          if (text.charAt(startPos) == '/') startPos++;
+      for (protocol in protocols) {
+        if (text.length > protocol.length + 4 && text.startsWith(protocol) && text.get(protocol.length) == ':') {
+          startPos = protocol.length + 1
+          if (text.get(startPos) == '/') {
+            startPos++
+          }
+          if (text.get(startPos) == '/') {
+            startPos++
+          }
         }
       }
     }
     if (startPos < 0) {
-      return text;
+      return text
     }
 
-    myMatcher.reset(text).region(startPos, text.length());
-    if (myMatcher.lookingAt()) {
-      myMacroMap.put(myMatcher.group(1), null);
+    matcher.reset(text).region(startPos, text.length)
+    if (matcher.lookingAt()) {
+      macroMap.put(matcher.group(1), null)
     }
 
-    return text;
+    return text
   }
 
-  @Override
-  public int hashCode() {
-    return myMacroMap.hashCode();
+  override fun hashCode(): Int = macroMap.hashCode()
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is PathMacrosCollector) return false
+
+    if (macroMap != other.macroMap) return false
+
+    return true
   }
 }
