@@ -1543,7 +1543,6 @@ f:com.intellij.openapi.project.ProjectCoreUtil
 - sf:INSTANCE:com.intellij.openapi.project.ProjectCoreUtil
 - sf:isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile):Z
 - sf:isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileTypes.FileType):Z
-- sf:isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile,java.lang.CharSequence):Z
 Fa:com.intellij.openapi.project.ProjectLocator
 - sf:Companion:com.intellij.openapi.project.ProjectLocator$Companion
 - <init>():V

@@ -1,146 +1,120 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl;
+package com.intellij.openapi.wm.impl
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.lightEdit.LightEditService;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.util.BitUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.KeyEvent;
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.lightEdit.LightEditService
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.util.BitUtil.isSet
+import com.intellij.util.BitUtil.set
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import java.awt.Frame
+import java.awt.event.KeyEvent
 
 /**
- * @author Bas Leijdekkers
- * This class is programmatically instantiated and registered when opening and closing projects
- * and therefore not registered in plugin.xml
+ * This class is programmatically instantiated and registered when opening and closing projects and therefore not registered in plugin.xml
  */
-public final class ProjectWindowAction extends ToggleAction implements DumbAware {
+@ApiStatus.Internal
+class ProjectWindowAction(
+  @param:NlsSafe val projectName: @NlsSafe String,
+  val projectLocation: String,
+  previous: ProjectWindowAction?
+) : ToggleAction(IdeBundle.message("action.switch.project.text")), DumbAware {
+  private var myPrevious: ProjectWindowAction? = null
+  private var myNext: ProjectWindowAction? = null
 
-  private ProjectWindowAction myPrevious;
-  private ProjectWindowAction myNext;
-  private final @NotNull String myProjectName;
-  private final @NotNull String myProjectLocation;
-
-  public ProjectWindowAction(@NlsSafe @NotNull String projectName, @NotNull String projectLocation, ProjectWindowAction previous) {
-    super(IdeBundle.message("action.switch.project.text"));
-    myProjectName = projectName;
-    myProjectLocation = projectLocation;
-    if (previous != null) {
-      myPrevious = previous;
-      myNext = previous.myNext;
-      myNext.myPrevious = this;
-      myPrevious.myNext = this;
+  init {
+    if (previous == null) {
+      myPrevious = this
+      myNext = this
     }
     else {
-      myPrevious = this;
-      myNext = this;
+      myPrevious = previous
+      myNext = previous.myNext
+      myNext!!.myPrevious = this
+      myPrevious!!.myNext = this
     }
-    getTemplatePresentation().setText(projectName, false);
-    getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.Never);
+    getTemplatePresentation().setText(projectName, false)
+    getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.Never)
   }
 
-  public void dispose() {
+  fun dispose() {
     if (myPrevious == this) {
-      assert myNext == this;
-      return;
+      assert(myNext == this)
+      return
     }
+
     if (myNext == this) {
-      assert false;
-      return;
+      assert(false)
+      return
     }
-    myPrevious.myNext = myNext;
-    myNext.myPrevious = myPrevious;
+
+    myPrevious?.myNext = myNext
+    myNext?.myPrevious = myPrevious
   }
 
-  public ProjectWindowAction getPrevious() {
-    return myPrevious;
-  }
+  val previous: ProjectWindowAction?
+    get() = myPrevious
 
-  public ProjectWindowAction getNext() {
-    return myNext;
-  }
+  val next: ProjectWindowAction?
+    get() = myNext
 
-  public @NotNull String getProjectLocation() {
-    return myProjectLocation;
-  }
-
-  public @NotNull String getProjectName() {
-    return myProjectName;
-  }
-
-  private @Nullable Project findProject() {
-    if (LightEditService.getWindowName().equals(myProjectName)) {
-      return LightEditService.getInstance().getProject();
+  private fun findProject(): Project? {
+    if (LightEditService.getWindowName() == this.projectName) {
+      return LightEditService.getInstance().getProject()
     }
-    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (Project project : projects) {
-      if (myProjectLocation.equals(project.getPresentableUrl())) {
-        return project;
+
+    val projects = ProjectManager.getInstance().getOpenProjects()
+    for (project in projects) {
+      if (projectLocation == project.presentableUrl) {
+        return project
       }
     }
-    return null;
+    return null
   }
 
-  @Override
-  public boolean isSelected(@NotNull AnActionEvent e) {
+  override fun isSelected(e: AnActionEvent): Boolean {
     // show check mark for active and visible project frame
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) {
-      return false;
-    }
-    return myProjectLocation.equals(project.getPresentableUrl());
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return false
+    return projectLocation == project.presentableUrl
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  @Override
-  public void setSelected(@NotNull AnActionEvent e, boolean selected) {
-    final Project project = findProject();
-    if (project == null) {
-      return;
-    }
-    final JFrame projectFrame = WindowManager.getInstance().getFrame(project);
-    if (projectFrame == null) {
-      return;
-    }
-
-    final int frameState = projectFrame.getExtendedState();
-    if (SystemInfo.isMac && BitUtil.isSet(projectFrame.getExtendedState(), Frame.ICONIFIED) && e.getInputEvent() instanceof KeyEvent) {
+  override fun setSelected(e: AnActionEvent, selected: Boolean) {
+    val project = findProject() ?: return
+    val projectFrame = WindowManager.getInstance().getFrame(project) ?: return
+    val frameState = projectFrame.extendedState
+    if (SystemInfoRt.isMac && isSet(projectFrame.extendedState, Frame.ICONIFIED) && e.inputEvent is KeyEvent) {
       // On Mac minimized window should not be restored this way
-      return;
+      return
     }
 
-    if (BitUtil.isSet(frameState, Frame.ICONIFIED)) {
+    if (isSet(frameState, Frame.ICONIFIED)) {
       // restore the frame if it is minimized
-      projectFrame.setExtendedState(BitUtil.set(frameState, Frame.ICONIFIED, false));
+      projectFrame.setExtendedState(set(frameState, Frame.ICONIFIED, false))
     }
-    projectFrame.toFront();
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      Component mostRecentFocusOwner = projectFrame.getMostRecentFocusOwner();
+
+    projectFrame.toFront()
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(Runnable {
+      val mostRecentFocusOwner = projectFrame.mostRecentFocusOwner
       if (mostRecentFocusOwner != null) {
-        IdeFocusManager.getGlobalInstance().requestFocus(mostRecentFocusOwner, true);
+        IdeFocusManager.getGlobalInstance().requestFocus(mostRecentFocusOwner, true)
       }
-    });
+    })
   }
 
-  @Override
-  public @NonNls String toString() {
-    return getTemplatePresentation().getText()
-           + " previous: " + myPrevious.getTemplatePresentation().getText()
-           + " next: " + myNext.getTemplatePresentation().getText();
+  @NonNls
+  override fun toString(): @NonNls String {
+    return (getTemplatePresentation().getText()
+            + " previous: " + myPrevious!!.getTemplatePresentation().getText()
+            + " next: " + myNext!!.getTemplatePresentation().getText())
   }
 }

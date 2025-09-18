@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.platform.ModuleAttachProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,13 +26,14 @@ public final class ProjectWindowActionGroup extends IdeDependentActionGroup impl
   private ProjectWindowAction latest = null;
 
   public void addProject(@NotNull Project project) {
-    final String projectLocation = project.getPresentableUrl();
+    String projectLocation = project.getPresentableUrl();
     if (projectLocation == null) {
       return;
     }
-    final String projectName = getProjectDisplayName(project);
-    final ProjectWindowAction windowAction = new ProjectWindowAction(projectName, projectLocation, latest);
-    final List<ProjectWindowAction> duplicateWindowActions = findWindowActionsWithProjectName(projectName);
+
+    String projectName = getProjectDisplayName(project);
+    ProjectWindowAction windowAction = new ProjectWindowAction(projectName, projectLocation, latest);
+    List<ProjectWindowAction> duplicateWindowActions = findWindowActionsWithProjectName(projectName);
     if (!duplicateWindowActions.isEmpty()) {
       for (ProjectWindowAction action : duplicateWindowActions) {
         action.getTemplatePresentation().setText(FileUtil.getLocationRelativeToUserHome(action.getProjectLocation()));
@@ -44,9 +45,12 @@ public final class ProjectWindowActionGroup extends IdeDependentActionGroup impl
   }
 
   private static @NlsActions.ActionText String getProjectDisplayName(Project project) {
-    if (LightEdit.owns(project)) return LightEditService.getWindowName();
+    if (LightEdit.owns(project)) {
+      return LightEditService.getWindowName();
+    }
+
     String name = ModuleAttachProcessor.getMultiProjectDisplayName(project);
-    return name != null ? name : project.getName();
+    return name == null ? project.getName() : name;
   }
 
   public void removeProject(@NotNull Project project) {
@@ -89,7 +93,7 @@ public final class ProjectWindowActionGroup extends IdeDependentActionGroup impl
     if (windowAction == null) {
       return;
     }
-    final ProjectWindowAction next = windowAction.getNext();
+    ProjectWindowAction next = windowAction.getNext();
     if (next != null) {
       next.setSelected(e, true);
     }
@@ -158,6 +162,6 @@ public final class ProjectWindowActionGroup extends IdeDependentActionGroup impl
   }
 
   private static final Comparator<AnAction> SORT_BY_NAME = (action1, action2) -> {
-    return StringUtil.naturalCompare(getProjectName(action1), getProjectName(action2));
+    return NaturalComparator.INSTANCE.compare(getProjectName(action1), getProjectName(action2));
   };
 }

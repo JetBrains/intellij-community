@@ -10085,18 +10085,6 @@ a:com.intellij.openapi.wm.impl.ProjectFrameHelper
 f:com.intellij.openapi.wm.impl.ProjectFrameHelper$Companion
 - f:getFrameHelper(java.awt.Window):com.intellij.openapi.wm.impl.ProjectFrameHelper
 - f:getSuperUserSuffix():java.lang.String
-f:com.intellij.openapi.wm.impl.ProjectWindowAction
-- com.intellij.openapi.actionSystem.ToggleAction
-- com.intellij.openapi.project.DumbAware
-- <init>(java.lang.String,java.lang.String,com.intellij.openapi.wm.impl.ProjectWindowAction):V
-- dispose():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getNext():com.intellij.openapi.wm.impl.ProjectWindowAction
-- getPrevious():com.intellij.openapi.wm.impl.ProjectWindowAction
-- getProjectLocation():java.lang.String
-- getProjectName():java.lang.String
-- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 a:com.intellij.openapi.wm.impl.SplitButtonAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.actionSystem.ex.CustomComponentAction
