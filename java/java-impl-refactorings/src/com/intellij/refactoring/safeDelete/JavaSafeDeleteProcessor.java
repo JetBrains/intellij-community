@@ -111,10 +111,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         PsiReferenceExpression referencedElement = (PsiReferenceExpression)reference.getElement();
         PsiElement statementOrExprInList = PsiTreeUtil.getParentOfType(referencedElement, PsiStatement.class);
         if (statementOrExprInList instanceof PsiExpressionListStatement statement) {
-          PsiExpressionList expressionList = statement.getExpressionList();
-          if (expressionList != null) {
-            statementOrExprInList = PsiTreeUtil.findPrevParent(expressionList, referencedElement);
-          }
+          statementOrExprInList = PsiTreeUtil.findPrevParent(statement.getExpressionList(), referencedElement);
         }
 
         boolean isSafeToDelete = PsiUtil.isAccessedForWriting(referencedElement);
