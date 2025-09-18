@@ -275,6 +275,10 @@ public final class ServiceViewActionProvider {
     public DefaultFrontendServiceViewActionGroup() {
     }
 
+    public DefaultFrontendServiceViewActionGroup(AnAction @NotNull ... actions) {
+      super(actions);
+    }
+
     public DefaultFrontendServiceViewActionGroup(@NotNull List<? extends AnAction> actions) {
       super(actions);
     }
