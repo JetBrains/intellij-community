@@ -1,9 +1,5 @@
 // COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution
-// IGNORE_K1
 package test
-
-import test.Color.RED
-
 
 enum class Color {
     RED

@@ -1,5 +1,4 @@
 // COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution
-// IGNORE_K1
 package test
 
 sealed class MyResult {
