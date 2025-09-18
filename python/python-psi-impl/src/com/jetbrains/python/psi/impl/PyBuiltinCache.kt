@@ -307,7 +307,7 @@ private class CachedFile(
   private val myTypeCache: MutableMap<String, PyClassType?> = mutableMapOf(),
 ) {
   fun getClassType(name: @NonNls String): PyClassType? {
-    return synchronized(this) {
+    return synchronized(myTypeCache) {
       if (myModificationStamp != file.modificationStamp) {
         myTypeCache.clear()
         myModificationStamp = file.modificationStamp
@@ -316,7 +316,7 @@ private class CachedFile(
         ?.also { it.assertValid(name) }
     } ?: resolveTopLevel(name)?.also {
       synchronized(myTypeCache) {
-        myTypeCache.put(name, it)
+        myTypeCache[name] = it
       }
     }
   }

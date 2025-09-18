@@ -1138,6 +1138,17 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  // PY-76811
+  public void testDataclassSlotsOnClass() {
+    final PyFile file = getTestFile();
+
+    assertTrue(file.findTopLevelClass("Foo1").getStub().getCustomStub(PyDataclassStub.class).slotsValue());
+    assertFalse(file.findTopLevelClass("Foo2").getStub().getCustomStub(PyDataclassStub.class).slotsValue());
+    assertNull(file.findTopLevelClass("Foo3").getStub().getCustomStub(PyDataclassStub.class).slotsValue());
+
+    assertNotParsed(file);
+  }
+
   // PY-62608
   public void testTypeParameterListInFunctionDeclaration() {
     PyFile file = getTestFile();
