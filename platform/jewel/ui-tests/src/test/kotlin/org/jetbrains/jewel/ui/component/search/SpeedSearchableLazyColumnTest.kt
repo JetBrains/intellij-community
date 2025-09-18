@@ -23,6 +23,7 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import kotlin.test.Test
@@ -98,7 +99,25 @@ class SpeedSearchableLazyColumnTest {
     }
 
     @Test
-    fun `select closest match if it happens before the current item`() = runComposeTest {
+    fun `select first visible match if after the current item`() = runComposeTest {
+        onLazyColumn.performKeyPress("Item 40", rule = this)
+        onLazyColumnItem("Item 40").assertIsDisplayed().assertIsSelected()
+
+        // Return scroll a bit and ensure 39 is visible
+        onLazyColumn.performScrollToIndex(35)
+        onLazyColumnItem("Item 39").assertIsDisplayed()
+
+        // Delete the number and replace with "9"
+        onSpeedSearchAreaInput.performKeyPress(Key.Backspace, rule = this)
+        onSpeedSearchAreaInput.performKeyPress(Key.Backspace, rule = this)
+        onSpeedSearchAreaInput.performKeyPress("9", rule = this)
+
+        // 39 is the first visible item containing 9, so it will be selected
+        onLazyColumnItem("Item 39").assertIsDisplayed().assertIsSelected()
+    }
+
+    @Test
+    fun `select closest match if after the current item`() = runComposeTest {
         onLazyColumn.performKeyPress("Item 245", rule = this)
         onLazyColumnItem("Item 245").assertIsDisplayed().assertIsSelected()
 
@@ -107,11 +126,9 @@ class SpeedSearchableLazyColumnTest {
         onSpeedSearchAreaInput.performKeyPress(Key.Backspace, rule = this)
         onSpeedSearchAreaInput.performKeyPress(Key.Backspace, rule = this)
 
-        // Add `99`
+        // Add `99` and jumps to next reference matching "99"
         onSpeedSearchAreaInput.performKeyPress("99", rule = this)
-
-        // Selects 199 that is closer compared to 299
-        onLazyColumnItem("Item 199").assertIsDisplayed().assertIsSelected()
+        onLazyColumnItem("Item 299").assertIsDisplayed().assertIsSelected()
     }
 
     @Test
@@ -120,6 +137,12 @@ class SpeedSearchableLazyColumnTest {
         onLazyColumnItem("Item 9").assertIsDisplayed().assertIsSelected()
 
         onLazyColumn.performKeyPress(Key.DirectionDown, rule = this)
+        onLazyColumnItem("Item 19").assertIsDisplayed().assertIsSelected()
+
+        onLazyColumn.performKeyPress(Key.DirectionDown, rule = this)
+        onLazyColumnItem("Item 29").assertIsDisplayed().assertIsSelected()
+
+        onLazyColumn.performKeyPress(Key.DirectionUp, rule = this)
         onLazyColumnItem("Item 19").assertIsDisplayed().assertIsSelected()
 
         onLazyColumn.performKeyPress(Key.DirectionUp, rule = this)
