@@ -137,7 +137,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
   fun completeAsyncTasks() {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     @Suppress("DEPRECATION")
-    runUnderModalProgressIfIsEdt {
+    runUnderModalProgressIfIsEdt(project) {
       val parentJob = coroutineScope.coroutineContext[Job]!!
       while (true) {
         // process all events in EDT

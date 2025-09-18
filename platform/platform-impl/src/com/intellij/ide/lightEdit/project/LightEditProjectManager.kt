@@ -21,7 +21,7 @@ private fun fireProjectOpened(project: Project) {
   val fireRunnable = Runnable {
     // similar to com.intellij.openapi.project.impl.ProjectManagerExImplKt.openProject
     app.messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
-    runUnderModalProgressIfIsEdt {
+    runUnderModalProgressIfIsEdt(project) {
       val startupManager = StartupManager.getInstance(project) as StartupManagerImpl
       startupManager.initProject()
       startupManager.runPostStartupActivities()

@@ -766,6 +766,21 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
   }
 }
 
+@Internal
+@ScheduledForRemoval
+@Deprecated(
+  "Use runWithModalProgressBlocking on EDT with proper owner and title, " +
+  "or runBlockingCancellable(+withBackgroundProgress with proper title) on BGT"
+)
+fun <T> runUnderModalProgressIfIsEdt(project: Project, task: suspend CoroutineScope.() -> T): T {
+  if (ApplicationManager.getApplication().isDispatchThread) {
+    return runWithModalProgressBlocking(ModalTaskOwner.project(project), "", TaskCancellation.cancellable(), task)
+  }
+  else {
+    return runBlockingMaybeCancellable(task)
+  }
+}
+
 private fun getActiveWindow(): Window? {
   val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
   LOG.trace { "getActiveWindow: active window is $window" }

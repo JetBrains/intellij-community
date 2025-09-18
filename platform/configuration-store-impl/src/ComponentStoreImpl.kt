@@ -789,14 +789,6 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  final override fun scheduleReloadState(componentClass: Class<out PersistentStateComponent<*>>, postAction: Runnable?) {
-    val componentManager = project ?: ApplicationManager.getApplication()
-    val pluginScope = (componentManager as ComponentManagerEx).instanceCoroutineScope(componentClass)
-    pluginScope.launch {
-      reloadState(componentClass)
-    }
-  }
-
   private suspend fun reloadState(componentName: String, changedStorages: Set<StateStorage>): Boolean {
     val info = components.get(componentName) ?: return false
     val component = info.component

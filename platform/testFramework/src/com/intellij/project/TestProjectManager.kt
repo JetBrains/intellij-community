@@ -114,7 +114,7 @@ open class TestProjectManager : ProjectManagerImpl() {
 
     val app = ApplicationManager.getApplication()
     try {
-      runUnderModalProgressIfIsEdt {
+      runUnderModalProgressIfIsEdt(project) {
         coroutineScope {
           runInitProjectActivities(project = project)
         }

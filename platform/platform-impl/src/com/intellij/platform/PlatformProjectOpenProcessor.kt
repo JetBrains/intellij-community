@@ -77,7 +77,12 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmStatic
     @JvmOverloads
     @Internal
-    fun openProjectLegacyJavaApi(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean, instance: PlatformProjectOpenProcessor? = null): Project? {
+    fun openProjectLegacyJavaApi(
+      virtualFile: VirtualFile,
+      projectToClose: Project?,
+      forceOpenInNewFrame: Boolean,
+      instance: PlatformProjectOpenProcessor? = null,
+    ): Project? {
       @Suppress("DEPRECATION") // Function has no thread requirements
       return runUnderModalProgressIfIsEdt { (instance ?: getInstance()).openProjectAsync(virtualFile, projectToClose, forceOpenInNewFrame) }
     }

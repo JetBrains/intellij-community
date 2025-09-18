@@ -30,7 +30,10 @@ final class PackageSetFactoryImpl extends PackageSetFactory {
       public void extensionAdded(@NotNull PackageSetParserExtension extension, @NotNull PluginDescriptor pluginDescriptor) {
         for (Project project : ProjectUtil.getOpenProjects()) {
           for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
-            IComponentStoreKt.getStateStore(project).scheduleReloadState(holder.getClass(), holder::fireScopeListeners);
+            IComponentStoreKt.scheduleReloadState(IComponentStoreKt.getStateStore(project),
+                                                  holder.getClass(),
+                                                  holder::fireScopeListeners,
+                                                  coroutineScope);
           }
         }
       }

@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -33,8 +34,6 @@ interface IComponentStore {
 
   suspend fun reloadState(componentClass: Class<out PersistentStateComponent<*>>)
 
-  fun scheduleReloadState(componentClass: Class<out PersistentStateComponent<*>>, postAction: Runnable? = null)
-
   fun isReloadPossible(componentNames: Set<String>): Boolean
 
   suspend fun save(forceSavingAllSettings: Boolean = false)
@@ -56,6 +55,21 @@ interface IComponentStore {
 @Internal
 interface ComponentStoreOwner {
   val componentStore: IComponentStore
+}
+
+// for poor code in java
+@Deprecated("Use coroutine version")
+@Internal
+fun scheduleReloadState(
+  store: IComponentStore,
+  componentClass: Class<out PersistentStateComponent<*>>,
+  postAction: Runnable,
+  coroutineScope: CoroutineScope,
+) {
+  coroutineScope.launch {
+    store.reloadState(componentClass)
+    postAction.run()
+  }
 }
 
 @get:Internal
