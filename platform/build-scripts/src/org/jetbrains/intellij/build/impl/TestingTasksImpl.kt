@@ -547,12 +547,12 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     notifySnapshotBuilt(allJvmArgs)
   }
 
-  private suspend fun replaceWithArchivedIfNeededLF(files: List<File>): List<File> {
-    if (context is ArchivedCompilationContext) {
-      return context.replaceWithCompressedIfNeededLF(files)
-    }
-    else {
-      return files
+  private suspend fun replaceWithArchivedIfNeededLF(files: List<File>, context:CompilationContext = this.context): List<File> {
+    return when (context) {
+      is BuildContextImpl -> replaceWithArchivedIfNeededLF(files, context.compilationContext)
+      is ArchivedCompilationContext -> context.replaceWithCompressedIfNeededLF(files)
+      is BazelCompilationContext -> context.replaceWithCompressedIfNeededLF(files)
+      else -> files
     }
   }
 
