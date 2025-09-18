@@ -161,7 +161,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     val deferredTabs = tabsOrDeferredTabs.filterIsInstance<SuspendLazyProperty<SeTab?>>()
 
     var popup: JBPopup? = null
-    val popupVm = SePopupVm(popupScope, project, tabs, deferredTabs, searchText, tabId, historyList, availableLegacyContributors) {
+    val popupVm = SePopupVm(popupScope, session, project, tabs, deferredTabs, searchText, tabId, historyList, availableLegacyContributors) {
       popup?.cancel()
       popup = null
     }

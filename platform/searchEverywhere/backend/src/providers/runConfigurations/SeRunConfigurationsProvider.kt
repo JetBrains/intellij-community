@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
 import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import com.intellij.platform.searchEverywhere.providers.runConfigurations.SeRunConfigurationsPresentationProvider
 import kotlinx.coroutines.Dispatchers
@@ -32,8 +33,8 @@ class SeRunConfigurationsItem(
 }
 
 @ApiStatus.Internal
-class SeRunConfigurationsProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeItemsProvider {
-  private val contributor = contributorWrapper.contributor
+class SeRunConfigurationsProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider() {
+  override val contributor: SearchEverywhereContributor<Any> get() = contributorWrapper.contributor
   override val id: String get() = SeProviderIdUtils.RUN_CONFIGURATIONS_ID
   override val displayName: @Nls String get() = contributor.fullGroupName
 

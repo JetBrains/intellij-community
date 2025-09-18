@@ -31,11 +31,12 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class SeBackendService(val project: Project, private val coroutineScope: CoroutineScope) {
-  private val sessionIdToProviderHolders: MutableMap<EID, SeProvidersHolder> = HashMap()
+  private val sessionIdToProviderHolders: ConcurrentHashMap<EID, SeProvidersHolder> = ConcurrentHashMap()
   private val mutex: Mutex = Mutex()
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -104,6 +105,12 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     val providersHolder = getProvidersHolder(session, dataContextId) ?: return null
     val allProviderIds = SeItemsProviderFactory.EP_NAME.extensionList.map { it.id.toProviderId() } + providersHolder.legacyAllTabContributors.map { it.key }
     return SeSortedProviderIds.create(allProviderIds, providersHolder, session)
+  }
+
+  fun tryGetProvider(id: SeProviderId, isAllTab: Boolean, session: SeSession) : SeItemsProvider? {
+    return session.asRef().derefOrNull()?.eid?.let {
+      sessionIdToProviderHolders[it]?.get(id, isAllTab)?.provider
+    }
   }
 
   private suspend fun getProvidersHolder(

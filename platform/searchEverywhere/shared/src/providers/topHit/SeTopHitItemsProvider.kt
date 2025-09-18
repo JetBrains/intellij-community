@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
 import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,8 +33,8 @@ open class SeTopHitItemsProvider(
   private val project: Project,
   private val contributorWrapper: SeAsyncContributorWrapper<Any>,
   override val displayName: @Nls String,
-) : SeItemsProvider {
-  private val contributor = contributorWrapper.contributor
+) : SeWrappedLegacyContributorItemsProvider() {
+  override val contributor: SearchEverywhereContributor<Any> = contributorWrapper.contributor
   override val id: String get() = id(isHost)
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {

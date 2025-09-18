@@ -1,23 +1,26 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.backend.providers.symbols
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.util.gotoByName.LanguageRef
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.backend.providers.target.SeTargetsProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-class SeSymbolsProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeItemsProvider,
+class SeSymbolsProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(),
                                                                                           SeSearchScopesProvider,
                                                                                           SeTypeVisibilityStateProvider {
   override val id: String get() = SeProviderIdUtils.SYMBOLS_ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName
+  override val contributor: SearchEverywhereContributor<*> get() = contributorWrapper.contributor
 
   private val targetsProviderDelegate = SeTargetsProviderDelegate(contributorWrapper)
 

@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
 import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -38,21 +39,21 @@ class SeActionItem(
 }
 
 @Internal
-class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEverywhereContributor) : SeItemsProvider {
+class SeActionsAdaptedProvider(override val contributor: ActionSearchEverywhereContributor) : SeWrappedLegacyContributorItemsProvider() {
   override val id: String get() = SeProviderIdUtils.ACTIONS_ID
   override val displayName: @Nls String
-    get() = legacyContributor.fullGroupName
+    get() = contributor.fullGroupName
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val inputQuery = params.inputQuery
     val filter = SeActionsFilter.from(params.filter)
-    legacyContributor.getActions({}).filterIsInstance<CheckBoxSearchEverywhereToggleAction>().firstOrNull()?.let {
+    contributor.getActions({}).filterIsInstance<CheckBoxSearchEverywhereToggleAction>().firstOrNull()?.let {
       it.isEverywhere = filter.includeDisabled
     }
 
     coroutineScope {
-      legacyContributor.fetchWeightedElements(this, inputQuery) {
-        collector.put(SeActionItem(it.item, legacyContributor, legacyContributor.getExtendedInfo(it.item), legacyContributor.isMultiSelectionSupported))
+      contributor.fetchWeightedElements(this, inputQuery) {
+        collector.put(SeActionItem(it.item, contributor, contributor.getExtendedInfo(it.item), contributor.isMultiSelectionSupported))
       }
     }
   }
@@ -60,17 +61,17 @@ class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEveryw
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
     val legacyItem = (item as? SeActionItem)?.matchedValue ?: return false
     return withContext(Dispatchers.EDT) {
-      legacyContributor.processSelectedItem(legacyItem, modifiers, searchText)
+      contributor.processSelectedItem(legacyItem, modifiers, searchText)
     }
   }
 
   override suspend fun canBeShownInFindResults(): Boolean {
-    return legacyContributor.showInFindResults()
+    return contributor.showInFindResults()
   }
 
   override suspend fun performExtendedAction(item: SeItem): Boolean {
     val legacyItem = (item as? SeActionItem)?.matchedValue ?: return false
-    val rightAction = (legacyContributor as? SearchEverywhereExtendedInfoProvider)
+    val rightAction = (contributor as? SearchEverywhereExtendedInfoProvider)
                         ?.createExtendedInfo()?.rightAction?.invoke(legacyItem) ?: return false
 
     return withContext(Dispatchers.EDT) {
@@ -92,6 +93,6 @@ class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEveryw
   }
 
   override fun dispose() {
-    Disposer.dispose(legacyContributor)
+    Disposer.dispose(contributor)
   }
 }

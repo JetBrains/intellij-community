@@ -41,11 +41,11 @@ class SeTextSearchItem(
 }
 
 @ApiStatus.Internal
-class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeItemsProvider, SeSearchScopesProvider {
-  private val contributor = contributorWrapper.contributor
+class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(), SeSearchScopesProvider {
   override val id: String get() = SeProviderIdUtils.TEXT_ID
   override val displayName: @Nls String
     get() = contributor.fullGroupName
+  override val contributor: SearchEverywhereContributor<Any> get() = contributorWrapper.contributor
   private val findModel = FindManager.getInstance(project).findInProjectModel
   private val scopeProviderDelegate = ScopeChooserActionProviderDelegate(contributorWrapper)
 

@@ -29,6 +29,7 @@ import org.jetbrains.annotations.ApiStatus
 @OptIn(ExperimentalCoroutinesApi::class)
 class SePopupVm(
   val coroutineScope: CoroutineScope,
+  val session: SeSession,
   private val project: Project?,
   tabs: List<SeTab>,
   deferredTabs: List<SuspendLazyProperty<SeTab?>>,

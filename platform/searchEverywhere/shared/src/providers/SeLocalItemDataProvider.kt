@@ -23,7 +23,7 @@ import kotlin.concurrent.atomics.incrementAndFetch
 
 @ApiStatus.Internal
 class SeLocalItemDataProvider(
-  private val provider: SeItemsProvider,
+  val provider: SeItemsProvider,
   private val session: SeSession,
   private val logLabel: String = "Local",
 ) : Disposable {

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.backend.providers.recentFiles
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeItem
@@ -9,14 +10,16 @@ import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.backend.providers.target.SeTargetsProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
 @Internal
-class SeRecentFilesProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeItemsProvider {
+class SeRecentFilesProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider() {
   override val id: String get() = SeProviderIdUtils.RECENT_FILES_ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName
+  override val contributor: SearchEverywhereContributor<*> get() = contributorWrapper.contributor
 
   private val targetsProviderDelegate = SeTargetsProviderDelegate(contributorWrapper)
 
