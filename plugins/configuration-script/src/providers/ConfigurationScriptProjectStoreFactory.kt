@@ -167,6 +167,6 @@ private class ReadOnlyStorage(
 
   override fun createSaveSessionProducer(): SaveSessionProducer? = null
 
-  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
+  override suspend fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
   }
 }

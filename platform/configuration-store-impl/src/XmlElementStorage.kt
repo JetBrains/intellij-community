@@ -134,7 +134,7 @@ abstract class XmlElementStorage protected constructor(
 
   protected abstract fun createSaveSession(states: StateMap): SaveSessionProducer
 
-  final override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
+  final override suspend fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     LOG.debug("Running analyzeExternalChangesAndUpdateIfNeeded")
     val oldData = storageDataRef.get()
     val newData = getStorageData(reload = true)

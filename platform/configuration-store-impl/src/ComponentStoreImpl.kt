@@ -818,11 +818,11 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val componentNames = HashSet<String>()
     for (storage in changedStorages) {
-      LOG.runAndLogException {
+      runCatching {
         // we must update (reload in-memory storage data) even if a non-reloadable component is detected later
         // not saved -> user does a modification -> new (on disk) state will be overwritten and not applied
         storage.analyzeExternalChangesAndUpdateIfNeeded(componentNames)
-      }
+      }.getOrLogException(LOG)
     }
 
     if (componentNames.isEmpty()) {

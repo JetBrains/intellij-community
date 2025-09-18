@@ -30,7 +30,7 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 
   private val storage by lazy {
     val file = ApplicationManager.getApplication().stateStore.storageManager.expandMacro(PROJECT_DEFAULT_FILE_SPEC)
-    DefaultProjectStorage(file, PROJECT_DEFAULT_FILE_SPEC, PathMacroManager.getInstance(project), compoundStreamProvider)
+    DefaultProjectStorage(file = file, fileSpec = PROJECT_DEFAULT_FILE_SPEC, pathMacroManager = PathMacroManager.getInstance(project), streamProvider = compoundStreamProvider)
   }
 
   override val serviceContainer: ComponentManagerEx
