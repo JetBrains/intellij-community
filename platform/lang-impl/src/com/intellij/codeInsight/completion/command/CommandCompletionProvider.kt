@@ -526,12 +526,12 @@ private class LimitedToleranceMatcher(private val myCurrentPrefix: String) : Cam
         if (prefix.length != range.length) continue
         if (range.startOffset >= range.endOffset ||
             range.startOffset < 0 || range.startOffset >= (lookupString.length - 1) ||
-            range.endOffset < 0 || range.endOffset >= (lookupString.length - 1)) continue
+            range.endOffset < 0 || range.endOffset > lookupString.length) continue
         val matchedFragment = lookupString.substring(range.startOffset, range.endOffset)
         var errors = 0
         for (i in matchedFragment.indices) {
           if (prefix[i] != matchedFragment[i]) errors++
-          if (errors > 2) return false
+          if (errors > 2) continue
         }
         if (range.startOffset <= 1) return true
         if (!lookupString[range.startOffset].isLowerCase()) return true
