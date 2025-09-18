@@ -4549,7 +4549,6 @@ a:com.intellij.projectImport.ProjectOpenProcessor
 - askConfirmationForOpeningProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):I
 - canImportProjectAfterwards():Z
 - a:canOpenProject(com.intellij.openapi.vfs.VirtualFile):Z
-- a:doOpenProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,Z):com.intellij.openapi.project.Project
 - getIcon():javax.swing.Icon
 - getIcon(com.intellij.openapi.vfs.VirtualFile):javax.swing.Icon
 - sf:getImportProvider(com.intellij.openapi.vfs.VirtualFile):com.intellij.projectImport.ProjectOpenProcessor

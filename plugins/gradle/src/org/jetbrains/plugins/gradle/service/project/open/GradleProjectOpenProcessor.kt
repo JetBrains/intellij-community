@@ -18,10 +18,6 @@ class GradleProjectOpenProcessor : ProjectOpenProcessor() {
 
   override fun canOpenProject(file: VirtualFile): Boolean = canOpenGradleProject(file)
 
-  override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    return runUnderModalProgressIfIsEdt { openGradleProject(virtualFile, projectToClose, forceOpenInNewFrame) }
-  }
-
   override suspend fun openProjectAsync(virtualFile: VirtualFile,
                                         projectToClose: Project?,
                                         forceOpenInNewFrame: Boolean): Project? {

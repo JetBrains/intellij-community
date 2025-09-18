@@ -742,6 +742,8 @@ com.intellij.platform.ide.customization.ExternalProductResourceUrls
 com.intellij.pom.NavigatableWithText
 - com.intellij.pom.Navigatable
 - a:getNavigateActionText(Z):java.lang.String
+a:com.intellij.projectImport.ProjectOpenProcessor
+- doOpenProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,Z):com.intellij.openapi.project.Project
 com.intellij.ui.AnActionButtonRunnable
 - com.intellij.util.ParameterizedRunnable
 com.intellij.ui.AnActionButtonUpdater

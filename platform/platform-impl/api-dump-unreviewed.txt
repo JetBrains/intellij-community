@@ -10972,7 +10972,6 @@ f:com.intellij.platform.PlatformProjectOpenProcessor
 - <init>():V
 - canOpenProject(com.intellij.openapi.vfs.VirtualFile):Z
 - sf:doOpenProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,I,com.intellij.projectImport.ProjectOpenedCallback,java.util.EnumSet):com.intellij.openapi.project.Project
-- doOpenProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,Z):com.intellij.openapi.project.Project
 - sf:getInstance():com.intellij.platform.PlatformProjectOpenProcessor
 - sf:getInstanceIfItExists():com.intellij.platform.PlatformProjectOpenProcessor
 - getName():java.lang.String

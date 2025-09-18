@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -68,7 +69,16 @@ abstract class ProjectOpenProcessor {
       .show(project)
   }
 
+
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use openProjectAsync instead", replaceWith = ReplaceWith("openProjectAsync(virtualFile, projectToClose, forceOpenInNewFrame)"), level = DeprecationLevel.ERROR)
+  open fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+    error("Use `openProjectAsync` instead")
+  }
+
   /**
+   * Warning: This function *must* be implemented.
+   *
    * Create an instance of the project, configure the project according to the needs of this ProjectOpenProcessor, and open it.
    *
    * If this processor calls some potentially untrusted code, then the processor should show a confirmation warning to the user,
@@ -77,11 +87,11 @@ abstract class ProjectOpenProcessor {
    *
    * @return The created project, or null if it was not possible to create a project for some reason.
    */
-  abstract fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project?
-
-  open suspend fun openProjectAsync(virtualFile: VirtualFile,
-                                    projectToClose: Project?,
-                                    forceOpenInNewFrame: Boolean): Project? {
+  open suspend fun openProjectAsync(
+    virtualFile: VirtualFile,
+    projectToClose: Project?,
+    forceOpenInNewFrame: Boolean,
+  ): Project? {
     throw unimplementedOpenAsync
   }
 

@@ -72,6 +72,15 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
   }
 
   companion object {
+    @Deprecated("this function is for legacy Java api, do not use it", level = DeprecationLevel.ERROR)
+    @JvmStatic
+    @JvmOverloads
+    @Internal
+    fun openProjectLegacyJavaApi(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean, instance: PlatformProjectOpenProcessor? = null): Project? {
+      @Suppress("DEPRECATION") // Function has no thread requirements
+      return runUnderModalProgressIfIsEdt { (instance ?: getInstance()).openProjectAsync(virtualFile, projectToClose, forceOpenInNewFrame) }
+    }
+
     fun isOpenedByPlatformProcessor(project: Project): Boolean = project.getUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR) == true
 
     fun isNewProject(project: Project): Boolean = project.getUserData(PROJECT_NEWLY_OPENED) == true
@@ -89,11 +98,13 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmStatic
     @ApiStatus.ScheduledForRemoval
     @Deprecated("Use {@link #doOpenProject(Path, OpenProjectTask)}", level = DeprecationLevel.ERROR)
-    fun doOpenProject(virtualFile: VirtualFile,
-                      projectToClose: Project?,
-                      line: Int,
-                      callback: ProjectOpenedCallback?,
-                      options: EnumSet<Option>): Project? {
+    fun doOpenProject(
+      virtualFile: VirtualFile,
+      projectToClose: Project?,
+      line: Int,
+      callback: ProjectOpenedCallback?,
+      options: EnumSet<Option>,
+    ): Project? {
       val openProjectOptions = OpenProjectTask {
         forceOpenInNewFrame = Option.FORCE_NEW_FRAME in options
         this.projectToClose = projectToClose
@@ -118,10 +129,10 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           model.addContentEntry(VfsUtilCore.pathToUrl(file.toString()))
         }
       },
-      beforeOpen = {
-        it.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
-        options.beforeOpen?.invoke(it) ?: true
-      })
+                              beforeOpen = {
+                                it.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
+                                options.beforeOpen?.invoke(it) ?: true
+                              })
       TrustedPaths.getInstance().setProjectPathTrusted(baseDir, true)
       val project = ProjectManagerEx.getInstanceEx().openProject(baseDir, copy) ?: return null
       openFileFromCommandLine(project = project, file = file, line = copy.line, column = copy.column)
@@ -298,7 +309,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
       }
 
-      if (createModule){
+      if (createModule) {
         moduleRef.getOrInitializeModule(project, virtualFile)
       }
       for (configurator in EP_NAME.lazySequence()) {
@@ -374,9 +385,10 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
   override fun lookForProjectsInDirectory(): Boolean = false
 
-  override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+  @Internal
+  override suspend fun openProjectAsync(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     val baseDir = virtualFile.toNioPath()
-    val options = runUnderModalProgressIfIsEdt {
+    val options = run {
       createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose)
     }.copy(forceOpenInNewFrame = forceOpenInNewFrame)
     return doOpenProject(baseDir, options)
@@ -421,7 +433,7 @@ suspend fun attachToProjectAsync(
   projectDir: Path,
   processor: ProjectAttachProcessor? = null,
   callback: ProjectOpenedCallback? = null,
-  beforeOpen: (suspend (Project) -> Boolean)? = null
+  beforeOpen: (suspend (Project) -> Boolean)? = null,
 ): Boolean {
   if (!checkTrustedState(projectDir)) {
     return false

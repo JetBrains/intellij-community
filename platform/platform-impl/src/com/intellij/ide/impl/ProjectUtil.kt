@@ -221,7 +221,7 @@ object ProjectUtil {
       LOG.info("No processor found for project in $file")
       return null
     }
-    LOG.info("Processors found for project in $file: ${ processors.joinToString { it.name} }")
+    LOG.info("Processors found for project in $file: ${processors.joinToString { it.name }}")
 
     val project: Project?
     if (processors.size == 1 && processors[0] is PlatformProjectOpenProcessor) {
@@ -326,6 +326,7 @@ object ProjectUtil {
     return withContext(Dispatchers.EDT) {
       //readaction is not enough
       writeIntentReadAction {
+        @Suppress("DEPRECATION_ERROR") // TODO: Remove as soon as everyone implement async function
         processor.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
       }
     }
@@ -716,7 +717,7 @@ object ProjectUtil {
     val project = if (canAttach) {
       val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject).copy(
         projectRootDir = file,
-        )
+      )
       (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options)
     }
     else {

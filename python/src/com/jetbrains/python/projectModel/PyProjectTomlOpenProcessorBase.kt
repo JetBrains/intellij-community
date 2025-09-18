@@ -20,11 +20,6 @@ internal abstract class PyProjectTomlOpenProcessorBase : ProjectOpenProcessor() 
 
   final override fun canOpenProject(file: VirtualFile): Boolean = enablePyProjectToml && importProvider.canOpenProject(file)
 
-  final override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    @Suppress("DEPRECATION") // Can't get rid of it because the platform doesn't provide neither suspend API nor thread guarantee
-    return runUnderModalProgressIfIsEdt { importProvider.openProject(virtualFile, projectToClose, forceOpenInNewFrame) }
-  }
-
   final override suspend fun openProjectAsync(
     virtualFile: VirtualFile,
     projectToClose: Project?,
