@@ -45,8 +45,9 @@ internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope)
   private fun calculateEventLogProvider(): Map<String, StatisticsEventLoggerProvider> {
     return calculateEventLogProviderExt().mapValues {
       it.value.find { provider ->
-        PluginManager.getPluginByClass(provider::class.java)?.let { plugin -> PluginManagerCore.isDevelopedExclusivelyByJetBrains(plugin) }
-        ?: false
+        if (PluginManagerCore.isRunningFromSources()) true
+        else PluginManager.getPluginByClass(provider::class.java)?.let { plugin -> PluginManagerCore.isDevelopedExclusivelyByJetBrains(plugin) }
+             ?: false
       } ?: EmptyStatisticsEventLoggerProvider(it.key)
     }
   }

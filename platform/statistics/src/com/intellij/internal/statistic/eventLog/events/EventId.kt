@@ -12,7 +12,7 @@ import java.util.function.Consumer
 
 abstract class BaseEventId(val eventId: String, val recorder: String, val description: String?) {
 
-  internal fun getLoggers(): List<StatisticsEventLogger> = StatisticsEventLogProviderUtil.getEventLogProvidersExt(recorder).map { it.logger }
+  private  fun getLoggers(): List<StatisticsEventLogger> = StatisticsEventLogProviderUtil.getEventLogProvidersExt(recorder).map { it.logger }
   internal fun processLoggers(log: (StatisticsEventLogger) -> Unit) {
     val errors = mutableListOf<Throwable>()
     for (logger in getLoggers()) {
