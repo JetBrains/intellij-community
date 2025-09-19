@@ -115,7 +115,7 @@ object BundleBase {
         return parentBundle.getString(key)
       }
     }
-    catch (e: IllegalAccessException) {
+    catch (_: IllegalAccessException) {
       LOG.warn("Cannot fetch default message with 'idea.l10n.english' enabled, by key '$key'")
     }
     return "undefined"
@@ -125,7 +125,7 @@ object BundleBase {
   fun appendLocalizationSuffix(result: String, suffixToAppend: String): @NlsSafe String {
     for (suffix in SUFFIXES) {
       if (result.endsWith(suffix)) {
-        return result.substring(0, result.length - suffix.length) + L10N_MARKER + suffix
+        return result.dropLast(suffix.length) + L10N_MARKER + suffix
       }
     }
     return result + suffixToAppend
@@ -230,14 +230,13 @@ internal fun postprocessValue(bundle: ResourceBundle, value: @Nls String, params
     OrdinalFormat.apply(format)
     return format.format(params)
   }
-  catch (e: IllegalArgumentException) {
+  catch (_: IllegalArgumentException) {
     return "!invalid format: `$value`!"
   }
 }
 
 @Suppress("DuplicatedCode")
-@Internal
-fun messageOrDefault(bundle: ResourceBundle, key: String, defaultValue: @Nls String?, params: Array<out Any?>?): @Nls String {
+internal fun messageOrDefault(bundle: ResourceBundle, key: String, defaultValue: @Nls String?, params: Array<out Any?>?): @Nls String {
   if (bundle !is IntelliJResourceBundle || bundle.parent != null) {
     @Suppress("HardCodedStringLiteral")
     return messageOrDefaultForJdkBundle(bundle = bundle, key = key, defaultValue = defaultValue, params = params)
@@ -257,7 +256,7 @@ private fun messageOrDefaultForJdkBundle(
   val value = try {
     bundle.getString(key)
   }
-  catch (e: MissingResourceException) {
+  catch (_: MissingResourceException) {
     resourceFound = false
     defaultValue ?: useDefaultValue(bundle = bundle, key = key)
   }

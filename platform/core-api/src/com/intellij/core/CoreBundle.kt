@@ -1,23 +1,38 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.core;
+package com.intellij.core
 
-import com.intellij.DynamicBundle;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
+import com.intellij.DynamicBundle
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.PropertyKey
 
-public final class CoreBundle {
-  public static final String BUNDLE = "messages.CoreBundle";
+@ApiStatus.Internal
+object CoreBundle {
+  private const val BUNDLE: String = "messages.CoreBundle"
+  private val INSTANCE = DynamicBundle(CoreBundle::class.java, BUNDLE)
 
-  private static final DynamicBundle INSTANCE = new DynamicBundle(CoreBundle.class, BUNDLE);
-
-  private CoreBundle() { }
-
-  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getMessage(key, params);
+  @Nls
+  @JvmStatic
+  fun message(key: @PropertyKey(resourceBundle = BUNDLE) String, vararg params: Any?): @Nls String {
+    return INSTANCE.getMessage(key, *params)
   }
 
-  public static @Nls String messageOrNull(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.messageOrNull(key, params);
+  @Nls
+  fun messagePointer(key: @PropertyKey(resourceBundle = BUNDLE) String): () -> String {
+    return { INSTANCE.getMessage(key) }
+  }
+
+  @Nls
+  fun messagePointer(key: @PropertyKey(resourceBundle = BUNDLE) String, param: String): () -> String {
+    return { INSTANCE.getMessage(key, param) }
+  }
+
+  @Nls
+  @JvmStatic
+  fun messageOrNull(
+    key: @PropertyKey(resourceBundle = BUNDLE) String,
+    vararg params: Any
+  ): @Nls String? {
+    return INSTANCE.messageOrNull(key, *params)
   }
 }

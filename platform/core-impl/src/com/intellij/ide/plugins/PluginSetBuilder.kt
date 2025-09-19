@@ -11,8 +11,6 @@ import com.intellij.util.containers.Java11Shim
 import com.intellij.util.graph.DFSTBuilder
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.PropertyKey
 import java.util.*
 import java.util.function.Supplier
 
@@ -49,7 +47,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       }
 
       val pluginString = component.joinToString(separator = ", ") { "'${it.name}'" }
-      errors.add(message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginString))
+      errors.add(CoreBundle.messagePointer("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginString))
       val detailedMessage = StringBuilder()
       val pluginToString: (IdeaPluginDescriptorImpl) -> String = { "id = ${it.pluginId.idString}@${it.contentModuleId} (${it.name})" }
       detailedMessage.append("Detected plugin dependencies cycle details (only related dependencies are included):\n")
@@ -357,10 +355,6 @@ private fun createCannotLoadError(
   } else {
     PluginDependencyIsNotInstalled(descriptor, dependencyIdString, isNotifyUser)
   }
-}
-
-private fun message(key: @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String, vararg params: Any): @Nls Supplier<String> {
-  return Supplier { CoreBundle.message(key, *params) }
 }
 
 private fun getAllPluginDependencies(plugin: IdeaPluginDescriptorImpl): Sequence<PluginId> {

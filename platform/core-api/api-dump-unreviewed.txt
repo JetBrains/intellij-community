@@ -115,10 +115,6 @@ a:com.intellij.concurrency.JobScheduler
 com.intellij.concurrency.ResultConsumer
 - a:onFailure(java.lang.Throwable):V
 - a:onSuccess(java.lang.Object):V
-f:com.intellij.core.CoreBundle
-- sf:BUNDLE:java.lang.String
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messageOrNull(java.lang.String,java.lang.Object[]):java.lang.String
 com.intellij.diagnostic.Dumpable
 - a:dumpState():java.lang.String
 f:com.intellij.diagnostic.ImplementationConflictException

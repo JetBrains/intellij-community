@@ -220,16 +220,10 @@ private object IntelliJResourceControl : ResourceBundle.Control() {
   }
 }
 
-private class MissingResourceBundle(val baseName: String) : ResourceBundle() {
-  override fun handleGetObject(key: String?): Any? {
-    return null
-  }
+private class MissingResourceBundle(private val baseName: String) : ResourceBundle() {
+  override fun handleGetObject(key: String?): Any? = null
 
-  override fun getKeys(): Enumeration<String> {
-    return Collections.emptyEnumeration()
-  }
+  override fun getKeys(): Enumeration<String> = Collections.emptyEnumeration()
 
-  override fun getBaseBundleName(): String? {
-    return baseName
-  }
+  override fun getBaseBundleName(): String = baseName
 }
