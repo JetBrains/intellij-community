@@ -6,6 +6,8 @@ if [ $(uname) != "Darwin" ]; then
     exit 1
 fi
 
+pgrep -q oahd && echo "Rosetta is installed." || echo "Rosetta is NOT installed."
+
 function realpath() {
    cd $1 && pwd
 }
