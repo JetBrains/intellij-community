@@ -4,17 +4,6 @@ import ctypes
 import os
 import signal
 import traceback
-
-try:
-    import torch
-except Exception:
-    pass
-
-try:
-    import tensorflow as tf
-except Exception:
-    pass
-
 import pydevd_file_utils
 
 try:
@@ -616,24 +605,6 @@ def is_pandas_container(type_qualifier, var_type, var):
 def is_numpy_container(type_qualifier, var_type, var):
     return var_type == "ndarray" and type_qualifier == "numpy" and hasattr(var, "shape")
 
-def is_pytorch_tensor(type_qualifier, var):
-    try:
-        import torch
-        return type_qualifier == "torch" and torch.is_tensor(var)
-    except ImportError:
-        return False # Can't be torch if it is not installed
-
-def is_tf_tensor(type_qualifier, var):
-    try:
-        import tensorflow as tf
-        return type_qualifier.startswith("tensorflow") and tf.is_tensor(var)
-    except ImportError:
-        return False # Can't be tensorflow if it is not installed
-
-def is_container_with_shape_dtype(type_qualifier, var_type, var):
-    return (is_numpy_container(type_qualifier, var_type, var)
-            or is_pytorch_tensor(type_qualifier, var)
-            or is_tf_tensor(type_qualifier, var))
 
 def is_builtin(x):
     return getattr(x, '__module__', None) == BUILTINS_MODULE_NAME
@@ -657,6 +628,12 @@ def should_evaluate_full_value(val, group_type=GET_FRAME_NORMAL_GROUP):
 
 def should_evaluate_shape():
     return LOAD_VALUES_POLICY != ValuesPolicy.ON_DEMAND
+
+
+def has_attribute_safe(obj, attr_name):
+    """Evaluates the existence of attribute without accessing it."""
+    attr = inspect.getattr_static(obj, attr_name, None)
+    return attr is not None
 
 
 def is_safe_to_access(obj, attr_name):
