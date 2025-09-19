@@ -3,7 +3,9 @@
   <name>Java Bytecode Decompiler</name>
   <category>JVM Tools</category>
   <description>
-    Extends standard .class file viewer with the FernFlower Java decompiler
+    <![CDATA[
+      Extends the standard <code>.class</code> file viewer with the Fernflower Java decompiler.
+    ]]>
   </description>
   <vendor>JetBrains</vendor>
 
