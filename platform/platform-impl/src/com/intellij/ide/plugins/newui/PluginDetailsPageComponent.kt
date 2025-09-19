@@ -1571,6 +1571,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       gearButton!!.isVisible = !bundled
       myEnableDisableButton!!.isVisible = bundled
     }
+    else if (pluginManagerCustomizer != null) {
+      if (enableDisableController != null) {
+        enableDisableController!!.update()
+      }
+    }
 
     scheduleNotificationsUpdate()
     updateEnableForNameAndIcon()
