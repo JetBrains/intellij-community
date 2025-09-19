@@ -16057,6 +16057,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeExplicitTypeArguments/unnecessaryDefinitelyNonNullableTypeArg.kt");
         }
 
+        @TestMetadata("unresolvedUnrelatedReference.kt")
+        public void testUnresolvedUnrelatedReference() throws Exception {
+            runTest("testData/intentions/removeExplicitTypeArguments/unresolvedUnrelatedReference.kt");
+        }
+
         @TestMetadata("valueDeclaration.kt")
         public void testValueDeclaration() throws Exception {
             runTest("testData/intentions/removeExplicitTypeArguments/valueDeclaration.kt");

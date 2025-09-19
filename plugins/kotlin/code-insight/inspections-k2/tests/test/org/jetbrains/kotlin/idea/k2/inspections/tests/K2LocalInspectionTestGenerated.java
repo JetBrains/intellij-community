@@ -19066,6 +19066,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/unnecessaryDefinitelyNonNullableTypeArg.kt");
         }
 
+        @TestMetadata("unresolvedUnrelatedReference.kt")
+        public void testUnresolvedUnrelatedReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/unresolvedUnrelatedReference.kt");
+        }
+
         @TestMetadata("valueDeclaration.kt")
         public void testValueDeclaration() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/valueDeclaration.kt");

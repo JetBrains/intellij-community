@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.util
 
+import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -8,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
-import org.jetbrains.kotlin.analysis.api.components.diagnostics
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -135,19 +136,33 @@ private fun KaSession.areAllTypesEqual(
 
 context(_: KaSession)
 private fun hasNewDiagnostics(originalCallExpression: KtCallExpression, newCallExpression: KtCallExpression): Boolean {
-    @OptIn(KaExperimentalApi::class)
-    val oldDiagnostics = originalCallExpression.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-    val newDiagnostics = newCallExpression.containingKtFile.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-    if (oldDiagnostics.isEmpty() && newDiagnostics.isEmpty()) {
-        return false
-    }
+    val newDiagnostics = newCallExpression.nestedDiagnostics
+    if (newDiagnostics.isEmpty()) return false
 
-    return (newDiagnostics - oldDiagnostics.toHashSet()).any {
-        it is KaFirDiagnostic.UnresolvedReference ||
-                it is KaFirDiagnostic.BuilderInferenceStubReceiver ||
-                it is KaFirDiagnostic.ImplicitNothingReturnType
-    }
+    val oldDiagnostics = originalCallExpression.nestedDiagnostics
+
+    // Diagnostics cannot be compared directly since they have only identity equals/hashCode
+    // Also, original call expression and new call expression files have a different set of psi instances since
+    // they effectively in different files
+    return newDiagnostics.size != oldDiagnostics.size
 }
+
+// TODO: when KT-63221 is fixed use `diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)` to reduce resolve and avoid psi checks
+@OptIn(KaExperimentalApi::class)
+context(_: KaSession)
+private val KtCallExpression.nestedDiagnostics: List<KaDiagnosticWithPsi<*>>
+    get() = containingKtFile
+        .collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        .filter { diagnostic ->
+            when (diagnostic) {
+                is KaFirDiagnostic.UnresolvedReference,
+                is KaFirDiagnostic.BuilderInferenceStubReceiver,
+                is KaFirDiagnostic.ImplicitNothingReturnType,
+                    -> isAncestor(diagnostic.psi, strict = false)
+
+                else -> false
+            }
+        }
 
 private fun KaSession.areTypesEqual(
     type1: KaType,
