@@ -17,12 +17,8 @@ import javax.swing.JComponent
  * @author Alexander Lobas
  */
 @Internal
-class SubscriptionExpirationDialog(
-  project: Project?,
-  private val isEvaluation: Boolean,
-  private val showPromise: Boolean,
-  private val showContinueWithoutSubscription: Boolean,
-) : LicenseExpirationDialog(project, getImagePath(), 433, 242) {
+class SubscriptionExpirationDialog(project: Project?, private val settings: SubscriptionExpirationSettings) :
+  LicenseExpirationDialog(project, getImagePath(), 433, 242) {
 
   private var selectionButton = 0
 
@@ -30,6 +26,7 @@ class SubscriptionExpirationDialog(
     CANCEL,
     ACTIVATE,
     PROMISE,
+    EXTEND_TRIAL,
     CONTINUE
   }
 
@@ -42,8 +39,8 @@ class SubscriptionExpirationDialog(
     }
 
     @JvmStatic
-    fun show(project: Project?, isEvaluation: Boolean, showPromise: Boolean, showContinueWithoutSubscription: Boolean): ResultState {
-      val dialog = SubscriptionExpirationDialog(project, isEvaluation, showPromise, showContinueWithoutSubscription)
+    fun show(project: Project?, settings: SubscriptionExpirationSettings): ResultState {
+      val dialog = SubscriptionExpirationDialog(project, settings)
       dialog.show()
 
       if (dialog.exitCode != OK_EXIT_CODE) {
@@ -53,6 +50,7 @@ class SubscriptionExpirationDialog(
       return when (dialog.selectionButton) {
         0 -> ResultState.ACTIVATE
         1 -> ResultState.PROMISE
+        2 -> ResultState.EXTEND_TRIAL
         else -> ResultState.CONTINUE
       }
     }
@@ -64,35 +62,48 @@ class SubscriptionExpirationDialog(
 
   override fun createPanel(): JComponent {
     val panel = panel {
+      val platformName = getPlatformName()
+
       row {
         label(dialogTitle()).component.font = JBFont.h1()
       }
       row {
-        browserLink(IdeBundle.message("subscription.dialog.link", getPlatformName()), "https://www.jetbrains.com/idea/features")
+        browserLink(IdeBundle.message("subscription.dialog.link", platformName), "https://www.jetbrains.com/idea/features")
         bottomGap(BottomGap.MEDIUM)
       }
 
       buttonsGroup {
         val listener = ActionListener { e ->
           selectionButton = when (e.actionCommand) {
-            IdeBundle.message("subscription.dialog.activate.button", getPlatformName()) -> 0
+            IdeBundle.message("subscription.dialog.activate.button", platformName) -> 0
             IdeBundle.message("subscription.dialog.promise.button") -> 1
-            else -> 2
+            IdeBundle.message("subscription.dialog.extend.button") -> 2
+            else -> 3
           }
           updateOKActionText()
         }
 
         row {
-          radioButton(IdeBundle.message("subscription.dialog.activate.button", getPlatformName()), 0).component.addActionListener(listener)
+          radioButton(IdeBundle.message("subscription.dialog.activate.button", platformName), 0).component.addActionListener(listener)
         }
-        if (showPromise) {
+        if (settings.showPromise) {
           row {
             radioButton(IdeBundle.message("subscription.dialog.promise.button"), 1).component.addActionListener(listener)
           }
         }
-        if (showContinueWithoutSubscription) {
+        if (settings.showExtendTrial) {
           row {
-            radioButton(IdeBundle.message("subscription.dialog.continue.button"), 2).component.addActionListener(listener)
+            radioButton(IdeBundle.message("subscription.dialog.extend.button"), 2).component.addActionListener(listener)
+          }
+        }
+        if (settings.showContinueWithoutSubscription) {
+          row {
+            val cell = radioButton(IdeBundle.message("subscription.dialog.continue.button"), 3)
+            cell.component.addActionListener(listener)
+
+            if (settings.showRemDevHint) {
+              cell.comment(IdeBundle.message("subscription.dialog.rd.hint"))
+            }
           }
         }
       }.bind({ selectionButton }, { selectionButton = it })
@@ -105,12 +116,13 @@ class SubscriptionExpirationDialog(
     return when (selectionButton) {
       0 -> IdeBundle.message("subscription.dialog.activate.ok.text", getPlatformName())
       1 -> IdeBundle.message("subscription.dialog.promise.ok.text")
+      2 -> IdeBundle.message("subscription.dialog.extend.ok.text")
       else -> IdeBundle.message("subscription.dialog.continue.ok.text")
     }
   }
 
   private fun dialogTitle(): @Nls String {
-    val key = if (isEvaluation) "subscription.dialog.title.evaluation" else "subscription.dialog.title.subscription"
+    val key = if (settings.isEvaluation) "subscription.dialog.title.evaluation" else "subscription.dialog.title.subscription"
     return IdeBundle.message(key, getPlatformName())
   }
 
@@ -120,3 +132,12 @@ class SubscriptionExpirationDialog(
 
   private fun getPlatformName(): @Nls String = IdeBundle.message(if (PlatformUtils.isPyCharm()) "subscription.dialog.pro" else "subscription.dialog.ultimate")
 }
+
+@Internal
+data class SubscriptionExpirationSettings(
+  val isEvaluation: Boolean,
+  val showPromise: Boolean,
+  val showExtendTrial: Boolean,
+  val showContinueWithoutSubscription: Boolean,
+  val showRemDevHint: Boolean,
+)
