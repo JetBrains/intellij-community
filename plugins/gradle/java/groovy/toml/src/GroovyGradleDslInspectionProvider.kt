@@ -44,8 +44,8 @@ class GroovyGradleDslInspectionProvider : GradleDslInspectionProvider {
   override fun getRedundantKotlinStdLibInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
     GroovyPsiElementVisitor(GroovyRedundantKotlinStdLibInspectionVisitor(holder))
 
-  override fun isAvoidApplyPluginSyntaxInspectionAvailable(file: PsiFile): Boolean = false
-  override fun getAvoidApplyPluginSyntaxInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+  override fun isAvoidApplyPluginMethodInspectionAvailable(file: PsiFile): Boolean = false
+  override fun getAvoidApplyPluginMethodInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     TODO("Not yet implemented")
   }
 }

@@ -6,7 +6,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
@@ -20,11 +19,10 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.k2.codeinsight.KotlinFirConstantExpressionEvaluator
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_CORE_PLUGIN_SHORT_NAMES
 
-class KotlinAvoidApplyPluginNotationInspectionVisitor(val holder: ProblemsHolder) : KtVisitorVoid() {
+class KotlinAvoidApplyPluginMethodInspectionVisitor(val holder: ProblemsHolder) : KtVisitorVoid() {
     private val constEvaluator = KotlinFirConstantExpressionEvaluator()
 
     override fun visitCallExpression(expression: KtCallExpression) {
@@ -39,13 +37,13 @@ class KotlinAvoidApplyPluginNotationInspectionVisitor(val holder: ProblemsHolder
         if (pluginFixInfo != null) {
             holder.registerProblem(
                 expression,
-                GradleInspectionBundle.message("inspection.message.avoid.apply.plugin.notation.descriptor"),
+                GradleInspectionBundle.message("inspection.message.avoid.apply.plugin.method.descriptor"),
                 GradleMoveApplyPluginToPluginsBlockFix(pluginFixInfo)
             )
         } else {
             holder.registerProblem(
                 expression,
-                GradleInspectionBundle.message("inspection.message.avoid.apply.plugin.notation.descriptor")
+                GradleInspectionBundle.message("inspection.message.avoid.apply.plugin.method.descriptor")
             )
         }
     }
@@ -167,26 +165,3 @@ private data class PluginFixInfo(
     val versionString: String?,
     val classpathCallElement: SmartPsiElementPointer<KtCallExpression>?
 )
-
-private fun KtFile.findScriptInitializer(startsWith: String): KtScriptInitializer? =
-    PsiTreeUtil.findChildrenOfType(this, KtScriptInitializer::class.java).find { it.text.startsWith(startsWith) }
-
-private fun KtBlockExpression.findBlock(name: String): KtBlockExpression? {
-    return getChildrenOfType<KtCallExpression>().find {
-        it.calleeExpression?.text == name &&
-                it.valueArguments.singleOrNull()?.getArgumentExpression() is KtLambdaExpression
-    }?.getBlock()
-}
-
-private fun KtScriptInitializer.getBlock(): KtBlockExpression? =
-    PsiTreeUtil.findChildOfType(this, KtCallExpression::class.java)?.getBlock()
-
-private fun KtCallExpression.getBlock(): KtBlockExpression? =
-    (valueArguments.singleOrNull()?.getArgumentExpression() as? KtLambdaExpression)?.bodyExpression
-        ?: lambdaArguments.lastOrNull()?.getLambdaExpression()?.bodyExpression
-
-private fun PsiElement.findParentBlock(name: String): KtBlockExpression? =
-    PsiTreeUtil.findFirstParent(this) { elem ->
-        (elem is KtCallExpression && elem.calleeExpression?.text?.contains(name) == true) ||
-                (elem is KtDotQualifiedExpression && elem.text?.contains(name) == true)
-    }.asSafely<KtCallExpression>()?.getBlock()
