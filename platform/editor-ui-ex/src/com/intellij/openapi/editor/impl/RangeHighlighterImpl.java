@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Key;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
@@ -34,7 +33,7 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   private static final Logger LOG = Logger.getInstance(RangeHighlighterImpl.class);
   @SuppressWarnings({"InspectionUsingGrayColors", "UseJBColor"})
   private static final Color NULL_COLOR = new Color(0, 0, 0); // must be a new instance to work as a sentinel
-  private static final Key<Boolean> VISIBLE_IF_FOLDED = Key.create("visible.folded");
+  private boolean visibleIfFolded;
 
   private final MarkupModelImpl myModel;
   private TextAttributes myForcedTextAttributes;
@@ -168,13 +167,13 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   @Override
   public void setVisibleIfFolded(boolean value) {
     if (isVisibleIfFolded() != value) {
-      runUnderWriteLock(() -> putUserData(VISIBLE_IF_FOLDED, value ? Boolean.TRUE : null));
+      runUnderWriteLock(() -> visibleIfFolded = value);
     }
   }
 
   @Override
   public boolean isVisibleIfFolded() {
-    return VISIBLE_IF_FOLDED.isIn(this);
+    return visibleIfFolded;
   }
 
   private static int getFontStyle(@Nullable TextAttributes textAttributes) {
