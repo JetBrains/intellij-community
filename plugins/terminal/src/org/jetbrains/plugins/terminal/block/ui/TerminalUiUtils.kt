@@ -120,10 +120,11 @@ object TerminalUiUtils {
     val editorDisposable = Disposer.newDisposable()
     EditorUtil.disposeWithEditor(editor, editorDisposable)
     ApplicationManager.getApplication().messageBus.connect(editorDisposable).run {
-      subscribe(EditorColorsManager.TOPIC, EditorColorsListener { scheme ->
-        if (scheme != null) {
-          terminalColorScheme.globalScheme = scheme
-        }
+      subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+        // Get the new scheme from the manager rather than taking the one provided by the listener.
+        // Because the one from the listener might be a read-only bundled scheme,
+        // but we need an editable scheme that contains all user changes.
+        terminalColorScheme.globalScheme = EditorColorsManager.getInstance().globalScheme
       })
     }
 
