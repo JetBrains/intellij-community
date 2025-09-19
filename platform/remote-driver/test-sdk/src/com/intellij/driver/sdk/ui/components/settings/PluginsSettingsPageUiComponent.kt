@@ -9,13 +9,14 @@ import com.intellij.driver.sdk.ui.accessibleName
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.WelcomeScreenUI
+import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
 import com.intellij.driver.sdk.ui.components.elements.checkBox
 import com.intellij.driver.sdk.ui.components.elements.textField
 import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JLabel
 
-fun SettingsDialogUiComponent.pluginsSettingsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
+fun DialogUiComponent.pluginsSettingsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
   onPluginsPage().apply(action)
 
 fun WelcomeScreenUI.pluginsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
