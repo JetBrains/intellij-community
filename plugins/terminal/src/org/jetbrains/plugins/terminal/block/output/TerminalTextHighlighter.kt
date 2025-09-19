@@ -12,7 +12,9 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.terminal.TerminalColorPalette
 import com.jediterm.terminal.TextStyle
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputTokenTypes
+import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.toTextAttributes
 
 @ApiStatus.Internal
@@ -46,7 +48,13 @@ class TextStyleAdapter(
   private val ignoreContrastAdjustment: Boolean = true,
 ) : TextAttributesProvider {
   override fun getTextAttributes(): TextAttributes {
-    val requiredContrast = if (ignoreContrastAdjustment) 1.0 else 4.5
+    val requiredContrast = if (ignoreContrastAdjustment) {
+      TerminalContrastRatio.MIN_VALUE
+    }
+    else {
+      val options = TerminalOptionsProvider.instance
+      if (options.enforceMinContrastRatio) options.minContrastRatio else TerminalContrastRatio.MIN_VALUE
+    }
     return style.toTextAttributes(colorPalette, requiredContrast)
   }
 

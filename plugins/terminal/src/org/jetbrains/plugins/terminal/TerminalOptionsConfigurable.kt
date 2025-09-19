@@ -74,6 +74,7 @@ import org.jetbrains.plugins.terminal.block.feedback.TerminalFeedbackUtils
 import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
+import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import java.awt.Color
@@ -319,6 +320,27 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .bindText(optionsProvider::tabName)
             .align(AlignX.FILL)
         }
+        row {
+          val enforceContrastCheckbox = checkBox(message("settings.enforce.minimum.contrast.ratio"))
+            .bindSelected(optionsProvider::enforceMinContrastRatio)
+            .gap(RightGap.SMALL)
+
+          fun parseRatio(text: String): TerminalContrastRatio {
+            val float = text.toFloatOrNull()
+            return if (float != null) TerminalContrastRatio.ofFloat(float) else TerminalContrastRatio.DEFAULT_VALUE
+          }
+
+          textField()
+            .columns(4)
+            .enabledIf(enforceContrastCheckbox.selected)
+            .gap(RightGap.SMALL)
+            .bindText(
+              getter = { optionsProvider.minContrastRatio.toFormattedString() },
+              setter = { optionsProvider.minContrastRatio = parseRatio(it) }
+            )
+
+          contextHelp(message("settings.enforce.minimum.contrast.ratio.description"))
+        }.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED))
         row {
           checkBox(message("settings.show.separators.between.blocks"))
             .bindSelected(blockTerminalOptions::showSeparatorsBetweenBlocks)

@@ -240,7 +240,7 @@ object TerminalUiUtils {
   fun toFloatAndScale(value: Int): Float = JBUIScale.scale(value.toFloat())
 
   @ApiStatus.Internal
-  fun TextStyle.toTextAttributes(palette: TerminalColorPalette, requiredContrast: Double): TextAttributes {
+  fun TextStyle.toTextAttributes(palette: TerminalColorPalette, requiredContrast: TerminalContrastRatio): TextAttributes {
     return TextAttributes().also { attr ->
       // [TerminalColorPalette.getDefaultBackground] is not applied to [TextAttributes].
       // It's passed to [EditorEx.setBackgroundColor] / [JComponent.setBackground] to
@@ -267,7 +267,7 @@ object TerminalUiUtils {
     return AwtTransformers.toAwtColor(color)!!
   }
 
-  private fun getResultForeground(style: TextStyle, palette: TerminalColorPalette, requiredContrast: Double): Color {
+  private fun getResultForeground(style: TextStyle, palette: TerminalColorPalette, requiredContrast: TerminalContrastRatio): Color {
     val bg = getEffectiveBackgroundOrDefault(style, palette)
     val fg = getEffectiveForegroundOrDefault(style, palette)
     val dimmedFg = if (style.hasOption(TextStyle.Option.DIM)) {
@@ -280,11 +280,15 @@ object TerminalUiUtils {
     else fg
 
     // Allow dimmed foreground to be less contrast, otherwise, it might be indistinguishable from the non-dimmed foreground.
-    val contrast = if (style.hasOption(TextStyle.Option.DIM)) clampContrastRatio(requiredContrast / 2) else requiredContrast
-    return if (contrast == 1.0) {
+    val contrast = if (style.hasOption(TextStyle.Option.DIM)) {
+      TerminalContrastRatio.ofFloat(requiredContrast.value / 2)
+    }
+    else requiredContrast
+
+    return if (contrast == TerminalContrastRatio.MIN_VALUE) {
       return dimmedFg
     }
-    else ensureContrastRatio(bg, dimmedFg, contrast)
+    else ensureContrastRatio(bg, dimmedFg, contrast.value)
   }
 
   private fun getEffectiveForegroundOrDefault(style: TextStyle, palette: TerminalColorPalette): Color {
@@ -324,7 +328,7 @@ object TerminalUiUtils {
    *
    * Similar to https://github.com/xtermjs/xterm.js/blob/47409f39f684c417717d885b2cba56dd918d591a/src/common/Color.ts#L288
    */
-  fun ensureContrastRatio(bgColor: Color, fgColor: Color, requiredContrast: Double): Color {
+  fun ensureContrastRatio(bgColor: Color, fgColor: Color, requiredContrast: Float): Color {
     val current = ColorUtil.getContrast(fgColor, bgColor)
     if (current >= requiredContrast) return fgColor
 
@@ -357,7 +361,7 @@ object TerminalUiUtils {
    * Note that the alpha channel is ignored.
    */
   @Suppress("UseJBColor")
-  fun reduceLuminance(bgColor: Color, fgColor: Color, requiredContrast: Double): Color {
+  fun reduceLuminance(bgColor: Color, fgColor: Color, requiredContrast: Float): Color {
     var contrast = ColorUtil.getContrast(fgColor, bgColor)
     var fgRed = fgColor.red
     var fgGreen = fgColor.green
@@ -377,7 +381,7 @@ object TerminalUiUtils {
    * Note that the alpha channel is ignored.
    */
   @Suppress("UseJBColor")
-  fun increaseLuminance(bgColor: Color, fgColor: Color, requiredContrast: Double): Color {
+  fun increaseLuminance(bgColor: Color, fgColor: Color, requiredContrast: Float): Color {
     var contrast = ColorUtil.getContrast(fgColor, bgColor)
     var fgRed = fgColor.red
     var fgGreen = fgColor.green
@@ -398,10 +402,6 @@ object TerminalUiUtils {
       in 0x2500..0x259F -> true   // Box or block glyphs
       else -> false
     }
-  }
-
-  fun clampContrastRatio(ratio: Double): Double {
-    return ratio.coerceIn(1.0, 21.0)
   }
 
   const val NEW_TERMINAL_OUTPUT_CAPACITY_KB: String = "new.terminal.output.capacity.kb"
