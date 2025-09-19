@@ -266,6 +266,12 @@ private fun collectDirectDependenciesInNewFormat(
     if (targetModule != null && (targetModule is ContentModuleDescriptor || targetModule.pluginId != PluginManagerCore.CORE_ID)) {
       dependenciesCollector.add(targetModule)
     }
+    // Add an edge to the main module of the plugin. Handling aliases.
+    if (targetModule != null && targetModule is ContentModuleDescriptor && targetModule.isRequiredContentModule) {
+      if (idMap.get(module.pluginId.idString) != targetModule.parent) {
+        additionalEdges.add(targetModule.parent)
+      }
+    }
   }
 
   if (module.pluginId != PluginManagerCore.CORE_ID) {
