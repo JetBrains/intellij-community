@@ -145,6 +145,8 @@ android/layoutlib-loader
 android/lint
 android/lint/tests
 android/logcat
+android/logcat/gradle
+android/logcat/gradle/integration-tests
 android/memory-usage
 android/ml-api
 android/mlkit
