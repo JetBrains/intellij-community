@@ -181,21 +181,6 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   public void runRemainingContributors(@NotNull CompletionParameters parameters,
                                        @NotNull Consumer<? super CompletionResult> consumer,
                                        boolean stop) {
-    runRemainingContributors(parameters, consumer, stop, null);
-  }
-
-  /**
-   * Runs all instances of {@link CompletionContributor} applicable to {@code parameters} starting from the current one (excluding it).
-   *
-   * @param parameters   the parameters for which the contributors are run.
-   * @param consumer     the consumer for the results.
-   * @param stop       if {@code false} is passed, no contributors will be run after the current contributor finishes.
-   * @param customSorter the sorter to be used instead of the default one.
-   */
-  public void runRemainingContributors(@NotNull CompletionParameters parameters,
-                                       @NotNull Consumer<? super CompletionResult> consumer,
-                                       boolean stop,
-                                       @Nullable CompletionSorter customSorter) {
     //grouped contributors are not allowed to be used in runRemainingContributors from other contributors
     if (GroupedCompletionContributor.isGroupEnabledInApp() &&
         contributor instanceof GroupedCompletionContributor groupedCompletionContributor &&
@@ -220,7 +205,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
       public void consume(CompletionResult result) {
         consumer.consume(result);
       }
-    }, customSorter);
+    });
   }
 
   /**
