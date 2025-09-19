@@ -81,9 +81,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/sessions-core/intellij.agent.workbench.sessions.core.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/sessions-core/intellij.agent.workbench.sessions.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/sessions-launch-config/backend/intellij.agent.workbench.sessions.launch.config.backend.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/sessions-launch-config/backend/intellij.agent.workbench.sessions.launch.config.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/sessions-launch-config/backend/intellij.agent.workbench.sessions.launch.config.backend.tests.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/sessions-launch-config/backend/intellij.agent.workbench.sessions.launch.config.backend.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/sessions/intellij.agent.workbench.sessions.tests.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/sessions/intellij.agent.workbench.sessions.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/sessions-toolwindow/intellij.agent.workbench.sessions.toolwindow.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/sessions-toolwindow/intellij.agent.workbench.sessions.toolwindow.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/sessions-toolwindow/intellij.agent.workbench.sessions.toolwindow.tests.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/sessions-toolwindow/intellij.agent.workbench.sessions.toolwindow.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/agent-workbench/sessions/intellij.agent.workbench.sessions.tests.iml" filepath="$PROJECT_DIR$/plugins/agent-workbench/sessions/intellij.agent.workbench.sessions.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-adb/intellij.android.adb.iml" filepath="$PROJECT_DIR$/android/android-adb/intellij.android.adb.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-adb/intellij.android.adb.testUtil.iml" filepath="$PROJECT_DIR$/android/android-adb/intellij.android.adb.testUtil.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-adb/intellij.android.adb.tests.iml" filepath="$PROJECT_DIR$/android/android-adb/intellij.android.adb.tests.iml" />
@@ -263,6 +263,8 @@
       <module fileurl="file://$PROJECT_DIR$/android/lint/tests/intellij.android.lint.common.tests.iml" filepath="$PROJECT_DIR$/android/lint/tests/intellij.android.lint.common.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-lint/intellij.android.lint.tests.iml" filepath="$PROJECT_DIR$/android/android-lint/intellij.android.lint.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/logcat/intellij.android.logcat.iml" filepath="$PROJECT_DIR$/android/logcat/intellij.android.logcat.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/logcat/gradle/integration-tests/intellij.android.logcat.gradle.integration-tests.iml" filepath="$PROJECT_DIR$/android/logcat/gradle/integration-tests/intellij.android.logcat.gradle.integration-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/logcat/gradle/intellij.android.logcat.gradle.iml" filepath="$PROJECT_DIR$/android/logcat/gradle/intellij.android.logcat.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/logcat/intellij.android.logcat.tests.iml" filepath="$PROJECT_DIR$/android/logcat/intellij.android.logcat.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/memory-usage/intellij.android.memory-usage.iml" filepath="$PROJECT_DIR$/android/memory-usage/intellij.android.memory-usage.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/ml-api/intellij.android.ml-api.iml" filepath="$PROJECT_DIR$/android/ml-api/intellij.android.ml-api.iml" />
