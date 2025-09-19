@@ -13,11 +13,12 @@ import com.intellij.psi.PsiFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.fix.GradleWrapperVersionFix
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_WRAPPER_PROPERTIES_FILE_NAME
 
 class GradleLatestMinorVersionInspection : LocalInspectionTool() {
   override fun isAvailableForFile(file: PsiFile): Boolean {
     // TODO not sure if this should be limited to "gradle-wrapper.properties" file
-    return FileUtilRt.fileNameEquals(file.name, "gradle-wrapper.properties")
+    return FileUtilRt.fileNameEquals(file.name, GRADLE_WRAPPER_PROPERTIES_FILE_NAME)
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
