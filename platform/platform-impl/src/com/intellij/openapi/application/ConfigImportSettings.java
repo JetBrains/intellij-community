@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -49,19 +49,6 @@ public interface ConfigImportSettings {
     @NotNull Path oldPluginsDir,
     @NotNull ConfigImportHelper.ConfigImportOptions options,
     @Nullable Map<PluginId, Set<String>> brokenPluginVersions,
-    @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
-    @NotNull List<IdeaPluginDescriptor> pluginsToDownload
-  ) { 
-    processPluginsToMigrate(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload);
-  }
-
-  /**
-   * Override {@link #processPluginsToMigrate(Path, Path, Path, ConfigImportHelper.ConfigImportOptions, Map, List, List)} instead
-   */
-  @ApiStatus.Obsolete
-  default void processPluginsToMigrate(
-    @NotNull Path newConfigDir,
-    @NotNull Path oldConfigDir,
     @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
     @NotNull List<IdeaPluginDescriptor> pluginsToDownload
   ) { }

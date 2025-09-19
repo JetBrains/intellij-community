@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.jb
 
 import com.intellij.ide.AppLifecycleListener
@@ -49,7 +49,7 @@ private class JbAfterRestartSettingsApplier(private val coroutineScope: Coroutin
           pluginIds.add(it.trim())
         }
       }
-      val importer = JbSettingsImporter(oldConfDir, oldConfDir, null)
+      val importer = JbSettingsImporter(oldConfDir, oldConfDir)
       coroutineScope.launch {
         withContext(Dispatchers.EDT) {
           importer.importOptionsAfterRestart(options, pluginIds)

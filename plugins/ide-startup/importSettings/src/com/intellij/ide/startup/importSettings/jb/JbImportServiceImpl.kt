@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.jb
 
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
@@ -208,7 +208,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     val modalityState = ModalityState.current()
     ImportSettingsEventsCollector.customDirectorySelected()
     coroutineScope.async(modalityState.asContextElement()) {
-      val importer = JbSettingsImporter(folderPath, folderPath, null)
+      val importer = JbSettingsImporter(folderPath, folderPath)
       importer.importRaw()
       logger.info("Performing raw import from '$folderPath'")
       withContext(Dispatchers.EDT) {
@@ -416,7 +416,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                            && unselectedPlugins.isNullOrEmpty()
 
     val importData = TransferSettingsProgress(productInfo)
-    val importer = JbSettingsImporter(productInfo.configDir, productInfo.pluginDir, null)
+    val importer = JbSettingsImporter(productInfo.configDir, productInfo.pluginDir)
     val progressIndicator = importData.createProgressIndicatorAdapter()
     val importLifetime = LifetimeDefinition()
     var importStartedDeferred: Deferred<Unit>? = null
