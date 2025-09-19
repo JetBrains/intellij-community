@@ -73,8 +73,11 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), ActionRemoteBeh
         getPopupForRepoSetup(state.trustedProject, event)
       }
       is GitWidgetState.OnRepository -> {
-        val repo = GitRepositoriesHolder.getInstance(project).get(state.repository)
-        GitBranchesPopup.createDefaultPopup(project, repo)
+        val holder = GitRepositoriesHolder.getInstance(project)
+        val repo = holder.get(state.repository)
+        val repositories = holder.getAll()
+        if (repo == null || repositories.isEmpty()) null
+        else GitBranchesPopup.createDefaultPopup(project, repo, repositories)
       }
     }
   }
