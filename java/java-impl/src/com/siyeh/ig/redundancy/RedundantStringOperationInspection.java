@@ -1115,7 +1115,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiNewExpression expression)) return;
       final PsiArrayInitializerExpression initializer = expression.getArrayInitializer();
-      if (initializer == null || initializer.getInitializers().length != 1) return;
+      if (initializer == null || initializer.getInitializerCount() != 1) return;
       PsiReplacementUtil.replaceExpression(expression, initializer.getInitializers()[0].getText(), new CommentTracker());
     }
   }
