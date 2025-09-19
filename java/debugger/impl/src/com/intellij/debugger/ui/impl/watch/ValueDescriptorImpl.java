@@ -306,9 +306,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   private @NotNull String calcRepresentation(EvaluationContextImpl context,
-                                             DescriptorLabelListener labelListener,
+                                             DescriptorLabelListener originalListener,
                                              DebugProcessImpl debugProcess,
                                              NodeRenderer renderer) {
+    var labelListener = new DelayedDescriptorLabelListener(originalListener);
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     EvaluateException valueException = myValueException;
@@ -377,6 +378,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
       labelListener.labelChanged();
     });
+
+    labelListener.start();
 
     return ""; // we have overridden getLabel
   }
@@ -786,5 +789,26 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public EvaluationContextImpl getStoredEvaluationContext() {
     return myStoredEvaluationContext;
+  }
+
+  private static class DelayedDescriptorLabelListener implements DescriptorLabelListener {
+    private final DescriptorLabelListener myLabelListener;
+    private volatile boolean started = false;
+
+    DelayedDescriptorLabelListener(DescriptorLabelListener labelListener) {
+      myLabelListener = labelListener;
+    }
+
+    @Override
+    public void labelChanged() {
+      if (started) {
+        myLabelListener.labelChanged();
+      }
+    }
+
+    public void start() {
+      started = true;
+      myLabelListener.labelChanged();
+    }
   }
 }

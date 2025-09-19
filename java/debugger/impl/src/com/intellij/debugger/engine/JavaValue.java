@@ -226,7 +226,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                   @Override
                   public void evaluate(final @NotNull XFullValueEvaluationCallback callback) {
                     final ValueDescriptorImpl fullValueDescriptor = myValueDescriptor.getFullValueDescriptor();
-                    fullValueDescriptor.updateRepresentation(myEvaluationContext, new DescriptorLabelListener() {
+                    fullValueDescriptor.updateRepresentationNoNotify(myEvaluationContext, new DescriptorLabelListener() {
                       @Override
                       public void labelChanged() {
                         callback.evaluated(fullValueDescriptor.getValueText());
