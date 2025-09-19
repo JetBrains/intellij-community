@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 private class FrontendXDebuggerInitializationProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     // initialize the debugger manager to start listening for backend state
-    FrontendXDebuggerManager.getInstance(project)
+    val frontendManager = FrontendXDebuggerManager.getInstance(project)
 
     // Subscribe to breakpoints dialog requests from backend
     subscribeOnBreakpointsDialogRequest(project)
@@ -18,6 +18,7 @@ private class FrontendXDebuggerInitializationProjectActivity : ProjectActivity {
     // initialize debugger editor lines breakpoints manager
     if (useFeProxy()) {
       FrontendEditorLinesBreakpointsInfoManager.getInstance(project)
+      frontendManager.startContentSelectionListening()
     }
   }
 }

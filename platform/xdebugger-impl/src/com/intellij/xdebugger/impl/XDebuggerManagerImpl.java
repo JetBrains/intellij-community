@@ -5,14 +5,18 @@ import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
+import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.DynamicPluginVetoer;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.idea.AppMode;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
@@ -39,6 +43,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
@@ -148,6 +153,10 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       }
     });
 
+    if (!XDebugSessionProxy.useFeProxy() || AppMode.isRemoteDevHost()) {
+      startContentSelectionListening(messageBusConnection);
+    }
+
     GutterUiRunToCursorEditorListener listener = new GutterUiRunToCursorEditorListener();
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     eventMulticaster.addEditorMouseMotionListener(listener, this);
@@ -157,6 +166,27 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       eventMulticaster.addEditorMouseMotionListener(myNewRunToCursorListener, this);
       eventMulticaster.addEditorMouseListener(myNewRunToCursorListener, this);
     }
+  }
+
+  private void startContentSelectionListening(SimpleMessageBusConnection messageBusConnection) {
+    messageBusConnection.subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
+      @Override
+      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
+        if (descriptor != null && ToolWindowId.DEBUG.equals(executor.getToolWindowId())) {
+          XDebugSessionImpl session = mySessions.get(descriptor.getProcessHandler());
+          onSessionSelected(session);
+        }
+      }
+
+      @Override
+      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
+        if (descriptor != null && ToolWindowId.DEBUG.equals(executor.getToolWindowId())) {
+          XDebugSessionImpl session = mySessions.get(descriptor.getProcessHandler());
+          if (session == null) return;
+          removeSessionNoNotify(session);
+        }
+      }
+    });
   }
 
   @ApiStatus.Internal
