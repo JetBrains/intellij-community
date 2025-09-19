@@ -55,7 +55,7 @@ interface XDebugSessionProxy {
   val restartActions: List<AnAction>
   val extraActions: List<AnAction>
   val extraStopActions: List<AnAction>
-  val additionalConsoleActions: List<AnAction>
+  val consoleActions: List<AnAction>
   val processHandler: ProcessHandler?
   val coroutineScope: CoroutineScope
   val editorsProvider: XDebuggerEditorsProvider
@@ -152,7 +152,7 @@ interface XDebugSessionProxy {
       get() = (session as? XDebugSessionImpl)?.extraActions ?: emptyList()
     override val extraStopActions: List<AnAction>
       get() = (session as? XDebugSessionImpl)?.extraStopActions ?: emptyList()
-    override val additionalConsoleActions: List<AnAction>
+    override val consoleActions: List<AnAction>
       get() = consoleView?.createConsoleActions()?.toList() ?: emptyList()
     override val processHandler: ProcessHandler
       get() = session.debugProcess.processHandler

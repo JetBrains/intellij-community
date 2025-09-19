@@ -26,7 +26,7 @@ data class RemoteXDebuggerConsoleViewData(
   val uniqueId: String,
   val consoleId: Int,
   val runnerLayoutUiId: Int?,
-  val actionIds: List<AnActionId> = emptyList(),
+  val actionIds: List<AnActionId>,
 )
 
 @ApiStatus.Internal

@@ -149,7 +149,7 @@ class FrontendXDebuggerSession private constructor(
     get() = sessionDto.extraActions.mapNotNull { it.action() }
   override val extraStopActions: List<AnAction>
     get() = sessionDto.extraStopActions.mapNotNull { it.action() }
-  override val additionalConsoleActions: List<AnAction>
+  override val consoleActions: List<AnAction>
     get() = sessionDto.consoleViewData?.actionIds()?.mapNotNull { it.action() }
           ?: consoleView?.createConsoleActions()?.toList()
           ?: emptyList()

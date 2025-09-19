@@ -51,7 +51,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeProxy;
 
@@ -416,7 +415,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       layouter.registerAdditionalContent(myUi);
 
       final DefaultActionGroup consoleActions = new DefaultActionGroup();
-      for (AnAction action : session.getAdditionalConsoleActions()) {
+      for (AnAction action : session.getConsoleActions()) {
         consoleActions.add(action);
       }
       consoleContent.setActions(consoleActions, ActionPlaces.RUNNER_TOOLBAR, myConsole.getComponent());
