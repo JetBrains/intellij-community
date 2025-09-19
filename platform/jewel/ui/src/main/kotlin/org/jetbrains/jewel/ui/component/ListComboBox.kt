@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -18,15 +17,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.takeOrElse
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
@@ -90,7 +93,8 @@ public fun <T : Any> ListComboBox(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ComboBoxStyle = JewelTheme.comboBoxStyle,
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
-    listState: SelectableLazyListState = rememberSelectableLazyListState(),
+    listState: SelectableLazyListState =
+        rememberSelectableLazyListState(selectedIndex.takeIfInBoundsOrZero(items.indices)),
     itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     LaunchedEffect(itemKeys) {
@@ -250,7 +254,8 @@ public fun ListComboBox(
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
     itemKeys: (Int, String) -> Any = { _, item -> item },
-    listState: SelectableLazyListState = rememberSelectableLazyListState(),
+    listState: SelectableLazyListState =
+        rememberSelectableLazyListState(selectedIndex.takeIfInBoundsOrZero(items.indices)),
 ) {
     var labelText by remember { mutableStateOf(items.getOrNull(selectedIndex).orEmpty()) }
     var previewSelectedIndex by remember { mutableIntStateOf(-1) }
@@ -406,7 +411,8 @@ public fun EditableListComboBox(
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
     itemKeys: (Int, String) -> Any = { _, item -> item },
-    listState: SelectableLazyListState = rememberSelectableLazyListState(),
+    listState: SelectableLazyListState =
+        rememberSelectableLazyListState(selectedIndex.takeIfInBoundsOrZero(items.indices)),
 ) {
     val textFieldState = rememberTextFieldState(items.getOrNull(selectedIndex).orEmpty())
     var previewSelectedIndex by remember { mutableIntStateOf(-1) }
@@ -573,7 +579,11 @@ private fun <T : Any> PopupContent(
         modifier = Modifier.heightIn(max = popupMaxHeight),
     ) {
         SelectableLazyColumn(
-            modifier = Modifier.fillMaxWidth().heightIn(max = popupMaxHeight).padding(contentPadding),
+            modifier =
+                Modifier.fillMaxWidth()
+                    .heightIn(max = popupMaxHeight)
+                    .padding(contentPadding)
+                    .testTag("Jewel.ComboBox.List"),
             selectionMode = SelectionMode.Single,
             state = listState,
             onSelectedIndexesChange = { selectedItemsIndexes ->
@@ -611,5 +621,15 @@ private fun <T : Any> PopupContent(
         }
     }
 
-    DisposableEffect(Unit) { onDispose { listState.lazyListState.requestScrollToItem(currentlySelectedIndex) } }
+    LaunchedEffect(Unit) {
+        // Only run the call when the list is actually visible
+        val visibleItems = snapshotFlow { listState.visibleItemsRange }.filter { it.first >= 0 && it.last >= 0 }.first()
+
+        val indexToShow = currentlySelectedIndex.takeIfInBoundsOrZero(items.indices)
+        if (indexToShow !in visibleItems) {
+            listState.lazyListState.scrollToIndex(indexToShow)
+        }
+    }
 }
+
+private fun Int.takeIfInBoundsOrZero(acceptedIndices: IntRange) = if (this in acceptedIndices) this else 0
