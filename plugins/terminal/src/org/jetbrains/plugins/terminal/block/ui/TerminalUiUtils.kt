@@ -240,13 +240,13 @@ object TerminalUiUtils {
   fun toFloatAndScale(value: Int): Float = JBUIScale.scale(value.toFloat())
 
   @ApiStatus.Internal
-  fun TextStyle.toTextAttributes(palette: TerminalColorPalette): TextAttributes {
+  fun TextStyle.toTextAttributes(palette: TerminalColorPalette, requiredContrast: Double): TextAttributes {
     return TextAttributes().also { attr ->
       // [TerminalColorPalette.getDefaultBackground] is not applied to [TextAttributes].
       // It's passed to [EditorEx.setBackgroundColor] / [JComponent.setBackground] to
       // paint the background uniformly.
       attr.backgroundColor = getEffectiveBackgroundNoDefault(this, palette)
-      attr.foregroundColor = getResultForeground(this, palette)
+      attr.foregroundColor = getResultForeground(this, palette, requiredContrast)
       if (hasOption(TextStyle.Option.BOLD)) {
         attr.fontType = attr.fontType or Font.BOLD
       }
@@ -267,7 +267,7 @@ object TerminalUiUtils {
     return AwtTransformers.toAwtColor(color)!!
   }
 
-  private fun getResultForeground(style: TextStyle, palette: TerminalColorPalette): Color {
+  private fun getResultForeground(style: TextStyle, palette: TerminalColorPalette, requiredContrast: Double): Color {
     val bg = getEffectiveBackgroundOrDefault(style, palette)
     val fg = getEffectiveForegroundOrDefault(style, palette)
     val dimmedFg = if (style.hasOption(TextStyle.Option.DIM)) {
@@ -280,8 +280,11 @@ object TerminalUiUtils {
     else fg
 
     // Allow dimmed foreground to be less contrast, otherwise, it might be indistinguishable from the non-dimmed foreground.
-    val requiredContrast = if (style.hasOption(TextStyle.Option.DIM)) 2.25 else 4.5
-    return ensureContrastRatio(bg, dimmedFg, requiredContrast)
+    val contrast = if (style.hasOption(TextStyle.Option.DIM)) clampContrastRatio(requiredContrast / 2) else requiredContrast
+    return if (contrast == 1.0) {
+      return dimmedFg
+    }
+    else ensureContrastRatio(bg, dimmedFg, contrast)
   }
 
   private fun getEffectiveForegroundOrDefault(style: TextStyle, palette: TerminalColorPalette): Color {
@@ -387,6 +390,18 @@ object TerminalUiUtils {
       contrast = ColorUtil.getContrast(color, bgColor)
     }
     return Color(fgRed, fgGreen, fgBlue)
+  }
+
+  fun shouldIgnoreContrastAdjustment(char: Char): Boolean {
+    return when (char.code) {
+      in 0xE0A4..0xE0D6 -> true   // Powerline symbols for those we shouldn't change foreground
+      in 0x2500..0x259F -> true   // Box or block glyphs
+      else -> false
+    }
+  }
+
+  fun clampContrastRatio(ratio: Double): Double {
+    return ratio.coerceIn(1.0, 21.0)
   }
 
   const val NEW_TERMINAL_OUTPUT_CAPACITY_KB: String = "new.terminal.output.capacity.kb"

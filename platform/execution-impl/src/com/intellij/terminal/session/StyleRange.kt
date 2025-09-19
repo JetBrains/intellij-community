@@ -9,4 +9,5 @@ data class StyleRange(
   val startOffset: Long,
   val endOffset: Long,
   val style: TextStyle,
+  val ignoreContrastAdjustment: Boolean = true,
 )

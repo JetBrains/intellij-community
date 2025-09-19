@@ -305,7 +305,7 @@ class TerminalOutputModelImpl(
         HighlightingInfo(
           startOffset = (it.startOffset - trimmedCharsCount).toInt(),
           endOffset = (it.endOffset - trimmedCharsCount).toInt(),
-          textAttributesProvider = TextStyleAdapter(it.style, colorPalette),
+          textAttributesProvider = TextStyleAdapter(it.style, colorPalette, it.ignoreContrastAdjustment),
         )
       }
       val snapshot = TerminalOutputHighlightingsSnapshot(document, documentRelativeHighlightings)
@@ -330,7 +330,7 @@ class TerminalOutputModelImpl(
         HighlightingInfo(
           startOffset = (range.startOffset - trimmedCharsCount).toInt(),
           endOffset = (range.endOffset - trimmedCharsCount).toInt(),
-          textAttributesProvider = TextStyleAdapter(range.style, colorPalette),
+          textAttributesProvider = TextStyleAdapter(range.style, colorPalette, range.ignoreContrastAdjustment),
         )
       }
       else null
@@ -342,7 +342,7 @@ class TerminalOutputModelImpl(
       check(styleRanges.isEmpty() || styleRanges.last().endOffset <= absoluteOffset) { "New highlightings overlap with existing" }
 
       val adjustedStyles = styles.map {
-        StyleRange(absoluteOffset + it.startOffset, absoluteOffset + it.endOffset, it.style)
+        it.copy(startOffset = absoluteOffset + it.startOffset, endOffset = absoluteOffset + it.endOffset)
       }
       styleRanges.addAll(adjustedStyles)
 
@@ -362,7 +362,7 @@ class TerminalOutputModelImpl(
       if (updateFromIndex < styleRanges.size) {
         for (ind in (updateFromIndex until styleRanges.size)) {
           val cur = styleRanges[ind]
-          styleRanges[ind] = StyleRange(cur.startOffset + length, cur.endOffset + length, cur.style)
+          styleRanges[ind] = cur.copy(startOffset = cur.startOffset + length, endOffset = cur.endOffset + length)
         }
 
         highlightingsSnapshot = null

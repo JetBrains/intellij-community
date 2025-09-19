@@ -43,8 +43,12 @@ object EmptyTextAttributesProvider : TextAttributesProvider {
 class TextStyleAdapter(
   private val style: TextStyle,
   private val colorPalette: TerminalColorPalette,
+  private val ignoreContrastAdjustment: Boolean = true,
 ) : TextAttributesProvider {
-  override fun getTextAttributes(): TextAttributes = style.toTextAttributes(colorPalette)
+  override fun getTextAttributes(): TextAttributes {
+    val requiredContrast = if (ignoreContrastAdjustment) 1.0 else 4.5
+    return style.toTextAttributes(colorPalette, requiredContrast)
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -52,11 +56,16 @@ class TextStyleAdapter(
 
     other as TextStyleAdapter
 
-    return style == other.style
+    if (ignoreContrastAdjustment != other.ignoreContrastAdjustment) return false
+    if (style != other.style) return false
+
+    return true
   }
 
   override fun hashCode(): Int {
-    return style.hashCode()
+    var result = ignoreContrastAdjustment.hashCode()
+    result = 31 * result + style.hashCode()
+    return result
   }
 
   override fun toString(): String {
