@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Set;
 
@@ -63,6 +64,94 @@ public final class GradleConstants {
 
   public static final String GRADLE_DIR_NAME = "gradle";
   public static final String GRADLE_CACHE_DIR_NAME = ".gradle";
+
+  @ApiStatus.Internal
+  public static final Set<String> GRADLE_CORE_PLUGIN_SHORT_NAMES = Set.of(
+    "groovy-gradle-plugin",
+    "java-gradle-plugin",
+    "build-init",
+    "wrapper",
+    "antlr",
+    "application",
+    "visual-studio",
+    "xcode",
+    "cpp-unit-test",
+    "cunit-test-suite",
+    "cunit",
+    "google-test-test-suite",
+    "google-test",
+    "xctest",
+    "checkstyle",
+    "codenarc",
+    "pmd",
+    "eclipse-wtp",
+    "eclipse",
+    "idea",
+    "groovy-base",
+    "groovy",
+    "ear",
+    "jacoco-report-aggregation",
+    "jacoco",
+    "java-library-distribution",
+    "java-library",
+    "java-test-fixtures",
+    "scala-base",
+    "scala",
+    "war",
+    "java",
+    "jvm-test-suite",
+    "test-report-aggregation",
+    "java-base",
+    "jvm-toolchain-management",
+    "jvm-toolchains",
+    "assembler-lang",
+    "assembler",
+    "c-lang",
+    "c",
+    "cpp-application",
+    "cpp-lang",
+    "cpp-library",
+    "cpp",
+    "objective-c-lang",
+    "objective-c",
+    "objective-cpp-lang",
+    "objective-cpp",
+    "swift-application",
+    "swift-library",
+    "swiftpm-export",
+    "windows-resource-script",
+    "windows-resources",
+    "clang-compiler",
+    "gcc-compiler",
+    "microsoft-visual-cpp-compiler",
+    "native-component-model",
+    "native-component",
+    "standard-tool-chains",
+    "component-reporting-tasks",
+    "project-report",
+    "project-reports",
+    "software-reporting-tasks",
+    "help-tasks",
+    "model-reporting-tasks",
+    "signing",
+    "version-catalog",
+    "java-platform",
+    "jvm-ecosystem",
+    "ivy-publish",
+    "maven-publish",
+    "publishing",
+    "test-suite-base",
+    "distribution-base",
+    "distribution",
+    "base",
+    "binary-base",
+    "component-base",
+    "component-model-base",
+    "language-base",
+    "lifecycle-base",
+    "build-dashboard",
+    "reporting-base"
+  );
 
   private GradleConstants() { }
 }
