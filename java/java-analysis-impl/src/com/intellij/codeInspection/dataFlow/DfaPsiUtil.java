@@ -163,14 +163,14 @@ public final class DfaPsiUtil {
   }
 
   private static @Nullable Nullability getNullabilityFromType(@Nullable PsiType resultType, @NotNull PsiModifierListOwner owner) {
-    Nullability fromType = getTypeNullability(resultType);
-    if (fromType != Nullability.UNKNOWN) {
-      if (fromType == Nullability.NOT_NULL && hasNullContract(owner)) {
-        return Nullability.UNKNOWN;
-      }
-      return fromType;
+    if (resultType == null) return null;
+    TypeNullability typeNullability = resultType.getNullability();
+    if (typeNullability.equals(TypeNullability.UNKNOWN)) return null;
+    Nullability fromType = typeNullability.nullability();
+    if (fromType == Nullability.NOT_NULL && hasNullContract(owner)) {
+      return Nullability.UNKNOWN;
     }
-    return null;
+    return fromType;
   }
 
   private static boolean hasNullContract(@NotNull PsiModifierListOwner owner) {
