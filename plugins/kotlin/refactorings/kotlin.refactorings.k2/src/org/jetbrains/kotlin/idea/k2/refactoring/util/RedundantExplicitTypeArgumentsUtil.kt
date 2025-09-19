@@ -77,11 +77,11 @@ private fun buildCallExpressionWithoutTypeArgs(element: KtCallExpression): KtCal
     return codeFragment.findElementAt(typeArgumentListRange.start + prefix.length - contextStartOffset)?.parentOfType()
 }
 
-private fun KaSession.isInlineReifiedFunction(symbol: KaFunctionSymbol): Boolean {
-    if (symbol !is KaNamedFunctionSymbol) return false
-    return symbol.importableFqName?.asString() !in INLINE_REIFIED_FUNCTIONS_WITH_INSIGNIFICANT_TYPE_ARGUMENTS &&
-            (symbol.isInline && symbol.typeParameters.any { it.isReified })
-}
+private fun KaSession.isInlineReifiedFunction(symbol: KaFunctionSymbol): Boolean =
+    symbol is KaNamedFunctionSymbol &&
+            symbol.importableFqName?.asString() !in INLINE_REIFIED_FUNCTIONS_WITH_INSIGNIFICANT_TYPE_ARGUMENTS &&
+            symbol.isInline &&
+            symbol.typeParameters.any { it.isReified }
 
 private fun findContextToAnalyze(
     expression: KtExpression,
@@ -168,15 +168,17 @@ private fun KaSession.areTypesEqual(
     type1: KaType,
     type2: KaType,
     approximateFlexible: Boolean,
-): Boolean {
-    return if (type1 is KaTypeParameterType && type2 is KaTypeParameterType) {
+): Boolean = when (type1) {
+    is KaTypeParameterType if type2 is KaTypeParameterType -> {
         type1.name == type2.name
-    } else if (type1 is KaDefinitelyNotNullType && type2 is KaDefinitelyNotNullType) {
-        areTypesEqual(type1.original, type2.original, approximateFlexible)
-    } else {
-        (approximateFlexible || type1.hasFlexibleNullability == type2.hasFlexibleNullability) &&
-                type1.semanticallyEquals(type2)
     }
+
+    is KaDefinitelyNotNullType if type2 is KaDefinitelyNotNullType -> {
+        areTypesEqual(type1.original, type2.original, approximateFlexible)
+    }
+
+    else -> (approximateFlexible || type1.hasFlexibleNullability == type2.hasFlexibleNullability) &&
+            type1.semanticallyEquals(type2)
 }
 
 context(_: KaSession)
