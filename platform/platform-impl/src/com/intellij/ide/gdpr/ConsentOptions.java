@@ -9,6 +9,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import kotlin.Pair;
@@ -36,6 +37,7 @@ public final class ConsentOptions implements ModificationTracker {
   private static final String AI_DATA_COLLECTION_OPTION_ID = "ai.data.collection.and.use.policy";
   private static final String TRACE_DATA_COLLECTION_NON_COM_OPTION_ID = "ai.trace.data.collection.and.use.noncom.policy";
   private static final String TRACE_DATA_COLLECTION_COM_OPTION_ID = "ai.trace.data.collection.and.use.com.policy";
+  private static final String TRACE_DATA_COLLECTION_OPTION_ID = "ai.trace.data.collection.and.use.policy";
   private static final Set<String> PER_PRODUCT_CONSENTS = Set.of(EAP_FEEDBACK_OPTION_ID);
   private final BooleanSupplier myIsEap;
   private String myProductCode;
@@ -208,6 +210,13 @@ public final class ConsentOptions implements ModificationTracker {
 
   public static @NotNull Predicate<Consent> condTraceDataCollectionComConsent() {
     return consent -> TRACE_DATA_COLLECTION_COM_OPTION_ID.equals(consent.getId());
+  }
+
+  /**
+   * Should only be used to limit the visibility of the outdated TRACE content in the settings.
+   */
+  public static @NotNull Predicate<Consent> condTraceDataCollectionConsent() {
+    return consent -> TRACE_DATA_COLLECTION_OPTION_ID.equals(consent.getId());
   }
 
   /**
