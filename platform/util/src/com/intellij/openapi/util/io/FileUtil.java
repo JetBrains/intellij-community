@@ -1310,17 +1310,12 @@ public class FileUtil {
     return path;
   }
 
+  /** @deprecated use {@link OSAgnosticPathUtil#expandUserHome} instead. */
   @Contract(pure = true)
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull String expandUserHome(@NotNull String path) {
-    if (path.equals("~")) {
-      return SystemProperties.getUserHome();
-    }
-    else if (path.startsWith("~/") || path.startsWith("~\\")) {
-      return SystemProperties.getUserHome() + path.substring(1);
-    }
-    else {
-      return path;
-    }
+    return OSAgnosticPathUtil.expandUserHome(path);
   }
 
   public static File @NotNull [] notNullize(File @Nullable [] files) {

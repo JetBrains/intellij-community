@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion.spec
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.terminal.completion.spec.ShellFileInfo
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.annotations.ApiStatus
@@ -51,7 +51,7 @@ suspend fun ShellRuntimeContext.getChildFiles(
 private suspend fun ShellRuntimeContext.getChildFilesReworked(path: String, onlyDirectories: Boolean): List<ShellFileInfo> {
   check(isReworkedTerminal)
 
-  val adjustedPath = FileUtil.expandUserHome(path)
+  val adjustedPath = OSAgnosticPathUtil.expandUserHome(path)
   val absolutePath = try {
     val nioPath = Path(adjustedPath)
     if (nioPath.isAbsolute) {

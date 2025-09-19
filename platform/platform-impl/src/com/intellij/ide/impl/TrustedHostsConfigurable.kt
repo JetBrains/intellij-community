@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.ide.IdeBundle
@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
@@ -86,7 +86,7 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
       .title(IdeBundle.message("trusted.hosts.settings.new.trusted.folder.dialog.title"))
       .setNorthPanel(pathField)
       .showAndGet()
-    return if (ok) FileUtil.expandUserHome(pathField.text) else null
+    return if (ok) OSAgnosticPathUtil.expandUserHome(pathField.text) else null
   }
 
   override fun getId(): String {

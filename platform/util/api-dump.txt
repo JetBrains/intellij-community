@@ -212,6 +212,16 @@ a:com.intellij.openapi.util.io.NioFiles$StatsCollectingVisitor
 - visitFileFailed(java.nio.file.Path,java.io.IOException):java.nio.file.FileVisitResult
 f:com.intellij.openapi.util.io.NioJarUtilKt
 - sf:getJarAttribute(java.nio.file.Path,java.util.jar.Attributes$Name):java.lang.String
+f:com.intellij.openapi.util.io.OSAgnosticPathUtil
+- sf:COMPARATOR:java.util.Comparator
+- s:expandUserHome(java.lang.String):java.lang.String
+- s:getParent(java.lang.String):java.lang.String
+- s:isAbsolute(java.lang.String):Z
+- s:isAbsoluteDosPath(java.lang.String):Z
+- s:isDriveLetter(C):Z
+- s:isUncPath(java.lang.String):Z
+- s:startsWith(java.lang.String,java.lang.String):Z
+- s:startsWithWindowsDrive(java.lang.String):Z
 com.intellij.openapi.util.registry.RegistryValueListener
 - afterValueChanged(com.intellij.openapi.util.registry.RegistryValue):V
 - beforeValueChanged(com.intellij.openapi.util.registry.RegistryValue):V

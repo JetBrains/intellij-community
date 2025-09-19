@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("UiUtils")
 @file:Suppress("SameParameterValue")
 
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.CollectionComboBoxModel
@@ -190,9 +191,8 @@ fun getPresentablePath(path: @NonNls String): @NlsSafe String {
 }
 
 @JvmOverloads
-fun getCanonicalPath(path: @NlsSafe String, removeLastSlash: Boolean = true): @NonNls String {
-  return FileUtil.toCanonicalPath(FileUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
-}
+fun getCanonicalPath(path: @NlsSafe String, removeLastSlash: Boolean = true): @NonNls String =
+  FileUtil.toCanonicalPath(OSAgnosticPathUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
 
 /**
  * Injects ellipsis into text if text width is more [maxTextWidth].

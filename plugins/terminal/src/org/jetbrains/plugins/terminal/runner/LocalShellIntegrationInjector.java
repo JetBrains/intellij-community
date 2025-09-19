@@ -9,8 +9,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.EelDescriptor;
@@ -262,7 +262,7 @@ public final class LocalShellIntegrationInjector {
     if (idx >= 0) {
       arguments.remove(idx);
       if (idx < arguments.size()) {
-        String userRcFile = FileUtil.expandUserHome(arguments.get(idx));
+        String userRcFile = OSAgnosticPathUtil.expandUserHome(arguments.get(idx));
         // do not set the same RC file path to avoid sourcing recursion
         if (!userRcFile.equals(rcFilePath)) {
           envs.put(JEDITERM_USER_RCFILE, userRcFile);
