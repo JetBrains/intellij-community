@@ -160,6 +160,8 @@ internal object UpdateInstaller {
     args += "-Djna.debug_load.jna=true"
     args += "-Djava.io.tmpdir=${tempDir}"
     args += "-Didea.updater.log=${PathManager.getLogDir()}"
+    System.getProperty("sun.java2d.metal")?.let { args += "-Dsun.java2d.metal=${it}" }
+    System.getProperty("awt.toolkit.name")?.let { args += "-Dawt.toolkit.name=${it}" }
     args += "-Dswing.defaultlaf=${UIManager.getSystemLookAndFeelClassName()}"
     args += "-Duser.language=${DynamicBundle.getLocale().language}"
     args += "-Duser.country=${DynamicBundle.getLocale().country}"
