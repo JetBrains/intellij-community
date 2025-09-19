@@ -105,6 +105,7 @@ jvm_library(
     "//platform/whatsNew:whatsNew_test_lib",
     "//platform/util/coroutines",
     "//platform/experiment",
+    "//platform/experiment:experiment_test_lib",
     "@lib//:jna",
     "//python/services/system-python",
     "//python/services/system-python:system-python_test_lib",
