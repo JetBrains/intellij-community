@@ -17,9 +17,10 @@ import kotlin.math.absoluteValue
  * The plugins are welcome to use [ABExperimentOption.isEnabled] to check whether the experiment is enabled on the user's machine
  */
 enum class ABExperimentOption {
-  EXPERIMENT_1,
-  EXPERIMENT_2,
-  EXPERIMENT_3,
+  KUBERNETES_SEPARATE_SERVICE_VIEW,
+  FUZZY_FILE_SEARCH,
+  SHOW_TRIAL_SURVEY,
+  NEW_USERS_ONBOARDING,
 
   /**
    * A group for users which are not assigned to any experiment.
@@ -49,10 +50,9 @@ internal const val NUMBER_OF_BUCKETS: Int = 1024
  */
 @VisibleForTesting
 internal val experimentsPartition: List<ExperimentAssignment> = listOf(
-  ExperimentAssignment(experiment = EXPERIMENT_1, experimentBuckets = (0 until 180).toSet(), controlBuckets = (180 until 256).toSet()),
-  ExperimentAssignment(experiment = EXPERIMENT_2, experimentBuckets = (256 until 384).toSet(), controlBuckets = (384 until 512).toSet()),
-  ExperimentAssignment(experiment = EXPERIMENT_3, experimentBuckets = (512 until 640).toSet(), controlBuckets = (640 until 768).toSet()),
-  // the rest belongs to the unassigned experiment
+  ExperimentAssignment(experiment = KUBERNETES_SEPARATE_SERVICE_VIEW, experimentBuckets = (0 until 128).toSet(), controlBuckets = (128 until 256).toSet()),
+  ExperimentAssignment(experiment = FUZZY_FILE_SEARCH, experimentBuckets = (256 until 512).toSet(), controlBuckets = (512 until 768).toSet()),
+  // the rest belongs to the "unassigned" experiment
 )
 
 /**
