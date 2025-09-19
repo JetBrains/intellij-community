@@ -2,6 +2,7 @@ a:com.intellij.codeInsight.completion.CompletionService
 - *p:getVariantsFromGroupContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.util.Consumer):V
 *:com.intellij.codeInsight.completion.command.CommandCompletionFactory
 - com.intellij.openapi.project.PossiblyDumbAware
+- *:adjustCaret(com.intellij.psi.PsiFile,I):java.lang.Integer
 - commandProviders(com.intellij.openapi.project.Project,com.intellij.lang.Language):java.util.List
 - createFile(com.intellij.psi.PsiFile,java.lang.String):com.intellij.psi.PsiFile
 - filterSuffix():java.lang.Character
