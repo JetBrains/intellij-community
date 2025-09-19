@@ -572,6 +572,14 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showPreviewInSearchEverywhere = value
     }
 
+  @get:Internal
+  @set:Internal
+  var useSimplifiedSplashImage: Boolean
+    get() = state.useSimplifiedSplashImage
+    set(value) {
+      state.useSimplifiedSplashImage = value
+    }
+
   companion object {
     init {
       if (JBUIScale.SCALE_VERBOSE) {

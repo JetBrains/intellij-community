@@ -17,9 +17,13 @@ import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.IdeZoomChanged
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ThemeAutodetectSelector
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.impl.ApplicationInfoImpl.SIMPLIFIED_SPLASH_MARKER_FILE_NAME
 import com.intellij.openapi.application.impl.islands.IslandsFeedback
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.PlatformEditorBundle
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -65,9 +69,12 @@ import java.awt.RenderingHints
 import java.awt.Window
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.nio.file.Path
 import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.writeText
 
 private val settings: UISettings
   get() = UISettings.getInstance()
@@ -132,6 +139,9 @@ private val cdDifferentiateProjects
   get() = CheckboxDescriptor(message("checkbox.use.solution.colors.in.main.toolbar"), settings::differentiateProjects,
                              message("text.use.solution.colors.in.main.toolbar"), groupName = uiOptionGroupName)
 
+private val cdUseSimplifiedSplashImage
+  get() = CheckboxDescriptor(message("checkbox.use.simplified.splash.image"), settings::useSimplifiedSplashImage)
+
 internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
   return sequenceOf(
     cdShowToolWindowBars,
@@ -156,6 +166,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   private val lafProperty = propertyGraph.lazyProperty { lafManager.lookAndFeelReference }
   private val syncThemeProperty = propertyGraph.lazyProperty { lafManager.autodetect }
   private val islandLafProperty = propertyGraph.lazyProperty { IslandsFeedback.isIslandTheme() }
+  private val simplifiedSplashMarkerFile: Path by lazy { PathManager.getConfigDir().resolve(SIMPLIFIED_SPLASH_MARKER_FILE_NAME) }
 
   override fun createPanel(): DialogPanel {
     lafProperty.afterChange(disposable!!) {
@@ -367,6 +378,19 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             link(UIBundle.message("color.blindness.link.to.help")
             ) { HelpManager.getInstance().invokeHelp("Colorblind_Settings") }
           }
+        }
+
+        row {
+          checkBox(cdUseSimplifiedSplashImage)
+            .visible(ApplicationInfo.getInstance().isSimplifiedSplashSupported)
+            .onApply {
+              runCatching {
+                if (settings.useSimplifiedSplashImage) simplifiedSplashMarkerFile.writeText("")
+                else simplifiedSplashMarkerFile.deleteIfExists()
+              }.onFailure {
+                thisLogger().warn("Failed to update marker file for simplified splash image", it)
+              }
+            }
         }
       }
 

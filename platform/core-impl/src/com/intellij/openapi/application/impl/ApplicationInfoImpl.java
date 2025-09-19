@@ -38,6 +38,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
   public static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
   public static final String FREE_MODE_SPLASH_MARKER_FILE_NAME = "splash-free-mode.txt";
+  public static final String SIMPLIFIED_SPLASH_MARKER_FILE_NAME = "splash-simplified.txt";
 
   private static final String IDEA_APPLICATION_INFO_DEFAULT_DARK_LAF = "idea.application.info.default.dark.laf";
   private static final String IDEA_APPLICATION_INFO_DEFAULT_CLASSIC_DARK_LAF = "idea.application.info.default.classic.dark.laf";
@@ -62,6 +63,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myCompanyUrl = "https://www.jetbrains.com/";
   private @Nullable String splashImageUrl;
   private @Nullable String freeModeSplashImageUrl;
+  private @Nullable String simplifiedSplashImageUrl;
   private @Nullable String eapSplashImageUrl;
   private String svgIconUrl;
   private String mySvgEapIconUrl;
@@ -151,6 +153,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
         case "logo-free-mode": {
           freeModeSplashImageUrl = getAttributeValue(child, "url");
+        }
+        break;
+
+        case "logo-simplified": {
+          simplifiedSplashImageUrl = getAttributeValue(child, "url");
         }
         break;
 
@@ -448,6 +455,13 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       Path markerFile = PathManager.getConfigDir().resolve(FREE_MODE_SPLASH_MARKER_FILE_NAME);
       if (Files.exists(markerFile)) {
         return freeModeSplashImageUrl;
+      }
+    }
+
+    if (simplifiedSplashImageUrl != null) {
+      Path markerFile = PathManager.getConfigDir().resolve(SIMPLIFIED_SPLASH_MARKER_FILE_NAME);
+      if (Files.exists(markerFile)) {
+        return simplifiedSplashImageUrl;
       }
     }
 
@@ -760,6 +774,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public @Nullable String getDefaultClassicDarkLaf() {
     String override = System.getProperty(IDEA_APPLICATION_INFO_DEFAULT_CLASSIC_DARK_LAF);
     return override != null ? override : myDefaultClassicDarkLaf;
+  }
+
+  @Override
+  public boolean isSimplifiedSplashSupported() {
+    return simplifiedSplashImageUrl != null;
   }
 
   private static final class UpdateUrlsImpl implements UpdateUrls {

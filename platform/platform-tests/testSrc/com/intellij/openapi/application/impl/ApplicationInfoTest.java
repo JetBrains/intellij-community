@@ -71,6 +71,16 @@ public class ApplicationInfoTest {
   }
 
   @Test
+  public void splashImage_simplifiedLogoPreferredWhenMarkerPresent() {
+    withTempConfigDirectory(configDir -> {
+      createSimplifiedSplashMarkerFile(configDir);
+      ApplicationInfo info = createAppInfo(logo, logoSimplified);
+      String url = info.getSplashImageUrl();
+      assertThat(url).isEqualTo(logoSimplifiedUrl);
+    });
+  }
+
+  @Test
   public void splashImage_regularLogoWhenNoFreeModeMarker() {
     withTempConfigDirectory(configDir -> {
       deleteFreeModeSplashMarkerFile(configDir);
@@ -81,9 +91,29 @@ public class ApplicationInfoTest {
   }
 
   @Test
+  public void splashImage_regularLogoWhenNoSimplifiedMarker() {
+    withTempConfigDirectory(configDir -> {
+      deleteSimplifiedSplashMarkerFile(configDir);
+      ApplicationInfo info = createAppInfo(logo, logoSimplified);
+      String url = info.getSplashImageUrl();
+      assertThat(url).isEqualTo(logoUrl);
+    });
+  }
+
+  @Test
   public void splashImage_regularLogoWhenMarkerPresentButNoFreeModeLogoProvided() {
     withTempConfigDirectory(configDir -> {
       createFreeModeSplashMarkerFile(configDir);
+      ApplicationInfo info = createAppInfo(logo);
+      String url = info.getSplashImageUrl();
+      assertThat(url).isEqualTo(logoUrl);
+    });
+  }
+
+  @Test
+  public void splashImage_regularLogoWhenMarkerPresentButNoSimplifiedLogoProvided() {
+    withTempConfigDirectory(configDir -> {
+      createSimplifiedSplashMarkerFile(configDir);
       ApplicationInfo info = createAppInfo(logo);
       String url = info.getSplashImageUrl();
       assertThat(url).isEqualTo(logoUrl);
@@ -101,6 +131,16 @@ public class ApplicationInfoTest {
   }
 
   @Test
+  public void splashImage_eapLogoBeatsSimplifiedInEapWhenBothAvailableAndMarkerPresent() {
+    withTempConfigDirectory(configDir -> {
+      createSimplifiedSplashMarkerFile(configDir);
+      ApplicationInfo info = createAppInfo(eap(true), logo, logoEap, logoSimplified);
+      String url = info.getSplashImageUrl();
+      assertThat(url).isEqualTo(logoEapUrl);
+    });
+  }
+
+  @Test
   public void splashImage_freeModeLogoWhenNotEapAndMarkerPresent() {
     withTempConfigDirectory(configDir -> {
       createFreeModeSplashMarkerFile(configDir);
@@ -111,13 +151,47 @@ public class ApplicationInfoTest {
   }
 
   @Test
+  public void splashImage_simplifiedLogoWhenNotEapAndMarkerPresent() {
+    withTempConfigDirectory(configDir -> {
+      createSimplifiedSplashMarkerFile(configDir);
+      ApplicationInfo info = createAppInfo(eap(false), logo, logoEap, logoSimplified);
+      String url = info.getSplashImageUrl();
+      assertThat(url).isEqualTo(logoSimplifiedUrl);
+    });
+  }
+
+  @Test
   public void splashImage_regularLogoWhenNotEapAndNoMarker() {
     withTempConfigDirectory(configDir -> {
       deleteFreeModeSplashMarkerFile(configDir);
+      deleteSimplifiedSplashMarkerFile(configDir);
       ApplicationInfo info = createAppInfo(eap(false), logo, logoEap, logoFreeMode);
       String url = info.getSplashImageUrl();
       assertThat(url).isEqualTo(logoUrl);
     });
+  }
+
+  @Test
+  public void splashImage_freeModeLogoBeatsSimplifiedWhenBothAvailableAndMarkersPresent() {
+    withTempConfigDirectory(configDir -> {
+      createFreeModeSplashMarkerFile(configDir);
+      createSimplifiedSplashMarkerFile(configDir);
+      ApplicationInfo info = createAppInfo(eap(false), logo, logoFreeMode, logoSimplified);
+      String url = info.getSplashImageUrl();
+      assertThat(url).isEqualTo(logoFreeModeUrl);
+    });
+  }
+
+  @Test
+  public void simplifiedSplashIsSupportedIfThereIsAnImageDefined() {
+    var info = createAppInfo(logo, logoSimplified);
+    assertThat(info.isSimplifiedSplashSupported()).isTrue();
+  }
+
+  @Test
+  public void simplifiedSplashIsNotSupportedIfThereIsNoImageDefined() {
+    var info = createAppInfo(logo, logoEap);
+    assertThat(info.isSimplifiedSplashSupported()).isFalse();
   }
 
   public static @NotNull ApplicationInfoImpl createAppInfo(@NotNull XmlElement @NotNull ... content) {
@@ -131,8 +205,16 @@ public class ApplicationInfoTest {
     Files.writeString(configDir.resolve(ApplicationInfoImpl.FREE_MODE_SPLASH_MARKER_FILE_NAME), "");
   }
 
+  private static void createSimplifiedSplashMarkerFile(@NotNull Path configDir) throws IOException {
+    Files.writeString(configDir.resolve(ApplicationInfoImpl.SIMPLIFIED_SPLASH_MARKER_FILE_NAME), "");
+  }
+
   private static void deleteFreeModeSplashMarkerFile(@NotNull Path configDir) throws IOException {
     Files.deleteIfExists(configDir.resolve(ApplicationInfoImpl.FREE_MODE_SPLASH_MARKER_FILE_NAME));
+  }
+
+  private static void deleteSimplifiedSplashMarkerFile(@NotNull Path configDir) throws IOException {
+    Files.deleteIfExists(configDir.resolve(ApplicationInfoImpl.SIMPLIFIED_SPLASH_MARKER_FILE_NAME));
   }
 
   private static XmlElement eap(boolean isEap) {
@@ -142,8 +224,10 @@ public class ApplicationInfoTest {
   private static final String logoUrl = "/logo.png";
   private static final String logoEapUrl = "/logo_eap.png";
   private static final String logoFreeModeUrl = "/logo_free.png";
+  private static final String logoSimplifiedUrl = "/logo_simplified.png";
 
   private final XmlElement logo = new XmlElement("logo", Map.of("url", logoUrl), List.of(), null);
   private final XmlElement logoEap = new XmlElement("logo-eap", Map.of("url", logoEapUrl), List.of(), null);
   private final XmlElement logoFreeMode = new XmlElement("logo-free-mode", Map.of("url", logoFreeModeUrl), List.of(), null);
+  private final XmlElement logoSimplified = new XmlElement("logo-simplified", Map.of("url", logoSimplifiedUrl), List.of(), null);
 }
