@@ -12970,11 +12970,6 @@ f:com.intellij.openapi.vcs.changes.PsiChangeTracker
 com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:settingsUpdated():V
-f:com.intellij.openapi.wm.impl.ProjectWindowActionGroup
-- com.intellij.ide.IdeDependentActionGroup
-- <init>():V
-- getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
-- isDumbAware():Z
 f:com.intellij.openapi.wm.impl.WindowDressing
 - com.intellij.ide.lightEdit.LightEditServiceListener
 - com.intellij.openapi.project.ProjectCloseListener

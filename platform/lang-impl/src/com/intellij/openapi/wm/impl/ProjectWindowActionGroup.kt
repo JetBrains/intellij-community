@@ -20,7 +20,7 @@ import java.io.File
 import java.nio.file.Path
 import java.util.*
 
-class ProjectWindowActionGroup : IdeDependentActionGroup(), ActionRemoteBehaviorSpecification.Frontend {
+internal class ProjectWindowActionGroup : IdeDependentActionGroup(), ActionRemoteBehaviorSpecification.Frontend {
   private var latest: ProjectWindowAction? = null
 
   internal fun addProject(project: Project) {
