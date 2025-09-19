@@ -129,6 +129,8 @@ private class GradleMoveApplyPluginToPluginsBlockFix(
     override fun applyFix(project: Project, element: KtCallExpression, updater: ModPsiUpdater) {
         val psiFactory = KtPsiFactory(project, true)
         val file = element.containingKtFile
+        val classpathCallElement = PsiTreeUtil.findSameElementInCopy(pluginFixInfo.classpathCallElement?.element, file)
+
         val pluginsBlock = file.findScriptInitializer("plugins")?.getBlock()
         val pluginIdCallText = "id(${pluginFixInfo.nameText})${pluginFixInfo.versionString?.let { " version \"$it\"" } ?: ""}"
         // add the plugin to the plugins block or create the block if it's missing with the plugin declaration
@@ -146,9 +148,7 @@ private class GradleMoveApplyPluginToPluginsBlockFix(
         element.delete()
 
         // buildscript block handling
-        val originalClasspathCallElement = pluginFixInfo.classpathCallElement?.element ?: return
-        val classpathCallElement = PsiTreeUtil.findSameElementInCopy(originalClasspathCallElement, file)
-        val dependenciesBlock = classpathCallElement.findParentBlock("dependencies") ?: return
+        val dependenciesBlock = classpathCallElement?.findParentBlock("dependencies") ?: return
         // delete the corresponding plugin's dependency declaration
         classpathCallElement.delete()
         if (!dependenciesBlock.children.isEmpty()) return
