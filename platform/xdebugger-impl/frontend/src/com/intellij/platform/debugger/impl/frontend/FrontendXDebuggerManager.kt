@@ -2,21 +2,28 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.execution.ui.RunContentManagerImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.platform.debugger.impl.frontend.editor.BreakpointPromoterEditorListener
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionDto
 import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi
 import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerSessionEvent
 import com.intellij.platform.project.projectId
+import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.asDisposable
 import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -133,7 +140,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
     eventMulticaster.addEditorMouseMotionListener(bpPromoter, cs.asDisposable())
   }
 
-  internal fun getSessionIdByContentDescriptor(descriptor: RunContentDescriptor): XDebugSessionId? {
+  private fun getSessionIdByContentDescriptor(descriptor: RunContentDescriptor): XDebugSessionId? {
     return sessionsFlow.value.firstOrNull { it.sessionTab?.runContentDescriptor === descriptor }?.id
   }
 
@@ -144,6 +151,47 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
     }
     assert(old.none { it.id == sessionDto.id }) { "Session with id ${sessionDto.id} already exists" }
     return newSession
+  }
+
+  internal fun startContentSelectionListening() {
+    val selectedSessionId = MutableSharedFlow<XDebugSessionId?>(1, 1, BufferOverflow.DROP_OLDEST)
+    cs.launch {
+      selectedSessionId.collectLatest { sessionId ->
+        XDebuggerManagerApi.getInstance().sessionTabSelected(project.projectId(), sessionId)
+      }
+    }
+
+    val contentListener = object : ContentManagerListener {
+      override fun selectionChanged(event: ContentManagerEvent) {
+        val descriptor = getDescriptor(event) ?: return
+        val sessionId = getSessionIdByContentDescriptor(descriptor)
+        selectedSessionId.tryEmit(sessionId)
+      }
+
+      override fun contentRemoved(event: ContentManagerEvent) {
+        val descriptor = getDescriptor(event) ?: return
+        val sessionId = getSessionIdByContentDescriptor(descriptor) ?: return
+        cs.launch {
+          XDebuggerManagerApi.getInstance().sessionTabClosed(sessionId)
+        }
+      }
+
+      private fun getDescriptor(event: ContentManagerEvent): RunContentDescriptor? {
+        if (event.operation != ContentManagerEvent.ContentOperation.add) return null
+        val executor = RunContentManagerImpl.getExecutorByContent(event.content) ?: return null
+        if (executor.toolWindowId != ToolWindowId.DEBUG) return null
+        return RunContentManagerImpl.getRunContentDescriptorByContent(event.content)
+      }
+    }
+
+    project.messageBus.connect().subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun toolWindowsRegistered(ids: List<String?>, toolWindowManager: ToolWindowManager) {
+        for (id in ids) {
+          val toolWindow = toolWindowManager.getToolWindow(id) ?: continue
+          toolWindow.contentManager.addContentManagerListener(contentListener)
+        }
+      }
+    })
   }
 
   companion object {
