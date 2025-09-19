@@ -2,12 +2,23 @@
   <dependencies>
     <module name="intellij.spellchecker"/>
     <module name="intellij.python.sdk"/>
+    <module name="intellij.python.syntax"/>
     <module name="intellij.python.community"/>
+    <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.interpreters"/>
+    <module name="intellij.python.community.impl.poetry"/>
+    <module name="intellij.python.hatch"/>
+    <module name="intellij.python.pydev"/>
+    <module name="intellij.python.sdk.ui"/>
     <module name="intellij.regexp"/>
+    <module name="intellij.libraries.kotlinx.io"/>
+    <module name="intellij.python.pyproject"/>
+    <module name="intellij.python.community.impl.installer"/>
+    <module name="intellij.python.community.impl.venv"/>
+    <module name="intellij.python.community.services.systemPython"/>
   </dependencies>
 
   <resource-bundle>messages.PyBundle</resource-bundle>
@@ -18,7 +29,6 @@
                      key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python"
                      suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
     <registryKey defaultValue="10" description="How ofter system pythons must be refreshed (minutes)" key="python.system.refresh.minutes"/>
-    <postStartupActivity implementation="com.intellij.python.community.services.systemPython.impl.SystemPythonInitialLoader"/>
     <fileType name="Requirements.txt"
               implementationClass="com.jetbrains.python.requirements.RequirementsFileType"
               fieldName="INSTANCE"
@@ -32,6 +42,18 @@
       language="Requirements"
       implementationClass="com.jetbrains.python.requirements.RequirementsSyntaxHighlighterFactory"/>
     <multiHostInjector implementation="com.jetbrains.python.requirements.injection.TomlRequirementsLanguageInjector"/>
+
+    <codeInsight.declarativeInlayProvider group="TYPES_GROUP"
+                                          bundle="messages.PyPsiBundle"
+                                          implementationClass="com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider"
+                                          isEnabledByDefault="true"
+                                          language="Python"
+                                          nameKey="INLAY.type.hints"
+                                          providerId="python.type.inlays">
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.reveal.type" enabledByDefault="true" nameKey="INLAY.reveal.type" optionId="python.type.inlays.reveal_type" />
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.function.return" enabledByDefault="false" nameKey="INLAY.function.return" optionId="python.type.inlays.function.return" />
+    </codeInsight.declarativeInlayProvider>
+
 
     <!-- Requirements.txt support. Can't extract module due to circular dependency between it and community.impl (RequirementsFile inspection)-->
     <completion.contributor language="Requirements"
@@ -133,18 +155,14 @@
                     serviceImplementation="com.jetbrains.python.codeInsight.completion.DummyRemoteFilePathRetrievalService"
                     testServiceImplementation="com.jetbrains.python.codeInsight.completion.DummyRemoteFilePathRetrievalService"/>
 
-    <applicationService serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
     <applicationService serviceImplementation="com.jetbrains.python.packaging.pip.PypiPackageCache"/>
     <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.module.PyModuleService"
                         serviceImplementation="com.jetbrains.python.module.PyModuleServiceImpl"/>
-    <applicationService serviceInterface="com.jetbrains.python.sdk.WinRegistryService"
-                        serviceImplementation="com.jetbrains.python.sdk.WinRegistryServiceImpl"/>
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyMethodNameTypedHandler" id="pyMethodNameTypedHandler"/>
 
     <idIndexer filetype="Python" implementationClass="com.jetbrains.python.PyIdIndexer"/>
     <todoIndexer filetype="Python" implementationClass="com.jetbrains.python.PyTodoIndexer"/>
-    <indexPatternBuilder implementation="com.jetbrains.python.PyIndexPatternBuilder"/>
 
     <declarationRangeHandler key="com.jetbrains.python.psi.PyClass"
                              implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
@@ -177,6 +195,8 @@
     <xdebugger.attachDebuggerProvider implementation="com.jetbrains.python.debugger.attach.PyLocalAttachDebuggerProvider"/>
 
     <codeInsight.containerProvider implementation="com.jetbrains.python.codeInsight.PyContainerProvider"/>
+    <codeInsight.parameterNameHints language="Python"
+                                    implementationClass="com.jetbrains.python.inlayHints.PythonInlayParameterHintsProvider"/>
     <registryKey key="python.debugger.use.dispatcher" defaultValue="false" description="Use dispatcher in Python debugger"/>
     <registryKey key="flask.new.run.config" defaultValue="true" description="Flask Server Run configurations new UI"/>
     <registryKey key="pytest.new.run.config" defaultValue="true" description="PyTest configurations new UI"/>
@@ -521,19 +541,24 @@
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.runAnything.PyRunAnythingCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.debugger.statistics.PyDataViewerCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.python.community.impl.installer.BinaryInstallerUsagesCollector"/>
 
     <!-- Code-insight IDE bridge -->
+    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService"
                         serviceImplementation="com.jetbrains.python.PythonRuntimeServiceImpl"/>
+    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.PythonUiService"
                         serviceImplementation="com.jetbrains.python.PythonUiServiceImpl"/>
+    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.PyImportCollectorFactory"
                         serviceImplementation="com.jetbrains.python.codeInsight.imports.CodeStylePyImportCollectorFactory"/>
+    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportChooser"
                         serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportChooser"/>
+    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.refactoring.PyRefactoringUiService"
                         serviceImplementation="com.jetbrains.python.refactoring.PyRefactoringUiServiceImpl"/>
+    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.jetbrains.python.PythonDocumentationHighlightingService"
                         serviceImplementation="com.jetbrains.python.PythonDocumentationHighlightingServiceImpl"/>
 
@@ -696,9 +721,6 @@
     <extensionPoint qualifiedName="Pythonid.runnableScriptFilter" interface="com.jetbrains.python.run.RunnableScriptFilter" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.unresolvedReferenceQuickFixProvider"
                     interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.documentationLinkProvider"
-                    interface="com.jetbrains.python.documentation.PythonDocumentationLinkProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.runConfigurationExtension" interface="com.jetbrains.python.run.PythonRunConfigurationExtension"
                     dynamic="true"/>
@@ -917,21 +939,6 @@
 
 
     <systemPythonProvider implementation="com.jetbrains.python.sdk.uv.UvSystemPythonProvider"/>
-    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.LegacySystemPythonProvider"/>
-
-    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.BrewSystemPythonProvider"
-                          os="mac"/>
-    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.MacSystemPythonProvider"
-                          os="mac"/>
-
-    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.WindowsSystemPythonProvider"
-                          os="windows"/>
-
-    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.AsdfSystemPythonProvider"/>
-    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.PyenvSystemPythonProvider"/>
-
-    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.UnixSystemPythonProvider"
-                          os="unix"/>
 
     <inspectionExtension implementation="com.jetbrains.python.sdk.configuration.suppressors.PyInterpreterInspectionSuppressor"/>
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>

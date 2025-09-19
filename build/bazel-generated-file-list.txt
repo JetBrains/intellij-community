@@ -1304,6 +1304,7 @@ plugins/yaml
 plugins/yaml/backend
 python
 python/IntelliLang-python
+python/aliasProvider
 python/build
 python/build/build-debug-binaries
 python/huggingFace
