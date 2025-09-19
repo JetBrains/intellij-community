@@ -4,6 +4,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.node.TraversableNode
 import androidx.compose.ui.node.traverseDescendants
 import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -16,6 +17,7 @@ import org.jetbrains.jewel.foundation.actionSystem.DataProviderNode
 public class RootDataProviderNode : Modifier.Node(), UiDataProvider {
     override fun uiDataSnapshot(sink: DataSink) {
         val context = DataProviderDataSinkContext(sink)
+        sink[PlatformDataKeys.PASTE_PROVIDER] = ComposePasteProvider()
 
         @Suppress("DEPRECATION")
         traverseDescendants(DataProviderNode) { dp ->
