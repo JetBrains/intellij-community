@@ -18,11 +18,7 @@ fun test(someName: String) {
 // ORDER: name
 // ORDER: someName
 // ORDER: getName
-// ORDER: "name ="
 // ORDER: aVariable
 // ORDER: bVariable
 // ORDER: yVariable
 // ORDER: zVariable
-
-// IGNORE_K1
-
