@@ -367,6 +367,9 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     default boolean shouldCount() {
       return true;
     }
+    
+    default void reportUnused() {
+    }
   }
 
   record Statistic(LongAdder total, LongAdder valuable, LongAdder checked, MultiMap<String, Place> skipped) {

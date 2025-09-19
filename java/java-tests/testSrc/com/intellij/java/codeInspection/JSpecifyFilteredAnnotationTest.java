@@ -2,6 +2,7 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -9,8 +10,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.AfterClass;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -20,126 +23,135 @@ import java.util.Set;
  * If it is necessary to check the full set of tests, please, use {@link JSpecifyAnnotationTest}.
  */
 public class JSpecifyFilteredAnnotationTest extends JSpecifyAnnotationTest {
+  private static final List<ErrorFilter> FILTERS = List.of(
+    new SkipErrorFilter("jspecify_nullness_not_enough_information"), //it is useless for our goals
+    new ReturnSynchronizedWithUnspecifiedFilter(), // it looks like it is useless because @Unspecified is not supported
+    new SkipIndividuallyFilter( //each case has its own reason (line number starts from 0)
+      Set.of(
+        new Pair<>("CastWildcardToTypeVariable.java", 21),  // see: IDEA-377686
+
+        new Pair<>("ContravariantReturns.java", 32),  // see: IDEA-377687
+        new Pair<>("ContravariantReturns.java", 36),  // see: IDEA-377687
+        new Pair<>("ExtendsTypeVariableImplementedForNullableTypeArgument.java",
+                   28), // overriding method with @NotNull, original has @Nullable, but IDEA doesn't highlight the opposite example, see IDEA-377687
+        new Pair<>("ExtendsTypeVariableImplementedForNullableTypeArgument.java",
+                   33), // overriding method with @NotNull, original has @Nullable, but IDEA doesn't highlight the opposite example, see IDEA-377687
+        new Pair<>("OverrideParameters.java", 66),  // see: IDEA-377687
+
+        new Pair<>("DereferenceTypeVariable.java", 117),  // see: IDEA-377688
+        new Pair<>("TypeVariableToObject.java", 104), // see: IDEA-377688
+
+        new Pair<>("NullLiteralToTypeVariable.java", 58), // see: IDEA-377691
+        new Pair<>("NullLiteralToTypeVariable.java", 78), // see: IDEA-377691
+        new Pair<>("NullLiteralToTypeVariable.java", 98), // see: IDEA-377691
+        new Pair<>("NullLiteralToTypeVariable.java", 103), // see: IDEA-377691
+        new Pair<>("NullLiteralToTypeVariable.java", 118), // see: IDEA-377691
+        new Pair<>("TypeVariableUnionNullToParent.java", 88), // see: IDEA-377691
+        new Pair<>("TypeVariableUnionNullToParent.java", 98), // see: IDEA-377691
+        new Pair<>("TypeVariableUnionNullToSelf.java", 58), // see: IDEA-377691
+        new Pair<>("TypeVariableUnionNullToSelf.java", 78), // see: IDEA-377691
+        new Pair<>("TypeVariableUnionNullToSelf.java", 103), // see: IDEA-377691
+        new Pair<>("TypeVariableUnionNullToSelf.java", 118), // see: IDEA-377691
+        new Pair<>("TypeVariableToParent.java", 94), // see: IDEA-377691
+
+        new Pair<>("NullUnmarkedUndoesNullMarkedForWildcards.java", 23), // see: IDEA-377693
+
+        new Pair<>("SuperObject.java", 31),  // see: IDEA-377694
+        new Pair<>("SuperTypeVariable.java", 28),  // see: IDEA-377694
+        new Pair<>("SuperTypeVariable.java", 57),  // see: IDEA-377694
+        new Pair<>("SuperTypeVariable.java", 86),  // see: IDEA-377694
+        new Pair<>("SuperTypeVariable.java", 115), // see: IDEA-377694
+
+        new Pair<>("UninitializedField.java", 29), // see: IDEA-377695
+
+        new Pair<>("ContainmentExtends.java", 27),  // see: IDEA-377696
+        new Pair<>("ContainmentSuper.java", 36),  // see: IDEA-377696
+        new Pair<>("ContainmentSuperVsExtends.java", 22),  // see: IDEA-377696
+        new Pair<>("ContainmentSuperVsExtendsSameType.java", 21),  // see: IDEA-377696
+
+        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 62), // see: IDEA-377697
+
+        new Pair<>("WildcardCapturesToBoundOfTypeParameterNotToTypeVariableItself.java", 24), // see: IDEA-377699
+
+        new Pair<>("UnionTypeArgumentWithUseSite.java", 30), // see: IDEA-377706
+
+        new Pair<>("SelfType.java", 34),  // see: IDEA-377707
+        new Pair<>("SelfType.java", 43),  // see: IDEA-377707
+        new Pair<>("OutOfBoundsTypeVariable.java", 21)  // see: IDEA-377707
+      )
+    ),
+    new SkipIndividuallyFilter( //cases to investigate. (line number starts from 0)
+      Set.of(
+        new Pair<>("AnnotatedBoundsOfWildcard.java", 74), // @unspecified, skip
+        new Pair<>("AnnotatedBoundsOfWildcard.java", 76), // @unspecified, skip
+        new Pair<>("ComplexParametric.java", 158), // @unspecified, skip
+        new Pair<>("ComplexParametric.java", 172), // @unspecified, skip
+        new Pair<>("ComplexParametric.java", 176), // @unspecified, skip
+        new Pair<>("ComplexParametric.java", 238), // @unspecified, skip
+        new Pair<>("ComplexParametric.java", 246), // @unspecified, skip
+        new Pair<>("DereferenceTypeVariable.java", 123), // @unspecified, skip
+        new Pair<>("MultiBoundTypeVariableToObject.java", 43), // @unspecified, skip
+        new Pair<>("MultiBoundTypeVariableToObject.java", 52), // @unspecified, skip
+        new Pair<>("MultiBoundTypeVariableToOther.java", 43), // @unspecified, skip
+        new Pair<>("MultiBoundTypeVariableToOther.java", 52), // @unspecified, skip
+        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 27), // @unspecified, skip
+        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 37), // @unspecified, skip
+        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 42), // @unspecified, skip
+        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 47), // @unspecified, skip
+        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 57), // @unspecified, skip
+        new Pair<>("MultiBoundTypeVariableUnspecToObject.java", 63), // @unspecified, skip
+        new Pair<>("MultiBoundTypeVariableUnspecToOther.java", 63), // @unspecified, skip
+        new Pair<>("NotNullMarkedUseOfTypeVariable.java", 41), // @unspecified, skip
+        new Pair<>("NullLiteralToTypeVariable.java", 53), // @unspecified, skip
+        new Pair<>("NullLiteralToTypeVariable.java", 73), // @unspecified, skip
+        new Pair<>("NullLiteralToTypeVariable.java", 83), // @unspecified, skip
+        new Pair<>("NullLiteralToTypeVariable.java", 93), // @unspecified, skip
+        new Pair<>("NullLiteralToTypeVariable.java", 113), // @unspecified, skip
+        new Pair<>("TypeVariableToObject.java", 109), // @unspecified, skip
+        new Pair<>("TypeVariableToParent.java", 80), // @unspecified, skip
+        new Pair<>("TypeVariableUnionNullToParent.java", 73), // @unspecified, skip
+        new Pair<>("TypeVariableUnionNullToParent.java", 78), // @unspecified, skip
+        new Pair<>("TypeVariableUnionNullToParent.java", 83), // @unspecified, skip
+        new Pair<>("TypeVariableUnionNullToParent.java", 93), // @unspecified, skip
+        new Pair<>("TypeVariableUnionNullToSelf.java", 53), // @unspecified, skip
+        new Pair<>("TypeVariableUnionNullToSelf.java", 73), // @unspecified, skip
+        new Pair<>("TypeVariableUnionNullToSelf.java", 83), // @unspecified, skip
+        new Pair<>("TypeVariableUnionNullToSelf.java", 93), // @unspecified, skip
+        new Pair<>("TypeVariableUnionNullToSelf.java", 98), // @unspecified, skip
+        new Pair<>("TypeVariableUnionNullToSelf.java", 113), // @unspecified, skip
+        new Pair<>("TypeVariableUnspecToObject.java", 58), // @unspecified, skip
+        new Pair<>("TypeVariableUnspecToObject.java", 78), // @unspecified, skip
+        new Pair<>("TypeVariableUnspecToObject.java", 98), // @unspecified, skip
+        new Pair<>("TypeVariableUnspecToObject.java", 103), // @unspecified, skip
+        new Pair<>("TypeVariableUnspecToObject.java", 108), // @unspecified, skip
+        new Pair<>("TypeVariableUnspecToObject.java", 113), // @unspecified, skip
+        new Pair<>("TypeVariableUnspecToObject.java", 118), // @unspecified, skip
+        new Pair<>("TypeVariableUnspecToParent.java", 53), // @unspecified, skip
+        new Pair<>("TypeVariableUnspecToParent.java", 68), // @unspecified, skip
+        new Pair<>("TypeVariableUnspecToParent.java", 83), // @unspecified, skip
+        new Pair<>("TypeVariableUnspecToParent.java", 98), // @unspecified, skip
+        new Pair<>("UnionTypeArgumentWithUseSite.java", 77), // @unspecified, skip
+        new Pair<>("UnionTypeArgumentWithUseSite.java", 95) // @unspecified, skip
+      )
+    ) {
+      @Override
+      public boolean shouldCount() {
+        return false;
+      }
+    },
+    new CallWithParameterWithNestedGenericsFilter(), // see: IDEA-377682
+    new VariableWithNestedGenericsFilter(), // see: IDEA-377683
+    new ReturnWithNestedGenericsFilter() // see: IDEA-375132
+  );
+
   @Override
   protected List<ErrorFilter> getErrorFilter() {
-    return List.of(
-      new SkipErrorFilter("jspecify_nullness_not_enough_information"), //it is useless for our goals
-      new ReturnSynchronizedWithUnspecifiedFilter(), // it looks like it is useless because @Unspecified is not supported
-      new SkipIndividuallyFilter( //each case has its own reason (line number starts from 0)
-        Set.of(
-          new Pair<>("CastWildcardToTypeVariable.java", 21),  // see: IDEA-377686
-
-          new Pair<>("ContravariantReturns.java", 32),  // see: IDEA-377687
-          new Pair<>("ContravariantReturns.java", 36),  // see: IDEA-377687
-          new Pair<>("ExtendsTypeVariableImplementedForNullableTypeArgument.java", 28), // overriding method with @NotNull, original has @Nullable, but IDEA doesn't highlight the opposite example, see IDEA-377687
-          new Pair<>("ExtendsTypeVariableImplementedForNullableTypeArgument.java", 33), // overriding method with @NotNull, original has @Nullable, but IDEA doesn't highlight the opposite example, see IDEA-377687
-          new Pair<>("OverrideParameters.java", 66),  // see: IDEA-377687
-
-          new Pair<>("DereferenceTypeVariable.java", 117),  // see: IDEA-377688
-          new Pair<>("TypeVariableToObject.java", 104), // see: IDEA-377688
-
-          new Pair<>("NullLiteralToTypeVariable.java", 58), // see: IDEA-377691
-          new Pair<>("NullLiteralToTypeVariable.java", 78), // see: IDEA-377691
-          new Pair<>("NullLiteralToTypeVariable.java", 98), // see: IDEA-377691
-          new Pair<>("NullLiteralToTypeVariable.java", 103), // see: IDEA-377691
-          new Pair<>("NullLiteralToTypeVariable.java", 118), // see: IDEA-377691
-          new Pair<>("TypeVariableUnionNullToParent.java", 88), // see: IDEA-377691
-          new Pair<>("TypeVariableUnionNullToParent.java", 98), // see: IDEA-377691
-          new Pair<>("TypeVariableUnionNullToSelf.java", 58), // see: IDEA-377691
-          new Pair<>("TypeVariableUnionNullToSelf.java", 78), // see: IDEA-377691
-          new Pair<>("TypeVariableUnionNullToSelf.java", 103), // see: IDEA-377691
-          new Pair<>("TypeVariableUnionNullToSelf.java", 118), // see: IDEA-377691
-          new Pair<>("TypeVariableToParent.java", 94), // see: IDEA-377691
-
-          new Pair<>("NullUnmarkedUndoesNullMarkedForWildcards.java", 23), // see: IDEA-377693
-
-          new Pair<>("SuperObject.java", 31),  // see: IDEA-377694
-          new Pair<>("SuperTypeVariable.java", 28),  // see: IDEA-377694
-          new Pair<>("SuperTypeVariable.java", 57),  // see: IDEA-377694
-          new Pair<>("SuperTypeVariable.java", 86),  // see: IDEA-377694
-          new Pair<>("SuperTypeVariable.java", 115), // see: IDEA-377694
-
-          new Pair<>("UninitializedField.java", 29), // see: IDEA-377695
-
-          new Pair<>("ContainmentExtends.java", 27),  // see: IDEA-377696
-          new Pair<>("ContainmentSuper.java", 36),  // see: IDEA-377696
-          new Pair<>("ContainmentSuperVsExtends.java", 22),  // see: IDEA-377696
-          new Pair<>("ContainmentSuperVsExtendsSameType.java", 21),  // see: IDEA-377696
-
-          new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 62), // see: IDEA-377697
-
-          new Pair<>("WildcardCapturesToBoundOfTypeParameterNotToTypeVariableItself.java", 24), // see: IDEA-377699
-
-          new Pair<>("UnionTypeArgumentWithUseSite.java", 30), // see: IDEA-377706
-
-          new Pair<>("SelfType.java", 34),  // see: IDEA-377707
-          new Pair<>("SelfType.java", 43),  // see: IDEA-377707
-          new Pair<>("OutOfBoundsTypeVariable.java", 21)  // see: IDEA-377707
-        )
-      ),
-      new SkipIndividuallyFilter( //cases to investigate. (line number starts from 0)
-        Set.of(
-          new Pair<>("AnnotatedBoundsOfWildcard.java", 74), // @unspecified, skip
-          new Pair<>("AnnotatedBoundsOfWildcard.java", 76), // @unspecified, skip
-          new Pair<>("ComplexParametric.java", 158), // @unspecified, skip
-          new Pair<>("ComplexParametric.java", 172), // @unspecified, skip
-          new Pair<>("ComplexParametric.java", 176), // @unspecified, skip
-          new Pair<>("ComplexParametric.java", 238), // @unspecified, skip
-          new Pair<>("ComplexParametric.java", 246), // @unspecified, skip
-          new Pair<>("DereferenceTypeVariable.java", 123), // @unspecified, skip
-          new Pair<>("MultiBoundTypeVariableToObject.java", 43), // @unspecified, skip
-          new Pair<>("MultiBoundTypeVariableToObject.java", 52), // @unspecified, skip
-          new Pair<>("MultiBoundTypeVariableToOther.java", 43), // @unspecified, skip
-          new Pair<>("MultiBoundTypeVariableToOther.java", 52), // @unspecified, skip
-          new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 27), // @unspecified, skip
-          new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 37), // @unspecified, skip
-          new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 42), // @unspecified, skip
-          new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 47), // @unspecified, skip
-          new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 57), // @unspecified, skip
-          new Pair<>("MultiBoundTypeVariableUnspecToObject.java", 63), // @unspecified, skip
-          new Pair<>("MultiBoundTypeVariableUnspecToOther.java", 63), // @unspecified, skip
-          new Pair<>("NotNullMarkedUseOfTypeVariable.java", 41), // @unspecified, skip
-          new Pair<>("NullLiteralToTypeVariable.java", 53), // @unspecified, skip
-          new Pair<>("NullLiteralToTypeVariable.java", 73), // @unspecified, skip
-          new Pair<>("NullLiteralToTypeVariable.java", 83), // @unspecified, skip
-          new Pair<>("NullLiteralToTypeVariable.java", 93), // @unspecified, skip
-          new Pair<>("NullLiteralToTypeVariable.java", 113), // @unspecified, skip
-          new Pair<>("TypeVariableToObject.java", 109), // @unspecified, skip
-          new Pair<>("TypeVariableToParent.java", 80), // @unspecified, skip
-          new Pair<>("TypeVariableUnionNullToParent.java", 73), // @unspecified, skip
-          new Pair<>("TypeVariableUnionNullToParent.java", 78), // @unspecified, skip
-          new Pair<>("TypeVariableUnionNullToParent.java", 83), // @unspecified, skip
-          new Pair<>("TypeVariableUnionNullToParent.java", 93), // @unspecified, skip
-          new Pair<>("TypeVariableUnionNullToSelf.java", 53), // @unspecified, skip
-          new Pair<>("TypeVariableUnionNullToSelf.java", 73), // @unspecified, skip
-          new Pair<>("TypeVariableUnionNullToSelf.java", 83), // @unspecified, skip
-          new Pair<>("TypeVariableUnionNullToSelf.java", 93), // @unspecified, skip
-          new Pair<>("TypeVariableUnionNullToSelf.java", 98), // @unspecified, skip
-          new Pair<>("TypeVariableUnionNullToSelf.java", 113), // @unspecified, skip
-          new Pair<>("TypeVariableUnspecToObject.java", 58), // @unspecified, skip
-          new Pair<>("TypeVariableUnspecToObject.java", 78), // @unspecified, skip
-          new Pair<>("TypeVariableUnspecToObject.java", 98), // @unspecified, skip
-          new Pair<>("TypeVariableUnspecToObject.java", 103), // @unspecified, skip
-          new Pair<>("TypeVariableUnspecToObject.java", 108), // @unspecified, skip
-          new Pair<>("TypeVariableUnspecToObject.java", 113), // @unspecified, skip
-          new Pair<>("TypeVariableUnspecToObject.java", 118), // @unspecified, skip
-          new Pair<>("TypeVariableUnspecToParent.java", 53), // @unspecified, skip
-          new Pair<>("TypeVariableUnspecToParent.java", 68), // @unspecified, skip
-          new Pair<>("TypeVariableUnspecToParent.java", 83), // @unspecified, skip
-          new Pair<>("TypeVariableUnspecToParent.java", 98), // @unspecified, skip
-          new Pair<>("UnionTypeArgumentWithUseSite.java", 77), // @unspecified, skip
-          new Pair<>("UnionTypeArgumentWithUseSite.java", 95) // @unspecified, skip
-        )
-      ) {
-        @Override
-        public boolean shouldCount() {
-          return false;
-        }
-      },
-      new CallWithParameterWithNestedGenericsFilter(), // see: IDEA-377682
-      new VariableWithNestedGenericsFilter(), // see: IDEA-377683
-      new ReturnWithNestedGenericsFilter() // see: IDEA-375132
-    );
+    return FILTERS;
+  }
+  
+  @AfterClass
+  public static void reportUnusedFilters() {
+    FILTERS.forEach(ErrorFilter::reportUnused);
   }
 
   private static class CallWithParameterWithNestedGenericsFilter implements ErrorFilter {
@@ -217,8 +229,12 @@ public class JSpecifyFilteredAnnotationTest extends JSpecifyAnnotationTest {
 
   private static class SkipIndividuallyFilter implements ErrorFilter {
     private final Set<Pair<String, Integer>> places;
+    private final Set<Pair<String, Integer>> unusedPlaces;
 
-    private SkipIndividuallyFilter(Set<Pair<String, Integer>> places) { this.places = places; }
+    private SkipIndividuallyFilter(Set<Pair<String, Integer>> places) { 
+      this.places = places;
+      this.unusedPlaces = new HashSet<>(places);
+    }
 
     @Override
     public boolean filterActual(@NotNull PsiFile file,
@@ -227,7 +243,7 @@ public class JSpecifyFilteredAnnotationTest extends JSpecifyAnnotationTest {
                                 int startLineOffset,
                                 @NotNull String errorMessage) {
       if (!errorMessage.contains("jspecify_nullness_mismatch")) return false;
-      return places.contains(Pair.create(file.getName(), lineNumber));
+      return filter(Pair.create(file.getName(), lineNumber));
     }
 
     @Override
@@ -236,7 +252,22 @@ public class JSpecifyFilteredAnnotationTest extends JSpecifyAnnotationTest {
       PsiFile file = psiElement.getContainingFile();
       if (file == null) return false;
       Document document = file.getFileDocument();
-      return places.contains(Pair.create(file.getName(), document.getLineNumber(psiElement.getTextRange().getStartOffset()) - 1));
+      return filter(Pair.create(file.getName(), document.getLineNumber(psiElement.getTextRange().getStartOffset()) - 1));
+    }
+
+    private boolean filter(Pair<@NotNull @NlsSafe String, Integer> pair) {
+      if (places.contains(pair)) {
+        unusedPlaces.remove(pair);
+        return true;
+      }
+      return false;
+    }
+
+    @Override
+    public void reportUnused() {
+      if (unusedPlaces.isEmpty()) return;
+      System.out.println("Some filters were unused; probably they are not actual anymore and should be excluded:\n"
+                         +StringUtil.join(unusedPlaces, "\n"));
     }
   }
 
