@@ -1188,7 +1188,7 @@ private fun optionalDependenciesOnPlugin(
     return emptySet()
   }
   val topologicalComparator = PluginSetBuilder(dependentDescriptors.map { it.getMainDescriptor() }.toSet()).topologicalComparator
-  dependentDescriptors.sortWith(Comparator { o1, o2 -> topologicalComparator.compare(o1.getMainDescriptor(), o2.getMainDescriptor()) })
+  dependentDescriptors.sortWith { o1, o2 -> topologicalComparator.compare(o1.getMainDescriptor(), o2.getMainDescriptor()) }
   return dependentDescriptors
     .distinct()
     .filter {

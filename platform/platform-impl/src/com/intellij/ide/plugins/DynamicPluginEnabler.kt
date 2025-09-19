@@ -23,7 +23,6 @@ fun interface PluginEnableStateChangedListener{
 @ApiStatus.Internal
 @IntellijInternalApi
 class DynamicPluginEnabler : PluginEnabler {
-
   companion object {
     private val pluginEnableStateChangedListeners = CopyOnWriteArrayList<PluginEnableStateChangedListener>()
 
@@ -38,14 +37,13 @@ class DynamicPluginEnabler : PluginEnabler {
     }
   }
 
-  override fun isDisabled(pluginId: PluginId): Boolean =
-    PluginEnabler.HEADLESS.isDisabled(pluginId)
+  override fun isDisabled(pluginId: PluginId): Boolean = PluginEnabler.HEADLESS.isDisabled(pluginId)
 
-  override fun enable(descriptors: Collection<IdeaPluginDescriptor>): Boolean =
-    enable(descriptors, project = null)
+  override fun enable(descriptors: Collection<IdeaPluginDescriptor>): Boolean = enable(descriptors, project = null)
 
-  fun enable(descriptors: Collection<IdeaPluginDescriptor>, project: Project? = null): Boolean =
-    enable(descriptors = descriptors, progressTitle = null, project = project)
+  fun enable(descriptors: Collection<IdeaPluginDescriptor>, project: Project? = null): Boolean {
+    return enable(descriptors = descriptors, progressTitle = null, project = project)
+  }
 
   fun enable(
     descriptors: Collection<IdeaPluginDescriptor>,
@@ -87,8 +85,7 @@ class DynamicPluginEnabler : PluginEnabler {
     return pluginsLoaded
   }
 
-  override fun disable(descriptors: Collection<IdeaPluginDescriptor>): Boolean =
-    disable(descriptors, project = null)
+  override fun disable(descriptors: Collection<IdeaPluginDescriptor>): Boolean = disable(descriptors, project = null)
 
   fun disable(
     descriptors: Collection<IdeaPluginDescriptor>,
