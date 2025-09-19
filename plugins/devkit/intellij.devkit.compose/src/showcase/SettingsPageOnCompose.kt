@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ComposeFoundationFlags
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -61,6 +62,7 @@ class SettingsPageOnCompose() : ComposeSearchableConfigurable() {
    */
   @Composable
   override fun ComposeContent() {
+    ComposeFoundationFlags.isNewContextMenuEnabled = false
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
 
       HeaderWithAnimation()
