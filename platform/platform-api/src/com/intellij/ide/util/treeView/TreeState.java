@@ -43,6 +43,8 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
 import static com.intellij.ide.util.treeView.CachedTreePresentationData.createFromTree;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 /**
  * @see #createOn(JTree)
@@ -156,12 +158,12 @@ public final class TreeState implements JDOMExternalizable {
       private int maxCachedIndex;
 
       void cacheSerializedMatch(@NotNull Object node, int nodeIndex, @NotNull List<@NotNull SerializablePathElement> matchedElements) {
-        maxCachedIndex = Math.max(maxCachedIndex, nodeIndex);
+        maxCachedIndex = max(maxCachedIndex, nodeIndex);
         serializedMatches.put(matchedElements.get(0), new SerializedMatch(node, matchedElements));
       }
 
       void cacheUserObjectMatch(@NotNull Object node, int nodeIndex) {
-        maxCachedIndex = Math.max(maxCachedIndex, nodeIndex);
+        maxCachedIndex = max(maxCachedIndex, nodeIndex);
         userObjectMatches.put(new SerializablePathElement(calcId(node), calcType(node)), new UserObjectMatch(node));
       }
 
@@ -372,6 +374,24 @@ public final class TreeState implements JDOMExternalizable {
         }
         return null;
       }
+    }
+
+    boolean tryAdvanceUsingIndex(@NotNull TreeModel model, @NotNull Object parent) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Trying to advance a matcher using the previously saved index");
+        logCurrentMatchedPath();
+      }
+      assert matchedSoFar <= serializedPath.length;
+      if (matchedSoFar == serializedPath.length) throw new IllegalStateException("Already matched all the path");
+      var nextSerializedElement = serializedPath[matchedSoFar];
+      var index = nextSerializedElement.index;
+      var count = model.getChildCount(parent);
+      if (index < 0 || count == 0) return false;
+      index = min(index, count - 1);
+      var child = model.getChild(parent, index);
+      ++matchedSoFar;
+      matchedPath = matchedPath == null ? new CachingTreePath(child) : matchedPath.pathByAddingChild(child);
+      return true;
     }
 
     @Nullable Match tryAdvanceUsingCache(@NotNull TreeState.PathMatcherCache.Node cacheNode) {
@@ -979,8 +999,12 @@ public final class TreeState implements JDOMExternalizable {
       matcher.restoreState(serializedMatch);
       return findMatchedPath(matcher, model, cache);
     }
-    // Nope, nothing.
-    return null;
+    // Nope, nothing. Let's blindly use the last index, coercing it into the valid range. Still better than nothing.
+    if (matcher.tryAdvanceUsingIndex(model, parent)) {
+      return findMatchedPath(matcher, model, cache);
+    }
+    // Still nothing? Let's select the parent at least.
+    return matcher.matchedPath();
   }
 
   private static void expandImpl(

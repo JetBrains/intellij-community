@@ -125,6 +125,68 @@ internal class TreeStateTest : BasePlatformTestCase() {
     )
   }
 
+  fun `test restore selection - the selected child is removed`() {
+    syncSelectionTest(
+      inputToSave = """
+       +root
+        +a1
+         *a1.1
+        +a2
+         *[a2.1]
+         *a2.2
+        *a3
+      """.trimIndent(),
+      inputToRestore = """
+       +root
+        +a1
+        +a2
+         *[a2.2]
+        *a3
+      """.trimIndent(),
+    )
+  }
+
+  fun `test restore selection - the selected child is removed, and it's the last child`() {
+    syncSelectionTest(
+      inputToSave = """
+       +root
+        +a1
+         *a1.1
+        +a2
+         *a2.1
+         *[a2.2]
+        *a3
+      """.trimIndent(),
+      inputToRestore = """
+       +root
+        +a1
+        +a2
+         *[a2.1]
+        *a3
+      """.trimIndent(),
+    )
+  }
+
+  fun `test restore selection - all children are removed`() {
+    syncSelectionTest(
+      inputToSave = """
+       +root
+        +a1
+         *a1.1
+        +a2
+         *a2.1
+         *[a2.2]
+        *a3
+      """.trimIndent(),
+      inputToRestore = """
+       +root
+        +a1
+        +[a2]
+        *a3
+      """.trimIndent(),
+    )
+  }
+
   private fun cachedPresentationTest(
     inputToSave: String,
     inputToRestore: String = inputToSave,
