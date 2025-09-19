@@ -63,25 +63,25 @@ public class BuildContextImpl implements BuildContext {
     
     myIsRebuild = CLFlags.NON_INCREMENTAL.isFlagSet(flags);
 
-    Map<NodeSource, String> sourcesMap = new HashMap<>();
-    Map<Path, String> otherInputsMap = new HashMap<>();
+    Map<String, String> digestsMap = new HashMap<>();
     Base64.Encoder base64 = Base64.getEncoder().withoutPadding();
     for (Input input : inputs) {
-      Path inputPath = baseDir.resolve(input.path).normalize();
       String inputDigest = base64.encodeToString(input.digest);
-      if (isSourceDependency(inputPath)) {
-        sourcesMap.put(myPathMapper.toNodeSource(inputPath), inputDigest);
-      }
-      else {
-        otherInputsMap.put(inputPath, inputDigest);
-      }
+      digestsMap.put(input.path, inputDigest);
+    }
+
+    Map<NodeSource, String> sourcesMap = new HashMap<>();
+    for (String src : CLFlags.SRCS.getValue(flags)) {
+      Path inputPath = baseDir.resolve(src).normalize();
+      assert isSourceDependency(inputPath);
+      sourcesMap.put(myPathMapper.toNodeSource(inputPath), Objects.requireNonNull(digestsMap.get(src)));
     }
     mySources = new SourceSnapshotImpl(sourcesMap);
 
     Map<NodeSource, String> libsMap = new LinkedHashMap<>(); // for the classpath order is important
     for (String cpEntry : CLFlags.CP.getValue(flags)) {
       Path path = baseDir.resolve(cpEntry).normalize();
-      libsMap.put(myPathMapper.toNodeSource(path), otherInputsMap.getOrDefault(path, ""));
+      libsMap.put(myPathMapper.toNodeSource(path), Objects.requireNonNull(digestsMap.get(cpEntry)));
     }
     myLibraries = new SourceSnapshotImpl(libsMap);
 

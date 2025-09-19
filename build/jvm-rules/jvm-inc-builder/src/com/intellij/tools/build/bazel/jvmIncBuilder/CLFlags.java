@@ -13,6 +13,7 @@ public enum CLFlags {
   NON_INCREMENTAL,
   JAVA_COUNT,
   TARGET_LABEL,
+  SRCS,
   // classpath
   CP,
 

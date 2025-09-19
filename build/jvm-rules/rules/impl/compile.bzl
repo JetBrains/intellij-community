@@ -277,7 +277,7 @@ def _run_jvm_builder(
         kotlin_inc_threshold = kotlinc_options.inc_threshold
     java_inc_threshold = ctx.attr._java_inc_threshold[BuildSettingInfo].value
 
-    args = init_builder_args(ctx, associates, transitiveInputs, plugins = plugins, compile_deps = compile_deps)
+    args = init_builder_args(ctx, srcs, associates, transitiveInputs, plugins = plugins, compile_deps = compile_deps)
     args.add("--out", output_jar)
 
     outputs = [output_jar]
