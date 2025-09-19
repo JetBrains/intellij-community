@@ -25,7 +25,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.PsiTodoSearchHelper
 import com.intellij.psi.search.TodoAttributesUtil
 import com.intellij.psi.search.TodoPattern
-import kotlinx.coroutines.flow.buffer
 import java.util.regex.Pattern
 
 private val LOG: Logger = logger<TodoRemoteApiImpl>()
@@ -47,43 +46,67 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
         return@channelFlow
       }
 
-      readAction {
+      val filter = resolveFilter(project, settings.filter)
+
+      // lightweight descriptor of a TODO occurrence containing only offsets
+      // introduced in order to separate filtering from preview computation to keep read locks as short as possible
+      data class TodoOccurence(val start: Int, val end: Int)
+
+      val todoItems: List<TodoOccurence> = readAction {
         val psiFile = PsiManager.getInstance(project).findFile(virtualFile)
         if (psiFile == null) {
           LOG.warn("PsiFile not found for virtualFile path ${virtualFile.path}")
-          return@readAction
+          return@readAction emptyList()
         }
 
-        val document = psiFile.viewProvider.document
         val helper = PsiTodoSearchHelper.getInstance(project)
-        val filter = resolveFilter(project, settings.filter)
-
         val allTodoItems = helper.findTodoItems(psiFile)
-        val filteredTodoItems = if (filter != null) allTodoItems.filter { it.pattern != null && filter.contains(it.pattern) } else allTodoItems.asList()
-        if (filteredTodoItems.isEmpty()) return@readAction
+
+        val filteredTodoItems = if (filter != null) {
+          allTodoItems.filter { it.pattern != null && filter.contains(it.pattern) }
+        } else allTodoItems.asList()
+
+        val items = ArrayList<TodoOccurence>(minOf(filteredTodoItems.size, settings.maxItems))
 
         for (todoItem in filteredTodoItems) {
           if (sentItems.get() >= settings.maxItems) break
 
           val start = todoItem.textRange.startOffset
           val end = todoItem.textRange.endOffset
-          val line = if (document != null) document.getLineNumber(start) else 0
 
-          val previewChunks = buildPreviewChunks(document, line)
-
-          val result = TodoResult(
-            presentation = previewChunks,
-            fileId = virtualFile.rpcId(),
-            line = line,
-            navigationOffset = start,
-            length = end - start,
+          items += TodoOccurence(
+            start = start,
+            end = end,
           )
-
-          val sent = trySend(result)
-          if (sent.isSuccess) sentItems.incrementAndGet()
         }
+        items
       }
-    }.buffer(capacity = settings.maxItems)
+
+      val document: Document? = readAction {
+        PsiManager.getInstance(project).findFile(virtualFile)?.viewProvider?.document
+      }
+
+      for (item in todoItems) {
+        val (line, preview) = readAction {
+          if (document != null) {
+            val line = document.getLineNumber(item.start)
+            val previewChunks = buildPreviewChunks(document, line)
+            line to previewChunks
+          } else 0 to emptyList()
+        }
+
+        val result = TodoResult(
+          presentation = preview,
+          fileId = virtualFile.rpcId(),
+          line = line,
+          navigationOffset = item.start,
+          length = item.end - item.start
+        )
+
+        val sent = trySend(result)
+        if (sent.isSuccess) sentItems.incrementAndGet()
+      }
+    }
   }
 
   private fun resolveFilter(project: Project, config: TodoFilterConfig?): TodoFilter? {
