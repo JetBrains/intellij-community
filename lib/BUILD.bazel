@@ -2289,11 +2289,39 @@ jvm_import(
   source_jar = "@mockk-core-jvm-1_14_5-sources_http//file"
 )
 
-jvm_import(
+java_library(
   name = "io-modelcontextprotocol-kotlin-sdk",
-  jar = "@kotlin-sdk-jvm-0_6_0_http//file",
-  source_jar = "@kotlin-sdk-jvm-0_6_0-sources_http//file",
+  exports = [
+    ":kotlin-sdk-jvm-0_7_2_http_import",
+    ":kotlin-sdk-core-jvm-0_7_2_http_import",
+    ":kotlin-sdk-client-jvm-0_7_2_http_import",
+    ":kotlin-sdk-server-jvm-0_7_2_http_import",
+  ],
   visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "kotlin-sdk-jvm-0_7_2_http_import",
+  jar = "@kotlin-sdk-jvm-0_7_2_http//file",
+  source_jar = "@kotlin-sdk-jvm-0_7_2-sources_http//file"
+)
+
+jvm_import(
+  name = "kotlin-sdk-core-jvm-0_7_2_http_import",
+  jar = "@kotlin-sdk-core-jvm-0_7_2_http//file",
+  source_jar = "@kotlin-sdk-core-jvm-0_7_2-sources_http//file"
+)
+
+jvm_import(
+  name = "kotlin-sdk-client-jvm-0_7_2_http_import",
+  jar = "@kotlin-sdk-client-jvm-0_7_2_http//file",
+  source_jar = "@kotlin-sdk-client-jvm-0_7_2-sources_http//file"
+)
+
+jvm_import(
+  name = "kotlin-sdk-server-jvm-0_7_2_http_import",
+  jar = "@kotlin-sdk-server-jvm-0_7_2_http//file",
+  source_jar = "@kotlin-sdk-server-jvm-0_7_2-sources_http//file"
 )
 
 jvm_import(
