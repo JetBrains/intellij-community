@@ -5,13 +5,13 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.inspections.GradleKotlinInspectionProvider
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor
 
 class GroovyGradleKotlinInspectionProvider : GradleKotlinInspectionProvider {
     override fun isRedundantKotlinStdLibInspectionAvailable(file: PsiFile): Boolean {
-        return FileUtilRt.extensionEquals(file.name, KotlinGradleConstants.GROOVY_EXTENSION)
+        return FileUtilRt.extensionEquals(file.name, GradleConstants.EXTENSION)
     }
 
     override fun getRedundantKotlinStdLibInspectionVisitor(

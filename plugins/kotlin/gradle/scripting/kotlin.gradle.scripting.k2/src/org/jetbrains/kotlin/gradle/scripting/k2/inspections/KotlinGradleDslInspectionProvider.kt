@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.gradle.codeInspection.GradleDslInspectionProvider
+import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
     override fun getConfigurationAvoidanceInspectionVisitor(
@@ -44,7 +45,7 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
     }
 
     override fun isAvoidDependencyNamedArgumentsNotationInspectionAvailable(file: PsiFile) : Boolean {
-        return FileUtilRt.extensionEquals(file.name, "gradle.kts")
+        return FileUtilRt.extensionEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
     }
 
     override fun getAvoidDependencyNamedArgumentsNotationInspectionVisitor(

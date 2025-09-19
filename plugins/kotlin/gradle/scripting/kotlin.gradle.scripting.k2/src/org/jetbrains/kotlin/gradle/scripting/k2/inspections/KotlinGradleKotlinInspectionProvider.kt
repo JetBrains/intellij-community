@@ -6,11 +6,12 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.inspections.GradleKotlinInspectionProvider
+import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class KotlinGradleKotlinInspectionProvider : GradleKotlinInspectionProvider {
 
     override fun isRedundantKotlinStdLibInspectionAvailable(file: PsiFile): Boolean {
-        return FileUtilRt.extensionEquals(file.name, "gradle.kts")
+        return FileUtilRt.extensionEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
     }
 
     override fun getRedundantKotlinStdLibInspectionVisitor(
