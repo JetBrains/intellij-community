@@ -7,7 +7,8 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
+import org.jetbrains.kotlin.analysis.api.components.diagnostics
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -100,7 +101,6 @@ private fun findContextToAnalyze(
     return null
 }
 
-@OptIn(KaExperimentalApi::class)
 private fun areTypeArgumentsEqual(
     originalCallExpression: KtCallExpression,
     newCallExpression: KtCallExpression,
@@ -118,11 +118,8 @@ private fun areTypeArgumentsEqual(
         ?.typeArgumentsMapping
         ?: return false
 
-    val oldDiagnostics = originalCallExpression.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-    val newDiagnostics = newCallExpression.containingKtFile.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-
     return areAllTypesEqual(originalTypeArgs, newTypeArgs, approximateFlexible) &&
-            !hasNewDiagnostics(oldDiagnostics, newDiagnostics)
+            !hasNewDiagnostics(originalCallExpression, newCallExpression)
 }
 
 private fun KaSession.areAllTypesEqual(
@@ -136,13 +133,20 @@ private fun KaSession.areAllTypesEqual(
             }
 }
 
-private fun hasNewDiagnostics(
-    oldDiagnostics: Collection<KaDiagnosticWithPsi<*>>,
-    newDiagnostics: Collection<KaDiagnosticWithPsi<*>>,
-): Boolean = (newDiagnostics - oldDiagnostics).any {
-    it is KaFirDiagnostic.UnresolvedReference ||
-            it is KaFirDiagnostic.BuilderInferenceStubReceiver ||
-            it is KaFirDiagnostic.ImplicitNothingReturnType
+context(_: KaSession)
+private fun hasNewDiagnostics(originalCallExpression: KtCallExpression, newCallExpression: KtCallExpression): Boolean {
+    @OptIn(KaExperimentalApi::class)
+    val oldDiagnostics = originalCallExpression.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+    val newDiagnostics = newCallExpression.containingKtFile.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+    if (oldDiagnostics.isEmpty() && newDiagnostics.isEmpty()) {
+        return false
+    }
+
+    return (newDiagnostics - oldDiagnostics.toHashSet()).any {
+        it is KaFirDiagnostic.UnresolvedReference ||
+                it is KaFirDiagnostic.BuilderInferenceStubReceiver ||
+                it is KaFirDiagnostic.ImplicitNothingReturnType
+    }
 }
 
 private fun KaSession.areTypesEqual(
