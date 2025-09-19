@@ -1869,7 +1869,6 @@ f:com.intellij.codeInsight.completion.CompletionPhase$Synchronous
 a:com.intellij.codeInsight.completion.CompletionPhase$ZombiePhase
 - com.intellij.codeInsight.completion.CompletionPhase
 a:com.intellij.codeInsight.completion.CompletionPreselectionBehaviourProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - shouldPreselectFirstSuggestion(com.intellij.codeInsight.completion.CompletionParameters):Z
 c:com.intellij.codeInsight.completion.DefaultCompletionContributor

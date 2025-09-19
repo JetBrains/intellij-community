@@ -964,7 +964,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   public static boolean shouldPreselectFirstSuggestion(@NotNull CompletionParameters parameters) {
     if (Registry.is("ide.completion.lookup.element.preselect.depends.on.context")) {
-      for (CompletionPreselectionBehaviourProvider provider : CompletionPreselectionBehaviourProvider.EP_NAME.getExtensionList()) {
+      for (CompletionPreselectionBehaviourProvider provider : CompletionPreselectionBehaviourProvider.getExtensions()) {
         if (!provider.shouldPreselectFirstSuggestion(parameters)) {
           return false;
         }
