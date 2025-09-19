@@ -264,12 +264,6 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/compose-multiplatform/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
-    LibraryLicense("Compose Multiplatform File Picker", libraryName = "com.darkrockstudios.mpfilepicker", url = "https://github.com/Wavesonics/compose-multiplatform-file-picker")
-      .mit("https://github.com/Wavesonics/compose-multiplatform-file-picker/blob/master/LICENSE")
-      .additionalLibraryNames(
-        "com.darkrockstudios.mpfilepicker.jvm"
-      ),
-
     // For ADB wireless QR Code generation
     LibraryLicense("Core barcode encoding/decoding library", url = "https://github.com/zxing/zxing/tree/master/core", libraryName = "zxing-core")
       .apache("https://github.com/zxing/zxing/blob/master/LICENSE")
@@ -908,11 +902,8 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/qos-ch/slf4j/blob/master/log4j-over-slf4j/LICENSE.txt")
       .suppliedByOrganizations("QOS.ch Sarl"),
 
-    LibraryLicense("LWJGL", libraryName="org.lwjgl.lwjgl", url = "https://github.com/LWJGL/lwjgl3")
-      .newBsd("https://github.com/LWJGL/lwjgl3/blob/master/LICENSE.md")
-      .additionalLibraryNames(
-        "org.lwjgl.lwjgl.tinyfd"
-      ),
+    LibraryLicense("LWJGL", libraryName="org.lwjgl.lwjgl.tinyfd", url = "https://github.com/LWJGL/lwjgl3")
+      .newBsd("https://github.com/LWJGL/lwjgl3/blob/master/LICENSE.md"),
 
     LibraryLicense("lz4-java", libraryName = "lz4-java", url = "https://github.com/lz4/lz4-java")
       .apache("https://github.com/lz4/lz4-java/blob/master/LICENSE.txt"),
