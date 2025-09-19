@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -190,25 +190,35 @@ public class ClassElement extends CompositeElement implements Constants {
 
     if (child.getElementType() == FIELD) {
       final ASTNode nextField = TreeUtil.findSibling(child.getTreeNext(), FIELD);
-      if (nextField != null && ((PsiField)nextField.getPsi()).getTypeElement().equals(((PsiField)child.getPsi()).getTypeElement())) {
-        final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
+      if (nextField != null && ((PsiField)nextField.getPsi()).getTypeElement() == ((PsiField)child.getPsi()).getTypeElement()) {
+        JavaSourceUtil.deleteSeparatingComma(this, child);
+        final CharTable table = SharedImplUtil.findCharTableByTree(this);
         final ASTNode modifierList = child.findChildByType(MODIFIER_LIST);
         if (modifierList != null) {
-          LeafElement whitespace = Factory.createSingleLeafElement(WHITE_SPACE, " ", 0, 1, treeCharTab, getManager());
+          LeafElement whitespace = Factory.createSingleLeafElement(WHITE_SPACE, " ", 0, 1, table, getManager());
           final ASTNode first = nextField.getFirstChildNode();
           nextField.addChild(whitespace, first);
           final ASTNode typeElement = child.findChildByType(TYPE);
           if (typeElement == null) {
-            final TreeElement modifierListCopy = ChangeUtil.copyElement((TreeElement)modifierList, treeCharTab);
+            final TreeElement modifierListCopy = ChangeUtil.copyElement((TreeElement)modifierList, table);
             nextField.addChild(modifierListCopy, whitespace);
           } else {
             ASTNode run = modifierList;
             do {
-              final TreeElement copy = ChangeUtil.copyElement((TreeElement)run, treeCharTab);
+              final TreeElement copy = ChangeUtil.copyElement((TreeElement)run, table);
               nextField.addChild(copy, whitespace);
               if (run == typeElement) break; else run = run.getTreeNext();
             } while(true);
           }
+        }
+      }
+      else {
+        final ASTNode prevField = TreeUtil.findSiblingBackward(child.getTreePrev(), FIELD);
+        if (prevField != null && ((PsiField)prevField.getPsi()).getTypeElement() == ((PsiField)child.getPsi()).getTypeElement()) {
+          JavaSourceUtil.deleteSeparatingComma(this, child);
+          final CharTable table = SharedImplUtil.findCharTableByTree(this);
+          TreeElement semicolon = Factory.createSingleLeafElement(SEMICOLON, ";", 0, 1, table, getManager());
+          prevField.addChild(semicolon, null);
         }
       }
     }

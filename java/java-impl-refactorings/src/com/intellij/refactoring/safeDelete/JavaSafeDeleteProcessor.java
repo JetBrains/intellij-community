@@ -505,9 +505,6 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   @Override
   public void prepareForDeletion(@NotNull PsiElement element) {
-    if (element instanceof PsiVariable var) {
-      var.normalizeDeclaration();
-    }
     if (element instanceof PsiParameter parameter
         && element.getParent() instanceof PsiParameterList parameterList
         && parameterList.getParent() instanceof PsiMethod method) {
