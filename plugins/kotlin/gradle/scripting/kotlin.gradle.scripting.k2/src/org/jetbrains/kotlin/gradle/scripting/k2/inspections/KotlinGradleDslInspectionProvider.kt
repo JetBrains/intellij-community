@@ -66,14 +66,14 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
         return RedundantKotlinStdLibInspectionVisitor(holder)
     }
 
-    override fun isAvoidApplyPluginSyntaxInspectionAvailable(file: PsiFile): Boolean {
+    override fun isAvoidApplyPluginMethodInspectionAvailable(file: PsiFile): Boolean {
         return FileUtilRt.extensionEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
     }
 
-    override fun getAvoidApplyPluginSyntaxInspectionVisitor(
+    override fun getAvoidApplyPluginMethodInspectionVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean
     ): PsiElementVisitor {
-        return KotlinAvoidApplyPluginNotationInspectionVisitor(holder)
+        return KotlinAvoidApplyPluginMethodInspectionVisitor(holder)
     }
 }
