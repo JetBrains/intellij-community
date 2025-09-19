@@ -600,6 +600,10 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     private final boolean myIsDefault;
     private DuplicatesFinder myFinder;
     protected final boolean myCanDeleteRedundantBranch;
+    /**
+     * Represents the context in which this branch is defined.
+     * It can contain any element inside the current branch.
+     */
     private final PsiElement myContext;
 
     BranchBase(@NotNull PsiElement context, T @NotNull [] labels, PsiStatement @NotNull [] statements, String @NotNull [] commentTexts) {
