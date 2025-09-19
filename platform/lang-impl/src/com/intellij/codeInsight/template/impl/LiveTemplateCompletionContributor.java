@@ -73,9 +73,8 @@ public final class LiveTemplateCompletionContributor extends CompletionContribut
 
         Editor editor = parameters.getEditor();
         int offset = editor.getCaretModel().getOffset();
-        final List<TemplateImpl> availableTemplates = TemplateManagerImpl.listApplicableTemplates(
-          TemplateActionContext.expanding(file, editor));
-        final Map<TemplateImpl, String> templates = filterTemplatesByPrefix(availableTemplates, editor, offset, false, false);
+        List<TemplateImpl> availableTemplates = TemplateManagerImpl.listApplicableTemplates(TemplateActionContext.expanding(file, editor));
+        Map<TemplateImpl, String> templates = filterTemplatesByPrefix(availableTemplates, editor, offset, false, false);
         boolean isAutopopup = parameters.getInvocationCount() == 0;
         if (shouldShowAllTemplates()) {
           final AtomicBoolean templatesShown = new AtomicBoolean(false);
