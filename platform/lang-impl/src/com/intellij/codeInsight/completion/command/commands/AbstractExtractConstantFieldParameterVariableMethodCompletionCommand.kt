@@ -115,9 +115,13 @@ abstract class AbstractExtractMethodCompletionCommandProvider(
     if (controlFlowStatement != null) {
       editor?.selectionModel?.setSelection(controlFlowStatement.textRange.startOffset, controlFlowStatement.textRange.endOffset)
       return super.isApplicable(offset, psiFile, editor)
-    } else {
-      return findOutermostExpression(offset, psiFile, editor) != null && super.isApplicable(offset, psiFile, editor)
     }
+    val outermostExpression = findOutermostExpression(offset, psiFile, editor)
+    if (outermostExpression != null) {
+      editor?.selectionModel?.setSelection(outermostExpression.textRange.startOffset, outermostExpression.textRange.endOffset)
+      return super.isApplicable(offset, psiFile, editor)
+    }
+    return false
   }
 
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand {
@@ -133,8 +137,14 @@ abstract class AbstractExtractMethodCompletionCommandProvider(
         val controlFlowStatement = findControlFlowStatement(offset, psiFile)
         if (controlFlowStatement != null) {
           editor.selectionModel.setSelection(controlFlowStatement.textRange.startOffset, controlFlowStatement.textRange.endOffset)
+          super.execute(offset, psiFile, editor)
+          return
         }
-        super.execute(offset, psiFile, editor)
+        val expression = findOutermostExpression(offset, psiFile, editor)
+        if (expression != null) {
+          editor.selectionModel.setSelection(expression.textRange.startOffset, expression.textRange.endOffset)
+          super.execute(offset, psiFile, editor)
+        }
       }
     }
   }

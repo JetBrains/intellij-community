@@ -1433,6 +1433,9 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
               }
           }
     """)
+
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.any { element -> element.lookupString.contains("Extract method", ignoreCase = true) })
   }
 
   fun testExtractMethodControlFlowIfElseStatement() {
@@ -1447,6 +1450,22 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
               }
           }
     """)
+
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.any { element -> element.lookupString.contains("Extract method", ignoreCase = true) })
+  }
+
+  fun testExtractMethodInTheEndOfStatement() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          void foo() {
+              System.out.println(1).<caret>;
+          }
+    """)
+
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.any { element -> element.lookupString.contains("Extract method", ignoreCase = true) })
   }
 
   fun testExtractMethodControlFlowIfElseIfStatement() {
