@@ -121,7 +121,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
 
     return TodoFilter().apply {
       config.patterns.forEach { config: TodoPatternConfig ->
-        val patternString = if (config.isRegex) config.pattern else Pattern.quote(config.pattern)
+        val patternString = config.pattern
         val pattern = TodoPattern(patternString, TodoAttributesUtil.createDefault(), config.isCaseSensitive)
         addTodoPattern(pattern)
       }

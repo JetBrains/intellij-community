@@ -34,8 +34,7 @@ class TodoRemoteClient {
       val it = filter.iterator()
       while (it.hasNext()) {
         val filter = it.next()
-        val isRegex = filter.pattern != null
-        patterns.add(TodoPatternConfig(filter.patternString, filter.isCaseSensitive, isRegex))
+        patterns.add(TodoPatternConfig(filter.patternString, filter.isCaseSensitive))
       }
       return TodoFilterConfig(filter.name, patterns)
     }

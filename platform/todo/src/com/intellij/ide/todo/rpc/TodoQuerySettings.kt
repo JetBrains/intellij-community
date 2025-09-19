@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 data class TodoPatternConfig(
   val pattern: String,
   val isCaseSensitive: Boolean,
-  val isRegex: Boolean,
 )
 
 @ApiStatus.Internal
