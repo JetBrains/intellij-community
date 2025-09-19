@@ -1,10 +1,13 @@
 package com.intellij.driver.sdk.ui.components.common.dialogs
 
 import com.intellij.driver.client.Driver
+import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.elements.accessibleList
 import com.intellij.driver.sdk.ui.components.elements.checkBox
+import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.ui
 import javax.swing.JTextField
@@ -33,6 +36,13 @@ open class NewProjectDialogUI(data: ComponentData) : UiComponent(data) {
 
   fun chooseProjectType(projectType: String) {
     projectTypeList.waitOneText(projectType).click()
+  }
+
+  fun selectJdk(jdkVersion: String) {
+    step("Pick JDK version") {
+      x("//div[@accessiblename='JDK:']/div[@class='BasicArrowButton']").click()
+      driver.ui.popup().accessibleList().clickItem(jdkVersion, false)
+    }
   }
 
   fun specifyProjectLanguage(language: String) {

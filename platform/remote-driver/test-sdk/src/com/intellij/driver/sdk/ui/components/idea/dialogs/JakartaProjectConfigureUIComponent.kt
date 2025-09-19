@@ -6,6 +6,7 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.dialogs.NewProjectDialogUI
 import com.intellij.driver.sdk.ui.components.elements.accessibleList
 import com.intellij.driver.sdk.ui.components.elements.popup
+import com.intellij.driver.sdk.ui.shouldBe
 import com.intellij.driver.sdk.ui.ui
 
 
@@ -41,10 +42,15 @@ class JakartaProjectConfigureUIComponent(data: ComponentData) : UiComponent(data
   }
 
   fun getActualAddedDependencies(): List<String> {
-    return x("//div[@accessiblename='Added dependencies:']/following-sibling::div[@class='SelectedLibrariesPanel']//div[@class='ScrollablePanel']")
-      .getAllTexts()
-      .map { it.text }
-      .sorted()
-      .toList()
+    val list: List<UiComponent> = xx("//div[@accessiblename='Added dependencies:']/following-sibling::div[@class='SelectedLibrariesPanel']//div[@class='ScrollablePanel']").list()
+    if (list.isEmpty()) {
+      x("//div[@emptytext='No dependencies added']").shouldBe { present() }
+      return listOf()
+    }
+    else {
+      return list[0].getAllTexts()
+        .map { it.text }
+        .toList()
+    }
   }
 }

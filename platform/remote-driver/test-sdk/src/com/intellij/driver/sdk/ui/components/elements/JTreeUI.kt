@@ -22,6 +22,7 @@ import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
 import java.awt.Point
+import java.io.File
 import javax.swing.JTree
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -174,6 +175,10 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 
   open fun collectExpandedPaths(): List<TreePathToRow> {
     return fixture.collectExpandedPaths()
+  }
+
+  fun collectExpandedPathsAsStrings(): List<String> {
+    return collectExpandedPaths().map { it.path.joinToString(File.separator) }.toList()
   }
 
   fun collectSelectedPaths(): List<TreePath> = fixture.collectSelectedPaths()
