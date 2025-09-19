@@ -217,7 +217,16 @@ internal class GHPRReviewFileEditorModel internal constructor(
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
 
     private val cs = cs.childScope("${this::class.simpleName}")
-    private val _range = MutableStateFlow(originalLocation.lineIdx.shiftLineToAfter().let { Side.RIGHT to it..it })
+    private val _range = MutableStateFlow(
+      when (originalLocation) {
+        is GHPRReviewCommentLocation.SingleLine -> {
+          Side.RIGHT to originalLocation.lineIdx.shiftLineToAfter().let { it..it }
+        }
+        is GHPRReviewCommentLocation.MultiLine -> {
+          Side.RIGHT to (originalLocation.startLineIdx.shiftLineToAfter()..originalLocation.lineIdx.shiftLineToAfter())
+        }
+      }
+    )
     override val range: StateFlow<Pair<Side, IntRange>?> = _range.asStateFlow()
     override val line: StateFlow<Int?> = range.mapState { it?.second?.last }
 
