@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider.Companion.EP_NAME
 import com.intellij.internal.statistic.utils.PluginType
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
@@ -45,7 +46,7 @@ internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope)
   private fun calculateEventLogProvider(): Map<String, StatisticsEventLoggerProvider> {
     return calculateEventLogProviderExt().mapValues {
       it.value.find { provider ->
-        if (PluginManagerCore.isRunningFromSources()) true
+        if (PluginManagerCore.isRunningFromSources() || AppMode.isDevServer()) true
         else PluginManager.getPluginByClass(provider::class.java)?.let { plugin -> PluginManagerCore.isDevelopedExclusivelyByJetBrains(plugin) }
              ?: false
       } ?: EmptyStatisticsEventLoggerProvider(it.key)
