@@ -177,7 +177,10 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
    * @param parameters the parameters for which the contributors are run.
    * @param consumer   the consumer for the results.
    * @param stop       if {@code false} is passed, no contributors will be run after the current contributor finishes.
+   * @deprecated use {@link #runRemainingContributors(CompletionParameters, Consumer)} instead.
+   * It never should be allowed to pass {@code false} as stop parameter.
    */
+  @Deprecated
   public void runRemainingContributors(@NotNull CompletionParameters parameters,
                                        @NotNull Consumer<? super CompletionResult> consumer,
                                        boolean stop) {
