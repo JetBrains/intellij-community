@@ -54,6 +54,11 @@ jvm_library(
     "@lib//:python-community-junit5_tests-framework-uk-webcompere-system-stubs-jupiter",
     "//platform/util/coroutines",
     "@lib//:byte-buddy",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/analysis-impl",
   ],
   exports = [
     "//python/setup-test-environment:community-testFramework-testEnv",

@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.fixtures.junit5
+package com.intellij.python.junit5Tests.framework
 
-import com.jetbrains.python.fixtures.junit5.metaInfo.TestMetaInfoExtension.Companion.getTestClassInfo
-import com.jetbrains.python.fixtures.junit5.metaInfo.TestMetaInfoExtension.Companion.setTestCaseFilePath
-import com.jetbrains.python.fixtures.junit5.metaInfo.resolveTestName
+import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfoExtension.Companion.getTestClassInfo
+import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfoExtension.Companion.setTestCaseFilePath
+import com.intellij.python.junit5Tests.framework.metaInfo.resolveTestName
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.api.extension.ExtendWith

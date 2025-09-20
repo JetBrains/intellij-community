@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.fixtures.junit5
+package com.intellij.python.junit5Tests.framework
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -13,9 +13,9 @@ import com.intellij.testFramework.junit5.fixture.*
 import com.intellij.testFramework.junit5.fixture.LookupFixtureExtension.Companion.getLookupFixtureManager
 import com.intellij.testFramework.junit5.fixture.LookupFixtureExtension.Companion.registerImplicitFixtures
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.fixtures.junit5.metaInfo.TestMetaInfoExtension
-import com.jetbrains.python.fixtures.junit5.metaInfo.TestMetaInfoExtension.Companion.getTestClassInfo
-import com.jetbrains.python.fixtures.junit5.metaInfo.TestMetaInfoExtension.Companion.getTestMethodInfo
+import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfoExtension
+import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfoExtension.Companion.getTestClassInfo
+import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfoExtension.Companion.getTestMethodInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
