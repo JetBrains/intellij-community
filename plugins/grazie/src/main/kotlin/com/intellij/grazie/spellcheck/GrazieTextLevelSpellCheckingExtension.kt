@@ -124,7 +124,7 @@ object GrazieTextLevelSpellCheckingExtension {
   }
 }
 
-/** A typo detected by [SpellcheckingExtension] in a sentence or text inside a [PsiElement]. */
+/** A typo detected by [GrazieTextLevelSpellCheckingExtension] in a sentence or text inside a [PsiElement]. */
 interface SpellingTypo {
   /** The misspelled word inside the [element] */
   val word: String
