@@ -387,7 +387,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     val projectSaveSettingsDurationMs = measureTimeMillis {
       if (saveProject) {
-        serviceOrNull<FileDocumentManager>()?.saveAllDocuments()
+        serviceIfCreated<FileDocumentManager>()?.saveAllDocuments()
         SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project)
       }
     }
