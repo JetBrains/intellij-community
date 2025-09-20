@@ -201,7 +201,14 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         compilationTasks.buildProjectArtifacts(it)
       }
 
-      if (runConfigurations.any()) {
+      if (runConfigurations.any { it.buildProject }) {
+        context.messages.info(
+          "Building the entire project as requested by run configurations: " +
+          runConfigurations.filter { it.buildProject }.map { it.name }
+        )
+        compilationTasks.compileAllModulesAndTests()
+      }
+      else if (runConfigurations.any()) {
         compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"),
                                         listOf("intellij.platform.buildScripts") + runConfigurations.map { it.moduleName })
         compilationTasks.buildProjectArtifacts(runConfigurations.flatMapTo(LinkedHashSet()) { it.requiredArtifacts })
