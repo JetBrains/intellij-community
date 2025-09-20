@@ -20,9 +20,6 @@ import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.SpellCheckerSeveritiesProvider;
 import com.intellij.spellchecker.grazie.diacritic.Diacritics;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
-import com.intellij.spellchecker.inspections.SpellcheckingExtension;
-import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellCheckingResult;
-import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellingTypo;
 import com.intellij.spellchecker.inspections.Splitter;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.SuppressibleSpellcheckingStrategy;
@@ -107,7 +104,7 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
         var strategy = getSpellcheckingStrategy(element);
         if (strategy == null || !strategy.elementFitsScope(element, scopes) || isCopyrightComment(strategy, element)) return;
 
-        SpellCheckingResult result = SpellcheckingExtension.Companion.spellcheck(
+        SpellCheckingResult result = GrazieTextLevelSpellCheckingExtension.INSTANCE.spellcheck(
           element, strategy, session,
           typo -> {
             if (hasSameNamedReferenceInFile(typo.getWord(), element, strategy)) return;

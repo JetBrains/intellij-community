@@ -23,9 +23,6 @@ import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import com.intellij.psi.PsiElement
 import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
 import com.intellij.spellchecker.inspections.IdentifierSplitter.MINIMAL_TYPO_LENGTH
-import com.intellij.spellchecker.inspections.SpellcheckingExtension
-import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellCheckingResult
-import com.intellij.spellchecker.inspections.SpellcheckingExtension.SpellingTypo
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy
 import com.intellij.util.containers.ContainerUtil
 import java.util.concurrent.ConcurrentHashMap
@@ -34,11 +31,23 @@ import java.util.function.Consumer
 
 private val DOMAINS = TextContent.TextDomain.ALL
 
-class GrazieSpellcheckingExtension : SpellcheckingExtension {
+object GrazieTextLevelSpellCheckingExtension {
 
   private val knownPhrases = ContainerUtil.createConcurrentSoftValueMap<Language, KnownPhrases>()
 
-  override fun spellcheck(element: PsiElement, strategy: SpellcheckingStrategy, session: LocalInspectionToolSession, consumer: Consumer<SpellingTypo>): SpellCheckingResult {
+  /**
+   * Performs spell-checking on the specified PSI element.
+   *
+   * The implementation may examine neighboring elements of [PsiElement] if needed.
+   * In case of doing that, it's implementation's responsibility to not check the same element for spelling mistake twice.
+   *
+   * @param element The PSI element to check for spelling errors
+   * @param strategy The element's spellchecking strategy
+   * @param consumer The callback function that will be invoked for each spelling error detected during the inspection
+   *
+   * @return [SpellCheckingResult.Checked] if the PSI element has been checked, [SpellCheckingResult.Ignored] otherwise
+   */
+  fun spellcheck(element: PsiElement, strategy: SpellcheckingStrategy, session: LocalInspectionToolSession, consumer: Consumer<SpellingTypo>): SpellCheckingResult {
     if (!strategy.useTextLevelSpellchecking()) return SpellCheckingResult.Ignored
     ProgressManager.checkCanceled()
 
@@ -86,12 +95,12 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
     }
   }
 
-  private fun mapTypo(text: TextContent, typos: List<Typo>, element: PsiElement): List<SimpleTypo> {
+  private fun mapTypo(text: TextContent, typos: List<Typo>, element: PsiElement): List<SpellingTypo> {
     val psiRange = element.textRange
     return typos.mapNotNull {
       val range = text.textRangeToFile(mapRange(it.range))
       if (!psiRange.contains(range)) return@mapNotNull null
-      SimpleTypo(it.word, range.shiftLeft(element.textRange.startOffset), element)
+      createTypo(it.word, range.shiftLeft(element.textRange.startOffset), element)
     }
   }
 
@@ -107,12 +116,26 @@ class GrazieSpellcheckingExtension : SpellcheckingExtension {
       })
     }
   }
+
+  private fun createTypo(word: String, range: TextRange, element: PsiElement) = object : SpellingTypo {
+    override val word: String = word
+    override val range: TextRange = range
+    override val element: PsiElement = element
+  }
 }
 
-private data class SimpleTypo(
-  override val word: String,
-  override val range: TextRange,
-  override val element: PsiElement,
-) : SpellingTypo
+/** A typo detected by [SpellcheckingExtension] in a sentence or text inside a [PsiElement]. */
+interface SpellingTypo {
+  /** The misspelled word inside the [element] */
+  val word: String
+
+  /** The range of the typo in the [element]'s text */
+  val range: TextRange
+
+  /** Element that contains a misspelled [word] within the given text [range] */
+  val element: PsiElement
+}
+
+enum class SpellCheckingResult { Checked, Ignored }
 
 private val KEY_TYPO_CACHE = Key.create<ConcurrentMap<TextContent, List<Typo>>>("KEY_TYPO_CACHE")
