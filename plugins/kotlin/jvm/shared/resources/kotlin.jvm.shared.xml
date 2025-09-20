@@ -107,8 +107,6 @@
 
   <resource-bundle>messages.KotlinBundle</resource-bundle>
   <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileModuleInfoProvider"
-              topic="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileListener"/>
     <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
     <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"

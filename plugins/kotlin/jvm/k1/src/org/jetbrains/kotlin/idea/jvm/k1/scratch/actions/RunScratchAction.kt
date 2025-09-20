@@ -58,7 +58,7 @@ class RunScratchAction : ScratchAction(
             log.printDebugMessage("Run Action: isMakeBeforeRun = $isMakeBeforeRun")
 
             ScriptConfigurationManager.getInstance(project).updateScriptDependenciesIfNeeded(scratchFile.virtualFile)
-            val module = scratchFile.module
+            val module = scratchFile.currentModule
             log.printDebugMessage("Run Action: module = ${module?.name}")
 
             if (!isAutoRun && module != null && isMakeBeforeRun) {

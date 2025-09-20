@@ -115,7 +115,7 @@ class KtScratchExecutionSession(
         }) ?: return
 
         try {
-            val (environmentRequest, commandLine) = createCommandLine(psiFile, file.module, result.mainClassName, tempDir.path)
+            val (environmentRequest, commandLine) = createCommandLine(psiFile, file.currentModule, result.mainClassName, tempDir.path)
             val environment = environmentRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
 
             val commandLinePresentation = commandLine.getCommandPresentation(environment)

@@ -5,12 +5,13 @@ package org.jetbrains.kotlin.idea.jvm.shared.scratch
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.messages.Topic
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.ScratchFileOptions
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.ScratchFileOptionsByFile
@@ -22,9 +23,10 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class ScratchFile(val project: Project, val virtualFile: VirtualFile) {
-    private val moduleListeners: MutableList<() -> Unit> = mutableListOf()
-    var module: Module? = null
-        private set
+    val currentModule: Module?
+        get() = ScriptRelatedModuleNameFile[project, virtualFile]?.let { ModuleManager.getInstance(project).findModuleByName(it) }
+
+    abstract fun setModule(module: Module?)
 
     fun getPsiFile(): PsiFile? = runReadAction {
         virtualFile.toPsiFile(project)
@@ -32,22 +34,6 @@ abstract class ScratchFile(val project: Project, val virtualFile: VirtualFile) {
 
     val ktFile: KtFile?
         get() = getPsiFile().safeAs<KtFile>()
-
-    fun setModule(value: Module?) {
-        module = value
-        moduleListeners.forEach { it() }
-    }
-
-    fun addModuleListener(f: (PsiFile, Module?) -> Unit) {
-        moduleListeners.add {
-            val selectedModule = module
-
-            val psiFile = getPsiFile()
-            if (psiFile != null) {
-                f(psiFile, selectedModule)
-            }
-        }
-    }
 
     val options: ScratchFileOptions
         get() = project.service<ScratchFileOptionsByFile>()[virtualFile] ?: ScratchFileOptions()
@@ -108,15 +94,3 @@ abstract class ScratchFile(val project: Project, val virtualFile: VirtualFile) {
 }
 
 data class ScratchExpression(val element: PsiElement, val lineStart: Int, val lineEnd: Int = lineStart)
-
-interface ScratchFileListener {
-    fun fileCreated(file: ScratchFile)
-
-    companion object {
-        @Topic.ProjectLevel
-        val TOPIC: Topic<ScratchFileListener> = Topic.create(
-            "ScratchFileListener",
-            ScratchFileListener::class.java
-        )
-    }
-}

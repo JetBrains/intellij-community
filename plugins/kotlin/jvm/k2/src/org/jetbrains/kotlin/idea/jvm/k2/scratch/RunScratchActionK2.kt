@@ -16,7 +16,7 @@ internal class RunScratchActionK2 : ScratchAction(
         val project = e.project ?: return
         val scratchFile = e.currentScratchFile as? K2KotlinScratchFile ?: return
         val executor = scratchFile.executor
-        val module = scratchFile.module
+        val module = scratchFile.currentModule
 
         ProjectTaskManagerImpl.putBuildOriginator(project, this.javaClass)
 

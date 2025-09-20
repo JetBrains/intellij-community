@@ -6,7 +6,6 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,73 +35,79 @@ import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.readLines
 
-class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val project: Project, val scope: CoroutineScope) : ScratchExecutor(scratchFile) {
+class K2ScratchExecutor(override val scratchFile: K2KotlinScratchFile, val project: Project, val scope: CoroutineScope) :
+    ScratchExecutor(scratchFile) {
     override fun execute() {
         handler.onStart(scratchFile)
 
-        val scriptFile = scratchFile.virtualFile
-
         scope.launch {
-            val document = readAction { scriptFile.findDocument() }
-            if (document != null) {
-                edtWriteAction {
-                    PsiDocumentManager.getInstance(project).commitDocument(document)
-                    FileDocumentManager.getInstance().saveDocument(document)
-                }
+            try {
+                processExecution(scratchFile.virtualFile)
+            } catch (e: Exception) {
+                handler.error(scratchFile, e.message ?: "Unknown error")
+            } finally {
+                handler.onFinish(scratchFile)
+            }
+        }
+    }
+
+    private suspend fun processExecution(scriptFile: VirtualFile) {
+        val document = readAction { scriptFile.findDocument() }
+        if (document == null) {
+            handler.error(scratchFile, "Cannot find document: ${scriptFile.path}")
+            return
+        }
+
+        edtWriteAction {
+            PsiDocumentManager.getInstance(project).commitDocument(document)
+            FileDocumentManager.getInstance().saveDocument(document)
+        }
+
+        val (code, stdout, stderr) = withBackgroundProgress(
+            project, title = KotlinJvmBundle.message("progress.title.compiling.kotlin.scratch")
+        ) {
+            val process = getJavaCommandLine(scratchFile.virtualFile, scratchFile.currentModule).createProcess()
+            process.awaitExit()
+            val stdout = withContext(Dispatchers.IO) {
+                process.inputStream.bufferedReader().use { it.readText() }
+            }
+            val stderr = withContext(Dispatchers.IO) {
+                process.errorStream.bufferedReader().use { it.readText() }
             }
 
-            val (code, stdout, stderr) = withBackgroundProgress(
-                project, title = KotlinJvmBundle.message("progress.title.compiling.kotlin.scratch")
-            ) {
-                val process = getJavaCommandLine(scratchFile.virtualFile, scratchFile.module).createProcess()
-                process.awaitExit()
-                val stdout = withContext(Dispatchers.IO) {
-                    process.inputStream.bufferedReader().use { it.readText() }
-                }
-                val stderr = withContext(Dispatchers.IO) {
-                    process.errorStream.bufferedReader().use { it.readText() }
-                }
+            CompilationResult(process.exitValue(), stdout, stderr)
+        }
 
-                CompilationResult(process.exitValue(), stdout, stderr)
+        if (code == 0) {
+            if (stdout.isNotEmpty()) {
+                handler.handle(scratchFile, ScratchOutput(stdout, ScratchOutputType.OUTPUT))
             }
 
-            if (code != 0 && !scratchFile.options.isInteractiveMode) {
-                handler.error(scratchFile, "Compilation failed: $stderr")
-            } else if (code == 0) {
-                if (stdout.isNotEmpty()) {
-                    handler.handle(scratchFile, ScratchOutput(stdout, ScratchOutputType.OUTPUT))
-                }
+            val explanations = scriptFile.explainFilePath.readLines().associate {
+                it.substringBefore('=', "") to it.substringAfter('=')
+            }.filterKeys { it.isNotBlank() }.map { (key, value) ->
+                val leftBracketIndex = key.indexOf("(")
+                val rightBracketIndex = key.indexOf(")")
+                val commaIndex = key.indexOf(",")
 
-                runCatching {
-                    val explanations = scriptFile.explainFilePath.readLines().associate {
-                        it.substringBefore('=', "") to it.substringAfter('=')
-                    }.filterKeys { it.isNotBlank() }.map { (key, value) ->
-                        val leftBracketIndex = key.indexOf("(")
-                        val rightBracketIndex = key.indexOf(")")
-                        val commaIndex = key.indexOf(",")
+                val offsets =
+                    key.substring(leftBracketIndex + 1, commaIndex).toInt() to key.substring(commaIndex + 2, rightBracketIndex)
+                        .toInt()
 
-                        val offsets =
-                            key.substring(leftBracketIndex + 1, commaIndex).toInt() to key.substring(commaIndex + 2, rightBracketIndex)
-                                .toInt()
-
-                        ExplainInfo(
-                            key.substring(0, leftBracketIndex), offsets, value, scratchFile.getPsiFile()?.getLineNumber(offsets.second)
-                        )
-                    }
-
-                    handler.handle(scratchFile, explanations, scope)
-                }.onFailure {
-                    handler.error(scratchFile, it.message ?: "Unknown error")
-                }
+                ExplainInfo(
+                    key.substring(0, leftBracketIndex), offsets, value, scratchFile.getPsiFile()?.getLineNumber(offsets.second)
+                )
             }
 
-            handler.onFinish(scratchFile)
+            handler.handle(scratchFile, explanations, scope)
+        } else if (!scratchFile.options.isInteractiveMode) {
+            handler.error(scratchFile, "Compilation failed: $stderr")
         }
     }
 
     private fun getJavaCommandLine(scriptVirtualFile: VirtualFile, module: Module?): GeneralCommandLine {
         val javaParameters = JavaParametersBuilder(project)
-            .withSdkFrom(module ?: ModuleUtilCore.findModuleForFile(scriptVirtualFile, project))
+            .withSdkFrom(module)
             .withMainClassName("org.jetbrains.kotlin.preloading.Preloader").build()
 
         javaParameters.charset = null

@@ -12,6 +12,6 @@ data class ScriptConfigurationWithSdk(
     val sdk: Sdk?,
 ) {
     companion object {
-        val EMPTY: ScriptConfigurationWithSdk =  ScriptConfigurationWithSdk(ResultWithDiagnostics.Failure(), null)
+        val EMPTY: ScriptConfigurationWithSdk = ScriptConfigurationWithSdk(ResultWithDiagnostics.Failure(), null)
     }
 }

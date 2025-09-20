@@ -61,6 +61,7 @@ jvm_library(
     "@lib//:guava",
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+    "//platform/lang-core",
   ],
   runtime_deps = [":scripting.k2_resources"]
 )

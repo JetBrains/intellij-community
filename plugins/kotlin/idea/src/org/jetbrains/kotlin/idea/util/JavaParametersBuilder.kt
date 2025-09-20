@@ -4,10 +4,8 @@ package org.jetbrains.kotlin.idea.util
 
 import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.configurations.JavaParameters
-import com.intellij.openapi.compiler.CompilerPaths
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.projectRoots.Sdk
@@ -16,19 +14,20 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.util.SystemProperties
-import kotlin.io.path.Path
-import kotlin.io.path.exists
 
 class JavaParametersBuilder(private val project: Project) {
     private var mainClassName: String? = null
     private var sdk: Sdk? = null
 
-    fun build(): JavaParameters {
-        return JavaParameters().apply {
-            mainClass = mainClassName
-            jdk = sdk ?: ProjectRootManager.getInstance(project).projectSdk ?: SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome())
-            setShortenCommandLine(getDefaultShortenCommandLineMethod(jdk?.homePath), project)
-        }
+    fun build(): JavaParameters = JavaParameters().apply {
+        mainClass = mainClassName
+        jdk = sdk
+            ?: ProjectRootManager.getInstance(project).projectSdk
+                    ?: SimpleJavaSdkType().createJdk(
+                "tmp",
+                SystemProperties.getJavaHome()
+            )
+        setShortenCommandLine(getDefaultShortenCommandLineMethod(jdk?.homePath), project)
     }
 
     /**
@@ -37,8 +36,13 @@ class JavaParametersBuilder(private val project: Project) {
      * @see [com.intellij.execution.ShortenCommandLine.getDefaultMethod]
      */
     private fun getDefaultShortenCommandLineMethod(rootPath: String?): ShortenCommandLine {
-        if (rootPath != null && JdkUtil.isModularRuntime(rootPath)) return ShortenCommandLine.ARGS_FILE
-        return if (JdkUtil.useClasspathJar()) ShortenCommandLine.MANIFEST else ShortenCommandLine.CLASSPATH_FILE
+        return if (rootPath != null && JdkUtil.isModularRuntime(rootPath)) {
+            ShortenCommandLine.ARGS_FILE
+        } else if (JdkUtil.useClasspathJar()) {
+            ShortenCommandLine.MANIFEST
+        } else {
+            ShortenCommandLine.CLASSPATH_FILE
+        }
     }
 
     fun withMainClassName(name: String?): JavaParametersBuilder {
@@ -47,17 +51,19 @@ class JavaParametersBuilder(private val project: Project) {
     }
 
     fun withSdkFrom(module: Module?): JavaParametersBuilder {
-        if (module != null) {
-            val sdk = module.let { ModuleRootManager.getInstance(module).sdk }
-            if (sdk != null && sdk.sdkType is JavaSdkType && sdk.homePath?.let { Path(it).exists() } == true) {
-                this.sdk = sdk
-            }
+        if (module == null) return this
+
+        val sdk = ModuleRootManager.getInstance(module).sdk ?: return this
+        if (sdk.sdkType is JavaSdkType) {
+            this.sdk = sdk
         }
+
         return this
     }
 
     companion object {
         fun getModuleDependencies(module: Module): List<String> =
-            CompilerPaths.getOutputPaths(arrayOf(module)).toList() + OrderEnumerator.orderEntries(module).withoutSdk().recursively().pathsList.pathList
+            OrderEnumerator.orderEntries(module).withoutSdk()
+                .recursively().pathsList.pathList
     }
 }

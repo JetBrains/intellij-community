@@ -35,7 +35,7 @@ class KtScratchReplExecutor(file: org.jetbrains.kotlin.idea.jvm.k1.scratch.K1Kot
     private var osProcessHandler: OSProcessHandler? = null
 
     override fun startExecution() {
-        val module = scratchFile.module
+        val module = scratchFile.currentModule
         val (environmentRequest, cmdLine) = KotlinConsoleKeeper.createReplCommandLine(scratchFile.project, module)
         val environment = environmentRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
 
