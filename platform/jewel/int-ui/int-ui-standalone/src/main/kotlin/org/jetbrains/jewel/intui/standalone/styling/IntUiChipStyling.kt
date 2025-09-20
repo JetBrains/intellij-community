@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
@@ -153,9 +154,18 @@ public fun ChipColors.Companion.dark(
         borderSelectedHovered = borderSelectedHovered,
     )
 
+@Deprecated("Use the version with 'minSize' instead")
 public fun ChipMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(100),
     padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
     borderWidth: Dp = 1.dp,
     borderWidthSelected: Dp = 2.dp,
-): ChipMetrics = ChipMetrics(cornerSize, padding, borderWidth, borderWidthSelected)
+): ChipMetrics = ChipMetrics(cornerSize, padding, borderWidth, borderWidthSelected, DpSize(72.dp, 28.dp))
+
+public fun ChipMetrics.Companion.defaults(
+    cornerSize: CornerSize = CornerSize(100),
+    padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+    borderWidth: Dp = 1.dp,
+    borderWidthSelected: Dp = 2.dp,
+    minSize: DpSize = DpSize(72.dp, 28.dp),
+): ChipMetrics = ChipMetrics(cornerSize, padding, borderWidth, borderWidthSelected, minSize)
