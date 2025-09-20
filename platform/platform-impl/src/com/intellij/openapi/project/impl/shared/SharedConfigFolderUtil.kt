@@ -25,8 +25,7 @@ import kotlin.random.Random
 
 interface ConfigFolderChangedListener {
   companion object {
-    @JvmField
-    val TOPIC: Topic<ConfigFolderChangedListener> = Topic(ConfigFolderChangedListener::class.java.simpleName, ConfigFolderChangedListener::class.java)
+    internal val TOPIC: Topic<ConfigFolderChangedListener> = Topic(ConfigFolderChangedListener::class.java.simpleName, ConfigFolderChangedListener::class.java)
   }
 
   fun onChange(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>)

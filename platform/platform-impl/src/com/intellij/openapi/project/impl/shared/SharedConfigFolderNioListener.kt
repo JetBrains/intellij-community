@@ -8,7 +8,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.createDirectories
 import java.io.IOException
 import java.nio.file.*
@@ -109,7 +108,9 @@ internal class SharedConfigFolderNioListener(private val root: Path, private val
                   watchPath(path)
                 }
                 else {
-                  ContainerUtil.addIfNotNull(modified, getSpecFor(path))
+                  getSpecFor(path)?.let {
+                    modified.add(it)
+                  }
                 }
               }
             }

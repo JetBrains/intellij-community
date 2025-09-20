@@ -11,8 +11,8 @@ import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import com.intellij.util.text.nullize
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -27,12 +27,14 @@ private val configFile: Path by lazy {
   PathManager.getConfigDir().resolve(EarlyAccessRegistryManager.fileName)
 }
 
+private const val DISABLE_SAVE_PROPERTY = "early.access.registry.disable.saving"
+
 private val lazyMap = SynchronizedClearableLazy {
   val result = ConcurrentHashMap<String, String>()
   val lines = try {
     Files.lines(configFile)
   }
-  catch (ignore: NoSuchFileException) {
+  catch (_: NoSuchFileException) {
     return@SynchronizedClearableLazy result
   }
 
@@ -61,15 +63,48 @@ private val map: ConcurrentHashMap<String, String>?
   }
 
 /**
- * Provides a configuration of internal settings which might be used before application has been loaded unless [Registry].
+ * Obsolete. Avoid using in new code.
  *
- * Please avoid to use it, consult with someone from core team first.
+ * `EarlyAccessRegistryManager` exists **only** for a historical, one-off case:
+ * letting end users toggle the *New UI* flag via the Registry UI **before**
+ * the full configuration store was initialized.
+ *
+ * Why you should not use it:
+ * - Startup must not be blocked by loading configs. Reading “real” values early
+ *   is expensive and couples startup to configuration store initialization.
+ * - It creates hidden state that later has to be reconciled with the actual
+ *   `Registry` and persisted settings, which is fragile and error-prone.
+ *
+ * What to use instead:
+ * 1) **System property** (preferred for low-level or risky switches).
+ *    - Define a property key, read it early with a safe default.
+ *    - Document it in dev notes and feature flags list.
+ *    - Example key: `idea.use.new.file.system`.
+ *
+ * 2) **Defer & re-apply** when configs become available.
+ *    - Start with a safe default.
+ *    - When `Registry`/settings are loaded, re-read the real value and reapply
+ *      (reinitialize/refresh) if needed. Startup stays decoupled from config I/O.
+ *
+ * Decision guide:
+ * - Does the flag affect very low-level behavior (runs before configuration store initialization)?
+ *   → Use a **system property** (no UI).
+ * - Do you only need the setting after the app is up?
+ *   → Read from **Registry** or settings normally; don’t touch early paths.
+ * - Do you think you must read the *real* user/IDE setting during early startup?
+ *   → **Don’t.** Use a temporary default and **re-apply later**. If that’s
+ *   impossible, consult the core team with a concrete justification.
+ *
+ * If you believe you still need this class:
+ * - Please consult the core team. New usages are strongly discouraged.
+ *
+ * This class remains only for compatibility with the historical *New UI* rollout.
  */
-@ApiStatus.Internal
+@Obsolete
+@Internal
 object EarlyAccessRegistryManager {
   @Suppress("ConstPropertyName")
   const val fileName: String = "early-access-registry.txt"
-  const val DISABLE_SAVE_PROPERTY = "early.access.registry.disable.saving"
 
   fun getBoolean(key: String): Boolean {
     return getString(key).toBoolean()
@@ -83,7 +118,7 @@ object EarlyAccessRegistryManager {
 
     val map = lazyMap.value
     if (!LoadingState.APP_STARTED.isOccurred) {
-      return getOrFromSystemProperty(map, key).nullize()
+      return getOrFromSystemProperty(map, key)?.takeIf { it.isNotEmpty() }
     }
 
     // see com.intellij.ide.plugins.PluginDescriptorLoader.loadForCoreEnv
@@ -92,7 +127,7 @@ object EarlyAccessRegistryManager {
     val value = try {
       registryManager.stringValue(key)
     }
-    catch (ignore: MissingResourceException) {
+    catch (_: MissingResourceException) {
       null
     }
 
@@ -119,7 +154,7 @@ object EarlyAccessRegistryManager {
    * Use this function instead of the default [RegistryValue.setValue] to ensure that the updated value will be saved to [fileName]. 
    */
   fun setBoolean(key: String, value: Boolean) {
-    lazyMap.value[key] = value.toString()
+    lazyMap.value.put(key, value.toString())
     ApplicationManager.getApplication().serviceIfCreated<RegistryManager>()?.get(key)?.setValue(value)
   }
 
@@ -128,7 +163,7 @@ object EarlyAccessRegistryManager {
    * Use this function instead of the default [RegistryValue.setValue] to ensure that the updated value will be saved to [fileName].
    */
   fun setString(key: String, value: String) {
-    lazyMap.value[key] = value
+    lazyMap.value.put(key, value)
     ApplicationManager.getApplication().serviceIfCreated<RegistryManager>()?.get(key)?.setValue(value)
   }
   
@@ -137,13 +172,13 @@ object EarlyAccessRegistryManager {
     // Why maybe in a registry but not in our store?
     // Because store file deleted / removed / loaded from ICS or registry value was set before using EarlyAccessedRegistryManager
     val map = map ?: return
-    val registryManager = ApplicationManager.getApplication().serviceIfCreated<RegistryManager>() ?: return
+    val registryManager = serviceIfCreated<RegistryManager>() ?: return
     try {
       saveConfigFile(map, configFile) {
         try {
           registryManager.stringValue(it)
         }
-        catch (ignore: MissingResourceException) {
+        catch (_: MissingResourceException) {
           null
         }
       }
@@ -175,11 +210,15 @@ private fun getOrFromSystemProperty(map: ConcurrentHashMap<String, String>, key:
   return map.get(key) ?: System.getProperty(key)
 }
 
-private inline fun saveConfigFile(map: ConcurrentHashMap<String, String>,
-                                  @Suppress("SameParameterValue") configFile: Path,
-                                  provider: (String) -> String?) {
-  if (System.getProperty(EarlyAccessRegistryManager.DISABLE_SAVE_PROPERTY) == "true")
+private inline fun saveConfigFile(
+  map: ConcurrentHashMap<String, String>,
+  @Suppress("SameParameterValue") configFile: Path,
+  provider: (String) -> String?,
+) {
+  if (System.getProperty(DISABLE_SAVE_PROPERTY) == "true") {
     return
+  }
+
   val lines = mutableListOf<String>()
   for (key in map.keys.sorted()) {
     val value = provider(key) ?: continue
