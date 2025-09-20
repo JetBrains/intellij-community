@@ -141,7 +141,6 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/convertNaNEquality")
             model("${idea}/inspectionsLocal/javaCollectionsWithNullableTypes")
             model("${idea}/inspectionsLocal/redundantNullableReturnType")
-            model("${idea}/inspectionsLocal/replaceMapIndexedWithListGenerator")
             model("${idea}/inspectionsLocal/copyWithoutNamedArguments")
             model("${idea}/inspectionsLocal/unusedUnaryOperator")
             model("${idea}/inspectionsLocal/javaMapForEach")
