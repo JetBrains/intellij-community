@@ -736,15 +736,20 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       //   would disappear too -- but it seems like the same 'local refresh' would then lead to some filenames being absent
       //   in the filename index...
 
-      //   ...Until the good solution is found, here is dirty but workable 'solution': just yield for a while, leaving another
+      //   ...Until the good solution is found, here is a dirty but workable 'solution': just yield for a while, leaving another
       //   thread a chance to finish child record initialization -- and if it does (judging by isInPersistentChildren() changed
-      //   it's return value) then re-try:
-      Thread.yield();
-      boolean isInPersistentChildren = isInPersistentChildren(pFS, getId(), childId);
-      if (isInPersistentChildren && Boolean.FALSE.equals(wasInPersistentChildren)) {
-        return findChildById(childId);
+      //   it's return value) then re-try findChildById():
+      if (Boolean.FALSE.equals(wasInPersistentChildren)) {
+        for (int i = 0; i < 3; i++) {
+          Thread.yield();
+          boolean isInPersistentChildren = isInPersistentChildren(pFS, getId(), childId);
+          if (isInPersistentChildren) {
+            return findChildById(childId);
+          }
+        }
       }
 
+      boolean isInPersistentChildren = isInPersistentChildren(pFS, getId(), childId);
       int parentId = pFS.peer().getParent(childId);
       VirtualDirectoryImpl parent = child.getParent();
       LOG.error(
