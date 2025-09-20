@@ -39,27 +39,31 @@ private class P3SharedConfigFolderApplicationLoadListener : ApplicationLoadListe
 @OptIn(FlowPreview::class)
 private class ProcessPerProjectSharedConfigFolderApplicationInitializedListener : ApplicationActivity {
   override suspend fun execute() = coroutineScope {
-  val path = PathManager.getOriginalConfigDir()
-    if (processPerProjectSupport().isEnabled()) {
-      LOG.info("P3 mode is enabled, configuration files with be synchronized with $path.")
-      val application = ApplicationManager.getApplication()
-      val compoundStreamProvider = application.stateStore.storageManager.streamProvider
-      val streamProvider = compoundStreamProvider.getInstanceOf(SharedConfigFolderStreamProvider::class.java) as SharedConfigFolderStreamProvider
-      val configFilesUpdatedByThisProcess = streamProvider.configFilesUpdatedByThisProcess
-      SharedConfigFolderUtil.installFsWatcher(path, configFilesUpdatedByThisProcess)
+    if (!processPerProjectSupport().isEnabled()) {
+      return@coroutineScope
+    }
 
-      launch {
-        while (isActive) {
-          delay(1.minutes)
-          configFilesUpdatedByThisProcess.cleanUpOldData()
-        }
+    val path = PathManager.getOriginalConfigDir()
+    LOG.info("P3 mode is enabled, configuration files with be synchronized with $path.")
+    val app = ApplicationManager.getApplication()
+    val compoundStreamProvider = app.stateStore.storageManager.streamProvider
+    val streamProvider = compoundStreamProvider.getInstanceOf(SharedConfigFolderStreamProvider::class.java) as SharedConfigFolderStreamProvider
+    val configFilesUpdatedByThisProcess = streamProvider.configFilesUpdatedByThisProcess
+    launch {
+      SharedConfigFolderUtil.installFsWatcher(path, configFilesUpdatedByThisProcess)
+    }
+
+    launch {
+      while (isActive) {
+        delay(1.minutes)
+        configFilesUpdatedByThisProcess.cleanUpOldData()
       }
-      
-      application.messageBus.connect().subscribe(DynamicPluginListener.TOPIC, serviceAsync<P3DynamicPluginSynchronizer>())
-      coroutineScope {
-        setupSyncEarlyAccessRegistry(path, this)
-        setupSyncDisabledPlugins(path, this)
-      }
+    }
+
+    app.messageBus.connect(this@coroutineScope).subscribe(DynamicPluginListener.TOPIC, serviceAsync<P3DynamicPluginSynchronizer>())
+    coroutineScope {
+      setupSyncEarlyAccessRegistry(path, this)
+      setupSyncDisabledPlugins(path, this)
     }
   }
 

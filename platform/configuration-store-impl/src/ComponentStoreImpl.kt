@@ -18,7 +18,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
-import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.extensions.PluginId
@@ -75,11 +74,8 @@ internal fun setRoamableComponentSaveThreshold(thresholdInSeconds: Int) {
 }
 
 private class ComponentStoreImplReloadListener : ConfigFolderChangedListener {
-  override fun onChange(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>) {
-    val componentStore = (ApplicationManager.getApplication() as ComponentStoreOwner).componentStore as ComponentStoreImpl
-    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
-      componentStore.reloadComponents(changedFileSpecs, deletedFileSpecs)
-    }
+  override suspend fun onChange(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>, componentStore: IComponentStore) {
+    (componentStore as ComponentStoreImpl).reloadComponents(changedFileSpecs, deletedFileSpecs)
   }
 }
 

@@ -1993,11 +1993,10 @@
 
     <registryKey key="ide.suppress.low.memory.notifications.when.dumb" defaultValue="false"
                  description="Disables Low Memory notifications during indexing for the sake of less false-positive detection for users" />
+    <configFolderChangedListener implementation="com.intellij.configurationStore.ComponentStoreImplReloadListener"/>
   </extensions>
 
   <applicationListeners>
-    <listener class="com.intellij.configurationStore.ComponentStoreImplReloadListener"
-              topic="com.intellij.openapi.project.impl.shared.ConfigFolderChangedListener"/>
     <listener class="com.intellij.ide.plugins.DynamicPluginsFrameStateListener"
               topic="com.intellij.openapi.application.ApplicationActivationListener"/>
     <listener class="com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyAppLifecycleListener"
