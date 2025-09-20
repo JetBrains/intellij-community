@@ -37,7 +37,6 @@ jvm_library(
     "//java/idea-ui:ui",
     "//java/compiler/impl",
     "//platform/backend/workspace",
-    "//platform/editor-ui-api:editor-ui",
   ],
   runtime_deps = [":compiler-configuration-ui_resources"]
 )
