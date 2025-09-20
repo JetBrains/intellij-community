@@ -19,10 +19,13 @@ import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onLast
@@ -30,6 +33,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.pressKey
@@ -37,11 +42,13 @@ import androidx.compose.ui.unit.dp
 import junit.framework.TestCase.assertEquals
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
+import org.jetbrains.jewel.ui.component.interactions.performKeyPress
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalTestApi::class)
+@Suppress("LargeClass")
 class ListComboBoxUiTest {
     @get:Rule val composeRule = createComposeRule()
 
@@ -57,6 +64,9 @@ class ListComboBoxUiTest {
 
     private val comboBox: SemanticsNodeInteraction
         get() = composeRule.onNodeWithTag("ComboBox")
+
+    private val comboBoxPopupList: SemanticsNodeInteraction
+        get() = composeRule.onNodeWithTag("Jewel.ComboBox.List")
 
     @Test
     fun `when enabled and editable clicking the chevron container opens the popup`() {
@@ -528,7 +538,8 @@ class ListComboBoxUiTest {
         composeRule.onNodeWithTag("ComboBox").performClick()
 
         // Select first item
-        composeRule.onNodeWithText("Item 1").performClick()
+        comboBoxPopupList.performScrollToIndex(0)
+        composeRule.onNodeWithText("Item 1").performScrollTo().performClick()
 
         // Verify selection updated
         assertEquals(0, selectedIndex)
@@ -654,6 +665,239 @@ class ListComboBoxUiTest {
         // Verify text field updates and selection state
         textField.assertTextEquals("Book")
         assert(selectedIndex == 3) { "Expected selectedIndex to be 3, but was $selectedIndex" }
+    }
+
+    @Test
+    fun `when opening the popup for the first time, the selected item is visible`() {
+        var selectedIndex by mutableIntStateOf(comboBoxItems.lastIndex)
+        val focusRequester = FocusRequester()
+
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { index: Int -> selectedIndex = index },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
+                    itemKeys = { index: Int, _: String -> index },
+                    maxPopupHeight = 100.dp,
+                )
+            }
+        }
+
+        // Wait for initial composition and request focus
+        composeRule.waitForIdle()
+        focusRequester.requestFocus()
+        composeRule.waitForIdle()
+
+        // Open the combobox
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertExists().assertIsDisplayed()
+
+        // The last item should be visible and selected
+        composeRule
+            .onNode(hasAnyAncestor(hasTestTag("Jewel.ComboBox.Popup")) and hasText(comboBoxItems.last()))
+            .assertExists()
+            .assertIsDisplayed()
+            .assertIsSelected()
+    }
+
+    @Test
+    fun `when closing the popup, scroll back to the selected item`() {
+        var selectedIndex by mutableIntStateOf(1) // Item 2
+        val focusRequester = FocusRequester()
+
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { index: Int -> selectedIndex = index },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
+                    itemKeys = { index: Int, _: String -> index },
+                    maxPopupHeight = 100.dp,
+                )
+            }
+        }
+
+        // Wait for initial composition and request focus
+        composeRule.waitForIdle()
+        focusRequester.requestFocus()
+        composeRule.waitForIdle()
+
+        // Open the combobox
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertExists().assertIsDisplayed()
+
+        // Scroll to last item and ensure selected item is not visible
+        composeRule
+            .onNode(hasAnyAncestor(hasTestTag("Jewel.ComboBox.Popup")) and hasText("Item 2"))
+            .assertExists()
+            .assertIsDisplayed()
+            .assertIsSelected()
+        comboBoxPopupList.performScrollToIndex(comboBoxItems.lastIndex)
+        composeRule
+            .onNode(hasAnyAncestor(hasTestTag("Jewel.ComboBox.Popup")) and hasText("Item 2"))
+            .assertDoesNotExist()
+
+        // Close it
+        popupMenu.performKeyPress(Key.Escape)
+
+        // Open the combobox again
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertExists().assertIsDisplayed()
+
+        // Ensure the selected item is visible
+        composeRule
+            .onNode(hasAnyAncestor(hasTestTag("Jewel.ComboBox.Popup")) and hasText("Item 2"))
+            .assertExists()
+            .assertIsDisplayed()
+            .assertIsSelected()
+    }
+
+    @Test
+    fun `when closing the popup, but the selected index is smaller than zero, scroll to first item `() {
+        var selectedIndex by mutableIntStateOf(-1)
+        val focusRequester = FocusRequester()
+
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { index: Int -> selectedIndex = index },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
+                    itemKeys = { index: Int, _: String -> index },
+                    maxPopupHeight = 100.dp,
+                )
+            }
+        }
+
+        // Wait for initial composition and request focus
+        composeRule.waitForIdle()
+        focusRequester.requestFocus()
+        composeRule.waitForIdle()
+
+        // Open the combobox
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertExists().assertIsDisplayed()
+
+        // Scroll to last item and ensure selected item is not visible
+        composeRule
+            .onNode(hasAnyAncestor(hasTestTag("Jewel.ComboBox.Popup")) and hasText("Item 1"))
+            .assertExists()
+            .assertIsDisplayed()
+        comboBoxPopupList.performScrollToIndex(comboBoxItems.lastIndex)
+        composeRule
+            .onNode(hasAnyAncestor(hasTestTag("Jewel.ComboBox.Popup")) and hasText("Item 1"))
+            .assertDoesNotExist()
+
+        // Close it
+        popupMenu.performKeyPress(Key.Escape)
+
+        // Open the combobox again
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertExists().assertIsDisplayed()
+
+        // Ensure the selected item is visible
+        composeRule
+            .onNode(hasAnyAncestor(hasTestTag("Jewel.ComboBox.Popup")) and hasText("Item 1"))
+            .assertExists()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `when closing the popup, but the selected index is greater than the last index, scroll to first item`() {
+        var selectedIndex by mutableIntStateOf(comboBoxItems.size)
+        val focusRequester = FocusRequester()
+
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { index: Int -> selectedIndex = index },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
+                    itemKeys = { index: Int, _: String -> index },
+                    maxPopupHeight = 100.dp,
+                )
+            }
+        }
+
+        // Wait for initial composition and request focus
+        composeRule.waitForIdle()
+        focusRequester.requestFocus()
+        composeRule.waitForIdle()
+
+        // Open the combobox
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertExists().assertIsDisplayed()
+
+        // Scroll to last item and ensure selected item is not visible
+        composeRule
+            .onNode(hasAnyAncestor(hasTestTag("Jewel.ComboBox.Popup")) and hasText("Item 1"))
+            .assertExists()
+            .assertIsDisplayed()
+        comboBoxPopupList.performScrollToIndex(comboBoxItems.lastIndex)
+        composeRule
+            .onNode(hasAnyAncestor(hasTestTag("Jewel.ComboBox.Popup")) and hasText("Item 1"))
+            .assertDoesNotExist()
+
+        // Close it
+        popupMenu.performKeyPress(Key.Escape)
+
+        // Open the combobox again
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertExists().assertIsDisplayed()
+
+        // Ensure the selected item is visible
+        composeRule
+            .onNode(hasAnyAncestor(hasTestTag("Jewel.ComboBox.Popup")) and hasText("Item 1"))
+            .assertExists()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `when closing the popup that has no items, no crash should happen`() {
+        var selectedIndex by mutableIntStateOf(comboBoxItems.size)
+        val focusRequester = FocusRequester()
+
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = emptyList(),
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { index: Int -> selectedIndex = index },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
+                    itemKeys = { index: Int, _: String -> index },
+                    maxPopupHeight = 100.dp,
+                )
+            }
+        }
+
+        // Wait for initial composition and request focus
+        composeRule.waitForIdle()
+        focusRequester.requestFocus()
+        composeRule.waitForIdle()
+
+        // Open the combobox
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertExists().assertIsDisplayed()
+
+        // Close it
+        popupMenu.performKeyPress(Key.Escape)
+
+        // Wait for initial composition and request focus
+        composeRule.waitForIdle()
+        focusRequester.requestFocus()
+        composeRule.waitForIdle()
+
+        // Open the combobox
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertExists().assertIsDisplayed()
+
+        // Close it
+        popupMenu.performKeyPress(Key.Escape)
     }
 
     private fun editableListComboBox(): SemanticsNodeInteraction {
