@@ -56,7 +56,6 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.function.Supplier
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.nameWithoutExtension
 
@@ -327,7 +326,7 @@ private abstract class JpsStorageContentWriter(
       // TODO: this is not correct for external xml files, because $MODULE_DIR$ should always point
       //  to a dir with `iml` file. (filePath points to xml file when this method is called for external module files,
       //  so $MODULE_DIR$ resolves to incorrect dir here)
-      return ModulePathMacroManager.createInstance(project::getProjectFilePath, Supplier { filePath }).replacePathMap
+      return ModulePathMacroManager(PathMacros.getInstance(), { project.getProjectFilePath() }, { filePath }).replacePathMap
     }
     else {
       return ProjectPathMacroManager.getInstance(project).replacePathMap

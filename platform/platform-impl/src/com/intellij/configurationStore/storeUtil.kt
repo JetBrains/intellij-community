@@ -95,10 +95,12 @@ object StoreUtil {
 
 suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false): Boolean {
   val storeReloadManager = if (componentManager is Project) componentManager.serviceAsync<StoreReloadManager>() else null
-  storeReloadManager?.reloadChangedStorageFiles()
-  storeReloadManager?.blockReloadingProjectOnExternalChanges()
+  if (storeReloadManager != null) {
+    storeReloadManager.reloadChangedStorageFiles()
+    storeReloadManager.blockReloadingProjectOnExternalChanges()
+  }
   try {
-    // Force local ClientId: settings are not saved on disk under a remote ClientId
+    // force local ClientId: settings are not saved on disk under a remote ClientId
     withContext(ClientId.localId.asContextElement()) {
       componentManager.stateStore.save(forceSavingAllSettings)
     }

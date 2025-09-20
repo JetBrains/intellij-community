@@ -410,8 +410,8 @@ abstract class ComponentStoreImpl : IComponentStore {
     @Suppress("DEPRECATION")
     if (component is com.intellij.openapi.util.JDOMExternalizable) {
       val effectiveComponentName = componentName ?: getComponentName(component)
-      storageManager.getOldStorage(component, effectiveComponentName, StateStorageOperation.WRITE)?.let {
-        sessionManager.getProducer(it)?.setState(component, effectiveComponentName, info.pluginId, component)
+      storageManager.getOldStorage(component = component, componentName = effectiveComponentName, operation = StateStorageOperation.WRITE)?.let {
+        sessionManager.getProducer(it)?.setState(component = component, componentName = effectiveComponentName, pluginId = info.pluginId, state = component)
       }
       return
     }
@@ -695,7 +695,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       if (stateSpec.defaultStateAsResource) {
         return emptyList()
       }
-      throw AssertionError("No storage specified for ${component}")
+      throw AssertionError("No storage specified for $component")
     }
 
     return sortStoragesByDeprecated(storages)

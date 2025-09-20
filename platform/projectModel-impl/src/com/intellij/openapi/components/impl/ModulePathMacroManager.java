@@ -7,7 +7,7 @@ import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.serviceContainer.NonInjectable;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -28,9 +28,12 @@ public final class ModulePathMacroManager extends PathMacroManager {
   }
 
   @NonInjectable
-  private ModulePathMacroManager(@NotNull Supplier<@Nullable @SystemIndependent String> projectFilePathPointer,
-                                 @NotNull Supplier<@NotNull @SystemIndependent String> moduleDirPointer) {
-    super(PathMacros.getInstance());
+  @Internal
+  public ModulePathMacroManager(@NotNull PathMacros globalPathMacros,
+                                @NotNull Supplier<@Nullable @SystemIndependent String> projectFilePathPointer,
+                                @NotNull Supplier<@NotNull @SystemIndependent String> moduleDirPointer) {
+    super(globalPathMacros);
+
     this.projectFilePathPointer = projectFilePathPointer;
     myModuleDirPointer = moduleDirPointer;
   }
@@ -61,13 +64,13 @@ public final class ModulePathMacroManager extends PathMacroManager {
     return result;
   }
 
-  @ApiStatus.Internal
+  @Internal
   public void onImlFileMoved() {
     resetCachedReplacePathMap();
   }
 
   public static ModulePathMacroManager createInstance(@NotNull Supplier<@Nullable @SystemIndependent String> projectFilePathPointer,
                                                       @NotNull Supplier<@NotNull @SystemIndependent String> moduleDirPointer) {
-    return new ModulePathMacroManager(projectFilePathPointer, moduleDirPointer);
+    return new ModulePathMacroManager(PathMacros.getInstance(), projectFilePathPointer, moduleDirPointer);
   }
 }
