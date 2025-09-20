@@ -51,7 +51,7 @@ import androidx.compose.ui.window.rememberComponentRectPositionProvider
 import java.awt.event.KeyEvent as AWTKeyEvent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
@@ -119,7 +119,10 @@ public interface SpeedSearchState {
 
     public fun matchResultForText(text: String?): SpeedSearchMatcher.MatchResult
 
-    public suspend fun attach(entriesFlow: Flow<List<String?>>, dispatcher: CoroutineDispatcher = Dispatchers.Default)
+    public suspend fun attach(
+        entriesFlow: StateFlow<List<String?>>,
+        dispatcher: CoroutineDispatcher = Dispatchers.Default,
+    )
 }
 
 @ExperimentalJewelApi
@@ -404,12 +407,14 @@ internal class SpeedSearchStateImpl(private val matcherBuilderState: State<(Stri
     // Using only 'derivedStates' caused a lot of recompositions and caused a rendering lag.
     // To prevent this issue, I'm aggregating the states in this method and posting the values
     // to the relevant properties.
-    override suspend fun attach(entriesFlow: Flow<List<String?>>, dispatcher: CoroutineDispatcher) {
+    override suspend fun attach(entriesFlow: StateFlow<List<String?>>, dispatcher: CoroutineDispatcher) {
         val searchTextFlow = snapshotFlow { searchText }
         val matcherBuilderFlow = snapshotFlow { matcherBuilderState.value }
 
-        combine(searchTextFlow, entriesFlow, matcherBuilderFlow) { text, items, buildMatcher ->
-                if (text.isBlank()) {
+        combine(searchTextFlow, matcherBuilderFlow) { text, buildMatcher ->
+                val items = entriesFlow.value
+
+                if (text.isBlank() || items.isEmpty()) {
                     allMatches = emptyMap()
                     matchingIndexes = emptyList()
                     hasMatches = true
