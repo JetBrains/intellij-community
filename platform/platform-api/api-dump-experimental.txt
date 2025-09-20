@@ -48,6 +48,13 @@ f:com.intellij.execution.filters.HyperlinkInfoBaseKt
 - f:tag(java.lang.String,java.lang.String,kotlin.jvm.functions.Function1):com.intellij.execution.ui.SettingsEditorFragment
 - f:variantableTag(java.lang.String,java.lang.String,kotlin.jvm.functions.Function1):V
 - f:withCustomBuilder(com.intellij.execution.ui.utils.AbstractFragmentBuilder,kotlin.jvm.functions.Function1):com.intellij.execution.ui.SettingsEditorFragment
+*:com.intellij.execution.ui.utils.FragmentsDslBuilderExtender
+- *sf:Companion:com.intellij.execution.ui.utils.FragmentsDslBuilderExtender$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:extend(com.intellij.execution.ui.utils.FragmentsBuilder):V
+- a:getId():java.lang.String
+- isApplicableTo(com.intellij.execution.ui.utils.FragmentsBuilder):Z
+*f:com.intellij.execution.ui.utils.FragmentsDslBuilderExtender$Companion
 *f:com.intellij.execution.ui.utils.Group
 - com.intellij.execution.ui.utils.AbstractFragmentBuilder
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.util.List):V
