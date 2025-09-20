@@ -1,5 +1,6 @@
 package com.intellij.grazie.text;
 
+import ai.grazie.gec.model.problem.Problem;
 import ai.grazie.gec.model.problem.ProblemFix;
 import ai.grazie.nlp.langs.Language;
 import ai.grazie.rules.Example;
@@ -37,7 +38,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiFile;
@@ -59,6 +59,8 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.grazie.text.GrazieProblem.getQuickFixText;
+import static com.intellij.grazie.text.GrazieProblem.visualizeSpace;
 import static com.intellij.grazie.utils.UtilsKt.ijRange;
 
 @SuppressWarnings("NonAsciiCharacters")
@@ -111,12 +113,10 @@ public final class TreeRuleChecker {
     }
 
     LanguageToolkit toolkit = LanguageToolkit.forLanguage(language);
-    return ContainerUtil.map(toolkit.publishedRules(), rule -> toGrazieRule(rule, toolkit));
+    return ContainerUtil.map(toolkit.publishedRules(), rule -> toGrazieRule(rule));
   }
 
-  public static String RULE_ENGINE_PREFIX = Strings.trimEnd(ai.grazie.rules.Rule.GRAZIE_RULE_ENGINE_ID_PREFIX, '.');
-
-  public static Rule toGrazieRule(ai.grazie.rules.Rule rule, LanguageToolkit toolkit) {
+  public static Rule toGrazieRule(ai.grazie.rules.Rule rule) {
     String langCode = rule.language().getIso().toString();
     String category =
       rule.id.startsWith("Style.") ? styleCategories.get(langCode) :
@@ -129,7 +129,7 @@ public final class TreeRuleChecker {
     List<String> categories = rule.isStyleLike()
                               ? List.of(styleCategories.get(langCode))
                               : List.of(category);
-    return new Rule(id, rule.displayName, categories.get(0)) {
+    return new Rule(id, rule.displayName, categories.getFirst()) {
 
       @Override
       public List<String> getCategories() {
@@ -169,6 +169,7 @@ public final class TreeRuleChecker {
       @Override
       public Navigatable editSettings() {
         RuleSetting setting = new RuleSetting(rule);
+        LanguageToolkit toolkit = LanguageToolkit.forLanguage(rule.language());
         return StyleConfigurable.affectedSettings(toolkit).contains(setting)
                ? StyleConfigurable.focusSetting(setting, null)
                : null;
@@ -195,10 +196,6 @@ public final class TreeRuleChecker {
     return result;
   }
 
-  private static String visualizeSpace(String s) {
-    return s.replaceAll("\n", "⏎");
-  }
-
   private static List<MatchingResult> doCheck(TextContent text, List<ParsedSentence> sentences) {
     if (sentences.isEmpty()) return List.of();
 
@@ -213,7 +210,7 @@ public final class TreeRuleChecker {
     try {
       Cached cached = ref.get();
       if (cached == null || !cached.sentences.equals(sentences)) {
-        List<ai.grazie.rules.Rule> rules = enabledRules(sentences.get(0).tree);
+        List<ai.grazie.rules.Rule> rules = enabledRules(sentences.getFirst().tree);
         List<MatchingResult> matches = matchTrees(trees, rules);
         ref.set(cached = new Cached(sentences, matches));
       }
@@ -230,7 +227,7 @@ public final class TreeRuleChecker {
   private static List<ai.grazie.rules.Rule> enabledRules(Tree sampleTree) {
     Language language = sampleTree.treeSupport().getGrazieLanguage();
     LanguageToolkit toolkit = LanguageToolkit.forLanguage(language);
-    List<ai.grazie.rules.Rule> rules = ContainerUtil.filter(toolkit.publishedRules(), r -> toGrazieRule(r, toolkit).isCurrentlyEnabled());
+    List<ai.grazie.rules.Rule> rules = ContainerUtil.filter(toolkit.publishedRules(), r -> toGrazieRule(r).isCurrentlyEnabled());
     if (sampleTree.isFlat()) {
       return ContainerUtil.filter(rules, r -> r.supportsFlatTrees());
     }
@@ -250,8 +247,8 @@ public final class TreeRuleChecker {
 
   private static ParameterValues calcParameters(List<ParsedSentence> sentences) {
     var parameters = new HashMap<String, String>();
-    var ltLanguage = sentences.get(0).tree.language();
-    Language language = sentences.get(0).tree.treeSupport().getGrazieLanguage();
+    var ltLanguage = sentences.getFirst().tree.language();
+    Language language = sentences.getFirst().tree.treeSupport().getGrazieLanguage();
     LanguageToolkit toolkit = LanguageToolkit.forLanguage(language);
     toolkit.allParameters(RuleIdeClient.INSTANCE).forEach(p -> parameters.put(p.id(), getParamValue(p, language)));
     if (language == Language.ENGLISH || language == Language.GERMAN) {
@@ -269,7 +266,7 @@ public final class TreeRuleChecker {
 
   private static @Nullable String getParamValue(Parameter param, Language language) {
     String value = GrazieConfig.Companion.get().paramValue(language, param);
-    if (value == null || param.possibleValues(RuleIdeClient.INSTANCE).stream().noneMatch(v -> value.equals(v.id()))) {
+    if (value == null || !ContainerUtil.exists(param.possibleValues(RuleIdeClient.INSTANCE), v -> value.equals(v.id()))) {
       return param.defaultValue(GrazieConfig.Companion.get().getTextStyle(), RuleIdeClient.INSTANCE).id();
     }
     return value;
@@ -319,14 +316,14 @@ public final class TreeRuleChecker {
     MatchingResult mr = checkDocument(doc);
     for (RuleMatch match : mr.matches) {
       var reportedRanges = match.reportedRanges();
-      var firstRange = reportedRanges.get(0);
+      var firstRange = reportedRanges.getFirst();
       SentenceWithContent sentence = findSentence(doc, firstRange.start(), firstRange.end());
       TextContent content = sentence.content;
-      List<TextRange> highlightRanges =
-        ContainerUtil.map(reportedRanges, r -> toIdeaRange(r).shiftLeft(sentence.contentStart));
-      var problem = new TreeProblem(match, content, List.of(), highlightRanges);
       var fixes = asciiAwareFixes(match, content, docText);
       if (fixes == null) continue;
+
+      var source = GrazieProblem.copyWithFixes(match.toProblem(RuleIdeClient.INSTANCE), List.of());
+      var problem = new TreeProblem(source.withOffset(-sentence.contentStart), match, content);
 
       result.add(problem.withCustomFixes(ContainerUtil.map(fixes, fix ->
         new TextLevelFix(file, getQuickFixText(fix), fileLevelChanges(fix, doc))))
@@ -482,11 +479,11 @@ public final class TreeRuleChecker {
         rule.id.equals("Typography.VARIANT_QUOTE_PUNCTUATION") &&
         text.getDomain() != TextDomain.PLAIN_TEXT &&
         match.reportedRanges().size() == 1 &&
-        match.reportedRanges().get(0).shiftRight(0).substring(text.toString()).matches(".*['\"]\\p{P}")) {
+        match.reportedRanges().getFirst().substring(text.toString()).matches(".*['\"]\\p{P}")) {
       return null;
     }
 
-    return new TreeProblem(match, text, ContainerUtil.map(fixes, fix -> new TreeProblem.MySuggestion(fix, text)));
+    return new TreeProblem(GrazieProblem.copyWithFixes(match.toProblem(RuleIdeClient.INSTANCE), fixes), match, text);
   }
 
   private static @Nullable List<ProblemFix> asciiAwareFixes(RuleMatch match, TextContent content, String fullText) {
@@ -536,51 +533,20 @@ public final class TreeRuleChecker {
     return new TextRange(reported.start(), reported.end());
   }
 
-  private static String getQuickFixText(ProblemFix fix) {
-    if (fix.getCustomDisplayName() != null) return fix.getCustomDisplayName();
-
-    return visualizeSpace(StreamEx.of(fix.getParts()).map(p -> p.getDisplay()).joining());
-  }
-
-  public static class TreeProblem extends TextProblem {
+  public static class TreeProblem extends GrazieProblem {
     public final RuleMatch match;
-    final boolean concedeToOtherCheckers;
-    private final List<MySuggestion> suggestions;
     private final List<LocalQuickFix> customFixes;
 
-    TreeProblem(RuleMatch match, TextContent text, List<MySuggestion> suggestions) {
-      this(match, text, suggestions, ContainerUtil.map(match.reportedRanges(), r -> toIdeaRange(r)));
+    TreeProblem(Problem problem, RuleMatch match, TextContent text) {
+      this(problem, toGrazieRule(match.rule()), text, match, List.of());
     }
 
-    TreeProblem(RuleMatch match, TextContent text, List<MySuggestion> suggestions, List<TextRange> highlightRanges) {
-      this(toGrazieRule(match.rule(), LanguageToolkit.forLanguage(match.rule().language())), text,
-           highlightRanges, match, suggestions, List.of(), match.concedeToOtherGrammarCheckers());
-    }
-
-
-    private TreeProblem(@NotNull Rule ideaRule, @NotNull TextContent text,
-                        @NotNull List<TextRange> highlightRanges, RuleMatch match,
-                        List<MySuggestion> suggestions, List<LocalQuickFix> customFixes, boolean concedeToOtherCheckers) {
-      super(ideaRule, text, highlightRanges);
+    private TreeProblem(Problem problem, com.intellij.grazie.text.@NotNull Rule ideaRule, @NotNull TextContent text,
+                        RuleMatch match,
+                        List<LocalQuickFix> customFixes) {
+      super(problem, ideaRule, text);
       this.match = match;
-      this.suggestions = suggestions;
       this.customFixes = customFixes;
-      this.concedeToOtherCheckers = concedeToOtherCheckers;
-    }
-
-    @Override
-    public @NotNull String getShortMessage() {
-      return Objects.requireNonNull(match.message());
-    }
-
-    @Override
-    public @NotNull String getDescriptionTemplate(boolean isOnTheFly) {
-      return getShortMessage();
-    }
-
-    @Override
-    public @NotNull List<Suggestion> getSuggestions() {
-      return new ArrayList<>(suggestions);
     }
 
     @Override
@@ -600,7 +566,7 @@ public final class TreeRuleChecker {
     }
 
     public TreeProblem withCustomFixes(List<? extends LocalQuickFix> fixes) {
-      return new TreeProblem(getRule(), getText(), getHighlightRanges(), match, suggestions, ContainerUtil.concat(customFixes, fixes), concedeToOtherCheckers);
+      return new TreeProblem(getSource(), getRule(), getText(), match, ContainerUtil.concat(customFixes, fixes));
     }
 
     @Override
@@ -669,7 +635,7 @@ public final class TreeRuleChecker {
         if (psiClass.equals("com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl")) {
           Matcher matcher = PY_DOC_PARAM.matcher(text);
           while (matcher.find()) {
-            if (ranges.stream().anyMatch(r -> r.intersects(matcher.start(), matcher.end()))) {
+            if (ContainerUtil.exists(ranges, r -> r.intersects(matcher.start(), matcher.end()))) {
               return true;
             }
           }

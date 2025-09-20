@@ -1,5 +1,6 @@
 package com.intellij.grazie.text
 
+import ai.grazie.gec.model.problem.concedeToOtherGrammarCheckers
 import ai.grazie.nlp.langs.Language
 import com.intellij.grazie.rule.ParsedSentence
 import com.intellij.grazie.text.TreeRuleChecker.TreeProblem
@@ -25,7 +26,7 @@ sealed class AsyncTreeRuleChecker : ExternalTextChecker() {
     }
 
     override suspend fun checkExternally(content: TextContent): Collection<TreeProblem> {
-      return super.checkExternally(content).filter { !it.isStyleLike && !it.concedeToOtherCheckers }
+      return super.checkExternally(content).filter { !it.isStyleLike && !concedeToOtherGrammarCheckers(it.source) }
     }
   }
 
@@ -33,7 +34,7 @@ sealed class AsyncTreeRuleChecker : ExternalTextChecker() {
     override fun getRules(locale: Locale): Collection<Rule> = emptyList()
 
     override suspend fun checkExternally(content: TextContent): Collection<TreeProblem> {
-      return super.checkExternally(content).filter { !it.isStyleLike && it.concedeToOtherCheckers }
+      return super.checkExternally(content).filter { !it.isStyleLike && !concedeToOtherGrammarCheckers(it.source) }
     }
   }
 
