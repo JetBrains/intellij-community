@@ -3,10 +3,12 @@ package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.spellchecker.ProjectDictionaryLayer
 import com.intellij.spellchecker.SpellCheckerManager
 import com.intellij.spellchecker.dictionary.Loader
+import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
 import com.intellij.spellchecker.settings.SpellCheckerSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -181,6 +183,16 @@ class JavaSupportTest : GrazieTestBase() {
 
     myFixture.configureByText("a.java", "// wexwex, Wexwex, WEXWEX")
     myFixture.checkHighlighting()
+  }
+
+  fun `test performance on typos by word-level spellchecker`() {
+    // German is not enabled on purpose to disable suggestion-based typo detection
+    Benchmark.newBenchmark("word-level spellchecking performance") {
+      runHighlightTestForFile("ide/language/java/Dictionary.java")
+    }.setup {
+      psiManager.dropPsiCaches()
+      project.service<GrazieSpellCheckerEngine>().dropSuggestionCache()
+    }.start()
   }
 
   private fun doTest(beforeText: String, afterText: String, hint: String) {

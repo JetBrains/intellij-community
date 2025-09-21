@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.grazie.spellcheck;
 
+import ai.grazie.nlp.langs.LanguageISO;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.grazie.GrazieConfig;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
@@ -18,24 +20,24 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.SpellCheckerSeveritiesProvider;
+import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine;
 import com.intellij.spellchecker.grazie.diacritic.Diacritics;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.inspections.Splitter;
+import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.SuppressibleSpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -272,6 +274,10 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
         return false;
       }
 
+      if (isOnlyEnglishDictionaryEnabled(myElement.getProject())) {
+        return true;
+      }
+
       // If the word isn't "code" or contains letters outside the English alphabet,
       // then diacritic check should be skipped
       if (!myCodeLike || NON_ENGLISH_LETTERS.matcher(word).matches()) {
@@ -283,6 +289,23 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
         .stream()
         .filter(suggestion -> RenameUtil.isValidName(project, myElement, suggestion))
         .noneMatch(suggestion -> Diacritics.equalsIgnoringDiacritics(word, suggestion));
+    }
+
+    private static boolean isOnlyEnglishDictionaryEnabled(Project project) {
+      Set<LanguageISO> languages = GrazieConfig.Companion.get().getEnabledLanguages()
+        .stream()
+        .map(it -> it.getIso())
+        .collect(Collectors.toSet());
+      if (languages.size() != 1 || !languages.contains(LanguageISO.EN)) {
+        return false;
+      }
+
+      List<String> paths = SpellCheckerSettings.getInstance(project).getCustomDictionariesPaths();
+      if (paths != null && !paths.isEmpty()) {
+        GrazieSpellCheckerEngine engine = project.getService(GrazieSpellCheckerEngine.class);
+        return !ContainerUtil.exists(paths, dictionaryName -> engine.isDictionaryLoad(dictionaryName));
+      }
+      return true;
     }
   }
 
