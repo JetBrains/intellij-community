@@ -68,7 +68,6 @@
   - name: intellij.java.jam
   - name: intellij.java.duplicatesDetection
   - name: intellij.java.duplicates
-  - name: intellij.java.duplicates.analysis
   - name: intellij.java.plugin
   - name: intellij.java.resources
     reason: <- intellij.java.plugin
@@ -136,6 +135,9 @@
 - name: lib/modules/intellij.java.debugger.impl.frontend.jar
   contentModules:
   - name: intellij.java.debugger.impl.frontend
+- name: lib/modules/intellij.java.duplicates.analysis.jar
+  contentModules:
+  - name: intellij.java.duplicates.analysis
 - name: lib/modules/intellij.java.execution.impl.backend.jar
   contentModules:
   - name: intellij.java.execution.impl.backend
