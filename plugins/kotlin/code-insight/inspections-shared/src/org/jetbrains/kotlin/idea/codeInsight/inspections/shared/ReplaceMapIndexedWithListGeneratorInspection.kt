@@ -48,7 +48,7 @@ internal class ReplaceMapIndexedWithListGeneratorInspection :
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean {
         val calleeText = element.calleeExpression?.text ?: return false
-        if (calleeText != MAP_INDEXED_FUNCTION_NAME && !element.containingKtFile.importDirectives.any {
+        if (calleeText != MAP_INDEXED_FUNCTION_NAME && element.containingKtFile.importDirectives.none {
                 it.importedFqName == MAP_INDEXED_FQ_NAME && calleeText == it.aliasName
             }) return false
         val valueArgument = element.valueArguments.singleOrNull() ?: element.lambdaArguments.singleOrNull() ?: return false
