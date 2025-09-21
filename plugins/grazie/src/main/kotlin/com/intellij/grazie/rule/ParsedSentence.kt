@@ -113,9 +113,9 @@ class ParsedSentence private constructor(
           var tree = trees[sentence.swe()]
           if (tree != null) {
             val start = sentence.start
-            tree = tree.withStartOffset(start)!!
+            tree = tree.withStartOffset(start)
             val stubbed = trees[sentence.stubbedSwe()]
-            if (stubbed != null) tree = tree.withStubbed(StubbedSentence(sentence.swe(), stubbed.withStartOffset(start)))!!
+            if (stubbed != null) tree = tree.withStubbed(StubbedSentence(sentence.swe(), stubbed.withStartOffset(start)))
             out.add(ParsedSentence(tree.startOffset(), tree.text(), content, tree, TextRange(sentence.start, sentence.end())))
           }
         }

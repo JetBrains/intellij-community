@@ -19,6 +19,7 @@ import org.languagetool.Language
 import org.languagetool.language.English
 import org.languagetool.noop.NoopChunker
 
+@Suppress("NonAsciiCharacters", "ANNOTATION_WILL_BE_APPLIED_ALSO_TO_PROPERTY_OR_FIELD")
 enum class Lang(val displayName: String, val className: String, val iso: LanguageISO, @NlsSafe val nativeName: String, @NonNls val variant: String? = null) {
   BRITISH_ENGLISH("English (GB)", "BritishEnglish", LanguageISO.EN, "English (Great Britain)"),
   AMERICAN_ENGLISH("English (US)", "AmericanEnglish", LanguageISO.EN, "English (USA)"),

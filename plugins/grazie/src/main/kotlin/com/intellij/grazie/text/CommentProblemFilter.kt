@@ -5,7 +5,6 @@ import com.intellij.grazie.text.TextContent.TextDomain.COMMENTS
 import com.intellij.grazie.text.TextContent.TextDomain.DOCUMENTATION
 import com.intellij.grazie.utils.Text
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiTodoSearchHelper
 import com.intellij.psi.util.CachedValuesManager
@@ -38,10 +37,6 @@ internal class CommentProblemFilter : ProblemFilter() {
       }
     }
     return false
-  }
-
-  private fun textAround(text: CharSequence, range: TextRange): CharSequence {
-    return text.subSequence((range.startOffset - 20).coerceAtLeast(0), (range.endOffset + 20).coerceAtMost(text.length))
   }
 
   private fun isInFirstSentence(problem: TextProblem) =

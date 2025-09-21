@@ -50,7 +50,7 @@ public final class AutoFix {
   }
 
   private static List<IntentionAndQuickFixAction> selectFixes(List<LocalQuickFix> fixes) {
-    return StreamEx.of(fixes).select(IntentionAndQuickFixAction.class).toList();
+    return ContainerUtil.filterIsInstance(fixes, IntentionAndQuickFixAction.class);
   }
 
   private static Map<TreeProblem, List<IntentionAndQuickFixAction>> collectFixes(List<TreeProblem> candidates) {
@@ -93,13 +93,13 @@ public final class AutoFix {
   private static boolean shouldAutoFix(Document document, TreeProblem problem) {
     if (!problem.match.autoFixCapable() || problem.getSuggestions().size() != 1) return false;
 
-    List<StringOperation> changes = problem.getSuggestions().get(0).getChanges();
+    List<StringOperation> changes = problem.getSuggestions().getFirst().getChanges();
     TextContent text = problem.getText();
     List<TextRange> fileRanges = ContainerUtil.map(changes, c -> text.textRangeToFile(c.getRange()));
 
     for (Editor editor : EditorFactory.getInstance().getEditors(document, text.getContainingFile().getProject())) {
       for (Caret caret : editor.getCaretModel().getAllCarets()) {
-        if (fileRanges.stream().anyMatch(r -> r.containsOffset(caret.getOffset()))) return false;
+        if (ContainerUtil.exists(fileRanges, r -> r.containsOffset(caret.getOffset()))) return false;
       }
     }
 
