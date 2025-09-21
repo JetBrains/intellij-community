@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.mapped.content;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.ContentTooBigException;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSContentAccessor;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLog;
@@ -155,7 +155,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
       Path mapPath = storagePath.resolveSibling(storagePath.getFileName().toString() + ".hashToId");
       if (contentStorage.isEmpty()) {
         //ensure map is also empty
-        FileUtil.delete(mapPath);
+        NioFiles.deleteRecursively(mapPath);
       }
 
       hashToContentRecordIdMap = ExtendibleMapFactory.mediumSize()
