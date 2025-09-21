@@ -284,7 +284,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
 
 private class ProjectStateStorageManager(private val project: Project, private val isExternalStorageSupported: () -> Boolean) : StateStorageManagerImpl(
   rootTagName = "project",
-  macroSubstitutor = TrackingPathMacroSubstitutorImpl(PathMacroManager.getInstance(project)),
+  macroSubstitutor = TrackingPathMacroSubstitutorImpl(project.service<PathMacroManager>()),
   componentManager = project,
   controller = ApplicationManager.getApplication().getService(SettingsController::class.java)?.createChild(project),
 ) {

@@ -45,10 +45,14 @@ open class RecentProjectListActionProvider {
 
   private fun collectProjects(projectToFilterOut: Project?): List<RecentProjectTreeItem> {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
-    val openedPaths = ProjectManagerEx.getOpenProjects().mapNotNullTo(LinkedHashSet()) { recentProjectManager.getProjectPath(it)?.invariantSeparatorsPathString }
+    val openedPaths = ProjectManagerEx.getOpenProjects().mapNotNullTo(LinkedHashSet()) {
+      recentProjectManager.getProjectPath(it)?.invariantSeparatorsPathString
+    }
     val allRecentProjectPaths = LinkedHashSet(recentProjectManager.getRecentPaths())
     if (projectToFilterOut != null) {
-      allRecentProjectPaths.remove(recentProjectManager.getProjectPath(projectToFilterOut)?.invariantSeparatorsPathString)
+      recentProjectManager.getProjectPath(projectToFilterOut)?.let {
+        allRecentProjectPaths.remove(it.invariantSeparatorsPathString)
+      }
     }
 
     val duplicates = getDuplicateProjectNames(openedPaths, allRecentProjectPaths, recentProjectManager)
@@ -80,8 +84,13 @@ open class RecentProjectListActionProvider {
       emptyList()
     }
 
-    val mergedProjectsWithoutGroups = insertProjectsFromProvider(projectsWithoutGroups.toList(), projectsFromEP) { it.activationTimestamp }
-    return (projectGroups + mergedProjectsWithoutGroups).toList()
+    val mergedProjectsWithoutGroups = insertProjectsFromProvider(projectsWithoutGroups, projectsFromEP) { it.activationTimestamp }
+    if (projectGroups.isEmpty()) {
+      return mergedProjectsWithoutGroups
+    }
+    else {
+      return projectGroups + mergedProjectsWithoutGroups
+    }
   }
 
   @ApiStatus.Internal
@@ -278,7 +287,9 @@ open class RecentProjectListActionProvider {
     projectsFromEP: List<T>,
     timestampGetter: (T) -> Long?,
   ): List<T> {
-    if (projectsFromEP.isEmpty()) return projects
+    if (projectsFromEP.isEmpty()) {
+      return projects
+    }
 
     fun List<T>.indexOfFirstOrSize(predicate: (T) -> Boolean): Int {
       val index = indexOfFirst(predicate)
@@ -363,17 +374,22 @@ private class RemoteRecentProjectActionGroup(val projectId: String, val project:
 
   override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
     val additionalActions = project.additionalActions
-    if (additionalActions.isEmpty()) return EMPTY_ARRAY
+    if (additionalActions.isEmpty()) {
+      return EMPTY_ARRAY
+    }
 
-    if (e != null && e.place == ActionPlaces.DOCK_MENU) return EMPTY_ARRAY
+    if (e != null && e.place == ActionPlaces.DOCK_MENU) {
+      return EMPTY_ARRAY
+    }
 
     val result = mutableListOf<AnAction>()
     if (project.canOpenProject()) {
-      result += DumbAwareAction.create(UIBundle.message("project.widget.opening.project.group.child.action.text")) { event ->
+      result.add(DumbAwareAction.create(UIBundle.message("project.widget.opening.project.group.child.action.text")) { event ->
         project.openProject(event)
       }
+      )
     }
-    result += additionalActions
+    result.addAll(additionalActions)
     return result.toTypedArray()
   }
 
