@@ -66,7 +66,6 @@
   - name: intellij.java.typeMigration
   - name: intellij.java.ultimate.icons
   - name: intellij.java.jam
-  - name: intellij.java.duplicatesDetection
   - name: intellij.java.duplicates
   - name: intellij.java.plugin
   - name: intellij.java.resources
@@ -138,6 +137,9 @@
 - name: lib/modules/intellij.java.duplicates.analysis.jar
   contentModules:
   - name: intellij.java.duplicates.analysis
+- name: lib/modules/intellij.java.duplicatesDetection.jar
+  contentModules:
+  - name: intellij.java.duplicatesDetection
 - name: lib/modules/intellij.java.execution.impl.backend.jar
   contentModules:
   - name: intellij.java.execution.impl.backend
