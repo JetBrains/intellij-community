@@ -18046,6 +18046,55 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceWithEnumMap")
+    public static class ReplaceWithEnumMap extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("fullyQualified.kt")
+        public void testFullyQualified() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithEnumMap/fullyQualified.kt");
+        }
+
+        @TestMetadata("importAlias.kt")
+        public void testImportAlias() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithEnumMap/importAlias.kt");
+        }
+
+        @TestMetadata("inferred.kt")
+        public void testInferred() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithEnumMap/inferred.kt");
+        }
+
+        @TestMetadata("javaCollection.kt")
+        public void testJavaCollection() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithEnumMap/javaCollection.kt");
+        }
+
+        @TestMetadata("noInfer.kt")
+        public void testNoInfer() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithEnumMap/noInfer.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithEnumMap/simple.kt");
+        }
+
+        @TestMetadata("withArguments.kt")
+        public void testWithArguments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithEnumMap/withArguments.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes")
     public static class JavaCollectionsWithNullableTypes extends AbstractK2LocalInspectionTest {
         @java.lang.Override

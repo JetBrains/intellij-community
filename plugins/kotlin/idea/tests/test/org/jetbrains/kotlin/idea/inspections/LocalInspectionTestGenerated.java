@@ -13979,6 +13979,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("fullyQualified.kt")
+        public void testFullyQualified() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithEnumMap/fullyQualified.kt");
+        }
+
+        @TestMetadata("importAlias.kt")
+        public void testImportAlias() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithEnumMap/importAlias.kt");
+        }
+
         @TestMetadata("inferred.kt")
         public void testInferred() throws Exception {
             runTest("testData/inspectionsLocal/replaceWithEnumMap/inferred.kt");

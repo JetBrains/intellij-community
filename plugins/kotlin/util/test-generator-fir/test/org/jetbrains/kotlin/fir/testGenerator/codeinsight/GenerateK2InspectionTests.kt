@@ -139,6 +139,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/replaceNotNullAssertionWithElvisReturn")
             model("${idea}/inspectionsLocal/replaceGuardClauseWithFunctionCall")
             model("${idea}/inspectionsLocal/convertNaNEquality")
+            model("${idea}/inspectionsLocal/replaceWithEnumMap")
             model("${idea}/inspectionsLocal/javaCollectionsWithNullableTypes")
             model("${idea}/inspectionsLocal/redundantNullableReturnType")
             model("${idea}/inspectionsLocal/copyWithoutNamedArguments")
