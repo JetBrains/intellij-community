@@ -1231,12 +1231,15 @@ private class ScalableCounterIconComponent : JComponent(), UISettingsListener {
     if (icon.number < 10) {
       icon.setInsets(0)
       //added to have equal right and left insets for the resulting [icon]
-      val symmetryBit = (iconSize + icon.iconWidth) % 2
-      return Dimension(iconSize + symmetryBit, iconSize)
+      val symmetryWidthBit = (iconSize + icon.iconWidth) % 2
+      val symmetryHeightBit = (iconSize + icon.iconHeight) % 2
+      val dimension = Dimension(iconSize + symmetryWidthBit, iconSize + symmetryHeightBit)
+      return dimension
     }
     val sensibleDefaultInset = JBUI.scale(3)
     icon.setInsets(0, sensibleDefaultInset)
-    return Dimension(max(iconSize, icon.iconWidth), max(iconSize, icon.iconHeight))
+    return Dimension(max(iconSize + (iconSize + icon.iconWidth) % 2, icon.iconWidth),
+                     max(iconSize + (iconSize + icon.iconHeight) % 2, icon.iconHeight))
   }
 
   override fun paintComponent(g: Graphics) {
