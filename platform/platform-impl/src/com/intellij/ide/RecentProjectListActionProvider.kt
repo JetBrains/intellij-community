@@ -341,9 +341,9 @@ private fun getDuplicateProjectNames(
 
 private class ProjectGroupComparator(private val projectPaths: Set<String>) : Comparator<ProjectGroup> {
   override fun compare(o1: ProjectGroup, o2: ProjectGroup): Int {
-    val ind1 = getGroupIndex(o1)
-    val ind2 = getGroupIndex(o2)
-    return if (ind1 == ind2) NaturalComparator.INSTANCE.compare(o1.name, o2.name) else ind1 - ind2
+    val index1 = getGroupIndex(o1)
+    val index2 = getGroupIndex(o2)
+    return if (index1 == index2) NaturalComparator.INSTANCE.compare(o1.name, o2.name) else index1 - index2
   }
 
   private fun getGroupIndex(group: ProjectGroup): Int {
