@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.java.JavaBundle;
@@ -144,12 +144,13 @@ public final class JavaColorProvider implements ElementColorProvider {
   }
 
   private static boolean canBeColorConstructorCall(@NotNull UCallExpression callExpression) {
+    if (!callExpression.hasKind(UastCallKind.CONSTRUCTOR_CALL) ||
+        !callExpression.isClassConstructorNameOneOf(colorNames) ||
+        !isColorType(callExpression.getReturnType())) {
+      return false;
+    }
     int argumentCount = callExpression.getValueArgumentCount();
-    return argumentCount > 0 &&
-           argumentCount < 5 &&
-           callExpression.isClassConstructorNameOneOf(colorNames) &&
-           callExpression.hasKind(UastCallKind.CONSTRUCTOR_CALL) &&
-           isColorType(callExpression.getReturnType());
+    return argumentCount > 0 && argumentCount < 5;
   }
 
   private static @Nullable ColorConstructors getConstructorType(int paramCount, PsiType paramType) {
