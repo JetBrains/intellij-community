@@ -131,17 +131,14 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
     }
 
-    @RequiresBackgroundThread
-    @RequiresReadLockAbsence
-    @JvmStatic
-    @JvmOverloads
-    fun getLastCompatiblePluginUpdate(
+    private fun loadLastCompatiblePluginUpdate(
       allIds: Set<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false,
+      updateCheck: Boolean = false
     ): List<IdeCompatibleUpdate> {
       val chunks = mutableListOf<MutableList<PluginId>>()
-      chunks.add(mutableListOf())
+      chunks.add(ArrayList(100))
 
       val maxLength = 3500 // 4k minus safety gap
       var currentLength = 0
@@ -161,14 +158,38 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
 
       return chunks.flatMap {
-        loadLastCompatiblePluginsUpdate(it, buildNumber, throwExceptions)
+        loadLastCompatiblePluginsUpdate(it, buildNumber, throwExceptions, updateCheck)
       }
+    }
+
+    /**
+     * Must be used only from [com.intellij.openapi.updateSettings.impl.UpdateChecker].
+     */
+    internal fun checkLastCompatiblePluginUpdate(
+      allIds: Set<PluginId>,
+      buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false,
+    ): List<IdeCompatibleUpdate> {
+      return loadLastCompatiblePluginUpdate(allIds, buildNumber, throwExceptions, updateCheck = true)
+    }
+
+    @RequiresBackgroundThread
+    @RequiresReadLockAbsence
+    @JvmStatic
+    @JvmOverloads
+    fun getLastCompatiblePluginUpdate(
+      allIds: Set<PluginId>,
+      buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false,
+    ): List<IdeCompatibleUpdate> {
+      return loadLastCompatiblePluginUpdate(allIds, buildNumber, throwExceptions)
     }
 
     private fun loadLastCompatiblePluginsUpdate(
       ids: Collection<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false,
+      updateCheck: Boolean = false,
     ): List<IdeCompatibleUpdate> {
       try {
         if (ids.isEmpty()) {
@@ -185,7 +206,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         val query = buildString {
           append("build=${ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber)}")
           append("&os=$os")
-          if (machineId != null) {
+          if (machineId != null && updateCheck) {
             append("&mid=$machineId")
           }
           for (id in ids) {
