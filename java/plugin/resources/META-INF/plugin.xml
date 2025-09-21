@@ -32,9 +32,6 @@
   <xi:include href="intellij.java.duplicatesDetection.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="intellij.java.jam.impl.xml">
-    <xi:fallback/>
-  </xi:include>
 
   <content>
     <module name="intellij.java.structuralSearch"/>
@@ -59,6 +56,7 @@
     <module name="intellij.java.langInjection"/>
     <module name="intellij.java.langInjection.jps"/>
 
+    <module name="intellij.java.jam.impl"/>
     <module name="intellij.profiler.ultimate"/>
     <module name="intellij.jvm.dfa.analysis.ui"/>
   </content>

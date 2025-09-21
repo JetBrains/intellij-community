@@ -66,7 +66,6 @@
   - name: intellij.java.typeMigration
   - name: intellij.java.ultimate.icons
   - name: intellij.java.jam
-  - name: intellij.java.jam.impl
   - name: intellij.java.duplicatesDetection
   - name: intellij.java.duplicates
   - name: intellij.java.duplicates.analysis
@@ -146,6 +145,9 @@
 - name: lib/modules/intellij.java.featuresTrainer.jar
   contentModules:
   - name: intellij.java.featuresTrainer
+- name: lib/modules/intellij.java.jam.impl.jar
+  contentModules:
+  - name: intellij.java.jam.impl
 - name: lib/modules/intellij.java.langInjection.jar
   contentModules:
   - name: intellij.java.langInjection
