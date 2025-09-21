@@ -1954,14 +1954,6 @@ f:com.intellij.ide.actions.QuickChangeLookAndFeel
 - <init>():V
 - s:switchLafAndUpdateUI(com.intellij.ide.ui.LafManager,com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo,Z):V
 - s:switchLafAndUpdateUI(com.intellij.ide.ui.LafManager,javax.swing.UIManager$LookAndFeelInfo,Z):V
-f:com.intellij.ide.actions.RecentProjectsGroup
-- com.intellij.openapi.actionSystem.ActionGroup
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
-- s:removeCurrentProject(com.intellij.openapi.project.Project,java.util.List):com.intellij.openapi.actionSystem.AnAction[]
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ide.actions.RedoAction
 - com.intellij.ide.actions.UndoRedoAction
 - com.intellij.ide.lightEdit.LightEditCompatible

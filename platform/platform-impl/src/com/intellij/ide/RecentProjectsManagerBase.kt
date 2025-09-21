@@ -332,7 +332,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun getRecentProjectsActions(addClearListItem: Boolean): Array<AnAction> {
-    return RecentProjectListActionProvider.getInstance().getActions(addClearListItem = addClearListItem).toTypedArray()
+    return RecentProjectListActionProvider.getInstance().getActionsWithoutGroups(addClearListItem = addClearListItem).toTypedArray()
   }
 
   @Internal

@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetPresentable
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem.Companion.openProjectAndLogRecent
 import com.intellij.platform.eel.provider.EelInitialization
@@ -65,7 +66,7 @@ open class ReopenProjectAction @JvmOverloads constructor(
   override fun update(e: AnActionEvent) {
     val presentation = e.presentation
     presentation.setText(projectDisplayName, false)
-    presentation.description = FileUtil.toSystemDependentName(projectPath)
+    presentation.description = FileUtilRt.toSystemDependentName(projectPath)
     presentation.isEnabledAndVisible = true
   }
 

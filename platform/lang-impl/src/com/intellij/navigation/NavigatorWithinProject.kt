@@ -70,7 +70,7 @@ suspend fun openProject(parameters: Map<String, String?>): ProtocolOpenProjectRe
     return ProtocolOpenProjectResult.Success(alreadyOpenProject)
   }
 
-  val recentProjectAction = RecentProjectListActionProvider.getInstance().getActions().asSequence()
+  val recentProjectAction = RecentProjectListActionProvider.getInstance().getActionsWithoutGroups().asSequence()
                               .filterIsInstance(ReopenProjectAction::class.java)
                               .find {
                                 projectName != null && it.projectName == projectName ||

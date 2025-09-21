@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 
 internal class RecentProjectsGroup : ActionGroup(), DumbAware, ActionRemoteBehaviorSpecification.BackendOnly {
@@ -26,7 +25,7 @@ internal class RecentProjectsGroup : ActionGroup(), DumbAware, ActionRemoteBehav
 
   override fun update(event: AnActionEvent) {
     val presentation = event.presentation
-    presentation.setEnabled(!RecentProjectListActionProvider.getInstance().getActions(addClearListItem = true).isEmpty())
+    presentation.setEnabled(!RecentProjectListActionProvider.getInstance().getActionsWithoutGroups(addClearListItem = true).isEmpty())
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -34,7 +33,7 @@ internal class RecentProjectsGroup : ActionGroup(), DumbAware, ActionRemoteBehav
 
 private fun removeCurrentProject(project: Project?): Array<AnAction> {
   val provider = RecentProjectListActionProvider.getInstance()
-  val actions = provider.getActions(addClearListItem = true)
+  val actions = provider.getActionsWithoutGroups(addClearListItem = true)
   if (project == null) {
     return actions.toTypedArray()
   }

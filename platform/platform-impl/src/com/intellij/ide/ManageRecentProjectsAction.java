@@ -101,7 +101,7 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    boolean enable = project != null && !RecentProjectListActionProvider.getInstance().getActions(false).isEmpty();
+    boolean enable = project != null && !RecentProjectListActionProvider.getInstance().getActionsWithoutGroups(false).isEmpty();
     e.getPresentation().setEnabledAndVisible(enable);
   }
 
