@@ -42,6 +42,7 @@ import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -242,6 +243,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
         when (it) {
           is EditorsSplitters -> {
+            it.border = null
             it.borderPainter = DefaultBorderPainter()
           }
           is ManyIslandDivider -> {
@@ -475,7 +477,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun createToolWindowBorderPainter(toolwindow: ToolWindow, component: XNextIslandHolder) {
-    component.border = null
+    component.border = JBEmptyBorder(JBUI.insets("Island.ToolWindow.border", JBUI.insets(3)))
+
     component.borderPainter = object : AbstractBorderPainter() {
       override fun paintAfterChildren(component: JComponent, g: Graphics) {
         if (toolwindow.type.isInternal) {
@@ -486,7 +489,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun createEditorBorderPainter(component: EditorsSplitters) {
+    component.border = JBEmptyBorder(JBUI.insets("Island.Editor.border", JBUI.insets(2)))
+
     ClientProperty.putRecursive(component, IdeBackgroundUtil.NO_BACKGROUND, true)
+
     component.borderPainter = object : AbstractBorderPainter() {
       override fun paintAfterChildren(component: JComponent, g: Graphics) {
         val fileEditorManager = ProjectUtil.getProjectForComponent(component)?.getServiceIfCreated(FileEditorManager::class.java)
