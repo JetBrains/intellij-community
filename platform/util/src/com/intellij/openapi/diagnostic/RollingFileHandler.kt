@@ -100,7 +100,8 @@ class RollingFileHandler @JvmOverloads constructor(
       e
     }
 
-    open(false)
+    // Truncate log if we successfully created .1 file
+    open(e != null)
 
     if (e == null) {
       rotateFailed = false
