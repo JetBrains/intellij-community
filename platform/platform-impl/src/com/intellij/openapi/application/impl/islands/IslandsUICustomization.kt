@@ -477,7 +477,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun createToolWindowBorderPainter(toolwindow: ToolWindow, component: XNextIslandHolder) {
-    component.border = JBEmptyBorder(JBUI.insets("Island.Editor.border", JBUI.insets(3)))
+    component.border = JBEmptyBorder(JBUI.insets("Island.ToolWindow.border", JBUI.insets(3)))
 
     component.borderPainter = object : AbstractBorderPainter() {
       override fun paintAfterChildren(component: JComponent, g: Graphics) {
@@ -489,7 +489,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun createEditorBorderPainter(component: EditorsSplitters) {
-    component.border = JBEmptyBorder(JBUI.insets("Island.ToolWindow.border", JBUI.insets(2)))
+    component.border = JBEmptyBorder(JBUI.insets("Island.Editor.border", JBUI.insets(2)))
 
     ClientProperty.putRecursive(component, IdeBackgroundUtil.NO_BACKGROUND, true)
 
