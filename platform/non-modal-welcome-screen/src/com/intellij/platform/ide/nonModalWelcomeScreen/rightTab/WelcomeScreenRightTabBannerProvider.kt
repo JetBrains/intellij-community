@@ -16,7 +16,7 @@ interface WelcomeScreenRightTabBannerProvider {
 
     @Composable
     fun SingleBanner(project: Project, modifier: Modifier) {
-      val provider = EP_NAME.lazySequence().singleOrNull()?.takeIf { it.isApplicable(project) }
+      val provider = EP_NAME.lazySequence().firstOrNull { it.isApplicable(project) }
       if (provider != null) {
         provider.Banner(project, modifier)
         Spacer(modifier = Modifier.height(44.dp))
