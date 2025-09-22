@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.command.configuration.CommandCompleti
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.ide.highlighter.JavaFileType
@@ -750,9 +751,27 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       myFixture.doHighlighting()
       myFixture.type(".")
       val elements = myFixture.completeBasic()
-      assertNotNull(elements.firstOrNull() { element -> element.lookupString.contains("Change Sign", ignoreCase = true) })
+      assertNotNull(elements.firstOrNull { element -> element.lookupString.contains("Change Sign", ignoreCase = true) })
       myFixture.performEditorAction("EditorBackSpace")
     }
+  }
+
+  fun testChangeParameters() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    val text = """
+      abstract class A { 
+        void foo().changep<caret>{
+        }
+        abstract void bar();
+      }
+      """.trimIndent()
+    myFixture.configureByText(JavaFileType.INSTANCE, text)
+    val elements = myFixture.completeBasic()
+    val lookupElement = elements.firstOrNull { element -> element.lookupString.contains("Change Sign", ignoreCase = true) }
+    assertNotNull(lookupElement)
+    val presentation = LookupElementPresentation()
+    lookupElement!!.renderElement(presentation)
+    assertTrue(presentation.itemText!!.contains("Tag"))
   }
 
   fun testFlipIntention() {
