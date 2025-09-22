@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -11,7 +10,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.inlinePrompt.InlinePrompt;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.AccessToken;
@@ -19,7 +17,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -38,6 +35,7 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -57,18 +55,18 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
   private final PsiFile myPsiFile;
 
   private final TextRange myVisibleRange;
-  private final boolean hasDirtyTextRange;
   private final List<BooleanSupplier> autoImportActions = Collections.synchronizedList(new ArrayList<>());
 
   @RequiresBackgroundThread
+  @RequiresReadLock
   ShowAutoImportPass(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull ProperTextRange visibleRange) {
     super(psiFile.getProject(), editor.getDocument(), false);
     ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
     myEditor = editor;
     myVisibleRange = visibleRange;
     myPsiFile = psiFile;
-    hasDirtyTextRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), psiFile, Pass.UPDATE_ALL) != null;
   }
 
   @Override
@@ -83,8 +81,7 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
     int exceptCaretOffset = myEditor.getCaretModel().getOffset();
 
     DaemonCodeAnalyzerEx.processHighlights(document, myProject, null, 0, document.getTextLength(), info -> {
-      if ((info.hasLazyQuickFixes() || info.type.getAttributesKey().equals(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES))// auto import fix can be either "lazy fix" or the regular fix attached to the info for unresolved reference
-          && info.getSeverity() == HighlightSeverity.ERROR && !info.containsOffset(exceptCaretOffset, true)) {
+      if (info.hasQuickFixes() && !info.containsOffset(exceptCaretOffset, true)) {
         infos.add(info);
       }
       return true;
@@ -92,12 +89,9 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
 
     for (HighlightInfo info : infos) {
       for (ReferenceImporter importer : ReferenceImporter.EP_NAME.getExtensionList()) {
-        if (!importer.isAddUnambiguousImportsOnTheFlyEnabled(myPsiFile)) {
-          continue;
-        }
-        BooleanSupplier action = importer.computeAutoImportAtOffset(myEditor, myPsiFile, info.getActualStartOffset(), false);
-        if (action != null) {
-          result.add(action);
+        if (importer.isAddUnambiguousImportsOnTheFlyEnabled(myPsiFile)) {
+          BooleanSupplier action = importer.computeAutoImportAtOffset(myEditor, myPsiFile, info.getActualStartOffset(), false);
+          ContainerUtil.addIfNotNull(result, action);
         }
       }
     }
@@ -129,13 +123,14 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
 
       int caretOffset = myEditor.getCaretModel().getOffset();
       importUnambiguousImports();
-      if (isImportHintEnabled() && !(myEditor instanceof ImaginaryEditor)) {
-        List<HighlightInfo> visibleHighlights = getVisibleHighlights(myVisibleRange, myProject, myEditor, hasDirtyTextRange);
+      if (isImportHintEnabled() && !(myEditor instanceof ImaginaryEditor) && !DaemonCodeAnalyzerEx.getInstanceEx(myProject).isEscapeJustPressed()) {
+        List<HighlightInfo> visibleHints = getVisibleHints(myVisibleRange, myProject, myEditor);
         // sort by distance to the caret
-        visibleHighlights.sort(Comparator.comparingInt(info -> Math.abs(info.getActualStartOffset() - caretOffset)));
+        visibleHints.sort(Comparator.comparingInt(info -> Math.abs(info.getActualStartOffset() - caretOffset)));
         try (AccessToken ignore = SlowOperations.knownIssue("IDEA-301732, IDEA-305605, EA-829346, EA-789713, ...")) {
-          for (HighlightInfo visibleHighlight : visibleHighlights) {
-            if (showAddImportHint(visibleHighlight)) {
+          for (HighlightInfo visibleHint : visibleHints) {
+            ProgressManager.checkCanceled();
+            if (showAddImportHint(visibleHint)) {
               break;
             }
           }
@@ -174,21 +169,14 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
                                 importer -> importer.isAddUnambiguousImportsOnTheFlyEnabled(psiFile));
   }
 
-  private static @NotNull List<HighlightInfo> getVisibleHighlights(@NotNull TextRange visibleRange,
-                                                                   @NotNull Project project,
-                                                                   @NotNull Editor editor,
-                                                                   boolean isDirty) {
+  private static @NotNull List<HighlightInfo> getVisibleHints(@NotNull TextRange visibleRange,
+                                                              @NotNull Project project,
+                                                              @NotNull Editor editor) {
     List<HighlightInfo> highlights = new ArrayList<>();
-    int offset = editor.getCaretModel().getOffset();
     DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, visibleRange.getStartOffset(), visibleRange.getEndOffset(), info -> {
-      //no changes after escape => suggest imports under caret only
-      if (!isDirty && !info.containsOffset(offset, true)) {
-        return true;
+      if (info.hasHint() && !editor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
+        highlights.add(info);
       }
-      if (!info.hasHint() || editor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
-        return true;
-      }
-      highlights.add(info);
       return true;
     });
     return highlights;
@@ -196,6 +184,7 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   private boolean showAddImportHint(@NotNull HighlightInfo info) {
     for (HintAction action : extractHints(info)) {
+      ProgressManager.checkCanceled();
       if (action.isAvailable(myProject, myEditor, myPsiFile) && action.showHint(myEditor)) {
         return true;
       }

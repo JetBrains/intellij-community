@@ -1281,6 +1281,11 @@ public class HighlightInfo implements Segment {
   public final boolean hasLazyQuickFixes() {
     return !offsetStore.lazyQuickFixes().isEmpty();
   }
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  public boolean hasQuickFixes() {
+    return hasLazyQuickFixes() || !offsetStore.intentionActionDescriptors.isEmpty();
+  }
 
   @ApiStatus.Internal
   @Contract(pure = true)
