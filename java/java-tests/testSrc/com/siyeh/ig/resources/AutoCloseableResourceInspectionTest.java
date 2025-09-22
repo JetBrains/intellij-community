@@ -4,7 +4,9 @@ package com.siyeh.ig.resources;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -675,6 +677,43 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
     finally {
       InspectionProfileImpl.INIT_INSPECTIONS = false;
     }
+  }
+
+  public void testSwitchExpression() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      doTest("""
+               import java.io.*;
+               abstract class TestInputOutput {
+                   enum FileSource { DEV_NULL, DEV_URANDOM, UNKNOWN}
+                   public void test(String[] args) {
+                       var arg = FileSource.valueOf(args[0]);
+                       try (var is = switch (arg) {
+                           case DEV_NULL -> {
+                               yield openDevUrandom();
+                           }
+                           case DEV_URANDOM -> openDevUrandom();
+                           case UNKNOWN -> throw new IllegalArgumentException("unknown");
+                       }) {
+                           var data = is.readAllBytes();
+                           try (var out = switch (arg) {
+                               case DEV_NULL -> openDevUrandom();
+                               case DEV_URANDOM ->{
+                                 InputStream a = <warning descr="'InputStream' used without 'try'-with-resources statement">openDevUrandom</warning>()<EOLError descr="';' expected"></EOLError>
+                                 yield openDevUrandom();
+                               }
+                               case UNKNOWN -> throw new IllegalArgumentException("unknown");
+               
+                           }) {
+                               System.out.println("data output");
+                           }
+                       } catch (IOException e) {
+                           throw new RuntimeException(e);
+                       }
+                   }
+                   abstract  InputStream openDevUrandom() throws FileNotFoundException;
+               }
+               """);
+    });
   }
 
   @Override
