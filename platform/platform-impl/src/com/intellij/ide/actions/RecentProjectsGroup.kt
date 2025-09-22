@@ -2,7 +2,6 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.RecentProjectListActionProvider
-import com.intellij.ide.ReopenProjectAction
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -32,18 +31,8 @@ internal class RecentProjectsGroup : ActionGroup(), DumbAware, ActionRemoteBehav
 }
 
 private fun removeCurrentProject(project: Project?): Array<AnAction> {
-  val provider = RecentProjectListActionProvider.getInstance()
-  val actions = provider.getActionsWithoutGroups(addClearListItem = true)
-  if (project == null) {
-    return actions.toTypedArray()
-  }
-
-  val list = ArrayList<AnAction>()
-  for (action in actions) {
-    if (action !is ReopenProjectAction || !provider.isCurrentProjectAction(project, action)) {
-      list.add(action)
-    }
-  }
-  return list.toTypedArray()
+  return RecentProjectListActionProvider.getInstance()
+    .getActionsWithoutGroups(addClearListItem = true, withoutProject = project)
+    .toTypedArray()
 }
 

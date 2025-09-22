@@ -1567,7 +1567,6 @@ c:com.intellij.ide.RecentProjectListActionProvider
 - f:getActions():java.util.List
 - f:getActions(Z):java.util.List
 - sf:getInstance():com.intellij.ide.RecentProjectListActionProvider
-- isCurrentProjectAction(com.intellij.openapi.project.Project,com.intellij.ide.ReopenProjectAction):Z
 f:com.intellij.ide.RecentProjectListActionProvider$Companion
 - f:getInstance():com.intellij.ide.RecentProjectListActionProvider
 f:com.intellij.ide.RecentProjectManagerState
