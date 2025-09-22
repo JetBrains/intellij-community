@@ -10,7 +10,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PySdkBundle;
+import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.packaging.PyPackageManagers;
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;

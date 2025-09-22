@@ -1,9 +1,11 @@
-package com.jetbrains.python
+package com.jetbrains.python.sdk.impl
 
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.jetbrains.annotations.ApiStatus
 import kotlin.io.path.name

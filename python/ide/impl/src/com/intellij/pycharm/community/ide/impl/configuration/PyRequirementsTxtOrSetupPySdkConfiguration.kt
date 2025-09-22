@@ -25,7 +25,7 @@ import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewVirtualE
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
-import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager

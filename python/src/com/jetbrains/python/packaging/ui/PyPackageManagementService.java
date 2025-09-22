@@ -17,7 +17,7 @@ import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageManagementServiceEx;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PySdkBundle;
+import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.errorProcessing.Exe;
 import com.jetbrains.python.errorProcessing.ExecErrorImpl;
 import com.jetbrains.python.errorProcessing.ExecErrorReason;

@@ -11,7 +11,7 @@ import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Time;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PySdkBundle;
+import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;

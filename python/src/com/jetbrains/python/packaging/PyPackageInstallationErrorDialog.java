@@ -13,7 +13,7 @@ import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.fields.ExpandableSupport;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
-import com.jetbrains.python.PySdkBundle;
+import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.run.PyVirtualEnvReaderKt;
 import kotlin.Pair;

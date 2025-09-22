@@ -13,7 +13,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.parser.icons.PythonParserIcons
 import com.jetbrains.python.pathValidation.PlatformAndRoot

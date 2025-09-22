@@ -13,7 +13,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.onSuccess
-import com.jetbrains.python.resolvePythonBinary
+import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator

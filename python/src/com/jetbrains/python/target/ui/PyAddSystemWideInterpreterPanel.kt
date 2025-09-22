@@ -17,7 +17,7 @@ import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.extendWithTargetSpecificFields
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkPanel

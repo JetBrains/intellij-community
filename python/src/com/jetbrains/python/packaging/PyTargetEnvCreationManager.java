@@ -25,7 +25,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.HelperPackage;
-import com.jetbrains.python.PySdkBundle;
+import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.packaging.pip.PipParseUtils;

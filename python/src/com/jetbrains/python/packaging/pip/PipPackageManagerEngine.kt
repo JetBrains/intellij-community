@@ -13,7 +13,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.IdeUtilIoBundle
-import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onFailure

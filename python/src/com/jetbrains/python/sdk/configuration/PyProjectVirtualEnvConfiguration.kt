@@ -11,7 +11,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -25,7 +24,7 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.remote.RemoteSdkException
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.packaging.PyTargetEnvCreationManager

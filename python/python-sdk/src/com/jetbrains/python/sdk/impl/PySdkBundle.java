@@ -1,4 +1,4 @@
-package com.jetbrains.python;
+package com.jetbrains.python.sdk.impl;
 
 import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.Nls;

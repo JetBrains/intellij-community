@@ -16,7 +16,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.poetry.findPoetryLock
 import com.jetbrains.python.poetry.getPyProjectTomlForPoetry
-import com.jetbrains.python.resolvePythonBinary
+import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.basePath

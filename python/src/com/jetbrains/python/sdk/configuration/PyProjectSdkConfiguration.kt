@@ -16,7 +16,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine

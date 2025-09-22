@@ -23,7 +23,7 @@ import com.intellij.platform.DirectoryProjectConfigurator
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
