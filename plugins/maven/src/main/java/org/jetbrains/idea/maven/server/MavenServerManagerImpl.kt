@@ -14,8 +14,6 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.ObjectUtils
 import com.intellij.util.PathUtil
 import com.intellij.util.io.DigestUtil.digestToHash
@@ -25,7 +23,6 @@ import org.apache.commons.lang3.SystemUtils
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.MavenDisposable
-import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.indices.MavenIndices
 import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager.Companion.getInstance
 import org.jetbrains.idea.maven.project.*
@@ -451,7 +448,10 @@ internal class MavenServerManagerImpl : MavenServerManager {
   companion object {
     private val freeDebugPort: Int?
       get() {
-        if (Registry.`is`("maven.server.debug")) {
+        val strVal = Registry.get("maven.server.debug").asString()
+        val explicitPort = strVal.toIntOrNull()
+        if (explicitPort != null) return explicitPort
+        if (strVal.toBoolean()) {
           try {
             return NetUtils.findAvailableSocketPort()
           }
