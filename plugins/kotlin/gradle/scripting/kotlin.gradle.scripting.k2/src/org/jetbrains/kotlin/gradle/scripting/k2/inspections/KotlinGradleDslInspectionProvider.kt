@@ -76,4 +76,15 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
     ): PsiElementVisitor {
         return KotlinAvoidApplyPluginMethodInspectionVisitor(holder)
     }
+
+    override fun isAvoidRepositoriesInBuildGradleInspectionAvailable(file: PsiFile): Boolean {
+        return FileUtilRt.fileNameEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_NAME)
+    }
+
+    override fun getAvoidRepositoriesInBuildGradleInspectionVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): PsiElementVisitor {
+        return KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(holder)
+    }
 }

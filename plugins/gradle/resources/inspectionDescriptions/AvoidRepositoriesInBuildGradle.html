@@ -1,0 +1,46 @@
+<html>
+<body>
+<p>Detects declarations of repositories in Gradle build scripts.</p>
+<p>
+  It's recommended to have all repositories declared in the Gradle settings file.
+</p>
+<p><b>Example:</b></p>
+<pre><code lang="kotlin">
+// build.gradle.kts
+buildscript { // reports 'buildscript', suggests moving it to `settings.gradle.kts`
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id("java")
+}
+
+repositories { // reports 'buildscript', suggests moving it to `settings.gradle.kts`
+    mavenCentral()
+}
+</code></pre>
+<p>After the quick fix is applied:</p>
+<pre><code lang="kotlin">
+// settings.gradle.kts
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+    repositories {
+        mavenCentral()
+    }
+}
+</code></pre>
+
+<p>Best practice described <a
+  href="https://docs.gradle.org/current/userguide/best_practices_dependencies.html#set_up_repositories_in_settings">here</a>.</p>
+</body>
+</html>

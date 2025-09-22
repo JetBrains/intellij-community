@@ -56,4 +56,10 @@ interface GradleDslInspectionProvider {
    */
   fun isAvoidApplyPluginMethodInspectionAvailable(file: PsiFile): Boolean
   fun getAvoidApplyPluginMethodInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
+
+  /**
+   * @see AvoidRepositoriesInBuildGradleInspection
+   */
+  fun isAvoidRepositoriesInBuildGradleInspectionAvailable(file: PsiFile): Boolean
+  fun getAvoidRepositoriesInBuildGradleInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
 }
