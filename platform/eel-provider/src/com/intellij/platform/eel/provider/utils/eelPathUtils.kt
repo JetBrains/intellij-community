@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
+import com.intellij.platform.eel.provider.utils.EelPathUtils.UnixFilePermissionBranch.*
+
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -10,12 +12,14 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.fs.ChangeAttributesOptionsBuilder
 import com.intellij.platform.eel.fs.WalkDirectoryEntryResult
 import com.intellij.platform.eel.fs.WalkDirectoryEntry
 import com.intellij.platform.eel.fs.WalkDirectoryEntryPosix
 import com.intellij.platform.eel.fs.WalkDirectoryEntryWindows
 import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.fs.EelPosixFileInfoImpl
 import com.intellij.platform.eel.fs.WalkDirectoryOptionsBuilder
 import com.intellij.platform.eel.fs.createTemporaryDirectory
@@ -42,6 +46,7 @@ import java.io.IOException
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
+import java.nio.file.AccessMode
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -1440,6 +1445,65 @@ object EelPathUtils {
       from.lastAccessTime(),
       from.creationTime(),
     )
+  }
+
+  private enum class UnixFilePermissionBranch { OWNER, GROUP, OTHER }
+
+  /**
+   * returns one of [modes] which is not satisfied, or `null` if all modes are satisfied
+   */
+  @ApiStatus.Internal
+  fun checkAccess(userInfo: EelUserPosixInfo, fileInfo: EelPosixFileInfo, vararg modes: AccessMode): AccessMode? {
+    if (userInfo.uid == 0) {
+      if (AccessMode.EXECUTE in modes) {
+        val executable = fileInfo.permissions.run {
+          ownerCanExecute || groupCanExecute || otherCanExecute
+        }
+        if (!executable) {
+          return AccessMode.EXECUTE
+        }
+      }
+      return null
+    }
+
+    // Inspired by sun.nio.fs.UnixFileSystemProvider#checkAccess
+    val filePermissionBranch = when {
+      userInfo.uid == fileInfo.permissions.owner -> OWNER
+      userInfo.gid == fileInfo.permissions.group -> GROUP
+      else -> OTHER
+    }
+
+    if (AccessMode.READ in modes) {
+      val canRead = when (filePermissionBranch) {
+        OWNER -> fileInfo.permissions.ownerCanRead
+        GROUP -> fileInfo.permissions.groupCanRead
+        OTHER -> fileInfo.permissions.otherCanRead
+      }
+      if (!canRead) {
+        return AccessMode.READ
+      }
+    }
+    if (AccessMode.WRITE in modes) {
+      val canWrite = when (filePermissionBranch) {
+        OWNER -> fileInfo.permissions.ownerCanWrite
+        GROUP -> fileInfo.permissions.groupCanWrite
+        OTHER -> fileInfo.permissions.otherCanWrite
+      }
+      if (!canWrite) {
+        return AccessMode.WRITE
+      }
+    }
+    if (AccessMode.EXECUTE in modes) {
+      val canExecute = when (filePermissionBranch) {
+        OWNER -> fileInfo.permissions.ownerCanExecute
+        GROUP -> fileInfo.permissions.groupCanExecute
+        OTHER -> fileInfo.permissions.otherCanExecute
+      }
+      if (!canExecute) {
+        return AccessMode.EXECUTE
+      }
+    }
+    return null
   }
 
   fun deleteRecursively(path: Path) {
