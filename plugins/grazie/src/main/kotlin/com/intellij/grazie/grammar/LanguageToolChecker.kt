@@ -9,17 +9,19 @@ import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.*
 import com.intellij.grazie.utils.NaturalTextDetector
 import com.intellij.grazie.utils.trimToNull
-import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.*
-import com.intellij.openapi.util.ClassLoaderUtil
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.ClassLoaderUtil.computeWithClassLoader
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Predicates
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
+import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.html.p
 import kotlinx.html.style
 import org.jetbrains.annotations.ApiStatus
@@ -31,11 +33,11 @@ import org.languagetool.rules.RuleMatch
 import org.languagetool.rules.en.EnglishUnpairedQuotesRule
 import org.slf4j.LoggerFactory
 import java.util.*
-import java.util.concurrent.Callable
 import java.util.function.Predicate
+import kotlin.coroutines.cancellation.CancellationException
 
 
-open class LanguageToolChecker : TextChecker() {
+open class LanguageToolChecker : ExternalTextChecker() {
   @ApiStatus.Internal
   class TestChecker : LanguageToolChecker()
 
@@ -46,38 +48,28 @@ open class LanguageToolChecker : TextChecker() {
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  override fun check(extracted: TextContent): List<Problem> {
-    val text = extracted.toString()
+  override suspend fun checkExternally(content: TextContent): List<Problem> {
+    val text = content.toString()
     if (text.isBlank() || !NaturalTextDetector.seemsNatural(text)) {
       return emptyList()
     }
 
     val language = LangDetector.getLang(text) ?: return emptyList()
-    try {
-      return runBlockingCancellable {
-        // LT will use indicator for cancelled checks
-        coroutineToIndicator {
-          val indicator = ProgressManager.getGlobalProgressIndicator()
-          checkNotNull(indicator) { "Indicator was not set for current job" }
-          runWithCheckCanceled(indicator) {
-            ClassLoaderUtil.computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
-              collectLanguageToolProblems(extracted, text, language)
-            }
-          }
+    return computeDetached(currentCoroutineContext()) {
+      try {
+        computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
+          collectLanguageToolProblems(content, text, language)
         }
       }
-    }
-    catch (exception: Throwable) {
-      if (ExceptionUtil.causedBy(exception, ProcessCanceledException::class.java)) {
-        throw ProcessCanceledException()
+      catch (exception: Throwable) {
+        if (ExceptionUtil.causedBy(exception, CancellationException::class.java)) {
+          throw ProcessCanceledException()
+        }
+        logger.warn("Got exception from LanguageTool", exception)
+        emptyList()
       }
-      logger.warn("Got exception from LanguageTool", exception)
     }
-    return emptyList()
   }
-
-  private fun <T> runWithCheckCanceled(indicator: ProgressIndicator, callable: Callable<out T>): T =
-    ApplicationUtil.runWithCheckCanceled(callable, indicator)
 
   private fun collectLanguageToolProblems(extracted: TextContent, text: String, lang: Lang): List<Problem> {
     val tool = LangTool.getTool(lang)

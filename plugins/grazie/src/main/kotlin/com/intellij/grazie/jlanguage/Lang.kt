@@ -108,7 +108,7 @@ enum class Lang(val displayName: String, val className: String, val iso: Languag
       if (shouldDisableChunker(it)) {
         it.chunker = NoopChunker()
       }
-      it.disambiguator = LazyCachingDisambiguator(it)
+      it.disambiguator = LazyCachingConcurrentDisambiguator(it)
       _jLanguage = it
       
     }

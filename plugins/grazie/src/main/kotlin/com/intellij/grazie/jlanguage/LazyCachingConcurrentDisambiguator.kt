@@ -1,34 +1,46 @@
 package com.intellij.grazie.jlanguage
 
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.grazie.GraziePlugin
+import com.intellij.openapi.util.ClassLoaderUtil.runWithClassLoader
 import com.intellij.util.containers.ContainerUtil.createConcurrentSoftKeySoftValueMap
 import com.intellij.util.io.computeDetached
-import com.intellij.util.progress.withLockCancellable
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.currentCoroutineContext
 import org.languagetool.AnalyzedSentence
 import org.languagetool.AnalyzedTokenReadings
 import org.languagetool.Language
 import org.languagetool.tagging.disambiguation.AbstractDisambiguator
 import org.languagetool.tagging.disambiguation.Disambiguator
-import java.util.concurrent.locks.ReentrantLock
 
 private val cache = createConcurrentSoftKeySoftValueMap<List<AnalyzedTokenReadings>, AnalyzedSentence>()
 
-internal class LazyCachingDisambiguator(private val jLanguage: Language) : AbstractDisambiguator() {
+internal class LazyCachingConcurrentDisambiguator(private val jLanguage: Language) : AbstractDisambiguator() {
 
   @Volatile
-  private lateinit var disambiguator: Disambiguator
+  private var disambiguator: Disambiguator? = null
+  private val lock = Any()
+
   override fun disambiguate(input: AnalyzedSentence): AnalyzedSentence {
     ensureInitialized()
-    return cache.computeIfAbsent(copy(input.tokens)) { disambiguator.disambiguate(input) }
+    return cache.computeIfAbsent(copy(input.tokens)) { disambiguator!!.disambiguate(input) }
+  }
+
+  private fun ensureInitialized() {
+    if (disambiguator == null) {
+      synchronized(lock) {
+        if (disambiguator == null) {
+          disambiguator = jLanguage.createDefaultDisambiguator()
+        }
+      }
+    }
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  fun ensureInitialized() {
-    if (!this::disambiguator.isInitialized) {
-      disambiguator = runBlockingCancellable {
-        computeDetached {
-          jLanguage.createDefaultDisambiguator()
+  suspend fun ensureInitializedAsync() {
+    if (disambiguator == null) {
+      computeDetached(currentCoroutineContext()) {
+        runWithClassLoader<Throwable>(GraziePlugin.classLoader) {
+          ensureInitialized()
         }
       }
     }
