@@ -3,7 +3,6 @@
 package com.intellij.toolWindow
 
 import com.intellij.accessibility.AccessibilityUtils
-import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsSafe
@@ -53,7 +52,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     val topWrapper = JBPanel<JBPanel<*>>(BorderLayout()).apply {
       border = JBUI.Borders.customLineTop(JBUI.CurrentTheme.MainToolbar.borderColor())
     }
-    border = InternalUICustomization.getInstance()?.configureToolWindowToolbarBorder(this, createBorder()) ?: createBorder()
+    border = createBorder()
     topStripe.background = JBUI.CurrentTheme.ToolWindow.stripeBackground()
     bottomStripe.background = JBUI.CurrentTheme.ToolWindow.stripeBackground()
     topWrapper.background = JBUI.CurrentTheme.ToolWindow.stripeBackground()

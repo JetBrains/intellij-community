@@ -28,7 +28,10 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHe
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MacToolbarFrameHeader
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
-import com.intellij.toolWindow.*
+import com.intellij.toolWindow.ToolWindowButtonManager
+import com.intellij.toolWindow.ToolWindowPane
+import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
+import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLayeredPane
@@ -452,24 +455,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
   override fun createCustomDivider(isVertical: Boolean, splitter: Splittable): Divider {
     return ManyIslandDivider(isVertical, splitter).also {
       it.configure(isManyIslandEnabled)
-    }
-  }
-
-  override fun configureToolWindowToolbarBorder(toolbar: ToolWindowToolbar, border: Border): Border {
-    val islandsBorder = if (toolbar is ToolWindowLeftToolbar) JBUI.Borders.emptyLeft(2) else JBUI.Borders.emptyRight(2)
-
-    return object : Border {
-      override fun paintBorder(component: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-        if (!isManyIslandEnabled) {
-          border.paintBorder(component, g, x, y, width, height)
-        }
-      }
-
-      override fun getBorderInsets(component: Component) = getCurrentBorder().getBorderInsets(component)
-
-      override fun isBorderOpaque() = getCurrentBorder().isBorderOpaque
-
-      private fun getCurrentBorder() = if (isManyIslandEnabled) islandsBorder else border
     }
   }
 

@@ -15,7 +15,6 @@ import com.intellij.openapi.wm.impl.content.ContentLayout
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.toolWindow.StripesUxCustomizer
 import com.intellij.toolWindow.ToolWindowButtonManager
-import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.toolWindow.xNext.XNextStripesUxCustomizer
 import com.intellij.ui.JBColor
 import com.intellij.ui.tabs.JBTabPainter
@@ -28,7 +27,6 @@ import java.awt.*
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JPanel
-import javax.swing.border.Border
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
@@ -133,8 +131,6 @@ open class InternalUICustomization {
   open fun attachDialogFallbackBackgroundPainter(glassPane: IdeGlassPane): Unit = Unit
 
   open fun getToolWindowsPaneThreeSplitterBackground(): Color = JBColor.GRAY
-
-  open fun configureToolWindowToolbarBorder(toolbar: ToolWindowToolbar, border: Border): Border = border
 
   open fun getCustomDefaultButtonFillPaint(c: JComponent, r: Rectangle, defaultPaint: Paint?): Paint? {
     return aiComponentMarker.getCustomDefaultButtonFillPaint(c, r, defaultPaint)
