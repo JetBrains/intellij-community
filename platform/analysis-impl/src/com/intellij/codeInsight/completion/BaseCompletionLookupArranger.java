@@ -359,35 +359,34 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
 
   private synchronized @NotNull Pair<List<LookupElement>, Integer> doArrangeItems(@NotNull LookupElementListPresenter lookup,
                                                                                   boolean onExplicitAction) {
-    return TraceKt.use(TelemetryManager.getInstance().getTracer(CodeCompletion).spanBuilder("arrangeItems"),
-                       span -> {
-                         List<LookupElement> items = getMatchingItems();
-                         Iterable<LookupElement> filteredIterableItems;
-                         if (!hasCustomElements()) {
-                           filteredIterableItems = items;
-                         }
-                         else {
-                           filteredIterableItems = JBIterable.from(items)
-                             .filter(item -> !isCustomElements(item));
-                         }
+    return TraceKt.use(TelemetryManager.getInstance().getTracer(CodeCompletion).spanBuilder("arrangeItems"), span -> {
+      List<LookupElement> items = getMatchingItems();
+      Iterable<LookupElement> filteredIterableItems;
+      if (!hasCustomElements()) {
+        filteredIterableItems = items;
+      }
+      else {
+        filteredIterableItems = JBIterable.from(items)
+          .filter(item -> !isCustomElements(item));
+      }
 
-                         Iterable<? extends LookupElement> sortedByRelevance = sortByRelevance(groupItemsBySorter(filteredIterableItems));
+      Iterable<? extends LookupElement> sortedByRelevance = sortByRelevance(groupItemsBySorter(filteredIterableItems));
 
-                         sortedByRelevance = applyFinalSorter(sortedByRelevance);
+      sortedByRelevance = applyFinalSorter(sortedByRelevance);
 
-                         sortedByRelevance = combineCustomElements(sortedByRelevance);
+      sortedByRelevance = combineCustomElements(sortedByRelevance);
 
-                         LookupElement relevantSelection = findMostRelevantItem(sortedByRelevance);
-                         List<LookupElement> listModel = isAlphaSorted() ?
-                                                         sortByPresentation(items) :
-                                                         fillModelByRelevance(lookup, new ReferenceOpenHashSet<>(items), sortedByRelevance,
-                                                                              relevantSelection);
-                         customizeListModel(listModel);
-                         int toSelect = getItemToSelect(lookup, listModel, onExplicitAction, relevantSelection);
-                         LOG.assertTrue(toSelect >= 0);
+      LookupElement relevantSelection = findMostRelevantItem(sortedByRelevance);
+      List<LookupElement> listModel = isAlphaSorted() ?
+                                      sortByPresentation(items) :
+                                      fillModelByRelevance(lookup, new ReferenceOpenHashSet<>(items), sortedByRelevance,
+                                                           relevantSelection);
+      customizeListModel(listModel);
+      int toSelect = getItemToSelect(lookup, listModel, onExplicitAction, relevantSelection);
+      LOG.assertTrue(toSelect >= 0);
 
-                         return new Pair<>(listModel, toSelect);
-                       });
+      return new Pair<>(listModel, toSelect);
+    });
   }
 
   /**
