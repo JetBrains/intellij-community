@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -136,13 +137,6 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     setPlatformUpdateInfo(null);
     newPlatformUpdate(null, null, (String)null);
     updateState();
-  }
-
-  public static void newPlatformUpdate(@NotNull PlatformUpdates.Loaded platformUpdateInfo,
-                                       @NotNull List<PluginDownloader> updatesForPlugins,
-                                       @NotNull Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
-    List<String> incompatiblePluginNames = ContainerUtil.map(incompatiblePlugins, it -> it.getName());
-    newPlatformUpdate(platformUpdateInfo, updatesForPlugins, incompatiblePluginNames);
   }
 
   public static void newPlatformUpdate(@NotNull PlatformUpdates.Loaded platformUpdateInfo,
@@ -279,7 +273,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
           if (platformUpdateInfo instanceof PlatformUpdates.Loaded && pluginResults != null) {
             setPlatformUpdateInfo((PlatformUpdates.Loaded)platformUpdateInfo);
             newPlatformUpdate(pluginResults.getPluginUpdates().getAllEnabled().stream().toList(),
-                              ContainerUtil.map(pluginResults.getPluginUpdates().getIncompatible(), it -> it.getName()),
+                              ContainerUtil.map(pluginResults.getPluginUpdates().getIncompatible(), PluginDescriptor::getName),
                               null);
             super.actionPerformed(e);
           }
