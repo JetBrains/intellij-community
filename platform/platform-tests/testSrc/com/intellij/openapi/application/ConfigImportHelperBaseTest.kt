@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.intellij.openapi.application.ConfigImportHelper.findConfigDirectories
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.InMemoryFsRule
@@ -12,6 +11,8 @@ import org.junit.rules.ExternalResource
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.util.function.Function
 
 abstract class ConfigImportHelperBaseTest : BareTestFixtureTestCase() {
@@ -21,25 +22,26 @@ abstract class ConfigImportHelperBaseTest : BareTestFixtureTestCase() {
   protected fun newTempDir(name: String): Path =
     Files.createDirectories(memoryFs.fs.getPath("_temp", name).toAbsolutePath())
 
-  protected fun createConfigDir(version: String, modern: Boolean = version >= "2020.1", product: String = "IntelliJIdea", storageTS: Long = 0): Path {
+  protected fun createConfigDir(version: String, modern: Boolean = version >= "2020.1", product: String = "IntelliJIdea", storageTS: LocalDateTime? = null): Path {
     val path = when {
       modern -> PathManager.getDefaultConfigPathFor("${product}${version}")
       OS.CURRENT == OS.macOS -> "${SystemProperties.getUserHome()}/Library/Preferences/${product}${version}"
       else -> "${SystemProperties.getUserHome()}/.${product}${version}/config"
     }
     val dir = Files.createDirectories(memoryFs.fs.getPath(path).normalize())
-    if (storageTS > 0) writeStorageFile(dir, storageTS)
+    if (storageTS != null) writeStorageFile(dir, storageTS)
     return dir
   }
 
-  protected fun writeStorageFile(config: Path, lastModified: Long) {
-    val file = config.resolve("${PathManager.OPTIONS_DIRECTORY}/${StoragePathMacros.NON_ROAMABLE_FILE}")
+  protected fun writeStorageFile(configDir: Path, lastModified: LocalDateTime) {
+    val file = configDir.resolve("${PathManager.OPTIONS_DIRECTORY}/${StoragePathMacros.NON_ROAMABLE_FILE}")
     Files.createDirectories(file.parent)
     Files.writeString(file, "<application/>")
-    Files.setLastModifiedTime(file, FileTime.fromMillis(lastModified))
+    Files.setLastModifiedTime(file, FileTime.from(lastModified.toInstant(ZoneOffset.UTC)))
   }
 
-  protected fun findConfigDirectories(newConfigPath: Path): List<Path> = findConfigDirectories(newConfigPath, null, emptyList()).paths
+  protected fun findConfigDirectories(newConfigPath: Path): List<Path> =
+    ConfigImportHelper.findConfigDirectories(newConfigPath, null, emptyList()).paths
 
   // disables broken plugins fetcher from the Marketplace by default
   class ConfigImportMarketplaceStub : ExternalResource() {

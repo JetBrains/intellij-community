@@ -43,6 +43,7 @@ import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Function
 import java.util.function.Predicate
@@ -77,23 +78,24 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   }
 
   @Test fun `find both historic and current config directories`() {
-    val cfg15 = createConfigDir("15", storageTS = 1448928000000)
-    val cfg193 = createConfigDir("2019.1", storageTS = 1574845200000)
-    val cfg201 = createConfigDir("2020.1", storageTS = 1585731600000)
+    val cfg15 = createConfigDir("15", storageTS = LocalDateTime.of(2015, 12, 1, 10, 0))
+    val cfg193 = createConfigDir("2019.1", storageTS = LocalDateTime.of(2019, 11, 27, 10, 0))
+    val cfg201 = createConfigDir("2020.1", storageTS = LocalDateTime.of(2020, 4, 1, 10, 0))
 
     val newConfigPath = createConfigDir("2020.2")
     assertThat(findConfigDirectories(newConfigPath)).containsExactly(cfg201, cfg193, cfg15)
   }
 
   @Test fun `find recent config directory`() {
-    val cfg201 = createConfigDir("2020.1", storageTS = 100)
-    val cfg211 = createConfigDir("2021.1", storageTS = 200)
-    val cfg221 = createConfigDir("2022.1", storageTS = 300)
+    val now = LocalDateTime.now()
+    val cfg201 = createConfigDir("2020.1", storageTS = now.minusSeconds(3))
+    val cfg211 = createConfigDir("2021.1", storageTS = now.minusSeconds(2))
+    val cfg221 = createConfigDir("2022.1", storageTS = now.minusSeconds(1))
 
     val newConfigPath = createConfigDir("2022.3")
     assertThat(findConfigDirectories(newConfigPath)).containsExactly(cfg221, cfg211, cfg201)
 
-    writeStorageFile(cfg211, 400)
+    writeStorageFile(cfg211, now)
     assertThat(findConfigDirectories(newConfigPath)).containsExactly(cfg211, cfg221, cfg201)
   }
 
@@ -107,17 +109,17 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   }
 
   @Test fun `sort some real historic config dirs`() {
-    val cfg10 = createConfigDir("10", product = "DataGrip", storageTS = 1455035096000)
-    val cfg162 = createConfigDir("2016.2", product = "DataGrip", storageTS = 1466345662000)
-    val cfg161 = createConfigDir("2016.1", product = "DataGrip", storageTS = 1485460719000)
-    val cfg171 = createConfigDir("2017.1", product = "DataGrip", storageTS = 1503006763000)
-    val cfg172 = createConfigDir("2017.2", product = "DataGrip", storageTS = 1510866492000)
-    val cfg163 = createConfigDir("2016.3", product = "DataGrip", storageTS = 1520869009000)
-    val cfg181 = createConfigDir("2018.1", product = "DataGrip", storageTS = 1531238044000)
-    val cfg183 = createConfigDir("2018.3", product = "DataGrip", storageTS = 1545844523000)
-    val cfg182 = createConfigDir("2018.2", product = "DataGrip", storageTS = 1548076635000)
-    val cfg191 = createConfigDir("2019.1", product = "DataGrip", storageTS = 1548225505000)
-    val cfg173 = createConfigDir("2017.3", product = "DataGrip", storageTS = 1549092322000)
+    val cfg10 = createConfigDir("10", product = "DataGrip", storageTS = LocalDateTime.of(2016, 2, 9, 17, 24))
+    val cfg162 = createConfigDir("2016.2", product = "DataGrip", storageTS = LocalDateTime.of(2016, 6, 19, 16, 14))
+    val cfg161 = createConfigDir("2016.1", product = "DataGrip", storageTS = LocalDateTime.of(2017, 1, 26, 20, 58))
+    val cfg171 = createConfigDir("2017.1", product = "DataGrip", storageTS = LocalDateTime.of(2017, 8, 17, 23, 52))
+    val cfg172 = createConfigDir("2017.2", product = "DataGrip", storageTS = LocalDateTime.of(2017, 11, 16, 22, 8))
+    val cfg163 = createConfigDir("2016.3", product = "DataGrip", storageTS = LocalDateTime.of(2018, 3, 12, 16, 36))
+    val cfg181 = createConfigDir("2018.1", product = "DataGrip", storageTS = LocalDateTime.of(2018, 7, 10, 17, 54))
+    val cfg183 = createConfigDir("2018.3", product = "DataGrip", storageTS = LocalDateTime.of(2018, 12, 26, 18, 23))
+    val cfg182 = createConfigDir("2018.2", product = "DataGrip", storageTS = LocalDateTime.of(2019, 1, 21, 14, 17))
+    val cfg191 = createConfigDir("2019.1", product = "DataGrip", storageTS = LocalDateTime.of(2019, 1, 23, 7, 38))
+    val cfg173 = createConfigDir("2017.3", product = "DataGrip", storageTS = LocalDateTime.of(2019, 2, 2, 8, 52))
 
     val newConfigPath = createConfigDir("2020.1", product = "DataGrip")
     assertThat(findConfigDirectories(newConfigPath)).containsExactly(
@@ -402,7 +404,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
   @Test fun `finding related directories`() {
     fun populate(config: Path, plugins: Path?, system: Path?, logs: Path?) {
-      writeStorageFile(config, System.currentTimeMillis())
+      writeStorageFile(config, LocalDateTime.now())
       plugins?.createDirectories()
       system?.createDirectories()
       logs?.createDirectories()
@@ -490,31 +492,27 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   @Test fun `suffix-less directories are excluded`() {
     createConfigDir(product = "Rider", version = "", modern = true)
     val current = createConfigDir(product = "Rider", version = "2022.1")
-    val result = ConfigImportHelper.findConfigDirectories(current, null, emptyList())
-    assertThat(result.paths).isEmpty()
+    assertThat(findConfigDirectories(current)).isEmpty()
   }
 
   @Test fun `suffix-less directories are excluded case-insensitively`() {
     createConfigDir(product = "RIDER", version = "", modern = true)
     val current = createConfigDir(product = "Rider", version = "2022.1")
-    val result = ConfigImportHelper.findConfigDirectories(current, null, emptyList())
-    assertThat(result.paths).isEmpty()
+    assertThat(findConfigDirectories(current)).isEmpty()
   }
 
   @Test fun `non-versioned directories are excluded_Rider`() {
     createConfigDir(product = "RiderFlow", version = "", modern = true)
     createConfigDir(product = "RiderRemoteDebugger", version = "", modern = true)
     val current = createConfigDir(product = "Rider", version = "2023.2")
-    val result = ConfigImportHelper.findConfigDirectories(current, null, emptyList())
-    assertThat(result.paths).isEmpty()
+    assertThat(findConfigDirectories(current)).isEmpty()
   }
 
   @Test fun `non-versioned directories are excluded_CLion`() {
     createConfigDir(product = ".clion-vcpkg", version = "", modern = false) // was created at the user dir by older versions
     createConfigDir(product = "CLionNova", version = "2023.2", modern = true) // "CLion" + RADLER_SUFFIX = "CLionNova"
     val current = createConfigDir(product = "CLion", version = "2023.2")
-    val result = ConfigImportHelper.findConfigDirectories(current, null, emptyList())
-    assertThat(result.paths).isEmpty()
+    assertThat(findConfigDirectories(current)).isEmpty()
   }
 
   @Test fun `merging VM options`() {
