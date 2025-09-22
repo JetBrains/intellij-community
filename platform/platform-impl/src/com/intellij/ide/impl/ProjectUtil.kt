@@ -722,7 +722,7 @@ object ProjectUtil {
       (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options)
     }
     else {
-      val options = OpenProjectTask().withProjectToClose(currentProject).copy(
+      val options = OpenProjectTask(projectToClose = currentProject).copy(
         projectRootDir = file,
       )
       openOrImportAsync(file, options)
