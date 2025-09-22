@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.implTraining
 
-import com.intellij.openapi.wm.impl.OnboardingBackgroundImageProviderBase
+import com.intellij.openapi.wm.impl.DialogBackgroundImageProviderBase
 import java.net.URL
 
-internal class PyCharmOnboardingBackgroundImageProvider : OnboardingBackgroundImageProviderBase() {
+internal class PyCharmDialogBackgroundImageProvider : DialogBackgroundImageProviderBase() {
   override fun getImageUrl(isDark: Boolean): URL? = javaClass.getResource(if (isDark) "/img/pycharm-onboarding-gradient-background-dark.svg"
                                                                           else "/img/pycharm-onboarding-gradient-background-light.svg")
 }

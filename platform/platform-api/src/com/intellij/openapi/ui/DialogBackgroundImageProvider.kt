@@ -9,10 +9,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Image
 
 @Internal
-interface OnboardingBackgroundImageProvider {
+interface DialogBackgroundImageProvider {
   companion object {
     @JvmStatic
-    fun getInstance(): OnboardingBackgroundImageProvider = ApplicationManager.getApplication().service()
+    fun getInstance(): DialogBackgroundImageProvider = ApplicationManager.getApplication().service()
   }
 
   val isAvailable: Boolean get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.onboarding.background.enabled", true)

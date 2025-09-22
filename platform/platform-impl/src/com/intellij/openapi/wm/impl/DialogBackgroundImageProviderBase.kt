@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.OnboardingBackgroundImageProvider
+import com.intellij.openapi.ui.DialogBackgroundImageProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -18,7 +18,7 @@ import java.io.IOException
 import java.net.URL
 
 @Internal
-abstract class OnboardingBackgroundImageProviderBase : OnboardingBackgroundImageProvider {
+abstract class DialogBackgroundImageProviderBase : DialogBackgroundImageProvider {
   open fun getImageUrl(isDark: Boolean): URL? = null
 
   override fun getImage(isDark: Boolean): Image? {
@@ -81,6 +81,6 @@ abstract class OnboardingBackgroundImageProviderBase : OnboardingBackgroundImage
     private val BACKGROUND_IMAGE_DISPOSABLE_KEY: Key<Disposable> = Key.create("ide.background.image.provider.background.image")
     private const val LOADING_TIMEOUT_MILLIS: Long = 300
     private val USE_LONG_TIMEOUT: Boolean get() = Registry.`is`("ide.onboarding.background.use.long.timeout", true)
-    private val LOG = Logger.getInstance(OnboardingBackgroundImageProviderBase::class.java)
+    private val LOG = Logger.getInstance(DialogBackgroundImageProviderBase::class.java)
   }
 }

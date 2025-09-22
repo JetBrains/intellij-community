@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.net.URL
 
 @Internal
-class OnboardingBackgroundImageProviderImpl : OnboardingBackgroundImageProviderBase() {
+class DialogBackgroundImageProviderImpl : DialogBackgroundImageProviderBase() {
   override fun getImageUrl(isDark: Boolean): URL? =
     if (PlatformUtils.isIntelliJ()) javaClass.getResource(if (isDark) "/images/gradientBackground-dark.svg"
                                                           else "/images/gradientBackground-light.svg")

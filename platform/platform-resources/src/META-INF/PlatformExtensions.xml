@@ -1526,8 +1526,8 @@
     <applicationService serviceInterface="com.intellij.ui.ToolbarService"
                         serviceImplementation="com.intellij.ui.ToolbarServiceImpl"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.ui.OnboardingBackgroundImageProvider"
-                        serviceImplementation="com.intellij.openapi.wm.impl.OnboardingBackgroundImageProviderImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.ui.DialogBackgroundImageProvider"
+                        serviceImplementation="com.intellij.openapi.wm.impl.DialogBackgroundImageProviderImpl"/>
 
     <applicationService serviceImplementation="com.intellij.ui.WindowDeactivationManager" client="all"/>
 

@@ -11,7 +11,7 @@ import com.intellij.ide.startup.importSettings.transfer.TransferableSetting
 import com.intellij.ide.startup.importSettings.wizard.pluginChooser.WizardPluginsPage
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.ui.OnboardingBackgroundImageProvider
+import com.intellij.openapi.ui.DialogBackgroundImageProvider
 import com.intellij.openapi.util.Disposer
 import com.jetbrains.rd.util.reactive.viewNotNull
 
@@ -83,7 +83,7 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
 
   override fun goToProductChooserPage() {
     val isDark = LafManager.getInstance().currentUIThemeLookAndFeel?.isDark ?: true
-    val page = ProductChooserPage(this, OnboardingBackgroundImageProvider.getInstance().getImage(isDark))
+    val page = ProductChooserPage(this, DialogBackgroundImageProvider.getInstance().getImage(isDark))
     Disposer.tryRegister(dialog.disposable, page)
     ImportSettingsEventsCollector.productPageShown()
     dialog.changePage(page)
