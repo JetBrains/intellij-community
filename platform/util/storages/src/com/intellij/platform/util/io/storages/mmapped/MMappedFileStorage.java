@@ -212,7 +212,8 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
    */
   public long actualFileSize() throws IOException {
     synchronized (pagesLock) {
-      //RC: Lock the pages to prevent file expansion (file expansion also acquires .pagesLock, see .pageByOffset())
+      //MMappedFileStorageFactory.dealWithPageUnAlignedFileSize() ensures channel.size must be aligned with page size.
+      // Lock the pages to prevent file expansion (file expansion also acquires .pagesLock, see .pageByOffset())
       //    If file is expanded concurrently with this method, we could see not-pageSize-aligned file size,
       //    which is confusing to deal with.
       //    Better to just prohibit such cases: file expansion (=new page allocation) is a relatively rare
