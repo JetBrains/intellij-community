@@ -109,8 +109,21 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private volatile boolean myCalculating;
   private final Advertiser myAdComponent;
   private int myGuardedChanges;
+
+  /**
+   * `myArranger` is the arranger that is used for collecting items.
+   * Can be changed by calling {@link #setArranger} from any thread.
+   * Changing arranger usually means that completion process is updated (e.g., prefix changed, completion type changed, etc.)
+   */
   private volatile @NotNull LookupArranger myArranger;
+
+  /**
+   * An arranger that is used for rendering. It's synchronized (i.e. replaced) with {@link #myArranger} during rendering.
+   * See {@link #checkReused()}.
+   * Accessed on EDT only. Note though, that {@link #myArranger} is usually the same instance, but it is accessed on any thread.
+   */
   private LookupArranger myPresentableArranger;
+
   private boolean myStartCompletionWhenNothingMatches;
   boolean myResizePending;
   private boolean myFinishing;
@@ -541,6 +554,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return ScrollingUtil.isIndexFullyVisible(list, list.getSelectedIndex());
   }
 
+  /**
+   * @return true if this lookup is reused my another completion process
+   */
   private boolean checkReused() {
     EDT.assertIsEdt();
     if (myPresentableArranger != myArranger) {
@@ -1312,6 +1328,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return ExceptionUtil.getThrowableText(disposeTrace) + "\n============";
   }
 
+  /**
+   * @param mayCheckReused   pass {@code true} if you want refresh because lookup is reused for another completion process (e.g., prefix has changed, completion type has changed, etc.)
+   * @param onExplicitAction the method is called on explicit user action
+   */
   public void refreshUi(boolean mayCheckReused, boolean onExplicitAction) {
     assert !myUpdating;
     LookupElement prevItem = getCurrentItem();
