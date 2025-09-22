@@ -66,7 +66,7 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
   private fun createFakeProjectWrapper() {
     createProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
                          "distributionUrl=http://example.com")
-    if (SystemInfo.isWindows) {
+    if (EelOsFamily.Windows == project.getEelDescriptor().osFamily) {
       createProjectSubFile("mvnw.cmd", "@echo $wrapperOutput\r\n@echo %*\r\n@set")
     }
     else {
@@ -258,7 +258,7 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
     assertTrue("Should pass env variables in run configuration, but stdout: ${executionInfo.stdout}", mavenOptsLineStarts != -1)
     val mavenOptsLineEnd = executionInfo.stdout.indexOf("\n", mavenOptsLineStarts)
     val mavenOptsLine = executionInfo.stdout.substring(mavenOptsLineStarts, mavenOptsLineEnd)
-    assertTrue("MAVEN_OPTS should contain parameters, but was ${mavenOptsLine}", mavenOptsLine.contains("$option"))
+    assertTrue("MAVEN_OPTS should contain parameters, but was ${mavenOptsLine}", mavenOptsLine.contains(option))
   }
 
   @Test
