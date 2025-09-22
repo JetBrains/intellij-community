@@ -21,7 +21,7 @@ public class CompletionSorterImpl extends CompletionSorter {
     myHashCode = myMembers.hashCode();
   }
 
-  public static ClassifierFactory<LookupElement> weighingFactory(final LookupElementWeigher weigher) {
+  public static @NotNull ClassifierFactory<LookupElement> weighingFactory(@NotNull LookupElementWeigher weigher) {
     final String id = weigher.toString();
     return new ClassifierFactory<>(id) {
       @Override
@@ -31,7 +31,8 @@ public class CompletionSorterImpl extends CompletionSorter {
     };
   }
 
-  @Override public @NotNull CompletionSorterImpl weighBefore(final @NotNull String beforeId, LookupElementWeigher... weighers) {
+  @Override
+  public @NotNull CompletionSorterImpl weighBefore(@NotNull String beforeId, LookupElementWeigher... weighers) {
     if (weighers.length == 0) return this;
 
     CompletionSorterImpl result = this;
@@ -41,7 +42,8 @@ public class CompletionSorterImpl extends CompletionSorter {
     return result;
   }
 
-  @Override public @NotNull CompletionSorterImpl weighAfter(final @NotNull String afterId, LookupElementWeigher... weighers) {
+  @Override
+  public @NotNull CompletionSorterImpl weighAfter(@NotNull String afterId, LookupElementWeigher... weighers) {
     if (weighers.length == 0) return this;
 
     CompletionSorterImpl result = this;
@@ -52,16 +54,18 @@ public class CompletionSorterImpl extends CompletionSorter {
     return result;
   }
 
-  @Override public @NotNull CompletionSorterImpl weigh(final @NotNull LookupElementWeigher weigher) {
+  @Override
+  public @NotNull CompletionSorterImpl weigh(@NotNull LookupElementWeigher weigher) {
     return withClassifier(weighingFactory(weigher));
   }
 
-  public CompletionSorterImpl withClassifier(ClassifierFactory<LookupElement> classifierFactory) {
+  public @NotNull CompletionSorterImpl withClassifier(@NotNull ClassifierFactory<LookupElement> classifierFactory) {
     return enhanced(classifierFactory, myMembers.size());
   }
 
   public @NotNull CompletionSorterImpl withClassifier(@NotNull String anchorId,
-                                             boolean beforeAnchor, ClassifierFactory<LookupElement> classifierFactory) {
+                                                      boolean beforeAnchor,
+                                                      @NotNull ClassifierFactory<LookupElement> classifierFactory) {
     final int i = idIndex(anchorId);
     return enhanced(classifierFactory, beforeAnchor ? Math.max(0, i) : i + 1);
   }
@@ -70,7 +74,10 @@ public class CompletionSorterImpl extends CompletionSorter {
     return new CompletionSorterImpl(ContainerUtil.filter(myMembers, t -> !removeCondition.test(t)));
   }
 
-  private @NotNull CompletionSorterImpl enhanced(ClassifierFactory<LookupElement> classifierFactory, int index) {
+  /**
+   * @return a copy of sorter with classifierFactory added to the specified index
+   */
+  private @NotNull CompletionSorterImpl enhanced(@NotNull ClassifierFactory<LookupElement> classifierFactory, int index) {
     final List<ClassifierFactory<LookupElement>> copy = new ArrayList<>(myMembers);
     copy.add(index, classifierFactory);
     return new CompletionSorterImpl(copy);
@@ -90,6 +97,9 @@ public class CompletionSorterImpl extends CompletionSorter {
     return myHashCode;
   }
 
+  /**
+   * @return a function-style list of classifiers corresponding to {@code components} starting from {@code index}
+   */
   private static Classifier<LookupElement> createClassifier(final int index,
                                                             final List<? extends ClassifierFactory<LookupElement>> components,
                                                             Classifier<LookupElement> tail) {
