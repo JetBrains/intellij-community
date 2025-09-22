@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixtureTestCase {
-  public void test_contract_and_notNull() {
+  public void testContractAndNotNull() {
     myFixture.configureByText("a.java", """
       class Foo {
         static String f<caret>oo() {
@@ -32,7 +32,7 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
       }""");
   }
 
-  public void test_parameter() {
+  public void testParameter() {
     myFixture.configureByText("a.java", """
       class Foo {
         static String foo(String s<caret>tr) {
@@ -50,7 +50,7 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
       }""");
   }
 
-  public void test_custom_notNull() {
+  public void testCustomNotNull() {
     myFixture.addClass("package foo; public @interface MyNotNull {}");
     NullableNotNullManager.getInstance(getProject()).setNotNulls("foo.MyNotNull");
 
@@ -74,7 +74,7 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
                             }""");
   }
 
-  public void test_type_use() {
+  public void testTypeUse() {
     myFixture.addClass("package foo; import java.lang.annotation.*;@Target(ElementType.TYPE_USE)public @interface MyNotNull {}");
     NullableNotNullManager.getInstance(getProject()).setNotNulls("foo.MyNotNull");
     myFixture.configureByText("a.java", """
@@ -94,7 +94,7 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
                             }""");
   }
 
-  public void test_type_use_qualified_type() {
+  public void testTypeUseQualifiedType() {
     myFixture.addClass("package foo; import java.lang.annotation.*;@Target(ElementType.TYPE_USE)public @interface MyNotNull {}");
     NullableNotNullManager.getInstance(getProject()).setNotNulls("foo.MyNotNull");
     myFixture.configureByText("a.java", """
