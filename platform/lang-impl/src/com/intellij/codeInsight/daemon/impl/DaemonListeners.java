@@ -601,7 +601,7 @@ public final class DaemonListeners implements Disposable {
         return;
       }
 
-      if (myEscPressed) {
+      if (isEscapeJustPressed()) {
         if (affectedDocument != null) {
           // prevent Esc key to leave the document in the not-highlighted state
           // todo IJPL-339 investigate this place
