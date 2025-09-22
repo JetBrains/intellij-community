@@ -693,7 +693,7 @@ object UpdateChecker {
   //</editor-fold>
 }
 
-private fun doUpdateAndShowResult(
+private suspend fun doUpdateAndShowResult(
   project: Project? = null,
   customSettings: UpdateSettings? = null,
   userInitiated: Boolean,
@@ -719,10 +719,13 @@ private fun doUpdateAndShowResult(
     return null
   }
 
-  val (pluginUpdates, customRepoPlugins, internalErrors) = UpdateChecker.getInternalPluginUpdates(
-    (platformUpdates as? PlatformUpdates.Loaded)?.newBuild?.apiVersion,
-    indicator,
-  )
+  val apiVersion = (platformUpdates as? PlatformUpdates.Loaded)?.newBuild?.apiVersion
+  val updatesModel = PluginUpdateHandler.getInstance().loadAndStorePluginUpdates(apiVersion?.asString(), indicator = indicator)
+  val updatesForPlugins = updatesModel.getNotIgnoredUpdates()
+  val incompatiblePluginNames = updatesModel.incompatiblePluginNames
+  val customRepoPlugins = updatesModel.getCustomRepoUpdates()
+  val internalErrors = updatesModel.internalErrors
+  val notIgnoredDownloaders = updatesModel.downloaders
 
   indicator?.text = IdeBundle.message("updates.external.progress")
   val (externalUpdates, externalErrors) = UpdateChecker.getExternalPluginUpdates(updateSettings, indicator)
@@ -731,14 +734,14 @@ private fun doUpdateAndShowResult(
 
   if (userInitiated && (internalErrors.isNotEmpty() || externalErrors.isNotEmpty())) {
     val builder = HtmlBuilder()
-    internalErrors.forEach { (host, ex) ->
+    internalErrors.forEach { (host, message) ->
       if (!builder.isEmpty) {
         builder.br()
       }
 
       val message = host?.let {
-        IdeBundle.message("updates.plugins.error.message2", it, ex.message)
-      } ?: IdeBundle.message("updates.plugins.error.message1", ex.message)
+        IdeBundle.message("updates.plugins.error.message2", it, message)
+      } ?: IdeBundle.message("updates.plugins.error.message1", message)
       builder.append(message)
     }
     for ((key, value) in externalErrors) {
@@ -750,15 +753,13 @@ private fun doUpdateAndShowResult(
 
   fun nonIgnored(downloaders: Collection<PluginDownloader>) = downloaders.filterNot { UpdateChecker.isIgnored(it.descriptor) }
 
-  val updatesForEnabledPlugins = nonIgnored(pluginUpdates.allEnabled)
   // disabled plugins are excluded from updates, see IDEA-273418, TODO refactor
   // probably it can lead to disabled plugins becoming incompatible without a notification in platform update dialog
-  val updatesForPlugins = updatesForEnabledPlugins // + nonIgnored(pluginUpdates.allDisabled)
 
   // TODO revise this
   val pluginAutoUpdateService = service<PluginAutoUpdateService>()
   if (platformUpdates !is PlatformUpdates.Loaded) {
-    pluginAutoUpdateService.onPluginUpdatesChecked(updatesForPlugins)
+    pluginAutoUpdateService.onPluginUpdatesChecked(notIgnoredDownloaders)
   }
   else {
     if (pluginAutoUpdateService.isAutoUpdateEnabled()) {
@@ -769,10 +770,10 @@ private fun doUpdateAndShowResult(
 
   if (!showResults) {
     if (platformUpdates is PlatformUpdates.Loaded) {
-      UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatesForPlugins, pluginUpdates.incompatible.map { it.name })
+      UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, notIgnoredDownloaders, incompatiblePluginNames)
     }
     else {
-      UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatesForPlugins, customRepoPlugins)
+      UpdateSettingsEntryPointActionProvider.newPluginUpdates(notIgnoredDownloaders, customRepoPlugins)
     }
     callback?.setDone()
     return null
@@ -784,8 +785,8 @@ private fun doUpdateAndShowResult(
       showResults(
         project = project,
         platformUpdates = platformUpdates,
-        updatesForPlugins = updatesForPlugins,
-        incompatiblePluginNames = pluginUpdates.incompatible.map { it.name },
+        updatesForPlugins = notIgnoredDownloaders,
+        incompatiblePluginNames = incompatiblePluginNames,
         showNotification = userInitiated || WelcomeFrame.getInstance() != null,
         forceDialog = forceDialog,
         showSettingsLink = showSettingsLink,
@@ -794,13 +795,14 @@ private fun doUpdateAndShowResult(
     else {
       showResults(
         project = project,
-        updatesForPlugins = updatesForPlugins,
+        sessionId = updatesModel.sessionId,
+        downloaders = notIgnoredDownloaders,
+        pluginUpdates = updatesForPlugins,
         customRepoPlugins = customRepoPlugins,
         externalUpdates = externalUpdates,
-        updatesForEnabledPlugins = updatesForEnabledPlugins,
         userInitiated = userInitiated,
         forceDialog = forceDialog,
-        showSettingsLink = showSettingsLink,
+        showSettingsLink = showSettingsLink
       )
     }
     callback?.setDone()
@@ -819,35 +821,42 @@ private fun showErrors(project: Project?, @NlsContexts.DialogMessage message: St
 @RequiresEdt
 private suspend fun showResults(
   project: Project?,
-  updatesForPlugins: List<PluginDownloader>,
+  sessionId: String,
+  downloaders: List<PluginDownloader>,
+  pluginUpdates: List<PluginUiModel>,
   customRepoPlugins: Collection<PluginUiModel>,
   externalUpdates: Collection<ExternalUpdate>,
-  updatesForEnabledPlugins: List<PluginDownloader>,
   userInitiated: Boolean,
   forceDialog: Boolean,
   showSettingsLink: Boolean,
 ) {
-  if (updatesForEnabledPlugins.isNotEmpty()) {
+  if (pluginUpdates.isNotEmpty()) {
     if (userInitiated) {
       shownNotifications.remove(NotificationKind.PLUGINS)?.forEach { it.expire() }
     }
     val plugins = withContext(Dispatchers.IO) {
-      UiPluginManager.getInstance().findInstalledPlugins(updatesForPlugins.map { it.id }.toSet())
+      UiPluginManager.getInstance().findInstalledPlugins(downloaders.map { it.id }.toSet())
     }
     // offer all updates in a dialog
     val showUpdateDialog: () -> Unit = {
-      PluginUpdateDialog.showAndUpdate(project, updatesForPlugins, customRepoPlugins, plugins)
+      val dialog = PluginUpdateDialog(project, pluginUpdates, customRepoPlugins, plugins)
+      if (dialog.showAndGet()) {
+        val selectedPlugins = dialog.getSelectedPluginModels()
+        service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.IO) {
+          PluginUpdateHandler.getInstance().installUpdates(sessionId, selectedPlugins, dialog.contentPanel, dialog.finishCallback)
+        }
+      }
     }
 
     if (forceDialog) {
       showUpdateDialog()
     }
     else {
-      UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatesForPlugins, customRepoPlugins)
+      UpdateSettingsEntryPointActionProvider.newPluginUpdates(downloaders, customRepoPlugins)
 
       if (userInitiated) {
         // offer to update only enabled plugins
-        showUpdatePluginsNotification(updatesForEnabledPlugins, project, showUpdateDialog)
+        showUpdatePluginsNotification(sessionId, pluginUpdates, project, showUpdateDialog)
       }
     }
   }
@@ -873,7 +882,7 @@ private suspend fun showResults(
       }
     }
   }
-  else if (updatesForEnabledPlugins.isEmpty()) {
+  else if (pluginUpdates.isEmpty()) {
     if (forceDialog) {
       NoUpdatesDialog(showSettingsLink).show()
     }
@@ -888,15 +897,17 @@ private suspend fun showResults(
 }
 
 private fun showUpdatePluginsNotification(
-  updatesForPlugins: List<PluginDownloader>,
+  sessionId: String,
+  updatesForPlugins: List<PluginUiModel>,
   project: Project?,
   showUpdateDialog: () -> Unit,
 ) {
-  val updatedPluginNames = updatesForPlugins.map { it.pluginName }
+  val updatedPluginNames = updatesForPlugins.map { it.name }
   val (title, message) = when (updatedPluginNames.size) {
     1 -> "" to IdeBundle.message("updates.plugin.ready.title", updatedPluginNames[0])
     else -> IdeBundle.message("updates.plugins.ready.title") to updatedPluginNames.joinToString { """"$it"""" }
   }
+  val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope
   showNotification(
     project = project,
     kind = NotificationKind.PLUGINS,
@@ -905,12 +916,16 @@ private fun showUpdatePluginsNotification(
     message = message,
     actions = listOf(
       NotificationAction.createExpiring(IdeBundle.message("updates.all.plugins.action", updatesForPlugins.size)) { e, _ ->
-        val component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as JComponent?
-        PluginUpdateDialog.runUpdateAll(updatesForPlugins, component, null, null)
+        coroutineScope.launch {
+          val component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as JComponent?
+          PluginUpdateHandler.getInstance().installUpdates(sessionId, updatesForPlugins, component, null)
+        }
       },
       NotificationAction.createSimpleExpiring(IdeBundle.message("updates.plugins.dialog.action"), showUpdateDialog),
       NotificationAction.createSimpleExpiring(IdeBundle.message("updates.ignore.updates.link", updatesForPlugins.size)) {
-        UpdateChecker.ignorePlugins(updatesForPlugins.map { it.descriptor })
+        coroutineScope.launch {
+          PluginUpdateHandler.getInstance().ignorePluginUpdates(sessionId)
+        }
       },
     ),
   )

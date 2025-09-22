@@ -53,7 +53,6 @@ import java.util.stream.Collectors;
  */
 @ApiStatus.Internal
 public class PluginUpdateDialog extends DialogWrapper {
-  private final @NotNull Collection<IdeaPluginDescriptor> myPluginDescriptors;
   private final boolean myPlatformUpdate;
   private final MyPluginModel myPluginModel;
   private final PluginsGroupComponent myPluginsPanel;
@@ -66,32 +65,48 @@ public class PluginUpdateDialog extends DialogWrapper {
   private @Nullable Runnable myFinishCallback;
 
   public PluginUpdateDialog(@Nullable Project project,
-                            @NotNull Collection<PluginDownloader> downloaders,
+                            @NotNull Collection<PluginUiModel> plugins,
                             @Nullable Collection<PluginUiModel> customRepositoryPlugins,
                             Map<PluginId, PluginUiModel> installedPlugins) {
-    this(project, ContainerUtil.map(downloaders, PluginDownloader::getDescriptor), customRepositoryPlugins, installedPlugins, false);
+    this(project, plugins, customRepositoryPlugins, installedPlugins, false);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
 
   public PluginUpdateDialog(@Nullable Project project,
                             @NotNull Collection<PluginDownloader> updatesForPlugins,
                             Map<PluginId, PluginUiModel> installedPlugins) {
-    this(project, ContainerUtil.map(updatesForPlugins, PluginDownloader::getDescriptor), null, Collections.emptyMap(), true);
+    this(project, ContainerUtil.map(updatesForPlugins, PluginDownloader::getUiModel), null, installedPlugins, true);
     setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
 
   public static boolean showAndUpdate(@Nullable Project project,
-                                      @NotNull Collection<PluginDownloader> downloaders,
+                                      @NotNull String sessionId,
+                                      @NotNull Collection<PluginUiModel> updates,
                                       @Nullable Collection<PluginUiModel> customRepositoryPlugins,
                                       Map<PluginId, PluginUiModel> installedPlugins) {
-    PluginUpdateDialog dialog = new PluginUpdateDialog(project, downloaders, customRepositoryPlugins, installedPlugins);
-    return showDialogAndUpdate(downloaders, dialog);
+    PluginUpdateDialog dialog = new PluginUpdateDialog(project, updates, customRepositoryPlugins, installedPlugins);
+    if (dialog.showAndGet()) {
+      List<PluginUiModel> selectedPlugins = dialog.getSelectedPluginModels();
+      UpdateInstaller.installPluginUpdates(sessionId, selectedPlugins, dialog.getContentPanel(), dialog.myFinishCallback);
+      return true;
+    }
+    return false;
   }
 
+  @Deprecated
+  public static boolean showAndUpdate(@Nullable Project project,
+                                      @NotNull Collection<PluginDownloader> updatesForPlugins,
+                                      Map<PluginId, PluginUiModel> installedPlugins) {
+    PluginUpdateDialog dialog = new PluginUpdateDialog(project, updatesForPlugins, installedPlugins);
+    return showDialogAndUpdate(updatesForPlugins, dialog);
+  }
+
+
+  @Deprecated
   public static boolean showDialogAndUpdate(@NotNull Collection<PluginDownloader> downloaders, PluginUpdateDialog dialog) {
     if (dialog.showAndGet()) {
-      List<IdeaPluginDescriptor> selectedPlugins = dialog.getSelectedPluginDescriptors();
+      List<PluginUiModel> selectedPlugins = dialog.getSelectedPluginModels();
       List<PluginDownloader> selectedDownloaders = findDownloadersForPlugins(downloaders, selectedPlugins);
       runUpdateAll(selectedDownloaders, dialog.getContentPanel(), dialog.myFinishCallback, null);
       return true;
@@ -100,9 +115,9 @@ public class PluginUpdateDialog extends DialogWrapper {
   }
 
   private static @NotNull List<PluginDownloader> findDownloadersForPlugins(@NotNull Collection<PluginDownloader> downloaders,
-                                                                           @NotNull List<IdeaPluginDescriptor> selectedPlugins) {
+                                                                           @NotNull List<PluginUiModel> selectedPlugins) {
     List<PluginDownloader> selectedDownloaders = new ArrayList<>();
-    Set<PluginId> selectedPluginIds = ContainerUtil.map2Set(selectedPlugins, IdeaPluginDescriptor::getPluginId);
+    Set<PluginId> selectedPluginIds = ContainerUtil.map2Set(selectedPlugins, PluginUiModel::getPluginId);
 
     for (PluginDownloader downloader : downloaders) {
       if (selectedPluginIds.contains(downloader.getDescriptor().getPluginId())) {
@@ -114,16 +129,15 @@ public class PluginUpdateDialog extends DialogWrapper {
   }
 
   private PluginUpdateDialog(@Nullable Project project,
-                             Collection<IdeaPluginDescriptor> pluginDescriptors,
+                             Collection<PluginUiModel> updates,
                              @Nullable Collection<PluginUiModel> customRepositoryPlugins,
                              Map<PluginId, PluginUiModel> installedPlugins,
                              boolean platformUpdate) {
     super(project, true);
 
-    myPluginDescriptors = pluginDescriptors;
     myPlatformUpdate = platformUpdate;
 
-    myIgnoreAction = new ActionLink(IdeBundle.message("updates.ignore.updates.button", pluginDescriptors.size()), e -> {
+    myIgnoreAction = new ActionLink(IdeBundle.message("updates.ignore.updates.button", updates.size()), e -> {
       doIgnoreUpdateAction(e);
     });
 
@@ -183,8 +197,8 @@ public class PluginUpdateDialog extends DialogWrapper {
     PluginManagerConfigurablePanel.registerCopyProvider(myPluginsPanel);
     myPluginsPanel.setSelectionListener(__ -> myDetailsPage.showPlugins(myPluginsPanel.getSelection()));
 
-    for (IdeaPluginDescriptor descriptor : pluginDescriptors) {
-      myGroup.addDescriptor(descriptor);
+    for (PluginUiModel descriptor : updates) {
+      myGroup.addModel(descriptor);
     }
     myGroup.sortByName();
     myPluginsPanel.addGroup(myGroup);
@@ -230,11 +244,11 @@ public class PluginUpdateDialog extends DialogWrapper {
     myFinishCallback = finishCallback;
   }
 
-  public @NotNull List<IdeaPluginDescriptor> getSelectedPluginDescriptors() {
-    List<IdeaPluginDescriptor> selectedPlugins = new ArrayList<>();
+  public @NotNull List<PluginUiModel> getSelectedPluginModels() {
+    List<PluginUiModel> selectedPlugins = new ArrayList<>();
     for (ListPluginComponent plugin : myGroup.ui.plugins) {
       if (plugin.getChooseUpdateButton().isSelected()) {
-        selectedPlugins.add(plugin.getPluginDescriptor());
+        selectedPlugins.add(plugin.getPluginModel());
       }
     }
     return selectedPlugins;

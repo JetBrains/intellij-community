@@ -5,7 +5,6 @@ import com.intellij.execution.CommandLineUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.nls.NlsMessages;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.newui.PluginModelAsyncOperationsExecutor;
 import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.ide.util.PropertiesComponent;
@@ -37,7 +36,6 @@ import java.awt.event.ActionEvent;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.updateSettings.impl.UpdateCheckerService.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
 
@@ -214,7 +212,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
   }
 
   private void downloadPatchAndRestart(Map<PluginId, PluginUiModel> installedPlugins) {
-    if (!ContainerUtil.isEmpty(myUpdatesForPlugins) && !PluginUpdateDialog.showAndUpdate(myProject, myUpdatesForPlugins, null, installedPlugins)) {
+    if (!ContainerUtil.isEmpty(myUpdatesForPlugins) && !PluginUpdateDialog.showAndUpdate(myProject, myUpdatesForPlugins, installedPlugins)) {
       return;  // update cancelled
     }
 

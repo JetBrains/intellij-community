@@ -334,9 +334,10 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
         @SuppressWarnings("unchecked")
         public void actionPerformed(@NotNull AnActionEvent e) {
           Set<PluginId> pluginIds = myUpdatesForPlugins.stream().map(it -> it.getId()).collect(Collectors.toSet());
+          List<@Nullable PluginUiModel> uiModels = ContainerUtil.map(myUpdatesForPlugins, it -> it.getUiModel());
           PluginModelAsyncOperationsExecutor.INSTANCE.findPlugins(pluginIds, plugins -> {
             PluginUpdateDialog dialog =
-              new PluginUpdateDialog(e.getProject(), myUpdatesForPlugins, myCustomRepositoryPlugins, (Map<PluginId, PluginUiModel>)plugins);
+              new PluginUpdateDialog(e.getProject(), uiModels, myCustomRepositoryPlugins, (Map<PluginId, PluginUiModel>)plugins);
             dialog.setFinishCallback(() -> setEnableUpdateAction(true));
             setEnableUpdateAction(false);
 

@@ -415,6 +415,8 @@
 
     <diff.editor.diffRequestProcessorEditorCustomizer implementation="com.intellij.diff.editor.DefaultDiffFileEditorCustomizer"/>
 
+    <pluginUpdateHandler implementation="com.intellij.openapi.updateSettings.impl.DefaultPluginUpdateHandler"/>
+
     <fileIconProvider implementation="com.intellij.diff.editor.DiffFileIconProvider"/>
 
     <editorTabTitleProvider implementation="com.intellij.diff.editor.DiffEditorTabTitleProvider"/>
