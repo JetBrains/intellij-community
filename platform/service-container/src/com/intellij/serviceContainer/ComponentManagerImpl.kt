@@ -1510,6 +1510,8 @@ private fun getInstanceBlocking(holder: InstanceHolder, debugString: String, cre
   }
 }
 
+private val forbidGetServiceEvenInNonCancellable = System.getProperty("idea.forbid.get.service.in.nc.static.init", "false").toBoolean()
+
 internal fun getOrCreateInstanceBlocking(holder: InstanceHolder, debugString: String, keyClass: Class<*>?): Any {
   // container scope might be canceled
   // => holder is initialized with CE
@@ -1521,18 +1523,30 @@ internal fun getOrCreateInstanceBlocking(holder: InstanceHolder, debugString: St
     }
   }
 
-  if (!Cancellation.isInNonCancelableSection() && !checkOutsideClassInitializer(debugString)) {
+  @Suppress("UsagesOfObsoleteApi")
+  val inNonCancelableSection = Cancellation.isInNonCancelableSection()
+
+  val guiltyClassName = if (inNonCancelableSection && !forbidGetServiceEvenInNonCancellable) null else isInsideClassInitializer(debugString)
+  if (guiltyClassName != null) {
+    checkOutsideClassInitializer(debugString, guiltyClassName)
+  }
+
+  // if guiltyClassName is not null, it means that we are inside class initializer,
+  // and so, we should execute it in a non-cancellable section
+  if (inNonCancelableSection || guiltyClassName == null) {
+    return doGetOrCreateInstanceBlocking(holder, keyClass)
+  }
+  else {
     Cancellation.withNonCancelableSection().use {
-      return holder.doGetOrCreateInstanceBlocking(keyClass)
+      return doGetOrCreateInstanceBlocking(holder, keyClass)
     }
   }
-  return holder.doGetOrCreateInstanceBlocking(keyClass)
 }
 
-private fun InstanceHolder.doGetOrCreateInstanceBlocking(keyClass: Class<*>?): Any {
+private fun doGetOrCreateInstanceBlocking(holder: InstanceHolder, keyClass: Class<*>?): Any {
   try {
     return runBlockingInitialization {
-      getInstanceInCallerContext(keyClass)
+      holder.getInstanceInCallerContext(keyClass)
     }
   }
   catch (e: ProcessCanceledException) {
@@ -1544,23 +1558,23 @@ private fun InstanceHolder.doGetOrCreateInstanceBlocking(keyClass: Class<*>?): A
 /**
  * @return `true` if called outside a class initializer, `false` if called inside a class initializer
  */
-private fun checkOutsideClassInitializer(debugString: String): Boolean {
-  val className = isInsideClassInitializer(debugString) ?: return true
-  if (logAccessInsideClinit.get()) {
-    dontLogAccessInClinit().use {
-      val message = "$className <clinit> requests $debugString instance. " +
-                    "Class initialization must not depend on services. " +
-                    "Consider using instance of the service on-demand instead."
-      if (!ApplicationManager.getApplication().isUnitTestMode) {
-        LOG.error(message)
-      }
-      else {
-        // TODO make this an error IJPL-156676
-        LOG.warn(message)
-      }
+private fun checkOutsideClassInitializer(debugString: String, guiltyClassName: String) {
+  if (!logAccessInsideClinit.get()) {
+    return
+  }
+
+  dontLogAccessInClinit().use {
+    val message = "$guiltyClassName <clinit> requests $debugString instance. " +
+                  "Class initialization must not depend on services. " +
+                  "Consider using instance of the service on-demand instead."
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      // TODO make this an error IJPL-156676
+      LOG.warn(message)
+    }
+    else {
+      LOG.error(message)
     }
   }
-  return false
 }
 
 private val expectedComponentsUsedByEelNio = setOf(
