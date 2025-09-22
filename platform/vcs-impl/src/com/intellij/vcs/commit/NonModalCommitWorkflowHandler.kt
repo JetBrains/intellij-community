@@ -420,6 +420,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     if (hasBlockedSmartChecks) {
       smartChecksWereBlocked = true
       ui.commitProgressUi.showWarningAboutDumbMode()
+      CommitSessionCollector.getInstance(project).logSmartCommitCheckBlocked()
       return NonModalCommitChecksFailure.SMART_MODE_REQUIRED
     }
     smartChecksWereBlocked = false

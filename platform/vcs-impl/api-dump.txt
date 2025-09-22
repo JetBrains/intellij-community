@@ -4190,7 +4190,7 @@ f:com.intellij.vcs.commit.CommitSessionCollector
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.vcs.commit.CommitSessionCollector
 - f:getProject():com.intellij.openapi.project.Project
 - f:logCodeAnalysisWarnings(I,I):V
-- f:logCommit(java.lang.String,I,I):V
+- f:logCommit(java.lang.String,I,I,Z):V
 - f:logCommitCheckToggled(com.intellij.openapi.vcs.checkin.CheckinHandler,Z,Z):V
 - f:logCommitOptionToggled(com.intellij.vcs.commit.CommitOption,Z):V
 - f:logDiffViewer(Z):V
