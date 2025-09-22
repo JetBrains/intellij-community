@@ -2,9 +2,9 @@
 package com.intellij.openapi.editor.toolbar.floating
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.UI
-import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.UiDispatcherKind
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.ui
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -49,14 +49,14 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
     provider: FloatingToolbarProvider,
   ) {
     editor.disposable.createLifetime().launch {
-      val dataContext = withContext(Dispatchers.UiWithModelAccess) {
+      val dataContext = withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
         editor.dataContext
       }
       val providerApplicable = readAction {
         provider.isApplicable(dataContext)
       }
       if (providerApplicable) {
-        withContext(Dispatchers.UiWithModelAccess) {
+        withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
           coroutineContext.ensureActive()
           val disposable = FloatingToolbarProvider.EP_NAME.createExtensionDisposable(
             extension = provider,
