@@ -19,53 +19,61 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   public void testCorrectClose() {
     // No highlighting because str was closed and we have ignoreResourcesWithClose option set
     //noinspection EmptyTryBlock
-    doTest("import java.io.*;" +
-           "class X {" +
-           "    public static void m() throws IOException {" +
-           "        FileInputStream str;" +
-           "        str = new FileInputStream(\"bar\");" +
-           "        try {" +
-           "        } finally {" +
-           "            str.close();" +
-           "        }" +
-           "    }" +
-           "}");
+    doTest("""
+             import java.io.*;
+             class X {
+                 public static void m() throws IOException {
+                     FileInputStream str;
+                     str = new FileInputStream("bar");
+                     try {
+                     } finally {
+                         str.close();
+                     }
+                 }
+             }
+             """);
   }
 
   public void testEscape() {
-    doTest("import java.io.*;" +
-           "class X {" +
-           "  static void m() throws IOException {" +
-           "    n(new FileInputStream(\"file.name\"));" +
-           "  }" +
-           "  static void n(Closeable c) {" +
-           "    System.out.println(c);" +
-           "  }" +
-           "}");
+    doTest("""
+             import java.io.*;
+             class X {
+               static void m() throws IOException {
+                 n(new FileInputStream("file.name"));
+               }
+               static void n(Closeable c) {
+                 System.out.println(c);
+               }
+             }
+             """);
   }
 
   public void testEscape2() {
     final AutoCloseableResourceInspection inspection = new AutoCloseableResourceInspection();
     inspection.anyMethodMayClose = false;
     myFixture.enableInspections(inspection);
-    doTest("import java.io.*;" +
-           "class X {" +
-           "  static void m() throws IOException {" +
-           "    n(new /*'FileInputStream' used without 'try'-with-resources statement*/FileInputStream/**/(\"file.name\"));" +
-           "  }" +
-           "  static void n(Closeable c) {" +
-           "    System.out.println(c);" +
-           "  }" +
-           "}");
+    doTest("""
+             import java.io.*;
+             class X {
+               static void m() throws IOException {
+                 n(new /*'FileInputStream' used without 'try'-with-resources statement*/FileInputStream/**/("file.name"));
+               }
+               static void n(Closeable c) {
+                 System.out.println(c);
+               }
+             }
+             """);
   }
 
   public void testEscape3() {
-    doTest("import java.io.*;" +
-           "class X {" +
-           "  static void m() throws IOException {" +
-           "    System.out.println(new FileInputStream(\"file.name\"));" +
-           "  }" +
-           "}");
+    doTest("""
+             import java.io.*;
+             class X {
+               static void m() throws IOException {
+                 System.out.println(new FileInputStream("file.name"));
+               }
+             }
+             """);
   }
 
   public void testARM() {
@@ -102,67 +110,78 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
 
   public void testSimple() {
     mockSql();
-    doTest("import java.sql.*;" +
-           "class X {" +
-           "  static void m(Driver driver) throws SQLException {" +
-           "    driver./*'Connection' used without 'try'-with-resources statement*/connect/**/(\"jdbc\", null);" +
-           "  }" +
-           "}");
+    doTest("""
+             import java.sql.*;
+             class X {
+               static void m(Driver driver) throws SQLException {
+                 driver./*'Connection' used without 'try'-with-resources statement*/connect/**/("jdbc", null);
+               }
+             }
+             """);
   }
 
   public void testSystemOut() {
-    doTest("class X {" +
-           "  static void m(String s) {" +
-           "    System.out.printf(\"asdf %s\", s);" +
-           "    System.err.format(\"asdf %s\", s);" +
-           "  }" +
-           "}");
+    doTest("""
+             class X {
+               static void m(String s) {
+                 System.out.printf("asdf %s", s);
+                 System.err.format("asdf %s", s);
+               }
+             }
+             """);
   }
 
   public void testMethodReference() {
-    doTest("import java.util.*;" +
-           "class X {" +
-           "  void m(List<String> list) {" +
-           "    final Z<String, Y> f = /*'Y' used without 'try'-with-resources statement*/Y::new/**/;" +
-           "  }" +
-           "  class Y implements java.io.Closeable {" +
-           "    Y(String s) {}" +
-           "    @Override public void close() throws java.io.IOException {}" +
-           "  }" +
-           "  interface Z<T, R> {\n" +
-           "    R apply(T t);" +
-           "  }" +
-           "}");
+    doTest("""
+             import java.util.*;
+             class X {
+               void m(List<String> list) {
+                 final Z<String, Y> f = /*'Y' used without 'try'-with-resources statement*/Y::new/**/;
+               }
+               class Y implements java.io.Closeable {
+                 Y(String s) {}
+                 @Override public void close() throws java.io.IOException {}
+               }
+               interface Z<T, R> {
+                 R apply(T t);
+               }
+             }
+             """);
   }
 
   public void testFormatter() {
-    doTest("import java.util.*;" +
-           "class TryWithResourcesFalsePositiveForFormatterFormat {" +
-           "    public static void useFormatter( Formatter output ) {" +
-           "        output.format( \"Hello, world!%n\" );" +
-           "    }" +
-           "}");
+    doTest("""
+             import java.util.*;
+             class TryWithResourcesFalsePositiveForFormatterFormat {
+                 public static void useFormatter( Formatter output ) {
+                     output.format( "Hello, world!%n" );
+                 }
+             }
+             """);
   }
 
   public void testWriterAppend() {
-    doTest("import java.io.*;" +
-           "class A {" +
-           "    private static void write(Writer writer) throws IOException {" +
-           "        writer.append(\"command\");" +
-           "    }" +
-           "}");
+    doTest("""
+             import java.io.*;
+             class A {
+                 private static void write(Writer writer) throws IOException {
+                     writer.append("command");
+                 }
+             }
+             """);
   }
 
   public void testScanner() {
-    doTest("import java.util.Scanner;" +
-           "class A {" +
-           "    static void a() throws java.io.IOException {" +
-           "        try (Scanner scanner = new Scanner(\"\").useDelimiter(\"\\\\A\")) {" +
-           "            String sconf = scanner.next();" +
-           "            System.out.println(sconf);" +
-           "        }" +
-           "    }" +
-           "}");
+    doTest("""
+             import java.util.Scanner;
+             class A {
+                 static void a() throws java.io.IOException {
+                     try (Scanner scanner = new Scanner("").useDelimiter("\\\\A")) {
+                         String sconf = scanner.next();
+                         System.out.println(sconf);
+                     }
+                 }
+             }""");
   }
 
   public void testTernary() {
@@ -635,10 +654,10 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
     try {
       myFixture.configureByText("X.java", """
         import java.io.InputStream;
-                
+        
         class X {
           native InputStream produce();
-          
+        
           void test() {
             InputStream is = <caret>produce();
             int i = is.read();
@@ -668,22 +687,26 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package java.util;" +
-      "public final class Formatter implements java.io.Closeable {" +
-      "    public Formatter format(String format, Object ... args) {" +
-      "      return this;" +
-      "    }" +
-      "}",
-      "package java.util;" +
-      "public final class Scanner implements java.io.Closeable {" +
-      "    public Scanner(String source) {}" +
-      "    public Scanner useDelimiter(String pattern) {" +
-      "         return this;" +
-      "    }" +
-      "    public String next() {" +
-      "        return this;" +
-      "    }" +
-      "}"
+      """
+      package java.util;
+      public final class Formatter implements java.io.Closeable {
+          public Formatter format(String format, Object ... args) {
+            return this;
+          }
+      }
+      """,
+      """
+      package java.util;
+      public final class Scanner implements java.io.Closeable {
+          public Scanner(String source) {}
+          public Scanner useDelimiter(String pattern) {
+               return this;
+          }
+          public String next() {
+              return this;
+          }
+      }
+      """
     };
   }
 }
