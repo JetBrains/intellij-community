@@ -279,16 +279,28 @@ object TerminalUiUtils {
     }
     else fg
 
-    // Allow dimmed foreground to be less contrast, otherwise, it might be indistinguishable from the non-dimmed foreground.
-    val contrast = if (style.hasOption(TextStyle.Option.DIM)) {
-      TerminalContrastRatio.ofFloat(requiredContrast.value / 2)
-    }
-    else requiredContrast
-
+    val contrast = style.getEffectiveContrastRatio(requiredContrast)
     return if (contrast == TerminalContrastRatio.MIN_VALUE) {
       return dimmedFg
     }
     else ensureContrastRatio(bg, dimmedFg, contrast.value)
+  }
+
+  private fun TextStyle.getEffectiveContrastRatio(base: TerminalContrastRatio): TerminalContrastRatio {
+    val effectiveFg = if (hasOption(TextStyle.Option.INVERSE)) background else foreground
+    val effectiveBg = if (hasOption(TextStyle.Option.INVERSE)) foreground else background
+    return when {
+      effectiveFg?.isIndexed == false && effectiveBg?.isIndexed == false -> {
+        // Do not adjust the foreground color if both foreground and background are specified in RGB format.
+        // Assume that if colors are specified absolutely, their contrast ratio is enough.
+        TerminalContrastRatio.MIN_VALUE
+      }
+      hasOption(TextStyle.Option.DIM) -> {
+        // Allow dimmed foreground to be less contrast, otherwise, it might be indistinguishable from the non-dimmed foreground.
+        TerminalContrastRatio.ofFloat(base.value / 2)
+      }
+      else -> base
+    }
   }
 
   private fun getEffectiveForegroundOrDefault(style: TextStyle, palette: TerminalColorPalette): Color {
