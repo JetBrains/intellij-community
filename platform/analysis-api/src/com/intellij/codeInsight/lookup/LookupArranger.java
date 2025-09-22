@@ -231,6 +231,7 @@ public abstract class LookupArranger implements WeighingContext {
 
   /**
    * Called when the prefix has been truncated farther than the additional prefix typed while the lookup was visible.
+   * Usually, we want to restart completion in this case.
    */
   public void prefixTruncated(@NotNull LookupEx lookup, int hideOffset) {
     lookup.hideLookup(false);

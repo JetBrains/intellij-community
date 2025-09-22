@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -74,6 +74,10 @@ public final class LookupOffsets implements DocumentListener {
                  : myEditor.getCaretModel().getOffset();
   }
 
+  /**
+   * An additional prefix is a prefix a part of completion prefix that was typed after the completion process had been started.
+   * It is stored separately because we don't always restart completion process, and in this case we have a base prefix and additional prefix.
+   */
   public @NotNull String getAdditionalPrefix() {
     return myAdditionalPrefix;
   }
@@ -83,6 +87,10 @@ public final class LookupOffsets implements DocumentListener {
     myAdditionalPrefix += c;
   }
 
+  /**
+   * @return {code true} if truncating of the additional prefix was successful. Returns {@code false} if additional prefix was empty, so
+   * we need to restart completion with truncated base prefix.
+   */
   public boolean truncatePrefix() {
     final int len = myAdditionalPrefix.length();
     if (len == 0) {
