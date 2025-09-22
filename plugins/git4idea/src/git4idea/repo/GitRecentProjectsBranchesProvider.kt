@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.AsyncCacheLoader
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.vcs.RecentProjectsBranchesProvider
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -60,12 +59,8 @@ internal enum class RecentProjectsShowBranchMode {
 }
 
 @Service
-internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineScope) : Disposable {
-  private val recentProjectsTopic = application.messageBus.syncPublisher(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC)
-  private val appMessageBusConnection = application.messageBus.simpleConnect()
-
-  private val updateRecentProjectsSignal =
-    MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+internal class GitRecentProjectsBranchesService(private val coroutineScope: CoroutineScope) {
+  private val updateRecentProjectsSignal = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val cache: AsyncLoadingCache<String, GitRecentProjectCachedBranch> = CaffeineUtil.withIoExecutor()
     .refreshAfterWrite(REFRESH_IN)
@@ -73,7 +68,7 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
     .buildAsync(BranchesLoader())
 
   init {
-    appMessageBusConnection.subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
+    application.messageBus.connect(coroutineScope).subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
       override fun applicationActivated(ideFrame: IdeFrame) {
         if (ideFrame.project?.isDefault == true) {
           cache.synchronous().refreshAll(cache.asMap().keys)
@@ -82,6 +77,7 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
     })
 
     coroutineScope.launch {
+      val recentProjectsTopic = application.messageBus.syncPublisher(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC)
       @OptIn(FlowPreview::class)
       updateRecentProjectsSignal.debounce(50).collectLatest {
         withContext(Dispatchers.EDT) {
@@ -106,11 +102,6 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
     }
     val branchFuture = cache.get(projectPath)
     return (branchFuture.getNow(GitRecentProjectCachedBranch.Unknown) as? GitRecentProjectCachedBranch.KnownBranch)?.branchName
-  }
-
-  override fun dispose() {
-    appMessageBusConnection.disconnect()
-    cache.synchronous().invalidateAll()
   }
 
   private inner class BranchesLoader : AsyncCacheLoader<String, GitRecentProjectCachedBranch> {
