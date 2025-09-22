@@ -514,6 +514,7 @@ internal class BazelBuildFileGenerator(
     val javacOptionsLabel = computeJavacOptions(moduleDescriptor, jvmTarget)
 
     val resourceTargets = mutableListOf<BazelLabel>()
+    val testResourceTargets = mutableListOf<BazelLabel>()
     val productionCompileTargets = mutableListOf<BazelLabel>()
     val productionCompileJars = mutableListOf<BazelLabel>()
     val testCompileTargets = mutableListOf<BazelLabel>()
@@ -527,7 +528,7 @@ internal class BazelBuildFileGenerator(
     }
     if (moduleDescriptor.testResources.isNotEmpty()) {
       val result = generateResources(module = moduleDescriptor, forTests = true)
-      resourceTargets.addAll(result.resourceTargets)
+      testResourceTargets.addAll(result.resourceTargets)
       testCompileTargets.addAll(result.resourceTargets)
     }
 
@@ -645,7 +646,7 @@ internal class BazelBuildFileGenerator(
         javacOptionsLabel?.let { option("javac_opts", it) }
         kotlincOptionsLabel?.let { option("kotlinc_opts", it) }
 
-        renderDeps(deps = testDeps, target = this, resourceDependencies = resourceTargets, forTests = true)
+        renderDeps(deps = testDeps, target = this, resourceDependencies = testResourceTargets, forTests = true)
       }
     }
 
@@ -1187,7 +1188,7 @@ private fun renderDeps(
 
   if (resourceDependencies.isNotEmpty() || (deps != null && deps.runtimeDeps.isNotEmpty())) {
     val runtimeDeps = resourceDependencies
-                        .filter {
+                        .map {
                           check(
                             PRODUCTION_RESOURCES_TARGET_REGEX.matches(it.label) ||
                             TEST_RESOURCES_TARGET_REGEX.matches(it.label)
@@ -1200,9 +1201,10 @@ private fun renderDeps(
                           ) {
                             "Resource dependency target name matches both prod and test regex: $it"
                           }
-                          return@filter PRODUCTION_RESOURCES_TARGET_REGEX.matches(it.label) ||
-                          (forTests && TEST_RESOURCES_TARGET_REGEX.matches(it.label))
-                        }.map {
+                          check(PRODUCTION_RESOURCES_TARGET_REGEX.matches(it.label) ||
+                                (forTests && TEST_RESOURCES_TARGET_REGEX.matches(it.label))) {
+                            "Unexpected resource dependency target name: $it"
+                          }
                           if (it.label.startsWith('@') || it.label.startsWith("//")) {
                             it
                           } else {
