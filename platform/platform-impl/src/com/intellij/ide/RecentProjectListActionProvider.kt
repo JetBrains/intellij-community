@@ -185,13 +185,13 @@ open class RecentProjectListActionProvider {
     val paths = LinkedHashSet(recentProjectManager.getRecentPaths())
     val duplicates = getDuplicateProjectNames(openedPaths, paths, recentProjectManager)
 
-    val actionsWithoutGroup = mutableListOf<AnAction>()
+    val actionsWithoutGroup = mutableListOf<ReopenProjectAction>()
     for (path in paths) {
       actionsWithoutGroup.add(createOpenAction(path, duplicates, recentProjectManager))
     }
 
     val actionsFromEP = if (LoadingState.COMPONENTS_LOADED.isOccurred && Registry.`is`("ide.recent.projects.query.ep.providers")) {
-      EP.extensionList.flatMap { createActionsFromProvider(it, false) }
+      EP.extensionList.flatMap { createActionsFromProvider(provider = it, allowCustomProjectActions = false) }
     }
     else {
       emptyList()
@@ -423,8 +423,7 @@ private class RemoteRecentProjectActionGroup(val projectId: String, val project:
     if (project.canOpenProject()) {
       result.add(DumbAwareAction.create(UIBundle.message("project.widget.opening.project.group.child.action.text")) { event ->
         project.openProject(event)
-      }
-      )
+      })
     }
     result.addAll(additionalActions)
     return result.toTypedArray()
@@ -436,8 +435,7 @@ private class RemoteRecentProjectActionGroup(val projectId: String, val project:
 }
 
 private class RemoteRecentProjectAction(val projectId: String, val project: RecentProject)
-  : AnAction(), DumbAware,
-    ProjectToolbarWidgetPresentable by RemoteRecentProjectWidgetActionHelper(projectId, project) {
+  : AnAction(), DumbAware, ProjectToolbarWidgetPresentable by RemoteRecentProjectWidgetActionHelper(projectId, project) {
   init {
     templatePresentation.setText(nameToDisplayAsText, false)
   }
@@ -452,9 +450,15 @@ private class RemoteRecentProjectWidgetActionHelper(val projectId: String, val p
   override val providerPathToDisplay: @NlsSafe String? get() = project.providerPath
   override val projectPathToDisplay: @NlsSafe String? = project.projectPath
   override val branchName: @NlsSafe String? = project.branchName
+
   override val projectIcon: Icon
-    get() = project.icon
-            ?: RecentProjectsManagerBase.getInstanceEx().getNonLocalProjectIcon(projectId, true, unscaledProjectIconSize(), project.displayName)
+    get() = project.icon ?: RecentProjectsManagerBase.getInstanceEx().getNonLocalProjectIcon(
+      id = projectId,
+      isProjectValid = true,
+      unscaledIconSize = unscaledProjectIconSize(),
+      name = project.displayName,
+    )
+
   override val providerIcon: Icon? get() = project.providerIcon
   override val activationTimestamp: Long? get() = project.activationTimestamp
 
@@ -493,10 +497,9 @@ private val AnAction.activationTimestamp
 private val EP_NAME: ExtensionPointName<RecentProjectsBranchesProvider> = ExtensionPointName("com.intellij.recentProjectsBranchesProvider")
 
 private fun getCurrentBranch(projectPath: String, nameIsDistinct: Boolean): String? {
-  EP_NAME.extensionList.forEach { provider ->
-    val branch = provider.getCurrentBranch(projectPath, nameIsDistinct)
-    if (branch != null) {
-      return branch
+  for (provider in EP_NAME.extensionList) {
+    provider.getCurrentBranch(projectPath, nameIsDistinct)?.let {
+      return it
     }
   }
 
