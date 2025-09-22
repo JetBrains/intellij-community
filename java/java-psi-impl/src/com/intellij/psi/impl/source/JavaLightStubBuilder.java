@@ -27,15 +27,6 @@ public class JavaLightStubBuilder extends LightStubBuilder {
     if (!(file instanceof PsiJavaFile)) {
       return super.createStubForFile(file, tree);
     }
-
-    String refText = "";
-    LighterASTNode pkg = LightTreeUtil.firstChildOfType(tree, tree.getRoot(), JavaElementType.PACKAGE_STATEMENT);
-    if (pkg != null) {
-      LighterASTNode ref = LightTreeUtil.firstChildOfType(tree, pkg, JavaElementType.JAVA_CODE_REFERENCE);
-      if (ref != null) {
-        refText = JavaSourceUtil.getReferenceText(tree, ref);
-      }
-    }
     return new PsiJavaFileStubImpl((PsiJavaFile)file, null, false);
   }
 
