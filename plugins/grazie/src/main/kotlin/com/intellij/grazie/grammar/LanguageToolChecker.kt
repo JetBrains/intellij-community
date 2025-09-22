@@ -7,6 +7,7 @@ import com.intellij.grazie.ide.ui.components.utils.html
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.*
+import com.intellij.grazie.utils.NaturalTextDetector
 import com.intellij.grazie.utils.trimToNull
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.application.runReadAction
@@ -47,7 +48,7 @@ open class LanguageToolChecker : TextChecker() {
   @OptIn(DelicateCoroutinesApi::class)
   override fun check(extracted: TextContent): List<Problem> {
     val text = extracted.toString()
-    if (text.isBlank()) {
+    if (text.isBlank() || !NaturalTextDetector.seemsNatural(text)) {
       return emptyList()
     }
 
