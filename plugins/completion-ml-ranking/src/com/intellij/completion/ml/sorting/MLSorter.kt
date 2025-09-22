@@ -28,7 +28,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 class MLSorterFactory : CompletionFinalSorter.Factory {
-  override fun newSorter() = MLSorter()
+  override fun newSorter(): MLSorter = MLSorter()
 }
 
 
@@ -43,25 +43,25 @@ class MLSorter : CompletionFinalSorter() {
 
   override fun getRelevanceObjects(items: MutableIterable<LookupElement>): Map<LookupElement, List<Pair<String, Any>>> {
     if (cachedScore.isEmpty()) {
-      return items.associate { it to listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.NONE as Any)) }
+      return items.associateWith { listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.NONE as Any)) }
     }
 
     if (hasUnknownFeatures(items)) {
-      return items.associate { it to listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.UNDEFINED as Any)) }
+      return items.associateWith { listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.UNDEFINED as Any)) }
     }
 
     if (!isCacheValid(items)) {
-      return items.associate { it to listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.INVALID_CACHE as Any)) }
+      return items.associateWith { listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.INVALID_CACHE as Any)) }
     }
 
-    return items.associate {
+    return items.associateWith {
       val result = mutableListOf<Pair<String, Any>>()
       val cached = cachedScore[it]
       if (cached != null) {
         result.add(Pair.create(FeatureUtils.ML_RANK, cached.mlRank))
         result.add(Pair.create(FeatureUtils.BEFORE_ORDER, cached.positionBefore))
       }
-      it to result
+      result
     }
   }
 
@@ -74,7 +74,7 @@ class MLSorter : CompletionFinalSorter() {
     score?.mlRank == null
   }
 
-  override fun sort(items: MutableIterable<LookupElement>, parameters: CompletionParameters): Iterable<LookupElement?> {
+  override fun sort(items: Iterable<LookupElement>, parameters: CompletionParameters): Iterable<LookupElement> {
     val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl ?: return items
     val lookupStorage = MutableLookupStorage.get(lookup) ?: return items
     // Do nothing if unable to reorder items or to log the weights
