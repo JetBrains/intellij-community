@@ -53,8 +53,10 @@ private val BUNDLED_EP_NAME = ExtensionPointName<BundledDictionaryProvider>("com
 
 @Service(Service.Level.PROJECT)
 class SpellCheckerManager @Internal constructor(@Internal val project: Project, coroutineScope: CoroutineScope) : Disposable {
-  private var projectDictionary: ProjectDictionary? = null
-  private var appDictionary: EditableDictionary? = null
+  internal val projectDictionary: ProjectDictionary
+    get() = project.service<ProjectDictionaryState>().projectDictionary
+  internal val appDictionary: EditableDictionary
+    get() = AppDictionaryState.getInstance().dictionary
 
   @get:Internal
   val projectDictionaryPath: String by lazy {
@@ -83,6 +85,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
     fullConfigurationReload()
 
     LocalFileSystem.getInstance().addVirtualFileListener(CustomDictFileListener(project = project, manager = this), this)
+    LocalFileSystem.getInstance().addVirtualFileListener(ProjectDictFileListener(this), this)
     BUNDLED_EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker!!) }
     RuntimeDictionaryProvider.EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker!!) }
     CustomDictionaryProvider.EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker!!) }
@@ -169,10 +172,10 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
   }
 
   val userDictionaryWords: Set<String>
-    get() = projectDictionary!!.editableWords + appDictionary!!.editableWords
+    get() = projectDictionary.editableWords + appDictionary.editableWords
 
   val userCamelCaseWords: Set<String>
-    get() = projectDictionary!!.camelCaseWords + appDictionary!!.camelCaseWords
+    get() = projectDictionary.camelCaseWords + appDictionary.camelCaseWords
 
   private fun fillEngineDictionary(spellChecker: SpellCheckerEngine) {
     spellChecker.reset()
@@ -201,14 +204,11 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
     if (appDictionaryState.dictionary == null) {
       appDictionaryState.dictionary = UserDictionary(AppDictionaryState.DEFAULT_NAME)
     }
-    appDictionary = appDictionaryState.dictionary
-    spellChecker.addModifiableDictionary(appDictionary!!)
+    spellChecker.addModifiableDictionary(appDictionary)
     val dictionaryState = project.service<ProjectDictionaryState>()
     dictionaryState.addProjectDictListener { restartInspections("SpellCheckerManager.addProjectDictListener") }
-    projectDictionary = dictionaryState.projectDictionary
-    projectDictionary!!.setActiveName(getProjectDictionaryName())
-
-    spellChecker.addModifiableDictionary(projectDictionary!!)
+    projectDictionary.setActiveName(getProjectDictionaryName())
+    spellChecker.addModifiableDictionary(projectDictionary)
   }
 
   fun loadDictionary(path: String) {
@@ -268,6 +268,9 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
 
   private fun addWordToDictionary(dictionary: EditableDictionary, word: String) {
     dictionary.addToDictionary(word)
+    if (!spellChecker!!.isDictionaryLoad(dictionary.name)) {
+      spellChecker!!.addModifiableDictionary(dictionary)
+    }
     fireDictionaryChanged(dictionary)
   }
 
@@ -285,7 +288,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
   fun updateUserDictionary(words: Collection<String>) {
     // new for project dictionary
     val addedToProjectWords = words - userDictionaryWords
-    val projectDictionary = projectDictionary!!
+    val projectDictionary = projectDictionary
     for (word in addedToProjectWords) {
       projectDictionary.addToDictionary(word)
     }
@@ -302,9 +305,9 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
     }
 
     // deleted from application dictionary
-    val deletedFromApplicationWords = appDictionary!!.editableWords - wordSet
+    val deletedFromApplicationWords = appDictionary.editableWords - wordSet
     for (word in deletedFromApplicationWords) {
-      appDictionary!!.removeFromDictionary(word)
+      appDictionary.removeFromDictionary(word)
     }
     if (!deletedFromApplicationWords.isEmpty()) {
       userDictionaryListenerEventDispatcher.multicaster.dictChanged(appDictionary)
@@ -336,6 +339,15 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
   fun addUserDictionaryChangedListener(listener: DictionaryStateListener, parentDisposable: Disposable?) {
     userDictionaryListenerEventDispatcher.addListener(listener)
     Disposer.register(parentDisposable!!) { userDictionaryListenerEventDispatcher.removeListener(listener) }
+  }
+}
+
+private class ProjectDictFileListener(private val manager: SpellCheckerManager) : VirtualFileListener {
+  override fun fileDeleted(event: VirtualFileEvent) {
+    if (event.file.path.endsWith(getProjectDictionaryPath())) {
+      manager.spellChecker!!.removeDictionary(getProjectDictionaryName())
+      restartInspections("SpellCheckerManager.removeProjectDictionary")
+    }
   }
 }
 
