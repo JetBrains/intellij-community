@@ -78,6 +78,9 @@ public final class TypeNullability {
     if (this.nullability() == Nullability.NOT_NULL) {
       return this;
     }
+    if (this.nullability() == Nullability.NULLABLE && this.source() instanceof NullabilitySource.ExtendsBound) {
+      return nullability;
+    }
     if (nullability.nullability() == Nullability.NOT_NULL && this.source() instanceof NullabilitySource.ExtendsBound) {
       return nullability;
     }
