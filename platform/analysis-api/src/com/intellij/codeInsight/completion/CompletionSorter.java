@@ -8,18 +8,31 @@ import org.jetbrains.annotations.NotNull;
  * @see CompletionResultSet#withRelevanceSorter(CompletionSorter)
  */
 public abstract class CompletionSorter {
-  public abstract CompletionSorter weighBefore(@NotNull String beforeId, LookupElementWeigher... weighers);
+  /**
+   * @param beforeId id of the weigher which must be run after {@code weighers}
+   * @param weighers weighers to add
+   * @return a sorter combining the current one and added weighers
+   */
+  public abstract @NotNull CompletionSorter weighBefore(@NotNull String beforeId, LookupElementWeigher... weighers);
 
-  public abstract CompletionSorter weighAfter(@NotNull String afterId, LookupElementWeigher... weighers);
+  /**
+   * @param afterId  id of the weigher which must be run before {@code weighers}
+   * @param weighers weighers to add.
+   * @return a sorter combining the current one and added weighers
+   */
+  public abstract @NotNull CompletionSorter weighAfter(@NotNull String afterId, LookupElementWeigher... weighers);
 
-  public abstract CompletionSorter weigh(LookupElementWeigher weigher);
+  /**
+   * @param weigher a new weigher to append
+   * @return a sorter combining the current sorter and the added weigher
+   */
+  public abstract @NotNull CompletionSorter weigh(@NotNull LookupElementWeigher weigher);
 
-  public static CompletionSorter emptySorter() {
+  public static @NotNull CompletionSorter emptySorter() {
     return CompletionService.getCompletionService().emptySorter();
   }
 
-  public static CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher) {
+  public static @NotNull CompletionSorter defaultSorter(@NotNull CompletionParameters parameters, @NotNull PrefixMatcher matcher) {
     return CompletionService.getCompletionService().defaultSorter(parameters, matcher);
   }
-
 }
