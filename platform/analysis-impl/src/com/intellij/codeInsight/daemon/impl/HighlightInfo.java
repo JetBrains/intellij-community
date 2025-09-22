@@ -20,7 +20,6 @@ import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Document;
@@ -112,9 +111,8 @@ public class HighlightInfo implements Segment {
     long psiModificationStamp,
     // list of (code fragment to be executed in BGT, and their execution result future)
     // future == null means the code was never executed, not-null means the execution has started, .isDone() means it's completed
-    @Nullable Future<@NotNull List<IntentionActionDescriptor>> future,
-    // the ProgressIndicator under which the future is running
-    @NotNull ProgressIndicator progressIndicator) {}
+    @Nullable Future<@NotNull List<IntentionActionDescriptor>> future
+  ) {}
 
   private final @DetailedDescription String description;
   private final @Tooltip String toolTip;
@@ -217,7 +215,7 @@ public class HighlightInfo implements Segment {
     this.toolId = toolId;
     this.group = group;
     List<LazyFixDescription> myLazyQuickFixes =
-      ContainerUtil.map(lazyFixes, c -> new LazyFixDescription(c, 0, null, new DaemonProgressIndicator()));
+      ContainerUtil.map(lazyFixes, c -> new LazyFixDescription(c, 0, null));
     offsetStore = new OffsetStore(null, null, List.of(), myLazyQuickFixes);
   }
 
@@ -1146,7 +1144,7 @@ public class HighlightInfo implements Segment {
   public final void updateLazyFixesPsiTimeStamp(long psiTimeStamp) {
     updateOffsetStore(store -> store.withLazyQuickFixes(ContainerUtil.map(store.lazyQuickFixes(),
                                                          d -> d.psiModificationStamp() == 0
-                                                              ? new LazyFixDescription(d.fixesComputer(), psiTimeStamp, d.future(), d.progressIndicator())
+                                                              ? new LazyFixDescription(d.fixesComputer(), psiTimeStamp, d.future())
                                                               : d)));
   }
 
@@ -1402,15 +1400,10 @@ public class HighlightInfo implements Segment {
             __ -> doComputeLazyQuickFixes(document, psiFile.getProject(), desc.psiModificationStamp(), computer));
         assert result != null;
         future = CompletableFuture.completedFuture(result);
-        return new LazyFixDescription(desc.fixesComputer(), desc.psiModificationStamp(), future, desc.progressIndicator());
+        return new LazyFixDescription(desc.fixesComputer(), desc.psiModificationStamp(), future);
       });
       return oldStore.withLazyQuickFixes(newLazies);
     });
-    // cancel the computations still going in background, but only after the new futures were assigned,
-    // to avoid data race when the progressIndicator canceled, the computation aborted, the future state is "completed exceptionally", some other process picked this up and confused
-    for (LazyFixDescription desc : offsetStore.lazyQuickFixes()) {
-      desc.progressIndicator().cancel();
-    }
   }
 
   @NotNull
@@ -1471,15 +1464,8 @@ public class HighlightInfo implements Segment {
         Future<List<IntentionActionDescriptor>> future = description.future();
         if (future == null) {
           Consumer<? super QuickFixActionRegistrar> computer = description.fixesComputer();
-          future = ReadAction.nonBlocking(() -> {
-            AtomicReference<List<IntentionActionDescriptor>> result = new AtomicReference<>(List.of());
-            ((ApplicationEx)ApplicationManager.getApplication()).executeByImpatientReader(
-              () -> result.set(doComputeLazyQuickFixes(document, project, description.psiModificationStamp(), computer)));
-            assert result.get() != null;
-            return result.get();
-          }).wrapProgress(progressIndicator.get()).submit(ForkJoinPool.commonPool());
-          return new LazyFixDescription(computer, PsiManager.getInstance(project).getModificationTracker().getModificationCount(),
-                                        future, progressIndicator.get());
+          future = ReadAction.nonBlocking(() -> doComputeLazyQuickFixes(document, project, description.psiModificationStamp(), computer)).wrapProgress(progressIndicator.get()).submit(ForkJoinPool.commonPool());
+          return new LazyFixDescription(computer, PsiManager.getInstance(project).getModificationTracker().getModificationCount(), future);
         }
         return description;
       });
