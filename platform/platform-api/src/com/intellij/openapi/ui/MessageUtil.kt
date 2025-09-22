@@ -34,3 +34,15 @@ fun showOkCancelDialog(@DialogTitle title: String,
                        project: Project? = null): Int {
   return Messages.showOkCancelDialog(project, message, title, okText, cancelText, icon, doNotAskOption)
 }
+
+@Deprecated(message = "Use showOkCancelDialog overload with com.intellij.openapi.ui.DoNotAskOption parameters")
+@Messages.OkCancelResult
+fun showOkCancelDialog(@DialogTitle title: String,
+                       @DialogMessage message: String,
+                       @Button okText: String,
+                       @Button cancelText: String = Messages.getCancelButton(),
+                       icon: Icon? = null,
+                       doNotAskOption: DialogWrapper.DoNotAskOption?,
+                       project: Project? = null): Int {
+  return Messages.showOkCancelDialog(project, message, title, okText, cancelText, icon, doNotAskOption)
+}

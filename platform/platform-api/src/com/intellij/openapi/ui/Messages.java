@@ -194,6 +194,18 @@ public class Messages {
       .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false, null);
   }
 
+  @Deprecated(forRemoval = true)
+  public static int showDialog(@Nullable Project project,
+                               @DialogMessage String message,
+                               @NotNull @DialogTitle String title,
+                               String @NotNull @NlsContexts.Button [] options,
+                               int defaultOptionIndex,
+                               @Nullable Icon icon,
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return MessagesService.getInstance()
+      .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false, null);
+  }
+
   /**
    * @return number of the button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    */
@@ -204,6 +216,21 @@ public class Messages {
                                           int defaultOptionIndex,
                                           @Nullable Icon icon,
                                           @Nullable DoNotAskOption doNotAskOption) {
+    return MessagesService.getInstance()
+      .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, true, null);
+  }
+
+  /**
+   * @return number of the button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
+   */
+  @Deprecated(forRemoval = true)
+  public static int showIdeaMessageDialog(@Nullable Project project,
+                                          @DialogMessage String message,
+                                          @DialogTitle String title,
+                                          String @NotNull @NlsContexts.Button [] options,
+                                          int defaultOptionIndex,
+                                          @Nullable Icon icon,
+                                          @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessagesService.getInstance()
       .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, true, null);
   }
@@ -267,6 +294,21 @@ public class Messages {
   }
 
   /**
+   * @deprecated Use overload with {@link DoNotAskOption} parameter.
+   */
+  @Deprecated(forRemoval = true)
+  public static int showDialog(@DialogMessage String message,
+                               @NotNull @DialogTitle String title,
+                               String @NotNull @NlsContexts.Button [] options,
+                               int defaultOptionIndex,
+                               int focusedOptionIndex,
+                               @Nullable Icon icon,
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return MessagesService.getInstance()
+      .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false, null);
+  }
+
+  /**
    * Use this method only if you do not know the project or component.
    *
    * @return number of the button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
@@ -287,6 +329,23 @@ public class Messages {
   }
 
   /**
+   * @deprecated Use overload with {@link DoNotAskOption} parameter.
+   */
+  @Deprecated(forRemoval = true)
+  public static int showDialog(@DialogMessage String message,
+                               @NotNull @DialogTitle String title,
+                               String @NotNull @NlsContexts.Button [] options,
+                               int defaultOptionIndex,
+                               int focusedOptionIndex,
+                               @Nullable Icon icon,
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption,
+                               @Nullable String invocationPlace) {
+    return MessagesService.getInstance()
+      .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false, null,
+                         invocationPlace, new ExitActionType[0]);
+  }
+
+  /**
    * Use this method only if you do not know a project or component
    *
    * @return number of the button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
@@ -299,6 +358,16 @@ public class Messages {
                                int defaultOptionIndex,
                                @Nullable Icon icon,
                                @Nullable DoNotAskOption doNotAskOption) {
+    return showDialog(message, title, options, defaultOptionIndex, -1, icon, doNotAskOption);
+  }
+
+  @Deprecated(forRemoval = true)
+  public static int showDialog(@DialogMessage String message,
+                               @DialogTitle String title,
+                               String @NotNull @NlsContexts.Button [] options,
+                               int defaultOptionIndex,
+                               @Nullable Icon icon,
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return showDialog(message, title, options, defaultOptionIndex, -1, icon, doNotAskOption);
   }
 
@@ -391,6 +460,23 @@ public class Messages {
       .ask(project) ? YES : NO;
   }
 
+  /** @deprecated Use {@link MessageDialogBuilder#yesNo} */
+  @Deprecated(forRemoval = true)
+  public static int showYesNoDialog(@Nullable Project project,
+                                    @DialogMessage String message,
+                                    @NotNull @DialogTitle String title,
+                                    @NotNull @NlsContexts.Button String yesText,
+                                    @NotNull @NlsContexts.Button String noText,
+                                    @Nullable Icon icon,
+                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return MessageDialogBuilder.yesNo(title, message)
+             .icon(icon)
+             .doNotAsk(doNotAskOption)
+             .yesText(yesText)
+             .noText(noText)
+             .ask(project) ? YES : NO;
+  }
+
   /** Use {@link MessageDialogBuilder#yesNo} */
   @YesNoResult
   public static int showYesNoDialog(@Nullable Project project,
@@ -411,6 +497,19 @@ public class Messages {
       .icon(icon)
       .doNotAsk(doNotAskOption)
       .ask(project) ? YES : NO;
+  }
+
+  /** @deprecated Use {@link MessageDialogBuilder#yesNo} */
+  @Deprecated
+  public static int showYesNoDialog(@Nullable Project project,
+                                    @DialogMessage String message,
+                                    @NotNull @DialogTitle String title,
+                                    @Nullable Icon icon,
+                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return MessageDialogBuilder.yesNo(title, message)
+             .icon(icon)
+             .doNotAsk(doNotAskOption)
+             .ask(project) ? YES : NO;
   }
 
   /** Use {@link MessageDialogBuilder#yesNo} */
@@ -438,6 +537,22 @@ public class Messages {
       .guessWindowAndAsk() ? YES : NO;
   }
 
+  /** @deprecated Use {@link MessageDialogBuilder#yesNo} */
+  @Deprecated
+  public static int showYesNoDialog(@DialogMessage String message,
+                                    @NotNull @DialogTitle String title,
+                                    @Nls @NotNull @NlsContexts.Button String yesText,
+                                    @Nls @NotNull @NlsContexts.Button String noText,
+                                    @Nullable Icon icon,
+                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return MessageDialogBuilder.yesNo(title, message)
+             .yesText(yesText)
+             .noText(noText)
+             .icon(icon)
+             .doNotAsk(doNotAskOption)
+             .guessWindowAndAsk() ? YES : NO;
+  }
+
   /** Use {@link MessageDialogBuilder#yesNo} */
   @YesNoResult
   public static int showYesNoDialog(@DialogMessage String message,
@@ -460,7 +575,7 @@ public class Messages {
     return MessageDialogBuilder.yesNo(title, message).icon(icon).guessWindowAndAsk() ? YES : NO;
   }
 
-  /** Use {@link MessageDialogBuilder#yesNo} */
+  /** Use {@link MessageDialogBuilder#okCancel} */
   @OkCancelResult
   public static int showOkCancelDialog(@Nullable Project project,
                                        @NotNull @DialogMessage String message,
@@ -475,6 +590,23 @@ public class Messages {
       .icon(icon)
       .doNotAsk(doNotAskOption)
       .ask(project) ? OK : CANCEL;
+  }
+
+  /** Use {@link MessageDialogBuilder#okCancel} */
+  @OkCancelResult
+  public static int showOkCancelDialog(@Nullable Project project,
+                                       @NotNull @DialogMessage String message,
+                                       @NotNull @DialogTitle String title,
+                                       @NotNull @NlsContexts.Button String okText,
+                                       @NotNull @NlsContexts.Button String cancelText,
+                                       @Nullable Icon icon,
+                                       @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return MessageDialogBuilder.okCancel(title, message)
+             .yesText(okText)
+             .noText(cancelText)
+             .icon(icon)
+             .doNotAsk(doNotAskOption)
+             .ask(project) ? OK : CANCEL;
   }
 
   /** Use {@link MessageDialogBuilder#yesNo} */
@@ -570,6 +702,22 @@ public class Messages {
       .icon(icon)
       .doNotAsk(doNotAskOption)
       .guessWindowAndAsk() ? OK : CANCEL;
+  }
+
+  @Deprecated(forRemoval = true)
+  @OkCancelResult
+  public static int showOkCancelDialog(@DialogMessage String message,
+                                       @NotNull @DialogTitle String title,
+                                       @NotNull @NlsContexts.Button String okText,
+                                       @NotNull @NlsContexts.Button String cancelText,
+                                       Icon icon,
+                                       @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return MessageDialogBuilder.okCancel(title, message)
+             .yesText(okText)
+             .noText(cancelText)
+             .icon(icon)
+             .doNotAsk(doNotAskOption)
+             .guessWindowAndAsk() ? OK : CANCEL;
   }
 
   public static int showCheckboxOkCancelDialog(@DialogMessage String message,
@@ -674,6 +822,7 @@ public class Messages {
   /**
    * Use {@link MessageDialogBuilder#yesNoCancel}
    */
+  @SuppressWarnings("MagicConstant")
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@Nullable Project project,
                                           @DialogMessage String message,
@@ -693,6 +842,7 @@ public class Messages {
   /**
    * Use {@link MessageDialogBuilder#yesNoCancel}
    */
+  @SuppressWarnings("MagicConstant")
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@Nullable Project project,
                                           @DialogMessage String message,
@@ -704,6 +854,7 @@ public class Messages {
   /**
    * Use {@link MessageDialogBuilder#yesNoCancel}
    */
+  @SuppressWarnings("MagicConstant")
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@NotNull Component parent,
                                           @DialogMessage String message,
@@ -723,6 +874,7 @@ public class Messages {
   /**
    * Use {@link MessageDialogBuilder#yesNoCancel}
    */
+  @SuppressWarnings("MagicConstant")
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@NotNull Component parent,
                                           @DialogMessage String message,
@@ -734,6 +886,7 @@ public class Messages {
   /**
    * Use {@link MessageDialogBuilder#yesNoCancel}
    */
+  @SuppressWarnings("MagicConstant")
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@DialogMessage String message,
                                           @NotNull @DialogTitle String title,
@@ -752,8 +905,30 @@ public class Messages {
   }
 
   /**
+   * @deprecated Use {@link MessageDialogBuilder#yesNoCancel}
+   */
+  @Deprecated(forRemoval = true)
+  @YesNoCancelResult
+  public static int showYesNoCancelDialog(@DialogMessage String message,
+                                          @NotNull @DialogTitle String title,
+                                          @NotNull @NlsContexts.Button String yes,
+                                          @NotNull @NlsContexts.Button String no,
+                                          @NotNull @NlsContexts.Button String cancel,
+                                          Icon icon,
+                                          @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+    return MessageDialogBuilder.yesNoCancel(title, message)
+      .yesText(yes)
+      .noText(no)
+      .cancelText(cancel)
+      .icon(icon)
+      .doNotAsk(doNotAskOption)
+      .guessWindowAndAsk();
+  }
+
+  /**
    * Use {@link MessageDialogBuilder#yesNoCancel}
    */
+  @SuppressWarnings("MagicConstant")
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@DialogMessage String message,
                                           @DialogTitle String title,
@@ -776,6 +951,7 @@ public class Messages {
    * @see #showYesNoCancelDialog(Project, String, String, Icon)
    * @see #showYesNoCancelDialog(Component, String, String, Icon)
    */
+  @SuppressWarnings("MagicConstant")
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@DialogMessage String message,
                                           @DialogTitle String title,
@@ -1030,7 +1206,7 @@ public class Messages {
       super(project, true);
       myComment = comment;
       myValidator = validator;
-      _init(title, message, options, defaultOption, -1, icon, null, null);
+      _init(title, message, options, defaultOption, -1, icon, (com.intellij.openapi.ui.DoNotAskOption)null, null);
       myField.setText(initialValue);
       enableOkAction();
     }
