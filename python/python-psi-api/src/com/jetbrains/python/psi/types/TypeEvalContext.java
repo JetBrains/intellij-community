@@ -80,6 +80,10 @@ public sealed class TypeEvalContext {
     return myConstraints.myAllowCallContext && !inPyiFile(element) && inOrigin(element);
   }
 
+  public boolean maySwitchToAST(@NotNull PsiElement element) {
+    return myConstraints.myAllowStubToAST && !inPyiFile(element) || inOrigin(element);
+  }
+
   /**
    * Create a context for code completion.
    * <p/>
@@ -314,10 +318,6 @@ public sealed class TypeEvalContext {
     if (result != null) {
       result.assertValid(element.toString());
     }
-  }
-
-  public boolean maySwitchToAST(@NotNull PsiElement element) {
-    return myConstraints.myAllowStubToAST && !inPyiFile(element) || inOrigin(element);
   }
 
   public @Nullable PsiFile getOrigin() {
