@@ -173,5 +173,13 @@
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidApplyPluginMethodInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidRepositoriesInBuildGradle"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.avoid.repositories.in.build.gradle" groupKey="inspection.best.practises"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.AvoidRepositoriesInBuildGradleInspection"/>
+
   </extensions>
 </idea-plugin>
