@@ -3,6 +3,7 @@ package com.intellij.ide.ui
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -10,7 +11,10 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
-import com.intellij.ui.*
+import com.intellij.ui.ClickListener
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.LicensingFacade
+import com.intellij.ui.TextIcon
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -144,7 +148,7 @@ abstract class LicenseRelatedStatusBarWidget(private val factory: LicenseRelated
             icon.setFontTransform(getFontMetrics(icon.font).fontRenderContext.transform)
             parent.revalidate()
           }
-          super.paint(g)
+          super.paint(InternalUICustomization.getInstance()?.preserveGraphics(g) ?: g)
         }
       }
     }
