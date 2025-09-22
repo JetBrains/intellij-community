@@ -32,7 +32,7 @@ class SeAdaptedItemsProvider(contributor: SearchEverywhereContributor<Any>) : Se
         if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
       }
     }
-    scopeProviderDelegate.applyScope(scopeToApply)
+    scopeProviderDelegate.applyScope(scopeToApply, false)
 
     contributorWrapper.fetchElements(params.inputQuery, object : AsyncProcessor<Any> {
       override suspend fun process(item: Any, weight: Int): Boolean {

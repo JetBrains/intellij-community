@@ -43,16 +43,17 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
     val inputQuery = params.inputQuery
     val defaultMatchers = createDefaultMatchers(inputQuery)
 
-    val scopeToApply: String? = SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
-      scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
+    SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
+      val selectedScopeId = scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
         if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
-      }
+      } ?: return@let
+
+      scopeProviderDelegate.applyScope(selectedScopeId, false)
     } ?: run {
       val targetsFilter = SeTargetsFilter.from(params.filter)
       SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, targetsFilter.hiddenTypes)
-      targetsFilter.selectedScopeId
+      scopeProviderDelegate.applyScope(targetsFilter.selectedScopeId, targetsFilter.isAutoTogglePossible)
     }
-    scopeProviderDelegate.applyScope(scopeToApply)
 
     contributorWrapper.fetchElements(inputQuery, object : AsyncProcessor<Any> {
       override suspend fun process(item: Any, weight: Int): Boolean {

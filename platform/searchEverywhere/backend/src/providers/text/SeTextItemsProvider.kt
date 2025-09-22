@@ -94,7 +94,7 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
   }
 
   private fun applyScope(scopeId: String?) {
-    scopeProviderDelegate.applyScope(scopeId)
+    scopeProviderDelegate.applyScope(scopeId, false)
   }
 
   override suspend fun getSearchScopesInfo(): SearchScopesInfo? {

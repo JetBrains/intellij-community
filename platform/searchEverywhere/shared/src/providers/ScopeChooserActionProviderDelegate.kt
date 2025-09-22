@@ -67,10 +67,13 @@ class ScopeChooserActionProviderDelegate(private val contributorWrapper: SeAsync
                             everywhereScopeId)
   }
 
-  fun applyScope(scopeId: String?) {
+  fun applyScope(scopeId: String?, isAutoTogglePossible: Boolean) {
     if (scopeId == null) return
     val scope = scopeIdToScope.load()[scopeId] ?: return
 
-    contributorWrapper.contributor.getActions { }.filterIsInstance<ScopeChooserAction>().firstOrNull()?.onScopeSelected(scope)
+    contributorWrapper.contributor.getActions { }.filterIsInstance<ScopeChooserAction>().firstOrNull()?.let {
+      it.setScopeIsDefaultAndAutoSet(isAutoTogglePossible)
+      it.onScopeSelected(scope)
+    }
   }
 }
