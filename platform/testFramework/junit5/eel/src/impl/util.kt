@@ -59,8 +59,10 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
   val meaningfulDirName = "eel-fixture-${os.name}"
   val directory = Files.createTempDirectory(meaningfulDirName)
 
+  val fakeRootOsAgnostic = "/eel-test-${directory.name}"
+
   val fakeRoot = if (SystemInfo.isUnix) {
-    "/eel-test-${directory.name}"
+    fakeRootOsAgnostic
   }
   else {
     "\\\\eel-test\\${directory.name}"
@@ -112,6 +114,13 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
       override fun getEelMachineByInternalName(internalName: String): EelMachine? =
         if (internalName == meaningfulDirName) descriptor.machine
         else null
+
+      override fun handlesPath(path: String): Boolean = path.startsWith(fakeRootOsAgnostic)
+
+      override fun getPathHandlerPredicate(machine: EelMachine): ((path: @MultiRoutingFileSystemPath String) -> Boolean)? {
+        if (machine != descriptor.machine) return null
+        return { path -> path.startsWith(fakeRootOsAgnostic) }
+      }
     },
     disposable,
   )
