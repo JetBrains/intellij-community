@@ -1139,6 +1139,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/OneExplicitReceiver.kt");
             }
 
+            @TestMetadata("parenthesizedInWhenBranch.kt")
+            public void testParenthesizedInWhenBranch() throws Exception {
+                runTest("testData/refactoring/introduceVariable/parenthesizedInWhenBranch.kt");
+            }
+
             @TestMetadata("PropertyAccessorAddBlock.kt")
             public void testPropertyAccessorAddBlock() throws Exception {
                 runTest("testData/refactoring/introduceVariable/PropertyAccessorAddBlock.kt");

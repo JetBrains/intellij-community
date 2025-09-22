@@ -1137,6 +1137,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/OneExplicitReceiver.kt");
         }
 
+        @TestMetadata("parenthesizedInWhenBranch.kt")
+        public void testParenthesizedInWhenBranch() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/parenthesizedInWhenBranch.kt");
+        }
+
         @TestMetadata("PropertyAccessorAddBlock.kt")
         public void testPropertyAccessorAddBlock() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/PropertyAccessorAddBlock.kt");
