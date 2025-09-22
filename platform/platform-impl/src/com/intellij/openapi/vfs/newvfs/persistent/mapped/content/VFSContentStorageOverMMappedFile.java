@@ -164,7 +164,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
         .open(mapPath);
 
       if (hashToContentRecordIdMap.isEmpty() && !contentStorage.isEmpty()) {
-        LOG.warn("Content map[" + mapPath + "] is empty while content storage is not: re-building map from the storage");
+        LOG.warn("Content map[" + mapPath + "] is empty (or dropped) while content storage is not: re-building map from the storage");
         rebuildMap(contentStorage, hashToContentRecordIdMap);
       }
 

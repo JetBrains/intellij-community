@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.mmapped;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,7 +16,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
 import static com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory.IfNotPageAligned.THROW_EXCEPTION;
-import static java.nio.file.StandardOpenOption.*;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 
 @ApiStatus.Internal
@@ -90,7 +90,7 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
 
     if (!storageFileExists) {
       checkParentDirectories(absoluteStoragePath);
-    }//if storage file does exist => parentDir definitely does exist also
+    }//if the storage file does exist => parentDir definitely does exist also
 
     RegionAllocationAtomicityLock regionAllocationLock = RegionAllocationAtomicityLock.defaultLock(absoluteStoragePath);
 

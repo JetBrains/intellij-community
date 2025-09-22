@@ -315,8 +315,8 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
       int startOffsetInPage = toOffsetInPage(offset);
       int endOffsetInPage = endOffsetInFile > page.lastOffsetInFile() ?
                             pageSize - 1 : toOffsetInPage(endOffsetInFile);
-      //MAYBE RC: it could be done much faster -- with putLong(), with preallocated array of zeroes,
-      //          with Unsafe.setMemory() -- but does it worth it?
+      //MAYBE RC: it could be done much faster -- with putLong(), or with preallocated array of zeroes,
+      //          or with Unsafe.setMemory() -- but does it worth it?
       for (int pos = startOffsetInPage; pos <= endOffsetInPage; pos++) {
         //TODO RC: make putLong() (but check both startOffsetInPage and endOffsetInPage are 64-aligned)
         pageBuffer.put(pos, (byte)0);
@@ -507,8 +507,8 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
       RegionAllocationAtomicityLock.Region region = regionAllocationAtomicityLock.region(offsetInFile, pageSize);
 
       //The difference between the branches:
-      //In the 'correct' branch: we don't touch already existing part of the file -- because it could be already written
-      //  to, and we don't want to ruin that data.
+      //In the 'correct' branch: we don't touch the already existing part of the file -- because it could be already
+      //  written to, and we don't want to ruin that data.
       //In the unfinished (='recovering') branch: we intentionally zero _all_ the region -- because we know we didn't
       //  finish page allocation, so page wasn't published for use => nobody should _legally_ write anything meaningful
       //  into it, but page-zeroing is likely also un-finished, hence it could be some _garbage_ on the page, which we
