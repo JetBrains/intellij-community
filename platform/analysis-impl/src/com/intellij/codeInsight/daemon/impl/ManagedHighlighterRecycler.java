@@ -63,11 +63,7 @@ public final class ManagedHighlighterRecycler {
     for (i = list.size()-1; i>=0; i--) {
       InvalidPsi psi = list.get(i);
       RangeHighlighterEx highlighter = psi.info().getHighlighter();
-      if (highlighter.isValid() && highlighter.getLayer() == layer
-          // make sure no other thread managed to recycle this highlighter to another HighlightInfo
-          // if it did, we would be trying to assign the same RangeHighlighter to two different HighlightInfos.
-          // this check is thread-safe because we are under HighlightInfoUpdaterImpl lock
-          && HighlightInfo.fromRangeHighlighter(highlighter) == psi.info()) {
+      if (highlighter.isValid() && highlighter.getLayer() == layer) {
         if (Comparing.strEqual(psi.info().getDescription(), preferredDescription)) {
           break;
         }
@@ -118,13 +114,5 @@ public final class ManagedHighlighterRecycler {
       UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(psi.info(), myHighlightingSession);
     }
     incinerator.clear();
-  }
-
-  synchronized ManagedHighlighterRecycler copy() {
-    ManagedHighlighterRecycler cop = new ManagedHighlighterRecycler(myHighlightingSession);
-    for (Long2ObjectMap.Entry<List<InvalidPsi>> entry : incinerator.long2ObjectEntrySet()) {
-      cop.incinerator.put(entry.getLongKey(), new ArrayList<>(entry.getValue()));
-    }
-    return cop;
   }
 }
