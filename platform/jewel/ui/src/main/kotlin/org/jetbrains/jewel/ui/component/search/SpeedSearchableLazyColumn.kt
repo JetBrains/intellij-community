@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.absoluteValue
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -95,14 +97,16 @@ public fun SpeedSearchScope.SpeedSearchableLazyColumn(
     SpeedSearchableLazyColumnScrollEffect(state, speedSearchState, currentStateToList.value.second, dispatcher)
 
     LaunchedEffect(state, dispatcher) {
+        val entriesState = MutableStateFlow(emptyList<String?>())
+
         val entriesFlow = snapshotFlow { currentStateToList.value.first }
-        speedSearchState.attach(entriesFlow, dispatcher)
+        async(dispatcher) { entriesFlow.collect(entriesState::emit) }
+
+        speedSearchState.attach(entriesState, dispatcher)
     }
 }
 
-@ExperimentalJewelApi
-@ApiStatus.Experimental
-public class SpeedSearchableLazyColumnKeyActions(
+internal class SpeedSearchableLazyColumnKeyActions(
     private val delegate: KeyActions,
     private val speedSearchState: SpeedSearchState,
 ) : KeyActions by delegate {
@@ -126,7 +130,11 @@ public class SpeedSearchableLazyColumnKeyActions(
                     return@lambda true
                 }
                 isSelectPreviousItem && speedSearchState.isVisible -> {
-                    onSelectPreviousItem(keys, state, speedSearchState.matchingIndexes.filter { it < initialIndex })
+                    onSelectPreviousItem(
+                        keys,
+                        state,
+                        speedSearchState.matchingIndexes.filter { it < initialIndex }.asReversed(),
+                    )
                     return@lambda true
                 }
                 else -> Unit
@@ -208,7 +216,7 @@ internal class SpeedSearchableLazyColumnScopeImpl(
 }
 
 @Composable
-private fun SpeedSearchableLazyColumnScrollEffect(
+internal fun SpeedSearchableLazyColumnScrollEffect(
     selectableLazyListState: SelectableLazyListState,
     speedSearchState: SpeedSearchState,
     keys: List<Any?>,
@@ -217,16 +225,16 @@ private fun SpeedSearchableLazyColumnScrollEffect(
     val currentKeys = rememberUpdatedState(keys)
     LaunchedEffect(selectableLazyListState, speedSearchState, dispatcher) {
         snapshotFlow { speedSearchState.matchingIndexes }
-            .filter { it.isNotEmpty() }
             .distinctUntilChanged()
+            .filter { it.isNotEmpty() }
             .flowOn(dispatcher)
-            .onEach { matchingIndexes ->
+            .onEach { indexesMatchingSearchText ->
+                val keyValues = currentKeys.value
                 val visibleItemIndexes = selectableLazyListState.visibleItemsRange
+                val indexesForSelectedKeys = keyValues.indicesForKeys(selectableLazyListState.selectedKeys)
 
                 val matchingSelectionIndex =
-                    currentKeys.value.indicesForKeys(selectableLazyListState.selectedKeys).firstOrNull {
-                        matchingIndexes.binarySearch(it) >= 0
-                    }
+                    indexesForSelectedKeys.firstOrNull { indexesMatchingSearchText.binarySearch(it) >= 0 }
 
                 // If any of the selected items match the filter, and it is visible, just skip. But if it's not visible,
                 // scroll to it.
@@ -238,20 +246,41 @@ private fun SpeedSearchableLazyColumnScrollEffect(
                     return@onEach
                 }
 
-                // If any of the visible items match the filter, just select it, no need to scroll
-                val indexOfVisibleMatch = visibleItemIndexes.firstOrNull { matchingIndexes.binarySearch(it) >= 0 }
-                if (indexOfVisibleMatch != null) {
-                    selectableLazyListState.selectedKeys = setOfNotNull(keys.getOrNull(indexOfVisibleMatch))
-                    selectableLazyListState.lastActiveItemIndex = indexOfVisibleMatch
+                // If any of the visible items match the filter, just select the one closest to any of the selected
+                // items
+                val indexOfVisibleMatches =
+                    visibleItemIndexes.filter { indexesMatchingSearchText.binarySearch(it) >= 0 }
+
+                val bestVisibleMatch =
+                    indexOfVisibleMatches
+                        .mapNotNull { visibleMatchIndex ->
+                            indexesForSelectedKeys
+                                .minByOrNull { (visibleMatchIndex - it).absoluteValue }
+                                ?.let { visibleMatchIndex to it }
+                        }
+                        .minByOrNull { (it.first - it.second).absoluteValue }
+                        ?.first
+
+                if (bestVisibleMatch != null) {
+                    selectableLazyListState.selectedKeys = setOfNotNull(keyValues.getOrNull(bestVisibleMatch))
+                    selectableLazyListState.lastActiveItemIndex = bestVisibleMatch
                     return@onEach
                 }
 
-                // If no items are visible or selected, scroll to the closest match
-                val middleVisible = (visibleItemIndexes.first + visibleItemIndexes.last) / 2
-                val itemToFocus = matchingIndexes.minBy { (middleVisible - it).absoluteValue }
+                // If no items are visible or selected, scroll to the best match after the last visible item
+                val indexBeforeVisibleItems = (0 until visibleItemIndexes.first)
+                val indexesAfterVisibleItems =
+                    (visibleItemIndexes.last until selectableLazyListState.lazyListState.layoutInfo.totalItemsCount)
 
-                selectableLazyListState.selectedKeys = setOfNotNull(keys.getOrNull(itemToFocus))
-                selectableLazyListState.scrollToItem(itemToFocus)
+                // First item after the visible items, or before it (ordered in order)
+                val bestMatch =
+                    indexesMatchingSearchText.firstOrNull { it in indexesAfterVisibleItems }
+                        ?: indexesMatchingSearchText.firstOrNull { it in indexBeforeVisibleItems }
+
+                if (bestMatch != null) {
+                    selectableLazyListState.selectedKeys = setOfNotNull(keyValues.getOrNull(bestMatch))
+                    selectableLazyListState.scrollToItem(bestMatch)
+                }
             }
             .collect()
     }
