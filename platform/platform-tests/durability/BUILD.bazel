@@ -28,6 +28,7 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "//platform/util",
     "//platform/util/storages",
+    "@lib//:fastutil-min",
   ]
 )
 ### auto-generated section `build intellij.platform.durability` end

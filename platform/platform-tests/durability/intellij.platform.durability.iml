@@ -40,5 +40,6 @@
     <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.util.io.storages" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>
