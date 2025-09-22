@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.newui
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
@@ -55,6 +56,8 @@ interface PluginManagerCustomizer {
   fun customRepositoriesUpdated(repoUrls: List<String>)
 
   fun requestRestart(pluginModelFacade: PluginModelFacade, parentComponent: JComponent? = null)
+
+  fun getAllPluginIds(pluginId: PluginId): Set<PluginId>
 
   companion object {
     @JvmField

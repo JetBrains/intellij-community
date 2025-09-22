@@ -363,7 +363,19 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       myInstalling!!.titleWithCount()
       myInstalledPanel!!.doLayout()
     }
+    for (id: PluginId in getAllPluginIds(pluginId)) {
+      showInstallProgress(id, installationScope)
+    }
+  }
 
+  private fun getAllPluginIds(pluginId: PluginId): Set<PluginId> {
+    return myPluginManagerCustomizer?.getAllPluginIds(pluginId) ?: setOf(pluginId)
+  }
+
+  private fun showInstallProgress(
+    pluginId: PluginId,
+    installationScope: CoroutineScope,
+  ) {
     val gridComponents = myMarketplacePluginComponentMap[pluginId]
     if (gridComponents != null) {
       for (gridComponent in gridComponents) {
@@ -377,7 +389,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       }
     }
     for (panel in myDetailPanels) {
-      if (panel.descriptorForActions === descriptor) {
+      if (panel.isShowingPlugin(pluginId)) {
         panel.showInstallProgress(installationScope)
       }
     }
@@ -404,12 +416,13 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     val pluginId = descriptor.pluginId
     val marketplaceComponents = myMarketplacePluginComponentMap[pluginId]
     val errorList = errors[pluginId] ?: emptyList()
+    hideProgresses(pluginId)
     if (marketplaceComponents != null) {
       for (gridComponent in marketplaceComponents) {
         if (installedDescriptor != null) {
           gridComponent.pluginModel = installedDescriptor
         }
-        gridComponent.hideProgress(success, restartRequired, installedDescriptor)
+        gridComponent.pluginInstalled(success, restartRequired, installedDescriptor)
         if (gridComponent.myInstalledDescriptorForMarketplace != null) {
           gridComponent.updateErrors(errorList)
         }
@@ -421,14 +434,14 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
         if (installedDescriptor != null) {
           listComponent.pluginModel = installedDescriptor
         }
-        listComponent.hideProgress(success, restartRequired, installedDescriptor)
+        listComponent.pluginInstalled(success, restartRequired, installedDescriptor)
         listComponent.updateErrors(errorList)
       }
     }
     for (panel in myDetailPanels) {
       if (panel.isShowingPlugin(descriptor.pluginId)) {
         panel.setPlugin(installedDescriptor)
-        panel.hideProgress(success, restartRequired, installedDescriptor)
+        panel.finishInstall(success, restartRequired, installedDescriptor)
       }
     }
 
@@ -485,6 +498,30 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
   }
 
+  private fun hideProgresses(pluginId: PluginId) {
+    val allPluginIds = getAllPluginIds(pluginId)
+    for (id: PluginId in allPluginIds) {
+      val marketplaceComponents = myMarketplacePluginComponentMap[id]
+      if (marketplaceComponents != null) {
+        for (gridComponent in marketplaceComponents) {
+          gridComponent.hideProgress()
+        }
+      }
+      for (panel in myDetailPanels) {
+        if (panel.isShowingPlugin(id)) {
+          panel.hideProgress()
+        }
+      }
+
+      val installedComponents = myInstalledPluginComponentMap[id]
+      if (installedComponents != null) {
+        for (listComponent in installedComponents) {
+          listComponent.hideProgress()
+        }
+      }
+    }
+  }
+
   private fun clearInstallingProgress(descriptor: PluginUiModel) {
     if (installingPlugins.isEmpty()) {
       for (listComponent in myInstalling!!.ui.plugins) {
@@ -538,7 +575,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       for (entry in myMarketplacePluginComponentMap.entries) {
         if (id == entry.key.idString) {
           for (component in entry.value) {
-            component.hideProgress(success, restartRequired, installedDescriptor)
+            component.pluginInstalled(success, restartRequired, installedDescriptor)
           }
           break
         }
@@ -903,27 +940,19 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       val errors = getErrors(errorCheckResult)
       if (myPluginManagerCustomizer != null) {
         myPluginManagerCustomizer.updateAfterModificationAsync {
-          removeProgresses(descriptor)
+          hideProgresses(descriptor.pluginId)
           updateUiAfterUninstall(descriptor, needRestartForUninstall, errors)
           callback?.run()
         }
       }
       else {
-        removeProgresses(descriptor)
+        hideProgresses(descriptor.pluginId)
         updateUiAfterUninstall(descriptor, needRestartForUninstall, errors)
         callback?.run()
       }
     }
     finally {
-      removeProgresses(descriptor)
-    }
-  }
-
-  private fun removeProgresses(descriptor: PluginUiModel) {
-    for (panel in myDetailPanels) {
-      if (panel.descriptorForActions === descriptor) {
-        panel.hideProgress()
-      }
+      hideProgresses(descriptor.pluginId)
     }
   }
 
@@ -961,7 +990,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
 
     for (panel in myDetailPanels) {
-      if (panel.isShowingPlugin(descriptor)) {
+      if (panel.isShowingPlugin(descriptor.pluginId)) {
         panel.updateAfterUninstall(needRestartForUninstall)
       }
     }

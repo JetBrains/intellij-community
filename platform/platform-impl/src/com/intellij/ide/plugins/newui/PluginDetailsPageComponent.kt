@@ -172,6 +172,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private val notificationsUpdateSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
   private val coroutineScope = pluginModel.getModel().coroutineScope
   private val showPluginSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
+  private var buttonsLoadedDeferred: Deferred<Unit>? = null
 
   init {
     nameAndButtons = BaselinePanel(12, false)
@@ -245,7 +246,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  fun isShowingPlugin(pluginId: PluginId): Boolean = plugin?.pluginId == pluginId
+  fun isShowingPlugin(pluginId: PluginId): Boolean = plugin?.pluginId == pluginId || descriptorForActions?.pluginId == pluginId
 
   override fun create(key: Int): JComponent {
     if (key == 0) {
@@ -766,7 +767,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     if (indicator != null) {
       PluginModelFacade.removeProgress(descriptorForActions!!, indicator!!)
-      hideProgress(false, false)
+      hideProgress()
+      finishInstall(false, false)
     }
 
     if (component == null) {
@@ -1266,7 +1268,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     if (plugin != null) {
       if (indicator != null) {
         PluginModelFacade.removeProgress(descriptorForActions!!, indicator!!)
-        hideProgress(false, false)
+        hideProgress()
+        finishInstall(false, false)
       }
       showPluginImpl(plugin!!, updateDescriptor)
     }
@@ -1410,10 +1413,6 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  fun isShowingPlugin(pluginModel: PluginUiModel): Boolean {
-    return descriptorForActions === pluginModel || plugin === pluginModel
-  }
-
   fun showProgress(storeIndicator: Boolean, installationScope: CoroutineScope, cancelRunnable: suspend () -> Unit) {
     indicator = OneLineProgressIndicatorWithAsyncCallback(installationScope, false, cancelRunnable)
     nameAndButtons!!.setProgressComponent(null, indicator!!.createBaselineWrapper())
@@ -1479,9 +1478,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     nameAndButtons?.removeProgressComponent()
   }
 
-  suspend fun hideProgress(success: Boolean, restartRequired: Boolean, installedPlugin: PluginUiModel? = null) {
-    indicator = null
-    nameAndButtons!!.removeProgressComponent()
+  suspend fun finishInstall(success: Boolean, restartRequired: Boolean, installedPlugin: PluginUiModel? = null) {
     if (pluginManagerCustomizer != null) {
       updateButtonsAndApplyCustomization()
     }
