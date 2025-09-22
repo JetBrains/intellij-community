@@ -80,7 +80,7 @@ public interface SelectableColumnOnKeyEvent {
         possibleIndexes: Iterable<Int>,
     ) {
         for (index in possibleIndexes) {
-            val key = keys[index]
+            val key = keys.getOrNull(index)
             if (key is Selectable) {
                 state.selectedKeys = setOf(key.key)
                 state.lastActiveItemIndex = index
@@ -117,7 +117,7 @@ public interface SelectableColumnOnKeyEvent {
         possibleIndexes: Iterable<Int>,
     ) {
         for (index in possibleIndexes) {
-            val key = keys[index]
+            val key = keys.getOrNull(index)
             if (key is Selectable) {
                 state.selectedKeys = setOf(key.key)
                 state.lastActiveItemIndex = index
