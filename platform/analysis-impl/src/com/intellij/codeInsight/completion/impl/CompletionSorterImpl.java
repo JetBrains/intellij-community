@@ -25,7 +25,7 @@ public class CompletionSorterImpl extends CompletionSorter {
     final String id = weigher.toString();
     return new ClassifierFactory<>(id) {
       @Override
-      public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
+      public @NotNull Classifier<LookupElement> createClassifier(@NotNull Classifier<LookupElement> next) {
         return new CachingComparingClassifier(next, weigher);
       }
     };
@@ -100,9 +100,9 @@ public class CompletionSorterImpl extends CompletionSorter {
   /**
    * @return a function-style list of classifiers corresponding to {@code components} starting from {@code index}
    */
-  private static Classifier<LookupElement> createClassifier(final int index,
-                                                            final List<? extends ClassifierFactory<LookupElement>> components,
-                                                            Classifier<LookupElement> tail) {
+  private static @NotNull Classifier<LookupElement> createClassifier(int index,
+                                                                     @NotNull List<? extends ClassifierFactory<LookupElement>> components,
+                                                                     @NotNull Classifier<LookupElement> tail) {
     if (index == components.size()) {
       return tail;
     }
@@ -110,7 +110,7 @@ public class CompletionSorterImpl extends CompletionSorter {
     return components.get(index).createClassifier(createClassifier(index + 1, components, tail));
   }
 
-  public Classifier<LookupElement> buildClassifier(Classifier<LookupElement> tail) {
+  public @NotNull Classifier<LookupElement> buildClassifier(@NotNull Classifier<LookupElement> tail) {
     return createClassifier(0, myMembers, tail);
   }
 }
