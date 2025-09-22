@@ -1,5 +1,6 @@
 package com.intellij.grazie.text;
 
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy;
@@ -43,7 +44,8 @@ public abstract class TextExtractor {
   private static final Key<CachedValue<Cache>> QUERY_CACHE = Key.create("TextExtractor query cache");
   private static final Key<Boolean> IGNORED = Key.create("TextExtractor ignored");
   private static final Key<CachedValue<Map<TextContent, TextContent>>> CONTENT_INTERNER = Key.create("TextExtractor interner");
-  private static final Pattern SUPPRESSION = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP);
+  private static final Pattern NOINSPECTION_SUPPRESSION = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP);
+  private static final Pattern PROPERTY_SUPPRESSION = Pattern.compile("\\s*suppress inspection \"" + LocalInspectionTool.VALID_ID_PATTERN + "\"");
 
   /**
    * Extract text from the given PSI element, if possible.
@@ -266,7 +268,8 @@ public abstract class TextExtractor {
   }
 
   private static boolean isSuppressionComment(TextContent content) {
-    return content.getDomain() == TextContent.TextDomain.COMMENTS && SUPPRESSION.matcher(content).lookingAt();
+    return content.getDomain() == TextContent.TextDomain.COMMENTS &&
+           (NOINSPECTION_SUPPRESSION.matcher(content).lookingAt() || PROPERTY_SUPPRESSION.matcher(content).lookingAt());
   }
 
   /**
