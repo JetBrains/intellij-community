@@ -16,6 +16,7 @@ public enum CLFlags {
   SRCS,
   // classpath
   CP,
+  RESOURCES,
 
   PLUGIN_ID,
   PLUGIN_CLASSPATH,
