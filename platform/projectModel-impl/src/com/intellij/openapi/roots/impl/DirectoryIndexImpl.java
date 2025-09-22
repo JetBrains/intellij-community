@@ -37,27 +37,22 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   private static final Logger LOG = Logger.getInstance(DirectoryIndexImpl.class);
 
   private final Project myProject;
-  private final MessageBusConnection myConnection;
   private final WorkspaceFileIndexEx myWorkspaceFileIndex;
 
   private volatile boolean myDisposed;
   private volatile RootIndex myRootIndex;
 
+  public DirectoryIndexImpl(@NotNull Project project, @NotNull RootIndex rootIndex, @NotNull WorkspaceFileIndexEx workspaceFileIndex) {
+    myWorkspaceFileIndex = workspaceFileIndex;
+    myProject = project;
+    myRootIndex = rootIndex;
+  }
+
   public DirectoryIndexImpl(@NotNull Project project) {
     myWorkspaceFileIndex = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
     myProject = project;
-    myConnection = project.getMessageBus().connect();
-    subscribeToFileChanges();
-  }
-
-  @Override
-  public void dispose() {
-    myDisposed = true;
-    myRootIndex = null;
-  }
-
-  private void subscribeToFileChanges() {
-    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    var connection = project.getMessageBus().connect();
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         RootIndex rootIndex = myRootIndex;
@@ -71,6 +66,12 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
         }
       }
     });
+  }
+
+  @Override
+  public void dispose() {
+    myDisposed = true;
+    myRootIndex = null;
   }
 
   public static boolean shouldResetOnEvents(@NotNull List<? extends VFileEvent> events) {
@@ -100,8 +101,10 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   public @NotNull Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
-  
-  private RootIndex getRootIndex() {
+
+  @NotNull
+  @ApiStatus.Internal
+  public RootIndex getRootIndex() {
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
       myRootIndex = rootIndex = new RootIndex(myProject);
