@@ -65,6 +65,8 @@ kotlin {
       exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
     implementation(project(":fleet.util.codepoints"))
+  }
+  sourceSets.jvmTest.dependencies {
     implementation(project(":fleet.junit4"))
   }
   // KOTLIN__MARKER_END
