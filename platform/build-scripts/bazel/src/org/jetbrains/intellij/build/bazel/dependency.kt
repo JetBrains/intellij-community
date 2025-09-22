@@ -438,7 +438,7 @@ private fun addDep(
         else {
           if (hasOnlyTestResources(dependencyModuleDescriptor)) {
             // module with only test resources
-            runtimeDeps.add(addSuffix(dependencyLabel, TEST_RESOURCES_TARGET_SUFFIX))
+            runtimeDeps.add(getLabelForTest(dependencyLabel))
             if (isExported) {
               throw RuntimeException("Do not export test dependency (module=${dependentModule.module.name}, exported=${dependencyModuleDescriptor.module.name})")
             }

@@ -523,13 +523,10 @@ internal class BazelBuildFileGenerator(
     if (moduleDescriptor.resources.isNotEmpty()) {
       val result = generateResources(module = moduleDescriptor, forTests = false)
       resourceTargets.addAll(result.resourceTargets)
-      productionCompileTargets.addAll(result.resourceTargets)
-      productionCompileJars.addAll(result.resourceTargets)
     }
     if (moduleDescriptor.testResources.isNotEmpty()) {
       val result = generateResources(module = moduleDescriptor, forTests = true)
       testResourceTargets.addAll(result.resourceTargets)
-      testCompileTargets.addAll(result.resourceTargets)
     }
 
     // if someone depends on such a test module from another production module
@@ -546,6 +543,9 @@ internal class BazelBuildFileGenerator(
         option("module_name", module.name)
         visibility(arrayOf("//visibility:public"))
         option("srcs", sourcesToGlob(sources, moduleDescriptor))
+        if (resourceTargets.isNotEmpty()) {
+          option("resources", resourceTargets.map { ":${it.label}" })
+        }
         if (javacOptionsLabel != null) {
           option("javac_opts", javacOptionsLabel)
         }
@@ -586,7 +586,7 @@ internal class BazelBuildFileGenerator(
           deps = deps.copy(deps = deps.deps + extraDeps)
         }
 
-        renderDeps(deps = deps, target = this, resourceDependencies = resourceTargets, forTests = false)
+        renderDeps(deps = deps, target = this, resourceDependencies = emptyList(), forTests = false)
       }
     }
     else {
@@ -596,12 +596,15 @@ internal class BazelBuildFileGenerator(
         option("name", moduleDescriptor.targetName)
         visibility(arrayOf("//visibility:public"))
         option("srcs", sourcesToGlob(sources, moduleDescriptor))
+        if (resourceTargets.isNotEmpty()) {
+          option("resources", resourceTargets.map { ":${it.label}" })
+        }
 
         val deps = moduleList.deps.get(moduleDescriptor)
         renderDeps(
           deps = deps?.copy(plugins = emptyList()), // do not apply plugins to an empty library regardless of dependencies
           target = this,
-          resourceDependencies = resourceTargets,
+          resourceDependencies = emptyList(),
           forTests = false
         )
       }
@@ -624,9 +627,10 @@ internal class BazelBuildFileGenerator(
     }
 
     val moduleHasTestSources = moduleDescriptor.testSources.isNotEmpty()
+    val moduleHasTestResources = moduleDescriptor.testResources.isNotEmpty()
 
     // Decide whether to render a test target at all
-    if (moduleHasTestSources || isTestClasspathModule(moduleDescriptor)) {
+    if (moduleHasTestSources || moduleHasTestResources || isTestClasspathModule(moduleDescriptor)) {
       val testLibTargetName = "${moduleDescriptor.targetName}$TEST_LIB_NAME_SUFFIX"
       testCompileTargets.add(BazelLabel(testLibTargetName, moduleDescriptor))
 
@@ -642,11 +646,14 @@ internal class BazelBuildFileGenerator(
         visibility(arrayOf("//visibility:public"))
 
         option("srcs", sourcesToGlob(moduleDescriptor.testSources, moduleDescriptor))
+        if (testResourceTargets.isNotEmpty()) {
+          option("resources", testResourceTargets.map { ":${it.label}" })
+        }
 
         javacOptionsLabel?.let { option("javac_opts", it) }
         kotlincOptionsLabel?.let { option("kotlinc_opts", it) }
 
-        renderDeps(deps = testDeps, target = this, resourceDependencies = testResourceTargets, forTests = true)
+        renderDeps(deps = testDeps, target = this, resourceDependencies = emptyList(), forTests = true)
       }
     }
 
@@ -741,16 +748,16 @@ internal class BazelBuildFileGenerator(
       return GenerateResourcesResult(resourceTargets = fixedTargetsList)
     }
 
-    load("@rules_jvm//:jvm.bzl", "jvm_resources")
+    load("@rules_jvm//:jvm.bzl", "resourcegroup")
 
     val targetNameSuffix = if (forTests) TEST_RESOURCES_TARGET_SUFFIX else PRODUCTION_RESOURCES_TARGET_SUFFIX
 
     val resourceTargets = resources.withIndex().map { (i, resource) ->
       val name = "${module.targetName}$targetNameSuffix" + (if (i == 0) "" else "_$i")
 
-      target("jvm_resources") {
+      target("resourcegroup") {
         option("name", name)
-        option("files", glob(resource.files, allowEmpty = false))
+        option("srcs", glob(resource.files, allowEmpty = false))
         if (resource.baseDirectory.isNotEmpty()) {
           option("strip_prefix", resource.baseDirectory)
         }
