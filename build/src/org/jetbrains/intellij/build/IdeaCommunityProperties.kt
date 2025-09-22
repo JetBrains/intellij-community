@@ -43,6 +43,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     scrambleMainJar = false
     useSplash = true
     buildCrossPlatformDistribution = true
+    buildSourcesArchive = true
 
     productLayout.productImplementationModules = listOf(
       "intellij.platform.starter",
@@ -53,7 +54,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     )
 
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
-    productLayout.buildAllCompatiblePlugins = false
+    productLayout.buildAllCompatiblePlugins = true
     productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.addAll(listOf(
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.androidPlugin(allPlatforms = true),
