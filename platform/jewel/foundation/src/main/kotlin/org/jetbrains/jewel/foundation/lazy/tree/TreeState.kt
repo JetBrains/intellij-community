@@ -8,6 +8,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.SelectableScope
 
@@ -17,9 +19,10 @@ public fun rememberTreeState(
     selectableLazyListState: SelectableLazyListState = SelectableLazyListState(lazyListState),
 ): TreeState = remember { TreeState(selectableLazyListState) }
 
-public class TreeState(internal val delegate: SelectableLazyListState) :
-    SelectableScope by delegate, ScrollableState by delegate {
+public class TreeState(delegate: SelectableLazyListState) : SelectableScope by delegate, ScrollableState by delegate {
     internal val allNodes = mutableStateListOf<Pair<Any, Int>>()
+
+    @InternalJewelApi @ApiStatus.Internal public val lazyListState: SelectableLazyListState = delegate
 
     public var openNodes: Set<Any> by mutableStateOf<Set<Any>>(emptySet())
 

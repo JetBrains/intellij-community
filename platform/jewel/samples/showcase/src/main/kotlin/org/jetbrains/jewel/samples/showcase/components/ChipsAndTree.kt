@@ -29,16 +29,16 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
+import org.jetbrains.jewel.foundation.lazy.tree.rememberTreeState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.component.Chip
 import org.jetbrains.jewel.ui.component.CircularProgressIndicator
+import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.GroupHeader
-import org.jetbrains.jewel.ui.component.LazyTree
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.RadioButtonChip
 import org.jetbrains.jewel.ui.component.SimpleListItem
@@ -47,6 +47,7 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.ToggleableChip
 import org.jetbrains.jewel.ui.component.VerticalScrollbar
 import org.jetbrains.jewel.ui.component.search.SpeedSearchableLazyColumn
+import org.jetbrains.jewel.ui.component.search.SpeedSearchableTree
 import org.jetbrains.jewel.ui.component.search.highlightSpeedSearchMatches
 import org.jetbrains.jewel.ui.component.search.highlightTextSearch
 import org.jetbrains.jewel.ui.theme.colorPalette
@@ -114,38 +115,31 @@ public fun ChipsSample(modifier: Modifier = Modifier) {
 
 @Composable
 public fun TreeSample(modifier: Modifier = Modifier) {
-    var tree by remember {
-        mutableStateOf(
-            buildTree {
-                addNode("root 1") {
-                    addLeaf("leaf 1")
-                    addLeaf("leaf 2")
-                }
-                addNode("root 2") {
-                    addLeaf("leaf 2.1")
-                    addNode("node 1") {
-                        addLeaf("subleaf 1")
-                        addLeaf("subleaf 2")
-                    }
-                }
-                addNode("root 3") {
-                    addLeaf("leaf 3.1")
-                    addLeaf("leaf 3.2")
-                }
-            }
-        )
-    }
+    var isRandom by remember { mutableStateOf(false) }
+    var tree by remember { mutableStateOf(buildTree(random = false)) }
+
+    // Clean up open nodes when the tree changes
+    val treeState = rememberTreeState()
+    LaunchedEffect(tree) { treeState.openNodes.forEach(treeState::toggleNode) }
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton({
-            tree = buildTree {
-                addNode("root ${Random.nextInt(0, 1024)}") {
-                    addLeaf("leaf 1")
-                    addLeaf("leaf 2")
-                }
+        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.width(200.dp)) {
+            OutlinedButton(
+                onClick = {
+                    isRandom = false
+                    tree = buildTree(random = false)
+                },
+                enabled = isRandom,
+            ) {
+                Text("Reset")
             }
-        }) {
-            Text("Rebuild tree")
+
+            DefaultButton({
+                isRandom = true
+                tree = buildTree(random = true)
+            }) {
+                Text("Randomize")
+            }
         }
 
         val borderColor =
@@ -155,14 +149,23 @@ public fun TreeSample(modifier: Modifier = Modifier) {
                 JewelTheme.colorPalette.grayOrNull(12) ?: Color(0xFFEBECF0)
             }
 
-        Box(Modifier.border(1.dp, borderColor, RoundedCornerShape(2.dp))) {
-            LazyTree(
+        SpeedSearchArea(Modifier.border(1.dp, borderColor, RoundedCornerShape(2.dp))) {
+            SpeedSearchableTree(
                 tree = tree,
+                treeState = treeState,
                 modifier = Modifier.size(200.dp, 200.dp).focusable(),
                 onElementClick = {},
                 onElementDoubleClick = {},
+                nodeText = { it.data },
             ) { element ->
-                Box(Modifier.fillMaxWidth()) { Text(element.data, Modifier.padding(2.dp)) }
+                Box(Modifier.fillMaxWidth()) {
+                    var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+                    Text(
+                        element.data.highlightTextSearch(),
+                        Modifier.padding(2.dp).highlightSpeedSearchMatches(textLayoutResult),
+                        onTextLayout = { textLayoutResult = it },
+                    )
+                }
             }
         }
     }
@@ -170,41 +173,82 @@ public fun TreeSample(modifier: Modifier = Modifier) {
 
 @Composable
 public fun SelectableLazyColumnSample(modifier: Modifier = Modifier) {
+    var randomIndex by remember { mutableStateOf(-1) }
     var listOfItems by remember { mutableStateOf(emptyList<String>()) }
+    val state = rememberSelectableLazyListState()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(randomIndex) {
         @Suppress("InjectDispatcher") // Ok for demo code
-        launch { listOfItems = withContext(Dispatchers.Default) { List(1_000_000) { "Item $it" } } }
+        listOfItems =
+            withContext(Dispatchers.Default) {
+                if (randomIndex >= 0) {
+                    (1..Random.nextInt(100, 1_000_000) step Random.nextInt(1, 9)).map { "Item $it" }
+                } else {
+                    List(1_000_000) { "Item $it" }
+                }
+            }
     }
 
-    val state = rememberSelectableLazyListState()
-    Box(modifier = modifier.size(200.dp)) {
-        if (listOfItems.isEmpty()) {
-            CircularProgressIndicator(Modifier.align(Alignment.Center))
-        } else {
-            SpeedSearchArea {
-                SpeedSearchableLazyColumn(modifier = Modifier.focusable(), state = state) {
-                    items(listOfItems, textContent = { item -> item }, key = { item -> item }) { item ->
-                        LaunchedEffect(isSelected) {
-                            if (isSelected) {
-                                JewelLogger.getInstance("ChipsAndTree").info("Item $item got selected")
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.width(200.dp)) {
+            OutlinedButton(onClick = { randomIndex = -1 }, enabled = randomIndex >= 0) { Text("Reset") }
+
+            DefaultButton({ randomIndex += 1 }) { Text("Randomize") }
+        }
+
+        Box(modifier = Modifier.size(200.dp)) {
+            if (listOfItems.isEmpty()) {
+                CircularProgressIndicator(Modifier.align(Alignment.Center))
+            } else {
+                SpeedSearchArea {
+                    SpeedSearchableLazyColumn(modifier = Modifier.focusable(), state = state) {
+                        items(listOfItems, textContent = { item -> item }, key = { item -> item }) { item ->
+                            LaunchedEffect(isSelected) {
+                                if (isSelected) {
+                                    JewelLogger.getInstance("ChipsAndTree").info("Item $item got selected")
+                                }
                             }
+
+                            var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+
+                            SimpleListItem(
+                                text = item.highlightTextSearch(),
+                                selected = isSelected,
+                                active = isActive,
+                                onTextLayout = { textLayoutResult = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                textModifier = Modifier.highlightSpeedSearchMatches(textLayoutResult),
+                            )
                         }
+                    }
 
-                        var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+                    VerticalScrollbar(state.lazyListState, modifier = Modifier.align(Alignment.CenterEnd))
+                }
+            }
+        }
+    }
+}
 
-                        SimpleListItem(
-                            text = item.highlightTextSearch(),
-                            selected = isSelected,
-                            active = isActive,
-                            onTextLayout = { textLayoutResult = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            textModifier = Modifier.highlightSpeedSearchMatches(textLayoutResult),
-                        )
+private fun buildTree(random: Boolean) = buildTree {
+    if (random) {
+        val startingNode = Random.nextInt(0, 1024)
+        val randomTree =
+            (1 until Random.nextInt(2, 128) step Random.nextInt(1, 5)).associate { root ->
+                (root + startingNode) to (1 until Random.nextInt(2, 128) step Random.nextInt(1, 10))
+            }
+
+        randomTree.forEach { (root, children) ->
+            addNode("Random root $root") { children.forEach { leaf -> addLeaf("Random leaf $leaf") } }
+        }
+    } else {
+        repeat(100) { root ->
+            addNode("root ${root + 1}") {
+                repeat(100) { node ->
+                    addNode("node ${root + 1}.${node + 1}") {
+                        repeat(100) { addLeaf("subleaf ${root + 1}.${node + 1}.${it + 1}") }
                     }
                 }
-
-                VerticalScrollbar(state.lazyListState, modifier = Modifier.align(Alignment.CenterEnd))
+                repeat(100) { addLeaf("leaf ${root + 1}.${it + 1}") }
             }
         }
     }

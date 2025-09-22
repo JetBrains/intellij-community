@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.ui.component.search
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
@@ -23,6 +24,7 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import kotlin.test.Test
@@ -30,8 +32,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
+import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.SpeedSearchArea
+import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.assertCursorAtPosition
 import org.jetbrains.jewel.ui.component.interactions.performKeyPress
 import org.junit.Rule
@@ -98,7 +102,25 @@ class SpeedSearchableLazyColumnTest {
     }
 
     @Test
-    fun `select closest match if it happens before the current item`() = runComposeTest {
+    fun `select first visible match if after the current item`() = runComposeTest {
+        onLazyColumn.performKeyPress("Item 40", rule = this)
+        onLazyColumnItem("Item 40").assertIsDisplayed().assertIsSelected()
+
+        // Return scroll a bit and ensure 39 is visible
+        onLazyColumn.performScrollToIndex(35)
+        onLazyColumnItem("Item 39").assertIsDisplayed()
+
+        // Delete the number and replace with "9"
+        onSpeedSearchAreaInput.performKeyPress(Key.Backspace, rule = this)
+        onSpeedSearchAreaInput.performKeyPress(Key.Backspace, rule = this)
+        onSpeedSearchAreaInput.performKeyPress("9", rule = this)
+
+        // 39 is the first visible item containing 9, so it will be selected
+        onLazyColumnItem("Item 39").assertIsDisplayed().assertIsSelected()
+    }
+
+    @Test
+    fun `select closest match if after the current item`() = runComposeTest {
         onLazyColumn.performKeyPress("Item 245", rule = this)
         onLazyColumnItem("Item 245").assertIsDisplayed().assertIsSelected()
 
@@ -107,11 +129,9 @@ class SpeedSearchableLazyColumnTest {
         onSpeedSearchAreaInput.performKeyPress(Key.Backspace, rule = this)
         onSpeedSearchAreaInput.performKeyPress(Key.Backspace, rule = this)
 
-        // Add `99`
+        // Add `99` and jumps to next reference matching "99"
         onSpeedSearchAreaInput.performKeyPress("99", rule = this)
-
-        // Selects 199 that is closer compared to 299
-        onLazyColumnItem("Item 199").assertIsDisplayed().assertIsSelected()
+        onLazyColumnItem("Item 299").assertIsDisplayed().assertIsSelected()
     }
 
     @Test
@@ -120,6 +140,12 @@ class SpeedSearchableLazyColumnTest {
         onLazyColumnItem("Item 9").assertIsDisplayed().assertIsSelected()
 
         onLazyColumn.performKeyPress(Key.DirectionDown, rule = this)
+        onLazyColumnItem("Item 19").assertIsDisplayed().assertIsSelected()
+
+        onLazyColumn.performKeyPress(Key.DirectionDown, rule = this)
+        onLazyColumnItem("Item 29").assertIsDisplayed().assertIsSelected()
+
+        onLazyColumn.performKeyPress(Key.DirectionUp, rule = this)
         onLazyColumnItem("Item 19").assertIsDisplayed().assertIsSelected()
 
         onLazyColumn.performKeyPress(Key.DirectionUp, rule = this)
@@ -186,6 +212,15 @@ class SpeedSearchableLazyColumnTest {
         onLazyColumnItem("Item 20").assertIsDisplayed().assertIsSelected()
     }
 
+    @Test
+    fun `on lose focus, hide input`() = runComposeTest {
+        onLazyColumn.performKeyPress("Item 42", rule = this)
+        onSpeedSearchAreaInput.assertExists().assertIsDisplayed()
+
+        onNodeWithTag("Button").performClick()
+        onSpeedSearchAreaInput.assertDoesNotExist()
+    }
+
     private fun runComposeTest(
         listEntries: List<String> = List(500) { "Item ${it + 1}" },
         block: ComposeContentTestRule.() -> Unit,
@@ -194,27 +229,30 @@ class SpeedSearchableLazyColumnTest {
             val focusRequester = remember { FocusRequester() }
 
             IntUiTheme {
-                SpeedSearchArea(modifier = Modifier.testTag("SpeedSearchArea")) {
-                    SpeedSearchableLazyColumn(
-                        modifier = Modifier.size(200.dp).testTag("LazyColumn").focusRequester(focusRequester),
-                        dispatcher = UnconfinedTestDispatcher(),
-                    ) {
-                        items(listEntries, textContent = { it }) { item ->
-                            var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+                Column {
+                    SpeedSearchArea(modifier = Modifier.testTag("SpeedSearchArea")) {
+                        SpeedSearchableLazyColumn(
+                            modifier = Modifier.size(200.dp).testTag("LazyColumn").focusRequester(focusRequester),
+                            dispatcher = UnconfinedTestDispatcher(),
+                        ) {
+                            items(listEntries, textContent = { it }) { item ->
+                                var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
 
-                            SimpleListItem(
-                                text = item.highlightTextSearch(),
-                                selected = isSelected,
-                                active = isActive,
-                                onTextLayout = { textLayoutResult = it },
-                                modifier =
-                                    Modifier.fillMaxWidth().selectable(isSelected) {
-                                        JewelLogger.getInstance("ChipsAndTree").info("Click on $item")
-                                    },
-                                textModifier = Modifier.highlightSpeedSearchMatches(textLayoutResult),
-                            )
+                                SimpleListItem(
+                                    text = item.highlightTextSearch(),
+                                    selected = isSelected,
+                                    active = isActive,
+                                    onTextLayout = { textLayoutResult = it },
+                                    modifier =
+                                        Modifier.fillMaxWidth().selectable(isSelected) {
+                                            JewelLogger.getInstance("ChipsAndTree").info("Click on $item")
+                                        },
+                                    textModifier = Modifier.highlightSpeedSearchMatches(textLayoutResult),
+                                )
+                            }
                         }
                     }
+                    DefaultButton(onClick = {}, modifier = Modifier.testTag("Button")) { Text("Press me") }
                 }
             }
 

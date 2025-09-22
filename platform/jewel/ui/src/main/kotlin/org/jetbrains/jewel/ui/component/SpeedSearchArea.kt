@@ -4,6 +4,7 @@ package org.jetbrains.jewel.ui.component
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
@@ -14,6 +15,7 @@ import androidx.compose.foundation.text.input.delete
 import androidx.compose.foundation.text.input.placeCursorAtEnd
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.State
 import androidx.compose.runtime.compositionLocalOf
@@ -51,7 +53,7 @@ import androidx.compose.ui.window.rememberComponentRectPositionProvider
 import java.awt.event.KeyEvent as AWTKeyEvent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
@@ -84,6 +86,9 @@ public fun SpeedSearchArea(
     val currentMatcherBuilder = rememberUpdatedState(matcherBuilder)
 
     val state = remember { SpeedSearchStateImpl(currentMatcherBuilder) }
+    val isFocused by intSource.collectIsFocusedAsState()
+
+    LaunchedEffect(isFocused) { if (!isFocused) state.hideSearch() }
 
     Box(modifier = modifier) {
         val scope =
@@ -94,7 +99,7 @@ public fun SpeedSearchArea(
         scope.content()
 
         if (state.isVisible) {
-            SpeedSearchInput(state.textFieldState, state.hasMatches, styling, textStyle, textFieldStyle, intSource)
+            SpeedSearchInput(state.textFieldState, state.hasMatches, styling, textStyle, textFieldStyle)
         }
     }
 }
@@ -119,7 +124,14 @@ public interface SpeedSearchState {
 
     public fun matchResultForText(text: String?): SpeedSearchMatcher.MatchResult
 
-    public suspend fun attach(entriesFlow: Flow<List<String?>>, dispatcher: CoroutineDispatcher = Dispatchers.Default)
+    public fun clearSearch(): Boolean
+
+    public fun hideSearch(): Boolean
+
+    public suspend fun attach(
+        entriesFlow: StateFlow<List<String?>>,
+        dispatcher: CoroutineDispatcher = Dispatchers.Default,
+    )
 }
 
 @ExperimentalJewelApi
@@ -165,7 +177,6 @@ private fun SpeedSearchInput(
     styling: SpeedSearchStyle,
     textStyle: TextStyle,
     textFieldStyle: TextFieldStyle,
-    interactionSource: MutableInteractionSource,
 ) {
     val foregroundColor = styling.getCurrentForegroundColor(hasMatch, textFieldStyle, textStyle)
 
@@ -176,7 +187,6 @@ private fun SpeedSearchInput(
             state = state,
             cursorBrush = SolidColor(foregroundColor),
             textStyle = textStyle.merge(TextStyle(color = foregroundColor)),
-            interactionSource = interactionSource,
             modifier =
                 Modifier.testTag("SpeedSearchArea.Input").focusRequester(focusRequester).onFirstVisible {
                     focusRequester.requestFocus()
@@ -248,17 +258,9 @@ private class SpeedSearchScopeImpl(
         }
     }
 
-    private fun hideSpeedSearch(): Boolean {
-        if (!clearSearchInput()) return false
-        speedSearchState.isVisible = false
-        return true
-    }
+    private fun hideSpeedSearch(): Boolean = speedSearchState.hideSearch()
 
-    private fun clearSearchInput(): Boolean {
-        if (!speedSearchState.isVisible) return false
-        speedSearchState.textFieldState.edit { delete(0, length) }
-        return true
-    }
+    private fun clearSearchInput(): Boolean = speedSearchState.clearSearch()
 
     private fun TextFieldState.handleTextNavigationKeys(event: KeyEvent): Boolean =
         when (event.key.nativeKeyCode) {
@@ -401,15 +403,29 @@ internal class SpeedSearchStateImpl(private val matcherBuilderState: State<(Stri
     override fun matchResultForText(text: String?): SpeedSearchMatcher.MatchResult =
         allMatches[text] ?: SpeedSearchMatcher.MatchResult.NoMatch
 
+    override fun clearSearch(): Boolean {
+        if (!isVisible) return false
+        textFieldState.edit { delete(0, length) }
+        return true
+    }
+
+    override fun hideSearch(): Boolean {
+        if (!clearSearch()) return false
+        isVisible = false
+        return true
+    }
+
     // Using only 'derivedStates' caused a lot of recompositions and caused a rendering lag.
     // To prevent this issue, I'm aggregating the states in this method and posting the values
     // to the relevant properties.
-    override suspend fun attach(entriesFlow: Flow<List<String?>>, dispatcher: CoroutineDispatcher) {
+    override suspend fun attach(entriesFlow: StateFlow<List<String?>>, dispatcher: CoroutineDispatcher) {
         val searchTextFlow = snapshotFlow { searchText }
         val matcherBuilderFlow = snapshotFlow { matcherBuilderState.value }
 
-        combine(searchTextFlow, entriesFlow, matcherBuilderFlow) { text, items, buildMatcher ->
-                if (text.isBlank()) {
+        combine(searchTextFlow, matcherBuilderFlow) { text, buildMatcher ->
+                val items = entriesFlow.value
+
+                if (text.isBlank() || items.isEmpty()) {
                     allMatches = emptyMap()
                     matchingIndexes = emptyList()
                     hasMatches = true
