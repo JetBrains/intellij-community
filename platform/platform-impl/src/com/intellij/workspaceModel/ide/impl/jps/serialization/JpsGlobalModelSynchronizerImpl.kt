@@ -8,7 +8,7 @@ import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
+import com.intellij.platform.backend.workspace.InternalEnvironmentName
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.eel.provider.LocalEelMachine
@@ -80,7 +80,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
     get() = 5.seconds
 
   override fun loadInitialState(
-    environmentName: GlobalWorkspaceModelCache.InternalEnvironmentName,
+    environmentName: InternalEnvironmentName,
     mutableStorage: MutableEntityStorage,
     initialEntityStorage: VersionedEntityStorage,
     loadedFromCache: Boolean,
@@ -224,8 +224,8 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
   }
 
   @VisibleForTesting
-  protected open suspend fun delayLoadGlobalWorkspaceModel(environmentName: GlobalWorkspaceModelCache.InternalEnvironmentName) {
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceByInternalName(environmentName)
+  protected open suspend fun delayLoadGlobalWorkspaceModel(environmentName: InternalEnvironmentName) {
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceByEnvironmentName(environmentName)
     if (loadedFromDisk || !globalWorkspaceModel.loadedFromCache) {
       return
     }
@@ -249,7 +249,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
   }
 
   private fun loadGlobalEntitiesToEmptyStorage(
-    environmentName: GlobalWorkspaceModelCache.InternalEnvironmentName,
+    environmentName: InternalEnvironmentName,
     mutableStorage: MutableEntityStorage,
     initialEntityStorage: VersionedEntityStorage,
     initializeBridges: Boolean,
@@ -283,7 +283,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
   }
 
   private fun bridgesInitializationCallback(
-    environmentName: GlobalWorkspaceModelCache.InternalEnvironmentName,
+    environmentName: InternalEnvironmentName,
     mutableStorage: MutableEntityStorage,
     initialEntityStorage: VersionedEntityStorage,
     notifyListeners: Boolean,
