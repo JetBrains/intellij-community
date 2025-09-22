@@ -24,7 +24,9 @@ object GlobalEelMrfsBackendProvider {
 
   fun install(provider: MultiRoutingFileSystemProvider) {
     provider.theOnlyFileSystem.setBackendProvider(::compute, ::getCustomRoots, ::getCustomFileStores)
-    provider.setTraceListener(MeasuringFileSystemListener())
+    if (System.getProperty("nio.mrfs.telemetry.enable", "false").toBoolean()) {
+      provider.setTraceListener(MeasuringFileSystemListener())
+    }
   }
 
   fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem {
