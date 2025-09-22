@@ -87,7 +87,8 @@
     "MainToolbar": {
       "background": "BackgroundLight",
       "borderColor": "BorderTransparent",
-      "Dropdown.transparentHoverBackground": "#FFFFFF12"
+      "Dropdown.transparentHoverBackground": "#FFFFFF12",
+      "Button.arc.compact": 8
     },
 
     "StatusBar": {
@@ -124,6 +125,7 @@
       "hoverBackground": "Gray2",
 
       "tabInsets": "-7,8,-7,8",
+      "tabInsets.compact": "-2,6,-2,4",
       "tabContentActionsRightInsets": "0,4,0,2"
     },
 
