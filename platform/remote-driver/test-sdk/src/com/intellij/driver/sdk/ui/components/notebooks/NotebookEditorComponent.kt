@@ -106,7 +106,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
       service<PsiManager>(singleProject()).findFile(editor.getVirtualFile())
     }
 
-  fun addEmptyCodeCell(): Unit = addCellBelow.click()
+  fun addEmptyCodeCell(): Unit = addCellBelow.strictClick()
 
   fun addCodeCell(text: String) {
     addEmptyCodeCell()
