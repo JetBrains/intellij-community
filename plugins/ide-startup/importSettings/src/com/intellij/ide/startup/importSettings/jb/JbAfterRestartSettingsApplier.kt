@@ -9,6 +9,7 @@ import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.ide.bootstrap.applyIslandsTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -53,6 +54,7 @@ private class JbAfterRestartSettingsApplier(private val coroutineScope: Coroutin
       coroutineScope.launch {
         withContext(Dispatchers.EDT) {
           importer.importOptionsAfterRestart(options, pluginIds)
+          applyIslandsTheme(true)
         }
       }
     }
