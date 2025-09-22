@@ -169,7 +169,7 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
     val file = virtualFile.toNioPath()
     if (Files.isDirectory(file)) {
       @Suppress("TestOnlyProblems")
-      val openedProject = ProjectUtil.openExistingDir(file, project)
+      ProjectUtil.openExistingDir(file, project)
       return
     }
 
@@ -189,6 +189,7 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
     }
 
     LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, virtualFile)
+
     readAction { virtualFile.fileType }.takeIf { it != FileTypes.UNKNOWN }
     ?: withContext(Dispatchers.EDT) {
       FileTypeChooser.associateFileType(virtualFile.name)
@@ -212,11 +213,14 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
       }
     }
   }
+}
 
-  @Messages.YesNoCancelResult
-  private suspend fun shouldOpenNewProject(project: Project?, file: VirtualFile): Int {
-    if (file.fileType is ProjectFileType) return Messages.YES
-    val provider = getImportProvider(file) ?: return Messages.CANCEL
-    return withContext(Dispatchers.EDT) { provider.askConfirmationForOpeningProject(file, project) }
+@Messages.YesNoCancelResult
+private suspend fun shouldOpenNewProject(project: Project?, file: VirtualFile): Int {
+  if (file.fileType is ProjectFileType) {
+    return Messages.YES
   }
+
+  val provider = getImportProvider(file) ?: return Messages.CANCEL
+  return withContext(Dispatchers.EDT) { provider.askConfirmationForOpeningProject(file, project) }
 }
