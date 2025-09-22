@@ -4,7 +4,6 @@ package com.intellij.diff.tools.util;
 import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollingModel;
@@ -13,7 +12,6 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
@@ -26,8 +24,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class SyncScrollSupport {
-  private static final @NotNull Logger LOG = Logger.getInstance(SyncScrollSupport.class);
-
   public interface SyncScrollable {
     @RequiresEdt
     boolean isSyncScrollEnabled();
@@ -247,26 +243,14 @@ public final class SyncScrollSupport {
       assert startLines.length == count;
       assert endLines.length == count;
 
-      AsyncEditorLoader.performWhenLoaded(editors.get(masterIndex), () ->
-        makeVisibleWhenEditorLoaded(masterIndex, startLines, endLines, animate, forceSyncVerticalScroll, editors, helpers)
-      );
-    }
-
-    private void makeVisibleWhenEditorLoaded(int masterIndex,
-                                             int[] startLines,
-                                             int[] endLines,
-                                             boolean animate,
-                                             boolean forceSyncVerticalScroll,
-                                             List<? extends Editor> editors,
-                                             List<ScrollHelper> helpers) {
-      final int count = editors.size();
-      final Editor masterEditor = editors.get(masterIndex);
       final int[] offsets = getTargetOffsets(editors.toArray(Editor.EMPTY_ARRAY), startLines, endLines, -1);
+
       final int[] startOffsets = new int[count];
       for (int i = 0; i < count; i++) {
         startOffsets[i] = editors.get(i).getScrollingModel().getVisibleArea().y;
       }
 
+      final Editor masterEditor = editors.get(masterIndex);
       final int masterOffset = offsets[masterIndex];
       final int masterStartOffset = startOffsets[masterIndex];
 
@@ -494,29 +478,23 @@ public final class SyncScrollSupport {
     int[] topShifts = new int[count];
 
     for (int i = 0; i < count; i++) {
-      Editor editor = editors[i];
-      topOffsets[i] = editor.logicalPositionToXY(new LogicalPosition(startLines[i], 0)).y;
-      bottomOffsets[i] = editor.logicalPositionToXY(new LogicalPosition(endLines[i] + 1, 0)).y;
+      topOffsets[i] = editors[i].logicalPositionToXY(new LogicalPosition(startLines[i], 0)).y;
+      bottomOffsets[i] = editors[i].logicalPositionToXY(new LogicalPosition(endLines[i] + 1, 0)).y;
       rangeHeights[i] = bottomOffsets[i] - topOffsets[i];
 
-      gapLines[i] = 2 * editor.getLineHeight();
-      int editorHeight = editor.getScrollingModel().getVisibleArea().height;
-      if (editorHeight <= 0 && LOG.isDebugEnabled()) {
-        LOG.warn("Editor (%s) height is %d initial scroll position might be invalid".formatted(editor, editorHeight), new Throwable());
-      }
+      gapLines[i] = 2 * editors[i].getLineHeight();
+      editorHeights[i] = editors[i].getScrollingModel().getVisibleArea().height;
 
-      editorHeights[i] = editorHeight;
-
-      maximumOffsets[i] = ((EditorEx)editor).getScrollPane().getVerticalScrollBar().getMaximum() - editorHeight;
+      maximumOffsets[i] = ((EditorEx)editors[i]).getScrollPane().getVerticalScrollBar().getMaximum() - editorHeights[i];
 
       // 'shift' here - distance between editor's top and first line of range
 
       // make whole range visible. If possible, locate it at 'center' (1/3 of height) (or at 'preferredTopShift' if it was specified)
       // If can't show whole range - show as much as we can
-      boolean canShow = 2 * gapLines[i] + rangeHeights[i] <= editorHeight;
+      boolean canShow = 2 * gapLines[i] + rangeHeights[i] <= editorHeights[i];
 
-      int shift = preferredTopShift != -1 ? preferredTopShift : editorHeight / 3;
-      topShifts[i] = canShow ? Math.min(editorHeight - gapLines[i] - rangeHeights[i], shift) : gapLines[i];
+      int shift = preferredTopShift != -1 ? preferredTopShift : editorHeights[i] / 3;
+      topShifts[i] = canShow ? Math.min(editorHeights[i] - gapLines[i] - rangeHeights[i], shift) : gapLines[i];
     }
 
     int topShift = ArrayUtil.min(topShifts);
