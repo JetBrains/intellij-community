@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.project.ProjectStoreOwner
 import com.intellij.projectImport.ProjectOpenProcessor.Companion.getImportProvider
 import com.intellij.util.SlowOperations
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +45,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
 
 open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.BackendOnly {
   companion object {
@@ -174,7 +176,7 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
     }
 
     // try to open as a project - unless the file is an .ipr of the current one
-    if ((project == null || virtualFile != project.projectFile) && OpenProjectFileChooserDescriptor.isProjectFile(virtualFile)) {
+    if ((project == null || !isFileEqualToProjectFile(file, project)) && OpenProjectFileChooserDescriptor.isProjectFile(virtualFile)) {
       val answer = shouldOpenNewProject(project, virtualFile)
       if (answer == Messages.CANCEL) {
         return
@@ -213,6 +215,14 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
       }
     }
   }
+}
+
+private fun isFileEqualToProjectFile(file: Path, project: Project): Boolean {
+  if (project !is ProjectStoreOwner) {
+    return false
+  }
+  val storeDescriptor = project.componentStore.storeDescriptor
+  return file == storeDescriptor.presentableUrl
 }
 
 @Messages.YesNoCancelResult
