@@ -1175,4 +1175,12 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     if(reference == null) return List.of();
     return ReplaceTypeWithWrongImportFix.createFixes(reference);
   }
+
+  @Override
+  public @Nullable ModCommandAction createChangeToSimilarKeyword(@Nullable PsiElement old,
+                                                                 @NotNull Collection<@NotNull String> newKeywords) {
+    if (old == null) return null;
+    if (newKeywords.isEmpty()) return null;
+    return ChangeToSimilarKeywordFix.createFix(old, newKeywords);
+  }
 }

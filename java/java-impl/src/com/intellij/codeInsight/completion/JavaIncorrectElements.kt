@@ -13,6 +13,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtil.PRIMITIVE_TYPES
 import com.intellij.util.containers.addIfNotNull
 
 
@@ -94,7 +95,7 @@ private object TryWithResourcesPositionMatcher: LookupPositionMatcher {
 
   private fun match(lookupElement: LookupElement): Boolean {
     val obj = lookupElement.`object`
-    if (obj is PsiKeyword && obj.text in JavaKeywordCompletion.PRIMITIVE_TYPES) {
+    if (obj is PsiKeyword && obj.text in PRIMITIVE_TYPES) {
       return true
     }
     val psiClass = obj as? PsiClass ?: return false

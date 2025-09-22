@@ -43,6 +43,7 @@ import static com.intellij.codeInsight.completion.JavaCompletionContributor.IN_C
 import static com.intellij.openapi.util.Conditions.notInstanceOf;
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.psi.SyntaxTraverser.psiApi;
+import static com.intellij.psi.util.PsiUtil.PRIMITIVE_TYPES;
 
 public class JavaKeywordCompletion {
   public static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
@@ -113,13 +114,6 @@ public class JavaKeywordCompletion {
         not(psiElement().inside(PsiAnnotation.class)),
         not(START_SWITCH),
         not(JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN));
-
-  static final Set<String> PRIMITIVE_TYPES = ContainerUtil.newLinkedHashSet(
-    JavaKeywords.SHORT, JavaKeywords.BOOLEAN,
-    JavaKeywords.DOUBLE, JavaKeywords.LONG,
-    JavaKeywords.INT, JavaKeywords.FLOAT,
-    JavaKeywords.CHAR, JavaKeywords.BYTE
-  );
 
   static final PsiElementPattern<PsiElement, ?> START_FOR = psiElement().afterLeaf(psiElement().withText("(").afterLeaf("for"));
   private static final ElementPattern<PsiElement> CLASS_REFERENCE =
