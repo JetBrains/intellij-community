@@ -432,4 +432,24 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
 
     assertEquals(psiFile.getTextRange(), FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL));
   }
+
+  public void testPsiTouchedScopes() {
+    String text = """
+      import java.util.*;
+      class S {
+        void f() {
+          Map s1 = new HashMap();
+          Map s2 = <caret>new HashMap();
+          Map s3 = new HashMap();
+        }
+       }""";
+    PsiFile psiFile = configureByText(JavaFileType.INSTANCE, text);
+    Document document = psiFile.getFileDocument();
+    doHighlighting();
+    assertNull(FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL));
+
+    type('3');
+
+    assertEquals(psiFile.getTextRange(), FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL));
+  }
 }

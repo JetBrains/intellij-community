@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -34,10 +35,10 @@ import java.util.concurrent.ConcurrentMap;
  */
 public final class FileStatusMap implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileStatusMap.class);
-  public static final String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING = "PSI/document/model changes are not allowed during highlighting, " +
-                                                                       "because it leads to the daemon unnecessary restarts. If you really do need to start write action " +
-                                                                       "during the highlighting, you can pass `canChangeDocument=true` to the CodeInsightTestFixtureImpl#instantiateAndRun() " +
-                                                                       "and accept the daemon unresponsiveness/blinking/slowdowns.";
+  public static final @NonNls String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING = "PSI/document/model changes are not allowed during highlighting, " +
+     "because it leads to the daemon unnecessary restarts. If you really do need to start write action " +
+     "during the highlighting, you can pass `canChangeDocument=true` to the CodeInsightTestFixtureImpl#instantiateAndRun() " +
+     "and accept the daemon unresponsiveness/blinking/slowdowns.";
   private final Project myProject;
   private final FileStatusMapState myFileStatusMapState;
   private volatile boolean myAllowDirt = true;
@@ -195,6 +196,14 @@ public final class FileStatusMap implements Disposable {
   public @Nullable TextRange getFileDirtyScope(@NotNull Document document, @NotNull PsiFile psiFile, int passId) {
     CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
     return getFileDirtyScope(document, context, psiFile, passId);
+  }
+
+  @ApiStatus.Internal
+  public void addTouchedPsi(@NotNull Document document, @NotNull PsiElement psiElement) {
+    synchronized (myFileStatusMapState) {
+      FileStatus status = myFileStatusMapState.getOrCreateStatus(document, CodeInsightContexts.anyContext());
+      status.addTouchedPsi(psiElement, document);
+    }
   }
 
   /**

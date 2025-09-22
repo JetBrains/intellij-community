@@ -112,70 +112,60 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
 
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     myHighlightVisitorRunner.createHighlightVisitorsFor(filteredVisitors->{
-      List<Divider.DividedElements> dividedElements = new ArrayList<>();
-      List<Divider.DividedElements> notVisitableElements = new ArrayList<>();
-      Divider.divideInsideAndOutsideAllRoots(getFile(), myRestrictRange, myPriorityRange, psiFile -> true,
-                                             elements -> {
-                                               if (SHOULD_HIGHLIGHT_FILTER.test(elements.psiRoot())) {
-                                                 dividedElements.add(elements);
-                                               }
-                                               else {
-                                                 notVisitableElements.add(elements);
-                                               }
-                                               return false;
-                                             });
-      List<PsiElement> allInsideElements = ContainerUtil.concat(ContainerUtil.map(dividedElements,
-                                            dividedForRoot -> {
-                                              List<? extends PsiElement> inside = dividedForRoot.inside();
-                                              PsiElement lastInside = ContainerUtil.getLastItem(inside);
-                                              return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? inside
-                                                .subList(0, inside.size() - 1) : inside;
-                                            }));
-
-
-      List<LongList> map = ContainerUtil.map(dividedElements,
-                                             dividedForRoot -> {
-                                               LongList insideRanges = dividedForRoot.insideRanges();
-                                               PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
-                                               return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment)
-                                                      ? insideRanges.subList(0, insideRanges.size() - 1) : insideRanges;
-                                             });
-
-      LongList allInsideRanges = ContainerUtil.reduce(map, new LongArrayList(map.isEmpty() ? 1 : map.get(0).size()), (l1, l2)->{ l1.addAll(l2); return l1;});
-
-      List<PsiElement> allOutsideElements = ContainerUtil.concat(ContainerUtil.map(dividedElements,
-                                                  dividedForRoot -> {
-                                                    List<? extends PsiElement> outside = dividedForRoot.outside();
-                                                    PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
-                                                    return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? ContainerUtil.append(outside,
-                                                      lastInside) : outside;
-                                                  }));
-      List<LongList> map1 = ContainerUtil.map(dividedElements,
-                                              dividedForRoot -> {
-                                                LongList outsideRanges = dividedForRoot.outsideRanges();
-                                                PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
-                                                long lastInsideRange = dividedForRoot.insideRanges().isEmpty() ? -1 : dividedForRoot.insideRanges().getLong(dividedForRoot.insideRanges().size()-1);
-                                                if (lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) && lastInsideRange != -1) {
-                                                  LongArrayList r = new LongArrayList(outsideRanges);
-                                                  r.add(lastInsideRange);
-                                                  return r;
-                                                }
-                                                return outsideRanges;
-                                              });
-      LongList allOutsideRanges = ContainerUtil.reduce(map1, new LongArrayList(map1.isEmpty() ? 1 : map1.get(0).size()), (l1, l2)->{ l1.addAll(l2); return l1;});
-
-
-      setProgressLimit(allInsideElements.size() + allOutsideElements.size());
-
       boolean forceHighlightParents = forceHighlightParents();
 
-      // Remove obsolete infos for invalid psi elements.
-      // Unfortunately, the majority of PSI implementations are very bad at increment reparsing, meaning the smallest document change
-      // leads (non-optimally) to many unrelated PSI elements being invalidated, and then the new PSI recreated in their place with identical structure.
-      // If we removed these invalid elements eagerly, it would cause flicker because the newly created elements preempt the just removed invalid ones.
-      // Hence, we defer the removal of invalid elements till the very end, in hope that these highlighters be reused by these new elements.
-      // this optimization, however, could lead to an increased latency
       Consumer<? super ManagedHighlighterRecycler> recyclerConsumer = invalidPsiRecycler -> {
+        List<Divider.DividedElements> dividedElements = new ArrayList<>();
+        List<Divider.DividedElements> notVisitableElements = new ArrayList<>();
+        Divider.divideInsideAndOutsideAllRoots(getFile(), myRestrictRange, myPriorityRange, psiFile -> true,
+          elements -> {
+            if (SHOULD_HIGHLIGHT_FILTER.test(elements.psiRoot())) {
+              dividedElements.add(elements);
+            }
+            else {
+              notVisitableElements.add(elements);
+            }
+            return false;
+          });
+        List<PsiElement> allInsideElements = ContainerUtil.concat(ContainerUtil.map(dividedElements,
+          dividedForRoot -> {
+            List<? extends PsiElement> inside = dividedForRoot.inside();
+            PsiElement lastInside = ContainerUtil.getLastItem(inside);
+            return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? inside
+              .subList(0, inside.size() - 1) : inside;
+          }));
+
+        List<LongList> map = ContainerUtil.map(dividedElements,
+          dividedForRoot -> {
+            LongList insideRanges = dividedForRoot.insideRanges();
+            PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
+            return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment)
+                   ? insideRanges.subList(0, insideRanges.size() - 1) : insideRanges;
+          });
+
+        LongList allInsideRanges = ContainerUtil.reduce(map, new LongArrayList(map.isEmpty() ? 1 : map.get(0).size()), (l1, l2)->{ l1.addAll(l2); return l1;});
+
+        List<PsiElement> allOutsideElements = ContainerUtil.concat(ContainerUtil.map(dividedElements,
+          dividedForRoot -> {
+            List<? extends PsiElement> outside = dividedForRoot.outside();
+            PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
+            return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? ContainerUtil.append(outside, lastInside) : outside;
+          }));
+        List<LongList> map1 = ContainerUtil.map(dividedElements,
+          dividedForRoot -> {
+            LongList outsideRanges = dividedForRoot.outsideRanges();
+            PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
+            long lastInsideRange = dividedForRoot.insideRanges().isEmpty() ? -1 : dividedForRoot.insideRanges().getLong(dividedForRoot.insideRanges().size()-1);
+            if (lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) && lastInsideRange != -1) {
+              LongArrayList r = new LongArrayList(outsideRanges);
+              r.add(lastInsideRange);
+              return r;
+            }
+            return outsideRanges;
+          });
+        LongList allOutsideRanges = ContainerUtil.reduce(map1, new LongArrayList(map1.isEmpty() ? 1 : map1.get(0).size()), (l1, l2)->{ l1.addAll(l2); return l1;});
+        setProgressLimit(allInsideElements.size() + allOutsideElements.size());
+
         // clear highlights generated by visitors called on psi elements no longer highlightable under the current highlighting level (e.g., when the file level was changed from "All Problems" to "None")
         for (Divider.DividedElements notVisitable : notVisitableElements) {
           for (PsiElement element : ContainerUtil.concat(notVisitable.inside(), notVisitable.outside())) {
@@ -194,10 +184,9 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
           success = true;
         }
         else {
-          success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, filteredVisitors,
+          success = collectHighlights(myRestrictRange, allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, filteredVisitors,
                                       forceHighlightParents, (toolId, psiElement, newInfos) -> {
-              myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, newInfos, getDocument(), getFile(), myProject,
-                                                       getHighlightingSession(), invalidPsiRecycler);
+              myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, newInfos, getDocument(), getFile(), myProject, getHighlightingSession(), invalidPsiRecycler);
               myHighlights.addAll(newInfos);
               if (psiElement instanceof PsiErrorElement) {
                 myHasErrorElement = true;
@@ -221,6 +210,12 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
         }
       };
       if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
+        // Remove obsolete infos for invalid psi elements.
+        // Unfortunately, the majority of PSI implementations are very bad at increment reparsing, meaning the smallest document change
+        // leads (non-optimally) to many unrelated PSI elements being invalidated, and then the new PSI recreated in their place with identical structure.
+        // If we removed these invalid elements eagerly, it would cause flicker because the newly created elements preempt the just removed invalid ones.
+        // Hence, we defer the removal of invalid elements till the very end, in hope that these highlighters be reused by these new elements.
+        // this optimization, however, could lead to an increased latency
         impl.runWithInvalidPsiRecycler(getHighlightingSession(), HighlightInfoUpdaterImpl.WhatTool.ANNOTATOR_OR_VISITOR, recyclerConsumer);
       }
       else {
@@ -249,7 +244,8 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     return myHighlights;
   }
 
-  private boolean collectHighlights(@NotNull List<? extends PsiElement> elements1,
+  private boolean collectHighlights(@NotNull TextRange restrictRange,
+                                    @NotNull List<? extends PsiElement> elements1,
                                     @NotNull LongList ranges1,
                                     @NotNull List<? extends PsiElement> elements2,
                                     @NotNull LongList ranges2,
@@ -258,10 +254,10 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
                                     @NotNull ResultSink resultSink) {
     int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
     ProgressManager.checkCanceled();
-    Runnable runnable = () -> myHighlightVisitorRunner.runVisitors(getFile(), myRestrictRange, elements1, ranges1, elements2, ranges2, visitors, forceHighlightParents, chunkSize,
-                                                            myUpdateAll, () -> createInfoHolder(getFile()), resultSink);
+    Runnable runnable = () -> myHighlightVisitorRunner.runVisitors(getFile(), restrictRange, elements1, ranges1, elements2, ranges2, visitors, forceHighlightParents, chunkSize,
+                                                                   myUpdateAll, () -> createInfoHolder(getFile()), resultSink);
     AnnotationSession session = AnnotationSessionImpl.create(getFile());
-    setupAnnotationSession(session, myPriorityRange, myRestrictRange,
+    setupAnnotationSession(session, myPriorityRange, restrictRange,
                            ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity());
     AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, false) : null;
     if (annotatorRunner == null) {

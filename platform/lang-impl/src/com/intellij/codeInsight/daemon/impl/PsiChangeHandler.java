@@ -185,6 +185,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     PsiDocumentManagerImpl pdm = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
     Document document = pdm.getCachedDocument(psiFile);
     if (document != null) {
+      myFileStatusMap.addTouchedPsi(document, child);
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null && ProjectFileIndex.getInstance(myProject).isExcluded(virtualFile)) {
         // ignore changes in excluded files

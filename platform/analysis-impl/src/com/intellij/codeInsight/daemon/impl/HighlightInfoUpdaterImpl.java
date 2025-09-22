@@ -512,7 +512,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       newInfo.updateLazyFixesPsiTimeStamp(psiTimeStamp);
     }
     synchronized (this) {
-      assertMarkupDataConsistent(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
+      assertMarkupConsistentWithData(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
       Map<Object, ToolHighlights> data = getData(psiFile, hostDocument);
       ToolHighlights toolHighlights = data.get(toolId);
       List<? extends HighlightInfo> oldInfos = ContainerUtil.notNullize(toolHighlights == null ? null : toolHighlights.elementHighlights.get(visitedPsiElement));
@@ -556,7 +556,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       });
     }
     //assertNoDuplicates(psiFile, getInfosFromMarkup(hostDocument, project), "markup after psiElementVisited ");
-    assertMarkupDataConsistent(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
+    assertMarkupConsistentWithData(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
     Reference.reachabilityFence(visitedPsiElement); // ensure no psi is gced while in the middle of modifying soft-ref maps
   }
 
@@ -617,15 +617,18 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       .collect(Collectors.toList());
   }
 
-  private synchronized void assertMarkupDataConsistent(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
+  private synchronized void assertMarkupConsistentWithData(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
     if (!isAssertInvariants()) return;
     Collection<HighlightInfo> fromMarkup = getInfosFromMarkup(psiFile, toolIdPredicate);
     // todo IJPL-339 process top level infos
     Set<HighlightInfo> fromData = new HashSet<>(getAllData(psiFile, toolIdPredicate));
 
     if (!new HashSet<>(fromMarkup).equals(fromData)) {
-      String fromDataStr = StringUtil.join(ContainerUtil.sorted(fromData, Segment.BY_START_OFFSET_THEN_END_OFFSET), "\n");
-      String fromMarkupStr = StringUtil.join(ContainerUtil.sorted(fromMarkup, Segment.BY_START_OFFSET_THEN_END_OFFSET), "\n");
+      Comparator<Object> toString = Comparator.comparing(o->o.toString());
+      List<HighlightInfo> ds = ContainerUtil.sorted(fromData, toString);
+      List<HighlightInfo> ms = ContainerUtil.sorted(fromMarkup, toString);
+      String fromDataStr = StringUtil.join(ds, "\n");
+      String fromMarkupStr = StringUtil.join(ms, "\n");
       throw new AssertionError("data inconsistent with markup: data:\n"
                                  + fromDataStr + "\n---------------markup:\n"
                                  + fromMarkupStr+"\n========="
@@ -902,6 +905,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       }
     });
   }
+
   /**
    * We associate each {@link HighlightInfo} with the PSI element for which the inspection builder has produced that info.
    * Unfortunately, there are some crazy inspections that produce infos in their {@link LocalInspectionTool#inspectionFinished(LocalInspectionToolSession, ProblemsHolder)} method instead.
@@ -1251,7 +1255,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       changeRangeHighlighterAttributes(session, psiFile, markup, newInfo, range2markerCache, finalInfoRange, recycled, isFileLevel, infoStartOffset, infoEndOffset, layer,
                                        severityRegistrar);
     }
-    removeFromDataAtomically(data, recycledInvalidPsiHighlightersToBeRemovedFromData, session);
 
     // this list must be sorted by Segment.BY_START_OFFSET_THEN_END_OFFSET
     for (int i = 0; i < newInfosToStore.size(); i++) {
@@ -1266,6 +1269,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         assert Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(newInfosToStore.get(i-1), newInfosToStore.get(i)) <= 0 : "assignRangeHighlighters returned unsorted list: "+newInfosToStore;
       }
     }
+    removeFromDataAtomically(data, recycledInvalidPsiHighlightersToBeRemovedFromData, session);
     return newInfosToStore.emptyOrFrozen();
   }
 
