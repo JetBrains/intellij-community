@@ -68,6 +68,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//java/openapi:java",
     "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
   ],
   runtime_deps = [
     ":kotlin-gradle-scripting-k2_resources",
@@ -145,6 +146,8 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//java/openapi:java",
     "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.gradle.scripting.k2` end

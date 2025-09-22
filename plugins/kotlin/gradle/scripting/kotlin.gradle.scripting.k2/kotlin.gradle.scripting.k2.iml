@@ -80,5 +80,6 @@
     <orderEntry type="module" module-name="kotlin.base.scripting.shared" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" />
   </component>
 </module>
