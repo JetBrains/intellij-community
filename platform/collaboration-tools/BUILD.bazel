@@ -108,8 +108,7 @@ jvm_library(
     "@lib//:app-cash-turbine-jvm",
     "@lib//:assert_j",
     "//platform/vcs-impl/shared",
-  ],
-  runtime_deps = [":collaboration-tools_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.collaborationTools` end
 

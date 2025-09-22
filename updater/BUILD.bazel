@@ -31,8 +31,7 @@ jvm_library(
     "@lib//:jna",
     "@lib//:junit5",
     "@lib//:assert_j",
-  ],
-  runtime_deps = [":updater_resources"]
+  ]
 )
 ### auto-generated section `build intellij.tools.updater` end
 

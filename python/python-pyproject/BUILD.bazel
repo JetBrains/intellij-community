@@ -43,8 +43,7 @@ jvm_library(
     "@lib//:tuweni-toml",
     "@lib//:junit5",
     "@lib//:junit5Params",
-  ],
-  runtime_deps = [":pyproject_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.pyproject` end
 

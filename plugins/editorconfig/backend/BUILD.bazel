@@ -99,10 +99,6 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "//plugins/editorconfig/common",
     "//platform/backend",
-  ],
-  runtime_deps = [
-    ":backend_resources",
-    ":backend_resources_1",
   ]
 )
 ### auto-generated section `build intellij.editorconfig.backend` end

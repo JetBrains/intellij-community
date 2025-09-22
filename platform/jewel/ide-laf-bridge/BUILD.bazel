@@ -87,7 +87,6 @@ jvm_library(
     "//platform/jewel/ui:ui_test_lib",
     "//libraries/compose-foundation-desktop",
   ],
-  runtime_deps = [":ide-laf-bridge_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.jewel.ideLafBridge` end

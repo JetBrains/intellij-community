@@ -44,8 +44,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ],
-  runtime_deps = [":ui_resources"]
+  ]
 )
 ### auto-generated section `build intellij.performanceTesting.ui` end
 

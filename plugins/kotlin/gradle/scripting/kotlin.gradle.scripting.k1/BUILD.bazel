@@ -92,8 +92,7 @@ jvm_library(
     "//platform/core-ui",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:kotlin-tooling-core",
-  ],
-  runtime_deps = [":kotlin-gradle-scripting-k1_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.gradle.scripting.k1` end
 

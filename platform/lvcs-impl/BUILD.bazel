@@ -79,8 +79,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/vcs-impl/shared",
     "@lib//:jetbrains-annotations",
-  ],
-  runtime_deps = [":lvcs-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.lvcs.impl` end
 

@@ -72,10 +72,7 @@ jvm_library(
     "//plugins/grazie/src:core",
     "//platform/core-ui",
   ],
-  runtime_deps = [
-    ":i18n_resources",
-    ":i18n_test_resources",
-  ]
+  runtime_deps = [":i18n_test_resources"]
 )
 ### auto-generated section `build intellij.devkit.i18n` end
 

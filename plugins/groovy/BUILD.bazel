@@ -180,8 +180,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//java/unscramble",
   ],
-  exports = ["//plugins/groovy/groovy-psi:psi"],
-  runtime_deps = [":groovy_resources"]
+  exports = ["//plugins/groovy/groovy-psi:psi"]
 )
 ### auto-generated section `build intellij.groovy` end
 

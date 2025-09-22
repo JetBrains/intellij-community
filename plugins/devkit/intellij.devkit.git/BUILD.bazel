@@ -78,8 +78,7 @@ jvm_library(
     "//platform/vcs-log/impl",
     "//platform/vcs-log/impl:impl_test_lib",
     "//platform/platform-api:ide",
-  ],
-  runtime_deps = [":git_resources"]
+  ]
 )
 ### auto-generated section `build intellij.devkit.git` end
 

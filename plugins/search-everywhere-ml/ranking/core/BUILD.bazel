@@ -101,8 +101,7 @@ jvm_library(
   exports = [
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
-  ],
-  runtime_deps = [":core_resources"]
+  ]
 )
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.core` end
 

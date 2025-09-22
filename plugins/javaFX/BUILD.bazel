@@ -100,8 +100,7 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//xml/xml-psi-api:psi",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [":javaFX_resources"]
+  ]
 )
 ### auto-generated section `build intellij.javaFX` end
 

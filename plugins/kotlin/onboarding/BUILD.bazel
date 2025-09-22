@@ -79,8 +79,7 @@ jvm_library(
     "//plugins/kotlin/base/util:util_test_lib",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/preferences",
-  ],
-  runtime_deps = [":onboarding_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.onboarding` end
 

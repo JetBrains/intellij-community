@@ -39,10 +39,7 @@ jvm_library(
     "@lib//:junit5",
     "@lib//:jetbrains-annotations",
   ],
-  runtime_deps = [
-    ":freezeAnalyzer_resources",
-    ":freezeAnalyzer_test_resources",
-  ]
+  runtime_deps = [":freezeAnalyzer_test_resources"]
 )
 ### auto-generated section `build intellij.platform.diagnostic.freezeAnalyzer` end
 

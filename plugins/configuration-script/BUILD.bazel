@@ -69,8 +69,7 @@ jvm_library(
     "//platform/service-container:service-container_test_lib",
     "@lib//:snakeyaml-engine",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [":configuration-script_resources"]
+  ]
 )
 ### auto-generated section `build intellij.configurationScript` end
 

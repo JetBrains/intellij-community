@@ -72,8 +72,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
-  ],
-  runtime_deps = [":k1_resources"]
+  ]
 )
 ### auto-generated section `build intellij.devkit.workspaceModel.k1` end
 

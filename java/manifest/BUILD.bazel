@@ -55,8 +55,7 @@ jvm_library(
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//platform/core-ui",
-  ],
-  runtime_deps = [":manifest_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.manifest` end
 

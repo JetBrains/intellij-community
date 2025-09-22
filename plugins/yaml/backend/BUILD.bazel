@@ -98,10 +98,7 @@ jvm_library(
     "//platform/searchEverywhere/backend",
     "//plugins/IntelliLang/backend",
   ],
-  runtime_deps = [
-    ":backend_resources",
-    ":backend_test_resources",
-  ]
+  runtime_deps = [":backend_test_resources"]
 )
 ### auto-generated section `build intellij.yaml.backend` end
 

@@ -104,8 +104,7 @@ jvm_library(
     "//java/java-indexing-api:indexing",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
-  ],
-  runtime_deps = [":kotlin-code-insight-line-markers-k2_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.code-insight.line-markers.k2` end
 

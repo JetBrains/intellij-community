@@ -54,8 +54,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//java/java-impl-refactorings:impl-refactorings",
     "//java/codeserver/highlighting",
-  ],
-  runtime_deps = [":typeMigration_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.typeMigration` end
 

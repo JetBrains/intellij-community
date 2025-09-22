@@ -111,8 +111,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//xml/xml-psi-api:psi",
     "//xml/testFramework",
-  ],
-  runtime_deps = [":ant_resources"]
+  ]
 )
 ### auto-generated section `build intellij.ant` end
 

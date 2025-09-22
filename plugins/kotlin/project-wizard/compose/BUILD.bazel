@@ -63,10 +63,7 @@ jvm_library(
     "//plugins/kotlin/project-wizard/core",
     "//plugins/kotlin/project-wizard/core:core_test_lib",
   ],
-  runtime_deps = [
-    ":compose_resources",
-    ":compose_test_resources",
-  ]
+  runtime_deps = [":compose_test_resources"]
 )
 ### auto-generated section `build kotlin.project-wizard.compose` end
 

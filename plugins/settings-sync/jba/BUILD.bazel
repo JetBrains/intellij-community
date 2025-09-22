@@ -58,8 +58,7 @@ jvm_library(
     "//libraries/mockito",
     "//platform/util/progress",
     "@lib//:kotlinx-coroutines-test",
-  ],
-  runtime_deps = [":settingsSync_resources"]
+  ]
 )
 ### auto-generated section `build intellij.settingsSync` end
 

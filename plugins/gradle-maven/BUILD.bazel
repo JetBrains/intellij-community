@@ -49,8 +49,7 @@ jvm_library(
     "//plugins/repository-search:repository-search_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ],
-  runtime_deps = [":gradle-java-maven_resources"]
+  ]
 )
 ### auto-generated section `build intellij.gradle.java.maven` end
 

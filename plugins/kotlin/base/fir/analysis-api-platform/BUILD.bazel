@@ -119,8 +119,7 @@ jvm_library(
     "//plugins/kotlin/base/fir/project-structure:project-structure_test_lib",
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/base/indices/tests:tests_test_lib",
-  ],
-  runtime_deps = [":analysis-api-platform_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.base.fir.analysis-api-platform` end
 

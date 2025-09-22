@@ -94,7 +94,6 @@ jvm_library(
     "//platform/ide-core-impl",
   ],
   runtime_deps = [
-    ":lombok_resources",
     ":lombok_test_resources",
     ":lombok_test_resources_1",
   ]

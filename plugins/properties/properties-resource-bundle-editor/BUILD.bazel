@@ -67,8 +67,7 @@ jvm_library(
     "//platform/core-ui",
     "@lib//:fastutil-min",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [":resource-bundle-editor_resources"]
+  ]
 )
 ### auto-generated section `build intellij.properties.resource.bundle.editor` end
 

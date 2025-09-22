@@ -154,10 +154,7 @@ jvm_library(
     "//libraries/ktor-client-cio",
     "@lib//:mcpserver-ktor-server-cio-internal",
   ],
-  runtime_deps = [
-    ":mcpserver_resources",
-    ":mcpserver_test_resources",
-  ]
+  runtime_deps = [":mcpserver_test_resources"]
 )
 ### auto-generated section `build intellij.mcpserver` end
 

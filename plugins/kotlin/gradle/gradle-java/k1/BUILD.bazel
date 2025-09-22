@@ -142,8 +142,7 @@ jvm_library(
   exports = [
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-gradle-plugin-idea",
-  ],
-  runtime_deps = [":k1_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java.k1` end
 

@@ -59,8 +59,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ],
-  runtime_deps = [":apiDump-lang_resources"]
+  ]
 )
 ### auto-generated section `build intellij.devkit.apiDump.lang` end
 

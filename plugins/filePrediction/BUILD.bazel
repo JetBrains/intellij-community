@@ -78,10 +78,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/statistics/testFramework",
   ],
-  runtime_deps = [
-    ":filePrediction_resources",
-    ":filePrediction_test_resources",
-  ]
+  runtime_deps = [":filePrediction_test_resources"]
 )
 ### auto-generated section `build intellij.filePrediction` end
 

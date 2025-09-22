@@ -99,10 +99,7 @@ jvm_library(
     "//platform/lang-core",
     "//plugins/kotlin/util/project-model-updater",
   ],
-  runtime_deps = [
-    ":plugin_resources",
-    ":plugin_test_resources",
-  ]
+  runtime_deps = [":plugin_test_resources"]
 )
 ### auto-generated section `build kotlin.base.plugin` end
 

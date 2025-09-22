@@ -31,8 +31,7 @@ jvm_library(
     "@lib//:jna",
     "@lib//:junit5",
     "@lib//:hamcrest",
-  ],
-  runtime_deps = [":wintools_resources"]
+  ]
 )
 ### auto-generated section `build intellij.community.wintools` end
 

@@ -46,8 +46,7 @@ jvm_library(
     "//java/testFramework",
     "//platform/duplicates-analysis",
     "//platform/core-ui",
-  ],
-  runtime_deps = [":structuralSearch_resources"]
+  ]
 )
 ### auto-generated section `build intellij.groovy.structuralSearch` end
 

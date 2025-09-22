@@ -72,8 +72,7 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/testFramework/junit5.jimfs",
     "//platform/testFramework/junit5.jimfs:junit5.jimfs_test_lib",
-  ],
-  runtime_deps = [":copyright_resources"]
+  ]
 )
 ### auto-generated section `build intellij.copyright` end
 

@@ -131,8 +131,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//plugins/kotlin/code-insight/impl-base",
     "//plugins/kotlin/base/scripting/scripting.shared",
-  ],
-  runtime_deps = [":kotlin-highlighting-k2_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.highlighting.k2` end
 

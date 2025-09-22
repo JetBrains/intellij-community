@@ -75,10 +75,7 @@ jvm_library(
     "//platform/statistics/testFramework",
   ],
   exports = ["@lib//:ngram-slp"],
-  runtime_deps = [
-    ":ml-impl_resources",
-    ":ml-impl_test_resources",
-  ]
+  runtime_deps = [":ml-impl_test_resources"]
 )
 ### auto-generated section `build intellij.platform.ml.impl` end
 

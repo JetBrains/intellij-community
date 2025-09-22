@@ -57,8 +57,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//xml/xml-psi-api:psi",
     "//platform/lang-impl",
-  ],
-  runtime_deps = [":xmlbeans_resources"]
+  ]
 )
 ### auto-generated section `build intellij.xml.xmlbeans` end
 

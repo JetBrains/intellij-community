@@ -117,8 +117,7 @@ jvm_library(
     "//platform/vcs-impl/shared",
     "//libraries/mockito",
     "//platform/bookmarks",
-  ],
-  runtime_deps = [":impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.vcs.log.impl` end
 

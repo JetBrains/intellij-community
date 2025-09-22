@@ -93,10 +93,7 @@ jvm_library(
     "//platform/util-ex",
     "//platform/util/jdom",
   ],
-  runtime_deps = [
-    ":junit5_resources",
-    ":junit5_test_resources",
-  ]
+  runtime_deps = [":junit5_test_resources"]
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5` end
 

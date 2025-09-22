@@ -56,8 +56,7 @@ jvm_library(
     "@lib//:execution-process-mediator-client-grpc-inprocess",
     "//libraries/grpc",
     "//libraries/grpc-netty-shaded",
-  ],
-  runtime_deps = [":client_resources"]
+  ]
 )
 ### auto-generated section `build intellij.execution.process.mediator.client` end
 

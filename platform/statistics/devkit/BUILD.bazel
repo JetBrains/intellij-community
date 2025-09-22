@@ -68,8 +68,7 @@ jvm_library(
     "@lib//:jackson",
     "@lib//:jackson-databind",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [":devkit_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.statistics.devkit` end
 

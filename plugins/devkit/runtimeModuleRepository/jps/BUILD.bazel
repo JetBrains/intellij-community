@@ -54,8 +54,7 @@ jvm_library(
     "//jps/model-serialization",
     "//plugins/devkit/runtimeModuleRepository/generator",
     "@lib//:hash4j",
-  ],
-  runtime_deps = [":jps_resources"]
+  ]
 )
 ### auto-generated section `build intellij.devkit.runtimeModuleRepository.jps` end
 

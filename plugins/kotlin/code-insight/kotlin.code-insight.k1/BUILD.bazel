@@ -58,8 +58,7 @@ jvm_library(
     "//plugins/kotlin/plugin/k1",
     "//platform/lang-impl",
     "//plugins/kotlin/kotlin.ide:ide",
-  ],
-  runtime_deps = [":kotlin-code-insight-k1_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.code-insight.k1` end
 

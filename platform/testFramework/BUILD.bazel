@@ -203,7 +203,6 @@ jvm_library(
     "//platform/testFramework/core",
   ],
   runtime_deps = [
-    ":testFramework_resources",
     ":testFramework_test_resources",
     ":testFramework_test_resources_1",
   ]

@@ -93,10 +93,7 @@ jvm_library(
     "@lib//:mvstore",
   ],
   exports = ["@lib//:package-search-api-client"],
-  runtime_deps = [
-    ":repository-search_resources",
-    ":repository-search_test_resources",
-  ]
+  runtime_deps = [":repository-search_test_resources"]
 )
 ### auto-generated section `build intellij.repository.search` end
 

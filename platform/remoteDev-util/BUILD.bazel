@@ -112,8 +112,7 @@ jvm_library(
     "//platform/runtime/product",
     "//platform/execution",
     "//platform/util/coroutines",
-  ],
-  runtime_deps = [":remoteDev-util_resources"]
+  ]
 )
 ### auto-generated section `build intellij.remoteDev.util` end
 

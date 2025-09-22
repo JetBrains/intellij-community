@@ -115,8 +115,7 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//platform/observable",
     "//java/openapi:java",
-  ],
-  runtime_deps = [":kotlin-refactorings-move-k2_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.refactorings.move.k2` end
 

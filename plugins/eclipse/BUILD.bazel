@@ -88,8 +88,7 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/backend/workspace",
     "//xml/xml-psi-impl:psi-impl",
-  ],
-  runtime_deps = [":eclipse_resources"]
+  ]
 )
 ### auto-generated section `build intellij.eclipse` end
 

@@ -136,11 +136,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/vcs-impl/shared",
   ],
-  runtime_deps = [
-    ":vcs-gitlab_resources",
-    ":vcs-gitlab_resources_1",
-    ":vcs-gitlab_test_resources",
-  ]
+  runtime_deps = [":vcs-gitlab_test_resources"]
 )
 ### auto-generated section `build intellij.vcs.gitlab` end
 

@@ -157,8 +157,7 @@ jvm_library(
     "//platform/kernel/backend",
     "//platform/platform-impl/rpc",
     "//platform/diff-impl/tests:tests_test_lib",
-  ],
-  runtime_deps = [":vcs-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl` end
 

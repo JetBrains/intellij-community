@@ -153,7 +153,6 @@ jvm_library(
     "//plugins/java-i18n:java-i18n_test_lib",
   ],
   runtime_deps = [
-    ":java-guiForms-designer_resources",
     ":java-guiForms-designer_test_resources",
     ":java-guiForms-designer_test_resources_1",
   ]

@@ -58,8 +58,7 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "@lib//:stream_ex",
     "@lib//:fastutil-min",
-  ],
-  runtime_deps = [":java-rareRefactorings_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.rareRefactorings` end
 

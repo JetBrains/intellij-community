@@ -173,8 +173,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:commons-lang3",
     "//plugins/kotlin/jvm-debugger/coroutines",
-  ],
-  runtime_deps = [":gradle-java_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java` end
 

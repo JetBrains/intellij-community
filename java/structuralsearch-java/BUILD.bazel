@@ -50,8 +50,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/projectModel-api:projectModel",
     "//platform/code-style-api:codeStyle",
-  ],
-  runtime_deps = [":structuralSearch_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.structuralSearch` end
 

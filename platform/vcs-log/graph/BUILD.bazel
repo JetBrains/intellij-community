@@ -46,8 +46,7 @@ jvm_library(
   exports = [
     "//platform/util",
     "//platform/vcs-log/graph-api:vcs-log-graph",
-  ],
-  runtime_deps = [":vcs-log-graph-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.vcs.log.graph.impl` end
 

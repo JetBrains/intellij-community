@@ -60,10 +60,7 @@ jvm_library(
     "//platform/boot",
     "//platform/core-impl",
   ],
-  runtime_deps = [
-    ":ide-metrics-benchmark_resources",
-    ":ide-metrics-benchmark_test_resources",
-  ]
+  runtime_deps = [":ide-metrics-benchmark_test_resources"]
 )
 ### auto-generated section `build intellij.tools.ide.metrics.benchmark` end
 

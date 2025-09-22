@@ -73,8 +73,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
     "//java/openapi:java",
-  ],
-  runtime_deps = [":gradle_resources"]
+  ]
 )
 ### auto-generated section `build intellij.devkit.gradle` end
 

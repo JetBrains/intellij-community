@@ -111,11 +111,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "@lib//:jgoodies-forms",
   ],
-  runtime_deps = [
-    ":testng_resources",
-    ":testng_resources_1",
-    ":testng_test_resources",
-  ]
+  runtime_deps = [":testng_test_resources"]
 )
 ### auto-generated section `build intellij.testng` end
 

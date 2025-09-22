@@ -91,8 +91,7 @@ jvm_library(
     "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
   ],
-  exports = ["//platform/extensions"],
-  runtime_deps = [":inspect_resources"]
+  exports = ["//platform/extensions"]
 )
 ### auto-generated section `build intellij.platform.inspect` end
 

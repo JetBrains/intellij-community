@@ -95,8 +95,7 @@ jvm_library(
     "//platform/util/progress",
     "//platform/platform-impl/ui",
     "//platform/plugins/parser/impl",
-  ],
-  runtime_deps = [":importSettings_resources"]
+  ]
 )
 ### auto-generated section `build intellij.ide.startup.importSettings` end
 

@@ -50,8 +50,7 @@ jvm_library(
     "@lib//:junit5",
     "@lib//:assert_j",
     "@lib//:caffeine",
-  ],
-  runtime_deps = [":concurrency_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.ide.concurrency` end
 

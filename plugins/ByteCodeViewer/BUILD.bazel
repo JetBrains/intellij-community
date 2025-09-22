@@ -65,8 +65,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/core-ui",
     "//java/java-frontback-psi-impl:frontback-psi-impl",
-  ],
-  runtime_deps = [":java-byteCodeViewer_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.byteCodeViewer` end
 

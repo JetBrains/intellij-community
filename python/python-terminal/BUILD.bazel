@@ -53,8 +53,7 @@ jvm_library(
     "@lib//:junit5Params",
     "@lib//:junit5Pioneer",
     "//platform/testFramework/common",
-  ],
-  runtime_deps = [":terminal_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.terminal` end
 

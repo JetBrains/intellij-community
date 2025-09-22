@@ -77,8 +77,7 @@ jvm_library(
     "//platform/testFramework/extensions:testExtensions",
     "@lib//:assert_j",
     "@lib//:junit4",
-  ],
-  runtime_deps = [":credentialStore-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.credentialStore.impl` end
 

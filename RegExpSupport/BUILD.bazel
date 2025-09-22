@@ -57,8 +57,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/core-ui",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [":regexp_resources"]
+  ]
 )
 ### auto-generated section `build intellij.regexp` end
 

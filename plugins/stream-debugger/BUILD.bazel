@@ -63,8 +63,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//plugins/stream-debugger-core/testFramework",
     "//platform/util/coroutines",
-  ],
-  runtime_deps = [":java-debugger-streams_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.debugger.streams` end
 

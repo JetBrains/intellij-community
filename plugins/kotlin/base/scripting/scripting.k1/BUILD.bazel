@@ -126,8 +126,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//platform/refactoring",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
-  ],
-  runtime_deps = [":scripting.k1_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.base.scripting.k1` end
 

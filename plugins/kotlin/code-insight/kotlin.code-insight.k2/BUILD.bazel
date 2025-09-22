@@ -168,8 +168,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//plugins/kotlin/bundled-compiler-plugins-support",
     "//plugins/kotlin/base/scripting/scripting.k2",
-  ],
-  runtime_deps = [":kotlin-code-insight-k2_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.code-insight.k2` end
 

@@ -65,8 +65,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-impl:debugger-impl_test_lib",
-  ],
-  runtime_deps = [":testRunner_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.testRunner` end
 

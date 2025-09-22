@@ -96,11 +96,7 @@ jvm_library(
     "//xml/relaxng",
     "//xml/relaxng:relaxng_test_lib",
   ],
-  runtime_deps = [
-    ":spellchecker_resources",
-    ":spellchecker_resources_1",
-    ":spellchecker_test_resources",
-  ]
+  runtime_deps = [":spellchecker_test_resources"]
 )
 ### auto-generated section `build intellij.spellchecker` end
 

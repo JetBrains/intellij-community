@@ -39,8 +39,7 @@ jvm_library(
     "@lib//:io-opentelemetry-sdk-extension-autoconfigure-spi-provided",
     "@lib//:jackson-databind",
     "@lib//:kotlin-stdlib",
-  ],
-  runtime_deps = [":diagnostic-telemetry-agent-extension_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.agent.extension` end
 

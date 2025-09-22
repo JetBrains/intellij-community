@@ -54,8 +54,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/core-api:core",
-  ],
-  runtime_deps = [":commander_resources"]
+  ]
 )
 ### auto-generated section `build intellij.commander` end
 

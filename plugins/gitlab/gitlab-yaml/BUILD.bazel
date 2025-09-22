@@ -43,8 +43,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//json/backend/tests:tests_test_lib",
-  ],
-  runtime_deps = [":vcs-gitlab-yaml_resources"]
+  ]
 )
 ### auto-generated section `build intellij.vcs.gitlab.yaml` end
 

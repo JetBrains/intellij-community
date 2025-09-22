@@ -56,8 +56,7 @@ jvm_library(
     "@lib//:assert_j",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-  ],
-  runtime_deps = [":remote-control_resources"]
+  ]
 )
 ### auto-generated section `build intellij.remoteControl` end
 

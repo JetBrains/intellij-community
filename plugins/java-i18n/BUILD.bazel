@@ -109,8 +109,7 @@ jvm_library(
   exports = [
     "//plugins/properties:properties-backend",
     "//java/java-impl:impl",
-  ],
-  runtime_deps = [":java-i18n_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.i18n` end
 

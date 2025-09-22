@@ -66,8 +66,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
-  ],
-  runtime_deps = [":kotlin-code-insight-live-templates-k1_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.code-insight.live-templates.k1` end
 

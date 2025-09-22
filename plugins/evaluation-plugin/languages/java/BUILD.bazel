@@ -62,8 +62,7 @@ jvm_library(
     "//java/testFramework",
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
-  ],
-  runtime_deps = [":java_resources"]
+  ]
 )
 ### auto-generated section `build intellij.evaluationPlugin.languages.java` end
 

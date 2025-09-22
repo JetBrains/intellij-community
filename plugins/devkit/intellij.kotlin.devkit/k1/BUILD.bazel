@@ -61,8 +61,7 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/devkit/devkit-core:core",
     "//plugins/kotlin/code-insight/api",
-  ],
-  runtime_deps = [":k1_resources"]
+  ]
 )
 ### auto-generated section `build intellij.kotlin.devkit.k1` end
 

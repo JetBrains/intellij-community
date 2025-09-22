@@ -55,8 +55,7 @@ jvm_library(
     "//platform/core-api:core",
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
-  ],
-  runtime_deps = [":execService.python_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.community.execService.python` end
 

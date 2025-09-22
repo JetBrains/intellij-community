@@ -74,8 +74,7 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/util/coroutines",
-  ],
-  runtime_deps = [":whatsNew_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.whatsNew` end
 

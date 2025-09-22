@@ -49,8 +49,7 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:junit5",
     "//platform/core-impl",
-  ],
-  runtime_deps = [":findUsagesMl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.findUsagesMl` end
 

@@ -82,8 +82,7 @@ jvm_library(
     "//platform/testRunner",
     "//platform/testRunner:testRunner_test_lib",
     "@lib//:tc_service_messages",
-  ],
-  runtime_deps = [":smRunner_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.smRunner` end
 

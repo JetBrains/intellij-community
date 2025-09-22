@@ -46,8 +46,7 @@ jvm_library(
     "//jps/jps-builders:build-tests_test_lib",
     "@lib//:hash4j",
     "@lib//:junit5",
-  ],
-  runtime_deps = [":jps_resources"]
+  ]
 )
 ### auto-generated section `build intellij.maven.jps` end
 

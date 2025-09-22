@@ -87,8 +87,7 @@ jvm_library(
     "//platform/eel-impl",
     "//platform/eel-provider",
     "//python/impl.helperLocator:community-helpersLocator",
-  ],
-  runtime_deps = [":sdk_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.sdk` end
 

@@ -77,10 +77,7 @@ jvm_library(
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
     "//libraries/compose-foundation-desktop",
   ],
-  runtime_deps = [
-    ":ui_resources",
-    ":ui_test_resources",
-  ],
+  runtime_deps = [":ui_test_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.jewel.ui` end

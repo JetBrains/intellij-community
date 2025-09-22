@@ -65,8 +65,7 @@ jvm_library(
     "//xml/dom-openapi:dom",
     "//java/testFramework",
     "//platform/core-ui",
-  ],
-  runtime_deps = [":themes_resources"]
+  ]
 )
 ### auto-generated section `build intellij.devkit.themes` end
 

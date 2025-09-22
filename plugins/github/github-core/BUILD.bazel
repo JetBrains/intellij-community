@@ -166,11 +166,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/vcs-impl/shared",
   ],
-  runtime_deps = [
-    ":vcs-github_resources",
-    ":vcs-github_resources_1",
-    ":vcs-github_test_resources",
-  ]
+  runtime_deps = [":vcs-github_test_resources"]
 )
 ### auto-generated section `build intellij.vcs.github` end
 

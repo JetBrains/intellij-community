@@ -49,8 +49,7 @@ jvm_library(
     "//platform/instanceContainer",
     "//platform/diagnostic",
     "//platform/util/coroutines",
-  ],
-  runtime_deps = [":service-container_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.serviceContainer` end
 

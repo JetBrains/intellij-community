@@ -96,8 +96,7 @@ jvm_library(
   exports = [
     "@lib//:com-jetbrains-fus-reporting-model",
     "@lib//:com-jetbrains-fus-reporting-ap-validation",
-  ],
-  runtime_deps = [":statistics_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.statistics` end
 

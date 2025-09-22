@@ -57,8 +57,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/IntelliLang:langInjection",
     "//platform/testFramework/extensions:testExtensions",
-  ],
-  runtime_deps = [":jsonpath_resources"]
+  ]
 )
 ### auto-generated section `build intellij.jsonpath` end
 

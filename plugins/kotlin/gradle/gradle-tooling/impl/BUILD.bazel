@@ -55,8 +55,7 @@ jvm_library(
     "@lib//:kotlin-test-junit",
     "@lib//:kotlin-test",
     "//platform/extensions",
-  ],
-  runtime_deps = [":impl_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.gradle.gradle-tooling.impl` end
 

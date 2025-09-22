@@ -56,8 +56,7 @@ jvm_library(
   exports = [
     "//python/python-psi-api:psi",
     "//platform/platform-util-io:ide-util-io",
-  ],
-  runtime_deps = [":community_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.community` end
 

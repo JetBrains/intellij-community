@@ -76,8 +76,7 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "@lib//:kotlinc-kotlin-jps-plugin-classpath",
-  ],
-  runtime_deps = [":core_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.project-wizard.core` end
 

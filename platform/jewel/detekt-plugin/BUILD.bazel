@@ -42,10 +42,7 @@ jvm_library(
     "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-test",
     "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-core",
   ],
-  runtime_deps = [
-    ":detekt-plugin_resources",
-    ":detekt-plugin_test_resources",
-  ]
+  runtime_deps = [":detekt-plugin_test_resources"]
 )
 ### auto-generated section `build intellij.platform.jewel.detektPlugin` end
 

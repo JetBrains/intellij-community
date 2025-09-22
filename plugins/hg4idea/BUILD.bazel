@@ -80,8 +80,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/dvcs-impl/shared",
     "//platform/vcs-impl/shared",
-  ],
-  runtime_deps = [":vcs-hg_resources"]
+  ]
 )
 ### auto-generated section `build intellij.vcs.hg` end
 

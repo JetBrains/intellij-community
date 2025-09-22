@@ -73,8 +73,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/execution/impl",
     "//java/debugger/shared",
-  ],
-  runtime_deps = [":featuresTrainer_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.featuresTrainer` end
 

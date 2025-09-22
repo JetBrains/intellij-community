@@ -30,8 +30,7 @@ jvm_library(
     "@lib//:maven-server-event_listener-org-apache-maven-maven-core-3-3-9-provided",
     "@lib//:maven-server-event_listener-com-google-inject-guice-no_aop-4-0-provided",
     "@lib//:junit5",
-  ],
-  runtime_deps = [":server-eventListener_resources"]
+  ]
 )
 ### auto-generated section `build intellij.maven.server.eventListener` end
 

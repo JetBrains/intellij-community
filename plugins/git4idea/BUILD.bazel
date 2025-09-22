@@ -225,11 +225,7 @@ jvm_library(
     "//platform/dvcs-api:vcs-dvcs",
     "@lib//:cucumber-testing",
   ],
-  runtime_deps = [
-    ":vcs-git_resources",
-    ":vcs-git_resources_1",
-    ":vcs-git_test_resources",
-  ]
+  runtime_deps = [":vcs-git_test_resources"]
 )
 ### auto-generated section `build intellij.vcs.git` end
 

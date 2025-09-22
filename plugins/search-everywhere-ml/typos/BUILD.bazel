@@ -59,8 +59,7 @@ jvm_library(
     "//platform/ml-impl",
     "//platform/ml-impl:ml-impl_test_lib",
     "@lib//:search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
-  ],
-  runtime_deps = [":typos_resources"]
+  ]
 )
 ### auto-generated section `build intellij.searchEverywhereMl.typos` end
 

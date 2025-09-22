@@ -57,8 +57,7 @@ jvm_library(
     "//platform/vcs-log/graph:vcs-log-graph-impl_test_lib",
     "//platform/vcs-api/shared",
     "//platform/vcs-impl/shared",
-  ],
-  runtime_deps = [":vcs-git-coverage_resources"]
+  ]
 )
 ### auto-generated section `build intellij.vcs.git.coverage` end
 

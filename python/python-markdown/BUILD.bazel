@@ -44,8 +44,7 @@ jvm_library(
     "//python:python-community-tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ],
-  runtime_deps = [":markdown_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.markdown` end
 

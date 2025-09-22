@@ -144,10 +144,7 @@ jvm_library(
     "//platform/kernel/rpc",
     "//platform/testFramework/common",
   ],
-  runtime_deps = [
-    ":impl_resources",
-    ":impl_test_resources",
-  ]
+  runtime_deps = [":impl_test_resources"]
 )
 ### auto-generated section `build intellij.java.debugger.impl` end
 

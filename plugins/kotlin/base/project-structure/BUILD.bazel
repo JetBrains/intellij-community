@@ -117,8 +117,7 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:kotlinc-analysis-api-impl-base",
     "@lib//:fastutil-min",
-  ],
-  runtime_deps = [":project-structure_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.base.project-structure` end
 

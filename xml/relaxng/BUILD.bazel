@@ -74,8 +74,7 @@ jvm_library(
     "//xml/xml-parser:parser",
     "//xml/xml-psi-api:psi",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [":relaxng_resources"]
+  ]
 )
 ### auto-generated section `build intellij.relaxng` end
 

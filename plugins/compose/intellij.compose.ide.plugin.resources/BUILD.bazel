@@ -101,8 +101,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-test",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
-  ],
-  runtime_deps = [":ide-plugin-resources_resources"]
+  ]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.resources` end
 

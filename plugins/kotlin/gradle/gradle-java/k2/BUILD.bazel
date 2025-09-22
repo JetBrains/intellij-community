@@ -60,8 +60,7 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/fir/tests:tests_test_lib",
-  ],
-  runtime_deps = [":k2_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java.k2` end
 

@@ -73,8 +73,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//xml/xml-psi-impl:psi-impl",
     "//xml/xml-psi-api:psi",
-  ],
-  runtime_deps = [":images_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.images` end
 

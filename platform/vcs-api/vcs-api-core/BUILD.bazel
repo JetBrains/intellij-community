@@ -42,8 +42,7 @@ jvm_library(
     "//libraries/junit5-params",
     "//libraries/assertj-core",
     "@lib//:kotlinx-serialization-core",
-  ],
-  runtime_deps = [":vcs-core_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.vcs.core` end
 

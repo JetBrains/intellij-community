@@ -69,8 +69,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
-  ],
-  runtime_deps = [":community-execService_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.community.execService` end
 

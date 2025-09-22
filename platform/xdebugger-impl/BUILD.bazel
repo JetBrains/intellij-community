@@ -133,10 +133,6 @@ jvm_library(
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
     "//platform/remote-topics/shared:rpc-topics",
-  ],
-  runtime_deps = [
-    ":debugger-impl_resources",
-    ":debugger-impl_resources_1",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl` end
