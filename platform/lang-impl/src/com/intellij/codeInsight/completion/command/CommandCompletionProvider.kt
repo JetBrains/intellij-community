@@ -80,7 +80,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     var editor = parameters.editor
     var isReadOnly = false
     var isInjected = false
-    var offset = parameters.offset
+    var offset = parameters.editor.caretModel.offset
     val targetEditor = editor.getUserData(ORIGINAL_EDITOR)
     var originalFile = parameters.originalFile
     if (targetEditor != null) {
@@ -155,7 +155,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
                               copyEditor,
                               adjustedParameters,
                               editor,
-                              parameters.offset,
+                              offset,
                               originalFile,
                               isReadOnly,
                               isInjected) { commands ->
