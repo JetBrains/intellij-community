@@ -210,6 +210,11 @@ class IntelliJPlatformPrePushHandlerTest {
             
             Relates to #WHATEVER-123
           """.trimIndent(),
+          """
+            [subsystem] refactoring: rename a to b
+
+            Explains why it is needed.
+          """.trimIndent(),
 
           "test thing", "test: thing", "[test] thing", "Test thing",
           "tests thing", "tests: thing", "[tests] thing",
@@ -222,6 +227,11 @@ class IntelliJPlatformPrePushHandlerTest {
           "style thing", "style: thing", "[style] thing",
           "refactor this thing", "refactor: this thing",
           "WIP", "[WIP] do stuff", "Add thingies WIP", "wip", "(wip) hoho", "wip: haha",
+          """
+            WIP
+            
+            Some additional remarks.
+          """.trimIndent(),
 
           "Cleanup (reason)",
           "[subsystem][tests] new tests",
@@ -270,6 +280,16 @@ class IntelliJPlatformPrePushHandlerTest {
             
             Body-line-1
             Body-line-N
+          """.trimIndent(),
+          """
+            No explanation
+            
+            Test added
+          """.trimIndent(),
+          """
+            No explanation
+            
+            WIP
           """.trimIndent(),
 
           "test", "test:", "[test]", "test ", "add test", "drop test",

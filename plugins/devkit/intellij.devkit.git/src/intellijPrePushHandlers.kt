@@ -26,7 +26,7 @@ internal class IntelliJPlatformPrePushHandler : IssueIDPrePushHandler() {
 
   override val commitMessageRegex = Regex("""(?:^|.*[^-A-Z0-9])[A-Z]+-\d+.*""", RegexOption.DOT_MATCHES_ALL)
   override val ignorePattern = Regex(
-    pattern = """^(?:\[.+] ?)?\[?(?:tests?|clean ?up|docs?|typo|refactor(?:ing)?|format|style|testFramework|test framework)]?.*\s.*[A-Z0-9].*|(?:.*[^a-z])?WIP(?:[^a-z].*)?""",
+    pattern = """^(?:\[.+] ?)?\[?(?:tests?|clean ?up|docs?|typo|refactor(?:ing)?|format|style|testFramework|test framework)]?.*\s.*[A-Z0-9](?:.|\n)*|(?:.*[^a-z])?WIP(?:[^a-z](?:.|\n)*)?""",
     option = RegexOption.IGNORE_CASE
   )
   override val validateCommitsOnlyFromCurrentUser: Boolean = true
