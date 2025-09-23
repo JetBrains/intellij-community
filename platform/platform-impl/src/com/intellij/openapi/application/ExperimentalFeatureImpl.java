@@ -29,7 +29,7 @@ public final class ExperimentalFeatureImpl extends ExperimentalFeature{
     }
     if (app.isUnitTestMode()) return false;
 
-    int hash = (PermanentInstallationID.get() + id).hashCode();
+    int hash = (JetBrainsPermanentInstallationID.get() + id).hashCode();
     return Math.floorMod(hash, 100) <= percentOfUsers;
   }
 }

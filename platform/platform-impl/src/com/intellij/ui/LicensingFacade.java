@@ -4,7 +4,7 @@ package com.intellij.ui;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PermanentInstallationID;
+import com.intellij.openapi.application.JetBrainsPermanentInstallationID;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
@@ -90,7 +90,7 @@ public final class LicensingFacade {
    *   <br>
    *   license-server-stamp := 'timestampLong':'machineId':'signatureType':'signatureBase64':'certificateBase64'[:'intermediate-certificateBase64']<br>
    *     the signed part is 'timestampLong':'machineId' <br>
-   *     machineId should be the same as {@link PermanentInstallationID#get()} returns
+   *     machineId should be the same as {@link JetBrainsPermanentInstallationID#get()} returns
    *   <br>
    *   eval-key := 'expiration-date-long'
    * </pre>
