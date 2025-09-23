@@ -45,6 +45,14 @@ import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Unmodifiable
 
+private const val STANDARD_MEAN_PRIORITY = 100.0
+
+private const val DEFAULT_PRIORITY = -150.0
+
+private val CHAR_TO_FILTER = setOf('\'', '"', '_', '-')
+
+private val CHAR_TO_FILTER_WITH_SPACE = setOf('\'', '"', '_', '-', ' ')
+
 /**
  * Internal provider for handling command completion in IntelliJ-based editors.
  *
@@ -217,7 +225,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
         otherSynonyms = emptyList()
       )
       val priority = command.priority
-      return listOf(PrioritizedLookupElement.withPriority(element, priority?.let { it.toDouble() - 100.0 } ?: -150.0))
+      return listOf(PrioritizedLookupElement.withPriority(element, priority?.let { it.toDouble() - STANDARD_MEAN_PRIORITY } ?: DEFAULT_PRIORITY))
     }
     val elements = mutableListOf<LookupElement>()
     for (synonym in synonyms) {
@@ -234,7 +242,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
         otherSynonyms = synonyms
       )
       val priority = command.priority
-      elements.add(PrioritizedLookupElement.withPriority(element, priority?.let { it.toDouble() - 100.0 } ?: -150.0))
+      elements.add(PrioritizedLookupElement.withPriority(element, priority?.let { it.toDouble() - STANDARD_MEAN_PRIORITY } ?: DEFAULT_PRIORITY))
     }
     return elements
   }
@@ -268,11 +276,11 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
   private fun generateSynonyms(synonyms: MutableList<String>): Collection<String> {
     val result = mutableSetOf<String>()
     for (string in synonyms) {
-      var newString = string.trim().filter { it !in setOf('\'', '"', '_', '-') }
+      var newString = string.trim().filter { it !in CHAR_TO_FILTER }
       if (newString != string) {
         result.add(newString)
       }
-      newString = string.trim().filter { it !in setOf('\'', '"', '_', '-', ' ') }
+      newString = string.trim().filter { it !in CHAR_TO_FILTER_WITH_SPACE }
       if (newString != string) {
         result.add(newString)
       }

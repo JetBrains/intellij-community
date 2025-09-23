@@ -54,7 +54,7 @@ class CommandCompletionLookupElement(
     if (currentTags.contains(lookupString)) return
     val itemText = presentation.itemText ?: ""
     val tailText = presentation.getTailText() ?: ""
-    val tagMessage: String = CodeInsightBundle.message("command.completion.tag", 1)
+    val tagMessage: String = CodeInsightBundle.message("command.completion.tag")
     val fullItemText = "$itemText$tailText $tagMessage '${currentTags.first()}'"
     presentation.setItemText(fullItemText)
     presentation.decorateItemTextRange(TextRange(itemText.length, itemText.length + tailText.length + 1 + tagMessage.length),
