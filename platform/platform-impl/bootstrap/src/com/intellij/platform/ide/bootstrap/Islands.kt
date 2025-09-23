@@ -10,12 +10,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.ui.JBColor
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 fun applyIslandsTheme(afterImportSettings: Boolean) {
   val application = ApplicationManager.getApplication()
-  if (!application.isEAP || application.isUnitTestMode || application.isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
+  if (!application.isEAP || application.isUnitTestMode || application.isHeadlessEnvironment || AppMode.isRemoteDevHost() || PlatformUtils.isDataSpell()) {
     return
   }
   if (System.getProperty("platform.experiment.ab.manual.option", "") == "control.option") {
