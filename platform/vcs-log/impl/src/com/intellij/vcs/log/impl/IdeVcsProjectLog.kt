@@ -112,7 +112,7 @@ internal class IdeVcsProjectLog(
       if (!future.isDone) {
         coroutineScope.launch {
           val title = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.toShortString())
-          withBackgroundProgress(project, title, false) {
+          withBackgroundProgress(project, title) {
             try {
               future.await()
             }
