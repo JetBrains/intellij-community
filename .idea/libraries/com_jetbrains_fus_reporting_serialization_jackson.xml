@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="com.jetbrains.fus.reporting.serialization.jackson" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.fus.reporting:serialization-jackson:SNAPSHOT.1.0.204">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/serialization-jackson/SNAPSHOT.1.0.204/serialization-jackson-SNAPSHOT.1.0.204.jar">
+          <sha256sum>d7f1d4a1e9b2c748fa2b9c7ba41680039be059f5a71e212deb92ab9119d6aaed</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/serialization-jackson/SNAPSHOT.1.0.204/serialization-jackson-SNAPSHOT.1.0.204.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/serialization-jackson/SNAPSHOT.1.0.204/serialization-jackson-SNAPSHOT.1.0.204-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

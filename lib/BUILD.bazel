@@ -839,37 +839,23 @@ jvm_import(
 )
 
 jvm_import(
-  name = "com-jetbrains-fus-reporting-ap-validation",
-  jar = "@com_jetbrains_fus_reporting-ap-validation-171_http//file",
-  source_jar = "@com_jetbrains_fus_reporting-ap-validation-171_http//file",
+  name = "com-jetbrains-fus-reporting-ap-validation-all",
+  jar = "@com_jetbrains_fus_reporting-ap-validation-all-1_0_205_http//file",
+  source_jar = "@com_jetbrains_fus_reporting-ap-validation-all-1_0_205_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "com-jetbrains-fus-reporting-configuration",
-  jar = "@com_jetbrains_fus_reporting-configuration-171_http//file",
-  source_jar = "@com_jetbrains_fus_reporting-configuration-171_http//file",
+  name = "com-jetbrains-fus-reporting-api",
+  jar = "@com_jetbrains_fus_reporting-api-1_0_205_http//file",
+  source_jar = "@com_jetbrains_fus_reporting-api-1_0_205_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "com-jetbrains-fus-reporting-connection-client",
-  jar = "@com_jetbrains_fus_reporting-connection-client-171_http//file",
-  source_jar = "@com_jetbrains_fus_reporting-connection-client-171_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "com-jetbrains-fus-reporting-model",
-  jar = "@com_jetbrains_fus_reporting-model-171_http//file",
-  source_jar = "@com_jetbrains_fus_reporting-model-171_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "com-jetbrains-fus-reporting-serialization-kotlin",
-  jar = "@com_jetbrains_fus_reporting-serialization-kotlin-171_http//file",
-  source_jar = "@com_jetbrains_fus_reporting-serialization-kotlin-171_http//file",
+  name = "com-jetbrains-fus-reporting-serialization-jackson",
+  jar = "@com_jetbrains_fus_reporting-serialization-jackson-SNAPSHOT_1_0_204_http//file",
+  source_jar = "@com_jetbrains_fus_reporting-serialization-jackson-SNAPSHOT_1_0_204_http//file",
   visibility = ["//visibility:public"]
 )
 

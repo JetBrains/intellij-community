@@ -181,8 +181,7 @@
     <orderEntry type="module" module-name="intellij.python.hatch" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.model" level="project" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation" level="project" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" />
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" />
     <orderEntry type="library" name="kaml" level="project" />

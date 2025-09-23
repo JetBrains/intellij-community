@@ -721,73 +721,45 @@ http_file(
 )
 
 http_file(
-  name = "com_jetbrains_fus_reporting-ap-validation-171_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/ap-validation/171/ap-validation-171.jar",
-  sha256 = "3c8c66663148ac5d2a953cb048a1939b96be543d4612c23e030a7c6fd20390cd",
-  downloaded_file_path = "ap-validation-171.jar"
+  name = "com_jetbrains_fus_reporting-ap-validation-all-1_0_205_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/ap-validation-all/1.0.205/ap-validation-all-1.0.205.jar",
+  sha256 = "9921601d14966cf0f9231fd2b92ba9a5b65b02c92a3a9ebc2049c8b2710a2eea",
+  downloaded_file_path = "ap-validation-all-1.0.205.jar"
 )
 
 http_file(
-  name = "com_jetbrains_fus_reporting-ap-validation-171-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/ap-validation/171/ap-validation-171-sources.jar",
-  sha256 = "a98f7ce542e21628b807966bb46790514f05c6ddca15a037c36636bfd859acef",
-  downloaded_file_path = "ap-validation-171-sources.jar"
+  name = "com_jetbrains_fus_reporting-ap-validation-all-1_0_205-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/ap-validation-all/1.0.205/ap-validation-all-1.0.205-sources.jar",
+  sha256 = "57629ade1163f0c382a38eae0b127eb83e1f8aae36b6ca98242bcb2453f0e7b7",
+  downloaded_file_path = "ap-validation-all-1.0.205-sources.jar"
 )
 
 http_file(
-  name = "com_jetbrains_fus_reporting-configuration-171_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/configuration/171/configuration-171.jar",
-  sha256 = "f138ed43c55cb90192518293a5b46a135221c898b2b05d6c0648645b3d0fac64",
-  downloaded_file_path = "configuration-171.jar"
+  name = "com_jetbrains_fus_reporting-api-1_0_205_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/api/1.0.205/api-1.0.205.jar",
+  sha256 = "bd122fb2110ec009cf3143aef5e2d473611b5e015c0d2701686eb94200e538ca",
+  downloaded_file_path = "api-1.0.205.jar"
 )
 
 http_file(
-  name = "com_jetbrains_fus_reporting-configuration-171-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/configuration/171/configuration-171-sources.jar",
-  sha256 = "a9a756b91ddfaecc4fe227ff0accbb6b7ff137adb401ffa4adb6bd8fc54db25c",
-  downloaded_file_path = "configuration-171-sources.jar"
+  name = "com_jetbrains_fus_reporting-api-1_0_205-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/api/1.0.205/api-1.0.205-sources.jar",
+  sha256 = "5ce874a15878312c16eeafc73ff14e28e1fc0b72961eb6156cb8c46c04f66aac",
+  downloaded_file_path = "api-1.0.205-sources.jar"
 )
 
 http_file(
-  name = "com_jetbrains_fus_reporting-connection-client-171_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/connection-client/171/connection-client-171.jar",
-  sha256 = "ca8ebd17e33f333647b905d43fc8cce2ad16abd22bfa99b75cb8a499894648b8",
-  downloaded_file_path = "connection-client-171.jar"
+  name = "com_jetbrains_fus_reporting-serialization-jackson-SNAPSHOT_1_0_204_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/serialization-jackson/SNAPSHOT.1.0.204/serialization-jackson-SNAPSHOT.1.0.204.jar",
+  sha256 = "d7f1d4a1e9b2c748fa2b9c7ba41680039be059f5a71e212deb92ab9119d6aaed",
+  downloaded_file_path = "serialization-jackson-SNAPSHOT.1.0.204.jar"
 )
 
 http_file(
-  name = "com_jetbrains_fus_reporting-connection-client-171-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/connection-client/171/connection-client-171-sources.jar",
-  sha256 = "9d53829813cfa8c305ed1153c6c173a399eb269aade3e7d121e90b3857a034c3",
-  downloaded_file_path = "connection-client-171-sources.jar"
-)
-
-http_file(
-  name = "com_jetbrains_fus_reporting-model-171_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/model/171/model-171.jar",
-  sha256 = "8aa0be7e7c1a46ef0827d98c026d328a6f9be27aed79b36692a7f38bacd41a6a",
-  downloaded_file_path = "model-171.jar"
-)
-
-http_file(
-  name = "com_jetbrains_fus_reporting-model-171-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/model/171/model-171-sources.jar",
-  sha256 = "b528d8f0b1fcdcee98e626e46be146081b149bc66585f72f7b8932cdc8aa2c8e",
-  downloaded_file_path = "model-171-sources.jar"
-)
-
-http_file(
-  name = "com_jetbrains_fus_reporting-serialization-kotlin-171_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/serialization-kotlin/171/serialization-kotlin-171.jar",
-  sha256 = "83380929b70dc8e25db327be8680438f3d80087962a88f4dcf061c919ba2fc32",
-  downloaded_file_path = "serialization-kotlin-171.jar"
-)
-
-http_file(
-  name = "com_jetbrains_fus_reporting-serialization-kotlin-171-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/serialization-kotlin/171/serialization-kotlin-171-sources.jar",
-  sha256 = "2e91b1d046e4b6d11c33c4d733ed93e0f694e7c7fcbad6c5968145b0d20b1c44",
-  downloaded_file_path = "serialization-kotlin-171-sources.jar"
+  name = "com_jetbrains_fus_reporting-serialization-jackson-SNAPSHOT_1_0_204-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/serialization-jackson/SNAPSHOT.1.0.204/serialization-jackson-SNAPSHOT.1.0.204-sources.jar",
+  sha256 = "abc967c13226fc6e8c7cd91d5673d0853312979b60e81a0ceb917edaaffbe505",
+  downloaded_file_path = "serialization-jackson-SNAPSHOT.1.0.204-sources.jar"
 )
 
 http_file(
