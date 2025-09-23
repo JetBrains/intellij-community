@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 public final class CommandProcessorImpl extends CoreCommandProcessor implements Disposable {
   @Override
   public void finishCommand(final @NotNull CommandToken command, final @Nullable Throwable throwable) {
-    if (myCurrentCommand != command) return;
+    if (!isCommandTokenActive(command)) return;
     final boolean failed;
     try {
       if (throwable != null) {

@@ -911,7 +911,7 @@ class LineStatusTrackerManager(
     override fun commandFinished(event: CommandEvent) {
       if (!partialChangeListsEnabled) return
 
-      if (CommandProcessor.getInstance().currentCommand == null &&
+      if (!CommandProcessor.getInstance().isCommandInProgress &&
           !filesWithDamagedInactiveRanges.isEmpty()) {
         showInactiveRangesDamagedNotification()
       }

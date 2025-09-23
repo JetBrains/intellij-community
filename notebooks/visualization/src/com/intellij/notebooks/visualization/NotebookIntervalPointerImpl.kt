@@ -175,7 +175,6 @@ class NotebookIntervalPointerFactoryImpl(
     eventChanges: NotebookIntervalPointersEventChanges,
     shiftChanges: NotebookIntervalPointersEventChanges,
   ) {
-    CommandProcessor.getInstance().currentCommand
     registerUndoableAction(object : BasicUndoableAction(document) {
       override fun undo() {}
 

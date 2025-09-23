@@ -676,7 +676,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         if (sameElement) {
           JComponent preferredFocusableComponent = content.getPreferredFocusableComponent();
           // focus toolwindow on the second actionPerformed
-          boolean focus = requestFocus || CommandProcessor.getInstance().getCurrentCommand() != null;
+          boolean focus = requestFocus || CommandProcessor.getInstance().isCommandInProgress();
           if (preferredFocusableComponent != null && focus) {
             IdeFocusManager.getInstance(myProject).requestFocus(preferredFocusableComponent, true);
           }

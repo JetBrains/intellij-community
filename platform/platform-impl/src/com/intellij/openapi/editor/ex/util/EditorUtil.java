@@ -1175,7 +1175,7 @@ public final class EditorUtil {
    * command (so that it becomes part of it), otherwise does nothing.
    */
   public static void performBeforeCommandEnd(@NotNull Runnable task) {
-    if (CommandProcessor.getInstance().getCurrentCommand() == null) return;
+    if (!CommandProcessor.getInstance().isCommandInProgress()) return;
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(CommandListener.TOPIC, new CommandListener() {
       @Override

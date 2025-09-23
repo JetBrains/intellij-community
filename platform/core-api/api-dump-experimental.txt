@@ -245,6 +245,7 @@ a:com.intellij.openapi.application.ReadAction
 a:com.intellij.openapi.command.CommandProcessor
 - *a:allowMergeGlobalCommands(java.lang.Runnable):V
 - *a:executeCommand(com.intellij.openapi.project.Project,java.lang.Runnable,java.lang.String,java.lang.Object,com.intellij.openapi.command.UndoConfirmationPolicy,Z,com.intellij.openapi.editor.Document):V
+- *:isCommandInProgress():Z
 f:com.intellij.openapi.command.CoroutinesKt
 - *sf:execute(com.intellij.openapi.command.WriteCommandAction$Builder,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:writeCommandAction(com.intellij.openapi.application.ReadAndWriteScope,com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function0):com.intellij.openapi.application.ReadResult
