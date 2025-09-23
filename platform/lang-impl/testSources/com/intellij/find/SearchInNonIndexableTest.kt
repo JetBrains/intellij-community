@@ -82,7 +82,7 @@ class SearchInNonIndexableTest() {
 
   @Test
   fun `non-indexable files deque`(): Unit = runBlocking {
-    val deque = readAction {FilesDeque.nonIndexableDequeue(project)}
+    val deque = readAction { FilesDeque.nonIndexableDequeue(project) }
     val files = mutableListOf<VirtualFile>()
     while (true) {
       val file = readAction { deque.computeNext() } ?: break
@@ -144,6 +144,7 @@ class SearchInNonIndexableTest() {
       isProjectScope = false
       directoryName = baseDir.rootPath.toString() + "/external-dir/"
     }
+    model.customScope
 
     val usages = synchronizedList<UsageInfo?>(ArrayList())
     val consumer: Processor<UsageInfo?> = CollectProcessor<UsageInfo?>(usages)
@@ -158,6 +159,25 @@ class SearchInNonIndexableTest() {
     assertThat(cacheAvoidingFiles)
       .describedAs { "Search in an external directory should produce CacheAvoidingVirtualFile by default" }
       .isEqualTo(1)
+  }
+
+  @Test
+  fun `don't traverse non indexable when scope is directory`() {
+    val model = model("a").apply {
+      isProjectScope = false
+      directoryName = baseDir.rootPath.resolve("indexable").toString()
+    }
+
+    val usages = synchronizedList<UsageInfo?>(ArrayList())
+    val consumer: Processor<UsageInfo?> = CollectProcessor<UsageInfo?>(usages)
+    val presentation = FindInProjectUtil.setupProcessPresentation(false, FindInProjectUtil.setupViewPresentation(false, model))
+
+    FindInProjectUtil.findUsages(model, project, consumer, presentation)
+
+    assertThat(usages).isNotEmpty()
+
+    val files = usages.map { baseDir.rootPath.relativize(it!!.virtualFile!!.toNioPath()).toString() }.distinct()
+    assertThat(files).noneMatch { it.contains("non-indexable") }
   }
 
 
