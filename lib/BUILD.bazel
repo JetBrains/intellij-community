@@ -7941,8 +7941,8 @@ jvm_import(
 
 jvm_import(
   name = "platform-build_scripts-jetbrains-format-ripper",
-  jar = "@format-ripper-1_1_1_http//file",
-  source_jar = "@format-ripper-1_1_1-sources_http//file",
+  jar = "@format-ripper-1_2_0_http//file",
+  source_jar = "@format-ripper-1_2_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

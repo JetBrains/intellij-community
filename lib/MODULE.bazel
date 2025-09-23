@@ -11368,17 +11368,17 @@ http_file(
 )
 
 http_file(
-  name = "format-ripper-1_1_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/format-ripper/format-ripper/1.1.1/format-ripper-1.1.1.jar",
-  sha256 = "c5edac7046453d487daf26bfce1ebb0ccb2d51e07167d01878a13ffdb9b66b8e",
-  downloaded_file_path = "format-ripper-1.1.1.jar"
+  name = "format-ripper-1_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/format-ripper/format-ripper/1.2.0/format-ripper-1.2.0.jar",
+  sha256 = "7b47cc1b48092566eaf82c8cd6210151661423b755dc578613000cac90464eef",
+  downloaded_file_path = "format-ripper-1.2.0.jar"
 )
 
 http_file(
-  name = "format-ripper-1_1_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/format-ripper/format-ripper/1.1.1/format-ripper-1.1.1-sources.jar",
-  sha256 = "909b73d49d2bdc86d9ffd2f6063983922850d2c03e29c08e833fc9a127820b44",
-  downloaded_file_path = "format-ripper-1.1.1-sources.jar"
+  name = "format-ripper-1_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/format-ripper/format-ripper/1.2.0/format-ripper-1.2.0-sources.jar",
+  sha256 = "db02c7a8f865e55fcac3af117c8b711f715044573743f124461977ea21b88b2b",
+  downloaded_file_path = "format-ripper-1.2.0-sources.jar"
 )
 
 http_file(

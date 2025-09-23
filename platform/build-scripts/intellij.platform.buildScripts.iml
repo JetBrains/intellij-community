@@ -77,32 +77,19 @@
     <orderEntry type="library" name="bouncy-castle-provider" level="project" />
     <orderEntry type="module-library">
       <library name="jetbrains.format.ripper" type="repository">
-        <properties maven-id="com.jetbrains.format-ripper:format-ripper:1.1.1">
+        <properties include-transitive-deps="false" maven-id="com.jetbrains.format-ripper:format-ripper:1.2.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.1.1/format-ripper-1.1.1.jar">
-              <sha256sum>c5edac7046453d487daf26bfce1ebb0ccb2d51e07167d01878a13ffdb9b66b8e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.2.0/format-ripper-1.2.0.jar">
+              <sha256sum>7b47cc1b48092566eaf82c8cd6210151661423b755dc578613000cac90464eef</sha256sum>
             </artifact>
           </verification>
-          <exclude>
-            <dependency maven-id="org.jetbrains:annotations" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-jdk8" />
-            <dependency maven-id="org.apache.commons:commons-compress" />
-            <dependency maven-id="org.bouncycastle:bcprov-jdk15on" />
-            <dependency maven-id="org.bouncycastle:bcpkix-jdk15on" />
-            <dependency maven-id="org.bouncycastle:bcutil-jdk15on" />
-          </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.1.1/format-ripper-1.1.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.2.0/format-ripper-1.2.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.1.1/format-ripper-1.1.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.2.0/format-ripper-1.2.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
