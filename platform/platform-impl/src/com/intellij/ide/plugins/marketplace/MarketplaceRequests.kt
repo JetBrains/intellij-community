@@ -980,8 +980,7 @@ private data class CompatibleUpdateForModuleRequest(
   )
 }
 
-@ApiStatus.Internal
-fun Logger.infoOrDebug(
+private fun Logger.infoOrDebug(
   message: String,
   throwable: Throwable,
 ) {
