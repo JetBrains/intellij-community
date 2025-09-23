@@ -130,7 +130,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
 
   fun deleteFirstCell() {
     notebookCellEditors.first().strictClick()
-    deleteCell.strictClick()
+    deleteCell.click()
   }
 
   fun restartHighlighting() {
