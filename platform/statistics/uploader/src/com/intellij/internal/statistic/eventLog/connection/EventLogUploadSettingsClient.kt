@@ -5,9 +5,8 @@ import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo
 import com.jetbrains.fus.reporting.configuration.ConfigurationClient
 import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
 import com.jetbrains.fus.reporting.configuration.RegionCode
-import com.jetbrains.fus.reporting.connection.JavaHttpClientBuilder
-import com.jetbrains.fus.reporting.connection.JavaHttpRequestBuilder
-import com.jetbrains.fus.reporting.connection.ProxyInfo
+import com.jetbrains.fus.reporting.jvm.JvmHttpClient
+import com.jetbrains.fus.reporting.jvm.ProxyInfo
 import com.jetbrains.fus.reporting.serialization.FusKotlinSerializer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -35,14 +34,14 @@ open class EventLogUploadSettingsClient(
     productCode = applicationInfo.productCode,
     productVersion = applicationInfo.productVersion,
     isTestConfiguration = applicationInfo.isTestConfig,
-    httpClientBuilder = JavaHttpClientBuilder()
-      .setSSLContext(applicationInfo.connectionSettings.provideSSLContext())
-      .setProxyProvider { configurationUrl ->
+    httpClient = JvmHttpClient(
+      sslContextProvider = { applicationInfo.connectionSettings.provideSSLContext() },
+      proxyProvider = { configurationUrl ->
         ProxyInfo(applicationInfo.connectionSettings.provideProxy(configurationUrl).proxy)
       },
-    httpRequestBuilder = JavaHttpRequestBuilder()
-      .setExtraHeaders(applicationInfo.connectionSettings.provideExtraHeaders())
-      .setUserAgent(applicationInfo.connectionSettings.provideUserAgent()),
+      extraHeadersProvider = { applicationInfo.connectionSettings.provideExtraHeaders() },
+      userAgent = applicationInfo.connectionSettings.provideUserAgent()
+    ),
     regionCode = if (applicationInfo.regionalCode == chinaRegion) RegionCode.CN else RegionCode.ALL,
     serializer = FusKotlinSerializer(),
     cacheTimeoutMs = cacheTimeoutMs

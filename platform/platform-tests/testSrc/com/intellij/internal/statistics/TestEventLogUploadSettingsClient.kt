@@ -6,9 +6,8 @@ import com.intellij.internal.statistic.eventLog.connection.EventLogSettingsClien
 import com.intellij.internal.statistic.eventLog.connection.metadata.StatsBasicConnectionSettings
 import com.intellij.internal.statistic.eventLog.connection.metadata.StatsConnectionSettings
 import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
-import com.jetbrains.fus.reporting.connection.JavaHttpClientBuilder
-import com.jetbrains.fus.reporting.connection.JavaHttpRequestBuilder
-import com.jetbrains.fus.reporting.connection.ProxyInfo
+import com.jetbrains.fus.reporting.jvm.JvmHttpClient
+import com.jetbrains.fus.reporting.jvm.ProxyInfo
 import com.jetbrains.fus.reporting.serialization.FusKotlinSerializer
 import java.security.SecureRandom
 import java.time.Duration
@@ -21,15 +20,15 @@ internal class TestEventLogUploadSettingsClient(configurationUrl: String) : Even
   override val configurationClient = ConfigurationClientFactory.Companion.createTest(
     applicationInfo.productCode,
     applicationInfo.productVersion,
-    httpClientBuilder = JavaHttpClientBuilder()
-      .setProxyProvider { configurationUrl ->
-        ProxyInfo(
-        applicationInfo.connectionSettings.provideProxy(configurationUrl).proxy)
-      }.setSSLContext(applicationInfo.connectionSettings.provideSSLContext()),
-    httpRequestBuilder = JavaHttpRequestBuilder()
-      .setExtraHeaders(applicationInfo.connectionSettings.provideExtraHeaders())
-      .setUserAgent(applicationInfo.connectionSettings.provideUserAgent())
-      .setTimeout(Duration.ofSeconds(1)),
+    httpClient = JvmHttpClient(
+      proxyProvider = { configurationUrl ->
+        ProxyInfo(applicationInfo.connectionSettings.provideProxy(configurationUrl).proxy)
+      },
+      sslContextProvider = { applicationInfo.connectionSettings.provideSSLContext() },
+      extraHeadersProvider = { applicationInfo.connectionSettings.provideExtraHeaders() },
+      userAgent = applicationInfo.connectionSettings.provideUserAgent(),
+      timeout = Duration.ofSeconds(1)
+    ),
     configurationUrl = configurationUrl,
     serializer = FusKotlinSerializer()
   )
