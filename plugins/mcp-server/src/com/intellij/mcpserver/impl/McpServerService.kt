@@ -463,7 +463,6 @@ private fun McpTool.toSdkTool(): Tool {
   }
   else null
   val tool = Tool(name = descriptor.name,
-                  title = null,
                   description = descriptor.description,
                   inputSchema = Tool.Input(
                     properties = descriptor.inputSchema.propertiesSchema,
