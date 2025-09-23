@@ -50,8 +50,12 @@ internal const val NUMBER_OF_BUCKETS: Int = 1024
  */
 @VisibleForTesting
 internal val experimentsPartition: List<ExperimentAssignment> = listOf(
-  ExperimentAssignment(experiment = KUBERNETES_SEPARATE_SERVICE_VIEW, experimentBuckets = (0 until 128).toSet(), controlBuckets = (128 until 256).toSet()),
-  ExperimentAssignment(experiment = FUZZY_FILE_SEARCH, experimentBuckets = (256 until 512).toSet(), controlBuckets = (512 until 768).toSet()),
+  //ExperimentAssignment(
+  //  experiment = KUBERNETES_SEPARATE_SERVICE_VIEW,
+  //  experimentBuckets = (0 until 128).toSet(),
+  //  controlBuckets = (128 until 256).toSet(),
+  //  majorVersion = "2025.2"
+  //),
   // the rest belongs to the "unassigned" experiment
 )
 
