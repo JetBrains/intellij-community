@@ -39,8 +39,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/platform-impl:ide-impl",
     "@lib//:junit5",
-  ],
-  runtime_deps = [":experiment_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.experiment` end
 
