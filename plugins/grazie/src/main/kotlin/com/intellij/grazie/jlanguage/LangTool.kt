@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.jlanguage
 
+import ai.grazie.nlp.similarity.Levenshtein
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
@@ -15,6 +16,7 @@ import org.languagetool.JLanguageTool
 import org.languagetool.ResultCache
 import org.languagetool.Tag
 import org.languagetool.rules.CategoryId
+import org.languagetool.rules.ExampleSentence
 import org.languagetool.rules.IncorrectExample
 import org.languagetool.rules.Rule
 import org.languagetool.rules.patterns.AbstractPatternRule
@@ -23,7 +25,10 @@ import org.languagetool.rules.patterns.RepeatedPatternRuleTransformer
 import org.languagetool.rules.spelling.hunspell.Hunspell
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.max
+import kotlin.math.min
 
 object LangTool : GrazieStateLifecycle {
   private val langs: MutableMap<Lang, JLanguageTool> = Collections.synchronizedMap(ContainerUtil.createSoftValueMap())
@@ -162,11 +167,14 @@ object LangTool : GrazieStateLifecycle {
   }
 
   private fun removeVerySimilarExamples(rule: Rule): List<IncorrectExample> {
+    val cleanAccepted = ArrayList<String>()
     val accepted = ArrayList<IncorrectExample>()
     for (example in removeInappropriateExamples(rule)) {
-      if (accepted.none { it.example.isSimilarTo(example.example) }) {
+      val cleanExample = ExampleSentence.cleanMarkersInExample(example.example)
+      if (cleanAccepted.none { it.isSimilarTo(cleanExample) }) {
         val corrections = example.corrections.filter { it.isNotBlank() }.take(3)
         accepted.add(IncorrectExample(example.example, corrections))
+        cleanAccepted.add(cleanExample)
         if (accepted.size > 5) break
       }
     }
@@ -185,15 +193,13 @@ object LangTool : GrazieStateLifecycle {
   private const val MINIMUM_EXAMPLE_SIMILARITY = 0.2
 
   private fun CharSequence.isSimilarTo(sequence: CharSequence): Boolean {
+    val maxLength = max(this.length, sequence.length)
+    val distance = ceil(maxLength * MINIMUM_EXAMPLE_SIMILARITY).toInt()
+    if (abs(this.length - sequence.length) > distance) return false
+
     val prefixLength = StringUtil.commonPrefixLength(this, sequence)
     val suffixLength = StringUtil.commonSuffixLength(this, sequence)
-
-    val maxLength = max(this.length, sequence.length)
-    val commonPartLength = suffixLength + prefixLength
-    if (commonPartLength.toDouble() / maxLength < MINIMUM_EXAMPLE_SIMILARITY) return false
-
-    return LevenshteinDistance(maxLength)
-      .apply(this, sequence).toDouble() / maxLength < MINIMUM_EXAMPLE_SIMILARITY
+    return suffixLength + prefixLength >= distance
   }
 
   internal fun isRuleEnabledByDefault(lang: Lang, ruleId: String): Boolean {
