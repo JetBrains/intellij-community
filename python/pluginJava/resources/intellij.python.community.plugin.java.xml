@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.python.community.plugin.java">
+<idea-plugin>
   <!--For IU or IC-->
   <dependencies>
     <!-- Supports Java -->

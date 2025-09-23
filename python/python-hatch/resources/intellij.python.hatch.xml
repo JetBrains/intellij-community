@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.python.hatch">
+<idea-plugin>
   <dependencies>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.execService"/>

@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.python.community.services.internal.impl">
+<idea-plugin>
   <dependencies>
     <module name="intellij.python.community"/>
     <module name="intellij.python.psi.impl"/>

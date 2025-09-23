@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.python.community.impl.huggingFace">
+<idea-plugin>
   <dependencies>
     <module name="intellij.json.backend"/>
     <module name="intellij.python.community.impl"/>

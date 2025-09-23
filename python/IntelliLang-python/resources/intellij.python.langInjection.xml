@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.python.langInjection">
+<idea-plugin>
   <dependencies>
     <module name="intellij.python.community.impl"/>
     <module name="intellij.platform.langInjection"/>

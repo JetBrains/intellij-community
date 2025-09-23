@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.pycharm.community.ide.impl.promotion">
+<idea-plugin>
   <!--Customization code for Community Pycharm only. Promotes PyCharm Prof.-->
 
   <dependencies>

@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.python.terminal">
+<idea-plugin>
   <dependencies>
     <module name="intellij.python.community.impl"/>
     <plugin id="org.jetbrains.plugins.terminal"/>
