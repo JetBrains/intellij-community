@@ -123,15 +123,9 @@ public final class DefaultInferredAnnotationProvider implements InferredAnnotati
 
   private @Nullable PsiAnnotation getInferredMutabilityAnnotation(@NotNull PsiModifierListOwner owner) {
     if (!(owner instanceof PsiMethodImpl method)) return null;
-    PsiModifierList modifiers = method.getModifierList();
-    if (modifiers.hasAnnotation(Mutability.UNMODIFIABLE_ANNOTATION) ||
-        modifiers.hasAnnotation(Mutability.UNMODIFIABLE_VIEW_ANNOTATION)) {
-      return null;
-    }
-    PsiType returnType = method.getReturnType();
-    if (returnType != null &&
-        (returnType.hasAnnotation(Mutability.UNMODIFIABLE_ANNOTATION) ||
-         returnType.hasAnnotation(Mutability.UNMODIFIABLE_VIEW_ANNOTATION))) {
+    if (StreamEx.of(method.getModifierList(), method.getReturnType())
+      .nonNull()
+      .anyMatch(m -> m.hasAnnotation(Mutability.UNMODIFIABLE_ANNOTATION) || m.hasAnnotation(Mutability.UNMODIFIABLE_VIEW_ANNOTATION))) {
       return null;
     }
     return JavaSourceInference.inferMutability(method).asAnnotation(myProject);
