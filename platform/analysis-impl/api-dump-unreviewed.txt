@@ -1734,7 +1734,6 @@ c:com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl
 - getDfTypeIncludingDerived(com.intellij.codeInspection.dataFlow.value.DfaValue):com.intellij.codeInspection.dataFlow.types.DfType
 - p:getDistinctClassPairs():com.intellij.codeInspection.dataFlow.memory.DistinctPairSet
 - getEqClassIndex(com.intellij.codeInspection.dataFlow.value.DfaValue):I
-- getEqClasses():java.util.List
 - getFactory():com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 - getMergeabilityKey():java.lang.Object
 - p:getNonTrivialEqClasses():java.util.LinkedHashSet

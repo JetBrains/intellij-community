@@ -33,7 +33,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private final @NotNull DfaValueFactory myFactory;
 
-  private final List<EqClassImpl> myEqClasses;
+  final List<EqClassImpl> myEqClasses; // used from DistinctPairSet
   // dfa value id -> indices in myEqClasses list of the classes which contain the id
   private final Int2IntMap myIdToEqClassesIndices;
   protected final Stack<DfaValue> myStack;
@@ -584,10 +584,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return superValue.getDfType().isMergeable(subValue.getDfType());
     }
     return false;
-  }
-
-  public List<EqClass> getEqClasses() {
-    return Collections.unmodifiableList(myEqClasses);
   }
 
   private @Nullable EqClass getEqClass(DfaValue value) {
