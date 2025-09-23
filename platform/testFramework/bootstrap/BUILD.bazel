@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.tools.testsBootstrap` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "tools-testsBootstrap_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "tools-testsBootstrap",
@@ -17,6 +23,9 @@ jvm_library(
     "@lib//:opentest4j",
     "//platform/core-nio-fs",
   ],
-  runtime_deps = ["//platform/boot"]
+  runtime_deps = [
+    ":tools-testsBootstrap_resources",
+    "//platform/boot",
+  ]
 )
 ### auto-generated section `build intellij.tools.testsBootstrap` end
