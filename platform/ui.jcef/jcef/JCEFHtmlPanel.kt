@@ -7,30 +7,32 @@ import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.callback.CefContextMenuParams
 import org.cef.callback.CefMenuModel
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * @author tav
  */
 open class JCEFHtmlPanel(isOffScreenRendering: Boolean, client: JBCefClient?, url: String?) : JBCefBrowser(
   createBuilder().setOffScreenRendering(isOffScreenRendering).setClient(client).setUrl(url)) {
-  private val myUrl: String
+  private val url = cefBrowser.url
 
-  constructor(url: String?) : this(ourCefClient, url)
+  constructor(url: String?) : this(cefClient, url)
 
-  constructor(isOffScreenRendering: Boolean, url: String?) : this(isOffScreenRendering, ourCefClient, url)
+  constructor(isOffScreenRendering: Boolean, url: String?) : this(
+    isOffScreenRendering = isOffScreenRendering,
+    client = cefClient,
+    url = url,
+  )
 
-  constructor(client: JBCefClient?, url: String?) : this(true, client, url) // should no pass url to ctor
+  // should no pass url to ctor
+  constructor(client: JBCefClient?, url: String?) : this(isOffScreenRendering = true, client = client, url = url)
 
-
-  init {
-    myUrl = getCefBrowser().getURL()
-  }
-
+  @Internal
   companion object {
-    private val ourCefClient = JBCefApp.getInstance().createClient()
-
-    init {
-      Disposer.register(ApplicationManager.getApplication(), ourCefClient)
+    private val cefClient by lazy {
+      val client = JBCefApp.getInstance().createClient()
+      Disposer.register(ApplicationManager.getApplication(), client)
+      client
     }
   }
 
@@ -45,7 +47,7 @@ open class JCEFHtmlPanel(isOffScreenRendering: Boolean, client: JBCefClient?, ur
 
   open fun setHtml(html: String) {
     val htmlToRender = prepareHtml(html)
-    loadHTML(htmlToRender, myUrl)
+    loadHTML(htmlToRender, url)
   }
 
   protected open fun prepareHtml(html: String): String = html

@@ -54,9 +54,13 @@ import javax.swing.JPanel
 import kotlin.math.round
 
 class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFile: VirtualFile?)
-  : JCEFHtmlPanel(isOffScreenRendering(), null, null), MarkdownHtmlPanelEx, UserDataHolder by UserDataHolderBase()
+  : JCEFHtmlPanel(
+  isOffScreenRendering = isOffScreenRendering(),
+  client = null,
+  url = null,
+), MarkdownHtmlPanelEx, UserDataHolder by UserDataHolderBase()
 {
-  constructor() : this(null, null)
+  constructor() : this(project = null, virtualFile = null)
 
   private val pageBaseName = "markdown-preview-index-${DigestUtil.randomToken()}.html"
   private val resourceProvider = MyAggregatingResourceProvider()
