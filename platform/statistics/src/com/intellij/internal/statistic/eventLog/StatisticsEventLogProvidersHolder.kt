@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtils
 import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider.Companion.EP_NAME
 import com.intellij.internal.statistic.utils.PluginType
@@ -14,7 +14,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.sequences.groupBy
 
 @Service(Service.Level.APP)
 internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope) {
@@ -47,8 +46,8 @@ internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope)
     return calculateEventLogProviderExt().mapValues {
       it.value.find { provider ->
         if (PluginManagerCore.isRunningFromSources() || AppMode.isDevServer()) true
-        else PluginManager.getPluginByClass(provider::class.java)?.let { plugin -> PluginManagerCore.isDevelopedExclusivelyByJetBrains(plugin) }
-             ?: false
+        else PluginUtils.getPluginDescriptorOrPlatformByClassName(provider::class.java.name)?.let { plugin -> PluginManagerCore.isDevelopedExclusivelyByJetBrains(plugin) }
+                                                                                                   ?: false
       } ?: EmptyStatisticsEventLoggerProvider(it.key)
     }
   }
