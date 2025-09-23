@@ -86,7 +86,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     mainClassLoader: ClassLoader,
   ): Deferred<List<DiscoveredPluginsList>> {
     val platformPrefix = PlatformUtils.getPlatformPrefix()
-    val isInDevServerMode = AppMode.isDevServer()
+    val isInDevServerMode = AppMode.isRunningFromDevBuild()
     val isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode
     val classpathPathResolver = ClassPathXmlPathResolver(mainClassLoader, isRunningFromSourcesWithoutDevBuild = isRunningFromSourcesWithoutDevBuild)
     val useCoreClassLoader = platformPrefix.startsWith("CodeServer") ||

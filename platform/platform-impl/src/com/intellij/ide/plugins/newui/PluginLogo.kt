@@ -406,7 +406,7 @@ private class PluginLogoLoader(private val coroutineScope: CoroutineScope) {
           if (path == null) {
             loadPluginIconsFromUrl(idPlugin = idPlugin, lazyIcon = info.second, coroutineContext = coroutineContext)
           }
-          else if (AppMode.isDevServer()) {
+          else if (AppMode.isRunningFromDevBuild()) {
             val descriptor = info.first as? IdeaPluginDescriptorImpl
             loadPluginIconsFromExploded(paths = descriptor?.jarFiles ?: listOf(path), idPlugin = idPlugin, lazyIcon = info.second)
           }

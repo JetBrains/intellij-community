@@ -319,7 +319,7 @@ internal object SystemHealthMonitor {
     when {
       changedOptions.isEmpty() -> Unit
       
-      PluginManagerCore.isRunningFromSources() || AppMode.isDevServer() -> {
+      PluginManagerCore.isRunningFromSources() || AppMode.isRunningFromDevBuild() -> {
         logger<MultiRoutingFileSystemVmOptionsSetter>().warn(
           changedOptions.joinToString(
             prefix = "This message is seen only in Dev Mode/Run from sources.\n" +

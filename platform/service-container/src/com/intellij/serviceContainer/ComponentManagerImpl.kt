@@ -1033,7 +1033,7 @@ abstract class ComponentManagerImpl(
 
             if (impl.startsWith("com.intellij.")) {
               // logged only in the IJ project, let's not spam developers of plugins
-              if (AppMode.isDevServer() || PluginManagerCore.isRunningFromSources()) {
+              if (AppMode.isRunningFromDevBuild() || PluginManagerCore.isRunningFromSources()) {
                 LOG.warn(message)
               }
             }

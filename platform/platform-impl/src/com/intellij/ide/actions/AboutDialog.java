@@ -259,7 +259,7 @@ public final class AboutDialog extends DialogWrapper {
     Date buildDate = appInfo.getBuildDate().getTime();
     String formattedBuildDate = DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(buildDate);
 
-    if (AppMode.isDevServer()) {
+    if (AppMode.isRunningFromDevBuild()) {
       // Dev mode build date is not accurate, so we don't show it to avoid confusion
       buildInfo += IdeBundle.message("about.box.build.date.omitted.in.dev.build.mode");
       buildInfoNonLocalized += ", build date omitted in Dev build mode";

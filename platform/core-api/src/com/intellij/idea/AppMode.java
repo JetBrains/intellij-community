@@ -61,10 +61,23 @@ public final class AppMode {
   }
 
   /**
-   * See also {@link com.intellij.ide.plugins.PluginManagerCore#isRunningFromSources}
+   * Returns {@code true} if the IDE is running from a development build, not a regular installation.
+   * The IDE can be started with the development build by running '* (dev build)' configuration from source code, also some tests use this
+   * mode.
+   * In this mode modules and plugins are loaded by different classloaders, the same as in production mode. However, the layout of
+   * class-files and resources may differ from the real production layout.
+   * @see com.intellij.ide.plugins.PluginManagerCore#isRunningFromSources
    */
-  public static boolean isDevServer() {
+  public static boolean isRunningFromDevBuild() {
     return Boolean.getBoolean("idea.use.dev.build.server");
+  }
+
+  /**
+   * @deprecated use {@link #isRunningFromDevBuild()} instead; this name may be confusing
+   */
+  @Deprecated
+  public static boolean isDevServer() {
+    return isRunningFromDevBuild();
   }
 
   public static void setFlags(@NotNull List<String> args) {
