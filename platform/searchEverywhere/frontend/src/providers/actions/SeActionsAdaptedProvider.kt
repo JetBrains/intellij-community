@@ -2,7 +2,6 @@
 package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
 import com.intellij.ide.DataManager
-import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.CheckBoxSearchEverywhereToggleAction
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
@@ -14,11 +13,12 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
+import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
 import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -39,29 +39,31 @@ class SeActionItem(
 }
 
 @Internal
-class SeActionsAdaptedProvider(override val contributor: ActionSearchEverywhereContributor) : SeWrappedLegacyContributorItemsProvider() {
+class SeActionsAdaptedProvider(private val contributorWrapper: SeAsyncContributorWrapper<MatchedValue>) : SeWrappedLegacyContributorItemsProvider() {
   override val id: String get() = SeProviderIdUtils.ACTIONS_ID
   override val displayName: @Nls String
     get() = contributor.fullGroupName
+  override val contributor: SearchEverywhereContributor<*>
+    get() = contributorWrapper.contributor
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
-    val inputQuery = params.inputQuery
     val filter = SeActionsFilter.from(params.filter)
     contributor.getActions({}).filterIsInstance<CheckBoxSearchEverywhereToggleAction>().firstOrNull()?.let {
+      it.setScopeIsDefaultAndAutoSet(filter.isAutoTogglePossible)
       it.isEverywhere = filter.includeDisabled
     }
 
-    coroutineScope {
-      contributor.fetchWeightedElements(this, inputQuery) {
-        collector.put(SeActionItem(it.item, contributor, contributor.getExtendedInfo(it.item), contributor.isMultiSelectionSupported))
+    contributorWrapper.fetchElements(params.inputQuery, object : AsyncProcessor<MatchedValue> {
+      override suspend fun process(item: MatchedValue, weight: Int): Boolean {
+        return collector.put(SeActionItem(item, contributor, contributor.getExtendedInfo(item), contributor.isMultiSelectionSupported))
       }
-    }
+    })
   }
 
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
     val legacyItem = (item as? SeActionItem)?.matchedValue ?: return false
     return withContext(Dispatchers.EDT) {
-      contributor.processSelectedItem(legacyItem, modifiers, searchText)
+      contributorWrapper.contributor.processSelectedItem(legacyItem, modifiers, searchText)
     }
   }
 
