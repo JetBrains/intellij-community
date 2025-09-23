@@ -7133,6 +7133,62 @@ http_file(
 )
 
 http_file(
+  name = "system-stubs-jupiter-2_1_8_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/uk/org/webcompere/system-stubs-jupiter/2.1.8/system-stubs-jupiter-2.1.8.jar",
+  sha256 = "9a24867a51f5d22db67d9052a06bc5dd2e9a3e273bc2ee9814620f2d9f25d0a8",
+  downloaded_file_path = "system-stubs-jupiter-2.1.8.jar"
+)
+
+http_file(
+  name = "system-stubs-core-2_1_8_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/uk/org/webcompere/system-stubs-core/2.1.8/system-stubs-core-2.1.8.jar",
+  sha256 = "9c27322cfc7043c75384ad444007b0880ca18fe7231d69bfa69616bc773cafe1",
+  downloaded_file_path = "system-stubs-core-2.1.8.jar"
+)
+
+http_file(
+  name = "byte-buddy-1_17_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.4/byte-buddy-1.17.4.jar",
+  sha256 = "74768731219a5b2e0cc9d2b1c9e2092e0622242e41b1925a6ba7346e160731bc",
+  downloaded_file_path = "byte-buddy-1.17.4.jar"
+)
+
+http_file(
+  name = "byte-buddy-agent-1_17_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.17.4/byte-buddy-agent-1.17.4.jar",
+  sha256 = "e1dae7efc5562c29ad3b625b90e6864208de69bad5632c3f93a547f17622ac51",
+  downloaded_file_path = "byte-buddy-agent-1.17.4.jar"
+)
+
+http_file(
+  name = "system-stubs-jupiter-2_1_8-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/uk/org/webcompere/system-stubs-jupiter/2.1.8/system-stubs-jupiter-2.1.8-sources.jar",
+  sha256 = "208bfe2907ab022fe206402f2ef6b1ea445f8240f072a14a49e338c1448fb2b6",
+  downloaded_file_path = "system-stubs-jupiter-2.1.8-sources.jar"
+)
+
+http_file(
+  name = "system-stubs-core-2_1_8-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/uk/org/webcompere/system-stubs-core/2.1.8/system-stubs-core-2.1.8-sources.jar",
+  sha256 = "6e6c4adf9094e0200400a5d9f8086c8a1c4a0940919fe0b30d30543b483d5687",
+  downloaded_file_path = "system-stubs-core-2.1.8-sources.jar"
+)
+
+http_file(
+  name = "byte-buddy-1_17_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.17.4/byte-buddy-1.17.4-sources.jar",
+  sha256 = "ea0286512984db5473f6573bc84030a5d1eab4dbaecf3ffde0b8827d967316f8",
+  downloaded_file_path = "byte-buddy-1.17.4-sources.jar"
+)
+
+http_file(
+  name = "byte-buddy-agent-1_17_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/bytebuddy/byte-buddy-agent/1.17.4/byte-buddy-agent-1.17.4-sources.jar",
+  sha256 = "57b0ee93eab8caa3cfc424aa24616462543bb2a7f13848cbb537c225314dffaf",
+  downloaded_file_path = "byte-buddy-agent-1.17.4-sources.jar"
+)
+
+http_file(
   name = "xercesImpl-2_12_2_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/xerces/xercesImpl/2.12.2/xercesImpl-2.12.2.jar",
   sha256 = "6fc991829af1708d15aea50c66f0beadcd2cfeb6968e0b2f55c1b0909883fe16",
@@ -12779,34 +12835,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/completion/ml/python/features/ml-completion-prev-exprs-models/1.11/ml-completion-prev-exprs-models-1.11.jar",
   sha256 = "8924b199c8cc52530de2b250670806d8b046fa5ae9d32a9f27a9b224e934a1ad",
   downloaded_file_path = "ml-completion-prev-exprs-models-1.11.jar"
-)
-
-http_file(
-  name = "system-stubs-jupiter-2_1_8_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/uk/org/webcompere/system-stubs-jupiter/2.1.8/system-stubs-jupiter-2.1.8.jar",
-  sha256 = "9a24867a51f5d22db67d9052a06bc5dd2e9a3e273bc2ee9814620f2d9f25d0a8",
-  downloaded_file_path = "system-stubs-jupiter-2.1.8.jar"
-)
-
-http_file(
-  name = "system-stubs-core-2_1_8_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/uk/org/webcompere/system-stubs-core/2.1.8/system-stubs-core-2.1.8.jar",
-  sha256 = "9c27322cfc7043c75384ad444007b0880ca18fe7231d69bfa69616bc773cafe1",
-  downloaded_file_path = "system-stubs-core-2.1.8.jar"
-)
-
-http_file(
-  name = "system-stubs-jupiter-2_1_8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/uk/org/webcompere/system-stubs-jupiter/2.1.8/system-stubs-jupiter-2.1.8-sources.jar",
-  sha256 = "208bfe2907ab022fe206402f2ef6b1ea445f8240f072a14a49e338c1448fb2b6",
-  downloaded_file_path = "system-stubs-jupiter-2.1.8-sources.jar"
-)
-
-http_file(
-  name = "system-stubs-core-2_1_8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/uk/org/webcompere/system-stubs-core/2.1.8/system-stubs-core-2.1.8-sources.jar",
-  sha256 = "6e6c4adf9094e0200400a5d9f8086c8a1c4a0940919fe0b30d30543b483d5687",
-  downloaded_file_path = "system-stubs-core-2.1.8-sources.jar"
 )
 
 http_file(

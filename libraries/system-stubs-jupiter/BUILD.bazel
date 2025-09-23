@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.libraries.system.stubs.jupiter` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "system-stubs-jupiter_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "system-stubs-jupiter",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:libraries-system-stubs-jupiter-uk-webcompere-system-stubs-jupiter"],
+  runtime_deps = [
+    ":system-stubs-jupiter_resources",
+    "//libraries/junit5",
+  ]
+)
+### auto-generated section `build intellij.libraries.system.stubs.jupiter` end

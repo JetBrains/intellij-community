@@ -5002,6 +5002,41 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "libraries-system-stubs-jupiter-uk-webcompere-system-stubs-jupiter",
+  exports = [
+    ":system-stubs-jupiter-2_1_8_http_import",
+    ":system-stubs-core-2_1_8_http_import",
+    ":byte-buddy-1_17_4_http_import",
+    ":byte-buddy-agent-1_17_4_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "system-stubs-jupiter-2_1_8_http_import",
+  jar = "@system-stubs-jupiter-2_1_8_http//file",
+  source_jar = "@system-stubs-jupiter-2_1_8-sources_http//file"
+)
+
+jvm_import(
+  name = "system-stubs-core-2_1_8_http_import",
+  jar = "@system-stubs-core-2_1_8_http//file",
+  source_jar = "@system-stubs-core-2_1_8-sources_http//file"
+)
+
+jvm_import(
+  name = "byte-buddy-1_17_4_http_import",
+  jar = "@byte-buddy-1_17_4_http//file",
+  source_jar = "@byte-buddy-1_17_4-sources_http//file"
+)
+
+jvm_import(
+  name = "byte-buddy-agent-1_17_4_http_import",
+  jar = "@byte-buddy-agent-1_17_4_http//file",
+  source_jar = "@byte-buddy-agent-1_17_4-sources_http//file"
+)
+
 jvm_import(
   name = "libraries-xerces-_xerces",
   jar = "@xercesImpl-2_12_2_http//file",
@@ -8788,27 +8823,6 @@ jvm_import(
   name = "python-community-impl-ml-completion-prev-exprs-models",
   jar = "@ml-completion-prev-exprs-models-1_11_http//file",
   visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "python-community-junit5_tests-framework-uk-webcompere-system-stubs-jupiter",
-  exports = [
-    ":system-stubs-jupiter-2_1_8_http_import",
-    ":system-stubs-core-2_1_8_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "system-stubs-jupiter-2_1_8_http_import",
-  jar = "@system-stubs-jupiter-2_1_8_http//file",
-  source_jar = "@system-stubs-jupiter-2_1_8-sources_http//file"
-)
-
-jvm_import(
-  name = "system-stubs-core-2_1_8_http_import",
-  jar = "@system-stubs-core-2_1_8_http//file",
-  source_jar = "@system-stubs-core-2_1_8-sources_http//file"
 )
 
 jvm_import(
