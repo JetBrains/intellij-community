@@ -40,9 +40,9 @@ internal class ChangesViewWorkflowManagerImpl(
         val activity = StartUpMeasurer.startActivity("ChangesViewWorkflowManager initialization")
 
         // ChangesViewPanel can be reused between workflow instances -> should clean up after ourselves
-        val changesPanel = (ChangesViewManager.getInstance(project) as ChangesViewManager).initChangesPanel()
+        val changesView = (ChangesViewManager.getInstance(project) as ChangesViewManager).initChangesView()
         val workflow = ChangesViewCommitWorkflow(project)
-        val commitPanel = ChangesViewCommitPanel(project, changesPanel.changesView)
+        val commitPanel = ChangesViewCommitPanel(project, changesView.viewModel.getTree())
         _commitWorkflowHandler = ChangesViewCommitWorkflowHandler(workflow, commitPanel)
 
         project.messageBus.syncPublisher(TOPIC).commitWorkflowChanged()

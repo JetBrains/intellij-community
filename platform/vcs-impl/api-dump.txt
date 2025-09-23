@@ -812,9 +812,6 @@ f:com.intellij.openapi.vcs.changes.ChangesViewManager$ChangesViewToolWindowPanel
 - dispose():V
 - getActions(Z):java.util.List
 - isAllowExcludeFromCommit():Z
-- scheduleRefresh():V
-- selectChanges(java.util.List):V
-- selectFile(com.intellij.openapi.vfs.VirtualFile):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - updateCommitWorkflow():V
 com.intellij.openapi.vcs.changes.ChangesViewManager$ChangesViewToolWindowPanel$Listener
