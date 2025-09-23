@@ -17,7 +17,6 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.intellij.build.CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
-import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PatchOverwriteMode
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -124,9 +123,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       // platform modules, leading to duplicated classes on the runtime classpath in some situations (depending on classloader configuration).
       // For precedent, see IntelliJ commit https://github.com/JetBrains/intellij-community/commit/bb6d3cf0ac.
       layout.withProjectLibrary("kotlinx-coroutines-guava")
-
-      // b/446705343: kotlinx-serialization-core needs to be in a standalone jar to preserve metadata needed by the compiler plugin.
-      layout.withProjectLibrary("kotlinx-serialization-core", LibraryPackMode.STANDALONE_MERGED)
 
       // b/358035533: plexus-utils is used by maven-resolver-provider from core, thus plexus-utils must be in core too.
       // This is consistent with the layout of IntelliJ IDEA CE 2024.2.
