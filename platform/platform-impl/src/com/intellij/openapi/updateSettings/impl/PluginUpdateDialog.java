@@ -79,21 +79,6 @@ public class PluginUpdateDialog extends DialogWrapper {
     setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
-
-  public static boolean showAndUpdate(@Nullable Project project,
-                                      @NotNull String sessionId,
-                                      @NotNull Collection<PluginUiModel> updates,
-                                      @Nullable Collection<PluginUiModel> customRepositoryPlugins,
-                                      Map<PluginId, PluginUiModel> installedPlugins) {
-    PluginUpdateDialog dialog = new PluginUpdateDialog(project, updates, customRepositoryPlugins, installedPlugins);
-    if (dialog.showAndGet()) {
-      List<PluginUiModel> selectedPlugins = dialog.getSelectedPluginModels();
-      UpdateInstaller.installPluginUpdates(sessionId, selectedPlugins, dialog.getContentPanel(), dialog.myFinishCallback);
-      return true;
-    }
-    return false;
-  }
-
   @Deprecated
   public static boolean showAndUpdate(@Nullable Project project,
                                       @NotNull Collection<PluginDownloader> updatesForPlugins,
@@ -163,7 +148,10 @@ public class PluginUpdateDialog extends DialogWrapper {
     });
 
     //noinspection unchecked
-    myDetailsPage = new PluginDetailsPageComponent(new PluginModelFacade(myPluginModel), LinkListener.NULL, true);
+    myDetailsPage = new PluginDetailsPageComponent(new PluginModelFacade(myPluginModel),
+                                                   LinkListener.NULL,
+                                                   true,
+                                                   UpdateDialogPluginDetailsPageCustomizationStrategy.INSTANCE);
     myDetailsPage.setOnlyUpdateMode();
 
     MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
@@ -242,6 +230,10 @@ public class PluginUpdateDialog extends DialogWrapper {
 
   public void setFinishCallback(@NotNull Runnable finishCallback) {
     myFinishCallback = finishCallback;
+  }
+
+  public @Nullable Runnable getFinishCallback() {
+    return myFinishCallback;
   }
 
   public @NotNull List<PluginUiModel> getSelectedPluginModels() {
