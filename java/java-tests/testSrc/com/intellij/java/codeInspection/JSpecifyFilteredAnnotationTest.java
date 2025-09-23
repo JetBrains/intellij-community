@@ -101,7 +101,6 @@ public class JSpecifyFilteredAnnotationTest extends JSpecifyAnnotationTest {
         new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 57), // @unspecified, skip
         new Pair<>("MultiBoundTypeVariableUnspecToObject.java", 63), // @unspecified, skip
         new Pair<>("MultiBoundTypeVariableUnspecToOther.java", 63), // @unspecified, skip
-        new Pair<>("NotNullMarkedUseOfTypeVariable.java", 41), // @unspecified, skip
         new Pair<>("NullLiteralToTypeVariable.java", 53), // @unspecified, skip
         new Pair<>("NullLiteralToTypeVariable.java", 73), // @unspecified, skip
         new Pair<>("NullLiteralToTypeVariable.java", 83), // @unspecified, skip
