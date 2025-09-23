@@ -85,6 +85,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private val pluginModel: PluginModelFacade,
   private val searchListener: LinkListener<Any>,
   private val isMarketplace: Boolean,
+  private val customizationStrategy: PluginDetailsPageCustomizationStrategy = DefaultPluginDetailsPageCustomizationStrategy,
 ) : MultiPanel() {
   @Suppress("OPT_IN_USAGE")
   private val limitedDispatcher = Dispatchers.IO.limitedParallelism(2)
@@ -560,11 +561,12 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun updateAdditionalText() {
-    additionalTextLabel.isVisible = !isMarketplace
-    if (isMarketplace) {
+    val visible = customizationStrategy.isAdditionalTextVisible(plugin!!, isMarketplace)
+    additionalTextLabel.isVisible = visible
+    if (!visible) {
       return
     }
-    val additionalText = pluginManagerCustomizer?.getAdditionalTitleText(plugin!!)
+    val additionalText = customizationStrategy.getAdditionalText(plugin!!)
     if (additionalText != null) {
       additionalTextLabel.text = additionalText
     }

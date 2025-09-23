@@ -14,7 +14,7 @@ import kotlinx.coroutines.async
 
 class BackendPluginUpdaterApi : PluginUpdaterApi {
   override suspend fun loadAndStorePluginUpdates(apiVersion: String?, sessionId: String): PluginUpdateModel {
-    return PluginUpdateHandler.getInstance().loadAndStorePluginUpdates(apiVersion)
+    return PluginUpdateHandler.getInstance().loadAndStorePluginUpdates(apiVersion, sessionId)
   }
 
   override suspend fun installUpdates(sessionId: String, updates: List<PluginDto>): Deferred<Boolean> {
