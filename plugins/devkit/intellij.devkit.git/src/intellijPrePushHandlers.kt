@@ -25,7 +25,10 @@ internal class IntelliJPlatformPrePushHandler : IssueIDPrePushHandler() {
   override val pathsToIgnore: List<String> = listOf()
 
   override val commitMessageRegex = Regex("""(?:^|.*[^-A-Z0-9])[A-Z]+-\d+.*""", RegexOption.DOT_MATCHES_ALL)
-  override val ignorePattern = Regex("""^(?:\[.+\] ?)?\[?(?:tests?|clean ?up|docs?|typo|refactor(?:ing)?|format|style|testFramework|test framework)\]?.*\s.*[A-Z0-9].*|(?:.*[^a-z])?WIP(?:[^a-z].*)?""", RegexOption.IGNORE_CASE)
+  override val ignorePattern = Regex(
+    pattern = """^(?:\[.+] ?)?\[?(?:tests?|clean ?up|docs?|typo|refactor(?:ing)?|format|style|testFramework|test framework)]?.*\s.*[A-Z0-9].*|(?:.*[^a-z])?WIP(?:[^a-z].*)?""",
+    option = RegexOption.IGNORE_CASE
+  )
   override val validateCommitsOnlyFromCurrentUser: Boolean = true
 
   override fun isAvailable(): Boolean = Registry.`is`("intellij.platform.commit.message.validation.enabled", true)
