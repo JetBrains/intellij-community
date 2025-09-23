@@ -10,17 +10,21 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.DisclosureButton
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
+import java.awt.Point
 import java.awt.Rectangle
+import java.awt.event.InputEvent
 import java.util.function.Supplier
 import javax.swing.JComponent
 
@@ -94,6 +98,17 @@ private class LeftPanelDisclosureButtonAction(private val actionDelegate: AnActi
     component.text = presentation.text
     component.icon = presentation.icon ?: EmptyIcon.ICON_16
 
+    val inlineActions = presentation.getClientProperty(ActionUtil.INLINE_ACTIONS).orEmpty()
+    if (inlineActions.isNotEmpty()) {
+      component.additionalAction = object : DisclosureButton.ActionListener {
+        override fun actionTriggered(e: InputEvent?) {
+          showInlineActionsPopup(component, presentation, inlineActions)
+        }
+      }
+    }
+    else {
+      component.additionalAction = null
+    }
     UIUtil.setEnabled(component, presentation.isEnabled, true)
   }
 
@@ -101,6 +116,19 @@ private class LeftPanelDisclosureButtonAction(private val actionDelegate: AnActi
     val dataContext = ActionToolbar.getDataContextFor(component)
     val ev = AnActionEvent.createEvent(actionDelegate, dataContext, presentation, ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE, null)
     ActionUtil.invokeAction(actionDelegate, ev, null)
+  }
+
+  private fun showInlineActionsPopup(component: JComponent, presentation: Presentation, inlineActions: List<AnAction>) {
+    val dataContext = ActionToolbar.getDataContextFor(component)
+    val popup = JBPopupFactory.getInstance().createActionGroupPopup(null,
+                                                                    DefaultActionGroup(inlineActions),
+                                                                    dataContext,
+                                                                    JBPopupFactory.ActionSelectionAid.MNEMONICS,
+                                                                    false,
+                                                                    ActionPlaces.WELCOME_SCREEN)
+
+    val targetPoint = RelativePoint(component, Point(component.width + JBUI.scale(4), 0))
+    popup.show(targetPoint)
   }
 }
 
