@@ -9,14 +9,13 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 fun applyIslandsTheme(afterImportSettings: Boolean) {
   val application = ApplicationManager.getApplication()
-  if (Registry.`is`("llm.riderNext.enabled", false) || !application.isEAP || application.isUnitTestMode || application.isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
+  if (!application.isEAP || application.isUnitTestMode || application.isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
     return
   }
   if (System.getProperty("platform.experiment.ab.manual.option", "") == "control.option") {
