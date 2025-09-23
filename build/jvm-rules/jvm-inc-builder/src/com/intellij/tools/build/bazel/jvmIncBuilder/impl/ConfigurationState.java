@@ -30,9 +30,11 @@ import static org.jetbrains.jps.util.Iterators.*;
 public class ConfigurationState {
   // Update the version value whenever a serialization format changes.
   // This will help to avoid multiple "failed to load configuration" error messages
-  private static final int VERSION = 1;
+  private static final int VERSION = 2;
 
-  private static final ConfigurationState EMPTY = new ConfigurationState(new PathSourceMapper(), NodeSourceSnapshot.EMPTY, NodeSourceSnapshot.EMPTY, Map.of());
+  private static final ConfigurationState EMPTY = new ConfigurationState(
+    new PathSourceMapper(), NodeSourceSnapshot.EMPTY, ResourceGroup.EMPTY, NodeSourceSnapshot.EMPTY, Map.of()
+  );
 
   private static final Set<CLFlags> ourIgnoredFlags = EnumSet.of(
     CLFlags.NON_INCREMENTAL,
@@ -49,12 +51,16 @@ public class ConfigurationState {
   
   private final NodeSourcePathMapper myPathMapper;
   private final NodeSourceSnapshot mySourcesSnapshot;
+  private final NodeSourceSnapshot myResourcesSnapshot;
   private final NodeSourceSnapshot myLibsSnapshot;
   private final long myFlagsDigest;
 
-  public ConfigurationState(NodeSourcePathMapper pathMapper, NodeSourceSnapshot sourcesSnapshot, NodeSourceSnapshot libsSnapshot, Map<CLFlags, List<String>> flags) {
+  public ConfigurationState(
+    NodeSourcePathMapper pathMapper, NodeSourceSnapshot sourcesSnapshot, NodeSourceSnapshot resourcesSnapshot, NodeSourceSnapshot libsSnapshot, Map<CLFlags, List<String>> flags
+  ) {
     myPathMapper = pathMapper;
     mySourcesSnapshot = sourcesSnapshot;
+    myResourcesSnapshot = resourcesSnapshot;
     myLibsSnapshot = libsSnapshot;
     myFlagsDigest = buildFlagsDigest(flags);
   }
@@ -66,11 +72,13 @@ public class ConfigurationState {
       int version = in.readInt();
       if (version == VERSION) {
         mySourcesSnapshot = new SourceSnapshotImpl(in, PathSource::new);
+        myResourcesSnapshot = new SourceSnapshotImpl(in, PathSource::new);
         myLibsSnapshot = new SourceSnapshotImpl(in, PathSource::new);
         myFlagsDigest = in.readLong();
       }
       else { // version differs
         mySourcesSnapshot = NodeSourceSnapshot.EMPTY;
+        myResourcesSnapshot = NodeSourceSnapshot.EMPTY;
         myLibsSnapshot = NodeSourceSnapshot.EMPTY;
         myFlagsDigest = buildFlagsDigest(Map.of());
       }
@@ -83,6 +91,7 @@ public class ConfigurationState {
       GraphDataOutput out = GraphDataOutputImpl.wrap(stream);
       out.writeInt(VERSION);
       getSources().write(out);
+      getResources().write(out);
       getLibraries().write(out);
       out.writeLong(myFlagsDigest);
     }
@@ -106,6 +115,10 @@ public class ConfigurationState {
 
   public NodeSourceSnapshot getSources() {
     return mySourcesSnapshot;
+  }
+
+  public NodeSourceSnapshot getResources() {
+    return myResourcesSnapshot;
   }
 
   public NodeSourceSnapshot getLibraries() {

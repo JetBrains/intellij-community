@@ -7,11 +7,15 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.DeltaView;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.LibraryGraphLoader;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.java.JVMClassNode;
 import org.jetbrains.jps.util.Pair;
+import org.jetbrains.jps.util.SystemInfo;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -33,6 +37,7 @@ public class BazelIncBuilder {
 
     DiagnosticSink diagnostic = context;
     NodeSourceSnapshotDelta srcSnapshotDelta = null;
+    NodeSourceSnapshotDelta resourcesDelta = null;
     Iterable<NodeSource> modifiedLibraries = List.of();
     Iterable<NodeSource> deletedLibraries = List.of();
 
@@ -50,9 +55,11 @@ public class BazelIncBuilder {
         }
         else {
           ConfigurationState pastState = ConfigurationState.loadSavedState(context);
-          ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), context.getBinaryDependencies(), context.getFlags());
+          ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), SourceSnapshotImpl.composite(context.getResources()), context.getBinaryDependencies(), context.getFlags());
 
-          srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), context.getSources());
+          srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), presentState.getSources());
+          resourcesDelta = new SnapshotDeltaImpl(pastState.getResources(), presentState.getResources());
+
           if (shouldRecompileAll(srcSnapshotDelta) || pastState.getFlagsDigest() != presentState.getFlagsDigest() || pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
             int changedPercent = srcSnapshotDelta.getChangedPercent();
             LOG.info(() -> "Marking whole target for recompilation [" + context.getTargetName() + "]. Changed sources: " + changedPercent + "% (threshold " + RECOMPILE_CHANGED_RATIO_PERCENT + "%) ");
@@ -163,6 +170,23 @@ public class BazelIncBuilder {
           OutputSinkImpl outSink = new OutputSinkImpl(storageManager);
 
           if (isInitialRound) {
+            
+            // processing resources
+            ZipOutputBuilder out = storageManager.getOutputBuilder();
+            if (resourcesDelta == null) {
+              // copy everything
+              for (ResourceGroup group : context.getResources()) {
+                copyResources(context, group, out);
+              }
+            }
+            else {
+              // only copy modified and remove deleted
+              for (NodeSource deleted : resourcesDelta.getDeleted()) {
+                out.deleteEntry(deleted.toString());
+              }
+              copyResources(resourcesDelta.getModified(), context, out);
+            }
+
             // processing deleted sources makes sense on inintial round only
             if (!srcSnapshotDelta.isRecompileAll() && !isEmpty(srcSnapshotDelta.getDeleted())) {
               // clean outputs that correspond to deleted sources, no matter of source type
@@ -251,21 +275,86 @@ public class BazelIncBuilder {
       return ExitCode.OK;
     }
     finally {
-      saveBuildState(context, srcSnapshotDelta, modifiedLibraries, deletedLibraries);
+      NodeSourceSnapshot sourcesState = srcSnapshotDelta != null? srcSnapshotDelta.asSnapshot() : null;
+      NodeSourceSnapshot resourcesState = resourcesDelta != null? resourcesDelta.asSnapshot() : SourceSnapshotImpl.composite(context.getResources());
+      saveBuildState(
+        context, sourcesState, resourcesState, modifiedLibraries, deletedLibraries
+      );
     }
   }
 
-  public void saveBuildState(
-    BuildContext context, NodeSourceSnapshotDelta srcSnapshotDelta, Iterable<NodeSource> modifiedLibraries, Iterable<NodeSource> deletedLibraries
-  ) {
+  private static void copyResources(Iterable<NodeSource> resources, BuildContext context, ZipOutputBuilder out) throws IOException {
+    Iterable<ResourceGroup> groups = context.getResources();
+    if (count(groups) == 1) {
+      // optimization
+      ResourceGroup group = groups.iterator().next();
+      for (NodeSource res : resources) {
+        copyResource(context, group, res, out);
+      }
+    }
+    else {
+      for (NodeSource res : resources) {
+        for (ResourceGroup group : filter(groups, gr -> contains(gr.getElements(), res))) {
+          copyResource(context, group, res, out);
+        }
+      }
+    }
+  }
 
-    if (srcSnapshotDelta != null) {
-      if (context.hasErrors()) {
-        ConfigurationState pastState = ConfigurationState.loadSavedState(context);
-        new ConfigurationState(context.getPathMapper(), srcSnapshotDelta.asSnapshot(), pastState.getLibraries(), context.getFlags()).save(context);
+  private static void copyResources(BuildContext context, ResourceGroup resourceGroup, ZipOutputBuilder out) throws IOException {
+    for (NodeSource res : resourceGroup.getElements()) {
+      copyResource(context, resourceGroup, res, out);
+    }
+  }
+
+  private static void copyResource(BuildContext context, ResourceGroup resourceGroup, NodeSource res, ZipOutputBuilder out)
+    throws IOException {
+    String destPath = getResourceDestinationPath(resourceGroup, res);
+    if (destPath != null) {
+      Path from = context.getPathMapper().toPath(res);
+      try (InputStream in = Files.newInputStream(from)) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        in.transferTo(bytes);
+        out.putEntry(destPath, bytes.toByteArray());
+      }
+    }
+  }
+
+  private static @Nullable String getResourceDestinationPath(ResourceGroup group, NodeSource source) {
+    String destPath = source.toString();
+
+    String stripPrefix = group.getStripPrefix();
+    if (!stripPrefix.isEmpty()) {
+      if (destPath.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, stripPrefix, 0, stripPrefix.length()) && (destPath.length() == stripPrefix.length() || destPath.charAt(stripPrefix.length()) == '/') ) {
+        destPath = destPath.substring(stripPrefix.length());
       }
       else {
-        new ConfigurationState(context.getPathMapper(), srcSnapshotDelta.asSnapshot(), context.getBinaryDependencies(), context.getFlags()).save(context);
+        return null;
+      }
+    }
+
+    String addPrefix = group.getAddPrefix();
+    if (!addPrefix.isEmpty()) {
+      destPath = destPath.startsWith("/")? addPrefix + destPath : addPrefix + "/" + destPath;
+    }
+
+    return destPath;
+  }
+
+
+  public void saveBuildState(
+    BuildContext context,
+    NodeSourceSnapshot sourcesState, NodeSourceSnapshot resourcesState,
+    Iterable<NodeSource> modifiedLibraries, Iterable<NodeSource> deletedLibraries
+  ) {
+
+    if (sourcesState != null && resourcesState != null) {
+      if (context.hasErrors()) {
+        ConfigurationState pastState = ConfigurationState.loadSavedState(context);
+        new ConfigurationState(context.getPathMapper(), sourcesState, resourcesState, pastState.getLibraries(), context.getFlags()).save(context);
+      }
+      else {
+        new ConfigurationState(context.getPathMapper(), sourcesState, resourcesState, context.getBinaryDependencies(), context.getFlags()).save(context);
       }
     }
 

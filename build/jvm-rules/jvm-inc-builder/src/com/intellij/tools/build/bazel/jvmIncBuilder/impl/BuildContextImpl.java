@@ -33,7 +33,7 @@ public class BuildContextImpl implements BuildContext {
 
   private final @NotNull NodeSourceSnapshot mySources;
   private final @NotNull NodeSourceSnapshot myLibraries;
-  private final @NotNull NodeSourceSnapshot myResources;
+  private final @NotNull Iterable<ResourceGroup> myResources;
   private final boolean myIsRebuild;
   private final BuilderOptions myBuilderOptions;
 
@@ -86,18 +86,22 @@ public class BuildContextImpl implements BuildContext {
     }
     myLibraries = new SourceSnapshotImpl(libsMap);
 
-    Map<NodeSource, String> resourcesMap = new HashMap<>();
+    List<ResourceGroup> resources = new ArrayList<>();
     for (String resourcesEntry : CLFlags.RESOURCES.getValue(flags)) {
       String[] parts = resourcesEntry.split(":", 3);
       String stripPrefix = parts[0];
       String addPrefix = parts[1];
+      Map<NodeSource, String> resourcesMap = new HashMap<>();
       for (String file : parts[2].split(":")) {
         Path path = baseDir.resolve(file).normalize();
         String digest = Objects.requireNonNull(digestsMap.get(file));
-        //resourcesMap.put(myPathMapper.toNodeSource(path), digest);
+        resourcesMap.put(myPathMapper.toNodeSource(file), digest);
+      }
+      if (!resourcesMap.isEmpty()) {
+        resources.add(new ResourceGroupImpl(resourcesMap, stripPrefix, addPrefix));
       }
     }
-    myResources = new SourceSnapshotImpl(resourcesMap);
+    myResources = resources;
 
     myBuilderOptions = BuilderOptions.create(buildJavaOptions(flags), buildKotlinOptions(flags, map(myLibraries.getElements(), myPathMapper::toPath)));
   }
@@ -327,7 +331,7 @@ public class BuildContextImpl implements BuildContext {
   }
 
   @Override
-  public @NotNull NodeSourceSnapshot getResources() {
+  public Iterable<ResourceGroup> getResources() {
     return myResources;
   }
 

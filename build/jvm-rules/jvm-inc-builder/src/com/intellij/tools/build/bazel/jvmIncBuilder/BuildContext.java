@@ -40,7 +40,7 @@ public interface BuildContext extends DiagnosticSink {
 
   NodeSourceSnapshot getBinaryDependencies();
 
-  NodeSourceSnapshot getResources();
+  Iterable<ResourceGroup> getResources();
 
   BuilderOptions getBuilderOptions();
 
