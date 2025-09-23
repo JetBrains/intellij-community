@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("OVERRIDE_DEPRECATION")
+
 package com.intellij.mock
 
 import com.intellij.lang.MetaLanguage
@@ -11,6 +13,7 @@ import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.AnyModalityState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -19,7 +22,9 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
 import java.lang.reflect.Modifier
@@ -29,23 +34,29 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.concurrent.Volatile
 
+@Internal
 open class MockApplication(parentDisposable: Disposable) : MockComponentManager(null, parentDisposable), ApplicationEx {
   companion object {
     var INSTANCES_CREATED: Int = 0
+      private set
 
     @TestOnly
+    @JvmStatic
     fun setUp(parentDisposable: Disposable): MockApplication {
       val app = MockApplication(parentDisposable)
       ApplicationManager.setApplication(app, parentDisposable)
       return app
     }
 
-    private val logger: Logger
-      get() = Logger.getInstance(MockApplication::class.java)
+    private val LOG: Logger
+      get() = logger<MockApplication>()
 
     @Volatile
     private var warningLogged = false
   }
+
+  @Suppress("RAW_SCOPE_CREATION")
+  private val appCoroutineScope = CoroutineScope(SupervisorJob())
 
   init {
     INSTANCES_CREATED++
@@ -53,11 +64,11 @@ open class MockApplication(parentDisposable: Disposable) : MockComponentManager(
     Extensions.setRootArea(getExtensionArea(), parentDisposable)
   }
 
-  override fun <T> getServiceIfCreated(serviceClass: Class<T?>): T? = doGetService(serviceClass = serviceClass, createIfNeeded = false)
+  override fun <T> getServiceIfCreated(serviceClass: Class<T>): T? = doGetService(serviceClass = serviceClass, createIfNeeded = false)
 
-  override fun <T> getService(serviceClass: Class<T?>): T? = doGetService(serviceClass = serviceClass, createIfNeeded = true)
+  override fun <T> getService(serviceClass: Class<T>): T? = doGetService(serviceClass = serviceClass, createIfNeeded = true)
 
-  private fun <T> doGetService(serviceClass: Class<T?>, createIfNeeded: Boolean): T? {
+  private fun <T> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     super.getService(serviceClass)?.let {
       return it
     }
@@ -78,7 +89,7 @@ open class MockApplication(parentDisposable: Disposable) : MockComponentManager(
 
   override fun isEAP(): Boolean = false
 
-  override fun getCoroutineScope(): CoroutineScope = GlobalScope
+  override fun getCoroutineScope(): CoroutineScope = appCoroutineScope
 
   override fun isDispatchThread(): Boolean = SwingUtilities.isEventDispatchThread()
 
@@ -276,19 +287,24 @@ open class MockApplication(parentDisposable: Disposable) : MockComponentManager(
   }
 
   override fun dispose() {
-    // A mock application may cause incorrect caching during tests. It does not fire extension point removed events.
-    // Ensure that we have cached against correct application.
-    MetaLanguage.clearAllMatchingMetaLanguagesCache()
-    super.dispose()
+    try {
+      // A mock application may cause incorrect caching during tests. It does not fire extension point removed events.
+      // Ensure that we have cached against correct application.
+      MetaLanguage.clearAllMatchingMetaLanguagesCache()
+      appCoroutineScope.cancel()
+    }
+    finally {
+      super.dispose()
+    }
   }
 
-  private fun logInsufficientIsolation(methodName: String?, vararg args: Any?) {
+  private fun logInsufficientIsolation(@Suppress("SameParameterValue") methodName: String?, vararg args: Any?) {
     if (warningLogged || !isUnitTestMode()) {
       return
     }
 
     warningLogged = true
-    logger.warn(
+    LOG.warn(
       "Attempt to execute method \"" + methodName + "\" with arguments `" + args.contentToString() + "` within a MockApplication.\n" +
       "This is likely caused by an improper test isolation. Please consider writing tests with JUnit 5 fixtures.",
       Throwable())

@@ -130,7 +130,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     System.out.println("----- TEST STATISTICS -----");
     UsefulTestCase.logSetupTeardownCosts();
     System.out.printf("##teamcity[buildStatisticValue key='ideaTests.appInstancesCreated' value='%d']%n",
-                      MockApplication.INSTANCES_CREATED);
+                      MockApplication.Companion.getINSTANCES_CREATED());
     System.out.printf("##teamcity[buildStatisticValue key='ideaTests.projectInstancesCreated' value='%d']%n",
                       TestProjectManagerKt.getTotalCreatedProjectsCount());
     long totalGcTime = 0;
