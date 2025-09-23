@@ -39,7 +39,6 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -978,7 +977,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         || isLoadedFromCacheButHasNoModules(project)
     ) {
       val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
-        baseDir = projectStoreBaseDir,
+        projectFile = projectStoreBaseDir,
         project = project,
         newProject = options.isProjectCreatedWithWizard,
         createModule = options.createModule

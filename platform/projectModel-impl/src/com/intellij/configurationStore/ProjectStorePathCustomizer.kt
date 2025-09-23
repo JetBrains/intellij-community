@@ -52,6 +52,14 @@ interface ProjectStoreDescriptor {
 
   fun getJpsBridgeAwareStorageSpec(filePath: String, project: Project): Storage
 
+  fun getModuleStorageSpecs(
+    component: PersistentStateComponent<*>,
+    stateSpec: State,
+    operation: StateStorageOperation,
+    storageManager: StateStorageManager,
+    project: Project,
+  ): List<Storage>
+
   fun <T : Any> getStorageSpecs(
     component: PersistentStateComponent<T>,
     stateSpec: State,

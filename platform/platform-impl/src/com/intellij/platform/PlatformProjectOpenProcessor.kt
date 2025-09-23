@@ -5,7 +5,10 @@ import com.intellij.configurationStore.ProjectStorePathManager
 import com.intellij.ide.impl.*
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.util.PsiNavigationSupport
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
@@ -14,11 +17,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.checkTrustedState
-import com.intellij.openapi.project.impl.getOrInitializeModule
+import com.intellij.openapi.project.impl.doCreateFakeModuleForDirectoryProjectConfigurators
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.startup.StartupManager
@@ -124,21 +126,26 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     private fun createTempProjectAndOpenFile(file: Path, options: OpenProjectTask): Project? {
       val dummyProjectName = file.fileName.toString()
       val baseDir = FileUtilRt.createTempDirectory(dummyProjectName, null, true).toPath()
-      val copy = options.copy(isNewProject = true, projectName = dummyProjectName, runConfigurators = true, preparedToOpen = { module ->
-        // adding content root for chosen (single) file
-        ModuleRootModificationUtil.updateModel(module) { model ->
-          val entries = model.contentEntries
-          // remove custom content entry created for temp directory
-          if (entries.size == 1) {
-            model.removeContentEntry(entries[0])
+      val copy = options.copy(
+        isNewProject = true,
+        projectName = dummyProjectName,
+        runConfigurators = true,
+        preparedToOpen = { module ->
+          // adding content root for chosen (single) file
+          ModuleRootModificationUtil.updateModel(module) { model ->
+            val entries = model.contentEntries
+            // remove custom content entry created for temp directory
+            if (entries.size == 1) {
+              model.removeContentEntry(entries[0])
+            }
+            model.addContentEntry(VfsUtilCore.pathToUrl(file.toString()))
           }
-          model.addContentEntry(VfsUtilCore.pathToUrl(file.toString()))
-        }
-      },
-                              beforeOpen = {
-                                it.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
-                                options.beforeOpen?.invoke(it) ?: true
-                              })
+        },
+        beforeOpen = {
+          it.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
+          options.beforeOpen?.invoke(it) ?: true
+        },
+      )
       TrustedPaths.getInstance().setProjectPathTrusted(baseDir, true)
       val project = ProjectManagerEx.getInstanceEx().openProject(baseDir, copy) ?: return null
       openFileFromCommandLine(project = project, file = file, line = copy.line, column = copy.column)
@@ -305,21 +312,19 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return project
     }
 
-    suspend fun runDirectoryProjectConfigurators(baseDir: Path, project: Project, newProject: Boolean, createModule: Boolean): Module? {
+    suspend fun runDirectoryProjectConfigurators(projectFile: Path, project: Project, newProject: Boolean, createModule: Boolean): Module? {
       project.putUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR, true)
 
-      val moduleRef = Ref<Module>()
-
-      val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(baseDir)!!
+      val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectFile)!!
       withContext(Dispatchers.EDT) {
-        writeIntentReadAction {
-          virtualFile.refresh(false, false)
-        }
+        virtualFile.refresh(false, false)
       }
 
+      val moduleRef = Ref<Module>()
       if (createModule) {
-        moduleRef.getOrInitializeModule(project, virtualFile)
+        moduleRef.set(doCreateFakeModuleForDirectoryProjectConfigurators(projectVirtualFile = virtualFile, moduleManager = project.serviceAsync(), projectFile = projectFile))
       }
+
       for (configurator in EP_NAME.lazySequence()) {
         try {
           if (configurator is DirectoryProjectConfigurator.AsyncDirectoryProjectConfigurator) {
@@ -335,9 +340,6 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           else {
             configurator.configureProject(project, virtualFile, moduleRef, newProject)
           }
-        }
-        catch (e: ProcessCanceledException) {
-          throw e
         }
         catch (e: CancellationException) {
           throw e
@@ -396,9 +398,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
   @Internal
   override suspend fun openProjectAsync(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     val baseDir = virtualFile.toNioPath()
-    val options = run {
-      createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose)
-    }.copy(forceOpenInNewFrame = forceOpenInNewFrame)
+    val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose).copy(forceOpenInNewFrame = forceOpenInNewFrame)
     return doOpenProject(baseDir, options)
   }
 
@@ -435,8 +435,7 @@ private fun openFileFromCommandLine(project: Project, file: Path, line: Int, col
   }
 }
 
-@Internal
-suspend fun attachToProjectAsync(
+internal suspend fun attachToProjectAsync(
   projectToClose: Project,
   projectDir: Path,
   processor: ProjectAttachProcessor? = null,

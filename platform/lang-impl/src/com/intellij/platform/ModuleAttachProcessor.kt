@@ -59,7 +59,7 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
       val newProject = ProjectManagerEx.getInstanceEx().newProjectAsync(file = projectDir, options = options)
       try {
         PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
-          baseDir = projectDir,
+          projectFile = projectDir,
           project = newProject,
           newProject = true,
           createModule = true,

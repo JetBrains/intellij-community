@@ -34,7 +34,12 @@ class LegacyBridgeJpsEntitySourceFactoryImpl(val project: Project) : LegacyBridg
   }
 
   override fun createEntitySourceForModule(baseModuleDir: VirtualFileUrl, externalSource: ProjectModelExternalSource?): EntitySource {
-    return createEntitySourceForModule(baseModuleDir, externalSource, null, null)
+    return createEntitySourceForModule(
+      baseModuleDir = baseModuleDir,
+      externalSource = externalSource,
+      fileInDirectoryNames = null,
+      moduleFileName = null,
+    )
   }
 
   private fun createImportedEntitySource(

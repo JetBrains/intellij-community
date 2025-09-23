@@ -62,7 +62,7 @@ private class NestedProjectStorePathManager : ProjectStorePathManager {
 
     val useParent = System.getProperty("store.basedir.parent.detection", "true").toBoolean() &&
                     (projectRoot.fileName?.toString()?.startsWith("${Project.DIRECTORY_STORE_FOLDER}.") == true)
-    return DotIdeProjectStoreDescriptor(projectRoot = projectRoot, historicalProjectBasePath = if (useParent) projectRoot.parent.parent else projectRoot)
+    return DotIdeaProjectStoreDescriptor(projectRoot = projectRoot, historicalProjectBasePath = if (useParent) projectRoot.parent.parent else projectRoot)
   }
 
   override fun getStoreDirectory(projectRoot: VirtualFile): VirtualFile? {
@@ -70,7 +70,7 @@ private class NestedProjectStorePathManager : ProjectStorePathManager {
   }
 }
 
-private class DotIdeProjectStoreDescriptor(
+private class DotIdeaProjectStoreDescriptor(
   projectRoot: Path,
   override val historicalProjectBasePath: Path,
 ) : ProjectStoreDescriptor {
@@ -88,6 +88,37 @@ private class DotIdeProjectStoreDescriptor(
 
   override fun testStoreDirectoryExistsForProjectRoot(): Boolean {
     return Files.isDirectory(dotIdea)
+  }
+
+  override fun getModuleStorageSpecs(
+    component: PersistentStateComponent<*>,
+    stateSpec: State,
+    operation: StateStorageOperation,
+    storageManager: StateStorageManager,
+    project: Project,
+  ): List<Storage> {
+    val result = if (stateSpec.storages.isEmpty()) {
+      listOf(FileStorageAnnotation.MODULE_FILE_STORAGE_ANNOTATION)
+    }
+    else {
+      getStorageSpecGenericImpl(component = component, stateSpec = stateSpec)
+    }
+
+    for (provider in StreamProviderFactory.EP_NAME.getExtensions(project)) {
+      runCatching {
+        provider.customizeStorageSpecs(
+          component = component,
+          storageManager = storageManager,
+          stateSpec = stateSpec,
+          storages = result,
+          operation = operation,
+        )
+      }.getOrLogException(LOG)?.let {
+        return it
+      }
+    }
+
+    return result
   }
 
   override fun <T : Any> getStorageSpecs(

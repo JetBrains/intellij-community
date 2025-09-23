@@ -334,7 +334,6 @@ private abstract class JpsStorageContentWriter(
   }
 }
 
-private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
 private val NULL_ELEMENT = Element("null")
 
 private class ProjectWithModulesSaveSessionProducerManager(private val project: Project) : SaveSessionProducerManager() {
@@ -374,7 +373,7 @@ private class ProjectWithModulesSaveSessionProducerManager(private val project: 
     val moduleFilePath = moduleStore.storageManager.expandMacro(StoragePathMacros.MODULE_FILE)
     val internalComponents = internalModuleComponents.get(moduleFilePath.invariantSeparatorsPathString)
     if (internalComponents != null) {
-      commitToStorage(MODULE_FILE_STORAGE_ANNOTATION, internalComponents)
+      commitToStorage(FileStorageAnnotation.MODULE_FILE_STORAGE_ANNOTATION, internalComponents)
     }
 
     val moduleFileName = FileUtilRt.getNameWithoutExtension(moduleFilePath.fileName.toString())

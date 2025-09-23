@@ -5,21 +5,18 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.project.isDirectoryBased
+import com.intellij.project.ProjectStoreOwner
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleStore
 import org.jdom.Element
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.concurrent.write
 import kotlin.io.path.invariantSeparatorsPathString
-
-private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
 
 internal class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl(), ModuleStore {
   override val project: Project = module.project
@@ -38,30 +35,13 @@ internal class ModuleStoreImpl(module: Module, private val pathMacroManager: Pat
     stateSpec: State,
     operation: StateStorageOperation,
   ): List<Storage> {
-    val result = if (stateSpec.storages.isEmpty()) {
-      listOf(MODULE_FILE_STORAGE_ANNOTATION)
-    }
-    else {
-      super.getStorageSpecs(component = component, stateSpec = stateSpec, operation = operation)
-    }
-
-    if (project.isDirectoryBased) {
-      for (provider in StreamProviderFactory.EP_NAME.getExtensions(project)) {
-        runCatching {
-          provider.customizeStorageSpecs(
-            component = component,
-            storageManager = storageManager,
-            stateSpec = stateSpec,
-            storages = result,
-            operation = operation,
-          )
-        }.getOrLogException(LOG)?.let {
-          return it
-        }
-      }
-    }
-
-    return result
+    return (project as ProjectStoreOwner).componentStore.storeDescriptor.getModuleStorageSpecs(
+      component = component,
+      stateSpec = stateSpec,
+      operation = operation,
+      storageManager = storageManager,
+      project = project,
+    )
   }
 
   override suspend fun reloadStates(componentNames: Set<String>) {
@@ -182,7 +162,14 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
   }
 
   override val isExternalSystemStorageEnabled: Boolean
-    get() = (componentManager as Module?)?.project?.isExternalStorageEnabled == true
+    get() {
+      val project = (componentManager as Module?)?.project ?: return false
+      if (project !is ProjectStoreOwner) {
+        return false
+      }
+      // isExternalStorageEnabled located in API module, where we cannot check isExternalStorageSupported directly
+      return project.componentStore.storeDescriptor.isExternalStorageSupported && project.isExternalStorageEnabled
+    }
 
   override fun createFileBasedStorage(
     file: Path,

@@ -62,7 +62,7 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
   }
 
   final override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
-    ((app as? ComponentManagerEx)?.getServiceAsyncIfDefined(JpsGlobalModelSynchronizer::class.java))?.saveGlobalEntities()
+    (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(JpsGlobalModelSynchronizer::class.java)?.saveGlobalEntities()
 
     coroutineScope {
       launch {

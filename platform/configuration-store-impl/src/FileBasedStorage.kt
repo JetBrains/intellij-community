@@ -39,7 +39,7 @@ import javax.xml.stream.XMLStreamException
 internal val XML_PROLOG: ByteArray = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
 
 @ApiStatus.Internal
-abstract class FileBasedStorage(
+abstract class FileBasedStorage internal constructor(
   file: Path,
   fileSpec: String,
   rootElementName: String?,

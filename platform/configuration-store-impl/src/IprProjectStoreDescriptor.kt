@@ -41,6 +41,21 @@ internal class IprProjectStoreDescriptor(
     return doGetJpsBridgeAwareStorageSpec(filePath, project)
   }
 
+  override fun getModuleStorageSpecs(
+    component: PersistentStateComponent<*>,
+    stateSpec: State,
+    operation: StateStorageOperation,
+    storageManager: StateStorageManager,
+    project: Project,
+  ): List<Storage> {
+    if (stateSpec.storages.isEmpty()) {
+      return listOf(FileStorageAnnotation.MODULE_FILE_STORAGE_ANNOTATION)
+    }
+    else {
+      return getStorageSpecGenericImpl(component = component, stateSpec = stateSpec)
+    }
+  }
+
   override fun <T : Any> getStorageSpecs(
     component: PersistentStateComponent<T>,
     stateSpec: State,

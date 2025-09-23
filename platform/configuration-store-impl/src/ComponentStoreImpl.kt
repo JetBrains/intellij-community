@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.shared.ConfigFolderChangedListener
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
@@ -39,7 +40,7 @@ import com.intellij.util.xmlb.SettingsInternalApi
 import com.intellij.util.xmlb.XmlSerializerUtil
 import kotlinx.coroutines.*
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
@@ -79,7 +80,7 @@ private class ComponentStoreImplReloadListener : ConfigFolderChangedListener {
   }
 }
 
-@ApiStatus.Internal
+@Internal
 abstract class ComponentStoreImpl : IComponentStore {
   private val components = ConcurrentHashMap<String, ComponentInfo>()
 
@@ -102,7 +103,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   internal fun getComponents(): Map<String, ComponentInfo> = components
 
-  @ApiStatus.Internal
+  @Internal
   fun incrementModificationCount(componentName: String) {
     components.get(componentName)?.let { info ->
       info.updateModificationCount(info.lastModificationCount + 1)
@@ -195,7 +196,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           registerComponent(componentName, componentInfo)
         }
       }
-      else if (loadPolicy == StateLoadPolicy.LOAD && component is com.intellij.openapi.util.JDOMExternalizable) {
+      else if (loadPolicy == StateLoadPolicy.LOAD && component is JDOMExternalizable) {
         componentName = initJdom(component, pluginId)
       }
     }
@@ -214,7 +215,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     LOG.error(error)
   }
 
-  private fun initJdom(@Suppress("DEPRECATION") component: com.intellij.openapi.util.JDOMExternalizable, pluginId: PluginId): String {
+  private fun initJdom(@Suppress("DEPRECATION") component: JDOMExternalizable, pluginId: PluginId): String {
     if (component.javaClass.name !in ignoredDeprecatedJDomExternalizableComponents) {
       LOG.error(PluginException("""
           |Component ${component.javaClass.name} implements deprecated JDOMExternalizable interface to serialize its state.
@@ -241,7 +242,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     @Suppress("DEPRECATION")
     val name = when (component) {
       is PersistentStateComponent<*> -> getStateSpec(component.javaClass)?.name ?: return
-      is com.intellij.openapi.util.JDOMExternalizable -> getComponentName(component)
+      is JDOMExternalizable -> getComponentName(component)
       else -> return
     }
     removeComponent(name)
@@ -408,7 +409,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   ) {
     val component = info.component
     @Suppress("DEPRECATION")
-    if (component is com.intellij.openapi.util.JDOMExternalizable) {
+    if (component is JDOMExternalizable) {
       val effectiveComponentName = componentName ?: getComponentName(component)
       storageManager.getOldStorage(component = component, componentName = effectiveComponentName, operation = StateStorageOperation.WRITE)?.let {
         sessionManager.getProducer(it)?.setState(component = component, componentName = effectiveComponentName, pluginId = info.pluginId, state = component)
@@ -686,33 +687,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     stateSpec: State,
     operation: StateStorageOperation,
   ): List<Storage> {
-    val storages = getWithPerOsStorages(stateSpec.storages)
-    if (storages.size == 1 || component is StateStorageChooserEx) {
-      return storages
-    }
-
-    if (storages.isEmpty()) {
-      if (stateSpec.defaultStateAsResource) {
-        return emptyList()
-      }
-      throw AssertionError("No storage specified for $component")
-    }
-
-    return sortStoragesByDeprecated(storages)
-  }
-
-  private fun getWithPerOsStorages(storages: Array<Storage>): List<Storage> {
-    val result = mutableListOf<Storage>()
-    for (storage in storages) {
-      if (storage.roamingType == RoamingType.PER_OS) {
-        result.add(StorageImpl.copyWithNewValue(storage, getOsDependentStorage(storage.value)))
-        result.add(StorageImpl.deprecatedCopy(storage))
-      }
-      else {
-        result.add(storage)
-      }
-    }
-    return result
+    return getStorageSpecGenericImpl(stateSpec, component)
   }
 
   final override fun isReloadPossible(componentNames: Set<String>): Boolean = !componentNames.any { isNotReloadable(it) }
@@ -852,12 +827,12 @@ abstract class ComponentStoreImpl : IComponentStore {
   override fun toString(): String = storageManager.componentManager.toString()
 }
 
-@ApiStatus.Internal
+@Internal
 enum class StateLoadPolicy {
   LOAD, LOAD_ONLY_DEFAULT, NOT_LOAD
 }
 
-@ApiStatus.Internal
+@Internal
 interface ExternalStorageWithInternalPart {
   val internalStorage: StateStorage
 }
@@ -915,4 +890,37 @@ internal suspend fun getStateForComponent(component: PersistentStateComponent<*>
 
 private fun isStorageChanged(changedStorages: Set<StateStorage>, storage: StateStorage): Boolean {
   return changedStorages.contains(storage) || (storage is ExternalStorageWithInternalPart && changedStorages.contains(storage.internalStorage))
+}
+
+internal fun <T : Any> getStorageSpecGenericImpl(
+  stateSpec: State,
+  component: PersistentStateComponent<T>,
+): List<Storage> {
+  val storages = getWithPerOsStorages(stateSpec.storages)
+  if (storages.size == 1 || component is StateStorageChooserEx) {
+    return storages
+  }
+
+  if (storages.isEmpty()) {
+    if (stateSpec.defaultStateAsResource) {
+      return emptyList()
+    }
+    throw AssertionError("No storage specified for $component")
+  }
+
+  return sortStoragesByDeprecated(storages)
+}
+
+private fun getWithPerOsStorages(storages: Array<Storage>): List<Storage> {
+  val result = mutableListOf<Storage>()
+  for (storage in storages) {
+    if (storage.roamingType == RoamingType.PER_OS) {
+      result.add(StorageImpl.copyWithNewValue(storage, getOsDependentStorage(storage.value)))
+      result.add(StorageImpl.deprecatedCopy(storage))
+    }
+    else {
+      result.add(storage)
+    }
+  }
+  return result
 }

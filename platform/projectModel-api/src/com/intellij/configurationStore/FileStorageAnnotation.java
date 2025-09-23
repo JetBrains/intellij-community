@@ -19,6 +19,9 @@ public class FileStorageAnnotation implements Storage {
   public static final FileStorageAnnotation PROJECT_FILE_STORAGE_ANNOTATION =
     new FileStorageAnnotation(StoragePathMacros.PROJECT_FILE, false);
 
+  public static final FileStorageAnnotation MODULE_FILE_STORAGE_ANNOTATION =
+    new FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false);
+
   public FileStorageAnnotation(@NotNull String path, boolean deprecated) {
     this(path, deprecated, StateSplitterEx.class);
   }
