@@ -25,7 +25,7 @@ class LoggerProviderOverrideTest : BasePlatformTestCase() {
 
   fun installEP() {
     val ep = ApplicationManager.getApplication().extensionArea.getExtensionPoint(EP_NAME)
-    ep.registerExtension(TestLoggerProvider(), LoadingOrder.FIRST, project)
+    ep.registerExtension(TestLoggerProvider(), LoadingOrder.FIRST, testRootDisposable)
   }
 
   fun testFUSLoggerProviderOverridden() {
