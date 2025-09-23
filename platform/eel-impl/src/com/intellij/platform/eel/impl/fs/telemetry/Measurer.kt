@@ -32,7 +32,7 @@ object Measurer {
 
   @Suppress("EnumEntryName")
   enum class DelegateType() {
-    system,
+    local,
     wsl,
     docker;
 
@@ -48,7 +48,7 @@ object Measurer {
       private fun fromDelegateClassInternal(clazz: Class<FileSystemProvider>): DelegateType {
         if (clazz.name == "com.intellij.platform.ide.impl.wsl.ijent.nio.IjentWslNioFileSystemProvider") return wsl
         if (clazz.name == "com.intellij.docker.ijent.MountsAwareFileSystemProvider") return docker
-        if (!RoutingAwareFileSystemProvider::class.java.isAssignableFrom(clazz)) return system
+        if (!RoutingAwareFileSystemProvider::class.java.isAssignableFrom(clazz)) return local
         error("Unknown delegate class: ${clazz.name}")
       }
     }
@@ -71,7 +71,12 @@ object Measurer {
         false -> ".initial"
         null -> ""
       }
-      val keyString = "ijent.fs.events.${delegateType}.${operation}$successKey$repeatedKey"
+      val delegateTypeKey = when (delegateType) {
+        DelegateType.local -> ".local"
+        DelegateType.wsl -> ".ijent.wsl"
+        DelegateType.docker -> ".ijent.docker"
+      }
+      val keyString = "nio.fs.${delegateTypeKey}.${operation}$successKey$repeatedKey"
       return keyString
     }
     companion object {
