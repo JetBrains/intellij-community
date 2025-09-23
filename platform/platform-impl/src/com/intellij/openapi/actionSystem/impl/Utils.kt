@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.util.ActionSystem
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.keymap.impl.ActionProcessor
@@ -712,6 +713,15 @@ object Utils {
     }
     sb.append(")")
     sb.insert(0, StringUtilRt.getShortName(c.getName()))
+
+    if (action is AnAction) {
+      val actionManager = serviceIfCreated<ActionManager>()
+      val actionId = actionManager?.getId(action)
+      if (actionId != null) {
+        sb.append(" \"$actionId\"")
+      }
+    }
+
     return sb.toString()
   }
 
