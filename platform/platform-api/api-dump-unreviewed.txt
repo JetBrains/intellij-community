@@ -6692,6 +6692,7 @@ c:com.intellij.ui.components.JBOptionButton
 - sf:getDefaultShowPopupShortcut():com.intellij.openapi.actionSystem.CustomShortcutSet
 - sf:getDefaultTooltip():java.lang.String
 - f:getHideDisabledOptions():Z
+- f:getOptionAdText():java.lang.String
 - f:getOptionTooltipText():java.lang.String
 - f:getOptions():javax.swing.Action[]
 - f:getPopupBackgroundColor():java.awt.Color
@@ -6704,6 +6705,7 @@ c:com.intellij.ui.components.JBOptionButton
 - f:isSimpleButton():Z
 - f:setAddSeparator(Z):V
 - f:setHideDisabledOptions(Z):V
+- f:setOptionAdText(java.lang.String):V
 - f:setOptionTooltipText(java.lang.String):V
 - f:setOptions(java.util.List):V
 - f:setOptions(javax.swing.Action[]):V

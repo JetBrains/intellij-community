@@ -27,6 +27,7 @@ import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.util.function.Supplier
 import javax.swing.JComponent
+import javax.swing.SwingConstants
 
 internal class WelcomeScreenLeftPanelActions(val project: Project) {
   fun createButtonsComponent(): JComponent {
@@ -126,6 +127,9 @@ private class LeftPanelDisclosureButtonAction(private val actionDelegate: AnActi
                                                                     JBPopupFactory.ActionSelectionAid.MNEMONICS,
                                                                     false,
                                                                     ActionPlaces.WELCOME_SCREEN)
+
+    val adText = presentation.getClientProperty(WelcomeScreenActionsUtil.INLINE_ACTIONS_POPUP_AD_TEXT) // NON-NLS
+    if (adText != null) popup.setAdText(adText, SwingConstants.LEFT)
 
     val targetPoint = RelativePoint(component, Point(component.width + JBUI.scale(4), 0))
     popup.show(targetPoint)

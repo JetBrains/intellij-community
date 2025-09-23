@@ -239,6 +239,8 @@ com.intellij.openapi.actionSystem.Toggleable
 com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener
 - actionPopupMenuCreated(com.intellij.openapi.actionSystem.ActionPopupMenu):V
 - actionPopupMenuReleased(com.intellij.openapi.actionSystem.ActionPopupMenu):V
+f:com.intellij.openapi.actionSystem.ex.ActionUtil
+- sf:POPUP_AD_TEXT:com.intellij.openapi.util.Key
 com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 com.intellij.openapi.actionSystem.ex.TooltipLinkProvider
 - a:getTooltipLink(javax.swing.JComponent):com.intellij.openapi.actionSystem.ex.TooltipLinkProvider$TooltipLink
@@ -661,6 +663,7 @@ com.intellij.openapi.ui.popup.IdePopupEventDispatcher
 - setRestoreFocusSilently():V
 com.intellij.openapi.ui.popup.ListPopupStepEx
 - com.intellij.openapi.ui.popup.ListPopupStep
+- getAdText():java.lang.String
 - getSecondaryIconFor(java.lang.Object):javax.swing.Icon
 - getSecondaryTextFor(java.lang.Object):java.lang.String
 - a:getTooltipTextFor(java.lang.Object):java.lang.String

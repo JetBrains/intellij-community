@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Weighted
 import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.Nls
@@ -37,12 +38,13 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
     options = actions?.map { AnActionWrapper(it) }?.toTypedArray()
   }
 
-  var optionTooltipText: String? = null
+  var optionTooltipText: @Nls String? = null
     set(value) {
       val oldValue = optionTooltipText
       field = value
       firePropertyChange(PROP_OPTION_TOOLTIP, oldValue, optionTooltipText)
     }
+  var optionAdText: @NlsContexts.PopupAdvertisement String? = null
 
   val isSimpleButton: Boolean get() = options.isNullOrEmpty()
 

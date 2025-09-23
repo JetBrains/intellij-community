@@ -22,6 +22,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,6 +41,9 @@ public final class WelcomeScreenActionsUtil {
 
   @ApiStatus.Internal
   public static final Key<Icon> TEXT_BUTTON_RIGHT_ICON = Key.create("WelcomeScreenActionsUtil.TEXT_BUTTON_RIGHT_ICON");
+
+  @ApiStatus.Internal
+  public static final Key<@Nls String> INLINE_ACTIONS_POPUP_AD_TEXT = Key.create("WelcomeScreenActionsUtil.POPUP_HINT");
 
   public static @NotNull CustomComponentAction createToolbarTextButtonAction(@NotNull AnAction action) {
     return new CustomComponentAction() {
@@ -71,6 +75,9 @@ public final class WelcomeScreenActionsUtil {
         }
         button.setBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground());
         button.putClientProperty(JBOptionButton.PLACE, place);
+
+        String popupHint = presentation.getClientProperty(INLINE_ACTIONS_POPUP_AD_TEXT);
+        button.setOptionAdText(popupHint);
 
         return textButton;
       }

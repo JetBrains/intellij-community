@@ -13771,6 +13771,7 @@ c:com.intellij.ui.popup.ActionPopupStep
 - s:createActionsStep(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,java.util.function.Supplier,com.intellij.ui.popup.ActionPopupOptions):com.intellij.openapi.ui.popup.ListPopupStep
 - createAnActionEvent(com.intellij.ui.popup.PopupFactoryImpl$ActionItem,java.awt.event.InputEvent):com.intellij.openapi.actionSystem.AnActionEvent
 - getActionPlace():java.lang.String
+- getAdText():java.lang.String
 - getDefaultOptionIndex():I
 - getFinalRunnable():java.lang.Runnable
 - getIconFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):javax.swing.Icon
