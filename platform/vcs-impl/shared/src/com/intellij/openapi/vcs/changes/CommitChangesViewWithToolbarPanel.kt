@@ -6,6 +6,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
@@ -19,6 +20,7 @@ import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.platform.vcs.impl.shared.telemetry.ChangesView
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
@@ -64,6 +66,12 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisp
   @RequiresEdt
   fun initPanel(modelProvider: ModelProvider) {
     this.modelProvider = modelProvider
+
+    scope.launch(Dispatchers.UI) {
+      ChangeListsViewModel.getInstance(project).changeListManagerState.collectLatest {
+        changesView.repaint()
+      }
+    }
 
     changesView.installPopupHandler(
       ActionManager.getInstance().getAction("ChangesViewPopupMenuShared") as ActionGroup

@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.shared.changes
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -12,11 +10,8 @@ import com.intellij.platform.project.projectIdOrNull
 import com.intellij.platform.vcs.changes.ChangeListManagerState
 import com.intellij.platform.vcs.impl.shared.RdLocalChanges
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi
-import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -39,14 +34,6 @@ class ChangeListsViewModel(
       ChangeLists(changeLists.map { it.getChangeList(project) })
     })
   }.stateIn(cs, SharingStarted.Eagerly, ChangeLists(emptyList()))
-
-  fun updateUiOnStateUpdate(disposable: Disposable, action: Runnable) {
-    cs.launch(Dispatchers.UI) {
-      changeListManagerState.collect {
-        action.run()
-      }
-    }.cancelOnDispose(disposable)
-  }
 
   private fun <T> changeListsApiFlow(checkRegistry: Boolean = true, flowProducer: suspend FlowCollector<T>.(ChangeListsApi, ProjectId) -> Unit): Flow<T> =
     if (checkRegistry && !RdLocalChanges.isEnabled()) emptyFlow()

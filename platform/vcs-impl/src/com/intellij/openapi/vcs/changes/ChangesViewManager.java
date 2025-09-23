@@ -30,7 +30,6 @@ import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.platform.vcs.impl.shared.RdLocalChanges;
-import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel;
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys;
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings;
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
@@ -427,12 +426,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       busConnection.subscribe(ChangeListListener.TOPIC, new MyChangeListListener());
 
       busConnection.subscribe(ChangesViewModifier.TOPIC, () -> scheduleRefresh());
-      busConnection.subscribe(VcsManagedFilesHolder.TOPIC, () -> {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          myView.repaint();
-        });
-      });
-      ChangeListsViewModel.getInstance(project).updateUiOnStateUpdate(this, () -> myView.repaint());
 
       scheduleRefresh();
     }
