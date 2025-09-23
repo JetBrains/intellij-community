@@ -470,6 +470,8 @@
           <action id="CloseOtherProjects" class="com.intellij.ide.actions.CloseOtherProjectsAction"/>
         </group>
         <separator/>
+        <group id="FileMenu.RemoteDevelopmentActions"/>
+        <separator/>
         <group id="FileMainSettingsGroup">
           <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction"/>
         </group>
