@@ -873,6 +873,7 @@ plugins/javaFX/common
 plugins/javaFX/community
 plugins/javaFX/jps
 plugins/javaFX/sceneBuilder
+plugins/jshell
 plugins/jsonpath
 plugins/junit
 plugins/junit/groovy-tests
