@@ -285,8 +285,8 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     return getCurrentlyShownUI();
   }
 
-  private SearchEverywhereUI createView(Project project, List<SearchEverywhereContributor<?>> contributors,
-                                        @Nullable StartMoment startMoment) {
+  private @NotNull SearchEverywhereUI createView(Project project, List<SearchEverywhereContributor<?>> contributors,
+                                                 @Nullable StartMoment startMoment) {
     if (LightEdit.owns(project)) {
       contributors = ContainerUtil.filter(contributors, (contributor) -> contributor instanceof LightEditCompatible);
     }
