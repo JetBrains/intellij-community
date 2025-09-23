@@ -70,12 +70,13 @@ object Measurer {
       return keyString
     }
     companion object {
+      val countUniquePathsEnabled: Boolean get() = System.getProperty("nio.mrfs.telemetry.count.unique.paths", "false").toBoolean()
       val VALUES: List<FsEventKey> = DelegateType.entries.filter {
         it != DelegateType.wsl || SystemInfo.isWindows
       }.flatMap { delegateType ->
         Operation.entries.flatMap { operation ->
           listOf(true, false).flatMap { success ->
-            val repeatedChoices = if (fsQueryStatCounter == null) listOf(null) else listOf(null, true, false)
+            val repeatedChoices = if (countUniquePathsEnabled) listOf(null, true, false) else listOf(null)
             repeatedChoices.map { repeated ->
               FsEventKey(delegateType, operation, success, repeated)
             }
@@ -142,7 +143,7 @@ object Measurer {
     supportedFileAttributeViews;
   }
 
-  val fsQueryStatCounter: FsQueryStatCounter? = if (System.getProperty("nio.mrfs.telemetry.count.unique.paths", "false").toBoolean()) {
+  val fsQueryStatCounter: FsQueryStatCounter? = if (FsEventKey.countUniquePathsEnabled) {
     FsQueryStatCounter()
   }
   else null
