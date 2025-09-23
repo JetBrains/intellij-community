@@ -51,7 +51,7 @@ public final class PyDataclassClassMembersProvider extends PyClassMembersProvide
       if (hasAttrs) {
         PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(pyClass);
         PyClass objectClass = builtinCache.getClass(PyNames.OBJECT);
-        result.add(new PyCustomMember("__attrs_attrs__", objectClass));
+        result.add(new PyCustomMember("__attrs_attrs__", objectClass).asClassVar());
       }
 
       return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
