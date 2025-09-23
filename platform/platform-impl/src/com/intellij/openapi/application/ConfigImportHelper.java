@@ -86,9 +86,8 @@ import static com.intellij.platform.ide.bootstrap.SplashManagerKt.hideSplash;
 
 @ApiStatus.Internal
 public final class ConfigImportHelper {
-  public static final String CONFIG_IMPORTED_FROM_OTHER_PRODUCT_KEY = "intellij.config.imported.from.other.product";
-  public static final String CONFIG_IMPORTED_FROM_PREVIOUS_VERSION_KEY = "intellij.config.imported.from.previous.version";
   public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?(\\D+)(\\d+(?:\\.\\d+)*)");
+  public static final String CONFIG_IMPORTED_FROM_PATH = "intellij.config.imported.from";
   public static final String CUSTOM_MARKER_FILE_NAME = "migrate.config";
   public static final String FRONTEND_PLUGINS_TO_MIGRATE_DIR_NAME = "frontend-to-migrate";
 
@@ -273,17 +272,16 @@ public final class ConfigImportHelper {
           importScenarioStatistics = IMPORTED_FROM_PREVIOUS_VERSION;
         }
 
-        System.setProperty(
-          guessedOldConfigDirs.fromSameProduct ? CONFIG_IMPORTED_FROM_PREVIOUS_VERSION_KEY : CONFIG_IMPORTED_FROM_OTHER_PRODUCT_KEY,
-          oldConfigDir.toString());
+        System.setProperty(CONFIG_IMPORTED_FROM_PATH, oldConfigDir.toString());
 
         doImport(oldConfigDir, newConfigDir, oldIdeHome, log, configImportOptions);
 
-        setConfigImportedInThisSession();
+        System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
+
         if (currentlyDisabledPlugins != null) {
           try {
             var newDisablePluginsFile = newConfigDir.resolve(P3SupportKt.processPerProjectSupport().getDisabledPluginsFileName());
-            Set<String> newDisabledPlugins = new LinkedHashSet<>();
+            var newDisabledPlugins = new LinkedHashSet<String>();
             if (Files.isRegularFile(newDisablePluginsFile)) {
               newDisabledPlugins.addAll(Files.readAllLines(newDisablePluginsFile, CharsetToolkit.getPlatformCharset()));
             }
@@ -531,10 +529,6 @@ public final class ConfigImportHelper {
     descriptor
       .withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE))
       .withExtensionFilter(BootstrapBundle.message("import.settings.filter"), "zip", "jar");
-  }
-
-  public static void setConfigImportedInThisSession() {
-    System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
   }
 
   /**
