@@ -554,25 +554,22 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
    */
   private int @Nullable [] getClassesMap(DfaMemoryStateImpl that) {
     List<EqClassImpl> thisClasses = this.myEqClasses;
-    List<EqClassImpl> thatClasses = that.myEqClasses;
     int thisSize = thisClasses.size();
-    int thatSize = thatClasses.size();
     int[] thisToThat = new int[thisSize];
     // If any two values are equivalent in this, they also must be equivalent in that
     for (int thisIdx = 0; thisIdx < thisSize; thisIdx++) {
-      EqClass thisClass = thisClasses.get(thisIdx);
+      EqClassImpl thisClass = thisClasses.get(thisIdx);
       thisToThat[thisIdx] = -1;
       if (thisClass != null) {
-        boolean found = false;
-        for (int thatIdx = 0; thatIdx < thatSize; thatIdx++) {
-          EqClass thatClass = thatClasses.get(thatIdx);
-          if (thatClass != null && thatClass.containsAll(thisClass)) {
-            thisToThat[thisIdx] = thatIdx;
-            found = true;
-            break;
-          }
+        int varId = thisClass.get(0);
+        int thatIdx = that.getRawEqClassIndex(varId);
+        if (thatIdx != -1) {
+          EqClass thatClass = Objects.requireNonNull(that.myEqClasses.get(thatIdx));
+          if (!thatClass.containsAll(thisClass)) return null;
+          thisToThat[thisIdx] = thatIdx;
+        } else {
+          if (thisClass.size() > 1) return null;
         }
-        if (!found && thisClass.size() > 1) return null;
       }
     }
     return thisToThat;
