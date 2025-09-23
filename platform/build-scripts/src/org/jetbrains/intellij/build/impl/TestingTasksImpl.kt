@@ -510,6 +510,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     systemProperties.putIfAbsent(TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG, options.isPerformanceTestsOnly.toString())
     val allJvmArgs = ArrayList(jvmArgs)
     prepareEnvForTestRun(allJvmArgs, systemProperties, bootstrapClasspath, remoteDebugging)
+    val devBuildServerSettings = DevBuildServerSettings.readDevBuildServerSettingsFromIntellijYaml(mainModule)
     val messages = context.messages
     if (isRunningInBatchMode) {
       messages.info("Running tests from $mainModule matched by '${options.batchTestIncludes}' pattern.")
@@ -541,6 +542,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       if (!envVariables.isEmpty()) {
         messages.info("Environment variables: $envVariables")
       }
+      devBuildServerSettings?.let {
+        messages.info("Dev build server settings: $it")
+      }
     }
     runJUnit5Engine(
       mainModule = mainModule,
@@ -550,6 +554,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       bootstrapClasspath = bootstrapClasspath,
       modulePath = modulePath,
       testClasspath = testClasspath,
+      devBuildServerSettings = devBuildServerSettings,
     )
     notifySnapshotBuilt(allJvmArgs)
   }
@@ -862,6 +867,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         // Run JUnit 4 and 5 whole test classes separately
         if (options.isDedicatedTestRuntime != "false" && jUnit4And5TestMethods.isNotEmpty()) {
           val exitCode = runJUnit5Engine(
+            mainModule = mainModule,
             systemProperties = systemProperties,
             jvmArgs = jvmArgs,
             envVariables = envVariables,
@@ -869,7 +875,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
             modulePath = null,
             testClasspath = testClasspath,
             suiteName = qName,
-            methodName = null
+            methodName = null,
+            devBuildServerSettings = null,
           )
           noTests = exitCode == NO_TESTS_ERROR
         }
@@ -877,8 +884,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         else if (jUnit4And5TestMethods.isNotEmpty()) {
           for (method in jUnit4And5TestMethods) {
             val exitCode = runJUnit5Engine(
-              systemProperties, jvmArgs, envVariables, bootstrapClasspath, null, testClasspath,
-              qName, method
+              mainModule, systemProperties, jvmArgs, envVariables, bootstrapClasspath, null, testClasspath,
+              qName, method, null
             )
             noTests = noTests && exitCode == NO_TESTS_ERROR
           }
@@ -887,8 +894,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         // Fallback to running whole class (JUnit 3+4)
         if (noTests) {
           val exitCode = runJUnit5Engine(
-            systemProperties, jvmArgs, envVariables, bootstrapClasspath, null, testClasspath,
-            qName, null,
+            mainModule, systemProperties, jvmArgs, envVariables, bootstrapClasspath, null, testClasspath,
+            qName, null, null
           )
           noTests = exitCode == NO_TESTS_ERROR
         }
@@ -921,6 +928,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     bootstrapClasspath: List<String>,
     modulePath: List<String>?,
     testClasspath: List<String>,
+    devBuildServerSettings: DevBuildServerSettings?,
   ) {
     if (isRunningInBatchMode) {
       spanBuilder("run tests in batch mode")
@@ -950,6 +958,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
         val testClassesListFile = Files.createTempFile("tests-to-run-", ".list").apply { Files.delete(this) }
         runJUnit5Engine(
+          mainModule = mainModule,
           systemProperties = systemProperties + ("intellij.build.test.list.classes" to testClassesListFile.absolutePathString()),
           jvmArgs = jvmArgs,
           envVariables = envVariables,
@@ -958,6 +967,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           testClasspath = testClasspath,
           suiteName = null,
           methodName = null,
+          devBuildServerSettings = null,
         )
         testClassesListFile.let { if (Files.exists(it)) it.readLines() else emptyList() }
       }
@@ -970,6 +980,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
         val testClassesListFile = Files.createTempFile("tests-to-run-", ".list").apply { Files.delete(this) }
         runJUnit5Engine(
+          mainModule = mainModule,
           systemProperties = systemProperties + ("intellij.build.test.list.classes" to testClassesListFile.absolutePathString()),
           jvmArgs = jvmArgs,
           envVariables = envVariables,
@@ -977,7 +988,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           modulePath = modulePath,
           testClasspath = testClasspath,
           suiteName = options.bootstrapSuite,
-          methodName = null
+          methodName = null,
+          devBuildServerSettings = null,
         )
         return@block testClassesListFile.let { if (Files.exists(it)) it.readLines() else emptyList() }
       }
@@ -992,6 +1004,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         suspend fun runOneClass(testClassName: String) {
           val exitCode = block("running test class '$testClassName'") {
             runJUnit5Engine(
+              mainModule = mainModule,
               systemProperties = systemProperties + ("idea.performance.tests.discovery.filter" to "true"),
               jvmArgs = jvmArgs,
               envVariables = envVariables,
@@ -999,7 +1012,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
               modulePath = modulePath,
               testClasspath = testClasspath,
               suiteName = testClassName,
-              methodName = null
+              methodName = null,
+              devBuildServerSettings = null,
             )
           }
           if (exitCode == NO_TESTS_ERROR) throw NoTestsFound()
@@ -1032,6 +1046,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
           val exitCode = block("running tests in package '$packageName'") {
             runJUnit5Engine(
+              mainModule = mainModule,
               systemProperties = systemProperties + ("idea.performance.tests.discovery.filter" to "true"),
               jvmArgs = jvmArgs,
               envVariables = envVariables,
@@ -1039,7 +1054,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
               modulePath = modulePath,
               testClasspath = testClasspath,
               suiteName = "__classes__",
-              methodName = classes.joinToString(";")
+              methodName = classes.joinToString(";"),
+              devBuildServerSettings = null,
             )
           }
           if (exitCode == NO_TESTS_ERROR) throw NoTestsFound()
@@ -1086,6 +1102,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         val exitCode5: Int = if (runJUnit5) {
           block("run junit 5 tests${spanNameSuffix}") {
             runJUnit5Engine(
+              mainModule = mainModule,
               systemProperties = systemProperties + additionalProperties + additionalPropertiesJUnit5,
               jvmArgs = jvmArgs,
               envVariables = envVariables,
@@ -1093,7 +1110,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
               modulePath = modulePath,
               testClasspath = testClasspath,
               suiteName = null,
-              methodName = null
+              methodName = null,
+              devBuildServerSettings = devBuildServerSettings,
             )
           }
         }
@@ -1104,6 +1122,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         val exitCode34: Int = if (runJUnit34) {
           block("run junit 3+4 tests${spanNameSuffix}") {
             runJUnit5Engine(
+              mainModule = mainModule,
               systemProperties = systemProperties + additionalProperties + additionalPropertiesJUnit34,
               jvmArgs = jvmArgs,
               envVariables = envVariables,
@@ -1111,7 +1130,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
               modulePath = modulePath,
               testClasspath = testClasspath,
               suiteName = options.bootstrapSuite,
-              methodName = null
+              methodName = null,
+              devBuildServerSettings = null,
             )
           }
         }
@@ -1182,14 +1202,16 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     return muslClasspathEntries
   }
 
-  private fun runJUnit5Engine(systemProperties: Map<String, String?>,
+  private fun runJUnit5Engine(mainModule: String,
+                              systemProperties: Map<String, String?>,
                               jvmArgs: List<String>,
                               envVariables: Map<String, String>,
                               bootstrapClasspath: List<String>,
                               modulePath: List<String>?,
                               testClasspath: List<String>,
                               suiteName: String?,
-                              methodName: String?): Int {
+                              methodName: String?,
+                              devBuildServerSettings: DevBuildServerSettings?): Int {
     val args = ArrayList<String>()
 
     val classpath = ArrayList<String>(bootstrapClasspath)
@@ -1203,7 +1225,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
     args += "-classpath"
 
-    val classpathForTests = if (LibcImpl.current(OsFamily.currentOs) == LinuxLibcImpl.MUSL) {
+    val useDevBuildServer = devBuildServerSettings != null && suiteName == null
+    val classpathForTests = if (useDevBuildServer) {
+      runBlocking(Dispatchers.Default) { context.getModuleRuntimeClasspath(context.findRequiredModule(devBuildServerSettings.mainClassModule), false) }
+    }
+    else if (LibcImpl.current(OsFamily.currentOs) == LinuxLibcImpl.MUSL) {
       prepareMuslClassPath(classpath)
     } else {
       classpath
@@ -1235,7 +1261,12 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     args += "--add-opens"
     args += "java.base/java.nio.file.spi=ALL-UNNAMED"
 
-    args += if (suiteName == null) "com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath" else "com.intellij.tests.JUnit5TeamCityRunnerForTestAllSuite"
+    if (useDevBuildServer) {
+      devBuildServerSettings.apply(mainModule, args)
+    }
+    else {
+      args += if (suiteName == null) "com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath" else "com.intellij.tests.JUnit5TeamCityRunnerForTestAllSuite"
+    }
 
     if (suiteName != null) {
       args += suiteName
