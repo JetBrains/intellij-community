@@ -111,7 +111,11 @@ object PluginManagerCore {
   private var thirdPartyPluginsNoteAccepted: Boolean? = null
 
   /**
-   * See also [AppMode.isRunningFromDevBuild]
+   * Returns `true` if the IDE is running from source code **without using 'dev build'**.
+   * In this mode a single classloader is used to load all modules and plugins, and the actual layout of class-files and resources differs from the real production layout.
+   * The IDE can be started in this mode from source code using a run configuration without the 'dev build' suffix. Also, tests are often started in this mode.
+   *
+   * See also [AppMode.isRunningFromDevBuild].
    */
   @JvmStatic
   fun isRunningFromSources(): Boolean {
