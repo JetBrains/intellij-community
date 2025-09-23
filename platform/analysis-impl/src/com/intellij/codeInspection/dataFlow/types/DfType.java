@@ -218,6 +218,7 @@ public interface DfType {
    * has either this or other state at the same code location.
    */
   default boolean isMergeable(@NotNull DfType other) {
+    if (other == BOTTOM || other == this) return true;
     return isSuperType(other);
   }
 
