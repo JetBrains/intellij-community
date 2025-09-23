@@ -15,6 +15,7 @@ import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration.Companion.nanoseconds
 
 @ApiStatus.Internal
 object Measurer {
@@ -56,11 +57,15 @@ object Measurer {
   data class FsEventKey(
     val delegateType: DelegateType,
     val operation: Operation,
-    val success: Boolean,
+    val success: Boolean?,
     val repeated: Boolean?
   ) {
     override fun toString(): String {
-      val successKey = if (success) ".success" else ".failure"
+      val successKey = when (success) {
+        true -> ".success"
+        false -> ".failure"
+        null -> ""
+      }
       val repeatedKey = when (repeated) {
         true -> ".repeated"
         false -> ".initial"
@@ -75,8 +80,8 @@ object Measurer {
         it != DelegateType.wsl || SystemInfo.isWindows
       }.flatMap { delegateType ->
         Operation.entries.flatMap { operation ->
-          listOf(true, false).flatMap { success ->
-            val repeatedChoices = if (countUniquePathsEnabled) listOf(null, true, false) else listOf(null)
+          listOf(null, true, false).flatMap { success ->
+            val repeatedChoices = if (countUniquePathsEnabled && success != null) listOf(null, true, false) else listOf(null)
             repeatedChoices.map { repeated ->
               FsEventKey(delegateType, operation, success, repeated)
             }
@@ -101,10 +106,12 @@ object Measurer {
       val keyString = key.toString()
       listOfNotNull("$keyString.count" to {
         extendedFsEventsCounter[key]!!.get()
-      }, "$keyString.duration.nanos" to {
-        extendedFsEventsDurationNanos[key]!!.get()
-      }, ("$keyString.repeat.interval.nanos" to {
-        extendedFsEventsRepeatIntervalNanos[key]!!.get()
+      }, "$keyString.duration.ms" to {
+        extendedFsEventsDurationNanos[key]!!.get().nanoseconds.inWholeMilliseconds
+      }, ("$keyString.repeat.interval.ms" to {
+        val intervalSum = extendedFsEventsRepeatIntervalNanos[key]!!.get().nanoseconds
+        val uniqueCount = extendedFsEventsCounter[key.copy(repeated = false)]!!.get()
+        (intervalSum.div(uniqueCount.coerceAtLeast(1).toDouble())).inWholeMilliseconds
       }).takeIf { key.repeated == true })
     }
   }
@@ -163,9 +170,15 @@ object Measurer {
     )
     extendedFsEventsCounter[key]!!.incrementAndGet()
     extendedFsEventsDurationNanos[key]!!.addAndGet(Duration.between(startTime, endTime).toNanos())
+    run {
+      val keyWithNullRepeatedAndSuccess = key.copy(repeated = null, success = null)
+      extendedFsEventsCounter[keyWithNullRepeatedAndSuccess]!!.incrementAndGet()
+      extendedFsEventsDurationNanos[keyWithNullRepeatedAndSuccess]!!.addAndGet(Duration.between(startTime, endTime).toNanos())
+    }
     if (repeated != null) {
-      extendedFsEventsCounter[key.copy(repeated = null)]!!.incrementAndGet()
-      extendedFsEventsDurationNanos[key.copy(repeated = null)]!!.addAndGet(Duration.between(startTime, endTime).toNanos())
+      val keyWithNullRepeated = key.copy(repeated = null)
+      extendedFsEventsCounter[keyWithNullRepeated]!!.incrementAndGet()
+      extendedFsEventsDurationNanos[keyWithNullRepeated]!!.addAndGet(Duration.between(startTime, endTime).toNanos())
     }
     if (repeated == true) {
       extendedFsEventsRepeatIntervalNanos[key]!!.addAndGet(repeatInterval!!.toNanos())
