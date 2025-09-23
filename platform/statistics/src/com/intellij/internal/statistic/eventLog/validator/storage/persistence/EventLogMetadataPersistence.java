@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.internal.statistic.eventLog.validator.DictionaryStorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
+import com.jetbrains.fus.reporting.jvm.JvmFileStorage;
 import com.jetbrains.fus.reporting.model.dictionaries.RemoteDictionaryList;
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors;
 import org.jetbrains.annotations.NotNull;
@@ -263,7 +264,7 @@ public class EventLogMetadataPersistence extends BaseEventLogMetadataPersistence
     }
     Path dictionariesDir = getDictionariesPath(true);
 
-    dictionaryStorage = new SimpleDictionaryStorage(dictionariesDir.toFile(), Dictionary.AccessMode.RANDOM_FILE_ACCESS);
+    dictionaryStorage = new SimpleDictionaryStorage(new JvmFileStorage(dictionariesDir.getParent()), Dictionary.AccessMode.RANDOM_FILE_ACCESS);
     return dictionaryStorage;
   }
 
@@ -282,7 +283,7 @@ public class EventLogMetadataPersistence extends BaseEventLogMetadataPersistence
     initAllBuiltinDictionaries(tempDictionaryDir);
 
     DictionaryStorage builtinDictionaryStorage = new SimpleDictionaryStorage(
-      tempDictionaryDir.toFile(), Dictionary.AccessMode.RANDOM_FILE_ACCESS
+      new JvmFileStorage(tempDictionaryDir.getParent()), Dictionary.AccessMode.RANDOM_FILE_ACCESS
     );
     RemoteDictionaryList builtinRemoteDictionaryList = readBuiltinDictionaryList();
 
@@ -292,7 +293,7 @@ public class EventLogMetadataPersistence extends BaseEventLogMetadataPersistence
     }
 
     DictionaryStorage localDictionaryStorage = new SimpleDictionaryStorage(
-      dictionariesDir.toFile(), Dictionary.AccessMode.RANDOM_FILE_ACCESS
+      new JvmFileStorage(dictionariesDir.getParent()), Dictionary.AccessMode.RANDOM_FILE_ACCESS
     );
 
     for (String dictionary : builtinRemoteDictionaryList.dictionaries) {
