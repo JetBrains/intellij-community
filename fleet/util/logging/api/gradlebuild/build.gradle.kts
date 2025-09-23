@@ -64,10 +64,12 @@ kotlin {
     api(jps.com.intellij.platform.kotlinx.coroutines.core.jvm134738847.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
       isTransitive = false
     }
+  }
+  sourceSets.jvmMain.dependencies {
     compileOnly(project(":fleet.util.multiplatform"))
   }
   sourceSets.wasmJsMain.dependencies {
-    api(project(":fleet.util.multiplatform"))
+    implementation(project(":fleet.util.multiplatform"))
   }
   // KOTLIN__MARKER_END
 }
