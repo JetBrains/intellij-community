@@ -1,414 +1,296 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.mock;
+package com.intellij.mock
 
-import com.intellij.lang.MetaLanguage;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.impl.AnyModalityState;
-import com.intellij.openapi.components.Service;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import kotlinx.coroutines.CoroutineScope;
-import kotlinx.coroutines.GlobalScope;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.lang.MetaLanguage
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.ApplicationListener
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.impl.AnyModalityState
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.util.concurrency.AppExecutorUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.GlobalScope
+import org.jetbrains.annotations.TestOnly
+import java.awt.Component
+import java.lang.reflect.Modifier
+import java.util.concurrent.Callable
+import java.util.concurrent.Future
+import javax.swing.JComponent
+import javax.swing.SwingUtilities
+import kotlin.concurrent.Volatile
 
-import javax.swing.*;
-import java.awt.*;
-import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
+open class MockApplication(parentDisposable: Disposable) : MockComponentManager(null, parentDisposable), ApplicationEx {
+  companion object {
+    var INSTANCES_CREATED: Int = 0
 
-public class MockApplication extends MockComponentManager implements ApplicationEx {
-  public static int INSTANCES_CREATED;
+    @TestOnly
+    fun setUp(parentDisposable: Disposable): MockApplication {
+      val app = MockApplication(parentDisposable)
+      ApplicationManager.setApplication(app, parentDisposable)
+      return app
+    }
 
-  public MockApplication(@NotNull Disposable parentDisposable) {
-    super(null, parentDisposable);
+    private val logger: Logger
+      get() = Logger.getInstance(MockApplication::class.java)
 
-    INSTANCES_CREATED++;
-    //noinspection TestOnlyProblems
-    Extensions.setRootArea(getExtensionArea(), parentDisposable);
+    @Volatile
+    private var warningLogged = false
   }
 
-  @TestOnly
-  public static @NotNull MockApplication setUp(@NotNull Disposable parentDisposable) {
-    MockApplication app = new MockApplication(parentDisposable);
-    ApplicationManager.setApplication(app, parentDisposable);
-    return app;
+  init {
+    INSTANCES_CREATED++
+    @Suppress("TestOnlyProblems")
+    Extensions.setRootArea(getExtensionArea(), parentDisposable)
   }
 
-  @Override
-  public final @Nullable <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
-    return doGetService(serviceClass, false);
-  }
+  override fun <T> getServiceIfCreated(serviceClass: Class<T?>): T? = doGetService(serviceClass = serviceClass, createIfNeeded = false)
 
-  @Override
-  public final <T> T getService(@NotNull Class<T> serviceClass) {
-    return doGetService(serviceClass, true);
-  }
+  override fun <T> getService(serviceClass: Class<T?>): T? = doGetService(serviceClass = serviceClass, createIfNeeded = true)
 
-  private <T> T doGetService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
-    T service = super.getService(serviceClass);
-    if (service == null &&
-        createIfNeeded &&
-        Modifier.isFinal(serviceClass.getModifiers()) &&
-        serviceClass.isAnnotationPresent(Service.class)) {
-      //noinspection SynchronizeOnThis,SynchronizationOnLocalVariableOrMethodParameter
-      synchronized (serviceClass) {
-        service = super.getService(serviceClass);
-        if (service != null) {
-          return service;
+  private fun <T> doGetService(serviceClass: Class<T?>, createIfNeeded: Boolean): T? {
+    super.getService(serviceClass)?.let {
+      return it
+    }
+    if (createIfNeeded && Modifier.isFinal(serviceClass.modifiers) && serviceClass.isAnnotationPresent(Service::class.java)) {
+      synchronized(serviceClass) {
+        super.getService(serviceClass)?.let {
+          return it
         }
 
-        getPicoContainer().registerComponentImplementation(serviceClass.getName(), serviceClass);
-        return super.getService(serviceClass);
+        picoContainer.registerComponentImplementation(serviceClass.getName(), serviceClass)
+        return super.getService<T?>(serviceClass)
       }
     }
-    return service;
+    return null
   }
 
-  private static @NotNull Logger getLogger() {
-    return Logger.getInstance(MockApplication.class);
+  override fun isInternal(): Boolean = false
+
+  override fun isEAP(): Boolean = false
+
+  override fun getCoroutineScope(): CoroutineScope = GlobalScope
+
+  override fun isDispatchThread(): Boolean = SwingUtilities.isEventDispatchThread()
+
+  override fun isWriteIntentLockAcquired(): Boolean = true
+
+  override fun isActive(): Boolean = true
+
+  override fun assertReadAccessAllowed() {
   }
 
-  @Override
-  public boolean isInternal() {
-    return false;
+  override fun assertWriteAccessAllowed() {
   }
 
-  @Override
-  public boolean isEAP() {
-    return false;
+  override fun assertReadAccessNotAllowed() {
   }
 
-  @Override
-  public @NotNull CoroutineScope getCoroutineScope() {
-    return GlobalScope.INSTANCE;
+  override fun assertIsDispatchThread() {
   }
 
-  @Override
-  public boolean isDispatchThread() {
-    return SwingUtilities.isEventDispatchThread();
+  override fun assertIsNonDispatchThread() {
   }
 
-  @Override
-  public boolean isWriteIntentLockAcquired() {
-    return true;
+  override fun assertWriteIntentLockAcquired() {
   }
 
-  @Override
-  public boolean isActive() {
-    return true;
+  override fun isReadAccessAllowed(): Boolean = true
+
+  override fun isWriteAccessAllowed(): Boolean = true
+
+  override fun isUnitTestMode(): Boolean = true
+
+  override fun isHeadlessEnvironment(): Boolean = true
+
+  override fun isCommandLine(): Boolean = true
+
+  override fun executeOnPooledThread(action: Runnable): Future<*> = AppExecutorUtil.getAppExecutorService().submit(action)
+
+  override fun <T> executeOnPooledThread(action: Callable<T?>): Future<T?> = AppExecutorUtil.getAppExecutorService().submit<T?>(action)
+
+  override fun isRestartCapable(): Boolean = false
+
+  override fun invokeLaterOnWriteThread(action: Runnable) {
+    action.run()
   }
 
-  @Override
-  public void assertReadAccessAllowed() {
+  override fun invokeLaterOnWriteThread(action: Runnable, modal: ModalityState) {
+    action.run()
   }
 
-  @Override
-  public void assertWriteAccessAllowed() {
+  override fun invokeLaterOnWriteThread(action: Runnable, modal: ModalityState, expired: Condition<*>) {
+    action.run()
   }
 
-  @Override
-  public void assertReadAccessNotAllowed() {
+  override fun runReadAction(action: Runnable) {
+    action.run()
   }
 
-  @Override
-  public void assertIsDispatchThread() {
+  override fun <T> runReadAction(computation: Computable<T?>): T? {
+    return computation.compute()
   }
 
-  @Override
-  public void assertIsNonDispatchThread() {
+  override fun <T, E : Throwable?> runReadAction(computation: ThrowableComputable<T?, E?>): T? {
+    return computation.compute()
   }
 
-  @Override
-  public void assertWriteIntentLockAcquired() {
+  override fun runWriteAction(action: Runnable) {
+    action.run()
   }
 
-  @Override
-  public boolean isReadAccessAllowed() {
-    return true;
+  override fun <T> runWriteAction(computation: Computable<T?>): T? {
+    return computation.compute()
   }
 
-  @Override
-  public boolean isWriteAccessAllowed() {
-    return true;
+  override fun <T, E : Throwable?> runWriteAction(computation: ThrowableComputable<T?, E?>): T? {
+    return computation.compute()
   }
 
-  @Override
-  public boolean isUnitTestMode() {
-    return true;
+  override fun acquireReadActionLock(): AccessToken = AccessToken.EMPTY_ACCESS_TOKEN
+
+  override fun acquireWriteActionLock(marker: Class<*>): AccessToken = AccessToken.EMPTY_ACCESS_TOKEN
+
+  override fun hasWriteAction(actionClass: Class<*>): Boolean = false
+
+  override fun addApplicationListener(listener: ApplicationListener) {
   }
 
-  @Override
-  public boolean isHeadlessEnvironment() {
-    return true;
+  override fun addApplicationListener(listener: ApplicationListener, parent: Disposable) {
   }
 
-  @Override
-  public boolean isCommandLine() {
-    return true;
+  override fun removeApplicationListener(listener: ApplicationListener) {
   }
 
-  @Override
-  public @NotNull Future<?> executeOnPooledThread(@NotNull Runnable action) {
-    return AppExecutorUtil.getAppExecutorService().submit(action);
+  override fun getStartTime(): Long = 0
+
+  override fun getIdleTime(): Long = 0
+
+  override fun getNoneModalityState(): ModalityState = ModalityState.nonModal()
+
+  override fun invokeLater(runnable: Runnable, expired: Condition<*>) {
+    logInsufficientIsolation("invokeLater", runnable, expired)
+    SwingUtilities.invokeLater(runnable)
   }
 
-  @Override
-  public @NotNull <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
-    return AppExecutorUtil.getAppExecutorService().submit(action);
+  override fun invokeLater(runnable: Runnable, state: ModalityState, expired: Condition<*>) {
+    logInsufficientIsolation("invokeLater", runnable, state, expired)
+    SwingUtilities.invokeLater(runnable)
   }
 
-  @Override
-  public boolean isRestartCapable() {
-    return false;
+  override fun invokeLater(runnable: Runnable) {
+    logInsufficientIsolation("invokeLater", runnable)
+    SwingUtilities.invokeLater(runnable)
   }
 
-  @Override
-  public void invokeLaterOnWriteThread(@NotNull Runnable action) {
-    action.run();
+  override fun invokeLater(runnable: Runnable, state: ModalityState) {
+    logInsufficientIsolation("invokeLater", runnable, state)
+    SwingUtilities.invokeLater(runnable)
   }
 
-  @Override
-  public void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal) {
-    action.run();
-  }
-
-  @Override
-  public void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired) {
-    action.run();
-  }
-
-  @Override
-  public void runReadAction(@NotNull Runnable action) {
-    action.run();
-  }
-
-  @Override
-  public <T> T runReadAction(@NotNull Computable<T> computation) {
-    return computation.compute();
-  }
-
-  @Override
-  public <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    return computation.compute();
-  }
-
-  @Override
-  public void runWriteAction(@NotNull Runnable action) {
-    action.run();
-  }
-
-  @Override
-  public <T> T runWriteAction(@NotNull Computable<T> computation) {
-    return computation.compute();
-  }
-
-  @Override
-  public <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    return computation.compute();
-  }
-
-  @Override
-  public @NotNull AccessToken acquireReadActionLock() {
-    return AccessToken.EMPTY_ACCESS_TOKEN;
-  }
-
-  @Override
-  public @NotNull AccessToken acquireWriteActionLock(@Nullable Class<?> marker) {
-    return AccessToken.EMPTY_ACCESS_TOKEN;
-  }
-
-  @Override
-  public boolean hasWriteAction(@NotNull Class<?> actionClass) {
-    return false;
-  }
-
-  @Override
-  public void addApplicationListener(@NotNull ApplicationListener listener) {
-  }
-
-  @Override
-  public void addApplicationListener(@NotNull ApplicationListener listener, @NotNull Disposable parent) {
-  }
-
-  @Override
-  public void removeApplicationListener(@NotNull ApplicationListener listener) {
-  }
-
-  @Override
-  public long getStartTime() {
-    return 0;
-  }
-
-  @Override
-  public long getIdleTime() {
-    return 0;
-  }
-
-  @Override
-  public @NotNull ModalityState getNoneModalityState() {
-    return ModalityState.nonModal();
-  }
-
-  @Override
-  public void invokeLater(final @NotNull Runnable runnable, final @NotNull Condition<?> expired) {
-    logInsufficientIsolation("invokeLater", runnable, expired);
-    SwingUtilities.invokeLater(runnable);
-  }
-
-  @Override
-  public void invokeLater(final @NotNull Runnable runnable, final @NotNull ModalityState state, final @NotNull Condition<?> expired) {
-    logInsufficientIsolation("invokeLater", runnable, state, expired);
-    SwingUtilities.invokeLater(runnable);
-  }
-
-  @Override
-  public void invokeLater(@NotNull Runnable runnable) {
-    logInsufficientIsolation("invokeLater", runnable);
-    SwingUtilities.invokeLater(runnable);
-  }
-
-  @Override
-  public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state) {
-    logInsufficientIsolation("invokeLater", runnable, state);
-    SwingUtilities.invokeLater(runnable);
-  }
-
-  @Override
-  public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+  override fun invokeAndWait(runnable: Runnable, modalityState: ModalityState) {
     if (isDispatchThread()) {
-      runnable.run();
+      runnable.run()
     }
     else {
       try {
-        SwingUtilities.invokeAndWait(runnable);
+        SwingUtilities.invokeAndWait(runnable)
       }
-      catch (Exception e) {
-        throw new RuntimeException(e);
+      catch (e: Exception) {
+        throw RuntimeException(e)
       }
     }
   }
 
-  @Override
-  public void invokeAndWait(@NotNull Runnable runnable) throws ProcessCanceledException {
-    invokeAndWait(runnable, getDefaultModalityState());
+  @Throws(ProcessCanceledException::class)
+  override fun invokeAndWait(runnable: Runnable) {
+    invokeAndWait(runnable, defaultModalityState)
   }
 
-  @Override
-  public @NotNull ModalityState getCurrentModalityState() {
-    return getNoneModalityState();
+  override fun getCurrentModalityState(): ModalityState = getNoneModalityState()
+
+  override fun getAnyModalityState(): ModalityState = AnyModalityState.ANY
+
+  override fun getModalityStateForComponent(c: Component): ModalityState = getNoneModalityState()
+
+  override fun getDefaultModalityState(): ModalityState = getNoneModalityState()
+
+  override fun saveAll() {
   }
 
-  @Override
-  public @NotNull ModalityState getAnyModalityState() {
-    return AnyModalityState.ANY;
+  override fun saveSettings() {
   }
 
-  @Override
-  public @NotNull ModalityState getModalityStateForComponent(@NotNull Component c) {
-    return getNoneModalityState();
+  override fun holdsReadLock(): Boolean {
+    return false
   }
 
-  @Override
-  public @NotNull ModalityState getDefaultModalityState() {
-    return getNoneModalityState();
+  override fun restart(exitConfirmed: Boolean) {
   }
 
-  @Override
-  public void saveAll() {
+  override fun restart(exitConfirmed: Boolean, elevate: Boolean) {
   }
 
-  @Override
-  public void saveSettings() {
+  override fun runProcessWithProgressSynchronously(
+    process: Runnable,
+    progressTitle: String,
+    canBeCanceled: Boolean,
+    modal: Boolean,
+    project: Project?,
+    parentComponent: JComponent?,
+    cancelText: String?
+  ): Boolean {
+    return false
   }
 
-  @Override
-  public boolean holdsReadLock() {
-    return false;
+  override fun assertIsDispatchThread(component: JComponent?) {
   }
 
-  @Override
-  public void restart(boolean exitConfirmed) {
+  override fun tryRunReadAction(runnable: Runnable): Boolean {
+    runReadAction(runnable)
+    return true
   }
 
-  @Override
-  public void restart(boolean exitConfirmed, boolean elevate) {
+  override fun isWriteActionInProgress(): Boolean {
+    return false
   }
 
-  @Override
-  public boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                     @NotNull String progressTitle,
-                                                     boolean canBeCanceled,
-                                                     boolean modal,
-                                                     @Nullable Project project,
-                                                     @Nullable JComponent parentComponent,
-                                                     @Nullable String cancelText) {
-    return false;
+  override fun isWriteActionPending(): Boolean {
+    return false
   }
 
-  @Override
-  public void assertIsDispatchThread(final @Nullable JComponent component) {
+  override fun isSaveAllowed(): Boolean {
+    return true
   }
 
-  @Override
-  public boolean tryRunReadAction(@NotNull Runnable runnable) {
-    runReadAction(runnable);
-    return true;
+  override fun setSaveAllowed(value: Boolean) {
   }
 
-  @Override
-  public boolean isWriteActionInProgress() {
-    return false;
-  }
-
-  @Override
-  public boolean isWriteActionPending() {
-    return false;
-  }
-
-  @Override
-  public boolean isSaveAllowed() {
-    return true;
-  }
-
-  @Override
-  public void setSaveAllowed(boolean value) {
-  }
-
-  @Override
-  public void dispose() {
+  override fun dispose() {
     // A mock application may cause incorrect caching during tests. It does not fire extension point removed events.
     // Ensure that we have cached against correct application.
-    MetaLanguage.clearAllMatchingMetaLanguagesCache();
-    super.dispose();
+    MetaLanguage.clearAllMatchingMetaLanguagesCache()
+    super.dispose()
   }
 
-  private static volatile boolean warningLogged = false;
-
-  @SuppressWarnings("SameParameterValue")
-  private void logInsufficientIsolation(String methodName, Object... args) {
+  private fun logInsufficientIsolation(methodName: String?, vararg args: Any?) {
     if (warningLogged || !isUnitTestMode()) {
-      return;
+      return
     }
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    warningLogged = true;
-    getLogger().warn("Attempt to execute method \"" + methodName + "\" with arguments `" +
-                     Arrays.toString(args) + "` within a MockApplication.\n" +
-                     "This is likely caused by an improper test isolation. Please consider writing tests with JUnit 5 fixtures.",
-                     new Throwable());
+
+    warningLogged = true
+    logger.warn(
+      "Attempt to execute method \"" + methodName + "\" with arguments `" + args.contentToString() + "` within a MockApplication.\n" +
+      "This is likely caused by an improper test isolation. Please consider writing tests with JUnit 5 fixtures.",
+      Throwable())
   }
 }
