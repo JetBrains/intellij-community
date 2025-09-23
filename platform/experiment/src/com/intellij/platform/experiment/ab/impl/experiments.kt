@@ -2,7 +2,7 @@
 package com.intellij.platform.experiment.ab.impl
 
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
-import com.intellij.openapi.application.ApplicationInfo.getInstance
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -72,13 +72,19 @@ internal fun ABExperimentOption.reportableName(): String {
 
 private val thisUserDecision: ABExperimentDecision by lazy {
   val currentBucket = getUserBucketNumber()
+  val currentVersion = ApplicationInfo.getInstance().fullVersion
   val option = experimentsPartition.find {
-    it.experimentBuckets.contains(currentBucket) || it.controlBuckets.contains(currentBucket)
+    (it.majorVersion == null || currentVersion.startsWith(it.majorVersion)) &&
+    (it.experimentBuckets.contains(currentBucket) || it.controlBuckets.contains(currentBucket))
   } ?: return@lazy ABExperimentDecision(option = UNASSIGNED, isControlGroup = true, bucketNumber = currentBucket)
   ABExperimentDecision(option = option.experiment, isControlGroup = option.controlBuckets.contains(currentBucket), bucketNumber = currentBucket)
 }
 
-data class ExperimentAssignment(val experiment: ABExperimentOption, val experimentBuckets: Set<Int>, val controlBuckets: Set<Int>)
+data class ExperimentAssignment(
+  val experiment: ABExperimentOption,
+  val experimentBuckets: Set<Int>,
+  val controlBuckets: Set<Int>,
+  val majorVersion: String? = null)
 
 internal fun getUserBucketNumber(): Int {
   val overridingBucket = Integer.getInteger("ide.ab.test.overriding.bucket")
@@ -96,7 +102,7 @@ internal fun getUserBucketNumber(): Int {
 }
 
 private fun getDeviceIdPurpose(): String {
-  return "A/B Experiment" + getInstance().shortVersion
+  return "A/B Experiment" + ApplicationInfo.getInstance().shortVersion
 }
 
 private val LOG = logger<ABExperimentOption>()
