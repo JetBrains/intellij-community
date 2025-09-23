@@ -412,8 +412,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       updatePanelLayout();
 
       busConnection.subscribe(ChangesViewModifier.TOPIC, () -> scheduleRefresh());
-
-      scheduleRefresh();
     }
 
     private boolean performHoverAction() {

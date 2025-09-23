@@ -87,6 +87,8 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisp
     toolbarActionGroup.addAll(createChangesToolbarActions(changesView))
 
     Initializer.EP_NAME.forEachExtensionSafe { it.init(scope, this) }
+
+    scheduleRefresh()
   }
 
   @CalledInAny
