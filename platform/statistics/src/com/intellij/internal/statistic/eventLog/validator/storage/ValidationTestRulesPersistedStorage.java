@@ -46,8 +46,9 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
   }
 
   @Override
-  public void update() {
+  public boolean update() {
     updateValidators();
+    return true;
   }
 
   @Override

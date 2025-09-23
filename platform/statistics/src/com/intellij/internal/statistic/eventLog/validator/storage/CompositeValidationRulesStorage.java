@@ -31,9 +31,8 @@ public class CompositeValidationRulesStorage implements IntellijValidationRulesS
   }
 
   @Override
-  public void update() {
-    myRulesStorage.update();
-    myTestRulesStorage.update();
+  public boolean update() {
+    return myRulesStorage.update() && myRulesStorage.update();
   }
 
   @Override

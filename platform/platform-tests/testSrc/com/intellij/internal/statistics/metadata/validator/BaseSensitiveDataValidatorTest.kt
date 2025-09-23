@@ -90,7 +90,7 @@ internal class TestSensitiveDataValidator(storage: ValidationRulesPersistedStora
   fun getEventRules(group: EventLogGroup): Array<FUSRule> {
     val rules = validationRulesStorage.getGroupRules(group.id)
 
-    return if (rules == null) FUSRule.EMPTY_ARRAY else rules.eventIdRules
+    return if (rules == null) FUSRule.EMPTY_ARRAY else rules.getEventIdRules()
   }
 
   fun getEventDataRules(group: EventLogGroup): Map<String, Array<FUSRule>> {

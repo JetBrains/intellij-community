@@ -105,11 +105,12 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
   }
 
   @Override
-  public void update() {
+  public boolean update() {
     EventLogConfigOptionsService.getInstance().updateOptions(myRecorderId, myMetadataLoader);
 
     updateMetadata();
     updateDictionaries();
+    return true;
   }
 
   private void updateMetadata() {
