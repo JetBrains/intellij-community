@@ -120,7 +120,7 @@ jobs:
         run: ./scripts/annotate-api-dump-changes.main.kts
 
   check_ij_api_dumps:
-    name: Check that IJP API dumps are up-to-date
+    name: Check that the IJP API dumps are up-to-date
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -142,9 +142,51 @@ jobs:
       - name: Grant execute permission to the validation script
         run: chmod +x platform/jewel/scripts/check-api-dumps.main.kts
 
-      - name: Check that IJP API dumps are up-to-date
+      - name: Check that the IJP API dumps are up-to-date
         run: ./scripts/check-api-dumps.main.kts
         working-directory: platform/jewel
+
+  check_bazel_build:
+    name: Check that the Bazel build is up-to-date
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - uses: actions/checkout@v4
+        name: Check out repository
+
+      - uses: actions/checkout@v4
+        name: Checkout JetBrains/android submodule
+        with:
+          repository: JetBrains/android
+          path: android
+          ref: master
+
+      - name: Set up JBR 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: jetbrains
+          cache: gradle
+
+      - name: Grant execute permission to the Bazel build generator script
+        run: chmod +x build/jpsModelToBazelCommunityOnly.cmd
+
+      - name: Run the Bazel build generator script
+        run: ./build/jpsModelToBazelCommunityOnly.cmd
+
+      - name: Check that the Bazel build is up-to-date (except android submodule)
+        run: |
+          CHANGED_BAZEL_FILES=$(git diff --name-only HEAD | grep -E '\.(bzl|bazel)$|^BUILD|^WORKSPACE' | grep -v '^android/' || true)
+          if [ -n "$CHANGED_BAZEL_FILES" ]; then
+            echo "Error: Bazel files need to be updated:"
+            echo "$CHANGED_BAZEL_FILES"
+            echo "Run the jpsModelToBazelCommunityOnly.cmd script and commit the changes outside of the android submodule."
+            exit 1
+          fi
+          echo "Bazel build files look up-to-date."
 
   metalava:
     name: Check for breaking API changes with Metalava
