@@ -14,6 +14,8 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.FinalLayoutWrapper
 import com.intellij.util.ui.JBDimension
@@ -119,6 +121,8 @@ open class InlineBanner private constructor(
     myActionPanel.isVisible = false
     myActionPanel.add(DropDownAction())
     centerPanel.add(myActionPanel)
+
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
   }
 
   private fun createInplaceButton(tooltip: @Nls String, icon: Icon, listener: ActionListener): JComponent {
