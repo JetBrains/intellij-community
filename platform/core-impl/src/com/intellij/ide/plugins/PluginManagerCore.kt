@@ -1087,14 +1087,18 @@ fun pluginRequiresUltimatePlugin(rootDescriptor: IdeaPluginDescriptorImpl,
   }
 }
 
+/**
+ * Checks if the class is a part of the platform or included to a built-in plugin provided by JetBrains vendor.
+ */
 @ApiStatus.Internal
 @IntellijInternalApi
-fun isPlatformOrJetBrainsBundled(aClass: Class<*>): Boolean {
+fun isPlatformOrJetBrainsDistributionPlugin(aClass: Class<*>): Boolean {
   val classLoader = aClass.classLoader
   when {
     classLoader is PluginAwareClassLoader -> {
       val plugin = classLoader.pluginDescriptor
-      return plugin.isBundled && PluginManagerCore.isDevelopedByJetBrains(plugin)
+      return (plugin.isBundled || PluginManagerCore.isUpdatedBundledPlugin(plugin))
+             && PluginManagerCore.isDevelopedByJetBrains(plugin)
     }
     PluginManagerCore.isRunningFromSources() -> {
       return true

@@ -22,7 +22,7 @@ import java.util.Locale;
 import java.util.UUID;
 import java.util.prefs.Preferences;
 
-import static com.intellij.ide.plugins.PluginManagerCoreKt.isPlatformOrJetBrainsBundled;
+import static com.intellij.ide.plugins.PluginManagerCoreKt.isPlatformOrJetBrainsDistributionPlugin;
 
 public final class DeviceIdManager {
   private static final Logger LOG = Logger.getInstance(DeviceIdManager.class);
@@ -61,7 +61,7 @@ public final class DeviceIdManager {
       if (token == null) {
         throw new InvalidDeviceIdTokenException("Cannot access base device id from unknown class");
       }
-      else if (!isPlatformOrJetBrainsBundled(token.getClass())) {
+      else if (!isPlatformOrJetBrainsDistributionPlugin(token.getClass())) {
         throw new InvalidDeviceIdTokenException("Cannot access base device id from " + token.getClass().getName());
       }
     }
