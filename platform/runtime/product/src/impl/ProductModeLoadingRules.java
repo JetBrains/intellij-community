@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
  * a module is compatible with explicitly in the future.
  */
 @ApiStatus.Internal
-public final class ProductModes {
-  private ProductModes() {
+public final class ProductModeLoadingRules {
+  private ProductModeLoadingRules() {
   }
 
   /**

@@ -6,7 +6,7 @@ import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 
 class ProductModeMatcher(productMode: ProductMode) {
-  private val myIncompatibleRootModule: String = ProductModes.getIncompatibleRootModule(productMode).stringId
+  private val myIncompatibleRootModule: String = ProductModeLoadingRules.getIncompatibleRootModule(productMode).stringId
   private val myCache: MutableMap<String, Boolean> = mutableMapOf()
   val unmatchedModules: MutableMap<RuntimeModuleId, List<RuntimeModuleId>> = mutableMapOf()
 
