@@ -31,7 +31,7 @@ import kotlin.io.path.extension
 internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeModuleRepository) : ProductLoadingStrategy() {
   private val currentMode by lazy {
     val currentModeId = System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.MONOLITH.id)
-    val currentMode = ProductMode.entries.find { it.id == currentModeId }
+    val currentMode = ProductMode.findById(currentModeId)
     if (currentMode == null) {
       error("Unknown mode '$currentModeId' specified in '$PLATFORM_PRODUCT_MODE_PROPERTY' system property")
     }

@@ -6,6 +6,8 @@ import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.platform.runtime.product.ProductMode.*;
+
 /**
  * This class is used to determine whether a module should be loaded based on the current {@link ProductMode}.
  * Currently, this is determined by the presence of specific modules in dependencies. We can change this and require to specify modes 
@@ -20,14 +22,18 @@ public final class ProductModeLoadingRules {
    * Returns the module which presence in the dependencies indicates that a module isn't compatible with the given {@code mode}.
    */
   public static @NotNull RuntimeModuleId getIncompatibleRootModule(@NotNull ProductMode mode) {
-    switch (mode) {
-      case FRONTEND: return RuntimeModuleId.module("intellij.platform.backend");
-      
-      case MONOLITH: return RuntimeModuleId.module("intellij.platform.frontend.split");
-
-      //currently we use the same modules in 'backend' and 'monolith' modes, in the future we may disable some UI-only modules in 'backend' mode
-      case BACKEND: return RuntimeModuleId.module("intellij.platform.frontend.split");
+    if (mode.equals(FRONTEND)) {
+      return RuntimeModuleId.module("intellij.platform.backend");
     }
-    throw new AssertionError(mode);
+    else if (mode.equals(MONOLITH)) {
+      //currently we use the same modules in 'backend' and 'monolith' modes, in the future we may disable some UI-only modules in 'backend' mode
+      return RuntimeModuleId.module("intellij.platform.frontend.split");
+    }
+    else if (mode.equals(BACKEND)) {
+      return RuntimeModuleId.module("intellij.platform.frontend.split");
+    }
+    else {
+      throw new AssertionError("Unexpected value: " + mode);
+    }
   }
 }
