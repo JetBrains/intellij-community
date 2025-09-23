@@ -36,7 +36,7 @@ object KotlinPluginLayoutModeProvider {
 
     private fun computeDefaultMode(): KotlinPluginLayoutMode {
         val isRunningFromSources =
-            !AppMode.isDevServer() && Files.isDirectory(Path.of(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER))
+          !AppMode.isRunningFromDevBuild() && Files.isDirectory(Path.of(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER))
         return if (isRunningFromSources) KotlinPluginLayoutMode.SOURCES else KotlinPluginLayoutMode.INTELLIJ
     }
 
