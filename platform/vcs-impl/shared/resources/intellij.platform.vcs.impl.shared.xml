@@ -42,6 +42,10 @@
     <extensionPoint name="vcs.changes.changesTreeNodeFactory"
                     interface="com.intellij.platform.vcs.impl.shared.changes.ChangesTreeNodeFactory"
                     dynamic="true"/>
+
+    <extensionPoint name="vcs.commitChangesViewInitializer"
+                    interface="com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel$Initializer"
+                    dynamic="true"/>
   </extensionPoints>
 
   <actions>

@@ -21,7 +21,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
+import javax.swing.*;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
@@ -46,7 +48,7 @@ class DummyChangesView implements ChangesViewEx {
   }
 
   @Override
-  public void updateProgressText(String text, boolean isError) {
+  public void updateProgressComponent(@NotNull List<Supplier<JComponent>> progress) {
   }
 
   @Override

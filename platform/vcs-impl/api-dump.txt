@@ -783,7 +783,7 @@ com.intellij.openapi.vcs.changes.ChangesViewI
 - a:selectFile(com.intellij.openapi.vfs.VirtualFile):V
 - a:setBusy(Z):V
 - a:setGrouping(java.lang.String):V
-- a:updateProgressText(java.lang.String,Z):V
+- a:updateProgressComponent(java.util.List):V
 c:com.intellij.openapi.vcs.changes.ChangesViewManager
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.vcs.changes.ChangesViewEx
@@ -804,7 +804,7 @@ c:com.intellij.openapi.vcs.changes.ChangesViewManager
 - selectFile(com.intellij.openapi.vfs.VirtualFile):V
 - setBusy(Z):V
 - setGrouping(java.lang.String):V
-- updateProgressText(java.lang.String,Z):V
+- updateProgressComponent(java.util.List):V
 f:com.intellij.openapi.vcs.changes.ChangesViewManager$ChangesViewToolWindowPanel
 - com.intellij.openapi.ui.SimpleToolWindowPanel
 - com.intellij.openapi.Disposable
@@ -818,7 +818,6 @@ f:com.intellij.openapi.vcs.changes.ChangesViewManager$ChangesViewToolWindowPanel
 - selectFile(com.intellij.openapi.vfs.VirtualFile):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - updateCommitWorkflow():V
-- updateProgressText(java.lang.String,Z):V
 com.intellij.openapi.vcs.changes.ChangesViewManager$ChangesViewToolWindowPanel$Listener
 - java.util.EventListener
 - a:allowExcludeFromCommitChanged():V

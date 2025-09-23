@@ -9,7 +9,9 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangesViewModifier.ChangesViewModifierListener
@@ -44,7 +46,7 @@ import javax.swing.tree.DefaultTreeModel
 
 @ApiStatus.Internal
 class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisposable: Disposable) : ChangesViewPanel(changesView), Disposable {
-  private val project get() = changesView.project
+  val project: Project get() = changesView.project
   private val settings get() = ChangesViewSettings.getInstance(project)
 
   private val scope = project.service<ScopeProvider>().cs.childScope("CommitChangesListWithToolbarPanel")
@@ -83,6 +85,8 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisp
                                        Runnable { scheduleRefresh() })
 
     toolbarActionGroup.addAll(createChangesToolbarActions(changesView))
+
+    Initializer.EP_NAME.forEachExtensionSafe { it.init(scope, this) }
   }
 
   @CalledInAny
@@ -198,6 +202,14 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisp
     fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>)
 
     class ExtendedTreeModel(val changeLists: List<LocalChangeList>, val unversionedFiles: List<FilePath>, val treeModel: DefaultTreeModel)
+  }
+
+  interface Initializer {
+    fun init(scope: CoroutineScope, panel: CommitChangesViewWithToolbarPanel)
+
+    companion object {
+      internal val EP_NAME = ExtensionPointName<Initializer>("com.intellij.vcs.commitChangesViewInitializer")
+    }
   }
 
   @Service(Service.Level.PROJECT)

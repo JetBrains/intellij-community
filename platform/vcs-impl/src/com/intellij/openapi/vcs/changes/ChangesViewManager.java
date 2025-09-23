@@ -33,7 +33,6 @@ import com.intellij.platform.vcs.impl.shared.RdLocalChanges;
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys;
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings;
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
-import com.intellij.problems.ProblemListener;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
@@ -61,8 +60,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EventListener;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -206,9 +207,9 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   }
 
   @Override
-  public void updateProgressText(@NlsContexts.Label String text, boolean isError) {
+  public void updateProgressComponent(@NotNull List<Supplier<JComponent>> progress) {
     if (myToolWindowPanel == null) return;
-    myToolWindowPanel.updateProgressText(text, isError);
+    myToolWindowPanel.updateProgressComponent(progress);
   }
 
   @Override
@@ -357,7 +358,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
       // ChangesViewPanel is used for a singular ChangesViewToolWindowPanel instance. Cleanup is not needed.
       myView = myChangesPanel.getChangesView();
-      ChangesViewDnDSupport.install(myProject, myView, this);
       registerShortcuts(this);
 
       ApplicationManager.getApplication().getMessageBus().connect(project)
@@ -410,20 +410,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
       subscribeOnVcsToolWindowLayoutChanges(busConnection, this::updatePanelLayout);
       updatePanelLayout();
-
-      busConnection.subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
-      busConnection.subscribe(ProblemListener.TOPIC, new ProblemListener() {
-        @Override
-        public void problemsAppeared(@NotNull VirtualFile file) {
-          refreshChangesViewNodeAsync(file);
-        }
-
-        @Override
-        public void problemsDisappeared(@NotNull VirtualFile file) {
-          refreshChangesViewNodeAsync(file);
-        }
-      });
-      busConnection.subscribe(ChangeListListener.TOPIC, new MyChangeListListener());
 
       busConnection.subscribe(ChangesViewModifier.TOPIC, () -> scheduleRefresh());
 
@@ -657,10 +643,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       });
     }
 
-    public void updateProgressText(@NlsContexts.Label String text, boolean isError) {
-      updateProgressComponent(Collections.singletonList(createTextStatusFactory(text, isError)));
-    }
-
     public void scheduleRefresh() {
       myChangesPanel.scheduleRefresh();
     }
@@ -688,18 +670,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       TreeUtil.selectPaths(myView, paths);
     }
 
-
-    public void refreshChangesViewNodeAsync(@NotNull VirtualFile file) {
-      invokeLater(() -> refreshChangesViewNode(file));
-    }
-
-    private void refreshChangesViewNode(@NotNull VirtualFile file) {
-      ChangesBrowserNode<?> node = findNodeForFile(file);
-      if (node == null) return;
-
-      myView.getModel().nodeChanged(node);
-    }
-
     private @Nullable ChangesBrowserNode<?> findNodeForFile(@NotNull VirtualFile file) {
       FilePath filePath = VcsUtil.getFilePath(file);
       DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
@@ -709,33 +679,8 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       });
     }
 
-    private void invokeLater(Runnable runnable) {
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.nonModal(), myProject.getDisposed());
-    }
-
     private void invokeLaterIfNeeded(Runnable runnable) {
       ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), myProject.getDisposed(), runnable);
-    }
-
-    private class MyChangeListListener extends ChangeListAdapter {
-      @Override
-      public void changeListsChanged() {
-        scheduleRefresh();
-      }
-
-      @Override
-      public void unchangedFileStatusChanged() {
-        scheduleRefresh();
-      }
-
-      @Override
-      public void changedFileStatusChanged() {
-        myChangesPanel.setBusy(false);
-        scheduleRefresh();
-
-        ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-        updateProgressComponent(changeListManager.getAdditionalUpdateInfo());
-      }
     }
 
     public interface Listener extends EventListener {
