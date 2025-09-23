@@ -46,6 +46,11 @@
     <extensionPoint name="vcs.commitChangesViewInitializer"
                     interface="com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel$Initializer"
                     dynamic="true"/>
+
+    <extensionPoint name="vcs.changes.changesViewModifier"
+                    interface="com.intellij.openapi.vcs.changes.ChangesViewModifier"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
   </extensionPoints>
 
   <actions>

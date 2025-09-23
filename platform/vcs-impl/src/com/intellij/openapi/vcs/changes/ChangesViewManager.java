@@ -120,7 +120,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
   public ChangesViewManager(@NotNull Project project) {
     myProject = project;
-    ChangesViewModifier.KEY.addChangeListener(project, this::resetViewImmediatelyAndRefreshLater, this);
 
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
     busConnection.subscribe(ChangesViewWorkflowManager.TOPIC, () -> updateCommitWorkflow());
@@ -410,8 +409,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
       subscribeOnVcsToolWindowLayoutChanges(busConnection, this::updatePanelLayout);
       updatePanelLayout();
-
-      busConnection.subscribe(ChangesViewModifier.TOPIC, () -> scheduleRefresh());
     }
 
     private boolean performHoverAction() {

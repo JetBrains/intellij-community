@@ -88,6 +88,9 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisp
 
     Initializer.EP_NAME.forEachExtensionSafe { it.init(scope, this) }
 
+    ChangesViewModifier.KEY.addChangeListener(project, { resetViewImmediatelyAndRefreshLater() }, this)
+    project.messageBus.connect(scope).subscribe(ChangesViewModifier.TOPIC, ChangesViewModifierListener { scheduleRefresh() })
+
     scheduleRefresh()
   }
 

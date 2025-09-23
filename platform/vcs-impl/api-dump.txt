@@ -833,13 +833,6 @@ c:com.intellij.openapi.vcs.changes.ChangesViewManager$DisplayNameSupplier
 - java.util.function.Supplier
 - <init>(com.intellij.openapi.project.Project):V
 - get():java.lang.String
-com.intellij.openapi.vcs.changes.ChangesViewModifier
-- sf:KEY:com.intellij.openapi.extensions.ProjectExtensionPointName
-- sf:TOPIC:com.intellij.util.messages.Topic
-- modifyTreeModelBuilder(com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder):V
-com.intellij.openapi.vcs.changes.ChangesViewModifier$ChangesViewModifierListener
-- java.util.EventListener
-- a:updated():V
 Fa:com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 - sf:TOPIC:com.intellij.util.messages.Topic
 - f:getCommitWorkflowHandler():com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler

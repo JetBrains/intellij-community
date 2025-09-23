@@ -74,6 +74,13 @@ f:com.intellij.openapi.vcs.changes.ChangeListData$Companion
 f:com.intellij.openapi.vcs.changes.ChangeListDataKt
 - sf:getAuthor(com.intellij.openapi.vcs.changes.LocalChangeList):com.intellij.vcs.log.VcsUser
 - sf:getAuthorDate(com.intellij.openapi.vcs.changes.LocalChangeList):java.util.Date
+com.intellij.openapi.vcs.changes.ChangesViewModifier
+- sf:KEY:com.intellij.openapi.extensions.ProjectExtensionPointName
+- sf:TOPIC:com.intellij.util.messages.Topic
+- modifyTreeModelBuilder(com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder):V
+com.intellij.openapi.vcs.changes.ChangesViewModifier$ChangesViewModifierListener
+- java.util.EventListener
+- a:updated():V
 f:com.intellij.openapi.vcs.changes.FilePathsHelper
 - s:convertPath(com.intellij.openapi.vcs.FilePath):java.lang.String
 - s:convertPath(java.lang.String):java.lang.String
