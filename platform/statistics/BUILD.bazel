@@ -40,15 +40,13 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
-    "@lib//:com-jetbrains-fus-reporting-model",
-    "@lib//:com-jetbrains-fus-reporting-serialization-kotlin",
-    "@lib//:com-jetbrains-fus-reporting-connection-client",
-    "@lib//:com-jetbrains-fus-reporting-configuration",
-    "@lib//:com-jetbrains-fus-reporting-ap-validation",
+    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-serialization-jackson",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ],
   exports = [
-    "@lib//:com-jetbrains-fus-reporting-model",
-    "@lib//:com-jetbrains-fus-reporting-ap-validation",
+    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ]
 )
 
@@ -87,15 +85,13 @@ jvm_library(
     "@lib//:assert_j",
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
-    "@lib//:com-jetbrains-fus-reporting-model",
-    "@lib//:com-jetbrains-fus-reporting-serialization-kotlin",
-    "@lib//:com-jetbrains-fus-reporting-connection-client",
-    "@lib//:com-jetbrains-fus-reporting-configuration",
-    "@lib//:com-jetbrains-fus-reporting-ap-validation",
+    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-serialization-jackson",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ],
   exports = [
-    "@lib//:com-jetbrains-fus-reporting-model",
-    "@lib//:com-jetbrains-fus-reporting-ap-validation",
+    "@lib//:com-jetbrains-fus-reporting-api",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation-all",
   ]
 )
 ### auto-generated section `build intellij.platform.statistics` end
