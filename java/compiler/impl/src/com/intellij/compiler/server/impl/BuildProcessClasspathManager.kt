@@ -143,7 +143,7 @@ private fun findClassesRoots(relativePath: String, plugin: IdeaPluginDescriptor,
     return listOf(jarFile.toString())
   }
 
-  if (AppMode.isDevServer()) {
+  if (AppMode.isRunningFromDevBuild()) {
     check(Files.isDirectory(baseFile))
     return listOf(baseFile.toString())
   }

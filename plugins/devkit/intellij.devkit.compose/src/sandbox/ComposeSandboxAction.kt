@@ -28,7 +28,7 @@ internal class ComposeSandboxAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     // only needed when we develop a plugin, hide from unrelated projects
     e.presentation.isEnabledAndVisible = e.project != null
-                                         && (PluginManagerCore.isRunningFromSources() || AppMode.isDevServer())
+                                         && (PluginManagerCore.isRunningFromSources() || AppMode.isRunningFromDevBuild())
   }
 
   override fun actionPerformed(e: AnActionEvent) {
