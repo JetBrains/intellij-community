@@ -246,6 +246,7 @@ com.intellij.lang.SyntaxTreeBuilder
 - a:rawTokenIndex():I
 - a:rawTokenTypeStart(I):I
 - a:remapCurrentToken(com.intellij.psi.tree.IElementType):V
+- remapCurrentTokenAndRestoreOnRollback(com.intellij.psi.tree.IElementType):V
 - a:setDebugMode(Z):V
 - a:setTokenTypeRemapper(com.intellij.lang.ITokenTypeRemapper):V
 - a:setWhitespaceSkippedCallback(com.intellij.lang.WhitespaceSkippedCallback):V
