@@ -596,6 +596,12 @@ public final class PyTypeChecker {
         if (protocolMember.isDeletable() && !subclassElementMember.isDeletable()) {
           return false;
         }
+        boolean isProtocolMemberClassVar = protocolMember.isClassVar();
+        boolean isSubclassMemberClassVar = subclassElementMember.isClassVar();
+        if (isSubclassMemberClassVar != isProtocolMemberClassVar) {
+          return false;
+        }
+
         PyType subclassElementType = dropSelfIfNeeded(actual, subclassElementMember.getType(), matchContext.context);
         subclassElementType = substitute(subclassElementType, substitutions, matchContext.context);
         boolean matched = match(protocolElementType, subclassElementType, protocolContext).orElse(true);

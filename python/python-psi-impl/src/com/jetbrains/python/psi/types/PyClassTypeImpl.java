@@ -17,6 +17,7 @@ import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.PyCustomMemberUtils;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
@@ -607,7 +608,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
             type = resolveContext.getTypeEvalContext().getType(typedElement);
           }
 
-          result.add(new PyTypeMember(element, type));
+          boolean isClassVar = false;
+          if (element instanceof PyAnnotationOwner && element instanceof PyTypeCommentOwner) {
+            isClassVar =
+              PyTypingTypeProvider.isClassVar((PyAnnotationOwner & PyTypeCommentOwner)element, resolveContext.getTypeEvalContext());
+          }
+          result.add(new PyTypeMember(element, type, isClassVar));
         }
       }
       return true;
@@ -689,12 +695,16 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     return ContainerUtil.map(results, result -> {
       PsiElement element = result.getElement();
+      boolean isClassVar = false;
+      if (element instanceof PyAnnotationOwner && element instanceof PyTypeCommentOwner) {
+        isClassVar = PyTypingTypeProvider.isClassVar((PyAnnotationOwner & PyTypeCommentOwner)element, context.getTypeEvalContext());
+      }
       if (element instanceof PyTypedElement typedElement) {
         return new PyTypeMember(typedElement,
-                                context.getTypeEvalContext().getType(typedElement), typedElement, typedElement, typedElement);
+                                context.getTypeEvalContext().getType(typedElement), isClassVar);
       }
       else {
-        return new PyTypeMember(element, null, element, element, element);
+        return new PyTypeMember(element, null, isClassVar);
       }
     });
   }

@@ -305,7 +305,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
         """
           import attr
           import typing
-
+          
           @attr.s
           class Weak1:
               x = attr.ib()
@@ -313,8 +313,8 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
               z = attr.ib(default=attr.Factory(list))
              \s
           Weak1(1, <warning descr="Expected type 'int', got 'str' instead">"str"</warning>, <warning descr="Expected type 'list', got 'int' instead">2</warning>)
-
-
+          
+          
           @attr.s
           class Weak2:
               x = attr.ib()
@@ -324,8 +324,8 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                   return 1
              \s
           Weak2("str")
-
-
+          
+          
           @attr.s
           class Strong:
               x = attr.ib(type=int)
@@ -421,25 +421,25 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testTypingLiteralStrings() {
     doTestByText("""
                    from typing_extensions import Literal
-
+                   
                    a: Literal["abc"] = undefined
                    b: Literal[b"abc"] = undefined
-
+                   
                    def foo1(p1: Literal["abc"]):
                        pass
                    foo1(a)
                    foo1(<warning descr="Expected type 'Literal[\\"abc\\"]', got 'Literal[b\\"abc\\"]' instead">b</warning>)
-
+                   
                    def foo2(p1: Literal[b"abc"]):
                        pass
                    foo2(<warning descr="Expected type 'Literal[b\\"abc\\"]', got 'Literal[\\"abc\\"]' instead">a</warning>)
                    foo2(b)
-
+                   
                    def foo3(p1: str):
                        pass
                    foo3(a)
                    foo3(<warning descr="Expected type 'str', got 'Literal[b\\"abc\\"]' instead">b</warning>)
-
+                   
                    def foo4(p1: bytes):
                        pass
                    foo4(<warning descr="Expected type 'bytes', got 'Literal[\\"abc\\"]' instead">a</warning>)
@@ -450,19 +450,19 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-46385
   public void testAliasingEnumClassNameInLiteralType() {
     doTestByText("""
-             from enum import Enum
-             from typing import Literal
-     
-             class Colors(Enum):
-                 RED = 1
-                 GREEN = 1
-                 BLUE = 3
-     
-             AliasColors = Colors
-     
-             x: AliasColors = Colors.RED
-             y: Literal[Colors.RED] = <warning descr="Expected type 'Literal[Colors.RED]', got 'Literal[Colors.GREEN]' instead">Colors.GREEN</warning>
-             z: Literal[AliasColors.RED] = Colors.RED""");
+                   from enum import Enum
+                   from typing import Literal
+                   
+                   class Colors(Enum):
+                       RED = 1
+                       GREEN = 1
+                       BLUE = 3
+                   
+                   AliasColors = Colors
+                   
+                   x: AliasColors = Colors.RED
+                   y: Literal[Colors.RED] = <warning descr="Expected type 'Literal[Colors.RED]', got 'Literal[Colors.GREEN]' instead">Colors.GREEN</warning>
+                   z: Literal[AliasColors.RED] = Colors.RED""");
   }
 
   // PY-46385
@@ -506,7 +506,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
       """
         from enum import Enum
         from typing import Literal
-
+        
         class Color(Enum):
             R = 1
             G = 2
@@ -514,7 +514,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
             RED = R
             GREEN = G
             BLUE = B
-
+        
         def foo(v: Color | str) -> None:
             if v is Color.RED:
                 r: Literal[Color.R] = v
@@ -530,7 +530,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                 pass
             else:
                 s: str = <warning descr="Expected type 'str', got 'Literal[Color.R, Color.G]' instead">v</warning>
-
+        
         def bar(v: Literal[Color.R, "1"]) -> None:
             if isinstance(v, Color):
                 r: Literal[Color.R] = v
@@ -654,11 +654,11 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
       """
         import pathlib
         import os
-
+        
         def foo(p: pathlib.Path):
             with open(p) as file:
                 pass
-
+        
         p1: pathlib.Path
         p2: os.PathLike[bytes] = <warning descr="Expected type 'PathLike[bytes]', got 'Path' instead">p1</warning>
         p3: os.PathLike[str] = p1"""
@@ -686,10 +686,10 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParameterizedClassAgainstType() {
     doTestByText("""
                    from typing import Type, Any, List
-
+                   
                    def my_function(param: Type[Any]):
                        pass
-
+                   
                    my_function(List[str])""");
   }
 
@@ -697,10 +697,10 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testUnionAgainstType() {
     doTestByText("""
                    from typing import Type, Any, Union
-
+                   
                    def my_function(param: Type[Any]):
                        pass
-
+                   
                    my_function(Union[int, str])""");
   }
 
@@ -864,7 +864,8 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-44974
   public void testParenthesizedBitwiseOrUnionOfUnionsAssignNone() {
-    doTestByText("bar: int | ((list | dict) | (float | str)) = <warning descr=\"Expected type 'int | list | dict | float | str', got 'None' instead\">None</warning>");
+    doTestByText(
+      "bar: int | ((list | dict) | (float | str)) = <warning descr=\"Expected type 'int | list | dict | float | str', got 'None' instead\">None</warning>");
   }
 
   // PY-44974
@@ -885,17 +886,17 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParamSpecExample() {
     doTestByText("""
                    from typing import Callable, ParamSpec
-
+                   
                    P = ParamSpec("P")
-
-
+                   
+                   
                    def changes_return_type_to_str(x: Callable[P, int]) -> Callable[P, str]: ...
-
-
+                   
+                   
                    def returns_int(a: str, b: bool) -> int:
                        return 42
-
-
+                   
+                   
                    changes_return_type_to_str(returns_int)("42", <warning descr="Expected type 'bool', got 'int' instead">42</warning>)""");
   }
 
@@ -903,23 +904,23 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParamSpecUserGenericClassMethod() {
     doTestByText("""
                    from typing import TypeVar, Generic, Callable, ParamSpec
-
+                   
                    U = TypeVar("U")
                    P = ParamSpec("P")
-
-
+                   
+                   
                    class Y(Generic[U, P]):
                        f: Callable[P, U]
                        attr: U
-
+                   
                        def __init__(self, f: Callable[P, U], attr: U) -> None:
                            self.f = f
                            self.attr = attr
-
-
+                   
+                   
                    def a(q: int) -> str: ...
-
-
+                   
+                   
                    expr = Y(a, '1').f(<warning descr="Expected type 'int', got 'str' instead">"42"</warning>)
                    """);
   }
@@ -928,23 +929,23 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParamSpecUserGenericClassMethodSeveralParameters() {
     doTestByText("""
                    from typing import TypeVar, Generic, Callable, ParamSpec
-
+                   
                    U = TypeVar("U")
                    P = ParamSpec("P")
-
-
+                   
+                   
                    class Y(Generic[U, P]):
                        f: Callable[P, U]
                        attr: U
-
+                   
                        def __init__(self, f: Callable[P, U], attr: U) -> None:
                            self.f = f
                            self.attr = attr
-
-
+                   
+                   
                    def a(q: int, s: str) -> str: ...
-
-
+                   
+                   
                    expr = Y(a, '1').f(42, <warning descr="Expected type 'str', got 'int' instead">42</warning>)
                    """);
   }
@@ -953,23 +954,23 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParamSpecUserGenericClassMethodConcatenate() {
     doTestByText("""
                    from typing import TypeVar, Generic, Callable, ParamSpec, Concatenate
-
+                   
                    U = TypeVar("U")
                    P = ParamSpec("P")
-
-
+                   
+                   
                    class Y(Generic[U, P]):
                        f: Callable[Concatenate[int, P], U]
                        attr: U
-
+                   
                        def __init__(self, f: Callable[Concatenate[int, P], U], attr: U) -> None:
                            self.f = f
                            self.attr = attr
-
-
+                   
+                   
                    def a(q: int, s: str, b: bool) -> str: ...
-
-
+                   
+                   
                    expr = Y(a, '1').f(42, <warning descr="Expected type 'str', got 'int' instead">42</warning>, <warning descr="Expected type 'bool', got 'int' instead">42</warning>)
                    """);
   }
@@ -978,16 +979,16 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParamSpecConcatenateAddThirdParameter() {
     doTestByText("""
                    from typing import Callable, Concatenate, ParamSpec
-
+                   
                    P = ParamSpec("P")
-
-
+                   
+                   
                    def bar(x: int, *args: bool) -> int: ...
-
-
+                   
+                   
                    def add(x: Callable[P, int]) -> Callable[Concatenate[str, P], bool]: ...
-
-
+                   
+                   
                    add(bar)("42", 42, <warning descr="Expected type 'bool', got 'int' instead">42</warning>)""");
   }
 
@@ -995,16 +996,16 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParamSpecConcatenateAddSecondParameter() {
     doTestByText("""
                    from typing import Callable,  Concatenate, ParamSpec
-
+                   
                    P = ParamSpec("P")
-
-
+                   
+                   
                    def bar(x: int, *args: bool) -> int: ...
-
-
+                   
+                   
                    def add(x: Callable[P, int]) -> Callable[Concatenate[str, P], bool]: ...
-
-
+                   
+                   
                    add(bar)("42", <warning descr="Expected type 'int', got 'str' instead">"42"</warning>, True)""");
   }
 
@@ -1012,16 +1013,16 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParamSpecConcatenateAddFirstParameter() {
     doTestByText("""
                    from typing import Callable,  Concatenate, ParamSpec
-
+                   
                    P = ParamSpec("P")
-
-
+                   
+                   
                    def bar(x: int, *args: bool) -> int: ...
-
-
+                   
+                   
                    def add(x: Callable[P, int]) -> Callable[Concatenate[str, P], bool]: ...
-
-
+                   
+                   
                    add(bar)(<warning descr="Expected type 'str', got 'int' instead">42</warning>, 42, True)""");
   }
 
@@ -1029,16 +1030,16 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParamSpecConcatenateAddFirstSeveralParameters() {
     doTestByText("""
                    from typing import Callable,  Concatenate, ParamSpec
-
+                   
                    P = ParamSpec("P")
-
-
+                   
+                   
                    def bar(x: int, *args: bool) -> int: ...
-
-
+                   
+                   
                    def add(x: Callable[P, int]) -> Callable[Concatenate[str, list[str], P], bool]: ...
-
-
+                   
+                   
                    add(bar)(<warning descr="Expected type 'str', got 'int' instead">42</warning>, <warning descr="Expected type 'list[str]', got 'list[int]' instead">[42]</warning>, 3, True)""");
   }
 
@@ -1046,16 +1047,16 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParamSpecConcatenateAddOk() {
     doTestByText("""
                    from typing import Callable,  Concatenate, ParamSpec
-
+                   
                    P = ParamSpec("P")
-
-
+                   
+                   
                    def bar(x: int, *args: bool) -> int: ...
-
-
+                   
+                   
                    def add(x: Callable[P, int]) -> Callable[Concatenate[str, P], bool]: ...
-
-
+                   
+                   
                    add(bar)("42", 42, True, True, True)""");
   }
 
@@ -1063,16 +1064,16 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParamSpecConcatenateRemove() {
     doTestByText("""
                    from typing import Callable,  Concatenate, ParamSpec
-
+                   
                    P = ParamSpec("P")
-
-
+                   
+                   
                    def bar(x: int, *args: bool) -> int: ...
-
-
+                   
+                   
                    def remove(x: Callable[Concatenate[int, P], int]) -> Callable[P, bool]: ...
-
-
+                   
+                   
                    remove(bar)(<warning descr="Expected type 'bool', got 'int' instead">42</warning>)""");
   }
 
@@ -1080,16 +1081,16 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParamSpecConcatenateRemoveOkOneBool() {
     doTestByText("""
                    from typing import Callable,  Concatenate, ParamSpec
-
+                   
                    P = ParamSpec("P")
-
-
+                   
+                   
                    def bar(x: int, *args: bool) -> int: ...
-
-
+                   
+                   
                    def remove(x: Callable[Concatenate[int, P], int]) -> Callable[P, bool]: ...
-
-
+                   
+                   
                    remove(bar)(True)""");
   }
 
@@ -1097,16 +1098,16 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParamSpecConcatenateRemoveOkTwoBools() {
     doTestByText("""
                    from typing import Callable,  Concatenate, ParamSpec
-
+                   
                    P = ParamSpec("P")
-
-
+                   
+                   
                    def bar(x: int, *args: bool) -> int: ...
-
-
+                   
+                   
                    def remove(x: Callable[Concatenate[int, P], int]) -> Callable[P, bool]: ...
-
-
+                   
+                   
                    remove(bar)(True, True)""");
   }
 
@@ -1114,16 +1115,16 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParamSpecConcatenateRemoveOkEmpty() {
     doTestByText("""
                    from typing import Callable,  Concatenate, ParamSpec
-
+                   
                    P = ParamSpec("P")
-
-
+                   
+                   
                    def bar(x: int, *args: bool) -> int: ...
-
-
+                   
+                   
                    def remove(x: Callable[Concatenate[int, P], int]) -> Callable[P, bool]: ...
-
-
+                   
+                   
                    remove(bar)()""");
   }
 
@@ -1131,21 +1132,21 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParamSpecConcatenateTransform() {
     doTestByText("""
                    from typing import Callable,  Concatenate, ParamSpec
-
+                   
                    P = ParamSpec("P")
-
-
+                   
+                   
                    def bar(x: int, *args: bool) -> int: ...
-
-
+                   
+                   
                    def transform(
                            x: Callable[Concatenate[int, P], int]
                    ) -> Callable[Concatenate[str, P], bool]:
                        def inner(s: str, *args: P.args):
                            return True
                        return inner
-
-
+                   
+                   
                    transform(bar)(<warning descr="Expected type 'str', got 'int' instead">42</warning>)""");
   }
 
@@ -1202,13 +1203,13 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testBitwiseOrUnionWithNotCalculatedGenericFromUnion() {
     doTestByText("""
                    from typing import Union, TypeVar
-
+                   
                    T = TypeVar("T", bytes, str)
-
+                   
                    my_union = Union[str, set[T]]
                    another_union = Union[list[str], my_union[T]]
-
-
+                   
+                   
                    def foo(path_or_buf: another_union[T] | None) -> None:
                        print(path_or_buf)
                    """);
@@ -1218,24 +1219,24 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testFunctionNamedParameterUnification() {
     doTestByText("""
                    from typing import Callable,  ParamSpec
-
+                   
                    P = ParamSpec("P")
-
-
+                   
+                   
                    def twice(f: Callable[P, int], *args: P.args, **kwargs: P.kwargs) -> int:
                        return f(*args, **kwargs) + f(*args, **kwargs)
-
-
+                   
+                   
                    def a_int_b_str(a: int, b: str) -> int:
                        return a + len(b)
-
-
+                   
+                   
                    res1 = twice(a_int_b_str, 1, "A")
-
+                   
                    res2 = twice(a_int_b_str, b="A", a=1)
-
+                   
                    res3 = twice(a_int_b_str, <warning descr="Expected type 'int', got 'str' instead">"A"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>)
-
+                   
                    res4 = twice(a_int_b_str, <warning descr="Expected type 'str', got 'int' instead">b=1</warning>, <warning descr="Expected type 'int', got 'str' instead">a="A"</warning>)""");
   }
 
@@ -1243,19 +1244,19 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testFunctionNotEnoughArgumentsToMatchWithParamSpec() {
     doTestByText("""
                    from typing import ParamSpec, Callable, TypeVar
-
+                   
                    P = ParamSpec('P')
                    T = TypeVar('T')
-
-
+                   
+                   
                    def caller(f: Callable[P, T], *args: P.args, **kwargs: P.kwargs):
                        f(*args, **kwargs)
-
-
+                   
+                   
                    def func(n: int, s: str) -> None:
                        pass
-
-
+                   
+                   
                    caller(func, 42<warning descr="Parameter 's' unfilled (from ParamSpec 'P')">)</warning>
                    """);
   }
@@ -1264,19 +1265,19 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testFunctionTooManyArgumentsToMatchWithParamSpec() {
     doTestByText("""
                    from typing import ParamSpec, Callable, TypeVar
-
+                   
                    P = ParamSpec('P')
                    T = TypeVar('T')
-
-
+                   
+                   
                    def caller(f: Callable[P, T], *args: P.args, **kwargs: P.kwargs):
                        f(*args, **kwargs)
-
-
+                   
+                   
                    def func(n: int, s: str) -> None:
                        pass
-
-
+                   
+                   
                    caller(func, 42, 'foo', <warning descr="Unexpected argument (from ParamSpec 'P')">None</warning>)""");
   }
 
@@ -1284,19 +1285,19 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testFunctionNamedArgumentNotMatchWithParamSpec() {
     doTestByText("""
                    from typing import ParamSpec, Callable, TypeVar
-
+                   
                    P = ParamSpec('P')
                    T = TypeVar('T')
-
-
+                   
+                   
                    def caller(f: Callable[P, T], *args: P.args, **kwargs: P.kwargs):
                        f(*args, **kwargs)
-
-
+                   
+                   
                    def func(foo: int) -> None:
                        pass
-
-
+                   
+                   
                    caller(func, <warning descr="Unexpected argument (from ParamSpec 'P')">bar=42</warning><warning descr="Parameter 'foo' unfilled (from ParamSpec 'P')">)</warning>""");
   }
 
@@ -1304,81 +1305,81 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testSameArgumentPassedTwiceInParamSpec() {
     doTestByText("""
                    from typing import ParamSpec, Callable, TypeVar
-
+                   
                    P = ParamSpec('P')
                    T = TypeVar('T')
-
-
+                   
+                   
                    def caller(f: Callable[P, T], *args: P.args, **kwargs: P.kwargs):
                        f(*args, **kwargs)
-
-
+                   
+                   
                    def func(n: int) -> None:
                        pass
-
-
+                   
+                   
                    caller(func, 42, <warning descr="Unexpected argument (from ParamSpec 'P')">n=42</warning>)""");
   }
 
   // PY-80704
   public void testParamSpecDerived() {
     doTestByText("""
-             class Base[**P]: ...
-             b: Base[[int]]
-
-             class Derived1(Base[int]): ...
-             b = Derived1()
-             
-             class Derived2(Base[str]): ...
-             b = <warning descr="Expected type 'Base[[int]]', got 'Derived2' instead">Derived2()</warning>
-
-             class Derived3[**P](Base[P]): ...
-             b = Derived3()
-             """);
+                   class Base[**P]: ...
+                   b: Base[[int]]
+                   
+                   class Derived1(Base[int]): ...
+                   b = Derived1()
+                   
+                   class Derived2(Base[str]): ...
+                   b = <warning descr="Expected type 'Base[[int]]', got 'Derived2' instead">Derived2()</warning>
+                   
+                   class Derived3[**P](Base[P]): ...
+                   b = Derived3()
+                   """);
   }
 
   // PY-80704
   public void testParamSpecProtocol() {
     doTestByText("""
-             from typing import Protocol, Callable
-             
-             class Proto[**P](Protocol):
-                 f: Callable[P, None]
-             p: Proto[[int]]
-             
-             class Match:
-                 f: Callable[[int], None]
-             p = Match()
-             
-             class Mismatch:
-                 f: Callable[[str], None]
-             p = <warning descr="Expected type 'Proto[[int]]', got 'Mismatch' instead">Mismatch()</warning>
-             """);
+                   from typing import Protocol, Callable
+                   
+                   class Proto[**P](Protocol):
+                       f: Callable[P, None]
+                   p: Proto[[int]]
+                   
+                   class Match:
+                       f: Callable[[int], None]
+                   p = Match()
+                   
+                   class Mismatch:
+                       f: Callable[[str], None]
+                   p = <warning descr="Expected type 'Proto[[int]]', got 'Mismatch' instead">Mismatch()</warning>
+                   """);
   }
 
   public void testParamSpecProtocolEmpty() {
     doTestByText("""
-             from typing import Protocol
-             
-             class Proto[**P](Protocol): ...
-             
-             _: Proto[[]] = 1
-             """);
+                   from typing import Protocol
+                   
+                   class Proto[**P](Protocol): ...
+                   
+                   _: Proto[[]] = 1
+                   """);
   }
 
   // PY-80775
   public void testParamSpecProtocolFull() {
     doTestByText("""
-             from typing import Protocol
-             
-             class Proto[**P](Protocol):
-                 def f(self, *args: P.args, **kwargs: P.kwargs) -> None: ...
-             
-             class Impl:
-                 def f(self, i: int) -> None: ...
-             
-             p: Proto[[int]] = Impl()
-             """);
+                   from typing import Protocol
+                   
+                   class Proto[**P](Protocol):
+                       def f(self, *args: P.args, **kwargs: P.kwargs) -> None: ...
+                   
+                   class Impl:
+                       def f(self, i: int) -> None: ...
+                   
+                   p: Proto[[int]] = Impl()
+                   """);
   }
 
   // PY-46661
@@ -1563,33 +1564,33 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParameterSelf() {
     doTestByText("""
                    from typing import Self, Callable
-
+                   
                    class Shape:
                        def difference(self, other: Self) -> float: ...
-
+                   
                        def apply(self, f: Callable[[Self], None]) -> None: ...
-
-
+                   
+                   
                    class Circle(Shape):
                        pass
-
-
+                   
+                   
                    def fCircle(c: Circle):
                      pass
-
-
+                   
+                   
                    def fShape(sh: Shape):
                      pass
-
-
+                   
+                   
                    sh = Shape()
                    cir = Circle()
-
+                   
                    sh.difference(cir)
                    sh.difference(sh)
                    cir.difference(cir)
                    cir.difference(<warning descr="Expected type 'Circle' (matched generic type 'Self'), got 'Shape' instead">sh</warning>)
-
+                   
                    cir.apply(fCircle)
                    cir.apply(<warning descr="Expected type '(Circle) -> None' (matched generic type '(Self) -> None'), got '(sh: Shape) -> None' instead">fShape</warning>)
                    sh.apply(fCircle)
@@ -1600,23 +1601,23 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParameterTypeSelf() {
     doTestByText("""
                    from typing import Self, Callable
-
+                   
                    class MyClass:
                        def foo(self, bar: Type[Self]) -> None: ...
-
-
+                   
+                   
                    class SubClass(MyClass):
                        pass
-
-
+                   
+                   
                    myClass = MyClass()
                    subClass = MySubClass()
-
+                   
                    myClass.foo(myClass)
                    myClass.foo(subClass)
                    myClass.foo(MyClass)
                    myClass.foo(SubClass)
-
+                   
                    subClass.foo(myClass)
                    subClass.foo(subClass)
                    subClass.foo(MyClass)
@@ -1627,24 +1628,24 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParameterTypeSelfUnion() {
     doTestByText("""
                    from typing import Self, Callable
-
+                   
                    class MyClass:
                        def foo(self, bar: Self | None | int) -> None: ...
-
-
+                   
+                   
                    class SubClass(MyClass):
                        pass
-
-
+                   
+                   
                    myClass = MyClass()
                    subClass = SubClass()
-
+                   
                    myClass.foo(myClass)
                    myClass.foo(subClass)
                    myClass.foo(42)
                    myClass.foo(None)
                    myClass.foo(<warning descr="Expected type 'MyClass | None | int' (matched generic type 'Self | None | int'), got 'str' instead">""</warning>)
-
+                   
                    subClass.foo(<warning descr="Expected type 'SubClass | None | int' (matched generic type 'Self | None | int'), got 'MyClass' instead">myClass</warning>)
                    subClass.foo(subClass)
                    subClass.foo(42)
@@ -1656,23 +1657,23 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testParameterTypeSelfReturnAsParameter() {
     doTestByText("""
                    from typing import Self, Callable
-
+                   
                    class MyClass:
                        def foo(self, bar: Self) -> Self: ...
-
-
+                   
+                   
                    class SubClass(MyClass):
                        pass
-
-
+                   
+                   
                    myClass = MyClass()
                    subClass = SubClass()
-
+                   
                    myClass.foo(myClass.foo(myClass))
                    myClass.foo(subClass.foo(subClass))
                    myClass.foo(myClass.foo(subClass))
                    myClass.foo(subClass.foo(<warning descr="Expected type 'SubClass' (matched generic type 'Self'), got 'MyClass' instead">myClass</warning>))
-
+                   
                    subClass.foo(<warning descr="Expected type 'SubClass' (matched generic type 'Self'), got 'MyClass' instead">myClass.foo(myClass)</warning>)
                    subClass.foo(subClass.foo(subClass))
                    subClass.foo(<warning descr="Expected type 'SubClass' (matched generic type 'Self'), got 'MyClass' instead">myClass.foo(subClass)</warning>)
@@ -1684,21 +1685,21 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from __future__ import annotations
                    from typing import Self, Protocol
-
-
+                   
+                   
                    class MyProtocol(Protocol):
                        def foo(self, bar: float) -> Self: ...
-
-
+                   
+                   
                    class MyClass:
                        def foo(self, bar: float) -> MyClass:
                            pass
-
-
+                   
+                   
                    def accepts_protocol(obj: MyProtocol) -> None:
                        print(obj)
-
-
+                   
+                   
                    obj = MyClass()
                    accepts_protocol(obj)
                    """);
@@ -1709,25 +1710,25 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from __future__ import annotations
                    from typing import Self, Protocol
-
-
+                   
+                   
                    class MyProtocol(Protocol):
                        def foo(self, bar: float) -> Self: ...
-
-
+                   
+                   
                    class MyClass:
                        def foo(self, bar: float) -> MySubClass:
                            pass
-
-
+                   
+                   
                    class MySubClass(MyClass):
                        pass
-
-
+                   
+                   
                    def accepts_protocol(obj: MyProtocol) -> None:
                        print(obj)
-
-
+                   
+                   
                    obj = MyClass()
                    accepts_protocol(obj)
                    """);
@@ -1738,21 +1739,21 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from __future__ import annotations
                    from typing import Self, Protocol
-
-
+                   
+                   
                    class MyProtocol(Protocol):
                        def foo(self, bar: float) -> Self: ...
-
-
+                   
+                   
                    class MyClass:
                        def foo(self, bar: float) -> int:
                            pass
-
-
+                   
+                   
                    def accepts_protocol(obj: MyProtocol) -> None:
                        print(obj)
-
-
+                   
+                   
                    obj = MyClass()
                    accepts_protocol(<warning descr="Expected type 'MyProtocol', got 'MyClass' instead">obj</warning>)
                    """);
@@ -1763,26 +1764,26 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from __future__ import annotations
                    from typing import Self, Protocol
-
-
+                   
+                   
                    class MyProtocol(Protocol):
                        def foo(self, bar: float) -> Self: ...
-
-
+                   
+                   
                    class MyClass:
                        def foo(self, bar: float) -> MyClassNotSubclass:
                            pass
-
-
+                   
+                   
                    class MyClassNotSubclass:
                        def foo(self, bar: float) -> int:
                            pass
-
-
+                   
+                   
                    def accepts_protocol(obj: MyProtocol) -> None:
                        print(obj)
-
-
+                   
+                   
                    obj = MyClass()
                    accepts_protocol(<warning descr="Expected type 'MyProtocol', got 'MyClass' instead">obj</warning>)
                    """);
@@ -1793,21 +1794,21 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from __future__ import annotations
                    from typing import Self, Protocol
-
-
+                   
+                   
                    class MyProtocol(Protocol):
                        def foo(self, bar: float) -> Self: ...
-
-
+                   
+                   
                    class MyClass:
                        def foo(self, bar: float) -> Self:
                            pass
-
-
+                   
+                   
                    def accepts_protocol(obj: MyProtocol) -> None:
                        print(obj)
-
-
+                   
+                   
                    obj = MyClass()
                    accepts_protocol(obj)
                    """);
@@ -1817,15 +1818,15 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testVariadicGenericInFunction() {
     doTestByText("""
                    from typing import Tuple, TypeVarTuple, TypeVar
-
+                   
                    T = TypeVar('T')
                    Ts = TypeVarTuple('Ts')
-
-
+                   
+                   
                    def foo(x: T, y: Tuple[*Ts]):
                        pass
-
-
+                   
+                   
                    foo(10, (1, '1', [1]))
                    """);
   }
@@ -1834,16 +1835,16 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testVariadicGenericArgumentByCallableInFunction() {
     doTestByText("""
                    from typing import Callable, TypeVarTuple, Tuple
-
+                   
                    Ts = TypeVarTuple('Ts')
-
-
+                   
+                   
                    def foo(a: int, f: Callable[[*Ts], None], args: Tuple[*Ts]) -> None: ...
                    def bar(a: int, b: str) -> None: ...
-
-
+                   
+                   
                    foo(1, bar, args=(0, 'foo'))
-
+                   
                    foo(1, bar, <warning descr="Expected type 'tuple[int, str]' (matched generic type 'tuple[*Ts]'), got 'tuple[str, int]' instead">args=('foo', 0)</warning>)
                    """);
   }
@@ -1852,26 +1853,26 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testVariadicGenericCheckCallableInFunction() {
     doTestByText("""
                    from typing import TypeVar, TypeVarTuple, Callable, Tuple
-
+                   
                    T = TypeVar('T')
                    Ts = TypeVarTuple('Ts')
-
-
+                   
+                   
                    def foo(f: Callable[[int, *Ts, T], Tuple[T, *Ts]]) -> None: ...
-
-
+                   
+                   
                    def ok1(a: int, b: str, c: bool, d: list[int]) -> Tuple[list[int], str, bool]: ...
                    def ok2(a: int, b: str) -> Tuple[str]: ...
-
-
+                   
+                   
                    foo(ok1)
                    foo(ok2)
-
-
+                   
+                   
                    def err1(a: int, b: str, c: bool, d: list[int]) -> Tuple[list[int], str, str]: ...
                    def err2(a: int, b: str) -> Tuple[str, str]: ...
-
-
+                   
+                   
                    foo(<warning descr="Expected type '(int, str, bool, list[int]) -> tuple[list[int], str, bool]' (matched generic type '(int, *Ts, T) -> tuple[T, *Ts]'), got '(a: int, b: str, c: bool, d: list[int]) -> tuple[list[int], str, str]' instead">err1</warning>)
                    foo(<warning descr="Expected type '(int, str) -> tuple[str]' (matched generic type '(int, *Ts, T) -> tuple[T, *Ts]'), got '(a: int, b: str) -> tuple[str, str]' instead">err2</warning>)
                    """);
@@ -1881,24 +1882,24 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testVariadicGenericTwoTsInFunction() {
     doTestByText("""
                    from typing import TypeVarTuple, Generic
-
+                   
                    Ts = TypeVarTuple('Ts')
-
-
+                   
+                   
                    class Array(Generic[*Ts]):
                        ...
-
-
+                   
+                   
                    def foo(x: Array[*Ts], y: Array[*Ts]) -> Array[*Ts]:
                        ...
-
-
+                   
+                   
                    x: Array[int]
                    y: Array[str]
                    z: Array[int, str]
-
+                   
                    foo(x, x)
-
+                   
                    foo(x, <warning descr="Expected type 'Array[int]' (matched generic type 'Array[*Ts]'), got 'Array[str]' instead">y</warning>)
                    foo(x, <warning descr="Expected type 'Array[int]' (matched generic type 'Array[*Ts]'), got 'Array[int, str]' instead">z</warning>)
                    """);
@@ -1908,31 +1909,31 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testVariadicGenericUnboundTupleInFunction() {
     doTestByText("""
                    from typing import Generic, TypeVarTuple, Tuple, Any
-                                      
+                   
                    Ts = TypeVarTuple('Ts')
-                                      
-                                      
+                   
+                   
                    class Array(Generic[*Ts]):
                        def __init__(self, shape: Tuple[*Ts]):
                            ...
-                                      
-                                      
+                   
+                   
                    def foo(x: Array[int, *Tuple[Any, ...], str]) -> None:
                        ...
-                                      
-                                      
+                   
+                   
                    x: Array[int, list[str], bool, str]
                    foo(x)
-                                      
+                   
                    y: Array[int, str]
                    foo(y)
-                                      
+                   
                    z: Array[int]
                    foo(<warning descr="Expected type 'Array[int, *tuple[Any, ...], str]', got 'Array[int]' instead">z</warning>)
-                                      
+                   
                    t: Array[str]
                    foo(<warning descr="Expected type 'Array[int, *tuple[Any, ...], str]', got 'Array[str]' instead">t</warning>)
-                                      
+                   
                    k: Array[int, int]
                    foo(<warning descr="Expected type 'Array[int, *tuple[Any, ...], str]', got 'Array[int, int]' instead">k</warning>)
                    """);
@@ -1942,17 +1943,17 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testVariadicGenericStarArgsNamedParameters() {
     doTestByText("""
                    from typing import Tuple, TypeVarTuple
-                                      
+                   
                    Ts = TypeVarTuple('Ts')
-                                      
-                                      
+                   
+                   
                    def foo(a: str, *args: *Tuple[*Ts, int], b: str, c: bool) -> None: ...
-                                      
-                                      
+                   
+                   
                    foo('', 1, True, [1], 42, b='', c=True)
                    foo('', 42, b='', c=True)
                    foo('', True, 42, c=True, b='')
-                                      
+                   
                    foo('', b='', c=True<warning descr="Parameter 'args' unfilled, expected '*tuple[*Ts, int]'">)</warning>
                    foo('', <warning descr="Expected type '*tuple[int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str]' instead">''</warning>, b='', c=True)
                    foo('', <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, list]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, list]' instead">[False]</warning>, b='', c=True)
@@ -1964,19 +1965,19 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testVariadicGenericStarArgsTupleAndUnpackedTuple() {
     doTestByText("""
                    from typing import Tuple, TypeVarTuple
-                                      
+                   
                    Ts = TypeVarTuple('Ts')
-                                      
-                                      
+                   
+                   
                    def foo(a: Tuple[*Ts], *args: *Tuple[str, *Ts, int], b: str) -> None: ...
-                                      
-                                      
+                   
+                   
                    foo(('', 1), '', '', 1, 1, b='')
                    foo((1,1), '', 1, 1, 1, b='')
                    foo(('',), '', '', 1, b='')
                    foo((), '', 1, b='')
                    foo(([], {}), '', [], {}, 1, b='')
-                                      
+                   
                    foo(('', 1), b=''<warning descr="Parameter 'args' unfilled, expected '*tuple[str, str, int, int]'">)</warning>
                    foo(('', 1), <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">1</warning>, b='')
                    foo((1,1), <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, b='')
@@ -1991,11 +1992,11 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testVariadicGenericStarArgsOfVariadicGeneric() {
     doTestByText("""
                    from typing import Tuple, TypeVarTuple
-
+                   
                    Ts = TypeVarTuple('Ts')
-
+                   
                    def foo(*args: Tuple[*Ts]): ...
-
+                   
                    foo((0,), (1,))
                    foo((0,), <warning descr="Expected type 'tuple[int]' (matched generic type 'tuple[*Ts]'), got 'tuple[int, int]' instead">(1, 2)</warning>)
                    # Should fail according to https://typing.python.org/en/latest/spec/generics.html#type-variable-tuple-equality
@@ -2007,19 +2008,19 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testVariadicGenericStarArgsOfVariadicGenericPrefixSuffix() {
     doTestByText("""
                    from typing import Tuple, TypeVarTuple
-                                      
+                   
                    Ts = TypeVarTuple('Ts')
-                                      
-                                      
+                   
+                   
                    def foo(a: Tuple[*Ts], *args: *Tuple[str, *Ts, int], b: str) -> None: ...
-                                      
-                                      
+                   
+                   
                    foo(('', 1), '', '', 1, 1, b='')
                    foo((1,1), '', 1, 1, 1, b='')
                    foo(('',), '', '', 1, b='')
                    foo((), '', 1, b='')
                    foo(([], {}), '', [], {}, 1, b='')
-                                      
+                   
                    foo(('', 1), b=''<warning descr="Parameter 'args' unfilled, expected '*tuple[str, str, int, int]'">)</warning>
                    foo(('', 1), <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">1</warning>, b='')
                    foo((1,1), <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, b='')
@@ -2034,19 +2035,19 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testVariadicGenericStarArgsPrefixSuffix() {
     doTestByText("""
                    from typing import Tuple, TypeVarTuple
-                                      
+                   
                    Ts = TypeVarTuple('Ts')
-                                      
-                                      
+                   
+                   
                    def foo(a: Tuple[*Ts], *args: *Tuple[str, *Ts, int], b: str) -> None: ...
-                                      
-                                      
+                   
+                   
                    foo(('', 1), '', '', 1, 1, b='')
                    foo((1,1), '', 1, 1, 1, b='')
                    foo(('',), '', '', 1, b='')
                    foo((), '', 1, b='')
                    foo(([], {}), '', [], {}, 1, b='')
-                                      
+                   
                    foo(('', 1), b=''<warning descr="Parameter 'args' unfilled, expected '*tuple[str, str, int, int]'">)</warning>
                    foo(('', 1), <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">1</warning>, b='')
                    foo((1,1), <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, b='')
@@ -2061,15 +2062,15 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testVariadicGenericStarArgsUnboundTuple() {
     doTestByText("""
                    from typing import Tuple
-
-
+                   
+                   
                    def foo(*args: *Tuple[int, ...]) -> None: ...
-
-
+                   
+                   
                    foo()
                    foo(1)
                    foo(1, 2, 3)
-
+                   
                    foo(<warning descr="Expected type 'int', got 'str' instead">''</warning>)
                    foo(1, <warning descr="Expected type 'int', got 'str' instead">''</warning>)
                    """);
@@ -2078,47 +2079,47 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-53105
   public void testVariadicGenericMatchWithHomogeneousGenericVariadic() {
     doTestByText("""
-                    from __future__ import annotations
-                                       
-                    from typing import TypeVarTuple
-                    from typing import Generic
-                    from typing import Any
-                    
-                    Shape = TypeVarTuple("Shape")
-                    
-                    class Array(Generic[*Shape]):
-                        ...
-                    
-                    y: Array[*tuple[Any, ...]] = Array()
-                    
-                    def expect_variadic_array(x: Array[int, *Shape]) -> None:
-                        print(x)
-                    
-                    expect_variadic_array(y)
-                    """);
+                   from __future__ import annotations
+                   
+                   from typing import TypeVarTuple
+                   from typing import Generic
+                   from typing import Any
+                   
+                   Shape = TypeVarTuple("Shape")
+                   
+                   class Array(Generic[*Shape]):
+                       ...
+                   
+                   y: Array[*tuple[Any, ...]] = Array()
+                   
+                   def expect_variadic_array(x: Array[int, *Shape]) -> None:
+                       print(x)
+                   
+                   expect_variadic_array(y)
+                   """);
   }
 
   // PY-53105
   public void testVariadicGenericMatchWithHomogeneousGenericVariadicAndOtherTypes() {
     doTestByText("""
-                    from __future__ import annotations
-                                       
-                    from typing import TypeVarTuple
-                    from typing import Generic
-                    from typing import Any
-                    
-                    Shape = TypeVarTuple("Shape")
-                    
-                    class Array(Generic[*Shape]):
-                        ...
-                    
-                    y: Array[*tuple[Any, ...], int, str] = Array()
-                    
-                    def expect_variadic_array(x: Array[int, *Shape]) -> None:
-                        print(x)
-                    
-                    expect_variadic_array(y)
-                    """);
+                   from __future__ import annotations
+                   
+                   from typing import TypeVarTuple
+                   from typing import Generic
+                   from typing import Any
+                   
+                   Shape = TypeVarTuple("Shape")
+                   
+                   class Array(Generic[*Shape]):
+                       ...
+                   
+                   y: Array[*tuple[Any, ...], int, str] = Array()
+                   
+                   def expect_variadic_array(x: Array[int, *Shape]) -> None:
+                       print(x)
+                   
+                   expect_variadic_array(y)
+                   """);
   }
 
   // PY-53105
@@ -2147,7 +2148,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    y: Float32Array[Height] = Array()
                    takes_float_array_of_specific_shape(<warning descr="Expected type 'Array[float, Height, Width]', got 'Array[float, Height]' instead">y</warning>)
-                    """);
+                   """);
   }
 
   // PY-53105
@@ -2176,33 +2177,33 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    y: Float32Array[Height, Width] = Array()
                    takes_float_array_of_specific_shape(<warning descr="Expected type 'Array[float, Height]', got 'Array[float, Height, Width]' instead">y</warning>)
-                    """);
+                   """);
   }
 
   // PY-53105
   public void testVariadicGenericEmpty() {
     doTestByText("""
                    from typing import TypeVarTuple
-                                      
+                   
                    Ts = TypeVarTuple("Ts")
-                                      
+                   
                    IntTuple = tuple[int, *Ts]
-                                      
+                   
                    c: IntTuple[()] = <warning descr="Expected type 'tuple[int]', got 'tuple[int, str]' instead">(1, "")</warning>
-                    """);
+                   """);
   }
 
   // PY-56785
   public void testTypingSelfNoInspectionReturnSelfMethod() {
     doTestByText("""
                    from typing import Self
-
-
+                   
+                   
                    class Builder:
                        def foo(self) -> Self:
                            result = self.bar()
                            return result
-
+                   
                        def bar(self) -> Self:
                            pass
                    """);
@@ -2212,12 +2213,12 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testTypingSelfClassMethodReturnClsNoHighlighting() {
     doTestByText("""
                    from typing import Self
-
+                   
                    class Shape:
-
+                   
                        def __init__(self, scale: float):
                            self.scale = None
-
+                   
                        @classmethod
                        def from_config(cls, config: dict[str, float]) -> Self:
                            return cls(config["scale"])
@@ -2229,7 +2230,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from __future__ import annotations
                    from typing import Self
-
+                   
                    class SomeClass():
                        def foo(self, bar: Self) -> Self:
                            return <warning descr="Cannot return explicit class in self annotated function">SomeClass()</warning>
@@ -2240,17 +2241,17 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void _testTypingSelfReturnSubClassMethod() {
     doTestByText("""
                    from typing import Self
-
-
+                   
+                   
                    class Builder:
                        def foo(self) -> Self:
                            result = SubBuilder().bar()
                            return <warning descr="Cannot return explicit class in self annotated function">result</warning>
-
+                   
                        def bar(self) -> Self:
                            pass
-
-
+                   
+                   
                    class SubBuilder(Builder):
                        pass
                    """);
@@ -2320,14 +2321,14 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from typing_extensions import LiteralString
                    def expect_literal_string(s: LiteralString) -> None: ...
-                                                                    
+                   
                    expect_literal_string("foo" + "bar")
                    literal_string: LiteralString
                    expect_literal_string(literal_string + "bar")
-                             
+                   
                    literal_string2: LiteralString
                    expect_literal_string(literal_string + literal_string2)
-                             
+                   
                    plain_string: str
                    expect_literal_string(<warning descr="Expected type 'LiteralString', got 'str' instead">literal_string + plain_string</warning>)
                    expect_literal_string(<warning descr="Expected type 'LiteralString', got 'str' instead">plain_string + literal_string</warning>)
@@ -2345,7 +2346,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    expect_literal_string(literal_string.join(["foo", "bar"]))
                    literal_string2: LiteralString
                    expect_literal_string(literal_string.join([literal_string, literal_string2]))
-                             
+                   
                    xs: List[LiteralString]
                    expect_literal_string(literal_string.join(xs))
                    plain_string: str
@@ -2463,10 +2464,10 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> doTestByText("""
-from typing import TypeGuard
-def foo(param: str | int) -> TypeGuard[str]:
-    return <warning descr="Expected type 'TypeGuard[str]', got 'str | int' instead">param</warning>
-      """)
+                           from typing import TypeGuard
+                           def foo(param: str | int) -> TypeGuard[str]:
+                               return <warning descr="Expected type 'TypeGuard[str]', got 'str | int' instead">param</warning>
+                           """)
     );
   }
 
@@ -2503,36 +2504,36 @@ def foo(param: str | int) -> TypeGuard[str]:
   // PY-70528
   public void testVersionDependentTypeVarTupleInitialization() {
     doTestByText("""
-                  import sys
-                  
-                  if sys.version_info >= (3, 11):
-                      from typing import TypeVarTuple
-                  else:
-                      from typing_extensions import TypeVarTuple
-                  
-                  PosArgsT = TypeVarTuple("PosArgsT")
-                  """);
+                   import sys
+                   
+                   if sys.version_info >= (3, 11):
+                       from typing import TypeVarTuple
+                   else:
+                       from typing_extensions import TypeVarTuple
+                   
+                   PosArgsT = TypeVarTuple("PosArgsT")
+                   """);
   }
 
   // PY-23067
   public void testFunctoolsWraps() {
     doTestByText("""
                    import functools
-
+                   
                    class MyClass:
                      def foo(self, i: int):
                          pass
-
+                   
                    class Route:
                        @functools.wraps(MyClass.foo)
                        def __init__(self):
                            pass
-
+                   
                    class Router:
                        @functools.wraps(wrapped=Route.__init__)
                        def route(self, s: str):
                            pass
-
+                   
                    router = Router()
                    router.route(-2)
                    router.route(<warning descr="Expected type 'int', got 'str' instead">""</warning>)
@@ -2740,7 +2741,7 @@ def foo(param: str | int) -> TypeGuard[str]:
     doTestByText("""
                    class A[T]:
                        def __init__(self, v: T) -> None: ...
-
+                   
                    A[int](<warning descr="Expected type 'int' (matched generic type 'T'), got 'str' instead">""</warning>)
                    """);
   }
@@ -2751,12 +2752,12 @@ def foo(param: str | int) -> TypeGuard[str]:
                    
                    class Node[T]:
                        x: T
-
+                   
                    Node[int].<warning descr="Access to generic instance variables via class is ambiguous">x</warning> = 1
                    Node[int].<warning descr="Access to generic instance variables via class is ambiguous">x</warning>
                    Node.<warning descr="Access to generic instance variables via class is ambiguous">x</warning> = 1
                    Node.<warning descr="Access to generic instance variables via class is ambiguous">x</warning>
-
+                   
                    p = Node[int]()
                    type(p).<warning descr="Access to generic instance variables via class is ambiguous">x</warning>
                    i: int = p.x
@@ -2888,7 +2889,7 @@ def foo(param: str | int) -> TypeGuard[str]:
                    class NT(NamedTuple):
                        a: str
                        b: int
-
+                   
                    x: tuple[str, int] = NT("a", 1)
                    y: tuple[str, int, str] = <warning descr="Expected type 'tuple[str, int, str]', got 'NT' instead">NT("a", 1)</warning>
                    """);
@@ -3072,10 +3073,10 @@ def foo(param: str | int) -> TypeGuard[str]:
                    
                    def int_bool(x: int, y: bool) -> str:
                        pass
-
+                   
                    def single_str(x: str) -> str:
                        pass
-
+                   
                    def empty() -> str:
                        pass
                    
@@ -3211,6 +3212,54 @@ def foo(param: str | int) -> TypeGuard[str]:
                    @dataclass(frozen=True)
                    class Concrete:
                        val: int = 0
+                   
+                   var: Template = <warning descr="Expected type 'Template', got 'Concrete' instead">Concrete()</warning>
+                   """);
+  }
+
+  // PY-76822
+  public void testProtocolClassVarAndSubclassClassVar() {
+    doTestByText("""
+                   from typing import Protocol, ClassVar
+                   
+                   class Template(Protocol):
+                       val: ClassVar[int] = 0
+                   
+                   
+                   class Concrete:
+                       val: ClassVar[int] = 0
+                   
+                   var: Template = Concrete()
+                   """);
+  }
+
+  // PY-76822
+  public void testProtocolClassVarAndSubclassInstanceVar() {
+    doTestByText("""
+                   from typing import Protocol, ClassVar
+                   
+                   class Template(Protocol):
+                       val: ClassVar[int] = 0
+                   
+                   
+                   class Concrete:
+                       val: int = 0
+                   
+                   var: Template = <warning descr="Expected type 'Template', got 'Concrete' instead">Concrete()</warning>
+                   """);
+  }
+
+  // PY-76822
+  public void testProtocolInstanceVarAndSubclassClassVar() {
+    doTestByText("""
+                   from typing import Protocol, ClassVar
+                   
+                   class Template(Protocol):
+                       val: int = 0
+                   
+                   
+                   class Concrete:
+                       val: ClassVar[int] = 0
                    
                    var: Template = <warning descr="Expected type 'Template', got 'Concrete' instead">Concrete()</warning>
                    """);
