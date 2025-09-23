@@ -11,6 +11,8 @@ import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.parameters.options.defaultLazy
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.system.exitProcess
 import kotlin.time.TimeSource.Monotonic.markNow
 import kotlinx.coroutines.Dispatchers
@@ -24,8 +26,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import java.io.File
-import java.util.concurrent.ConcurrentHashMap
 
 // --- Configuration ---
 private object Config {
@@ -51,7 +51,7 @@ private class ExtractReleaseNotesCommand : CliktCommand() {
                 if (latestReleaseDate.isNullOrBlank()) {
                     printlnErr(
                         "Error: --start-date is required if ${Config.RELEASE_NOTES_FILE} " +
-                        "does not exist or contain a release date."
+                            "does not exist or contain a release date."
                     )
                     exitProcess(1)
                 }
@@ -198,7 +198,9 @@ private class ExtractReleaseNotesCommand : CliktCommand() {
         results.forEach { result ->
             processedPrs[result.prId] = result
             result.notes.forEach { (section, items) ->
-                allReleaseNotes.getOrPut(section) { mutableListOf() }.addAll(items)
+                allReleaseNotes
+                    .getOrPut(section) { mutableListOf() }
+                    .addAll(items.filter { it.description.isNotBlank() })
             }
         }
 
@@ -225,7 +227,7 @@ private class ExtractReleaseNotesCommand : CliktCommand() {
 
         val sectionOrder = listOf("⚠️ Important Changes", "New features", "Bug fixes", "Deprecated API", "Other")
         val sortedSections =
-            allReleaseNotes.keys.sortedBy{ sectionKey ->
+            allReleaseNotes.keys.sortedBy { sectionKey ->
                 sectionOrder.indexOf(sectionKey).takeIf { it >= 0 } ?: Int.MAX_VALUE
             }
 
