@@ -12,7 +12,6 @@ import org.apache.tuweni.toml.Toml
 import org.apache.tuweni.toml.TomlParseError
 import org.apache.tuweni.toml.TomlTable
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.io.InputStream
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 
@@ -113,9 +112,9 @@ data class PyProjectToml(
      * val hatch = pyProject.getTool(HatchPyProject)
      * ```
      */
-    fun parse(inputStream: InputStream): Result<PyProjectToml, List<TomlParseError>> {
+    fun parse(tomlFileContent: String): Result<PyProjectToml, List<TomlParseError>> {
       val issues = mutableListOf<PyProjectIssue>()
-      val toml = Toml.parse(inputStream)
+      val toml = Toml.parse(tomlFileContent)
 
       if (toml.hasErrors()) {
         return Result.failure(toml.errors())

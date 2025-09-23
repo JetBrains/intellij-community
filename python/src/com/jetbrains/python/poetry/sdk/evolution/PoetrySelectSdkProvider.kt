@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.vfs.readText
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.sdk.ui.evolution.sdk.EvoModuleSdk
 import com.intellij.python.sdk.ui.evolution.sdk.resolvePythonExecutable
@@ -46,7 +47,7 @@ private class PoetrySelectSdkProvider() : EvoSelectSdkProvider {
 
 
     val (projectName, requiresPython) = withContext(Dispatchers.IO) {
-      val toml = PyProjectToml.parse(pyProjectTomlFile.inputStream).getOrNull()
+      val toml = PyProjectToml.parse(pyProjectTomlFile.readText()).getOrNull()
       (toml?.project?.name) to (toml?.project?.requiresPython)
     }
     val poetryVirtualenvsPath = runPoetry(pyProjectTomlFile.parent.toNioPath(), "config", "virtualenvs.path")

@@ -1,5 +1,6 @@
-package com.intellij.python.pyproject
+package com.intellij.python.junit5Tests.unit.pyproject
 
+import com.intellij.python.pyproject.*
 import com.intellij.python.pyproject.PyProjectIssue.*
 import com.intellij.python.pyproject.TomlTableSafeGetError.RequiredValueMissing
 import com.intellij.python.pyproject.TomlTableSafeGetError.UnexpectedType
@@ -22,7 +23,7 @@ class PyProjectTomlTest {
     val configContents = "[proj"
 
     // WHEN
-    val result = PyProjectToml.parse(configContents.byteInputStream())
+    val result = PyProjectToml.Companion.parse(configContents)
 
     // THEN
     assert(result.isFailure)
@@ -44,7 +45,7 @@ class PyProjectTomlTest {
       bar="test bar"
       baz="test baz"
     """.trimIndent()
-    val pyproject = PyProjectToml.parse(configContents.byteInputStream()).orThrow()
+    val pyproject = PyProjectToml.Companion.parse(configContents).orThrow()
 
     // WHEN
     val testTool = pyproject.getTool(TestPyProject)
@@ -68,7 +69,7 @@ class PyProjectTomlTest {
     """.trimIndent()
 
     // WHEN
-    val pyproject = PyProjectToml.parse(configContents.byteInputStream()).orThrow()
+    val pyproject = PyProjectToml.Companion.parse(configContents).orThrow()
     val testTool = pyproject.getTool(TestPyProject)
 
     // THEN
@@ -94,7 +95,7 @@ class PyProjectTomlTest {
     """.trimIndent()
 
     // WHEN
-    val pyproject = PyProjectToml.parse(configContents.byteInputStream()).orThrow()
+    val pyproject = PyProjectToml.Companion.parse(configContents).orThrow()
     val testTool = pyproject.getTool(TestPyProject)
 
     // THEN
@@ -113,7 +114,7 @@ class PyProjectTomlTest {
       name="Some project"
       version="1.2.3"
     """.trimIndent()
-    val pyproject = PyProjectToml.parse(configContents.byteInputStream()).orThrow()
+    val pyproject = PyProjectToml.Companion.parse(configContents).orThrow()
 
     // WHEN
     val testTool = pyproject.getTool(TestPyProject)
@@ -126,7 +127,7 @@ class PyProjectTomlTest {
   @ParameterizedTest(name = "{0}")
   @MethodSource("parseTestCases")
   fun parseTests(name: String, pyprojectToml: String, expectedProjectTable: PyProjectTable?, expectedIssues: List<PyProjectIssue>) {
-    val result = PyProjectToml.parse(pyprojectToml.byteInputStream())
+    val result = PyProjectToml.Companion.parse(pyprojectToml)
     val unwrapped = result.getOrThrow()
 
     assertEquals(expectedProjectTable, unwrapped.project)
