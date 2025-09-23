@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 #include <pthread.h>
 #include <stdio.h>
@@ -114,7 +114,7 @@ static void PrintMountedFileSystems(CFArrayRef roots) {
 #define INPUT_BUF_LEN 2048
 static char input_buf[INPUT_BUF_LEN];
 
-static char *read_stdin(void) {
+static char *read_stdin() {
     char* result = fgets(input_buf, INPUT_BUF_LEN, stdin);
     if (result == NULL || feof(stdin)) {
         return NULL;
@@ -126,7 +126,7 @@ static char *read_stdin(void) {
     return input_buf;
 }
 
-static bool ParseRoots(void) {
+static bool ParseRoots() {
     CFMutableArrayRef roots = CFArrayCreateMutable(NULL, 0, NULL);
     bool has_private_root = false;
 
