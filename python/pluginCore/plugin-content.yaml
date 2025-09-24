@@ -12,15 +12,24 @@
 - name: lib/modules/intellij.python.community.aliasProvider.jar
   contentModules:
   - name: intellij.python.community.aliasProvider
+- name: lib/modules/intellij.python.community.communityOnly.jar
+  contentModules:
+  - name: intellij.python.community.communityOnly
 - name: lib/modules/intellij.python.community.core.impl.jar
   contentModules:
   - name: intellij.python.community.core.impl
+- name: lib/modules/intellij.python.community.execService.jar
+  contentModules:
+  - name: intellij.python.community.execService
 - name: lib/modules/intellij.python.community.execService.python.jar
   contentModules:
   - name: intellij.python.community.execService.python
 - name: lib/modules/intellij.python.community.helpersLocator.jar
   contentModules:
   - name: intellij.python.community.helpersLocator
+- name: lib/modules/intellij.python.community.impl.huggingFace.jar
+  contentModules:
+  - name: intellij.python.community.impl.huggingFace
 - name: lib/modules/intellij.python.community.impl.installer.jar
   contentModules:
   - name: intellij.python.community.impl.installer
@@ -46,7 +55,7 @@
     reason: <- intellij.python.community.impl
   - name: tuweni-toml
     files:
-    - name: $MAVEN_REPOSITORY$/org/apache/tuweni/tuweni-toml/2/tuweni-toml-2.jar
+    - name: $MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2/tuweni-toml-2.jar
     - name: $MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4/antlr4-runtime-4.jar
     reason: <- intellij.python.community.impl
   contentModules:
@@ -59,12 +68,54 @@
 - name: lib/modules/intellij.python.community.impl.poetry.jar
   contentModules:
   - name: intellij.python.community.impl.poetry
+- name: lib/modules/intellij.python.community.impl.venv.jar
+  contentModules:
+  - name: intellij.python.community.impl.venv
 - name: lib/modules/intellij.python.community.interpreters.jar
   contentModules:
   - name: intellij.python.community.interpreters
 - name: lib/modules/intellij.python.community.jar
   contentModules:
   - name: intellij.python.community
+- name: lib/modules/intellij.python.community.plugin.impl.jar
+  contentModules:
+  - name: intellij.python.community.plugin.impl
+- name: lib/modules/intellij.python.community.plugin.java.jar
+  contentModules:
+  - name: intellij.python.community.plugin.java
+- name: lib/modules/intellij.python.community.plugin.minor.jar
+  contentModules:
+  - name: intellij.python.community.plugin.minor
+- name: lib/modules/intellij.python.community.plugin.minorRider.jar
+  contentModules:
+  - name: intellij.python.community.plugin.minorRider
+- name: lib/modules/intellij.python.community.services.internal.impl.jar
+  contentModules:
+  - name: intellij.python.community.services.internal.impl
+- name: lib/modules/intellij.python.community.services.shared.jar
+  contentModules:
+  - name: intellij.python.community.services.shared
+- name: lib/modules/intellij.python.community.services.systemPython.jar
+  contentModules:
+  - name: intellij.python.community.services.systemPython
+- name: lib/modules/intellij.python.copyright.jar
+  contentModules:
+  - name: intellij.python.copyright
+- name: lib/modules/intellij.python.featuresTrainer.jar
+  contentModules:
+  - name: intellij.python.featuresTrainer
+- name: lib/modules/intellij.python.grazie.jar
+  contentModules:
+  - name: intellij.python.grazie
+- name: lib/modules/intellij.python.hatch.jar
+  contentModules:
+  - name: intellij.python.hatch
+- name: lib/modules/intellij.python.langInjection.jar
+  contentModules:
+  - name: intellij.python.langInjection
+- name: lib/modules/intellij.python.markdown.jar
+  contentModules:
+  - name: intellij.python.markdown
 - name: lib/modules/intellij.python.ml.features.jar
   contentModules:
   - name: intellij.python.ml.features
@@ -83,6 +134,9 @@
 - name: lib/modules/intellij.python.pydev.jar
   contentModules:
   - name: intellij.python.pydev
+- name: lib/modules/intellij.python.pyproject.jar
+  contentModules:
+  - name: intellij.python.pyproject
 - name: lib/modules/intellij.python.sdk.jar
   contentModules:
   - name: intellij.python.sdk
@@ -99,36 +153,14 @@
 - name: lib/modules/intellij.python.syntax.jar
   contentModules:
   - name: intellij.python.syntax
+- name: lib/modules/intellij.python.terminal.jar
+  contentModules:
+  - name: intellij.python.terminal
 - name: lib/python-ce.jar
   modules:
   - name: intellij.python.community.plugin
   contentModules:
-  - name: intellij.python.pyproject
-  - name: intellij.python.community.execService
-  - name: intellij.python.community.impl.venv
-  - name: intellij.python.hatch
-  - name: intellij.python.community.services.shared
-  - name: intellij.python.community.services.internal.impl
-  - name: intellij.python.community.services.systemPython
-  - name: intellij.python.community.plugin.minor
-  - name: intellij.python.community.plugin.minorRider
-  - name: intellij.python.community.communityOnly
   - name: intellij.commandInterface
-  - name: intellij.python.community.impl.huggingFace
-  - name: intellij.python.community.plugin.impl
-  - name: intellij.python.community.plugin.java
-  - name: intellij.python.copyright
-  - name: intellij.python.featuresTrainer
-  - name: intellij.python.grazie
-  - name: intellij.python.langInjection
-  - name: intellij.python.markdown
-  - name: intellij.python.terminal
-- name: lib/tuweni-toml.jar
-  library: tuweni-toml
-  files:
-  - name: $MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2/tuweni-toml-2.jar
-  - name: $MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4/antlr4-runtime-4.jar
-  reason: <- intellij.python.community.impl
 - name: lib/xmlrpc.jar
   library: XmlRPC
   files:
