@@ -95,6 +95,8 @@
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
     <registryKey defaultValue="false" key="search.in.non.indexable" restartRequired="false"
                  description="Search files in non-indexable filesets with NonIndexableFileNavigationContributor"/>
+    <registryKey defaultValue="true" key="se.enable.non.indexable.files.contributor" restartRequired="false"
+                 description="Search files in non-indexable filesets with NonIndexableFilesSEContributor"/>
     <registryKey defaultValue="false"
                  description="Enable reformat action execution on frontend in remote development"
                  key="reformat.action.execute.on.frontend"
@@ -1369,6 +1371,7 @@
     <searchEverywhere.manager implementation="com.intellij.ide.actions.searcheverywhere.MonolithSearchEverywhereManagerFactory"/>
 
     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributorFactory"/>
+    <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.NonIndexableFilesSEContributor$Factory"/>
     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor$Factory"/>
     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.CalculatorSEContributorFactory"/>
     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor$Factory"/>

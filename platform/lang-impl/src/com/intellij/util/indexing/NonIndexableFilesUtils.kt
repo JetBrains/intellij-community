@@ -34,7 +34,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @RequiresBackgroundThread
 @RequiresReadLock
-private fun WorkspaceFileIndexEx.contentUnindexedRoots(): Set<VirtualFile> {
+fun WorkspaceFileIndexEx.contentNonIndexableRoots(): Set<VirtualFile> {
   val roots = mutableSetOf<VirtualFile>()
   visitFileSets { fileSet, _ ->
     val root = fileSet.root
@@ -49,7 +49,7 @@ private fun WorkspaceFileIndexEx.contentUnindexedRoots(): Set<VirtualFile> {
 
 internal fun iterateNonIndexableFilesImpl(project: Project, inputFilter: VirtualFileFilter?, processor: ContentIterator): Boolean {
   val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
-  val roots: Set<VirtualFile> = ReadAction.nonBlocking<Set<VirtualFile>> { workspaceFileIndex.contentUnindexedRoots() }.executeSynchronously()
+  val roots: Set<VirtualFile> = ReadAction.nonBlocking<Set<VirtualFile>> { workspaceFileIndex.contentNonIndexableRoots() }.executeSynchronously()
   return workspaceFileIndex.iterateNonIndexableFilesImpl(roots, inputFilter ?: VirtualFileFilter.ALL, processor)
 }
 
@@ -113,7 +113,7 @@ interface FilesDeque {
     @RequiresReadLock
     @RequiresBackgroundThread
     fun nonIndexableDequeue(project: Project): FilesDeque {
-      return NonIndexableFilesDequeImpl(project, WorkspaceFileIndexEx.getInstance(project).contentUnindexedRoots())
+      return NonIndexableFilesDequeImpl(project, WorkspaceFileIndexEx.getInstance(project).contentNonIndexableRoots())
     }
   }
 }
