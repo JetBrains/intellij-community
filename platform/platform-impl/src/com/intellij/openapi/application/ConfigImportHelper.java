@@ -79,7 +79,7 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.CommandLineProcessorKt.isIdeStartupWizardEnabled;
 import static com.intellij.ide.SpecialConfigFiles.*;
 import static com.intellij.ide.plugins.BundledPluginsState.BUNDLED_PLUGINS_FILENAME;
-import static com.intellij.openapi.application.ImportOldConfigsState.InitialImportScenario.*;
+import static com.intellij.openapi.application.ImportOldConfigsUsagesCollector.InitialImportScenario.*;
 import static com.intellij.openapi.application.migrations.Localization242Kt.enableL10nIfPluginInstalled;
 import static com.intellij.openapi.application.migrations.PluginMigrationKt.MIGRATION_INSTALLED_PLUGINS_TXT;
 import static com.intellij.platform.ide.bootstrap.SplashManagerKt.hideSplash;
@@ -175,7 +175,7 @@ public final class ConfigImportHelper {
     var vmOptionFileChanged = false;
     var vmOptionsLines = (List<String>)null;
     var currentlyDisabledPlugins = (List<String>)null;
-    var importScenarioStatistics = (ImportOldConfigsState.InitialImportScenario)null;
+    var importScenarioStatistics = (ImportOldConfigsUsagesCollector.InitialImportScenario)null;
 
     try {
       var oldConfigDirAndOldIdePath = (Pair<@NotNull Path, @Nullable Path>)null;
@@ -305,7 +305,8 @@ public final class ConfigImportHelper {
         settings.importFinished(newConfigDir, otherProductPrefixes);
       }
 
-      ImportOldConfigsState.Companion.getInstance().reportImportScenario(importScenarioStatistics);
+      ImportOldConfigsUsagesCollector.INSTANCE.reportImportScenario(importScenarioStatistics);
+
       if (importScenarioStatistics == IMPORT_SETTINGS_ACTION && vmOptionsLines != null) {
         var vmOptionsFile = newConfigDir.resolve(VMOptions.getFileName());
         try {

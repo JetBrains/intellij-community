@@ -189,7 +189,7 @@ final class ImportOldConfigsPanel extends JDialog {
   }
 
   @Nullable Pair<Path, Path> getSelectedFile() {
-    ImportOldConfigsState.Companion.getInstance().saveImportOldConfigType(myRbImportAuto, myRbImport, myRbDoNotImport, myResult != null);
+    ImportOldConfigsUsagesCollector.INSTANCE.saveImportOldConfigType(myRbImportAuto, myRbImport, myRbDoNotImport, myResult != null);
 
     if (myRbImportAuto.isSelected()) {
       return new Pair<>(myGuessedOldConfigDirs.get(Math.max(myComboBoxOldPaths.getSelectedIndex(), 0)), null);
