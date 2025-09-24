@@ -5,6 +5,7 @@ import com.intellij.terminal.session.TerminalInputEvent
 import com.intellij.terminal.session.TerminalOutputEvent
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.session.TerminalSessionTerminatedEvent
+import fleet.rpc.client.durable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -30,8 +31,9 @@ class FrontendTerminalSession(val id: TerminalSessionId) : TerminalSession {
     if (isClosed) {
       return Channel<TerminalInputEvent>(capacity = 0).also { it.close() }
     }
-
-    return TerminalSessionApi.getInstance().getInputChannel(id)
+    return durable {
+      TerminalSessionApi.getInstance().getInputChannel(id)
+    }
   }
 
   override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> {
@@ -39,16 +41,20 @@ class FrontendTerminalSession(val id: TerminalSessionId) : TerminalSession {
       return emptyFlow()
     }
 
-    val flow = TerminalSessionApi.getInstance().getOutputFlow(id)
-    return flow.onEach { events ->
-      if (events.any { it == TerminalSessionTerminatedEvent }) {
-        isClosed = true
-      }
+    return durable {
+      TerminalSessionApi.getInstance().getOutputFlow(id)
+        .onEach { events ->
+          if (events.any { it == TerminalSessionTerminatedEvent }) {
+            isClosed = true
+          }
+        }
     }
   }
 
   override suspend fun hasRunningCommands(): Boolean {
     if (isClosed) return false
-    return TerminalSessionApi.getInstance().hasRunningCommands(id)
+    return durable {
+      TerminalSessionApi.getInstance().hasRunningCommands(id)
+    }
   }
 }

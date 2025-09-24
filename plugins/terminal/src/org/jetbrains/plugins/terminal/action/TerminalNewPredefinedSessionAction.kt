@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBUI
+import fleet.rpc.client.durable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,7 +36,9 @@ class TerminalNewPredefinedSessionAction : DumbAwareAction(), ActionRemoteBehavi
 
     val popupPoint = getPreferredPopupPoint(e)
     terminalProjectScope(project).launch {
-      val shells = detectShells()
+      val shells = durable {
+        detectShells()
+      }
       val customActions = OpenPredefinedTerminalActionProvider.collectAll(project)
 
       withContext(Dispatchers.EDT) {
