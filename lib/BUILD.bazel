@@ -9249,22 +9249,22 @@ jvm_import(
 java_library(
   name = "tuweni-toml",
   exports = [
-    ":tuweni-toml-2_0_0_http_import",
-    ":antlr4-runtime-4_7_1_http_import",
+    ":tuweni-toml-2_7_1_http_import",
+    ":antlr4-runtime-4_13_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "tuweni-toml-2_0_0_http_import",
-  jar = "@tuweni-toml-2_0_0_http//file",
-  source_jar = "@tuweni-toml-2_0_0-sources_http//file"
+  name = "tuweni-toml-2_7_1_http_import",
+  jar = "@tuweni-toml-2_7_1_http//file",
+  source_jar = "@tuweni-toml-2_7_1-sources_http//file"
 )
 
 jvm_import(
-  name = "antlr4-runtime-4_7_1_http_import",
-  jar = "@antlr4-runtime-4_7_1_http//file",
-  source_jar = "@antlr4-runtime-4_7_1-sources_http//file"
+  name = "antlr4-runtime-4_13_0_http_import",
+  jar = "@antlr4-runtime-4_13_0_http//file",
+  source_jar = "@antlr4-runtime-4_13_0-sources_http//file"
 )
 
 java_library(
