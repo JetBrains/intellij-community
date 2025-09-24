@@ -2,8 +2,8 @@ package com.intellij.terminal.frontend
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.idea.AppModeAssertions
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -49,7 +49,7 @@ internal class TerminalTypeAheadOutputModelController(
   private var delayedEvents: MutableList<TerminalOutputEvent> = mutableListOf()
 
   init {
-    coroutineScope.launch(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       delayedUpdateRequests
         .debounce(BACKEND_EVENTS_DELAY_MILLIS)
         .collect {
