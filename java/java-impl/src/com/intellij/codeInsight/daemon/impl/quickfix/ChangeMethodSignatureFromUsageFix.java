@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.ChangeSignatureRefactoring;
@@ -144,6 +145,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (!myTargetMethod.isValid() || myTargetMethod.getContainingClass() == null) return false;
+    if (myTargetMethod instanceof SyntheticElement && !(myTargetMethod instanceof LightRecordCanonicalConstructor)) return false;
     if (ContainerUtil.exists(myTargetMethod.getParameterList().getParameters(), p -> !p.isValid())) {
       return false;
     }
