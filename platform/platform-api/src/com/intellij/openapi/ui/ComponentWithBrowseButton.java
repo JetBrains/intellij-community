@@ -63,7 +63,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     boolean inlineBrowseButton = myComponent instanceof ExtendableTextComponent;
     if (inlineBrowseButton) {
       myInlineButtonExtension = ExtendableTextComponent.Extension.create(
-        getDefaultIcon(), getHoveredIcon(), getIconTooltip(), this::notifyActionListeners);
+        getDefaultIcon(), getHoveredIcon(), getIconTooltip(), true, this::notifyActionListeners);
       ((ExtendableTextComponent)myComponent).addExtension(myInlineButtonExtension);
       new DumbAwareAction() {
         @Override

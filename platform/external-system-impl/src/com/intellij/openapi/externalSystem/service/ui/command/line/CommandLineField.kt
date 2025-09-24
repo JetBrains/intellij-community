@@ -70,7 +70,7 @@ class CommandLineField(
     val keystrokeText = KeymapUtil.getKeystrokeText(keyStroke)
     val tooltip = commandLineInfo.dialogTooltip + " ($keystrokeText)"
     val browseExtension = ExtendableTextComponent.Extension.create(
-      AllIcons.General.InlineVariables, AllIcons.General.InlineVariablesHover, tooltip, action)
+      AllIcons.General.InlineVariables, AllIcons.General.InlineVariablesHover, tooltip, true, action)
     addExtension(browseExtension)
   }
 }

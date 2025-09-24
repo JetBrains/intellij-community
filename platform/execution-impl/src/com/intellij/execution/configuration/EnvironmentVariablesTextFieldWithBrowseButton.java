@@ -65,7 +65,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
   private void addEnvFilesExtension() {
     if (myEnvFilesExtension != null) return;
     myEnvFilesExtension = ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover,
-                                             ExecutionBundle.message("tooltip.browse.for.environment.files"), () -> browseForEnvFile());
+                                             ExecutionBundle.message("tooltip.browse.for.environment.files"), true, () -> browseForEnvFile());
     getTextField().addExtension(myEnvFilesExtension);
     getTextField().getEmptyText().setText(ExecutionBundle.message("status.text.environment.variables.or.env.files"));
   }

@@ -1077,6 +1077,7 @@ public final class PluginManagerConfigurable
         JBTextField textField = searchTextField.getTextEditor();
         textField.putClientProperty("search.extension", ExtendableTextComponent.Extension
           .create(AllIcons.Actions.More, AllIcons.Actions.More, IdeBundle.message("plugins.configurable.search.options"), // TODO: icon
+                  true,
                   () -> showRightBottomPopup(textField, IdeBundle.message("plugins.configurable.show"), myInstalledSearchGroup)));
         textField.putClientProperty("JTextField.variant", null);
         textField.putClientProperty("JTextField.variant", "search");

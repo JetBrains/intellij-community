@@ -192,7 +192,7 @@ class DistributionComboBox(
     whenItemSelected {
       setEditable(it is Item.Distribution && it.info is LocalDistributionInfo)
     }
-    editor.textField.addBrowseExtension(::showBrowseDistributionDialog, null)
+    editor.textField.addBrowseExtension(::showBrowseDistributionDialog, null, false)
     FileChooserFactory.getInstance()
       .installFileCompletion(editor.textField, info.fileChooserDescriptor, true, null)
   }

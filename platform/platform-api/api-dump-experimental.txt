@@ -534,6 +534,7 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - com.intellij.ui.components.JBTextField
 - com.intellij.ui.components.fields.ExtendableTextComponent
 - *:addBrowseExtension(java.lang.Runnable,com.intellij.openapi.Disposable):com.intellij.ui.components.fields.ExtendableTextField
+- *:addBrowseExtension(java.lang.Runnable,com.intellij.openapi.Disposable,Z):com.intellij.ui.components.fields.ExtendableTextField
 *f:com.intellij.ui.components.panels.ListLayout
 - java.awt.LayoutManager2
 - *sf:Companion:com.intellij.ui.components.panels.ListLayout$Companion

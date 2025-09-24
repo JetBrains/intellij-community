@@ -385,6 +385,8 @@ c:com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 - p:setupDefaultButton(javax.swing.JComponent,java.awt.Graphics):V
 - p:textIconGap():I
 - update(java.awt.Graphics,javax.swing.JComponent):V
+f:com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI$IconHolder
+- iconButton:javax.swing.JButton
 com.intellij.ide.util.ElementsChooser$ElementsMarkListener
 - a:elementMarkChanged(java.lang.Object,Z):V
 com.intellij.ide.util.ElementsChooser$StatisticsCollector

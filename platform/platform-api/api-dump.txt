@@ -931,6 +931,7 @@ com.intellij.ui.components.fields.ExtendableTextComponent
 com.intellij.ui.components.fields.ExtendableTextComponent$Extension
 - s:create(javax.swing.Icon,java.lang.String,java.lang.Runnable):com.intellij.ui.components.fields.ExtendableTextComponent$Extension
 - s:create(javax.swing.Icon,javax.swing.Icon,java.lang.String,java.lang.Runnable):com.intellij.ui.components.fields.ExtendableTextComponent$Extension
+- s:create(javax.swing.Icon,javax.swing.Icon,java.lang.String,Z,java.lang.Runnable):com.intellij.ui.components.fields.ExtendableTextComponent$Extension
 - getActionOnClick():java.lang.Runnable
 - getActionOnClick(java.awt.event.InputEvent):java.lang.Runnable
 - getAfterIconOffset():I
@@ -939,6 +940,7 @@ com.intellij.ui.components.fields.ExtendableTextComponent$Extension
 - getIconGap():I
 - getPreferredSpace():I
 - getTooltip():java.lang.String
+- isFocusable():Z
 - isIconBeforeText():Z
 - isSelected():Z
 com.intellij.ui.components.fields.valueEditors.ValueEditor
