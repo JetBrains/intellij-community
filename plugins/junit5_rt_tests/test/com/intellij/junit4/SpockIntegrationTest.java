@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit4;
 
 import com.intellij.execution.ExecutionException;
@@ -27,7 +27,7 @@ public class SpockIntegrationTest extends AbstractTestFrameworkCompilingIntegrat
   
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[] {"1.2-groovy-2.5"}, new Object[] {"2.0-groovy-2.5"});
+    return Arrays.asList(new Object[] {"2.0-groovy-3.0"}, new Object[] {"2.3-groovy-3.0"});
   }
   
   @Parameterized.Parameter
@@ -38,7 +38,7 @@ public class SpockIntegrationTest extends AbstractTestFrameworkCompilingIntegrat
   protected void setupModule() throws Exception {
     super.setupModule();
     ArtifactRepositoryManager repoManager = getRepoManager();
-    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.codehaus.groovy:groovy:2.5.23"), repoManager);
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.codehaus.groovy:groovy:3.0.25"), repoManager);
     addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.spockframework:spock-core:" + mySpockVersion), repoManager);
     addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.4.0"), repoManager);
     addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.platform", "junit-platform-engine", "1.4.0"), repoManager);
