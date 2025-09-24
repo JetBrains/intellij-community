@@ -6,8 +6,8 @@ import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 class GradleProjectEntityId(
-  private val buildId: GradleBuildEntityId,
-  private val url: VirtualFileUrl,
+  val buildId: GradleBuildEntityId,
+  val url: VirtualFileUrl,
 ): SymbolicEntityId<GradleProjectEntity> {
   override val presentableName: @NlsSafe String
     get() = url.fileName

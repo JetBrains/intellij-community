@@ -2,8 +2,6 @@
 package org.jetbrains.plugins.gradle.model.versionCatalogs
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -11,6 +9,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity
 import org.jetbrains.plugins.gradle.model.projectModel.gradleModuleEntity
+import org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogUtil.getVersionCatalogEntities
+import org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogUtil.getVersionCatalogEntity
 
 object GradleVersionCatalogUtil {
   fun getVersionCatalogEntity(moduleEntity: ModuleEntity, catalogName: String, storage: EntityStorage): GradleVersionCatalogEntity? {
@@ -45,6 +45,6 @@ object GradleVersionCatalogUtil {
 
   private fun getBuildEntity(moduleEntity: ModuleEntity, storage: EntityStorage): GradleBuildEntity? {
     val gradleModuleEntity = moduleEntity.gradleModuleEntity?: return null
-    return storage.resolve(gradleModuleEntity.gradleProject.buildId)
+    return storage.resolve(gradleModuleEntity.gradleProjectId.buildId)
   }
 }

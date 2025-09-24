@@ -10,16 +10,15 @@ import com.intellij.platform.workspace.storage.annotations.Parent
  */
 interface GradleModuleEntity : WorkspaceEntity {
   @Parent
-  val gradleProject: GradleProjectEntity
-  @Parent
   val module: ModuleEntity
+  val gradleProjectId: GradleProjectEntityId
 
   //region generated code
   @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<GradleModuleEntity> {
     override var entitySource: EntitySource
-    var gradleProject: GradleProjectEntity.Builder
     var module: ModuleEntity.Builder
+    var gradleProjectId: GradleProjectEntityId
   }
 
   companion object : EntityType<GradleModuleEntity, Builder>() {
@@ -27,10 +26,12 @@ interface GradleModuleEntity : WorkspaceEntity {
     @JvmStatic
     @JvmName("create")
     operator fun invoke(
+      gradleProjectId: GradleProjectEntityId,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
     ): Builder {
       val builder = builder()
+      builder.gradleProjectId = gradleProjectId
       builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
@@ -52,7 +53,4 @@ var ModuleEntity.Builder.gradleModuleEntity: GradleModuleEntity.Builder?
 //endregion
 
 val ModuleEntity.gradleModuleEntity: GradleModuleEntity?
-  by WorkspaceEntity.extension()
-
-val GradleProjectEntity.gradleModuleEntity: GradleModuleEntity?
   by WorkspaceEntity.extension()

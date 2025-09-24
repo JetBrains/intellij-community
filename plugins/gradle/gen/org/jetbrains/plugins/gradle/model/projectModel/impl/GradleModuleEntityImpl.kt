@@ -6,16 +6,18 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToOneParent
+import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity
-import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity
+import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityId
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -24,24 +26,23 @@ internal class GradleModuleEntityImpl(private val dataSource: GradleModuleEntity
   dataSource) {
 
   private companion object {
-    internal val GRADLEPROJECT_CONNECTION_ID: ConnectionId = ConnectionId.create(GradleProjectEntity::class.java,
-                                                                                 GradleModuleEntity::class.java,
-                                                                                 ConnectionId.ConnectionType.ONE_TO_ONE, false)
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, GradleModuleEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
-      GRADLEPROJECT_CONNECTION_ID,
       MODULE_CONNECTION_ID,
     )
 
   }
 
-  override val gradleProject: GradleProjectEntity
-    get() = snapshot.extractOneToOneParent(GRADLEPROJECT_CONNECTION_ID, this)!!
-
   override val module: ModuleEntity
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
+
+  override val gradleProjectId: GradleProjectEntityId
+    get() {
+      readField("gradleProjectId")
+      return dataSource.gradleProjectId
+    }
 
   override val entitySource: EntitySource
     get() {
@@ -87,16 +88,6 @@ internal class GradleModuleEntityImpl(private val dataSource: GradleModuleEntity
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (_diff != null) {
-        if (_diff.extractOneToOneParent<WorkspaceEntityBase>(GRADLEPROJECT_CONNECTION_ID, this) == null) {
-          error("Field GradleModuleEntity#gradleProject should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(false, GRADLEPROJECT_CONNECTION_ID)] == null) {
-          error("Field GradleModuleEntity#gradleProject should be initialized")
-        }
-      }
-      if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
           error("Field GradleModuleEntity#module should be initialized")
         }
@@ -105,6 +96,9 @@ internal class GradleModuleEntityImpl(private val dataSource: GradleModuleEntity
         if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
           error("Field GradleModuleEntity#module should be initialized")
         }
+      }
+      if (!getEntityData().isGradleProjectIdInitialized()) {
+        error("Field GradleModuleEntity#gradleProjectId should be initialized")
       }
     }
 
@@ -116,6 +110,7 @@ internal class GradleModuleEntityImpl(private val dataSource: GradleModuleEntity
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as GradleModuleEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.gradleProjectId != dataSource.gradleProjectId) this.gradleProjectId = dataSource.gradleProjectId
       updateChildToParentReferences(parents)
     }
 
@@ -127,43 +122,6 @@ internal class GradleModuleEntityImpl(private val dataSource: GradleModuleEntity
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
-      }
-
-    override var gradleProject: GradleProjectEntity.Builder
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(GRADLEPROJECT_CONNECTION_ID,
-                                                                           this) as? GradleProjectEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, GRADLEPROJECT_CONNECTION_ID)]!! as GradleProjectEntity.Builder)
-        }
-        else {
-          this.entityLinks[EntityLink(false, GRADLEPROJECT_CONNECTION_ID)]!! as GradleProjectEntity.Builder
-        }
-      }
-      set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, GRADLEPROJECT_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneParentOfChild(GRADLEPROJECT_CONNECTION_ID, this, value)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, GRADLEPROJECT_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
-          this.entityLinks[EntityLink(false, GRADLEPROJECT_CONNECTION_ID)] = value
-        }
-        changedProperty.add("gradleProject")
       }
 
     override var module: ModuleEntity.Builder
@@ -202,13 +160,61 @@ internal class GradleModuleEntityImpl(private val dataSource: GradleModuleEntity
         changedProperty.add("module")
       }
 
+    override var gradleProjectId: GradleProjectEntityId
+      get() = getEntityData().gradleProjectId
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).gradleProjectId = value
+        changedProperty.add("gradleProjectId")
+
+      }
+
     override fun getEntityClass(): Class<GradleModuleEntity> = GradleModuleEntity::class.java
   }
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class GradleModuleEntityData : WorkspaceEntityData<GradleModuleEntity>() {
+internal class GradleModuleEntityData : WorkspaceEntityData<GradleModuleEntity>(), SoftLinkable {
+  lateinit var gradleProjectId: GradleProjectEntityId
 
+  internal fun isGradleProjectIdInitialized(): Boolean = ::gradleProjectId.isInitialized
+
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
+    result.add(gradleProjectId)
+    return result
+  }
+
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+    index.index(this, gradleProjectId)
+  }
+
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+    // TODO verify logic
+    val mutablePreviousSet = HashSet(prev)
+    val removedItem_gradleProjectId = mutablePreviousSet.remove(gradleProjectId)
+    if (!removedItem_gradleProjectId) {
+      index.index(this, gradleProjectId)
+    }
+    for (removed in mutablePreviousSet) {
+      index.remove(this, removed)
+    }
+  }
+
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
+    var changed = false
+    val gradleProjectId_data = if (gradleProjectId == oldLink) {
+      changed = true
+      newLink as GradleProjectEntityId
+    }
+    else {
+      null
+    }
+    if (gradleProjectId_data != null) {
+      gradleProjectId = gradleProjectId_data
+    }
+    return changed
+  }
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<GradleModuleEntity> {
     val modifiable = GradleModuleEntityImpl.Builder(null)
@@ -237,15 +243,13 @@ internal class GradleModuleEntityData : WorkspaceEntityData<GradleModuleEntity>(
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return GradleModuleEntity(entitySource) {
-      parents.filterIsInstance<GradleProjectEntity.Builder>().singleOrNull()?.let { this.gradleProject = it }
+    return GradleModuleEntity(gradleProjectId, entitySource) {
       parents.filterIsInstance<ModuleEntity.Builder>().singleOrNull()?.let { this.module = it }
     }
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
     val res = mutableListOf<Class<out WorkspaceEntity>>()
-    res.add(GradleProjectEntity::class.java)
     res.add(ModuleEntity::class.java)
     return res
   }
@@ -257,6 +261,7 @@ internal class GradleModuleEntityData : WorkspaceEntityData<GradleModuleEntity>(
     other as GradleModuleEntityData
 
     if (this.entitySource != other.entitySource) return false
+    if (this.gradleProjectId != other.gradleProjectId) return false
     return true
   }
 
@@ -266,16 +271,19 @@ internal class GradleModuleEntityData : WorkspaceEntityData<GradleModuleEntity>(
 
     other as GradleModuleEntityData
 
+    if (this.gradleProjectId != other.gradleProjectId) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
+    result = 31 * result + gradleProjectId.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
+    result = 31 * result + gradleProjectId.hashCode()
     return result
   }
 }

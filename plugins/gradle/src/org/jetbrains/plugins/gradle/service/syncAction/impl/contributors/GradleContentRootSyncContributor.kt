@@ -15,8 +15,6 @@ import org.jetbrains.plugins.gradle.model.GradleLightProject
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity
-import org.jetbrains.plugins.gradle.model.projectModel.gradleModuleEntity
-import org.jetbrains.plugins.gradle.model.projectModel.modifyGradleProjectEntity
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.*
@@ -171,10 +169,8 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
       LOG.warn("GradleProjectEntity is not found: it should be already created for the project ${projectModel.projectDirectory}")
       return
     }
-    storage.modifyGradleProjectEntity(projectEntity) {
-      gradleModuleEntity = GradleModuleEntity(projectEntity.entitySource) {
-        module = moduleEntity
-      }
+    storage addEntity GradleModuleEntity(projectEntity.symbolicId, projectEntity.entitySource) {
+      module = moduleEntity
     }
   }
 

@@ -89,7 +89,7 @@ internal fun assertGradleModuleEntities(
     assertNotNull(gradleModuleEntity) {
       "GradleModuleEntity should exist for the module with name = `$moduleName`."
     }
-    assertEquals(projectId, gradleModuleEntity!!.gradleProject.symbolicId) {
+    assertEquals(projectId, gradleModuleEntity!!.gradleProjectId) {
       "GradleModuleEntity for the module with name = `$moduleName` should contain an expected symbolic ID of GradleProjectEntity."
     }
   }
