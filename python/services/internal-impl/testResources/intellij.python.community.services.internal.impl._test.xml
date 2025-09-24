@@ -1,0 +1,7 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.testFramework.junit5"/>
+    <module name="intellij.python.community.junit5Tests.framework._test"/>
+    <module name="intellij.python.community.services.internal.impl"/>
+  </dependencies>
+</idea-plugin>
