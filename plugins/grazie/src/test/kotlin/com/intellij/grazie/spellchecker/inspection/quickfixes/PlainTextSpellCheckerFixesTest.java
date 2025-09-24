@@ -19,6 +19,8 @@ import com.intellij.spellchecker.quickfixes.ChangeTo;
 import com.intellij.spellchecker.quickfixes.RenameTo;
 import com.intellij.spellchecker.quickfixes.SaveTo;
 
+import java.util.List;
+
 public class PlainTextSpellCheckerFixesTest extends AbstractSpellCheckerFixesTest {
   @Override
   protected String getExtension() {
@@ -54,7 +56,7 @@ public class PlainTextSpellCheckerFixesTest extends AbstractSpellCheckerFixesTes
   }
 
   public void testEmptyRenameTo() {
-    doNoQuickFixTest(RenameTo.getFixName());
+    doNoQuickFixTest(RenameTo.getFixName(List.of()));
   }
 
   public void testEmptySaveTo() {
@@ -66,10 +68,10 @@ public class PlainTextSpellCheckerFixesTest extends AbstractSpellCheckerFixesTes
   }
 
   public void testNoTypoRenameTo() {
-    doNoQuickFixTest(RenameTo.getFixName());
+    doNoQuickFixTest(RenameTo.getFixName(List.of()));
   }
 
   public void testSimpleWordRenameTo() {
-    doNoQuickFixTest(RenameTo.getFixName());
+    doNoQuickFixTest(RenameTo.getFixName(List.of()));
   }
 }

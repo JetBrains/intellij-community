@@ -13,6 +13,8 @@ import com.intellij.spellchecker.settings.SpellCheckerSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import com.intellij.ui.ChooserInterceptor
+import com.intellij.ui.UiInterceptors
 import java.util.function.Consumer
 
 
@@ -123,11 +125,31 @@ class JavaSupportTest : GrazieTestBase() {
     )
   }
 
-  fun `test meaningful suggestions in RenameTo action`() {
+  fun `test meaningful single suggestion in RenameTo action`() {
     myFixture.configureByText("a.java", """
       class A {
         void foo() {
           int <TYPO descr="Typo: In word 'tagret'">tag<caret>ret</TYPO>Dir = 1;
+        }
+      }
+    """)
+    myFixture.checkHighlighting()
+    val intention = myFixture.findSingleIntention("Typo: Rename to 'targetDir'")
+    myFixture.launchAction(intention)
+    myFixture.checkResult("""
+      class A {
+        void foo() {
+          int targetDir = 1;
+        }
+      }
+    """)
+  }
+
+  fun `test multiple suggestions in RenameTo action`() {
+    myFixture.configureByText("a.java", """
+      class A {
+        void foo() {
+          int <TYPO descr="Typo: In word 'barek'">barek<caret></TYPO> = 1;
         }
       }
     """)
@@ -137,7 +159,7 @@ class JavaSupportTest : GrazieTestBase() {
     myFixture.checkResult("""
       class A {
         void foo() {
-          int targetDir = 1;
+          int bark = 1;
         }
       }
     """)
