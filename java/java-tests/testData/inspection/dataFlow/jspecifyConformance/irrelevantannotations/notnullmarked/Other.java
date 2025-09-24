@@ -87,7 +87,7 @@ public class Other {
     try (@Nullable AutoCloseable a = () -> {}) {}
     // test:name:NonNull try-with-resources
     // test:irrelevant-annotation:NonNull
-    try (@Nullable AutoCloseable a = () -> {}) {}
+    try (@NonNull AutoCloseable a = () -> {}) {}
   }
 
   /**

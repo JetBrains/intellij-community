@@ -178,15 +178,6 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
     Pattern.compile("// test:irrelevant[^\\r\\n]*\n *// test:irrelevant.*\n");
 
   private static @NotNull String clean(@NotNull String text, String fileName) {
-    //it is a bug in tests
-    text = text.replaceAll(Pattern.quote("""
-                                               // test:irrelevant-annotation:NonNull
-                                               try (@Nullable AutoCloseable a = () -> {}) {}
-                                           """),
-                           """
-                                 // test:irrelevant-annotation:NonNull
-                                 try (@NonNull AutoCloseable a = () -> {}) {}
-                             """);
     text = JOIN_TEST_IRRELEVANT_ANNOTATIONS.matcher(text)
       .replaceAll("// test:irrelevant-annotation:Nullable & test:irrelevant-annotation:NonNull\n");
     text = CANNOT_CONVERT.matcher(text).replaceAll("// jspecify_nullness_mismatch\n");
