@@ -72,7 +72,7 @@ internal class GHPRReviewInEditorViewModelImpl(
 
         val diffData = mappingData.diffData
                        ?: return@mapValues MappedGHPRReviewEditorThreadViewModel.MappingData(isVisible, mappingData.change, null)
-        val commentRange = mappingData.threadData.mapToInEditorRange(diffData)?.second
+        val commentRange = mappingData.threadData.mapToInEditorRange(diffData)
 
         MappedGHPRReviewEditorThreadViewModel.MappingData(isVisible, mappingData.change, commentRange)
       }
