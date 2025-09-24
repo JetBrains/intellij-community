@@ -273,12 +273,13 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     actionDescriptor: PluginUiModel,
   ): InstallPluginResult {
     prepareToInstall(installPluginInfo, installationScope)
-    val result = controller.installOrUpdatePlugin(sessionId, parentComponent, descriptor, updateDescriptor, myInstallSource, modalityState, null)
+    val customPlugins = customRepoPlugins.toList()
+    val result = controller.installOrUpdatePlugin(sessionId, parentComponent, descriptor, updateDescriptor, myInstallSource, modalityState, null, customPlugins)
     if (result.disabledPlugins.isEmpty() && result.disabledDependants.isEmpty()) {
       return result
     }
     val enableDependencies = withContext(Dispatchers.EDT + modalityState.asContextElement()) { PluginManagerMain.askToEnableDependencies(1, result.disabledPlugins, result.disabledDependants) }
-    return controller.continueInstallation(sessionId, actionDescriptor.pluginId, enableDependencies, result.allowInstallWithoutRestart, null, modalityState, parentComponent)
+    return controller.continueInstallation(sessionId, actionDescriptor.pluginId, enableDependencies, result.allowInstallWithoutRestart, null, modalityState, parentComponent, customPlugins)
   }
 
   suspend fun applyInstallResult(result: InstallPluginResult, info: InstallPluginInfo, descriptor: PluginUiModel, controller: UiPluginManagerController): InstallPluginResult {
@@ -1017,7 +1018,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     return getErrors(response)
   }
 
-  protected open val customRepoPlugins: MutableCollection<PluginUiModel?>
+  protected open val customRepoPlugins: Collection<PluginUiModel>
     get() = CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins()
 
   private val myIcons: MutableMap<String?, Icon?> = HashMap<String?, Icon?>() // local cache for PluginLogo WeakValueMap
