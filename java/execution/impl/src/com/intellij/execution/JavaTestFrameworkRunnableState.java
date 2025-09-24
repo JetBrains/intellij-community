@@ -12,7 +12,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.*;
-import com.intellij.execution.target.eel.EelTargetEnvironmentRequest;
+import com.intellij.execution.target.EelTargetEnvironmentRequest;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.testDiscovery.JvmToggleAutoTestAction;
 import com.intellij.execution.testframework.*;

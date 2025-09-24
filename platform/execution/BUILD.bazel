@@ -31,6 +31,8 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/util/coroutines",
     "//platform/kernel/shared:kernel",
+    "//platform/eel",
+    "//platform/eel-provider",
   ],
   runtime_deps = [":execution_resources"]
 )

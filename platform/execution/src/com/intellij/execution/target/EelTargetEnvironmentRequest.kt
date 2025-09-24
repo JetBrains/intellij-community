@@ -1,8 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.target.eel
+package com.intellij.execution.target
 
 import com.intellij.execution.Platform
-import com.intellij.execution.target.*
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -31,6 +30,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -200,7 +200,7 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
       try {
         if (from.isSameFileAs(to)) return
       }
-      catch (err: java.nio.file.NoSuchFileException) {
+      catch (err: NoSuchFileException) {
         if (!Files.exists(from)) throw err
       }
       // TODO: generalize com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider.copy
@@ -213,7 +213,7 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
       try {
         if (from.isSameFileAs(to)) return
       }
-      catch (err: java.nio.file.NoSuchFileException) {
+      catch (err: NoSuchFileException) {
         if (!Files.exists(from)) throw err
       }
       // TODO: generalize com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider.copy
