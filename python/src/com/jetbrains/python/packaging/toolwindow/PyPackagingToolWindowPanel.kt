@@ -27,6 +27,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.asDisposable
 import com.intellij.util.ui.NamedColorUtil
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.TraceContext
 import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.packaging.toolwindow.details.PyPackageInfoPanel
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
@@ -63,7 +64,8 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
   internal val packageListController = PyPackagesListController(project, controller = this)
   private val moduleController = PyPackagesSdkController(project)
   private val descriptionController = PyPackageInfoPanel(project)
-  private val packagingScope = PyPackageCoroutine.getScope(project).childScope("Packaging tool window").also {
+  private val packagingScope = PyPackageCoroutine.getScope(project)
+    .childScope("Packaging tool window", TraceContext(message("tracecontext.packaging.tool.window"), null)).also {
     Disposer.register(this, it.asDisposable())
   }
 

@@ -14,6 +14,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.messages.Topic
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
@@ -44,7 +45,7 @@ import kotlin.coroutines.cancellation.CancellationException
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Disposable.Default {
   private val isInited = AtomicBoolean(false)
   private val initializationJob = if (!shouldBeInitInstantly()) {
-    PyPackageCoroutine.launch(project, start = CoroutineStart.LAZY) {
+    PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
       initInstalledPackages()
     }.also {
       it.cancelOnDispose(this)
@@ -135,7 +136,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
 
     if (packages != installedPackages) {
       installedPackages = packages
-      PyPackageCoroutine.launch(project) {
+      PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
         reloadOutdatedPackages()
       }.cancelOnDispose(this)
 
