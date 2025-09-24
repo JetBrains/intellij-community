@@ -6,7 +6,6 @@ import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.PreviewExperiment.isExperimentEnabled
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -26,6 +25,7 @@ import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeFilesTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.symbols.SeSymbolsTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextTab
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane
+import com.intellij.platform.searchEverywhere.frontend.ui.SePopupHeaderPane
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.LIFE_CYCLE
@@ -74,23 +74,57 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     private set
 
   private val historyList = SearchHistoryList(true)
+  private var visibleTabsState: List<SePopupHeaderPane.Tab>? = null
 
   val removeSessionRef: AtomicBoolean = AtomicBoolean(true)
 
   override fun show(tabId: String, searchText: String?, initEvent: AnActionEvent) {
+    EDT.assertIsEdt()
+
+    val showPopupStartTime = System.currentTimeMillis()
+
+    val tabFactories = SeTabFactory.EP_NAME.extensionList
+    val initialTabs = visibleTabsState
+                      ?: tabFactories.filterIsInstance<SeEssentialTabFactory>().map { SePopupHeaderPane.Tab(it.name, it.id, it.id) }
+
+    val popupClosedCompletable = CompletableDeferred<Unit>()
+    val searchStatePublisher = SeSearchStatePublisher()
+    val popupScope = coroutineScope.childScope("SearchEverywhereFrontendService popup scope")
+    val (popup, popupContentPane) = createAndShowIdlePopup(popupScope, initialTabs, tabId, searchText, searchStatePublisher) {
+      popupInstance?.saveSearchText()
+      visibleTabsState = it.visibleTabsInfo
+      popupClosedCompletable.complete(Unit)
+    }
+
+    val showIdlePopupEndTime = System.currentTimeMillis()
+    SeLog.log { "Search Everywhere Idle popup opened in ${showIdlePopupEndTime - showPopupStartTime} ms" }
+
     val popupFuture = CompletableFuture<SePopupInstance>()
     popupInstanceFuture = popupFuture
 
     coroutineScope.launch {
-      val popupScope = coroutineScope.childScope("SearchEverywhereFrontendService popup scope")
       val session = SeSessionEntity.createSession()
 
       try {
         popupSemaphore.withPermit {
           val providersHolder = SeProvidersHolder.initialize(initEvent, project, session, "Frontend", false)
           localProvidersHolder = providersHolder
-          val completable = doShowPopup(popupFuture, tabId, searchText, initEvent, popupScope, session, providersHolder.legacyAllTabContributors)
-          completable.await()
+          initializeVmAndSetToPopup(popupFuture,
+                                    popup,
+                                    popupContentPane,
+                                    searchStatePublisher,
+                                    tabFactories,
+                                    tabId,
+                                    searchText,
+                                    initEvent,
+                                    popupScope,
+                                    session,
+                                    providersHolder.legacyAllTabContributors)
+
+          val showPopupEndTime = System.currentTimeMillis()
+          SeLog.log { "Search Everywhere popup opened in ${showPopupEndTime - showPopupStartTime} ms" }
+
+          popupClosedCompletable.await()
         }
       }
       finally {
@@ -112,19 +146,20 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     }
   }
 
-  private suspend fun doShowPopup(
+  private suspend fun initializeVmAndSetToPopup(
     popupFuture: CompletableFuture<SePopupInstance>,
+    popup: JBPopup,
+    popupContentPane: SePopupContentPane,
+    searchStatePublisher: SeSearchStatePublisher,
+    tabFactories: List<SeTabFactory>,
     tabId: String,
     searchText: String?,
     initEvent: AnActionEvent,
     popupScope: CoroutineScope,
     session: SeSession,
     availableLegacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
-  ): CompletableDeferred<Unit> {
-    val startTime = System.currentTimeMillis()
-    val tabInitializationTimoutMillis: Long = 50
-
-    val tabFactories = SeTabFactory.EP_NAME.extensionList
+  ) {
+    val tabInitializationTimeoutMillis: Long = 50
     val orderedTabFactoryIds = tabFactories.map { it.id }
 
     val tabsOrDeferredTabs = tabFactories.map {
@@ -137,16 +172,16 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       }
     }.map { (loadingTabId, tabLoadingProperty) ->
       popupScope.async {
-        withTimeoutOrNull(tabInitializationTimoutMillis) {
+        withTimeoutOrNull(tabInitializationTimeoutMillis) {
           tabLoadingProperty.getValue()
         } ?: run {
           if ((tabId + MAIN_TABS).contains(loadingTabId)) {
-            SeLog.warn("Tab $tabId initialization took too long (> ${tabInitializationTimoutMillis}ms), waiting it's initialization anyway")
+            SeLog.warn("Tab $tabId initialization took too long (> ${tabInitializationTimeoutMillis}ms), waiting it's initialization anyway")
             // If we have to open this tab right after the popup is there, we wait until it gets initialized
             tabLoadingProperty.getValue()
           }
           else {
-            SeLog.log(LIFE_CYCLE) { "Tab $tabId initialization took too long (> ${tabInitializationTimoutMillis}ms), will be initialized later" }
+            SeLog.log(LIFE_CYCLE) { "Tab $tabId initialization took too long (> ${tabInitializationTimeoutMillis}ms), will be initialized later" }
             tabLoadingProperty
           }
         }
@@ -161,60 +196,60 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     }
     val deferredTabs = tabsOrDeferredTabs.filterIsInstance<SuspendLazyProperty<SeTab?>>()
 
-    var popup: JBPopup? = null
-    val popupVm = SePopupVm(popupScope, session, project, tabs, deferredTabs, searchText, tabId, historyList, availableLegacyContributors) {
-      popup?.cancel()
-      popup = null
-    }
-    popupVm.showTab(tabId)
-
-    val completable = CompletableDeferred<Unit>()
-    withContext(Dispatchers.EDT) {
-      val searchStatePublisher = SeSearchStatePublisher()
-
-      val contentPane = SePopupContentPane(project,
-                                           popupVm,
-                                           resizePopupHandler = { size ->
-                                             popup?.let { popup ->
-                                               popup.setMinimumSize(popup.content.minimumSize)
-                                               popup.size = size
-                                             }
-                                           },
-                                           searchStatePublisher,
-                                           getStateService().getSize(POPUP_LOCATION_SETTINGS_KEY)) {
-        popupScope.launch(NonCancellable) {
-          removeSessionRef.set(false)
-          try {
-            popupVm.openInFindWindow(session, initEvent)
-          }
-          finally {
-            change {
-              shared {
-                session.asRef().derefOrNull()?.delete()
-              }
+    val popupVm = SePopupVm(popupScope, session, project, tabs, deferredTabs, searchText, tabId, historyList, availableLegacyContributors, onShowFindToolWindow = {
+      popupScope.launch(NonCancellable) {
+        removeSessionRef.set(false)
+        try {
+          it.openInFindWindow(session, initEvent)
+        } finally {
+          change {
+            shared {
+              session.asRef().derefOrNull()?.delete()
             }
           }
         }
-        popupScope.cancel()
       }
+      popupScope.cancel()
+    }, closePopupHandler = {
+      popup.cancel()
+    })
+    popupVm.showTab(tabId)
 
-      popup = createPopup(contentPane, popupVm, project) {
-        completable.complete(Unit)
-      }
-
-      popup?.let { popup ->
-        calcPopupPositionAndShow(popup, contentPane)
-      }
-
-      popupFuture.complete(SePopupInstance(popupVm, contentPane, searchStatePublisher))
-
-      val endTime = System.currentTimeMillis()
-      SeLog.log { "Search Everywhere popup opened in ${endTime - startTime} ms" }
-    }
-    return completable
+    popupContentPane.setVm(popupVm)
+    popupFuture.complete(SePopupInstance(popupVm, popupContentPane, searchStatePublisher))
   }
 
-  private fun createPopup(panel: SePopupContentPane, popupVm: SePopupVm, project: Project?, onCancel: () -> Unit): JBPopup {
+  private fun createAndShowIdlePopup(
+    popupScope: CoroutineScope,
+    initialTabs: List<SePopupHeaderPane.Tab>,
+    selectedTabId: String,
+    searchText: String?,
+    searchStatePublisher: SeSearchStatePublisher,
+    onCancel: (SePopupContentPane) -> Unit
+  ): Pair<JBPopup, SePopupContentPane> {
+    var popup: JBPopup? = null
+
+    val contentPane = SePopupContentPane(project,
+                                         resizePopupHandler = { size ->
+                                           popup?.let { popup ->
+                                             popup.setMinimumSize(popup.content.minimumSize)
+                                             popup.size = size
+                                           }
+                                         },
+                                         searchStatePublisher,
+                                         popupScope,
+                                         initialTabs,
+                                         selectedTabId,
+                                         searchText,
+                                         getStateService().getSize(POPUP_LOCATION_SETTINGS_KEY))
+
+    popup = createPopup(contentPane, project) { onCancel(contentPane) }
+    calcPopupPositionAndShow(popup, contentPane)
+
+    return popup to contentPane
+  }
+
+  private fun createPopup(panel: SePopupContentPane, project: Project?, onCancel: () -> Unit): JBPopup {
     val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, panel.preferableFocusedComponent)
       .setProject(project)
       .setModalContext(false)
@@ -228,7 +263,6 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       .setDimensionServiceKey(project, POPUP_LOCATION_SETTINGS_KEY, true)
       .setLocateWithinScreenBounds(false)
       .setCancelCallback {
-        popupVm.saveSearchText()
         onCancel()
         SearchEverywhereUsageTriggerCollector.DIALOG_CLOSED.log(project, true)
         true

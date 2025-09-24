@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.ui
 
-import com.intellij.accessibility.TextFieldWithListAccessibleContext
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
@@ -16,6 +15,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
@@ -62,7 +62,6 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.*
 import java.util.function.Supplier
-import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.event.ListSelectionEvent
 import javax.swing.text.Document
@@ -73,36 +72,36 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
 @Internal
 class SePopupContentPane(
-  private val project: Project?, private val vm: SePopupVm,
+  private val project: Project?, //private val vm: SePopupVm,
   private val resizePopupHandler: (Dimension) -> Unit,
   private val searchStatePublisher: SeSearchStatePublisher,
+  private val coroutineScope: CoroutineScope,
+  initialTabs: List<SePopupHeaderPane.Tab>,
+  selectedTabId: String,
+  initialSearchText: String?,
   initPopupExtendedSize: Dimension?,
-  onShowFindToolWindow: () -> Unit,
 ) : JPanel(), Disposable, UiDataProvider {
   val preferableFocusedComponent: JComponent get() = textField
   val searchFieldDocument: Document get() = textField.document
+  private val tabConfigurationState = MutableStateFlow(SePopupHeaderPane.Configuration.createInitial(initialTabs, selectedTabId))
+  private val vmState = MutableStateFlow<SePopupVm?>(null)
+  private val contentPane = this
 
   private val headerPane: SePopupHeaderPane = SePopupHeaderPane(
     project,
-    vm.tabVms.map { SePopupHeaderPane.Tab(it) },
-    vm.currentTabIndex,
-    vm.coroutineScope,
-    vm.ShowInFindToolWindowAction(onShowFindToolWindow)
+    coroutineScope,
+    tabConfigurationState,
   ) { updatePopupWidthIfNecessary() }
 
-  private val textField = object : SeTextField() {
-    override fun getAccessibleContext(): AccessibleContext {
-      if (accessibleContext == null) {
-        accessibleContext = TextFieldWithListAccessibleContext(this, resultList.getAccessibleContext())
-      }
-      return accessibleContext
-    }
-  }
-  private val hintHelper = HintHelper(textField)
+  val visibleTabsInfo: List<SePopupHeaderPane.Tab>
+    get() = tabConfigurationState.value.tabs
+
   private val minWidth = Registry.intValue("search.everywhere.new.minimum.width", 700)
 
   private val resultListModel = SeResultListModel(searchStatePublisher) { resultList.selectionModel }
   private val resultList: JBList<SeResultListRow> = JBList(resultListModel)
+  private val textField = SeTextField(initialSearchText) { resultList.accessibleContext }
+  private val hintHelper = HintHelper(textField)
   private val resultsScrollPane = createListPane(resultList)
   private val usagePreviewPanel = createUsagePreviewPanel()
   private val splitter = createSplitter()
@@ -161,13 +160,6 @@ class SePopupContentPane(
       .row(resizable = true).cell(splitter, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL, resizableColumn = true)
       .row().cell(extendedInfoContainer, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
 
-    textField.text = vm.searchPattern.value
-    textField.selectAll()
-    textField.document.addDocumentListener(object : DocumentAdapter() {
-      override fun textChanged(e: javax.swing.event.DocumentEvent) {
-        vm.setSearchText(textField.text)
-      }
-    })
 
     if (textField.text.isNotEmpty()) {
       isCompactViewMode = false
@@ -177,8 +169,39 @@ class SePopupContentPane(
     updateViewMode()
 
     addHistoryExtensionToTextField()
+    WindowMoveListener(this).installTo(headerPane)
 
-    vm.coroutineScope.launch {
+    coroutineScope.launch {
+      vmState.filterNotNull().collectLatest { vm ->
+        connectTo(vm)
+      }
+    }
+  }
+
+  fun setVm(vm: SePopupVm) {
+    vmState.value = vm
+  }
+
+  private suspend fun connectTo(vm: SePopupVm) = coroutineScope {
+    DumbAwareAction.create { vm.getHistoryItem(true).let { textField.text = it; textField.selectAll() } }
+      .registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, contentPane)
+    DumbAwareAction.create { vm.getHistoryItem(false).let { textField.text = it; textField.selectAll() } }
+      .registerCustomShortcutSet(SearchTextField.ALT_SHOW_HISTORY_SHORTCUT, contentPane)
+
+    tabConfigurationState.value = SePopupHeaderPane.Configuration(
+      vm.tabVms.map { SePopupHeaderPane.Tab(it) },
+      vm.deferredTabVms.map { SePopupHeaderPane.Tab(it) },
+      vm.currentTabIndex,
+      vm.ShowInFindToolWindowAction()
+    )
+
+    withContext(Dispatchers.UI) {
+      textField.configure(vm.searchPattern.value) { newText ->
+        vm.setSearchText(newText)
+      }
+    }
+
+    launch {
       vm.currentTabFlow.flatMapLatest {
         withContext(Dispatchers.EDT) {
           resultListModel.reset()
@@ -262,26 +285,18 @@ class SePopupContentPane(
       }
     }
 
-    vm.coroutineScope.launch {
-      vm.currentTabFlow.collectLatest { tabVm ->
-        val filterEditor = tabVm.filterEditor.getValue()
+    launch {
+      vm.currentTabFlow.collectLatest {
+        val filterEditor = it.filterEditor.getValue()
         filterEditor?.let { filterEditor ->
           withContext(Dispatchers.EDT) {
-            headerPane.setFilterActions(filterEditor.getHeaderActions(), tabVm.isPreviewEnabled())
+            headerPane.setFilterActions(filterEditor.getHeaderActions(), vm.ShowInFindToolWindowAction())
             hintHelper.removeRightExtensions()
             val rightActions = filterEditor.getSearchFieldActions()
             if (rightActions.isNotEmpty()) {
               hintHelper.setRightExtensions(rightActions)
             }
           }
-        }
-      }
-    }
-
-    vm.coroutineScope.launch {
-      vm.deferredTabVms.collect { tabVm ->
-        withContext(Dispatchers.EDT) {
-          headerPane.addTab(SePopupHeaderPane.Tab(tabVm))
         }
       }
     }
@@ -300,7 +315,7 @@ class SePopupContentPane(
       }
     }
 
-    vm.coroutineScope.launch {
+    launch {
       vm.currentTabFlow.collectLatest { tabVm ->
         coroutineScope {
           combine(isScrolledAlmostToAnEnd, resultListModel.isValidState) {
@@ -312,17 +327,17 @@ class SePopupContentPane(
       }
     }
 
-    vm.coroutineScope.launch {
+    launch {
       vm.currentTabFlow.flatMapLatest {
         it.resultsHitBackPressureFlow
-      }.collect { (searchId, stabilized) ->
+      }.collect { (searchId, _) ->
         withContext(Dispatchers.EDT) {
           searchStatePublisher.searchStoppedProducingResults(searchId, resultListModel.size, false)
         }
       }
     }
 
-    vm.coroutineScope.launch {
+    launch {
       vm.searchFieldWarning.collect { warning ->
         withContext(Dispatchers.EDT) {
           hintHelper.setLoadingText(warning)
@@ -365,13 +380,6 @@ class SePopupContentPane(
         }
       }
     }
-
-    WindowMoveListener(this).installTo(headerPane)
-
-    DumbAwareAction.create { vm.getHistoryItem(true).let { textField.text = it; textField.selectAll() } }
-      .registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, this)
-    DumbAwareAction.create { vm.getHistoryItem(false).let { textField.text = it; textField.selectAll() } }
-      .registerCustomShortcutSet(SearchTextField.ALT_SHOW_HISTORY_SHORTCUT, this)
   }
 
   private fun updateFrozenCount() {
@@ -442,7 +450,7 @@ class SePopupContentPane(
       val newShortcutSet: ShortcutSet = CustomShortcutSet(*newShortcuts.toTypedArray())
       DumbAwareAction.create { _: AnActionEvent? ->
         val indices: IntArray = resultList.selectedIndices
-        vm.coroutineScope.launch(Dispatchers.EDT) {
+        coroutineScope.launch(Dispatchers.EDT) {
           elementsSelected(indices, modifiers)
         }
       }.registerCustomShortcutSet(newShortcutSet, this, this)
@@ -451,7 +459,7 @@ class SePopupContentPane(
 
   @Internal
   fun selectFirstItem() {
-    vm.coroutineScope.launch(Dispatchers.EDT) {
+    coroutineScope.launch(Dispatchers.EDT) {
       elementsSelected(intArrayOf(0), 0)
     }
   }
@@ -473,7 +481,7 @@ class SePopupContentPane(
       }
     }
 
-    if (vm.itemsSelected(itemDataList, nonItemDataCount == 0, modifiers)) {
+    if (vmState.value?.itemsSelected(itemDataList, nonItemDataCount == 0, modifiers) == true) {
       closePopup()
     }
     else {
@@ -483,6 +491,7 @@ class SePopupContentPane(
   }
 
   private suspend fun refreshPresentations() {
+    val currentTab = vmState.value?.currentTab ?: return
     val visibleRange = resultList.firstVisibleIndex..resultList.lastVisibleIndex
     val visibleRows = visibleRange.mapNotNull { resultListModel.get(it) as? SeResultListItemRow }
 
@@ -491,7 +500,7 @@ class SePopupContentPane(
         val item = itemRow.item
 
         launch {
-          val newPresentation = vm.currentTab.getUpdatedPresentation(item)
+          val newPresentation = currentTab.getUpdatedPresentation(item)
           if (newPresentation != null) {
             val newItemRow = SeResultListItemRow(item.withPresentation(newPresentation))
 
@@ -567,14 +576,18 @@ class SePopupContentPane(
     ScrollingUtil.redirectExpandSelection(resultList, textField)
 
     val nextTabAction: (AnActionEvent) -> Unit = { e ->
-      vm.selectNextTab()
-      logTabSwitchedEvent(e)
-      updateExtendedInfoContainer()
+      vmState.value?.let { vm ->
+        vm.selectNextTab()
+        logTabSwitchedEvent(e)
+        updateExtendedInfoContainer()
+      }
     }
     val prevTabAction: (AnActionEvent) -> Unit = { e ->
-      vm.selectPreviousTab()
-      logTabSwitchedEvent(e)
-      updateExtendedInfoContainer()
+      vmState.value?.let { vm ->
+        vm.selectPreviousTab()
+        logTabSwitchedEvent(e)
+        updateExtendedInfoContainer()
+      }
     }
 
     registerAction(SeActions.SWITCH_TO_NEXT_TAB, nextTabAction)
@@ -649,7 +662,7 @@ class SePopupContentPane(
         resultList.setSelectedIndex(i)
         val modifiers = e.modifiersEx
 
-        vm.coroutineScope.launch {
+        coroutineScope.launch {
           withContext(Dispatchers.EDT) {
             elementsSelected(intArrayOf(i), modifiers)
           }
@@ -713,6 +726,7 @@ class SePopupContentPane(
   }
 
   private fun showHistoryPopup(relativePoint: RelativePoint) {
+    val vm = vmState.value ?: return
     val items = vm.getHistoryItems()
 
     if (items.isEmpty()) return
@@ -751,8 +765,8 @@ class SePopupContentPane(
 
         return object : DumbAwareAction({ actionText }, { actionDescription }) {
           override fun actionPerformed(e: AnActionEvent) {
-            vm.coroutineScope.launch {
-              if (vm.currentTab.performExtendedAction(item)) {
+            coroutineScope.launch {
+              if (vmState.value?.currentTab?.performExtendedAction(item) == true) {
                 withContext(Dispatchers.EDT) {
                   closePopup()
                 }
@@ -779,7 +793,7 @@ class SePopupContentPane(
   }
 
   private fun closePopup() {
-    vm.closePopup()
+    vmState.value?.closePopup()
   }
 
   private suspend fun updateEmptyStatus() {
@@ -789,6 +803,7 @@ class SePopupContentPane(
       return
     }
 
+    val vm = vmState.value ?: return
     val emptyResultInfo = vm.currentTab.getEmptyResultInfo(DataManager.getInstance().getDataContext(this@SePopupContentPane))
     emptyResultInfo?.chunks?.forEach { (text, newLine, attrs, listener) ->
       if (newLine) {
@@ -859,6 +874,7 @@ class SePopupContentPane(
   }
 
   private fun logTabSwitchedEvent(e: AnActionEvent) {
+    val vm = vmState.value ?: return
     SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(project,
                                                            SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(vm.currentTab.tabId),
                                                            EventFields.InputEventByAnAction.with(e),
@@ -868,8 +884,11 @@ class SePopupContentPane(
   override fun uiDataSnapshot(sink: DataSink) {
     sink[PlatformDataKeys.PREDEFINED_TEXT] = textField.text
     sink[CommonDataKeys.PROJECT] = project
-    sink[SeDataKeys.SPLIT_SE_SESSION] = vm.session
-    sink[SeDataKeys.SPLIT_SE_IS_ALL_TAB] = vm.currentTab.tabId == SeAllTab.ID
+
+    vmState.value?.let { vm ->
+      sink[SeDataKeys.SPLIT_SE_SESSION] = vm.session
+      sink[SeDataKeys.SPLIT_SE_IS_ALL_TAB] = vm.currentTab.tabId == SeAllTab.ID
+    }
 
     val selectedItems = resultList.selectedIndices.toList().mapNotNull {
       if (it < 0 || resultList.model.size <= it) return@mapNotNull null
@@ -883,7 +902,7 @@ class SePopupContentPane(
   /**
    * Custom move up action that moves to the end if the index is 0 and the search is completed
    */
-  private inner class MoveUpAction() : DumbAwareAction() {
+  private inner class MoveUpAction : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
       val currentIndex = resultList.selectedIndex
       if (currentIndex == -1) return

@@ -481,7 +481,7 @@ f:com.intellij.ui.dsl.builder.components.ValidationTooltipKt
 f:com.intellij.ui.render.RenderersKt
 - *sf:fontInfoRenderer(Z):javax.swing.ListCellRenderer
 f:com.intellij.util.SwingBindingsKt
-- *sf:bindSelectedTabIn(javax.swing.JTabbedPane,kotlinx.coroutines.flow.MutableStateFlow,kotlinx.coroutines.CoroutineScope):V
+- *sf:bindSelectedTabIn(javax.swing.JTabbedPane,kotlinx.coroutines.flow.MutableStateFlow,kotlinx.coroutines.CoroutineScope):kotlinx.coroutines.Job
 *f:com.intellij.util.ui.RestartDialogImpl
 - *sf:Companion:com.intellij.util.ui.RestartDialogImpl$Companion
 - <init>():V
