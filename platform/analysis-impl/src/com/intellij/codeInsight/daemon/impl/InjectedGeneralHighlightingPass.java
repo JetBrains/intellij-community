@@ -9,6 +9,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.*;
@@ -37,6 +38,7 @@ import java.util.*;
  */
 @ApiStatus.Internal
 final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(InjectedGeneralHighlightingPass.class);
   private final @Nullable List<? extends @NotNull TextRange> myReducedRanges;
   private final boolean myUpdateAll;
   private final ProperTextRange myPriorityRange;
@@ -153,12 +155,18 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
 
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(hosts), progress, element -> {
         ApplicationManager.getApplication().assertReadAccessAllowed();
+      try {
         injectedLanguageManager.enumerateEx(element, myFile, false, (injectedPsi, places) -> {
           if (visitedInjected.add(injectedPsi.getViewProvider())) {
             visitor.visit(injectedPsi, places);
           }
         });
-        advanceProgress(1);
+      }
+      catch (Exception e) {
+        if (Logger.shouldRethrow(e)) throw e;
+        LOG.error(e);
+      }
+      advanceProgress(1);
         return true;
       })) {
       throw new ProcessCanceledException();
