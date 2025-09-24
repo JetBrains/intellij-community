@@ -55,6 +55,7 @@ jvm_library(
     "@lib//:caffeine",
     "//platform/progress/shared:ide-progress",
     "//platform/util/diff",
+    "//platform/runtime/product",
   ],
   exports = [
     "//platform/util",

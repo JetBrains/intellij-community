@@ -647,6 +647,10 @@
       serviceInterface="com.intellij.platform.ide.productInfo.IdeProductInfo"
       serviceImplementation="com.intellij.platform.ide.impl.productInfo.IdeProductInfoImpl"/>
 
+    <applicationService
+      serviceInterface="com.intellij.platform.ide.productMode.IdeProductMode"
+      serviceImplementation="com.intellij.platform.ide.productMode.impl.IdeProductModeImpl"/>
+
     <applicationService serviceInterface="com.intellij.openapi.options.advanced.AdvancedSettings"
                         serviceImplementation="com.intellij.openapi.options.advanced.AdvancedSettingsImpl"/>
 

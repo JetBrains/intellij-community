@@ -153,6 +153,7 @@ jvm_library(
     "//platform/pratt",
     "//platform/eel-impl",
     "//platform/platform-impl/recentProjects",
+    "//platform/runtime/product",
   ],
   exports = [
     "//platform/platform-api:ide",
@@ -319,6 +320,7 @@ jvm_library(
     "//platform/pratt",
     "//platform/eel-impl",
     "//platform/platform-impl/recentProjects",
+    "//platform/runtime/product",
   ],
   exports = [
     "//platform/platform-api:ide",

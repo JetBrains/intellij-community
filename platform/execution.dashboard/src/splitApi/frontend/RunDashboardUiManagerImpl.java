@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunContentDescriptorId;
+import com.intellij.execution.dashboard.RunDashboardService;
 import com.intellij.execution.dashboard.RunDashboardUiManager;
 import com.intellij.execution.services.ServiceEventListener;
 import com.intellij.execution.services.ServiceViewDescriptor;
@@ -26,10 +27,10 @@ import com.intellij.platform.execution.dashboard.BackendRunDashboardManagerState
 import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl;
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor;
 import com.intellij.platform.execution.dashboard.RunDashboardTypePanel;
-import com.intellij.execution.dashboard.RunDashboardService;
 import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceDto;
 import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.FrontendRunConfigurationNode;
 import com.intellij.platform.execution.serviceView.ServiceViewManagerImpl;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -50,7 +51,6 @@ import java.util.function.Predicate;
 
 import static com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardGroupingRule.GROUPING_RULE_EP_NAME;
 import static com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardUiUtils.updateContentToolbar;
-import static com.intellij.platform.execution.serviceView.ServiceViewImplementationChooserKt.isMonolith;
 
 @ApiStatus.Internal
 public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
@@ -241,7 +241,7 @@ public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
 
   @Override
   public boolean isSupported(@NotNull Executor executor) {
-    return !executor.getToolWindowId().equals(ToolWindowId.RUN) || isMonolith();
+    return !executor.getToolWindowId().equals(ToolWindowId.RUN) || IdeProductMode.isMonolith();
   }
 
   @ApiStatus.Internal

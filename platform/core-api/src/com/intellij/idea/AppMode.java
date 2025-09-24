@@ -56,6 +56,12 @@ public final class AppMode {
     return isHeadless;
   }
 
+  /**
+   * Returns {@code true} if the IDE is running as a remote development host.
+   * This is an internal method supposed to be used only from code running during early startup phases.
+   * If the instance container is initialized (in particular, in any plugin code), its equivalent
+   * {@link com.intellij.platform.ide.productMode.IdeProductMode#isBackend()} should be used instead.
+   */
   public static boolean isRemoteDevHost() {
     return isRemoteDevHost;
   }
