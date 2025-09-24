@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.editorTab.LearnIdeEditorTab
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTab
-import com.intellij.pycharm.community.ide.impl.PycharmCommunityIdeImplIcons
+import com.intellij.pycharm.community.ide.impl.icons.PycharmCommunityIdeImplIcons
 import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 import com.intellij.pycharm.community.ide.impl.miscProject.PyMiscService
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscScriptFileType
