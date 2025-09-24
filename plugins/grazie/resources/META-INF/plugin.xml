@@ -41,13 +41,6 @@
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationConfigurable
-      parentId="proofread"
-      instance="com.intellij.grazie.ide.ui.configurable.StyleConfigurable"
-      key="grazie.settings.style.configurable.name"
-      bundle="messages.GrazieBundle"
-      id="reference.settings.grazie"/>
-
     <projectConfigurable parentId="proofread" instance="com.intellij.grazie.spellcheck.settings.SpellCheckerSettingsManager"
                          id="reference.settings.ide.settings.spelling"
                          key="spelling"

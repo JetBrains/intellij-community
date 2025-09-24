@@ -8,6 +8,8 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.*
 import com.intellij.grazie.utils.NaturalTextDetector
+import com.intellij.grazie.utils.TextStyleDomain
+import com.intellij.grazie.utils.getTextDomain
 import com.intellij.grazie.utils.trimToNull
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -44,7 +46,7 @@ open class LanguageToolChecker : ExternalTextChecker() {
   override fun getRules(locale: Locale): Collection<Rule> {
     val language = Languages.getLanguageForLocale(locale)
     val lang = Lang.entries.find { it.jLanguage == language } ?: return emptyList()
-    return grammarRules(LangTool.getTool(lang), lang)
+    return grammarRules(LangTool.getTool(lang, TextStyleDomain.Other), lang)
   }
 
   @OptIn(DelicateCoroutinesApi::class)
@@ -72,7 +74,7 @@ open class LanguageToolChecker : ExternalTextChecker() {
   }
 
   private fun collectLanguageToolProblems(extracted: TextContent, text: String, lang: Lang): List<Problem> {
-    val tool = LangTool.getTool(lang)
+    val tool = LangTool.getTool(lang, extracted.getTextDomain())
     val sentences = tool.sentenceTokenize(text)
     if (sentences.any { it.length > 1000 }) {
       return emptyList()

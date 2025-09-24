@@ -8,6 +8,7 @@ import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.broker.GrazieDynamicDataBroker
 import com.intellij.grazie.jlanguage.filters.UppercaseMatchFilter
 import com.intellij.grazie.jlanguage.hunspell.LuceneHunspellDictionary
+import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil
@@ -31,8 +32,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 object LangTool : GrazieStateLifecycle {
-  private val langs: MutableMap<Lang, JLanguageTool> = Collections.synchronizedMap(ContainerUtil.createSoftValueMap())
-  private val rulesEnabledByDefault = ConcurrentHashMap<Lang, Set<String>>()
+  private val langs: MutableMap<Lang, MutableMap<TextStyleDomain, JLanguageTool>> = ConcurrentHashMap()
+  private val rulesEnabledByDefault = ConcurrentHashMap<Lang, MutableMap<TextStyleDomain, Set<String>>>()
   private val inappropriateExamples = mapOf(
     "DT_NNS_AGREEMENT" to setOf("small children and their mothers", "eternal rest")
   )
@@ -49,40 +50,37 @@ object LangTool : GrazieStateLifecycle {
 
   internal fun globalIdPrefix(lang: Lang): String = "LanguageTool." + lang.ltRemote!!.iso.name + "."
 
-  fun getTool(lang: Lang): JLanguageTool {
+  fun getTool(lang: Lang, domain: TextStyleDomain): JLanguageTool {
     // this is equivalent to computeIfAbsent, but allows multiple threads to create tools concurrently,
     // so that threads can be interrupted (with checkCanceled on their own indicator) instead of waiting on a lock
     while (true) {
-      var tool = langs[lang]
+      val tools = langs.computeIfAbsent(lang) { Collections.synchronizedMap(ContainerUtil.createSoftValueMap()) }
+      var tool = tools[domain]
       if (tool != null) return tool
 
       val state = GrazieConfig.get()
-      tool = createTool(lang, state)
+      tool = createTool(lang, state, domain)
       synchronized(langs) {
         if (state === GrazieConfig.get()) {
-          val alreadyComputed = langs[lang]
+          val alreadyComputed = tools[domain]
           if (alreadyComputed != null) return alreadyComputed
 
-          langs[lang] = tool
+          tools[domain] = tool
           return tool
         }
       }
     }
   }
-
-  internal fun createTool(lang: Lang, state: GrazieConfig.State): JLanguageTool {
+  internal fun createTool(lang: Lang, state: GrazieConfig.State, domain: TextStyleDomain): JLanguageTool {
     val jLanguage = lang.jLanguage
     require(jLanguage != null) { "Trying to get LangTool for not available language" }
     return JLanguageTool(jLanguage, null, ResultCache(10_000)).apply {
       setCheckCancelledCallback { ProgressManager.checkCanceled(); false }
       addMatchFilter(UppercaseMatchFilter())
 
-      val prefix = globalIdPrefix(lang)
-      val disabledRules = state.userDisabledRules.mapNotNull { if (it.startsWith(prefix)) it.substring(prefix.length) else null }.toSet()
-      val enabledRules =  state.userEnabledRules.mapNotNull  { if (it.startsWith(prefix)) it.substring(prefix.length) else null }.toSet()
-
+      val (enabledRules, disabledRules) = getRules(lang, state, domain)
+      enabledRules. forEach { id -> enableRule(id) }
       disabledRules.forEach { id -> disableRule(id) }
-      enabledRules.forEach { id -> enableRule(id) }
 
       fun loadConfigFile(path: String, block: (iso: String, id: String) -> Unit) {
         GrazieDynamicDataBroker.getFromResourceDirAsStream(path).use { stream ->
@@ -147,6 +145,22 @@ object LangTool : GrazieStateLifecycle {
     return false
   }
 
+  private fun getRules(lang: Lang, state: GrazieConfig.State, domain: TextStyleDomain): Pair<Set<String>, Set<String>> {
+    val prefix = globalIdPrefix(lang)
+    val enabledRules = HashSet<String>()
+    val disabledRules = HashSet<String>()
+    if (domain == TextStyleDomain.Other) {
+      enabledRules.addAll( state.userEnabledRules.mapNotNull   { if (it.startsWith(prefix)) it.substring(prefix.length) else null })
+      disabledRules.addAll(state.userDisabledRules.mapNotNull  { if (it.startsWith(prefix)) it.substring(prefix.length) else null })
+    } else {
+      val domainEnabledRules =  state.domainEnabledRules[domain]  ?: emptySet()
+      val domainDisabledRules = state.domainDisabledRules[domain] ?: emptySet()
+      enabledRules.addAll( domainEnabledRules.mapNotNull   { if (it.startsWith(prefix)) it.substring(prefix.length) else null })
+      disabledRules.addAll(domainDisabledRules.mapNotNull  { if (it.startsWith(prefix)) it.substring(prefix.length) else null })
+    }
+    return enabledRules to disabledRules
+  }
+
   private fun prepareForNoChunkTags(rule: Rule) {
     @Suppress("TestOnlyProblems")
     fun relaxChunkConditions(token: PatternToken, positive: Boolean) {
@@ -185,7 +199,7 @@ object LangTool : GrazieStateLifecycle {
     val inappropriateExamples = inappropriateExamples[rule.id]
     if (inappropriateExamples != null) {
       return rule.incorrectExamples
-        .filterNot { example -> inappropriateExamples.any { example.example.contains(it)} }
+        .filterNot { example -> inappropriateExamples.any { example.example.contains(it) } }
     }
     return rule.incorrectExamples
   }
@@ -202,9 +216,10 @@ object LangTool : GrazieStateLifecycle {
     return suffixLength + prefixLength >= distance
   }
 
-  internal fun isRuleEnabledByDefault(lang: Lang, ruleId: String): Boolean {
-    val activeIds = rulesEnabledByDefault.computeIfAbsent(lang) {
-      createTool(lang, GrazieConfig.State()).allActiveRules.map { it.id }.toSet()
+  internal fun isRuleEnabledByDefault(lang: Lang, ruleId: String, domain: TextStyleDomain): Boolean {
+    val rules = rulesEnabledByDefault.computeIfAbsent(lang) { ConcurrentHashMap() }
+    val activeIds = rules.computeIfAbsent(domain) {
+      createTool(lang, GrazieConfig.State(), domain).allActiveRules.map { it.id }.toSet()
     }
     return activeIds.contains(ruleId)
   }
@@ -214,6 +229,8 @@ object LangTool : GrazieStateLifecycle {
       prevState.availableLanguages == newState.availableLanguages
       && prevState.userDisabledRules == newState.userDisabledRules
       && prevState.userEnabledRules == newState.userEnabledRules
+      && prevState.domainEnabledRules == newState.domainEnabledRules
+      && prevState.domainDisabledRules == newState.domainDisabledRules
     ) return
 
     langs.clear()

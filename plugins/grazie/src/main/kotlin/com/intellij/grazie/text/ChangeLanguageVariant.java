@@ -58,11 +58,10 @@ record ChangeLanguageVariant(Lang from, Lang to, boolean wasOxford, boolean toOx
       languages.add(to);
 
       return s.copy(
-        languages, s.getEnabledGrammarStrategies(), s.getDisabledGrammarStrategies(),
-        s.getEnabledCommitIntegration(),
-        s.getUserDisabledRules(), s.getUserEnabledRules(),
+        languages, s.getEnabledGrammarStrategies(), s.getDisabledGrammarStrategies(), s.getEnabledCommitIntegration(),
+        s.getUserDisabledRules(), s.getUserEnabledRules(), s.getDomainDisabledRules(), s.getDomainEnabledRules(),
         s.getSuppressingContext(), s.getDetectionContext(), s.getCheckingContext(), s.getVersion(),
-        s.getStyleProfile(), s.getParameters(), s.getUseOxfordSpelling(), s.getAutoFix()
+        s.getStyleProfile(), s.getParameters(), s.getParametersPerDomain(), s.getUseOxfordSpelling(), s.getAutoFix()
       );
     });
     if (from.isEnglish()) {

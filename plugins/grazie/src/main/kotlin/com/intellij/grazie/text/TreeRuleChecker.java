@@ -33,6 +33,7 @@ import com.intellij.grazie.style.TextLevelFix;
 import com.intellij.grazie.text.TextContent.TextDomain;
 import com.intellij.grazie.utils.HighlightingUtil;
 import com.intellij.grazie.utils.Text;
+import com.intellij.grazie.utils.TextStyleDomain;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -61,6 +62,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.grazie.text.GrazieProblem.getQuickFixText;
 import static com.intellij.grazie.text.GrazieProblem.visualizeSpace;
+import static com.intellij.grazie.utils.TextUtilsKt.getTextDomain;
 import static com.intellij.grazie.utils.UtilsKt.ijRange;
 
 @SuppressWarnings("NonAsciiCharacters")
@@ -108,7 +110,7 @@ public final class TreeRuleChecker {
   public static final String SMART_APOSTROPHE = "Grazie.RuleEngine.En.Typography.SMART_APOSTROPHE";
 
   public static List<Rule> getRules(Language language) {
-    if (!StyleConfigurable.Companion.getRuleLanguages().contains(language) || SentenceBatcher.findInstalledLTLanguage(language) == null) {
+    if (!StyleConfigurable.getRuleEngineLanguages().contains(language) || SentenceBatcher.findInstalledLTLanguage(language) == null) {
       return List.of();
     }
 
@@ -161,8 +163,8 @@ public final class TreeRuleChecker {
       }
 
       @Override
-      public boolean isEnabledByDefault() {
-        return rule.isRuleEnabledByDefault(GrazieConfig.Companion.get().getTextStyle(), RuleIdeClient.INSTANCE);
+      public boolean isEnabledByDefault(TextStyleDomain domain) {
+        return rule.isRuleEnabledByDefault(GrazieConfig.Companion.get().getTextStyle(domain), RuleIdeClient.INSTANCE);
       }
 
       @SuppressWarnings("SuspiciousMethodCalls")//false negative in Qodana
@@ -170,7 +172,7 @@ public final class TreeRuleChecker {
       public Navigatable editSettings() {
         RuleSetting setting = new RuleSetting(rule);
         LanguageToolkit toolkit = LanguageToolkit.forLanguage(rule.language());
-        return StyleConfigurable.affectedSettings(toolkit).contains(setting)
+        return StyleConfigurable.featuredSettings(toolkit).contains(setting)
                ? StyleConfigurable.focusSetting(setting, null)
                : null;
       }
@@ -210,7 +212,7 @@ public final class TreeRuleChecker {
     try {
       Cached cached = ref.get();
       if (cached == null || !cached.sentences.equals(sentences)) {
-        List<ai.grazie.rules.Rule> rules = enabledRules(sentences.getFirst().tree);
+        List<ai.grazie.rules.Rule> rules = enabledRules(sentences.getFirst().tree, text);
         List<MatchingResult> matches = matchTrees(trees, rules);
         ref.set(cached = new Cached(sentences, matches));
       }
@@ -224,10 +226,10 @@ public final class TreeRuleChecker {
     }
   }
 
-  private static List<ai.grazie.rules.Rule> enabledRules(Tree sampleTree) {
+  private static List<ai.grazie.rules.Rule> enabledRules(Tree sampleTree, TextContent content) {
     Language language = sampleTree.treeSupport().getGrazieLanguage();
     LanguageToolkit toolkit = LanguageToolkit.forLanguage(language);
-    List<ai.grazie.rules.Rule> rules = ContainerUtil.filter(toolkit.publishedRules(), r -> toGrazieRule(r).isCurrentlyEnabled());
+    List<ai.grazie.rules.Rule> rules = ContainerUtil.filter(toolkit.publishedRules(), r -> toGrazieRule(r).isCurrentlyEnabled(content));
     if (sampleTree.isFlat()) {
       return ContainerUtil.filter(rules, r -> r.supportsFlatTrees());
     }
@@ -249,8 +251,9 @@ public final class TreeRuleChecker {
     var parameters = new HashMap<String, String>();
     var ltLanguage = sentences.getFirst().tree.language();
     Language language = sentences.getFirst().tree.treeSupport().getGrazieLanguage();
+    TextContent content = sentences.getFirst().extractedText;
     LanguageToolkit toolkit = LanguageToolkit.forLanguage(language);
-    toolkit.allParameters(RuleIdeClient.INSTANCE).forEach(p -> parameters.put(p.id(), getParamValue(p, language)));
+    toolkit.allParameters(RuleIdeClient.INSTANCE).forEach(p -> parameters.put(p.id(), getParamValue(p, language, content)));
     if (language == Language.ENGLISH || language == Language.GERMAN) {
       String[] countries = ltLanguage.getCountries();
       if (countries.length > 0) {
@@ -264,10 +267,15 @@ public final class TreeRuleChecker {
     return new ParameterValues(parameters);
   }
 
-  private static @Nullable String getParamValue(Parameter param, Language language) {
-    String value = GrazieConfig.Companion.get().paramValue(language, param);
+  private static @Nullable String getParamValue(Parameter param, Language language, TextContent content) {
+    TextStyleDomain domain = getTextDomain(content);
+    String value = GrazieConfig.Companion.get().paramValue(domain, language, param);
     if (value == null || !ContainerUtil.exists(param.possibleValues(RuleIdeClient.INSTANCE), v -> value.equals(v.id()))) {
-      return param.defaultValue(GrazieConfig.Companion.get().getTextStyle(), RuleIdeClient.INSTANCE).id();
+      TextStyle textStyle = TextStyle.styles(RuleIdeClient.INSTANCE).stream()
+        .filter(it -> it.id().equals(domain.name()))
+        .findFirst()
+        .orElseGet(() -> GrazieConfig.Companion.get().getTextStyle());
+      return param.defaultValue(textStyle, RuleIdeClient.INSTANCE).id();
     }
     return value;
   }
@@ -355,8 +363,8 @@ public final class TreeRuleChecker {
     Map<Language, List<ai.grazie.rules.Rule>> rules = new LinkedHashMap<>();
     for (SentenceWithContent ds : doc) {
       Language language = ds.sentence.language;
-      if (!rules.containsKey(language) && StyleConfigurable.Companion.getRuleLanguages().contains(language)) {
-        rules.put(language, enabledRules(ds.sentence.treeOrThrow()));
+      if (!rules.containsKey(language) && StyleConfigurable.getRuleEngineLanguages().contains(language)) {
+        rules.put(language, enabledRules(ds.sentence.treeOrThrow(), ds.content));
       }
     }
 

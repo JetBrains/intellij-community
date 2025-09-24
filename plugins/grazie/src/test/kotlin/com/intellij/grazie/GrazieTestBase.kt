@@ -2,6 +2,7 @@
 package com.intellij.grazie
 
 import ai.grazie.nlp.langs.LanguageISO
+import ai.grazie.rules.settings.TextStyle
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.grazie.grammar.LanguageToolChecker
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
@@ -14,6 +15,8 @@ import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.text.TextProblem
+import com.intellij.grazie.utils.TextStyleDomain
+import com.intellij.grazie.utils.TextStyleDomain.*
 import com.intellij.grazie.utils.filterFor
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
@@ -129,7 +132,12 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     }
   }
 
-  protected fun enableProofreadingFor(languages: Set<Lang>) {
+  @JvmOverloads
+  protected fun enableProofreadingFor(
+    languages: Set<Lang>,
+    domainEnabledRules: MutableMap<TextStyleDomain, Set<String>> = HashMap(),
+    domainDisabledRules: MutableMap<TextStyleDomain, Set<String>> = HashMap(),
+  ) {
     // Load langs manually to prevent potential deadlock
     val enabledLanguages = languages + GrazieConfig.get().enabledLanguages
     loadLangs(enabledLanguages, project)
@@ -141,10 +149,17 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
         isCheckInDocumentationEnabled = true,
         enabledLanguages = additionalEnabledContextLanguages.map { it.id }.toSet(),
       )
+      val domains = setOf(Commit, AIPrompt, CodeDocumentation, CodeComment)
+      if (domainEnabledRules.isEmpty()) {
+        domains.forEach { domainEnabledRules[it] = enabledRules + additionalEnabledRules }
+      }
       state.copy(
         enabledLanguages = enabledLanguages,
         userEnabledRules = enabledRules + additionalEnabledRules,
-        checkingContext = checkingContext
+        checkingContext = checkingContext,
+        styleProfile = TextStyle.Unspecified.id,
+        domainEnabledRules = domainEnabledRules,
+        domainDisabledRules = domainDisabledRules,
       )
     }
 

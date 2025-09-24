@@ -42,9 +42,7 @@ class GrazieRuleSettingsAction(private val ruleName: String, private val rule: R
       navigatable.navigate(true)
       ok = true
     } else {
-      val configurable = GrazieConfigurable()
-      configurable.selectRule(rule.globalId)
-      ok = ShowSettingsUtil.getInstance().editConfigurable(project, configurable)
+      ok = ShowSettingsUtil.getInstance().editConfigurable(project, GrazieConfigurable())
     }
 
     val result = if (!ok) "canceled" else analyzeStateChange(state1, GrazieConfig.get())

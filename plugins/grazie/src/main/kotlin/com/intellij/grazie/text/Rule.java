@@ -1,6 +1,8 @@
 package com.intellij.grazie.text;
 
 import com.intellij.grazie.GrazieConfig;
+import com.intellij.grazie.utils.TextStyleDomain;
+import com.intellij.grazie.utils.TextUtilsKt;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,8 +84,18 @@ public abstract class Rule {
 
   /**
    * @return whether this rule is enabled by default
+   *
+   * @deprecated Use {@link #isEnabledByDefault(TextStyleDomain)} instead.
    */
+  @Deprecated(forRemoval = true)
   public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  /**
+   * @return whether this rule is enabled by default in the given domain
+   */
+  public boolean isEnabledByDefault(TextStyleDomain domain) {
     return true;
   }
 
@@ -94,14 +106,15 @@ public abstract class Rule {
     return null;
   }
 
-  @SuppressWarnings("unused")
-  public final boolean isCurrentlyEnabled() {
-    return isEnabledInState(GrazieConfig.Companion.get());
+  public final boolean isCurrentlyEnabled(TextContent content) {
+    GrazieConfig.State state = GrazieConfig.Companion.get();
+    TextStyleDomain domain = TextUtilsKt.getTextDomain(content);
+    return isEnabledInState(state, domain);
   }
 
-  public final boolean isEnabledInState(GrazieConfig.State state) {
-    return isEnabledByDefault() ? !state.getUserDisabledRules().contains(globalId)
-                                : state.getUserEnabledRules().contains(globalId);
+  public final boolean isEnabledInState(GrazieConfig.State state, TextStyleDomain domain) {
+    return isEnabledByDefault(domain) ? !state.isRuleDisabled(globalId, domain)
+                                      : state.isRuleEnabled(globalId, domain);
   }
 
   @Override
