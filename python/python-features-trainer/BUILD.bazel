@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "featuresTrainer_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "featuresTrainer",
   module_name = "intellij.python.featuresTrainer",
@@ -79,7 +85,8 @@ jvm_library(
     "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
     "//python/pluginCore:community-plugin",
     "@lib//:stream_ex",
-  ]
+  ],
+  runtime_deps = [":featuresTrainer_test_resources"]
 )
 ### auto-generated section `build intellij.python.featuresTrainer` end
 
