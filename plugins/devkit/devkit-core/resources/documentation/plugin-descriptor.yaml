@@ -57,16 +57,14 @@ elements:
             requirement:
               required: no
             description: |
-              Specifies the visibility of the content module (not applicable for `plugin.xml` descriptor). 
+              Specifies the visibility of the content module (not applicable for `plugin.xml` descriptors).
               The visibility determines which modules may declare a dependency on this module.
-              <br/>
-              The allowed values are:
-              - `private` - the module is visible only inside the plugin it's defined;
-              - `internal` - the module is visible only from content modules declared in the same [namespace](#attribute:idea-plugin__content__namespace);
-              - `public` - the module is visible from all content modules of all plugins.
-            internalNote: &plugin_model_v2_internal_note |
-              This item is part of the [_Plugin Model_](https://youtrack.jetbrains.com/articles/IJPL-A-31){internal},
-              which is not recommended to be used in third-party plugins in the current state.
+              
+              Allowed values:
+              - `private` - the module is visible only inside the plugin where it's defined
+              - `internal` - the module is visible only from content modules declared in the same [namespace](#attribute:idea-plugin__content__namespace)
+              - `public` - the module is visible from all content modules of all plugins
+            internalNote: *plugin_model_v2_internal_note
             defaultValue: |
               `private`
         - attribute:
@@ -77,7 +75,7 @@ elements:
             description: |
               Determines whether the main classloader of the core plugin is used as the parent classloader for the current content module.
               If set to `false`, the Java platform classloader is used as the parent classloader.
-  
+              
               The attribute is effective only for content modules in the core (`com.intellij`) plugin.
             internalNote: This item is internal and should be used only in modules implemented by JetBrains.
             defaultValue: |
@@ -540,13 +538,14 @@ elements:
                   name: namespace
                   description: |
                     Specifies the namespace for content modules. 
-                    If all content modules have private [visibility](#attribute:idea-plugin__visibility) (this is the default), the 
-                    namespace is not required. However, if at least one non-private content module is defined, the namespace must be set.
-                    <br/>
+                    
+                    If all content modules have private [visibility](#attribute:idea-plugin__visibility) (this is the default), the namespace is not required.
+                    However, if at least one non-private content module is defined, the namespace must be set.
+                    
                     If the namespace is set, it must be associated with the plugin's vendor at the Marketplace. 
-                    Plugins developed by JetBrains may use `jetbrains` namespace.
-                    <br/>
-                    If there are multiple `content` tags in the plugin descriptor, the namespace must be the same for all of them.
+                    Plugins developed by JetBrains may use the `jetbrains` namespace.
+                    
+                    If there are multiple [`<content>`](#element:idea-plugin__content) tags in the plugin descriptor, the namespace must be the same for all of them.
             children:
               - element:
                   name: module
@@ -907,7 +906,7 @@ elements:
                         namespace: *xIncludeNamespace
                         description: |
                           Indicates that including the specified file is optional.
-
+                          
                           If the file referenced in [`href`](#attribute:idea-plugin__xi:include__href) is not found and the `xi:fallback`
                           element
                           is missing, the plugin will fail to load.
@@ -1740,7 +1739,7 @@ elements:
                         deprecationNote: *componentsDeprecationNote
                         description: |
                           In the past, if present, the component was not loaded for the default project.
-
+                          
                           Currently, project components aren't loaded in the default project by default, so this element has no effect.
                           Use [`<loadForDefaultProject>`](#element:idea-plugin__application-components__component__loadForDefaultProject)
                           if it is required to load a component in the default project.
