@@ -8,28 +8,22 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangesViewManager
-import com.intellij.openapi.vcs.changes.InclusionModel
-import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.*
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.util.application
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.tree.TreeUtil.*
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import kotlin.properties.Delegates.observable
 
-class ChangesViewCommitPanel @ApiStatus.Internal constructor(
+class ChangesViewCommitPanel internal constructor(
   project: Project,
-  private val changesView: ChangesListView,
+  private val changesView: BackendChangesView,
 ) : NonModalCommitPanel(project), ChangesViewCommitWorkflowUi {
   private var isHideToolWindowOnCommit = false
 
@@ -49,10 +43,10 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(
       support.installSearch(commitMessage.editorField, commitMessage.editorField)
     }
 
-    changesView.setInclusionListener {
+    changesView.viewModel.setInclusionListener {
       WriteIntentReadAction.run { fireInclusionChanged() }
     }
-    changesView.isShowCheckboxes = true
+    changesView.viewModel.setShowCheckboxes(true)
 
     commitActionsPanel.isCommitButtonDefault = {
       !progressPanel.isDumbMode && UIUtil.isFocusAncestor(rootComponent ?: component)
@@ -77,39 +71,34 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(
   }
 
   override fun expand(item: Any) {
-    val node = changesView.findNodeInTree(item)
-    node?.let { changesView.expandSafe(it) }
+    changesView.viewModel.expand(item)
   }
 
   override fun select(item: Any) {
-    val path = changesView.findNodePathInTree(item)
-    path?.let { selectPath(changesView, it, false) }
+    changesView.viewModel.select(item)
   }
 
   override fun selectFirst(items: Collection<Any>) {
-    if (items.isEmpty()) return
-
-    val path = treePathTraverser(changesView).preOrderDfsTraversal().find { getLastUserObject(it) in items }
-    path?.let { selectPath(changesView, it, false) }
+    changesView.viewModel.selectFirst(items)
   }
 
   override fun setCompletionContext(changeLists: List<LocalChangeList>) {
     commitMessage.setChangesSupplier(ChangeListChangesSupplier(changeLists))
   }
 
-  override fun getDisplayedChanges(): List<Change> = all(changesView).userObjects(Change::class.java)
-  override fun getIncludedChanges(): List<Change> = included(changesView).userObjects(Change::class.java)
+  override fun getDisplayedChanges(): List<Change> = changesView.viewModel.getDisplayedChanges()
+  override fun getIncludedChanges(): List<Change> = changesView.viewModel.getIncludedChanges()
 
   override fun getDisplayedUnversionedFiles(): List<FilePath> =
-    allUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(FilePath::class.java)
+    changesView.viewModel.getDisplayedUnversionedFiles()
 
   override fun getIncludedUnversionedFiles(): List<FilePath> =
-    includedUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(FilePath::class.java)
+    changesView.viewModel.getIncludedUnversionedFiles()
 
   override var inclusionModel: InclusionModel?
-    get() = changesView.inclusionModel
+    get() = changesView.viewModel.inclusionModel
     set(value) {
-      changesView.setInclusionModel(value)
+      changesView.viewModel.inclusionModel = value
     }
 
   override val commitProgressUi: CommitProgressUi get() = progressPanel
@@ -127,8 +116,8 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(
 
   override fun dispose() {
     super.dispose()
-    changesView.isShowCheckboxes = false
-    changesView.setInclusionListener(null)
+    changesView.viewModel.setShowCheckboxes(false)
+    changesView.viewModel.setInclusionListener(null)
   }
 
   override fun activate(): Boolean {
@@ -136,7 +125,7 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(
     val contentManager = ChangesViewContentManager.getInstance(project)
 
     saveToolWindowState()
-    changesView.isShowCheckboxes = true
+    changesView.viewModel.setShowCheckboxes(true)
     component.isVisible = true
     commitActionsPanel.isActive = true
 
@@ -153,7 +142,7 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(
     }
 
     clearToolWindowState()
-    changesView.isShowCheckboxes = false
+    changesView.viewModel.setShowCheckboxes(false)
     component.isVisible = false
     commitActionsPanel.isActive = false
 

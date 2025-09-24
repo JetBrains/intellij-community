@@ -10,8 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel.ModelProvider.ExtendedTreeModel
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.storeValueGlobally
@@ -21,6 +23,7 @@ import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.split.createComponent
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -40,10 +43,11 @@ internal class BackendChangesView private constructor(
 
       if (RdLocalChanges.isEnabled()) {
         val viewModel = BackendRemoteCommitChangesViewModel(project)
-        val  id = storeValueGlobally(scope, viewModel, BackendChangesViewValueIdType)
+        val id = storeValueGlobally(scope, viewModel, BackendChangesViewValueIdType)
         val panel = ChangesViewSplitComponentBinding.createComponent(project, scope, id)
         return BackendChangesView(panel, viewModel)
-      } else {
+      }
+      else {
         val panel = CommitChangesViewWithToolbarPanel(LocalChangesListView(project), scope)
         val backendChangesView = BackendChangesView(panel, BackendLocalCommitChangesViewModel(panel))
         val id = storeValueGlobally(scope, backendChangesView.viewModel, BackendChangesViewValueIdType)
@@ -74,11 +78,25 @@ internal interface BackendCommitChangesViewModel {
   fun setGrouping(groupingKey: String)
   fun resetViewImmediatelyAndRefreshLater()
 
+  fun setInclusionListener(listener: Runnable?)
+  var inclusionModel: InclusionModel?
+  fun setShowCheckboxes(value: Boolean)
+
+  fun getDisplayedChanges(): List<Change>
+  fun getIncludedChanges(): List<Change>
+  fun getDisplayedUnversionedFiles(): List<FilePath>
+  fun getIncludedUnversionedFiles(): List<FilePath>
+
+  fun expand(item: Any)
+  fun select(item: Any)
+  fun selectFirst(items: Collection<Any>)
+
   fun selectFile(vFile: VirtualFile?)
   fun selectChanges(changes: List<Change>)
 
   @ApiStatus.Obsolete
   fun getTree(): ChangesListView
+
   @ApiStatus.Obsolete
   fun getPreferredFocusableComponent(): JComponent
 }
@@ -87,6 +105,8 @@ internal interface BackendCommitChangesViewModel {
 private class BackendRemoteCommitChangesViewModel(private val project: Project) : BackendCommitChangesViewModel {
   private var horizontal: Boolean = true
   private val treeView: ChangesListView by lazy { LocalChangesListView(project) }
+
+  override var inclusionModel: InclusionModel? = null
 
   override fun initPanel() {
   }
@@ -118,6 +138,27 @@ private class BackendRemoteCommitChangesViewModel(private val project: Project) 
   override fun resetViewImmediatelyAndRefreshLater() {
   }
 
+  override fun setInclusionListener(listener: Runnable?) {}
+
+  override fun setShowCheckboxes(value: Boolean) {}
+
+  override fun getDisplayedChanges(): List<Change> = emptyList()
+
+  override fun getIncludedChanges(): List<Change> = emptyList()
+
+  override fun getDisplayedUnversionedFiles(): List<FilePath> = emptyList()
+
+  override fun getIncludedUnversionedFiles(): List<FilePath> = emptyList()
+
+  override fun expand(item: Any) {
+  }
+
+  override fun select(item: Any) {
+  }
+
+  override fun selectFirst(items: Collection<Any>) {
+  }
+
   override fun selectFile(vFile: VirtualFile?) {
   }
 
@@ -129,8 +170,14 @@ private class BackendRemoteCommitChangesViewModel(private val project: Project) 
   override fun getPreferredFocusableComponent(): JComponent = treeView.preferredFocusedComponent
 }
 
-private class BackendLocalCommitChangesViewModel(private val panel: CommitChangesViewWithToolbarPanel): BackendCommitChangesViewModel {
+private class BackendLocalCommitChangesViewModel(private val panel: CommitChangesViewWithToolbarPanel) : BackendCommitChangesViewModel {
   private var commitWorkflowHandler: ChangesViewCommitWorkflowHandler? = null
+
+  override var inclusionModel: InclusionModel?
+    get() = panel.changesView.inclusionModel
+    set(value) {
+      panel.changesView.setInclusionModel(value)
+    }
 
   override fun initPanel() {
     panel.initPanel(ModelProvider())
@@ -166,6 +213,38 @@ private class BackendLocalCommitChangesViewModel(private val panel: CommitChange
 
   override fun resetViewImmediatelyAndRefreshLater() {
     panel.resetViewImmediatelyAndRefreshLater()
+  }
+
+  override fun setInclusionListener(listener: Runnable?) {
+    panel.changesView.setInclusionListener(listener)
+  }
+
+  override fun setShowCheckboxes(value: Boolean) {
+    panel.changesView.isShowCheckboxes = value
+  }
+
+  override fun getDisplayedChanges(): List<Change> = all(panel.changesView).userObjects(Change::class.java)
+
+  override fun getIncludedChanges(): List<Change> = included(panel.changesView).userObjects(Change::class.java)
+
+  override fun getDisplayedUnversionedFiles(): List<FilePath> = allUnderTag(panel.changesView, UNVERSIONED_FILES_TAG).userObjects(FilePath::class.java)
+
+  override fun getIncludedUnversionedFiles(): List<FilePath> = includedUnderTag(panel.changesView, UNVERSIONED_FILES_TAG).userObjects(FilePath::class.java)
+
+  override fun expand(item: Any) {
+    val node = panel.changesView.findNodeInTree(item)
+    node?.let { panel.changesView.expandSafe(it) }
+  }
+
+  override fun select(item: Any) {
+    val path = panel.changesView.findNodePathInTree(item)
+    path?.let { selectPath(panel.changesView, it, false) }
+  }
+
+  override fun selectFirst(items: Collection<Any>) {
+    if (items.isEmpty()) return
+    val path = treePathTraverser(panel.changesView).preOrderDfsTraversal().find { getLastUserObject(it) in items }
+    path?.let { selectPath(panel.changesView, it, false) }
   }
 
   override fun selectFile(vFile: VirtualFile?) {
