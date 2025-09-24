@@ -13,7 +13,6 @@ import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
  * Default bundled plugins for all editions of IntelliJ IDEA.
  * See also [DEFAULT_BUNDLED_PLUGINS].
  */
-@Suppress("SpellCheckingInspection")
 val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + sequenceOf(
   JavaPluginLayout.MAIN_MODULE_NAME,
   "intellij.java.ide.customization",
@@ -51,7 +50,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.sh.plugin",
   "intellij.markdown",
   "intellij.mcpserver",
-  "intellij.webp",
   "intellij.grazie",
   "intellij.featuresTrainer",
   "intellij.toml",
