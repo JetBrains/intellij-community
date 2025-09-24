@@ -42,12 +42,19 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   private volatile boolean myDisposed;
   private volatile RootIndex myRootIndex;
 
+  /**
+   * This constructor is used in Analyzer to initialize with a pre-built OrderEntryGraph
+   * */
   public DirectoryIndexImpl(@NotNull Project project, @NotNull RootIndex rootIndex, @NotNull WorkspaceFileIndexEx workspaceFileIndex) {
     myWorkspaceFileIndex = workspaceFileIndex;
     myProject = project;
     myRootIndex = rootIndex;
   }
 
+  /**
+   * This constructor is actually being used by service container in IDEA
+   * */
+  @SuppressWarnings("unused")
   public DirectoryIndexImpl(@NotNull Project project) {
     myWorkspaceFileIndex = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
     myProject = project;
