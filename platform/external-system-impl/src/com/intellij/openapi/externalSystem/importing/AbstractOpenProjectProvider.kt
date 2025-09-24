@@ -53,9 +53,7 @@ abstract class AbstractOpenProjectProvider {
   }
 
 
-  protected open suspend fun linkProject(projectFile: VirtualFile, project: Project) {
-    linkToExistingProjectAsync(projectFile, project)
-  }
+  protected abstract suspend fun linkProject(projectFile: VirtualFile, project: Project)
 
   suspend fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     LOG.debug("Open ${systemId.readableName} project from $projectFile")
