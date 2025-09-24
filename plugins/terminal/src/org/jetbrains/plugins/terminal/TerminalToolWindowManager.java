@@ -919,22 +919,3 @@ public final class TerminalToolWindowManager implements Disposable {
       createShellWidget(workingDirectory, tabName, requestFocus, deferSessionStartUntilUiShown));
   }
 }
-
-
-final class TerminalToolWindowPanel extends SimpleToolWindowPanel {
-  TerminalToolWindowPanel() {
-    super(false, true);
-  }
-
-  @Override
-  public void addNotify() {
-    super.addNotify();
-    InternalDecoratorImpl.componentWithEditorBackgroundAdded(this);
-  }
-
-  @Override
-  public void removeNotify() {
-    super.removeNotify();
-    InternalDecoratorImpl.componentWithEditorBackgroundRemoved(this);
-  }
-}
