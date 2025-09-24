@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocumentManager
+import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -115,7 +116,12 @@ internal fun createCallableLookupElements(
     }
 }
 
-private class InsertRequiredTypeArgumentsInsertHandler(
+/**
+ * Inserts the [typeArgs] at the [exprOffset] for expressions that require type arguments
+ * after a chained dot call.
+ */
+@Serializable
+internal class InsertRequiredTypeArgumentsInsertHandler(
     private val typeArgs: String,
     private val exprOffset: Int,
 ): SerializableInsertHandler {
@@ -131,6 +137,7 @@ private class InsertRequiredTypeArgumentsInsertHandler(
         } ?: return
 
         addTypeArguments(callExpr, typeArgs, callExpr.project)
+        // Need to commit the PSI changes to the document for potential following insert handlers that modify the document
         PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
     }
 }

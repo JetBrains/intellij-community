@@ -84,5 +84,6 @@ val serializableInsertionHandlerSerializersModule: SerializersModule = Serialize
         subclass(NameWithTypeLookupElementDecoratorInsertHandler::class, NameWithTypeLookupElementDecoratorInsertHandler.serializer())
         subclass(NamedArgumentWithValueInsertionHandler::class, NamedArgumentWithValueInsertionHandler.serializer())
         subclass(TrailingLambdaInsertionHandler::class, serializer = TrailingLambdaInsertionHandler.serializer())
+        subclass(InsertRequiredTypeArgumentsInsertHandler::class, serializer = InsertRequiredTypeArgumentsInsertHandler.serializer())
     }
 }
