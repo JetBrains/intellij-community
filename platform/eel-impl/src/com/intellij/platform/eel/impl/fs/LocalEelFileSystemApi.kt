@@ -437,14 +437,9 @@ abstract class PosixNioBasedEelFileSystemApi(
       emit(e)
       return@flow
     }
-    if (!rootDir.isDirectory(LinkOption.NOFOLLOW_LINKS)) {
-      val e = WalkDirectoryEntryResultImpl.Error(EelFsResultImpl.Other(options.path, "provided path is not a directory"))
-      emit(e)
-      return@flow
-    }
 
     val emptyFileHash = Hashing.xxh3_64().hashStream().asLong
-    val maxDepth = options.maxDepth.toInt()
+    val maxDepth = options.maxDepth
 
     when (options.traversalOrder) {
       EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder.BFS -> {
@@ -460,8 +455,8 @@ abstract class PosixNioBasedEelFileSystemApi(
             val sourceAttrs = currentItem.fileAttributesView<PosixFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
             walkDirectoryProcessFilePosix(currentItem, sourceAttrs, emptyFileHash, options)?.let { res -> emit(res) }
 
-            // maxDepth == 0 means that there is not limit on the depth
-            if (sourceAttrs.isDirectory && (maxDepth == 0 || currentDepth < maxDepth)) {
+            // maxDepth < 0 means that there is not limit on the depth
+            if (sourceAttrs.isDirectory && (maxDepth < 0 || currentDepth < maxDepth)) {
               var children = currentItem.listDirectoryEntries()
               children = when (options.entryOrder) {
                 EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder.RANDOM -> {
@@ -482,7 +477,7 @@ abstract class PosixNioBasedEelFileSystemApi(
         when (options.entryOrder) {
           EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder.RANDOM -> {
             // maxDepth == 0 means that there is not limit on the depth
-            val maxDepth = if (maxDepth == 0) Integer.MAX_VALUE else maxDepth
+            val maxDepth = if (maxDepth < 0) Integer.MAX_VALUE else maxDepth
             Files.walk(rootDir, maxDepth).use { pathStream ->
               for (path in pathStream) {
                 val sourceAttrs = path.fileAttributesView<PosixFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
@@ -500,8 +495,8 @@ abstract class PosixNioBasedEelFileSystemApi(
               val sourceAttrs = currentItem.fileAttributesView<PosixFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
               walkDirectoryProcessFilePosix(currentItem, sourceAttrs, emptyFileHash, options)?.let { res -> emit(res) }
 
-              // maxDepth == 0 means that there is not limit on the depth
-              if (sourceAttrs.isDirectory && (maxDepth == 0 || currDepth < maxDepth)) {
+              // maxDepth < 0 means that there is not limit on the depth
+              if (sourceAttrs.isDirectory && (maxDepth < 0 || currDepth < maxDepth)) {
                 val children = currentItem
                   .listDirectoryEntries()
                   .sortedByDescending { it.pathString }
@@ -674,14 +669,9 @@ abstract class WindowsNioBasedEelFileSystemApi(
       emit(e)
       return@flow
     }
-    if (!rootDir.isDirectory(LinkOption.NOFOLLOW_LINKS)) {
-      val e = WalkDirectoryEntryResultImpl.Error(EelFsResultImpl.Other(options.path, "provided path is not a directory"))
-      emit(e)
-      return@flow
-    }
 
     val emptyFileHash = Hashing.xxh3_64().hashStream().asLong
-    val maxDepth = options.maxDepth.toInt()
+    val maxDepth = options.maxDepth
 
     when (options.traversalOrder) {
       EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder.BFS -> {
@@ -697,8 +687,8 @@ abstract class WindowsNioBasedEelFileSystemApi(
             val sourceAttrs = currentItem.fileAttributesView<DosFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
             walkDirectoryProcessFileWindows(currentItem, sourceAttrs, emptyFileHash, options)?.let { res -> emit(res) }
 
-            // maxDepth == 0 means that there is not limit on the depth
-            if (sourceAttrs.isDirectory && (maxDepth == 0 || currentDepth < maxDepth)) {
+            // maxDepth < 0 means that there is not limit on the depth
+            if (sourceAttrs.isDirectory && (maxDepth < 0 || currentDepth < maxDepth)) {
               var children = currentItem.listDirectoryEntries()
               children = when (options.entryOrder) {
                 EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder.RANDOM -> {
@@ -718,8 +708,8 @@ abstract class WindowsNioBasedEelFileSystemApi(
       EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder.DFS -> {
         when (options.entryOrder) {
           EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder.RANDOM -> {
-            // maxDepth == 0 means that there is not limit on the depth
-            val maxDepth = if (maxDepth == 0) Integer.MAX_VALUE else maxDepth
+            // maxDepth < 0 means that there is not limit on the depth
+            val maxDepth = if (maxDepth < 0) Integer.MAX_VALUE else maxDepth
             Files.walk(rootDir, maxDepth).use { pathStream ->
               for (path in pathStream) {
                 val sourceAttrs = path.fileAttributesView<DosFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
@@ -737,8 +727,8 @@ abstract class WindowsNioBasedEelFileSystemApi(
               val sourceAttrs = currentItem.fileAttributesView<DosFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
               walkDirectoryProcessFileWindows(currentItem, sourceAttrs, emptyFileHash, options)?.let { res -> emit(res) }
 
-              // maxDepth == 0 means that there is not limit on the depth
-              if (sourceAttrs.isDirectory && (maxDepth == 0 || currDepth < maxDepth)) {
+              // maxDepth < 0 means that there is not limit on the depth
+              if (sourceAttrs.isDirectory && (maxDepth < 0 || currDepth < maxDepth)) {
                 val children = currentItem
                   .listDirectoryEntries()
                   .sortedByDescending { it.pathString }

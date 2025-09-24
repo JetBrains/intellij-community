@@ -222,13 +222,13 @@ interface EelFileSystemApi {
 
   interface WalkDirectoryOptions {
     /**
-     * Path to the directory that is to be traversed. The path must be a directory (not a symlink) and must exist.
+     * Path to the directory that is to be traversed. If the path is not a directory, WalkDirectory will still yield just the file itself.
      */
     val path: EelPath
 
     /**
-     * maxDepth parameter specifies how many levels deep to traverse within the given directory. A value of 0 (the default) means
-     * the entire directory will be traversed without any depth limit.
+     * maxDepth parameter specifies how many levels deep to traverse within the given directory. A negative depth (the default is -1) means
+     * the entire directory will be traversed without any depth limit. Depth of 0 will just return the directory itself.
      *
      * Example for depth = 1:
      * ```
@@ -245,7 +245,7 @@ interface EelFileSystemApi {
      * a/e
      * ```
      */
-    val maxDepth: UInt get() = 0U
+    val maxDepth: Int get() = -1
 
     /**
      * The default is DFS.

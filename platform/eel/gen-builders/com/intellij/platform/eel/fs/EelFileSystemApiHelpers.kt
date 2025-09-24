@@ -128,7 +128,7 @@ fun EelFileSystemApi.unwatch(
  * Default walkDirectory options are to traverse in a DFS manner, yield entries in a random order, yielding all file types, and to not
  * yield metadata and file hash.
  * 
- * @param path Path to the directory that is to be traversed. The path must be a directory (not a symlink) and must exist.
+ * @param path Path to the directory that is to be traversed. If the path is not a directory, WalkDirectory will still yield just the file itself.
  */
 @GeneratedBuilder.Result
 @ApiStatus.Internal
@@ -577,7 +577,7 @@ object EelFileSystemApiHelpers {
 
     private var fileContentsHash: Boolean = false
 
-    private var maxDepth: UInt = 0U
+    private var maxDepth: Int = -1
 
     private var readMetadata: Boolean = false
 
@@ -612,8 +612,8 @@ object EelFileSystemApiHelpers {
     }
 
     /**
-     * maxDepth parameter specifies how many levels deep to traverse within the given directory. A value of 0 (the default) means
-     * the entire directory will be traversed without any depth limit.
+     * maxDepth parameter specifies how many levels deep to traverse within the given directory. A negative depth (the default is -1) means
+     * the entire directory will be traversed without any depth limit. Depth of 0 will just return the directory itself.
      *
      * Example for depth = 1:
      * ```
@@ -630,12 +630,12 @@ object EelFileSystemApiHelpers {
      * a/e
      * ```
      */
-    fun maxDepth(arg: UInt): WalkDirectory = apply {
+    fun maxDepth(arg: Int): WalkDirectory = apply {
       this.maxDepth = arg
     }
 
     /**
-     * Path to the directory that is to be traversed. The path must be a directory (not a symlink) and must exist.
+     * Path to the directory that is to be traversed. If the path is not a directory, WalkDirectory will still yield just the file itself.
      */
     fun path(arg: EelPath): WalkDirectory = apply {
       this.path = arg

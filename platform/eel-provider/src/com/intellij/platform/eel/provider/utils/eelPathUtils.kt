@@ -19,6 +19,8 @@ import com.intellij.platform.eel.fs.WalkDirectoryEntry
 import com.intellij.platform.eel.fs.WalkDirectoryEntryPosix
 import com.intellij.platform.eel.fs.WalkDirectoryEntryWindows
 import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder
+import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder
 import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.fs.EelPosixFileInfoImpl
 import com.intellij.platform.eel.fs.WalkDirectoryOptionsBuilder
@@ -36,6 +38,7 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.produceIn
@@ -851,7 +854,7 @@ object EelPathUtils {
         remoteEntry = when (remoteEntryResult) {
           is WalkDirectoryEntryResult.Ok -> remoteEntryResult.value
           is WalkDirectoryEntryResult.Error -> {
-            LOG.info("Error processing hash on the remote side: ${remoteEntryResult.error}")
+            LOG.info("Error getting entry on the remote side: ${remoteEntryResult.error}")
             break
           }
         }
@@ -861,7 +864,7 @@ object EelPathUtils {
         localEntry = when (localEntryResult) {
           is WalkDirectoryEntryResult.Ok -> localEntryResult.value
           is WalkDirectoryEntryResult.Error -> {
-            LOG.info("Error processing hash on the local side: ${localEntryResult.error}")
+            LOG.info("Error getting entry on the local side: ${localEntryResult.error}")
             break
           }
         }
@@ -1094,72 +1097,194 @@ object EelPathUtils {
    */
   @RequiresBackgroundThread
   @VisibleForTesting
-  suspend fun directoryOnlySync(sourceRoot: Path, targetRoot: Path, eelApi: EelApi, ignoreCase: Boolean) {
-    val localQ = ArrayDeque<Path>()
-    val remoteQ = ArrayDeque<Path>()
+  suspend fun directoryOnlySync(
+    sourceRoot: EelPath,
+    targetRoot: EelPath,
+    sourceEelApi: EelApi,
+    targetEelApi: EelApi,
+    ignoreCase: Boolean,
+    scope: CoroutineScope,
+  ) {
+    coroutineScope {
 
-    if (sourceRoot.isDirectory(LinkOption.NOFOLLOW_LINKS)) {
-      localQ.add(sourceRoot)
-    }
-
-    if (targetRoot.isDirectory(LinkOption.NOFOLLOW_LINKS)) {
-      remoteQ.add(targetRoot)
-    }
-
-    while (localQ.isNotEmpty() || remoteQ.isNotEmpty()) {
-      if (localQ.isNotEmpty() && remoteQ.isEmpty()) {
-        val path = localQ.removeFirst()
-        val relativeDirPath = path.relativeTo(sourceRoot)
-        val targetDirPath = targetRoot.resolve(relativeDirPath)
-
-        // edge case when a local directory is deleted and replaced by a file with the same name
-        if (targetDirPath.exists()) {
-          Files.delete(targetDirPath)
-        }
-        Files.createDirectory(targetDirPath)
-        localQ.addAll(
-          path.listDirectoryEntries()
-            .filter { it.isDirectory(LinkOption.NOFOLLOW_LINKS) }
-            .sortedByDescending { it.pathString }
-        )
-      }
-      else if (localQ.isEmpty() && remoteQ.isNotEmpty()) {
-        val path = remoteQ.removeFirst()
-        eelApi.fs.delete(path.asEelPath(), true)
-      }
-      else {
-        val localRelativeDirPath = localQ.first().relativeTo(sourceRoot)
-        val remoteRelativeDirPath = remoteQ.first().relativeTo(targetRoot)
-        val comparison = compareRelativePathComponents(localRelativeDirPath, remoteRelativeDirPath, ignoreCase)
-
-        // new local directory
-        if (comparison > 0) {
-          val dirTargetPath = targetRoot.resolve(localRelativeDirPath)
-
-          // edge case when a local directory is deleted and replaced by a file with the same name
-          if (dirTargetPath.exists()) {
-            Files.delete(dirTargetPath)
+      val attrs = sourceRoot.asNioPath().fileAttributesView<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
+      when {
+        attrs.isDirectory -> {
+          if (!targetRoot.asNioPath().isDirectory(LinkOption.NOFOLLOW_LINKS)) {
+            targetEelApi.fs.delete(targetRoot, true).getOrThrow()
+            Files.createDirectory(targetRoot.asNioPath())
           }
-          Files.createDirectory(dirTargetPath)
-          localQ.removeFirst()
         }
-        // the local directory was deleted
-        else if (comparison < 0) {
-          eelApi.fs.delete(remoteQ.removeFirst().asEelPath(), true).getOrThrow()
+        attrs.isRegularFile -> {
+          if (!targetRoot.asNioPath().isRegularFile(LinkOption.NOFOLLOW_LINKS)) {
+            targetEelApi.fs.delete(targetRoot, true).getOrThrow()
+            Files.createFile(targetRoot.asNioPath())
+          }
         }
-        else {
-          val localPath = localQ.removeFirst()
-          val remotePath = remoteQ.removeFirst()
-          localQ.addAll(
-            localPath.listDirectoryEntries()
-              .filter { it.isDirectory(LinkOption.NOFOLLOW_LINKS) }
-              .sortedByDescending { it.pathString }
-          )
-          remoteQ.addAll(
-            remotePath.listDirectoryEntries()
-              .filter { it.isDirectory(LinkOption.NOFOLLOW_LINKS) }
-              .sortedByDescending { it.pathString }
-          )
+        attrs.isSymbolicLink -> {
+          if (!targetRoot.asNioPath().isSymbolicLink()) {
+            targetEelApi.fs.delete(targetRoot, true).getOrThrow()
+            Files.createSymbolicLink(targetRoot.asNioPath(), Path(""))
+          }
+        }
+      }
+
+      val sourceQ: ArrayDeque<EelPath> = ArrayDeque()
+      val targetQ: ArrayDeque<EelPath> = ArrayDeque()
+      sourceQ.add(sourceRoot)
+      targetQ.add(targetRoot)
+      val sourceRoot = sourceRoot.asNioPath()
+      val targetRoot = targetRoot.asNioPath()
+      var sourceDirEntriesChan: ReceiveChannel<WalkDirectoryEntryResult>?
+      var targetDirEntriesChan: ReceiveChannel<WalkDirectoryEntryResult>?
+      var sourceDir: WalkDirectoryEntry? = null
+      var targetDir: WalkDirectoryEntry? = null
+
+      var maxDepth = 0
+
+      while (sourceQ.isNotEmpty() || targetQ.isNotEmpty()) {
+        val nextSourceRootDir = sourceQ.removeFirstOrNull()
+        val nextTargetRootDir = targetQ.removeFirstOrNull()
+
+        sourceDirEntriesChan = null
+        nextSourceRootDir?.let { sourceRoot ->
+          val walkDirectoryOptionsSource = WalkDirectoryOptionsBuilder(sourceRoot)
+            .entryOrder(WalkDirectoryEntryOrder.ALPHABETICAL)
+            .traversalOrder(WalkDirectoryTraversalOrder.BFS)
+            .yieldDirectories(true)
+            .yieldSymlinks(false)
+            .yieldRegularFiles(false)
+            .yieldOtherFileTypes(false)
+            .maxDepth(maxDepth)
+            .build()
+          sourceDirEntriesChan = sourceEelApi.fs.walkDirectory(walkDirectoryOptionsSource).produceIn(scope)
+        }
+
+        targetDirEntriesChan = null
+        nextTargetRootDir?.let { targetRoot ->
+          val walkDirectoryOptionsTarget = WalkDirectoryOptionsBuilder(targetRoot)
+            .entryOrder(WalkDirectoryEntryOrder.ALPHABETICAL)
+            .traversalOrder(WalkDirectoryTraversalOrder.BFS)
+            .yieldDirectories(true)
+            .yieldSymlinks(false)
+            .yieldRegularFiles(false)
+            .yieldOtherFileTypes(false)
+            .maxDepth(maxDepth)
+            .build()
+          targetDirEntriesChan = targetEelApi.fs.walkDirectory(walkDirectoryOptionsTarget).produceIn(scope)
+        }
+
+        // skip the first directory yielded because it has been processed in the previous iteration
+        if (maxDepth == 1) {
+          if (sourceDirEntriesChan != null) {
+            try {
+              sourceDirEntriesChan.receive()
+            }
+            catch (_: ClosedReceiveChannelException) {
+            }
+          }
+
+          if (targetDirEntriesChan != null) {
+            try {
+              targetDirEntriesChan.receive()
+            }
+            catch (_: ClosedReceiveChannelException) {
+            }
+          }
+        }
+
+        // This sync must process layer by layer.
+        // In the first iteration, only the root directory itself is needed.
+        // In all later iterations, maxDepth = 1 is used to fetch the next layer.
+        maxDepth = 1
+
+        while (true) {
+          if (sourceDir == null && sourceDirEntriesChan != null) {
+            try {
+              val sourceRes = sourceDirEntriesChan.receive()
+              sourceDir = when (sourceRes) {
+                is WalkDirectoryEntryResult.Ok -> sourceRes.value
+                is WalkDirectoryEntryResult.Error -> {
+                  LOG.info("Error processing directory on the source side: ")
+                  break
+                }
+              }
+            }
+            catch (_: ClosedReceiveChannelException) {
+            }
+          }
+
+          if (targetDir == null && targetDirEntriesChan != null) {
+            try {
+              val targetRes = targetDirEntriesChan.receive()
+              targetDir = when (targetRes) {
+                is WalkDirectoryEntryResult.Ok -> targetRes.value
+                is WalkDirectoryEntryResult.Error -> {
+                  LOG.info("Error processing directory on the target side: ")
+                  break
+                }
+              }
+            }
+            catch (_: ClosedReceiveChannelException) {
+            }
+          }
+
+          if (sourceDir == null && targetDir == null) {
+            break
+          }
+          else if (sourceDir != null && targetDir == null) {
+            val relativeDirPath = sourceDir.path.asNioPath().relativeTo(sourceRoot)
+            val targetDirPath = targetRoot.resolve(relativeDirPath)
+
+            // try is required to handle an edge case when a source file is deleted and replaced by a directory with the same name
+            try {
+              Files.createDirectory(targetDirPath)
+            }
+            catch (_: java.nio.file.FileAlreadyExistsException) {
+              Files.delete(targetDirPath)
+              Files.createDirectory(targetDirPath)
+            }
+            sourceQ.add(sourceDir.path)
+            targetQ.add(targetDirPath.asEelPath())
+            sourceDir = null
+          }
+          else if (sourceDir == null && targetDir != null) {
+            val path = targetDir.path
+            targetEelApi.fs.delete(path, true).getOrThrow()
+            targetDir = null
+          }
+          else {
+            val sourceRelativeDirPath = sourceDir!!.path.asNioPath().relativeTo(sourceRoot)
+            val targetRelativeDirPath = targetDir!!.path.asNioPath().relativeTo(targetRoot)
+            val comparison = compareRelativePathComponents(sourceRelativeDirPath, targetRelativeDirPath, ignoreCase)
+
+            // new source directory
+            if (comparison < 0) {
+              val dirTargetPath = targetRoot.resolve(sourceRelativeDirPath)
+
+              // try is required to handle an edge case when a source file is deleted and replaced by a directory with the same name
+              try {
+                Files.createDirectory(dirTargetPath)
+              }
+              catch (_: java.nio.file.FileAlreadyExistsException) {
+                Files.delete(dirTargetPath)
+                Files.createDirectory(dirTargetPath)
+              }
+              sourceQ.add(sourceDir.path)
+              targetQ.add(dirTargetPath.asEelPath())
+              sourceDir = null
+            }
+            // the source directory was deleted
+            else if (comparison > 0) {
+              targetEelApi.fs.delete(targetDir.path, true).getOrThrow()
+            }
+            else {
+              sourceQ.add(sourceDir.path)
+              targetQ.add(targetDir.path)
+              sourceDir = null
+              targetDir = null
+            }
+          }
         }
       }
     }
@@ -1173,32 +1298,33 @@ object EelPathUtils {
   @RequiresBackgroundThread
   private suspend fun incrementalWalkingTransfer(sourceRoot: Path, targetRoot: Path, fileAttributesStrategy: FileTransferAttributesStrategy) {
     coroutineScope {
-      val remoteDescriptor = targetRoot.asEelPath().descriptor
+      val targetRootEel = targetRoot.asEelPath()
+      val remoteDescriptor = targetRootEel.descriptor
       val remoteEelApi = remoteDescriptor.toEelApi()
       val localPathEel = sourceRoot.asEelPath()
       val localOsFamily = localPathEel.descriptor.osFamily
       val remoteOsFamily = targetRoot.getEelDescriptor().osFamily
 
       withContext(Dispatchers.IO) {
-        directoryOnlySync(sourceRoot, targetRoot, remoteDescriptor.toEelApi(), false)
+        directoryOnlySync(localPathEel, targetRootEel, localPathEel.descriptor.toEelApi(), remoteDescriptor.toEelApi(), false, this)
       }
 
       val walkDirectoryOptionsSource = WalkDirectoryOptionsBuilder(localPathEel)
-        .traversalOrder(EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder.DFS)
-        .entryOrder(EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder.ALPHABETICAL)
+        .traversalOrder(WalkDirectoryTraversalOrder.DFS)
+        .entryOrder(WalkDirectoryEntryOrder.ALPHABETICAL)
         .yieldOtherFileTypes(false)
         .fileContentsHash(true)
         .readMetadata(fileAttributesStrategy !is FileTransferAttributesStrategy.Skip)
-        .maxDepth(0U)
+        .maxDepth(-1)
         .build()
 
       val walkDirectoryOptionsTarget = WalkDirectoryOptionsBuilder(targetRoot.asEelPath())
-        .traversalOrder(EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder.DFS)
-        .entryOrder(EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder.ALPHABETICAL)
+        .traversalOrder(WalkDirectoryTraversalOrder.DFS)
+        .entryOrder(WalkDirectoryEntryOrder.ALPHABETICAL)
         .yieldOtherFileTypes(false)
         .fileContentsHash(true)
         .readMetadata(fileAttributesStrategy !is FileTransferAttributesStrategy.Skip)
-        .maxDepth(0U)
+        .maxDepth(-1)
         .build()
       val localHashes = async(Dispatchers.IO) { localPathEel.descriptor.toEelApi().fs.walkDirectory(walkDirectoryOptionsSource) }
       val remoteHashes = async(Dispatchers.IO) { remoteDescriptor.toEelApi().fs.walkDirectory(walkDirectoryOptionsTarget) }
