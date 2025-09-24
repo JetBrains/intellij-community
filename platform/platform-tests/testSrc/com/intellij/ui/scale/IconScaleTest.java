@@ -85,14 +85,8 @@ public class IconScaleTest extends BasePlatformTestCase {
 
   private void jreHiDpi(float scale) throws MalformedURLException {
     assumeTrue(!SystemInfoRt.isLinux);
-
     overrideJreHiDPIEnabled(true);
-    try {
-      test(1, scale);
-    }
-    finally {
-      overrideJreHiDPIEnabled(false);
-    }
+    test(1, scale);
   }
 
   @Test
