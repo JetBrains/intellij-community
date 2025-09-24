@@ -225,10 +225,10 @@ class XMixedModeCombinedDebugProcess(
 
 
   override fun isValuesCustomSorted(): Boolean {
-    if (!processes.all { it.isValuesCustomSorted })
-      error("Custom values sorting only for one debug process is not yet supported")
+    if (processes.groupBy { it.isValuesCustomSorted }.count() != 1)
+      error("Different custom values sorting of the debug processes is not supported")
 
-    return super.isValuesCustomSorted()
+    return processes.first().isValuesCustomSorted
   }
 
   override fun isLibraryFrameFilterSupported(): Boolean = processes.all { it.isLibraryFrameFilterSupported }
