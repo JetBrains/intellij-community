@@ -12,7 +12,6 @@ import com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil;
 import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
 import com.intellij.java.codeserver.core.JavaPsiSealedUtil;
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
-import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
