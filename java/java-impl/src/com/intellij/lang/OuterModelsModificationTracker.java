@@ -312,7 +312,7 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
     private static boolean isAnnotatedPackageStatement(PsiElement psiElement) {
       if (psiElement instanceof PsiPackageStatement psiPackageStatement) {
         try {
-          return psiPackageStatement.getAnnotationList().getAnnotations().length > 0;
+          return psiPackageStatement.getAnnotationList().hasAnnotations();
         }
         catch (PsiInvalidElementAccessException ignored) {
         }

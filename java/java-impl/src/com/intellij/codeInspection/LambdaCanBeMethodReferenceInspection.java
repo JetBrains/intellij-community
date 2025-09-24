@@ -577,7 +577,7 @@ public final class LambdaCanBeMethodReferenceInspection extends AbstractBaseJava
    * @return true if given variable is annotated or its type is annotated
    */
   private static boolean hasAnnotation(PsiVariable p) {
-    if (p.getAnnotations().length > 0) return true;
+    if (p.hasAnnotations()) return true;
     PsiTypeElement typeElement = p.getTypeElement();
     return typeElement != null && !typeElement.isInferredType() && PsiTypesUtil.hasTypeAnnotation(typeElement.getType());
   }

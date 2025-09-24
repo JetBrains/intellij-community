@@ -269,7 +269,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         }
         if (type instanceof PsiPrimitiveType) {
           LocalQuickFix additionalFix = null;
-          if (targetType instanceof PsiArrayType && targetType.getAnnotations().length == 0) {
+          if (targetType instanceof PsiArrayType && !targetType.hasAnnotations()) {
             additionalFix = new MoveAnnotationToArrayFix();
           }
           reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.primitive.type.annotation", LocalQuickFix.notNullElements(additionalFix));

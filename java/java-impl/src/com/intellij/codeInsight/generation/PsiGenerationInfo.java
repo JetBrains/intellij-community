@@ -56,7 +56,7 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase i
       final PsiModifierList existingModifierList = existingMember.getModifierList();
       if (modifierList != null && existingModifierList != null) {
         final PsiAnnotation[] psiAnnotations = modifierList.getAnnotations();
-        PsiElement annoAnchor = existingModifierList.getAnnotations().length > 0 ? existingModifierList.getAnnotations()[0] : existingModifierList.getFirstChild();
+        PsiElement annoAnchor = existingModifierList.hasAnnotations() ? existingModifierList.getAnnotations()[0] : existingModifierList.getFirstChild();
         for (PsiAnnotation annotation : psiAnnotations) {
           final PsiAnnotation existingAnno = existingModifierList.findAnnotation(annotation.getQualifiedName());
           if (existingAnno != null) {
