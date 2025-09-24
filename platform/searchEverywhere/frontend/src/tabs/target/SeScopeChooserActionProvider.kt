@@ -26,7 +26,7 @@ class SeScopeChooserActionProvider(val scopesInfo: SearchScopesInfo, private val
     override fun onScopeSelected(o: ScopeDescriptor) {
       scopesInfo.scopes.firstOrNull { it.name == o.displayName }?.let {
         isAutoToggleEnabled = false
-        setSelectedScope(selectedScopeId, false)
+        setSelectedScope(it.scopeId, false)
       }
     }
 
