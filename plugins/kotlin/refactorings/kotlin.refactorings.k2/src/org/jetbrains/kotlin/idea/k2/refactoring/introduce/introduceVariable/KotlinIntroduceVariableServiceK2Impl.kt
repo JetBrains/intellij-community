@@ -68,6 +68,7 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
             project = project,
             editor = editor,
             expression = expressionToExtract,
+            occurrencesToReplace = occurrencesToReplace,
             // TODO: fix occurence container (currently it is not used in K2-implementation)
             containers = KotlinIntroduceVariableHelper.Containers(container, container),
             isVar = KotlinCommonRefactoringSettings.getInstance().INTRODUCE_DECLARE_WITH_VAR,
