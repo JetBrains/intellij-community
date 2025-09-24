@@ -74,7 +74,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   @Test fun `find pre-migration config directory`() {
     val cfg201 = createConfigDir("2020.1", modern = false)
     val newConfigPath = createConfigDir("2020.1", modern = true)
-    assertThat(findConfigDirectories(newConfigPath)).containsExactly(cfg201)
+    assertThat(findConfigDirectories(newConfigPath).paths).containsExactly(cfg201)
   }
 
   @Test fun `find both historic and current config directories`() {
@@ -83,7 +83,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val cfg201 = createConfigDir("2020.1", storageTS = LocalDateTime.of(2020, 4, 1, 10, 0))
 
     val newConfigPath = createConfigDir("2020.2")
-    assertThat(findConfigDirectories(newConfigPath)).containsExactly(cfg201, cfg193, cfg15)
+    assertThat(findConfigDirectories(newConfigPath).paths).containsExactly(cfg201, cfg193, cfg15)
   }
 
   @Test fun `find recent config directory`() {
@@ -93,10 +93,10 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val cfg221 = createConfigDir("2022.1", storageTS = now.minusSeconds(1))
 
     val newConfigPath = createConfigDir("2022.3")
-    assertThat(findConfigDirectories(newConfigPath)).containsExactly(cfg221, cfg211, cfg201)
+    assertThat(findConfigDirectories(newConfigPath).paths).containsExactly(cfg221, cfg211, cfg201)
 
     writeStorageFile(cfg211, now)
-    assertThat(findConfigDirectories(newConfigPath)).containsExactly(cfg211, cfg221, cfg201)
+    assertThat(findConfigDirectories(newConfigPath).paths).containsExactly(cfg211, cfg221, cfg201)
   }
 
   @Test fun `sort if no anchor files`() {
@@ -105,7 +105,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val cfg221 = createConfigDir("2022.1")
 
     val newConfigPath = createConfigDir("2022.3")
-    assertThat(findConfigDirectories(newConfigPath)).containsExactly(cfg221, cfg211, cfg201)
+    assertThat(findConfigDirectories(newConfigPath).paths).containsExactly(cfg221, cfg211, cfg201)
   }
 
   @Test fun `sort some real historic config dirs`() {
@@ -122,7 +122,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val cfg173 = createConfigDir("2017.3", product = "DataGrip", storageTS = LocalDateTime.of(2019, 2, 2, 8, 52))
 
     val newConfigPath = createConfigDir("2020.1", product = "DataGrip")
-    assertThat(findConfigDirectories(newConfigPath)).containsExactly(
+    assertThat(findConfigDirectories(newConfigPath).paths).containsExactly(
       cfg173, cfg191, cfg182, cfg183, cfg181, cfg163, cfg172, cfg171, cfg161, cfg162, cfg10)
   }
 
@@ -469,7 +469,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     }
 
     val current = createConfigDir("2021.2")
-    val result = ConfigImportHelper.findConfigDirectories(current, null, emptyList())
+    val result = findConfigDirectories(current)
     assertThat(result.paths).containsExactlyInAnyOrder(cfg191, cfg192, cfg193, cfg201, cfg202, cfg203)
 
     val related = result.paths.map { result.findRelatedDirectories(it, false) }
@@ -485,34 +485,33 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val defaultProjectPath = "${SystemProperties.getUserHome()}/PhpstormProjects"
     Files.createDirectories(memoryFs.fs.getPath(defaultProjectPath))
     val current = createConfigDir("2021.2", product = "PhpStorm")
-    val result = ConfigImportHelper.findConfigDirectories(current, null, emptyList())
-    assertThat(result.paths).isEmpty()
+    assertThat(findConfigDirectories(current).paths).isEmpty()
   }
 
   @Test fun `suffix-less directories are excluded`() {
     createConfigDir(product = "Rider", version = "", modern = true)
     val current = createConfigDir(product = "Rider", version = "2022.1")
-    assertThat(findConfigDirectories(current)).isEmpty()
+    assertThat(findConfigDirectories(current).paths).isEmpty()
   }
 
   @Test fun `suffix-less directories are excluded case-insensitively`() {
     createConfigDir(product = "RIDER", version = "", modern = true)
     val current = createConfigDir(product = "Rider", version = "2022.1")
-    assertThat(findConfigDirectories(current)).isEmpty()
+    assertThat(findConfigDirectories(current).paths).isEmpty()
   }
 
   @Test fun `non-versioned directories are excluded_Rider`() {
     createConfigDir(product = "RiderFlow", version = "", modern = true)
     createConfigDir(product = "RiderRemoteDebugger", version = "", modern = true)
     val current = createConfigDir(product = "Rider", version = "2023.2")
-    assertThat(findConfigDirectories(current)).isEmpty()
+    assertThat(findConfigDirectories(current).paths).isEmpty()
   }
 
   @Test fun `non-versioned directories are excluded_CLion`() {
     createConfigDir(product = ".clion-vcpkg", version = "", modern = false) // was created at the user dir by older versions
     createConfigDir(product = "CLionNova", version = "2023.2", modern = true) // "CLion" + RADLER_SUFFIX = "CLionNova"
     val current = createConfigDir(product = "CLion", version = "2023.2")
-    assertThat(findConfigDirectories(current)).isEmpty()
+    assertThat(findConfigDirectories(current).paths).isEmpty()
   }
 
   @Test fun `merging VM options`() {

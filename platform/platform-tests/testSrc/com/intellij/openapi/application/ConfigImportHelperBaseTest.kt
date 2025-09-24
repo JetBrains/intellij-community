@@ -40,8 +40,8 @@ abstract class ConfigImportHelperBaseTest : BareTestFixtureTestCase() {
     Files.setLastModifiedTime(file, FileTime.from(lastModified.toInstant(ZoneOffset.UTC)))
   }
 
-  protected fun findConfigDirectories(newConfigPath: Path): List<Path> =
-    ConfigImportHelper.findConfigDirectories(newConfigPath, null, emptyList()).paths
+  protected fun findConfigDirectories(newConfigPath: Path): ConfigImportHelper.ConfigDirsSearchResult =
+    ConfigImportHelper.findConfigDirectories(newConfigPath, ConfigImportHelper.findCustomConfigImportSettings(), /*args =*/ emptyList())
 
   // disables broken plugins fetcher from the Marketplace by default
   class ConfigImportMarketplaceStub : ExternalResource() {

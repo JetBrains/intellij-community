@@ -94,7 +94,7 @@ public final class OldDirectoryCleaner {
 
   @RequiresBackgroundThread
   public void seekAndDestroy(@Nullable Project project, @Nullable ProgressIndicator indicator) {
-    var result = ConfigImportHelper.findConfigDirectories(PathManager.getConfigDir());
+    var result = ConfigImportHelper.findConfigDirectories(PathManager.getConfigDir(), null, List.of());
     var groups = collectDirectoryData(result, indicator);
     if (myLogger.isDebugEnabled()) {
       myLogger.debug("configs: " + result.getPaths());

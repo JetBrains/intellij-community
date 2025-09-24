@@ -16,9 +16,9 @@ import java.util.Set;
 public interface ConfigImportSettings {
   /**
    * Called after configuration import is finished, even when there was nothing to import from.
-   * In the latter case, {@link ConfigImportHelper#isConfigImported()} returns {@code false}.
+   * In the latter case, {@code oldConfigDir} is {@code null} and {@link ConfigImportHelper#isConfigImported()} returns {@code false}.
    */
-  default void importFinished(@NotNull Path newConfigPath, @NotNull List<String> otherProductPrefixes) { }
+  default void importFinished(@NotNull Path newConfigDir, @Nullable Path oldConfigDir) { }
 
   /**
    * If there are no configs for previous versions of this product,

@@ -169,8 +169,7 @@ public final class ConfigImportHelper {
       return;
     }
 
-    var otherProductPrefixes = settings != null ? settings.getProductsToImportFrom(args) : List.<String>of();
-    var guessedOldConfigDirs = findConfigDirectories(newConfigDir, settings, otherProductPrefixes);
+    var guessedOldConfigDirs = findConfigDirectories(newConfigDir, settings, args);
     var tempBackup = (Path)null;
     var vmOptionFileChanged = false;
     var vmOptionsLines = (List<String>)null;
@@ -302,7 +301,8 @@ public final class ConfigImportHelper {
       }
 
       if (settings != null) {
-        settings.importFinished(newConfigDir, otherProductPrefixes);
+        var oldConfigDir = oldConfigDirAndOldIdePath != null ? oldConfigDirAndOldIdePath.first : null;
+        settings.importFinished(newConfigDir, oldConfigDir);
       }
 
       ImportOldConfigsUsagesCollector.INSTANCE.reportImportScenario(importScenarioStatistics);
@@ -578,10 +578,6 @@ public final class ConfigImportHelper {
     }
   }
 
-  static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir) {
-    return findConfigDirectories(newConfigDir, null, List.of());
-  }
-
   public static @Nullable FileTime getConfigLastModifiedTime(@NotNull Path configDir) {
     var max = (FileTime)null;
     for (var name : OPTIONS) {
@@ -596,12 +592,13 @@ public final class ConfigImportHelper {
     return max;
   }
 
-  @VisibleForTesting
   public static @NotNull ConfigDirsSearchResult findConfigDirectories(
     @NotNull Path newConfigDir,
     @Nullable ConfigImportSettings settings,
-    @NotNull List<String> otherProductPrefixes
+    @NotNull List<String> args
   ) {
+    var otherProductPrefixes = settings != null ? settings.getProductsToImportFrom(args) : List.<String>of();
+
     var homes = new HashSet<Path>();  // looking for existing config directories ...
     homes.add(newConfigDir.getParent());  // ... in the vicinity of the new config directory
     homes.add(newConfigDir.getFileSystem().getPath(PathManager.getDefaultConfigPathFor("X")).getParent());  // ... in the default location
