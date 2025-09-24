@@ -103,6 +103,7 @@ private fun readRootAttributes(reader: XMLStreamReader2, builder: PluginDescript
       PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR -> builder.isRestartRequired = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_DEPENDENT_ON_CORE_ATTR -> builder.isIndependentFromCoreClassLoader = !reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_IS_SEPARATE_JAR_ATTR -> builder.isSeparateJar = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.CONTENT_MODULE_VISIBILITY_ATTR -> builder.visibility = readModuleVisibility(reader.getAttributeValue(i), reader)
       PluginXmlConst.PLUGIN_VERSION_ATTR -> {
         // internalVersionString - why it is not used, but just checked?
         getNullifiedAttributeValue(reader, i)?.let {
@@ -114,6 +115,18 @@ private fun readRootAttributes(reader: XMLStreamReader2, builder: PluginDescript
           }
         }
       }
+    }
+  }
+}
+
+private fun readModuleVisibility(value: String, reader: XMLStreamReader2): ModuleVisibility {
+  return when (value) {
+    PluginXmlConst.CONTENT_MODULE_VISIBILITY_PRIVATE_VALUE -> ModuleVisibility.PRIVATE
+    PluginXmlConst.CONTENT_MODULE_VISIBILITY_INTERNAL_VALUE -> ModuleVisibility.INTERNAL
+    PluginXmlConst.CONTENT_MODULE_VISIBILITY_PUBLIC_VALUE -> ModuleVisibility.PUBLIC
+    else -> {
+      LOG.error("Unexpected value '$value' of '${PluginXmlConst.CONTENT_MODULE_VISIBILITY_ATTR}' attribute at ${reader.location}")
+      ModuleVisibility.PRIVATE
     }
   }
 }
@@ -637,6 +650,19 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Scoped
 }
 
 private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuilder, readContext: PluginDescriptorReaderContext) {
+  for (i in 0 until reader.attributeCount) {
+    if (reader.getAttributeLocalName(i) == PluginXmlConst.CONTENT_MODULE_NAMESPACE_ATTR) {
+      val namespace = readContext.interner.name(reader.getAttributeValue(i))
+      if (builder.namespace == null) {
+        builder.namespace = namespace
+      }
+      else if (builder.namespace != namespace) {
+        LOG.error("Some 'content' tag already set namespace ('${builder.namespace}'), but a different namespace '$namespace' is specified at ${reader.location}; " +
+                  "it will be ignored because multiple namespace in a single plugin aren't allowed")
+      }
+    }
+  }
+
   reader.consumeChildElements { elementName ->
     if (elementName != PluginXmlConst.CONTENT_MODULE_ELEM) {
       reader.skipElement()

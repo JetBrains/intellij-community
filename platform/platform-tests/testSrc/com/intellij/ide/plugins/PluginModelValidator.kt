@@ -267,6 +267,7 @@ class PluginModelValidator(
     }
     
     for (pluginInfo in allMainModulesOfPlugins) {
+      checkMainModuleUnexpectedElements(pluginInfo.descriptor, pluginInfo.sourceModule, pluginInfo)
       checkContent(
         contentElements = pluginInfo.descriptor.contentModules,
         referencingModuleInfo = pluginInfo,
@@ -655,6 +656,22 @@ class PluginModelValidator(
     ContentModuleDescriptor.reportContentModuleUnexpectedElements(moduleDescriptor) {
       reportError(
         "Element '$it' has no effect in a content module descriptor",
+        sourceModule,
+        mapOf(
+          "referencedDescriptorFile" to moduleInfo.descriptorFile
+        )
+      )
+    }
+  }
+
+  private fun checkMainModuleUnexpectedElements(
+    pluginDescriptor: RawPluginDescriptor,
+    sourceModule: JpsModule,
+    moduleInfo: ModuleInfo,
+  ) {
+    PluginMainDescriptor.reportMainDescriptorUnexpectedElements(pluginDescriptor) {
+      reportError(
+        "Element '$it' has no effect in a plugin main descriptor",
         sourceModule,
         mapOf(
           "referencedDescriptorFile" to moduleInfo.descriptorFile
