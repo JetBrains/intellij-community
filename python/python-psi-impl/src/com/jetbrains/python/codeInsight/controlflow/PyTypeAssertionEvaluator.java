@@ -16,6 +16,7 @@ import com.jetbrains.python.psi.PyAssignmentExpression;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyCaseClause;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyConditionalExpression;
 import com.jetbrains.python.psi.PyConditionalStatementPart;
 import com.jetbrains.python.psi.PyElementType;
@@ -32,9 +33,11 @@ import com.jetbrains.python.psi.PySequenceExpression;
 import com.jetbrains.python.psi.PySetLiteralExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyInstantiableType;
 import com.jetbrains.python.psi.types.PyLiteralType;
@@ -76,8 +79,12 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       if (args.length == 2) {
         final PyExpression typeElement = args[1];
 
-        pushAssertion(args[0], myPositive, context ->
-          transformTypeFromAssertion(context.getType(typeElement), false, context, typeElement));
+        pushAssertion(args[0], myPositive, context -> {
+          if (myPositive || isSafeForNegativeAssertion(typeElement, context)) {
+            return transformTypeFromAssertion(context.getType(typeElement), false, context, typeElement);
+          }
+          return null;
+        });
       }
     }
     else if (node.isCalleeText(PyNames.ISSUBCLASS)) {
@@ -85,10 +92,39 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       if (args.length == 2) {
         final PyExpression typeElement = args[1];
 
-        pushAssertion(args[0], myPositive, context ->
-          transformTypeFromAssertion(context.getType(typeElement), true, context, typeElement));
+        pushAssertion(args[0], myPositive, context -> {
+          if (myPositive || isSafeForNegativeAssertion(typeElement, context)) {
+            return transformTypeFromAssertion(context.getType(typeElement), true, context, typeElement);
+          }
+          return null;
+        });
       }
     }
+  }
+
+  private static boolean isSafeForNegativeAssertion(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    expression = PyPsiUtils.flattenParens(expression);
+    if (expression instanceof PyReferenceExpression ref) {
+      // Here we check that the reference resolves to a class, not a target in assignment or function parameter. 
+      // This is done to avoid cases like Py3TypeTest.testIsInstanceNegativeNarrowing
+      final List<@Nullable PsiElement> resolvedElements = PyUtil.multiResolveTopPriority(ref, PyResolveContext.defaultContext(context));
+      return ContainerUtil.getOnlyItem(resolvedElements) instanceof PyClass;
+    }
+    if (expression instanceof PyTupleExpression tuple) {
+      for (PyExpression element : tuple.getElements()) {
+        if (!isSafeForNegativeAssertion(element, context)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    // Keep in mind that `isinstance` will only accept `A | B` expression if all operands are classinfo, so no parameterized generics
+    if (expression instanceof PyBinaryExpression binary && binary.getOperator() == PyTokenTypes.OR) {
+      final PyExpression left = binary.getLeftExpression();
+      final PyExpression right = binary.getRightExpression();
+      return isSafeForNegativeAssertion(left, context) && right != null && isSafeForNegativeAssertion(right, context);
+    }
+    return false;
   }
 
   private void visitExpressionInCondition(@NotNull PyExpression node) {

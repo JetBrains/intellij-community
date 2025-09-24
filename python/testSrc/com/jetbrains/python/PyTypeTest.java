@@ -293,7 +293,7 @@ public class PyTypeTest extends PyTestCase {
                      :rtype: int or str or list
                      '''
                  x = g()
-                 if not isinstance(x, (str, long)):
+                 if not isinstance(x, (str, int)):
                      expr = x""");
   }
 
