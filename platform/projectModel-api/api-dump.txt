@@ -746,6 +746,7 @@ c:com.intellij.openapi.roots.OrderRootType
 - p:<init>(java.lang.String):V
 - f:equals(java.lang.Object):Z
 - s:getAllPersistentTypes():com.intellij.openapi.roots.PersistentOrderRootType[]
+- s:getAllPersistentTypesList():java.util.List
 - s:getAllTypes():com.intellij.openapi.roots.OrderRootType[]
 - ps:getOrderRootType(java.lang.Class):java.lang.Object
 - s:getSortedRootTypes():java.util.List

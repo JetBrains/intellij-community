@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
@@ -17,11 +18,8 @@ import java.util.List;
  */
 public class OrderRootType {
   private final String myName;
-  private static boolean ourExtensionsLoaded;
 
   public static final ExtensionPointName<OrderRootType> EP_NAME = ExtensionPointName.create("com.intellij.orderRootType");
-
-  static PersistentOrderRootType @NotNull [] ourPersistentOrderRootTypes = new PersistentOrderRootType[0];
 
   protected OrderRootType(@NotNull String name) {
     myName = name;
@@ -45,6 +43,17 @@ public class OrderRootType {
    * </ul>
    */
   public static final OrderRootType SOURCES = new PersistentOrderRootType("SOURCES", "sourcePath", null, "sourcePathEntry");
+
+  /**
+   * Exactly two built-in persistent root types: {@link #CLASSES} and {@link #SOURCES}.
+   * <p>
+   * This list is fixed for compatibility: these fields are public static constants and
+   * cannot be turned into EP registrations without breaking third‑party binaries.
+   * Do not add more built-ins. New persistent types must be contributed via
+   * {@link #EP_NAME} and are combined with this list in {@link #getAllPersistentTypesList()}.
+   */
+  private static final @NotNull @Unmodifiable List<PersistentOrderRootType> PREDEFINED_PERSISTENT_TYPES =
+    ContainerUtil.map(List.of(CLASSES, SOURCES), PersistentOrderRootType.class::cast);
 
   /**
    * Generic documentation order root type
@@ -81,16 +90,17 @@ public class OrderRootType {
     return false;
   }
 
-  public static synchronized OrderRootType @NotNull [] getAllTypes() {
+  public static OrderRootType @NotNull [] getAllTypes() {
     return getAllPersistentTypes();
   }
 
   public static PersistentOrderRootType @NotNull [] getAllPersistentTypes() {
-    if (!ourExtensionsLoaded) {
-      ourExtensionsLoaded = true;
-      EP_NAME.getExtensionList();
-    }
-    return ourPersistentOrderRootTypes;
+    return getAllPersistentTypesList().toArray(new PersistentOrderRootType[0]);
+  }
+
+  public static @NotNull @Unmodifiable List<PersistentOrderRootType> getAllPersistentTypesList() {
+    return ContainerUtil.concat(PREDEFINED_PERSISTENT_TYPES,
+                                ContainerUtil.filterIsInstance(EP_NAME.getExtensionList(), PersistentOrderRootType.class));
   }
 
   public static @NotNull @Unmodifiable List<PersistentOrderRootType> getSortedRootTypes() {

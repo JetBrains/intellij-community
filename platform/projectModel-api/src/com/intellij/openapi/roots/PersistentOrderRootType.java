@@ -2,7 +2,6 @@
 
 package com.intellij.openapi.roots;
 
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,8 +18,6 @@ public class PersistentOrderRootType extends OrderRootType {
     mySdkRootName = sdkRootName;
     myModulePathsName = modulePathsName;
     myOldSdkRootName = oldSdkRootName;
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    ourPersistentOrderRootTypes = ArrayUtil.append(ourPersistentOrderRootTypes, this);
   }
 
   /**
