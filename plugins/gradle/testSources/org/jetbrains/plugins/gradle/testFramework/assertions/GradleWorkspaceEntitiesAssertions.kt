@@ -5,18 +5,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
-import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.ide.toPath
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId
 import org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityId
-import org.jetbrains.plugins.gradle.model.projectModel.gradleModuleEntity
 import org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEntity
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import java.nio.file.Path
 
 internal fun assertGradleBuildEntity(
@@ -48,7 +44,6 @@ internal fun assertGradleProjectEntity(
   path: String,
   linkedProjectId: String,
   identityPath: String,
-  moduleName: String?,
   projectName: String = projectUrl.fileName,
 ) {
   val projectId = GradleProjectEntityId(buildId, projectUrl)
@@ -74,35 +69,30 @@ internal fun assertGradleProjectEntity(
   assertEquals(path, projectEntity.path) {
     "GradleProjectEntity with `url` = $projectUrl should have expected `path`."
   }
-
-  if (moduleName == null) {
-    assertNull(projectEntity.gradleModuleEntity) {
-      "It's not expected for GradleProjectEntity with `url` = $projectUrl to have a GradleModuleEntity."
-    }
-  }
-  else {
-    assertNotNull(projectEntity.gradleModuleEntity) {
-      "GradleProjectEntity with `url` = $projectUrl should have GradleModuleEntity, to connect it with ModuleEntity for `$moduleName` module."
-    }
-    assertEquals(ModuleId(moduleName), projectEntity.gradleModuleEntity!!.module.symbolicId) {
-      "GradleProjectEntity with `url` = $projectUrl should be connected with `$moduleName` module via GradleModuleEntity."
-    }
-  }
 }
 
 internal fun assertGradleModuleEntities(
   project: Project,
-  vararg expectedModuleNames: String,
-  messageSupplier: (() -> String)? = null,
+  vararg moduleNameToProjectIdPairs: Pair<String, GradleProjectEntityId>,
 ) {
   val storage = project.workspaceModel.currentSnapshot
-  val entities = storage.entities(GradleModuleEntity::class.java)
-  val actualModuleNames = entities.map { it.module.name }.toList()
+  val gradleModuleEntities = storage.entities(GradleModuleEntity::class.java)
 
-  val message = messageSupplier ?: {
-    "For each module name from the expected list, there should be a GradleModuleEntity connected with ModuleEntity with the same name."
+  val expectedModuleNames = moduleNameToProjectIdPairs.map { it.first }
+  val actualModuleNames = gradleModuleEntities.toList().map { it.module.name }
+  CollectionAssertions.assertEqualsUnordered(expectedModuleNames, actualModuleNames) {
+    "The each expected module name there should exist a GradleModuleEntity, connected with the corresponding ModuleEntity."
   }
-  CollectionAssertions.assertEqualsUnordered(expectedModuleNames.toList(), actualModuleNames, message)
+
+  moduleNameToProjectIdPairs.forEach { (moduleName, projectId) ->
+    val gradleModuleEntity = gradleModuleEntities.find { it.module.name == moduleName }
+    assertNotNull(gradleModuleEntity) {
+      "GradleModuleEntity should exist for the module with name = `$moduleName`."
+    }
+    assertEquals(projectId, gradleModuleEntity!!.gradleProject.symbolicId) {
+      "GradleModuleEntity for the module with name = `$moduleName` should contain an expected symbolic ID of GradleProjectEntity."
+    }
+  }
 }
 
 internal fun assertVersionCatalogEntities(
