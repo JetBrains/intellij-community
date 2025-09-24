@@ -116,14 +116,7 @@ public class OverrideImplementExploreUtil {
     HashMap<String, List<HierarchicalMethodSignature>> nameToSignature = new HashMap<>();
     for (HierarchicalMethodSignature signature : sigs) {
       String name = signature.getMethod().getName();
-      List<HierarchicalMethodSignature> previousSignatures = nameToSignature.get(name);
-      if (previousSignatures == null) {
-        List<HierarchicalMethodSignature> list = new ArrayList<>();
-        list.add(signature);
-        nameToSignature.put(name, list);
-        signatures.add(signature);
-        continue;
-      }
+      List<HierarchicalMethodSignature> previousSignatures = nameToSignature.computeIfAbsent(name, n -> new ArrayList<>());
       boolean addToList = true;
       for (HierarchicalMethodSignature previousSignature : previousSignatures) {
         if (!MethodSignatureUtil.areSignaturesErasureEqual(signature, previousSignature)) continue;
