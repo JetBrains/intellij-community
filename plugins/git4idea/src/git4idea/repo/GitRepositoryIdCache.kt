@@ -25,6 +25,18 @@ internal class GitRepositoryIdCache(private val project: Project, cs: CoroutineS
     value ?: GitRepositoryManager.getInstance(project).repositories.find { it.rpcId == repositoryId }
   }
 
+  fun resolveAll(repositoryIds: List<RepositoryId>): List<GitRepository> {
+    val resolved = repositoryIds.mapNotNull(::get)
+
+    check(resolved.size == repositoryIds.size) {
+      val resolvedIds = resolved.mapTo(mutableSetOf()) { it.rpcId }
+      val notFound = repositoryIds.filterNot { it in resolvedIds }
+      "Failed to resolve repositories: $notFound"
+    }
+
+    return resolved
+  }
+
   companion object {
     fun getInstance(project: Project) = project.service<GitRepositoryIdCache>()
   }

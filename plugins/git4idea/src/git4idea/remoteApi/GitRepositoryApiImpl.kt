@@ -17,6 +17,7 @@ import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScoped
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
 import git4idea.branch.GitRefType
 import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryIdCache
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.channels.SendChannel
@@ -61,7 +62,7 @@ class GitRepositoryApiImpl : GitRepositoryApi {
   ): Unit = projectScoped(projectId) { project ->
     requireOwner()
 
-    val resolvedRepositories = resolveRepositories(project, repositories)
+    val resolvedRepositories = GitRepositoryIdCache.getInstance(project).resolveAll(repositories)
 
     val refType = GitRefType.of(reference)
     val branchManager = project.service<GitBranchManager>()
@@ -167,20 +168,5 @@ class GitRepositoryApiImpl : GitRepositoryApi {
     val LOG = Logger.getInstance(GitRepositoryApiImpl::class.java)
 
     private fun getAllRepositories(project: Project): List<GitRepository> = GitRepositoryManager.getInstance(project).repositories
-
-    private fun resolveRepositories(project: Project, repositoryIds: List<RepositoryId>): List<GitRepository> {
-      val repositories = GitRepositoryManager.getInstance(project).repositories.associateBy { it.rpcId }
-
-      val notFound = mutableListOf<RepositoryId>()
-      val resolved = repositoryIds.mapNotNull {
-        val resolved = repositories[it]
-        if (resolved == null) notFound.add(it)
-        resolved
-      }
-
-      assert(notFound.isEmpty()) { "Not found repositories: $notFound" }
-
-      return resolved
-    }
   }
 }

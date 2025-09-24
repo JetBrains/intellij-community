@@ -24,6 +24,9 @@ internal class GitApiProvider : RemoteApiProvider {
     remoteApi(remoteApiDescriptor<GitUiSettingsApi>()) {
       GitUiSettingsApiImpl()
     }
+    remoteApi(remoteApiDescriptor<GitOperationsApi>()) {
+      GitOperationsApiImpl()
+    }
   }
 }
 

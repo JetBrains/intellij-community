@@ -30,6 +30,12 @@
       <action id="git.branches.popup.resize" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupResizeAction"/>
     </group>
 
+    <group id="Git.Branch">
+      <group id="Git.Branch.Checkout">
+        <action id="Git.Checkout.Update" class="com.intellij.vcs.git.actions.branch.GitCheckoutWithUpdateAction"/>
+      </group>
+      <group id="Git.Branch.Placeholder"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
