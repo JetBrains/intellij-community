@@ -90,6 +90,8 @@ fun buildDevImpl(): BuildDevInfo {
           homePath = runDir.invariantSeparatorsPathString
           environment.putAll(getIdeSystemProperties(runDir).map)
         },
+        // we should use binary launcher for dev-mode
+        isBootClassPathCorrect = false,
         generateRuntimeModuleRepository = System.getProperty("intellij.build.generate.runtime.module.repository").toBoolean(),
         buildOptionsTemplate = BuildOptions(),
       )

@@ -6,6 +6,7 @@ package org.jetbrains.intellij.build.impl
 import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
@@ -50,7 +51,7 @@ import org.jetbrains.intellij.build.buildSearchableOptions
 import org.jetbrains.intellij.build.createPluginLayoutSet
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
-import org.jetbrains.intellij.build.generateClasspath
+import org.jetbrains.intellij.build.generateClassPathByLayoutReport
 import org.jetbrains.intellij.build.generatePluginClassPath
 import org.jetbrains.intellij.build.generatePluginClassPathFromPrebuiltPluginFiles
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
@@ -131,12 +132,27 @@ internal suspend fun buildDistribution(
     val moduleOutputPatcher = ModuleOutputPatcher()
     val buildPlatformJob: Deferred<List<DistributionFileEntry>> = async(traceContext + CoroutineName("build platform lib")) {
       spanBuilder("build platform lib").use {
-        val result = buildLib(moduleOutputPatcher = moduleOutputPatcher, platform = state.platform, searchableOptionSetDescriptor = searchableOptionSet, context = context)
+        val distributionFileEntries = buildLib(
+          moduleOutputPatcher = moduleOutputPatcher,
+          platform = state.platform,
+          searchableOptionSetDescriptor = searchableOptionSet,
+          context = context,
+        )
         if (!isUpdateFromSources && context.productProperties.scrambleMainJar) {
           scramble(state.platform, context)
         }
-        context.bootClassPathJarNames = if (context.useModularLoader) listOf(PLATFORM_LOADER_JAR) else generateClasspath(context)
-        result
+        context.bootClassPathJarNames = if (context.useModularLoader) {
+          listOf(PLATFORM_LOADER_JAR)
+        }
+        else {
+          val libDir = context.paths.distAllDir.resolve("lib")
+          generateClassPathByLayoutReport(
+            libDir = libDir,
+            entries = distributionFileEntries,
+            skipNioFs = isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix)
+          ).map { libDir.relativize(it).toString() }
+        }
+        distributionFileEntries
       }
     }
 

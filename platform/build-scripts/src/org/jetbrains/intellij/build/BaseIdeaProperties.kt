@@ -89,6 +89,16 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "plugins/repository-search/lib/maven-model.jar" to "1.8"
 )
 
+internal val TEST_FRAMEWORK_MODULE_NAMES = linkedSetOf(
+  "intellij.platform.testFramework.common",
+  "intellij.platform.testFramework.junit5",
+  "intellij.platform.testFramework",
+  "intellij.platform.testFramework.core",
+  "intellij.platform.testFramework.impl",
+  "intellij.platform.testFramework.teamCity",
+  "intellij.tools.testsBootstrap",
+)
+
 /**
  * Describes modules to be added to 'testFramework.jar' in the IDE distribution. This JAR was used to compile and run tests in external plugins.
  * Since [#477](https://github.com/JetBrains/intellij-platform-gradle-plugin/issues/477) is implemented, it's possible to take test framework JARs from Maven repository,
@@ -98,15 +108,7 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
  */
 @ApiStatus.Obsolete
 val TEST_FRAMEWORK_LAYOUT_CUSTOMIZER: (PlatformLayout, BuildContext) -> Unit = { layout, _ ->
-  for (name in listOf(
-    "intellij.platform.testFramework.common",
-    "intellij.platform.testFramework.junit5",
-    "intellij.platform.testFramework",
-    "intellij.platform.testFramework.core",
-    "intellij.platform.testFramework.impl",
-    "intellij.platform.testFramework.teamCity",
-    "intellij.tools.testsBootstrap",
-  )) {
+  for (name in TEST_FRAMEWORK_MODULE_NAMES) {
     layout.withModule(name, TEST_FRAMEWORK_JAR)
   }
   layout.withoutProjectLibrary("JUnit4")
