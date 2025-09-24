@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "sdk_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "sdk",
   module_name = "intellij.python.sdk",
@@ -87,7 +93,8 @@ jvm_library(
     "//platform/eel-impl",
     "//platform/eel-provider",
     "//python/impl.helperLocator:community-helpersLocator",
-  ]
+  ],
+  runtime_deps = [":sdk_test_resources"]
 )
 ### auto-generated section `build intellij.python.sdk` end
 
