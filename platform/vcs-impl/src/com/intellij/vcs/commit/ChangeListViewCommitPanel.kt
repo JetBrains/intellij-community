@@ -123,7 +123,7 @@ abstract class ChangeListViewCommitPanel @ApiStatus.Internal constructor(
   }
 }
 
-private class ChangeListViewCommitProgressPanel(
+internal class ChangeListViewCommitProgressPanel(
   project: Project,
   private val commitWorkflowUi: ChangesViewCommitWorkflowUi,
   commitMessage: EditorTextComponent,

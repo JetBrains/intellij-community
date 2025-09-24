@@ -3955,11 +3955,27 @@ a:com.intellij.vcs.commit.ChangeListViewCommitPanel
 - f:setEditedCommit(com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation):V
 - f:setInclusionModel(com.intellij.openapi.vcs.changes.InclusionModel):V
 f:com.intellij.vcs.commit.ChangesViewCommitPanel
-- com.intellij.vcs.commit.ChangeListViewCommitPanel
+- com.intellij.vcs.commit.NonModalCommitPanel
+- com.intellij.vcs.commit.ChangesViewCommitWorkflowUi
 - activate():Z
 - deactivate(Z):V
+- dispose():V
+- endExecution():V
+- expand(java.lang.Object):V
+- getCommitProgressUi():com.intellij.vcs.commit.CommitProgressUi
+- getDisplayedChanges():java.util.List
+- getDisplayedUnversionedFiles():java.util.List
+- getEditedCommit():com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
+- getIncludedChanges():java.util.List
+- getIncludedUnversionedFiles():java.util.List
+- getInclusionModel():com.intellij.openapi.vcs.changes.InclusionModel
 - isActive():Z
 - refreshChangesViewBeforeCommit(kotlin.coroutines.Continuation):java.lang.Object
+- select(java.lang.Object):V
+- selectFirst(java.util.Collection):V
+- setCompletionContext(java.util.List):V
+- setEditedCommit(com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation):V
+- setInclusionModel(com.intellij.openapi.vcs.changes.InclusionModel):V
 com.intellij.vcs.commit.ChangesViewCommitWorkflowUi
 - com.intellij.vcs.commit.NonModalCommitWorkflowUi
 - a:deactivate(Z):V
