@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
@@ -79,14 +80,11 @@ internal class GeneralSvnConfigurable(private val project: Project) : BoundSearc
       }
 
       row {
-        label("")
-      }.resizableRow()
-
-      row {
         button(SvnBundle.message("button.text.clear.authentication.cache")) {
           SvnAuthenticationNotifier.clearAuthenticationCache(project, result, configurationDirectoryText.getText())
         }.commentRight(SvnBundle.message("label.text.delete.stored.credentials"))
-      }
+          .align(AlignY.BOTTOM)
+      }.resizableRow()
     }
 
     configurationDirectoryText.addActionListener { _ ->
