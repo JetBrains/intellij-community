@@ -4,7 +4,6 @@ package com.intellij.ui.scale;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.ui.DeferredIconImpl;
@@ -38,7 +37,6 @@ import static com.intellij.ui.scale.ScaleType.*;
 import static com.intellij.ui.scale.TestScaleHelper.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Tests that {@link com.intellij.openapi.util.ScalableIcon#scale(float)} works correctly for custom JB icons.
@@ -84,7 +82,6 @@ public class IconScaleTest extends BasePlatformTestCase {
   }
 
   private void jreHiDpi(float scale) throws MalformedURLException {
-    assumeTrue(!SystemInfoRt.isLinux);
     overrideJreHiDPIEnabled(true);
     test(1, scale);
   }
