@@ -293,7 +293,7 @@ internal class DocumentationUI(
     imageResolver = content.imageResolver
     val linkChunk = linkChunk(presentation.presentableText, pageContent.links)
     val decoratedData = extractAdditionalData(content.html)
-    val decorated = decorate(decoratedData?.html ?: content.html, null, linkChunk, pageContent.downloadSourcesLink)
+    val decorated = decorate(decoratedData?.html ?: content.html, null, linkChunk)
     if (!updateContent(decorated, presentation, ContentKind.DocumentationPage, decoratedData?.decoratedStyle)) {
       return
     }

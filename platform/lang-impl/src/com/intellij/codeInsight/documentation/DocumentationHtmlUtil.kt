@@ -119,7 +119,7 @@ object DocumentationHtmlUtil {
           padding: 0 ${contentInnerPadding}px 0px ${contentInnerPadding}px;
           max-width: 100%;
         }
-        .$CLASS_BOTTOM, .$CLASS_DOWNLOAD_DOCUMENTATION, .$CLASS_TOP { 
+        .$CLASS_BOTTOM, .$CLASS_TOP { 
           padding: ${beforeSpacing}px ${contentInnerPadding}px ${afterSpacing}px ${contentInnerPadding}px;
         }
         .$CLASS_SECTIONS { padding: 0 ${contentInnerPadding - 2}px 0 ${contentInnerPadding - 2}px 0; border-spacing: 0; }

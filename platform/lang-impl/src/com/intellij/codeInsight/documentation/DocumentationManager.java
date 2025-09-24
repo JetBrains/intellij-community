@@ -83,7 +83,6 @@ import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 import org.jsoup.nodes.Element;
-import org.jsoup.nodes.TextNode;
 
 import javax.swing.*;
 import java.awt.*;
@@ -1821,7 +1820,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     @Nullable DocumentationProvider provider
   ) {
     HtmlChunk locationInfo = getDefaultLocationInfo(element);
-    return decorate(text, locationInfo, getExternalText(element, externalUrl, provider), null);
+    return decorate(text, locationInfo, getExternalText(element, externalUrl, provider));
   }
 
   @RequiresReadLock
@@ -1861,8 +1860,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @Internal
   @Contract(pure = true)
-  public static @Nls String decorate(@Nls @NotNull String text, @Nullable HtmlChunk location, @Nullable HtmlChunk links,
-                                     @Nullable String downloadDocumentationActionLink) {
+  public static @Nls String decorate(@Nls @NotNull String text, @Nullable HtmlChunk location, @Nullable HtmlChunk links) {
     text = StringUtil.replaceIgnoreCase(text, "</html>", "");
     text = StringUtil.replaceIgnoreCase(text, "</body>", "");
 
@@ -1883,18 +1881,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     DocumentationHtmlUtil.removeEmptySections$intellij_platform_lang_impl(document);
-
-    if (downloadDocumentationActionLink != null) {
-      document.body().appendChild(
-        new Element("div")
-          .addClass(CLASS_DOWNLOAD_DOCUMENTATION)
-          .appendChildren(Arrays.asList(
-            new Element("icon").attr("src", "AllIcons.Plugins.Downloads"),
-            new TextNode(" "),
-            new Element("a").attr("href", downloadDocumentationActionLink)
-              .text(CodeInsightBundle.message("documentation.download.button.label"))
-          )));
-    }
     if (location != null) {
       document.body().append(getBottom().child(location).toString());
     }
@@ -1914,7 +1900,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                 && (
                   nextSibling.hasClass(CLASS_SECTIONS)
                   || nextSibling.hasClass(CLASS_BOTTOM)
-                  || nextSibling.hasClass(CLASS_DOWNLOAD_DOCUMENTATION)
                 ))) {
           div.after(new Element("hr"));
         }
