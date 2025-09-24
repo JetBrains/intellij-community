@@ -37,7 +37,7 @@ public class BazelIncBuilder {
 
     DiagnosticSink diagnostic = context;
     NodeSourceSnapshotDelta srcSnapshotDelta = null;
-    NodeSourceSnapshotDelta resourcesDelta = null;
+    ResourcesSnapshotDelta resourcesDelta = null;
     Iterable<NodeSource> modifiedLibraries = List.of();
     Iterable<NodeSource> deletedLibraries = List.of();
 
@@ -55,10 +55,10 @@ public class BazelIncBuilder {
         }
         else {
           ConfigurationState pastState = ConfigurationState.loadSavedState(context);
-          ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), SourceSnapshotImpl.composite(context.getResources()), context.getBinaryDependencies(), context.getFlags());
+          ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), context.getResources(), context.getBinaryDependencies(), context.getFlags());
 
           srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), presentState.getSources());
-          resourcesDelta = new SnapshotDeltaImpl(pastState.getResources(), presentState.getResources());
+          resourcesDelta = new ResourcesSnapshotDelta(pastState.getResources(), presentState.getResources());
 
           if (shouldRecompileAll(srcSnapshotDelta) || pastState.getFlagsDigest() != presentState.getFlagsDigest() || pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
             int changedPercent = srcSnapshotDelta.getChangedPercent();
@@ -176,15 +176,13 @@ public class BazelIncBuilder {
             if (resourcesDelta == null) {
               // copy everything
               for (ResourceGroup group : context.getResources()) {
-                copyResources(context, group, out);
+                copyResources(group, context.getPathMapper(), out);
               }
             }
             else {
               // only copy modified and remove deleted
-              for (NodeSource deleted : resourcesDelta.getDeleted()) {
-                out.deleteEntry(deleted.toString());
-              }
-              copyResources(resourcesDelta.getModified(), context, out);
+              deleteResources(resourcesDelta.getPastResources(), flat(resourcesDelta.getDeleted(), resourcesDelta.getChanged()), out);
+              copyResources(resourcesDelta.getPresentResources(), resourcesDelta.getModified(), context.getPathMapper(), out);
             }
 
             // processing deleted sources makes sense on inintial round only
@@ -276,42 +274,63 @@ public class BazelIncBuilder {
     }
     finally {
       NodeSourceSnapshot sourcesState = srcSnapshotDelta != null? srcSnapshotDelta.asSnapshot() : null;
-      NodeSourceSnapshot resourcesState = resourcesDelta != null? resourcesDelta.asSnapshot() : SourceSnapshotImpl.composite(context.getResources());
       saveBuildState(
-        context, sourcesState, resourcesState, modifiedLibraries, deletedLibraries
+        context, sourcesState, context.getResources(), modifiedLibraries, deletedLibraries
       );
     }
   }
 
-  private static void copyResources(Iterable<NodeSource> resources, BuildContext context, ZipOutputBuilder out) throws IOException {
-    Iterable<ResourceGroup> groups = context.getResources();
-    if (count(groups) == 1) {
+  private static void deleteResources(Iterable<ResourceGroup> resGroups, Iterable<NodeSource> resources, ZipOutputBuilder out) {
+    if (count(resGroups) == 1) {
       // optimization
-      ResourceGroup group = groups.iterator().next();
+      ResourceGroup resourceGroup = resGroups.iterator().next();
       for (NodeSource res : resources) {
-        copyResource(context, group, res, out);
+        deleteResource(resourceGroup, res, out);
       }
     }
     else {
       for (NodeSource res : resources) {
-        for (ResourceGroup group : filter(groups, gr -> contains(gr.getElements(), res))) {
-          copyResource(context, group, res, out);
+        for (ResourceGroup resourceGroup : filter(resGroups, gr -> contains(gr.getElements(), res))) {
+          deleteResource(resourceGroup, res, out);
         }
       }
     }
   }
 
-  private static void copyResources(BuildContext context, ResourceGroup resourceGroup, ZipOutputBuilder out) throws IOException {
-    for (NodeSource res : resourceGroup.getElements()) {
-      copyResource(context, resourceGroup, res, out);
+  private static void deleteResource(ResourceGroup resourceGroup, NodeSource res, ZipOutputBuilder out) {
+    String destPath = getResourceDestinationPath(resourceGroup, res);
+    if (destPath != null) {
+      out.deleteEntry(destPath);
     }
   }
 
-  private static void copyResource(BuildContext context, ResourceGroup resourceGroup, NodeSource res, ZipOutputBuilder out)
-    throws IOException {
+  private static void copyResources(Iterable<ResourceGroup> resGroups, Iterable<NodeSource> resources, NodeSourcePathMapper pathMapper, ZipOutputBuilder out) throws IOException {
+    if (count(resGroups) == 1) {
+      // optimization
+      ResourceGroup resourceGroup = resGroups.iterator().next();
+      for (NodeSource res : resources) {
+        copyResource(resourceGroup, res, pathMapper, out);
+      }
+    }
+    else {
+      for (NodeSource res : resources) {
+        for (ResourceGroup resourceGroup : filter(resGroups, gr -> contains(gr.getElements(), res))) {
+          copyResource(resourceGroup, res, pathMapper, out);
+        }
+      }
+    }
+  }
+
+  private static void copyResources(ResourceGroup resourceGroup, NodeSourcePathMapper pathMapper, ZipOutputBuilder out) throws IOException {
+    for (NodeSource res : resourceGroup.getElements()) {
+      copyResource(resourceGroup, res, pathMapper, out);
+    }
+  }
+
+  private static void copyResource(ResourceGroup resourceGroup, NodeSource res, NodeSourcePathMapper pathMapper, ZipOutputBuilder out) throws IOException {
     String destPath = getResourceDestinationPath(resourceGroup, res);
     if (destPath != null) {
-      Path from = context.getPathMapper().toPath(res);
+      Path from = pathMapper.toPath(res);
       try (InputStream in = Files.newInputStream(from)) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         in.transferTo(bytes);
@@ -344,11 +363,11 @@ public class BazelIncBuilder {
 
   public void saveBuildState(
     BuildContext context,
-    NodeSourceSnapshot sourcesState, NodeSourceSnapshot resourcesState,
+    NodeSourceSnapshot sourcesState, Iterable<ResourceGroup> resourcesState,
     Iterable<NodeSource> modifiedLibraries, Iterable<NodeSource> deletedLibraries
   ) {
 
-    if (sourcesState != null && resourcesState != null) {
+    if (sourcesState != null) {
       if (context.hasErrors()) {
         ConfigurationState pastState = ConfigurationState.loadSavedState(context);
         new ConfigurationState(context.getPathMapper(), sourcesState, resourcesState, pastState.getLibraries(), context.getFlags()).save(context);

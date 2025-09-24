@@ -7,10 +7,7 @@ import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.NodeSourcePathMapper;
-import org.jetbrains.jps.dependency.impl.GraphDataInputImpl;
-import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl;
-import org.jetbrains.jps.dependency.impl.PathSource;
-import org.jetbrains.jps.dependency.impl.PathSourceMapper;
+import org.jetbrains.jps.dependency.impl.*;
 import org.jetbrains.jps.util.Iterators;
 
 import java.io.DataInputStream;
@@ -33,7 +30,7 @@ public class ConfigurationState {
   private static final int VERSION = 2;
 
   private static final ConfigurationState EMPTY = new ConfigurationState(
-    new PathSourceMapper(), NodeSourceSnapshot.EMPTY, ResourceGroup.EMPTY, NodeSourceSnapshot.EMPTY, Map.of()
+    new PathSourceMapper(), NodeSourceSnapshot.EMPTY, List.of(), NodeSourceSnapshot.EMPTY, Map.of()
   );
 
   private static final Set<CLFlags> ourIgnoredFlags = EnumSet.of(
@@ -51,16 +48,16 @@ public class ConfigurationState {
   
   private final NodeSourcePathMapper myPathMapper;
   private final NodeSourceSnapshot mySourcesSnapshot;
-  private final NodeSourceSnapshot myResourcesSnapshot;
+  private final Iterable<ResourceGroup> myResources;
   private final NodeSourceSnapshot myLibsSnapshot;
   private final long myFlagsDigest;
 
   public ConfigurationState(
-    NodeSourcePathMapper pathMapper, NodeSourceSnapshot sourcesSnapshot, NodeSourceSnapshot resourcesSnapshot, NodeSourceSnapshot libsSnapshot, Map<CLFlags, List<String>> flags
+    NodeSourcePathMapper pathMapper, NodeSourceSnapshot sourcesSnapshot, Iterable<ResourceGroup> resourceGroups, NodeSourceSnapshot libsSnapshot, Map<CLFlags, List<String>> flags
   ) {
     myPathMapper = pathMapper;
     mySourcesSnapshot = sourcesSnapshot;
-    myResourcesSnapshot = resourcesSnapshot;
+    myResources = resourceGroups;
     myLibsSnapshot = libsSnapshot;
     myFlagsDigest = buildFlagsDigest(flags);
   }
@@ -72,13 +69,13 @@ public class ConfigurationState {
       int version = in.readInt();
       if (version == VERSION) {
         mySourcesSnapshot = new SourceSnapshotImpl(in, PathSource::new);
-        myResourcesSnapshot = new SourceSnapshotImpl(in, PathSource::new);
+        myResources = RW.readCollection(in, () -> new ResourceGroupImpl(in, PathSource::new));
         myLibsSnapshot = new SourceSnapshotImpl(in, PathSource::new);
         myFlagsDigest = in.readLong();
       }
       else { // version differs
         mySourcesSnapshot = NodeSourceSnapshot.EMPTY;
-        myResourcesSnapshot = NodeSourceSnapshot.EMPTY;
+        myResources = List.of();
         myLibsSnapshot = NodeSourceSnapshot.EMPTY;
         myFlagsDigest = buildFlagsDigest(Map.of());
       }
@@ -91,7 +88,7 @@ public class ConfigurationState {
       GraphDataOutput out = GraphDataOutputImpl.wrap(stream);
       out.writeInt(VERSION);
       getSources().write(out);
-      getResources().write(out);
+      RW.writeCollection(out, myResources, gr -> gr.write(out));
       getLibraries().write(out);
       out.writeLong(myFlagsDigest);
     }
@@ -117,8 +114,8 @@ public class ConfigurationState {
     return mySourcesSnapshot;
   }
 
-  public NodeSourceSnapshot getResources() {
-    return myResourcesSnapshot;
+  public Iterable<ResourceGroup> getResources() {
+    return myResources;
   }
 
   public NodeSourceSnapshot getLibraries() {

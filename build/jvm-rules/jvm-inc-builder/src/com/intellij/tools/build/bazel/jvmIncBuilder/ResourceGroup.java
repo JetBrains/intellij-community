@@ -1,9 +1,7 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.NodeSource;
-import org.jetbrains.jps.dependency.impl.PathSourceMapper;
 
 import java.util.Set;
 

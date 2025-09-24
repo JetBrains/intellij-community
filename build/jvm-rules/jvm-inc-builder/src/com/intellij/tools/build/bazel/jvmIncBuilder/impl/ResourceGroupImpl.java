@@ -8,6 +8,7 @@ import org.jetbrains.jps.dependency.NodeSource;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public class ResourceGroupImpl extends SourceSnapshotImpl implements ResourceGroup {
@@ -18,6 +19,11 @@ public class ResourceGroupImpl extends SourceSnapshotImpl implements ResourceGro
     super(digestSources);
     myStripPrefix = normalizePrefix(stripPrefix);
     myAddPrefix = normalizePrefix(addPrefix);
+    
+    String prefixDigest = Long.toHexString(Utils.digest(List.of(myStripPrefix, myAddPrefix)));
+    for (Map.Entry<NodeSource, String> entry : digestSources.entrySet()) {
+      entry.setValue(prefixDigest + ":" + entry.getValue());
+    }
   }
 
   private static String normalizePrefix(String prefix) {
