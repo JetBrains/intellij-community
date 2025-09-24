@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -104,8 +103,7 @@ public class OrderRootType {
   }
 
   public static @NotNull @Unmodifiable List<PersistentOrderRootType> getSortedRootTypes() {
-    List<PersistentOrderRootType> allTypes = new ArrayList<>();
-    Collections.addAll(allTypes, getAllPersistentTypes());
+    List<PersistentOrderRootType> allTypes = new ArrayList<>(getAllPersistentTypesList());
     allTypes.sort((o1, o2) -> o1.name().compareToIgnoreCase(o2.name()));
     return allTypes;
   }

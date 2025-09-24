@@ -265,7 +265,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   @Override
   public @Nullable VirtualFile getExistingRootDirectory() {
-    for (OrderRootType orderRootType : OrderRootType.getAllPersistentTypes()) {
+    for (OrderRootType orderRootType : OrderRootType.getAllPersistentTypesList()) {
       final VirtualFile[] existingRoots = getLibraryEditor().getFiles(orderRootType);
       if (existingRoots.length > 0) {
         VirtualFile existingRoot = existingRoots[0];
@@ -532,7 +532,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     for (String url : excludedRootUrls) {
       ContainerUtil.addIfNotNull(excludedRoots, VirtualFileManager.getInstance().findFileByUrl(url));
     }
-    for (PersistentOrderRootType type : OrderRootType.getAllPersistentTypes()) {
+    for (PersistentOrderRootType type : OrderRootType.getAllPersistentTypesList()) {
       VirtualFile[] files = getLibraryEditor().getFiles(type);
       for (VirtualFile file : files) {
         if (!VfsUtilCore.isUnder(file, excludedRoots)) {
