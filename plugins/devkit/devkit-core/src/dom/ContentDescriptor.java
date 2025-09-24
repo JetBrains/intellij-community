@@ -11,6 +11,10 @@ import java.util.List;
 public interface ContentDescriptor extends DomElement {
   @NotNull
   @Stubbed
+  GenericAttributeValue<String> getNamespace();
+
+  @NotNull
+  @Stubbed
   @SubTagList("module")
   List<ModuleDescriptor> getModuleEntry();
 

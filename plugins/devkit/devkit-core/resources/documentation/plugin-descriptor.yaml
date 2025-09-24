@@ -52,6 +52,24 @@ elements:
               This item is part of the [_Plugin Model_](https://youtrack.jetbrains.com/articles/IJPL-A-31){internal},
               which is not recommended to be used in third-party plugins in the current state.
         - attribute:
+            name: visibility
+            renderContexts: [doc_provider]
+            requirement:
+              required: no
+            description: |
+              Specifies the visibility of the content module (not applicable for `plugin.xml` descriptor). 
+              The visibility determines which modules may declare a dependency on this module.
+              <br/>
+              The allowed values are:
+              - `private` - the module is visible only inside the plugin it's defined;
+              - `internal` - the module is visible only from content modules declared in the same [namespace](#attribute:idea-plugin__content__namespace);
+              - `public` - the module is visible from all content modules of all plugins.
+            internalNote: &plugin_model_v2_internal_note |
+              This item is part of the [_Plugin Model_](https://youtrack.jetbrains.com/articles/IJPL-A-31){internal},
+              which is not recommended to be used in third-party plugins in the current state.
+            defaultValue: |
+              `private`
+        - attribute:
             name: dependent-on-core
             renderContexts: [doc_provider]
             requirement:
@@ -517,6 +535,18 @@ elements:
                   <module name="com.example.i18n"/>
                 </content>
                 ```
+            attributes:
+              - attribute:
+                  name: namespace
+                  description: |
+                    Specifies the namespace for content modules. 
+                    If all content modules have private [visibility](#attribute:idea-plugin__visibility) (this is the default), the 
+                    namespace is not required. However, if at least one non-private content module is defined, the namespace must be set.
+                    <br/>
+                    If the namespace is set, it must be associated with the plugin's vendor at the Marketplace. 
+                    Plugins developed by JetBrains may use `jetbrains` namespace.
+                    <br/>
+                    If there are multiple `content` tags in the plugin descriptor, the namespace must be the same for all of them.
             children:
               - element:
                   name: module
