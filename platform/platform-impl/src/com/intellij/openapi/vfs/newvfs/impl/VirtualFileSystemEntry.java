@@ -760,7 +760,16 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   /**
-   * @return true, if this file is a symlink or there is a symlink parent
+   * BEWARE: This holds only while inside the same file-system, but breaks on file-system borders.
+   * I.e. lets' take a [jar:///local/path/file.jar!/path/inside/My.class] file: if [/local/path] is a
+   * symlink, then
+   * VirtualFile[file:///local/path/file.jar].thisOrParentHaveSymlink() == true
+   * but
+   * VirtualFile[ jar:///local/path/file.jar!/path/inside/My.class].thisOrParentHaveSymlink() == false
+   * because for VFS VirtualFile[jar:///local/path/file.jar!/path/inside/My.class] belongs to
+   * [jar:///local/path/file.jar!/] root, and up to this root there are no symlinks.
+   * I don't know is it 'intended' behavior, or just an omission though
+   * @return true, if this file is a symlink or there is a symlink parent, up to VFS root (not file-system root!)
    */
   @ApiStatus.Internal
   public boolean thisOrParentHaveSymlink() {
