@@ -16,13 +16,13 @@ public final class ProductMode {
    */
   public static final ProductMode MONOLITH = new ProductMode("monolith");
   /**
-   * Indicates that this process doesn't perform heavy tasks like code analysis, and takes necessary information from another process.
-   * Currently, this is used by JetBrains Client process connected to a remote development host or CodeWithMe session.
+   * Indicates that this process is running in a frontend mode (JetBrains Client).
+   * It doesn't perform heavy tasks like code analysis and takes necessary information from a separate backend process
    */
   public static final ProductMode FRONTEND = new ProductMode("frontend");
   /**
-   * Indicates that this process doesn't perform heavy tasks like code analysis and takes necessary information from another process.
-   * Currently, this is used by an IDE running as a remote development host.
+   * Indicates that this process is running in a backend mode and serves as a remote development host.
+   * It doesn't show the UI to the user directly, a separate process is responsible for this.
    */
   public static final ProductMode BACKEND = new ProductMode("backend");
 
