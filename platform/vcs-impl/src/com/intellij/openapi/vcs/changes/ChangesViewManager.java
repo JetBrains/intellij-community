@@ -32,11 +32,9 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.platform.vcs.impl.shared.RdLocalChanges;
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys;
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings;
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -247,19 +245,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
     @Override
     public void initTabContent(@NotNull Content content) {
-      if (RdLocalChanges.isEnabled()) {
-        // Action isn't executed unless a context component is showing,
-        // which makes things complicated in RD scenario because:
-        // * For Commit TW we still use PROJECTOR_STEALING hacking content of the particular tab.
-        // * The current content component in a backend TW is selected as the context component.
-        // (see `ToolWindowComponentIdProvider` and `ComponentIdOwner` for more insights).
-        // * An empty panel is used for this tab content on the backend.
-        //
-        // As a workaround, it's explicitly marked as shown.
-        ComponentUtil.markAsShowing(content.getComponent(), true);
-        return;
-      }
-
       ChangesViewManager viewManager = (ChangesViewManager)getInstance(myProject);
       ChangesViewToolWindowPanel panel = viewManager.initToolWindowPanel();
 

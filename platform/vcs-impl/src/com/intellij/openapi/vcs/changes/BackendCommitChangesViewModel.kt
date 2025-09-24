@@ -13,8 +13,13 @@ import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel.ModelP
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.kernel.ids.BackendValueIdType
+import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.vcs.impl.shared.RdLocalChanges
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.split.createComponent
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import kotlinx.coroutines.CoroutineScope
@@ -33,8 +38,18 @@ internal class BackendChangesView private constructor(
       val scope = project.service<ScopeProvider>().cs.childScope("CommitChangesViewWithToolbarPanel")
       Disposer.register(parentDisposable) { scope.cancel() }
 
-      val panel = CommitChangesViewWithToolbarPanel(LocalChangesListView(project), scope)
-      return BackendChangesView(panel, BackendLocalCommitChangesViewModel(panel))
+      if (RdLocalChanges.isEnabled()) {
+        val viewModel = BackendRemoteCommitChangesViewModel(project)
+        val  id = storeValueGlobally(scope, viewModel, BackendChangesViewValueIdType)
+        val panel = ChangesViewSplitComponentBinding.createComponent(project, scope, id)
+        return BackendChangesView(panel, viewModel)
+      } else {
+        val panel = CommitChangesViewWithToolbarPanel(LocalChangesListView(project), scope)
+        val backendChangesView = BackendChangesView(panel, BackendLocalCommitChangesViewModel(panel))
+        val id = storeValueGlobally(scope, backendChangesView.viewModel, BackendChangesViewValueIdType)
+        panel.id = id
+        return backendChangesView
+      }
     }
   }
 
@@ -67,6 +82,55 @@ internal interface BackendCommitChangesViewModel {
   fun getTree(): ChangesListView
   @ApiStatus.Obsolete
   fun getPreferredFocusableComponent(): JComponent
+}
+
+// FIXME
+private class BackendRemoteCommitChangesViewModel(private val project: Project) : BackendCommitChangesViewModel {
+  private var horizontal: Boolean = true
+  private val treeView: ChangesListView by lazy { LocalChangesListView(project) }
+
+  override fun initPanel() {
+  }
+
+  override fun setCommitWorkflowHandler(handler: ChangesViewCommitWorkflowHandler?) {
+  }
+
+  override fun isToolbarHorizontal(): Boolean = horizontal
+
+  override fun getToolbarComponent(): JComponent = JBLabel("Toolbar (RD placeholder)")
+
+  override fun setToolbarHorizontal(horizontal: Boolean) {
+    this.horizontal = horizontal
+  }
+
+  override fun getActions(): List<AnAction> = emptyList()
+
+  override fun isModelUpdateInProgress(): Boolean = false
+
+  override fun setBusy(busy: Boolean) {
+  }
+
+  override fun scheduleRefreshNow(callback: Runnable?) {
+  }
+
+  override fun scheduleDelayedRefresh() {
+  }
+
+  override fun setGrouping(groupingKey: String) {
+  }
+
+  override fun resetViewImmediatelyAndRefreshLater() {
+  }
+
+  override fun selectFile(vFile: VirtualFile?) {
+  }
+
+  override fun selectChanges(changes: List<Change>) {
+  }
+
+  override fun getTree(): ChangesListView = treeView
+
+  override fun getPreferredFocusableComponent(): JComponent = treeView.preferredFocusedComponent
 }
 
 private class BackendLocalCommitChangesViewModel(private val panel: CommitChangesViewWithToolbarPanel): BackendCommitChangesViewModel {
@@ -150,3 +214,5 @@ private class BackendLocalCommitChangesViewModel(private val panel: CommitChange
     }
   }
 }
+
+private object BackendChangesViewValueIdType : BackendValueIdType<ChangesViewId, BackendCommitChangesViewModel>(::ChangesViewId)

@@ -38,7 +38,10 @@ import javax.swing.tree.DefaultTreeModel
 import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
-class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, private val cs: CoroutineScope) : ChangesViewPanel(changesView) {
+class CommitChangesViewWithToolbarPanel(
+  changesView: ChangesListView,
+  private val cs: CoroutineScope,
+) : ChangesViewPanel(changesView) {
   val project: Project get() = changesView.project
   private val settings get() = ChangesViewSettings.getInstance(project)
 
@@ -47,6 +50,12 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, private va
   }
 
   private var modelProvider: ModelProvider? = null
+
+  var id: ChangesViewId? = null
+    set(value) {
+      if (field == null) field = value
+      else error("Id is already assigned")
+    }
 
   init {
     refresher.start()
@@ -59,6 +68,8 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, private va
 
   @RequiresEdt
   fun initPanel(modelProvider: ModelProvider) {
+    checkNotNull(id)
+
     this.modelProvider = modelProvider
 
     cs.launch(Dispatchers.UI) {
@@ -93,7 +104,7 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, private va
   }
 
   @CalledInAny
-  fun scheduleRefresh() {
+  fun scheduleRefresh(){
     scheduleRefresh(withDelay = true)
   }
 
