@@ -634,7 +634,19 @@ private suspend fun collectAndEmbedProductModules(root: Element, xIncludePathRes
       continue
     }
 
-    val relativeOutFile = if (loadingRule == "embedded") getProductModuleJarName(moduleName, context, frontendModuleFilter) else "modules/$moduleName.jar"
+    val relativeOutFile = if (loadingRule == "embedded") {
+      if (isModuleCloseSource(moduleName, context = context)) {
+        if (frontendModuleFilter.isBackendModule(moduleName)) PRODUCT_BACKEND_JAR else PRODUCT_JAR
+      }
+      else {
+        // todo Change location after feature-freeze (and maybe by that time, https://youtrack.jetbrains.com/issue/IJPL-209476/extract-core-out-of-core will be ready).
+        // Using `modules` before release is not a safe option.
+        "module-$moduleName.jar"
+      }
+    }
+    else {
+      "modules/$moduleName.jar"
+    }
     result.add(ModuleItem(moduleName = moduleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES))
     PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let {
       it.mapTo(result) { subModuleName ->
