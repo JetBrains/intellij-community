@@ -1538,14 +1538,6 @@ public final class PsiUtil extends PsiUtilCore {
     return false;
   }
 
-  @ApiStatus.Internal
-  public static final Set<String> PRIMITIVE_TYPES = Collections.unmodifiableSet(ContainerUtil.newLinkedHashSet(
-    SHORT, BOOLEAN,
-    DOUBLE, LONG,
-    INT, FLOAT,
-    CHAR, BYTE
-  ));
-
   private static final Set<String> KEYWORDS = Collections.unmodifiableSet(
     ContainerUtil.newHashSet(ABSTRACT, BOOLEAN, BREAK, BYTE, CASE, CATCH, CHAR, CLASS, CONST, CONTINUE, DEFAULT, DO, DOUBLE, ELSE, EXTENDS,
                              FALSE, FINAL, FINALLY, FLOAT, FOR, GOTO, IF, IMPLEMENTS, IMPORT, INSTANCEOF, INT, INTERFACE, LONG, NATIVE,

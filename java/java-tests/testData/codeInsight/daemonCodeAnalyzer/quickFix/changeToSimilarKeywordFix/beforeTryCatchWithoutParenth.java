@@ -1,0 +1,9 @@
+// "Change 'catc' to 'catch'" "true-preview"
+public class Test {
+  public static void test(List<String> list) {
+    try{
+
+    }
+    catc<caret>
+  }
+}

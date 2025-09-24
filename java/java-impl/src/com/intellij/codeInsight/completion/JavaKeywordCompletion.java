@@ -43,7 +43,6 @@ import static com.intellij.codeInsight.completion.JavaCompletionContributor.IN_C
 import static com.intellij.openapi.util.Conditions.notInstanceOf;
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.psi.SyntaxTraverser.psiApi;
-import static com.intellij.psi.util.PsiUtil.PRIMITIVE_TYPES;
 
 public class JavaKeywordCompletion {
   public static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
@@ -1216,7 +1215,7 @@ public class JavaKeywordCompletion {
       boolean addAll = expected.isEmpty() || ContainerUtil.exists(expected, t ->
         t.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || t.equalsToText(CommonClassNames.JAVA_IO_SERIALIZABLE));
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(position.getProject());
-      for (String primitiveType : PRIMITIVE_TYPES) {
+      for (String primitiveType : PsiTypes.primitiveTypeNames()) {
         PsiType array = factory.createTypeFromText(primitiveType + "[]", null);
         if (addAll || expected.contains(array)) {
           result.consume(PsiTypeLookupItem.createLookupItem(array, null));
@@ -1239,7 +1238,7 @@ public class JavaKeywordCompletion {
         declaration ||
         typeFragment ||
         expressionPosition) && primitivesAreExpected(position)) {
-      for (String primitiveType : PRIMITIVE_TYPES) {
+      for (String primitiveType : PsiTypes.primitiveTypeNames()) {
         if (!session.isKeywordAlreadyProcessed(primitiveType)) {
           result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, primitiveType));
         }

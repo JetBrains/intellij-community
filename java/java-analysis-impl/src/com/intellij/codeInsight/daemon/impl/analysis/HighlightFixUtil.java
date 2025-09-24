@@ -50,7 +50,6 @@ import java.util.function.Consumer;
 
 import static com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil.checkRecordExhaustiveness;
 import static com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil.findMissedClasses;
-import static com.intellij.psi.util.PsiUtil.PRIMITIVE_TYPES;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
@@ -335,7 +334,7 @@ public final class HighlightFixUtil {
   public static void registerFixesForExpressionStatement(@NotNull Consumer<? super CommonIntentionAction> info,
                                                          @NotNull PsiElement statement) {
     if (!(statement instanceof PsiExpressionStatement)) return;
-    if (!(statement.getParent() instanceof PsiCodeBlock block)) return; 
+    if (!(statement.getParent() instanceof PsiCodeBlock block)) return;
     PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
     if (expression instanceof PsiAssignmentExpression) return;
     PsiType type = expression.getType();
@@ -1141,69 +1140,6 @@ public final class HighlightFixUtil {
     if (IncompleteModelUtil.hasUnresolvedComponent(type)) return null;
     return PriorityIntentionActionWrapper.highPriority(
       QuickFixFactory.getInstance().createSetVariableTypeFix(localVariable, type));
-  }
-
-  static @Nullable CommonIntentionAction createKeywordTypoFix(@Nullable PsiJavaCodeReferenceElement ref) {
-    if (ref == null) return null;
-    if (ref.isQualified()) return null;
-    if (ref.getParent() instanceof PsiTypeElement typeElement) {
-      //primitive keywords and var
-      PsiElement parent = typeElement.getParent();
-      if (parent instanceof PsiClass && typeElement.getNextSibling() instanceof PsiErrorElement) {
-        return QuickFixFactory.getInstance().createChangeToSimilarKeyword(typeElement, PRIMITIVE_TYPES);
-      }
-      if (!(parent instanceof PsiVariable variable &&
-            !(parent instanceof PsiParameter parameter && !(parameter.getParent() instanceof PsiParameterList)))) {
-        return null;
-      }
-      Set<String> targetKeywords = new HashSet<>(PRIMITIVE_TYPES);
-      PsiExpression initializer = variable.getInitializer();
-      if (initializer != null && initializer.getType() != null) {
-        PsiType initializerType = initializer.getType();
-        targetKeywords.removeIf(t -> {
-          PsiPrimitiveType targetType = null;
-          for (PsiPrimitiveType type : PsiTypes.primitiveTypes()) {
-            if (t.equals(type.getName())) {
-              targetType = type;
-              break;
-            }
-          }
-          if (targetType == null) return true;
-          return !TypeConversionUtil.isAssignable(targetType, initializerType);
-        });
-      }
-      if (parent instanceof PsiLocalVariable && PsiUtil.isAvailable(JavaFeature.LVTI, parent)) {
-        targetKeywords.add(JavaKeywords.VAR);
-      }
-      return QuickFixFactory.getInstance().createChangeToSimilarKeyword(typeElement, targetKeywords);
-    }
-    if (ref.getParent() instanceof PsiExpressionStatement expressionStatement) {
-      //primitive keywords and var
-      PsiElement[] children = expressionStatement.getChildren();
-      if (children.length == 2 && children[0] == ref && children[1] instanceof PsiErrorElement) {
-        Set<String> targetKeywords = new HashSet<>(PRIMITIVE_TYPES);
-        if (PsiUtil.isAvailable(JavaFeature.LVTI, expressionStatement)) {
-          targetKeywords.add(JavaKeywords.VAR);
-        }
-        return QuickFixFactory.getInstance().createChangeToSimilarKeyword(ref, targetKeywords);
-      }
-    }
-    if (ref instanceof PsiReferenceExpression expression) {
-      //true, false, null
-      Set<String> targetKeywords = new HashSet<>();
-      PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
-      if (expectedType != null) {
-        if (TypeConversionUtil.isAssignable(expectedType, PsiTypes.booleanType())) {
-          targetKeywords.add(JavaKeywords.TRUE);
-          targetKeywords.add(JavaKeywords.FALSE);
-        }
-        if (expectedType instanceof PsiClassType) {
-          targetKeywords.add(JavaKeywords.NULL);
-        }
-        return QuickFixFactory.getInstance().createChangeToSimilarKeyword(ref, targetKeywords);
-      }
-    }
-    return null;
   }
 
   private static final class ReturnModel {

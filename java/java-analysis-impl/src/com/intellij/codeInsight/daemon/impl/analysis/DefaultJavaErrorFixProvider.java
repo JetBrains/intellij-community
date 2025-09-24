@@ -225,10 +225,12 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
         }
       }
     });
+    fix(STATEMENT_BAD_EXPRESSION, error -> HighlightFixTypoUtil.createKeywordTypoFix(error.psi()));
     fix(STATEMENT_UNREACHABLE,
         error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.unreachable.statement.fix.text")));
     fix(STATEMENT_UNREACHABLE_LOOP_BODY, error -> myFactory.createSimplifyBooleanFix(error.psi(), false));
     fix(FOREACH_NOT_APPLICABLE, error -> myFactory.createNotIterableForEachLoopFix(error.psi()));
+    fix(LABEL_WITHOUT_STATEMENT, error -> HighlightFixTypoUtil.createKeywordTypoFix(error.psi()));
     fix(SWITCH_LABEL_EXPECTED, error -> {
       PsiSwitchLabeledRuleStatement previousRule = PsiTreeUtil.getPrevSiblingOfType(error.psi(), PsiSwitchLabeledRuleStatement.class);
       return previousRule == null ? null : myFactory.createWrapSwitchRuleStatementsIntoBlockFix(previousRule);
@@ -256,6 +258,7 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
                                error.psi().getErrorDescription().equals(JavaPsiBundle.message("expected.switch.rule"))
                                ? myFactory.createWrapSwitchRuleStatementsIntoBlockFix(rule)
                                : null);
+    fix(SYNTAX_ERROR, error -> HighlightFixTypoUtil.createKeywordTypoFix(error.psi()));
   }
 
   private void createMethodFixes() {
@@ -622,6 +625,7 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
           (error, sink) -> HighlightFixUtil.registerMethodCallIntentions(sink, error.psi(), error.psi().getArgumentList()));
     fixes(CALL_AMBIGUOUS, (error, sink) -> HighlightFixUtil.registerAmbiguousCallFixes(sink, error.psi(), error.context().results()));
     fixes(CALL_AMBIGUOUS_NO_MATCH, (error, sink) -> HighlightFixUtil.registerAmbiguousCallFixes(sink, error.psi(), error.context()));
+    fix(CALL_AMBIGUOUS_NO_MATCH, error -> HighlightFixTypoUtil.createKeywordTypoFix(error.psi()));
     fixes(REFERENCE_NON_STATIC_FROM_STATIC_CONTEXT, (error, sink) -> {
       HighlightFixUtil.registerStaticProblemQuickFixAction(sink, error.context(), error.psi());
       if (error.psi().getParent() instanceof PsiMethodCallExpression methodCall) {
@@ -667,7 +671,7 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
       QualifySuperArgumentFix.registerQuickFixAction(error.context(), sink));
     fix(REFERENCE_UNRESOLVED, error -> HighlightFixUtil.createUnresolvedReferenceFix(error.psi()));
     fix(REFERENCE_UNRESOLVED, error -> HighlightFixUtil.createVariableTypeFix(error.psi()));
-    fix(REFERENCE_UNRESOLVED, error -> HighlightFixUtil.createKeywordTypoFix(error.psi()));
+    fix(REFERENCE_UNRESOLVED, error -> HighlightFixTypoUtil.createKeywordTypoFix(error.psi()));
     fix(REFERENCE_QUALIFIER_PRIMITIVE,
         error -> error.psi() instanceof PsiReferenceExpression ref ? myFactory.createRenameWrongRefFix(ref) : null);
     fix(CAST_INTERSECTION_NOT_INTERFACE, error -> {
