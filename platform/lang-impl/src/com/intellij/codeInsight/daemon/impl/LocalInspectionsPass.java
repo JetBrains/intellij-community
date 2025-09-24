@@ -250,28 +250,29 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
 
   private void createHighlightsForDescriptor(@NotNull ProblemDescriptor descriptor,
                                              @NotNull PsiElement psiElement,
-                                             @NotNull LocalInspectionToolWrapper tool,
+                                             @NotNull LocalInspectionToolWrapper toolWrapper,
                                              @NotNull Consumer<? super HighlightInfo> infoProcessor) {
+    String originalShortName = toolWrapper.getShortName();
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (descriptor instanceof ProblemDescriptorWithReporterName name) {
       String reportingToolName = name.getReportingToolShortName();
-      tool = (LocalInspectionToolWrapper)myProfileWrapper.getInspectionTool(reportingToolName, psiElement);
+      toolWrapper = (LocalInspectionToolWrapper)myProfileWrapper.getInspectionTool(reportingToolName, psiElement);
     }
-    if (myIgnoreSuppressed && tool.getTool().isSuppressedFor(psiElement)) {
-      registerSuppressedElements(psiElement, tool.getID(), tool.getAlternativeID(), mySuppressedElements);
+    if (myIgnoreSuppressed && toolWrapper.getTool().isSuppressedFor(psiElement)) {
+      registerSuppressedElements(psiElement, toolWrapper.getID(), toolWrapper.getAlternativeID(), mySuppressedElements);
       return;
     }
 
     PsiFile psiFile = psiElement.getContainingFile();
 
-    HighlightDisplayKey displayKey = tool.getDisplayKey();
+    HighlightDisplayKey displayKey = toolWrapper.getDisplayKey();
     if (displayKey == null) {
-      LOG.error("getDisplayKey() is null for " + tool + " (" + tool.getTool() + " ; " + tool.getTool().getClass() + ")");
+      LOG.error("getDisplayKey() is null for " + toolWrapper + " (" + toolWrapper.getTool() + " ; " + toolWrapper.getTool().getClass() + ")");
       return;
     }
     HighlightSeverity severity = myProfileWrapper.getErrorLevel(displayKey, psiFile).getSeverity();
 
-    createHighlightsForDescriptor(emptyActionRegistered, psiFile, tool, severity, descriptor, psiElement, infoProcessor);
+    createHighlightsForDescriptor(emptyActionRegistered, psiFile, toolWrapper, originalShortName, severity, descriptor, psiElement, infoProcessor);
   }
 
   @Override
@@ -282,6 +283,7 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
   private void createHighlightsForDescriptor(@NotNull Set<? super Pair<TextRange, String>> emptyActionRegistered,
                                              @NotNull PsiFile psiFile,
                                              @NotNull LocalInspectionToolWrapper toolWrapper,
+                                             @NotNull String originalShortName,
                                              @NotNull HighlightSeverity severity,
                                              @NotNull ProblemDescriptor descriptor,
                                              @NotNull PsiElement element,
@@ -335,7 +337,7 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
     if (info == null || !UpdateHighlightersUtil.HighlightInfoPostFilters.accept(myProject, info)) {
       return;
     }
-    info.setToolId(toolWrapper.getShortName());
+    info.setToolId(originalShortName); // toolId must be consistent with the tool which actually ran it
     info.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
     if (isInInjected) {
       Document documentRange = documentManager.getDocument(psiFile);
