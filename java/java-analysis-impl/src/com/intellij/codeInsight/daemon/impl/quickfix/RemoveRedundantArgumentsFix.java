@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -39,10 +39,13 @@ public final class RemoveRedundantArgumentsFix extends PsiUpdateModCommandAction
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpressionList args) {
     if (!myTargetMethod.isValid() || myTargetMethod.getContainingClass() == null) return null;
     if (!mySubstitutor.isValid()) return null;
-    if (findRedundantArgument(args.getExpressions(), myTargetMethod.getParameterList().getParameters(), mySubstitutor) == null) {
+    PsiExpression[] redundant =
+      findRedundantArgument(args.getExpressions(), myTargetMethod.getParameterList().getParameters(), mySubstitutor);
+    if (redundant == null) {
       return null;
     }
-    return Presentation.of(QuickFixBundle.message("remove.redundant.arguments.text", JavaHighlightUtil.formatMethod(myTargetMethod)));
+    return Presentation.of(QuickFixBundle.message("remove.redundant.arguments.text", JavaHighlightUtil.formatMethod(myTargetMethod), 
+                                                  redundant.length));
   }
 
   private static PsiExpression @Nullable [] findRedundantArgument(PsiExpression @NotNull [] arguments,
