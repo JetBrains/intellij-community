@@ -14,6 +14,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.ApiStatus;
@@ -30,7 +31,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   private final Stack<@Nullable CommandDescriptor> interruptedCommands = new Stack<>();
   private @Nullable CommandDescriptor currentCommand;
   private int undoTransparentCount;
-  private int allowMergeGlobalCommandsCount = 0;
+  private int allowMergeGlobalCommandsCount;
 
   @Override
   public void executeCommand(
@@ -102,7 +103,6 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     application.assertIsDispatchThread();
 
     if (LOG.isDebugEnabled()) {
-      CommandDescriptor currentCommand = this.currentCommand;
       LOG.debug(String.format(
         "executeCommand: %s, name = %s, groupId = %s, in command = %s, in transparent action = %s",
         command,
@@ -139,7 +139,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     application.runWriteIntentReadAction(() -> {
       Throwable throwable = null;
       try {
-        fireCommandStarted(descriptor);
+        fireCommandStarted();
         command.run();
       }
       catch (Throwable th) {
@@ -188,25 +188,23 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       getDocumentFromGroupId(groupId)
     );
     currentCommand = descriptor;
-    fireCommandStarted(descriptor);
+    fireCommandStarted();
     return descriptor;
   }
 
   @Override
   public void finishCommand(@NotNull CommandToken command, @Nullable Throwable throwable) {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
-    CommandDescriptor currentCommand = this.currentCommand;
     LOG.assertTrue(currentCommand != null, "no current command in progress");
-    fireCommandFinished(currentCommand);
+    fireCommandFinished();
   }
 
   @Override
   public void enterModal() {
     ThreadingAssertions.assertEventDispatchThread();
-    CommandDescriptor currentCommand = this.currentCommand;
     interruptedCommands.push(currentCommand);
     if (currentCommand != null) {
-      fireCommandFinished(currentCommand);
+      fireCommandFinished();
     }
   }
 
@@ -214,65 +212,56 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   public void leaveModal() {
     ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(currentCommand == null, "Command must not run: " + currentCommand);
-    CommandDescriptor descriptor = interruptedCommands.pop();
-    currentCommand = descriptor;
-    if (descriptor != null) {
-      fireCommandStarted(descriptor);
+    currentCommand = interruptedCommands.pop();
+    if (currentCommand != null) {
+      fireCommandStarted();
     }
   }
 
   @Override
   public void setCurrentCommandName(String name) {
     ThreadingAssertions.assertWriteIntentReadAccess();
-    CommandDescriptor currentCommand = this.currentCommand;
     LOG.assertTrue(currentCommand != null);
-    this.currentCommand = currentCommand.withName(name);
+    currentCommand = currentCommand.withName(name);
   }
 
   @Override
   public void setCurrentCommandGroupId(Object groupId) {
     ThreadingAssertions.assertWriteIntentReadAccess();
-    CommandDescriptor currentCommand = this.currentCommand;
     LOG.assertTrue(currentCommand != null);
-    this.currentCommand = currentCommand.withGroupId(groupId);
+    currentCommand = currentCommand.withGroupId(groupId);
   }
 
   @Override
   public @Nullable Runnable getCurrentCommand() {
-    CommandDescriptor currentCommand = this.currentCommand;
-    return currentCommand != null ? currentCommand.getCommand() : null;
+    return ObjectUtils.doIfNotNull(currentCommand, command -> command.getCommand());
   }
 
   @Override
   public @Nullable String getCurrentCommandName() {
-    CommandDescriptor currentCommand = this.currentCommand;
     if (currentCommand != null) {
       return currentCommand.getName();
     }
     if (!interruptedCommands.isEmpty()) {
-      CommandDescriptor command = interruptedCommands.peek();
-      return command != null ? command.getName() : null;
+      return ObjectUtils.doIfNotNull(interruptedCommands.peek(), command -> command.getName());
     }
     return null;
   }
 
   @Override
   public @Nullable Object getCurrentCommandGroupId() {
-    CommandDescriptor currentCommand = this.currentCommand;
     if (currentCommand != null) {
       return currentCommand.getGroupId();
     }
     if (!interruptedCommands.isEmpty()) {
-      final CommandDescriptor command = interruptedCommands.peek();
-      return command != null ? command.getGroupId() : null;
+      return ObjectUtils.doIfNotNull(interruptedCommands.peek(), command -> command.getGroupId());
     }
     return null;
   }
 
   @Override
   public @Nullable Project getCurrentCommandProject() {
-    CommandDescriptor currentCommand = this.currentCommand;
-    return currentCommand != null ? currentCommand.getProject() : null;
+    return ObjectUtils.doIfNotNull(currentCommand, command -> command.getProject());
   }
 
   @Override
@@ -282,43 +271,19 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void runUndoTransparentAction(@NotNull Runnable action) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("runUndoTransparentAction: " + action + ", in command = " + (currentCommand != null) +
-                ", in transparent action = " + isUndoTransparentActionInProgress());
-    }
-    if (undoTransparentCount++ == 0) {
-      eventPublisher.undoTransparentActionStarted();
-    }
+    startUndoTransparentAction();
     try {
       action.run();
     }
     finally {
-      if (undoTransparentCount == 1) {
-        eventPublisher.beforeUndoTransparentActionFinished();
-      }
-      if (--undoTransparentCount == 0) {
-        eventPublisher.undoTransparentActionFinished();
-      }
+      finishUndoTransparentAction();
     }
   }
 
   @Override
-  public final AutoCloseable withUndoTransparentAction() {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("withUndoTransparentAction in command = " + (currentCommand != null) +
-                ", in transparent action = " + isUndoTransparentActionInProgress());
-    }
-    if (undoTransparentCount++ == 0) {
-      eventPublisher.undoTransparentActionStarted();
-    }
-    return () -> {
-      if (undoTransparentCount == 1) {
-        eventPublisher.beforeUndoTransparentActionFinished();
-      }
-      if (--undoTransparentCount == 0) {
-        eventPublisher.undoTransparentActionFinished();
-      }
-    };
+  public final @NotNull AutoCloseable withUndoTransparentAction() {
+    startUndoTransparentAction();
+    return () -> finishUndoTransparentAction();
   }
 
   @Override
@@ -372,21 +337,48 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     return command.equals(currentCommand);
   }
 
-  private void fireCommandStarted(@NotNull CommandDescriptor command) {
-    CommandEvent event = command.toCommandEvent(this);
+  private void startUndoTransparentAction() {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("runUndoTransparentAction in command = " + (currentCommand != null) +
+                ", in transparent action = " + isUndoTransparentActionInProgress());
+    }
+    if (undoTransparentCount++ == 0) {
+      eventPublisher.undoTransparentActionStarted();
+    }
+  }
+
+  private void finishUndoTransparentAction() {
+    if (undoTransparentCount == 1) {
+      eventPublisher.beforeUndoTransparentActionFinished();
+    }
+    if (--undoTransparentCount == 0) {
+      eventPublisher.undoTransparentActionFinished();
+    }
+  }
+
+  private void fireCommandStarted() {
+    CommandEvent event = createCurrentCommandEvent();
     eventPublisher.commandStarted(event);
   }
 
-  private void fireCommandFinished(@NotNull CommandDescriptor command) {
-    CommandEvent event = command.toCommandEvent(this);
+  private void fireCommandFinished() {
+    CommandEvent event = createCurrentCommandEvent();
     try {
       eventPublisher.beforeCommandFinished(event);
     }
     finally {
-      this.currentCommand = null;
+      currentCommand = null;
       eventPublisher.commandFinished(event);
     }
     LOG.debug("finishCommand: name = " + event.getCommandName() + ", groupId = " + event.getCommandGroupId());
+  }
+
+  private @NotNull CommandEvent createCurrentCommandEvent() {
+    CommandDescriptor command = currentCommand;
+    if (command == null) {
+      throw new IllegalStateException("No current command in progress");
+    }
+    return command.toCommandEvent(this);
   }
 
   private static @Nullable Document getDocumentFromGroupId(@Nullable Object groupId) {
