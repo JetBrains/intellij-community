@@ -564,8 +564,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         int varId = thisClass.get(0);
         int thatIdx = that.getRawEqClassIndex(varId);
         if (thatIdx != -1) {
-          EqClass thatClass = Objects.requireNonNull(that.myEqClasses.get(thatIdx));
-          if (!thatClass.containsAll(thisClass)) return null;
+          EqClass thatClass = that.myEqClasses.get(thatIdx);
+          // thisClass.size() == 1 doesn't require containsAll check (it will always be true),
+          // so we can save some CPU time
+          if (thisClass.size() > 1 && !thatClass.containsAll(thisClass)) return null;
           thisToThat[thisIdx] = thatIdx;
         } else {
           if (thisClass.size() > 1) return null;
