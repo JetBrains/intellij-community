@@ -3535,17 +3535,20 @@ f:com.intellij.util.ui.AppleBoldDottedPainter
 - paint(java.awt.Graphics2D,I,I,I):V
 f:com.intellij.util.ui.AvatarIcon
 - com.intellij.util.ui.JBCachingScalableIcon
+- <init>(I,D,com.intellij.util.ui.AvatarPresentation):V
 - <init>(I,D,java.lang.String,java.lang.String,com.intellij.util.ui.ColorPalette):V
 - b:<init>(I,D,java.lang.String,java.lang.String,com.intellij.util.ui.ColorPalette,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - copy():com.intellij.util.ui.AvatarIcon
 - f:getArcRatio():D
-- f:getAvatarName():java.lang.String
-- f:getGradientSeed():java.lang.String
 - getIconHeight():I
 - getIconWidth():I
-- f:getPalette():com.intellij.util.ui.ColorPalette
+- f:getPresentation():com.intellij.util.ui.AvatarPresentation
 - f:getTargetSize():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+com.intellij.util.ui.AvatarPresentation
+- a:getColor1():java.awt.Color
+- a:getColor2():java.awt.Color
+- a:getShortName():java.lang.String
 f:com.intellij.util.ui.AvatarUtils
 - sf:INSTANCE:com.intellij.util.ui.AvatarUtils
 - f:generateColoredAvatar(java.lang.String,java.lang.String,I,D,com.intellij.util.ui.ColorPalette):java.awt.image.BufferedImage
@@ -4957,6 +4960,22 @@ f:com.intellij.util.ui.NamedColorUtil
 - s:getInactiveTextColor():java.awt.Color
 - s:getListSelectionForeground(Z):java.awt.Color
 - s:getTextCursor(java.awt.Color):java.awt.Cursor
+f:com.intellij.util.ui.PaletteAvatarPresentation
+- com.intellij.util.ui.AvatarPresentation
+- <init>(java.lang.String,java.lang.String,com.intellij.util.ui.ColorPalette):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():com.intellij.util.ui.ColorPalette
+- f:copy(java.lang.String,java.lang.String,com.intellij.util.ui.ColorPalette):com.intellij.util.ui.PaletteAvatarPresentation
+- bs:copy$default(com.intellij.util.ui.PaletteAvatarPresentation,java.lang.String,java.lang.String,com.intellij.util.ui.ColorPalette,I,java.lang.Object):com.intellij.util.ui.PaletteAvatarPresentation
+- equals(java.lang.Object):Z
+- getColor1():java.awt.Color
+- getColor2():java.awt.Color
+- f:getGradientSeed():java.lang.String
+- f:getName():java.lang.String
+- f:getPalette():com.intellij.util.ui.ColorPalette
+- getShortName():java.lang.String
+- hashCode():I
 f:com.intellij.util.ui.PlatformColors
 - sf:BLUE:java.awt.Color
 - <init>():V

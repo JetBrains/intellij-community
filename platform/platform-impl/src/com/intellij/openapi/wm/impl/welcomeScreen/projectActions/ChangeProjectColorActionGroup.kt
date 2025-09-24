@@ -17,12 +17,12 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.ColorChooserService
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBPoint
-import kotlin.io.path.invariantSeparatorsPathString
+import java.nio.file.Path
 
 class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
-    val projectPath = ProjectWindowCustomizerService.projectPath(project)?.invariantSeparatorsPathString ?: return emptyArray()
+    val projectPath = ProjectWindowCustomizerService.projectPath(project) ?: return emptyArray()
     val projectName = if (RecentProjectsManagerBase.getInstanceEx().hasCustomIcon(project)) "" else project.name
 
     return arrayOf(ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Amber.title"), 0, projectName),
@@ -45,22 +45,22 @@ class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware, ActionRemo
     val project = e.project
     e.presentation.isEnabled = project != null
     e.presentation.icon = project?.let {
-      val projectPath = ProjectWindowCustomizerService.projectPath(project)?.invariantSeparatorsPathString ?: return@let null
-      RecentProjectIconHelper.generateProjectIcon(projectPath, true, size = 14, projectName = "", colorIndex = null)
+      val projectPath = ProjectWindowCustomizerService.projectPath(project) ?: return@let null
+      RecentProjectIconHelper.generateNewProjectIcon(projectPath, true, projectName = "", colorIndex = null, size = 14)
     }
     e.presentation.putClientProperty(ActionUtil.SHOW_ICON_IN_MAIN_MENU, true)
   }
 }
 
 private class ChangeProjectColorAction(
-  projectPath: String,
+  projectPath: Path,
   val name: @NlsSafe String,
   val index: Int,
   projectName: String?,
 ) : AnAction(
   name,
   "",
-  RecentProjectIconHelper.generateProjectIcon(projectPath, true, size = 16, colorIndex = index, projectName = projectName)
+  RecentProjectIconHelper.generateNewProjectIcon(projectPath, true, projectName = projectName, colorIndex = index, size = 16)
 ), DumbAware
 {
   override fun getActionUpdateThread() = ActionUpdateThread.EDT

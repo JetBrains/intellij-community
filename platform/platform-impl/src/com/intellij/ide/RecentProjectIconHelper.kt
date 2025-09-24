@@ -4,8 +4,9 @@
 package com.intellij.ide
 
 import com.intellij.configurationStore.ProjectStorePathManager
+import com.intellij.ide.RecentProjectIconHelper.Companion.createNewProjectIcon
+import com.intellij.ide.RecentProjectIconHelper.Companion.generateNewProjectIcon
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
 import com.intellij.openapi.util.registry.Registry
@@ -27,7 +28,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.imgscalr.Scalr
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.SystemIndependent
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
@@ -40,13 +40,15 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
+import kotlin.math.abs
 
 @Internal
 fun unscaledProjectIconSize(): Int = Registry.intValue("ide.project.icon.size", 20)
 
 internal fun userScaledProjectIconSize() = JBUIScale.scale(unscaledProjectIconSize())
 
-private val projectIconCache = ContainerUtil.createSoftValueMap<Pair<String, Int>, ProjectIcon>()
+private val projectIconCache = ContainerUtil.createSoftValueMap<Pair<Path, Int>, ProjectIcon>()
+private val nonLocalProjectIconCache = ContainerUtil.createSoftValueMap<Pair<String, Int>, ProjectIcon>()
 
 private val cacheEpoch = AtomicInteger()
 
@@ -78,14 +80,14 @@ class RecentProjectIconHelper {
 
     fun createIcon(data: ByteArray, svg: Boolean): Icon = createIcon(data, svg, unscaledProjectIconSize())
 
-    fun refreshProjectIcon(path: @SystemIndependent String) {
+    fun refreshProjectIcon(path: Path) {
       cacheEpoch.incrementAndGet()
       projectIconCache.keys
         .filter { it.first == path }
         .forEach { projectIconCache.remove(it) }
     }
 
-    fun getProjectName(path: @SystemIndependent String, recentProjectManager: RecentProjectsManagerBase): String {
+    fun getProjectName(path: Path, recentProjectManager: RecentProjectsManagerBase): String {
       val displayName = recentProjectManager.getDisplayName(path)
       return when {
         displayName == null -> recentProjectManager.getProjectName(path)
@@ -94,33 +96,27 @@ class RecentProjectIconHelper {
       }
     }
 
-    @JvmStatic
-    fun generateProjectIcon(path: @SystemIndependent String,
-                            isProjectValid: Boolean,
-                            size: Int = unscaledProjectIconSize(),
-                            projectName: String? = null): Icon {
-      val generatedProjectIcon = generateProjectIcon(path, isProjectValid, size, null, projectName)
+    fun generateNewProjectIcon(
+      path: Path,
+      isProjectValid: Boolean,
+      projectName: String?,
+      colorIndex: Int?,
+      size: Int = unscaledProjectIconSize(),
+    ): Icon {
+      val name = projectName ?: getProjectName(path, RecentProjectsManagerBase.getInstanceEx())
+      val presentation = when {
+        colorIndex != null -> FixedProjectAvatarPresentation(name, colorIndex)
+        else -> FullProjectAvatarPresentation(name, path)
+      }
 
-      projectIconCache.put(Pair(path, size), ProjectIcon(icon = generatedProjectIcon,
-                                                         isProjectValid = isProjectValid,
-                                                         lastUsedProjectIconSize = JBUIScale.scale(size)))
-
-      return generatedProjectIcon
+      return createNewProjectIcon(presentation, size, isProjectValid)
     }
 
-    fun generateProjectIcon(path: @SystemIndependent String,
-                            isProjectValid: Boolean,
-                            size: Int = unscaledProjectIconSize(),
-                            colorIndex: Int?,
-                            projectName: String? = null): Icon {
-      val name = projectName ?: getProjectName(path, RecentProjectsManagerBase.getInstanceEx())
-      val palette = if (colorIndex != null) ChangeProjectIconPalette(colorIndex) else ProjectIconPalette
-
+    internal fun createNewProjectIcon(presentation: AvatarPresentation, size: Int, isProjectValid: Boolean): Icon {
       var generatedProjectIcon: Icon = AvatarIcon(targetSize = size,
                                                   arcRatio = 0.4,
-                                                  gradientSeed = path,
-                                                  avatarName = name,
-                                                  palette = palette).withIconPreScaled(false)
+                                                  presentation = presentation)
+        .withIconPreScaled(false)
 
       if (!isProjectValid) {
         generatedProjectIcon = IconUtil.desaturate(generatedProjectIcon)
@@ -142,14 +138,11 @@ class RecentProjectIconHelper {
   }
 
   fun getProjectIcon(
-    path: @SystemIndependent String,
+    path: Path,
     isProjectValid: Boolean = true,
     iconSize: Int = unscaledProjectIconSize(),
     name: String? = null,
   ): Icon {
-    if (!RecentProjectsManagerBase.isFileSystemPath(path)) {
-      return EmptyIcon.create(iconSize)
-    }
     return createDeferredIcon(LocalProjectIconKey(
       cacheEpoch = cacheEpoch.get(),
       path = path,
@@ -163,7 +156,7 @@ class RecentProjectIconHelper {
     id: String,
     isProjectValid: Boolean = true,
     iconSize: Int = unscaledProjectIconSize(),
-    name: String? = null,
+    name: String,
   ): Icon {
     return createDeferredIcon(NonLocalProjectIconKey(
       cacheEpoch = cacheEpoch.get(),
@@ -197,14 +190,14 @@ private sealed class DeferredIconKey {
 
 private data class LocalProjectIconKey(
   val cacheEpoch: Int,
-  val path: @SystemIndependent String,
+  val path: Path,
   val isProjectValid: Boolean,
   override val iconSize: Int,
   val name: String?,
 ) : DeferredIconKey() {
   override fun loadIcon(): Icon =
     getCustomIcon(path, isProjectValid, iconSize)
-    ?: getGeneratedProjectIcon(path, isProjectValid, iconSize, name)
+    ?: getGeneratedProjectIcon(path, isProjectValid, name, iconSize)
 }
 
 private data class NonLocalProjectIconKey(
@@ -212,10 +205,9 @@ private data class NonLocalProjectIconKey(
   val id: String,
   val isProjectValid: Boolean,
   override val iconSize: Int,
-  val name: String?,
+  val name: String,
 ) : DeferredIconKey() {
-  override fun loadIcon(): Icon =
-    getGeneratedProjectIcon(path = id, isProjectValid, iconSize, name)
+  override fun loadIcon(): Icon = getGeneratedNonLocalProjectIcon(id = id, isProjectValid, name, iconSize)
 }
 
 private fun getCustomIconFileInfo(file: Path): Pair<Path, BasicFileAttributes>? {
@@ -227,17 +219,16 @@ private fun getCustomIconFileInfo(file: Path): Pair<Path, BasicFileAttributes>? 
   return Pair(file, fileInfo)
 }
 
-private fun getCustomIcon(path: @SystemIndependent String, isProjectValid: Boolean, iconSize: Int): Icon? {
+private fun getCustomIcon(path: Path, isProjectValid: Boolean, iconSize: Int): Icon? {
   // IJPL-194035
   // Avoid greedy I/O under non-local projects. For example, in the case of WSL:
   //	1.	it may trigger Ijent initialization for each recent project
   //	2.	with Ijent disabled, performance may degrade further — 9P is very slow and could lead to UI freezes
-  val projectFile = Path.of(path)
-  if (projectFile.getEelDescriptor() != LocalEelDescriptor) {
+  if (path.getEelDescriptor() != LocalEelDescriptor) {
     return null
   }
 
-  val (file, fileInfo) = getCustomIconFileInfo(projectFile) ?: return null
+  val (file, fileInfo) = getCustomIconFileInfo(path) ?: return null
   val timestamp = fileInfo.lastModifiedTime().toMillis()
 
   var iconWrapper = projectIconCache.get(Pair(path, iconSize))
@@ -263,19 +254,52 @@ private fun getCustomIcon(path: @SystemIndependent String, isProjectValid: Boole
   return iconWrapper.icon
 }
 
-private fun getGeneratedProjectIcon(path: @SystemIndependent String,
-                                    isProjectValid: Boolean,
-                                    size: Int = unscaledProjectIconSize(),
-                                    name: String? = null): Icon {
-  val projectIcon = projectIconCache.get(Pair(path, size))
+private fun getGeneratedNonLocalProjectIcon(
+  id: String,
+  isProjectValid: Boolean,
+  name: String,
+  size: Int,
+): Icon {
+  val key = Pair(id, size)
+  val projectIcon = nonLocalProjectIconCache.get(key)
   if (projectIcon != null && isCachedIcon(projectIcon, isProjectValid, name = name)) {
     return projectIcon.icon
   }
-  return RecentProjectIconHelper.generateProjectIcon(path = path, isProjectValid = isProjectValid, size = size, projectName = name)
+
+  val index = abs(id.hashCode() % ProjectIconPalette.gradients.size)
+  val presentation = FixedProjectAvatarPresentation(name = name, fixedIndex = index)
+  val generatedProjectIcon = createNewProjectIcon(presentation, size, isProjectValid)
+
+  nonLocalProjectIconCache.put(key, ProjectIcon(icon = generatedProjectIcon,
+                                                isProjectValid = isProjectValid,
+                                                lastUsedProjectIconSize = JBUIScale.scale(size)))
+
+  return generatedProjectIcon
+}
+
+private fun getGeneratedProjectIcon(
+  path: Path,
+  isProjectValid: Boolean,
+  name: String? = null,
+  size: Int,
+): Icon {
+  val key = Pair(path, size)
+  val projectIcon = projectIconCache.get(key)
+  if (projectIcon != null && isCachedIcon(projectIcon, isProjectValid, name = name)) {
+    return projectIcon.icon
+  }
+
+  val generatedProjectIcon = generateNewProjectIcon(path = path, isProjectValid = isProjectValid, projectName = name, colorIndex = null, size = size)
+
+  projectIconCache.put(key, ProjectIcon(icon = generatedProjectIcon,
+                                        isProjectValid = isProjectValid,
+                                        lastUsedProjectIconSize = JBUIScale.scale(i = size)))
+  return generatedProjectIcon
 }
 
 private fun isCachedIcon(icon: ProjectIcon, isProjectValid: Boolean, timestamp: Long? = null, name: String? = null): Boolean {
-  val isNameChanged = (icon.icon as? AvatarIcon)?.avatarName?.let { it != name } ?: false
+  val presentation = (icon.icon as? AvatarIcon)?.presentation as? ProjectAvatarPresentation
+  val isNameChanged = presentation?.let { it.name != name } ?: false
   val isTimestampChanged = timestamp?.let { icon.timestamp != it } ?: false
 
   return icon.isProjectValid == isProjectValid
@@ -411,9 +435,9 @@ private class EmptyIconData(iconSize: Int = unscaledProjectIconSize()) : IconDat
 private fun createEmptyIcon(iconSize: Int, pixScale: Float) = EmptyIcon.create(((iconSize * pixScale) + 0.5f).toInt())
 
 @Internal
-object ProjectIconPalette : ColorPalette {
+object ProjectIconPalette {
   @Suppress("UnregisteredNamedColor")
-  override val gradients: Array<Pair<Color, Color>>
+  val gradients: Array<Pair<Color, Color>>
     get() {
       return arrayOf(
         JBColor.namedColor("RecentProject.Color1.Avatar.Start", JBColor(0xDB3D3C, 0xCE443C))
@@ -437,22 +461,35 @@ object ProjectIconPalette : ColorPalette {
       )
     }
 
-  override fun gradient(seed: String?): Pair<Color, Color> {
-    seed ?: return gradients[0]
-    return try {
-      return ProjectWindowCustomizerService.getInstance().getRecentProjectIconColor(Path.of(seed))
-    } catch (e: Exception) {
-      thisLogger().warn(e)
-      gradients[0]
-    }
+  fun gradient(path: Path): Pair<Color, Color> {
+    return ProjectWindowCustomizerService.getInstance().getRecentProjectIconColor(path)
   }
 }
 
-class ChangeProjectIconPalette(val index: Int) : ColorPalette {
-  override val gradients: Array<Pair<Color, Color>>
-    get() = ProjectIconPalette.gradients
 
-  override fun gradient(seed: String?): Pair<Color, Color> {
-    return gradients[index]
-  }
+@Internal
+interface ProjectAvatarPresentation : AvatarPresentation {
+  val name: String
+}
+
+@Internal
+data class FixedProjectAvatarPresentation(override val name: String, val fixedIndex: Int) : ProjectAvatarPresentation {
+  private val colors = ProjectIconPalette.gradients[fixedIndex]
+
+  override val shortName: String = AvatarUtils.initials(name)
+  override val color1: Color get() = colors.first
+  override val color2: Color get() = colors.second
+}
+
+
+@Internal
+data class FullProjectAvatarPresentation(override val name: String, val path: Path) : ProjectAvatarPresentation {
+  private val colors: Pair<Color, Color>
+    get() {
+      return ProjectIconPalette.gradient(path) // requires EDT
+    }
+
+  override val shortName: String = AvatarUtils.initials(name)
+  override val color1: Color get() = colors.first
+  override val color2: Color get() = colors.second
 }

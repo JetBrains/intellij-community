@@ -25,15 +25,15 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.io.copy
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Graphics
 import java.nio.file.Files
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
-import kotlin.io.path.invariantSeparatorsPathString
+import com.intellij.openapi.diagnostic.logger
 
 private class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
   init {
@@ -44,7 +44,7 @@ private class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() 
     val project = event.project
     val selectedItem = getSelectedItem(event)
     val projectPath = getProjectPath(project, selectedItem) ?: return
-    val basePath = RecentProjectIconHelper.getDotIdeaPath(Path.of(projectPath)) ?: return
+    val basePath = RecentProjectIconHelper.getDotIdeaPath(projectPath) ?: return
 
     val ui = ProjectIconUI(projectPath)
 
@@ -71,12 +71,18 @@ private class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() 
     }
   }
 
-  private fun getProjectPath(project: Project?, selectedItem: RecentProjectTreeItem?): String? {
+  private fun getProjectPath(project: Project?, selectedItem: RecentProjectTreeItem?): Path? {
     if (selectedItem is RecentProjectItem) {
-      return selectedItem.projectPath
+      try {
+        return Path.of(selectedItem.projectPath)
+      }
+      catch (e: InvalidPathException) {
+        logger<ChangeProjectIconAction>().warn(e)
+        return null
+      }
     }
     if (project != null && selectedItem == null) {
-      return ProjectWindowCustomizerService.projectPath(project)?.invariantSeparatorsPathString
+      return ProjectWindowCustomizerService.projectPath(project)
     }
     return null
   }
@@ -92,7 +98,7 @@ private class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() 
 private fun changeProjectIcon(
   basePath: Path,
   ui: ProjectIconUI,
-  projectPath: String,
+  projectPath: Path,
   event: AnActionEvent,
 ) {
   val pathToIcon = ui.pathToIcon?.toNioPath()
@@ -143,7 +149,7 @@ private class ChangeProjectIcon(private val ui: ProjectIconUI) : AnAction() {
   }
 }
 
-private class ProjectIconUI(private val projectPath: @SystemIndependent String) {
+private class ProjectIconUI(private val projectPath: Path) {
   val setIconActionLink = AnActionLink(IdeBundle.message("link.change.project.icon"), ChangeProjectIcon(this))
   val iconLabel = JBLabel((RecentProjectsManager.getInstance() as RecentProjectsManagerBase).getProjectIcon(projectPath, true))
   var pathToIcon: VirtualFile? = null
@@ -154,7 +160,7 @@ private class ProjectIconUI(private val projectPath: @SystemIndependent String) 
     val removeIconAction = object : DumbAwareAction(AllIcons.Actions.GC) {
       override fun actionPerformed(e: AnActionEvent) {
         iconRemoved = true
-        iconLabel.icon = RecentProjectIconHelper.generateProjectIcon(projectPath, isProjectValid = true)
+        iconLabel.icon = RecentProjectIconHelper.generateNewProjectIcon(projectPath, isProjectValid = true, projectName = null, colorIndex = null)
         pathToIcon = null
       }
 
@@ -171,7 +177,7 @@ private class ProjectIconUI(private val projectPath: @SystemIndependent String) 
   }
 
   fun pathToIcon(): Path {
-    val file = Path.of(projectPath)
+    val file = projectPath
     return RecentProjectIconHelper.getDotIdeaPath(file)?.resolve("icon.svg") ?: file.resolve(".idea/icon.svg")
   }
 }

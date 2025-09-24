@@ -318,15 +318,23 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
   protected open fun getProjectDisplayName(project: Project): String? = null
 
-  fun getProjectIcon(path: String, isProjectValid: Boolean): Icon {
+  fun getProjectIcon(path: Path, isProjectValid: Boolean): Icon {
     return projectIconHelper.getProjectIcon(path, isProjectValid)
   }
 
-  fun getProjectIcon(path: String, isProjectValid: Boolean, unscaledIconSize: Int, name: String? = null): Icon {
+  fun getProjectIcon(path: String, isProjectValid: Boolean): Icon {
+    return getProjectIcon(Path.of(path), isProjectValid)
+  }
+
+  fun getProjectIcon(path: Path, isProjectValid: Boolean, unscaledIconSize: Int, name: String? = null): Icon {
     return projectIconHelper.getProjectIcon(path = path, isProjectValid = isProjectValid, iconSize = unscaledIconSize, name = name)
   }
 
-  fun getNonLocalProjectIcon(id: String, isProjectValid: Boolean, unscaledIconSize: Int, name: String?): Icon {
+  fun getProjectIcon(path: String, isProjectValid: Boolean, unscaledIconSize: Int, name: String? = null): Icon {
+    return getProjectIcon(Path.of(path), isProjectValid, unscaledIconSize, name)
+  }
+
+  fun getNonLocalProjectIcon(id: String, isProjectValid: Boolean, unscaledIconSize: Int, name: String): Icon {
     return projectIconHelper.getNonLocalProjectIcon(id = id, isProjectValid = isProjectValid, iconSize = unscaledIconSize, name = name)
   }
 
@@ -370,6 +378,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       info.metadata = getRecentProjectMetadata(path, project)
       return info
     }
+  }
+
+  fun addRecentPath(path: Path, info: RecentProjectMetaInfo) {
+    addRecentPath(path.invariantSeparatorsPathString, info)
   }
 
   /**
@@ -555,10 +567,18 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
+  fun getDisplayName(path: Path): String? {
+    return getDisplayName(path.invariantSeparatorsPathString)
+  }
+
   fun getDisplayName(path: String): String? {
     synchronized(stateLock) {
       return state.additionalInfo.get(path)?.displayName
     }
+  }
+
+  fun getProjectName(path: Path): String {
+    return getProjectName(path.invariantSeparatorsPathString)
   }
 
   fun getActivationTimestamp(path: String): Long? {

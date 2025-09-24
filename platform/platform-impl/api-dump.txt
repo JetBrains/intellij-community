@@ -163,6 +163,12 @@ c:com.intellij.ide.RecentProjectListActionProvider
 - getActions(Z,Z,Z):java.util.List
 - bs:getActions$default(com.intellij.ide.RecentProjectListActionProvider,Z,Z,Z,I,java.lang.Object):java.util.List
 c:com.intellij.ide.RecentProjectsManagerBase
+- f:addRecentPath(java.nio.file.Path,com.intellij.ide.RecentProjectMetaInfo):V
+- f:getDisplayName(java.nio.file.Path):java.lang.String
+- f:getProjectIcon(java.nio.file.Path,Z):javax.swing.Icon
+- f:getProjectIcon(java.nio.file.Path,Z,I,java.lang.String):javax.swing.Icon
+- bs:getProjectIcon$default(com.intellij.ide.RecentProjectsManagerBase,java.nio.file.Path,Z,I,java.lang.String,I,java.lang.Object):javax.swing.Icon
+- f:getProjectName(java.nio.file.Path):java.lang.String
 - willReopenProjectOnStart(kotlin.coroutines.Continuation):java.lang.Object
 c:com.intellij.ide.ReopenProjectAction
 - getNameToDisplayAsText():java.lang.String
@@ -883,6 +889,14 @@ com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
 - sf:Companion:com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createTabActions(com.intellij.ui.content.Content):java.util.List
+f:com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
+- f:runCloneTask(java.nio.file.Path,com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneTask):V
+f:com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneableProject
+- <init>(java.nio.file.Path,com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneTaskInfo,com.intellij.openapi.wm.ex.ProgressIndicatorEx,com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneStatus):V
+- f:component1():java.nio.file.Path
+- f:copy(java.nio.file.Path,com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneTaskInfo,com.intellij.openapi.wm.ex.ProgressIndicatorEx,com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneStatus):com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneableProject
+- bs:copy$default(com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneableProject,java.nio.file.Path,com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneTaskInfo,com.intellij.openapi.wm.ex.ProgressIndicatorEx,com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneStatus,I,java.lang.Object):com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneableProject
+- f:getProjectPath():java.nio.file.Path
 f:com.intellij.openapi.wm.impl.welcomeScreen.collapsedActionGroup.CollapsedActionGroup
 - f:getCollapsed():Z
 - f:setCollapsed(Z):V

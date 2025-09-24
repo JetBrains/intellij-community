@@ -175,7 +175,7 @@ internal data class ProviderRecentProjectItem(
 
 @Internal
 data class CloneableProjectItem(
-  val projectPath: @SystemIndependent String,
+  val projectPath: Path,
   @NlsSafe val projectName: String,
   @NlsSafe val displayName: String,
   val cloneableProject: CloneableProject
