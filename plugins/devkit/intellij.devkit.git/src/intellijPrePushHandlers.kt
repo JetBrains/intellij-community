@@ -34,8 +34,6 @@ internal class IntelliJPlatformPrePushHandler : IssueIDPrePushHandler() {
   override fun isAvailable(): Boolean = Registry.`is`("intellij.platform.commit.message.validation.enabled", true)
   override fun getPresentableName(): @Nls String = DevKitGitBundle.message("push.commit.intellij.platform.handler.name")
 
-  override fun isTargetBranchProtected(project: Project, pushInfo: PushInfo): Boolean = true
-
   override fun handleCommitsValidationFailure(
     project: Project,
     info: PushInfo,
