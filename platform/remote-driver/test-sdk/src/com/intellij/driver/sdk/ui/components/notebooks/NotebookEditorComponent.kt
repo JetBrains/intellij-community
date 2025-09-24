@@ -13,6 +13,7 @@ import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.EditorComponentImpl
+import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
 import com.intellij.driver.sdk.ui.components.common.editor
 import com.intellij.driver.sdk.ui.components.common.ideFrame
@@ -390,3 +391,18 @@ fun Driver.closeRightToolWindow(stripeButtonName: String) {
     }
   }
 }
+
+/**
+ * Executes a test block within the context of the notebook editor UI component.
+ * Note: only the NotebookEditorUiComponent and its successors are directly available in the context of this block.
+ * If you need to access other UI components in testBody(), use the `driver.ideFrame {}`.
+ *
+ * @param testBody A lambda containing the test actions to be executed with the `NotebookEditorUiComponent`.
+ */
+fun Driver.withNotebookEditor(testBody: NotebookEditorUiComponent.() -> Unit): IdeaFrameUI = ideFrame {
+  notebookEditor {
+    testBody()
+  }
+}
+
+
