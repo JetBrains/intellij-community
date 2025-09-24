@@ -193,13 +193,15 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
 
     Set<DfaMemoryState> finalStates = new LinkedHashSet<>();
 
-    DfType qualifierDfType = stateBefore.getDfType(callArguments.getQualifier());
+    DfaValue qualifier = callArguments.getQualifier();
+    DfType qualifierDfType = stateBefore.getDfType(qualifier);
     PsiMethod realMethod = findSpecificMethod(DfaPsiUtil.dfTypeToPsiType(factory.getProject(), qualifierDfType));
-    if (realMethod != null && (TypeConstraint.fromDfType(qualifierDfType).isExact() || !PsiUtil.canBeOverridden(realMethod)) && 
-        PropertyUtil.getFieldOfGetter(realMethod) != null) {
+    boolean stable = TypeConstraint.fromDfType(qualifierDfType).isExact();
+    VariableDescriptor precomputed = JavaDfaValueFactory.getAccessedVariableOrGetter(realMethod, stable);
+    if (realMethod != null && precomputed instanceof PlainDescriptor) {
       callArguments = callArguments.makeTransparent();
     }
-    DfaValue defaultResult = getMethodResultValue(callArguments, stateBefore, factory, realMethod);
+    DfaValue defaultResult = getMethodResultValue(callArguments, stateBefore, factory, realMethod, precomputed);
     DfaCallState initialState = new DfaCallState(stateBefore, callArguments, defaultResult);
     Set<DfaCallState> currentStates = Collections.singleton(initialState);
     if (callArguments.getArguments() != null && !(defaultResult.getDfType() instanceof DfConstantType)) {
@@ -339,13 +341,12 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
   }
 
   private @NotNull DfaValue getMethodResultValue(@NotNull DfaCallArguments callArguments,
-                                                 @NotNull DfaMemoryState state, 
-                                                 @NotNull DfaValueFactory factory, 
-                                                 PsiMethod realMethod) {
+                                                 @NotNull DfaMemoryState state,
+                                                 @NotNull DfaValueFactory factory,
+                                                 PsiMethod realMethod, 
+                                                 @Nullable VariableDescriptor precomputed) {
     DfaValue qualifierValue = callArguments.getQualifier();
-    boolean stable = TypeConstraint.fromDfType(state.getDfType(qualifierValue)).isExact();
-    VariableDescriptor descriptor = JavaDfaValueFactory.getAccessedVariableOrGetter(realMethod, stable);
-    DfaValue precomputedValue = descriptor == null ? null : descriptor.createValue(factory, qualifierValue);
+    DfaValue precomputedValue = precomputed == null ? null : precomputed.createValue(factory, qualifierValue);
 
     if (callArguments.getArguments() != null && myTargetMethod != null) {
       CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(myTargetMethod);
