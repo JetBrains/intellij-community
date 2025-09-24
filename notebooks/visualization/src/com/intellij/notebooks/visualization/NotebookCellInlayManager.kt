@@ -40,11 +40,22 @@ class NotebookCellInlayManager private constructor(
 
   val cells: List<EditorCell> get() = notebook.cells
 
-  val endNotebookInlays: List<EditorNotebookEndInlay> = EditorNotebookEndInlayProvider.create(this)
+  var endNotebookInlays: List<EditorNotebookEndInlay> = EditorNotebookEndInlayProvider.create(this)
+  private set
 
   internal val views: MutableMap<EditorCell, EditorCellView> = mutableMapOf()
 
   private val cellViewEventListeners = EventDispatcher.create(EditorCellViewEventListener::class.java)
+
+  fun refresh() {
+    endNotebookInlays.forEach { Disposer.dispose(it) }
+    endNotebookInlays = EditorNotebookEndInlayProvider.create(this)
+
+    for (cell in cells) {
+      disposeCellView(cell)
+      updateCellVisibility(cell, cell.isUnfolded.get())
+    }
+  }
 
   private fun update(force: Boolean = false, keepScrollingPosition: Boolean = false, block: (UpdateContext) -> Unit) {
     editor.updateManager.update(force = force, keepScrollingPositon = keepScrollingPosition, block = block)
