@@ -957,6 +957,7 @@ org.jetbrains.jewel.ui.component.banner.BannerIconActionScope
 org.jetbrains.jewel.ui.component.banner.BannerLinkActionScope
 - a:action(java.lang.String,kotlin.jvm.functions.Function0):V
 f:org.jetbrains.jewel.ui.component.search.HighlightKt
+f:org.jetbrains.jewel.ui.component.search.SpeedSearchableComboBoxKt
 f:org.jetbrains.jewel.ui.component.search.SpeedSearchableLazyColumnKt
 f:org.jetbrains.jewel.ui.component.search.SpeedSearchableTreeKt
 f:org.jetbrains.jewel.ui.component.styling.BannerColors

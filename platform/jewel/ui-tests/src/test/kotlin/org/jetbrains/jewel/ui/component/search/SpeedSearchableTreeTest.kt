@@ -30,9 +30,14 @@ import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.ui.component.DefaultButton
@@ -47,6 +52,8 @@ import org.junit.Rule
 class SpeedSearchableTreeTest {
     @get:Rule val rule = createComposeRule()
 
+    private val testDispatcher = UnconfinedTestDispatcher()
+
     private val ComposeContentTestRule.onLazyTree
         get() = onNodeWithTag("LazyTree")
 
@@ -55,6 +62,16 @@ class SpeedSearchableTreeTest {
 
     private fun ComposeContentTestRule.onLazyTreeNode(text: String) =
         onNode(hasAnyAncestor(hasTestTag("LazyTree")) and hasText(text))
+
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     @Test
     fun `should show on type text`() = runComposeTest {
@@ -273,7 +290,7 @@ class SpeedSearchableTreeTest {
                             tree = tree,
                             modifier = Modifier.size(200.dp).testTag("LazyTree").focusRequester(focusRequester),
                             nodeText = { it.data },
-                            dispatcher = UnconfinedTestDispatcher(),
+                            dispatcher = testDispatcher,
                         ) {
                             Box(Modifier.fillMaxWidth()) {
                                 var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }

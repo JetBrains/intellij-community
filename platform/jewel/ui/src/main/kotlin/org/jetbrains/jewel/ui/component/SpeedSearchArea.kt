@@ -99,7 +99,14 @@ public fun SpeedSearchArea(
         scope.content()
 
         if (state.isVisible) {
-            SpeedSearchInput(state.textFieldState, state.hasMatches, styling, textStyle, textFieldStyle)
+            SpeedSearchInput(
+                state = state.textFieldState,
+                hasMatch = state.hasMatches,
+                position = state.position,
+                styling = styling,
+                textStyle = textStyle,
+                textFieldStyle = textFieldStyle,
+            )
         }
     }
 }
@@ -117,6 +124,7 @@ public interface SpeedSearchScope : BoxScope {
 @ExperimentalJewelApi
 @ApiStatus.Experimental
 public interface SpeedSearchState {
+    public var position: Alignment.Vertical
     public val searchText: String
     public val isVisible: Boolean
     public val hasMatches: Boolean
@@ -174,13 +182,22 @@ public fun ProvideSearchMatchState(
 private fun SpeedSearchInput(
     state: TextFieldState,
     hasMatch: Boolean,
+    position: Alignment.Vertical,
     styling: SpeedSearchStyle,
     textStyle: TextStyle,
     textFieldStyle: TextFieldStyle,
 ) {
     val foregroundColor = styling.getCurrentForegroundColor(hasMatch, textFieldStyle, textStyle)
 
-    Popup(popupPositionProvider = rememberComponentRectPositionProvider(Alignment.TopStart, Alignment.TopEnd)) {
+    val (anchor, alignment) =
+        remember(position) {
+            when (position) {
+                Alignment.Bottom -> Alignment.BottomStart to Alignment.BottomEnd
+                else -> Alignment.TopStart to Alignment.TopEnd
+            }
+        }
+
+    Popup(popupPositionProvider = rememberComponentRectPositionProvider(anchor, alignment)) {
         val focusRequester = remember { FocusRequester() }
 
         BasicTextField(
@@ -390,6 +407,8 @@ internal class SpeedSearchStateImpl(private val matcherBuilderState: State<(Stri
     internal val textFieldState = TextFieldState()
     private var allMatches: Map<String?, SpeedSearchMatcher.MatchResult> by mutableStateOf(emptyMap())
     override val searchText: String by derivedStateOf { textFieldState.text.toString() }
+
+    override var position: Alignment.Vertical by mutableStateOf(Alignment.Top)
 
     override var isVisible: Boolean by mutableStateOf(false)
         internal set
