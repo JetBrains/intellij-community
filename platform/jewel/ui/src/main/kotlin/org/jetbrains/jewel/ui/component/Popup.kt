@@ -194,6 +194,7 @@ internal data class AnchorVerticalMenuPositionProvider(
     val contentMargin: PaddingValues,
     val alignment: Alignment.Horizontal,
     val density: Density,
+    val onPopupPositionDecided: (Alignment.Vertical) -> Unit = {},
 ) : PopupPositionProvider {
     override fun calculatePosition(
         anchorBounds: IntRect,
@@ -234,8 +235,10 @@ internal data class AnchorVerticalMenuPositionProvider(
         // the dropdown menu is displayed below by default.
         val y =
             if (belowSpacing > popupContentSize.height || belowSpacing >= aboveSpacing) {
+                onPopupPositionDecided(Alignment.Bottom)
                 anchorBounds.bottom + contentOffsetY
             } else {
+                onPopupPositionDecided(Alignment.Top)
                 anchorBounds.top - contentOffsetY - popupContentSize.height
             }
 

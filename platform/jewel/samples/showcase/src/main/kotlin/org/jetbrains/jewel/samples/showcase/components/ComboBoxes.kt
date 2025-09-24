@@ -31,7 +31,9 @@ import org.jetbrains.jewel.ui.component.GroupHeader
 import org.jetbrains.jewel.ui.component.ListComboBox
 import org.jetbrains.jewel.ui.component.PopupManager
 import org.jetbrains.jewel.ui.component.SimpleListItem
+import org.jetbrains.jewel.ui.component.SpeedSearchArea
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.search.SpeedSearchableComboBox
 import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
@@ -92,7 +94,7 @@ public fun ComboBoxes(modifier: Modifier = Modifier) {
 private fun ListComboBoxes() {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Column(Modifier.weight(1f).widthIn(min = 125.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("String-based API, enabled")
+            Text("String-based API")
             var selectedIndex by remember { mutableIntStateOf(2) }
             val selectedItemText = if (selectedIndex >= 0) stringItems[selectedIndex] else "[none]"
             InfoText(text = "Selected item: $selectedItemText")
@@ -107,7 +109,7 @@ private fun ListComboBoxes() {
         }
 
         Column(Modifier.weight(1f).widthIn(min = 125.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Generics-based API, enabled")
+            Text("Generics-based API")
             var selectedIndex by remember { mutableIntStateOf(2) }
             val selectedItemText = if (selectedIndex >= 0) languageOptions[selectedIndex].name else "[none]"
             InfoText(text = "Selected item: $selectedItemText")
@@ -132,22 +134,22 @@ private fun ListComboBoxes() {
         }
 
         Column(Modifier.weight(1f).widthIn(min = 125.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("String-based API, disabled")
+            Text("Speed Search API")
             var selectedIndex by remember { mutableIntStateOf(2) }
             val selectedItemText = if (selectedIndex >= 0) stringItems[selectedIndex] else "[none]"
             InfoText(text = "Selected item: $selectedItemText")
 
-            ListComboBox(
-                items = stringItems,
-                selectedIndex = selectedIndex,
-                onSelectedItemChange = { index -> selectedIndex = index },
-                modifier = Modifier.widthIn(max = 200.dp),
-                enabled = false,
-            )
+            SpeedSearchArea(Modifier.widthIn(max = 200.dp)) {
+                SpeedSearchableComboBox(
+                    items = stringItems,
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { index -> selectedIndex = index },
+                )
+            }
         }
 
         Column(Modifier.weight(1f).widthIn(min = 125.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Generics-based API, disabled")
+            Text("Disabled")
             var selectedIndex by remember { mutableIntStateOf(2) }
             val selectedItemText = if (selectedIndex >= 0) languageOptions[selectedIndex].name else "[none]"
             InfoText(text = "Selected item: $selectedItemText")
