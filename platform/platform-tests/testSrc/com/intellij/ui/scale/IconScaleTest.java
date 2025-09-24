@@ -104,6 +104,7 @@ public class IconScaleTest extends BasePlatformTestCase {
   }
 
   public void ideHiDpi(float scale) throws MalformedURLException {
+    overrideJreHiDPIEnabled(false); // it'll be restored in tearDown
     // the system scale repeats the default user scale in IDE-HiDPI
     test(scale, scale);
   }
