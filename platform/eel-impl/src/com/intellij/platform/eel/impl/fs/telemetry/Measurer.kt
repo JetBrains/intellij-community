@@ -76,7 +76,7 @@ object Measurer {
         DelegateType.wsl -> ".ijent.wsl"
         DelegateType.docker -> ".ijent.docker"
       }
-      val keyString = "nio.fs.${delegateTypeKey}.${operation}$successKey$repeatedKey"
+      val keyString = "nio.fs${delegateTypeKey}.${operation}$successKey$repeatedKey"
       return keyString
     }
     companion object {
