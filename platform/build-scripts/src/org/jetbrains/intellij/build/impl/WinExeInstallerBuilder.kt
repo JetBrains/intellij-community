@@ -240,6 +240,7 @@ private suspend fun prepareSignTool(nsiConfDir: Path, context: BuildContext, uni
       """.trimIndent()
     else -> $$"""
       #!/bin/sh
+      set -eux
       mv -f "$1" "$${nsiConfDir}/Uninstall.exe"
       "$${toolFile}" -denoted-content-type application/x-exe -signed-files-dir "$${nsiConfDir}/_signed" "$${nsiConfDir}/Uninstall.exe"
       cp -f "$${nsiConfDir}/_signed/Uninstall.exe" "$${uninstallerCopy}"
