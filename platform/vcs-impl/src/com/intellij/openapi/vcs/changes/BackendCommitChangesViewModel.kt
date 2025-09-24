@@ -69,7 +69,6 @@ internal interface BackendCommitChangesViewModel {
   fun getActions(): List<AnAction>
   fun isModelUpdateInProgress(): Boolean
 
-  fun setBusy(busy: Boolean)
   fun scheduleRefreshNow(callback: Runnable?)
   fun scheduleDelayedRefresh()
   fun setGrouping(groupingKey: String)
@@ -106,9 +105,6 @@ private class BackendRemoteCommitChangesViewModel(private val project: Project) 
   override fun getActions(): List<AnAction> = emptyList()
 
   override fun isModelUpdateInProgress(): Boolean = false
-
-  override fun setBusy(busy: Boolean) {
-  }
 
   override fun scheduleRefreshNow(callback: Runnable?) {
   }
@@ -155,10 +151,6 @@ private class BackendLocalCommitChangesViewModel(private val panel: CommitChange
   override fun getActions(): List<AnAction> = panel.toolbarActionGroup.getChildren(ActionManager.getInstance()).toList()
 
   override fun isModelUpdateInProgress(): Boolean = panel.changesView.isModelUpdateInProgress
-
-  override fun setBusy(busy: Boolean) {
-    panel.setBusy(busy)
-  }
 
   override fun scheduleRefreshNow(callback: Runnable?) {
     panel.scheduleRefreshNow(callback)

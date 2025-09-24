@@ -781,7 +781,6 @@ com.intellij.openapi.vcs.changes.ChangesViewI
 - a:scheduleRefresh():V
 - a:selectChanges(java.util.List):V
 - a:selectFile(com.intellij.openapi.vfs.VirtualFile):V
-- a:setBusy(Z):V
 - a:setGrouping(java.lang.String):V
 - a:updateProgressComponent(java.util.List):V
 c:com.intellij.openapi.vcs.changes.ChangesViewManager
@@ -802,7 +801,6 @@ c:com.intellij.openapi.vcs.changes.ChangesViewManager
 - scheduleRefresh(java.lang.Runnable):V
 - selectChanges(java.util.List):V
 - selectFile(com.intellij.openapi.vfs.VirtualFile):V
-- setBusy(Z):V
 - setGrouping(java.lang.String):V
 - updateProgressComponent(java.util.List):V
 f:com.intellij.openapi.vcs.changes.ChangesViewManager$ChangesViewToolWindowPanel

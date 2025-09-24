@@ -49,10 +49,6 @@ class DummyChangesView implements ChangesViewEx {
   }
 
   @Override
-  public void setBusy(boolean b) {
-  }
-
-  @Override
   public void setGrouping(@NotNull String groupingKey) {
   }
 

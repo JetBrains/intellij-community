@@ -27,7 +27,6 @@ public interface ChangesViewI {
   void selectFile(VirtualFile vFile);
   void selectChanges(@NotNull List<? extends Change> changes);
   void updateProgressComponent(@NotNull List<Supplier<JComponent>> progress);
-  void setBusy(boolean b);
 
   void setGrouping(@NotNull String groupingKey);
 }

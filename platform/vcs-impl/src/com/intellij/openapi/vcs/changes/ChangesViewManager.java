@@ -202,12 +202,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   }
 
   @Override
-  public void setBusy(boolean b) {
-    if (myChangesView == null) return;
-    myChangesView.getViewModel().setBusy(b);
-  }
-
-  @Override
   public void setGrouping(@NotNull String groupingKey) {
     if (myChangesView == null) return;
     myChangesView.getViewModel().setGrouping(groupingKey);
