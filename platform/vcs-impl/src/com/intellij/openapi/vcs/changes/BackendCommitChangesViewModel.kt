@@ -4,6 +4,8 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
@@ -11,9 +13,12 @@ import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel.ModelP
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.tree.TreePath
@@ -21,26 +26,24 @@ import javax.swing.tree.TreePath
 internal class BackendChangesView private constructor(
   val changesPanel: JComponent,
   val viewModel: BackendCommitChangesViewModel,
-): Disposable {
-  init {
-    Disposer.register(this, viewModel)
-  }
-
-  override fun dispose() {
-  }
-
+) {
   companion object {
     @JvmStatic
     fun create(project: Project, parentDisposable: Disposable): BackendChangesView {
-      val tree: ChangesListView = LocalChangesListView(project)
-      val panel = CommitChangesViewWithToolbarPanel(tree, parentDisposable)
+      val scope = project.service<ScopeProvider>().cs.childScope("CommitChangesViewWithToolbarPanel")
+      Disposer.register(parentDisposable) { scope.cancel() }
+
+      val panel = CommitChangesViewWithToolbarPanel(LocalChangesListView(project), scope)
       return BackendChangesView(panel, BackendLocalCommitChangesViewModel(panel))
     }
   }
+
+  @Service(Service.Level.PROJECT)
+  internal class ScopeProvider(val cs: CoroutineScope)
 }
 
 // TODO make RD-friendly implementation, cleanup methods returning tree/component
-internal interface BackendCommitChangesViewModel: Disposable {
+internal interface BackendCommitChangesViewModel {
   fun initPanel()
 
   fun setCommitWorkflowHandler(handler: ChangesViewCommitWorkflowHandler?)
@@ -68,10 +71,6 @@ internal interface BackendCommitChangesViewModel: Disposable {
 
 private class BackendLocalCommitChangesViewModel(private val panel: CommitChangesViewWithToolbarPanel): BackendCommitChangesViewModel {
   private var commitWorkflowHandler: ChangesViewCommitWorkflowHandler? = null
-
-  init {
-    Disposer.register(this, panel)
-  }
 
   override fun initPanel() {
     panel.initPanel(ModelProvider())
@@ -128,9 +127,6 @@ private class BackendLocalCommitChangesViewModel(private val panel: CommitChange
   override fun getTree(): ChangesListView = panel.changesView
 
   override fun getPreferredFocusableComponent(): JComponent = panel.changesView.preferredFocusedComponent
-
-  override fun dispose() {
-  }
 
   private inner class ModelProvider : CommitChangesViewWithToolbarPanel.ModelProvider {
     override fun getModel(grouping: ChangesGroupingPolicyFactory): ExtendedTreeModel {

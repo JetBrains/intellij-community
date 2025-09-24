@@ -94,7 +94,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
       BackendChangesView changesView = initChangesView();
       ChangesViewToolWindowPanel panel = new ChangesViewToolWindowPanel(myProject, changesView);
-      Disposer.register(this, changesView);
       Disposer.register(this, panel);
 
       panel.updateCommitWorkflow();
