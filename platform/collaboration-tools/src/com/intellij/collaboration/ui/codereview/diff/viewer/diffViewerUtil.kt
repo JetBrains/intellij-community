@@ -130,24 +130,7 @@ suspend fun <M, I> DiffViewerBase.showCodeReview(
   modelFactory: CoroutineScope.(locationToLine: (DiffLineLocation) -> Int?, lineToLocation: (Int) -> DiffLineLocation?) -> M,
   rendererFactory: RendererFactory<I, JComponent>,
 ): Nothing where I : CodeReviewInlayModel, M : CodeReviewEditorModel<I> {
-  showCodeReview(modelFactory, null, rendererFactory)
-}
-
-/**
- * Create editor models for diff editors via [modelFactory] and show inlays and gutter controls
- * Inlays are created via [rendererFactory]
- *
- * @param M editor inlays and controls model
- * @param I inlay model
- * @param modelKey will be used to store model in editor user data keys
- */
-@ApiStatus.Experimental
-suspend fun <M, I> DiffViewerBase.showCodeReview(
-  modelFactory: CoroutineScope.(locationToLine: (DiffLineLocation) -> Int?, lineToLocation: (Int) -> DiffLineLocation?) -> M,
-  modelKey: Key<M>? = null,
-  rendererFactory: RendererFactory<I, JComponent>,
-): Nothing where I : CodeReviewInlayModel, M : CodeReviewEditorModel<I> {
-  showCodeReview({ _, _, locationToLine, lineToLocation, _ -> modelFactory(locationToLine, lineToLocation) }, modelKey, rendererFactory)
+  showCodeReview(modelFactory, rendererFactory)
 }
 
 typealias EditorModelFactory<M> = CoroutineScope.(
@@ -161,7 +144,6 @@ typealias EditorModelFactory<M> = CoroutineScope.(
 @ApiStatus.Experimental
 suspend fun <M, I> DiffViewerBase.showCodeReview(
   modelFactory: EditorModelFactory<M>,
-  modelKey: Key<M>? = null,
   rendererFactory: RendererFactory<I, JComponent>,
 ): Nothing where I : CodeReviewInlayModel, M : CodeReviewEditorModel<I> {
   val viewer = this
@@ -182,7 +164,7 @@ suspend fun <M, I> DiffViewerBase.showCodeReview(
                 { lineIdx -> DiffLineLocation(viewer.side, lineIdx) },
                 { line -> if (viewer.side == Side.LEFT) line to -1 else -1 to line }
               )
-              viewer.editor.showCodeReview(model, modelKey, rendererFactory)
+              viewer.editor.showCodeReview(model, rendererFactory)
             }
           }
           is UnifiedDiffViewer -> {
@@ -200,7 +182,7 @@ suspend fun <M, I> DiffViewerBase.showCodeReview(
                   leftLine to rightLine
                 }
               )
-              viewer.editor.showCodeReview(model, modelKey, rendererFactory)
+              viewer.editor.showCodeReview(model, rendererFactory)
             }
           }
           is TwosideTextDiffViewer -> {
@@ -213,7 +195,7 @@ suspend fun <M, I> DiffViewerBase.showCodeReview(
                   { lineIdx -> DiffLineLocation(Side.LEFT, lineIdx) },
                   { line -> line to viewer.transferPosition(Side.RIGHT, LineCol(line, 0)).line }
                 )
-                viewer.editor1.showCodeReview(model, modelKey, rendererFactory)
+                viewer.editor1.showCodeReview(model, rendererFactory)
               }
               launchNow {
                 val model = modelFactory(
@@ -223,7 +205,7 @@ suspend fun <M, I> DiffViewerBase.showCodeReview(
                   { lineIdx -> DiffLineLocation(Side.RIGHT, lineIdx) },
                   { line -> viewer.transferPosition(Side.LEFT, LineCol(line, 0)).line to line }
                 )
-                viewer.editor2.showCodeReview(model, modelKey, rendererFactory)
+                viewer.editor2.showCodeReview(model, rendererFactory)
               }
             }
           }
@@ -234,7 +216,7 @@ suspend fun <M, I> DiffViewerBase.showCodeReview(
   }
 }
 
-private suspend fun <I, M> EditorEx.showCodeReview(model: M, modelKey: Key<M>?, rendererFactory: RendererFactory<I, JComponent>): Nothing
+private suspend fun <I, M> EditorEx.showCodeReview(model: M, rendererFactory: RendererFactory<I, JComponent>): Nothing
   where I : CodeReviewInlayModel, M : CodeReviewEditorModel<I> {
   val editor = this
   coroutineScope {
@@ -246,17 +228,17 @@ private suspend fun <I, M> EditorEx.showCodeReview(model: M, modelKey: Key<M>?, 
       renderInlays(model.inlays, HashingUtil.mappingStrategy(CodeReviewInlayModel::key)) { rendererFactory(it) }
     }
 
-    if (modelKey != null) {
-      putUserData(modelKey, model)
-    }
     putUserData(CodeReviewCommentableEditorModel.KEY, model)
+    if (model is CodeReviewNavigableEditorViewModel) {
+      putUserData(CodeReviewNavigableEditorViewModel.KEY, model)
+    }
     try {
       awaitCancellation()
     }
     finally {
       putUserData(CodeReviewCommentableEditorModel.KEY, null)
-      if (modelKey != null) {
-        putUserData(modelKey, null)
+      if (model is CodeReviewNavigableEditorViewModel) {
+        putUserData(CodeReviewNavigableEditorViewModel.KEY, null)
       }
     }
   }

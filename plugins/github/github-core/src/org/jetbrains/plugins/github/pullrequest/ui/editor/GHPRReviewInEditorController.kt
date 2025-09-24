@@ -66,8 +66,8 @@ internal class GHPRReviewInEditorController(private val project: Project, privat
               launchNow {
                 ReviewInEditorUtil.showReviewToolbarWithActions(
                   reviewVm, editor,
-                  actionManager.getAction("GitHub.Diff.Review.PreviousComment"),
-                  actionManager.getAction("GitHub.Diff.Review.NextComment"),
+                  actionManager.getAction("CodeReview.PreviousComment"),
+                  actionManager.getAction("CodeReview.NextComment"),
                 )
               }
 

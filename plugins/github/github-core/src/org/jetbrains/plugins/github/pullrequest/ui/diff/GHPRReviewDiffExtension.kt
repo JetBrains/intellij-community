@@ -24,7 +24,6 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -75,9 +74,7 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
               changeVm.setViewedState(isViewed = true)
             }
             val modelFactory = createEditorModelFactory(reviewVm, changeVm, change)
-            viewer.showCodeReview(modelFactory,
-                                  GHPRReviewDiffEditorModel.KEY,
-                                  { createRenderer(it, userIcon) })
+            viewer.showCodeReview(modelFactory) { createRenderer(it, userIcon) }
           }
         }
       }.cancelOnDispose(viewer)
@@ -100,7 +97,6 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
           val (leftLine, rightLine) = lineToUnified(it)
           UnifiedCodeReviewItemPosition(change, leftLine, rightLine)
         }.apply {
-          editor.putUserData(GHPRReviewDiffEditorModel.KEY, this)
           cs.launchNow {
             inlays
               .mapStatefulToStateful { inlayModel ->
@@ -120,11 +116,7 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
 internal interface GHPRReviewDiffEditorModel : CodeReviewEditorModel<GHPREditorMappedComponentModel>,
                                                CodeReviewCommentableEditorModel.WithMultilineComments,
                                                CodeReviewNavigableEditorViewModel,
-                                               CodeReviewEditorGutterControlsModel.WithMultilineComments {
-  companion object {
-    val KEY: Key<GHPRReviewDiffEditorModel> = Key.create("GitHub.PullRequest.Diff.Editor.Model")
-  }
-}
+                                               CodeReviewEditorGutterControlsModel.WithMultilineComments
 
 private class DiffEditorModel(
   cs: CoroutineScope,

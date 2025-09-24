@@ -18,6 +18,7 @@ import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsCompo
 import com.intellij.collaboration.ui.codereview.comment.submitActionIn
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
+import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.util.*
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -36,7 +37,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThre
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel.CommentItem
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadComponentFactory
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadViewModel
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
@@ -87,7 +87,7 @@ internal object GHPRReviewEditorComponentsFactory {
     }.let {
       CodeReviewCommentUIUtil.createEditorInlayPanel(it)
     }, UiDataProvider { sink ->
-      sink[GHPRReviewThreadViewModel.THREAD_VM_DATA_KEY] = vm
+      sink[CodeReviewTrackableItemViewModel.TRACKABLE_ITEM_KEY] = vm
     }).apply {
       if (AdvancedSettings.getBoolean("show.review.threads.with.increased.margins")) {
         border = JBUI.Borders.empty(VERTICAL_INLAY_MARGIN, LEFT_INLAY_MARGIN, VERTICAL_INLAY_MARGIN, RIGHT_INLAY_MARGIN)

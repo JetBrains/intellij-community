@@ -940,11 +940,8 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sort(java.util.List):java.util.List
 f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - *sf:controlInlaysIn(com.intellij.diff.tools.util.base.DiffViewerBase,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):V
-- *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function3,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function6,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- *bs:showCodeReview$default(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function3,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- *bs:showCodeReview$default(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function6,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function6,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 - *sf:Companion:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$Companion
 - a:canCreateComment(I):Z

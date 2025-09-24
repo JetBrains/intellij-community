@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui
 
+import com.intellij.collaboration.action.findFocusedThreadId
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.flatMapLatestEach
 import com.intellij.collaboration.async.launchNow
@@ -29,7 +30,6 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.github.pullrequest.comment.action.findFocusedThreadId
 import org.jetbrains.plugins.github.pullrequest.ui.comment.CommentedCodeFrameRenderer
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPREditorMappedComponentModel
 import java.awt.*
