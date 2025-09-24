@@ -204,7 +204,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       val path: Path
       if (storeDescriptor.dotIdea == null) {
         path = projectFilePath
-        prefix = storeDescriptor.getProjectName()
+        prefix = storeDescriptor.projectName
       }
       else {
         path = storeDescriptor.projectIdentityFile

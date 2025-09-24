@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectNameProvider
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
@@ -166,15 +167,16 @@ private class DotIdeaProjectStoreDescriptor(
     return result
   }
 
-  override fun getProjectName(): String {
-    val storedName = JpsPathUtil.readProjectName(dotIdea)
-    if (storedName != null) {
-      lastSavedProjectName = storedName
-      return storedName
-    }
+  override val projectName: @NlsSafe String
+    get() {
+      val storedName = JpsPathUtil.readProjectName(dotIdea)
+      if (storedName != null) {
+        lastSavedProjectName = storedName
+        return storedName
+      }
 
-    return NioFiles.getFileName(historicalProjectBasePath)
-  }
+      return super.projectName
+    }
 
   override suspend fun saveProjectName(project: Project) {
     try {

@@ -4,6 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -30,12 +31,10 @@ internal class IprProjectStoreDescriptor(
     Files.deleteIfExists(file)
   }
 
-  override fun getProjectName(): String {
-    return file.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
-  }
-
-  override suspend fun saveProjectName(project: Project) {
-  }
+  override val projectName: @NlsSafe String
+    get() = file.fileName
+      .toString()
+      .removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
 
   override fun getJpsBridgeAwareStorageSpec(filePath: String, project: Project): Storage {
     return doGetJpsBridgeAwareStorageSpec(filePath, project)

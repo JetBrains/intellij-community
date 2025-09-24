@@ -1043,7 +1043,9 @@ private fun readProjectName(path: String): String {
     return path
   }
 
-  return ProjectStorePathManager.getInstance().getStoreDescriptor(file).getProjectName()
+  return ProjectStorePathManager.getInstance()
+    .getStoreDescriptor(file)
+    .projectName
 }
 
 private fun getLastProjectFrameInfoFile() = getSystemDir().resolve("lastProjectFrameInfo")

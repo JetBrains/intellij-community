@@ -8,6 +8,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.NioFiles
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -44,9 +45,10 @@ interface ProjectStoreDescriptor {
 
   fun testStoreDirectoryExistsForProjectRoot(): Boolean
 
-  fun getProjectName(): String
+  val projectName: @NlsSafe String
+    get() = NioFiles.getFileName(historicalProjectBasePath)
 
-  suspend fun saveProjectName(project: Project)
+  suspend fun saveProjectName(project: Project) {}
 
   fun customMacros(): Map<String, Path> = emptyMap()
 
