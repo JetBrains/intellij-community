@@ -1422,17 +1422,21 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void flushVariables(@NotNull Predicate<? super @NotNull DfaVariableValue> filter, boolean onlyThis) {
-    Set<DfaVariableValue> vars = new HashSet<>();
-    for (EqClass aClass : myEqClasses) {
+    BitSet vars = new BitSet();
+    for (EqClassImpl aClass : myEqClasses) {
       if (aClass != null) {
-        for (DfaVariableValue value : aClass) {
-          vars.add(value);
-        }
+        aClass.setAll(vars);
       }
     }
-    vars.addAll(myVariableTypes.keySet());
-    vars.removeIf(filter.negate());
-    vars.forEach(variable -> flushVariable(variable, !onlyThis, !onlyThis));
+    for (DfaVariableValue value : myVariableTypes.keySet()) {
+      vars.set(value.getID());
+    }
+    for (int id = vars.nextSetBit(0); id >= 0; id = vars.nextSetBit(id + 1)) {
+      DfaVariableValue var = (DfaVariableValue)myFactory.getValue(id);
+      if (filter.test(var)) {
+        flushVariable(var, !onlyThis, !onlyThis);
+      }
+    }
   }
 
   /**
