@@ -21,10 +21,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -80,40 +77,52 @@ private class MoveRepositoriesToSettingsFile(
 
     override fun applyFix(project: Project, element: KtCallExpression, updater: ModPsiUpdater) {
         val isForPlugins = element.findParentBlock("buildscript") != null
-        val itemsToMove = element.getBlock()?.statements?.toList() ?: emptyList() // still want to move block itself
+        val itemsToMove = element.getBlock()?.statements?.toList() ?: emptyList() // still want to move the block itself
         val psiFactory = KtPsiFactory(element.project, true)
         val settingsFileCopy = updater.getWritable(settingsFile.element!!)
 
-        val parentBlock = if (isForPlugins) {
-            settingsFileCopy.findScriptInitializer("pluginManagement")?.getBlock()
-                ?: settingsFileCopy.addAfter(psiFactory.createExpression("pluginManagement {\n}"), null)
-                    .apply { parent.addAfter(psiFactory.createNewLine(2), this) }
-                    .asSafely<KtCallExpression>()!!.getBlock()!!
-        } else {
-            settingsFileCopy.findScriptInitializer("dependencyResolutionManagement")
-                ?.getBlock() ?: run {
-                val anchor = settingsFileCopy.findScriptInitializer("plugins")
-                    ?: settingsFileCopy.findScriptInitializer("pluginManagement")
-                val scriptBlock = settingsFileCopy.script!!.blockExpression
-                val dependencyResolutionManagementCall = psiFactory.createExpression(
-                    "dependencyResolutionManagement {\nrepositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS\n}"
-                )
+        val parentBlock =
+            if (isForPlugins) settingsFileCopy.findOrAddPluginManagementBlock(psiFactory)
+            else settingsFileCopy.findOrAddDependencyResolutionManagementBlock(psiFactory)
 
-                scriptBlock.addAfter(dependencyResolutionManagementCall, anchor)
-                    .apply { scriptBlock.addBefore(psiFactory.createNewLine(2), this) }
-                    .apply { if (anchor == null && this.nextSibling != null) scriptBlock.addAfter(psiFactory.createNewLine(2), this) }
-            }.asSafely<KtCallExpression>()!!.getBlock()!!
-        }
-        val repositoriesBlock = parentBlock.findBlock("repositories")
-            ?: parentBlock.add(psiFactory.createExpression("repositories {\n}"))
-                .apply { parent.addBefore(psiFactory.createNewLine(), this) }
-                .asSafely<KtCallExpression>()!!.getBlock()!!
+        val repositoriesBlock = parentBlock.findOrAddRepositoriesBlock(psiFactory)
 
         val lastStatement = itemsToMove.map {
             repositoriesBlock.add(psiFactory.createNewLine())
             repositoriesBlock.add(it)
         }.last()
-        updater.moveCaretTo(lastStatement)
+
         element.delete()
+        updater.moveCaretTo(lastStatement)
     }
+
+    private fun KtFile.findOrAddPluginManagementBlock(psiFactory: KtPsiFactory): KtBlockExpression =
+        this.findScriptInitializer("pluginManagement")?.getBlock()
+            ?: this.addAfter(psiFactory.createExpression("pluginManagement {\n}"), null)
+                .apply { parent.addAfter(psiFactory.createNewLine(2), this) }
+                .asSafely<KtCallExpression>()!!.getBlock()!!
+
+
+    private fun KtFile.findOrAddDependencyResolutionManagementBlock(psiFactory: KtPsiFactory): KtBlockExpression {
+        val existingBlock = this.findScriptInitializer("dependencyResolutionManagement")?.getBlock()
+        if (existingBlock != null) return existingBlock
+
+        val anchor = this.findScriptInitializer("plugins")
+            ?: this.findScriptInitializer("pluginManagement")
+        val scriptBlock = this.script!!.blockExpression
+        val dependencyResolutionManagementCall = psiFactory.createExpression(
+            "dependencyResolutionManagement {\nrepositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS\n}"
+        )
+
+        return scriptBlock.addAfter(dependencyResolutionManagementCall, anchor)
+            .apply { scriptBlock.addBefore(psiFactory.createNewLine(2), this) }
+            .apply { if (anchor == null && this.nextSibling != null) scriptBlock.addAfter(psiFactory.createNewLine(2), this) }
+            .asSafely<KtCallExpression>()!!.getBlock()!!
+    }
+
+    private fun KtBlockExpression.findOrAddRepositoriesBlock(psiFactory: KtPsiFactory) =
+        this.findBlock("repositories")
+            ?: this.add(psiFactory.createExpression("repositories {\n}"))
+                .apply { parent.addBefore(psiFactory.createNewLine(), this) }
+                .asSafely<KtCallExpression>()!!.getBlock()!!
 }
