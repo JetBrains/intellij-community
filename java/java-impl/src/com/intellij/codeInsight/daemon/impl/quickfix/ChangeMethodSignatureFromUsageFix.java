@@ -88,27 +88,30 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     String targetMethodName = myTargetMethod.getName();
     PsiClass aClass = myTargetMethod.getContainingClass();
     if (aClass != null && aClass.findMethodsByName(targetMethodName, true).length == 1) {
-      JavaElementKind parameter = JavaElementKind.PARAMETER;
-      JavaElementKind method = JavaElementKind.fromElement(myTargetMethod);
+      JavaElementKind parameterKind = JavaElementKind.PARAMETER;
+      JavaElementKind methodKind = JavaElementKind.fromElement(myTargetMethod);
       if (JavaPsiRecordUtil.isCanonicalConstructor(myTargetMethod)) {
-        parameter = JavaElementKind.RECORD_COMPONENT;
-        method = JavaElementKind.RECORD;
+        parameterKind = JavaElementKind.RECORD_COMPONENT;
+        methodKind = JavaElementKind.RECORD;
       }
       if (newParams.size() == 1) {
         final ParameterInfoImpl p = newParams.iterator().next();
+        if (methodKind != JavaElementKind.RECORD) targetMethodName += "()";
         return QuickFixBundle
           .message("add.parameter.from.usage.text", p.getTypeText(), ArrayUtil.find(myNewParametersInfo, p) + 1, 
-                   parameter.object(), method.object(), targetMethodName);
+                   parameterKind.object(), methodKind.object(), targetMethodName);
       }
       if (removedParams.size() == 1) {
         final ParameterInfoImpl p = removedParams.iterator().next();
+        if (methodKind != JavaElementKind.RECORD) targetMethodName += "()";
         return QuickFixBundle.message("remove.parameter.from.usage.text", p.getOldIndex() + 1, 
-                                      parameter.object(), method.object(), targetMethodName);
+                                      parameterKind.object(), methodKind.object(), targetMethodName);
       }
       if (changedParams.size() == 1) {
         final ParameterInfoImpl p = changedParams.iterator().next();
+        if (methodKind != JavaElementKind.RECORD) targetMethodName += "()";
         return QuickFixBundle.message("change.parameter.from.usage.text", p.getOldIndex() + 1,
-                                      parameter.object(), method.object(), targetMethodName,
+                                      parameterKind.object(), methodKind.object(), targetMethodName,
                                       Objects.requireNonNull(myTargetMethod.getParameterList().getParameter(p.getOldIndex())).getType().getPresentableText(),
                                       p.getTypeText());
       }

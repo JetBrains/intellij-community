@@ -1,4 +1,4 @@
-// "Change 2nd parameter of method 'foo' from 'boolean' to 'String'" "true"
+// "Change 2nd parameter of method 'foo()' from 'boolean' to 'String'" "true"
 
 public class J {
     void foo() {
