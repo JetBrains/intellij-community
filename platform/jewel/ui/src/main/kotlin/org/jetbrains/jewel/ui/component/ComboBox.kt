@@ -45,6 +45,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.takeOrElse
+import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
@@ -56,9 +57,11 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
+import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.theme.comboBoxStyle
+import org.jetbrains.jewel.ui.theme.popupContainerStyle
 
 /**
  * A dropdown component that displays a text label and a popup with custom content.
@@ -216,6 +219,48 @@ public fun ComboBox(
     onArrowUpPress: () -> Unit = {},
     popupManager: PopupManager = remember { PopupManager() },
 ) {
+    ComboBoxImpl(
+        labelContent = labelContent,
+        popupContent = popupContent,
+        modifier = modifier,
+        popupModifier = popupModifier,
+        enabled = enabled,
+        outline = outline,
+        maxPopupHeight = maxPopupHeight,
+        maxPopupWidth = maxPopupWidth,
+        interactionSource = interactionSource,
+        style = style,
+        onArrowDownPress = onArrowDownPress,
+        onArrowUpPress = onArrowUpPress,
+        popupManager = popupManager,
+    )
+}
+
+@Composable
+internal fun ComboBoxImpl(
+    labelContent: @Composable (() -> Unit),
+    popupContent: @Composable (() -> Unit),
+    modifier: Modifier = Modifier,
+    popupModifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    outline: Outline = Outline.None,
+    maxPopupHeight: Dp = Dp.Unspecified,
+    maxPopupWidth: Dp = Dp.Unspecified,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: ComboBoxStyle = JewelTheme.comboBoxStyle,
+    onArrowDownPress: () -> Unit = {},
+    onArrowUpPress: () -> Unit = {},
+    popupManager: PopupManager = remember { PopupManager() },
+    horizontalPopupAlignment: Alignment.Horizontal = Alignment.Start,
+    popupStyle: PopupContainerStyle = JewelTheme.popupContainerStyle,
+    popupPositionProvider: PopupPositionProvider =
+        AnchorVerticalMenuPositionProvider(
+            contentOffset = popupStyle.metrics.offset,
+            contentMargin = popupStyle.metrics.menuMargin,
+            alignment = horizontalPopupAlignment,
+            density = LocalDensity.current,
+        ),
+) {
     var chevronHovered by remember { mutableStateOf(false) }
 
     val popupVisible by popupManager.isPopupVisible
@@ -348,8 +393,10 @@ public fun ComboBox(
                         .widthIn(min = comboBoxWidth, max = maxPopupWidth.coerceAtLeast(comboBoxWidth))
                         .then(popupModifier)
                         .onClick { popupManager.setPopupVisible(false) },
-                horizontalAlignment = Alignment.Start,
+                horizontalAlignment = horizontalPopupAlignment,
                 popupProperties = PopupProperties(focusable = false),
+                style = popupStyle,
+                popupPositionProvider = popupPositionProvider,
                 content = popupContent,
             )
         }

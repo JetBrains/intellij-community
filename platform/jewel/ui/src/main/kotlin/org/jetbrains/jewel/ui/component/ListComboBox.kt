@@ -18,6 +18,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -30,6 +31,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.takeOrElse
+import androidx.compose.ui.window.PopupPositionProvider
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -47,8 +49,10 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
+import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.theme.comboBoxStyle
+import org.jetbrains.jewel.ui.theme.popupContainerStyle
 
 /**
  * A non-editable dropdown list component that follows the standard visual styling.
@@ -85,6 +89,7 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
+@Suppress("ContentSlotReused")
 public fun <T : Any> ListComboBox(
     items: List<T>,
     selectedIndex: Int,
@@ -123,7 +128,7 @@ public fun <T : Any> ListComboBox(
                 itemContent(item, false, false)
             }
         },
-        itemContent = itemContent,
+        itemContent = { _, item, isSelected, isActive -> itemContent(item, isSelected, isActive) },
     )
 }
 
@@ -266,7 +271,7 @@ public fun ListComboBox(
         listState = listState,
         popupModifier = popupModifier,
         labelContent = { item -> ComboBoxLabelText(item.orEmpty(), textStyle, style, enabled) },
-        itemContent = { item, isSelected, isActive ->
+        itemContent = { _, item, isSelected, isActive ->
             SimpleListItem(
                 modifier = Modifier.thenIf(!enabled) { disabledAppearance() },
                 text = item,
@@ -502,7 +507,7 @@ public fun EditableListComboBox(
                 },
                 onSelectedItemChange = ::setSelectedItem,
                 itemKeys = itemKeys,
-                itemContent = { item, isSelected, isActive ->
+                itemContent = { _, item, isSelected, isActive ->
                     SimpleListItem(text = item, selected = isSelected, active = isActive, iconContentDescription = item)
                 },
             )
@@ -631,7 +636,16 @@ internal fun <T : Any> ListComboBoxImpl(
     labelContent: @Composable (item: T?) -> Unit,
     modifier: Modifier = Modifier,
     popupModifier: Modifier = Modifier,
-    itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
+    horizontalPopupAlignment: Alignment.Horizontal = Alignment.Start,
+    popupStyle: PopupContainerStyle = JewelTheme.popupContainerStyle,
+    popupPositionProvider: PopupPositionProvider =
+        AnchorVerticalMenuPositionProvider(
+            contentOffset = popupStyle.metrics.offset,
+            contentMargin = popupStyle.metrics.menuMargin,
+            alignment = horizontalPopupAlignment,
+            density = LocalDensity.current,
+        ),
+    itemContent: @Composable (index: Int, item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     LaunchedEffect(itemKeys) {
         val item = items.getOrNull(selectedIndex)
@@ -679,7 +693,7 @@ internal fun <T : Any> ListComboBoxImpl(
         )
     }
 
-    ComboBox(
+    ComboBoxImpl(
         modifier =
             modifier
                 .onSizeChanged { comboBoxWidth = with(density) { it.width.toDp() } }
@@ -729,6 +743,9 @@ internal fun <T : Any> ListComboBoxImpl(
         interactionSource = interactionSource,
         outline = outline,
         popupManager = popupManager,
+        horizontalPopupAlignment = horizontalPopupAlignment,
+        popupStyle = popupStyle,
+        popupPositionProvider = popupPositionProvider,
         labelContent = { labelContent(items.getOrNull(selectedIndex)) },
         popupContent = {
             PopupContent(
@@ -744,7 +761,7 @@ internal fun <T : Any> ListComboBoxImpl(
                 },
                 onSelectedItemChange = { index: Int -> setSelectedItem(index) },
                 itemKeys = itemKeys,
-                itemContent = itemContent,
+                itemContent = { index, item, isSelected, isActive -> itemContent(index, item, isSelected, isActive) },
             )
         },
     )
@@ -760,7 +777,7 @@ private fun <T : Any> PopupContent(
     onHoveredItemChange: (Int) -> Unit,
     onSelectedItemChange: (Int) -> Unit,
     itemKeys: (Int, T) -> Any,
-    itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
+    itemContent: @Composable (index: Int, item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     VerticallyScrollableContainer(scrollState = listState.lazyListState as ScrollableState) {
         SelectableLazyColumn(
@@ -795,7 +812,7 @@ private fun <T : Any> PopupContent(
                             (isItemSelected && previewSelectedItemIndex < 0) || previewSelectedItemIndex == index
 
                         // We assume items are active when visible (the popup isn't really, but should show as such)
-                        itemContent(item, showAsSelected, true)
+                        itemContent(index, item, showAsSelected, true)
                     }
                 },
             )
@@ -813,4 +830,4 @@ private fun <T : Any> PopupContent(
     }
 }
 
-private fun Int.takeIfInBoundsOrZero(acceptedIndices: IntRange) = if (this in acceptedIndices) this else 0
+internal fun Int.takeIfInBoundsOrZero(acceptedIndices: IntRange) = if (this in acceptedIndices) this else 0
