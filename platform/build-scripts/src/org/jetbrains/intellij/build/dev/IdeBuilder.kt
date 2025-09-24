@@ -116,8 +116,8 @@ data class BuildRequest(
 
   @JvmField val os: OsFamily = OsFamily.currentOs
 ) {
-  override fun toString(): String =
-    buildString {
+  override fun toString(): String {
+    return buildString {
       append("BuildRequest(platformPrefix='$platformPrefix', ")
       if (baseIdePlatformPrefixForFrontend != null) {
         append("baseIdePlatformPrefixForFrontend='$baseIdePlatformPrefixForFrontend', ")
@@ -127,6 +127,7 @@ data class BuildRequest(
       append("keepHttpClient=$keepHttpClient, ")
       append("generateRuntimeModuleRepository=$generateRuntimeModuleRepository")
     }
+  }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -327,12 +328,14 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
   return runDir
 }
 
-private suspend fun getSearchableOptionSet(context: BuildContext): SearchableOptionSetDescriptor? = withContext(Dispatchers.IO) {
-  try {
-    readSearchableOptionIndex(context.paths.searchableOptionDir)
-  }
-  catch (_: NoSuchFileException) {
-    null
+private suspend fun getSearchableOptionSet(context: BuildContext): SearchableOptionSetDescriptor? {
+  return withContext(Dispatchers.IO) {
+    try {
+      readSearchableOptionIndex(context.paths.searchableOptionDir)
+    }
+    catch (_: NoSuchFileException) {
+      null
+    }
   }
 }
 
@@ -467,9 +470,8 @@ private suspend fun createBuildContext(
 ): BuildContext {
   return coroutineScope {
     val buildOptionsTemplate = request.buildOptionsTemplate
-    val useCompiledClassesFromProjectOutput =
-      buildOptionsTemplate == null ||
-      (buildOptionsTemplate.useCompiledClassesFromProjectOutput && buildOptionsTemplate.unpackCompiledClassesArchives)
+    val useCompiledClassesFromProjectOutput = buildOptionsTemplate == null ||
+                                              (buildOptionsTemplate.useCompiledClassesFromProjectOutput && buildOptionsTemplate.unpackCompiledClassesArchives)
     val classOutDir = if (useCompiledClassesFromProjectOutput) {
       request.productionClassOutput.parent
     }
@@ -484,7 +486,7 @@ private suspend fun createBuildContext(
       spanBuilder("create build context").use {
         // we cannot inject a proper build time as it is a part of resources, so, set to the first day of the current month
         val options = BuildOptions(
-          jarCacheDir,
+          jarCacheDir = jarCacheDir,
           buildDateInSeconds = getDevModeOrTestBuildDateInSeconds(),
           printFreeSpace = false,
           validateImplicitPlatformModule = false,
@@ -561,10 +563,23 @@ private suspend fun createBuildContext(
     }
 
     BuildContextImpl(
-      compilationContext, productProperties.await(), WindowsDistributionCustomizer(), LinuxDistributionCustomizer(), MacDistributionCustomizer(),
-      proprietaryBuildTools = if (request.scrambleTool == null) ProprietaryBuildTools.DUMMY else ProprietaryBuildTools(
-        ProprietaryBuildTools.DUMMY_SIGN_TOOL, request.scrambleTool, featureUsageStatisticsProperties = null, artifactsServer = null, licenseServerHost = null
-      ),
+      compilationContext = compilationContext,
+      productProperties = productProperties.await(),
+      windowsDistributionCustomizer = WindowsDistributionCustomizer(),
+      linuxDistributionCustomizer = LinuxDistributionCustomizer(),
+      macDistributionCustomizer = MacDistributionCustomizer(),
+      proprietaryBuildTools = if (request.scrambleTool == null) {
+        ProprietaryBuildTools.DUMMY
+      }
+      else {
+        ProprietaryBuildTools(
+          signTool = ProprietaryBuildTools.DUMMY_SIGN_TOOL,
+          scrambleTool = request.scrambleTool,
+          featureUsageStatisticsProperties = null,
+          artifactsServer = null,
+          licenseServerHost = null,
+        )
+      },
       jarCacheManager = jarCacheManager,
     )
   }
@@ -620,7 +635,14 @@ private suspend fun layoutPlatform(
   context: BuildContext,
   moduleOutputPatcher: ModuleOutputPatcher,
 ): Pair<List<DistributionFileEntry>, Set<Path>> {
-  val entries = layoutPlatformDistribution(moduleOutputPatcher, runDir, platformLayout, searchableOptionSet, copyFiles = true, context)
+  val entries = layoutPlatformDistribution(
+    moduleOutputPatcher = moduleOutputPatcher,
+    targetDirectory = runDir,
+    platform = platformLayout,
+    searchableOptionSet = searchableOptionSet,
+    copyFiles = true,
+    context = context,
+  )
   lateinit var sortedClassPath: Set<Path>
   coroutineScope {
     launch {
@@ -661,5 +683,6 @@ private fun computeAdditionalModulesFingerprint(additionalModules: List<String>)
   }
 }
 
-private fun getCommunityHomePath(homePath: Path): Path =
-  if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath
+private fun getCommunityHomePath(homePath: Path): Path {
+  return if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath
+}

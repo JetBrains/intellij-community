@@ -127,14 +127,11 @@ internal suspend fun buildDistribution(
       buildSearchableOptions(productRunner, context)
     }
 
-    val pluginLayouts = getPluginLayoutsByJpsModuleNames(
-      modules = context.getBundledPluginModules(),
-      productLayout = context.productProperties.productLayout,
-    )
+    val pluginLayouts = getPluginLayoutsByJpsModuleNames(modules = context.getBundledPluginModules(), productLayout = context.productProperties.productLayout)
     val moduleOutputPatcher = ModuleOutputPatcher()
     val buildPlatformJob: Deferred<List<DistributionFileEntry>> = async(traceContext + CoroutineName("build platform lib")) {
       spanBuilder("build platform lib").use {
-        val result = buildLib(moduleOutputPatcher, state.platform, searchableOptionSet, context)
+        val result = buildLib(moduleOutputPatcher = moduleOutputPatcher, platform = state.platform, searchableOptionSetDescriptor = searchableOptionSet, context = context)
         if (!isUpdateFromSources && context.productProperties.scrambleMainJar) {
           scramble(state.platform, context)
         }
@@ -233,7 +230,14 @@ private suspend fun buildBundledPluginsForAllPlatforms(
   val common = commonDeferred.await()
   val specific = specificDeferred.await()
   buildPlatformJob.join()
-  writePluginInfo(moduleOutputPatcher, pluginDirs, common, specific, additionalDeferred.await(), context)
+  writePluginInfo(
+    moduleOutputPatcher = moduleOutputPatcher,
+    pluginDirs = pluginDirs,
+    common = common,
+    specific = specific,
+    additional = additionalDeferred.await(),
+    context = context,
+  )
   common + specific.values.flatten()
 }
 
@@ -261,7 +265,13 @@ private fun writePluginInfo(
     specificClasspath?.let { out.write(it) }
     out.close()
 
-    context.addDistFile(DistFile(InMemoryDistFileContent(byteOut.toByteArray()), PLUGIN_CLASSPATH, supportedDist.os, supportedDist.libcImpl, supportedDist.arch))
+    context.addDistFile(DistFile(
+      content = InMemoryDistFileContent(byteOut.toByteArray()),
+      relativePath = PLUGIN_CLASSPATH,
+      os = supportedDist.os,
+      libcImpl = supportedDist.libcImpl,
+      arch = supportedDist.arch,
+    ))
   }
 }
 
@@ -274,15 +284,17 @@ fun validateModuleStructure(platform: PlatformLayout, context: BuildContext) {
   }
 }
 
-private fun getPluginDirs(context: BuildContext, isUpdateFromSources: Boolean): List<Pair<SupportedDistribution, Path>> =
+private fun getPluginDirs(context: BuildContext, isUpdateFromSources: Boolean): List<Pair<SupportedDistribution, Path>> {
   if (isUpdateFromSources) {
-    listOf(SupportedDistribution(OsFamily.currentOs, JvmArchitecture.currentJvmArch, LibcImpl.current(OsFamily.currentOs)) to context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
+    return listOf(SupportedDistribution(OsFamily.currentOs, JvmArchitecture.currentJvmArch, LibcImpl.current(OsFamily.currentOs)) to
+                    context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
   }
   else {
-    SUPPORTED_DISTRIBUTIONS.map {
-      it to getOsAndArchSpecificDistDirectory(it.os, it.arch, it.libcImpl, context).resolve(PLUGINS_DIRECTORY)
+    return SUPPORTED_DISTRIBUTIONS.map {
+      it to getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, libc = it.libcImpl, context = context).resolve(PLUGINS_DIRECTORY)
     }
   }
+}
 
 suspend fun buildBundledPlugins(
   state: DistributionBuilderState,
@@ -324,10 +336,17 @@ private suspend fun doBuildBundledPlugins(
       val targetDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
       val platformSpecificPluginDirs = getPluginDirs(context, isUpdateFromSources)
       val entries = buildPlugins(
-        moduleOutputPatcher, pluginsToBundle, os = null, targetDir, state, context, buildPlatformJob, searchableOptionSet
+        moduleOutputPatcher = moduleOutputPatcher,
+        plugins = pluginsToBundle,
+        os = null,
+        targetDir = targetDir,
+        state = state,
+        context = context,
+        buildPlatformJob = buildPlatformJob,
+        searchableOptionSet = searchableOptionSet,
       ) { layout, _ ->
         if (layout.hasPlatformSpecificResources) {
-          buildPlatformSpecificPluginResources(layout, platformSpecificPluginDirs, context)
+          buildPlatformSpecificPluginResources(plugin = layout, targetDirs = platformSpecificPluginDirs, context = context)
         }
         else {
           emptyList()
@@ -359,7 +378,7 @@ private suspend fun buildOsSpecificBundledPlugins(
         }
 
         val osSpecificPlugins = plugins.filter {
-          satisfiesBundlingRequirements(it, os, arch, context)
+          satisfiesBundlingRequirements(plugin = it, osFamily = os, arch = arch, context = context)
         }
         if (osSpecificPlugins.isEmpty()) {
           return@mapNotNull null
@@ -372,7 +391,16 @@ private suspend fun buildOsSpecificBundledPlugins(
             .setAttribute("count", osSpecificPlugins.size.toLong())
             .setAttribute("outDir", targetDir.toString())
             .use {
-              buildPlugins(moduleOutputPatcher, osSpecificPlugins, os, targetDir, state, context, buildPlatformJob, searchableOptionSet)
+              buildPlugins(
+                moduleOutputPatcher = moduleOutputPatcher,
+                plugins = osSpecificPlugins,
+                os = os,
+                targetDir = targetDir,
+                state = state,
+                context = context,
+                buildPlatformJob = buildPlatformJob,
+                searchableOptionSet = searchableOptionSet,
+              )
             }
         }
       }
@@ -590,10 +618,22 @@ internal suspend fun generateProjectStructureMapping(platformLayout: PlatformLay
     )
     val entries = mutableListOf<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>()
     for (plugin in allPlugins) {
-      if (satisfiesBundlingRequirements(plugin, osFamily = null, arch = null, context)) {
+      if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, context = context)) {
         val targetDirectory = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY).resolve(plugin.directoryName)
-        entries.add(PluginBuildDescriptor(targetDirectory, os = null, plugin, moduleNames = emptyList()) to layoutDistribution(
-          plugin, platformLayout, targetDirectory, copyFiles = false, moduleOutputPatcher, plugin.includedModules, searchableOptionSet = null, context
+        entries.add(PluginBuildDescriptor(
+          dir = targetDirectory,
+          os = null,
+          layout = plugin,
+          moduleNames = emptyList()
+        ) to layoutDistribution(
+          layout = plugin,
+          platformLayout = platformLayout,
+          targetDirectory = targetDirectory,
+          copyFiles = false,
+          moduleOutputPatcher = moduleOutputPatcher,
+          includedModules = plugin.includedModules,
+          searchableOptionSet = null,
+          context = context,
         ).first)
       }
     }
@@ -622,10 +662,16 @@ internal suspend fun buildPlugins(
   val entries = coroutineScope {
     plugins.map { plugin ->
       if (plugin.mainModule != BUILT_IN_HELP_MODULE_NAME) {
-        checkOutputOfPluginModules(plugin.mainModule, plugin.includedModules, plugin.moduleExcludes, context)
+        checkOutputOfPluginModules(mainPluginModule = plugin.mainModule, includedModules = plugin.includedModules, moduleExcludes = plugin.moduleExcludes, context = context)
         patchPluginXml(
-          moduleOutputPatcher, plugin, context.applicationInfo.majorReleaseDate, context.applicationInfo.releaseVersionForLicensing, state.pluginsToPublish,
-          (context as BuildContextImpl).jarPackagerDependencyHelper, state.platform, context
+          moduleOutputPatcher = moduleOutputPatcher,
+          plugin = plugin,
+          releaseDate = context.applicationInfo.majorReleaseDate,
+          releaseVersion = context.applicationInfo.releaseVersionForLicensing,
+          pluginsToPublish = state.pluginsToPublish,
+          helper = (context as BuildContextImpl).jarPackagerDependencyHelper,
+          platformLayout = state.platform,
+          context = context,
         )
       }
 
@@ -634,7 +680,14 @@ internal suspend fun buildPlugins(
       val task = async(CoroutineName("Build plugin (module=${plugin.mainModule})")) {
         spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).use {
           val (entries, file) = layoutDistribution(
-            plugin, state.platform, pluginDir, copyFiles = true, moduleOutputPatcher, plugin.includedModules, searchableOptionSet, context
+            layout = plugin,
+            platformLayout = state.platform,
+            targetDirectory = pluginDir,
+            copyFiles = true,
+            moduleOutputPatcher = moduleOutputPatcher,
+            includedModules = plugin.includedModules,
+            searchableOptionSet = searchableOptionSet,
+            context = context,
           )
 
           if (pluginBuilt == null) {
@@ -731,7 +784,12 @@ suspend fun buildLib(
 ): List<DistributionFileEntry> {
   val targetDirectory = context.paths.distAllDir
   val libDirMappings = layoutPlatformDistribution(
-    moduleOutputPatcher, targetDirectory, platform, searchableOptionSetDescriptor, copyFiles = true, context
+    moduleOutputPatcher = moduleOutputPatcher,
+    targetDirectory = targetDirectory,
+    platform = platform,
+    searchableOptionSet = searchableOptionSetDescriptor,
+    copyFiles = true,
+    context = context,
   )
   context.proprietaryBuildTools.scrambleTool?.validatePlatformLayout(platform.includedModules, context)
   return libDirMappings
@@ -758,7 +816,7 @@ suspend fun layoutPlatformDistribution(
           val relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
           val sourceBytes = context.readFileContentFromModuleOutput(module, relativePath) ?: error("app info not found")
           val patchedBytes = injectAppInfo(inFileBytes = sourceBytes, newFieldValue = context.appInfoXml)
-          moduleOutputPatcher.patchModuleOutput(moduleName, relativePath, patchedBytes)
+          moduleOutputPatcher.patchModuleOutput(moduleName = moduleName, path = relativePath, content = patchedBytes)
         }
       }
     }
@@ -770,12 +828,12 @@ suspend fun layoutPlatformDistribution(
       layoutDistribution(
         layout = platform,
         platformLayout = platform,
-        targetDirectory,
-        copyFiles,
-        moduleOutputPatcher,
-        platform.includedModules,
-        searchableOptionSet,
-        context,
+        targetDirectory = targetDirectory,
+        copyFiles = copyFiles,
+        moduleOutputPatcher = moduleOutputPatcher,
+        includedModules = platform.includedModules,
+        searchableOptionSet = searchableOptionSet,
+        context = context,
       ).first
     }
 }
@@ -787,7 +845,7 @@ private suspend fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutp
 
   val moduleName = "intellij.platform.resources"
   val relativePath = $$"keymaps/$default.xml"
-  val sourceFileContent = context.readFileContentFromModuleOutput(context.findRequiredModule(moduleName), relativePath)
+  val sourceFileContent = context.readFileContentFromModuleOutput(module = context.findRequiredModule(moduleName), relativePath = relativePath)
                           ?: error("Not found '$relativePath' in module $moduleName output")
   var text = String(sourceFileContent, StandardCharsets.UTF_8)
   text = text.replace("<mouse-shortcut keystroke=\"alt button1\"/>", "<mouse-shortcut keystroke=\"to be alt shift button1\"/>")
