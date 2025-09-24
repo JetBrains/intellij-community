@@ -617,6 +617,7 @@ com.intellij.ide.projectView.ProjectViewSettings
 - isShowExcludedFiles():Z
 - isShowVisibilityIcons():Z
 - isUseFileNestingRules():Z
+c:com.intellij.ide.projectView.impl.ProjectViewImpl
 com.intellij.ide.projectView.impl.ProjectViewListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - initCachedNodesLoaded():V

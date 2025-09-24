@@ -1288,7 +1288,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return getSelectInTarget(getCurrentViewId());
   }
 
-  private @Nullable SelectInTarget getSelectInTarget(String id) {
+  @ApiStatus.Internal
+  public @Nullable SelectInTarget getSelectInTarget(String id) {
     if (id == null) {
       return null;
     }
@@ -1300,7 +1301,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @ApiStatus.Internal
-  public ProjectViewSelectInTarget getProjectViewSelectInTarget(@NotNull AbstractProjectViewPane pane) {
+  ProjectViewSelectInTarget getProjectViewSelectInTarget(@NotNull AbstractProjectViewPane pane) {
     SelectInTarget target = getSelectInTarget(pane.getId());
     return target instanceof ProjectViewSelectInTarget
            ? (ProjectViewSelectInTarget)target
