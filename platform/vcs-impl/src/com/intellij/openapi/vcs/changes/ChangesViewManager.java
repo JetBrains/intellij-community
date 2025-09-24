@@ -150,10 +150,10 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   public void dispose() {
   }
 
-  public static class ContentPreloader implements ChangesViewContentProvider.Preloader {
+  static class ContentPreloader implements ChangesViewContentProvider.Preloader {
     private final @NotNull Project myProject;
 
-    public ContentPreloader(@NotNull Project project) {
+    ContentPreloader(@NotNull Project project) {
       myProject = project;
     }
 
@@ -289,7 +289,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     }
   }
 
-  public static final class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
+  private static final class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
     private static final @NotNull RegistryValue isOpenEditorDiffPreviewWithSingleClick =
       Registry.get("show.diff.preview.as.editor.tab.with.single.click");
 
