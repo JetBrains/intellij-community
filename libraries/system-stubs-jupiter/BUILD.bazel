@@ -15,6 +15,7 @@ jvm_library(
   runtime_deps = [
     ":system-stubs-jupiter_resources",
     "//libraries/junit5",
+    "@lib//:libraries-system-stubs-jupiter-uk-webcompere-system-stubs-jupiter",
   ]
 )
 ### auto-generated section `build intellij.libraries.system.stubs.jupiter` end
