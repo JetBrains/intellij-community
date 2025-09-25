@@ -2235,6 +2235,13 @@ jvm_import(
 )
 
 java_library(
+  name = "io-github-z4kn4fein-semver-jvm-provided",
+  exports = [":io-github-z4kn4fein-semver-jvm"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
   name = "io-mockk",
   exports = [
     ":io_mockk-mockk-1_14_5_http_import",
