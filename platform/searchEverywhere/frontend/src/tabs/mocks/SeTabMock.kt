@@ -45,6 +45,10 @@ class SeTabMock(
     return delegate.isPreviewEnabled()
   }
 
+  override suspend fun isExtendedInfoEnabled(): Boolean {
+    return delegate.isExtendedInfoEnabled()
+  }
+
   override fun dispose() {
     Disposer.dispose(delegate)
   }

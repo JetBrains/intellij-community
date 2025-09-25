@@ -250,6 +250,10 @@ class SePopupVm(
     return previewFetcher?.fetchPreview(usages)
   }
 
+  suspend fun isExtendedInfoEnabledInTab(): Boolean {
+    return currentTab.isExtendedInfoEnabled()
+  }
+
   private val popupVm = this
 
   inner class ShowInFindToolWindowAction : DumbAwareAction(IdeBundle.messagePointer("show.in.find.window.button.name"),

@@ -63,6 +63,10 @@ class SeActionsTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.getPreviewInfo(itemData, false)
   }
 
+  override suspend fun isExtendedInfoEnabled(): Boolean {
+    return delegate.isExtendedInfoEnabled()
+  }
+
   override fun dispose() {
     Disposer.dispose(delegate)
   }

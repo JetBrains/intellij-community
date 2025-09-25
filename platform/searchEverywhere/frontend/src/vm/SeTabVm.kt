@@ -239,6 +239,10 @@ class SeTabVm(
   }
 
   suspend fun getPreviewInfo(itemData: SeItemData): SePreviewInfo? = tab.getPreviewInfo(itemData)
+
+  suspend fun isExtendedInfoEnabled() : Boolean {
+    return tab.isExtendedInfoEnabled()
+  }
 }
 
 private const val ESSENTIALS_THROTTLE_DELAY: Long = 100

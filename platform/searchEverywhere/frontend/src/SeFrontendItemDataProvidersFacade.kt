@@ -97,6 +97,12 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
     )
   }
 
+  suspend fun isExtendedInfoEnabled(): Boolean {
+    return SeRemoteApi.getInstance().isExtendedInfoEnabled(
+      projectId, providerIds = providerIds, session = session, dataContextId = dataContextId, isAllTab = isAllTab
+    )
+  }
+
   companion object {
     private const val DEFAULT_CHUNK_SIZE: Int = 50
   }

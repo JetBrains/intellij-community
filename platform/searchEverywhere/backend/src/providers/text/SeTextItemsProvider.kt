@@ -45,7 +45,8 @@ class SeTextSearchItem(
 @ApiStatus.Internal
 class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(),
                                                                                                               SeSearchScopesProvider,
-                                                                                                              SeItemsPreviewProvider{
+                                                                                                              SeItemsPreviewProvider,
+                                                                                                              SeExtendedInfoProvider {
   override val id: String get() = SeProviderIdUtils.TEXT_ID
   override val displayName: @Nls String
     get() = contributor.fullGroupName
