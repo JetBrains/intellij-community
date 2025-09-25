@@ -15,7 +15,7 @@ interface AsyncDocumentFormattingSupportFactory {
 interface AsyncDocumentFormattingSupport {
   fun formatDocument(
     document: Document,
-    formattingRanges: MutableList<TextRange>,
+    formattingRanges: List<TextRange>,
     formattingContext: FormattingContext,
     canChangeWhiteSpaceOnly: Boolean,
     quickFormat: Boolean,
