@@ -11,6 +11,7 @@
 
     <applicationService serviceImplementation="com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService"/>
     <applicationService serviceImplementation="com.intellij.platform.feedback.eap.EAPFeedbackUrlProvider"/>
+    <applicationService serviceImplementation="com.intellij.platform.feedback.csat.CsatFeedbackExtraDataProvider"/>
 
     <notificationGroup displayType="BALLOON" id="Feedback In IDE" bundle="messages.CommonFeedbackMessagesBundle"
                        key="notification.group.feedback"/>
