@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "pyproject_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "pyproject",
   module_name = "intellij.python.pyproject",
@@ -20,7 +26,7 @@ jvm_library(
     "//python/python-sdk:sdk",
     "//platform/util",
     "//plugins/toml/core",
-    "@lib//:tuweni-toml",
+    "@lib//:tuweni-toml-provided",
   ],
   runtime_deps = [":pyproject_resources"]
 )
@@ -40,10 +46,11 @@ jvm_library(
     "//python/python-sdk:sdk_test_lib",
     "//platform/util",
     "//plugins/toml/core",
-    "@lib//:tuweni-toml",
+    "@lib//:tuweni-toml-provided",
     "@lib//:junit5",
     "@lib//:junit5Params",
-  ]
+  ],
+  runtime_deps = [":pyproject_test_resources"]
 )
 ### auto-generated section `build intellij.python.pyproject` end
 

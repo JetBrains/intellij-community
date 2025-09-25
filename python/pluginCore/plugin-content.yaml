@@ -92,7 +92,7 @@
   files:
   - name: $MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2/tuweni-toml-2.jar
   - name: $MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4/antlr4-runtime-4.jar
-  reason: <- intellij.python.pyproject
+  reason: <- intellij.python.community.impl
 - name: lib/xmlrpc.jar
   library: XmlRPC
   files:
