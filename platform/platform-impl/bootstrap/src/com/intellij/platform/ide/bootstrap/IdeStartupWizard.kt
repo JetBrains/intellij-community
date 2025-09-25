@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.ide.isIdeStartupWizardEnabled
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -96,7 +95,7 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
           }
         }
 
-        if (isIdeStartupWizardEnabled) {
+        if (ConfigImportHelper.isStartupWizardEnabled()) {
           LOG.info("Passing execution control to $wizard.")
           wizard.run()
           firstWizardExecuted = true

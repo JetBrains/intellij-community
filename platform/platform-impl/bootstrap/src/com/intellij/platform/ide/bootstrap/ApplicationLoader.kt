@@ -485,7 +485,7 @@ private suspend fun createAppStarter(args: List<String>, asyncScope: CoroutineSc
     }
     else -> {
       span("app custom starter creation") {
-        val starter = findStarter(commandName) ?: createDefaultAppStarter()
+        val starter = ApplicationStarter.findStarter(commandName) ?: createDefaultAppStarter()
         if (AppMode.isHeadless() && !starter.isHeadless) {
           val message = BootstrapBundle.message(
             "bootstrap.error.message.headless",

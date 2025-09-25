@@ -14,6 +14,7 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.idea.AppMode;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.migrations.NotebooksMigration242;
 import com.intellij.openapi.application.migrations.SpaceMigration252;
@@ -76,7 +77,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.intellij.ide.CommandLineProcessorKt.isIdeStartupWizardEnabled;
 import static com.intellij.ide.SpecialConfigFiles.*;
 import static com.intellij.ide.plugins.BundledPluginsState.BUNDLED_PLUGINS_FILENAME;
 import static com.intellij.openapi.application.ImportOldConfigsUsagesCollector.InitialImportScenario.*;
@@ -218,7 +218,7 @@ public final class ConfigImportHelper {
           log.error("Couldn't backup current config or delete current config directory", e);
         }
       }
-      else if (isIdeStartupWizardEnabled()) {
+      else if (isStartupWizardEnabled()) {
         if (!guessedOldConfigDirs.isEmpty() && !shouldAskForConfig()) {
           var bestConfigGuess = guessedOldConfigDirs.getFirstItem();
           if (!isConfigOld(bestConfigGuess.second)) {
@@ -230,31 +230,28 @@ public final class ConfigImportHelper {
           }
         }
       }
-      else {
-        var askForConfig = shouldAskForConfig();
-        if (askForConfig) {
+      else if (shouldAskForConfig()) {
+        oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
+        importScenarioStatistics = SHOW_DIALOG_REQUESTED_BY_PROPERTY;
+      }
+      else if (guessedOldConfigDirs.isEmpty()) {
+        if (!veryFirstStartOnThisComputer) {
           oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
-          importScenarioStatistics = SHOW_DIALOG_REQUESTED_BY_PROPERTY;
+          importScenarioStatistics = SHOW_DIALOG_NO_CONFIGS_FOUND;
         }
-        else if (guessedOldConfigDirs.isEmpty()) {
-          if (!veryFirstStartOnThisComputer) {
-            oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
-            importScenarioStatistics = SHOW_DIALOG_NO_CONFIGS_FOUND;
-          }
+      }
+      else {
+        var bestConfigGuess = guessedOldConfigDirs.getFirstItem();
+        if (isConfigOld(bestConfigGuess.second)) {
+          log.info("The best config guess [" + bestConfigGuess.first + "] is too old, it won't be used for importing.");
+          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
+          importScenarioStatistics = SHOW_DIALOG_CONFIGS_ARE_TOO_OLD;
         }
         else {
-          var bestConfigGuess = guessedOldConfigDirs.getFirstItem();
-          if (isConfigOld(bestConfigGuess.second)) {
-            log.info("The best config guess [" + bestConfigGuess.first + "] is too old, it won't be used for importing.");
-            oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
-            importScenarioStatistics = SHOW_DIALOG_CONFIGS_ARE_TOO_OLD;
-          }
-          else {
-            oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
-            if (oldConfigDirAndOldIdePath == null) {
-              logRejectedConfigDirectory(log, "Previous config directory", bestConfigGuess.first);
-              importScenarioStatistics = CONFIG_DIRECTORY_NOT_FOUND;
-            }
+          oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
+          if (oldConfigDirAndOldIdePath == null) {
+            logRejectedConfigDirectory(log, "Previous config directory", bestConfigGuess.first);
+            importScenarioStatistics = CONFIG_DIRECTORY_NOT_FOUND;
           }
         }
       }
@@ -478,6 +475,13 @@ public final class ConfigImportHelper {
       log.debug("RestoreDefaultConfigCustomizer not found, removing config directory manually...");
       NioFiles.deleteRecursively(currentConfig);
     }
+  }
+
+  public static boolean isStartupWizardEnabled() {
+    return
+      (!ApplicationManagerEx.isInIntegrationTest() || Boolean.getBoolean("show.wizard.in.test")) &&
+      !AppMode.isRemoteDevHost() &&
+      Boolean.parseBoolean(System.getProperty("intellij.startup.wizard", "true"));
   }
 
   private static boolean shouldAskForConfig() {

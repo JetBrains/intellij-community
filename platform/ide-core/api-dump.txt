@@ -460,7 +460,6 @@ com.intellij.openapi.application.ApplicationStarter
 - sf:NON_MODAL:I
 - sf:NOT_IN_EDT:I
 - canProcessExternalCommandLine():Z
-- getCommandName():java.lang.String
 - getRequiredModality():I
 - isHeadless():Z
 - main(java.util.List):V
