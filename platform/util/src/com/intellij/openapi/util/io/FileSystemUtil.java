@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -195,7 +194,7 @@ public final class FileSystemUtil {
       try {
         newAttributes = getAttributesNotNull(Paths.get(altPath));
       }
-      catch (FileNotFoundException e) {
+      catch (NoSuchFileException e) {
         if (!anyChild.exists()) {
           if (LOG.isDebugEnabled()) {
             LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + "): does not exist");
