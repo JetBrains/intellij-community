@@ -47,7 +47,8 @@ public class RenameTo extends IntentionAndQuickFixAction implements Iconable, Ev
 
   @Override
   public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile psiFile) {
-    PsiElement element = Objects.requireNonNull(pointer.getElement());
+    PsiElement element = pointer.getElement();
+    if (element == null) return false;
     var presentationName = getPresentationName(element);
     if (presentationName == null) return false;
     generateSuggestions(presentationName.getSecond(), element);
