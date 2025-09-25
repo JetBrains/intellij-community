@@ -357,6 +357,7 @@ public final class DaemonListeners implements Disposable {
 
     connection.subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, () -> stopDaemonAndRestartAllFiles("Severities changed"));
 
+    //noinspection rawtypes
     connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerListener() {
       @Override
       public void facetRenamed(@NotNull Facet facet, @NotNull String oldName) {

@@ -47,6 +47,8 @@ import java.util.*;
 public final class BackgroundUpdateHighlightersUtil {
   private static final Logger LOG = Logger.getInstance(BackgroundUpdateHighlightersUtil.class);
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
   public static void setHighlightersToEditor(@NotNull Project project,
                                              @NotNull PsiFile psiFile,
                                              @NotNull Document document,
