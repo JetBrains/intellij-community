@@ -59,6 +59,14 @@ internal object PluginModelAsyncOperationsExecutor {
     }
   }
 
+  fun getCustomRepositoriesPluginMap(cs: CoroutineScope, callback: (Map<String, List<PluginUiModel>>) -> Unit) {
+    cs.launch(Dispatchers.IO) {
+      val pluginManager = UiPluginManager.getInstance()
+      val result = pluginManager.getCustomRepositoryPluginMap()
+      callback(result)
+    }
+  }
+
   fun loadUpdates(cs: CoroutineScope, callback: (List<PluginUiModel>) -> Unit) {
     cs.launch(Dispatchers.IO) {
       val updates = UiPluginManager.getInstance().getUpdateModels()

@@ -93,11 +93,11 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   }
 
   override suspend fun installOrUpdatePlugin(sessionId: String, parentComponent: JComponent?, descriptor: PluginUiModel, updateDescriptor: PluginUiModel?, installSource: FUSEventSource?, modalityState: ModalityState?, pluginEnabler: PluginEnabler?, customRepoPlugins: List<PluginUiModel>): InstallPluginResult {
-    return PluginInstallerApi.getInstance().installOrUpdatePlugin(sessionId, PluginDto.fromModel(descriptor), updateDescriptor?.let { PluginDto.fromModel(it) }, installSource, customRepoPlugins)
+    return PluginInstallerApi.getInstance().installOrUpdatePlugin(sessionId, PluginDto.fromModel(descriptor), updateDescriptor?.let { PluginDto.fromModel(it) }, installSource, customRepoPlugins.map { PluginDto.fromModel(it) })
   }
 
   override suspend fun continueInstallation(sessionId: String, pluginId: PluginId, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, pluginEnabler: PluginEnabler?, modalityState: ModalityState?, parentComponent: JComponent?, customRepoPlugins: List<PluginUiModel>): InstallPluginResult {
-    return PluginInstallerApi.getInstance().continueInstallation(sessionId, pluginId, enableRequiredPlugins, allowInstallWithoutRestart, customRepoPlugins)
+    return PluginInstallerApi.getInstance().continueInstallation(sessionId, pluginId, enableRequiredPlugins, allowInstallWithoutRestart, customRepoPlugins.map { PluginDto.fromModel(it) })
   }
 
   override suspend fun getCustomRepoTags(): Set<String> {
