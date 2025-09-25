@@ -15,9 +15,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
@@ -174,11 +174,13 @@ private fun TooltipImpl(
     ) {
         Box(
             modifier =
-                Modifier.shadow(
-                        elevation = style.metrics.shadowSize,
-                        shape = RoundedCornerShape(style.metrics.cornerSize),
-                        ambientColor = style.colors.shadow,
-                        spotColor = Color.Transparent,
+                Modifier.dropShadow(
+                        RoundedCornerShape(style.metrics.cornerSize),
+                        Shadow(
+                            radius = style.metrics.shadowSize,
+                            color = style.colors.shadow,
+                            offset = DpOffset(0.dp, style.metrics.shadowSize / 2),
+                        ),
                     )
                     .background(color = style.colors.background, shape = RoundedCornerShape(style.metrics.cornerSize))
                     .border(

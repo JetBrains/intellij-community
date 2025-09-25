@@ -146,6 +146,7 @@ private fun JBPopup(
             .setCancelOnClickOutside(currentProperties.dismissOnClickOutside)
             .setCancelOnWindowDeactivation(currentProperties.dismissOnClickOutside)
             .setLocateWithinScreenBounds(false)
+            .setShowShadow(false)
             .setKeyEventHandler { event ->
                 val composeEvent = event.toComposeKeyEvent()
                 val consumed =
