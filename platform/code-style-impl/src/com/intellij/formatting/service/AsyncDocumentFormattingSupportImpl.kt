@@ -126,41 +126,6 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     private val stateRef: AtomicReference<FormattingRequestState> = AtomicReference(
       FormattingRequestState.NOT_STARTED)
 
-    override fun getIOFile(): File? {
-      val originalFile = _context.virtualFile
-      val ext: String?
-      val charset: Charset?
-      if (originalFile != null) {
-        if (originalFile.isInLocalFileSystem) {
-          val localPath = originalFile.getFileSystem().getNioPath(originalFile)
-          if (localPath != null) {
-            return localPath.toFile()
-          }
-        }
-        ext = originalFile.getExtension()
-        charset = originalFile.getCharset()
-      }
-      else {
-        ext = _context.containingFile.getFileType().getDefaultExtension()
-        charset = EncodingManager.getInstance().getDefaultCharset()
-      }
-      try {
-        val tempFile = FileUtilRt.createTempFile(TEMP_FILE_PREFIX, ".$ext", true)
-        FileWriter(tempFile, charset).use { writer ->
-          writer.write(documentText)
-        }
-        return tempFile
-      }
-      catch (e: IOException) {
-        LOG.warn(e)
-        return null
-      }
-    }
-
-    override fun getDocumentText(): String {
-      return document.text
-    }
-
     fun cancel(): Boolean {
       val formattingTask = task
       if (formattingTask != null && stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.CANCELLING)) {
@@ -171,18 +136,6 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
         }
       }
       return false
-    }
-
-    override fun getFormattingRanges(): List<TextRange> {
-      return _ranges
-    }
-
-    override fun canChangeWhitespaceOnly(): Boolean {
-      return _canChangeWhitespaceOnly
-    }
-
-    override fun getContext(): FormattingContext {
-      return _context
     }
 
     fun setTask(formattingTask: FormattingTask?) {
@@ -238,6 +191,37 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       }
     }
 
+    override fun getIOFile(): File? {
+      val originalFile = _context.virtualFile
+      val ext: String?
+      val charset: Charset?
+      if (originalFile != null) {
+        if (originalFile.isInLocalFileSystem) {
+          val localPath = originalFile.getFileSystem().getNioPath(originalFile)
+          if (localPath != null) {
+            return localPath.toFile()
+          }
+        }
+        ext = originalFile.getExtension()
+        charset = originalFile.getCharset()
+      }
+      else {
+        ext = _context.containingFile.getFileType().getDefaultExtension()
+        charset = EncodingManager.getInstance().getDefaultCharset()
+      }
+      try {
+        val tempFile = FileUtilRt.createTempFile(TEMP_FILE_PREFIX, ".$ext", true)
+        FileWriter(tempFile, charset).use { writer ->
+          writer.write(documentText)
+        }
+        return tempFile
+      }
+      catch (e: IOException) {
+        LOG.warn(e)
+        return null
+      }
+    }
+
     fun updateDocument(newText: String) {
       if (!needToUpdate(service)) return
       if (document.getModificationStamp() > initialModificationStamp) {
@@ -248,10 +232,6 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       else {
         document.setText(newText)
       }
-    }
-
-    override fun isQuickFormat(): Boolean {
-      return _quickFormat
     }
 
     override fun onTextReady(updatedText: String?) {
@@ -286,6 +266,12 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
                                   offset)
       }
     }
+
+    override fun getDocumentText(): String = document.text
+    override fun getFormattingRanges(): List<TextRange> = _ranges
+    override fun canChangeWhitespaceOnly(): Boolean = _canChangeWhitespaceOnly
+    override fun getContext(): FormattingContext = _context
+    override fun isQuickFormat(): Boolean = _quickFormat
   }
 
   companion object {
