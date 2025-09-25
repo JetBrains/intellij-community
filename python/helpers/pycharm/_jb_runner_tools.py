@@ -28,12 +28,12 @@ def _parse_parametrized(part):
     Support nose generators / pytest parameters and other functions that provides names like foo(1,2)
     Until https://github.com/JetBrains/teamcity-messages/issues/121, all such tests are provided
     with parentheses.
-    
+
     Tests with docstring are reported in similar way but they have space before parenthesis and should be ignored
     by this function
-    
+
     """
-    match = re.match("^([^\\s)(]+)(\\(.+\\))$", part)
+    match = re.match("^([^\\s)(]+)(\\(.*\\))$", part)
     if not match:
         return [part]
     else:
