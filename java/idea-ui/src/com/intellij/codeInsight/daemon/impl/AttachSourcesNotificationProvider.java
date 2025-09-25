@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.CommonBundle;
 import com.intellij.codeEditor.JavaEditorFileSwapper;
 import com.intellij.codeInsight.AttachSourcesProvider;
+import com.intellij.codeInsight.AttachSourcesProviderFilter;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -52,9 +53,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.ByteArrayInputStream;
@@ -68,7 +67,8 @@ import java.util.function.Function;
 /**
  * @author Dmitry Avdeev
  */
-final class AttachSourcesNotificationProvider implements EditorNotificationProvider {
+@VisibleForTesting
+public final class AttachSourcesNotificationProvider implements EditorNotificationProvider {
 
   private static final ExtensionPointName<AttachSourcesProvider> EXTENSION_POINT_NAME =
     new ExtensionPointName<>("com.intellij.attachSourcesProvider");
@@ -194,6 +194,9 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
 
     boolean hasNonLightAction = false;
     for (AttachSourcesProvider provider : EXTENSION_POINT_NAME.getExtensionList()) {
+      if (!AttachSourcesProviderFilter.isProviderApplicable(provider, libraries, classFile)) {
+        continue;
+      }
       for (AttachSourcesProvider.AttachSourcesAction action : provider.getActions(libraries, classFile)) {
         if (hasNonLightAction) {
           if (action instanceof AttachSourcesProvider.LightAttachSourcesAction) {
