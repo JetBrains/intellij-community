@@ -20,14 +20,14 @@ class MavenProjectJDKTestFixture(val project: Project, val jdkName: String) : Id
   @RequiresWriteLock
   override fun setUp() {
     myJdkHome = IdeaTestUtil.requireRealJdkHome()
-    val oldJdk = ProjectJdkTable.getInstance().findJdk(jdkName)
+    val oldJdk = ProjectJdkTable.getInstance(project).findJdk(jdkName)
     if (oldJdk != null) {
-      ProjectJdkTable.getInstance().removeJdk(oldJdk)
+      ProjectJdkTable.getInstance(project).removeJdk(oldJdk)
     }
     val jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(myJdkHome))
     val jdk = SdkConfigurationUtil.setupSdk(arrayOfNulls<Sdk>(0), jdkHomeDir!!, JavaSdk.getInstance(), true, null, jdkName)
     assertNotNull("Cannot create JDK for $myJdkHome", jdk)
-    ProjectJdkTable.getInstance().addJdk(jdk!!)
+    ProjectJdkTable.getInstance(project).addJdk(jdk!!)
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager.getProjectSdk() == null) {
       projectRootManager.setProjectSdk(jdk)
@@ -40,9 +40,9 @@ class MavenProjectJDKTestFixture(val project: Project, val jdkName: String) : Id
       //super.setUp() wasn't called
       return
     }
-    val jdk = ProjectJdkTable.getInstance().findJdk(jdkName)
+    val jdk = ProjectJdkTable.getInstance(project).findJdk(jdkName)
     if (jdk != null) {
-      ProjectJdkTable.getInstance().removeJdk(jdk)
+      ProjectJdkTable.getInstance(project).removeJdk(jdk)
     }
   }
 }
