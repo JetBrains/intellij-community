@@ -67,13 +67,18 @@ private fun enableTheme() {
 
   val isLight = JBColor.isBright()
 
-  val editorScheme = if (isLight) "Light" else "Islands Dark"
-
   val newTheme = UiThemeProviderListManager.getInstance().findThemeById(if (isLight) "Islands Light" else "Islands Dark") ?: return
 
   PropertiesComponent.getInstance().setValue("ide.islands.show.feedback2", "show.promo")
 
   lafManager.setCurrentLookAndFeel(newTheme, true)
+
+  val editorScheme = if (PlatformUtils.isRider()) {
+    if (isLight) "Rider Light" else "Rider Dark"
+  }
+  else {
+    if (isLight) "Light" else "Islands Dark"
+  }
 
   newTheme.installEditorScheme(colorsManager.getScheme(editorScheme) ?: colorsManager.defaultScheme)
 
