@@ -30,6 +30,7 @@ import kotlin.concurrent.Volatile
 class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFormattingService) : AsyncDocumentFormattingSupport {
   private val myPendingRequests: MutableList<FormattingRequestImpl> = Collections.synchronizedList(ArrayList())
 
+  @Synchronized
   override fun formatDocument(
     document: Document,
     formattingRanges: List<TextRange>,

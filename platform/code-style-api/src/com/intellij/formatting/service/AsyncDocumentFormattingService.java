@@ -36,7 +36,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     .getService(AsyncDocumentFormattingSupportFactory.class).create(this);
 
   @Override
-  public final synchronized void formatDocument(@NotNull Document document,
+  public final void formatDocument(@NotNull Document document,
                                                 @NotNull List<TextRange> formattingRanges,
                                                 @NotNull FormattingContext formattingContext,
                                                 boolean canChangeWhiteSpaceOnly,
