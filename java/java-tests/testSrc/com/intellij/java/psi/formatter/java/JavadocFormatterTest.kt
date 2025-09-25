@@ -2307,4 +2307,27 @@ public class Test {
     }
     """.trimIndent())
   }
+
+  fun testMarkdownCodeBlocksNotAffected() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 120
+    }
+
+    doTextTest("""
+      ///    only this should be reformated
+        ///  ```java
+          ///   @Annotation  public static final @Annotation2 List<String> myList = List.of("a", "b", "c");
+      ///  ```
+      public class Foo {
+      }
+      """.trimIndent(), """
+      /// only this should be reformated
+      ///  ```java
+      ///   @Annotation  public static final @Annotation2 List<String> myList = List.of("a", "b", "c");
+      ///  ```
+      public class Foo {
+      }
+      """.trimIndent())
+  }
 }
