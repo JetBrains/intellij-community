@@ -21,6 +21,7 @@ enum class ABExperimentOption {
   FUZZY_FILE_SEARCH,
   SHOW_TRIAL_SURVEY,
   NEW_USERS_ONBOARDING,
+  ISLANDS_THEME,
 
   /**
    * A group for users which are not assigned to any experiment.
@@ -50,12 +51,12 @@ internal const val NUMBER_OF_BUCKETS: Int = 1024
  */
 @VisibleForTesting
 internal val experimentsPartition: List<ExperimentAssignment> = listOf(
-  //ExperimentAssignment(
-  //  experiment = KUBERNETES_SEPARATE_SERVICE_VIEW,
-  //  experimentBuckets = (0 until 128).toSet(),
-  //  controlBuckets = (128 until 256).toSet(),
-  //  majorVersion = "2025.2"
-  //),
+  ExperimentAssignment(
+    experiment = ISLANDS_THEME,
+    experimentBuckets = (0 until 52).toSet(),
+    controlBuckets = (52 until 104).toSet(),
+    majorVersion = null
+  ),
   // the rest belongs to the "unassigned" experiment
 )
 
