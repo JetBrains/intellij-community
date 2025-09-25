@@ -309,18 +309,30 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
       layout.includedProjectLibraries.add(item)
     }
   }
+
   // as a separate step, not a part of computing implicitModules, as we should collect libraries from a such implicitly included modules
+  val skippedLibNameCache = HashSet<String>()
   layout.collectProjectLibrariesFromIncludedModules(context = context) { lib, module ->
-    val name = lib.name
+    val libName = lib.name
     // this module is used only when running IDE from sources, no need to include its dependencies, see IJPL-125
-    if (module.name == "intellij.platform.buildScripts.downloader" && name == "zstd-jni") {
+    if (module.name == "intellij.platform.buildScripts.downloader" && libName == "zstd-jni") {
+      return@collectProjectLibrariesFromIncludedModules
+    }
+
+    if (skippedLibNameCache.contains(libName)) {
+      return@collectProjectLibrariesFromIncludedModules
+    }
+
+    val libNameAsModuleName = "intellij.libraries.${libName.replace('-','.')}"
+    if (layout.includedModules.any { it.moduleName == libNameAsModuleName }) {
+      skippedLibNameCache.add(libName)
       return@collectProjectLibrariesFromIncludedModules
     }
 
     layout.includedProjectLibraries
       .addOrGet(ProjectLibraryData(
-        libraryName = name,
-        packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(name, LibraryPackMode.MERGED),
+        libraryName = libName,
+        packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libName, LibraryPackMode.MERGED),
         reason = "<- ${module.name}",
       ))
       .dependentModules.computeIfAbsent("core") { mutableListOf() }.add(module.name)
