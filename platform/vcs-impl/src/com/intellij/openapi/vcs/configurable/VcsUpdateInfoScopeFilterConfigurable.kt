@@ -1,125 +1,110 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.configurable;
+package com.intellij.openapi.vcs.configurable
 
-import com.intellij.ide.DataManager;
-import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ex.Settings;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.components.ActionLink;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.DataManager
+import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ex.Settings
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
+import com.intellij.ui.components.ActionLink
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
+import java.awt.FlowLayout
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
+import javax.swing.Box
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JPanel
 
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import java.awt.*;
-import java.util.Objects;
+internal class VcsUpdateInfoScopeFilterConfigurable(
+  project: Project,
+  private val myVcsConfiguration: VcsConfiguration
+) : Configurable, NamedScopesHolder.ScopeListener, Disposable {
+  private val myCheckbox: JCheckBox
+  private val myComboBox: ComboBox<String>
+  private val myNamedScopeHolders: Array<NamedScopesHolder>
 
-/**
- * @author Kirill Likhodedov
- */
-class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesHolder.ScopeListener, Disposable {
-  private final JCheckBox myCheckbox;
-  private final ComboBox<String> myComboBox;
-  private final VcsConfiguration myVcsConfiguration;
-  private final NamedScopesHolder[] myNamedScopeHolders;
+  init {
+    myCheckbox = JCheckBox(VcsBundle.message("settings.filter.update.project.info.by.scope"))
+    myComboBox = ComboBox<String>()
 
-  VcsUpdateInfoScopeFilterConfigurable(@NotNull Project project, VcsConfiguration vcsConfiguration) {
-    myVcsConfiguration = vcsConfiguration;
-    myCheckbox = new JCheckBox(VcsBundle.message("settings.filter.update.project.info.by.scope"));
-    myComboBox = new ComboBox<>();
+    myComboBox.setEnabled(myCheckbox.isSelected)
+    myCheckbox.addChangeListener { myComboBox.setEnabled(myCheckbox.isSelected) }
 
-    myComboBox.setEnabled(myCheckbox.isSelected());
-    myCheckbox.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(@NotNull ChangeEvent e) {
-        myComboBox.setEnabled(myCheckbox.isSelected());
-      }
-    });
-
-    myNamedScopeHolders = NamedScopesHolder.getAllNamedScopeHolders(project);
-    for (NamedScopesHolder holder : myNamedScopeHolders) {
-      holder.addScopeListener(this, this);
+    myNamedScopeHolders = NamedScopesHolder.getAllNamedScopeHolders(project)
+    for (holder in myNamedScopeHolders) {
+      holder.addScopeListener(this, this)
     }
   }
 
-  @Override
-  public void scopesChanged() {
-    reset();
+  override fun scopesChanged() {
+    reset()
   }
 
-  @Override
-  public @Nls String getDisplayName() {
-    return VcsBundle.message("settings.filter.update.project.info.by.scope");
+  @Nls
+  override fun getDisplayName(): @Nls String {
+    return VcsBundle.message("settings.filter.update.project.info.by.scope")
   }
 
-  @Override
-  public @NotNull JComponent createComponent() {
-    final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    panel.add(myCheckbox);
-    panel.add(myComboBox);
-    panel.add(Box.createHorizontalStrut(UIUtil.DEFAULT_HGAP));
-    panel.add(new ActionLink(VcsBundle.message("configurable.vcs.manage.scopes"), e -> {
-      Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(panel));
+  override fun createComponent(): JComponent {
+    val panel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
+    panel.add(myCheckbox)
+    panel.add(myComboBox)
+    panel.add(Box.createHorizontalStrut(UIUtil.DEFAULT_HGAP))
+    panel.add(ActionLink(VcsBundle.message("configurable.vcs.manage.scopes"), ActionListener { _: ActionEvent? ->
+      val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(panel))
       if (settings != null) {
-        settings.select(settings.find(ScopeChooserConfigurable.PROJECT_SCOPES));
+        settings.select(settings.find(ScopeChooserConfigurable.PROJECT_SCOPES))
       }
-    }));
-    return panel;
+    }))
+    return panel
   }
 
-  @Override
-  public boolean isModified() {
-    return !Objects.equals(myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME, getScopeFilterName());
+  override fun isModified(): Boolean {
+    return myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME != this.scopeFilterName
   }
 
-  @Override
-  public void apply() {
-    myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME = getScopeFilterName();
+  override fun apply() {
+    myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME = this.scopeFilterName
   }
 
-  @Override
-  public void reset() {
-    myComboBox.removeAllItems();
-    boolean selection = false;
-    for (NamedScopesHolder holder : myNamedScopeHolders) {
-      for (NamedScope scope : holder.getEditableScopes()) {
-        @NlsSafe String name = scope.getScopeId();
-        myComboBox.addItem(name);
-        if (!selection && name.equals(myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME)) {
-          selection = true;
+  override fun reset() {
+    myComboBox.removeAllItems()
+    var selection = false
+    for (holder in myNamedScopeHolders) {
+      for (scope in holder.editableScopes) {
+        val name = scope.scopeId
+        myComboBox.addItem(name)
+        if (!selection && name == myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME) {
+          selection = true
         }
       }
     }
     if (selection) {
-      myComboBox.setItem(myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME);
+      myComboBox.item = myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME
     }
-    myCheckbox.setSelected(selection);
+    myCheckbox.setSelected(selection)
   }
 
-  @Override
-  public void dispose() {
+  override fun dispose() {
   }
 
-  @Override
-  public void disposeUIResources() {
-    Disposer.dispose(this);
+  override fun disposeUIResources() {
+    Disposer.dispose(this)
   }
 
-  private String getScopeFilterName() {
-    if (!myCheckbox.isSelected()) {
-      return null;
+  private val scopeFilterName: String?
+    get() {
+      if (!myCheckbox.isSelected) {
+        return null
+      }
+      return myComboBox.getItem()
     }
-    return myComboBox.getItem();
-  }
 }
