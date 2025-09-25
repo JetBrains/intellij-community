@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vcs.FileStatusManager
@@ -119,22 +120,22 @@ private fun getRecentFiles(project: Project): List<VirtualFile> {
   return result
 }
 
+private val IDENTICAL_NAMES_CACHE_KEY = Key.create<Boolean>("IDENTICAL_NAMES_CACHE_KEY")
+
 private fun areThereFilesWithSameName(virtualFile: VirtualFile, project: Project): Boolean {
-  return if (PlatformUtils.isRider()) {
-    val searchScope = GlobalSearchScope.allScope(project)
-    val processor = StopOnTwoSameNamesProcessor(virtualFile.name)
-    FilenameIndex.processFilesByName(virtualFile.name, /*caseSensitive: */ false, searchScope, processor)
-    processor.areThereMoreThanOneFile()
-  }
-  else {
-    val searchScope = GlobalSearchScope.projectScope(project)
-    val processor = StopOnTwoSameNamesProcessor(virtualFile.name)
-    FilenameIndex.processFilesByName(virtualFile.name, /*caseSensitive: */ true, searchScope, processor)
-    processor.areThereMoreThanOneFile()
-  }
+  val alreadyComputedValue = virtualFile.getUserData(IDENTICAL_NAMES_CACHE_KEY)
+  if (alreadyComputedValue != null) return alreadyComputedValue
+
+  val searchScope =
+    if (PlatformUtils.isRider()) GlobalSearchScope.allScope(project) else GlobalSearchScope.projectScope(project)
+  val processor = StopOnTwoIdenticalNamesProcessor(virtualFile.name)
+  FilenameIndex.processFilesByName(virtualFile.name, true, searchScope, processor)
+  val moreThanOneOccurrence = processor.areThereMoreThanOneFile()
+  virtualFile.putUserData(IDENTICAL_NAMES_CACHE_KEY, moreThanOneOccurrence)
+  return moreThanOneOccurrence
 }
 
-private class StopOnTwoSameNamesProcessor(private val searchedName: String): Processor<VirtualFile> {
+private class StopOnTwoIdenticalNamesProcessor(private val searchedName: String) : Processor<VirtualFile> {
   private var fileNameCounter = AtomicInteger(0)
 
   fun areThereMoreThanOneFile(): Boolean {
