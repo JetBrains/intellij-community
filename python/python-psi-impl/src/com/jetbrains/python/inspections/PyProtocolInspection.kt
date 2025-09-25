@@ -57,7 +57,7 @@ class PyProtocolInspection : PyInspection() {
       superClassTypes
         .asSequence()
         .filterIsInstance<PyClassType>()
-        .filter { isProtocol(it, myTypeEvalContext) }
+        .filter { it.isProtocol(myTypeEvalContext) }
         .forEach { protocol ->
           inspectProtocolSubclass(protocol, type, myTypeEvalContext).forEach {
             val subclassElements = it.second
@@ -69,7 +69,7 @@ class PyProtocolInspection : PyInspection() {
     }
 
     private fun checkProtocolBases(type: PyClassType, superClassTypes: List<PyClassLikeType?>) {
-      if (!isProtocol(type, myTypeEvalContext)) return
+      if (!type.isProtocol(myTypeEvalContext)) return
 
       val correctBase: (PyClassLikeType?) -> Boolean = {
         if (it == null) true
@@ -78,7 +78,7 @@ class PyProtocolInspection : PyInspection() {
 
           classQName == PyTypingTypeProvider.PROTOCOL ||
           classQName == PyTypingTypeProvider.PROTOCOL_EXT ||
-          it is PyClassType && isProtocol(it, myTypeEvalContext)
+          it is PyClassType && it.isProtocol(myTypeEvalContext)
         }
       }
 
@@ -99,7 +99,7 @@ class PyProtocolInspection : PyInspection() {
       }
 
       val type = myTypeEvalContext.getType(base)
-      if (type is PyClassType && isProtocol(type, myTypeEvalContext) && !type.isRuntimeCheckable(myTypeEvalContext)) {
+      if (type is PyClassType && type.isProtocol(myTypeEvalContext) && !type.isRuntimeCheckable(myTypeEvalContext)) {
         registerProblem(base, 
                         PyPsiBundle.message("INSP.protocol.only.runtime.checkable.protocols.can.be.used.with.instance.class.checks"),
                         GENERIC_ERROR)
@@ -114,7 +114,7 @@ class PyProtocolInspection : PyInspection() {
         val base = node.arguments.getOrNull(1)
         if (base != null) {
           val type = myTypeEvalContext.getType(base)
-          if (type is PyClassLikeType && isProtocol(type, myTypeEvalContext)) {
+          if (type is PyClassLikeType && type.isProtocol(myTypeEvalContext)) {
             registerProblem(base, PyPsiBundle.message("INSP.protocol.newtype.cannot.be.used.with.protocol.classes"))
           }
         }
@@ -150,7 +150,7 @@ class PyProtocolInspection : PyInspection() {
         val resolveResult = calleeReferenceExpression.followAssignmentsChain(resolveContext)
         val cls = resolveResult.getElement()
         if (cls is PyClass) {
-          if (isProtocol(cls, myTypeEvalContext)) {
+          if (cls.isProtocol(myTypeEvalContext)) {
             registerProblem(node, PyPsiBundle.message("INSP.protocol.cannot.instantiate.protocol.class", cls.name))
           }
         }

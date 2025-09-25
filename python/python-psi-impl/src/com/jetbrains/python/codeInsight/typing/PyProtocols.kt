@@ -13,9 +13,9 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.*
 
 
-fun isProtocol(classLikeType: PyClassLikeType, context: TypeEvalContext): Boolean = containsProtocol(classLikeType.getSuperClassTypes(context))
+fun PyClassLikeType.isProtocol(context: TypeEvalContext): Boolean = containsProtocol(getSuperClassTypes(context))
 
-fun isProtocol(cls: PyClass, context: TypeEvalContext): Boolean = containsProtocol(cls.getSuperClassTypes(context))
+fun PyClass.isProtocol(context: TypeEvalContext): Boolean = containsProtocol(getSuperClassTypes(context))
 
 fun PyClassType.isRuntimeCheckable(context: TypeEvalContext): Boolean = 
   PyKnownDecoratorUtil.getKnownDecorators(pyClass, context).any {
@@ -26,8 +26,8 @@ fun matchingProtocolDefinitions(expected: PyType?, actual: PyType?, context: Typ
                                                                                                          actual is PyClassLikeType &&
                                                                                                          expected.isDefinition &&
                                                                                                          actual.isDefinition &&
-                                                                                                         isProtocol(expected, context) &&
-                                                                                                         isProtocol(actual, context)
+                                                                                                         expected.isProtocol(context) &&
+                                                                                                         actual.isProtocol(context)
 
 typealias ProtocolAndSubclassElements = Pair<PyTypeMember, List<PyTypeMember>>
 
@@ -37,7 +37,7 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
 
   val protocolMembers = protocol.toInstance().getAllMembers(resolveContext)
   val superClassesMembers = protocol.toInstance().getSuperClassTypes(context)
-    .filter { isProtocol(it, context) }
+    .filter { it.isProtocol(context) }
     .flatMap { it.toInstance().getAllMembers(resolveContext).asIterable() }
   protocolMembers.addAll(superClassesMembers)
 
@@ -45,7 +45,7 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
     val protocolElement = protocolMember.element ?: continue
     if (protocolElement is PyPossibleClassMember) {
       val cls = protocolElement.containingClass
-      if (cls != null && !isProtocol(cls, context)) {
+      if (cls != null && !cls.isProtocol(context)) {
         continue
       }
     }
