@@ -212,7 +212,7 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     doTest();
   }
   
-  public void testInheritNullableInstantiateUnknown() {
+  public void testGuavaIterablesProblems() {
     doTest();
   }
 
