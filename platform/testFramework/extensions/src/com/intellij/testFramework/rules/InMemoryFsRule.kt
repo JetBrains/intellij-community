@@ -2,6 +2,7 @@
 package com.intellij.testFramework.rules
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.system.OS
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
@@ -69,7 +70,10 @@ private fun fsBuilder(windows: Boolean): MemoryFileSystemBuilder =
   if (windows) {
     val builder = MemoryFileSystemBuilder.newWindows().setCurrentWorkingDirectory("C:\\")
     if (OS.CURRENT == OS.Windows) {
-      FileSystems.getDefault().rootDirectories.forEach { builder.addRoot(it.toString()) }
+      FileSystems.getDefault().rootDirectories.asSequence()
+        .map { it.toString() }
+        .filter { OSAgnosticPathUtil.isAbsoluteDosPath(it) }
+        .forEach { builder.addRoot(it) }
     }
     builder
   }
