@@ -127,11 +127,10 @@ private fun areThereFilesWithSameName(virtualFile: VirtualFile, project: Project
     processor.areThereMoreThanOneFile()
   }
   else {
-    val processor = StopOnTwoSameNamesProcessor(virtualFile.name)
     val searchScope = GlobalSearchScope.projectScope(project)
+    val processor = StopOnTwoSameNamesProcessor(virtualFile.name)
     FilenameIndex.processFilesByName(virtualFile.name, /*caseSensitive: */ true, searchScope, processor)
     processor.areThereMoreThanOneFile()
-    FilenameIndex.getVirtualFilesByName(virtualFile.name, searchScope).size > 1
   }
 }
 
