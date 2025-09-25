@@ -14,26 +14,31 @@ class ScriptDefinitionProviderImpl(val project: Project) : IdeScriptDefinitionPr
     private val shouldReloadDefinitions = AtomicBoolean(true)
 
     @Volatile
-    private var _definitions: List<ScriptDefinition> = emptyList()
+    private var definitions: List<ScriptDefinition> = emptyList()
 
-    override fun getDefinitions(): List<ScriptDefinition> = _definitions
+    override fun getDefinitions(): List<ScriptDefinition> = currentDefinitions.toList()
 
     override val currentDefinitions: Sequence<ScriptDefinition>
         get() {
-            if (shouldReloadDefinitions.getAndSet(false)) {
-                runCatching {
-                    _definitions = SCRIPT_DEFINITIONS_SOURCES.getExtensions(project).flatMap { it.definitions }
-                }.onFailure {
-                    shouldReloadDefinitions.set(true)
+            if (shouldReloadDefinitions.get()) {
+                synchronized(this) {
+                    if (shouldReloadDefinitions.get()) {
+                        val loaded = SCRIPT_DEFINITIONS_SOURCES
+                            .getExtensions(project)
+                            .flatMap { it.definitions }
+
+                        definitions = loaded
+                        shouldReloadDefinitions.set(false)
+                    }
                 }
             }
 
             val settingsProvider = ScriptDefinitionPersistentSettings.getInstance(project)
 
-            return _definitions
+            return definitions
+                .asSequence()
                 .filter { settingsProvider.isScriptDefinitionEnabled(it) }
                 .sortedBy { settingsProvider.getScriptDefinitionOrder(it) }
-                .asSequence()
         }
 
     override fun getDefaultDefinition(): ScriptDefinition = project.defaultDefinition
