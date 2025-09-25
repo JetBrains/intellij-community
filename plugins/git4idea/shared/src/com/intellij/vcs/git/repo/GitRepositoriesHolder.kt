@@ -18,6 +18,7 @@ import com.intellij.vcs.git.rpc.GitRepositoryApi
 import com.intellij.vcs.git.rpc.GitRepositoryDto
 import com.intellij.vcs.git.rpc.GitRepositoryEvent
 import com.intellij.vcs.git.rpc.GitRepositoryStateDto
+import fleet.rpc.client.durable
 import git4idea.GitStandardLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitTag
@@ -89,40 +90,43 @@ class GitRepositoriesHolder(
    */
   private suspend fun subscribeToRepoEvents() {
     cs.childScope("Git repository state synchronization").launch {
-      GitRepositoryApi.getInstance().getRepositoriesEvents(project.projectId()).collect { event ->
-        LOG.debug("Received repository event: $event")
-        when (event) {
-          is GitRepositoryEvent.ReloadState -> {
-            val newState = event.repositories.associate { it.repositoryId to convertToRepositoryInfo(it) }
-            repositories.keys.retainAll(newState.keys)
-            repositories.putAll(newState)
+      durable {
+        GitRepositoryApi.getInstance().getRepositoriesEvents(project.projectId()).collect { event ->
+          LOG.debug("Received repository event: $event")
+          when (event) {
+            is GitRepositoryEvent.ReloadState -> {
+              val newState = event.repositories.associate { it.repositoryId to convertToRepositoryInfo(it) }
+              repositories.keys.retainAll(newState.keys)
+              repositories.putAll(newState)
 
-            if (!initSignal.isCompleted) {
-              initSignal.complete(Unit)
+              if (!initSignal.isCompleted) {
+                initSignal.complete(Unit)
+              }
+            }
+            is GitRepositoryEvent.RepositoriesSync -> {
+              if (event.repositories.size != repositories.size || !repositories.keys.containsAll(event.repositories)) {
+                LOG.warn("State of repositories is not synchronized. " +
+                         "Received repositories: ${event.repositories.joinToString { it.toString() }}. " +
+                         "Known repositories are: ${repositories.keys.joinToString { it.toString() }}")
+                GitRepositoryApi.getInstance().forceSync(project.projectId())
+              }
+              else {
+                LOG.debug("Repositories state is synchronized")
+              }
+            }
+            is GitRepositoryEvent.RepositoryCreated -> {
+              repositories[event.repository.repositoryId] = convertToRepositoryInfo(event.repository)
+            }
+            is GitRepositoryEvent.RepositoryDeleted -> repositories.remove(event.repositoryId)
+            is GitRepositoryEvent.SingleRepositoryUpdate -> handleSingleRepoUpdate(event)
+            GitRepositoryEvent.TagsHidden -> {
+              repositories.values.forEach { it.state.tags = emptySet() }
             }
           }
-          is GitRepositoryEvent.RepositoriesSync -> {
-            if (event.repositories.size != repositories.size || !repositories.keys.containsAll(event.repositories)) {
-              LOG.warn("State of repositories is not synchronized. " +
-                       "Received repositories: ${event.repositories.joinToString { it.toString() }}. " +
-                       "Known repositories are: ${repositories.keys.joinToString { it.toString() }}")
-              GitRepositoryApi.getInstance().forceSync(project.projectId())
-            } else {
-              LOG.debug("Repositories state is synchronized")
-            }
-          }
-          is GitRepositoryEvent.RepositoryCreated -> {
-            repositories[event.repository.repositoryId] = convertToRepositoryInfo(event.repository)
-          }
-          is GitRepositoryEvent.RepositoryDeleted -> repositories.remove(event.repositoryId)
-          is GitRepositoryEvent.SingleRepositoryUpdate -> handleSingleRepoUpdate(event)
-          GitRepositoryEvent.TagsHidden -> {
-            repositories.values.forEach { it.state.tags = emptySet() }
-          }
-        }
 
-        if (initialized) {
-          getUpdateType(event)?.let { project.messageBus.syncPublisher(UPDATES).afterUpdate(it) }
+          if (initialized) {
+            getUpdateType(event)?.let { project.messageBus.syncPublisher(UPDATES).afterUpdate(it) }
+          }
         }
       }
     }
