@@ -9,7 +9,6 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.LanguageAndRegionBundle
 import com.intellij.ide.Region
 import com.intellij.ide.RegionSettings
-import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.ui.localization.statistics.EventSource
 import com.intellij.ide.ui.localization.statistics.LocalizationActionsStatistics
 import com.intellij.l10n.LocalizationStateService
@@ -221,7 +220,7 @@ private class LanguageAndRegionDialog(
   private fun getMessageBundle() = DynamicBundle.getResourceBundleLocalized(this::class.java.classLoader, LanguageAndRegionBundle.BUNDLE_FQN, selectedLanguage)
 }
 
-internal fun getLanguageAndRegionDialogIfNeeded(document: EndUserAgreement.Document): (suspend () -> Boolean)? {
+internal fun getLanguageAndRegionDialogIfNeeded(): (suspend () -> Boolean)? {
   val locale = Locale.getDefault()
   val matchingLocale = languageMapping.keys.find { language -> languageMapping[language]?.any { locale.toLanguageTag().contains(it) } == true } ?: Locale.ENGLISH
   var matchingRegion = Region.NOT_SET

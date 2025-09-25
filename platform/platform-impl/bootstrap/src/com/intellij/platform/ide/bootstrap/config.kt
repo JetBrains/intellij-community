@@ -2,7 +2,6 @@
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.accessibility.enableScreenReaderSupportIfNecessary
-import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.CustomConfigMigrationOption
@@ -28,8 +27,8 @@ internal suspend fun CoroutineScope.importConfigIfNeeded(
   args: List<String>,
   customTargetDirectoryToImportConfig: Path?,
   appStarterDeferred: Deferred<AppStarter>,
-  euaDocumentDeferred: Deferred<EndUserAgreement.Document?>,
-  initLafJob: Job
+  euaDocumentDeferred: Deferred<EndUserAgreementStatus>,
+  initLafJob: Job,
 ): Job? {
   if (!configImportNeededDeferred.await()) {
     val configDir = PathManager.getConfigDir()
@@ -92,7 +91,7 @@ private suspend fun importConfig(
   targetDirectoryToImportConfig: Path,
   log: Logger,
   appStarter: AppStarter,
-  euaDocumentDeferred: Deferred<EndUserAgreement.Document?>
+  euaDocumentDeferred: Deferred<EndUserAgreementStatus>,
 ) {
   span("screen reader checking") {
     runCatching {
@@ -103,7 +102,8 @@ private suspend fun importConfig(
   span("config importing") {
     appStarter.beforeImportConfigs()
 
-    val veryFirstStartOnThisComputer = euaDocumentDeferred.await() != null
+    val euaDocumentStatus = euaDocumentDeferred.await()
+    val veryFirstStartOnThisComputer = euaDocumentStatus is EndUserAgreementStatus.Required
     withContext(RawSwingDispatcher) {
       ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, targetDirectoryToImportConfig, args, log)
     }

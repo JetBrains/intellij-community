@@ -8,7 +8,6 @@ import com.intellij.diagnostic.*
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.InitAppContext
-import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.plugins.BundledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginSet
@@ -84,7 +83,7 @@ internal suspend fun loadApp(
   app: ApplicationImpl,
   pluginSetDeferred: Deferred<Deferred<PluginSet>>,
   appInfoDeferred: Deferred<ApplicationInfoEx>,
-  euaDocumentDeferred: Deferred<EndUserAgreement.Document?>,
+  euaDocumentDeferred: Deferred<EndUserAgreementStatus>,
   asyncScope: CoroutineScope,
   initLafJob: Job,
   logDeferred: Deferred<Logger>,
@@ -110,9 +109,11 @@ internal suspend fun loadApp(
     }
     else {
       async(CoroutineName("language and region")) {
-        euaDocumentDeferred.await()?.let {
-          getLanguageAndRegionDialogIfNeeded(it)
+        val euaDocumentStatus = euaDocumentDeferred.await()
+        if (euaDocumentStatus is EndUserAgreementStatus.Required) {
+          getLanguageAndRegionDialogIfNeeded()
         }
+        else null
       }
     }
     
@@ -121,7 +122,7 @@ internal suspend fun loadApp(
     }
     else {
       async(CoroutineName("eua document")) {
-        prepareShowEuaIfNeededTask(document = euaDocumentDeferred.await(), appInfoDeferred = appInfoDeferred, asyncScope = asyncScope)
+        prepareShowEuaIfNeededTask(documentStatus = euaDocumentDeferred.await(), appInfoDeferred = appInfoDeferred, asyncScope = asyncScope)
       }
     }
 

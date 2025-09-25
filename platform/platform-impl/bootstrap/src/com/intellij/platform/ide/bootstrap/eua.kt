@@ -13,7 +13,7 @@ import kotlinx.coroutines.*
 // On startup 2 dialogs must be shown:
 // - gdpr agreement
 // - eu(l)a
-internal suspend fun loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx>): EndUserAgreement.Document? {
+internal suspend fun loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx>): EndUserAgreementStatus {
   val vendorAsProperty = System.getProperty("idea.vendor.name", "")
   val isVendorJetBrains = if (vendorAsProperty.isNotEmpty()) {
     vendorAsProperty == "JetBrains"
@@ -22,21 +22,32 @@ internal suspend fun loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx
     appInfoDeferred.await().isVendorJetBrains
   }
   if (!isVendorJetBrains) {
-    return null
+    return EndUserAgreementStatus.NonJbVendor
   }
+
   val document = span("eua getting") {
     EndUserAgreement.getLatestDocument()
   }
-  return document.takeUnless {
-    span("eua is accepted checking") {
-      it.isAccepted
-    }
+  val isAccepted = span("eua is accepted checking") {
+    document.isAccepted
   }
+  if (isAccepted) {
+    return EndUserAgreementStatus.Accepted
+  }
+  return EndUserAgreementStatus.Required(document)
 }
 
-internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Document?,
-                                                appInfoDeferred: Deferred<ApplicationInfoEx>,
-                                                asyncScope: CoroutineScope): (suspend () -> Boolean)? {
+internal sealed interface EndUserAgreementStatus {
+  class Required(val document: EndUserAgreement.Document) : EndUserAgreementStatus
+  object Accepted : EndUserAgreementStatus
+  object NonJbVendor : EndUserAgreementStatus
+}
+
+internal suspend fun prepareShowEuaIfNeededTask(
+  documentStatus: EndUserAgreementStatus,
+  appInfoDeferred: Deferred<ApplicationInfoEx>,
+  asyncScope: CoroutineScope,
+): (suspend () -> Boolean)? {
   val updateCached = asyncScope.launch(CoroutineName("eua cache updating") + Dispatchers.IO) {
     EndUserAgreement.updateCachedContentToLatestBundledVersion()
   }
@@ -50,10 +61,10 @@ internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Docum
     }
   }
 
-  if (document != null) {
+  if (documentStatus is EndUserAgreementStatus.Required) {
     return {
       prepareAndExecuteInEdt {
-        showEndUserAndDataSharingAgreements(document)
+        showEndUserAndDataSharingAgreements(documentStatus.document)
       }
       true
     }
