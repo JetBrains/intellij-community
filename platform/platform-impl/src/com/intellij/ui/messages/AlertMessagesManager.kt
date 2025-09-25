@@ -210,6 +210,14 @@ internal class AlertDialog(
     }
 
     WindowRoundedCornersManager.configure(this)
+
+    val alertBackground = JBColor.namedColor("AlertDialog.background", JBColor.PanelBackground)
+
+    UIUtil.uiTraverser(window).traverse().consumeEach {
+      if (JBColor.PanelBackground.equals(it.background)) {
+        it.background = alertBackground
+      }
+    }
   }
 
   override fun setSizeDuringPack() = false
