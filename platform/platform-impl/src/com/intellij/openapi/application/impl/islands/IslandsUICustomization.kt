@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl.islands
 
 import com.intellij.ide.ProjectWindowCustomizerService
+import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
@@ -313,9 +314,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
             val tabContainer = rootPane.getClientProperty("WINDOW_TABS_CONTAINER_KEY")
             if (tabContainer is JComponent) {
               if (isIslands) {
-                val left = if (leftVisible) JBUI.unscale(buttonManager.left.width) + 1 else gap
-                val right = if (rightVisible) JBUI.unscale(buttonManager.right.width) + 2 else gap + 1
-
                 val frame = rootPane.parent
                 if (frame is IdeFrame) {
                   val project = frame.project
@@ -324,7 +322,15 @@ internal class IslandsUICustomization : InternalUICustomization() {
                   }
                 }
 
-                tabContainer.border = JBUI.Borders.empty(0, left, 2, right)
+                if (DistractionFreeModeController.isDistractionFreeModeEnabled()) {
+                  tabContainer.border = JBUI.Borders.emptyBottom(2)
+                }
+                else {
+                  val left = if (leftVisible) JBUI.unscale(buttonManager.left.width) + 1 else gap
+                  val right = if (rightVisible) JBUI.unscale(buttonManager.right.width) + 2 else gap + 1
+
+                  tabContainer.border = JBUI.Borders.empty(0, left, 2, right)
+                }
               }
               else if (tabContainer.border != null) {
                 tabContainer.border = null
@@ -340,7 +346,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
           return@addVisibleToolbarsListener
         }
 
-        if (leftVisible && rightVisible) {
+        if (leftVisible && rightVisible || DistractionFreeModeController.isDistractionFreeModeEnabled()) {
           if (toolWindowPaneParent.border != null) {
             toolWindowPaneParent.border = null
           }
