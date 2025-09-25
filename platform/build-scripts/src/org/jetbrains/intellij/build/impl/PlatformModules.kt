@@ -122,6 +122,8 @@ suspend fun createPlatformLayout(context: BuildContext): PlatformLayout {
   )
 }
 
+internal const val LIB_MODULE_PREFIX = "intellij.libraries."
+
 internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>, context: BuildContext): PlatformLayout {
   val frontendModuleFilter = context.getFrontendModuleFilter()
   val productLayout = context.productProperties.productLayout
@@ -302,16 +304,26 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
       .sortedBy { it.moduleName },
   )
 
+  val libAsProductModule: HashSet<String> = layout.includedModules.mapNotNullTo(HashSet()) {
+    if (it.moduleName.startsWith(LIB_MODULE_PREFIX)) {
+      it.moduleName.substring(LIB_MODULE_PREFIX.length).replace('.', '-')
+    }
+    else {
+      null
+    }
+  }
+  layout.libAsProductModule = libAsProductModule
+
   // sqlite - used by DB and "import settings" (temporarily)
   layout.alwaysPackToPlugin(listOf("flexmark", "sqlite"))
   for (item in projectLibrariesUsedByPlugins) {
-    if (!layout.isProjectLibraryExcluded(item.libraryName) && !layout.isLibraryAlwaysPackedIntoPlugin(item.libraryName)) {
+    val libName = item.libraryName
+    if (!libAsProductModule.contains(libName) && !layout.isProjectLibraryExcluded(libName) && !layout.isLibraryAlwaysPackedIntoPlugin(libName)) {
       layout.includedProjectLibraries.add(item)
     }
   }
 
-  // as a separate step, not a part of computing implicitModules, as we should collect libraries from a such implicitly included modules
-  val skippedLibNameCache = HashSet<String>()
+  // as a separate step, not a part of computing implicitModules, as we should collect libraries from such implicitly included modules
   layout.collectProjectLibrariesFromIncludedModules(context = context) { lib, module ->
     val libName = lib.name
     // this module is used only when running IDE from sources, no need to include its dependencies, see IJPL-125
@@ -319,13 +331,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
       return@collectProjectLibrariesFromIncludedModules
     }
 
-    if (skippedLibNameCache.contains(libName)) {
-      return@collectProjectLibrariesFromIncludedModules
-    }
-
-    val libNameAsModuleName = "intellij.libraries.${libName.replace('-','.')}"
-    if (layout.includedModules.any { it.moduleName == libNameAsModuleName }) {
-      skippedLibNameCache.add(libName)
+    if (libAsProductModule.contains(libName)) {
       return@collectProjectLibrariesFromIncludedModules
     }
 

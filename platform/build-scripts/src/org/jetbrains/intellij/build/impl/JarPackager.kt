@@ -463,7 +463,7 @@ class JarPackager private constructor(
       if (libRef.parentReference !is JpsModuleReference) {
         val libName = libRef.libraryName
         if (includeProjectLib) {
-          if (platformLayout!!.hasLibrary(libName) || layout.hasLibrary(libName)) {
+          if (platformLayout!!.hasLibrary(libName, moduleName) || layout.hasLibrary(libName)) {
             continue
           }
 

@@ -14,7 +14,6 @@ jvm_library(
   exports = ["@lib//:kotlinx-serialization-core"],
   runtime_deps = [
     ":core_resources",
-    "//libraries/kotlinx/serialization/core",
     "@lib//:kotlinx-serialization-core",
   ]
 )

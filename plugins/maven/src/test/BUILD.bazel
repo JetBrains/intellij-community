@@ -70,7 +70,7 @@ jvm_library(
     "//platform/backend/observation:observation_test_lib",
     "@lib//:hash4j",
     "@lib//:kotlin-reflect",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//platform/statistics/testFramework",
     "//xml/xml-psi-api:psi",
     "//platform/xdebugger-api:debugger",
