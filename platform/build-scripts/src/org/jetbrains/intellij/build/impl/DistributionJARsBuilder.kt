@@ -469,7 +469,7 @@ internal suspend fun buildNonBundledPlugins(
       }
     }
     val moduleOutputPatcher = ModuleOutputPatcher()
-    val stageDir = context.paths.tempDir.resolve("non-bundled-plugins-${context.applicationInfo.productCode}")
+    val stageDir = nonBundledPluginsStageDir(context)
     NioFiles.deleteRecursively(stageDir)
     val dirToJar = ConcurrentLinkedQueue<NonBundledPlugin>()
 
@@ -559,6 +559,9 @@ internal suspend fun buildNonBundledPlugins(
     mappings
   } ?: emptyList()
 }
+
+fun nonBundledPluginsStageDir(context: BuildContext): Path
+  = context.paths.tempDir.resolve("non-bundled-plugins-${context.applicationInfo.productCode}")
 
 private suspend fun validatePlugins(context: BuildContext, pluginSpecs: Collection<PluginRepositorySpec>) {
   context.executeStep(spanBuilder("plugins validation"), BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED) { span ->
