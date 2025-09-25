@@ -510,6 +510,15 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     return pos;
   }
 
+  /// Splits filenames into groups based on the longest suffix this name could match (i.e. contains all chars from it in
+  /// the right order)
+  ///
+  /// Example: pattern "abcd"
+  /// - "abacada" placed to group 0, since it contains all chars.
+  /// - "cdcd" placed to group 2 since it contains chars from suffix "cd"
+  /// - "abab" placed to group 4, because there is no suffix such as it contains all chars from it
+  ///
+  /// @see NameGrouper#findMatchStartingPosition
   private final class NameGrouper {
     private final String namePattern;
     private final char[] NAME_PATTERN; // upper cased namePattern
@@ -535,6 +544,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       this.indicator = indicator;
     }
 
+    /**
+     * @see com.intellij.ide.actions.GotoFileItemProvider#findMatchStartingPosition
+     */
     boolean processName(@NotNull String name) {
       indicator.checkCanceled();
       int position = findMatchStartingPosition(name, name_pattern, NAME_PATTERN);
