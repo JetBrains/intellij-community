@@ -3156,6 +3156,19 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+
+  // PY-84289
+  public void testExponentialAnalysisTimeWhenMapLookupKeyEqualsVariableName() {
+    long before = System.currentTimeMillis();
+    doMultiFileTest("main.py");
+    long after = System.currentTimeMillis();
+    long diff = after - before;
+    // junit3 doesn't support timeouts out of the box
+    if (diff > 5000) {
+      fail("Took too long to analyze main.py: " + diff + " ms");
+    }
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

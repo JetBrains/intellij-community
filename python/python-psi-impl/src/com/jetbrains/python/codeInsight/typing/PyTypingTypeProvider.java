@@ -1322,8 +1322,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   }
 
   private static @Nullable Ref<PyType> getStringBasedType(@NotNull String contents, @NotNull PsiElement anchor, @NotNull Context context) {
-    final PyExpression expr = toExpression(contents, anchor);
-    return expr != null ? getType(expr, context) : null;
+    return doPreventingRecursion(Pair.create(anchor, contents), true, () -> {
+      final PyExpression expr = toExpression(contents, anchor);
+      return expr != null ? getType(expr, context) : null;
+    });
   }
 
   private static @Nullable PyType getStringLiteralType(@NotNull PsiElement element, @NotNull Context context) {
