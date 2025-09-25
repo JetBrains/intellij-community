@@ -26,6 +26,7 @@ import com.intellij.driver.sdk.ui.components.elements.NotebookTableOutputUi
 import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.ui
+import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForCodeAnalysis
 import org.intellij.lang.annotations.Language
@@ -151,6 +152,26 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     }
   }
 
+  /*
+    This function should be removed when fixed:
+    PY-84369
+    PY-84374
+   */
+  fun softRunCellAndWaitExecuted(timeout: Duration = 1.minutes): Unit = step("Executing cell") {
+    runCell()
+    waitFor(timeout = timeout) {
+      val last = notebookCellExecutionInfos.lastOrNull()
+      if (last == null) {
+        false
+      } else {
+        val timeBefore = last.getExecutionTimeInMsSafe()
+        wait(250.milliseconds)
+        val timeAfter = last.getExecutionTimeInMsSafe()
+        timeAfter == timeBefore && timeAfter != null
+      }
+    }
+  }
+
   fun runAllCellsAndWaitExecuted(timeout: Duration = 1.minutes): Unit = step("Executing all cells") {
     runAllCells()
     waitFor(timeout = timeout) {
@@ -163,6 +184,28 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
       && infos.all {
         it.getParent().x { contains(byAttribute("defaulticon", "greenCheckmark.svg")) }.present()
       }
+    }
+  }
+
+  /*
+    This functions should be removed when fixed:
+    PY-84369
+    PY-84374
+   */
+  fun softRunAllCellsAndWaitExecuted(timeout: Duration = 1.minutes): Unit = step("Executing all cells") {
+    runAllCells()
+    waitFor(timeout = timeout) {
+      val infos = notebookCellExecutionInfos
+      val timesBefore = infos.map { it.getExecutionTimeInMsSafe() }
+
+      wait(250.milliseconds)
+
+      val timesAfter = infos.map { it.getExecutionTimeInMsSafe() }
+
+      infos.isNotEmpty()
+      && infos.size == notebookCellEditors.size
+      && timesAfter.all { it != null }
+      && timesBefore == timesAfter
     }
   }
 
@@ -207,6 +250,18 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
       ]
     """.trimIndent()
     ).list()
+
+  fun JLabelUiComponent.getExecutionTimeInMsSafe(): Long? = step("Get cell execution time") {
+    if (this.notPresent()) return@step null
+    val text = this.getText()
+    if (text == null) return@step null
+    if (text.isEmpty()) return@step null
+
+    val seconds = Regex("""(\d+)s""").find(text)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+    val millis  = Regex("""(\d+)ms""").find(text)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+
+    seconds * 1_000 + millis
+  }
 
   fun JLabelUiComponent.getExecutionTimeInMs(): Long = step("Get cell execution time") {
     this.getText().run {
