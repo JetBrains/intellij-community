@@ -296,7 +296,7 @@ internal fun generateDeps(
     }
   }
 
-  if (exports.isNotEmpty()) {
+  if (exports.isNotEmpty() && !dependentModuleName.startsWith("intellij.libraries.")) {
     require(!exports.any { it.label == "@lib//:kotlinx-serialization-core" }) {
       "Do not export kotlinx-serialization-core (module=$dependentModuleName})"
     }
