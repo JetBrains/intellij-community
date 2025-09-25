@@ -4442,7 +4442,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       EditorMouseEventArea eventArea = getMouseEventArea(e);
       myMousePressArea = eventArea;
-      if (eventArea == EditorMouseEventArea.FOLDING_OUTLINE_AREA) {
+      if (eventArea == EditorMouseEventArea.FOLDING_OUTLINE_AREA && e.getButton() == MouseEvent.BUTTON1) {
         FoldRegion range = myGutterComponent.findFoldingAnchorAt(x, y);
         if (range != null) {
           boolean expansion = !range.isExpanded();
