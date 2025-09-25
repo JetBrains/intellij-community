@@ -18,7 +18,7 @@ import javax.swing.JComponent
  */
 @Internal
 class SubscriptionExpirationDialog(project: Project?, private val settings: SubscriptionExpirationSettings) :
-  LicenseExpirationDialog(project, getImagePath(), 433, 242) {
+  LicenseExpirationDialog(project, getImagePath()) {
 
   private var selectionButton = 0
 
