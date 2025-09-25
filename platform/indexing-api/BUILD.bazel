@@ -28,8 +28,8 @@ jvm_library(
     "//platform/util",
     "//platform/util/concurrency",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
   ],
   runtime_deps = [":indexing_resources"]
 )

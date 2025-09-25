@@ -30,7 +30,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.grid.core.impl" />
     <orderEntry type="module" module-name="intellij.grid.csv.core.impl" />
     <orderEntry type="module" module-name="intellij.grid.types" />

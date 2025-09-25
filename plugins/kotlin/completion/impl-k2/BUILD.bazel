@@ -64,8 +64,8 @@ jvm_library(
     "//java/java-impl:impl",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "//plugins/kotlin/jvm-debugger/evaluation",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//plugins/kotlin/base/kotlin.base.serialization:kotlin-base-serialization",
   ],
   runtime_deps = [":kotlin-completion-impl-k2_resources"]

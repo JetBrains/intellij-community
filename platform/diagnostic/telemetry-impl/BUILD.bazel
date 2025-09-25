@@ -37,7 +37,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/util/http",
     "@lib//:kotlinx-serialization-protobuf",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//platform/diagnostic",
     "//platform/diagnostic/telemetry.exporters",
     "//platform/util/coroutines",

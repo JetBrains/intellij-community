@@ -52,7 +52,7 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/backend/observation",
     "//platform/settings",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//platform/eel-provider",
   ],
   runtime_deps = [":externalSystem-impl_resources"]

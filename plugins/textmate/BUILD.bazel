@@ -28,7 +28,7 @@ jvm_library(
     "@lib//:jackson",
     "@lib//:jackson-databind",
     "//platform/platform-impl:ide-impl",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//platform/code-style-impl:codeStyle-impl",
     "@lib//:caffeine",
     "//fleet/fastutil",

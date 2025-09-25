@@ -21,8 +21,8 @@ jvm_library(
   kotlinc_opts = ":custom_core",
   deps = [
     "@lib//:jetbrains-annotations",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
     "@lib//:slf4j-api",

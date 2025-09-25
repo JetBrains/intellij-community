@@ -16,8 +16,8 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kaml",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "@lib//:jetbrains-annotations",
   ]
 )

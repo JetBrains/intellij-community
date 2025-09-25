@@ -22,7 +22,7 @@ jvm_library(
     "//platform/util",
     "@lib//:fastutil-min",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//platform/syntax/syntax-psi:psi",
   ],
   exports = [

@@ -18,7 +18,7 @@ jvm_library(
     "//platform/util",
     "//platform/core-api:core",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/project/shared:project",
   ],

@@ -32,7 +32,7 @@ jvm_library(
   javac_opts = ":custom-javac-options",
   kotlinc_opts = ":custom_impl",
   deps = [
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//grid/core-impl",
     "//grid/csv:csv-core-impl",
     "//grid/types",

@@ -43,8 +43,8 @@ jvm_library(
     "@lib//:caffeine",
     "//platform/observable",
     "@lib//:kotlinx-datetime-jvm",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
   ],
   runtime_deps = [":frontend_resources"]
 )

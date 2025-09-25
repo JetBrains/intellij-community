@@ -21,8 +21,8 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/service-container",
     "//platform/kernel/shared:kernel",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/project/shared:project",
   ],
   runtime_deps = [":ide-progress_resources"]

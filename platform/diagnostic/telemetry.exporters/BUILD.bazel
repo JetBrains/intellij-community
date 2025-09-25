@@ -35,7 +35,7 @@ jvm_library(
     "@lib//:jackson",
     "@lib//:jackson-databind",
     "@lib//:jackson-module-kotlin",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "@lib//:kotlinx-serialization-protobuf",
   ],
   runtime_deps = [":telemetry.exporters_resources"]

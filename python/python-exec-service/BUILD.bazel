@@ -38,8 +38,8 @@ jvm_library(
     "//platform/util/progress",
     "//platform/execution",
     "//platform/projectModel-api:projectModel",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
   ],
   runtime_deps = [":community-execService_resources"]
 )
@@ -73,8 +73,8 @@ jvm_library(
     "//platform/util/progress",
     "//platform/execution",
     "//platform/projectModel-api:projectModel",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
   ],
   runtime_deps = [":community-execService_test_resources"]
 )

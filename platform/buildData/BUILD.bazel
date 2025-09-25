@@ -25,7 +25,7 @@ jvm_library(
   kotlinc_opts = ":custom_buildData",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "@lib//:jetbrains-annotations",
   ],
   runtime_deps = [":buildData_resources"]

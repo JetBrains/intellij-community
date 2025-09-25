@@ -19,7 +19,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/project/shared:project",
     "//platform/kernel/shared:kernel",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//platform/platform-api:ide",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
