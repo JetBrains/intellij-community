@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsActions.ActionDescription
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.python.sdk.ui.PySdkUiBundle
 import com.intellij.python.sdk.ui.evolution.sdk.EvoWarning
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
@@ -97,7 +98,7 @@ class EvoTreeLazyNodeElement(
         updateState(State.LOADING, listeners)
         sections.clear()
 
-        val result = withBackgroundProgress(project, "Loading ${presentation.text}", true) {
+        val result = withBackgroundProgress(project, PySdkUiBundle.message("evolution.progress.title.loading", presentation.text), true) {
           loader.invoke()
         }
         result.onSuccess { elements ->

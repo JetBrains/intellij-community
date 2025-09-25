@@ -13,6 +13,7 @@ import com.intellij.python.sdk.ui.evolution.ui.EvoSelectSdkProvider
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLazyNodeElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLeafElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeSection
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import java.nio.file.Path
@@ -22,7 +23,7 @@ import kotlin.collections.component2
 
 private class UvSelectSdkProvider() : EvoSelectSdkProvider {
   override fun getTreeElement(evoModuleSdk: EvoModuleSdk) = EvoTreeLazyNodeElement("uv", PythonIcons.UV) {
-    getUvExecutable() ?: return@EvoTreeLazyNodeElement PyResult.localizedError("uv executable is not found")
+    getUvExecutable() ?: return@EvoTreeLazyNodeElement PyResult.localizedError(PyBundle.message("evolution.uv.executable.is.not.found"))
 
     val environments = VenvEvoSdkManager.findEnvironments(evoModuleSdk.module).getOr {
       return@EvoTreeLazyNodeElement it
