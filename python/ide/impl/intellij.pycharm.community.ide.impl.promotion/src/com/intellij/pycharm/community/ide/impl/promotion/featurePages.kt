@@ -4,9 +4,9 @@ package com.intellij.pycharm.community.ide.impl.promotion
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.pycharm.community.customization.shared.djangoPromoFeatureList
-import com.intellij.pycharm.community.customization.shared.javaScriptPromoFeatureList
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import com.intellij.pycharm.community.ide.impl.promo.djangoPromoFeatureList
+import com.intellij.pycharm.community.ide.impl.promo.javaScriptPromoFeatureList
 import com.jetbrains.python.icons.PythonIcons
 import javax.swing.JComponent
 
