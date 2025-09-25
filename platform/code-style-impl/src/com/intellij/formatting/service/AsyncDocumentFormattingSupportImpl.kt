@@ -20,7 +20,7 @@ import java.io.File
 import java.io.FileWriter
 import java.io.IOException
 import java.nio.charset.Charset
-import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -28,7 +28,7 @@ import kotlin.concurrent.Volatile
 
 @ApiStatus.Internal
 class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentFormattingService) : AsyncDocumentFormattingSupport {
-  private val pendingRequests: MutableList<FormattingRequestImpl> = Collections.synchronizedList(ArrayList())
+  private val pendingRequests: ConcurrentHashMap<Document, FormattingRequestImpl> = ConcurrentHashMap()
 
   @Synchronized
   override fun formatDocument(
@@ -38,7 +38,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     canChangeWhiteSpaceOnly: Boolean,
     quickFormat: Boolean
   ) {
-    val currRequest = findPendingRequest(document)
+    val currRequest = pendingRequests[document]
     val forceSync = true == document.getUserData(FORMAT_DOCUMENT_SYNCHRONOUSLY)
     if (currRequest != null) {
       if (!currRequest.cancel()) {
@@ -52,7 +52,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     val formattingTask = createFormattingTask(service, formattingRequest)
     if (formattingTask != null) {
       formattingRequest.setTask(formattingTask)
-      pendingRequests.add(formattingRequest)
+      pendingRequests[document] = formattingRequest
       if (forceSync || ApplicationManager.getApplication().isHeadlessEnvironment()) {
         runAsyncFormat(formattingRequest, null)
       }
@@ -69,18 +69,12 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     }
   }
 
-  private fun findPendingRequest(document: Document): FormattingRequestImpl? {
-    synchronized(pendingRequests) {
-      return pendingRequests.find { it.document === document }
-    }
-  }
-
   private fun runAsyncFormat(formattingRequest: FormattingRequestImpl, indicator: ProgressIndicator?) {
     try {
       formattingRequest.runTask(indicator)
     }
     finally {
-      pendingRequests.remove(formattingRequest)
+      pendingRequests.remove(formattingRequest.document, formattingRequest)
     }
   }
 
