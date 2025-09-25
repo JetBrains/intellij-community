@@ -81,7 +81,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
    * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
    */
   fun waitNotFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT) {
-    waitFor(message = "No ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
+    waitFor(message = "There should be no ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
             timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
             interval = 1.seconds) {
       !present()
