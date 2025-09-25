@@ -28,7 +28,7 @@ import kotlin.concurrent.Volatile
 
 @ApiStatus.Internal
 class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFormattingService) : AsyncDocumentFormattingSupport {
-  private val myPendingRequests: MutableList<AsyncFormattingRequest> = Collections.synchronizedList(ArrayList())
+  private val myPendingRequests: MutableList<FormattingRequestImpl> = Collections.synchronizedList(ArrayList())
 
   override fun formatDocument(
     document: Document,
@@ -40,7 +40,7 @@ class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFor
     val currRequest = findPendingRequest(document)
     val forceSync = true == document.getUserData(FORMAT_DOCUMENT_SYNCHRONOUSLY)
     if (currRequest != null) {
-      if (!(currRequest as FormattingRequestImpl).cancel()) {
+      if (!currRequest.cancel()) {
         LOG.warn("Pending request can't be cancelled")
         return
       }
@@ -68,9 +68,9 @@ class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFor
     }
   }
 
-  private fun findPendingRequest(document: Document): AsyncFormattingRequest? {
+  private fun findPendingRequest(document: Document): FormattingRequestImpl? {
     synchronized(myPendingRequests) {
-      return myPendingRequests.find { (it as FormattingRequestImpl).document === document }
+      return myPendingRequests.find { it.document === document }
     }
   }
 
