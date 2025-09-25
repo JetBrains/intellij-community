@@ -54,7 +54,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
@@ -343,14 +342,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       Disposer.register(this, myCommitPanelSplitter);
       myCommitPanelSplitter.setFirstComponent(backendChangesView.getChangesPanel());
 
-      myContentPanel = new BorderLayoutPanel() {
-        @Override
-        public Dimension getMinimumSize() {
-          return isMinimumSizeSet() || myChangesView.getViewModel().isToolbarHorizontal()
-                 ? super.getMinimumSize()
-                 : myChangesView.getViewModel().getToolbarComponent().getPreferredSize();
-        }
-      };
+      myContentPanel = new BorderLayoutPanel();
       myContentPanel.addToCenter(myCommitPanelSplitter);
       myMainPanelContent = new Wrapper(myContentPanel);
       JPanel mainPanel = simplePanel(myMainPanelContent)

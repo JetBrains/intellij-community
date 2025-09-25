@@ -20,7 +20,6 @@ import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.RdLocalChanges
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.split.createComponent
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.tree.TreeUtil.*
@@ -67,8 +66,6 @@ internal interface BackendCommitChangesViewModel {
 
   fun setCommitWorkflowHandler(handler: ChangesViewCommitWorkflowHandler?)
 
-  fun isToolbarHorizontal(): Boolean
-  fun getToolbarComponent(): JComponent
   fun setToolbarHorizontal(horizontal: Boolean)
   fun getActions(): List<AnAction>
   fun isModelUpdateInProgress(): Boolean
@@ -113,10 +110,6 @@ private class BackendRemoteCommitChangesViewModel(private val project: Project) 
 
   override fun setCommitWorkflowHandler(handler: ChangesViewCommitWorkflowHandler?) {
   }
-
-  override fun isToolbarHorizontal(): Boolean = horizontal
-
-  override fun getToolbarComponent(): JComponent = JBLabel("Toolbar (RD placeholder)")
 
   override fun setToolbarHorizontal(horizontal: Boolean) {
     this.horizontal = horizontal
@@ -186,10 +179,6 @@ private class BackendLocalCommitChangesViewModel(private val panel: CommitChange
   override fun setCommitWorkflowHandler(handler: ChangesViewCommitWorkflowHandler?) {
     commitWorkflowHandler = handler
   }
-
-  override fun isToolbarHorizontal(): Boolean = panel.isToolbarHorizontal
-
-  override fun getToolbarComponent(): JComponent = panel.toolbar.component
 
   override fun setToolbarHorizontal(horizontal: Boolean) {
     panel.isToolbarHorizontal = horizontal
