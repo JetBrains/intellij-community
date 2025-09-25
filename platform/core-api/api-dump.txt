@@ -1359,6 +1359,7 @@ com.intellij.psi.PsiParserFacade
 com.intellij.psi.PsiPlainText
 - com.intellij.psi.PsiElement
 com.intellij.psi.PsiPlainTextFile
+- com.intellij.model.psi.PsiExternalReferenceHost
 - com.intellij.psi.PsiFile
 com.intellij.psi.PsiPolyVariantReference
 - com.intellij.psi.PsiReference
