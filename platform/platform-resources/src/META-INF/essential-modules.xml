@@ -1,10 +1,8 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="/META-INF/essential-libs.xml"/>
+
   <content>
     <module name="intellij.platform.settings.local"/>
-    <module name="intellij.libraries.ktor.client"/>
-    <module name="intellij.libraries.ktor.client.cio"/>
-
-    <module name="intellij.libraries.kotlinx.io"/>
 
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.rpc.backend"/>

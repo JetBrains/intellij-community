@@ -1,0 +1,11 @@
+<idea-plugin>
+  <content>
+    <module name="intellij.libraries.kotlinx.io"/>
+
+    <module name="intellij.libraries.kotlinx.serialization.core" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.serialization.json" loading="embedded"/>
+
+    <module name="intellij.libraries.ktor.client"/>
+    <module name="intellij.libraries.ktor.client.cio"/>
+  </content>
+</idea-plugin>

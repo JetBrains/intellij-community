@@ -132,7 +132,7 @@ data class BuildRequest(
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal suspend fun buildProduct(request: BuildRequest, createProductProperties: suspend (CompilationContext) -> ProductProperties ): Path {
+internal suspend fun buildProduct(request: BuildRequest, createProductProperties: suspend (CompilationContext) -> ProductProperties): Path {
   val rootDir = withContext(Dispatchers.IO) {
     val rootDir = request.devRootDir
     // if symlinked to RAM disk, use a real path for performance reasons and avoid any issues in ant/other code
@@ -308,7 +308,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       // ensure plugin dist files added to the list
       pluginDistributionEntriesDeferred.await()
 
-      spanBuilder("scramble platform").use{
+      spanBuilder("scramble platform").use {
         request.scrambleTool?.scramble(platformLayout.await(), context)
       }
       copyDistFiles(
@@ -544,8 +544,8 @@ private suspend fun createBuildContext(
           options = options,
           customBuildPaths = result,
         )
-        .asBazelIfNeeded
-        .let { if (options.unpackCompiledClassesArchives) it else it.asArchived }
+          .asBazelIfNeeded
+          .let { if (options.unpackCompiledClassesArchives) it else it.asArchived }
       }
     }
 

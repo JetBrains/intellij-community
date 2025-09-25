@@ -359,6 +359,8 @@ libraries/junit5-params
 libraries/junit5-pioneer
 libraries/kotlin-test
 libraries/kotlin-test-assertions-core-jvm
+libraries/kotlinx/serialization/core
+libraries/kotlinx/serialization/json
 libraries/ktor-client
 libraries/ktor-client-cio
 libraries/lucene.common

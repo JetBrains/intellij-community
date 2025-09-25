@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.libraries.kotlinx.serialization.json` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "json_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "json",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:kotlinx-serialization-json"],
+  runtime_deps = [
+    ":json_resources",
+    "//libraries/kotlinx/serialization/core",
+    "@lib//:kotlinx-serialization-json",
+  ]
+)
+### auto-generated section `build intellij.libraries.kotlinx.serialization.json` end
