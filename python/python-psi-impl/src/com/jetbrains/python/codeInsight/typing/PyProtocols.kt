@@ -6,6 +6,7 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL_EXT
 import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyKnownDecorator.*
 import com.jetbrains.python.psi.impl.getImplicitlyInvokedMethod
 import com.jetbrains.python.psi.impl.resolveImplicitlyInvokedMethods
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -15,6 +16,11 @@ import com.jetbrains.python.psi.types.*
 fun isProtocol(classLikeType: PyClassLikeType, context: TypeEvalContext): Boolean = containsProtocol(classLikeType.getSuperClassTypes(context))
 
 fun isProtocol(cls: PyClass, context: TypeEvalContext): Boolean = containsProtocol(cls.getSuperClassTypes(context))
+
+fun PyClassType.isRuntimeCheckable(context: TypeEvalContext): Boolean = 
+  PyKnownDecoratorUtil.getKnownDecorators(pyClass, context).any {
+    it in listOf(TYPING_RUNTIME_CHECKABLE, TYPING_RUNTIME_CHECKABLE_EXT, TYPING_RUNTIME, TYPING_RUNTIME_EXT)
+  }
 
 fun matchingProtocolDefinitions(expected: PyType?, actual: PyType?, context: TypeEvalContext): Boolean = expected is PyClassLikeType &&
                                                                                                          actual is PyClassLikeType &&

@@ -11,8 +11,8 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.inspectProtocolSubclass
 import com.jetbrains.python.codeInsight.typing.isProtocol
+import com.jetbrains.python.codeInsight.typing.isRuntimeCheckable
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.PyKnownDecorator.*
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.*
 
@@ -40,9 +40,17 @@ class PyProtocolInspection : PyInspection() {
     override fun visitPyCallExpression(node: PyCallExpression) {
       super.visitPyCallExpression(node)
 
-      checkRuntimeProtocolInIsInstance(node)
+      if (node.isCalleeText(PyNames.ISINSTANCE, PyNames.ISSUBCLASS)) {
+        node.arguments.getOrNull(1)?.let {
+          checkRuntimeProtocol(it)
+        }
+      }
       checkNewTypeWithProtocols(node)
       checkProtocolInstantiation(node)
+    }
+
+    override fun visitPyClassPattern(node: PyClassPattern) {
+      checkRuntimeProtocol(node.classNameReference)
     }
 
     private fun checkCompatibility(type: PyClassType, superClassTypes: List<PyClassLikeType?>) {
@@ -79,32 +87,22 @@ class PyProtocolInspection : PyInspection() {
       }
     }
 
-    private fun checkRuntimeProtocolInIsInstance(node: PyCallExpression) {
-      if (node.isCalleeText(PyNames.ISINSTANCE, PyNames.ISSUBCLASS)) {
-        val base = node.arguments.getOrNull(1) ?: return
-
-        if (base is PyReferenceExpression) {
-          val qNames = PyResolveUtil.resolveImportedElementQNameLocally(base).asSequence().map { it.toString() }
-          if (qNames.any { it == PyTypingTypeProvider.PROTOCOL || it == PyTypingTypeProvider.PROTOCOL_EXT }) {
-            registerProblem(base,
-                            PyPsiBundle.message("INSP.protocol.only.runtime.checkable.protocols.can.be.used.with.instance.class.checks"),
-                            GENERIC_ERROR)
-            return
-          }
-        }
-
-        val type = myTypeEvalContext.getType(base)
-        if (
-          type is PyClassType &&
-          isProtocol(type, myTypeEvalContext) &&
-          !PyKnownDecoratorUtil.getKnownDecorators(type.pyClass, myTypeEvalContext).any {
-            it == TYPING_RUNTIME_CHECKABLE || it == TYPING_RUNTIME_CHECKABLE_EXT || it == TYPING_RUNTIME || it == TYPING_RUNTIME_EXT
-          }
-        ) {
+    private fun checkRuntimeProtocol(base: PyExpression) {
+      if (base is PyReferenceExpression) {
+        val qNames = PyResolveUtil.resolveImportedElementQNameLocally(base).asSequence().map { it.toString() }
+        if (qNames.any { it == PyTypingTypeProvider.PROTOCOL || it == PyTypingTypeProvider.PROTOCOL_EXT }) {
           registerProblem(base,
                           PyPsiBundle.message("INSP.protocol.only.runtime.checkable.protocols.can.be.used.with.instance.class.checks"),
                           GENERIC_ERROR)
+          return
         }
+      }
+
+      val type = myTypeEvalContext.getType(base)
+      if (type is PyClassType && isProtocol(type, myTypeEvalContext) && !type.isRuntimeCheckable(myTypeEvalContext)) {
+        registerProblem(base, 
+                        PyPsiBundle.message("INSP.protocol.only.runtime.checkable.protocols.can.be.used.with.instance.class.checks"),
+                        GENERIC_ERROR)
       }
     }
 
