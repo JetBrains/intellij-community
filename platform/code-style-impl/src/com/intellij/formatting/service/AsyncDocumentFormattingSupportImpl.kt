@@ -27,8 +27,8 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.Volatile
 
 @ApiStatus.Internal
-class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFormattingService) : AsyncDocumentFormattingSupport {
-  private val myPendingRequests: MutableList<FormattingRequestImpl> = Collections.synchronizedList(ArrayList())
+class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentFormattingService) : AsyncDocumentFormattingSupport {
+  private val pendingRequests: MutableList<FormattingRequestImpl> = Collections.synchronizedList(ArrayList())
 
   @Synchronized
   override fun formatDocument(
@@ -46,20 +46,20 @@ class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFor
         return
       }
     }
-    prepareForFormatting(myService, document, formattingContext)
+    prepareForFormatting(service, document, formattingContext)
     val formattingRequest = FormattingRequestImpl(formattingContext, document, formattingRanges,
                                                   canChangeWhiteSpaceOnly, quickFormat)
-    val formattingTask = createFormattingTask(myService, formattingRequest)
+    val formattingTask = createFormattingTask(service, formattingRequest)
     if (formattingTask != null) {
       formattingRequest.setTask(formattingTask)
-      myPendingRequests.add(formattingRequest)
+      pendingRequests.add(formattingRequest)
       if (forceSync || ApplicationManager.getApplication().isHeadlessEnvironment()) {
         runAsyncFormat(formattingRequest, null)
       }
       else {
         if (formattingTask.isRunUnderProgress) {
           this.FormattingProgressTask(formattingRequest)
-            .setCancelText(CodeStyleBundle.message("async.formatting.service.cancel", getName(myService)))
+            .setCancelText(CodeStyleBundle.message("async.formatting.service.cancel", getName(service)))
             .queue()
         }
         else {
@@ -70,8 +70,8 @@ class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFor
   }
 
   private fun findPendingRequest(document: Document): FormattingRequestImpl? {
-    synchronized(myPendingRequests) {
-      return myPendingRequests.find { it.document === document }
+    synchronized(pendingRequests) {
+      return pendingRequests.find { it.document === document }
     }
   }
 
@@ -80,7 +80,7 @@ class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFor
       formattingRequest.runTask(indicator)
     }
     finally {
-      myPendingRequests.remove(formattingRequest)
+      pendingRequests.remove(formattingRequest)
     }
   }
 
@@ -95,7 +95,7 @@ class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFor
 
   private inner class FormattingProgressTask(private val myRequest: FormattingRequestImpl) : Task.Backgroundable(
     myRequest.context.project,
-    CodeStyleBundle.message("async.formatting.service.running", getName(myService)), true) {
+    CodeStyleBundle.message("async.formatting.service.running", getName(service)), true) {
     override fun run(indicator: ProgressIndicator) {
       indicator.setIndeterminate(false)
       indicator.setFraction(0.0)
@@ -109,25 +109,25 @@ class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFor
   }
 
   private inner class FormattingRequestImpl(
-    private val myContext: FormattingContext,
+    private val _context: FormattingContext,
     val document: Document,
-    private val myRanges: List<TextRange>,
-    private val myCanChangeWhitespaceOnly: Boolean,
-    private val myQuickFormat: Boolean
+    private val _ranges: List<TextRange>,
+    private val _canChangeWhitespaceOnly: Boolean,
+    private val _quickFormat: Boolean
   ) : AsyncFormattingRequest {
-    private val myInitialModificationStamp = document.getModificationStamp()
-    private val myTaskSemaphore = Semaphore(1)
+    private val initialModificationStamp = document.getModificationStamp()
+    private val taskSemaphore = Semaphore(1)
 
     @Volatile
-    private var myTask: FormattingTask? = null
+    private var task: FormattingTask? = null
 
-    private var myResult: String? = null
+    private var result: String? = null
 
-    private val myStateRef: AtomicReference<FormattingRequestState> = AtomicReference(
+    private val stateRef: AtomicReference<FormattingRequestState> = AtomicReference(
       FormattingRequestState.NOT_STARTED)
 
     override fun getIOFile(): File? {
-      val originalFile = myContext.virtualFile
+      val originalFile = _context.virtualFile
       val ext: String?
       val charset: Charset?
       if (originalFile != null) {
@@ -141,7 +141,7 @@ class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFor
         charset = originalFile.getCharset()
       }
       else {
-        ext = myContext.containingFile.getFileType().getDefaultExtension()
+        ext = _context.containingFile.getFileType().getDefaultExtension()
         charset = EncodingManager.getInstance().getDefaultCharset()
       }
       try {
@@ -162,11 +162,11 @@ class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFor
     }
 
     fun cancel(): Boolean {
-      val formattingTask = myTask
-      if (formattingTask != null && myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.CANCELLING)) {
+      val formattingTask = task
+      if (formattingTask != null && stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.CANCELLING)) {
         if (formattingTask.cancel()) {
-          myStateRef.set(FormattingRequestState.CANCELLED)
-          myTaskSemaphore.release()
+          stateRef.set(FormattingRequestState.CANCELLED)
+          taskSemaphore.release()
           return true
         }
       }
@@ -174,54 +174,54 @@ class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFor
     }
 
     override fun getFormattingRanges(): List<TextRange> {
-      return myRanges
+      return _ranges
     }
 
     override fun canChangeWhitespaceOnly(): Boolean {
-      return myCanChangeWhitespaceOnly
+      return _canChangeWhitespaceOnly
     }
 
     override fun getContext(): FormattingContext {
-      return myContext
+      return _context
     }
 
     fun setTask(formattingTask: FormattingTask?) {
-      myTask = formattingTask
+      task = formattingTask
     }
 
     fun runTask(indicator: ProgressIndicator?) {
-      val task = myTask
-      if (task != null && myStateRef.compareAndSet(FormattingRequestState.NOT_STARTED, FormattingRequestState.RUNNING)) {
+      val task = task
+      if (task != null && stateRef.compareAndSet(FormattingRequestState.NOT_STARTED, FormattingRequestState.RUNNING)) {
         try {
-          myTaskSemaphore.acquire()
+          taskSemaphore.acquire()
           task.run()
           var waitTime: Long = 0
-          while (waitTime < getTimeout(myService).seconds * 1000L) {
-            if (myTaskSemaphore.tryAcquire(RETRY_PERIOD, TimeUnit.MILLISECONDS)) {
-              myTaskSemaphore.release()
+          while (waitTime < getTimeout(service).seconds * 1000L) {
+            if (taskSemaphore.tryAcquire(RETRY_PERIOD, TimeUnit.MILLISECONDS)) {
+              taskSemaphore.release()
               break
             }
             indicator?.checkCanceled()
             waitTime += RETRY_PERIOD
           }
-          if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
-            FormattingNotificationService.getInstance(myContext.project).reportError(
-              getNotificationGroupId(myService),
-              getTimeoutNotificationDisplayId(myService), getName(myService),
-              CodeStyleBundle.message("async.formatting.service.timeout", getName(myService),
-                                      getTimeout(myService).seconds.toString()),
-              *getTimeoutActions(myService, myContext))
+          if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
+            FormattingNotificationService.getInstance(_context.project).reportError(
+              getNotificationGroupId(service),
+              getTimeoutNotificationDisplayId(service), getName(service),
+              CodeStyleBundle.message("async.formatting.service.timeout", getName(service),
+                                      getTimeout(service).seconds.toString()),
+              *getTimeoutActions(service, _context))
           }
-          else if (myResult != null) {
+          else if (result != null) {
             if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-              updateDocument(myResult!!)
+              updateDocument(result!!)
             }
             else {
               ApplicationManager.getApplication().invokeLater {
                 CommandProcessor.getInstance().runUndoTransparentAction {
                   try {
                     WriteAction.run<Throwable> {
-                      updateDocument(myResult!!)
+                      updateDocument(result!!)
                     }
                   }
                   catch (throwable: Throwable) {
@@ -239,8 +239,8 @@ class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFor
     }
 
     fun updateDocument(newText: String) {
-      if (!needToUpdate(myService)) return
-      if (document.getModificationStamp() > myInitialModificationStamp) {
+      if (!needToUpdate(service)) return
+      if (document.getModificationStamp() > initialModificationStamp) {
         for (merger in DocumentMerger.EP_NAME.extensionList) {
           if (merger.updateDocument(this.document, newText)) break
         }
@@ -251,13 +251,13 @@ class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFor
     }
 
     override fun isQuickFormat(): Boolean {
-      return myQuickFormat
+      return _quickFormat
     }
 
     override fun onTextReady(updatedText: String?) {
-      if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
-        myResult = updatedText
-        myTaskSemaphore.release()
+      if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
+        result = updatedText
+        taskSemaphore.release()
       }
     }
 
@@ -266,10 +266,10 @@ class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFor
       @NlsContexts.NotificationContent message: @NlsContexts.NotificationContent String,
       displayId: String?
     ) {
-      if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
-        myTaskSemaphore.release()
-        FormattingNotificationService.getInstance(myContext.project)
-          .reportError(getNotificationGroupId(myService), displayId, title, message)
+      if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
+        taskSemaphore.release()
+        FormattingNotificationService.getInstance(_context.project)
+          .reportError(getNotificationGroupId(service), displayId, title, message)
       }
     }
 
@@ -279,10 +279,10 @@ class AsyncDocumentFormattingSupportImpl(private val myService: AsyncDocumentFor
       displayId: String?,
       offset: Int
     ) {
-      if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
-        myTaskSemaphore.release()
-        FormattingNotificationService.getInstance(myContext.project)
-          .reportErrorAndNavigate(getNotificationGroupId(myService), displayId, title, message, myContext,
+      if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
+        taskSemaphore.release()
+        FormattingNotificationService.getInstance(_context.project)
+          .reportErrorAndNavigate(getNotificationGroupId(service), displayId, title, message, _context,
                                   offset)
       }
     }
