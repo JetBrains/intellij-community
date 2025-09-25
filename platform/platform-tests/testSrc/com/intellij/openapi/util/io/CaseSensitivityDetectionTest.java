@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -16,6 +16,7 @@ import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
 /** Tests low-level functions for reading file case-sensitivity attributes in {@link FileSystemUtil} */
+@SuppressWarnings("IO_FILE_USAGE")
 public class CaseSensitivityDetectionTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
 
@@ -49,8 +50,8 @@ public class CaseSensitivityDetectionTest {
     assumeWslPresence();
     assumeTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
 
-    File file = tempDir.newFile("dir/child.txt");
-    File dir = file.getParentFile();
+    var dir = tempDir.newDirectoryPath("dir");
+    var file = dir.resolve("child.txt").toFile();
     assertEquals(CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
     setCaseSensitivity(dir, true);
     assertEquals(CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
