@@ -20,6 +20,7 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
 import kotlin.io.path.exists
 
 private const val GROUP_ID: String = "org.jetbrains.jewel"
+
 private val CORE: Map<String, String> = mapOf(
   "intellij.platform.jewel.foundation" to "jewel-foundation",
   "intellij.platform.jewel.markdown.core" to "jewel-markdown-core",
@@ -30,7 +31,11 @@ private val CORE: Map<String, String> = mapOf(
   "intellij.platform.jewel.markdown.extensions.gfmAlerts" to "jewel-markdown-extensions-gfm-alerts",
   "intellij.platform.jewel.markdown.extensions.images" to "jewel-markdown-extensions-images",
 )
-private val NOT_PUBLISHED: Set<String> = setOf("intellij.platform.jewel.ideLafBridge", "intellij.platform.jewel.markdown.ideLafBridgeStyling")
+
+private val NOT_PUBLISHED: Set<String> = setOf(
+  "intellij.platform.jewel.ideLafBridge",
+  "intellij.platform.jewel.markdown.ideLafBridgeStyling",
+)
 
 private val transitiveJewelDependencies = mapOf(
   "jewel-foundation" to emptySet(),
@@ -69,9 +74,8 @@ internal object JewelMavenArtifacts {
     DependenciesProperties(COMMUNITY_ROOT, jewelProperties).property("jewel.release.version")
   }
 
-  fun isPublishedJewelModule(module: JpsModule): Boolean {
-    return module.name.startsWith("intellij.platform.jewel.") && module.name !in NOT_PUBLISHED
-  }
+  fun isPublishedJewelModule(module: JpsModule): Boolean =
+    module.name.startsWith("intellij.platform.jewel.") && module.name !in NOT_PUBLISHED
 
   fun patchCoordinates(module: JpsModule, coordinates: MavenCoordinates): MavenCoordinates {
     check(isPublishedJewelModule(module))
