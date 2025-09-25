@@ -111,7 +111,7 @@ public final class IoTestUtil {
   }
 
   public static void assumeLinux() throws AssumptionViolatedException {
-    assumeTrue("Need Linux, can't run on " + OS.CURRENT, OS.CURRENT == OS.Windows);
+    assumeTrue("Need Linux, can't run on " + OS.CURRENT, OS.CURRENT == OS.Linux);
   }
 
   public static void assumeUnix() throws AssumptionViolatedException {
