@@ -182,7 +182,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     return tokens.flatMap {
       TextExtractor.findTextsAt(it, TextContent.TextDomain.ALL).flatMap { text ->
         runBlocking {
-          LanguageToolChecker().check(text)
+          LanguageToolChecker().checkExternally(text)
         }
       }
     }

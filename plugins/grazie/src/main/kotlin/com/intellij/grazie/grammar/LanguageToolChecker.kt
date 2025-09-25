@@ -56,11 +56,12 @@ open class LanguageToolChecker : ExternalTextChecker() {
       return emptyList()
     }
 
+    val domain = content.getTextDomain()
     val language = LangDetector.getLang(text) ?: return emptyList()
     return computeDetached(currentCoroutineContext()) {
       try {
         computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
-          collectLanguageToolProblems(content, text, language)
+          collectLanguageToolProblems(content, text, language, domain)
         }
       }
       catch (exception: Throwable) {
@@ -73,8 +74,8 @@ open class LanguageToolChecker : ExternalTextChecker() {
     }
   }
 
-  private fun collectLanguageToolProblems(extracted: TextContent, text: String, lang: Lang): List<Problem> {
-    val tool = LangTool.getTool(lang, extracted.getTextDomain())
+  private fun collectLanguageToolProblems(extracted: TextContent, text: String, lang: Lang, domain: TextStyleDomain): List<Problem> {
+    val tool = LangTool.getTool(lang, domain)
     val sentences = tool.sentenceTokenize(text)
     if (sentences.any { it.length > 1000 }) {
       return emptyList()
