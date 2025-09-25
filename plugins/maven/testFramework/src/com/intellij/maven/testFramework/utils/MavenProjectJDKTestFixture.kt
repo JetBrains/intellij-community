@@ -13,7 +13,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.junit.jupiter.api.fail
-import java.io.File
+import java.nio.file.Path
 
 class MavenProjectJDKTestFixture(val project: Project, val jdkName: String) : IdeaTestFixture {
   private lateinit var jdk: Sdk
@@ -25,7 +25,7 @@ class MavenProjectJDKTestFixture(val project: Project, val jdkName: String) : Id
     if (oldJdk != null) {
       ProjectJdkTable.getInstance(project).removeJdk(oldJdk)
     }
-    val jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(myJdkHome))
+    val jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(myJdkHome))
                      ?: fail { "Cannot find JDK home: $myJdkHome" }
     jdk = SdkConfigurationUtil.setupSdk(arrayOfNulls<Sdk>(0), jdkHomeDir, JavaSdk.getInstance(), true, null, jdkName)
           ?: fail { "Cannot create JDK for $myJdkHome" }
