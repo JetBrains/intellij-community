@@ -10,58 +10,47 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
 
+private const val DEFAULT_MIN_HEAP = "128m"
+private const val DEFAULT_MAX_HEAP = "2048m"
+
+private val COMMON_VM_OPTIONS: List<String> = listOf(
+  "-XX:JbrShrinkingGcMaxHeapFreeRatio=40", // IJPL-181469. Used in a couple with AppIdleMemoryCleaner.runGc()
+  "-XX:ReservedCodeCacheSize=512m",
+  "-XX:+HeapDumpOnOutOfMemoryError",
+  "-XX:-OmitStackTraceInFastThrow",
+  "-XX:CICompilerCount=2",
+  "-XX:+IgnoreUnrecognizedVMOptions",  // allowing the JVM to start even with outdated options stuck in user configs
+  "-ea",
+  "-Dsun.io.useCanonCaches=false",
+  "-Dsun.java2d.metal=true",
+  "-Djbr.catch.SIGABRT=true",
+  "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
+  "-Djdk.attach.allowAttachSelf=true",
+  "-Djdk.module.illegalAccess.silent=true",
+  "-Djdk.nio.maxCachedBufferSize=2097152",
+  "-Djava.util.zip.use.nio.for.zip.file.access=true", // IJPL-149160
+  "-Dkotlinx.coroutines.debug=off",
+)
+
+/** duplicates RepositoryHelper.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY */
+private const val CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url"
+
 object VmOptionsGenerator {
-  private const val DEFAULT_MIN_HEAP = "128m"
-  private const val DEFAULT_MAX_HEAP = "2048m"
-
-  @Suppress("SpellCheckingInspection")
-  private val COMMON_VM_OPTIONS: List<String> = listOf(
-    "-XX:JbrShrinkingGcMaxHeapFreeRatio=40", // IJPL-181469. Used in a couple with AppIdleMemoryCleaner.runGc()
-    "-XX:ReservedCodeCacheSize=512m",
-    "-XX:+HeapDumpOnOutOfMemoryError",
-    "-XX:-OmitStackTraceInFastThrow",
-    "-XX:CICompilerCount=2",
-    "-XX:+IgnoreUnrecognizedVMOptions",  // allowing the JVM to start even with outdated options stuck in user configs
-    "-ea",
-    "-Dsun.io.useCanonCaches=false",
-    "-Dsun.java2d.metal=true",
-    "-Djbr.catch.SIGABRT=true",
-    "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
-    "-Djdk.attach.allowAttachSelf=true",
-    "-Djdk.module.illegalAccess.silent=true",
-    "-Djdk.nio.maxCachedBufferSize=2097152",
-    "-Djava.util.zip.use.nio.for.zip.file.access=true", // IJPL-149160
-    "-Dkotlinx.coroutines.debug=off",
-  )
-
-  /** duplicates RepositoryHelper.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY */
-  private const val CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url"
-
   fun generate(context: BuildContext): List<String> = generate(
     context.applicationInfo.isEAP,
     context.bundledRuntime,
     context.productProperties.customJvmMemoryOptions,
     context.productProperties.additionalVmOptions.let {
       val customPluginRepositoryUrl = computeCustomPluginRepositoryUrl(context)
-      if (customPluginRepositoryUrl == null) it
-      else it + "-D${CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY}=${customPluginRepositoryUrl}"
+      if (customPluginRepositoryUrl == null) {
+        it
+      }
+      else {
+        it + "-D${CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY}=${customPluginRepositoryUrl}"
+      }
     },
     context.productProperties.platformPrefix,
   )
-
-  private fun computeCustomPluginRepositoryUrl(context: BuildContext): String? {
-    val artifactsServer = context.proprietaryBuildTools.artifactsServer
-    if (artifactsServer != null && context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-      val builtinPluginsRepoUrl = artifactsServer.urlToArtifact(context, "${context.nonBundledPlugins.name}/plugins.xml")
-      if (builtinPluginsRepoUrl != null) {
-        if (builtinPluginsRepoUrl.startsWith("http:")) {
-          context.messages.logErrorAndThrow("Insecure artifact server: ${builtinPluginsRepoUrl}")
-        }
-        return builtinPluginsRepoUrl
-      }
-    }
-    return null
-  }
 
   internal fun generate(
     isEAP: Boolean,
@@ -76,20 +65,24 @@ object VmOptionsGenerator {
     memory.putIfAbsent("-Xms", DEFAULT_MIN_HEAP)
     memory.putIfAbsent("-Xmx", DEFAULT_MAX_HEAP)  // must be the same as [com.intellij.diagnostic.MemorySizeConfigurator.DEFAULT_XMX]
     for ((k, v) in memory) {
-      result += k + v
+      result.add(k + v)
     }
 
-    result += COMMON_VM_OPTIONS
+    result.addAll(COMMON_VM_OPTIONS)
 
     if (isMultiRoutingFileSystemEnabledForProduct(platformPrefix)) {
-      result += MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+      result.addAll(MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS)
     }
 
     result += additionalVmOptions
 
     var index = result.indexOf("-ea")
-    if (index < 0) index = result.indexOfFirst { it.startsWith("-D") }
-    if (index < 0) index = result.size
+    if (index < 0) {
+      index = result.indexOfFirst { it.startsWith("-D") }
+    }
+    if (index < 0) {
+      index = result.size
+    }
 
     result.addAll(
       index,
@@ -109,8 +102,22 @@ object VmOptionsGenerator {
 
     return result
   }
+}
 
-  internal fun writeVmOptions(file: Path, vmOptions: Sequence<String>, separator: String) {
-    Files.writeString(file, vmOptions.joinToString(separator, postfix = separator), StandardCharsets.US_ASCII)
+private fun computeCustomPluginRepositoryUrl(context: BuildContext): String? {
+  val artifactsServer = context.proprietaryBuildTools.artifactsServer
+  if (artifactsServer != null && context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
+    val builtinPluginsRepoUrl = artifactsServer.urlToArtifact(context, "${context.nonBundledPlugins.name}/plugins.xml")
+    if (builtinPluginsRepoUrl != null) {
+      if (builtinPluginsRepoUrl.startsWith("http:")) {
+        context.messages.logErrorAndThrow("Insecure artifact server: ${builtinPluginsRepoUrl}")
+      }
+      return builtinPluginsRepoUrl
+    }
   }
+  return null
+}
+
+internal fun writeVmOptions(file: Path, vmOptions: Sequence<String>, separator: String) {
+  Files.writeString(file, vmOptions.joinToString(separator, postfix = separator), StandardCharsets.US_ASCII)
 }
