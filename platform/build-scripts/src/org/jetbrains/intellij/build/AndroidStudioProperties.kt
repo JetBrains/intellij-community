@@ -109,10 +109,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       // used for compose and jewel related testing in the Android plugin
       layout.withModule("intellij.platform.jewel.intUi.standalone", TEST_FRAMEWORK_JAR)
       layout.withModule("intellij.platform.jewel.markdown.intUiStandaloneStyling", TEST_FRAMEWORK_JAR)
-      layout.withModuleLibrary("org.jetbrains.compose.ui.ui.test.desktop", "intellij.libraries.compose.foundation.desktop.junit", TEST_FRAMEWORK_JAR)
-      layout.withModuleLibrary("org.jetbrains.compose.ui.ui.test", "intellij.libraries.compose.foundation.desktop.junit", TEST_FRAMEWORK_JAR)
       layout.withModuleLibrary("org.jetbrains.compose.ui.ui.test.junit4.desktop", "intellij.libraries.compose.foundation.desktop.junit", TEST_FRAMEWORK_JAR)
-      layout.withModuleLibrary("org.jetbrains.compose.ui.ui.test.junit4", "intellij.libraries.compose.foundation.desktop.junit", TEST_FRAMEWORK_JAR)
 
       layout.withProjectLibrary("assertJ", TEST_FRAMEWORK_JAR) // Used by the CIDR test framework (b/295336541).
       layout.withProjectLibrary("hamcrest", TEST_FRAMEWORK_JAR) // Used by the CIDR test framework (b/295336541).
