@@ -8,7 +8,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesViewManager
+import com.intellij.openapi.vcs.changes.InclusionModel
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
@@ -16,6 +19,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.util.application
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.changes.BackendChangesView
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent

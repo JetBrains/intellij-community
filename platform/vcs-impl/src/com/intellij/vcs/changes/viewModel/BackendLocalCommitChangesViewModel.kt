@@ -1,13 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel.ModelProvider.ExtendedTreeModel
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
@@ -15,155 +10,14 @@ import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.kernel.ids.BackendValueIdType
-import com.intellij.platform.kernel.ids.storeValueGlobally
-import com.intellij.platform.util.coroutines.childScope
-import com.intellij.platform.vcs.impl.shared.RdLocalChanges
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
-import com.intellij.ui.split.createComponent
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.tree.TreePath
 
-internal class BackendChangesView private constructor(
-  val changesPanel: JComponent,
-  val viewModel: BackendCommitChangesViewModel,
-) {
-  companion object {
-    @JvmStatic
-    fun create(project: Project, parentDisposable: Disposable): BackendChangesView {
-      val scope = project.service<ScopeProvider>().cs.childScope("CommitChangesViewWithToolbarPanel")
-      Disposer.register(parentDisposable) { scope.cancel() }
-
-      if (RdLocalChanges.isEnabled()) {
-        val viewModel = BackendRemoteCommitChangesViewModel(project)
-        val id = storeValueGlobally(scope, viewModel, BackendChangesViewValueIdType)
-        val panel = ChangesViewSplitComponentBinding.createComponent(project, scope, id)
-        return BackendChangesView(panel, viewModel)
-      }
-      else {
-        val panel = CommitChangesViewWithToolbarPanel(LocalChangesListView(project), scope)
-        val backendChangesView = BackendChangesView(panel, BackendLocalCommitChangesViewModel(panel))
-        val id = storeValueGlobally(scope, backendChangesView.viewModel, BackendChangesViewValueIdType)
-        panel.id = id
-        return backendChangesView
-      }
-    }
-  }
-
-  @Service(Service.Level.PROJECT)
-  internal class ScopeProvider(val cs: CoroutineScope)
-}
-
-// TODO make RD-friendly implementation, cleanup methods returning tree/component
-internal interface BackendCommitChangesViewModel {
-  fun initPanel()
-
-  fun setCommitWorkflowHandler(handler: ChangesViewCommitWorkflowHandler?)
-
-  fun setToolbarHorizontal(horizontal: Boolean)
-  fun getActions(): List<AnAction>
-  fun isModelUpdateInProgress(): Boolean
-
-  fun scheduleRefreshNow(callback: Runnable?)
-  fun scheduleDelayedRefresh()
-  fun setGrouping(groupingKey: String)
-  fun resetViewImmediatelyAndRefreshLater()
-
-  fun setInclusionListener(listener: Runnable?)
-  var inclusionModel: InclusionModel?
-  fun setShowCheckboxes(value: Boolean)
-
-  fun getDisplayedChanges(): List<Change>
-  fun getIncludedChanges(): List<Change>
-  fun getDisplayedUnversionedFiles(): List<FilePath>
-  fun getIncludedUnversionedFiles(): List<FilePath>
-
-  fun expand(item: Any)
-  fun select(item: Any)
-  fun selectFirst(items: Collection<Any>)
-
-  fun selectFile(vFile: VirtualFile?)
-  fun selectChanges(changes: List<Change>)
-
-  @ApiStatus.Obsolete
-  fun getTree(): ChangesListView
-
-  @ApiStatus.Obsolete
-  fun getPreferredFocusableComponent(): JComponent
-}
-
-// FIXME
-private class BackendRemoteCommitChangesViewModel(private val project: Project) : BackendCommitChangesViewModel {
-  private var horizontal: Boolean = true
-  private val treeView: ChangesListView by lazy { LocalChangesListView(project) }
-
-  override var inclusionModel: InclusionModel? = null
-
-  override fun initPanel() {
-  }
-
-  override fun setCommitWorkflowHandler(handler: ChangesViewCommitWorkflowHandler?) {
-  }
-
-  override fun setToolbarHorizontal(horizontal: Boolean) {
-    this.horizontal = horizontal
-  }
-
-  override fun getActions(): List<AnAction> = emptyList()
-
-  override fun isModelUpdateInProgress(): Boolean = false
-
-  override fun scheduleRefreshNow(callback: Runnable?) {
-  }
-
-  override fun scheduleDelayedRefresh() {
-  }
-
-  override fun setGrouping(groupingKey: String) {
-  }
-
-  override fun resetViewImmediatelyAndRefreshLater() {
-  }
-
-  override fun setInclusionListener(listener: Runnable?) {}
-
-  override fun setShowCheckboxes(value: Boolean) {}
-
-  override fun getDisplayedChanges(): List<Change> = emptyList()
-
-  override fun getIncludedChanges(): List<Change> = emptyList()
-
-  override fun getDisplayedUnversionedFiles(): List<FilePath> = emptyList()
-
-  override fun getIncludedUnversionedFiles(): List<FilePath> = emptyList()
-
-  override fun expand(item: Any) {
-  }
-
-  override fun select(item: Any) {
-  }
-
-  override fun selectFirst(items: Collection<Any>) {
-  }
-
-  override fun selectFile(vFile: VirtualFile?) {
-  }
-
-  override fun selectChanges(changes: List<Change>) {
-  }
-
-  override fun getTree(): ChangesListView = treeView
-
-  override fun getPreferredFocusableComponent(): JComponent = treeView.preferredFocusedComponent
-}
-
-private class BackendLocalCommitChangesViewModel(private val panel: CommitChangesViewWithToolbarPanel) : BackendCommitChangesViewModel {
+internal class BackendLocalCommitChangesViewModel(private val panel: CommitChangesViewWithToolbarPanel) : BackendCommitChangesViewModel {
   private var commitWorkflowHandler: ChangesViewCommitWorkflowHandler? = null
 
   override var inclusionModel: InclusionModel?
@@ -274,5 +128,3 @@ private class BackendLocalCommitChangesViewModel(private val panel: CommitChange
     }
   }
 }
-
-private object BackendChangesViewValueIdType : BackendValueIdType<ChangesViewId, BackendCommitChangesViewModel>(::ChangesViewId)

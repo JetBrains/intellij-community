@@ -47,6 +47,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.vcs.changes.BackendChangesView;
 import com.intellij.vcs.commit.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
