@@ -40,7 +40,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -66,8 +65,6 @@ import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.InternalJewelApi
-import org.jetbrains.jewel.foundation.Stroke
-import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
@@ -90,6 +87,7 @@ import org.jetbrains.jewel.ui.component.styling.MenuItemMetrics
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.painter.hints.Stateful
+import org.jetbrains.jewel.ui.popupShadowAndBorder
 import org.jetbrains.jewel.ui.theme.menuStyle
 import org.jetbrains.skiko.hostOs
 
@@ -236,13 +234,13 @@ public fun MenuContent(
     Box(
         modifier =
             modifier
-                .shadow(
-                    elevation = style.metrics.shadowSize,
+                .popupShadowAndBorder(
                     shape = menuShape,
-                    ambientColor = colors.shadow,
-                    spotColor = colors.shadow,
+                    shadowSize = style.metrics.shadowSize,
+                    shadowColor = colors.shadow,
+                    borderWidth = style.metrics.borderWidth,
+                    borderColor = colors.border,
                 )
-                .border(Stroke.Alignment.Inside, style.metrics.borderWidth, colors.border, menuShape)
                 .background(colors.background, menuShape)
                 .width(IntrinsicSize.Max)
                 .onHover { localMenuController.onHoveredChange(it) }
