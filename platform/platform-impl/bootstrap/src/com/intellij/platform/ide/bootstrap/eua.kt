@@ -39,6 +39,7 @@ internal suspend fun loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx
 
 internal sealed interface EndUserAgreementStatus {
   class Required(val document: EndUserAgreement.Document) : EndUserAgreementStatus
+  object RemoteDev : EndUserAgreementStatus
   object Accepted : EndUserAgreementStatus
   object NonJbVendor : EndUserAgreementStatus
 }

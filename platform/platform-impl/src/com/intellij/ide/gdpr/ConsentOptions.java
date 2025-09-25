@@ -2,13 +2,13 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.idea.AppMode;
 import com.intellij.l10n.LocalizationUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import kotlin.Pair;
@@ -365,7 +365,8 @@ public final class ConsentOptions implements ModificationTracker {
       }
     }
     result.sort(Comparator.comparing(ConsentBase::getId));
-    var confirmationEnabled = Boolean.parseBoolean(System.getProperty(CONSENTS_CONFIRMATION_PROPERTY, "true"));
+    var confirmationEnabled = Boolean.parseBoolean(System.getProperty(CONSENTS_CONFIRMATION_PROPERTY, "true")) &&
+                              !AppMode.isRemoteDevHost();
     return new Pair<>(result, confirmationEnabled && needReconfirm(allDefaults, allConfirmed));
   }
 

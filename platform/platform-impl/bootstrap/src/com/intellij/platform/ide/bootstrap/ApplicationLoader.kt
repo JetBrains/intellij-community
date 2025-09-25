@@ -107,7 +107,8 @@ internal suspend fun loadApp(
     val languageAndRegionTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) null else {
       async(CoroutineName("language and region")) {
         val euaDocumentStatus = euaDocumentDeferred.await()
-        if (euaDocumentStatus is EndUserAgreementStatus.Required) {
+        if (euaDocumentStatus is EndUserAgreementStatus.Required ||
+            euaDocumentStatus is EndUserAgreementStatus.RemoteDev) {
           getLanguageAndRegionDialogIfNeeded()
         }
         else null
