@@ -27,9 +27,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Settings state is available both on frontend and backend.
- * However, the synchronization direction is only backend -> frontend, which provides only read access on the frontend side.
- *
  * @see com.intellij.platform.vcs.impl.shared.VcsRemoteSettingsInfoProvider
  */
 @State(name = IssueNavigationConfiguration.SETTINGS_KEY, storages = @Storage("vcs.xml"))
