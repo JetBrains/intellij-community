@@ -132,7 +132,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     detectSystemWideSdks(module, existingSdks, context).firstOrNull()?.let {
       thisLogger().debug { "Detected system-wide interpreter: $it" }
       withContext(Dispatchers.EDT) {
-        SdkConfigurationUtil.createAndAddSDK(it.homePath!!, PythonSdkType.getInstance())?.apply {
+        SdkConfigurationUtil.createAndAddSDK(project, it.homePath!!, PythonSdkType.getInstance())?.apply {
           thisLogger().debug { "Created system-wide interpreter: $this" }
           setReadyToUseSdk(project, module, this)
         }
