@@ -1,11 +1,16 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * User : catherine
@@ -183,6 +188,21 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-84077
+  public void testTryExcept313Against27() {
+    testAgainstVersions(LanguageLevel.PYTHON313, LanguageLevel.PYTHON27);
+  }
+
+  // PY-84077
+  public void testTryExcept314Against27() {
+    testAgainstVersions(LanguageLevel.PYTHON314, LanguageLevel.PYTHON27);
+  }
+
+  // PY-84077
+  public void testTryExcept314Against37() {
+    testAgainstVersions(LanguageLevel.PYTHON314, LanguageLevel.PYTHON37);
+  }
+
   // PY-26510
   public void testTryFinallyEmptyRaisePy2() {
     doTest();
@@ -287,6 +307,23 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
 
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);
+  }
+
+  void testAgainstVersions(LanguageLevel runLevel, LanguageLevel ... compLevels) {
+    assertNotNull(compLevels);
+    List<LanguageLevel> compLevelsList = Arrays.asList(compLevels);
+    assertNotEmpty(compLevelsList);
+
+    runWithLanguageLevel(runLevel, () -> {
+      PsiFile currentFile = myFixture.configureByFile(getTestFilePath());
+      PyCompatibilityInspection inspection = new PyCompatibilityInspection();
+      inspection.ourVersions.clear();
+      inspection.ourVersions.addAll(ContainerUtil.map(compLevelsList, l -> l.toPythonVersion()));
+      myFixture.enableInspections(inspection);
+
+      myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+      assertSdkRootsNotParsed(currentFile);
+    });
   }
 
   @NotNull
