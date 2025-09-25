@@ -25,21 +25,25 @@ public class SpockIntegrationTest extends AbstractTestFrameworkCompilingIntegrat
     return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/spock");
   }
   
-  @Parameterized.Parameters(name = "{0}")
+  @Parameterized.Parameters(name = "{0}, {1}")
   public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[] {"2.0-groovy-3.0"}, new Object[] {"2.3-groovy-3.0"});
+    return Arrays.asList(new Object[] {"2.0-groovy-3.0", "org.codehaus.groovy:groovy:3.0.25"}, new Object[] {"2.3-groovy-3.0", "org.codehaus.groovy:groovy:3.0.25"},
+                         new Object[] {"2.3-groovy-4.0", "org.apache.groovy:groovy:4.0.28"}
+                         );
   }
   
   @Parameterized.Parameter
-  public String mySpockVersion;
+  public String spockVersion;
 
+  @Parameterized.Parameter(1)
+  public String groovyCoordinate;
 
   @Override
   protected void setupModule() throws Exception {
     super.setupModule();
     ArtifactRepositoryManager repoManager = getRepoManager();
-    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.codehaus.groovy:groovy:3.0.25"), repoManager);
-    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.spockframework:spock-core:" + mySpockVersion), repoManager);
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor(groovyCoordinate), repoManager);
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.spockframework:spock-core:" + spockVersion), repoManager);
     addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.4.0"), repoManager);
     addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.platform", "junit-platform-engine", "1.4.0"), repoManager);
   }
