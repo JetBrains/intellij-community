@@ -1096,16 +1096,16 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
     }
   }
   //x_x_language
-  val xXLanguageInlineClass = mergedCompilerArguments.internalArguments.any { it.stringRepresentation == "-XXLanguage:+InlineClasses"}
-  if (xXLanguageInlineClass) {
-    options.put("x_x_language", "+InlineClasses")
+  val effectiveXXLanguage = mergedCompilerArguments.internalArguments.map { it.stringRepresentation }.filter { it.startsWith("-XXLanguage:") }
+  if (effectiveXXLanguage.size != 1 || effectiveXXLanguage[0] != "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks") {
+    options.put("x_x_language", effectiveXXLanguage.map { it.removePrefix("-XXLanguage:") })
   }
 
   checkNoUnhandledKotlincOptions(
     module.module,
     mergedCompilerArguments,
     handledArguments = handledArguments + setOf("jvmTarget", "pluginClasspaths"),
-    handledInternalArguments = setOf("-XXLanguage:+InlineClasses", "-XXLanguage:+AllowEagerSupertypeAccessibilityChecks"),
+    handledInternalArguments = setOf("-XXLanguage:+AllowEagerSupertypeAccessibilityChecks", "-XXLanguage:+InlineClasses"),
     handledUnknownExtraFlags = setOf("-Xallow-result-return-type", "-Xstrict-java-nullability-assertions", "-Xwasm-attach-js-exception", "-Xwasm-kclass-fqn"),
   )
 
