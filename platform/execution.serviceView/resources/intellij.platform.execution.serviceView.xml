@@ -6,6 +6,9 @@
     <extensionPoint name="backendServiceViewNavigatableProvider"
                     interface="com.intellij.platform.execution.serviceView.BackendServiceViewNavigatableProvider"
                     dynamic="true"/>
+    <extensionPoint name="backendServiceViewSelectedItemProvider"
+                    interface="com.intellij.platform.execution.serviceView.BackendServiceViewSelectedItemProvider"
+                    dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="true" description="Enable monolith services toolwindow on backend"
@@ -23,7 +26,7 @@
                         serviceImplementation="com.intellij.platform.execution.serviceView.ServiceViewDeleteProvider"/>
     <postStartupActivity implementation="com.intellij.platform.execution.serviceView.ServiceViewStartupActivity"/>
     <remote.customDataContextSerializer implementation="com.intellij.platform.execution.serviceView.ServiceViewDescriptorIdsSerializer"/>
-    <uiDataRule implementation="com.intellij.platform.execution.serviceView.ServiceViewNavigatablesDataRule"/>
+    <uiDataRule implementation="com.intellij.platform.execution.serviceView.ServiceViewSelectionDataRule"/>
   </extensions>
   <actions>
     <group id="ServiceViewTreeToolbar">
