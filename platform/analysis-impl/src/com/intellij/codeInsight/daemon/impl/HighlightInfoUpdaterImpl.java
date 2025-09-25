@@ -758,7 +758,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                 if (i != -1) {
                   PsiElement psiElement = elementEntry.getKey();
                   recycler.recycleHighlighter(psiElement, info);
-                  List<HighlightInfo> listMinusInfo = ContainerUtil.concat(infos.subList(0, i), infos.subList(i + 1, infos.size()));
+                  HighlightInfo toRemove = infos.get(i);
+                  List<HighlightInfo> listMinusInfo = ContainerUtil.filter(infos, h -> h != toRemove);
                   if (listMinusInfo.isEmpty()) {
                     elementHighlights.elementHighlights.remove(psiElement);
                   }
