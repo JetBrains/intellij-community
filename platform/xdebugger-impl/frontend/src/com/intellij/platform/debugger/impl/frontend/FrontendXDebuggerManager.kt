@@ -188,7 +188,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
       override fun toolWindowsRegistered(ids: List<String?>, toolWindowManager: ToolWindowManager) {
         for (id in ids) {
           val toolWindow = toolWindowManager.getToolWindow(id) ?: continue
-          toolWindow.contentManager.addContentManagerListener(contentListener)
+          toolWindow.addContentManagerListener(contentListener)
         }
       }
     })
