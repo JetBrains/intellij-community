@@ -365,6 +365,7 @@ libraries/lucene.common
 libraries/microba
 libraries/mockito
 libraries/skiko
+libraries/sshd-osgi
 libraries/system-stubs-jupiter
 libraries/testcontainers
 libraries/testng

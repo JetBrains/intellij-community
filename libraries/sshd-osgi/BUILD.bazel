@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.libraries.sshd.osgi` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "sshd-osgi_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "sshd-osgi",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = ["@lib//:apache-sshd-osgi"],
+  runtime_deps = [
+    ":sshd-osgi_resources",
+    "@lib//:apache-sshd-osgi",
+  ]
+)
+### auto-generated section `build intellij.libraries.sshd.osgi` end
