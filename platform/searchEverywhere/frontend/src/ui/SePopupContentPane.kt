@@ -152,8 +152,6 @@ class SePopupContentPane(
 
     resultList.setFocusable(false)
 
-    updateExtendedInfoContainer()
-
     RowsGridBuilder(this)
       .row().cell(headerPane, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
       .row().cell(textField, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
@@ -299,6 +297,9 @@ class SePopupContentPane(
               hintHelper.setRightExtensions(rightActions)
             }
           }
+        }
+        withContext(Dispatchers.EDT) {
+          updateExtendedInfoContainer()
         }
       }
     }
@@ -581,14 +582,12 @@ class SePopupContentPane(
       vmState.value?.let { vm ->
         vm.selectNextTab()
         logTabSwitchedEvent(e)
-        updateExtendedInfoContainer()
       }
     }
     val prevTabAction: (AnActionEvent) -> Unit = { e ->
       vmState.value?.let { vm ->
         vm.selectPreviousTab()
         logTabSwitchedEvent(e)
-        updateExtendedInfoContainer()
       }
     }
 
@@ -751,11 +750,10 @@ class SePopupContentPane(
       .show(relativePoint)
   }
 
-  private fun createExtendedInfoComponent(): ExtendedInfoComponent? {
-    if (isExtendedInfoEnabled()) {
+  private suspend fun createExtendedInfoComponent(): ExtendedInfoComponent? {
+    if (isExtendedInfoEnabled() && vm.isExtendedInfoEnabledInTab()) {
       val leftText = fun(element: Any): String? {
         val leftText = (element as? SeResultListItemRow)?.item?.presentation?.extendedInfo?.text
-        extendedInfoContainer.isVisible = !leftText.isNullOrEmpty()
         return leftText
       }
 
@@ -788,7 +786,7 @@ class SePopupContentPane(
     return null
   }
 
-  private fun updateExtendedInfoContainer() {
+  private suspend fun updateExtendedInfoContainer() {
     extendedInfoContainer.removeAll()
     extendedInfoComponent = createExtendedInfoComponent()
     extendedInfoComponent?.let { extendedInfoContainer.add(it.component) }

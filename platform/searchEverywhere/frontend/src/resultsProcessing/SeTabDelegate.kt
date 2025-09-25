@@ -163,6 +163,10 @@ class SeTabDelegate(
     return providers.getValue().isPreviewEnabled()
   }
 
+  suspend fun isExtendedInfoEnabled(): Boolean {
+    return providers.getValue().isExtendedInfoEnabled()
+  }
+
   override fun dispose() {}
 
   private class Providers(
@@ -265,6 +269,10 @@ class SeTabDelegate(
 
     suspend fun isPreviewEnabled(): Boolean {
       return localProviders.values.any { it.isPreviewEnabled() } || frontendProvidersFacade?.isPreviewEnabled() == true
+    }
+
+    suspend fun isExtendedInfoEnabled(): Boolean {
+      return localProviders.values.any { it.isExtendedInfoEnabled() } || frontendProvidersFacade?.isExtendedInfoEnabled() == true
     }
   }
 
