@@ -193,9 +193,6 @@ impl RemoteDevLaunchConfiguration {
     fn get_remote_dev_properties(&self) -> Result<Vec<IdeProperty>> {
         let mut remote_dev_properties = vec![
             // TODO: remove once all of this is disabled for remote dev
-            ("jb.privacy.policy.text", "<!--999.999-->"),
-            ("jb.consents.confirmation.enabled", "false"),
-            ("idea.initially.ask.config", "never"),
             ("ide.show.tips.on.startup.default.value", "false"),
 
             // Prevent CWM plugin from being disabled, as it's required for Remote Dev

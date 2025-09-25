@@ -110,7 +110,8 @@ internal suspend fun loadApp(
     else {
       async(CoroutineName("language and region")) {
         val euaDocumentStatus = euaDocumentDeferred.await()
-        if (euaDocumentStatus is EndUserAgreementStatus.Required) {
+        if (euaDocumentStatus is EndUserAgreementStatus.Required ||
+            euaDocumentStatus is EndUserAgreementStatus.RemoteDev) {
           getLanguageAndRegionDialogIfNeeded()
         }
         else null

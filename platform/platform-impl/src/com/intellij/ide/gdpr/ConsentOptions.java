@@ -2,6 +2,7 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.idea.AppMode;
 import com.intellij.l10n.LocalizationUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -339,7 +340,8 @@ public final class ConsentOptions implements ModificationTracker {
       }
     }
     result.sort(Comparator.comparing(ConsentBase::getId));
-    boolean confirmationEnabled = Boolean.parseBoolean(System.getProperty(CONSENTS_CONFIRMATION_PROPERTY, "true"));
+    boolean confirmationEnabled = Boolean.parseBoolean(System.getProperty(CONSENTS_CONFIRMATION_PROPERTY, "true")) &&
+                              !AppMode.isRemoteDevHost();
     return new Pair<>(result, confirmationEnabled && needReconfirm(allDefaults, allConfirmed));
   }
 
