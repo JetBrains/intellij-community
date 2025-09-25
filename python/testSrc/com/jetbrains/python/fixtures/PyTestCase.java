@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
@@ -59,7 +60,6 @@ import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -325,8 +325,11 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   private void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
-    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
+    Project project = myFixture.getProject();
+    if (project != null) {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(project, languageLevel);
+      IndexingTestUtil.waitUntilIndexesAreReady(project);
+    }
   }
 
   protected void runWithLanguageLevel(@NotNull LanguageLevel languageLevel, @NotNull Runnable runnable) {
