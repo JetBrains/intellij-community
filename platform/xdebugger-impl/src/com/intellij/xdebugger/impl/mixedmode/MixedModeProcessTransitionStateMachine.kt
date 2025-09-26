@@ -7,37 +7,40 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XSuspendContext
 import kotlinx.coroutines.*
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.States.*
 
 private val logger = logger<MixedModeProcessTransitionStateMachine>()
 
 /**
  * Implementation of Mono mixed mode
- * NOTE: If you are implementing a mixed mode scenario where high-level debugger doesn't use OS api, it's worth trying to reuse this state machine
+ * NOTE: If you are implementing a mixed mode scenario where a high-level debugger doesn't use OS api, it's worth trying to reuse this state machine
  */
 internal class MixedModeProcessTransitionStateMachine(
   low: XDebugProcess,
   high: XDebugProcess,
   coroutineScope: CoroutineScope,
 ) : MixedModeStateMachineBase(low, high, coroutineScope) {
-  open class WithHighLevelDebugSuspendContextState(val high: XSuspendContext) : State
-  class BothRunning(activeManagedStepping: Boolean = false) : BothRunningBase(activeManagedStepping)
-  class ResumeLowResumeStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
-  object ResumeLowRunHighResumeStarted : State
-  class ResumeLowStoppedAfterRunWhileHighResuming(val low: XSuspendContext) : State
-  class WaitingForHighProcessPositionReached(val threadInitiatedStopId : Long?) : State
-  object LeaveHighRunningWaitingForLowStop : State
-  class HighStoppedWaitingForLowProcessToStop(val highSuspendContext: XSuspendContext?) : State
-  class OnlyHighStopped(val highSuspendContext: XSuspendContext?) : State
-  class OnlyHighStoppedWaitingForLowStepToComplete(val highSuspendContext: XSuspendContext) : State
-  class ManagedStepStarted(val low: XSuspendContext) : State
-  class MixedStepIntoStartedWaitingForHighDebuggerToBeResumed() : State
-  class MixedStepIntoStartedHighDebuggerResumed() : State
-  class LowLevelStepStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
-  class LowLevelRunToAddressStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
-  class HighLevelRunToAddressStarted(val sourcePosition: XSourcePosition, val high: XSuspendContext) : State
-  class HighLevelRunToAddressStartedLowRun : State
-  class HighLevelSetStatementStarted(val low : XSuspendContext) : State
-  class HighLevelSetStatementHighRunning(val low : XSuspendContext) : State
+
+  private class States {
+    open class WithHighLevelDebugSuspendContextState(val high: XSuspendContext) : State
+    class BothRunning(activeManagedStepping: Boolean = false) : BothRunningBase(activeManagedStepping)
+    class ResumeLowResumeStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
+    object ResumeLowRunHighResumeStarted : State
+    class ResumeLowStoppedAfterRunWhileHighResuming(val low: XSuspendContext) : State
+    class WaitingForHighProcessPositionReached(val threadInitiatedStopId: Long?) : State
+    object LeaveHighRunningWaitingForLowStop : State
+    class HighStoppedWaitingForLowProcessToStop(val highSuspendContext: XSuspendContext?) : State
+    class OnlyHighStoppedWaitingForLowStepToComplete(val highSuspendContext: XSuspendContext) : State
+    class ManagedStepStarted(val low: XSuspendContext) : State
+    class MixedStepIntoStartedWaitingForHighDebuggerToBeResumed() : State
+    class MixedStepIntoStartedHighDebuggerResumed() : State
+    class LowLevelStepStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
+    class LowLevelRunToAddressStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
+    class HighLevelRunToAddressStarted(val sourcePosition: XSourcePosition, val high: XSuspendContext) : State
+    class HighLevelRunToAddressStartedLowRun : State
+    class HighLevelSetStatementStarted(val low: XSuspendContext) : State
+    class HighLevelSetStatementHighRunning(val low: XSuspendContext) : State
+  }
 
   private val nullObjectHighLevelSuspendContext: XSuspendContext = object : XSuspendContext() {}
 

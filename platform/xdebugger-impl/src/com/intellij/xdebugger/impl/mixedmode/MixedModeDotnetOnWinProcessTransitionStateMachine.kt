@@ -7,6 +7,7 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XSuspendContext
 import kotlinx.coroutines.*
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.States.*
 
 private val logger = logger<MixedModeDotnetOnWinProcessTransitionStateMachine>()
 
@@ -24,63 +25,65 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
   coroutineScope: CoroutineScope,
 ) : MixedModeStateMachineBase(low, high, coroutineScope) {
 
-  class BothRunning(val lowLevelSteppingState: LowLevelSteppingState = LowLevelSteppingState.NotActive, highLevelSteppingActive: Boolean = false) : BothRunningBase(highLevelSteppingActive)
-  object PausingStarted : State
-  class WaitingForHighProcessPositionReached(val lowLevelSuspendContext : XSuspendContext, val highLevelSteppingActive: Boolean) : State
-  class HighStoppedWaitingForLowProcessToStop(val highSuspendContext: XSuspendContext?, val highLevelSteppingActive: Boolean, val lowSteppingRunsToBeFinishedByManagedStepper : Boolean) : State
+  private class States {
+    class BothRunning(val lowLevelSteppingState: LowLevelSteppingState = LowLevelSteppingState.NotActive, highLevelSteppingActive: Boolean = false) : BothRunningBase(highLevelSteppingActive)
+    object PausingStarted : State
+    class WaitingForHighProcessPositionReached(val lowLevelSuspendContext: XSuspendContext, val highLevelSteppingActive: Boolean) : State
+    class HighStoppedWaitingForLowProcessToStop(val highSuspendContext: XSuspendContext?, val highLevelSteppingActive: Boolean, val lowSteppingRunsToBeFinishedByManagedStepper: Boolean) : State
 
-  // Set of states for SetNextStatement feature
-  // (we need so many states and transactions because low-level process has to refresh its state after high level set next statement completed):
-  // BothStopped ---HighLevelSetNextStatementRequested---> HighLevelSetStatementPreparingLowLevelProcess ---LowRunning---> HighLevelSetStatementLowRunningHighRunRequested ---HighRunning--->  HighLevelSetStatementLowRunningHighRunning
-  //             ---HighLevelPositionReached---> OnlyHighStopped ---LowLevelPositionReached---> BothStopped
-  class HighLevelSetStatementPreparingLowLevelProcess(val high: XSuspendContext, val position: XSourcePosition) : State
-  object HighLevelSetStatementLowRunningHighRunning : State
-  object HighLevelSetStatementLowRunningHighRunRequested : State
-  //
+    // Set of states for SetNextStatement feature
+    // (we need so many states and transactions because low-level process has to refresh its state after high level set next statement completed):
+    // BothStopped ---HighLevelSetNextStatementRequested---> HighLevelSetStatementPreparingLowLevelProcess ---LowRunning---> HighLevelSetStatementLowRunningHighRunRequested ---HighRunning--->  HighLevelSetStatementLowRunningHighRunning
+    //             ---HighLevelPositionReached---> OnlyHighStopped ---LowLevelPositionReached---> BothStopped
+    class HighLevelSetStatementPreparingLowLevelProcess(val high: XSuspendContext, val position: XSourcePosition) : State
+    object HighLevelSetStatementLowRunningHighRunning : State
+    object HighLevelSetStatementLowRunningHighRunRequested : State
+    //
 
-  enum class LowLevelSteppingState {
-    NotActive,
-    Active,
-    ActiveRunsToBeFinishedByManagedStepper
+    enum class LowLevelSteppingState {
+      NotActive,
+      Active,
+      ActiveRunsToBeFinishedByManagedStepper
+    }
+
+    class WaitingForBothDebuggersRunning(val lowLevelSteppingState: LowLevelSteppingState = LowLevelSteppingState.NotActive, val highLevelSteppingActive: Boolean = false) : State
+    class WaitingForLowDebuggerRunning(val lowLevelSteppingState: LowLevelSteppingState, val highLevelSteppingActive: Boolean) : State
+    class WaitingForHighDebuggerRunning(val lowLevelSteppingState: LowLevelSteppingState, val highLevelSteppingActive: Boolean) : State
+
+    // Set of states that manage race conditions between low and high-level debuggers
+    // in particular, we expect race conditions between events when a managed step is being performed, we may have such combinations(lowLevelSteppingActive == 1):
+    //                                                                                                                            --LowRun--> BothRunning---...stopping as usual
+    //                                                                                  --HighRun--> WaitingForLowDebuggerRunning
+    //                                                                                                                            --HighPositionReached--> HighDebuggerAlreadyStoppedWaitingForDelayedLowDebuggerRunningEvent --LowRun--> HighStoppedWaitingForLowProcessToStop --LowLevelPositionReached--> BothStopped.
+    // 1. BothStopped --HighLevelDebuggerStepRequested--> WaitingForBothDebuggersRunning
+    //                                                                                                                            --HighRun--> BothRunning ---...stopping as usual
+    //                                                                                  --LowRun---> WaitingForHighDebuggerRunning
+    //                                                                                         (the most frequent on my machine)  --LowLevelPositionReached--> LowDebuggerAlreadyStoppedWaitingForDelayedHighDebuggerRunningEvent --HighRun-->  WaitingForHighProcessPositionReached --HighLevelPositionReached--> BothStopped.
+    //
+    // When native stepping we also move state machine into WaitingForBothDebuggersRunning state but lowLevelSteppingState == Active. In this case we know that we don't have HighLevelPositionReached event from high-level debugger, that's why the graph is stripped comparing to the one above
+    //
+    //
+    //                                                                   --HighRun--> WaitingForLowDebuggerRunning(lowLevelSteppingState == Active)--LowRun-----
+    //                                                                                                                                                          |
+    //                                                                                                                                                          |
+    //                                                                                                                                                          |
+    // 1. WaitingForBothDebuggersRunning(lowLevelSteppingState == Active)                                                                                       |
+    //                                                                                                                                                          |                                                                         (interrupted in the middle of native step, we resume low-level debugger)-->the same as shown below
+    //                                                                                                                                             --HighRun-----> BothRunning(lowLevelSteppingState == Active) -->LowLevelPositionReached
+    //                                                                                                                                                                                                                                    (normal low level step)-->the same as shown below
+    //                                                                   --LowRun--> WaitingForHighDebuggerRunning(lowLevelSteppingState == Active)
+    //                                                                                                                                                                                                                                                                                     (interrupted in the middle of native step, we resume low-level debugger) --> WaitingForLowDebuggerRunning --Normal stopping due to high level debugger stepping logic as if we stop at a breakpoint-->BothStopped
+    //                                                                                                                                             --LowLevelPositionReached--> LowDebuggerAlreadyStoppedWaitingForDelayedHighDebuggerRunningEvent(lowLevelSteppingState == Active)--HighRun
+    //                                                                                                                                                                                                                                                                                     (normal low level step)--> WaitingForHighProcessPositionReached --HighProcessPositionReached-->BothStopped
+    //
+
+    class LowDebuggerAlreadyStoppedWaitingForDelayedHighDebuggerRunningEvent(val lowLevelSuspendContext: XSuspendContext, val lowLevelSteppingState: LowLevelSteppingState, val highLevelSteppingActive: Boolean) : State
+    class HighDebuggerAlreadyStoppedWaitingForDelayedLowDebuggerRunningEvent(val highLevelSuspendContext: XSuspendContext, val highLevelSteppingActive: Boolean, val lowSteppingRunsToBeFinishedByManagedStepper: Boolean) : State
+    //
+
+    // We need ExitingInProgress state to not skip to HighRun/LowRun events on detaching
+    object ExitingInProgress : State
   }
-
-  class WaitingForBothDebuggersRunning(val lowLevelSteppingState: LowLevelSteppingState = LowLevelSteppingState.NotActive, val highLevelSteppingActive: Boolean = false) : State
-  class WaitingForLowDebuggerRunning(val lowLevelSteppingState: LowLevelSteppingState, val highLevelSteppingActive: Boolean) : State
-  class WaitingForHighDebuggerRunning(val lowLevelSteppingState: LowLevelSteppingState, val highLevelSteppingActive: Boolean) : State
-
-  // Set of states that manage race conditions between low and high-level debuggers
-  // in particular, we expect race conditions between events when a managed step is being performed, we may have such combinations(lowLevelSteppingActive == 1):
-  //                                                                                                                            --LowRun--> BothRunning---...stopping as usual
-  //                                                                                  --HighRun--> WaitingForLowDebuggerRunning
-  //                                                                                                                            --HighPositionReached--> HighDebuggerAlreadyStoppedWaitingForDelayedLowDebuggerRunningEvent --LowRun--> HighStoppedWaitingForLowProcessToStop --LowLevelPositionReached--> BothStopped.
-  // 1. BothStopped --HighLevelDebuggerStepRequested--> WaitingForBothDebuggersRunning
-  //                                                                                                                            --HighRun--> BothRunning ---...stopping as usual
-  //                                                                                  --LowRun---> WaitingForHighDebuggerRunning
-  //                                                                                         (the most frequent on my machine)  --LowLevelPositionReached--> LowDebuggerAlreadyStoppedWaitingForDelayedHighDebuggerRunningEvent --HighRun-->  WaitingForHighProcessPositionReached --HighLevelPositionReached--> BothStopped.
-  //
-  // When native stepping we also move state machine into WaitingForBothDebuggersRunning state but lowLevelSteppingState == Active. In this case we know that we don't have HighLevelPositionReached event from high-level debugger, that's why the graph is stripped comparing to the one above
-  //
-  //
-  //                                                                   --HighRun--> WaitingForLowDebuggerRunning(lowLevelSteppingState == Active)--LowRun-----
-  //                                                                                                                                                          |
-  //                                                                                                                                                          |
-  //                                                                                                                                                          |
-  // 1. WaitingForBothDebuggersRunning(lowLevelSteppingState == Active)                                                                                       |
-  //                                                                                                                                                          |                                                                         (interrupted in the middle of native step, we resume low-level debugger)-->the same as shown below
-  //                                                                                                                                             --HighRun-----> BothRunning(lowLevelSteppingState == Active) -->LowLevelPositionReached
-  //                                                                                                                                                                                                                                    (normal low level step)-->the same as shown below
-  //                                                                   --LowRun--> WaitingForHighDebuggerRunning(lowLevelSteppingState == Active)
-  //                                                                                                                                                                                                                                                                                     (interrupted in the middle of native step, we resume low-level debugger) --> WaitingForLowDebuggerRunning --Normal stopping due to high level debugger stepping logic as if we stop at a breakpoint-->BothStopped
-  //                                                                                                                                             --LowLevelPositionReached--> LowDebuggerAlreadyStoppedWaitingForDelayedHighDebuggerRunningEvent(lowLevelSteppingState == Active)--HighRun
-  //                                                                                                                                                                                                                                                                                     (normal low level step)--> WaitingForHighProcessPositionReached --HighProcessPositionReached-->BothStopped
-  //
-
-  class LowDebuggerAlreadyStoppedWaitingForDelayedHighDebuggerRunningEvent(val lowLevelSuspendContext : XSuspendContext, val lowLevelSteppingState : LowLevelSteppingState, val highLevelSteppingActive : Boolean) : State
-  class HighDebuggerAlreadyStoppedWaitingForDelayedLowDebuggerRunningEvent(val highLevelSuspendContext: XSuspendContext, val highLevelSteppingActive : Boolean, val lowSteppingRunsToBeFinishedByManagedStepper : Boolean) : State
-  //
-
-  // We need ExitingInProgress state to not skip to HighRun/LowRun events on detaching
-  object ExitingInProgress : State
 
   // to be called from the executor
   override suspend fun setInternal(event: Event) {
