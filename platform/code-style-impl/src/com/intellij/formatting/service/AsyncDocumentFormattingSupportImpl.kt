@@ -16,10 +16,13 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.FileWriter
@@ -30,6 +33,7 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.Volatile
+import kotlin.coroutines.EmptyCoroutineContext
 
 @ApiStatus.Internal
 class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentFormattingService) : AsyncDocumentFormattingSupport {
@@ -45,6 +49,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
   ) {
     val currRequest = pendingRequests[document]
     val forceSync = true == document.getUserData(FORMAT_DOCUMENT_SYNCHRONOUSLY)
+    val isSyncMode = forceSync || ApplicationManager.getApplication().isHeadlessEnvironment()
     if (currRequest != null) {
       if (!currRequest.cancel()) {
         LOG.warn("Pending request can't be cancelled")
@@ -53,17 +58,17 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     }
     prepareForFormatting(service, document, formattingContext)
     val formattingRequest = FormattingRequestImpl(formattingContext, document, formattingRanges,
-                                                  canChangeWhiteSpaceOnly, quickFormat)
+                                                  canChangeWhiteSpaceOnly, quickFormat, isSyncMode)
     val formattingTask = createFormattingTask(service, formattingRequest)
     if (formattingTask != null) {
       formattingRequest.setTask(formattingTask)
       pendingRequests[document] = formattingRequest
-      if (forceSync || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      if (isSyncMode) {
         runAsyncFormatBlocking(formattingRequest)
       }
       else {
         GlobalScope.launch(Dispatchers.IO) {
-          runAsyncFormat(formattingRequest, formattingTask.isRunUnderProgress)
+          runAsyncFormat(formattingRequest)
         }
       }
     }
@@ -80,34 +85,19 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       //  2. FormattingServices are usually invoked in an EDT WA.
       // Hence, using `runWithModalProgressBlocking` would result in a deadlock anyway.
       runBlocking {
-        runAsyncFormat(request, null)
+        runAsyncFormat(request)
       }
     }
     else {
       runBlockingMaybeCancellable {
-        runAsyncFormat(request, null)
+        runAsyncFormat(request)
       }
     }
   }
 
-  private suspend fun runAsyncFormat(formattingRequest: FormattingRequestImpl, runUnderProgress: Boolean) {
-    if (runUnderProgress) {
-      withBackgroundProgress(formattingRequest.context.project,
-                             CodeStyleBundle.message("async.formatting.service.running", getName(service)),
-                             TaskCancellation.cancellable().withButtonText(CodeStyleBundle.message("async.formatting.service.cancel", getName(service)))) {
-        coroutineToIndicator {
-          runAsyncFormat(formattingRequest, it)
-        }
-      }
-    }
-    else {
-      runAsyncFormat(formattingRequest, null)
-    }
-  }
-
-  private fun runAsyncFormat(formattingRequest: FormattingRequestImpl, indicator: ProgressIndicator?) {
+  private suspend fun runAsyncFormat(formattingRequest: FormattingRequestImpl) {
     try {
-      formattingRequest.runTask(indicator)
+      formattingRequest.runTask()
     }
     finally {
       pendingRequests.remove(formattingRequest.document, formattingRequest)
@@ -128,7 +118,8 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     val document: Document,
     private val _ranges: List<TextRange>,
     private val _canChangeWhitespaceOnly: Boolean,
-    private val _quickFormat: Boolean
+    private val _quickFormat: Boolean,
+    private val isSync: Boolean
   ) : AsyncFormattingRequest {
     private val initialModificationStamp = document.getModificationStamp()
     private val taskSemaphore = Semaphore(1)
@@ -157,19 +148,35 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       task = formattingTask
     }
 
-    fun runTask(indicator: ProgressIndicator?) {
+    private fun CoroutineScope.launchTask(task: FormattingTask) = launch(if (isSync) EmptyCoroutineContext else Dispatchers.IO) {
+      if (task.isRunUnderProgress) {
+        withBackgroundProgress(context.project,
+                               CodeStyleBundle.message("async.formatting.service.running", getName(service)),
+                               TaskCancellation.cancellable().withButtonText(CodeStyleBundle.message("async.formatting.service.cancel", getName(service)))) {
+          coroutineToIndicator {
+            task.run()
+          }
+        }
+      }
+      else {
+        task.run()
+      }
+    }
+
+    suspend fun runTask() = coroutineScope {
       val task = task
       if (task != null && stateRef.compareAndSet(FormattingRequestState.NOT_STARTED, FormattingRequestState.RUNNING)) {
         try {
           taskSemaphore.acquire()
-          task.run()
+          launchTask(task)
           var waitTime: Long = 0
           while (waitTime < getTimeout(service).seconds * 1000L) {
             if (taskSemaphore.tryAcquire(RETRY_PERIOD, TimeUnit.MILLISECONDS)) {
               taskSemaphore.release()
               break
             }
-            indicator?.checkCanceled()
+            checkCanceled()
+            yield()
             waitTime += RETRY_PERIOD
           }
           if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
