@@ -513,8 +513,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   public void processInputMethodEvent(InputMethodEvent e) {
     if (!isSpeedSearchEnabled()) return;
 
-    if (mySearchPopup == null && e.getID() == InputMethodEvent.INPUT_METHOD_TEXT_CHANGED && e.getText().current() != CharacterIterator.DONE) {
-      showPopup();
+    if (mySearchPopup == null && e.getID() == InputMethodEvent.INPUT_METHOD_TEXT_CHANGED) {
+      var text = e.getText();
+      if (text != null && text.current() != CharacterIterator.DONE) {
+        showPopup();
+      }
     }
 
     if (mySearchPopup != null) {
