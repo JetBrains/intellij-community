@@ -41,7 +41,7 @@ com.intellij.openapi.application.ex.ApplicationEx
 - a:isWriteActionPending():Z
 - restart():V
 - a:restart(Z):V
-- a:restart(Z,Z):V
+- restart(Z,Z):V
 - a:setSaveAllowed(Z):V
 - a:tryRunReadAction(java.lang.Runnable):Z
 f:com.intellij.openapi.application.ex.ApplicationUtil

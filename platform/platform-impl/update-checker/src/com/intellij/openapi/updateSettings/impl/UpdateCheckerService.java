@@ -17,7 +17,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.BuildNumber;
@@ -28,7 +27,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,14 +53,11 @@ public class UpdateCheckerService {
 
   static final String SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY = "ide.self.update.started.for.build";
 
-  private static final Logger LOG = Logger.getInstance(UpdateCheckerService.class);
+  static final Logger LOG = Logger.getInstance(UpdateCheckerService.class);
 
   private static final long CHECK_INTERVAL_MS = MINUTES.toMillis(Long.getLong("ide.updates.check.interval.minutes", DAYS.toMinutes(1)));
   private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to 'com.intellij.updater.Runner.ERROR_LOG_FILE_NAME'
   private static final String PREVIOUS_BUILD_NUMBER_PROPERTY = "ide.updates.previous.build.number";
-  private static final String OLD_DIRECTORIES_SCAN_SCHEDULED = "ide.updates.old.dirs.scan.scheduled";
-  private static final int OLD_DIRECTORIES_SCAN_DELAY_DAYS = 7;
-  private static final int OLD_DIRECTORIES_SHELF_LIFE_DAYS = 180;
 
   private volatile ScheduledFuture<?> myScheduledCheck;
 
@@ -318,28 +313,6 @@ public class UpdateCheckerService {
 
   private static Path getUpdatedPluginsFile() {
     return Path.of(PathManager.getConfigPath(), ".updated_plugins_list");
-  }
-
-  static void deleteOldApplicationDirectories(@Nullable ProgressIndicator indicator) {
-    var propertyService = PropertiesComponent.getInstance();
-    if (InitialConfigImportState.INSTANCE.isConfigImported()) {
-      var scheduledAt = System.currentTimeMillis() + DAYS.toMillis(OLD_DIRECTORIES_SCAN_DELAY_DAYS);
-      LOG.info("scheduling old directories scan after " + DateFormatUtil.formatDateTime(scheduledAt));
-      propertyService.setValue(OLD_DIRECTORIES_SCAN_SCHEDULED, Long.toString(scheduledAt));
-      OldDirectoryCleaner.Stats.scheduled();
-    }
-    else {
-      long scheduledAt = propertyService.getLong(OLD_DIRECTORIES_SCAN_SCHEDULED, 0L), now;
-      if (scheduledAt != 0 && (now = System.currentTimeMillis()) >= scheduledAt) {
-        OldDirectoryCleaner.Stats.started((int)MILLISECONDS.toDays(now - scheduledAt) + OLD_DIRECTORIES_SCAN_DELAY_DAYS);
-        LOG.info("starting old directories scan");
-        var expireAfter = now - DAYS.toMillis(OLD_DIRECTORIES_SHELF_LIFE_DAYS);
-
-        new OldDirectoryCleaner(expireAfter).seekAndDestroy(null, indicator);
-        propertyService.unsetValue(OLD_DIRECTORIES_SCAN_SCHEDULED);
-        LOG.info("old directories scan complete");
-      }
-    }
   }
 
   static void pruneUpdateSettings() {

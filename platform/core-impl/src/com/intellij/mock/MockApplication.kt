@@ -248,9 +248,6 @@ open class MockApplication(parentDisposable: Disposable) : MockComponentManager(
   override fun restart(exitConfirmed: Boolean) {
   }
 
-  override fun restart(exitConfirmed: Boolean, elevate: Boolean) {
-  }
-
   override fun runProcessWithProgressSynchronously(
     process: Runnable,
     progressTitle: String,

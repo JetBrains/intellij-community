@@ -38,11 +38,11 @@ public final class ConfigImportProgressDialog extends JDialog {
     setLocationRelativeTo(null);
   }
 
-  public ProgressIndicatorAdapter getIndicator() {
+  ProgressIndicatorAdapter getIndicator() {
     return myIndicator;
   }
 
-  private final class ProgressIndicatorAdapter extends AbstractProgressIndicatorBase {
+  final class ProgressIndicatorAdapter extends AbstractProgressIndicatorBase {
     @Override
     public void setFraction(double fraction) {
       myProgressBar.setValue((int)(fraction * 100));

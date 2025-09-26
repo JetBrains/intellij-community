@@ -777,6 +777,20 @@ e:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - f:toolName:java.lang.String
 - s:valueOf(java.lang.String):com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - s:values():com.intellij.openapi.updateSettings.impl.ExternalUpdateManager[]
+f:com.intellij.openapi.updateSettings.impl.UpdateChannel
+- f:getBuilds():java.util.List
+- f:getEvalDays():I
+- f:getId():java.lang.String
+- f:getLicensing():com.intellij.openapi.updateSettings.impl.UpdateChannel$Licensing
+- f:getStatus():com.intellij.openapi.updateSettings.impl.ChannelStatus
+- f:getUrl():java.lang.String
+e:com.intellij.openapi.updateSettings.impl.UpdateChannel$Licensing
+- java.lang.Enum
+- sf:EAP:com.intellij.openapi.updateSettings.impl.UpdateChannel$Licensing
+- sf:RELEASE:com.intellij.openapi.updateSettings.impl.UpdateChannel$Licensing
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.updateSettings.impl.UpdateChannel$Licensing
+- s:values():com.intellij.openapi.updateSettings.impl.UpdateChannel$Licensing[]
 com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider
 - a:getPluginRepositories():java.util.List
 com.intellij.openapi.updateSettings.impl.UpdateSettingsUIProvider

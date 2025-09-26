@@ -41,7 +41,7 @@ public class DefaultUpdateRequestParametersProvider implements UpdateRequestPara
 
     parameters.put("uid", JetBrainsPermanentInstallationID.get());
 
-    if (!PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false)) {
+    if (!PropertiesComponent.getInstance().getBoolean(UpdateCheckerFacade.MACHINE_ID_DISABLED_PROPERTY, false)) {
       var machineId = ourMachineId.getValue();
       if (machineId != null) {
         parameters.put("mid", machineId);

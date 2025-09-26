@@ -14,7 +14,7 @@ import javax.swing.JComponent
 
 private const val PLUGINS_UPDATE = "plugins.update"
 
-internal class PluginsUpdateStep: SmartUpdateStep {
+private class PluginsUpdateStep: SmartUpdateStep {
   override val id = PLUGINS_UPDATE
   override val stepName = SmartUpdateBundle.message("update.plugins")
 

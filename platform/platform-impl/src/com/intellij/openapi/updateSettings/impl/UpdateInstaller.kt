@@ -5,6 +5,7 @@ import com.intellij.DynamicBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -15,6 +16,7 @@ import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.system.OS
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -23,7 +25,8 @@ import java.util.zip.ZipException
 import java.util.zip.ZipFile
 import javax.swing.UIManager
 
-internal object UpdateInstaller {
+@ApiStatus.Internal
+object UpdateInstaller {
   const val UPDATER_MAIN_CLASS: String = "com.intellij.updater.Runner"
 
   private val LOG = logger<UpdateInstaller>()
@@ -71,9 +74,10 @@ internal object UpdateInstaller {
   fun downloadPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): List<PluginDownloader> {
     indicator.text = IdeBundle.message("update.downloading.plugins.progress")
 
-    UpdateChecker.saveDisabledToUpdatePlugins()
+    val updateChecker = service<UpdateCheckerFacade>()
+    updateChecker.saveDisabledToUpdatePlugins()
 
-    val disabledToUpdate = UpdateChecker.disabledToUpdate
+    val disabledToUpdate = updateChecker.disabledToUpdate
     val readyToInstall = mutableListOf<PluginDownloader>()
     for (downloader in downloaders) {
       try {

@@ -25,7 +25,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.marketplaceIdeCodes
 import com.intellij.openapi.util.BuildNumber
@@ -183,7 +183,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     /**
      * Must be used only from [com.intellij.openapi.updateSettings.impl.UpdateChecker].
      */
-    internal fun checkLastCompatiblePluginUpdate(
+    fun checkLastCompatiblePluginUpdate(
       allIds: Set<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false,
@@ -218,7 +218,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         val os = URLEncoder.encode("${OS.CURRENT} ${OS.CURRENT.version()}", StandardCharsets.UTF_8)
         val machineId = if (LoadingState.COMPONENTS_LOADED.isOccurred) {
           MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates") // same as regular updates
-            .takeIf { !PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false) }
+            .takeIf { !PropertiesComponent.getInstance().getBoolean(UpdateCheckerFacade.MACHINE_ID_DISABLED_PROPERTY, false) }
         } else null
 
         val query = buildString {

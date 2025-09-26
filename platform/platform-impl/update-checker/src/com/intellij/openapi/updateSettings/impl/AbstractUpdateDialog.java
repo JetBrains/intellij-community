@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.CommonBundle;
@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 
-/**
- * @author anna
- */
 @ApiStatus.Internal
 public abstract class AbstractUpdateDialog extends DialogWrapper {
   protected final boolean myAddConfigureUpdatesLink;

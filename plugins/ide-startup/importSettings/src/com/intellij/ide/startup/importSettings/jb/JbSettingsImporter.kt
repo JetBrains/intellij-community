@@ -34,7 +34,7 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.Registry
@@ -406,7 +406,7 @@ internal class JbSettingsImporter(private val configDirPath: Path, private val p
     RepositoryHelper.updatePluginHostsFromConfigDir(configDirPath, LOG)
     val updateableMap = HashMap<PluginId, IdeaPluginDescriptor?>(pluginsMap)
     progressIndicator.text2 = ImportSettingsBundle.message("progress.details.checking.for.plugin.updates")
-    val internalPluginUpdates = UpdateChecker.getInternalPluginUpdates(
+    val internalPluginUpdates = service<UpdateCheckerFacade>().getInternalPluginUpdates(
       buildNumber = null,
       indicator = progressIndicator,
       updateablePluginsMap = updateableMap

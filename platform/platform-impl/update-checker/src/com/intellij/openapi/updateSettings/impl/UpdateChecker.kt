@@ -43,6 +43,7 @@ import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.*
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.lang.ref.SoftReference
 import java.net.HttpURLConnection
@@ -65,6 +66,57 @@ private const val DISABLED_PLUGIN_UPDATE = "plugin_disabled_updates.txt"
 private const val PRODUCT_DATA_TTL_MIN = 5L
 
 private val shownNotifications = MultiMap<NotificationKind, Notification>()
+
+
+private class UpdateCheckerFacadeImpl() : UpdateCheckerFacade {
+  override val disabledToUpdate: Set<PluginId>
+    get() = UpdateChecker.disabledToUpdate
+
+  override fun updateAndShowResult() {
+    UpdateChecker.updateAndShowResult()
+  }
+
+  override fun updateAndShowResult(project: Project?) {
+    UpdateChecker.updateAndShowResult(project)
+  }
+
+  override fun getNotificationGroup(): NotificationGroup {
+    return UpdateChecker.getNotificationGroup()
+  }
+
+  override fun getNotificationGroupForIdeUpdateResults(): NotificationGroup {
+    return UpdateChecker.getNotificationGroupForIdeUpdateResults()
+  }
+
+  override fun getNotificationGroupForPluginUpdateResults(): NotificationGroup {
+    return UpdateChecker.getNotificationGroupForPluginUpdateResults()
+  }
+
+  override fun loadProductData(indicator: ProgressIndicator?): Product? {
+    return UpdateChecker.loadProductData(indicator)
+  }
+
+  override fun updateDescriptorsForInstalledPlugins(state: InstalledPluginsState) {
+    UpdateChecker.updateDescriptorsForInstalledPlugins(state)
+  }
+
+  override fun getInternalPluginUpdates(
+    buildNumber: BuildNumber?,
+    indicator: ProgressIndicator?,
+    updateablePluginsMap: MutableMap<PluginId, IdeaPluginDescriptor?>?,
+  ): InternalPluginResults {
+    @Suppress("DEPRECATION")
+    return UpdateChecker.getInternalPluginUpdates(buildNumber, indicator, updateablePluginsMap)
+  }
+
+  override fun saveDisabledToUpdatePlugins() {
+    UpdateChecker.saveDisabledToUpdatePlugins()
+  }
+
+  override fun ignorePlugins(descriptors: List<IdeaPluginDescriptor>) {
+    UpdateChecker.ignorePlugins(descriptors)
+  }
+}
 
 @Service
 private class UpdateCheckerHelper(private val coroutineScope: CoroutineScope) {
@@ -91,11 +143,9 @@ private class UpdateCheckerHelper(private val coroutineScope: CoroutineScope) {
 }
 
 /**
- * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
+ * See XML file by [com.intellij.openapi.application.ex.ApplicationInfoEx.getUpdateUrls] for reference.
  */
 object UpdateChecker {
-  internal const val MACHINE_ID_DISABLED_PROPERTY: String = "machine.id.disabled"
-
   private val productDataLock = ReentrantLock()
   private var productDataUrl: Url? = null
   private var productDataCache: SoftReference<Product?>? = null
@@ -112,8 +162,9 @@ object UpdateChecker {
     NotificationGroupManager.getInstance().getNotificationGroup("IDE and Plugin Updates")
 
   @JvmStatic
-  fun getNotificationGroupForPluginUpdateResults(): NotificationGroup =
-    NotificationGroupManager.getInstance().getNotificationGroup("Plugin Update Results")
+  fun getNotificationGroupForPluginUpdateResults(): NotificationGroup {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Plugin Update Results")
+  }
 
   @JvmStatic
   fun getNotificationGroupForIdeUpdateResults(): NotificationGroup =
@@ -123,13 +174,11 @@ object UpdateChecker {
    * For scheduled update checks.
    */
   @JvmStatic
-  fun updateAndShowResult(): ActionCallback =
-    service<UpdateCheckerHelper>().updateAndShowResult(showResults = true)
+  fun updateAndShowResult(): ActionCallback = service<UpdateCheckerHelper>().updateAndShowResult(showResults = true)
 
-  @ApiStatus.Internal
+  @Internal
   @IntellijInternalApi
-  fun getUpdates(): ActionCallback =
-    service<UpdateCheckerHelper>().updateAndShowResult(showResults = false)
+  fun getUpdates(): ActionCallback = service<UpdateCheckerHelper>().updateAndShowResult(showResults = false)
 
   /**
    * For manual update checks (Help | Check for Updates, Settings | Updates | Check Now)
@@ -167,7 +216,7 @@ object UpdateChecker {
   @JvmOverloads
   @JvmStatic
   @JvmName("getPlatformUpdates")
-  @ApiStatus.Internal
+  @Internal
   @IntellijInternalApi
   internal fun getPlatformUpdates(
     settings: UpdateSettings = UpdateSettings.getInstance(),
@@ -211,7 +260,7 @@ object UpdateChecker {
           .let { parseUpdateData(it) }
           ?.also {
             if (it.disableMachineId) {
-              PropertiesComponent.getInstance().setValue(MACHINE_ID_DISABLED_PROPERTY, true)
+              PropertiesComponent.getInstance().setValue(UpdateCheckerFacade.MACHINE_ID_DISABLED_PROPERTY, true)
             }
           }
         productDataCache = SoftReference(product)
@@ -230,7 +279,7 @@ object UpdateChecker {
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   @JvmStatic
   fun updateDescriptorsForInstalledPlugins(state: InstalledPluginsState) {
     if (ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
@@ -265,7 +314,7 @@ object UpdateChecker {
   }
 
   @ApiStatus.Experimental
-  data class PluginUpdatesInfo(
+  data class PluginUpdatesInfo @Internal constructor(
     val allEnabled: Collection<PluginDownloader> = emptyList(),
     val allDisabled: Collection<PluginDownloader> = emptyList(),
     val incompatible: Collection<IdeaPluginDescriptor> = emptyList(),
@@ -285,7 +334,7 @@ object UpdateChecker {
   @JvmOverloads
   @JvmStatic
   @IntellijInternalApi
-  @ApiStatus.Internal
+  @Internal
   @Deprecated("Use [getPluginUpdates] instead", ReplaceWith("getPluginUpdates(pluginId, buildNumber, indicator)"))
   fun getInternalPluginUpdates(
     buildNumber: BuildNumber? = null,
@@ -465,7 +514,7 @@ object UpdateChecker {
   @JvmOverloads
   @JvmStatic
   @IntellijInternalApi
-  @ApiStatus.Internal
+  @Internal
   fun getExternalPluginUpdates(
     updateSettings: UpdateSettings,
     indicator: ProgressIndicator? = null,
@@ -547,13 +596,11 @@ object UpdateChecker {
     PluginStringSetFile.writeIdsSafe(PathManager.getConfigDir().resolve(DISABLED_UPDATE), disabledToUpdate, LOG)
   }
 
-  @JvmStatic
   @JvmName("isIgnored")
-  @ApiStatus.Internal
-  fun isIgnored(descriptor: IdeaPluginDescriptor): Boolean =
-    descriptor.ignoredKey in ignoredPlugins
-
+  @Internal
   @JvmStatic
+  fun isIgnored(descriptor: IdeaPluginDescriptor): Boolean = descriptor.ignoredKey in ignoredPlugins
+
   @JvmName("ignorePlugins")
   internal fun ignorePlugins(descriptors: List<IdeaPluginDescriptor>) {
     ignoredPlugins += descriptors.map { it.ignoredKey }
@@ -580,7 +627,7 @@ object UpdateChecker {
   }
 
   /** A helper method for manually testing platform updates (see [com.intellij.internal.ShowUpdateInfoDialogAction]). */
-  @ApiStatus.Internal
+  @Internal
   @IntellijInternalApi
   fun testPlatformUpdate(
     project: Project?,

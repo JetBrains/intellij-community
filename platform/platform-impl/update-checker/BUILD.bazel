@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.platform.ide.updateChecker` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "update-checker",
+  module_name = "intellij.platform.ide.updateChecker",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/core-impl",
+    "//platform/extensions",
+    "//platform/projectModel-api:projectModel",
+    "//platform/statistics",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core/plugins",
+    "//platform/util/jdom",
+    "@lib//:jackson",
+    "//platform/ide-core-impl",
+    "@lib//:jackson-databind",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/platform-impl/initial-config-import",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.updateChecker` end

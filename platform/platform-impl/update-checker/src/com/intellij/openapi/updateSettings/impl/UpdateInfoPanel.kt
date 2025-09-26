@@ -130,8 +130,9 @@ internal object UpdateInfoPanel {
     val patchSize = when {
       testPatch != null -> max(Files.size(testPatch) shr 20, 1).toString()
       patches != null && !patches.size.isNullOrBlank() -> {
-        val match = PATCH_SIZE_RANGE.matchEntire(patches.size)
-        if (match != null) match.groupValues[1] else patches.size
+        val size = patches.size!!
+        val match = PATCH_SIZE_RANGE.matchEntire(size)
+        if (match != null) match.groupValues[1] else size
       }
       else -> null
     }

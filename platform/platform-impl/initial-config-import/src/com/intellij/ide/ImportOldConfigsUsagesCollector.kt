@@ -1,18 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.application
+package com.intellij.ide
 
-import com.intellij.ide.ApplicationActivity
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
 import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import javax.swing.JRadioButton
 
-internal object ImportOldConfigsUsagesCollector : CounterUsagesCollector() {
-  private enum class ImportOldConfigType {
-    FROM_PREVIOUS, FROM_CUSTOM, DO_NOT_IMPORT, OTHER, NOT_INITIALIZED
-  }
+private enum class ImportOldConfigType {
+  FROM_PREVIOUS, FROM_CUSTOM, DO_NOT_IMPORT, OTHER, NOT_INITIALIZED
+}
 
+internal object ImportOldConfigsUsagesCollector : CounterUsagesCollector() {
   enum class InitialImportScenario {
     CLEAN_CONFIGS, IMPORTED_FROM_PREVIOUS_VERSION, IMPORTED_FROM_OTHER_PRODUCT, @Suppress("unused") IMPORTED_FROM_CLOUD, CONFIG_DIRECTORY_NOT_FOUND,
     SHOW_DIALOG_NO_CONFIGS_FOUND, SHOW_DIALOG_CONFIGS_ARE_TOO_OLD, SHOW_DIALOG_REQUESTED_BY_PROPERTY, IMPORT_SETTINGS_ACTION,

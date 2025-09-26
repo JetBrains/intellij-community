@@ -91,8 +91,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static com.intellij.ide.plugins.newui.PluginsViewCustomizerKt.getPluginsViewCustomizer;
-
 @ApiStatus.Internal
 public final class PluginManagerConfigurable
   implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
@@ -275,7 +273,7 @@ public final class PluginManagerConfigurable
       myForceShowInstalledTabForTag = false;
     }
 
-    getPluginsViewCustomizer().processConfigurable(this);
+    PluginsViewCustomizerKt.getPluginsViewCustomizer().processConfigurable(this);
     if (myPluginManagerCustomizer != null) {
       myPluginManagerCustomizer.initCustomizer(myCardPanel);
     }
@@ -677,7 +675,7 @@ public final class PluginManagerConfigurable
             }
             attributes.add(SearchWords.STAFF_PICKS.getValue());
             attributes.add(SearchWords.SUGGESTED.getValue());
-            if (getPluginsViewCustomizer() != NoOpPluginsViewCustomizer.INSTANCE) {
+            if (PluginsViewCustomizerKt.getPluginsViewCustomizer() != NoOpPluginsViewCustomizer.INSTANCE) {
               attributes.add(SearchWords.INTERNAL.getValue());
             }
             return attributes;
@@ -918,7 +916,7 @@ public final class PluginManagerConfigurable
 
               if (parser.internal) {
                 PluginsViewCustomizer.PluginsGroupDescriptor groupDescriptor =
-                  getPluginsViewCustomizer().getInternalPluginsGroupDescriptor();
+                  PluginsViewCustomizerKt.getPluginsViewCustomizer().getInternalPluginsGroupDescriptor();
                 if (groupDescriptor != null) {
                   if (parser.searchQuery == null) {
                     result.addDescriptors(groupDescriptor.getPlugins());
@@ -2131,7 +2129,7 @@ public final class PluginManagerConfigurable
       UpdateOptions state = UpdateSettings.getInstance().getState();
       if (state.isPluginsAutoUpdateEnabled() != myPluginsAutoUpdateEnabled) {
         state.setPluginsAutoUpdateEnabled(myPluginsAutoUpdateEnabled);
-        ApplicationManager.getApplication().getService(PluginAutoUpdateService.class).onSettingsChanged$intellij_platform_ide_impl();
+        ApplicationManager.getApplication().getService(PluginAutoUpdateService.class).onSettingsChanged();
       }
     }
 

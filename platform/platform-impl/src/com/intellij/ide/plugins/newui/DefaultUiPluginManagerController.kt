@@ -22,8 +22,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.ConfigurationException
@@ -32,13 +32,11 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +65,6 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   override suspend fun initSession(sessionId: String): InitSessionResult {
     return initSessionSync(sessionId)
   }
-
 
   fun initSessionSync(sessionId: String): InitSessionResult {
     val session = createSession(sessionId)
@@ -418,7 +415,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override suspend fun loadDescriptorById(pluginId: PluginId): PluginUiModel? {
     val clientPluginId = PluginId.getId(pluginId.idString)
-    val updateData = UpdateChecker.getInternalPluginUpdates(updateablePluginsMap = mutableMapOf(clientPluginId to null))
+    val updateData = service<UpdateCheckerFacade>().getInternalPluginUpdates(updateablePluginsMap = mutableMapOf(clientPluginId to null))
     return updateData.pluginUpdates.all.asSequence()
       .filter { it.pluginVersion != null }
       .map { it.uiModel ?: PluginUiModelAdapter(it.descriptor) }
@@ -518,7 +515,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override suspend fun updateDescriptorsForInstalledPlugins() {
-    UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance())
+    service<UpdateCheckerFacade>().updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance())
   }
 
   override suspend fun performUninstall(sessionId: String, pluginId: PluginId): Boolean {

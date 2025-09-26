@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
-import com.intellij.application.ImportOldConfigsUsagesCollector;
 import com.intellij.configurationStore.StoreUtilKt;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.*;

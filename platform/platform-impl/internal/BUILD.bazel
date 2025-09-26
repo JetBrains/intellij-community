@@ -52,6 +52,7 @@ jvm_library(
     "@lib//:jna",
     "//platform/workspace/storage",
     "//platform/platform-impl/concurrency",
+    "//platform/platform-impl/update-checker",
     "@lib//:jbr-api",
   ],
   runtime_deps = [":internal_resources"]

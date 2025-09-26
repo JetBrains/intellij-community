@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Divider;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder;
@@ -44,8 +43,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -169,7 +168,8 @@ public class PluginUpdateDialog extends DialogWrapper {
 
   protected void doIgnoreUpdateAction(ActionEvent e) {
     close(CANCEL_EXIT_CODE);
-    UpdateChecker.ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, ListPluginComponent::getPluginDescriptor));
+    ApplicationManager.getApplication().getService(UpdateCheckerFacade.class)
+      .ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, ListPluginComponent::getPluginDescriptor));
   }
 
   private void updateButtons() {
@@ -206,7 +206,7 @@ public class PluginUpdateDialog extends DialogWrapper {
       boolean selected = myAutoUpdateOption.isSelected();
       if (state.isPluginsAutoUpdateEnabled() != selected) {
         state.setPluginsAutoUpdateEnabled(selected);
-        ApplicationManager.getApplication().getService(PluginAutoUpdateService.class).onSettingsChanged$intellij_platform_ide_impl();
+        ApplicationManager.getApplication().getService(PluginAutoUpdateService.class).onSettingsChanged();
       }
     }
 
@@ -224,7 +224,7 @@ public class PluginUpdateDialog extends DialogWrapper {
     runUpdateAll(toDownloads, getContentPanel(), myFinishCallback, null);
   }
 
-  static void runUpdateAll(@NotNull Collection<PluginDownloader> toDownload,
+  public static void runUpdateAll(@NotNull Collection<PluginDownloader> toDownload,
                            @Nullable JComponent ownerComponent,
                            @Nullable Runnable finishCallback,
                            @Nullable Consumer<Boolean> customRestarter) {
@@ -247,7 +247,7 @@ public class PluginUpdateDialog extends DialogWrapper {
           }
           if (PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed() &&
               !UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled()) {
-            Notification notification = UpdateChecker.getNotificationGroupForPluginUpdateResults()
+            Notification notification = ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getNotificationGroupForPluginUpdateResults()
               .createNotification(IdeBundle.message("updates.plugins.notification.title"),
                                   IdeBundle.message("updates.plugins.autoupdate.notification.message"), NotificationType.INFORMATION)
               .addAction(new NotificationAction(IdeBundle.message("updates.auto.update.title")) {
@@ -255,7 +255,7 @@ public class PluginUpdateDialog extends DialogWrapper {
                 public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
                   UpdateSettings.getInstance().getState().setPluginsAutoUpdateEnabled(true);
                   ApplicationManager.getApplication().getService(PluginAutoUpdateService.class)
-                    .onSettingsChanged$intellij_platform_ide_impl();
+                    .onSettingsChanged();
                   notification.expire();
                 }
               })
@@ -271,7 +271,7 @@ public class PluginUpdateDialog extends DialogWrapper {
             notification.notify(myProject);
           }
           if (!restartRequired) {
-            UpdateChecker.getNotificationGroupForPluginUpdateResults()
+            ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getNotificationGroupForPluginUpdateResults()
               .createNotification(getUpdateNotificationMessage(installedDescriptors),
                                   NotificationType.INFORMATION)
               .setDisplayId("plugins.updated.without.restart")

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import com.intellij.application.ImportOldConfigsUsagesCollector;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.ApplicationNamesInfo;

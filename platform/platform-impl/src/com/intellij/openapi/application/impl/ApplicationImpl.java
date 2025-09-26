@@ -709,6 +709,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     exit(force, exitConfirmed, restart, 0);
   }
 
+  @Override
   public void restart(int flags, String @NotNull [] beforeRestart) {
     exit(flags, true, beforeRestart, 0);
   }

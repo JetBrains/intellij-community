@@ -15,7 +15,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.updateSettings.impl.BuildInfo
 import com.intellij.openapi.updateSettings.impl.ChannelStatus
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.OpenAnotherToolHandler
@@ -46,7 +46,7 @@ private const val TOOLBOX_INSTALL_BASE_URL: String = "http://localhost:52829/ins
 private const val TOOLBOX_ORIGIN: String = "https://toolbox.app"
 
 @Service(Service.Level.PROJECT)
-class UltimateInstallationService(
+internal class UltimateInstallationService(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
 ) {
@@ -67,7 +67,7 @@ class UltimateInstallationService(
       try {
         installerLock.withLock {
           withBackgroundProgress(project, IdeBundle.message("plugins.advertiser.try.ultimate.upgrade", suggestedIde.name), true) {
-            val productData = UpdateChecker.loadProductData(null)
+            val productData = service<UpdateCheckerFacade>().loadProductData(null)
             val status = if (Registry.`is`("ide.try.ultimate.use.eap")) ChannelStatus.EAP else ChannelStatus.RELEASE
             val build = productData?.channels?.firstOrNull { it.status == status }?.builds?.first() ?: return@withBackgroundProgress
 
@@ -225,8 +225,7 @@ class UltimateInstallationService(
   }
 }
 
-class TryUltimateActionHandler() : OpenAnotherToolHandler {
-
+private class TryUltimateActionHandler : OpenAnotherToolHandler {
   override fun isApplicable(project: Project?, suggestedIde: SuggestedIde, pluginId: PluginId?): Boolean {
     return Registry.`is`("ide.try.ultimate.automatic.installation")
            && project != null

@@ -559,6 +559,7 @@ platform/platform-impl/remote
 platform/platform-impl/rpc
 platform/platform-impl/ui
 platform/platform-impl/ui-inspector
+platform/platform-impl/update-checker
 platform/platform-resources
 platform/platform-resources-en
 platform/platform-tests

@@ -41,6 +41,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.impl.BundledColorSchemeEPName
@@ -62,7 +63,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.project.impl.ProjectManagerImpl
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
@@ -102,11 +103,10 @@ import javax.swing.ToolTipManager
 
 private val LOG = logger<DynamicPlugins>()
 private val classloadersFromUnloadedPlugins = mutableMapOf<PluginId, WeakList<PluginClassLoader>>()
+private val VETOER_EP_NAME = ExtensionPointName<DynamicPluginVetoer>("com.intellij.ide.dynamicPluginVetoer")
 
 @ApiStatus.Internal
 object DynamicPlugins {
-  private val VETOER_EP_NAME: ExtensionPointName<DynamicPluginVetoer> = ExtensionPointName.create("com.intellij.ide.dynamicPluginVetoer");
-
   private var myProcessRun = 0
   private val myProcessCallbacks = mutableListOf<Runnable>()
   private val myLock = Any()
@@ -801,7 +801,7 @@ object DynamicPlugins {
   }
 
   internal fun notify(@NlsContexts.NotificationContent text: String, notificationType: NotificationType, vararg actions: AnAction) {
-    val notification = UpdateChecker.getNotificationGroupForPluginUpdateResults().createNotification(text, notificationType)
+    val notification = service<UpdateCheckerFacade>().getNotificationGroupForPluginUpdateResults().createNotification(text, notificationType)
     for (action in actions) {
       notification.addAction(action)
     }

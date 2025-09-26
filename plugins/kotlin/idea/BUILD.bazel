@@ -67,6 +67,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-common",
     "@lib//:kotlinc-kotlin-scripting-dependencies",
     "@lib//:kotlinc-kotlin-scripting-jvm",
+    "//platform/platform-impl/update-checker",
     "//platform/ide-core-impl",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/plugin",

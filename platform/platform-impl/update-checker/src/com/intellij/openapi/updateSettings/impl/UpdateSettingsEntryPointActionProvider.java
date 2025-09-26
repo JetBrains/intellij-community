@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.PluginStateListener;
 import com.intellij.ide.plugins.PluginStateManager;
 import com.intellij.ide.plugins.newui.PluginModelAsyncOperationsExecutor;
@@ -25,11 +24,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.ide.actions.SettingsEntryPointAction.*;
 
@@ -333,7 +332,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
         @Override
         @SuppressWarnings("unchecked")
         public void actionPerformed(@NotNull AnActionEvent e) {
-          Set<PluginId> pluginIds = StreamEx.of(myUpdatesForPlugins).map(it -> it.getId()).toSet();
+          Set<PluginId> pluginIds = myUpdatesForPlugins.stream().map(it -> it.getId()).collect(Collectors.toSet());
           PluginModelAsyncOperationsExecutor.INSTANCE.findPlugins(pluginIds, plugins -> {
             PluginUpdateDialog dialog =
               new PluginUpdateDialog(e.getProject(), myUpdatesForPlugins, myCustomRepositoryPlugins, (Map<PluginId, PluginUiModel>)plugins);

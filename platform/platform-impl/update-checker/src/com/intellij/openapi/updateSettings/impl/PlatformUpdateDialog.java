@@ -13,7 +13,6 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -29,7 +28,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.OS;
 import com.intellij.util.ui.JBUI;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,7 +181,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
         public void actionPerformed(ActionEvent e) {
           close(OK_EXIT_CODE);
           PluginModelAsyncOperationsExecutor.INSTANCE
-            .findPlugins(StreamEx.of(myUpdatesForPlugins).map(it -> it.getId()).toSet(), plugins -> {
+            .findPlugins(myUpdatesForPlugins.stream().map(it -> it.getId()).collect(Collectors.toSet()), plugins -> {
               downloadPatchAndRestart((Map<PluginId, PluginUiModel>)plugins);
               return null;
             });
@@ -284,8 +282,8 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
   private static void restartLaterAndRunCommand(String[] command) {
     IdeUpdateUsageTriggerCollector.UPDATE_STARTED.log();
     PropertiesComponent.getInstance().setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
-    var application = (ApplicationImpl)ApplicationManager.getApplication();
-    application.invokeLater(() -> application.restart(ApplicationEx.EXIT_CONFIRMED | ApplicationEx.SAVE, command));
+    var app = (ApplicationEx)ApplicationManager.getApplication();
+    app.invokeLater(() -> app.restart(ApplicationEx.EXIT_CONFIRMED | ApplicationEx.SAVE, command));
   }
 
   private static void showPatchInstructions(String[] command) {
