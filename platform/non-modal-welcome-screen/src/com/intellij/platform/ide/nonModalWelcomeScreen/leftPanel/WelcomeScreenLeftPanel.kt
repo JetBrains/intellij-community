@@ -97,6 +97,7 @@ internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectVie
 
     val projectFilteringTree = createRecentProjectTree()
     setupDragAndDrop(projectFilteringTree.component)
+    recentProjectTreeComponent = projectFilteringTree.component
 
     val topPanel = JBPanel<JBPanel<*>>().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
