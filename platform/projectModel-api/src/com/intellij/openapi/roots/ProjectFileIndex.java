@@ -84,6 +84,10 @@ public interface ProjectFileIndex extends FileIndex {
 
   /**
    * Returns the order entries which contain the specified file (either in CLASSES or SOURCES).
+   * <br/>
+   * <strong>Use this method only if you really need to process {@link OrderEntry} instances.</strong>
+   * Otherwise, use {@link ProjectFileIndex#findContainingLibraries(VirtualFile)}</strong> or
+   * {@link ProjectFileIndex#findContainingSdks(VirtualFile)} which are much more efficient.
    */
   @RequiresReadLock
   @NotNull
