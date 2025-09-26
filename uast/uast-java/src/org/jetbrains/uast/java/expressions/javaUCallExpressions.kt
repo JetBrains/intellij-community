@@ -303,7 +303,7 @@ class JavaAnnotationArrayInitializerUCallExpression(
   override val valueArgumentCount: Int
     get() {
       if (valueArgumentCountLazy == Int.MIN_VALUE) {
-        valueArgumentCountLazy = sourcePsi.initializers.size
+        valueArgumentCountLazy = sourcePsi.initializerCount
       }
       return valueArgumentCountLazy
     }

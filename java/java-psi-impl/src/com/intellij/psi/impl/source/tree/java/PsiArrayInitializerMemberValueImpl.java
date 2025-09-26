@@ -22,6 +22,16 @@ public class PsiArrayInitializerMemberValueImpl extends CompositePsiElement impl
   }
 
   @Override
+  public int getInitializerCount() {
+    return countChildren(ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET);
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return findChildByType(ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET) == null;
+  }
+
+  @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
 
