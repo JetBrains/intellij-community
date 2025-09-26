@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.diagnostic.LoadingState;
@@ -12,18 +12,21 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.StorageUpdate;
 import com.intellij.util.indexing.containers.*;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
+import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.ResilientFileChannel;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import kotlin.ranges.IntRange;
 import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -640,7 +643,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         return readImpl(inputId);
       }
       catch (IOException e) {
-        throw new StorageException(e);
+        throw wrapped(e);
       }
     }
 
@@ -650,7 +653,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         writeImpl(inputId, value);
       }
       catch (IOException e) {
-        throw new StorageException(e);
+        throw wrapped(e);
       }
       modificationsCounter.incrementAndGet();
     }
@@ -669,7 +672,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         }
       }
       catch (IOException e) {
-        throw new StorageException(e);
+        throw wrapped(e);
       }
     }
 
@@ -680,7 +683,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         modificationsCounter.incrementAndGet();
       }
       catch (IOException e) {
-        throw new StorageException(e);
+        throw wrapped(e);
       }
     }
 
@@ -707,7 +710,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         }
       }
       catch (IOException e) {
-        throw new StorageException(e);
+        throw wrapped(e);
       }
     }
 
@@ -718,6 +721,16 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
 
     private short readImpl(int inputId) throws IOException {
       return storage.readShortField(inputId, FIELD_OFFSET);
+    }
+
+    @Contract("_ -> fail")
+    private static StorageException wrapped(@NotNull IOException e) throws StorageException {
+      if (e instanceof ClosedStorageException) {
+        AlreadyDisposedException ade = new AlreadyDisposedException("Index already closed");
+        ade.addSuppressed(e);
+        throw ade;
+      }
+      throw new StorageException(e);
     }
   }
 }
