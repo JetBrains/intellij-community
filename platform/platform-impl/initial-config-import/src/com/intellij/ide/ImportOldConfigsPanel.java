@@ -1,9 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.application;
+package com.intellij.ide;
 
-import com.intellij.ide.BootstrapBundle;
+import com.intellij.application.ImportOldConfigsUsagesCollector;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ConfigImportHelper;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
 import com.intellij.openapi.ui.ComboBox;
@@ -29,7 +32,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.zip.ZipFile;
 
-final class ImportOldConfigsPanel extends JDialog {
+public final class ImportOldConfigsPanel extends JDialog {
   private JPanel myRootPanel;
   private JRadioButton myRbImportAuto;
   private JRadioButton myRbImport;
@@ -44,7 +47,7 @@ final class ImportOldConfigsPanel extends JDialog {
   private Path myLastSelection = null;
   private Pair<Path, Path> myResult;
 
-  ImportOldConfigsPanel(@NotNull List<Path> guessedOldConfigDirs, @NotNull Function<Path, Pair<Path, Path>> validator) {
+  public ImportOldConfigsPanel(@NotNull List<Path> guessedOldConfigDirs, @NotNull Function<Path, Pair<Path, Path>> validator) {
     super((Dialog)null, true);
 
     ComponentUtil.decorateWindowHeader(rootPane);
@@ -188,7 +191,7 @@ final class ImportOldConfigsPanel extends JDialog {
     }
   }
 
-  @Nullable Pair<Path, Path> getSelectedFile() {
+  public @Nullable Pair<Path, Path> getSelectedFile() {
     ImportOldConfigsUsagesCollector.INSTANCE.saveImportOldConfigType(myRbImportAuto, myRbImport, myRbDoNotImport, myResult != null);
 
     if (myRbImportAuto.isSelected()) {

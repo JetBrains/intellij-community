@@ -1,7 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.application;
+package com.intellij.ide;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.application.InitialConfigImportState;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ import java.util.Set;
 public interface ConfigImportSettings {
   /**
    * Called after configuration import is finished, even when there was nothing to import from.
-   * In the latter case, {@code oldConfigDir} is {@code null} and {@link ConfigImportHelper#isConfigImported()} returns {@code false}.
+   * In the latter case, {@code oldConfigDir} is {@code null} and {@link InitialConfigImportState#isConfigImported()} returns {@code false}.
    */
   default void importFinished(@NotNull Path newConfigDir, @Nullable Path oldConfigDir) { }
 
@@ -47,7 +48,7 @@ public interface ConfigImportSettings {
     @NotNull Path newConfigDir,
     @NotNull Path oldConfigDir,
     @NotNull Path oldPluginsDir,
-    @NotNull ConfigImportHelper.ConfigImportOptions options,
+    @NotNull ConfigImportOptions options,
     @Nullable Map<PluginId, Set<String>> brokenPluginVersions,
     @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
     @NotNull List<IdeaPluginDescriptor> pluginsToDownload

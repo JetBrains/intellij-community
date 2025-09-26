@@ -31,6 +31,7 @@ jvm_library(
     "//platform/foldings",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/platform-impl/initial-config-import",
     "//jps/model-serialization",
     "//platform/lang-core",
     "//platform/lang-impl",

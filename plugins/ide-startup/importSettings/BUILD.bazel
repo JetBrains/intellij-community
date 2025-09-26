@@ -45,6 +45,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/util/progress",
     "//platform/platform-impl/ui",
+    "//platform/platform-impl/initial-config-import",
     "//platform/plugins/parser/impl",
   ],
   runtime_deps = [":importSettings_resources"]
@@ -94,6 +95,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/util/progress",
     "//platform/platform-impl/ui",
+    "//platform/platform-impl/initial-config-import",
     "//platform/plugins/parser/impl",
   ]
 )

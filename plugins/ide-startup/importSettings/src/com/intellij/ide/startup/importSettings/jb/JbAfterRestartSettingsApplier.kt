@@ -20,7 +20,6 @@ import kotlin.io.path.exists
 import kotlin.io.path.readLines
 import kotlin.io.path.writeText
 
-
 private class JbAfterRestartSettingsApplier(private val coroutineScope: CoroutineScope) : AppLifecycleListener {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment || !configPathFile.exists()) {

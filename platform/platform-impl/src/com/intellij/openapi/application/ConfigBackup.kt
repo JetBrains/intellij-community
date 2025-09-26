@@ -30,7 +30,7 @@ class ConfigBackup(private val configDir: Path) {
   }
 
   private fun migratePreviousBackupIfExists(backupDir: Path) {
-    if (ConfigImportHelper.isConfigDirectory(backupDir)) {
+    if (InitialConfigImportState.isConfigDirectory(backupDir)) {
       try {
         val oldBackup = backupDir.resolve("1970-01-01-00-00").createDirectory()
         for (file in backupDir.listDirectoryEntries()) {

@@ -10,11 +10,14 @@ import com.intellij.l10n.LocalizationStateService
 import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import org.jetbrains.annotations.ApiStatus.Internal
 
 private const val DEFAULT_LOCALE = "en"
+
+private val log: Logger
+  get() = Logger.getInstance("#com.intellij.openapi.application.ConfigImportHelper")
 
 @Internal
 @State(
@@ -29,11 +32,11 @@ private class LocalizationStateServiceImpl : LocalizationStateService, Persisten
 
   override fun initializeComponent() {
     val localizationProperty = EarlyAccessRegistryManager.getString(LocalizationUtil.LOCALIZATION_KEY)
-    thisLogger().info("[i18n] Localization property from registry is $localizationProperty")
+    log.info("[i18n] Localization property from registry is $localizationProperty")
     if (!localizationProperty.isNullOrEmpty()) {
       EarlyAccessRegistryManager.setString(LocalizationUtil.LOCALIZATION_KEY, "")
       localizationState.selectedLocale = localizationProperty
-      thisLogger().info("[i18n] Language defined from registry: $localizationProperty")
+      log.info("[i18n] Language defined from registry: $localizationProperty")
     }
   }
 
@@ -74,7 +77,7 @@ private class LocalizationStateServiceImpl : LocalizationStateService, Persisten
       && LoadingState.COMPONENTS_LOADED.isOccurred
       && PluginManager.getLoadedPlugins().none { LocalizationPluginHelper.isActiveLocalizationPlugin(it, selectedLocale) }
     ) {
-      thisLogger().info("[i18n] Language setting was reset to default value: $DEFAULT_LOCALE; Previous value: ${selectedLocale}")
+      log.info("[i18n] Language setting was reset to default value: $DEFAULT_LOCALE; Previous value: ${selectedLocale}")
       localizationState.selectedLocale = DEFAULT_LOCALE
     }
   }

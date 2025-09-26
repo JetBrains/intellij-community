@@ -44,6 +44,7 @@ jvm_library(
     "@lib//:googlecode-plist-dd",
     "@lib//:netty-codec-http",
     "//platform/eel-impl",
+    "//platform/platform-impl/initial-config-import",
     "//platform/eel-provider",
   ]
 )

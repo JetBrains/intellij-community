@@ -44,6 +44,7 @@
     <orderEntry type="library" name="googlecode.plist.dd" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="module" module-name="intellij.platform.eel.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.initialConfigImport" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
   </component>
 </module>

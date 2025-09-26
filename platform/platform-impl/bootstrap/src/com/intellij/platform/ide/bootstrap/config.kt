@@ -61,7 +61,13 @@ internal suspend fun importConfigIfNeeded(
   val targetDirectoryToImportConfig = customTargetDirectoryToImportConfig ?: PathManager.getConfigDir()
   val entries: Array<File>? = targetDirectoryToImportConfig.toFile().listFiles()
   log.info("Will import config to directory \"$targetDirectoryToImportConfig\" (exists = ${Files.exists(targetDirectoryToImportConfig)}). Current entries: ${entries?.joinToString(", ") { "\"${it.name}\"" }}.")
-  importConfig(args, targetDirectoryToImportConfig, log, appStarterDeferred.await(), euaDocumentDeferred)
+  importConfig(
+    args = args,
+    targetDirectoryToImportConfig = targetDirectoryToImportConfig,
+    log = log,
+    appStarter = appStarterDeferred.await(),
+    euaDocumentDeferred = euaDocumentDeferred,
+  )
 
   val isNewUser = InitialConfigImportState.isNewUser()
   enableNewUi(logDeferred, isNewUser)
@@ -85,7 +91,7 @@ private fun shouldMigrateConfigOnNextRun(args: List<String>): Boolean {
 private suspend fun importConfigHeadless(lockSystemDirsJob: Job, logDeferred: Deferred<Logger>) {
   // make sure we lock the dir before writing
   lockSystemDirsJob.join()
-  enableNewUi(logDeferred, isBackgroundSwitch = !AppMode.isRemoteDevHost())
+  enableNewUi(logDeferred = logDeferred, isBackgroundSwitch = !AppMode.isRemoteDevHost())
 }
 
 private suspend fun importConfig(

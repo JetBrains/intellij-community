@@ -3,6 +3,8 @@ package com.intellij.openapi.application
 
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.diagnostic.VMOptions
+import com.intellij.ide.ConfigImportOptions
+import com.intellij.ide.ConfigImportSettings
 import com.intellij.ide.SpecialConfigFiles
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate
 import com.intellij.ide.plugins.PluginNode
@@ -53,7 +55,7 @@ import kotlin.test.fail
 private val LOG = logger<ConfigImportHelperTest>()
 
 class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
-  val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true }
+  val options = ConfigImportOptions(LOG).apply { headless = true }
 
   @Test fun `config directory is valid for import`() {
     PropertiesComponent.getInstance().setValue("property.ConfigImportHelperTest", true)
@@ -588,7 +590,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     }, testRootDisposable)
 
     configImportMarketplaceStub.unset() // enable marketplace fetching
-    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply {
+    val options = ConfigImportOptions(LOG).apply {
       headless = true
       compatibleBuildNumber = BuildNumber.fromString("201.1")
     }
@@ -662,7 +664,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     )
 
     configImportMarketplaceStub.unset() // enable marketplace fetching
-    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply {
+    val options = ConfigImportOptions(LOG).apply {
       headless = true
       compatibleBuildNumber = BuildNumber.fromString("201.1")
     }

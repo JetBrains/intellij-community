@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -96,7 +95,7 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
           }
         }
 
-        if (ConfigImportHelper.isStartupWizardEnabled()) {
+        if (InitialConfigImportState.isStartupWizardEnabled()) {
           LOG.info("Passing execution control to $wizard.")
           wizard.run()
           firstWizardExecuted = true
