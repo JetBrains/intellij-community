@@ -11,7 +11,9 @@ import com.intellij.platform.pluginManager.shared.rpc.PluginUpdaterApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class BackendPluginUpdaterApi : PluginUpdaterApi {
   override suspend fun loadAndStorePluginUpdates(apiVersion: String?, sessionId: String): PluginUpdateModel {
     return PluginUpdateHandler.getInstance().loadAndStorePluginUpdates(apiVersion, sessionId)
@@ -35,4 +37,5 @@ class BackendPluginUpdaterApi : PluginUpdaterApi {
 }
 
 @Service
+@ApiStatus.Internal
 class PluginManagerCoroutineScopeHolder(val cs: CoroutineScope)

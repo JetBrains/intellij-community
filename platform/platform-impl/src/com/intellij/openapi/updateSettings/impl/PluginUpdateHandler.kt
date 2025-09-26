@@ -7,9 +7,11 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 interface PluginUpdateHandler {
   fun isEnabled(): Boolean
   suspend fun loadAndStorePluginUpdates(apiVersion: String?, sessionId: String = UUID.randomUUID().toString(), indicator: ProgressIndicator? = null): PluginUpdateModel
@@ -24,6 +26,7 @@ interface PluginUpdateHandler {
   }
 }
 
+@ApiStatus.Internal
 @Serializable
 data class PluginUpdateModel(
   val sessionId: String,

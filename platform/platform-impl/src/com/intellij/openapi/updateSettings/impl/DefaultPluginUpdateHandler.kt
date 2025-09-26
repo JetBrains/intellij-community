@@ -4,9 +4,11 @@ package com.intellij.openapi.updateSettings.impl
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
+import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 class DefaultPluginUpdateHandler : PluginUpdateHandler {
   override fun isEnabled(): Boolean {
     return true
