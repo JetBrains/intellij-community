@@ -118,15 +118,15 @@ public final class DfaPsiUtil {
     if (DumbService.isDumb(owner.getProject())) return Nullability.UNKNOWN;
     NullabilityAnnotationInfo fromAnnotation = getNullabilityFromAnnotation(owner, ignoreParameterNullabilityInference);
     if (fromAnnotation != null) {
-      if (fromAnnotation.getNullability() != Nullability.NOT_NULL) {
+      if (resultType != null && fromAnnotation.getNullability() != Nullability.NOT_NULL) {
         PsiType type = PsiUtil.getTypeByPsiElement(owner);
         if (type != null) {
           PsiAnnotationOwner annotationOwner = fromAnnotation.getAnnotation().getOwner();
-          if (PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter &&
-              annotationOwner instanceof PsiType && annotationOwner != type) {
+          if (PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter tp &&
+              annotationOwner instanceof PsiType && annotationOwner != type &&
+              !tp.equals(PsiUtil.resolveClassInClassTypeOnly(resultType))) {
             // Nullable/Unknown from type hierarchy: should check the instantiation, as it could be more concrete
-            Nullability fromType = getNullabilityFromType(resultType, owner);
-            if (fromType != null) return fromType;
+            return resultType.getNullability().nullability();
           }
         }
       }

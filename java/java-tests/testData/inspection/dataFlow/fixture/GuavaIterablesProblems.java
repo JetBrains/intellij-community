@@ -41,6 +41,10 @@ class MyTest {
 
   }
 
+  void get2(List<String> l1) {
+    System.out.println(Iterables.get(l1, 0).length());
+  }
+
   void foo(List<String> l1, List<String> l2) {
     for (String s : Iterables.concat(l1, l2)) {
       System.out.println(s.length());
