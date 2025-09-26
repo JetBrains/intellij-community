@@ -1089,6 +1089,9 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       val next: AnAction = newVisibleActions[index]
       if (next.javaClass != prev.javaClass) return false // in theory, that should be OK, but better to be safe
 
+      val isSecondaryAction = isSecondaryAction(next, index)
+      if (isSecondaryAction) continue
+
       if (prev is Separator) {
         if (next !is Separator) return false
         if (myShowSeparatorTitles && prev.text != next.text) return false
