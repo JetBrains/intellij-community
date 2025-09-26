@@ -3,7 +3,6 @@ package com.intellij.platform.feedback.csat
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
@@ -14,7 +13,6 @@ import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
 import com.intellij.platform.feedback.dialog.uiBlocks.SegmentedButtonBlock
 import com.intellij.platform.feedback.dialog.uiBlocks.TextAreaBlock
 import com.intellij.platform.feedback.dialog.uiBlocks.TopLabelBlock
-import com.intellij.util.application
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.json.Json
@@ -97,7 +95,7 @@ internal class CsatFeedbackDialog(
   )
 
   init {
-    val customFeedbackAgreementBlock = application.service<CsatFeedbackExtraDataProvider>().getFeedbackAgreementBlock {
+    val customFeedbackAgreementBlock = getExtraDataProvider()?.getFeedbackAgreementBlock {
       showFeedbackSystemInfoDialog(mySystemInfoDataComputation.getComputationResult())
     }
     if (customFeedbackAgreementBlock != null) {
@@ -113,5 +111,15 @@ private fun getCsatSystemInfo(project: Project?): CsatFeedbackSystemData {
   val today = getCsatToday()
   val isNewUser = userCreatedDate?.let { isNewUser(today, userCreatedDate) } ?: false
 
-  return CsatFeedbackSystemData(isNewUser, CommonFeedbackSystemData.getCurrentData(), application.service<CsatFeedbackExtraDataProvider>().getExtraInfo(project))
+  return CsatFeedbackSystemData(isNewUser, CommonFeedbackSystemData.getCurrentData(), getExtraDataProvider()?.getExtraInfo(project))
+}
+
+private fun getExtraDataProvider(): CsatFeedbackExtraDataProvider? {
+  val extraDataProviders = CsatFeedbackExtraDataProvider.EP_NAME.extensionList
+
+  assert(extraDataProviders.size <= 1)
+
+  if (extraDataProviders.isEmpty())
+    return null
+  return extraDataProviders.first()
 }
