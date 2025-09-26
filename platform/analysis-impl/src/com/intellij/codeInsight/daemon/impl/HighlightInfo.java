@@ -148,14 +148,13 @@ public class HighlightInfo implements Segment {
     @NotNull @Unmodifiable List<LazyFixDescription> lazyQuickFixes
   ) {
     @NotNull OffsetStore withLazyQuickFixes(@NotNull @Unmodifiable List<LazyFixDescription> newLazyQuickFixes) {
-      return new OffsetStore(highlighter(), fixMarker(), intentionActionDescriptors(), newLazyQuickFixes);
+      return newLazyQuickFixes.equals(this.lazyQuickFixes()) ? this : new OffsetStore(highlighter(), fixMarker(), intentionActionDescriptors(), newLazyQuickFixes);
     }
-    @NotNull OffsetStore withIntentionDescriptorsAndFixMarker(@NotNull @Unmodifiable List<IntentionActionDescriptor> newIntentionDescriptors,
-                                                              @Nullable RangeMarker fixMarker) {
-      return new OffsetStore(highlighter(), fixMarker, newIntentionDescriptors, lazyQuickFixes());
+    @NotNull OffsetStore withIntentionDescriptorsAndFixMarker(@NotNull @Unmodifiable List<IntentionActionDescriptor> newIntentionDescriptors, @Nullable RangeMarker fixMarker) {
+      return new OffsetStore(highlighter(), fixMarker, newIntentionDescriptors, lazyQuickFixes()); // fix ranges might be replaced with (albeit equal offsets) range markers
     }
     @NotNull OffsetStore withHighlighter(@NotNull RangeHighlighterEx highlighter) {
-      return new OffsetStore(highlighter, fixMarker(), intentionActionDescriptors(), lazyQuickFixes());
+      return highlighter.equals(this.highlighter()) ? this : new OffsetStore(highlighter, fixMarker(), intentionActionDescriptors(), lazyQuickFixes());
     }
   }
   // store some offset-containing things in a separate record for atomicity and lock-freedom
@@ -216,8 +215,9 @@ public class HighlightInfo implements Segment {
     this.group = group;
     List<LazyFixDescription> myLazyQuickFixes =
       ContainerUtil.map(lazyFixes, c -> new LazyFixDescription(c, 0, null));
-    offsetStore = new OffsetStore(null, null, List.of(), myLazyQuickFixes);
+    offsetStore = INITIAL_STORE.withLazyQuickFixes(myLazyQuickFixes);
   }
+  private static final OffsetStore INITIAL_STORE = new OffsetStore(null, null, List.of(), List.of());
 
   @ApiStatus.Internal
   public final void setToolId(Object toolId) {
@@ -447,7 +447,7 @@ public class HighlightInfo implements Segment {
   }
 
   public final void setHighlighter(@NotNull RangeHighlighterEx highlighter) {
-    updateOffsetStore(oldStore -> {
+    OffsetStore savedStore = updateOffsetStore(oldStore -> {
       if (oldStore.highlighter() != null) {
         throw new IllegalStateException("Cannot set highlighter to " + highlighter + " because it already set: " +
                                         oldStore.highlighter() + ". Maybe this HighlightInfo was (incorrectly) stored and reused?");
@@ -456,7 +456,7 @@ public class HighlightInfo implements Segment {
       // as soon as the HighlightInfo is bound to the document, we can replace TextRanges in IntentionActionDescriptor with RangeMarkers
       return updateFields(newStore, highlighter.getDocument());
     });
-    assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors(offsetStore));
+    assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors(savedStore));
   }
 
   public final boolean isAfterEndOfLine() {
@@ -1322,12 +1322,12 @@ public class HighlightInfo implements Segment {
     if (compositeTooltip != null) {
       builder.escapedToolTip(compositeTooltip);
     }
-    HighlightInfo info = builder.createUnconditionally();
-    OffsetStore oldStore = info.offsetStore;
+    HighlightInfo newInfo = builder.createUnconditionally();
+    OffsetStore oldStore = newInfo.offsetStore;
     List<IntentionActionDescriptor> newDescriptors =
       ContainerUtil.concat(ContainerUtil.map(infos, i -> ((HighlightInfo)i).offsetStore.intentionActionDescriptors()));
-    info.offsetStore = oldStore.withIntentionDescriptorsAndFixMarker(newDescriptors, oldStore.fixMarker()).withHighlighter(anchorInfo.getHighlighter());
-    return info;
+    newInfo.offsetStore = oldStore.withIntentionDescriptorsAndFixMarker(newDescriptors, oldStore.fixMarker()).withHighlighter(anchorInfo.getHighlighter());
+    return newInfo;
   }
   private static @Nullable @NlsSafe String createCompositeDescription(@NotNull List<? extends HighlightInfo> infos) {
     StringBuilder description = new StringBuilder();
@@ -1367,21 +1367,22 @@ public class HighlightInfo implements Segment {
     return XmlStringUtil.wrapInHtml(result);
   }
 
-  private void updateOffsetStore(@NotNull Function<? super @NotNull OffsetStore, @NotNull OffsetStore> computation) {
+  private @NotNull OffsetStore updateOffsetStore(@NotNull Function<? super @NotNull OffsetStore, @NotNull OffsetStore> computation) {
     while (true) {
       OffsetStore oldStore = offsetStore;
       OffsetStore newStore = computation.apply(oldStore);
-      if (oldStore.fixMarker() == newStore.fixMarker() &&
+      if (oldStore == newStore ||
+          oldStore.fixMarker() == newStore.fixMarker() &&
           oldStore.highlighter() == newStore.highlighter() &&
           oldStore.intentionActionDescriptors() == newStore.intentionActionDescriptors() &&
           oldStore.lazyQuickFixes() == newStore.lazyQuickFixes()) {
         // optimization: it does happen when we try to update with the same value
-        break;
+        return oldStore;
       }
       // invariant: the highlighter can only be written once, in a 'null -> notnull' way
       assert oldStore.highlighter() == null || oldStore.highlighter() == newStore.highlighter() : "Trying overwrite '"+oldStore+"' with '"+newStore+"'";
       if (OFFSET_STORE_HANDLE.compareAndSet(this, oldStore, newStore)) {
-        break;
+        return newStore;
       }
     }
   }
