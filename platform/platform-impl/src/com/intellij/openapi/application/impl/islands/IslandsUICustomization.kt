@@ -37,6 +37,7 @@ import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLayeredPane
+import com.intellij.ui.mac.WindowTabsComponent
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.tabs.JBTabPainter
@@ -465,6 +466,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
       is TopNavBarComponentFacade -> {
         component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
       }
+      is WindowTabsComponent -> {
+        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
+      }
     }
   }
 
@@ -719,11 +723,14 @@ internal class IslandsUICustomization : InternalUICustomization() {
     return true
   }
 
-  override fun createProjectTab(frame: JFrame) {
-    if (frame is IdeFrame) {
-      frame.project?.also { project ->
-        updateToolStripesVisibility(ToolWindowManager.getInstance(project))
+  override fun createProjectTab(frame: JFrame, tabsComponent: WindowTabsComponent) {
+    if (isManyIslandEnabled) {
+      if (frame is IdeFrame) {
+        frame.project?.also { project ->
+          updateToolStripesVisibility(ToolWindowManager.getInstance(project))
+        }
       }
+      configureMainFrameChildren(tabsComponent, true)
     }
   }
 
