@@ -169,41 +169,36 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     suspend fun runTask() = coroutineScope {
       val task = task
       if (task != null && stateRef.compareAndSet(FormattingRequestState.NOT_STARTED, FormattingRequestState.RUNNING)) {
-        try {
-          launchTask(task)
-          val formattedText = withTimeoutOrNull(getTimeout(service).toMillis()) {
-            result.await()
+        launchTask(task)
+        val formattedText = withTimeoutOrNull(getTimeout(service).toMillis()) {
+          result.await()
+        }
+        if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
+          FormattingNotificationService.getInstance(_context.project).reportError(
+            getNotificationGroupId(service),
+            getTimeoutNotificationDisplayId(service), getName(service),
+            CodeStyleBundle.message("async.formatting.service.timeout", getName(service),
+                                    getTimeout(service).seconds.toString()),
+            *getTimeoutActions(service, _context))
+        }
+        else if (formattedText != null) {
+          if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+            updateDocument(formattedText)
           }
-          if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
-            FormattingNotificationService.getInstance(_context.project).reportError(
-              getNotificationGroupId(service),
-              getTimeoutNotificationDisplayId(service), getName(service),
-              CodeStyleBundle.message("async.formatting.service.timeout", getName(service),
-                                      getTimeout(service).seconds.toString()),
-              *getTimeoutActions(service, _context))
-          }
-          else if (formattedText != null) {
-            if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-              updateDocument(formattedText)
-            }
-            else {
-              ApplicationManager.getApplication().invokeLater {
-                CommandProcessor.getInstance().runUndoTransparentAction {
-                  try {
-                    WriteAction.run<Throwable> {
-                      updateDocument(formattedText)
-                    }
+          else {
+            ApplicationManager.getApplication().invokeLater {
+              CommandProcessor.getInstance().runUndoTransparentAction {
+                try {
+                  WriteAction.run<Throwable> {
+                    updateDocument(formattedText)
                   }
-                  catch (throwable: Throwable) {
-                    LOG.error(throwable)
-                  }
+                }
+                catch (throwable: Throwable) {
+                  LOG.error(throwable)
                 }
               }
             }
           }
-        }
-        catch (_: InterruptedException) {
-          LOG.warn("Interrupted formatting thread.")
         }
       }
     }
