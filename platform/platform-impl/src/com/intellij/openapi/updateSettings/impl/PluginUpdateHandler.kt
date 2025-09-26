@@ -3,8 +3,10 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
@@ -13,16 +15,18 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 interface PluginUpdateHandler {
-  fun isEnabled(): Boolean
   suspend fun loadAndStorePluginUpdates(buildNumber: String?, sessionId: String = UUID.randomUUID().toString(), indicator: ProgressIndicator? = null): PluginUpdatesModel
   suspend fun installUpdates(sessionId: String, updates: List<PluginUiModel>, component: JComponent?, finishCallback: Runnable?)
 
   suspend fun ignorePluginUpdates(sessionId: String)
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<PluginUpdateHandler>("com.intellij.pluginUpdateHandler")
-
-    fun getInstance(): PluginUpdateHandler = EP_NAME.extensionList.firstOrNull { it.isEnabled() } ?: DefaultPluginUpdateHandler()
+    fun getInstance(): PluginUpdateHandler {
+      if (!Registry.`is`("reworked.plugin.updater", false)) {
+        return DefaultPluginUpdateHandler()
+      }
+      return service<PluginUpdateHandler>()
+    }
   }
 }
 

@@ -708,10 +708,6 @@
                     interface="com.intellij.configurationStore.ProjectStorePathCustomizer"
                     dynamic="true"/>
 
-    <extensionPoint name="pluginUpdateHandler"
-                    interface="com.intellij.openapi.updateSettings.impl.PluginUpdateHandler"
-                    dynamic="true"/>
-
     <extensionPoint name="openAnotherToolHandler" interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.OpenAnotherToolHandler" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

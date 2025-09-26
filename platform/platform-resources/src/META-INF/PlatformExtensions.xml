@@ -415,8 +415,6 @@
 
     <diff.editor.diffRequestProcessorEditorCustomizer implementation="com.intellij.diff.editor.DefaultDiffFileEditorCustomizer"/>
 
-    <pluginUpdateHandler implementation="com.intellij.openapi.updateSettings.impl.DefaultPluginUpdateHandler"/>
-
     <fileIconProvider implementation="com.intellij.diff.editor.DiffFileIconProvider"/>
 
     <editorTabTitleProvider implementation="com.intellij.diff.editor.DiffEditorTabTitleProvider"/>
@@ -473,6 +471,9 @@
     <applicationService serviceInterface="com.intellij.codeInsight.hint.ClientHintManager"
                         serviceImplementation="com.intellij.codeInsight.hint.LocalHintManager"
                         client="local"/>
+
+    <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.DefaultPluginUpdateHandler"
+                        serviceInterface="com.intellij.openapi.updateSettings.impl.PluginUpdateHandler"/>
 
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.EditorActionManager"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>

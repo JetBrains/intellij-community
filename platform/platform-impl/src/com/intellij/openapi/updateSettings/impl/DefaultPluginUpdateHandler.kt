@@ -10,10 +10,6 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 class DefaultPluginUpdateHandler : PluginUpdateHandler {
-  override fun isEnabled(): Boolean {
-    return true
-  }
-
   override suspend fun loadAndStorePluginUpdates(buildNumber: String?, sessionId: String, indicator: ProgressIndicator?): PluginUpdatesModel {
     val buildNumber = BuildNumber.fromString(buildNumber)
     val internalPluginUpdates = UpdateChecker.getInternalPluginUpdates(buildNumber, indicator)
