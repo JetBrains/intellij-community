@@ -58,6 +58,10 @@ import kotlin.reflect.KClass
 
 private val NOT_PROPERTIES = NotPropertiesService.DEFAULT.toSet()
 
+/**
+ * This contributor is responsible for emitting callable elements (e.g. properties, methods).
+ * Implementations can emit different callables depending on the semantics of the [positionContextClass].
+ */
 internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameReferencePositionContext>(
     positionContextClass: KClass<P>,
 ) : K2SimpleCompletionContributor<P>(
