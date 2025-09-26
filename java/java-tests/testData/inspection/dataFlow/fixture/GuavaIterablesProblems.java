@@ -16,7 +16,19 @@ class MyTest {
       Iterable<T> iterable, int position);
   }
 
+  void foo1(List<@Nullable Integer> l1, List<@Nullable String> l2) {
+    for (Object s : Iterables.concat(l1, l2)) {
+      System.out.println(s.<warning descr="Method invocation 'toString' may produce 'NullPointerException'">toString</warning>());
+    }
+  }
 
+
+  void foo2(List<@Nullable Integer> l1, List<String> l2) {
+    for (Object s : Iterables.concat(l1, l2)) {
+      System.out.println(s.<warning descr="Method invocation 'toString' may produce 'NullPointerException'">toString</warning>());
+    }
+  }
+  
   void toArray(List<@Nullable String> l1) {
     for (String s : Iterables.toArray(l1, String.class)) {
       System.out.println(s.<warning descr="Method invocation 'length' may produce 'NullPointerException'">length</warning>());

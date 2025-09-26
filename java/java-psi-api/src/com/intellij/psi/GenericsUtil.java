@@ -126,6 +126,7 @@ public final class GenericsUtil {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());
       PsiClassType[] conjuncts = new PsiClassType[supers.length];
       Set<Couple<PsiType>> siblings = new HashSet<>();
+      TypeNullability nullability = type1.getNullability().join(type2.getNullability());
       try {
         for (int i = 0; i < supers.length; i++) {
           PsiClass aSuper = supers[i];
@@ -160,7 +161,7 @@ public final class GenericsUtil {
             }
           }
 
-          conjuncts[i] = elementFactory.createType(aSuper, substitutor);
+          conjuncts[i] = elementFactory.createType(aSuper, substitutor).withNullability(nullability);
         }
       }
       finally {
