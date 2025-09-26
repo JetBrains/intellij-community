@@ -3,37 +3,31 @@ package com.intellij.xdebugger.impl.mixedmode
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XSuspendContext
-import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcessExtension
-import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcessExtension
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableSharedFlow
 
-private val logger = logger<MixedModeProcessTransitionStateMachine>()
+private val logger = logger<MixedModeDotnetOnWinProcessTransitionStateMachine>()
 
 /**
- * A state machine that is intended to handle debugger events from both debug processes
- * It takes the work of synchronizing debuggers and solving conflicts (like low-level breakpoint is hit while a managed step over is active).
- * Start state is OnlyLowStarted, finish state is Exited
+ * Mixed mode state machine for Dotnet process
+ * This machine is different from @see MixedModeProcessTransitionStateMachine, because low-level debugger depends on high-level one in
+ * this scenario. High-level debugger attaches to a process via Windows API and forwards Windows debug events to the low-level debugger.
+ * It also exposes functions that are Windows debug API counterparts. Low-level debugger calls there functions instead of direct Windows API calls
+ *
+ * The main difference from @see MixedModeProcessTransitionStateMachine is that interaction between debuggers is more complex here
  */
 internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
-  private val low: XDebugProcess,
-  private val high: XDebugProcess,
-  private val coroutineScope: CoroutineScope,
-) {
-  interface State
-  object OnlyLowStarted : State
-  class BothRunning(val lowLevelSteppingState: LowLevelSteppingState = LowLevelSteppingState.NotActive, val highLevelSteppingActive: Boolean = false) : State
+  low: XDebugProcess,
+  high: XDebugProcess,
+  coroutineScope: CoroutineScope,
+) : MixedModeStateMachineBase(low, high, coroutineScope) {
+
+  class BothRunning(val lowLevelSteppingState: LowLevelSteppingState = LowLevelSteppingState.NotActive, highLevelSteppingActive: Boolean = false) : BothRunningBase(highLevelSteppingActive)
   object PausingStarted : State
   class WaitingForHighProcessPositionReached(val lowLevelSuspendContext : XSuspendContext, val highLevelSteppingActive: Boolean) : State
   class HighStoppedWaitingForLowProcessToStop(val highSuspendContext: XSuspendContext?, val highLevelSteppingActive: Boolean, val lowSteppingRunsToBeFinishedByManagedStepper : Boolean) : State
-  class OnlyHighStopped(val highSuspendContext: XSuspendContext?) : State
-  class BothStopped(val low: XSuspendContext, val high: XSuspendContext) : State
 
   // Set of states for SetNextStatement feature
   // (we need so many states and transactions because low-level process has to refresh its state after high level set next statement completed):
@@ -87,67 +81,9 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
 
   // We need ExitingInProgress state to not skip to HighRun/LowRun events on detaching
   object ExitingInProgress : State
-  object Exited : State
-
-  interface Event
-  object HighStarted : Event
-  object PauseRequested : Event
-  object ResumeRequested : Event
-  class HighLevelPositionReached(val suspendContext: XSuspendContext) : Event
-  class LowLevelPositionReached(val suspendContext: XSuspendContext) : Event
-  object HighRun : Event
-  object LowRun : Event
-  class LowLevelRunToAddress(val sourcePosition: XSourcePosition, val low: XSuspendContext) : Event
-  class HighLevelRunToAddress(val sourcePosition: XSourcePosition, val high: XSuspendContext) : Event
-  object Stop : Event
-  class HighLevelDebuggerStepRequested(val highSuspendContext: XSuspendContext, val stepType: StepType) : Event
-  class MixedStepRequested(val highSuspendContext: XSuspendContext, val stepType: MixedStepType) : Event
-  class LowLevelStepRequested(val mixedSuspendContext: XMixedModeSuspendContext, val stepType: StepType) : Event
-  class HighLevelSetNextStatementRequested(val position: XSourcePosition) : Event
-  object ExitingStarted : Event
-  enum class StepType {
-    Over, Into, Out
-  }
-
-  enum class MixedStepType {
-    IntoLowFromHigh
-  }
-
-  private val nullObjectHighLevelSuspendContext: XSuspendContext = object : XSuspendContext() {}
-  private val mainDispatcher = AppExecutorUtil.createBoundedApplicationPoolExecutor("Mixed mode state machine", 1).asCoroutineDispatcher()
-  private val lowExtension get() = low.mixedModeDebugProcessExtension as XMixedModeLowLevelDebugProcessExtension
-  private val highExtension get() = high.mixedModeDebugProcessExtension as XMixedModeHighLevelDebugProcessExtension
-
-  // we assume that low debugger started before we created this class
-  private var state: State = OnlyLowStarted
-  val stateChannel: Channel<State> = Channel<State>()
-  var suspendContextCoroutine: CoroutineScope = coroutineScope.childScope("suspendContextCoroutine", supervisor = true)
-    private set
-
-  private val eventFlow = MutableSharedFlow<Event>(extraBufferCapacity = Int.MAX_VALUE)
-
-  init {
-    coroutineScope.launch {
-      eventFlow.collect { event ->
-        withContext(mainDispatcher) {
-          // I want OperationCancelled also be logged
-          try {
-            setInternal(event)
-          }
-          catch (e: Throwable) {
-            logger.error("Failed to process event $event", e)
-          }
-        }
-      }
-    }
-  }
-
-  fun set(event: Event) {
-    eventFlow.tryEmit(event).also { if (!it) logger.error("Failed to emit event $event") }
-  }
 
   // to be called from the executor
-  private suspend fun setInternal(event: Event) {
+  override suspend fun setInternal(event: Event) {
     logger.info("setInternal: state = ${state::class.simpleName}, event = ${event::class.simpleName}")
     val currentState = state
     when (event) {
@@ -373,20 +309,6 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
     }
   }
 
-  private suspend fun changeState(newState: State) {
-    if (newState is Exited)
-      suspendContextCoroutine.coroutineContext.job.cancelAndJoin()
-    else if (state is BothStopped) {
-      suspendContextCoroutine.coroutineContext.job.cancelAndJoin()
-      suspendContextCoroutine = coroutineScope.childScope("suspendContextCoroutine", supervisor = true)
-    }
-    val oldState = state
-    state = newState
-
-    stateChannel.send(newState)
-    logger.info("state change (${oldState::class.simpleName} -> ${newState::class.simpleName})")
-  }
-
   private suspend fun handleLowLevelActiveStep(lowLevelSuspendContext: XSuspendContext, activeLowLevelStepping: LowLevelSteppingState): Boolean =
     when (activeLowLevelStepping) {
       LowLevelSteppingState.NotActive -> false
@@ -410,8 +332,4 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
         false
       }
     }
-
-  private fun throwTransitionIsNotImplemented(event: Event) {
-    error("Transition from ${state::class.simpleName} by event ${event::class.simpleName} is not implemented")
-  }
 }

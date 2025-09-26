@@ -13,24 +13,25 @@ import com.intellij.xdebugger.frame.XDropFrameHandler
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.frame.XValueMarkerProvider
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.BothRunning
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.BothStopped
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.Exited
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.HighLevelDebuggerStepRequested
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.HighLevelPositionReached
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.HighLevelRunToAddress
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.HighRun
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.HighStarted
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.LowLevelPositionReached
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.LowLevelRunToAddress
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.LowLevelStepRequested
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.LowRun
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.MixedStepRequested
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.MixedStepType
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.PauseRequested
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.ResumeRequested
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.StepType
-import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.Stop
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.BothRunningBase
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.BothStopped
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.Exited
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelDebuggerStepRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelPositionReached
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelRunToAddress
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighRun
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighStarted
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.LowLevelPositionReached
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.LowLevelRunToAddress
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.LowLevelStepRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.LowRun
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.MixedStepRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.MixedStepType
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.PauseRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.ResumeRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.StepType
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.Stop
+import com.intellij.xdebugger.impl.mixedmode.MixedModeStateMachineBase.HighLevelSetNextStatementRequested
 import com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
 import com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizer
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcessExtension
@@ -85,7 +86,7 @@ class XMixedModeCombinedDebugProcess(
               }
             }
           }
-          is BothRunning -> {
+          is BothRunningBase -> {
             highLevelDebugProcessReady = true
             withContext(Dispatchers.EDT) { session.sessionResumed() }
           }
@@ -199,7 +200,8 @@ class XMixedModeCombinedDebugProcess(
   override fun checkCanInitBreakpoints(): Boolean = processes.all { it.checkCanInitBreakpoints() }
 
   override fun doGetProcessHandler(): ProcessHandler? {
-    return myProcessHandler ?: XMixedModeProcessHandler(high.processHandler, low.processHandler, config, {stateMachine.set(MixedModeDotnetOnWinProcessTransitionStateMachine.ExitingStarted)}).also { myProcessHandler = it }
+    return myProcessHandler
+           ?: XMixedModeProcessHandler(high.processHandler, low.processHandler, config, { stateMachine.set(MixedModeStateMachineBase.ExitingStarted) }).also { myProcessHandler = it }
   }
 
   override fun createConsole(): ExecutionConsole {
@@ -311,6 +313,6 @@ class XMixedModeCombinedDebugProcess(
 
   fun setNextStatement(position: XSourcePosition) {
     assert(highExtension.belongsToMe(position.file)) // this operation isn't implemented for a low-level debug process
-    stateMachine.set(MixedModeDotnetOnWinProcessTransitionStateMachine.HighLevelSetNextStatementRequested(position))
+    stateMachine.set(HighLevelSetNextStatementRequested(position))
   }
 }
