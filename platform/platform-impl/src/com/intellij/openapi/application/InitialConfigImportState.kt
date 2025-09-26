@@ -8,6 +8,8 @@ internal const val CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imp
 
 @ApiStatus.Internal
 object InitialConfigImportState {
+  const val CUSTOM_MARKER_FILE_NAME: String = "migrate.config"
+
   /**
    * Returns `true` when the IDE is launched for the first time (i.e., there was no config directory).
    **/

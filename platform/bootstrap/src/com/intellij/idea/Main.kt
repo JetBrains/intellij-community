@@ -9,7 +9,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.project.impl.P3SupportInstaller
@@ -190,7 +190,7 @@ internal var customTargetDirectoryToImportConfig: Path? = null
 
 internal fun isConfigImportNeeded(configPath: Path): Boolean {
   return Files.notExists(configPath) ||
-         Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)) ||
+         Files.exists(configPath.resolve(InitialConfigImportState.CUSTOM_MARKER_FILE_NAME)) ||
          customTargetDirectoryToImportConfig != null
 }
 

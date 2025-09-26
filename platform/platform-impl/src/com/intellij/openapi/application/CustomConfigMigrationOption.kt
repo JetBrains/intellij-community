@@ -134,7 +134,7 @@ sealed class CustomConfigMigrationOption {
     }
 
     @VisibleForTesting
-    fun getCustomConfigMarkerFilePath(configDir: Path): Path = configDir.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)
+    fun getCustomConfigMarkerFilePath(configDir: Path): Path = configDir.resolve(InitialConfigImportState.CUSTOM_MARKER_FILE_NAME)
     
     fun doesCustomConfigMarkerExist(configDir: Path): Boolean = getCustomConfigMarkerFilePath(configDir).exists()
   }

@@ -90,7 +90,6 @@ import static com.intellij.platform.ide.bootstrap.SplashManagerKt.hideSplash;
 public final class ConfigImportHelper {
   public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?(\\D+)(\\d+(?:\\.\\d+)*)");
   public static final String CONFIG_IMPORTED_FROM_PATH = "intellij.config.imported.from";
-  public static final String CUSTOM_MARKER_FILE_NAME = "migrate.config";
   public static final String FRONTEND_PLUGINS_TO_MIGRATE_DIR_NAME = "frontend-to-migrate";
 
   private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
@@ -106,7 +105,7 @@ public final class ConfigImportHelper {
   private static final String PLIST = "Info.plist";
   private static final String PLUGINS = "plugins";
   private static final String SYSTEM = "system";
-  private static final Set<String> SESSION_FILES = Set.of(CUSTOM_MARKER_FILE_NAME, LOCK_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN);
+  private static final Set<String> SESSION_FILES = Set.of(InitialConfigImportState.CUSTOM_MARKER_FILE_NAME, LOCK_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN);
 
   private static final long PLUGIN_UPDATES_TIMEOUT_MS = 7000L;
   private static final long BROKEN_PLUGINS_TIMEOUT_MS = 3000L;
