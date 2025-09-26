@@ -153,7 +153,9 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
         .open(storagePath);
 
       Path mapPath = storagePath.resolveSibling(storagePath.getFileName().toString() + ".hashToId");
-      if (contentStorage.isEmpty()) {
+      if (contentStorage.isEmpty()
+          || !contentStorage.wasClosedProperly()
+          || contentStorage.wasRecoveryNeeded()) {
         //ensure map is also empty
         NioFiles.deleteRecursively(mapPath);
       }
