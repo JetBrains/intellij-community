@@ -19,6 +19,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.FileWriter
@@ -58,12 +59,33 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       formattingRequest.setTask(formattingTask)
       pendingRequests[document] = formattingRequest
       if (forceSync || ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        runAsyncFormat(formattingRequest, null)
+        runAsyncFormatBlocking(formattingRequest)
       }
       else {
         GlobalScope.launch(Dispatchers.IO) {
           runAsyncFormat(formattingRequest, formattingTask.isRunUnderProgress)
         }
+      }
+    }
+  }
+
+  @Suppress("RAW_RUN_BLOCKING")
+  private fun runAsyncFormatBlocking(request: FormattingRequestImpl) {
+    val app = ApplicationManager.getApplication()
+    if (app.isDispatchThread) {
+      // Synchronous switches (e.g. `withContext`) to EDT inside `FormattingTask.run` will result in a deadlock.
+      //
+      // Unfortunately, `runWithModalProgressBlocking` will not help us here:
+      //  1. There are existing FormattingTask.run implementations that switch to EDT to perform WAs.
+      //  2. FormattingServices are usually invoked in an EDT WA.
+      // Hence, using `runWithModalProgressBlocking` would result in a deadlock anyway.
+      runBlocking {
+        runAsyncFormat(request, null)
+      }
+    }
+    else {
+      runBlockingMaybeCancellable {
+        runAsyncFormat(request, null)
       }
     }
   }
