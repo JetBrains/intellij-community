@@ -947,6 +947,7 @@ class SoftwareBillOfMaterialsImpl(
   }
 
   private fun validate(modelObject: ModelObject) {
+    if (!STRICT_MODE) return
     val errors = modelObject.verify()
     check(errors.none()) {
       errors.joinToString(separator = "\n")
