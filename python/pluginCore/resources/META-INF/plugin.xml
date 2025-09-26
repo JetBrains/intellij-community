@@ -75,8 +75,5 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.markdown"/>
     <module name="intellij.python.ml.features"/>
     <module name="intellij.python.terminal"/>
-    <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
-    <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
-    <module name="intellij.platform.ide.nonModalWelcomeScreen.frontend"/>
   </content>
 </idea-plugin>
