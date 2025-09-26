@@ -4866,21 +4866,14 @@ jvm_import(
 )
 
 java_library(
-  name = "libraries-compose-runtime-desktop-jetbrains-compose-runtime-desktop",
+  name = "libraries-compose-runtime-desktop-compose-runtime-desktop",
   exports = [
-    ":org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03_http_import",
     ":androidx_compose_runtime-runtime-desktop-1_9_0-rc01_http_import",
     ":androidx_collection-collection-jvm-1_5_0_http_import",
     ":androidx_annotation-annotation-jvm-1_9_1_http_import",
     ":androidx_compose_runtime-runtime-annotation-jvm-1_9_0-rc01_http_import",
   ],
   visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03_http_import",
-  jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03_http//file",
-  source_jar = "@org_jetbrains_compose_runtime-runtime-desktop-1_9_0-beta03_http//file"
 )
 
 jvm_import(
