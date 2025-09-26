@@ -4,6 +4,7 @@ package com.intellij.devkit.compose.hotreload
 import com.intellij.devkit.compose.DevkitComposeBundle
 import com.intellij.facet.FacetManager
 import com.intellij.icons.AllIcons
+import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.DumbAware
@@ -16,7 +17,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -25,13 +25,14 @@ import javax.swing.JComponent
 
 private const val COMPOSE_HOT_RELOAD_ENABLED_MARKER = "plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations"
 private const val REGISTRY_KEY = "devkit.compose.hot.reload.enabled"
+private const val COMPOSE_RUNTIME_MAVEN = "org.jetbrains.compose.runtime:runtime-desktop"
 
 internal class ComposeHotReloadSuggester : EditorNotificationProvider, DumbAware {
   private val SUGGESTION_DISMISSED_KEY = Key.create<Boolean>("HOT_RELOAD_SUGGESTION_DISMISSED")
 
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (Registry.`is`(REGISTRY_KEY)) return null
-    if (!PsiUtil.isPluginProject(project)) return null
+    if (!JavaLibraryUtil.hasLibraryJar(project, COMPOSE_RUNTIME_MAVEN)) return null
 
     if (isSuggestionDismissed(file)) return null
     if (!isComposeUiFile(project, file)) return null
