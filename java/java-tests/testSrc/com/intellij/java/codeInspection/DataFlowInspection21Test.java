@@ -215,6 +215,10 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testGuavaIterablesProblems() {
     doTest();
   }
+  
+  public void testGenericVarargNullability() {
+    doTest();
+  }
 
   public void testPassthroughGenericParameter() {
     doTestWith((dfi, cvi) -> dfi.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
