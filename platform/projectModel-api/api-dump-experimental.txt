@@ -47,6 +47,7 @@ com.intellij.openapi.roots.OrderRootsEnumerator
 com.intellij.openapi.roots.ProjectFileIndex
 - com.intellij.openapi.roots.FileIndex
 - *a:findContainingLibraries(com.intellij.openapi.vfs.VirtualFile):java.util.Collection
+- *a:findContainingSdks(com.intellij.openapi.vfs.VirtualFile):java.util.Collection
 - *a:getModulesForFile(com.intellij.openapi.vfs.VirtualFile,Z):java.util.Set
 *:com.intellij.openapi.roots.ProjectModelElement
 - *a:getExternalSource():com.intellij.openapi.roots.ProjectModelExternalSource

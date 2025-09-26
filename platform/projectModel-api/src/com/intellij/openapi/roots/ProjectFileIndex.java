@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -187,6 +188,12 @@ public interface ProjectFileIndex extends FileIndex {
    */
   @ApiStatus.Experimental
   @NotNull @Unmodifiable Collection<@NotNull LibraryEntity> findContainingLibraries(@NotNull VirtualFile fileOrDir);
+
+  /**
+   * Returns SDKs used in the project which have {@code fileOrDir} under their classes or source roots.
+   */
+  @ApiStatus.Experimental
+  @NotNull @Unmodifiable Collection<@NotNull SdkEntity> findContainingSdks(@NotNull VirtualFile fileOrDir);
 
   /**
    * Checks if the specified file or directory is located under project roots but the file itself or one of its parent directories is ignored
