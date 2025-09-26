@@ -504,6 +504,10 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/intellij-coverage/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
+    LibraryLicense(libraryName = "io.github.z4kn4fein.semver.jvm", url = "https://github.com/z4kn4fein/kotlin-semver/")
+      .mit("https://github.com/z4kn4fein/kotlin-semver/blob/main/LICENSE")
+      .suppliedByPersons("Peter Csajtai"),
+
     LibraryLicense(libraryName = "io.modelcontextprotocol.kotlin.sdk", url = "https://github.com/modelcontextprotocol/kotlin-sdk/")
       .mit("https://github.com/modelcontextprotocol/kotlin-sdk/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
