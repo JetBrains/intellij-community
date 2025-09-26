@@ -16,6 +16,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Path
 import java.util.TreeSet
+import kotlin.io.path.Path
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
@@ -160,14 +161,14 @@ internal fun generateDeps(
 
         // repositoryJpsLibrary == null
         // non-repository library, meaning library files are under VCS
-        // or from -SNAPSHOT versions already resolved to .m2/repo
+        // or from "-SNAPSHOT" versions already resolved to .m2/repo
         repositoryJpsLibrary == null -> {
           val firstFile = files.first()
           val isCommunityLib = firstFile.startsWith(context.communityRoot)
           val libraryContainer = context.getLibraryContainer(isCommunityLib)
 
           val targetName = if (underKotlinSnapshotLibRoot(firstFile, communityRoot = context.communityRoot)) {
-            // name the same way as maven library, so there will be minimal changes
+            // name the same way as a maven library, so there will be minimal changes
             // migrating from kotlin from maven to kotlin from a snapshot
             escapeBazelLabel(jpsLibrary.name)
           }
@@ -363,14 +364,28 @@ private fun getFileMavenFileDescription(lib: JpsTypedLibrary<JpsSimpleElement<Jp
     "jar path for jps library ${lib.name} must not contain redundant . and .. segments: $jar"
   }
 
+  if (jar.nameCount < 3) throw IllegalStateException("Unable to get maven coordinates for $jar by its path")
+
+  val version = jar.getName(jar.nameCount - 2).toString()
+  val artifactId = jar.getName(jar.nameCount - 3).toString()
+
+  val repositoryStartIndex = jar.indexOf(Path("repository"))
+  if (repositoryStartIndex == -1) throw IllegalStateException("Unable to get .m2/repository/ location for $jar")
+
+  val artifactStartIndex = jar.nameCount - 3
+  if (artifactStartIndex < 0) throw IllegalStateException("Unable to get artifactId for $jar")
+
+  val groupIdPaths = jar.subpath(repositoryStartIndex + 1, artifactStartIndex)
+  val groupId = groupIdPaths.joinToString(".")
+
   val libraryDescriptor = lib.properties.data
   for (verification in libraryDescriptor.artifactsVerification) {
     if (JpsPathUtil.urlToNioPath(verification.url) == jar) {
-      return MavenFileDescription(path = jar, sha256checksum = verification.sha256sum)
+      return MavenFileDescription(groupId, artifactId, version, path = jar, sha256checksum = verification.sha256sum)
     }
   }
 
-  return MavenFileDescription(path = jar, sha256checksum = null)
+  return MavenFileDescription(groupId, artifactId, version, path = jar, sha256checksum = null)
 }
 
 private fun isTestFriend(

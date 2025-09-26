@@ -40,9 +40,15 @@ internal data class MavenLibrary(
 ) : Library
 
 internal data class MavenFileDescription(
+  @JvmField val groupId: String,
+  @JvmField val artifactId: String,
+  @JvmField val version: String,
   @JvmField val path: Path,
   @JvmField val sha256checksum: String?,
-)
+) {
+  val mavenCoordinates: String
+    get() = "$groupId:$artifactId:$version"
+}
 
 internal data class LocalLibrary(
   val files: List<Path>,
@@ -96,9 +102,9 @@ internal fun BuildFile.generateMavenLib(
 
     target("jvm_import") {
       option("name", targetName)
-      option("jar", "@${fileToHttpRuleFile(lib.mavenCoordinates, jar.path)}")
+      option("jar", "@${fileToHttpRuleFile(jar.mavenCoordinates, jar.path)}")
       if (sourceJar != null) {
-        option("source_jar", "@${fileToHttpRuleFile(lib.mavenCoordinates + ":sources", jar.path)}")
+        option("source_jar", "@${fileToHttpRuleFile(jar.mavenCoordinates + ":sources", jar.path)}")
       }
       if (targetName == "kotlinx-serialization-core") {
         option("exported_compiler_plugins", listOf("@lib//:kotlin-serialization-plugin"))
@@ -113,14 +119,16 @@ internal fun BuildFile.generateMavenLib(
     load("@rules_java//java:defs.bzl", "java_library")
     target("java_library") {
       option("name", targetName)
-      option("exports", lib.jars.map { ":${mavenCoordinatesToHttpRuleRepoName(lib.mavenCoordinates, it.path)}_import" })
+      option("exports", lib.jars.map {
+        ":${mavenCoordinatesToHttpRuleRepoName(it.mavenCoordinates, it.path)}_import"
+      })
       libVisibility?.let {
         visibility(arrayOf(it))
       }
     }
 
     for (jar in lib.jars) {
-      val bazelLabel = mavenCoordinatesToHttpRuleRepoName(lib.mavenCoordinates, jar.path)
+      val bazelLabel = mavenCoordinatesToHttpRuleRepoName(jar.mavenCoordinates, jar.path)
       val label = "${bazelLabel}_import"
       if (!labelTracker.add(label)) {
         continue
@@ -131,7 +139,7 @@ internal fun BuildFile.generateMavenLib(
         option("name", label)
         option("jar", "@$bazelLabel//file")
         if (sourceJar != null) {
-          option("source_jar", "@${fileToHttpRuleFile(lib.mavenCoordinates + ":sources", jar.path)}")
+          option("source_jar", "@${fileToHttpRuleFile(jar.mavenCoordinates + ":sources", jar.path)}")
         }
       }
     }
@@ -209,7 +217,7 @@ internal fun generateBazelModuleSectionsForLibs(
   buildFile(bazelFileUpdater, owner.sectionName) {
     for (lib in list) {
       for (jar in lib.jars) {
-        val label = mavenCoordinatesToHttpRuleRepoName(lib.mavenCoordinates, jar.path)
+        val label = mavenCoordinatesToHttpRuleRepoName(jar.mavenCoordinates, jar.path)
         if (!labelTracker.add(label)) {
           continue
         }
@@ -228,7 +236,7 @@ internal fun generateBazelModuleSectionsForLibs(
       }
 
       for (jar in lib.sourceJars) {
-        val label = mavenCoordinatesToHttpRuleRepoName(lib.mavenCoordinates, jar.path)
+        val label = mavenCoordinatesToHttpRuleRepoName(jar.mavenCoordinates, jar.path)
         if (!labelTracker.add(label)) {
           continue
         }
