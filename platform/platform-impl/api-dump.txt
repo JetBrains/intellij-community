@@ -355,7 +355,6 @@ c:com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 - ps:HELP_BUTTON_DIAMETER:com.intellij.util.ui.JBValue
 - ps:HORIZONTAL_PADDING:com.intellij.util.ui.JBValue
 - <init>():V
-- p:adjustIcon(javax.swing.Icon,javax.swing.AbstractButton):javax.swing.Icon
 - s:createUI(javax.swing.JComponent):javax.swing.plaf.ComponentUI
 - p:getBackground(javax.swing.JComponent,java.awt.Rectangle):java.awt.Paint
 - p:getButtonColorEnd():java.awt.Color
@@ -380,7 +379,6 @@ c:com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 - p:paintContents(java.awt.Graphics,javax.swing.AbstractButton):V
 - p:paintDecorations(java.awt.Graphics2D,javax.swing.JComponent):Z
 - p:paintDisabledText(java.awt.Graphics,java.lang.String,javax.swing.JComponent,java.awt.Rectangle,java.awt.FontMetrics):V
-- p:paintIcon(java.awt.Graphics,javax.swing.JComponent,java.awt.Rectangle):V
 - p:paintText(java.awt.Graphics,javax.swing.JComponent,java.awt.Rectangle,java.lang.String):V
 - p:setupDefaultButton(javax.swing.JComponent,java.awt.Graphics):V
 - p:textIconGap():I
