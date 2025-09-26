@@ -449,7 +449,7 @@ open class ModuleDependencyIndexImpl(private val project: Project): ModuleDepend
 
     private fun findSdk(sdkDependency: ModuleDependencyItem): Sdk? = when (sdkDependency) {
       is InheritedSdkDependency -> projectRootManager.projectSdk
-      is SdkDependency -> ModifiableRootModelBridge.findSdk(sdkDependency.sdk.name, sdkDependency.sdk.type)
+      is SdkDependency -> ModifiableRootModelBridge.findSdk(project, sdkDependency.sdk.name, sdkDependency.sdk.type)
       else -> null
     }
 

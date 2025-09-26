@@ -46,7 +46,7 @@ class SdkIndexableIteratorHandler : IndexableIteratorBuilderHandler {
 
     val result = mutableListOf<IndexableFilesIterator>()
     for (entry in unifiedBuilders.entries) {
-      findSdk(entry.key.first, entry.key.second)?.apply {
+      findSdk(project, entry.key.first, entry.key.second)?.apply {
         result.addAll(entry.value.createIterator(this, project))
       }
     }
