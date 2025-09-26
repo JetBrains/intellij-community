@@ -116,11 +116,15 @@ class ZipTest {
 
     val archiveFile = tempDir.resolve("archive.zip")
     val fs = dir.fileSystem
-    buildJar(archiveFile, listOf(DirSource(dir = dir, excludes = listOf(
-      fs.getPathMatcher("glob:**/entry-item*"),
-      fs.getPathMatcher("glob:test-relative-ignore"),
-      fs.getPathMatcher("glob:**/icon-robots.txt"),
-    ))))
+    buildJar(archiveFile, listOf(DirSource(
+      dir = dir,
+      excludes = listOf(
+        fs.getPathMatcher("glob:**/entry-item*"),
+        fs.getPathMatcher("glob:test-relative-ignore"),
+        fs.getPathMatcher("glob:**/icon-robots.txt"),
+      ),
+      moduleName = null,
+    )))
 
     checkZip(archiveFile) { zipFile ->
       if (zipFile is ImmutableZipFile) {
@@ -174,7 +178,7 @@ class ZipTest {
     val archiveFile = tempDir.resolve("archive.zip")
     val regex = Regex("^zip-excl.*")
     buildJar(archiveFile, listOf(
-      ZipSource(file = zip, distributionFileEntryProducer = null, filter = { name -> !regex.matches(name)})
+      ZipSource(file = zip, distributionFileEntryProducer = null, filter = { name -> !regex.matches(name)}, moduleName = null)
     ))
 
     checkZip(archiveFile) { zipFile ->
@@ -191,7 +195,7 @@ class ZipTest {
     Files.writeString(dir.resolve("file2"), "2")
 
     val archiveFile = tempDir.resolve("archive.zip")
-    buildJar(targetFile = archiveFile, sources = listOf(DirSource(dir)), compress = true)
+    buildJar(targetFile = archiveFile, sources = listOf(DirSource(dir, moduleName = null)), compress = true)
 
     java.util.zip.ZipFile(archiveFile.toString()).use { zipFile ->
       assertThat(zipFile.entries().asSequence().map { it.name }.toList())

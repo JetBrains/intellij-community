@@ -62,6 +62,7 @@ data class ZipSource(
   @JvmField val isPreSignedAndExtractedCandidate: Boolean = false,
   @JvmField val optimizeConfigId: String? = null,
   @JvmField val distributionFileEntryProducer: DistributionFileEntryProducer?,
+  @JvmField val moduleName: String?,
   override val filter: ((String) -> Boolean),
 ) : Source, Comparable<ZipSource> {
   init {
@@ -104,6 +105,7 @@ data class DirSource(
   @JvmField val dir: Path,
   @JvmField val excludes: List<PathMatcher> = emptyList(),
   @JvmField val prefix: String = "",
+  @JvmField val moduleName: String?,
 ) : Source {
   init {
     assert(!Files.isRegularFile(dir)) { "'$dir' should not be a file" }

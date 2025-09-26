@@ -580,6 +580,7 @@ class JarPackager private constructor(
           },
           isPreSignedAndExtractedCandidate = isLibPreSigned(library),
           filter = ::defaultLibrarySourcesNamesFilter,
+          moduleName = null,
         )
       )
     }
@@ -760,6 +761,7 @@ class JarPackager private constructor(
             }
           },
           filter = ::defaultLibrarySourcesNamesFilter,
+          moduleName = null,
         )
       )
     }
@@ -858,10 +860,10 @@ suspend fun moduleOutputAsSource(context: CompilationContext, module: JpsModule,
   }
 
   if (moduleOutput.toString().endsWith(".jar")) {
-    return ZipSource(file = moduleOutput, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(excludes))
+    return ZipSource(file = moduleOutput, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(excludes), moduleName = module.name)
   }
   else {
-    return DirSource(dir = moduleOutput, excludes = excludes)
+    return DirSource(dir = moduleOutput, excludes = excludes, moduleName = module.name)
   }
 }
 
@@ -1123,8 +1125,8 @@ private fun createModuleSource(module: JpsModule, outputDir: Path, excludes: Lis
   }
 
   return when {
-    attributes != null && attributes.isDirectory -> DirSource(dir = outputDir, excludes = excludes)
-    attributes != null -> ZipSource(file = outputDir, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(excludes))
+    attributes != null && attributes.isDirectory -> DirSource(dir = outputDir, excludes = excludes, moduleName = module.name)
+    attributes != null -> ZipSource(file = outputDir, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(excludes), moduleName = module.name)
     module.sourceRoots.any { !it.rootType.isForTests } -> error("Module ${module.name} output does not exist: $outputDir")
     else -> null
   }

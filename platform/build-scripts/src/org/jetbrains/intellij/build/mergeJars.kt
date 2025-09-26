@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import org.jetbrains.intellij.build.impl.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.INDEX_FILENAME
@@ -233,7 +234,7 @@ private suspend fun handleZipSource(
       return@suspendAwareReadZipFile
     }
 
-    val includeManifest = sources.size == 1
+    val includeManifest = sources.count { !isLibModuleSource(it) } == 1
     val isIncluded = source.filter(name) && (includeManifest || name != "META-INF/MANIFEST.MF")
 
     if (!isIncluded || isDuplicated(uniqueNames = uniqueNames, name = name, sourceFile = sourceFile)) {
@@ -263,6 +264,15 @@ private suspend fun handleZipSource(
       packageIndexBuilder?.addFile(name)
       writeZipData(dataSupplier())
     }
+  }
+}
+
+private fun isLibModuleSource(source: Source): Boolean {
+  if (source is DirSource) {
+    return source.moduleName != null && source.moduleName.startsWith(LIB_MODULE_PREFIX)
+  }
+  else {
+    return source is ZipSource && source.moduleName != null && source.moduleName.startsWith(LIB_MODULE_PREFIX)
   }
 }
 
