@@ -111,10 +111,6 @@ class UiPluginManager {
     return getController().isModified(sessionId)
   }
 
-  suspend fun loadDescriptorById(pluginId: PluginId): PluginUiModel? {
-    return getController().loadDescriptorById(pluginId)
-  }
-
   suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginUiModel> {
     return getController().findInstalledPlugins(plugins)
   }

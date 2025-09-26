@@ -412,8 +412,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override suspend fun loadDescriptorById(pluginId: PluginId): PluginUiModel? {
-    val clientPluginId = PluginId.getId(pluginId.idString)
-    val updateData = service<UpdateCheckerFacade>().getInternalPluginUpdates(updateablePluginsMap = mutableMapOf(clientPluginId to null))
+    val updateData = service<UpdateCheckerFacade>().getInternalPluginUpdates(updateablePluginsMap = mutableMapOf(pluginId to null))
     return updateData.pluginUpdates.all.asSequence()
       .filter { it.pluginVersion != null }
       .map { it.uiModel ?: PluginUiModelAdapter(it.descriptor) }

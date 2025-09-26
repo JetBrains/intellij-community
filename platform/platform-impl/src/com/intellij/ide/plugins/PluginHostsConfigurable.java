@@ -274,11 +274,6 @@ public final class PluginHostsConfigurable implements Configurable.NoScroll, Con
     for (UrlInfo item : myModel.getItems()) {
       list.add(item.name);
     }
-
-    PluginManagerCustomizer customizer = PluginManagerCustomizer.getInstance();
-    if (customizer != null) {
-      customizer.customRepositoriesUpdated(new ArrayList<>(list));
-    }
   }
 
   @Override

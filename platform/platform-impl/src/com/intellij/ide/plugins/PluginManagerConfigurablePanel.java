@@ -292,7 +292,17 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (ShowSettingsUtil.getInstance().editConfigurable(myCardPanel, new PluginHostsConfigurable())) {
-          resetPanels();
+          if (myPluginManagerCustomizer == null) {
+            resetPanels();
+          }
+
+          PluginManagerCustomizer customizer = PluginManagerCustomizer.getInstance();
+          if (customizer != null) {
+            customizer.updateCustomRepositories(UpdateSettings.getInstance().getStoredPluginHosts(), () -> {
+              resetPanels();
+              return null;
+            });
+          }
         }
       }
     });
@@ -909,49 +919,49 @@ public final class PluginManagerConfigurablePanel implements Disposable {
                 }
               }
 
-              Map<String, List<PluginUiModel>> customRepositoriesMap =
-                CustomPluginRepositoryService.getInstance().getCustomRepositoryPluginMap();
-
-
-              if (parser.suggested && project != null) {
-                result.addModels(PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customRepositoriesMap));
-              }
-              else if (!parser.repositories.isEmpty()) {
-                for (String repository : parser.repositories) {
-                  List<PluginUiModel> descriptors = customRepositoriesMap.get(repository);
-                  if (descriptors == null) {
-                    continue;
-                  }
-                  if (parser.searchQuery == null) {
-                    result.addModels(descriptors);
-                  }
-                  else {
-                    for (PluginUiModel descriptor : descriptors) {
-                      if (StringUtil.containsIgnoreCase(descriptor.getName(), parser.searchQuery)) {
-                        result.addModel(descriptor);
+              PluginModelAsyncOperationsExecutor.INSTANCE.getCustomRepositoriesPluginMap(myCoroutineScope, map -> {
+                Map<String, List<PluginUiModel>> customRepositoriesMap = (Map<String, List<PluginUiModel>>)map;
+                if (parser.suggested && project != null) {
+                  result.addModels(PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customRepositoriesMap));
+                }
+                else if (!parser.repositories.isEmpty()) {
+                  for (String repository : parser.repositories) {
+                    List<PluginUiModel> descriptors = customRepositoriesMap.get(repository);
+                    if (descriptors == null) {
+                      continue;
+                    }
+                    if (parser.searchQuery == null) {
+                      result.addModels(descriptors);
+                    }
+                    else {
+                      for (PluginUiModel descriptor : descriptors) {
+                        if (StringUtil.containsIgnoreCase(descriptor.getName(), parser.searchQuery)) {
+                          result.addModel(descriptor);
+                        }
                       }
                     }
                   }
+                  result.removeDuplicates();
+                  result.sortByName();
+                  Set<PluginId> ids = result.getModels().stream().map(it -> it.getPluginId()).collect(Collectors.toSet());
+                  result.getPreloadedModel().setInstalledPlugins(UiPluginManager.getInstance().findInstalledPluginsSync(ids));
+                  result.getPreloadedModel().setPluginInstallationStates(UiPluginManager.getInstance().getInstallationStatesSync());
+                  updatePanel(runQuery);
                 }
-                result.removeDuplicates();
-                result.sortByName();
-                Set<PluginId> ids = result.getModels().stream().map(it -> it.getPluginId()).collect(Collectors.toSet());
-                result.getPreloadedModel().setInstalledPlugins(UiPluginManager.getInstance().findInstalledPluginsSync(ids));
-                result.getPreloadedModel().setPluginInstallationStates(UiPluginManager.getInstance().getInstallationStatesSync());
-                updatePanel(runQuery);
-              }
-              else {
-                PluginModelAsyncOperationsExecutor.INSTANCE
-                  .performMarketplaceSearch(myCoroutineScope,
-                                            parser.getUrlQuery(),
-                                            !result.getModels().isEmpty(),
-                                            (searchResult, updates) -> {
-                                              applySearchResult(result, searchResult, (List<PluginUiModel>)updates, customRepositoriesMap,
-                                                                parser, pluginToScore, searchIndex);
-                                              updatePanel(runQuery);
-                                              return null;
-                                            });
-              }
+                else {
+                  PluginModelAsyncOperationsExecutor.INSTANCE
+                    .performMarketplaceSearch(myCoroutineScope,
+                                              parser.getUrlQuery(),
+                                              !result.getModels().isEmpty(),
+                                              (searchResult, updates) -> {
+                                                applySearchResult(result, searchResult, (List<PluginUiModel>)updates, customRepositoriesMap,
+                                                                  parser, pluginToScore, searchIndex);
+                                                updatePanel(runQuery);
+                                                return null;
+                                              });
+                }
+                return null;
+              });
             }
 
             private void applySearchResult(@NotNull PluginsGroup result,
