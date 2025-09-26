@@ -32,7 +32,7 @@
     <lang.documentationProvider language="kotlin" implementationClass="com.intellij.devkit.compose.hotreload.ComposeHotReloadTips"/>
     <editorFactoryListener implementation="com.intellij.devkit.compose.hotreload.ToggleComposeSandboxTipsEditorListener"/>
 
-    <registryKey key="devkit.compose.desktop.preview" defaultValue="false"
+    <registryKey key="devkit.compose.desktop.preview" defaultValue="true"
                  restartRequired="true" description="Enables Compose UI previews tool window"/>
     <library.toolWindow id="ComposeUIPreview" anchor="right"
                         factoryClass="com.intellij.devkit.compose.preview.ComposePreviewToolWindowFactory"
