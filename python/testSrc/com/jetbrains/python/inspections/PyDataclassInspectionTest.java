@@ -400,6 +400,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-57582
+  public void testFieldsOrderKwOnly() {
+    doTest();
+  }
+
   // PY-49946
   public void testFieldsOrderOverridden() {
     doTest();
