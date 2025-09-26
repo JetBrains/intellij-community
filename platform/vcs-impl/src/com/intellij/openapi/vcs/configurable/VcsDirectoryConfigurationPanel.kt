@@ -292,7 +292,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : Di
 
       row {
         cell(tableLoadingPanel)
-          .comment(getProjectMappingDescription())
+          .comment(getProjectMappingDescription(), maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
           .align(Align.FILL)
       }.resizableRow()
 
