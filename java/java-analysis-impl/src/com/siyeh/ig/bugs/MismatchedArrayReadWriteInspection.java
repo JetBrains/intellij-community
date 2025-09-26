@@ -177,7 +177,7 @@ public final class MismatchedArrayReadWriteInspection extends BaseInspection {
         return arrayInitializer == null || isZeroSizeArrayExpression(arrayInitializer);
       }
       if (initializer instanceof PsiArrayInitializerExpression arrayInitializerExpression) {
-        return arrayInitializerExpression.getInitializerCount() == 0;
+        return arrayInitializerExpression.isEmpty();
       }
       return false;
     }

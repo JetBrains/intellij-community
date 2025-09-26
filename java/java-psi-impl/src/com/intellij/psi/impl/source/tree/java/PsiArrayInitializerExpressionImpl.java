@@ -28,6 +28,11 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
   }
 
   @Override
+  public boolean isEmpty() {
+    return findChildByType(ElementType.EXPRESSION_BIT_SET) == null;
+  }
+
+  @Override
   public PsiType getType(){
     if (getTreeParent() instanceof PsiNewExpression){
       if (getTreeParent().getChildRole(this) == ChildRole.ARRAY_INITIALIZER){

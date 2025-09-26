@@ -22,4 +22,11 @@ public interface PsiArrayInitializerExpression extends PsiExpression {
   default int getInitializerCount() {
     return getInitializers().length;
   }
+
+  /**
+   * @return {@code true} if this array initializer expression contains no expressions
+   */
+  default boolean isEmpty() {
+    return getInitializerCount() == 0;
+  }
 }

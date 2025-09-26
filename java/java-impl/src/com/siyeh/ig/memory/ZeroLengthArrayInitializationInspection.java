@@ -72,7 +72,7 @@ public final class ZeroLengthArrayInitializationInspection extends BaseInspectio
     @Override
     public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
       super.visitArrayInitializerExpression(expression);
-      if (expression.getInitializerCount() > 0) {
+      if (!expression.isEmpty()) {
         return;
       }
       if (expression.getParent() instanceof PsiNewExpression) {

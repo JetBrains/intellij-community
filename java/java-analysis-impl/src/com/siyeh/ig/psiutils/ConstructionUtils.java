@@ -201,7 +201,7 @@ public final class ConstructionUtils {
     final PsiExpression[] dimensions = newExpression.getArrayDimensions();
     if (dimensions.length == 0) {
       final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
-      return arrayInitializer != null && arrayInitializer.getInitializerCount() == 0;
+      return arrayInitializer != null && arrayInitializer.isEmpty();
     }
     for (PsiExpression dimension : dimensions) {
       if (!ExpressionUtils.isZero(dimension)) return false;
