@@ -55,16 +55,7 @@ def f(p):
   public void testInvalidMatchArgsType() {
     doTestByText("""
 class D:
-    __match_args__ = <warning descr="__match_args__ must be a tuple[str, ...]">42</warning>
-        """);
-  }
-
-  public void testUnknownAttributeInMatchArgs() {
-    doTestByText("""
-class E:
-    def __init__(self):
-        self.x = 0
-    __match_args__ = ("x", <warning descr="String 'y' does not refer to any instance attribute">'y'</warning>)
+    __match_args__ = <warning descr="Expected type 'tuple[str, ...]', got 'int' instead">42</warning>
         """);
   }
 
@@ -140,7 +131,7 @@ class A:
 
 def f(a):
     match a:
-        case A(x, <warning descr=\"Too many positional patterns, expected 1\">y</warning>, <warning descr=\"Too many positional patterns, expected 1\">z</warning>):
+        case A(x, <warning descr="Too many positional patterns, expected 1">y</warning>, <warning descr="Too many positional patterns, expected 1">z</warning>):
             pass
     """);
   }
@@ -150,7 +141,7 @@ def f(a):
 class D:
     def __init__(self):
         self.x = 0
-    __match_args__ = ("x", 1)
+    __match_args__ = (<warning descr="Expected type 'tuple[str, ...]', got 'tuple[str, int]' instead">"x", 1</warning>)
     """);
   }
 
@@ -230,6 +221,105 @@ class E:
         self.x = 0
         self.y = 0
     __match_args__ = ("x", "y")
+    """);
+  }
+
+  public void testSimplifyAsPatternInt() {
+    doTestByText("""
+x = 42
+
+match x:
+    case <weak_warning descr="Pattern can be simplified">int() as n</weak_warning>:
+        pass
+        """);
+  }
+
+  public void testSimplifyAsPatternDict() {
+    doTestByText("""
+x = {}
+
+match x:
+    case <weak_warning descr="Pattern can be simplified">dict() as d</weak_warning>:
+        pass
+        """);
+  }
+
+  public void testSimplifyAsPatternWithArgumentsNoWarning() {
+    doTestByText("""
+x = []
+
+match x:
+    case list(1, 2) as xs:
+        pass
+    """);
+  }
+
+  public void testMatchArgsInvalidTypeList() {
+    doTestByText("""
+class D:
+    __match_args__ = <warning descr="Expected type 'tuple[str, ...]', got 'list[str]' instead">["x", "y"]</warning>
+    """);
+  }
+
+  public void testMatchArgsInvalidTypeSet() {
+    doTestByText("""
+class D:
+    __match_args__ = <warning descr="Expected type 'tuple[str, ...]', got 'set[str]' instead">{"x", "y"}</warning>
+    """);
+  }
+
+  public void testMatchArgsInvalidTypeNone() {
+    doTestByText("""
+class D:
+    __match_args__ = <warning descr="Expected type 'tuple[str, ...]', got 'None' instead">None</warning>
+    """);
+  }
+
+  public void testMatchArgsInvalidTupleOfInts() {
+    doTestByText("""
+class D:
+    __match_args__ = (<warning descr="Expected type 'tuple[str, ...]', got 'tuple[int, int, int]' instead">1, 2, 3</warning>)
+    """);
+  }
+
+  public void testInheritedMatchArgsFromBase() {
+    doTestByText("""
+class Base:
+    __match_args__ = ("x",)
+    def __init__(self, x):
+        self.x = x
+
+class Derived(Base):
+    pass
+
+def f(d):
+    match d:
+        case Derived(1):
+            pass
+    """);
+  }
+
+  public void testClassWithoutInitNoWarning() {
+    doTestByText("""
+class C:
+    pass
+
+def f(c):
+    match c:
+        case C(a=1):
+            pass
+    """);
+  }
+
+  public void testEmptyClassWithPositionalPatternWarning() {
+    doTestByText("""
+class C:
+    pass
+
+def f(c):
+    match c:
+        case C(<warning descr="Class C does not support pattern matching with positional arguments">1</warning>):
+            pass
     """);
   }
 

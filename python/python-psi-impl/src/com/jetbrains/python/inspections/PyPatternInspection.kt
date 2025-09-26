@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyClassPatternImpl
@@ -83,7 +84,7 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
       val keywordName = (keywordPattern as PyKeywordPattern).keyword
       val positionalIndex = positionalAttributeNames.indexOf(keywordName)
       if (positionalIndex >= 0) {
-        holder.problem(keywordPattern, PyPsiBundle.message("INSP.patterns.attribute.already.specified.as.positional.pattern.at.position", keywordName, positionalIndex))
+        holder.problem(keywordPattern, PyPsiBundle.message("INSP.patterns.attribute.already.specified.as.positional.pattern.at.position", keywordName, positionalIndex + 1))
           .fix(RemoveListMemberFix(keywordPattern))
           .register()
       }
@@ -96,12 +97,16 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
       ?.findAssignedValue()
       ?.let { PyPsiUtils.flattenParens(it) } ?: return
     
-    val matchArgsType = myTypeEvalContext.getType(matchArgs)
-    val strType = PyBuiltinCache.getInstance(matchArgs).strType
-    val goodTuple = PyTupleType.createHomogeneous(matchArgs, strType)
+    val matchArgsType = myTypeEvalContext.getType(matchArgs) ?: return
+    val strType = PyBuiltinCache.getInstance(matchArgs).strType ?: return
+    val goodTuple = PyTupleType.createHomogeneous(matchArgs, strType) ?: return
     if (PyTypeChecker.match(goodTuple, matchArgsType, myTypeEvalContext)) return
     // __match_args__ must be a tuple[str, ...]
-    holder.problem(matchArgs, "__match_args__ must be a tuple[str, ...]").register()
+    holder.problem(matchArgs, PyPsiBundle.message(
+      "INSP.type.checker.expected.type.got.type.instead", 
+      PythonDocumentationProvider.getTypeName(goodTuple, myTypeEvalContext),
+      PythonDocumentationProvider.getTypeName(matchArgsType, myTypeEvalContext))
+    ).register()
   }
 }
 
@@ -167,7 +172,11 @@ class AddMatchArgsFix(element: PyClass) : PsiUpdateModCommandAction<PyClass>(ele
       ?.toList() ?: emptyList()
     
     val generator = PyElementGenerator.getInstance(pyClass.project)
-    val matchArgsValue = "(" + positionalArgs.joinToString(", ") { "'$it'" } + ")"
+    val matchArgsValue = positionalArgs.joinToString(
+      prefix = "(",
+      postfix = if (positionalArgs.size != 1) ")" else ",)",
+      separator = ", "
+    ) { "'$it'" }
     val matchArgsAssignment = generator.createFromText(
       LanguageLevel.forElement(pyClass),
       PyAssignmentStatement::class.java,

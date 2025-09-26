@@ -137,15 +137,25 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
   }
 
   public static @Nullable List<@NotNull String> getMatchArgs(@NotNull PyClassType type, @NotNull TypeEvalContext context) {
-    List<String> matchArgs = type.getPyClass().getOwnMatchArgs();
-    if (matchArgs == null) {
-      matchArgs = PyNamedTupleTypeProvider.Companion.getGeneratedMatchArgs(type, context);
-    }
-    if (matchArgs == null) {
-      matchArgs = PyDataclassTypeProvider.Companion.getGeneratedMatchArgs(type, context);
+    final PyClass cls = type.getPyClass();
+    // TODO: change to getMemberType, when PyLiteralType can be created without PyExpression
+    
+    List<String> matchArgs = cls.getOwnMatchArgs();
+    if (matchArgs != null) return matchArgs;
+
+    matchArgs = PyNamedTupleTypeProvider.Companion.getGeneratedMatchArgs(type, context);
+    if (matchArgs != null) return matchArgs;
+    matchArgs = PyDataclassTypeProvider.Companion.getGeneratedMatchArgs(type, context);
+    if (matchArgs != null) return matchArgs;
+
+    for (PyClassLikeType baseType : type.getSuperClassTypes(context)) {
+      if (baseType instanceof PyClassType baseClassType) {
+        final List<String> inherited = getMatchArgs(baseClassType, context);
+        if (inherited != null) return inherited;
+      }
     }
 
-    return matchArgs;
+    return null;
   }
 
   @Nullable
