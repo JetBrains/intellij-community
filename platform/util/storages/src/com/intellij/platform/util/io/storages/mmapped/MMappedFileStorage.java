@@ -701,6 +701,9 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
             //NoSuchFileException usually means 'parent dir doesn't exist'
             Path parent = mappingLockFile.getParent();
             if (!Files.exists(parent)) {
+              //RC: Why not just re-create the parent dirs? Because the mmapped file itself was 100% deleted, together with the folder,
+              //    i.e., the data is 100% compromised one way or another -- so better fail early, than continue working pretending
+              //    everything is fine, and waiting for some bizarre errors to pop up later on.
               Path firstExistingParent = firstExistingParent(parent);
               throw new IOException("Parent dir[" + parent.toAbsolutePath() + "] is not exist/was removed -- can't create .lock-file.\n" +
                                     "First existing parent: [" + firstExistingParent + "]", e);
