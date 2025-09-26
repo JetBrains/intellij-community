@@ -245,8 +245,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         PsiAnnotationOwner owner = annotation.getOwner();
         PsiModifierListOwner listOwner = owner instanceof PsiModifierList modifierList
                                          ? tryCast(modifierList.getParent(), PsiModifierListOwner.class) : null;
-        PsiType targetType = listOwner instanceof PsiMethod method ? method.getReturnType() :
-                             listOwner instanceof PsiVariable variable ? variable.getType() : null;
+        PsiType targetType = listOwner == null ? null : PsiUtil.getTypeByPsiElement(listOwner);
         if (listOwner != null && targetType != null) {
           checkRedundantInContainerScope(annotation, manager.findContainerAnnotation(listOwner), nullability);
         }
@@ -297,6 +296,9 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                    PsiUtil.isJavaToken(firstChild, JavaTokenType.IMPLEMENTS_KEYWORD)) &&
                   !(parent.getParent() instanceof PsiTypeParameter)) {
                 reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.reference.list");
+              }
+              if (PsiUtil.isJavaToken(firstChild, JavaTokenType.THROWS_KEYWORD)) {
+                reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.throws");
               }
             }
           }

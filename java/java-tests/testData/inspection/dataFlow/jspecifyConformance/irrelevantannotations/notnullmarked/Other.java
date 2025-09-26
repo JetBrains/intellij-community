@@ -104,7 +104,7 @@ public class Other {
     void throwsN() throws @Nullable Exception;
 
     // test:name:NonNull exception type
-    // test:irrelevant-annotation:NonNulll
+    // test:irrelevant-annotation:NonNull
     void throwsR() throws @NonNull Exception;
   }
 }

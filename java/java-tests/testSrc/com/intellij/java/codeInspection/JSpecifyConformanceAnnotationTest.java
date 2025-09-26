@@ -96,12 +96,7 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
       Pair.create("Irrelevant.java", 46), // see: IDEA-377761
 
       Pair.create("Other.java", 72), // see: IDEA-377763
-      Pair.create("Other.java", 70), // see: IDEA-377763
-
-      Pair.create("Other.java", 102), // see: IDEA-377764
-      Pair.create("Other.java", 106), // see: IDEA-377764
-      Pair.create("Other.java", 104), // see: IDEA-377764
-      Pair.create("Other.java", 108) // see: IDEA-377764
+      Pair.create("Other.java", 70) // see: IDEA-377763
     );
     LineColumn column = StringUtil.offsetToLineColumn(message, offset);
     return suppressed.contains(Pair.create(fileName, column.line));
@@ -232,6 +227,7 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
                                  @NotNull String messageKey, Object... args) {
       switch (messageKey) {
         case "inspection.nullable.problems.primitive.type.annotation",
+             "inspection.nullable.problems.at.throws",
              "inspection.nullable.problems.at.type.parameter",
              "inspection.nullable.problems.Nullable.NotNull.conflict",
              "inspection.nullable.problems.at.wildcard",
