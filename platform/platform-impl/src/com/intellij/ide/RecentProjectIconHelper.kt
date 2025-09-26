@@ -5,6 +5,7 @@ package com.intellij.ide
 
 import com.intellij.configurationStore.ProjectStorePathManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
 import com.intellij.openapi.util.registry.Registry
@@ -438,7 +439,12 @@ object ProjectIconPalette : ColorPalette {
 
   override fun gradient(seed: String?): Pair<Color, Color> {
     seed ?: return gradients[0]
-    return ProjectWindowCustomizerService.getInstance().getRecentProjectIconColor(Path.of(seed))
+    return try {
+      return ProjectWindowCustomizerService.getInstance().getRecentProjectIconColor(Path.of(seed))
+    } catch (e: Exception) {
+      thisLogger().warn(e)
+      gradients[0]
+    }
   }
 }
 
