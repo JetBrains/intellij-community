@@ -38,7 +38,7 @@ internal interface NativeFileHandler {
 }
 
 suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false) {
-  buildJar(targetFile, sources, nativeFileHandler = null, addDirEntries = false, compress)
+  buildJar(targetFile = targetFile, sources = sources, nativeFileHandler = null, addDirEntries = false, compress = compress)
 }
 
 internal suspend fun buildJar(
@@ -59,7 +59,17 @@ internal suspend fun buildJar(
     val filesToMerge = mutableListOf<CharSequence>()
 
     for (source in sources) {
-      writeSource(source, zipCreator, uniqueNames, packageIndexBuilder, targetFile, sources, nativeFileHandler, compress, filesToMerge)
+      writeSource(
+        source = source,
+        zipCreator = zipCreator,
+        uniqueNames = uniqueNames,
+        packageIndexBuilder = packageIndexBuilder,
+        targetFile = targetFile,
+        sources = sources,
+        nativeFileHandler = nativeFileHandler,
+        compress = compress,
+        filesToMerge = filesToMerge,
+      )
     }
 
     if (filesToMerge.isNotEmpty()) {
@@ -110,7 +120,7 @@ private suspend fun writeSource(
       }
 
       packageIndexBuilder?.addFile(source.relativePath)
-      zipCreator.uncompressedData(source.relativePath, source.data)
+      zipCreator.uncompressedData(path = source.relativePath, data = source.data)
     }
 
     is FileSource -> {
@@ -125,7 +135,18 @@ private suspend fun writeSource(
     is ZipSource -> {
       val sourceFile = source.file
       try {
-        handleZipSource(source, sourceFile, nativeFileHandler, uniqueNames, sources, packageIndexBuilder, zipCreator, compress, targetFile, filesToMerge)
+        handleZipSource(
+          source = source,
+          sourceFile = sourceFile,
+          nativeFileHandler = nativeFileHandler,
+          uniqueNames = uniqueNames,
+          sources = sources,
+          packageIndexBuilder = packageIndexBuilder,
+          zipCreator = zipCreator,
+          compress = compress,
+          targetFile = targetFile,
+          filesToMerge = filesToMerge,
+        )
       }
       catch (e: IOException) {
         if (e.message?.contains("No space left on device") == true) {
@@ -146,7 +167,17 @@ private suspend fun writeSource(
     is LazySource -> {
       for (subSource in source.getSources()) {
         require(subSource !== source)
-        writeSource(subSource, zipCreator, uniqueNames, packageIndexBuilder, targetFile, sources, nativeFileHandler, compress, filesToMerge)
+        writeSource(
+          source = subSource,
+          zipCreator = zipCreator,
+          uniqueNames = uniqueNames,
+          packageIndexBuilder = packageIndexBuilder,
+          targetFile = targetFile,
+          sources = sources,
+          nativeFileHandler = nativeFileHandler,
+          compress = compress,
+          filesToMerge = filesToMerge,
+        )
       }
     }
 
@@ -198,14 +229,14 @@ private suspend fun handleZipSource(
       }
     }
 
-    if (checkCoverageAgentManifest(name, sourceFile, targetFile, dataSupplier, ::writeZipData)) {
+    if (checkCoverageAgentManifest(name = name, sourceFile = sourceFile, targetFile = targetFile, dataSupplier = dataSupplier, writeData = ::writeZipData)) {
       return@suspendAwareReadZipFile
     }
 
     val includeManifest = sources.size == 1
     val isIncluded = source.filter(name) && (includeManifest || name != "META-INF/MANIFEST.MF")
 
-    if (!isIncluded || isDuplicated(uniqueNames, name, sourceFile)) {
+    if (!isIncluded || isDuplicated(uniqueNames = uniqueNames, name = name, sourceFile = sourceFile)) {
       return@suspendAwareReadZipFile
     }
 
@@ -353,22 +384,23 @@ private fun getIgnoredNames(): Set<String> {
 private val ignoredNames = getIgnoredNames()
 private val moduleInfoPattern = Regex("META-INF/versions/\\d+/module-info\\.class")
 
-fun defaultLibrarySourcesNamesFilter(name: String): Boolean =
-  !ignoredNames.contains(name) &&
-  !name.matches(moduleInfoPattern) &&
-  !name.endsWith(".kotlin_metadata") &&
-  !name.startsWith("license/") &&
-  !name.startsWith("licenses/") &&
-  !name.startsWith("native/") &&
-  !name.startsWith("META-INF/license/") &&
-  !name.startsWith("META-INF/LICENSE-") &&
-  !name.startsWith("native-image/") &&
-  !name.startsWith("org/xml/sax/") &&  // XmlRPC lib
-  !name.startsWith("META-INF/versions/9/org/apache/logging/log4j/") &&
-  !name.startsWith("META-INF/versions/9/org/bouncycastle/") &&
-  !name.startsWith("META-INF/versions/10/org/bouncycastle/") &&
-  !name.startsWith("META-INF/versions/15/org/bouncycastle/") &&
-  !name.startsWith("kotlinx/coroutines/repackaged/") &&
-  !name.startsWith("META-INF/INDEX.LIST") &&
-  (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA"))) &&
-  !name.startsWith("net/sf/cglib/core/AbstractClassGenerator")  // we replace the lib class with our own patched version
+fun defaultLibrarySourcesNamesFilter(name: String): Boolean {
+  return !ignoredNames.contains(name) &&
+         !name.matches(moduleInfoPattern) &&
+         !name.endsWith(".kotlin_metadata") &&
+         !name.startsWith("license/") &&
+         !name.startsWith("licenses/") &&
+         !name.startsWith("native/") &&
+         !name.startsWith("META-INF/license/") &&
+         !name.startsWith("META-INF/LICENSE-") &&
+         !name.startsWith("native-image/") &&
+         !name.startsWith("org/xml/sax/") &&  // XmlRPC lib
+         !name.startsWith("META-INF/versions/9/org/apache/logging/log4j/") &&
+         !name.startsWith("META-INF/versions/9/org/bouncycastle/") &&
+         !name.startsWith("META-INF/versions/10/org/bouncycastle/") &&
+         !name.startsWith("META-INF/versions/15/org/bouncycastle/") &&
+         !name.startsWith("kotlinx/coroutines/repackaged/") &&
+         !name.startsWith("META-INF/INDEX.LIST") &&
+         (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA"))) &&
+         !name.startsWith("net/sf/cglib/core/AbstractClassGenerator")  // we replace the lib class with our own patched version
+}
