@@ -36,18 +36,14 @@ internal class VcsUpdateInfoScopeFilter(
           manageScopesAction.run()
         }
       }
+
+      onIsModified { myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME != scopeFilterName }
+      onApply { myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME = scopeFilterName }
+      onReset(::reset)
     }
   }
 
-  fun isModified(): Boolean {
-    return myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME != this.scopeFilterName
-  }
-
-  fun apply() {
-    myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME = this.scopeFilterName
-  }
-
-  fun reset() {
+  private fun reset() {
     myComboBox.removeAllItems()
     var selection = false
     for (holder in myNamedScopeHolders) {

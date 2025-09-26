@@ -26,10 +26,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.ui.dsl.builder.Align
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.progress.ProgressUIUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil
@@ -42,14 +39,12 @@ import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
 import java.io.File
-import javax.swing.JCheckBox
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.JTable
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 
-internal class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), Disposable {
+internal class VcsDirectoryConfigurationPanel(private val project: Project) : Disposable {
   private val POSTPONE_MAPPINGS_LOADING_PANEL = ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS
 
   private val isEditingDisabled = project.isDefault
@@ -68,10 +63,6 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
   private val directoryRenderer: MyDirectoryRenderer
 
   private val vcsComboBox: ComboBox<AbstractVcs?>
-
-  private val detectVcsMappingsCheckBox: JCheckBox
-
-  private val scopeFilterConfigurable: VcsUpdateInfoScopeFilter
 
   private var rootDetectionIndicator: ProgressIndicator? = null
 
@@ -146,22 +137,13 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
       if (info is RecordInfo.MappingInfo) getPresentablePath(project, info.mapping) else ""
     }
 
-    scopeFilterConfigurable = VcsUpdateInfoScopeFilter(project, vcsConfiguration, this)
-
     // don't start loading automatically
     tableLoadingPanel = JBLoadingPanel(BorderLayout(), this, POSTPONE_MAPPINGS_LOADING_PANEL.toInt() * 2)
-
-    detectVcsMappingsCheckBox = JCheckBox(VcsBundle.message("directory.mapping.checkbox.detect.vcs.mappings.automatically"))
-
-    layout = BorderLayout()
-    add(createMainComponent())
 
     directoryRenderer = MyDirectoryRenderer(project)
 
     mappingTableModel = ListTableModel(MyDirectoryColumnInfo(), MyVcsColumnInfo())
     mappingTable.setModelAndUpdateColumns(mappingTableModel)
-
-    initializeModel()
 
     vcsComboBox = buildVcsesComboBox(project, allSupportedVcss)
     vcsComboBox.addItemListener {
@@ -181,13 +163,9 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
   }
 
   private fun initializeModel() {
-    scopeFilterConfigurable.reset()
-
     val items = mutableListOf<RecordInfo>()
     items.addAll(vcsManager.getDirectoryMappings().map { createRegisteredInfo(it) })
     setDisplayedMappings(items)
-
-    detectVcsMappingsCheckBox.isSelected = sharedProjectSettings.isDetectVcsMappingsAutomatically
 
     scheduleUnregisteredRootsLoading()
   }
@@ -298,7 +276,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
     mappingTable.selectionModel.setSelectionInterval(toSelect, toSelect)
   }
 
-  private fun createMainComponent(): JComponent {
+  fun createMainComponent(): DialogPanel {
     lateinit var result: DialogPanel
     result = panel {
       if (!TrustedProjects.isProjectTrusted(project)) {
@@ -319,18 +297,25 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
       }.resizableRow()
 
       row {
-        cell(detectVcsMappingsCheckBox).gap(RightGap.SMALL)
+        checkBox(VcsBundle.message("directory.mapping.checkbox.detect.vcs.mappings.automatically"))
+          .bindSelected(sharedProjectSettings::isDetectVcsMappingsAutomatically)
+          .gap(RightGap.SMALL)
         contextHelp(VcsBundle.message("directory.mapping.checkbox.detect.vcs.mappings.automatically.hint"))
       }
 
       if (!AbstractCommonUpdateAction.showsCustomNotification(vcsManager.getAllActiveVcss().asList())) {
-        scopeFilterConfigurable.createContent(this) {
+        val scopeFilter = VcsUpdateInfoScopeFilter(project, vcsConfiguration, this@VcsDirectoryConfigurationPanel)
+        scopeFilter.createContent(this) {
           val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(result))
           if (settings != null) {
             settings.select(settings.find(ScopeChooserConfigurable.PROJECT_SCOPES))
           }
         }
       }
+
+      onApply(::apply)
+      onReset(::reset)
+      onIsModified(::isModified)
     }
     return result
   }
@@ -392,16 +377,14 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
     return StringUtil.escapeXmlEntities(VcsDirectoryMapping.PROJECT_CONSTANT.get() + " - " + message)
   }
 
-  fun reset() {
+  private fun reset() {
     initializeModel()
   }
 
   @Throws(ConfigurationException::class)
-  fun apply() {
+  private fun apply() {
     adjustIgnoredRootsSettings()
     vcsManager.setDirectoryMappings(getModelMappings())
-    scopeFilterConfigurable.apply()
-    sharedProjectSettings.isDetectVcsMappingsAutomatically = detectVcsMappingsCheckBox.isSelected
     initializeModel()
   }
 
@@ -414,10 +397,8 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
     vcsConfiguration.removeFromIgnoredUnregisteredRoots(newMappings.map { obj: VcsDirectoryMapping -> obj.directory })
   }
 
-  fun isModified(): Boolean {
-    if (scopeFilterConfigurable.isModified()) return true
-    return getModelMappings() != vcsManager.getDirectoryMappings() ||
-           detectVcsMappingsCheckBox.isSelected != sharedProjectSettings.isDetectVcsMappingsAutomatically
+  private fun isModified(): Boolean {
+    return getModelMappings() != vcsManager.getDirectoryMappings()
   }
 
   private fun getModelMappings(): List<VcsDirectoryMapping> {
