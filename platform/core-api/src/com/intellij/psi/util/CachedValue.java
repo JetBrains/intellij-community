@@ -47,9 +47,9 @@ import org.jetbrains.annotations.NotNull;
  * See that method's documentation for further information and advice, when a failure happens.<p></p>
  *
  * <h3>Context-independence</h3>
- * If you store the CachedValue in a field or user data of some object {@code X}, then its {@link CachedValueProvider}
- * may only depend on X and parts of the global system state that don't change while {@code X} is alive and valid (e.g. application/project components/services).
- * Otherwise, re-invoking the CachedValueProvider after invalidation would use outdated data and produce incorrect results,
+ * If you store the CachedValue in a field or {@link com.intellij.openapi.util.UserDataHolder user data} of some object {@code X},
+ * then its {@link CachedValueProvider} may only depend on {@code X} and parts of the global system state that don't change while {@code X} is alive and valid (e.g. application/project components/services).
+ * Otherwise, re-invoking the {@link CachedValueProvider} after invalidation would use outdated data and produce incorrect results,
  * possibly causing exceptions in places far, far away. In particular, the provider may not capture:
  * <ul>
  *   <li>Parameters of a method where CachedValue is created, except for {@code X} itself. Example:
