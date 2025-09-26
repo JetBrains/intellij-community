@@ -28,21 +28,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.startOffset
-import com.intellij.util.progress.withLockCancellable
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.locks.Lock
-import java.util.concurrent.locks.ReentrantLock
 
 private val problemsKey = Key.create<CachedResults>("grazie.text.problems")
-private val lockKey = Key.create<Lock>("grazie.text.lock")
 
 class CheckerRunner(val text: TextContent) {
   private val tokenizer
@@ -64,14 +59,9 @@ class CheckerRunner(val text: TextContent) {
     val configStamp = service<GrazieConfig>().modificationCount
     var cachedProblems = getCachedProblems(configStamp)
     if (cachedProblems != null) return cachedProblems
-    val lock = text.getOrCreateUserData(lockKey) { ReentrantLock() }
-    return lock.withLockCancellable {
-      cachedProblems = getCachedProblems(configStamp)
-      if (cachedProblems != null) return@withLockCancellable cachedProblems
-      cachedProblems = filter(doRun(TextChecker.allCheckers()))
-      text.putUserData(problemsKey, CachedResults(configStamp, cachedProblems!!))
-      return@withLockCancellable cachedProblems
-    } ?: emptyList()
+    cachedProblems = filter(doRun(TextChecker.allCheckers()))
+    text.putUserData(problemsKey, CachedResults(configStamp, cachedProblems))
+    return cachedProblems
   }
 
   @Suppress("unused")
