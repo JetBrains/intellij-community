@@ -130,7 +130,6 @@ internal class MixedModeProcessTransitionStateMachine(
 
             logger.info("Low level process has been stopped")
             changeState(HighStoppedWaitingForLowProcessToStop(event.suspendContext))
-            changeState(BothStopped(event.suspendContext, event.suspendContext))
           }
           is HighLevelSetStatementHighRunning -> {
             changeState(BothStopped(currentState.low, event.suspendContext))
