@@ -131,11 +131,11 @@ public final class SdkConfigurationUtil {
    * but doesn't catch exceptions
    */
   @ApiStatus.Internal
-  public static @NotNull Sdk setupSdk(@NotNull Sdk @NotNull []allSdks,
-                             @NotNull VirtualFile homeDir,
-                             @NotNull SdkType sdkType,
-                             final @Nullable SdkAdditionalData additionalData,
-                             final @Nullable String customSdkSuggestedName) {
+  public static @NotNull Sdk setupSdk(@NotNull Sdk @NotNull [] allSdks,
+                                      @NotNull VirtualFile homeDir,
+                                      @NotNull SdkType sdkType,
+                                      final @Nullable SdkAdditionalData additionalData,
+                                      final @Nullable String customSdkSuggestedName) {
     Sdk sdk = createSdk(Arrays.asList(allSdks), homeDir, sdkType, additionalData, customSdkSuggestedName);
     sdkType.setupSdkPaths(sdk);
     return sdk;
@@ -143,14 +143,15 @@ public final class SdkConfigurationUtil {
 
   /**
    * Creates SDK, catches any error, logs it, and shows error if not `silent`.
+   *
    * @see #setupSdk(Sdk[], VirtualFile, SdkType, SdkAdditionalData, String)
    */
   public static @Nullable Sdk setupSdk(Sdk @NotNull [] allSdks,
-                             @NotNull VirtualFile homeDir,
-                             @NotNull SdkType sdkType,
-                             final boolean silent,
-                             final @Nullable SdkAdditionalData additionalData,
-                             final @Nullable String customSdkSuggestedName) {
+                                       @NotNull VirtualFile homeDir,
+                                       @NotNull SdkType sdkType,
+                                       final boolean silent,
+                                       final @Nullable SdkAdditionalData additionalData,
+                                       final @Nullable String customSdkSuggestedName) {
     Sdk sdk = null;
     try {
       sdk = setupSdk(allSdks, homeDir, sdkType, additionalData, customSdkSuggestedName);
@@ -297,6 +298,7 @@ public final class SdkConfigurationUtil {
 
   /// Tries to create an SDK identified by path; if successful, add the SDK to the global SDK table.
   /// Contrary to [#createAndAddSDK(String, SdkType)], SDK paths are not setup.
+  ///
   /// @param path identifies the SDK
   /// @return newly created incomplete SDK, or null.
   public static @Nullable Sdk createIncompleteSDK(@NotNull String path, @NotNull SdkType sdkType) {
