@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.ui.components.DisclosureButton
 import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
@@ -42,7 +43,9 @@ internal class WelcomeScreenLeftPanelActions(val project: Project) {
     toolbar.layoutStrategy = VerticalToolbarLayoutStrategy()
 
     toolbar.targetComponent = toolbar
-    toolbar.border = JBUI.Borders.empty(0, 20)
+
+    // + JBInsets(3) from DarculaDisclosureButtonBorder
+    toolbar.border = JBUI.Borders.empty(/* top = */ 5, /* left = */ 17, /* bottom = */ 0, /* right = */ 17)
 
     return UiDataProvider.wrapComponent(toolbar) { sink ->
       sink[WelcomeScreenActionsUtil.NON_MODAL_WELCOME_SCREEN] = true
@@ -79,7 +82,6 @@ private class LeftPanelDisclosureButtonAction(private val actionDelegate: AnActi
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val button = DisclosureButton()
     button.arrowIcon = null
-    button.border = JBUI.Borders.empty(4, 0)
 
     button.text = presentation.text
     button.icon = presentation.icon
@@ -119,6 +121,8 @@ private class LeftPanelActionGroupWrapper(group: ActionGroup) : ActionGroupWrapp
 }
 
 private class VerticalToolbarLayoutStrategy : ToolbarLayoutStrategy {
+  private val unscaledVerticalGap = 2 // + 3 * 2 = 8, from DarculaDisclosureButtonBorder
+
   override fun calculateBounds(toolbar: ActionToolbar): List<Rectangle> {
     val res = mutableListOf<Rectangle>()
 
@@ -129,7 +133,7 @@ private class VerticalToolbarLayoutStrategy : ToolbarLayoutStrategy {
     for (child in toolbar.component.components) {
       val d = if (child.isVisible) child.preferredSize else Dimension()
       res.add(Rectangle(insets.left, insets.top + yOffset, bounds.width - insets.left - insets.right, d.height))
-      yOffset += d.height
+      yOffset += d.height + JBUI.scale(unscaledVerticalGap)
     }
 
     return res;
@@ -142,9 +146,12 @@ private class VerticalToolbarLayoutStrategy : ToolbarLayoutStrategy {
     for (component in toolbar.component.components.filter { it.isVisible }) {
       val preferredSize = component.preferredSize
       width = maxOf(width, preferredSize.width)
-      height += preferredSize.height
+      height += preferredSize.height + JBUI.scale(unscaledVerticalGap)
     }
-    return JBUI.size(width, height)
+    if (height > 0) height -= JBUI.scale(unscaledVerticalGap)
+    val result = JBUI.size(width, height)
+    JBInsets.addTo(result, toolbar.component.insets)
+    return result
   }
 
   override fun calcMinimumSize(toolbar: ActionToolbar): Dimension = calcPreferredSize(toolbar)
