@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
 import org.jetbrains.annotations.ApiStatus
-import java.util.UUID
 import javax.swing.JComponent
 
 @ApiStatus.Internal
@@ -14,8 +14,8 @@ class DefaultPluginUpdateHandler : PluginUpdateHandler {
     return true
   }
 
-  override suspend fun loadAndStorePluginUpdates(apiVersion: String?, sessionId: String, indicator: ProgressIndicator?): PluginUpdateModel {
-    val buildNumber = BuildNumber.fromString(apiVersion)
+  override suspend fun loadAndStorePluginUpdates(buildNumber: String?, sessionId: String, indicator: ProgressIndicator?): PluginUpdatesModel {
+    val buildNumber = BuildNumber.fromString(buildNumber)
     val internalPluginUpdates = UpdateChecker.getInternalPluginUpdates(buildNumber, indicator)
     val pluginUpdates = internalPluginUpdates.pluginUpdates
     val notIgnoredDownloaders = pluginUpdates.allEnabled.filterNot { UpdateChecker.isIgnored(it.descriptor) }
@@ -23,11 +23,11 @@ class DefaultPluginUpdateHandler : PluginUpdateHandler {
     val incompatiblePluginNames = pluginUpdates.incompatible.map { it.name }
     PluginDownloadersHolder.getInstance().registerDownloaders(sessionId, notIgnoredDownloaders)
     val errors = internalPluginUpdates.errors.map { it.key to it.value.message.orEmpty() }.toMap()
-    val updateModel = PluginUpdateModel(nonIgnoredUpdates = updateModels,
-                                        incompatiblePluginNames = incompatiblePluginNames,
-                                        customRepoPluginUpdates = internalPluginUpdates.pluginNods.toList(),
-                                        internalErrors = errors,
-                                        sessionId = sessionId)
+    val updateModel = PluginUpdatesModel(pluginUpdates = updateModels.map { PluginDto.fromModel(it) },
+                                         incompatiblePluginNames = incompatiblePluginNames,
+                                         updatesFromCustomRepositories = internalPluginUpdates.pluginNods.map { PluginDto.fromModel(it) },
+                                         internalErrors = errors,
+                                         sessionId = sessionId)
     updateModel.downloaders = notIgnoredDownloaders
     return updateModel
   }

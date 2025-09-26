@@ -14,7 +14,7 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 interface PluginUpdateHandler {
   fun isEnabled(): Boolean
-  suspend fun loadAndStorePluginUpdates(apiVersion: String?, sessionId: String = UUID.randomUUID().toString(), indicator: ProgressIndicator? = null): PluginUpdateModel
+  suspend fun loadAndStorePluginUpdates(buildNumber: String?, sessionId: String = UUID.randomUUID().toString(), indicator: ProgressIndicator? = null): PluginUpdatesModel
   suspend fun installUpdates(sessionId: String, updates: List<PluginUiModel>, component: JComponent?, finishCallback: Runnable?)
 
   suspend fun ignorePluginUpdates(sessionId: String)
@@ -28,19 +28,14 @@ interface PluginUpdateHandler {
 
 @ApiStatus.Internal
 @Serializable
-data class PluginUpdateModel(
+data class PluginUpdatesModel(
   val sessionId: String,
-  @Transient private val nonIgnoredUpdates: List<PluginUiModel> = emptyList(),
+  val pluginUpdates: List<PluginDto>,
+  val updatesFromCustomRepositories: List<PluginDto>,
   val incompatiblePluginNames: List<String>,
-  @Transient private val customRepoPluginUpdates: List<PluginUiModel> = emptyList(),
   val internalErrors: Map<String?, String>,
 ) {
-  val notIgnoredDtos: List<PluginDto> = nonIgnoredUpdates.map { PluginDto.fromModel(it) }
-  val customRepoDtos: List<PluginDto> = customRepoPluginUpdates.map { PluginDto.fromModel(it) }
 
   @Transient
   var downloaders: List<PluginDownloader> = emptyList() //compatibility parameter that shouldn't exist in the future
-
-  fun getNotIgnoredUpdates(): List<PluginUiModel> = nonIgnoredUpdates.ifEmpty { notIgnoredDtos }
-  fun getCustomRepoUpdates(): List<PluginUiModel> = customRepoPluginUpdates.ifEmpty { customRepoDtos }
 }

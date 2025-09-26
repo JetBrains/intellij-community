@@ -2,8 +2,7 @@
 package com.intellij.platform.pluginManager.shared.rpc
 
 import com.intellij.ide.plugins.api.PluginDto
-import com.intellij.ide.plugins.newui.PluginUiModel
-import com.intellij.openapi.updateSettings.impl.PluginUpdateModel
+import com.intellij.openapi.updateSettings.impl.PluginUpdatesModel
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @IntellijInternalApi
 interface PluginUpdaterApi : RemoteApi<Unit> {
-  suspend fun loadAndStorePluginUpdates(apiVersion: String?, sessionId: String): PluginUpdateModel
+  suspend fun loadAndStorePluginUpdates(apiVersion: String?, sessionId: String): PluginUpdatesModel
 
   suspend fun installUpdates(sessionId: String, updates: List<PluginDto>): Deferred<Boolean>
 

@@ -721,9 +721,9 @@ private suspend fun doUpdateAndShowResult(
 
   val apiVersion = (platformUpdates as? PlatformUpdates.Loaded)?.newBuild?.apiVersion
   val updatesModel = PluginUpdateHandler.getInstance().loadAndStorePluginUpdates(apiVersion?.asString(), indicator = indicator)
-  val updatesForPlugins = updatesModel.getNotIgnoredUpdates()
+  val updatesForPlugins = updatesModel.pluginUpdates
   val incompatiblePluginNames = updatesModel.incompatiblePluginNames
-  val customRepoPlugins = updatesModel.getCustomRepoUpdates()
+  val customRepoPlugins = updatesModel.updatesFromCustomRepositories
   val internalErrors = updatesModel.internalErrors
   val notIgnoredDownloaders = updatesModel.downloaders
 
