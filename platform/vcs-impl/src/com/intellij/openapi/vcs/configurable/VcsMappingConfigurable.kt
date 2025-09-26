@@ -1,76 +1,64 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.configurable;
+package com.intellij.openapi.vcs.configurable
 
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.VcsBundle;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.VcsBundle
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import javax.swing.JComponent
 
 @ApiStatus.Internal
-public class VcsMappingConfigurable implements SearchableConfigurable {
-  private static final String ID = "project.propVCSSupport.DirectoryMappings";
-  public static final String HELP_ID = "project.propVCSSupport.Mappings";
+class VcsMappingConfigurable(private val myProject: Project) : SearchableConfigurable {
 
-  private final Project myProject;
-
-  private @Nullable VcsDirectoryConfigurationPanel myPanel;
-
-  public VcsMappingConfigurable(@NotNull Project project) {
-    myProject = project;
+  companion object {
+    private const val ID = "project.propVCSSupport.DirectoryMappings"
+    const val HELP_ID: String = "project.propVCSSupport.Mappings"
   }
 
-  @Override
-  public @Nls String getDisplayName() {
-    return VcsBundle.message("configurable.VcsDirectoryConfigurationPanel.display.name");
+  private var myPanel: VcsDirectoryConfigurationPanel? = null
+
+  @Nls
+  override fun getDisplayName(): @Nls String {
+    return VcsBundle.message("configurable.VcsDirectoryConfigurationPanel.display.name")
   }
 
-  @Override
-  public @NotNull String getId() {
-    return ID;
+  override fun getId(): String {
+    return ID
   }
 
-  @Override
-  public @Nullable String getHelpTopic() {
-    return HELP_ID;
+  override fun getHelpTopic(): String {
+    return HELP_ID
   }
 
-  @Override
-  public JComponent createComponent() {
-    if (myPanel == null) myPanel = new VcsDirectoryConfigurationPanel(myProject);
-    return myPanel;
+  override fun createComponent(): JComponent? {
+    if (myPanel == null) myPanel = VcsDirectoryConfigurationPanel(myProject)
+    return myPanel
   }
 
-  @Override
-  public void disposeUIResources() {
+  override fun disposeUIResources() {
     if (myPanel != null) {
-      Disposer.dispose(myPanel);
-      myPanel = null;
+      Disposer.dispose(myPanel!!)
+      myPanel = null
     }
   }
 
-  @Override
-  public void reset() {
+  override fun reset() {
     if (myPanel != null) {
-      myPanel.reset();
+      myPanel!!.reset()
     }
   }
 
-  @Override
-  public void apply() throws ConfigurationException {
+  @Throws(ConfigurationException::class)
+  override fun apply() {
     if (myPanel != null) {
-      myPanel.apply();
+      myPanel!!.apply()
     }
   }
 
-  @Override
-  public boolean isModified() {
-    return myPanel != null && myPanel.isModified();
+  override fun isModified(): Boolean {
+    return myPanel != null && myPanel!!.isModified()
   }
 }
