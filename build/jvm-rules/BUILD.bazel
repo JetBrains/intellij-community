@@ -131,6 +131,12 @@ alias(
     visibility = ["//visibility:public"],
 )
 
+jvm_import(
+    name = "kotlin-compiler-for-wasmjs",
+    jar = "@kotlin-compiler-for-wasmjs_http//file",
+    visibility = ["//visibility:public"],
+)
+
 jvm_provided_library(
     name = "kotlin-compiler-provided",
     lib = "//:kotlin-compiler",
@@ -320,6 +326,13 @@ jvm_import(
     name = "kotlin-stdlib",
     jar = "@kotlin-stdlib//file",
     source_jar = "@kotlin-stdlib-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-reflect",
+    jar = "@kotlin-reflect//file",
+    source_jar = "@kotlin-reflect-sources//file",
     visibility = ["//visibility:public"],
 )
 

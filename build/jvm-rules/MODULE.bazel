@@ -58,6 +58,15 @@ http_file(
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler/2.2.21-RC-376/kotlin-compiler-2.2.21-RC-376-sources.jar",
 )
 
+# ------------------------matching kotlin compiler for kotlin-builder-wasmjs
+
+http_file(
+  name = "kotlin-compiler-for-wasmjs_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler/2.2.20/kotlin-compiler-2.2.20.jar",
+  sha256 = "8546feb440ec2d59e00d475936523fcd3f528e21c7e8eb8a95e6de5044a6d496",
+  downloaded_file_path = "kotlin-compiler-2.2.20.jar"
+)
+
 # ------------------------patched kotlin compiler fork for jvm-inc-builder
 
 http_file(
@@ -482,6 +491,20 @@ http_file(
     downloaded_file_path = "kotlin-stdlib-2.2.0-RC-sources.jar",
     sha256 = "967ad9599254e3a60d96d6c789547cc35c22d770d9c8fb1e3f15fac3b4c3b65d",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.2.0-RC/kotlin-stdlib-2.2.0-RC-sources.jar",
+)
+
+http_file(
+    name = "kotlin-reflect",
+    downloaded_file_path = "kotlin-reflect-2.2.0-RC.jar",
+    sha256 = "b7dbcd4d7206233a2225c151cdbcc0b05edf66be6a0a6bee3a72be7186a5ef6e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-reflect/2.2.0-RC/kotlin-reflect-2.2.0-RC.jar",
+)
+
+http_file(
+    name = "kotlin-reflect-sources",
+    downloaded_file_path = "kotlin-reflect-2.2.0-RC-sources.jar",
+    sha256 = "e9719062ea18b7c10f231ee170306f95acf78c31b4f4592d32e8376ca3779f0b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-reflect/2.2.0-RC/kotlin-reflect-2.2.0-RC-sources.jar",
 )
 
 http_file(

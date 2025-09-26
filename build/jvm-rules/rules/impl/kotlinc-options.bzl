@@ -313,6 +313,17 @@ _KOPTS = {
             True: ["-Xwasm-attach-js-exception"],
         },
     ),
+    "x_wasm_kclass_fqn": struct(
+        flag = "-Xwasm-kclass-fqn",
+        args = dict(
+            default = False,
+            doc = "Enable experimental support for KClass::qualifiedName usage.",
+        ),
+        type = attr.bool,
+        value_to_flag = {
+            True: ["-Xwasm-kclass-fqn"],
+        },
+    ),
     "x_when_guards": struct(
         flag = "-Xwhen-guards",
         args = dict(

@@ -2,7 +2,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
 load("@rules_jvm//:jvm.bzl", "kt_kotlinc_options")
 
 # We set default options for IntelliJ project
-def create_kotlinc_options(name, jvm_target = "21", api_version = "2.2", language_version = "2.2", opt_in = ["com.intellij.openapi.util.IntellijInternalApi"], plugin_options = [], warn = "off", x_allow_kotlin_package = False, x_allow_result_return_type = False, x_allow_unstable_dependencies = False, x_consistent_data_class_copy_visibility = False, x_context_parameters = False, x_context_receivers = False,  x_explicit_api_mode = "disable", x_inline_classes = False, x_jvm_default = "all", x_lambdas = "indy", x_no_call_assertions = False, x_no_param_assertions = False, x_sam_conversions = "indy", x_skip_prerelease_check = False, x_strict_java_nullability_assertions = False, x_wasm_attach_js_exception = False, x_when_guards = False, x_x_language = ["+AllowEagerSupertypeAccessibilityChecks"]):
+def create_kotlinc_options(name, jvm_target = "21", api_version = "2.2", language_version = "2.2", opt_in = ["com.intellij.openapi.util.IntellijInternalApi"], plugin_options = [], warn = "off", x_allow_kotlin_package = False, x_allow_result_return_type = False, x_allow_unstable_dependencies = False, x_consistent_data_class_copy_visibility = False, x_context_parameters = False, x_context_receivers = False,  x_explicit_api_mode = "disable", x_inline_classes = False, x_jvm_default = "all", x_lambdas = "indy", x_no_call_assertions = False, x_no_param_assertions = False, x_sam_conversions = "indy", x_skip_prerelease_check = False, x_strict_java_nullability_assertions = False, x_wasm_attach_js_exception = False, x_wasm_kclass_fqn = False, x_when_guards = False, x_x_language = ["+AllowEagerSupertypeAccessibilityChecks"]):
   kt_kotlinc_options(
     name = name,
     jvm_target = jvm_target,
@@ -28,6 +28,7 @@ def create_kotlinc_options(name, jvm_target = "21", api_version = "2.2", languag
     x_skip_prerelease_check = x_skip_prerelease_check,
     x_strict_java_nullability_assertions = x_strict_java_nullability_assertions,
     x_wasm_attach_js_exception = x_wasm_attach_js_exception,
+    x_wasm_kclass_fqn = x_wasm_kclass_fqn,
     x_when_guards = x_when_guards,
     x_x_language = x_x_language,
   )
