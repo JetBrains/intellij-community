@@ -26,6 +26,7 @@ jvm_library(
     "//libraries/stream",
     "//libraries/fastutil",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/progress/shared:ide-progress",
   ]
 )
 ### auto-generated section `build intellij.platform.codeStyle.impl` end

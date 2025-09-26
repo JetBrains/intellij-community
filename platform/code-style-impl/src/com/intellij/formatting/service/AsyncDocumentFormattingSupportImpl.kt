@@ -9,12 +9,16 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.encoding.EncodingManager
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.FileWriter
@@ -57,15 +61,25 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
         runAsyncFormat(formattingRequest, null)
       }
       else {
-        if (formattingTask.isRunUnderProgress) {
-          this.FormattingProgressTask(formattingRequest)
-            .setCancelText(CodeStyleBundle.message("async.formatting.service.cancel", getName(service)))
-            .queue()
-        }
-        else {
-          ApplicationManager.getApplication().executeOnPooledThread { runAsyncFormat(formattingRequest, null) }
+        GlobalScope.launch(Dispatchers.IO) {
+          runAsyncFormat(formattingRequest, formattingTask.isRunUnderProgress)
         }
       }
+    }
+  }
+
+  private suspend fun runAsyncFormat(formattingRequest: FormattingRequestImpl, runUnderProgress: Boolean) {
+    if (runUnderProgress) {
+      withBackgroundProgress(formattingRequest.context.project,
+                             CodeStyleBundle.message("async.formatting.service.running", getName(service)),
+                             TaskCancellation.cancellable().withButtonText(CodeStyleBundle.message("async.formatting.service.cancel", getName(service)))) {
+        coroutineToIndicator {
+          runAsyncFormat(formattingRequest, it)
+        }
+      }
+    }
+    else {
+      runAsyncFormat(formattingRequest, null)
     }
   }
 
@@ -85,21 +99,6 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     CANCELLED,
     COMPLETED,
     EXPIRED
-  }
-
-  private inner class FormattingProgressTask(private val myRequest: FormattingRequestImpl) : Task.Backgroundable(
-    myRequest.context.project,
-    CodeStyleBundle.message("async.formatting.service.running", getName(service)), true) {
-    override fun run(indicator: ProgressIndicator) {
-      indicator.setIndeterminate(false)
-      indicator.setFraction(0.0)
-      runAsyncFormat(myRequest, indicator)
-      indicator.setFraction(1.0)
-    }
-
-    override fun onCancel() {
-      myRequest.cancel()
-    }
   }
 
   private inner class FormattingRequestImpl(
