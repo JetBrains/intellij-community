@@ -16,12 +16,16 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -122,12 +126,11 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     private val isSync: Boolean
   ) : AsyncFormattingRequest {
     private val initialModificationStamp = document.getModificationStamp()
-    private val taskSemaphore = Semaphore(1)
 
     @Volatile
     private var task: FormattingTask? = null
 
-    private var result: String? = null
+    private var result = CompletableDeferred<String?>()
 
     private val stateRef: AtomicReference<FormattingRequestState> = AtomicReference(
       FormattingRequestState.NOT_STARTED)
@@ -137,7 +140,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       if (formattingTask != null && stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.CANCELLING)) {
         if (formattingTask.cancel()) {
           stateRef.set(FormattingRequestState.CANCELLED)
-          taskSemaphore.release()
+          result.cancel()
           return true
         }
       }
@@ -167,17 +170,9 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       val task = task
       if (task != null && stateRef.compareAndSet(FormattingRequestState.NOT_STARTED, FormattingRequestState.RUNNING)) {
         try {
-          taskSemaphore.acquire()
           launchTask(task)
-          var waitTime: Long = 0
-          while (waitTime < getTimeout(service).seconds * 1000L) {
-            if (taskSemaphore.tryAcquire(RETRY_PERIOD, TimeUnit.MILLISECONDS)) {
-              taskSemaphore.release()
-              break
-            }
-            checkCanceled()
-            yield()
-            waitTime += RETRY_PERIOD
+          val formattedText = withTimeoutOrNull(getTimeout(service).toMillis()) {
+            result.await()
           }
           if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
             FormattingNotificationService.getInstance(_context.project).reportError(
@@ -187,16 +182,16 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
                                       getTimeout(service).seconds.toString()),
               *getTimeoutActions(service, _context))
           }
-          else if (result != null) {
+          else if (formattedText != null) {
             if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-              updateDocument(result!!)
+              updateDocument(formattedText)
             }
             else {
               ApplicationManager.getApplication().invokeLater {
                 CommandProcessor.getInstance().runUndoTransparentAction {
                   try {
                     WriteAction.run<Throwable> {
-                      updateDocument(result!!)
+                      updateDocument(formattedText)
                     }
                   }
                   catch (throwable: Throwable) {
@@ -258,8 +253,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
 
     override fun onTextReady(updatedText: String?) {
       if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
-        result = updatedText
-        taskSemaphore.release()
+        result.complete(updatedText)
       }
     }
 
@@ -269,7 +263,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       displayId: String?
     ) {
       if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
-        taskSemaphore.release()
+        result.complete(null)
         FormattingNotificationService.getInstance(_context.project)
           .reportError(getNotificationGroupId(service), displayId, title, message)
       }
@@ -282,7 +276,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       offset: Int
     ) {
       if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
-        taskSemaphore.release()
+        result.complete(null)
         FormattingNotificationService.getInstance(_context.project)
           .reportErrorAndNavigate(getNotificationGroupId(service), displayId, title, message, _context,
                                   offset)
@@ -302,4 +296,3 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
 }
 
 private const val TEMP_FILE_PREFIX = "ij-format-temp"
-private const val RETRY_PERIOD = 1000L // milliseconds
