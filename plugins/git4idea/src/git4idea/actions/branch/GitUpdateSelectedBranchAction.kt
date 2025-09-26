@@ -29,7 +29,7 @@ class GitUpdateSelectedBranchAction
       val branchName = branch.name
       val updateMethod = GitVcsSettings.getInstance(project).updateMethod.methodName.lowercase(Locale.ROOT)
       description = GitBundle.message("action.Git.Update.Selected.description",
-                                      listOf(branchName),
+                                      listOf(branchName).size,
                                       updateMethod)
 
       val fetchRunning = GitFetchSupport.fetchSupport(project).isFetchRunning
