@@ -15,8 +15,6 @@ import com.intellij.spellchecker.settings.SpellCheckerSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
-import com.intellij.ui.ChooserInterceptor
-import com.intellij.ui.UiInterceptors
 import java.util.function.Consumer
 
 

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class RenameTo extends IntentionAndQuickFixAction implements Iconable, EventTrackingIntentionAction {
 
@@ -35,7 +36,7 @@ public class RenameTo extends IntentionAndQuickFixAction implements Iconable, Ev
   private final TextRange range;
   private final SmartPsiElementPointer<PsiElement> pointer;
   private final SpellcheckerRateTracker tracker;
-  private final SequencedSet<String> suggestions = new LinkedHashSet<>();
+  private volatile List<String> suggestions;
   private SmartPsiElementPointer<PsiElement> namedPointer;
 
   public RenameTo(String typo, TextRange range, PsiElement psi, SpellcheckerRateTracker tracker) {
@@ -103,8 +104,8 @@ public class RenameTo extends IntentionAndQuickFixAction implements Iconable, Ev
     }
   }
 
-  public static @Nls String getFixName(SequencedCollection<String> suggestions) {
-    return suggestions.size() == 1 ?
+  public static @Nls String getFixName(List<String> suggestions) {
+    return (suggestions != null && suggestions.size() == 1) ?
            SpellCheckerBundle.message("rename.to.0", suggestions.getFirst()) :
            SpellCheckerBundle.message("rename.to");
   }
@@ -131,13 +132,14 @@ public class RenameTo extends IntentionAndQuickFixAction implements Iconable, Ev
   }
 
   private void generateSuggestions(String name, PsiElement element) {
-    if (suggestions.isEmpty()) {
+    if (suggestions == null) {
       TextRange range = this.range.shiftLeft(element.getText().indexOf(name));
-      SpellCheckerManager.getInstance(pointer.getProject()).getSuggestions(typo)
+      this.suggestions = SpellCheckerManager.getInstance(pointer.getProject()).getSuggestions(typo)
         .stream()
         .map(suggestion -> range.replace(name, suggestion))
         .filter(suggestion -> RenameUtil.isValidName(element.getProject(), element, suggestion))
-        .forEach(suggestions::add);
+        .distinct()
+        .toList();
     }
   }
 
