@@ -14,7 +14,6 @@ import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.codehaus.stax2.XMLStreamReader2
-import org.codehaus.stax2.typed.TypedXMLStreamException
 import java.io.IOException
 import java.io.InputStream
 import java.text.ParseException
@@ -111,7 +110,7 @@ private fun readRootAttributes(reader: XMLStreamReader2, builder: PluginDescript
             it.toInt()
           }
           catch (e: NumberFormatException) {
-            LOG.error("Cannot parse version: $it'", e)
+            LOG.error("Cannot parse version: '$it'", e)
           }
         }
       }
@@ -559,21 +558,26 @@ private fun readServiceElement(reader: XMLStreamReader2, os: OS?): ServiceElemen
 private fun readProduct(reader: XMLStreamReader2, builder: PluginDescriptorBuilder) {
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
-      PluginXmlConst.PRODUCT_DESCRIPTOR_CODE_ATTR -> builder.productCode = getNullifiedAttributeValue(
-        reader, i)
+      PluginXmlConst.PRODUCT_DESCRIPTOR_CODE_ATTR -> builder.productCode = getNullifiedAttributeValue(reader, i)
       PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_DATE_ATTR -> builder.releaseDate = parseReleaseDate(reader.getAttributeValue(i))
-      PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_VERSION_ATTR -> {
-        try {
-          builder.releaseVersion = reader.getAttributeAsInt(i)
-        }
-        catch (_: TypedXMLStreamException) {
-          builder.releaseVersion = 0
-        }
-      }
+      PluginXmlConst.PRODUCT_DESCRIPTOR_RELEASE_VERSION_ATTR -> builder.releaseVersion = parseIntOrZero(reader.getAttributeValue(i))
       PluginXmlConst.PRODUCT_DESCRIPTOR_OPTIONAL_ATTR -> builder.isLicenseOptional = reader.getAttributeAsBoolean(i)
     }
   }
   reader.skipElement()
+}
+
+// optimization: do not throw/catch IllegalArgumentException multiple times on startup in case of incorrect product version in XML
+private fun parseIntOrZero(value: String?): Int {
+  try {
+    if (value.isNullOrEmpty() || !Character.isDigit(value.codePointAt(0))) {
+      return 0
+    }
+    return Integer.parseInt(value)
+  }
+  catch (_: NumberFormatException) {
+    return 0
+  }
 }
 
 private fun readComponents(reader: XMLStreamReader2, containerDescriptor: ScopedElementsContainerBuilder) {
