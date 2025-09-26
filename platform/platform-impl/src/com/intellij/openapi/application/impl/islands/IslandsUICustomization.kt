@@ -7,7 +7,6 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
@@ -651,13 +650,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
     if (isManyIslandEnabled && isIslandsGradientEnabled) {
       islandsGradientPaint(frame as IdeFrame, getMainBackgroundColor(), ProjectWindowCustomizerService.getInstance(), component, g)
     }
-  }
-
-  override fun configureButtonLook(look: ActionButtonLook, g: Graphics): Graphics? {
-    if (isManyIslandEnabled && isIslandsGradientEnabled && look is SquareStripeButtonLook) {
-      return IdeBackgroundUtil.getOriginalGraphics(g)
-    }
-    return null
   }
 
   override fun transformGraphics(component: JComponent, graphics: Graphics): Graphics {

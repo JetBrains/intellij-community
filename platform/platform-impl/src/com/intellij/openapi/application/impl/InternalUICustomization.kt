@@ -96,8 +96,6 @@ open class InternalUICustomization {
 
   open fun configureTopNavBar(navBar: TopNavBarComponentFacade) {}
 
-  open fun configureButtonLook(look: ActionButtonLook, g: Graphics): Graphics? = null
-
   open fun getEditorToolbarButtonLook(): ActionButtonLook? = null
 
   open fun configureEditorsSplitters(component: EditorsSplitters) {}

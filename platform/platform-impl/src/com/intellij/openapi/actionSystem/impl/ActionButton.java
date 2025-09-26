@@ -8,6 +8,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.*;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -465,9 +466,14 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return KeymapUtil.getFirstKeyboardShortcutText(myAction);
   }
 
+  private final InternalUICustomization myCustomization = InternalUICustomization.getInstance();
+
   @Override
   public void paintComponent(Graphics g) {
     jComponentPaint(g);
+    if (myCustomization != null) {
+      g = myCustomization.preserveGraphics(g);
+    }
     paintButtonLook(g);
   }
 
