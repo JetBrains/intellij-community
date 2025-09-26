@@ -50,7 +50,7 @@ public fun compose(
  * @param config A lambda to configure the underlying [ComposePanel].
  * @param content The Composable content to display.
  */
-@Deprecated("Use the version with 'focusOnClickInside' parameter")
+@Deprecated("Use the version with 'focusOnClickInside' parameter", level = DeprecationLevel.HIDDEN)
 public fun compose(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposePanel(focusOnClickInside = false, config, content)
 
@@ -97,7 +97,7 @@ public fun JewelComposePanel(
  * @param content The Composable content to display.
  */
 @Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
-@Deprecated("Use the version with 'focusOnClickInside' parameter")
+@Deprecated("Use the version with 'focusOnClickInside' parameter", level = DeprecationLevel.HIDDEN)
 public fun JewelComposePanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposePanel(focusOnClickInside = false, config, content)
 
@@ -134,7 +134,7 @@ public fun composeWithoutTheme(
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @Suppress("ktlint:standard:function-naming") // Swing to Compose bridge API
-@Deprecated("Use the version with 'focusOnClickInside' parameter")
+@Deprecated("Use the version with 'focusOnClickInside' parameter", level = DeprecationLevel.HIDDEN)
 public fun composeWithoutTheme(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposeNoThemePanel(focusOnClickInside = false, config, content)
 
@@ -188,7 +188,7 @@ public fun JewelComposeNoThemePanel(
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 @Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
-@Deprecated("Use the version with 'focusOnClickInside' parameter")
+@Deprecated("Use the version with 'focusOnClickInside' parameter", level = DeprecationLevel.HIDDEN)
 public fun JewelComposeNoThemePanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposeNoThemePanel(focusOnClickInside = false, config, content)
 
