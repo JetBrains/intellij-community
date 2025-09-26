@@ -545,6 +545,10 @@ elements:
                     If the namespace is set, it must be associated with the plugin's vendor at the Marketplace. 
                     Plugins developed by JetBrains may use the `jetbrains` namespace.
                     
+                    A namespace must contain only Latin letters, numbers, dashes and underscores. 
+                    It cannot start or end with a dash or underscore, and it cannot contain multiple consecutive dashes or underscores.
+                    Its length is between 5 and 30 characters, inclusive.
+                    
                     If there are multiple [`<content>`](#element:idea-plugin__content) tags in the plugin descriptor, the namespace must be the same for all of them.
             children:
               - element:
