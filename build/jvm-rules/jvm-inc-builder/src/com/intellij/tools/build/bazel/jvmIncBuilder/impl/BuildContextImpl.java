@@ -95,7 +95,7 @@ public class BuildContextImpl implements BuildContext {
       for (String file : parts[2].split(":")) {
         Path path = baseDir.resolve(file).normalize();
         String digest = Objects.requireNonNull(digestsMap.get(file));
-        resourcesMap.put(myPathMapper.toNodeSource(file), digest);
+        resourcesMap.put(myPathMapper.toNodeSource(path), digest);
       }
       if (!resourcesMap.isEmpty()) {
         resources.add(new ResourceGroupImpl(resourcesMap, stripPrefix, addPrefix));
