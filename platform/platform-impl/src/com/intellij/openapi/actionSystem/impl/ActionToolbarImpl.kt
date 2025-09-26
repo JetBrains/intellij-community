@@ -112,6 +112,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   private var myUpdateOnFirstShowJob: Job? = null
 
   private var myUpdatesWithNewButtons = 0
+  private var myForcedUpdatesWithNewButtons = 0
   private var myLastNewButtonActionClass: String? = null
 
   private var myCustomButtonLook: ActionButtonLook? = null
@@ -973,9 +974,11 @@ open class ActionToolbarImpl @JvmOverloads constructor(
           myPlace, ActualActionUiKind.Toolbar(this@ActionToolbarImpl),
           firstTimeFastTrack || isUnitTestMode)
         myLastNewButtonActionClass = null
-        actionsUpdated(forcedActual, actions)
+
+        val forceRebuild = forcedActual || presentationFactory.isNeedRebuild
+        actionsUpdated(forceRebuild, actions)
         if (firstTimeFastTrack) ClientProperty.put(this@ActionToolbarImpl, SUPPRESS_FAST_TRACK, true)
-        reportActionButtonChangedEveryTimeIfNeeded()
+        reportActionButtonChangedEveryTimeIfNeeded(forceRebuild)
       }
       catch (ex: CancellationException) {
         throw ex
@@ -996,18 +999,31 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     }
   }
 
-  private fun reportActionButtonChangedEveryTimeIfNeeded() {
-    if (myUpdatesWithNewButtons < 0) return  // already reported
+  private fun reportActionButtonChangedEveryTimeIfNeeded(forceRebuild: Boolean) {
+    if (myUpdatesWithNewButtons < 0) {
+      return // already reported
+    }
 
     if (myLastNewButtonActionClass == null) {
       myUpdatesWithNewButtons = 0
+      myForcedUpdatesWithNewButtons = 0
       return
     }
-    if (++myUpdatesWithNewButtons < 20) return
-    LOG.error(Throwable("'" + myPlace + "' toolbar creates new components for " + myUpdatesWithNewButtons +
-                        " updates in a row. The latest button is created for '" + myLastNewButtonActionClass + "'." +
-                        " Toolbar action instances must not change on every update", myCreationTrace))
-    myUpdatesWithNewButtons = -1
+
+    myUpdatesWithNewButtons++;
+    if (forceRebuild) {
+      myForcedUpdatesWithNewButtons++;
+    }
+
+    if (myUpdatesWithNewButtons >= 20) {
+      LOG.error(Throwable("'$myPlace' toolbar creates new components for $myUpdatesWithNewButtons updates in a row " +
+                          "(forced updates: $myForcedUpdatesWithNewButtons). " +
+                          "The latest button is created for '$myLastNewButtonActionClass'. " +
+                          "Toolbar action instances must not change on every update",
+                          myCreationTrace))
+      myUpdatesWithNewButtons = -1
+      myForcedUpdatesWithNewButtons = -1
+    }
   }
 
   private fun addLoadingIcon() {
@@ -1038,9 +1054,9 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     updateMinimumButtonSize()
   }
 
-  protected open fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
+  protected open fun actionsUpdated(forceRebuild: Boolean, newVisibleActions: List<AnAction>) {
     myListeners.getMulticaster().actionsUpdated()
-    if (!forced && !presentationFactory.isNeedRebuild) {
+    if (!forceRebuild) {
       if (replaceButtonsForNewActionInstances(newVisibleActions)) return
     }
     myForcedUpdateRequested = false
@@ -1119,7 +1135,9 @@ open class ActionToolbarImpl @JvmOverloads constructor(
           break
         }
       }
-      if (actionButton == null) return false
+      if (actionButton == null) {
+        return false
+      }
 
       if (next === prev && canReuseActionButton(actionButton, nextP)) {
         continue // keep old component untouched
@@ -1129,7 +1147,9 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       pairs.add(Replacement(buttonIndex - 1, next))
     }
 
-    if (pairs.size == newVisibleActions.size) return false // no gain from in-place updates
+    if (pairs.size == newVisibleActions.size) {
+      return false // no gain from in-place updates
+    }
 
     myVisibleActions = newVisibleActions
     for (pair in pairs) {
