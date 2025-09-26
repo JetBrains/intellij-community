@@ -5,6 +5,7 @@ import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.wsl.WslIjentAvailabilityService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
@@ -13,6 +14,8 @@ import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSy
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.lang.management.ManagementFactory
+import kotlin.io.path.Path
+import kotlin.io.path.isSameFileAs
 
 object MultiRoutingFileSystemVmOptionsSetter {
   @VisibleForTesting
@@ -20,14 +23,14 @@ object MultiRoutingFileSystemVmOptionsSetter {
     isEnabled: Boolean,
     forceProductionOptions: Boolean,
     isEnabledByDefault: Boolean = isMultiRoutingFileSystemEnabledForProduct(ApplicationNamesInfo.getInstance().scriptName),
-    getOptionByPrefix: (String) -> String?,
+    getOptionByPrefix: (String) -> List<String>,
   ): Collection<Pair<String, String?>> {
     val changedOptions = mutableListOf<Pair<String, String?>>()
 
     var forceDefaultFs = false
     run {
       val prefix = "-Djava.nio.file.spi.DefaultFileSystemProvider="
-      val actualValue = getOptionByPrefix(prefix)
+      val actualValue = getOptionByPrefix(prefix).firstOrNull()
 
       if (isEnabled) {
         if (actualValue != MultiRoutingFileSystemProvider::class.java.name) {
@@ -44,17 +47,20 @@ object MultiRoutingFileSystemVmOptionsSetter {
 
     //see idea/nativeHelpers/buildTypes/ijent/performance/IJentWslBenchmarkTests.kt:38
     if (!forceProductionOptions && isEnabled && ApplicationManager.getApplication().isUnitTestMode) {
-      val prefix = "-Xbootclasspath/a:out/tests/classes/production/$IJENT_BOOT_CLASSPATH_MODULE"
-      val actualValue = getOptionByPrefix(prefix)
+      val prefix = "-Xbootclasspath/a:"
+      val actualValues = getOptionByPrefix(prefix)
+      val bootModulePath = "out/classes/production/$IJENT_BOOT_CLASSPATH_MODULE"
+      val bootModuleDir = PathManager.getHomeDir().resolve(Path(bootModulePath))
+      val actualValue = actualValues.find { PathManager.getHomeDir().resolve(Path(it)).isSameFileAs(bootModuleDir ) }
 
-      if (actualValue != "") {
-        changedOptions += prefix to ""
+      if (actualValue == null) {
+        changedOptions += prefix to bootModulePath
       }
     }
 
     run {
       val prefix = "-Didea.force.default.filesystem="
-      val actualValue = getOptionByPrefix(prefix)
+      val actualValue = getOptionByPrefix(prefix).firstOrNull()
 
       if (isEnabled) {
         if (actualValue != null && actualValue != "false") {
@@ -70,7 +76,7 @@ object MultiRoutingFileSystemVmOptionsSetter {
 
     run {
       val prefix = "-D$IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY="
-      val valueToSet = when (val actualValue = getOptionByPrefix(prefix)?.toBooleanStrictOrNull()) {
+      val valueToSet = when (val actualValue = getOptionByPrefix(prefix).firstOrNull()?.toBooleanStrictOrNull()) {
         null ->
           if (isEnabled != isEnabledByDefault && changedOptions.isNotEmpty()) isEnabled
           else null
@@ -92,8 +98,8 @@ object MultiRoutingFileSystemVmOptionsSetter {
     val serializedProperties: List<String> = ManagementFactory.getRuntimeMXBean().inputArguments
     val changedOptions = ensureInVmOptionsImpl(isEnabled, false) { prefix ->
       serializedProperties
-        .find { systemProperty -> systemProperty.startsWith(prefix) }
-        ?.removePrefix(prefix)
+        .filter { systemProperty -> systemProperty.startsWith(prefix) }
+        .map { it.removePrefix(prefix) }
     }
 
     for ((prefix, value) in changedOptions) {
