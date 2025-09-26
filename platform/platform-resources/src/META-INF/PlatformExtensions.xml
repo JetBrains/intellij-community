@@ -472,9 +472,6 @@
                         serviceImplementation="com.intellij.codeInsight.hint.LocalHintManager"
                         client="local"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.DefaultPluginUpdateHandler"
-                        serviceInterface="com.intellij.openapi.updateSettings.impl.PluginUpdateHandler"/>
-
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.EditorActionManager"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.TypedAction"

@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.registry.Registry
@@ -22,10 +23,10 @@ interface PluginUpdateHandler {
 
   companion object {
     fun getInstance(): PluginUpdateHandler {
-      if (!Registry.`is`("reworked.plugin.updater", false)) {
-        return DefaultPluginUpdateHandler()
+      if (Registry.`is`("reworked.plugin.updater", false)) {
+        return serviceOrNull<PluginUpdateHandler>() ?: DefaultPluginUpdateHandler
       }
-      return service<PluginUpdateHandler>()
+      return DefaultPluginUpdateHandler
     }
   }
 }

@@ -51,6 +51,7 @@ interface PluginManagerCustomizer {
   @Nls
   fun getAdditionalTitleText(pluginModel: PluginUiModel): String?
 
+  @Nls
   fun getUpdateSourceText(pluginModel: PluginUiModel): String?
 
   fun ensurePluginStatesLoaded()
