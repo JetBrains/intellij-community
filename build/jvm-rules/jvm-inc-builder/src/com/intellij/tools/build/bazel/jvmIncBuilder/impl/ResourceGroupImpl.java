@@ -1,5 +1,7 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
+import com.dynatrace.hash4j.hashing.HashStream64;
+import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.tools.build.bazel.jvmIncBuilder.ResourceGroup;
 import org.jetbrains.jps.dependency.DataReader;
 import org.jetbrains.jps.dependency.GraphDataInput;
@@ -8,7 +10,6 @@ import org.jetbrains.jps.dependency.NodeSource;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 public class ResourceGroupImpl extends SourceSnapshotImpl implements ResourceGroup {
@@ -20,16 +21,23 @@ public class ResourceGroupImpl extends SourceSnapshotImpl implements ResourceGro
     myStripPrefix = normalizePrefix(stripPrefix);
     myAddPrefix = normalizePrefix(addPrefix);
     
-    String prefixDigest = Long.toHexString(Utils.digest(List.of(myStripPrefix, myAddPrefix)));
+    HashStream64 hash = Hashing.xxh3_64().hashStream();
     for (Map.Entry<NodeSource, String> entry : digestSources.entrySet()) {
-      entry.setValue(prefixDigest + ":" + entry.getValue());
+      entry.setValue(Long.toHexString(hash.reset().putString(myStripPrefix).putString(myAddPrefix).putString(entry.getValue()).getAsLong()));
     }
   }
 
   private static String normalizePrefix(String prefix) {
-    prefix = prefix.replace(File.separatorChar, '/');
-    while (prefix.endsWith("/")) {
-      prefix = prefix.substring(0, prefix.length() - 1);
+    if (!prefix.isEmpty()) {
+      prefix = prefix.replace(File.separatorChar, '/');
+
+      int start = 0;
+      while (start < prefix.length() && prefix.charAt(start) == '/') start += 1;
+
+      int end = prefix.length() - 1;
+      while (end > start && prefix.charAt(end) == '/') end -= 1;
+
+      prefix = start <= end? prefix.substring(start, end + 1) : "";
     }
     return prefix;
   }

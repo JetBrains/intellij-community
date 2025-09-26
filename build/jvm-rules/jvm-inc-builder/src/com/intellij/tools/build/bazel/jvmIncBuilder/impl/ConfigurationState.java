@@ -37,13 +37,18 @@ public class ConfigurationState {
     CLFlags.NON_INCREMENTAL,
     CLFlags.JAVA_COUNT,
     CLFlags.TARGET_LABEL,
+
     CLFlags.CP, // processed separately
     CLFlags.OUT,
     CLFlags.ABI_OUT,
+
     CLFlags.WARN,
     CLFlags.X_WASM_ATTACH_JS_EXCEPTION,
     CLFlags.ADD_EXPORT,
-    CLFlags.ADD_READS
+    CLFlags.ADD_READS,
+
+    CLFlags.SRCS,
+    CLFlags.RESOURCES
   );
   
   private final NodeSourcePathMapper myPathMapper;

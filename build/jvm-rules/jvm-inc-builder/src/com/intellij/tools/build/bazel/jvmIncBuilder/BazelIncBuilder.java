@@ -58,7 +58,6 @@ public class BazelIncBuilder {
           ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), context.getResources(), context.getBinaryDependencies(), context.getFlags());
 
           srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), presentState.getSources());
-          resourcesDelta = new ResourcesSnapshotDelta(pastState.getResources(), presentState.getResources());
 
           if (shouldRecompileAll(srcSnapshotDelta) || pastState.getFlagsDigest() != presentState.getFlagsDigest() || pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
             int changedPercent = srcSnapshotDelta.getChangedPercent();
@@ -148,6 +147,10 @@ public class BazelIncBuilder {
               }
             }
           }
+
+          if (!srcSnapshotDelta.isRecompileAll()) {
+            resourcesDelta = new ResourcesSnapshotDelta(pastState.getResources(), presentState.getResources());
+          }
         }
 
         List<CompilerRunner> roundCompilers = collect(map(RunnerRegistry.getRoundCompilers(), f -> f.create(context, storageManager)), new ArrayList<>());
@@ -170,10 +173,10 @@ public class BazelIncBuilder {
           OutputSinkImpl outSink = new OutputSinkImpl(storageManager);
 
           if (isInitialRound) {
-            
+
             // processing resources
             ZipOutputBuilder out = storageManager.getOutputBuilder();
-            if (resourcesDelta == null) {
+            if (resourcesDelta == null || srcSnapshotDelta.isRecompileAll()) {
               // copy everything
               for (ResourceGroup group : context.getResources()) {
                 copyResources(group, context.getPathMapper(), out);
@@ -192,6 +195,15 @@ public class BazelIncBuilder {
                 storageManager.getGraph(), srcSnapshotDelta.getDeleted(), storageManager.getCompositeOutputBuilder(), new ArrayList<>()
               );
               logDeletedPaths(context, cleaned);
+            }
+          }
+          else {
+            if (srcSnapshotDelta.isRecompileAll()) {
+              // After several rounds, the IC logic can decide to recompile everything
+              ZipOutputBuilder out = storageManager.getOutputBuilder();
+              for (ResourceGroup group : context.getResources()) {
+                copyResources(group, context.getPathMapper(), out);
+              }
             }
           }
 
@@ -344,17 +356,17 @@ public class BazelIncBuilder {
 
     String stripPrefix = group.getStripPrefix();
     if (!stripPrefix.isEmpty()) {
-      if (destPath.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, stripPrefix, 0, stripPrefix.length()) && (destPath.length() == stripPrefix.length() || destPath.charAt(stripPrefix.length()) == '/') ) {
-        destPath = destPath.substring(stripPrefix.length());
+      if (destPath.length() > stripPrefix.length() && destPath.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, stripPrefix, 0, stripPrefix.length()) && destPath.charAt(stripPrefix.length()) == '/' ) {
+        destPath = destPath.substring(stripPrefix.length() + 1);
       }
       else {
-        return null;
+        return null; // todo: emit error
       }
     }
 
     String addPrefix = group.getAddPrefix();
     if (!addPrefix.isEmpty()) {
-      destPath = destPath.startsWith("/")? addPrefix + destPath : addPrefix + "/" + destPath;
+      destPath = addPrefix + "/" + destPath;
     }
 
     return destPath;
