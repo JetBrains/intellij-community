@@ -34,9 +34,10 @@
 
     <registryKey key="devkit.compose.desktop.preview" defaultValue="false"
                  restartRequired="true" description="Enables Compose UI previews tool window"/>
-    <toolWindow id="ComposeUIPreview" anchor="right"
-                factoryClass="com.intellij.devkit.compose.preview.ComposePreviewToolWindowFactory"
-                icon="org.jetbrains.idea.devkit.DevKitIcons.ComposeToolWindow"/>
+    <library.toolWindow id="ComposeUIPreview" anchor="right"
+                        factoryClass="com.intellij.devkit.compose.preview.ComposePreviewToolWindowFactory"
+                        icon="org.jetbrains.idea.devkit.DevKitIcons.ComposeToolWindow"
+                        librarySearchClass="com.intellij.devkit.compose.preview.ComposePreviewSearcher"/>
   </extensions>
 
   <actions>
@@ -62,10 +63,14 @@
     <group id="ComposePreviewActions.Title" searchable="false">
       <action id="ComposePreviewRefresh"
               class="com.intellij.devkit.compose.preview.ComposePreviewRefreshAction"
-              icon="AllIcons.General.Refresh"/>
+              icon="AllIcons.General.Refresh">
+        <override-text place="GoToAction"/>
+      </action>
       <action id="ComposePreviewRefreshAuto"
               class="com.intellij.devkit.compose.preview.ComposePreviewRefreshAutoAction"
-              icon="AllIcons.General.RefreshAuto"/>
+              icon="AllIcons.General.RefreshAuto">
+        <override-text place="GoToAction"/>
+      </action>
     </group>
   </actions>
 </idea-plugin>

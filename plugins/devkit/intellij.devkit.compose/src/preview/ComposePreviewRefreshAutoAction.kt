@@ -3,18 +3,31 @@ package com.intellij.devkit.compose.preview
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareToggleAction
 
 internal class ComposePreviewRefreshAutoAction : DumbAwareToggleAction() {
-  private var refresh: Boolean = true
-
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    e.presentation.isEnabledAndVisible = e.project != null
+  }
+
   override fun isSelected(e: AnActionEvent): Boolean {
-    return this.refresh
+    val p = e.project ?: return false
+
+    return p.service<ComposePreviewChangesTracker>().isAutoRefresh()
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    this.refresh = state
+    val p = e.project ?: return
+
+    val tracker = p.service<ComposePreviewChangesTracker>()
+    tracker.setAutoRefresh(state)
+    if (state) {
+      tracker.refresh()
+    }
   }
 }
