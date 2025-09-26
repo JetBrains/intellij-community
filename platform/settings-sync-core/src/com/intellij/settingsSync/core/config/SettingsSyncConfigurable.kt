@@ -6,8 +6,10 @@ package com.intellij.settingsSync.core.config
 import com.intellij.BundleBase
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
+import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -19,6 +21,9 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
@@ -27,11 +32,9 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.settingsSync.core.*
 import com.intellij.settingsSync.core.SettingsSyncBundle.message
 import com.intellij.settingsSync.core.UpdateResult.*
@@ -42,9 +45,10 @@ import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
 import com.intellij.settingsSync.core.communicator.getAvailableSyncProviders
 import com.intellij.settingsSync.core.config.SettingsSyncEnabler.State
 import com.intellij.settingsSync.core.statistics.SettingsSyncEventsStatistics
+import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.InlineBanner
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.components.JBHtmlPane
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
@@ -67,7 +71,6 @@ import java.awt.event.MouseEvent
 import java.util.concurrent.CancellationException
 import javax.swing.*
 import javax.swing.border.Border
-import javax.swing.event.HyperlinkEvent
 
 internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineScope) : BoundConfigurable(message("title.settings.sync")),
                                                                                       SettingsSyncEnabler.Listener,
@@ -86,18 +89,19 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   private var userProviderHolder: UserProviderHolder? = currentUser()
   private lateinit var cellUserComboBox: Cell<ComboBox<UserProviderHolder>>
 
-  private lateinit var syncTypeLabel: JBHtmlPane
+  private lateinit var syncTypeBanner: InlineBanner
   private lateinit var syncConfigPanel: DialogPanel
 
   private val syncEnabler = SettingsSyncEnabler()
   private val enableSyncOption = AtomicProperty<InitSyncType>(InitSyncType.GET_FROM_SERVER)
   private val disableSyncOption = AtomicProperty<DisableSyncType>(DisableSyncType.DISABLE)
   private val remoteSettingsExist = AtomicBooleanProperty(false)
+  private val showRemoveDataErrorPanel = AtomicBooleanProperty(false)
+  private val userAccountChangeEnabled = AtomicBooleanProperty(true)
   private val wasUsedBefore = AtomicBooleanProperty(currentUser() != null)
   private val userAccountListIsNotEmpty = AtomicBooleanProperty(false)
   private val syncPanelHolder = SettingsSyncPanelHolder()
   private val hasMultipleProviders = AtomicBooleanProperty(RemoteCommunicatorHolder.getExternalProviders().isNotEmpty())
-  private var lastRemoveRemoteDataError: String? = null
 
   private val actionRequired = AtomicBooleanProperty(false)
   private lateinit var actionRequiredLabel: JLabel
@@ -140,6 +144,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     configPanel = panel {
       updateUserAccountsList()
       validateCurrentUser()
+      updateRemoveDataState(RemoteDataRemovalState.fromString(SettingsSyncLocalSettings.getInstance().remoteDataRemovalState))
       updateUserAccountLogout(userProviderHolder)
       userComboBoxModel.selectedItem = userProviderHolder
       updateUserComboBoxModel()
@@ -189,7 +194,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         val enableCheckboxCell = checkBox(message("config.button.enable")).applyToComponent {
           iconTextGap = 6
           isSelected = SettingsSyncSettings.getInstance().syncEnabled
-        }.gap(RightGap.SMALL)
+        }.enabledIf(userAccountChangeEnabled).gap(RightGap.SMALL)
         enableCheckbox = enableCheckboxCell.component
         enableCheckbox.addActionListener {
           enableButtonAction()
@@ -240,6 +245,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         }
 
         cellUserComboBox = comboBox(userComboBoxModel, listCellRenderer)
+          .enabledIf(userAccountChangeEnabled)
           .resizableColumn().align(AlignX.FILL)
           .comment("", 50)
         cellUserComboBox.whenItemSelectedFromUi { item ->
@@ -255,36 +261,19 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         @Suppress("DialogTitleCapitalization")
         group(message("enable.dialog.select.what.to.sync")) {
           row {
-            val icon = JLabel(AllIcons.General.BalloonWarning)
-            val textPanel = JBHtmlPane().apply {
-              text = ""
-              isEditable = false
-              isOpaque = false
-              addHyperlinkListener {
-                if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-                  val syncTypeDialog = ChangeSyncTypeDialog(configPanel, enableSyncOption.get())
-                  if (syncTypeDialog.showAndGet()) {
-                    enableSyncOption.set(syncTypeDialog.option)
-                  }
+            syncTypeBanner = InlineBanner("", EditorNotificationPanel.Status.Warning).apply {
+              showCloseButton(false)
+              addAction(message("enable.dialog.change")) {
+                val syncTypeDialog = ChangeSyncTypeDialog(configPanel, enableSyncOption.get())
+                if (syncTypeDialog.showAndGet()) {
+                  enableSyncOption.set(syncTypeDialog.option)
                 }
               }
-            }.also {
-              syncTypeLabel = it
               enableSyncOption.afterChange {
-                updateSyncOptionText()
+                updateSyncTypeBannerText()
               }
             }
-            val panel = RoundedBorderLayoutPanel(
-              hgap = 8,
-              vgap = 0,
-              borderColor = JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR,
-              backgroundColor = JBUI.CurrentTheme.Banner.WARNING_BACKGROUND,
-              borderOffset = 8,
-            ).apply {
-              addToLeft(icon)
-              addToCenter(textPanel)
-            }
-            cell(panel).resizableColumn().align(AlignX.FILL).customize(UnscaledGaps(8))
+            cell(syncTypeBanner).resizableColumn().align(AlignX.FILL).customize(UnscaledGaps(8))
           }.layout(RowLayout.PARENT_GRID).topGap(TopGap.SMALL).visibleIf(remoteSettingsExist)
 
           row {
@@ -362,6 +351,30 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           }
         }.visibleIf(actionRequired)
 
+        row {
+          val errorBanner = InlineBanner(
+            message("sync.remove.data.error.message.title"),
+            EditorNotificationPanel.Status.Error
+          ).apply {
+            showCloseButton(true)
+            setCloseAction { updateRemoveDataState(RemoteDataRemovalState.OK) }
+
+            addAction(message("sync.remove.data.error.message.action.delete")) {
+              selectedUser()?.let { repeatedDisableAndRemoveData(it) }
+            }
+
+            val contactSupportFunction = currentUser()?.providerCode?.let {
+              RemoteCommunicatorHolder.getProvider(it)?.authService?.contactSupportFunction
+            }
+            if (contactSupportFunction != null) {
+              addAction(message("sync.remove.data.error.message.action.support")) {
+                contactSupportFunction()
+              }
+            }
+          }
+          cell(errorBanner).resizableColumn().align(AlignX.FILL).customize(UnscaledGaps(8))
+        }.layout(RowLayout.PARENT_GRID).topGap(TopGap.SMALL).visibleIf(showRemoveDataErrorPanel)
+
       }.visibleIf(userAccountListIsNotEmpty)
 
       // apply necessary changes
@@ -371,12 +384,13 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   }
 
   private fun handleDisableSync() {
-    SettingsSyncSettings.getInstance().syncEnabled = false
     when (disableSyncOption.get()) {
       DisableSyncType.DISABLE_AND_REMOVE_DATA -> {
-        disableAndRemoveData()
-        SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(
-          SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_AND_REMOVED_DATA_FROM_SERVER)
+        currentUser()?.let {
+          disableAndRemoveData(it, true)
+          SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(
+            SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_AND_REMOVED_DATA_FROM_SERVER)
+        }
       }
       DisableSyncType.DISABLE -> {
         SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_ONLY)
@@ -385,6 +399,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_ONLY)
       }
     }
+    SettingsSyncSettings.getInstance().syncEnabled = false
     disableSyncOption.set(DisableSyncType.DISABLE)
     syncStatusChanged()
   }
@@ -392,6 +407,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   private fun enableButtonAction(){
     // enableCheckbox state here has already changed, so we react to it
     if (enableCheckbox.isSelected) {
+      updateRemoveDataState(RemoteDataRemovalState.OK)
       val pendingUserAction = getPendingUserAction()
       if (pendingUserAction != null) {
         refreshActionRequired()
@@ -462,7 +478,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     val disableSyncConfirmed = yesNo(message("disable.active.sync.title"), message("disable.active.sync.message"))
       .yesText(message("disable.dialog.disable.button"))
       .noText(CommonBundle.getCancelButtonText())
-      .guessWindowAndAsk()
+      .ask(configPanel)
     if (disableSyncConfirmed) {
       enableCheckbox.isSelected = false
       disableSyncOption.set(DisableSyncType.DISABLE)
@@ -471,40 +487,69 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     return disableSyncConfirmed
   }
 
-  private fun disableAndRemoveData() {
+  private fun repeatedDisableAndRemoveData(userAccount: UserProviderHolder) {
+    if (currentUser() != userAccount) return
+    val currentState = SettingsSyncLocalSettings.getInstance().remoteDataRemovalState
+    if (currentState != RemoteDataRemovalState.ERROR.toString()) return
+    disableAndRemoveData(userAccount, false)
+  }
+
+  private fun disableAndRemoveData(userAccount: UserProviderHolder, shouldStopSyncing: Boolean) {
     try {
-      val result = runWithModalProgressBlocking(ModalTaskOwner.component(configPanel), message("disable.remove.data.title"), TaskCancellation.cancellable()) {
-        withTimeoutOrNull(60_000) {
-          removeRemoteData()
+      coroutineScope.launch {
+        updateRemoveDataState(RemoteDataRemovalState.IN_PROGRESS)
+        val project: Project? = ProjectManager.getInstanceIfCreated()?.openProjects?.firstOrNull()
+        val result = try {
+          withBackgroundProgress(
+            currentOrDefaultProject(project),
+            message("disable.remove.data.background.progress",
+                    userAccount.toString()),
+            false,
+          ) {
+            if (shouldStopSyncing) {
+              sendRemoveRemoteDataEvent()
+            } else {
+              SettingsSyncBridge.removeRemoteData(userAccount.userData)
+            }
+          }
+        } catch (ex : Exception) {
+          DeleteServerDataResult.Error(ex.toString())
+        }
+        when (result) {
+          is DeleteServerDataResult.Error -> {
+            updateRemoveDataState(RemoteDataRemovalState.ERROR)
+            syncStatusChanged()
+            if (!isConfigPanelVisible()) {
+              val notification = SettingsSyncRemoveDataNotifications.getFailedToDeleteSyncDataNotification(
+                userAccount.toString(),
+                { repeatedDisableAndRemoveData(userAccount) },
+                currentUser()?.providerCode?.let { RemoteCommunicatorHolder.getProvider(it)?.authService?.contactSupportFunction }
+              )
+              Notifications.Bus.notify(notification, project)
+            }
+          }
+          DeleteServerDataResult.Success -> {
+            updateRemoveDataState(RemoteDataRemovalState.OK)
+            syncStatusChanged()
+            if (!isConfigPanelVisible()) {
+              val notification = SettingsSyncRemoveDataNotifications.getSuccessfullyDeletedSyncDataNotification(userAccount.toString())
+              Notifications.Bus.notify(notification, project)
+            }
+          }
         }
       }
-      when (result) {
-        null -> {
-          val timeoutMessage = "Remote data removal timed out after 60 seconds"
-          LOG.warn(timeoutMessage)
-          lastRemoveRemoteDataError = timeoutMessage
-          syncStatusChanged()
-        }
-        is DeleteServerDataResult.Error -> {
-          LOG.warn("Failed to remove server data: ${result.error}")
-          lastRemoveRemoteDataError = result.error
-          syncStatusChanged()
-        }
-        DeleteServerDataResult.Success -> {
-          syncStatusChanged()
-        }
-      }
-    } catch (ex: CancellationException) {
-      LOG.info("Remote data removal was cancelled")
-      throw ex
     } catch (ex: Exception) {
-      LOG.warn("Unexpected error during server data removal: ${ex.message}", ex)
-      lastRemoveRemoteDataError = ex.message
+      updateRemoveDataState(RemoteDataRemovalState.ERROR)
       syncStatusChanged()
+      LOG.warn("Unexpected error during server data removal: ${ex.message}", ex)
     }
   }
 
-  private suspend fun removeRemoteData(): DeleteServerDataResult {
+  private fun isConfigPanelVisible(): Boolean {
+    return ::configPanel.isInitialized && configPanel.isVisible && configPanel.isShowing
+  }
+
+  private suspend fun sendRemoveRemoteDataEvent(): DeleteServerDataResult {
     val result = suspendCancellableCoroutine { continuation ->
       SettingsSyncEvents.getInstance().fireSettingsChanged(
         SyncSettingsEvent.DeleteServerData { deleteResult ->
@@ -515,7 +560,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     return result
   }
 
-  private fun updateSyncOptionText() {
+  private fun updateSyncTypeBannerText() {
     val message = if (enableSyncOption.get() == InitSyncType.GET_FROM_SERVER) {
       message("enable.dialog.get.settings.from.account.text")
     } else if (enableSyncOption.get() == InitSyncType.PUSH_LOCAL) {
@@ -523,17 +568,11 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     } else {
       ""
     }
-    val html = HtmlBuilder().apply {
-      append(HtmlChunk.div().addText(message))
-      append(HtmlChunk.div()
-       .style("margin-top: 5px")
-       .child(HtmlChunk.link("", message("enable.dialog.change")))
-      )
-    }.wrapWithHtmlBody()
-    syncTypeLabel.text = html.toString()
+    syncTypeBanner.setMessage(message)
   }
 
   private fun tryChangeAccount(selectedValue: UserProviderHolder) {
+    updateRemoveDataState(RemoteDataRemovalState.OK)
     when {
       selectedValue == UserProviderHolder.ADD_ACCOUNT -> {
         if (SettingsSyncSettings.getInstance().syncEnabled && !disableCurrentSyncDialog()) {
@@ -648,6 +687,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     with(SettingsSyncLocalSettings.getInstance()) {
       userId = newCurrentUser?.userId
       providerCode = newCurrentUser?.providerCode
+      remoteDataRemovalState = RemoteDataRemovalState.OK.toString()
     }
     userProviderHolder = newCurrentUser
   }
@@ -719,11 +759,6 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     }
     refreshActionRequired()
     if (!enableCheckbox.isSelected) {
-      if (lastRemoveRemoteDataError != null) {
-        cellUserComboBox.comment?.text = message("disable.remove.data.failure", lastRemoveRemoteDataError!!)
-      } else {
-        cellUserComboBox.comment?.text = ""
-      }
       return
     }
     if (SettingsSyncSettings.getInstance().syncEnabled) {
@@ -871,12 +906,41 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     GET_FROM_SERVER
   }
 
-  private enum class DisableSyncType(val value: Int) {
-    DISABLE(1),
-    DISABLE_AND_REMOVE_DATA(2),
-    DONT_DISABLE(0)
+  private enum class DisableSyncType {
+    DISABLE,
+    DISABLE_AND_REMOVE_DATA,
+    DONT_DISABLE
   }
 
+  private enum class RemoteDataRemovalState {
+    OK,
+    IN_PROGRESS, // background progress of data removal is running
+    ERROR; // data removal finished with an error, should show error panel
+
+    companion object {
+      fun fromString(value: String?): RemoteDataRemovalState {
+        return entries.find { it.name == value } ?: OK
+      }
+    }
+  }
+
+  private fun updateRemoveDataState(newState: RemoteDataRemovalState) {
+    SettingsSyncLocalSettings.getInstance().remoteDataRemovalState = newState.toString()
+    when (newState) {
+      RemoteDataRemovalState.OK -> {
+        showRemoveDataErrorPanel.set(false)
+        userAccountChangeEnabled.set(true)
+      }
+      RemoteDataRemovalState.IN_PROGRESS -> {
+        showRemoveDataErrorPanel.set(false)
+        userAccountChangeEnabled.set(false)
+      }
+      RemoteDataRemovalState.ERROR -> {
+        showRemoveDataErrorPanel.set(true)
+        userAccountChangeEnabled.set(true)
+      }
+    }
+  }
 
   private class ChangeSyncTypeDialog(parent: JComponent, var option: InitSyncType) : DialogWrapper(parent, false) {
 
@@ -946,7 +1010,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
               }
             }
             row {
-              text(message("disable.dialog.text", providerName))
+              text(message("disable.dialog.text", ApplicationNamesInfo.getInstance().fullProductName))
             }
             row {
               if (showRemoveDataCheckBox) {

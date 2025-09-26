@@ -45,6 +45,13 @@ interface SettingsSyncAuthService {
   suspend fun login(parentComponent: Component?): SettingsSyncUserData?
 
   /**
+   * Provides a contact support action for this provider.
+   * @return a function that opens the provider's contact support, or null if not supported
+   */
+  val contactSupportFunction: (() -> Unit)?
+    get() = null
+
+  /**
    * Data of the current user. If there's no user, return null
    * This data is used for in the local git repo as well as UI (if necessary)
    */
