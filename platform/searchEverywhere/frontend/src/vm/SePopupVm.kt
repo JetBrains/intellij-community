@@ -26,6 +26,7 @@ import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.psi.PsiManager
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SystemProperties
+import com.intellij.util.asDisposable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -74,11 +75,11 @@ class SePopupVm(
   val previewConfigurationFlow: Flow<SePreviewConfiguration?>
   private val showPreviewSetting = MutableStateFlow(UISettings.getInstance().showPreviewInSearchEverywhere)
 
-  private val previewGenerator =
+  private val previewFetcher =
     if (project == null) null
-    else SearchEverywherePreviewGenerator(project = project, publishPreviewTime = { selectedItem, duration ->
+    else SearchEverywherePreviewFetcher(project = project, publishPreviewTime = { selectedItem, duration ->
       previewTopicPublisher.onPreviewDataReady(project, selectedItem, duration)
-    })
+    }, coroutineScope.asDisposable())
   private val previewTopicPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(PREVIEW_EVENTS)
 
   init {
@@ -154,18 +155,16 @@ class SePopupVm(
       }
     )
 
-    if (PreviewExperiment.isExperimentEnabled && previewGenerator != null) {
+    if (PreviewExperiment.isExperimentEnabled && previewFetcher != null) {
       previewConfigurationFlow = combine(currentTabFlow, showPreviewSetting) { tabVm, previewSetting ->
         tabVm.isPreviewEnabled() to previewSetting
       }.mapLatest { (tabPreviewEnabled, previewSetting) ->
-        previewGenerator.cancelPreview()
-
         if (tabPreviewEnabled) {
-          if (previewSetting) SePreviewConfiguration(previewGenerator.project, this::fetchPreview)
-          else SePreviewConfiguration(previewGenerator.project, null)
+          if (previewSetting) SePreviewConfiguration(previewFetcher.project, this::fetchPreview)
+          else SePreviewConfiguration(previewFetcher.project, null)
         }
         else {
-          SePreviewConfiguration(previewGenerator.project, null)
+          SePreviewConfiguration(previewFetcher.project, null)
         }
       }
     }
@@ -247,7 +246,7 @@ class SePopupVm(
       }
     } ?: return null
 
-    return previewGenerator?.fetchPreview(usages)
+    return previewFetcher?.fetchPreview(usages)
   }
 
   inner class ShowInFindToolWindowAction(private val onShowFindToolWindow: () -> Unit) : DumbAwareAction(IdeBundle.messagePointer("show.in.find.window.button.name"),

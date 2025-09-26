@@ -4,7 +4,7 @@ package com.intellij.platform.searchEverywhere.backend.providers.target
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.ItemWithPresentation
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewGenerator
+import com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewFetcher
 import com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.ide.vfs.rpcId
@@ -92,7 +92,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
     val legacyItem = (item as? SeTargetItem)?.legacyItem ?: return null
 
     val usageInfo = readAction {
-      SearchEverywherePreviewGenerator.findFirstChild(legacyItem, project) {
+      SearchEverywherePreviewFetcher.findFirstChild(legacyItem, project) {
         usagePreviewDisposableList.add(it)
       }
     }
