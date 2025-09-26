@@ -184,7 +184,6 @@ public interface ProjectFileIndex extends FileIndex {
 
   /**
    * Returns libraries used in the project which have {@code fileOrDir} under their classes or source roots.
-   * <strong>Currently this method doesn't search for global libraries.</strong>
    */
   @ApiStatus.Experimental
   @NotNull @Unmodifiable Collection<@NotNull LibraryEntity> findContainingLibraries(@NotNull VirtualFile fileOrDir);
