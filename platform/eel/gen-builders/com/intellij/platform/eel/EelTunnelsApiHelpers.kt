@@ -9,6 +9,7 @@ import com.intellij.platform.eel.EelTunnelsApi.Connection
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.channels.SendChannel
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 

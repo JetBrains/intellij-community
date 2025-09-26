@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.impl.local.getShellFromPasswdRecords
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.readAllBytes
 import com.intellij.platform.eel.provider.utils.sendWholeText
@@ -15,6 +16,7 @@ import com.intellij.platform.tests.eelHelpers.EelHelper
 import com.intellij.platform.tests.eelHelpers.ttyAndExit.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
@@ -271,6 +273,40 @@ class EelLocalExecApiTest {
     finally {
       unmockkStatic(PathEnvironmentVariableUtil::class)
     }
+  }
+
+  @Test
+  fun `test getShellFromPasswdRecords`() {
+    // docker run --rm ubuntu:24.04 getent passwd
+    val records = listOf(
+      "# Comments are allowed",
+      "root:x:0:0:root:/root:/bin/bash",
+      "daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin",
+      "bin:x:2:2:bin:/bin:/usr/sbin/nologin",
+      "sys:x:3:3:sys:/dev:/usr/sbin/nologin",
+      "sync:x:4:65534:sync:/bin:/bin/sync",
+      "games:x:5:60:games:/usr/games:/usr/sbin/nologin",
+      "man:x:6:12:man:/var/cache/man:/usr/sbin/nologin",
+      "lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin",
+      "mail:x:8:8:mail:/var/mail:/usr/sbin/nologin",
+      "news:x:9:9:news:/var/spool/news:/usr/sbin/nologin",
+      "uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin",
+      "proxy:x:13:13:proxy:/bin:/usr/sbin/nologin",
+      "www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin",
+      "backup:x:34:34:backup:/var/backups:/usr/sbin/nologin",
+      "list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin",
+      "irc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin",
+      "_apt:x:42:65534::/nonexistent:/usr/sbin/nologin",
+      "nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin",
+      "ubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash",
+      "# commented_ubuntu:x:1001:1001:Ubuntu:/home/ubuntu:/bin/bash",
+    )
+
+    getShellFromPasswdRecords(records, 0) shouldBe "/bin/bash"
+    getShellFromPasswdRecords(records, 1) shouldBe "/usr/sbin/nologin"
+    getShellFromPasswdRecords(records, 1000) shouldBe "/bin/bash"
+    getShellFromPasswdRecords(records, 1001) shouldBe null
+    getShellFromPasswdRecords(records, 12345) shouldBe null
   }
 
   /**

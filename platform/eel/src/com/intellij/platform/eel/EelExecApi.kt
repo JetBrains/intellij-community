@@ -2,12 +2,15 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
+import java.util.*
 
 /**
  * Methods related to process execution: start a process, collect stdin/stdout/stderr of the process, etc.
@@ -100,10 +103,48 @@ sealed interface EelExecApi {
   }
 
   /**
-   * Gets the same environment variables on the remote machine as the user would get if they run the shell.
+   * Use [environmentVariables] instead.
+   *
+   * This method is still not deprecated only because it has an automatically refreshable cache inside.
+   * In contrast, [environmentVariables] only allows manually invalidating the cache.
    */
   @ApiStatus.Experimental
-  suspend fun fetchLoginShellEnvVariables(): Map<String, String>
+  @ApiStatus.Obsolete
+  suspend fun fetchLoginShellEnvVariables(): Map<String, String> =
+    when (this) {
+      is EelExecPosixApi -> {
+        var now = 0L
+        // The previous implementation used the same timeout, and in the previous implementation it was chosen as a wild guess.
+        val cacheDuration = 10_000_000_000L
+        val expireAt = cacheForObsoleteEnvVarExpireAt.compute(descriptor) { _, expireAt ->
+          now = System.nanoTime()
+          if (expireAt != null && expireAt <= now) expireAt
+          else now + cacheDuration
+        }!!
+        environmentVariables().loginInteractive().onlyActual(expireAt <= now).eelIt().await()
+      }
+      is EelExecWindowsApi -> environmentVariables().eelIt().await()
+    }
+
+  /**
+   * Gets the same environment variables on the remote machine as the user would get.
+   *
+   * See also [EelExecPosixApi.PosixEnvironmentVariablesOptions].
+   */
+  @ApiStatus.Experimental
+  fun environmentVariables(@GeneratedBuilder opts: EnvironmentVariablesOptions): Deferred<Map<String, String>>
+
+  interface EnvironmentVariablesOptions {
+    /**
+     * The implementation MAY cache the environment variables by default because they rarely change in real life.
+     * By setting this value to `true`, the cache will be refreshed, and the result will contain the freshest environment variables.
+     *
+     * Makes sense only for remote Eels (via IJent)
+     * or with such [EelExecPosixApi.PosixEnvironmentVariablesOptions.mode] that invoke a shell.
+     * In other cases this option has no effect.
+     */
+    val onlyActual: Boolean get() = false
+  }
 
   /**
    * Finds executable files by name.
@@ -261,6 +302,55 @@ interface EelExecPosixApi : EelExecApi {
   @ThrowsChecked(ExecuteProcessException::class)
   @ApiStatus.Experimental
   override suspend fun spawnProcess(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelPosixProcess
+
+  @ApiStatus.Experimental
+  override fun environmentVariables(
+    @GeneratedBuilder(PosixEnvironmentVariablesOptions::class) opts: EelExecApi.EnvironmentVariablesOptions,
+  ): Deferred<Map<String, String>>
+
+  interface PosixEnvironmentVariablesOptions : EelExecApi.EnvironmentVariablesOptions {
+    val mode: Mode get() = Mode.LOGIN_NON_INTERACTIVE
+
+    enum class Mode {
+      /**
+       * The fastest way to get environment variables. It doesn't call shell scripts written by users.
+       * At least, the environment variable `PATH` exists, but it may differ from what the user has in their `~/.profile` written.
+       * No guarantee for other environment variables.
+       */
+      MINIMAL,
+
+      /**
+       * This mode executes a shell process supposed to load various profile scripts:
+       * `~/.profile`, `~/.bashrc`, `~/.zshrc`, `/etc/profile` and so on.
+       *
+       * This mode may load not all environment variables, depending on what's written in user's configs
+       * because default `~/.bashrc` files in some distros like Debian and Ubuntu contain strings like `[ -z "$PS1" ] && return`.
+       * Often people put their adjustments at the bottom of the profile file, and therefore their code is not executed in the non-interactive mode.
+       */
+      LOGIN_NON_INTERACTIVE,
+
+      /**
+       *  **Use with caution, avoid when possible.**
+       *
+       * This mode executes a shell process supposed to load various profile scripts:
+       * `~/.profile`, `~/.bashrc`, `~/.zshrc`, `/etc/profile` and so on.
+       *
+       * The implementation launches an interactive shell session, so it reads all environment variables unlike [LOGIN_NON_INTERACTIVE].
+       *
+       * However, it's not conventional to run interactive shells without having an actual user interaction.
+       * And no way for user interaction is provided.
+       *
+       * Here are some real cases reported by our users. They're not exceptional cases but rather usual things.
+       * In these cases this mode led to inability to fetch environment variables or high CPU consumption:
+       * * `ssh-add` in `~/.bashrc` waits for a key passphrase, and the shell process hangs forever, IDE becomes unusable.
+       * * `~/.bashrc` starts `screen` or `tmux`, the shell process hangs forever.
+       * * `~/.bashrc` starts `ssh-agent`, and the operating system quickly becomes polluted with lots of unused SSH agents.
+       * * `~/.bashrc` calls `curl` to write the current weather, news, jokes, etc. CPU consumption grows, IDE works slower.
+       */
+      @EelDelicateApi
+      LOGIN_INTERACTIVE,
+    }
+  }
 }
 
 @ApiStatus.Experimental
@@ -313,3 +403,5 @@ suspend fun EelExecApi.getShell(): Pair<EelPath, String> {
   }
   return Pair(EelPath.parse(shell, descriptor), cmdArg)
 }
+
+private val cacheForObsoleteEnvVarExpireAt = Collections.synchronizedMap(WeakHashMap<EelDescriptor, Long>())

@@ -71,13 +71,14 @@ class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefaul
   override val tunnels: EelTunnelsPosixApi get() = EelLocalTunnelsApiImpl
   override val descriptor: EelDescriptor get() = LocalEelDescriptor
 
-  override val exec: EelExecPosixApi = EelLocalExecPosixApi()
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
 
   override val userInfo: EelUserPosixInfo = run {
     val unix = UnixSystem()
     EelUserPosixInfoImpl(uid = unix.uid.toInt(), gid = unix.gid.toInt(), home = getLocalUserHome())
   }
+
+  override val exec: EelExecPosixApi = EelLocalExecPosixApi(platform, userInfo)
 
   override val fs: LocalEelFileSystemPosixApi = object : PosixNioBasedEelFileSystemApi(nioFs, userInfo) {
     override val descriptor: EelDescriptor get() = LocalEelDescriptor

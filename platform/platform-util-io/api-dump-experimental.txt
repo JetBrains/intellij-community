@@ -51,4 +51,5 @@ com.intellij.execution.process.SelfKiller
 - s:powerShellCommand(java.nio.file.Path,java.util.List):java.lang.ProcessBuilder
 - s:readEnvironment(java.lang.ProcessBuilder,J):com.intellij.openapi.util.Pair
 - s:shellCommand(java.lang.String,java.nio.file.Path,java.util.List):java.lang.ProcessBuilder
+- s:shellCommand(java.lang.String,java.nio.file.Path,Z,java.util.List):java.lang.ProcessBuilder
 - s:winShellCommand(java.nio.file.Path,java.util.List):java.lang.ProcessBuilder

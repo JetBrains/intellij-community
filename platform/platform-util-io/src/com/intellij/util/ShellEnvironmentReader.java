@@ -47,6 +47,14 @@ public final class ShellEnvironmentReader {
    * Optionally, runs the given script with given parameters before reading.
    */
   public static @NotNull ProcessBuilder shellCommand(@Nullable String shell, @Nullable Path shFile, @Nullable List<@NotNull String> args) {
+    return shellCommand(shell, shFile, true, args);
+  }
+
+  /**
+   * Prepares a command for reading the environment from the given shell (or from the user's shell if {@code null}).
+   * Optionally, runs the given script with given parameters before reading.
+   */
+  public static @NotNull ProcessBuilder shellCommand(@Nullable String shell, @Nullable Path shFile, boolean interactive, @Nullable List<@NotNull String> args) {
     if (shell == null) {
       shell = System.getenv("SHELL");
       if (shell == null || shell.isBlank()) throw new IllegalStateException("'SHELL' environment variable is not set");
@@ -65,7 +73,7 @@ public final class ShellEnvironmentReader {
       command.add("-l");
     }
 
-    if (!"fish".equals(name)) {
+    if (interactive && !"fish".equals(name)) {
       // Fish uses a single config file with conditions
       command.add("-i");
     }

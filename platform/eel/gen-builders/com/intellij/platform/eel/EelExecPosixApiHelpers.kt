@@ -8,9 +8,12 @@ import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
 import com.intellij.platform.eel.EelExecApi.InteractionOptions
 import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
+import com.intellij.platform.eel.EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 
 /**
@@ -28,6 +31,13 @@ fun EelExecPosixApi.spawnProcess(
   EelExecPosixApiHelpers.SpawnProcess(
     owner = this,
     exe = exe,
+  )
+
+@GeneratedBuilder.Result
+@ApiStatus.Experimental
+fun EelExecPosixApi.environmentVariables(): EelExecPosixApiHelpers.EnvironmentVariables =
+  EelExecPosixApiHelpers.EnvironmentVariables(
+    owner = this,
   )
 
 @ApiStatus.Experimental
@@ -133,6 +143,56 @@ object EelExecPosixApiHelpers {
           ptyOrStdErrSettings = ptyOrStdErrSettings,
           scope = scope,
           workingDirectory = workingDirectory,
+        )
+      )
+  }
+
+  /**
+   * Create it via [com.intellij.platform.eel.EelExecPosixApi.environmentVariables].
+   */
+  @GeneratedBuilder.Result
+  @ApiStatus.Experimental
+  class EnvironmentVariables(
+    private val owner: EelExecPosixApi,
+  ) : OwnedBuilder<Deferred<Map<String, String>>> {
+    private var mode: Mode = Mode.LOGIN_NON_INTERACTIVE
+
+    private var onlyActual: Boolean = false
+
+    fun mode(arg: Mode): EnvironmentVariables = apply {
+      this.mode = arg
+    }
+
+    fun loginInteractive(): EnvironmentVariables =
+      mode(Mode.LOGIN_INTERACTIVE)
+
+    fun loginNonInteractive(): EnvironmentVariables =
+      mode(Mode.LOGIN_NON_INTERACTIVE)
+
+    fun minimal(): EnvironmentVariables =
+      mode(Mode.MINIMAL)
+
+    /**
+     * The implementation MAY cache the environment variables by default because they rarely change in real life.
+     * By setting this value to `true`, the cache will be refreshed, and the result will contain the freshest environment variables.
+     *
+     * Makes sense only for remote Eels (via IJent)
+     * or with such [EelExecPosixApi.PosixEnvironmentVariablesOptions.mode] that invoke a shell.
+     * In other cases this option has no effect.
+     */
+    fun onlyActual(arg: Boolean): EnvironmentVariables = apply {
+      this.onlyActual = arg
+    }
+
+    /**
+     * Complete the builder and call [com.intellij.platform.eel.EelExecPosixApi.environmentVariables]
+     * with an instance of [com.intellij.platform.eel.EelExecPosixApi.PosixEnvironmentVariablesOptions].
+     */
+    override suspend fun eelIt(): Deferred<Map<String, String>> =
+      owner.environmentVariables(
+        PosixEnvironmentVariablesOptionsImpl(
+          mode = mode,
+          onlyActual = onlyActual,
         )
       )
   }

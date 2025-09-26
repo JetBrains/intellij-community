@@ -19,7 +19,6 @@ import com.intellij.platform.eel.EelExecApi.ExternalCliEntrypoint
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentProcessInfo
-import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.IjentTunnelsPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.testFramework.junit5.TestApplication
@@ -36,10 +35,7 @@ import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.collections.haveSize
 import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.should
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -568,6 +564,8 @@ private class MockIjentExecApi(private val adapter: GeneralCommandLine, private 
   }
 
   override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = mapOf("SHELL" to TEST_SHELL)
+  override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): Deferred<Map<String, String>> =
+    CompletableDeferred(mapOf("SHELL" to TEST_SHELL))
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> = listOf(EelPath.parse("/bin/$binaryName", descriptor))
   override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): ExternalCliEntrypoint {
     throw UnsupportedOperationException()
