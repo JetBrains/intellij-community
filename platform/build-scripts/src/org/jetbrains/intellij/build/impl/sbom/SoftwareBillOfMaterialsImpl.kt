@@ -109,6 +109,8 @@ class SoftwareBillOfMaterialsImpl(
     /**
      * Cannot be enabled by default because the Maven resolver doesn't resolve pom.xml reproducibly, see IJI-1882.
      * It may resolve nothing, hence no metadata like a supplier value, hence sporadic failures of [checkNtiaConformance].
+     *
+     * Also, the full verification is required, see IJI-2119.
      */
     val STRICT_MODE: Boolean = System.getProperty("intellij.build.sbom.strictMode", "false").toBoolean()
   }
@@ -182,6 +184,11 @@ class SoftwareBillOfMaterialsImpl(
     document.specVersion = specVersion
     document.dataLicense = parseLicense(document, SpdxConstants.SPDX_DATA_LICENSE_ID)
     document.setName(name)
+    document.setComment(
+      "This document represents the ongoing effort in providing the complete SBOM for IntelliJ-based IDEs. " +
+      "At the moment, it should be considered a work in progress. " +
+      "The content may lack important details and therefore should not be used to draw any conclusions from it."
+    )
     return document
   }
 
