@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -159,7 +160,7 @@ object IdeStartupWizardCollector : CounterUsagesCollector() {
   )
 
   internal fun logWizardExperimentState() {
-    assert(ConfigImportHelper.isFirstSession())
+    assert(InitialConfigImportState.isFirstSession())
     val isEnabled = IdeStartupExperiment.isWizardExperimentEnabled()
     LOG.info("IDE startup isEnabled = $isEnabled," +
              " IDEStartupKind = ${IdeStartupExperiment.experimentGroupKind}, " +

@@ -112,7 +112,7 @@ public class UpdateCheckerService {
     if (appInfo.isMajorEAP() && current != ChannelStatus.EAP && customization.forceEapUpdateChannelForEapBuilds()) {
       settings.setSelectedChannelStatus(ChannelStatus.EAP);
       LOG.info("channel forced to 'eap'");
-      if (!ConfigImportHelper.isFirstSession()) {
+      if (!InitialConfigImportState.INSTANCE.isFirstSession()) {
         var title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
         var message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
         UpdateChecker.getNotificationGroup()
@@ -122,7 +122,7 @@ public class UpdateCheckerService {
       }
     }
 
-    if (!appInfo.isEAP() && !appInfo.isPreview() && current == ChannelStatus.EAP && ConfigImportHelper.isConfigImported()) {
+    if (!appInfo.isEAP() && !appInfo.isPreview() && current == ChannelStatus.EAP && InitialConfigImportState.INSTANCE.isConfigImported()) {
       settings.setSelectedChannelStatus(ChannelStatus.RELEASE);
       LOG.info("channel set to 'release'");
     }
@@ -322,7 +322,7 @@ public class UpdateCheckerService {
 
   static void deleteOldApplicationDirectories(@Nullable ProgressIndicator indicator) {
     var propertyService = PropertiesComponent.getInstance();
-    if (ConfigImportHelper.isConfigImported()) {
+    if (InitialConfigImportState.INSTANCE.isConfigImported()) {
       var scheduledAt = System.currentTimeMillis() + DAYS.toMillis(OLD_DIRECTORIES_SCAN_DELAY_DAYS);
       LOG.info("scheduling old directories scan after " + DateFormatUtil.formatDateTime(scheduledAt));
       propertyService.setValue(OLD_DIRECTORIES_SCAN_SCHEDULED, Long.toString(scheduledAt));

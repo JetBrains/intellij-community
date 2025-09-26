@@ -80,6 +80,8 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.SpecialConfigFiles.*;
 import static com.intellij.ide.plugins.BundledPluginsState.BUNDLED_PLUGINS_FILENAME;
 import static com.intellij.openapi.application.ImportOldConfigsUsagesCollector.InitialImportScenario.*;
+import static com.intellij.openapi.application.InitialConfigImportStateKt.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY;
+import static com.intellij.openapi.application.InitialConfigImportStateKt.FIRST_SESSION_KEY;
 import static com.intellij.openapi.application.migrations.Localization242Kt.enableL10nIfPluginInstalled;
 import static com.intellij.openapi.application.migrations.PluginMigrationKt.MIGRATION_INSTALLED_PLUGINS_TXT;
 import static com.intellij.platform.ide.bootstrap.SplashManagerKt.hideSplash;
@@ -91,8 +93,6 @@ public final class ConfigImportHelper {
   public static final String CUSTOM_MARKER_FILE_NAME = "migrate.config";
   public static final String FRONTEND_PLUGINS_TO_MIGRATE_DIR_NAME = "frontend-to-migrate";
 
-  private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
-  private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
   private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
   private static final String UPDATE_ONLY_INCOMPATIBLE_PLUGINS_PROPERTY = "idea.config.import.update.incompatible.plugins.only"; // if true, only incompatible will be updated
 
@@ -408,7 +408,7 @@ public final class ConfigImportHelper {
   private static void writeOptionsForRestart(Path newConfigDir) throws IOException {
     var properties = new ArrayList<String>();
     properties.add(FIRST_SESSION_KEY);
-    if (isConfigImported()) {
+    if (InitialConfigImportState.INSTANCE.isConfigImported()) {
       properties.add(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
     }
     new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile(newConfigDir);
@@ -520,14 +520,14 @@ public final class ConfigImportHelper {
 
   /** Returns {@code true} when the IDE is launched for the first time (i.e., there was no config directory). */
   public static boolean isFirstSession() {
-    return Boolean.getBoolean(FIRST_SESSION_KEY);
+    return InitialConfigImportState.INSTANCE.isFirstSession();
   }
 
   /**
    * Checking that the current user is a "new" one (i.e., this is the very first launch of the IDE on this machine).
    */
   public static boolean isNewUser() {
-    return isFirstSession() && !isConfigImported();
+    return InitialConfigImportState.INSTANCE.isNewUser();
   }
 
   public static void setSettingsFilter(@NotNull FileChooserDescriptor descriptor) {
@@ -540,7 +540,7 @@ public final class ConfigImportHelper {
    * Returns {@code true} when the IDE is launched for the first time, and configs were imported from another installation.
    */
   public static boolean isConfigImported() {
-    return Boolean.getBoolean(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
+    return InitialConfigImportState.INSTANCE.isConfigImported();
   }
 
   public static boolean isConfigDirectory(@NotNull Path candidate) {

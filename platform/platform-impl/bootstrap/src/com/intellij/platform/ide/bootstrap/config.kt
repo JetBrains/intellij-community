@@ -5,6 +5,7 @@ import com.intellij.accessibility.enableScreenReaderSupportIfNecessary
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.CustomConfigMigrationOption
+import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -62,7 +63,7 @@ internal suspend fun importConfigIfNeeded(
   log.info("Will import config to directory \"$targetDirectoryToImportConfig\" (exists = ${Files.exists(targetDirectoryToImportConfig)}). Current entries: ${entries?.joinToString(", ") { "\"${it.name}\"" }}.")
   importConfig(args, targetDirectoryToImportConfig, log, appStarterDeferred.await(), euaDocumentDeferred)
 
-  val isNewUser = ConfigImportHelper.isNewUser()
+  val isNewUser = InitialConfigImportState.isNewUser()
   enableNewUi(logDeferred, isNewUser)
   if (isNewUser && isIdeStartupDialogEnabled) {
     log.info("Will enter initial app wizard flow.")
@@ -77,7 +78,7 @@ internal suspend fun importConfigIfNeeded(
 private fun shouldMigrateConfigOnNextRun(args: List<String>): Boolean {
   val command = args.firstOrNull()
   //currently, migration of config will be performed on the next run only for headless commands from remote dev mode only; later we can enable this behavior for all commands
-  val headlessCommands = listOf("cwmHostStatus", "remoteDevStatus", "cwmHost", "invalidateCaches", "remoteDevShowHelp", "openUrlOnClient", "registerBackendLocationForGateway");
+  val headlessCommands = listOf("cwmHostStatus", "remoteDevStatus", "cwmHost", "invalidateCaches", "remoteDevShowHelp", "openUrlOnClient", "registerBackendLocationForGateway")
   return headlessCommands.contains(command)
 }
 

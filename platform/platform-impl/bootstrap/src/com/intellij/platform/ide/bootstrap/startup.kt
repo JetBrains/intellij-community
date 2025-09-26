@@ -344,7 +344,7 @@ fun startApplication(
       val isInitialStart = configImportDeferred.await()
       // appLoaded not only provides starter but also loads app; that's why it is here
       launch {
-        if (ConfigImportHelper.isFirstSession()) {
+        if (InitialConfigImportState.isFirstSession()) {
           IdeStartupWizardCollector.logWizardExperimentState()
         }
       }
