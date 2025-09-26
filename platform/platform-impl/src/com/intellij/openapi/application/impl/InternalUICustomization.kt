@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.toolWindow.StripesUxCustomizer
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.xNext.XNextStripesUxCustomizer
+import com.intellij.ui.BorderPainter
 import com.intellij.ui.JBColor
 import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.impl.JBTabsImpl
@@ -92,6 +93,8 @@ open class InternalUICustomization {
 
   open fun configureMainToolbar(toolbar: MainToolbar) {}
 
+  open fun configureTopNavBar(navBar: TopNavBarComponentFacade) {}
+
   open fun configureButtonLook(look: ActionButtonLook, g: Graphics): Graphics? = null
 
   open fun getEditorToolbarButtonLook(): ActionButtonLook? = null
@@ -161,4 +164,9 @@ open class InternalUICustomization {
   open fun paintTabBorder(g: Graphics, tabPlacement: Int, tabIndex: Int, x: Int, y: Int, w: Int, h: Int, isSelected: Boolean): Boolean = false
 
   open fun getTabLayoutStart(layout: ContentLayout): Int = 0
+}
+
+@ApiStatus.Internal
+interface TopNavBarComponentFacade {
+  var borderPainter: BorderPainter
 }

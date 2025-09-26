@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
+import com.intellij.openapi.application.impl.TopNavBarComponentFacade
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
@@ -426,6 +427,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
+  override fun configureTopNavBar(navBar: TopNavBarComponentFacade) {
+    if (isManyIslandEnabled) {
+      configureMainFrameChildren(navBar as Component, true)
+    }
+  }
+
   private fun configureMainFrame(frame: IdeFrameImpl, install: Boolean) {
     if (install) {
       frame.addWindowListener(frameActiveListener)
@@ -453,6 +460,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
         component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
       }
       is ToolWindowPane -> {
+        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
+      }
+      is TopNavBarComponentFacade -> {
         component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
       }
     }
