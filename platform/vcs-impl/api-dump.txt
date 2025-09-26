@@ -3948,12 +3948,11 @@ a:com.intellij.vcs.commit.ChangeListViewCommitPanel
 - f:getEditedCommit():com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 - f:getIncludedChanges():java.util.List
 - f:getIncludedUnversionedFiles():java.util.List
-- f:getInclusionModel():com.intellij.openapi.vcs.changes.InclusionModel
 - f:select(java.lang.Object):V
 - f:selectFirst(java.util.Collection):V
 - f:setCompletionContext(java.util.List):V
 - f:setEditedCommit(com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation):V
-- f:setInclusionModel(com.intellij.openapi.vcs.changes.InclusionModel):V
+- setInclusionModel(com.intellij.openapi.vcs.changes.InclusionModel):V
 f:com.intellij.vcs.commit.ChangesViewCommitPanel
 - com.intellij.vcs.commit.NonModalCommitPanel
 - com.intellij.vcs.commit.ChangesViewCommitWorkflowUi
@@ -3968,7 +3967,6 @@ f:com.intellij.vcs.commit.ChangesViewCommitPanel
 - getEditedCommit():com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 - getIncludedChanges():java.util.List
 - getIncludedUnversionedFiles():java.util.List
-- getInclusionModel():com.intellij.openapi.vcs.changes.InclusionModel
 - isActive():Z
 - refreshChangesViewBeforeCommit(kotlin.coroutines.Continuation):java.lang.Object
 - select(java.lang.Object):V
@@ -3981,7 +3979,6 @@ com.intellij.vcs.commit.ChangesViewCommitWorkflowUi
 - a:deactivate(Z):V
 - a:endExecution():V
 - a:expand(java.lang.Object):V
-- a:getInclusionModel():com.intellij.openapi.vcs.changes.InclusionModel
 - a:isActive():Z
 - a:refreshChangesViewBeforeCommit(kotlin.coroutines.Continuation):java.lang.Object
 - a:select(java.lang.Object):V
@@ -4088,6 +4085,7 @@ c:com.intellij.vcs.commit.CommitProgressPanel
 - com.intellij.openapi.vcs.changes.InclusionListener
 - com.intellij.vcs.commit.CommitProgressUi
 - <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.vcs.commit.CommitWorkflowUi,com.intellij.ui.EditorTextComponent):V
 - addCommitCheckFailure(com.intellij.vcs.commit.CommitCheckFailure):V
 - p:buildErrorText():java.lang.String
 - clearCommitCheckFailures():V

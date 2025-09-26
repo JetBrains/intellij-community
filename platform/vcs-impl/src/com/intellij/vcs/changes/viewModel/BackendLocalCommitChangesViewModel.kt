@@ -14,20 +14,24 @@ import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import javax.swing.JComponent
 import javax.swing.tree.TreePath
 
 internal class BackendLocalCommitChangesViewModel(private val panel: CommitChangesViewWithToolbarPanel) : BackendCommitChangesViewModel {
   private var commitWorkflowHandler: ChangesViewCommitWorkflowHandler? = null
+  private val _inclusionChanged = MutableSharedFlow<Unit>()
 
-  override var inclusionModel: InclusionModel?
-    get() = panel.changesView.inclusionModel
-    set(value) {
-      panel.changesView.setInclusionModel(value)
-    }
+  override val inclusionChanged = _inclusionChanged.asSharedFlow()
+
+  override fun setInclusionModel(model: InclusionModel?) {
+    panel.changesView.setInclusionModel(model)
+  }
 
   override fun initPanel() {
     panel.initPanel(ModelProvider())
+    panel.changesView.setInclusionListener { _inclusionChanged.tryEmit(Unit) }
   }
 
   override fun setCommitWorkflowHandler(handler: ChangesViewCommitWorkflowHandler?) {
@@ -56,10 +60,6 @@ internal class BackendLocalCommitChangesViewModel(private val panel: CommitChang
 
   override fun resetViewImmediatelyAndRefreshLater() {
     panel.resetViewImmediatelyAndRefreshLater()
-  }
-
-  override fun setInclusionListener(listener: Runnable?) {
-    panel.changesView.setInclusionListener(listener)
   }
 
   override fun setShowCheckboxes(value: Boolean) {

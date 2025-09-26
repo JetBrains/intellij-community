@@ -6,11 +6,14 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import kotlinx.coroutines.flow.SharedFlow
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 // TODO IJPL-173924 cleanup methods returning tree/component
 internal interface BackendCommitChangesViewModel {
+  val inclusionChanged: SharedFlow<Unit>
+
   fun initPanel()
 
   fun setCommitWorkflowHandler(handler: ChangesViewCommitWorkflowHandler?)
@@ -24,8 +27,7 @@ internal interface BackendCommitChangesViewModel {
   fun setGrouping(groupingKey: String)
   fun resetViewImmediatelyAndRefreshLater()
 
-  fun setInclusionListener(listener: Runnable?)
-  var inclusionModel: InclusionModel?
+  fun setInclusionModel(model: InclusionModel?)
   fun setShowCheckboxes(value: Boolean)
 
   fun getDisplayedChanges(): List<Change>

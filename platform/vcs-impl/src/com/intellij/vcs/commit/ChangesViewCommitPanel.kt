@@ -2,7 +2,7 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -16,11 +16,16 @@ import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.util.application
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.VcsDisposable
 import com.intellij.vcs.changes.BackendChangesView
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import kotlin.properties.Delegates.observable
@@ -31,7 +36,7 @@ class ChangesViewCommitPanel internal constructor(
 ) : NonModalCommitPanel(project), ChangesViewCommitWorkflowUi {
   private var isHideToolWindowOnCommit = false
 
-  private val progressPanel = ChangeListViewCommitProgressPanel(project, this, commitMessage.editorField)
+  private val progressPanel = CommitProgressPanel(project, this, commitMessage.editorField)
   private val commitActions = commitActionsPanel.createActions()
   private var rootComponent: JComponent? = null
 
@@ -47,9 +52,9 @@ class ChangesViewCommitPanel internal constructor(
       support.installSearch(commitMessage.editorField, commitMessage.editorField)
     }
 
-    changesView.viewModel.setInclusionListener {
-      WriteIntentReadAction.run { fireInclusionChanged() }
-    }
+    val scope = VcsDisposable.getInstance(project).coroutineScope.childScope("ChangesViewCommitPanel")
+    Disposer.register(this) { scope.cancel() }
+    changesView.viewModel.inclusionChanged.onEach { writeIntentReadAction { fireInclusionChanged() } }.launchIn(scope)
 
     commitActionsPanel.isCommitButtonDefault = {
       !progressPanel.isDumbMode && UIUtil.isFocusAncestor(rootComponent ?: component)
@@ -98,11 +103,9 @@ class ChangesViewCommitPanel internal constructor(
   override fun getIncludedUnversionedFiles(): List<FilePath> =
     changesView.viewModel.getIncludedUnversionedFiles()
 
-  override var inclusionModel: InclusionModel?
-    get() = changesView.viewModel.inclusionModel
-    set(value) {
-      changesView.viewModel.inclusionModel = value
-    }
+  override fun setInclusionModel(model: InclusionModel?) {
+    changesView.viewModel.setInclusionModel(model)
+  }
 
   override val commitProgressUi: CommitProgressUi get() = progressPanel
 
@@ -120,7 +123,6 @@ class ChangesViewCommitPanel internal constructor(
   override fun dispose() {
     super.dispose()
     changesView.viewModel.setShowCheckboxes(false)
-    changesView.viewModel.setInclusionListener(null)
   }
 
   override fun activate(): Boolean {

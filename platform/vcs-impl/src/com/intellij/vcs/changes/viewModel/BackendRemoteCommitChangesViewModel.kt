@@ -11,14 +11,21 @@ import com.intellij.openapi.vcs.changes.LocalChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import javax.swing.JComponent
 
 // TODO IJPL-173924 Propper RPC-based implementation
 internal class BackendRemoteCommitChangesViewModel(private val project: Project) : BackendCommitChangesViewModel {
   private var horizontal: Boolean = true
   private val treeView: ChangesListView by lazy { LocalChangesListView(project) }
+  override val inclusionChanged = MutableSharedFlow<Unit>()
 
-  override var inclusionModel: InclusionModel? = null
+  private val inclusionModel = MutableStateFlow<InclusionModel?>(null)
+
+  override fun setInclusionModel(model: InclusionModel?) {
+    inclusionModel.value = model
+  }
 
   override fun initPanel() {
   }
@@ -45,8 +52,6 @@ internal class BackendRemoteCommitChangesViewModel(private val project: Project)
 
   override fun resetViewImmediatelyAndRefreshLater() {
   }
-
-  override fun setInclusionListener(listener: Runnable?) {}
 
   override fun setShowCheckboxes(value: Boolean) {}
 
