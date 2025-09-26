@@ -10997,9 +10997,24 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/quickfix/kdocMissingDocumentation/simple.kt");
+        @TestMetadata("funWithKDoc.kt")
+        public void testFunWithKDoc() throws Exception {
+            runTest("testData/quickfix/kdocMissingDocumentation/funWithKDoc.kt");
+        }
+
+        @TestMetadata("internalFun.kt")
+        public void testInternalFun() throws Exception {
+            runTest("testData/quickfix/kdocMissingDocumentation/internalFun.kt");
+        }
+
+        @TestMetadata("privateClass.kt")
+        public void testPrivateClass() throws Exception {
+            runTest("testData/quickfix/kdocMissingDocumentation/privateClass.kt");
+        }
+
+        @TestMetadata("publicClass.kt")
+        public void testPublicClass() throws Exception {
+            runTest("testData/quickfix/kdocMissingDocumentation/publicClass.kt");
         }
 
         @TestMetadata("withIndentation.kt")
