@@ -51,7 +51,7 @@ public fun ToolWindow.addComposeTab(
  * @param isCloseable Whether the tab can be closed.
  * @param content The Composable content of the tab.
  */
-@Deprecated("Use the version with 'focusOnClickInside' parameter")
+@Deprecated("Use the version with 'focusOnClickInside' parameter", level = DeprecationLevel.HIDDEN)
 public fun ToolWindow.addComposeTab(
     @TabTitle tabDisplayName: String? = null,
     isLockable: Boolean = true,
