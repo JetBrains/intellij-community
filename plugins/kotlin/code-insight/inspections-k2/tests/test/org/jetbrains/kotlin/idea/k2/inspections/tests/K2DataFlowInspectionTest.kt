@@ -46,6 +46,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testConstantDivisionByZero() = doTest()
     fun testConstantWithDifferentType() = doTest()
     fun testContextParameter() = doTest()
+    fun testContractForNumber() = doTest()
     fun testCustomObjectComparisonK2() = doTest()
     fun testDestructuringInLoop() = doTest()
     fun testDoubleComparison() = doTest()

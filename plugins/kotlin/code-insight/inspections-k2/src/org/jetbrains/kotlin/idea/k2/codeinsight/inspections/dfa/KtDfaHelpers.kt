@@ -51,6 +51,14 @@ internal fun KaType?.toDfType(): DfType {
     return toDfTypeNotNullable()
 }
 
+/**
+ * Convert KaType to DfReferenceType (primitive types are boxed)
+ */
+context(_: KaSession)
+internal fun KaType?.toDfReferenceType(): DfType {
+    return this?.withNullability(true).toDfType().meet(DfTypes.NOT_NULL_OBJECT)
+}
+
 context(_: KaSession)
 private fun KaType.toDfTypeNotNullable(): DfType {
     return when (this) {

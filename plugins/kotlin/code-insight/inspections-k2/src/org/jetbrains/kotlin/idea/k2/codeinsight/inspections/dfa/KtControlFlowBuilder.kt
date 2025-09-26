@@ -364,8 +364,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (kotlinType is KaErrorType || kotlinType is KaTypeParameterType) return DfType.TOP
         val result = if (kotlinType.isMarkedNullable) kotlinType.toDfType()
         else {
-            // makeNullable to convert primitive to boxed
-            val dfType = kotlinType.withNullability(true).toDfType().meet(DfTypes.NOT_NULL_OBJECT)
+            val dfType = kotlinType.toDfReferenceType()
             if (dfType is DfReferenceType) dfType.dropSpecialField() else dfType
         }
         return if (result is DfReferenceType)
