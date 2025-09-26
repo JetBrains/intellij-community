@@ -2708,6 +2708,13 @@ java_library(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "jetbrains-compose-components-ui-tooling-preview-desktop",
+  jar = "@org_jetbrains_compose_components-components-ui-tooling-preview-desktop-1_9_0_http//file",
+  source_jar = "@org_jetbrains_compose_components-components-ui-tooling-preview-desktop-1_9_0_http//file",
+  visibility = ["//visibility:public"]
+)
+
 java_library(
   name = "jetbrains-intellij-deps-eclipse-jgit",
   exports = [

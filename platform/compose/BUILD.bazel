@@ -23,11 +23,13 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
   ],
   exports = [
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
     "//platform/jewel/ide-laf-bridge",
+    "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
   ],
   runtime_deps = [":compose_resources"],
   plugins = ["@lib//:compose-plugin"]
