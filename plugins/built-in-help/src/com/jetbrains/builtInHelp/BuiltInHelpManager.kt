@@ -4,6 +4,7 @@ package com.jetbrains.builtInHelp
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.ide.browsers.WebBrowserManager
+import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.help.HelpManager
@@ -17,7 +18,7 @@ import java.lang.String.valueOf
 import java.net.*
 import java.nio.charset.StandardCharsets
 
-private val LOG = Logger.getInstance(BuiltInHelpManager::class.java)
+val LOG = Logger.getInstance(BuiltInHelpManager::class.java)
 
 class BuiltInHelpManager : HelpManager() {
 
@@ -42,6 +43,7 @@ class BuiltInHelpManager : HelpManager() {
 
     val helpIdToUse = URLEncoder.encode(helpId, StandardCharsets.UTF_8) ?: "top"
     logWillOpenHelpId(helpIdToUse)
+    val locale = LocalizationStateService.getInstance()?.selectedLocale
 
     var activeKeymap: Keymap? = KeymapManagerEx.getInstanceEx().getActiveKeymap()
     if (true == activeKeymap?.canModify())
@@ -64,9 +66,19 @@ class BuiltInHelpManager : HelpManager() {
       }
       else {
 
-        val activeKeymapParam = if (activeKeymap == null) "" else "&keymap=${URLEncoder.encode(activeKeymap.presentableName, StandardCharsets.UTF_8)}"
+        val activeKeymapParam = if (activeKeymap == null) ""
+        else
+          "&keymap=${URLEncoder.encode(activeKeymap.presentableName, StandardCharsets.UTF_8)}"
 
-        "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${
+        //Later we'll add more languages here, for now it's either Chinese or English default
+        val langToUrl = mapOf(
+          "zh" to "zh-cn",
+        )
+
+        val selectedLocale = LocalizationStateService.getInstance()?.selectedLocale
+
+        val langPart = langToUrl[selectedLocale] ?: "en-us"
+        "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/${langPart}/help/?${
           helpIdToUse
         }$activeKeymapParam"
       }
