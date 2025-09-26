@@ -35,6 +35,7 @@ internal val DEVKIT_NEWLY_GENERATED_PROJECT: Key<Boolean> = Key.create("devkit.n
 
 internal class IdePluginModuleBuilder : StarterModuleBuilder() {
 
+  @Suppress("PrivatePropertyName")
   private val PLUGIN_TYPE_KEY: Key<PluginType> = Key.create("ide.plugin.type")
 
   override fun getBuilderId(): String = "idea-plugin"
@@ -227,7 +228,7 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
         groupRow.visible(pluginType == PluginType.PLUGIN)
         artifactRow.visible(pluginType == PluginType.PLUGIN)
 
-        fireStateChanged() // refresh next step depending on plugin type, skip dependencies step for THEME
+        fireStateChanged() // refresh the next step depending on a plugin type, skip dependencies step for THEME
       }
     }
 
