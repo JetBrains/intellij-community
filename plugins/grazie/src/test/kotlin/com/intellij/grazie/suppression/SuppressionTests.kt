@@ -23,7 +23,7 @@ class SuppressionTests: GrazieTestBase() {
   fun `test suppressing grammar inspection doesn't affect style issues`() {
     myFixture.configureByText("A.java", """
         class A {
-          // Show is <STYLE_SUGGESTION descr="American English does not double '-l-' in suffixes">can<caret>celled</STYLE_SUGGESTION> because of an cat
+          // Show is <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.VARIANT_LEXICAL_DIFFERENCES">can<caret>celled</STYLE_SUGGESTION> because of an cat
           @SuppressWarnings("GrazieInspection")
           public static void main() {}
         }
@@ -34,7 +34,7 @@ class SuppressionTests: GrazieTestBase() {
   fun `test suppress style action generates necessary inspection id`() {
     myFixture.configureByText("Class.java", """
       public class Class {
-          // Show is <STYLE_SUGGESTION descr="American English does not double '-l-' in suffixes">can<caret>celled</STYLE_SUGGESTION>
+          // Show is <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.VARIANT_LEXICAL_DIFFERENCES">can<caret>celled</STYLE_SUGGESTION>
           public static void main() {}
       }
     """.trimIndent())
@@ -75,7 +75,7 @@ class SuppressionTests: GrazieTestBase() {
     myFixture.disableInspections(GrazieInspection.Grammar())
     myFixture.configureByText("Class.java", """
       public class Class {
-          // Show is <STYLE_SUGGESTION descr="American English does not double '-l-' in suffixes">can<caret>celled</STYLE_SUGGESTION> because of an cat
+          // Show is <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.VARIANT_LEXICAL_DIFFERENCES">can<caret>celled</STYLE_SUGGESTION> because of an cat
           public static void main() {}
       }
     """.trimIndent())

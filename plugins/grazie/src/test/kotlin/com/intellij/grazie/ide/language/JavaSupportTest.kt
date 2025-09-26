@@ -165,9 +165,6 @@ class JavaSupportTest : GrazieTestBase() {
   }
 
   fun `test no highlighting after fixing an error within the same range`() {
-    GrazieConfig.update {
-      it.withDomainEnabledRules(TextStyleDomain.CodeDocumentation, setOf("LanguageTool.EN.FILE_EXTENSIONS_CASE"))
-    }
     runHighlightTestForFile("ide/language/java/PDF.java")
     myFixture.launchAction(myFixture.findSingleIntention("PDF"))
     myFixture.checkHighlighting()

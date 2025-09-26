@@ -19,6 +19,7 @@ import ai.grazie.rules.tree.Parameter;
 import ai.grazie.rules.tree.Tree;
 import ai.grazie.rules.tree.Tree.ParameterValues;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.grazie.GrazieBundle;
 import com.intellij.grazie.GrazieConfig;
 import com.intellij.grazie.ide.inspection.auto.AutoFix;
@@ -34,6 +35,8 @@ import com.intellij.grazie.text.TextContent.TextDomain;
 import com.intellij.grazie.utils.HighlightingUtil;
 import com.intellij.grazie.utils.Text;
 import com.intellij.grazie.utils.TextStyleDomain;
+import com.intellij.grazie.utils.TextUtilsKt;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -511,16 +514,9 @@ public final class TreeRuleChecker {
   }
 
   private static boolean shouldSuppressByPlace(ai.grazie.rules.Rule rule, TextContent text) {
-    TextDomain domain = text.getDomain();
-    PsiFile file = text.getContainingFile();
-    TextStyle placeStyle =
-      CommitMessage.isCommitMessage(file) ? TextStyle.Commit :
-      domain == TextDomain.DOCUMENTATION ? TextStyle.CodeDocumentation :
-      domain == TextDomain.COMMENTS ? TextStyle.CodeComment :
-      "ChatInput".equals(file.getLanguage().getID()) ? TextStyle.AIPrompt :
-      null;
-
-    return placeStyle != null && placeStyle.disabledRules().contains(rule.globalId());
+    TextStyleDomain domain = getTextDomain(text);
+    if (domain == TextStyleDomain.Other) return false;
+    return domain.getTextStyle().disabledRules().contains(rule.globalId());
   }
 
   private static boolean touchesUnknownFragments(TextContent text, ai.grazie.rules.tree.TextRange range, ai.grazie.rules.Rule rule) {
@@ -555,6 +551,13 @@ public final class TreeRuleChecker {
       super(problem, ideaRule, text);
       this.match = match;
       this.customFixes = customFixes;
+    }
+
+    @Override
+    @SuppressWarnings("HardCodedStringLiteral")
+    public @InspectionMessage @NotNull String getDescriptionTemplate(boolean isOnTheFly) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return match.rule().globalId();
+      return super.getDescriptionTemplate(isOnTheFly);
     }
 
     @Override
