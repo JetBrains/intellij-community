@@ -33,9 +33,9 @@ import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.util.EnvironmentUtil
-import com.intellij.util.containers.Java11Shim
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ShellEnvironmentReader
+import com.intellij.util.containers.Java11Shim
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.system.OS
 import com.jetbrains.JBR
@@ -130,9 +130,9 @@ fun startApplication(
     }
   }
 
-  val initAwtToolkitJob = scheduleInitAwtToolkit(scope, lockSystemDirsJob, busyThread)
+  val initAwtToolkitJob = scheduleInitAwtToolkit(scope = scope, lockSystemDirsJob = lockSystemDirsJob, busyThread = busyThread)
   val initBaseLafJob = scope.launch {
-    initUi(initAwtToolkitJob, isHeadless, scope)
+    initUi(initAwtToolkitJob = initAwtToolkitJob, isHeadless = isHeadless, asyncScope = scope)
   }
 
   var initUiScale: Job? = null
@@ -150,9 +150,9 @@ fun startApplication(
       }
     }
 
-    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(scope, initAwtToolkitJob, initUiScale, appInfoDeferred)
+    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(scope = scope, initAwtToolkitJob = initAwtToolkitJob, initUiScale = initUiScale, appInfoDeferred = appInfoDeferred)
 
-    scheduleShowSplashIfNeeded(scope, lockSystemDirsJob, initUiScale, appInfoDeferred, args)
+    scheduleShowSplashIfNeeded(scope = scope, lockSystemDirsJob = lockSystemDirsJob, initUiScale = initUiScale, appInfoDeferred = appInfoDeferred, args = args)
   }
 
   val initLafJob = scope.launch {
@@ -205,14 +205,29 @@ fun startApplication(
     }
   }
 
-  scheduleLoadSystemLibsAndLogInfoAndInitMacApp(scope, logDeferred, appInfoDeferred, initLafJob, args, mainScope)
+  scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
+    scope = scope,
+    logDeferred = logDeferred,
+    appInfoDeferred = appInfoDeferred,
+    initUiDeferred = initLafJob,
+    args = args,
+    mainScope = mainScope,
+  )
 
   val euaDocumentDeferred = scope.async { loadEuaDocument(appInfoDeferred) }
 
   val configImportDeferred: Deferred<Job?> = scope.async {
     importConfigIfNeeded(
-      scope, isHeadless, configImportNeededDeferred, lockSystemDirsJob, logDeferred, args, customTargetDirectoryToImportConfig, appStarterDeferred,
-      euaDocumentDeferred, initLafJob
+      scope = scope,
+      isHeadless = isHeadless,
+      configImportNeededDeferred = configImportNeededDeferred,
+      lockSystemDirsJob = lockSystemDirsJob,
+      logDeferred = logDeferred,
+      args = args,
+      customTargetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
+      appStarterDeferred = appStarterDeferred,
+      euaDocumentDeferred = euaDocumentDeferred,
+      initLafJob = initLafJob,
     )
   }
 
@@ -230,7 +245,12 @@ fun startApplication(
       }
     }
 
-    PluginManagerCore.scheduleDescriptorLoading(coroutineScope = this, zipPoolDeferred, mainClassLoaderDeferred, logDeferred)
+    PluginManagerCore.scheduleDescriptorLoading(
+      coroutineScope = this,
+      zipPoolDeferred = zipPoolDeferred,
+      mainClassLoaderDeferred = mainClassLoaderDeferred,
+      logDeferred = logDeferred,
+    )
   }
 
   val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
@@ -276,8 +296,16 @@ fun startApplication(
     }
 
     loadApp(
-      app, pluginSetDeferred, appInfoDeferred, euaDocumentDeferred, scope, initLafJob, logDeferred, appRegisteredJob,
-      args = args.filterNot { CommandLineArgs.isKnownArgument(it) }, initEventQueueJob
+      app = app,
+      pluginSetDeferred = pluginSetDeferred,
+      appInfoDeferred = appInfoDeferred,
+      euaDocumentDeferred = euaDocumentDeferred,
+      asyncScope = scope,
+      initLafJob = initLafJob,
+      logDeferred = logDeferred,
+      appRegisteredJob = appRegisteredJob,
+      args = args.filterNot { CommandLineArgs.isKnownArgument(it) },
+      initAwtToolkitAndEventQueueJob = initEventQueueJob,
     )
   }
 
@@ -400,23 +428,25 @@ private suspend fun runPreAppClass(args: List<String>, classBeforeAppProperty: S
   }
 }
 
-private fun configureJavaUtilLogging(scope: CoroutineScope): Job = scope.launch(CoroutineName("console logger configuration")) {
-  val rootLogger = java.util.logging.Logger.getLogger("")
-  if (rootLogger.handlers.isEmpty()) {
-    rootLogger.level = Level.WARNING
-    val consoleHandler = ConsoleHandler()
-    consoleHandler.level = Level.WARNING
-    rootLogger.addHandler(consoleHandler)
+private fun configureJavaUtilLogging(scope: CoroutineScope): Job {
+  return scope.launch(CoroutineName("console logger configuration")) {
+    val rootLogger = java.util.logging.Logger.getLogger("")
+    if (rootLogger.handlers.isEmpty()) {
+      rootLogger.level = Level.WARNING
+      val consoleHandler = ConsoleHandler()
+      consoleHandler.level = Level.WARNING
+      rootLogger.addHandler(consoleHandler)
+    }
   }
 }
 
 private fun checkDirectories(scope: CoroutineScope, lockSystemDirJob: Job): Job = scope.launch {
   lockSystemDirJob.join()
 
-  val homePath = PathManager.getHomePath()
+  val homePath = PathManager.getHomeDir().toString()
   val configPath = PathManager.getConfigDir()
   val systemPath = PathManager.getSystemDir()
-  if (!span("system dirs checking") { checkDirectories(homePath, configPath, systemPath) }) {
+  if (!span("system dirs checking") { checkDirectories(homePath = homePath, configPath = configPath, systemPath = systemPath) }) {
     exitProcess(AppExitCodes.DIR_CHECK_FAILED)
   }
 }
@@ -637,9 +667,9 @@ private fun loadEnvironment(parentJob: Job, log: Logger): Boolean {
     envFuture.complete(env.toImmutableMap())
     return true
   }
-  catch (t: Throwable) {
-    log.warn("can't get shell environment", t)
-    (t as? ExceptionWithAttachments)?.attachments?.forEach { log.warn("${it.path}:\n${it.displayText}") }
+  catch (e: Throwable) {
+    log.warn("can't get shell environment", e)
+    (e as? ExceptionWithAttachments)?.attachments?.forEach { log.warn("${it.path}:\n${it.displayText}") }
     envFuture.complete(emptyMap())
     return false
   }
