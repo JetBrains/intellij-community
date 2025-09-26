@@ -10,12 +10,14 @@ import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import com.intellij.platform.plugins.parser.impl.elements.ContentModuleElement
 import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
+import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibility
 import com.intellij.platform.plugins.testFramework.LoadFromSourceXIncludeLoader
 import com.intellij.platform.plugins.testFramework.loadRawPluginDescriptorInTest
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.NamedFailure
 import com.intellij.testFramework.junit5.groupFailures
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import org.jetbrains.jps.model.JpsProject
@@ -267,7 +269,7 @@ class PluginModelValidator(
     }
     
     for (pluginInfo in allMainModulesOfPlugins) {
-      checkMainModuleUnexpectedElements(pluginInfo.descriptor, pluginInfo.sourceModule, pluginInfo)
+      checkPluginMainDescriptor(pluginInfo.descriptor, pluginInfo.sourceModule, pluginInfo)
       checkContent(
         contentElements = pluginInfo.descriptor.contentModules,
         referencingModuleInfo = pluginInfo,
@@ -277,8 +279,9 @@ class PluginModelValidator(
       checkModuleElements(moduleDescriptor = pluginInfo.descriptor, sourceModule = pluginInfo.sourceModule, pluginInfo.descriptorFile)
     }
 
-    val registeredContentModules = allMainModulesOfPlugins.flatMapTo(HashSet()) { pluginInfo ->
-      pluginInfo.content.mapNotNull { it.name } 
+    val contentModuleToContainingPlugins = HashMap<String, MutableList<ModuleInfo>>()
+    for (pluginInfo in allMainModulesOfPlugins) {
+      pluginInfo.content.groupByTo(contentModuleToContainingPlugins, { it.name!! }, { pluginInfo })
     }
 
     // 3. check dependencies - we are aware about all modules now
@@ -301,7 +304,7 @@ class PluginModelValidator(
         referencingPluginInfo = pluginInfo,
         moduleNameToInfo = moduleNameToInfo,
         sourceModuleNameToFileInfo = sourceModuleNameToFileInfo,
-        registeredContentModules = registeredContentModules,
+        contentModuleToContainingPlugins = contentModuleToContainingPlugins,
         isMainModule = true,
         contentModuleNameFromThisPluginToLoadingRule = moduleNameToLoadingRule,
       )
@@ -325,7 +328,7 @@ class PluginModelValidator(
           referencingPluginInfo = pluginInfo,
           moduleNameToInfo = moduleNameToInfo,
           sourceModuleNameToFileInfo = sourceModuleNameToFileInfo,
-          registeredContentModules = registeredContentModules,
+          contentModuleToContainingPlugins = contentModuleToContainingPlugins,
           isMainModule = false,
           contentModuleNameFromThisPluginToLoadingRule = moduleNameToLoadingRule,
         )
@@ -387,7 +390,7 @@ class PluginModelValidator(
     referencingPluginInfo: ModuleInfo,
     moduleNameToInfo: Map<String, ModuleInfo>,
     sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>,
-    registeredContentModules: Set<String>,
+    contentModuleToContainingPlugins: HashMap<String, MutableList<ModuleInfo>>,
     isMainModule: Boolean,
     contentModuleNameFromThisPluginToLoadingRule: Map<String, ModuleLoadingRule>,
   ) {
@@ -472,8 +475,9 @@ class PluginModelValidator(
             registerError("Module not found: $moduleName")
             continue
           }
-          
-          if (moduleName !in registeredContentModules) {
+
+          val containingPlugins = contentModuleToContainingPlugins[moduleName]
+          if (containingPlugins == null || containingPlugins.isEmpty()) {
             registerError("""
               |Module '$moduleName' is not registered as a content module, but used as a dependency.
               |Either convert it to a content module, or use dependency on the plugin which includes it instead.
@@ -517,6 +521,31 @@ class PluginModelValidator(
           }
           
           referencingModuleInfo.dependencies.add(Reference(moduleName, isPlugin = false, moduleInfo))
+          if (SystemProperties.getBooleanProperty("intellij.plugin.model.check.module.visibility", false)) {
+            when (moduleInfo.descriptor.moduleVisibility) {
+              ModuleVisibility.PRIVATE -> {
+                val differentContainingPlugin = containingPlugins.find { it.pluginId != referencingPluginInfo.pluginId }
+                if (differentContainingPlugin != null) {
+                  registerError("""
+                  |Module '$moduleName' has 'private' (default) visibility in '${differentContainingPlugin.pluginId}' but it is used as a dependency in 
+                  |a plugin '${referencingPluginInfo.pluginId}'.
+                  |Use 'internal' visibility instead by adding 'visibility="internal"' to the root tag of $moduleName.xml.
+                  |""".trimMargin())
+                }
+              }
+              ModuleVisibility.INTERNAL -> {
+                val containingPluginFromAnotherNamespace = containingPlugins.find { it.descriptor.namespace != referencingPluginInfo.descriptor.namespace }
+                if (containingPluginFromAnotherNamespace != null) {
+                  registerError("""
+                  |Module '$moduleName' has 'internal' visibility in '${containingPluginFromAnotherNamespace.pluginId}' with namespace '${containingPluginFromAnotherNamespace.descriptor.namespace}' but it is used as a dependency in 
+                  |a plugin '${referencingPluginInfo.pluginId}' from another namespace '${referencingPluginInfo.descriptor.namespace}'.
+                  |Use 'public' visibility instead by adding 'visibility="public"' to the root tag of $moduleName.xml.
+                """.trimMargin())
+                }
+              }
+              ModuleVisibility.PUBLIC -> {}
+            }
+          }
 
           for (dependsElement in referencingModuleInfo.descriptor.depends) {
             if (dependsElement.configFile?.removePrefix("/META-INF/") == moduleInfo.descriptorFile.fileName.toString()) {
@@ -539,6 +568,7 @@ class PluginModelValidator(
     sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>,
     moduleNameToInfo: MutableMap<String, ModuleInfo>
   ) {
+    val nonPrivateModules = ArrayList<String>()
     for (contentElement in contentElements) {
       fun registerError(message: String, additionalParams: Map<String, Any?> = emptyMap()) {
         reportError(
@@ -574,6 +604,9 @@ class PluginModelValidator(
         registerError("No module descriptor ($moduleDescriptorFileInfo)")
         continue
       }
+      if (moduleDescriptor.moduleVisibility != ModuleVisibility.PRIVATE) {
+        nonPrivateModules.add(moduleName)
+      }
       val moduleInfo = checkModuleFileInfo(moduleDescriptorFileInfo, moduleName, moduleNameToInfo) ?: continue
       referencingModuleInfo.content.add(moduleInfo)
 
@@ -592,6 +625,19 @@ class PluginModelValidator(
 
       checkContentModuleUnexpectedElements(moduleDescriptor, referencingModuleInfo.sourceModule, moduleInfo)
       checkModuleElements(moduleDescriptor, moduleInfo.sourceModule, moduleInfo.descriptorFile)
+    }
+
+    if (nonPrivateModules.isNotEmpty() && referencingModuleInfo.descriptor.namespace == null) {
+      reportError("""
+        |Namespace is required for plugins with non-private content modules. 
+        |However, plugin '${referencingModuleInfo.pluginId}' has ${if (nonPrivateModules.size > 1) "${nonPrivateModules.size} non-private modules" else "a non-private module '${nonPrivateModules.single()}'"},
+        |but doesn't specify 'namespace' attribute in 'content' tag.
+        """.trimMargin(),
+                  referencingModuleInfo.sourceModule,
+                  mapOf(
+                    "referencedDescriptorFile" to referencingModuleInfo.descriptorFile,
+                    "nonPrivateModules" to nonPrivateModules.joinToString(),
+                  ))
     }
   }
 
@@ -664,7 +710,10 @@ class PluginModelValidator(
     }
   }
 
-  private fun checkMainModuleUnexpectedElements(
+  private val namespaceRegex = Regex("^[a-zA-Z0-9]+([_-][a-zA-Z0-9]+)*$")
+  private val namespaceAssociatedWithJetBrainsVendor = "jetbrains"
+
+  private fun checkPluginMainDescriptor(
     pluginDescriptor: RawPluginDescriptor,
     sourceModule: JpsModule,
     moduleInfo: ModuleInfo,
@@ -677,6 +726,31 @@ class PluginModelValidator(
           "referencedDescriptorFile" to moduleInfo.descriptorFile
         )
       )
+    }
+    val namespace = pluginDescriptor.namespace
+    if (namespace != null) {
+      when {
+        pluginDescriptor.vendor == "JetBrains" && namespace != namespaceAssociatedWithJetBrainsVendor -> {
+          reportError("""
+                       |Plugin '${pluginDescriptor.id}' has JetBrains as vendor, but specifies namespace '$namespace' for its content modules which isn't associated with JetBrains at the Marketplace.
+                       |Use namespace="$namespaceAssociatedWithJetBrainsVendor" for JetBrains plugins.
+                       """.trimMargin(),
+                      sourceModule,
+                      mapOf(
+                        "referencedDescriptorFile" to moduleInfo.descriptorFile
+                      )
+          )
+        }
+        !namespaceRegex.matches(namespace) || namespace.length !in 5..30 -> {
+          reportError(
+            "Invalid namespace format: '$namespace'. Namespace must start with a letter or number and can contain letters, numbers, underscores, or hyphens, and must be between 5 and 30 characters long.",
+            sourceModule,
+            mapOf(
+              "referencedDescriptorFile" to moduleInfo.descriptorFile
+            )
+          )
+        }
+      }
     }
   }
 
