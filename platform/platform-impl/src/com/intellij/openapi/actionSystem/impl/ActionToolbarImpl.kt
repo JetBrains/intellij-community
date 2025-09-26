@@ -5,8 +5,10 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.codeWithMe.ClientId
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.UISettings.Companion.setupComponentAntialiasing
 import com.intellij.ide.ui.customization.CustomizationUtil
+import com.intellij.idea.AppMode
 import com.intellij.internal.inspector.UiInspectorActionUtil.collectActionGroupInfo
 import com.intellij.internal.inspector.UiInspectorUtil
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector
@@ -1016,11 +1018,20 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     }
 
     if (myUpdatesWithNewButtons >= 20) {
-      LOG.error(Throwable("'$myPlace' toolbar creates new components for $myUpdatesWithNewButtons updates in a row " +
-                          "(forced updates: $myForcedUpdatesWithNewButtons). " +
-                          "The latest button is created for '$myLastNewButtonActionClass'. " +
-                          "Toolbar action instances must not change on every update",
-                          myCreationTrace))
+      val message = "'$myPlace' toolbar creates new components for $myUpdatesWithNewButtons updates in a row " +
+                    "(forced updates: $myForcedUpdatesWithNewButtons). " +
+                    "The latest button is created for '$myLastNewButtonActionClass'. " +
+                    "Toolbar action instances must not change on every update"
+      if (myForcedUpdatesWithNewButtons < 5 ||
+          ApplicationManager.getApplication().isUnitTestMode ||
+          PluginManagerCore.isRunningFromSources() ||
+          AppMode.isRunningFromDevBuild() ||
+          ApplicationManager.getApplication().isInternal) {
+        LOG.error(Throwable(message, myCreationTrace))
+      }
+      else {
+        LOG.warn(Throwable(message, myCreationTrace))
+      }
       myUpdatesWithNewButtons = -1
       myForcedUpdatesWithNewButtons = -1
     }
