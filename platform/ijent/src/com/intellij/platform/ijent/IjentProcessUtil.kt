@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("IjentProcessUtil")
 
 package com.intellij.platform.ijent
@@ -14,13 +14,16 @@ fun getIjentGrpcArgv(
   additionalEnv: Map<String, String> = mapOf(),
   selfDeleteOnExit: Boolean = false,
   usrBinEnv: String = "/usr/bin/env",
+  tcpConfig: TcpConnectionInfo? = null,
 ): List<String> {
+  val command = if (tcpConfig != null) arrayOf("grpc-socket-server", "--port=${tcpConfig.port}") else arrayOf("grpc-stdio-server")
+  LOG.info("Ijent gRPC command: ${command.joinToString(" ")}")
   return listOfNotNull(
     usrBinEnv,
     *additionalEnv.entries.map2Array { (k, v) -> "$k=$v" },
     // "gdbserver", "0.0.0.0:12345",  // https://sourceware.org/gdb/onlinedocs/gdb/Connecting.html
     remotePathToIjent,
-    "grpc-stdio-server",
+    *command,
     if (selfDeleteOnExit) "--self-delete-on-exit" else null,
   )
 }
