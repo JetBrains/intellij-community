@@ -25,6 +25,7 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:assert_j",
     "@lib//:jetbrains-annotations",
+    "@lib//:hamcrest",
   ]
 )
 ### auto-generated section `build intellij.java.decompiler.engine` end

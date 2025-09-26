@@ -264,4 +264,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
            "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",
            "typeAnnotations/F", "typeAnnotations/Z", "typeAnnotations/P", "typeAnnotations/S", "typeAnnotations/T");
   }
+  @Test public void testAnnotationExtendObjectStaticMethods() { doTest("pkg/TestAnnotationExtendObjectStaticMethods"); }
+  @Test public void testAnnotationExtendObjectClass() { doTest("pkg/TestAnnotationExtendObjectClass"); }
+  @Test public void testAnnotationExtendWildcard() { doTest("pkg/TestAnnotationExtendWildcard"); }
 }
