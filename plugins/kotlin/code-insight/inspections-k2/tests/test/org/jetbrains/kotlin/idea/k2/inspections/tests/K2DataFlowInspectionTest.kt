@@ -55,6 +55,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testExtensionImplicitThis() = doTest()
     fun testFieldAliasing() = doTest()
     fun testForLoop() = doTest()
+    fun testGenericAgainstNumber() = doTest()
     fun testInRange() = doTest()
     fun testInIterable() = doTest()
     fun testIncompleteCode1K2() = doTest()
