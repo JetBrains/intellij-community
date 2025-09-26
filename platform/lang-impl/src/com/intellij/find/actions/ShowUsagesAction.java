@@ -138,7 +138,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   private static final String DIMENSION_SERVICE_KEY = "ShowUsagesActions.dimensionServiceKey";
   private static final String SPLITTER_SERVICE_KEY = "ShowUsagesActions.splitterServiceKey";
   private static final String PREVIEW_PROPERTY_KEY = "ShowUsagesActions.previewPropertyKey";
-  private static final String SHOW_PATH_PROPERTY_KEY = "ShowUsagesActions.showPathPropertyKey";
 
   private static final IJTracer myFindUsagesTracer = TelemetryManager.getInstance().getTracer(FindUsagesScope);
 
@@ -923,7 +922,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     builder.setSouthComponent(extendedInfoContainer);
     JPanel extendedInfoPanel = createExtendedInfo(project, table, contentDisposable);
     extendedInfoContainer.add(extendedInfoPanel, BorderLayout.CENTER);
-    extendedInfoPanel.setVisible(properties.getBoolean(SHOW_PATH_PROPERTY_KEY, true));
 
     KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
     if (shortcut != null) {
@@ -1181,23 +1179,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     showOptionsGroup.setPopup(true);
 
     showOptionsGroup.add(Separator.create(UsageViewBundle.message("show.options.action.group.text")));
-    showOptionsGroup.add(new ToggleAction(UsageViewBundle.message("short.file.path.in.usages.action.text"), null, null) {
-      @Override
-      public boolean isSelected(@NotNull AnActionEvent e) {
-        return properties.getBoolean(SHOW_PATH_PROPERTY_KEY, true);
-      }
-
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.BGT;
-      }
-
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        properties.setValue(SHOW_PATH_PROPERTY_KEY, state, true);
-        extendedInfoPanel.setVisible(state);
-      }
-    });
+    showOptionsGroup.add(actionManager.getAction("UsageGrouping.ShortFilePath"));
     showOptionsGroup.add(actionManager.getAction("UsageGrouping.FileStructure"));
 
     return showOptionsGroup;

@@ -421,6 +421,7 @@ c:com.intellij.usages.UsageViewSettings
 - f:getExportFileName():java.lang.String
 - sf:getInstance():com.intellij.usages.UsageViewSettings
 - f:getPreviewUsagesSplitterProportion():F
+- getShowShortFilePath():Z
 - getState():com.intellij.usages.UsageViewSettings
 - f:isAutoScrollToSource():Z
 - f:isCompactMiddleDirectories():Z
@@ -454,6 +455,7 @@ c:com.intellij.usages.UsageViewSettings
 - f:setPreviewUsagesSplitterProportion(F):V
 - f:setReplacePreviewUsages(Z):V
 - f:setShowModules(Z):V
+- setShowShortFilePath(Z):V
 - f:setSortAlphabetically(Z):V
 f:com.intellij.usages.UsageViewSettings$Companion
 - f:getInstance():com.intellij.usages.UsageViewSettings
