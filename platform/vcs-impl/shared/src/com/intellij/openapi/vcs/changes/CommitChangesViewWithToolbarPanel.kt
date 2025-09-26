@@ -84,6 +84,7 @@ class CommitChangesViewWithToolbarPanel(
       }
     }
 
+    changesView.isShowCheckboxes = true
     changesView.installPopupHandler(
       ActionManager.getInstance().getAction("ChangesViewPopupMenuShared") as ActionGroup
     )

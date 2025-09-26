@@ -46,7 +46,6 @@ class ChangesViewCommitPanel internal constructor(
     changesView.viewModel.setInclusionListener {
       WriteIntentReadAction.run { fireInclusionChanged() }
     }
-    changesView.viewModel.setShowCheckboxes(true)
 
     commitActionsPanel.isCommitButtonDefault = {
       !progressPanel.isDumbMode && UIUtil.isFocusAncestor(rootComponent ?: component)
