@@ -1,12 +1,3 @@
-- name: lib/modules/intellij.platform.ide.nonModalWelcomeScreen.backend.jar
-  contentModules:
-  - name: intellij.platform.ide.nonModalWelcomeScreen.backend
-- name: lib/modules/intellij.platform.ide.nonModalWelcomeScreen.frontend.jar
-  contentModules:
-  - name: intellij.platform.ide.nonModalWelcomeScreen.frontend
-- name: lib/modules/intellij.platform.ide.nonModalWelcomeScreen.jar
-  contentModules:
-  - name: intellij.platform.ide.nonModalWelcomeScreen
 - name: lib/modules/intellij.python.ast.jar
   contentModules:
   - name: intellij.python.ast
