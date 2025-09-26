@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -37,6 +37,7 @@ public final class AddExceptionFromFieldInitializerToConstructorThrowsFix extend
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass == null ||
         containingClass instanceof PsiAnonymousClass ||
+        containingClass instanceof PsiImplicitClass ||
         containingClass.isInterface()) {
       return null;
     }
