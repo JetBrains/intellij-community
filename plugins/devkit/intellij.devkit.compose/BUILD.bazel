@@ -47,6 +47,10 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-provided",
     "@lib//:kotlinc-kotlin-jps-common-provided",
     "//platform/lang-impl",
+    "//uast/uast-common:uast",
+    "//java/openapi:java",
+    "//java/debugger/impl",
+    "//platform/ide-core-impl",
   ],
   runtime_deps = [":compose_resources"],
   plugins = ["@lib//:compose-plugin"]
