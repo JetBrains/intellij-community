@@ -5,6 +5,7 @@ package com.intellij.grazie.text
 import ai.grazie.nlp.tokenizer.Tokenizer
 import ai.grazie.nlp.tokenizer.sentence.StandardSentenceTokenizer
 import ai.grazie.utils.toLinkedSet
+import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorBase
@@ -13,6 +14,7 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.fus.AcceptanceRateTracker
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
+import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieAddExceptionQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieCustomFixWrapper
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
@@ -139,7 +141,10 @@ class CheckerRunner(val text: TextContent) {
       if (isOnTheFly) {
         descriptor.quickFixes = toFixes(problem, descriptor)
       }
-      descriptor
+      ProblemDescriptorWithReporterName(
+        descriptor,
+        if (problem.isStyleLike) GrazieInspection.STYLE_INSPECTION else GrazieInspection.GRAMMAR_INSPECTION
+      )
     }
   }
 
@@ -151,15 +156,11 @@ class CheckerRunner(val text: TextContent) {
                                         @NlsContexts.Tooltip private val tooltip: String
   ): ProblemDescriptorBase(
     psi, psi, descriptionTemplate, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false,
-    rangeInElement, true, onTheFly
+    rangeInElement, true, onTheFly, tooltip
   ) {
     var quickFixes: Array<LocalQuickFix> = LocalQuickFix.EMPTY_ARRAY
 
     override fun getFixes(): Array<LocalQuickFix> = quickFixes
-
-    override fun getTooltipTemplate(): String {
-      return tooltip
-    }
   }
 
   private fun isIgnoredByStrategies(descriptor: TextProblem): Boolean {

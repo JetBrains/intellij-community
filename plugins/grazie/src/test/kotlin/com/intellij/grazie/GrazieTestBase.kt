@@ -10,7 +10,6 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.HunspellDescriptor
 import com.intellij.grazie.spellcheck.GrazieCheckers
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
-import com.intellij.grazie.style.StyleInspection
 import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
@@ -39,8 +38,8 @@ import kotlin.io.path.Path
 
 abstract class GrazieTestBase : BasePlatformTestCase() {
   companion object {
-    val inspectionTools by lazy {
-      arrayOf<LocalInspectionTool>(GrazieInspection(), GrazieSpellCheckingInspection(), StyleInspection())
+    val inspectionTools: Array<LocalInspectionTool> by lazy {
+      arrayOf(GrazieInspection(), GrazieInspection.Grammar(), GrazieInspection.Style(), GrazieSpellCheckingInspection())
     }
 
     /**

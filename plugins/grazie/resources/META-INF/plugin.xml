@@ -51,9 +51,18 @@
     <backgroundPostStartupActivity implementation="com.intellij.grazie.ide.notification.GrazieNotificationComponent"/>
 
     <!-- getDisplayName is overridden in GrazieInspection itself! Placeholder is required to suppress validation. -->
-    <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieInspection"
+    <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieInspectionRunner"
                      implementationClass="com.intellij.grazie.ide.inspection.grammar.GrazieInspection"
+                     level="NON_SWITCHABLE_WARNING" key="grazie.grammar.inspection.grammar.text" language=""/>
+
+    <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieInspection"
+                     implementationClass="com.intellij.grazie.ide.inspection.grammar.GrazieInspection$Grammar"
                      level="GRAMMAR_ERROR" key="grazie.grammar.inspection.grammar.text" language=""/>
+
+    <localInspection groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieStyle"
+                     implementationClass="com.intellij.grazie.ide.inspection.grammar.GrazieInspection$Style"
+                     level="STYLE_SUGGESTION" key="grazie.style.inspection.display.name" language=""
+                     bundle="messages.GrazieBundle"/>
 
     <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true"
                      shortName="LanguageDetectionInspection"
@@ -99,10 +108,6 @@
     <registryKey key="grazie.skip.precommit.checks"
                  defaultValue="true"
                  description="Controls whether expensive linguistic checks should be performed during pre-commit code analysis"/>
-    <localInspection groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieStyle"
-                     implementationClass="com.intellij.grazie.style.StyleInspection"
-                     level="STYLE_SUGGESTION" key="grazie.style.inspection.display.name" language=""
-                     bundle="messages.GrazieBundle"/>
 
     <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Grammar" id="treeRules"
                         order="before languageTool"/>
