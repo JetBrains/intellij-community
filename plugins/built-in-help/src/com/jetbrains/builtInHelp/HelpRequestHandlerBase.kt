@@ -8,6 +8,7 @@ import io.netty.handler.codec.http.HttpHeaders
 import io.netty.handler.codec.http.HttpRequest
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.ide.HttpRequestHandler
+import java.io.IOException
 import kotlin.io.path.Path
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
@@ -23,6 +24,14 @@ abstract class HelpRequestHandlerBase : HttpRequestHandler() {
     return super.isAccessible(request) && request.uri().contains(prefix)
   }
 
+  fun getDefaultLocalePath(): String {
+    return "en-us"
+  }
+
+  fun getRequestLocalePath(request: HttpRequest): String {
+    return request.uri().substringBefore(prefix).substringBeforeLast("/")
+  }
+
   protected fun sendResource(
     resourceName: String,
     resourceLocation: String,
@@ -32,20 +41,45 @@ abstract class HelpRequestHandlerBase : HttpRequestHandler() {
   ): Boolean {
 
     val isImage = resourceLocation.contains("/img/")
+
+    //We don't ship dark images because of storage concerns, yet frontent might still request them and to avoid 404 we provide fallback
     val retrieveName = when (isImage) {
       true -> {
         val base = Path(resourceName)
         val baseName = base.nameWithoutExtension
         """${baseName.substringBeforeLast("_dark")}.${base.extension}"""
       }
+      //For non-images it's just a base name
       else -> resourceName
     }
+
     val resStream = ResourceUtil.getResourceAsStream(
       HelpRequestHandlerBase::class.java.classLoader,
-      if (isImage) "images" else "topics", retrieveName
+      if (isImage) "images" else "${getRequestLocalePath(request)}/topics", retrieveName
     )
+
+    //First try to deliver a topic from the selected locale and fallback to en-us when needed
+    val contentToSend = resStream.use { res ->
+      try {
+        res.readAllBytes()
+      }
+      catch (e: IOException) {
+        LOG.warn(e)
+        //Because of space concerns, images are only shipped for en-us anyway
+        if (!isImage) {
+          ResourceUtil.getResourceAsStream(
+            HelpRequestHandlerBase::class.java.classLoader,
+            "${getDefaultLocalePath()}/topics", retrieveName
+          ).use { res ->
+            res.readAllBytes()
+          }
+        }
+        else null
+      }
+    }
+
     return sendData(
-      resStream?.readAllBytes() ?: throw Exception("$resourceName not found in $resourceLocation via ${request.uri()}"), resourceName,
+      contentToSend ?: throw Exception("$resourceName not found in $resourceLocation via ${request.uri()}"), resourceName,
       request, channel,
       extraHeaders
     )
