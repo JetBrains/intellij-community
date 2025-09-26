@@ -57,11 +57,12 @@ extremely unpractical.
    > [!IMPORTANT]
    > Do not make any changes in the _Transitive dependencies_ dialog — click _Cancel_ when you've found the Skiko
    version to use.
-7. Navigate to the _intellij.platform.jewel.ui_ module
-8. Update the _org.jetbrains.compose.components.components.resources_ and
-   _org.jetbrains.compose.components.components.resources.desktop_ dependencies to the same CMP version with the same
-   procedure as above
-9. Navigate to _intellij.libraries.compose.runtime.desktop_ module and update the _compose-runtime-desktop_ library the same way like with _compose-foundation-desktop_
+7. Navigate to the _intellij.libraries.compose.runtime.desktop_ module and update the _compose-runtime-desktop_ library
+   in the same way as with _compose-foundation-desktop_ (steps 4–5)
+8. Navigate to the _intellij.platform.jewel.ui_ module
+9. Update the _org.jetbrains.compose.components.components.resources_ and
+   _org.jetbrains.compose.components.components.resources.desktop_ dependencies to the same CMP version, with the same
+   procedure as above (steps 4–5)
 10. Now it's time to update the Skiko dependency. Go to the _intellij.libraries.skiko_ module
 11. If the Skiko version currently listed is different from the one CMP requires — which is usually the case — then
     follow the same procedure as above to upgrade Skiko to the required version. Note that the required Skiko version
