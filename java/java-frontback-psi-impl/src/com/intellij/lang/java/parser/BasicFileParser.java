@@ -128,14 +128,14 @@ public class BasicFileParser {
   private void parsePackageStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
 
-    if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
-      PsiBuilder.Marker modList = builder.mark();
+    PsiBuilder.Marker modList = builder.mark();
+    if (builder.getTokenType() != JavaTokenType.PACKAGE_KEYWORD) {
       myParser.getDeclarationParser().parseAnnotations(builder);
-      done(modList, myJavaElementTypeContainer.MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
-      if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
-        statement.rollbackTo();
-        return;
-      }
+    }
+    done(modList, myJavaElementTypeContainer.MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
+    if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
+      statement.rollbackTo();
+      return;
     }
 
     PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false);

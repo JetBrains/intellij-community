@@ -70,7 +70,7 @@ public final class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage
       if (stmt == null) return true;
 
       final PsiModifierList annotations1 = stmt.getAnnotationList();
-      if (annotations1 == null) return true;
+      if (annotations1.getAnnotations().length == 0) return true;
       final PsiAnnotation ann = annotations1.findAnnotation(annotationFQN);
       if (ann == null) return true;
 

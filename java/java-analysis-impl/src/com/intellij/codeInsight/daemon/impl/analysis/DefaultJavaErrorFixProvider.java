@@ -1117,8 +1117,7 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
       return myFactory.createUnwrapArrayInitializerMemberValueAction(error.psi());
     });
     multi(ANNOTATION_NOT_ALLOWED_ON_PACKAGE, error ->
-      List.of(myFactory.createDeleteFix(requireNonNull(error.psi().getAnnotationList()),
-                                        JavaAnalysisBundle.message("intention.text.remove.annotation")),
+      List.of(myFactory.createDeleteFix(error.psi().getAnnotationList(), JavaAnalysisBundle.message("intention.text.remove.annotation")),
               new MoveAnnotationToPackageInfoFileFix(error.psi())));
     fix(ANNOTATION_NOT_ALLOWED_ON_PACKAGE, error ->
       myFactory.createDeleteFix(error.psi(), JavaAnalysisBundle.message("intention.text.remove.annotation")));

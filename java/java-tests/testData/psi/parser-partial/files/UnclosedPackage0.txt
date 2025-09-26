@@ -1,5 +1,7 @@
 PsiJavaFile:UnclosedPackage0.java
   PsiErrorElement:'class' or 'interface' expected
+    PsiModifierList:
+      <empty list>
     PsiKeyword:package('package')
   PsiImportList
     <empty list>

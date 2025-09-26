@@ -104,7 +104,7 @@ public final class JavaErrorKinds {
   public static final Simple<PsiAnnotation> ANNOTATION_NOT_ALLOWED_IN_PERMIT_LIST = error("annotation.not.allowed.in.permit.list");
   public static final Simple<PsiPackageStatement> ANNOTATION_NOT_ALLOWED_ON_PACKAGE =
     error(PsiPackageStatement.class, "annotation.not.allowed.on.package")
-      .withAnchor(statement -> requireNonNull(statement.getAnnotationList()));
+      .withAnchor(PsiPackageStatement::getAnnotationList);
   public static final Simple<PsiReferenceList> ANNOTATION_MEMBER_THROWS_NOT_ALLOWED =
     error(PsiReferenceList.class, "annotation.member.may.not.have.throws.list").withAnchor(list -> requireNonNull(list.getFirstChild()));
   public static final Simple<PsiParameterList> ANNOTATION_MEMBER_MAY_NOT_HAVE_PARAMETERS =
