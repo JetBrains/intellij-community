@@ -9514,8 +9514,8 @@ jvm_import(
 
 jvm_import(
   name = "zip-signer",
-  jar = "@org_jetbrains-marketplace-zip-signer-0_1_38_http//file",
-  source_jar = "@org_jetbrains-marketplace-zip-signer-0_1_38_http//file",
+  jar = "@org_jetbrains-marketplace-zip-signer-0_1_43_http//file",
+  source_jar = "@org_jetbrains-marketplace-zip-signer-0_1_43_http//file",
   visibility = ["//visibility:public"]
 )
 
