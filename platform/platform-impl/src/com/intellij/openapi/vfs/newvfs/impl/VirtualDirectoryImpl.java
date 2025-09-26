@@ -624,7 +624,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         //MAYBE RC: check case-sensitivity is defined? updateCaseSensitivityIfUnknown()?
         ensureChildrenSorted(isCaseSensitive());
       }
-      return cachedChildren( /*putToMemoryCache: */);
+      return cachedChildren();
     }
     return loadAllChildren(requireSorting);
   }
@@ -1007,7 +1007,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   public @NotNull @Unmodifiable List<VirtualFile> getCachedChildren() {
-    return Arrays.asList(cachedChildren(/*putToCache: */));
+    return Arrays.asList(cachedChildren());
   }
 
   @Override
@@ -1031,9 +1031,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     markDirtyRecursivelyInternal();
   }
 
-  // optimization: do not travel up unnecessary
+  // optimization: do not travel up unnecessarily
   private void markDirtyRecursivelyInternal() {
-    for (VirtualFileSystemEntry child : cachedChildren(/*putToCache: */)) {
+    for (VirtualFileSystemEntry child : cachedChildren()) {
       child.markDirtyInternal();
       if (child instanceof VirtualDirectoryImpl) {
         ((VirtualDirectoryImpl)child).markDirtyRecursivelyInternal();
