@@ -72,8 +72,10 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
         runAsyncFormatBlocking(formattingRequest)
       }
       else {
-        GlobalScope.launch(Dispatchers.IO) {
-          runAsyncFormat(formattingRequest)
+        withCurrentThreadCoroutineScopeBlocking {
+          currentThreadCoroutineScope().launch {
+            runAsyncFormat(formattingRequest)
+          }
         }
       }
     }
