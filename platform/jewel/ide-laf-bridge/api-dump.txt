@@ -70,16 +70,16 @@ f:org.jetbrains.jewel.bridge.JewelBridgeException$KeysNotFoundException
 - sf:$stable:I
 - <init>(java.util.List,java.lang.String):V
 f:org.jetbrains.jewel.bridge.JewelComposePanelWrapperKt
-- sf:JewelComposePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- bsf:JewelComposePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - sf:JewelComposePanel(Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - bs:JewelComposePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 - bs:JewelComposePanel$default(Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
-- sf:compose(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- bsf:compose(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - sf:compose(Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - bs:compose$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 - bs:compose$default(Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 f:org.jetbrains.jewel.bridge.ToolWindowExtensionsKt
-- sf:addComposeTab(com.intellij.openapi.wm.ToolWindow,java.lang.String,Z,Z,kotlin.jvm.functions.Function3):V
+- bsf:addComposeTab(com.intellij.openapi.wm.ToolWindow,java.lang.String,Z,Z,kotlin.jvm.functions.Function3):V
 - sf:addComposeTab(com.intellij.openapi.wm.ToolWindow,java.lang.String,Z,Z,Z,kotlin.jvm.functions.Function3):V
 - bs:addComposeTab$default(com.intellij.openapi.wm.ToolWindow,java.lang.String,Z,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
 - bs:addComposeTab$default(com.intellij.openapi.wm.ToolWindow,java.lang.String,Z,Z,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
