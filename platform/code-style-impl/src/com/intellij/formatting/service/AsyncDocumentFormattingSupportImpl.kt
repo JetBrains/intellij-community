@@ -20,23 +20,20 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
 import java.nio.charset.Charset
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Semaphore
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.Volatile
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 @ApiStatus.Internal
@@ -151,7 +148,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       task = formattingTask
     }
 
-    private fun CoroutineScope.launchTask(task: FormattingTask) = launch(if (isSync) EmptyCoroutineContext else Dispatchers.IO) {
+    private fun CoroutineScope.launchTask(task: FormattingTask, coroutineContext: CoroutineContext): Job = launch(coroutineContext) {
       if (task.isRunUnderProgress) {
         withBackgroundProgress(context.project,
                                CodeStyleBundle.message("async.formatting.service.running", getName(service)),
@@ -169,7 +166,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     suspend fun runTask() = coroutineScope {
       val task = task
       if (task != null && stateRef.compareAndSet(FormattingRequestState.NOT_STARTED, FormattingRequestState.RUNNING)) {
-        launchTask(task)
+        launchTask(task, if (isSync) EmptyCoroutineContext else Dispatchers.IO)
         val formattedText = withTimeoutOrNull(getTimeout(service).toMillis()) {
           result.await()
         }
@@ -179,7 +176,8 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
             getTimeoutNotificationDisplayId(service), getName(service),
             CodeStyleBundle.message("async.formatting.service.timeout", getName(service),
                                     getTimeout(service).seconds.toString()),
-            *getTimeoutActions(service, _context))
+            *getTimeoutActions(service, _context)
+          )
         }
         else if (formattedText != null) {
           if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
