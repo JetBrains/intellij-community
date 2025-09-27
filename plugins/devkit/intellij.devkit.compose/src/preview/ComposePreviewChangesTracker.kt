@@ -3,28 +3,20 @@ package com.intellij.devkit.compose.preview
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent
-import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener.TOPIC
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.messages.MessageBusConnection
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.FlowPreview
+import com.intellij.psi.util.PsiModificationTracker
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicInteger
 
 private val manualRefreshCounter = AtomicInteger(0)
@@ -72,7 +64,7 @@ internal class ComposePreviewChangesTracker(val project: Project, val coroutineS
 
   fun startTracking(project: Project, disposable: Disposable, processor: suspend (VirtualFile) -> Unit) {
     coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
-      val changesFlow = observeEditorContentChanges(project, disposable)
+      val changesFlow = observeEditorContentChanges(disposable)
         .debounce(1000L)
         .distinctUntilChanged()
         .filter { isPreviewVisible() }
@@ -113,43 +105,25 @@ internal class ComposePreviewChangesTracker(val project: Project, val coroutineS
         }
       }
 
-      awaitClose {  }
+      awaitClose { }
     }
   }
 
-  private fun observeEditorContentChanges(project: Project, disposable: Disposable): Flow<RefreshSignal> {
+  private fun observeEditorContentChanges(disposable: Disposable): Flow<RefreshSignal> {
     return callbackFlow {
-      var currentEditor: Editor? = null
-      var documentListener: DocumentListener? = null
+      val connection = project.messageBus.connect(disposable)
 
-      // Create message bus connection
-      val connection: MessageBusConnection = project.messageBus.connect(disposable)
+      connection.subscribe(PsiModificationTracker.TOPIC, PsiModificationTracker.Listener {
+        val selectedFile = getSelectedEditorFile()
+        if (selectedFile != null) {
+          val editor = FileEditorManager.getInstance(project).getSelectedEditor(selectedFile)
+          val text = (editor as? TextEditor)?.editor?.document?.text
 
-      // Helper function to remove listeners from the current editor
-      val removeCurrentListeners = {
-        documentListener?.let { listener -> currentEditor?.document?.removeDocumentListener(listener) }
-        documentListener = null
-      }
-
-      // Helper function to add listeners to the new active editor
-      val addListenersToCurrentEditor = { editor: Editor, file: VirtualFile ->
-        // Remove old listeners first
-        removeCurrentListeners()
-
-        currentEditor = editor
-
-        // Create and add a document listener
-        documentListener = object : DocumentListener {
-          override fun documentChanged(event: DocumentEvent) {
-            val text = event.document.text
-            trySend(RefreshSignal(text, file, RefreshReason.CHANGE))
-          }
+          trySend(RefreshSignal(text, selectedFile, RefreshReason.CHANGE))
         }
-        currentEditor!!.document.addDocumentListener(documentListener!!, disposable)
-      }
+      })
 
-      // File editor manager listener for editor selection changes
-      val fileEditorManagerListener = object : FileEditorManagerListener {
+      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
         override fun selectionChanged(event: FileEditorManagerEvent) {
           val newFile = event.newFile
           val newEditor = (event.newEditor as? TextEditor)?.editor ?: return
@@ -157,46 +131,41 @@ internal class ComposePreviewChangesTracker(val project: Project, val coroutineS
           if (newFile != null) {
             val text = newEditor.document.text
             trySend(RefreshSignal(text, newFile, RefreshReason.CHANGE))
-            addListenersToCurrentEditor(newEditor, newFile)
-          }
-          else {
-            // No active editor
-            removeCurrentListeners()
-            currentEditor = null
           }
         }
-      }
+      })
 
-      // Register the file editor manager listener
-      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, fileEditorManagerListener)
-
-      // Initialize with a currently active editor if any
-      val fileEditorManager = FileEditorManager.getInstance(project)
-      val selectedEditor = fileEditorManager.selectedEditor as? TextEditor
-      val selectedFile = fileEditorManager.selectedFiles.firstOrNull()
-
-      if (selectedEditor != null && selectedFile != null) {
+      val selectedFile = withContext(Dispatchers.EDT) { getSelectedEditorFile() }
+      if (selectedFile != null) {
         trySend(RefreshSignal(null, selectedFile, RefreshReason.INITIAL))
-        addListenersToCurrentEditor(selectedEditor.editor, selectedFile)
       }
 
-      connection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      var wasPreviewVisible = withContext(Dispatchers.EDT) { isPreviewVisible() }
+      connection.subscribe(TOPIC, object : ToolWindowManagerListener {
         override fun stateChanged(toolWindowManager: ToolWindowManager) {
-          val fileEditorManager = FileEditorManager.getInstance(project)
-          val selectedEditor = fileEditorManager.selectedEditor as? TextEditor
-          val selectedFile = fileEditorManager.selectedFiles.firstOrNull()
+          val selectedFile = getSelectedEditorFile()
 
-          if (selectedEditor != null && selectedFile != null) {
-            trySend(RefreshSignal(null, selectedFile, RefreshReason.INITIAL))
+          if (selectedFile != null) {
+            val nowVisible = isPreviewVisible()
+            if (wasPreviewVisible != nowVisible) {
+              trySend(RefreshSignal(null, selectedFile, RefreshReason.INITIAL))
+              wasPreviewVisible = nowVisible
+            }
           }
         }
       })
 
       // Handle cleanup when the flow is canceled
       awaitClose {
-        removeCurrentListeners()
         connection.disconnect()
       }
     }
+  }
+
+  private fun getSelectedEditorFile(): VirtualFile? {
+    val fileEditorManager = FileEditorManager.getInstance(project)
+    val selectedEditor = fileEditorManager.selectedEditor as? TextEditor
+    val selectedFile = selectedEditor?.let { fileEditorManager.selectedFiles.firstOrNull() }
+    return selectedFile
   }
 }

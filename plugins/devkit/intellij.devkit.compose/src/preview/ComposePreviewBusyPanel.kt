@@ -70,6 +70,9 @@ internal class ComposePreviewBusyPanel(private val project: Project) : JBPanelWi
 
     busy = paintBusy
     updateBusy()
+
+    revalidate()
+    repaint()
   }
 
   private fun updateBusy() {
@@ -82,21 +85,22 @@ internal class ComposePreviewBusyPanel(private val project: Project) : JBPanelWi
       }
     }
 
-    if (busyIcon != null) {
+    val current = busyIcon
+    if (current != null) {
       if (busy) {
-        busyIcon!!.resume()
+        removeAll()
+        add(current, BorderLayout.CENTER)
+        current.resume()
       }
       else {
-        busyIcon!!.suspend()
+        current.suspend()
         SwingUtilities.invokeLater(Runnable {
           if (busyIcon != null) {
             repaint()
           }
         })
       }
-      if (busyIcon != null) {
-        busyIcon!!.updateLocation(this)
-      }
+      current.updateLocation(this)
     }
   }
 

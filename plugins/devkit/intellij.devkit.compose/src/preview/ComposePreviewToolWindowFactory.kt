@@ -23,6 +23,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.bridge.compose
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
+import javax.swing.JComponent
 
 internal const val TOOLWINDOW_ID = "ComposeUIPreview"
 
@@ -46,8 +47,11 @@ internal class ComposePreviewToolWindowFactory : ToolWindowFactory, DumbAware {
     toolWindow.setTitleActions(titleActionsGroup.getChildren(actionManager).toList())
 
     project.service<ComposePreviewChangesTracker>().startTracking(project, toolWindowContent) { virtualFile ->
-      withContext(Dispatchers.UI) {
+      val oldContent = withContext(Dispatchers.UI) {
+        val current = wrapperPanel.components.firstOrNull()
         wrapperPanel.setPaintBusy(true)
+
+        current as? JComponent
       }
 
       val provider = try {
@@ -60,6 +64,9 @@ internal class ComposePreviewToolWindowFactory : ToolWindowFactory, DumbAware {
       finally {
         withContext(Dispatchers.UI) {
           wrapperPanel.setPaintBusy(false)
+          if (oldContent != null) {
+            wrapperPanel.setContent(oldContent)
+          }
         }
       }
 
