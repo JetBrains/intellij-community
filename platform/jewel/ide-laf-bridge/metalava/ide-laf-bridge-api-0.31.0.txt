@@ -1,0 +1,198 @@
+// Signature format: 4.0
+package org.jetbrains.jewel.bridge {
+
+  public final class BridgeIconDataKt {
+    method public static org.jetbrains.jewel.foundation.theme.ThemeIconData readFromLaF(org.jetbrains.jewel.foundation.theme.ThemeIconData.Companion);
+  }
+
+  public final class BridgeResourceResolverKt {
+    method @Deprecated public static org.jetbrains.jewel.ui.painter.ResourcePainterProvider bridgePainterProvider(String path);
+    method @Deprecated public static org.jetbrains.jewel.ui.painter.ResourcePainterProvider bridgePainterProvider(org.jetbrains.jewel.ui.icon.IconKey iconKey);
+  }
+
+  public final class BridgeTypography implements org.jetbrains.jewel.ui.Typography {
+    method @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle getConsoleTextStyle();
+    method @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle getEditorTextStyle();
+    method @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle getH0TextStyle();
+    method @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle getH1TextStyle();
+    method @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle getH2TextStyle();
+    method @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle getH3TextStyle();
+    method @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle getH4TextStyle();
+    method @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle getLabelTextStyle();
+    method @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle getMedium();
+    method @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle getRegular();
+    method @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle getSmall();
+    property @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle consoleTextStyle;
+    property @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle editorTextStyle;
+    property @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle h0TextStyle;
+    property @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle h1TextStyle;
+    property @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle h2TextStyle;
+    property @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle h3TextStyle;
+    property @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle h4TextStyle;
+    property public androidx.compose.ui.unit.TextUnit labelTextSize;
+    property @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle labelTextStyle;
+    property @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle medium;
+    property @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle regular;
+    property @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle small;
+    field public static final org.jetbrains.jewel.bridge.BridgeTypography INSTANCE;
+  }
+
+  public final class BridgeUriHandler implements androidx.compose.ui.platform.UriHandler {
+    method public void openUri(String uri);
+    field public static final org.jetbrains.jewel.bridge.BridgeUriHandler INSTANCE;
+  }
+
+  public final class BridgeUtilsKt {
+    method public static androidx.compose.ui.graphics.Brush createVerticalBrush(java.util.List<androidx.compose.ui.graphics.Color>, optional float startY, optional float endY, optional int tileMode);
+    method public static androidx.compose.foundation.shape.CornerSize retrieveArcAsCornerSize(String key);
+    method public static androidx.compose.foundation.shape.CornerSize retrieveArcAsCornerSizeOrDefault(String key, androidx.compose.foundation.shape.CornerSize default);
+    method public static androidx.compose.foundation.shape.CornerSize retrieveArcAsCornerSizeWithFallbacks(java.lang.String... keys);
+    method public static androidx.compose.foundation.shape.CornerSize? retrieveArcAsCornerSizeWithFallbacksOrNull(java.lang.String... keys);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.foundation.shape.CornerSize retrieveArcAsNonNegativeCornerSizeOrDefault(String key, androidx.compose.foundation.shape.CornerSize default);
+    method public static long retrieveColor(String key, boolean isDark, long default, long defaultDark);
+    method public static long retrieveColor(String key, long default);
+    method public static androidx.compose.ui.graphics.Color? retrieveColorOrNull(String key);
+    method public static long retrieveColorOrUnspecified(String key);
+    method public static java.util.List<androidx.compose.ui.graphics.Color> retrieveColorsOrUnspecified(java.lang.String... keys);
+    method public static com.intellij.openapi.editor.colors.EditorColorsScheme retrieveEditorColorScheme();
+    method public static androidx.compose.foundation.layout.PaddingValues retrieveInsetsAsPaddingValues(String key, optional androidx.compose.foundation.layout.PaddingValues? default);
+    method public static androidx.compose.foundation.layout.PaddingValues? retrieveInsetsAsPaddingValuesOrNull(String key);
+    method public static float retrieveIntAsDp(String key, optional androidx.compose.ui.unit.Dp? default);
+    method public static float retrieveIntAsDpOrUnspecified(String key);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static float retrieveIntAsNonNegativeDpOrUnspecified(String key);
+    method public static androidx.compose.ui.text.PlatformTextStyle retrievePlatformTextStyle();
+    method public static androidx.compose.ui.text.TextStyle retrieveTextStyle(String fontKey, optional String? colorKey, optional long lineHeight, optional boolean bold, optional int fontStyle, optional long size);
+    method public static androidx.compose.ui.text.TextStyle retrieveTextStyle(String key, optional long color, optional long lineHeight, optional boolean bold, optional int fontStyle, optional long size);
+    method public static java.awt.Color toAwtColor(long);
+    method public static java.awt.Color? toAwtColorOrNull(long);
+    method public static long toComposeColor(java.awt.Color);
+    method public static long toComposeColorOrUnspecified(java.awt.Color?);
+    method public static long toDpSize(com.intellij.util.ui.JBDimension);
+    method public static long toDpSize(java.awt.Dimension);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static long toNonNegativeDpSize(com.intellij.util.ui.JBDimension);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static long toNonNegativeDpSize(java.awt.Dimension);
+    method public static androidx.compose.foundation.layout.PaddingValues toPaddingValues(com.intellij.util.ui.JBInsets);
+    method public static androidx.compose.foundation.layout.PaddingValues toPaddingValues(java.awt.Insets);
+    property public static androidx.compose.ui.unit.Dp com.intellij.util.ui.JBValue.dp;
+  }
+
+  public abstract sealed class JewelBridgeException extends java.lang.RuntimeException {
+    property public String? message;
+  }
+
+  public static final class JewelBridgeException.KeyNotFoundException extends org.jetbrains.jewel.bridge.JewelBridgeException {
+    ctor public JewelBridgeException.KeyNotFoundException(String key, String type);
+  }
+
+  public static final class JewelBridgeException.KeysNotFoundException extends org.jetbrains.jewel.bridge.JewelBridgeException {
+    ctor public JewelBridgeException.KeysNotFoundException(java.util.List<java.lang.String> keys, String type);
+  }
+
+  public final class JewelComposePanelWrapperKt {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static javax.swing.JComponent JewelComposeNoThemePanel(optional boolean focusOnClickInside, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.awt.ComposePanel,kotlin.Unit> config, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static javax.swing.JComponent JewelComposeNoThemePanel(optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.awt.ComposePanel,kotlin.Unit> config, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method public static javax.swing.JComponent JewelComposePanel(optional boolean focusOnClickInside, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.awt.ComposePanel,kotlin.Unit> config, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method @Deprecated public static javax.swing.JComponent JewelComposePanel(optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.awt.ComposePanel,kotlin.Unit> config, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method public static javax.swing.JComponent compose(optional boolean focusOnClickInside, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.awt.ComposePanel,kotlin.Unit> config, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method @Deprecated public static javax.swing.JComponent compose(optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.awt.ComposePanel,kotlin.Unit> config, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static javax.swing.JComponent composeWithoutTheme(optional boolean focusOnClickInside, optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.awt.ComposePanel,kotlin.Unit> config, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static javax.swing.JComponent composeWithoutTheme(optional kotlin.jvm.functions.Function1<? super androidx.compose.ui.awt.ComposePanel,kotlin.Unit> config, kotlin.jvm.functions.Function0<kotlin.Unit> content);
+    method @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<javax.swing.JComponent> getLocalComponent();
+    property @Deprecated @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.runtime.ProvidableCompositionLocal<javax.swing.JComponent> LocalComponent;
+  }
+
+  public final class ToolWindowExtensionsKt {
+    method public static void addComposeTab(com.intellij.openapi.wm.ToolWindow, optional @com.intellij.openapi.util.NlsContexts.TabTitle String? tabDisplayName, optional boolean isLockable, optional boolean isCloseable, optional boolean focusOnClickInside, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.bridge.ToolWindowScope,kotlin.Unit> content);
+    method @Deprecated public static void addComposeTab(com.intellij.openapi.wm.ToolWindow, optional @com.intellij.openapi.util.NlsContexts.TabTitle String? tabDisplayName, optional boolean isLockable, optional boolean isCloseable, kotlin.jvm.functions.Function1<? super org.jetbrains.jewel.bridge.ToolWindowScope,kotlin.Unit> content);
+  }
+
+  public interface ToolWindowScope {
+    method public com.intellij.openapi.wm.ToolWindow getToolWindow();
+    property public abstract com.intellij.openapi.wm.ToolWindow toolWindow;
+  }
+
+  public final class TypographyKt {
+    method @Deprecated @androidx.compose.runtime.Composable public static androidx.compose.ui.text.TextStyle medium(org.jetbrains.jewel.ui.component.Typography);
+    method @Deprecated @androidx.compose.runtime.Composable public static androidx.compose.ui.text.TextStyle regular(org.jetbrains.jewel.ui.component.Typography);
+    method @Deprecated @androidx.compose.runtime.Composable public static androidx.compose.ui.text.TextStyle small(org.jetbrains.jewel.ui.component.Typography);
+  }
+
+}
+
+package org.jetbrains.jewel.bridge.code.highlighting {
+
+  @com.intellij.openapi.components.Service(com.intellij.openapi.components.Service.Level.PROJECT) public final class CodeHighlighterFactory {
+    ctor public CodeHighlighterFactory(com.intellij.openapi.project.Project project, kotlinx.coroutines.CoroutineScope coroutineScope);
+    method public org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter createHighlighter();
+    field public static final org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory.Companion Companion;
+  }
+
+  public static final class CodeHighlighterFactory.Companion {
+    method public org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory getInstance(com.intellij.openapi.project.Project project);
+  }
+
+}
+
+package org.jetbrains.jewel.bridge.icon {
+
+  public final class IntelliJIconKeyKt {
+    method public static org.jetbrains.jewel.ui.icon.IconKey fromPlatformIcon(org.jetbrains.jewel.ui.icon.IntelliJIconKey.Companion, javax.swing.Icon icon, optional Class<? extends java.lang.Object?> iconClass);
+  }
+
+}
+
+package org.jetbrains.jewel.bridge.theme {
+
+  public final class BridgeGlobalColorsKt {
+    method public static org.jetbrains.jewel.foundation.BorderColors readFromLaF(org.jetbrains.jewel.foundation.BorderColors.Companion);
+    method public static org.jetbrains.jewel.foundation.GlobalColors readFromLaF(org.jetbrains.jewel.foundation.GlobalColors.Companion);
+    method public static org.jetbrains.jewel.foundation.OutlineColors readFromLaF(org.jetbrains.jewel.foundation.OutlineColors.Companion);
+    method public static org.jetbrains.jewel.foundation.TextColors readFromLaF(org.jetbrains.jewel.foundation.TextColors.Companion);
+  }
+
+  public final class BridgeGlobalMetricsKt {
+    method public static org.jetbrains.jewel.foundation.GlobalMetrics readFromLaF(org.jetbrains.jewel.foundation.GlobalMetrics.Companion);
+  }
+
+  public final class BridgeGrayFilterValuesKt {
+    method public static org.jetbrains.jewel.foundation.DisabledAppearanceValues readFromLaF(org.jetbrains.jewel.foundation.DisabledAppearanceValues.Companion);
+  }
+
+  public final class BridgeThemeColorPaletteKt {
+    method public static org.jetbrains.jewel.foundation.theme.ThemeColorPalette readFromLaF(org.jetbrains.jewel.foundation.theme.ThemeColorPalette.Companion);
+    property public static androidx.compose.ui.graphics.Color? org.jetbrains.jewel.foundation.theme.ThemeColorPalette.windowsPopupBorder;
+  }
+
+  public final class IntUiBridgeScrollbarKt {
+    method public static org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.AlwaysVisible default(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.AlwaysVisible.Companion);
+    method public static org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenScrolling default(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenScrolling.Companion);
+    method public static org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.AlwaysVisible macOs(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.AlwaysVisible.Companion, optional float trackThickness, optional androidx.compose.foundation.layout.PaddingValues trackPadding, optional long thumbColorAnimationDuration, optional long scrollbarBackgroundColorLight, optional long scrollbarBackgroundColorDark);
+    method public static org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenScrolling macOs(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenScrolling.Companion, optional float trackThickness, optional float trackThicknessExpanded, optional androidx.compose.foundation.layout.PaddingValues trackPadding, optional androidx.compose.foundation.layout.PaddingValues trackPaddingWithBorder, optional long trackColorAnimationDuration, optional long expandAnimationDuration, optional long thumbColorAnimationDuration, optional long lingerDuration);
+    method public static org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.AlwaysVisible windowsAndLinux(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.AlwaysVisible.Companion, optional float trackThickness, optional androidx.compose.foundation.layout.PaddingValues trackPadding, optional long thumbColorAnimationDuration, optional long trackColorAnimationDuration);
+    method public static org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenScrolling windowsAndLinux(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenScrolling.Companion, optional float trackThickness, optional float trackThicknessExpanded, optional androidx.compose.foundation.layout.PaddingValues trackPadding, optional androidx.compose.foundation.layout.PaddingValues trackPaddingWithBorder, optional long trackColorAnimationDuration, optional long expandAnimationDuration, optional long thumbColorAnimationDuration, optional long lingerDuration);
+  }
+
+  public final class IntUiBridgeSliderKt {
+    method public static org.jetbrains.jewel.ui.component.styling.SliderColors dark(org.jetbrains.jewel.ui.component.styling.SliderColors.Companion, optional long track, optional long trackFilled, optional long trackDisabled, optional long trackFilledDisabled, optional long stepMarker, optional long thumbFill, optional long thumbFillDisabled, optional long thumbFillFocused, optional long thumbFillPressed, optional long thumbFillHovered, optional long thumbBorder, optional long thumbBorderFocused, optional long thumbBorderDisabled, optional long thumbBorderPressed, optional long thumbBorderHovered);
+    method public static org.jetbrains.jewel.ui.component.styling.SliderMetrics defaults(org.jetbrains.jewel.ui.component.styling.SliderMetrics.Companion, optional float trackHeight, optional long thumbSize, optional float thumbBorderWidth, optional float stepLineHeight, optional float stepLineWidth, optional float trackToStepSpacing);
+    method public static org.jetbrains.jewel.ui.component.styling.SliderColors light(org.jetbrains.jewel.ui.component.styling.SliderColors.Companion, optional long track, optional long trackFilled, optional long trackDisabled, optional long trackFilledDisabled, optional long stepMarker, optional long thumbFill, optional long thumbFillDisabled, optional long thumbFillFocused, optional long thumbFillPressed, optional long thumbFillHovered, optional long thumbBorder, optional long thumbBorderFocused, optional long thumbBorderDisabled, optional long thumbBorderPressed, optional long thumbBorderHovered);
+  }
+
+  public final class IntUiBridgeSplitButtonKt {
+    method public static org.jetbrains.jewel.ui.component.styling.SplitButtonStyle readDefaultSplitButtonStyle();
+    method public static org.jetbrains.jewel.ui.component.styling.SplitButtonStyle readOutlinedSplitButtonStyle();
+  }
+
+  public final class IntUiBridgeTextKt {
+    method public static androidx.compose.ui.text.TextStyle retrieveConsoleTextStyle();
+    method public static androidx.compose.ui.text.TextStyle retrieveDefaultTextStyle();
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.ui.text.TextStyle retrieveDefaultTextStyle(float lineHeightMultiplier);
+    method public static androidx.compose.ui.text.TextStyle retrieveEditorTextStyle();
+  }
+
+  public final class SwingBridgeThemeKt {
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static void SwingBridgeTheme(kotlin.jvm.functions.Function0<kotlin.Unit> content);
+  }
+
+}
+
