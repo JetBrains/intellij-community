@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.messages.MessageBusConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -70,6 +71,7 @@ internal class ComposePreviewChangesTracker(val project: Project, val coroutineS
       val changesFlow = observeEditorContentChanges(project, disposable)
         .debounce(1000L)
         .distinctUntilChanged()
+        .filter { isPreviewVisible() }
         .filter { autoRefresh.value }
 
       val manualRefreshFlow = observeManualRefresh()
@@ -80,6 +82,10 @@ internal class ComposePreviewChangesTracker(val project: Project, val coroutineS
           processor(virtualFile)
         }
     }
+  }
+
+  private fun isPreviewVisible(): Boolean {
+    return ToolWindowManager.getInstance(project).getToolWindow(TOOLWINDOW_ID)?.isVisible ?: return false
   }
 
   fun refresh() {

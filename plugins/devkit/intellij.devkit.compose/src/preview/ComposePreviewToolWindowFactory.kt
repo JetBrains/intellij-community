@@ -7,7 +7,7 @@ import androidx.compose.runtime.currentComposer
 import androidx.compose.runtime.currentCompositeKeyHashCode
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbAware
@@ -24,6 +24,8 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.bridge.compose
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import java.awt.BorderLayout
+
+internal const val TOOLWINDOW_ID = "ComposeUIPreview"
 
 internal class ComposePreviewToolWindowFactory : ToolWindowFactory, DumbAware {
 
@@ -45,7 +47,9 @@ internal class ComposePreviewToolWindowFactory : ToolWindowFactory, DumbAware {
     toolWindow.setTitleActions(titleActionsGroup.getChildren(actionManager).toList())
 
     project.service<ComposePreviewChangesTracker>().startTracking(project, toolWindowContent) { virtualFile ->
-      wrapperPanel.setPaintBusy(true)
+      withContext(Dispatchers.UI) {
+        wrapperPanel.setPaintBusy(true)
+      }
 
       val provider = try {
         compileCode(virtualFile, project)
@@ -55,17 +59,19 @@ internal class ComposePreviewToolWindowFactory : ToolWindowFactory, DumbAware {
         return@startTracking
       }
       finally {
-        wrapperPanel.setPaintBusy(false)
+        withContext(Dispatchers.UI) {
+          wrapperPanel.setPaintBusy(false)
+        }
       }
 
       if (provider == null) {
-        withContext(Dispatchers.EDT) {
+        withContext(Dispatchers.UI) {
           wrapperPanel.displayUnsupportedFile()
         }
         return@startTracking
       }
 
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.UI) {
         // free up the previous content JVM classes, register new
         try {
           wrapperPanel.getUserData(PROVIDER_KEY)?.classLoader?.close()

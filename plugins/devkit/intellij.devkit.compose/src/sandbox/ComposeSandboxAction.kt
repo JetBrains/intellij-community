@@ -39,7 +39,7 @@ internal class ComposeSandboxAction : DumbAwareAction() {
   }
 }
 
-internal class ComposeSandboxVirtualFile() : LightVirtualFile("Compose Sandbox") {
+internal class ComposeSandboxVirtualFile : LightVirtualFile("Compose Sandbox") {
   init {
     isWritable = false
   }
@@ -51,7 +51,7 @@ internal class ComposeSandboxFileEditorProvider : FileEditorProvider, DumbAware 
   override fun accept(project: Project, file: VirtualFile): Boolean = file is ComposeSandboxVirtualFile
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    val composeComponent: JComponent = compose {
+    val composeComponent: JComponent = compose(focusOnClickInside = true) {
       ComposeSandbox() // <<-- implement all demos there
     }
     val panel = JPanel(BorderLayout())
