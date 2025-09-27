@@ -278,10 +278,14 @@ private fun messageOrDefaultForJdkBundle(
 }
 
 internal fun useDefaultValue(bundle: ResourceBundle, @NlsSafe key: String): @Nls String {
-  if (assertOnMissedKeys) {
+  if (assertOnMissedKeys && !isDevelopmentTime(bundle.javaClass.classLoader)) {
     LOG.error("'$key' is not found (baseBundleName=${bundle.baseBundleName}, bundle=$bundle)")
   }
   return "!$key!"
+}
+
+private fun isDevelopmentTime(classLoader: ClassLoader): Boolean {
+  return classLoader.javaClass.simpleName == "DevKitClassLoader"
 }
 
 internal fun postProcessResolvedValue(

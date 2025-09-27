@@ -26,6 +26,7 @@ import org.jetbrains.uast.UFile
 import org.jetbrains.uast.findSourceAnnotation
 import org.jetbrains.uast.toUElement
 import java.lang.reflect.Method
+import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Files
 import kotlin.coroutines.resume
@@ -74,12 +75,17 @@ internal suspend fun compileCode(fileToCompile: VirtualFile, project: Project): 
   val pluginByClass = PluginManager.getPluginByClass(ComposePreviewToolWindowFactory::class.java)
   val filteringClassLoader = FilteringClassLoader(pluginByClass!!.classLoader)
 
-  val loader = URLClassLoader("ComposeUIPreview", diskPaths, filteringClassLoader)
+  val loader = DevKitClassLoader(diskPaths, filteringClassLoader)
   val functions = ComposableFunctionFinder(loader).findPreviewFunctions(analysis.targetClassName, analysis.composableMethodNames)
 
   return functions.firstOrNull()?.method
     ?.let { ContentProvider(it, loader) }
 }
+
+/**
+ * Here the magic name `DevKitClassLoader` is used in the IDE process to check if we are in development time classloader.
+ */
+internal class DevKitClassLoader(urls: Array<URL>, parent: ClassLoader) : URLClassLoader("ComposeUIPreview", urls, parent)
 
 private suspend fun compileFiles(fileToCompile: VirtualFile, project: Project): List<VirtualFile> {
   val taskManager = ProjectTaskManager.getInstance(project) as ProjectTaskManagerImpl
