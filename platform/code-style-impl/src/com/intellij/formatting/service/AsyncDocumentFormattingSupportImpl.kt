@@ -7,8 +7,6 @@ import com.intellij.formatting.service.AsyncDocumentFormattingService.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
@@ -104,7 +102,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
 
   private suspend fun runAsyncFormat(formattingRequest: FormattingRequestImpl) {
     try {
-      formattingRequest.runTask()
+      formattingRequest.runAndAwaitTask()
     }
     finally {
       pendingRequests.remove(formattingRequest.document, formattingRequest)
@@ -154,7 +152,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       task = formattingTask
     }
 
-    private fun CoroutineScope.launchTask(task: FormattingTask, coroutineContext: CoroutineContext): Job = launch(coroutineContext) {
+    suspend fun runTask(task: FormattingTask) {
       if (task.isRunUnderProgress) {
         withBackgroundProgress(context.project,
                                CodeStyleBundle.message("async.formatting.service.running", getName(service)),
@@ -169,10 +167,12 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       }
     }
 
-    suspend fun runTask() = coroutineScope {
+    suspend fun runAndAwaitTask() = coroutineScope {
       val task = task
       if (task != null && stateRef.compareAndSet(FormattingRequestState.NOT_STARTED, FormattingRequestState.RUNNING)) {
-        launchTask(task, if (isSync) EmptyCoroutineContext else Dispatchers.IO)
+        launch(if (isSync) EmptyCoroutineContext else Dispatchers.IO) {
+          runTask(task)
+        }
         val formattedText = withTimeoutOrNull(getTimeout(service).toMillis()) {
           result.await()
         }
