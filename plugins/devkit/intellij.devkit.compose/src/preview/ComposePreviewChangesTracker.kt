@@ -3,10 +3,12 @@ package com.intellij.devkit.compose.preview
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -14,6 +16,8 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.messages.MessageBusConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -25,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 private val manualRefreshCounter = AtomicInteger(0)
 
-enum class RefreshReason {
+internal enum class RefreshReason {
   INITIAL,
   CHANGE,
   MANUAL {
@@ -79,6 +83,11 @@ internal class ComposePreviewChangesTracker(val project: Project, val coroutineS
       merge(changesFlow, manualRefreshFlow)
         .conflate() // drop older refreshes, there is no need to process them
         .collect { (_, virtualFile) ->
+          writeAction {
+            PsiDocumentManager.getInstance(project).commitAllDocuments()
+            FileDocumentManager.getInstance().saveAllDocuments()
+          }
+
           processor(virtualFile)
         }
     }
@@ -170,6 +179,18 @@ internal class ComposePreviewChangesTracker(val project: Project, val coroutineS
         trySend(RefreshSignal(null, selectedFile, RefreshReason.INITIAL))
         addListenersToCurrentEditor(selectedEditor.editor, selectedFile)
       }
+
+      connection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+        override fun stateChanged(toolWindowManager: ToolWindowManager) {
+          val fileEditorManager = FileEditorManager.getInstance(project)
+          val selectedEditor = fileEditorManager.selectedEditor as? TextEditor
+          val selectedFile = fileEditorManager.selectedFiles.firstOrNull()
+
+          if (selectedEditor != null && selectedFile != null) {
+            trySend(RefreshSignal(null, selectedFile, RefreshReason.INITIAL))
+          }
+        }
+      })
 
       // Handle cleanup when the flow is canceled
       awaitClose {

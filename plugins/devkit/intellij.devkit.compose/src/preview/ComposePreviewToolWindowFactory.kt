@@ -23,7 +23,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.bridge.compose
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-import java.awt.BorderLayout
 
 internal const val TOOLWINDOW_ID = "ComposeUIPreview"
 
@@ -82,11 +81,9 @@ internal class ComposePreviewToolWindowFactory : ToolWindowFactory, DumbAware {
         wrapperPanel.putUserData(PROVIDER_KEY, provider)
 
         wrapperPanel.setPaintBusy(false)
-        wrapperPanel.removeAll()
-
-        wrapperPanel.add(compose(focusOnClickInside = true) {
+        wrapperPanel.setContent(compose(focusOnClickInside = true) {
           provider.build(currentComposer, currentCompositeKeyHashCode)
-        }, BorderLayout.CENTER)
+        })
       }
     }
   }

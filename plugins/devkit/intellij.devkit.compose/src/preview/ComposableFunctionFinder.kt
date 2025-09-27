@@ -65,7 +65,9 @@ internal class ComposableFunctionFinder(private val classLoader: ClassLoader) {
       }
     }
 
-    logger.warn("Cannot find valid preview function in: $clazz")
+    if (previewFunctions.isEmpty()) {
+      logger.warn("Cannot find valid preview function in: $clazz")
+    }
 
     return previewFunctions
   }

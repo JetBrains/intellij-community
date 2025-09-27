@@ -19,6 +19,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.StatusText
 import java.awt.BorderLayout
+import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
 internal class ComposePreviewBusyPanel(private val project: Project) : JBPanelWithEmptyText(BorderLayout()), DumbAware {
@@ -108,5 +109,16 @@ internal class ComposePreviewBusyPanel(private val project: Project) : JBPanelWi
     emptyText.appendLine(DevkitComposeBundle.message("compose.preview.enable.composable"))
 
     addRefreshHintText(emptyText, project)
+
+    revalidate()
+    repaint()
+  }
+
+  fun setContent(content: JComponent) {
+    removeAll()
+
+    add(content, BorderLayout.CENTER)
+    revalidate()
+    repaint()
   }
 }

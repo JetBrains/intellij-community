@@ -72,8 +72,9 @@ internal suspend fun compileCode(fileToCompile: VirtualFile, project: Project): 
     .toTypedArray()
 
   val pluginByClass = PluginManager.getPluginByClass(ComposePreviewToolWindowFactory::class.java)
-  val parent = pluginByClass!!.classLoader
-  val loader = URLClassLoader("ComposeUIPreview", diskPaths, parent)
+  val filteringClassLoader = FilteringClassLoader(pluginByClass!!.classLoader)
+
+  val loader = URLClassLoader("ComposeUIPreview", diskPaths, filteringClassLoader)
   val functions = ComposableFunctionFinder(loader).findPreviewFunctions(analysis.targetClassName, analysis.composableMethodNames)
 
   return functions.firstOrNull()?.method
@@ -135,4 +136,25 @@ private fun analyzeClass(project: Project, vFile: VirtualFile): FileAnalysisResu
     .toSet()
 
   return FileAnalysisResult(vFile, className, annotatedMethodNames)
+}
+
+/**
+ * Isolates project code from attempts to load unrelated classes via parent classloader.
+ */
+private class FilteringClassLoader(parent: ClassLoader) : ClassLoader(parent) {
+  override fun loadClass(name: String, resolve: Boolean): Class<*>? {
+    if (isAlienClass(name)) throw ClassNotFoundException(name)
+
+    return super.loadClass(name, resolve)
+  }
+
+  override fun findClass(name: String): Class<*> {
+    if (isAlienClass(name)) throw ClassNotFoundException(name)
+
+    return super.findClass(name)
+  }
+
+  private fun isAlienClass(name: String): Boolean {
+    return name.startsWith("com.intellij.") && !name.startsWith("com.intellij.openapi.")
+  }
 }
