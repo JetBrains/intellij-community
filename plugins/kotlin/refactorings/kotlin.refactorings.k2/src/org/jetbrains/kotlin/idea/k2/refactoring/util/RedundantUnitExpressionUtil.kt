@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
-private fun KtExpression.isUnitLiteral(): Boolean {
+fun KtExpression.isUnitLiteral(): Boolean {
     val referenceName = (this as? KtNameReferenceExpression)?.getReferencedNameAsName() ?: return false
     return referenceName == StandardNames.FqNames.unit.shortName()
 }

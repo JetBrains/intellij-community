@@ -146,6 +146,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/copyWithoutNamedArguments")
             model("${idea}/inspectionsLocal/unusedUnaryOperator")
             model("${idea}/inspectionsLocal/javaMapForEach")
+            model("${idea}/inspectionsLocal/mapToForEach")
             model("${idea}/inspectionsLocal/functionWithLambdaExpressionBody")
             model("${idea}/inspectionsLocal/replaceUntilWithRangeUntil")
             model("${idea}/inspectionsLocal/scriptExecutable", pattern = Patterns.KTS)
