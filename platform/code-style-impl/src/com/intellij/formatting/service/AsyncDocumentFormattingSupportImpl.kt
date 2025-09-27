@@ -5,7 +5,10 @@ import com.intellij.CodeStyleBundle
 import com.intellij.formatting.FormattingContext
 import com.intellij.formatting.service.AsyncDocumentFormattingService.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
@@ -24,6 +27,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -184,7 +188,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
             updateDocument(formattedText)
           }
           else {
-            ApplicationManager.getApplication().invokeLater {
+            withContext(Dispatchers.EDT) {
               CommandProcessor.getInstance().runUndoTransparentAction {
                 try {
                   WriteAction.run<Throwable> {
