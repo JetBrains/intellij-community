@@ -41,7 +41,9 @@ class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : KtVis
                 val arg = args.singleOrNull()?.getArgumentExpression() ?: return
                 val string = KotlinFirConstantExpressionEvaluator().computeConstantExpression(arg, false) as? String
                 if (string != null) {
-                    if (string.startsWith("$KOTLIN_GROUP_ID:$KOTLIN_JAVA_STDLIB_NAME")) registerProblem(expression)
+                    val segments = string.split(":")
+                    if (segments.size >= 2 && segments[0] == KOTLIN_GROUP_ID && segments[1] == KOTLIN_JAVA_STDLIB_NAME)
+                        registerProblem(expression)
                 } else if (arg is KtCallExpression && arg.calleeExpression?.text == "kotlin") {
                     val kotlinId = arg.valueArgumentList?.arguments?.firstOrNull()?.getArgumentExpression()
                         ?.let { KotlinFirConstantExpressionEvaluator().computeConstantExpression(it, false) as? String }
