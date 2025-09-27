@@ -10,23 +10,17 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.progress.currentThreadCoroutineScope
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.withCurrentThreadCoroutineScopeBlocking
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.FileWriter
@@ -35,8 +29,6 @@ import java.nio.charset.Charset
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.Volatile
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 @ApiStatus.Internal
 class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentFormattingService) : AsyncDocumentFormattingSupport {
@@ -130,6 +122,8 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
 
     @Volatile
     private var task: FormattingTask? = null
+    @Volatile
+    private var taskStarted = false
 
     private var result = CompletableDeferred<String?>()
 
@@ -167,10 +161,20 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     suspend fun runAndAwaitTask() = coroutineScope {
       val task = task
       if (task != null && stateRef.compareAndSet(FormattingRequestState.NOT_STARTED, FormattingRequestState.RUNNING)) {
-        launch(if (isSync) EmptyCoroutineContext else Dispatchers.IO) {
+        val dispatcher = if (isSync) {
+          // Keep sync tasks in the runBlocking event loop; otherwise, deadlocks ensue.
+          requireNotNull(coroutineContext[CoroutineDispatcher])
+        }
+        else {
+          Dispatchers.IO
+        }
+        // There is an implicit contract that a task that was already created is also started.
+        // GlobalScope is used here to prevent cancellation before that can happen.
+        GlobalScope.launch(dispatcher) {
           runTask(task)
         }
         val formattedText = withTimeoutOrNull(getTimeout(service).toMillis()) {
