@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
 private val logger = logger<MixedModeStateMachineBase>()
 
@@ -24,7 +25,8 @@ private val logger = logger<MixedModeStateMachineBase>()
  * It takes the work of synchronizing debuggers and solving conflicts (like low-level breakpoint is hit while a managed step over is active).
  * Start state is OnlyLowStarted, finish state is Exited
  */
-internal abstract class MixedModeStateMachineBase(
+@ApiStatus.Internal
+abstract class MixedModeStateMachineBase(
   protected val low: XDebugProcess,
   protected val high: XDebugProcess,
   protected val coroutineScope: CoroutineScope,

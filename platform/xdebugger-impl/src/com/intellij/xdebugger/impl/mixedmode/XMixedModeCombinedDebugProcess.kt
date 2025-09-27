@@ -58,12 +58,12 @@ class XMixedModeCombinedDebugProcess(
   val high: XDebugProcess,
   val session: XDebugSessionImpl,
   val config: XMixedModeProcessesConfiguration,
+  private val stateMachine: MixedModeStateMachineBase
 ) : XDebugProcess(session), XDebugSessionTabCustomizer {
   private val processes = listOf(low, high)
   private var myProcessHandler: XMixedModeProcessHandler? = null
   private var editorsProvider: XMixedModeDebuggersEditorProvider? = null
   private val coroutineScope get() = session.coroutineScope
-  private val stateMachine = MixedModeDotnetOnWinProcessTransitionStateMachine(low, high, coroutineScope)
   private var myAttract : Boolean = false // being accessed on EDT
   private var highLevelDebugProcessReady : Boolean = false
   private val lowExtension get() = low.mixedModeDebugProcessExtension as XMixedModeLowLevelDebugProcessExtension
