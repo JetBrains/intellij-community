@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.mixedMode
 
-import com.intellij.xdebugger.frame.XSuspendContext
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -19,25 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 interface XMixedModeLowLevelDebugProcessExtension : XMixedModeDebugProcessExtension {
   val mixedStackBuilder: MixedModeStackBuilder
 
-  suspend fun continueAllThreads(exceptThreads: Set<Long>, silent : Boolean)
-
-  suspend fun handleBreakpointDuringStep()
-
   fun pauseMixedModeSession(stopEventThreadId: Long?)
 
-  suspend fun startMixedStepInto(steppingThreadId: Long, ctx: XSuspendContext): Int
-
-  suspend fun finishMixedStepInto()
-
-  fun lowToHighTransitionDuringLastStepHappened() : Boolean
-
   suspend fun beforeStep(mixedSuspendContext: XMixedModeSuspendContextBase)
-
-  fun belongsToMe(context: XSuspendContext) : Boolean
-
-  suspend fun beforeManagedStep(highSuspendContext : XSuspendContext, threadId: Long, isStepInto: Boolean)
-
-  suspend fun beforeHighLevelSetNextStatement()
-
-  suspend fun afterManagedStep()
 }

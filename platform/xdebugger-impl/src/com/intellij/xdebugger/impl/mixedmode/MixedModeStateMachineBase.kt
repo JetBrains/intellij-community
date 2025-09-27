@@ -62,9 +62,7 @@ abstract class MixedModeStateMachineBase(
   abstract class BothRunningBase(val highLevelSteppingActive: Boolean = false) : State
   class OnlyHighStopped(val highSuspendContext: XSuspendContext?) : State
 
-  protected val mainDispatcher: ExecutorCoroutineDispatcher = AppExecutorUtil.createBoundedApplicationPoolExecutor("Mixed mode state machine", 1).asCoroutineDispatcher()
-  protected val lowExtension get() = low.mixedModeDebugProcessExtension as XMixedModeLowLevelDebugProcessExtension
-  protected val highExtension get() = high.mixedModeDebugProcessExtension as XMixedModeHighLevelDebugProcessExtension
+  protected val mainDispatcher = AppExecutorUtil.createBoundedApplicationPoolExecutor("Mixed mode state machine", 1).asCoroutineDispatcher()
 
   // we assume that low debugger started before we created this class
   protected var state: State = OnlyLowStarted
