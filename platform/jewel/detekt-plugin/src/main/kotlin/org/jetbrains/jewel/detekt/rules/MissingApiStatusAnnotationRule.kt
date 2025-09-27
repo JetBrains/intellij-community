@@ -44,46 +44,56 @@ class MissingApiStatusAnnotationRule(config: Config) : Rule(config) {
 
     override fun visitClassOrObject(classOrObject: KtClassOrObject) {
         super.visitClassOrObject(classOrObject)
+        if (!classOrObject.isJewelSymbol()) return
+
         checkAnnotations(classOrObject)
     }
 
     override fun visitNamedFunction(function: KtNamedFunction) {
         super.visitNamedFunction(function)
+        if (!function.isJewelSymbol()) return
         checkAnnotations(function)
     }
 
     override fun visitProperty(property: KtProperty) {
         super.visitProperty(property)
+        if (!property.isJewelSymbol()) return
         checkAnnotations(property)
     }
 
     override fun visitTypeAlias(typeAlias: KtTypeAlias) {
         super.visitTypeAlias(typeAlias)
+        if (!typeAlias.isJewelSymbol()) return
         checkAnnotations(typeAlias)
     }
 
     override fun visitPrimaryConstructor(constructor: KtPrimaryConstructor) {
         super.visitPrimaryConstructor(constructor)
+        if (!constructor.isJewelSymbol()) return
         checkAnnotations(constructor)
     }
 
     override fun visitSecondaryConstructor(constructor: KtSecondaryConstructor) {
         super.visitSecondaryConstructor(constructor)
+        if (!constructor.isJewelSymbol()) return
         checkAnnotations(constructor)
     }
 
     override fun visitClassInitializer(initializer: KtClassInitializer) {
         super.visitClassInitializer(initializer)
+        if (!initializer.isJewelSymbol()) return
         checkAnnotations(initializer)
     }
 
     override fun visitPropertyAccessor(accessor: KtPropertyAccessor) {
         super.visitPropertyAccessor(accessor)
+        if (!accessor.isJewelSymbol()) return
         checkAnnotations(accessor)
     }
 
     override fun visitParameter(parameter: KtParameter) {
         super.visitParameter(parameter)
+        if (!parameter.isJewelSymbol()) return
         checkAnnotations(parameter)
     }
 
