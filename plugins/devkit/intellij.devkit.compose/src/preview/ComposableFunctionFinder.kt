@@ -28,6 +28,9 @@ internal class ComposableFunctionFinder(private val classLoader: ClassLoader) {
   fun findPreviewFunctions(clazzFqn: String, composableMethodNames: Collection<String>): List<ComposablePreviewFunction> {
     val previewFunctions = mutableListOf<ComposablePreviewFunction>()
 
+    val contextClassLoader = Thread.currentThread().contextClassLoader
+    Thread.currentThread().contextClassLoader = classLoader
+
     try {
       val clazz = classLoader.loadClass(clazzFqn)
       val functions = findPreviewFunctionsInClass(clazz, composableMethodNames)
@@ -38,6 +41,9 @@ internal class ComposableFunctionFinder(private val classLoader: ClassLoader) {
     }
     catch (e: Exception) {
       logger.error("Error processing class: $clazzFqn", e)
+    }
+    finally {
+      Thread.currentThread().contextClassLoader = contextClassLoader
     }
 
     return previewFunctions

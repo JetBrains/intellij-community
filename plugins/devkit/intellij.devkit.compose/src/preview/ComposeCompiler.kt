@@ -6,6 +6,7 @@ import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.debugger.ui.HotSwapUIImpl
 import com.intellij.devkit.compose.hasCompose
 import com.intellij.ide.plugins.PluginManager
+import com.intellij.openapi.application.DevTimeClassLoader
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
@@ -36,11 +37,17 @@ internal data class ModulePaths(val module: Module, val paths: List<String>)
 
 internal data class ContentProvider(val function: Method, val classLoader: URLClassLoader) {
   fun build(currentComposer: Composer, currentCompositeKeyHashCode: Long) {
+    val contextClassLoader = Thread.currentThread().contextClassLoader
+    Thread.currentThread().contextClassLoader = classLoader
+
     try {
       function.invoke(null, currentComposer, currentCompositeKeyHashCode.toInt())
     }
     catch (t: Throwable) {
       thisLogger().warn("Unable to build preview", t)
+    }
+    finally {
+      Thread.currentThread().contextClassLoader = contextClassLoader
     }
   }
 }
@@ -75,17 +82,15 @@ internal suspend fun compileCode(fileToCompile: VirtualFile, project: Project): 
   val pluginByClass = PluginManager.getPluginByClass(ComposePreviewToolWindowFactory::class.java)
   val filteringClassLoader = FilteringClassLoader(pluginByClass!!.classLoader)
 
-  val loader = DevKitClassLoader(diskPaths, filteringClassLoader)
+  val loader = ComposeUIPreviewClassLoader(diskPaths, filteringClassLoader)
   val functions = ComposableFunctionFinder(loader).findPreviewFunctions(analysis.targetClassName, analysis.composableMethodNames)
 
   return functions.firstOrNull()?.method
     ?.let { ContentProvider(it, loader) }
 }
 
-/**
- * Here the magic name `DevKitClassLoader` is used in the IDE process to check if we are in development time classloader.
- */
-internal class DevKitClassLoader(urls: Array<URL>, parent: ClassLoader) : URLClassLoader("ComposeUIPreview", urls, parent)
+internal class ComposeUIPreviewClassLoader(urls: Array<URL>, parent: ClassLoader)
+  : URLClassLoader("ComposeUIPreview", urls, parent), DevTimeClassLoader
 
 private suspend fun compileFiles(fileToCompile: VirtualFile, project: Project): List<VirtualFile> {
   val taskManager = ProjectTaskManager.getInstance(project) as ProjectTaskManagerImpl
@@ -145,7 +150,7 @@ private fun analyzeClass(project: Project, vFile: VirtualFile): FileAnalysisResu
 }
 
 /**
- * Isolates project code from attempts to load unrelated classes via parent classloader.
+ * Isolates project code from attempts to load unrelated classes via the parent classloader.
  */
 private class FilteringClassLoader(parent: ClassLoader) : ClassLoader(parent) {
   override fun loadClass(name: String, resolve: Boolean): Class<*>? {

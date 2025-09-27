@@ -8,6 +8,7 @@ import com.intellij.BundleBase.SHOW_LOCALIZED_MESSAGES
 import com.intellij.BundleBase.appendLocalizationSuffix
 import com.intellij.BundleBase.getDefaultMessage
 import com.intellij.BundleBase.replaceMnemonicAmpersand
+import com.intellij.openapi.application.DevTimeClassLoader
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
@@ -61,7 +62,7 @@ object BundleBase {
   }
 
   /**
-   * Performs partial application of the pattern message from the bundle leaving some parameters unassigned.
+   * Performs partial application of the pattern message from the bundle, leaving some parameters unassigned.
    * It's expected that the message contains `params.length + unassignedParams` placeholders. Parameters
    * `{0}..{params.length-1}` will be substituted using a passed params array. The remaining parameters
    * will be renumbered: `{params.length}` will become `{0}` and so on, so the resulting template
@@ -284,8 +285,9 @@ internal fun useDefaultValue(bundle: ResourceBundle, @NlsSafe key: String): @Nls
   return "!$key!"
 }
 
-private fun isDevelopmentTime(classLoader: ClassLoader): Boolean {
-  return classLoader.javaClass.simpleName == "DevKitClassLoader"
+private fun isDevelopmentTime(bundleClassLoader: ClassLoader): Boolean {
+  return bundleClassLoader is DevTimeClassLoader
+         || Thread.currentThread().contextClassLoader is DevTimeClassLoader
 }
 
 internal fun postProcessResolvedValue(
