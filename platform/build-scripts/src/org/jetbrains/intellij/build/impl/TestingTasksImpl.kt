@@ -1225,7 +1225,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
     args += "-classpath"
 
-    val useDevBuildServer = devBuildServerSettings != null && suiteName == null
+    val useDevBuildServer = devBuildServerSettings != null && devBuildServerSettings.mainClass.isNotEmpty() && suiteName == null
     val classpathForTests = if (useDevBuildServer) {
       runBlocking(Dispatchers.Default) { context.getModuleRuntimeClasspath(context.findRequiredModule(devBuildServerSettings.mainClassModule), false) }
     }
