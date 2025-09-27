@@ -6,8 +6,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.jewel.foundation.Stroke
@@ -46,11 +49,13 @@ public fun PopupContainer(
             Box(
                 modifier =
                     modifier
-                        .shadow(
-                            elevation = style.metrics.shadowSize,
-                            shape = popupShape,
-                            ambientColor = colors.shadow,
-                            spotColor = colors.shadow,
+                        .dropShadow(
+                            RoundedCornerShape(style.metrics.cornerSize),
+                            Shadow(
+                                radius = style.metrics.shadowSize,
+                                color = colors.shadow,
+                                offset = DpOffset(0.dp, style.metrics.shadowSize / 2),
+                            ),
                         )
                         .border(Stroke.Alignment.Inside, style.metrics.borderWidth, colors.border, popupShape)
                         .background(colors.background, popupShape)

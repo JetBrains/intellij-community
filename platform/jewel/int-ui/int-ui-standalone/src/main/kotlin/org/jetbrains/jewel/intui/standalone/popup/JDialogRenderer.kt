@@ -195,7 +195,7 @@ private fun JPopupImpl(
             rootPane.isOpaque = false
             background = Color(0, 0, 0, 0)
             contentPane.background = Color(0, 0, 0, 0)
-            rootPane.putClientProperty("Window.shadow", true)
+            rootPane.putClientProperty("Window.shadow", false)
         }
     }
 

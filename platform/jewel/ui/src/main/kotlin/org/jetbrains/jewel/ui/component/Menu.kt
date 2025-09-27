@@ -40,7 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -48,6 +48,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.InputModeManager
 import androidx.compose.ui.input.key.Key
@@ -59,6 +60,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupPositionProvider
@@ -236,11 +238,13 @@ public fun MenuContent(
     Box(
         modifier =
             modifier
-                .shadow(
-                    elevation = style.metrics.shadowSize,
-                    shape = menuShape,
-                    ambientColor = colors.shadow,
-                    spotColor = colors.shadow,
+                .dropShadow(
+                    RoundedCornerShape(style.metrics.cornerSize),
+                    Shadow(
+                        radius = style.metrics.shadowSize,
+                        color = colors.shadow,
+                        offset = DpOffset(0.dp, style.metrics.shadowSize / 2),
+                    ),
                 )
                 .border(Stroke.Alignment.Inside, style.metrics.borderWidth, colors.border, menuShape)
                 .background(colors.background, menuShape)
