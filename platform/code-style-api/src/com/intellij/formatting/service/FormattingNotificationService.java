@@ -11,12 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 public interface FormattingNotificationService {
   static @NotNull FormattingNotificationService getInstance(@NotNull Project project) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      return HeadlessNotificationService.INSTANCE;
-    }
-    else {
-      return project.getService(FormattingNotificationService.class);
-    }
+    return project.getService(FormattingNotificationService.class);
   }
 
   default void reportError(@NotNull String groupId,

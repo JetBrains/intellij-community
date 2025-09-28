@@ -296,7 +296,7 @@
     <readerModeProvider implementation="com.intellij.codeInsight.actions.VisualFormattingLayerReaderModeProvider"/>
 
     <projectService serviceInterface="com.intellij.formatting.service.FormattingNotificationService"
-                    serviceImplementation="com.intellij.formatting.service.FormattingUiNotificationService"/>
+                    serviceImplementation="com.intellij.formatting.service.FormattingNotificationServiceImpl"/>
     <projectService serviceInterface="com.intellij.formatting.service.PostQuickFixTaskService"
                     serviceImplementation="com.intellij.formatting.service.PostQuickFixTaskServiceImpl"/>
     <applicationService serviceInterface="com.intellij.formatting.service.AsyncDocumentFormattingSupportFactory"
