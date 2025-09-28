@@ -25,7 +25,7 @@ private class DiffFileEditorProvider : DefaultPlatformFileEditorProvider, Struct
     val processor = (file as DiffViewerVirtualFile).createViewer(project)
     val editor = when (processor) {
       is DiffRequestProcessor -> @Suppress("DEPRECATION") DiffRequestProcessorEditor(file, processor)
-      else -> DiffEditorViewerFileEditor(file, processor)
+      else -> DiffEditorViewerFileEditor(project, file, processor)
     }
     DiffRequestProcessorEditorCustomizer.customize(file, editor, processor.context)
     return editor

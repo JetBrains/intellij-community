@@ -236,12 +236,14 @@ c:com.intellij.diff.editor.DiffEditorViewerFileEditor
 - com.intellij.diff.util.FileEditorBase
 - com.intellij.openapi.fileEditor.FileEditorWithTextEditors
 - sf:Companion:com.intellij.diff.editor.DiffEditorViewerFileEditor$Companion
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.diff.impl.DiffEditorViewer):V
 - <init>(com.intellij.openapi.vfs.VirtualFile,com.intellij.diff.impl.DiffEditorViewer):V
 - dispose():V
 - f:getEditorViewer():com.intellij.diff.impl.DiffEditorViewer
 - getEmbeddedEditors():java.util.List
 - getFilesToRefresh():java.util.List
 - getPreferredFocusedComponent():javax.swing.JComponent
+- f:getProject():com.intellij.openapi.project.Project
 - getState(com.intellij.openapi.fileEditor.FileEditorStateLevel):com.intellij.openapi.fileEditor.FileEditorState
 - selectNotify():V
 - setState(com.intellij.openapi.fileEditor.FileEditorState):V
