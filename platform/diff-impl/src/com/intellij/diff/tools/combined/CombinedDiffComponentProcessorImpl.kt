@@ -81,6 +81,12 @@ class CombinedDiffComponentProcessorImpl(
   override fun setBlocks(requests: List<CombinedBlockProducer>) = model.setBlocks(requests)
   override fun cleanBlocks() = model.cleanBlocks()
 
+  override val currentBlock: CombinedBlockProducer?
+    get() {
+      val currentBlockId = combinedViewer?.getCurrentBlockId() ?: return null
+      return model.getBlock(currentBlockId)
+    }
+
   override fun fireProcessorActivated() = Unit
   override fun addListener(listener: DiffEditorViewerListener, disposable: Disposable?) {
     if (disposable != null) {
@@ -280,4 +286,6 @@ interface CombinedDiffComponentProcessor : DiffEditorViewer {
    */
   fun setBlocks(requests: List<CombinedBlockProducer>)
   fun cleanBlocks()
+
+  val currentBlock: CombinedBlockProducer?
 }
