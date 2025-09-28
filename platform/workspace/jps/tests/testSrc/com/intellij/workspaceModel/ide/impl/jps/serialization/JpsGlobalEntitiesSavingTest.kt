@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.AnnotationOrderRootType
-import com.intellij.openapi.roots.JavadocOrderRootType
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.PersistentOrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -34,9 +33,8 @@ class JpsGlobalEntitiesSavingTest {
   val disposableRule = DisposableRule()
 
   @Before
-  fun registerPersistentOrderRootTypeIfAbsent() {
-    registerPersistentOrderRootTypeIfAbsent { AnnotationOrderRootType() }
-    registerPersistentOrderRootTypeIfAbsent { JavadocOrderRootType() }
+  fun ensureAnnotationAndJavadocOrderRootTypes() {
+    ensureAnnotationAndJavadocOrderRootTypes(disposableRule.disposable)
   }
 
   @Test
@@ -107,12 +105,6 @@ class JpsGlobalEntitiesSavingTest {
       val sdkBridges = ProjectJdkTable.getInstance().allJdks
       Assert.assertEquals(sdkNames.size, sdkBridges.size)
       Assert.assertEquals(sdkNames, sdkBridges.map { it.name })
-    }
-  }
-
-  private inline fun <reified T : PersistentOrderRootType> registerPersistentOrderRootTypeIfAbsent(factory: () -> T) {
-    if (OrderRootType.EP_NAME.findExtension(T::class.java) == null) {
-      OrderRootType.EP_NAME.point.registerExtension(factory(), disposableRule.disposable)
     }
   }
 
