@@ -4,12 +4,11 @@ package com.intellij.platform.execution.dashboard.splitApi.frontend
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.dashboard.RunDashboardManagerProxy
 import com.intellij.openapi.project.Project
-import com.intellij.platform.execution.serviceView.shouldEnableServicesViewInCurrentEnvironment
-import com.intellij.util.PlatformUtils
+import com.intellij.platform.execution.serviceView.isFrontendAndSplitRegistryEnabled
 
 internal class FrontendRunDashboardManagerProxy: RunDashboardManagerProxy {
   override fun isEnabled(): Boolean {
-    return PlatformUtils.isJetBrainsClient() && shouldEnableServicesViewInCurrentEnvironment()
+    return isFrontendAndSplitRegistryEnabled()
   }
 
   override fun getManager(project: Project): RunDashboardManager {

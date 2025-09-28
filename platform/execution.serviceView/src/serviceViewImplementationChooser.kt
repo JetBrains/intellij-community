@@ -11,8 +11,8 @@ import org.jetbrains.annotations.ApiStatus
 //        and the corresponding classes must be moved to frontend modules of their plugins
 fun shouldEnableServicesViewInCurrentEnvironment(): Boolean {
   val isServicesEnabled = when {
-    IdeProductMode.isFrontend && isNewFrontendServiceViewEnabled() -> true
-    IdeProductMode.isBackend && isOldMonolithServiceViewEnabled() -> true
+    isFrontendAndSplitRegistryEnabled() -> true
+    isBackendAndMonolithRegistryEnabled() -> true
     IdeProductMode.isMonolith -> true
     else -> false
   }
@@ -21,10 +21,28 @@ fun shouldEnableServicesViewInCurrentEnvironment(): Boolean {
   return isServicesEnabled
 }
 
+@ApiStatus.Internal
+fun isBackendAndMonolithRegistryEnabled(): Boolean = IdeProductMode.isBackend && isOldMonolithServiceViewEnabled()
+
+@ApiStatus.Internal
+fun isFrontendAndSplitRegistryEnabled(): Boolean = IdeProductMode.isFrontend && isNewFrontendServiceViewEnabled()
+
 private fun isNewFrontendServiceViewEnabled(): Boolean {
-  return Registry.`is`("services.view.split.enabled") || Registry.`is`("xdebugger.toolwindow.split.remdev")
+  // Split debugger's frontend works with a frontend run dashboard entities, same for backend. So registry flags must be in sync
+  // when it comes to testing either the debugger or service view.
+  // Otherwise we have to maintain even more registry flag combinations compatible which does not make sense
+  if (isSplitDebuggerEnabledInTestsCopyPaste()) return true
+
+  return Registry.`is`("services.view.split.enabled")
 }
 
 private fun isOldMonolithServiceViewEnabled(): Boolean {
+  if (isSplitDebuggerEnabledInTestsCopyPaste()) return false
+
   return Registry.`is`("services.view.monolith.enabled")
+}
+
+private fun isSplitDebuggerEnabledInTestsCopyPaste(): Boolean {
+  val testProperty = System.getProperty("xdebugger.toolwindow.split.for.tests")
+  return testProperty?.toBoolean() ?: false
 }

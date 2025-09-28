@@ -5,11 +5,11 @@ import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.dashboard.RunDashboardManagerProxy
 import com.intellij.openapi.project.Project
 import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl
-import com.intellij.util.PlatformUtils
+import com.intellij.platform.ide.productMode.IdeProductMode
 
 internal class BackendRunDashboardManagerProxy : RunDashboardManagerProxy {
   override fun isEnabled(): Boolean {
-    return !PlatformUtils.isJetBrainsClient()
+    return IdeProductMode.isBackend || IdeProductMode.isMonolith
   }
 
   override fun getManager(project: Project): RunDashboardManager {
