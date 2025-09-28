@@ -61,6 +61,8 @@ com.intellij.application.options.editor.AutoImportOptionsProvider
 - com.intellij.openapi.options.UnnamedConfigurable
 com.intellij.application.options.editor.CodeFoldingOptionsProvider
 - com.intellij.openapi.options.UnnamedConfigurable
+a:com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
+- runBackground():V
 com.intellij.codeInsight.actions.DirectoryFormattingOptions
 - com.intellij.codeInsight.actions.ReformatFilesOptions
 - a:isIncludeSubdirectories():Z

@@ -217,7 +217,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     val project = module.project
 
     try {
-      extractTemplate() // should be quite fast, only extracts single small ZIP file
+      extractTemplate() // should be quite fast, only extracts a single small ZIP file
     }
     catch (e: Exception) {
       thisLogger().info(e)
@@ -264,9 +264,18 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     preprocessModuleOpened(module, this, starterContext.frameworkVersion?.id)
 
     if (isReformatAfterCreation(module.project)) {
-      ReformatCodeProcessor(module.project, module, false).run()
+      val processor = ReformatCodeProcessor(module.project, module, false)
+      processor.setPostRunnable {
+        doImport(module)
+      }
+      processor.runBackground()
     }
+    else {
+      doImport(module)
+    }
+  }
 
+  private fun doImport(module: Module) {
     openSampleFiles(module, getFilePathsToOpen())
 
     if (starterContext.gitIntegration && starterContext.isCreatingNewProject) {
@@ -407,7 +416,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     val filename = getFilename(contentDisposition)
     val isZip = StringUtil.isNotEmpty(contentType) && contentType.startsWith("application/zip")
                 || filename.endsWith(".zip")
-    // Micronaut has broken content-type (it's "text") but zip-file as attachment
+    // Micronaut has broken content-type (it's "text") but zip-file as an attachment
     // (https://github.com/micronaut-projects/micronaut-starter/issues/268)
 
     request.saveToFile(tempFile, progressIndicator)
