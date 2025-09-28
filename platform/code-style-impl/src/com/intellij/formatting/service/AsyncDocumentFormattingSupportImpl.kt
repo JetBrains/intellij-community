@@ -140,7 +140,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       return false
     }
 
-    fun setTask(formattingTask: FormattingTask?) {
+    fun setTask(formattingTask: FormattingTask) {
       task = formattingTask
     }
 
