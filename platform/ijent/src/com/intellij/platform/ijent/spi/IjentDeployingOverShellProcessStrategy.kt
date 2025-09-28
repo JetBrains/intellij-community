@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.IjentUnavailableException
+import com.intellij.platform.ijent.TcpConnectionInfo
 import com.intellij.platform.ijent.getIjentGrpcArgv
 import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
@@ -74,7 +75,10 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
 
   final override suspend fun createProcess(binaryPath: String): IjentSessionMediator {
     return myContext.await().execCommand {
-      execIjent(binaryPath)
+      when (val strategy = getConnectionStrategy()) {
+        is IjentConnectionStrategy.Tcp -> execIjentWithTcp(binaryPath, strategy.config)
+        else -> execIjent(binaryPath)
+      }
     }
   }
 
@@ -374,8 +378,16 @@ private suspend fun DeployingContextAndShell.uploadIjentBinary(
   return process.readLineWithoutBuffering()
 }
 
+
 private suspend fun DeployingContextAndShell.execIjent(remotePathToBinary: String): IjentSessionMediator {
   val joinedCmd = getIjentGrpcArgv(remotePathToBinary, selfDeleteOnExit = true, usrBinEnv = context.env).joinToString(" ")
+    return createMediator(remotePathToBinary, joinedCmd)
+  }
+
+private suspend fun DeployingContextAndShell.createMediator(
+  remotePathToBinary: String,
+  joinedCmd: String,
+): IjentSessionMediator {
   val commandLineArgs = context.run {
     """
     | cd ${posixQuote(remotePathToBinary.substringBeforeLast('/'))};
@@ -386,6 +398,15 @@ private suspend fun DeployingContextAndShell.execIjent(remotePathToBinary: Strin
   }
   process.write(commandLineArgs)
   return process.extractProcess()
+}
+
+
+private suspend fun DeployingContextAndShell.execIjentWithTcp(remotePathToBinary: String, tcpConfiguration: TcpConnectionInfo): IjentSessionMediator {
+  val joinedCmd = getIjentGrpcArgv(remotePathToBinary,
+                                   selfDeleteOnExit = true,
+                                   usrBinEnv = context.env,
+                                   tcpConfig = tcpConfiguration).joinToString(" ")
+  return createMediator(remotePathToBinary, joinedCmd)
 }
 
 /**

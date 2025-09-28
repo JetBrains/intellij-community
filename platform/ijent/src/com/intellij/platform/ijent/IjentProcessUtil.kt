@@ -16,7 +16,7 @@ fun getIjentGrpcArgv(
   usrBinEnv: String = "/usr/bin/env",
   tcpConfig: TcpConnectionInfo? = null,
 ): List<String> {
-  val command = if (tcpConfig != null) arrayOf("grpc-socket-server", "--port=${tcpConfig.port}") else arrayOf("grpc-stdio-server")
+  val command = if (tcpConfig != null) arrayOf("grpc-socket-server", "--port=${tcpConfig.remotePort}") else arrayOf("grpc-stdio-server")
   LOG.info("Ijent gRPC command: ${command.joinToString(" ")}")
   return listOfNotNull(
     usrBinEnv,
