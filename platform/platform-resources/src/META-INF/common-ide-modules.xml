@@ -13,7 +13,6 @@
     <module name="intellij.platform.scriptDebugger.backend"/>
     <module name="intellij.platform.scriptDebugger.protocolReaderRuntime"/>
     <module name="intellij.platform.ml.impl"/>
-    <module name="intellij.platform.ml.logs"/>
     <module name="intellij.libraries.microba"/>
     <module name="intellij.charts"/>
 
