@@ -107,7 +107,8 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     CANCELLING,
     CANCELLED,
     COMPLETED,
-    EXPIRED
+    EXPIRED,
+    EXPIRED_CANCELLED
   }
 
   private inner class FormattingRequestImpl(
@@ -129,15 +130,29 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       FormattingRequestState.NOT_STARTED)
 
     fun cancel(): Boolean {
-      val formattingTask = task
-      if (formattingTask != null && stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.CANCELLING)) {
-        if (formattingTask.cancel()) {
-          stateRef.set(FormattingRequestState.CANCELLED)
-          result.cancel()
-          return true
+      while (true) {
+        when (stateRef.get()) {
+          FormattingRequestState.RUNNING -> {
+            val formattingTask = checkNotNull(task)
+            if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.CANCELLING)) {
+              return if (formattingTask.cancel()) {
+                stateRef.set(FormattingRequestState.CANCELLED)
+                result.cancel()
+                true
+              }
+              else false
+            }
+          }
+          FormattingRequestState.EXPIRED -> {
+            val formattingTask = checkNotNull(task)
+            if (stateRef.compareAndSet(FormattingRequestState.EXPIRED, FormattingRequestState.EXPIRED_CANCELLED)) {
+              result.cancel()
+              return formattingTask.cancel()
+            }
+          }
+          else -> return false
         }
       }
-      return false
     }
 
     fun setTask(formattingTask: FormattingTask) {
