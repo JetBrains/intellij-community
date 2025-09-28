@@ -16,19 +16,13 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 @ApiStatus.Internal
-class PyDataFlow(scopeOwner: ScopeOwner, controlFlow: ControlFlow, private val context: TypeEvalContext) : ControlFlow by controlFlow {
+class PyDataFlow(scopeOwner: ScopeOwner, controlFlow: ControlFlow, context: TypeEvalContext) : ControlFlow by controlFlow {
   private val reachability: BooleanArray = BooleanArray(instructions.size)
-  private val languageVersion = run {
-    val languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(scopeOwner.containingFile)
-    Version(languageLevel.majorVersion, languageLevel.minorVersion, 0)
-  }
-
 
   init {
-    buildReachability()
-  }
+    val languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(scopeOwner.containingFile)
+    val languageVersion = Version(languageLevel.majorVersion, languageLevel.minorVersion, 0)
 
-  private fun buildReachability() {
     val stack = ArrayDeque<Instruction>()
     stack.push(instructions[0])
 
@@ -42,7 +36,7 @@ class PyDataFlow(scopeOwner: ScopeOwner, controlFlow: ControlFlow, private val c
 
       reachability[instructionNum] = true
 
-      for (successor in getReachableSuccessors(instruction)) {
+      for (successor in getReachableSuccessors(instruction, languageVersion, context)) {
         if (!reachability[successor.num()]) {
           stack.push(successor)
         }
@@ -50,11 +44,11 @@ class PyDataFlow(scopeOwner: ScopeOwner, controlFlow: ControlFlow, private val c
     }
   }
 
-  private fun getReachableSuccessors(instruction: Instruction): Collection<Instruction> {
+  private fun getReachableSuccessors(instruction: Instruction, languageVersion: Version, context: TypeEvalContext): Collection<Instruction> {
     if (instruction is CallInstruction && instruction.isNoReturnCall(context)) return emptyList()
     if (instruction is PyWithContextExitInstruction && !instruction.isSuppressingExceptions(context)) return emptyList()
     return instruction.allSucc()
-      .filter { it.isReachableWithVersionChecks() }
+      .filter { it.isReachableWithVersionChecks(languageVersion) }
       .filter { next: Instruction ->
         if (next is ReadWriteInstruction && next.access.isAssertTypeAccess) {
           val type = next.getType(context, null)
@@ -69,7 +63,7 @@ class PyDataFlow(scopeOwner: ScopeOwner, controlFlow: ControlFlow, private val c
     return !reachability[instruction.num()]
   }
 
-  private fun Instruction.isReachableWithVersionChecks(): Boolean {
+  private fun Instruction.isReachableWithVersionChecks(languageVersion: Version): Boolean {
     return evaluateVersionsForElement(element ?: return true).contains(languageVersion)
   }
 }
