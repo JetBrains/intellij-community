@@ -21,6 +21,7 @@ import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.CalledInAny
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.beans.PropertyChangeListener
@@ -219,6 +220,7 @@ abstract class TreeHandlerEditorDiffPreview(
     return getEditorTabName(wrapper)
   }
 
+  @CalledInAny
   abstract fun getEditorTabName(wrapper: Wrapper?): String?
 
   companion object {

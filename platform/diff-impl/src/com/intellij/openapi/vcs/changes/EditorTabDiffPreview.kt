@@ -19,6 +19,7 @@ import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
 import java.lang.ref.WeakReference
 
@@ -26,6 +27,8 @@ abstract class EditorTabDiffPreview(val project: Project) : CheckedDisposable, D
   abstract fun hasContent(): Boolean
   protected abstract fun createViewer(): DiffEditorViewer
   protected abstract fun collectDiffProducers(selectedOnly: Boolean): ListSelection<out DiffRequestProducer>?
+
+  @CalledInAny
   protected abstract fun getEditorTabName(processor: DiffEditorViewer?): @Nls String?
 
 
