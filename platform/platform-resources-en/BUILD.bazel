@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.resources.en` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "resources-en_resources",
-  files = glob(["src/**/*"]),
+  srcs = glob(["src/**/*"]),
   strip_prefix = "src"
 )
 
@@ -11,6 +11,6 @@ jvm_library(
   name = "resources-en",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  runtime_deps = [":resources-en_resources"]
+  resources = [":resources-en_resources"]
 )
 ### auto-generated section `build intellij.platform.resources.en` end

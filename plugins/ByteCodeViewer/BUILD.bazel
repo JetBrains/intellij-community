@@ -1,15 +1,15 @@
 ### auto-generated section `build intellij.java.byteCodeViewer` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_java-byteCodeViewer",
   x_explicit_api_mode = "strict"
 )
 
-jvm_resources(
+resourcegroup(
   name = "java-byteCodeViewer_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -18,6 +18,7 @@ jvm_library(
   module_name = "intellij.java.byteCodeViewer",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":java-byteCodeViewer_resources"],
   kotlinc_opts = ":custom_java-byteCodeViewer",
   deps = [
     "@lib//:asm",
@@ -36,8 +37,7 @@ jvm_library(
     "//java/compiler/impl",
     "//platform/core-ui",
     "//java/java-frontback-psi-impl:frontback-psi-impl",
-  ],
-  runtime_deps = [":java-byteCodeViewer_resources"]
+  ]
 )
 
 jvm_library(

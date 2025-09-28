@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.gradle.native` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "native_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.gradle.native",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":native_resources"],
   deps = [
     "//platform/lang-api:lang",
     "//platform/lang-impl",
@@ -24,7 +25,6 @@ jvm_library(
   exports = [
     "//plugins/gradle:gradle-common",
     "//plugins/gradle/native/tooling",
-  ],
-  runtime_deps = [":native_resources"]
+  ]
 )
 ### auto-generated section `build intellij.gradle.native` end

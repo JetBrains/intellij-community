@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.vcs.impl.exec` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "exec_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,13 +12,13 @@ jvm_library(
   module_name = "intellij.platform.vcs.impl.exec",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":exec_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/vcs-impl",
     "//platform/core-api:core",
     "//platform/vcs-api:vcs",
     "//platform/execution",
-  ],
-  runtime_deps = [":exec_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.exec` end

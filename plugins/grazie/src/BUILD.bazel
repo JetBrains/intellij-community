@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.grazie.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "core_resources",
-  files = glob(["main/resources/**/*"]),
+  srcs = glob(["main/resources/**/*"]),
   strip_prefix = "main/resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.grazie.core",
   visibility = ["//visibility:public"],
   srcs = glob(["main/kotlin/**/*.kt", "main/kotlin/**/*.java", "main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jackson-module-kotlin",
@@ -84,7 +85,6 @@ jvm_library(
     "@lib//:grazie-core-ai-grazie-model-ner-jvm",
   ],
   runtime_deps = [
-    ":core_resources",
     "@lib//:jna",
     "@lib//:guava",
     "@lib//:jetbrains-annotations",

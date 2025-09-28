@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.groovy.psi` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "psi_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.groovy.psi",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":psi_resources"],
   deps = [
     "@lib//:org-codehaus-groovy-groovy",
     "//java/openapi:java",
@@ -43,7 +44,6 @@ jvm_library(
     "@lib//:asm",
     "//platform/util/jdom",
   ],
-  exports = ["@lib//:org-codehaus-groovy-groovy"],
-  runtime_deps = [":psi_resources"]
+  exports = ["@lib//:org-codehaus-groovy-groovy"]
 )
 ### auto-generated section `build intellij.groovy.psi` end

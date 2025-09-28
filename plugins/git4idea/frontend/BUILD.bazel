@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.vcs.git.frontend` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "frontend_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.vcs.git.frontend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":frontend_resources"],
   deps = [
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -27,7 +28,6 @@ jvm_library(
     "//platform/dvcs-impl/shared",
     "//platform/vcs-impl/shared",
     "//fleet/kernel",
-  ],
-  runtime_deps = [":frontend_resources"]
+  ]
 )
 ### auto-generated section `build intellij.vcs.git.frontend` end

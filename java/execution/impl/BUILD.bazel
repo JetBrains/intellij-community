@@ -9,11 +9,11 @@ java_import(
 ### auto-generated section `local-libs` end
 
 ### auto-generated section `build intellij.java.execution.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -22,6 +22,7 @@ jvm_library(
   module_name = "intellij.java.execution.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl_resources"],
   deps = [
     "//java/openapi:java",
     "//platform/analysis-api:analysis",
@@ -76,9 +77,6 @@ jvm_library(
     "//platform/testRunner",
     "//platform/statistics",
   ],
-  runtime_deps = [
-    ":impl_resources",
-    "//java/execution/impl:jshell-frontend",
-  ]
+  runtime_deps = ["//java/execution/impl:jshell-frontend"]
 )
 ### auto-generated section `build intellij.java.execution.impl` end

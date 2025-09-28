@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.ide.startup.importSettings` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "importSettings_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.ide.startup.importSettings",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":importSettings_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -47,8 +48,7 @@ jvm_library(
     "//platform/platform-impl/ui",
     "//platform/platform-impl/initial-config-import",
     "//platform/plugins/parser/impl",
-  ],
-  runtime_deps = [":importSettings_resources"]
+  ]
 )
 
 jvm_library(

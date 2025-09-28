@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.util` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "util_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -17,6 +17,7 @@ jvm_library(
   module_name = "intellij.platform.util",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":util_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
     "//platform/util/jdom",
@@ -47,7 +48,6 @@ jvm_library(
     "//platform/util/multiplatform",
   ],
   runtime_deps = [
-    ":util_resources",
     "@lib//:commons-io",
     "@lib//:commons-codec",
     "@lib//:commons-lang3",
@@ -56,15 +56,15 @@ jvm_library(
 ### auto-generated section `build intellij.platform.util` end
 
 ### auto-generated section `build intellij.platform.util.tests` start
-jvm_resources(
+resourcegroup(
   name = "util-tests_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
-jvm_resources(
+resourcegroup(
   name = "util-tests_test_resources_1",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -79,6 +79,10 @@ jvm_library(
   module_name = "intellij.platform.util.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [
+    ":util-tests_test_resources",
+    ":util-tests_test_resources_1",
+  ],
   deps = [
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
@@ -124,10 +128,6 @@ jvm_library(
     "@lib//:jimfs",
     "//platform/ijent/buildConstants",
     "//platform/testFramework/monorepo:monorepo_test_lib",
-  ],
-  runtime_deps = [
-    ":util-tests_test_resources",
-    ":util-tests_test_resources_1",
   ]
 )
 ### auto-generated section `build intellij.platform.util.tests` end
@@ -156,9 +156,9 @@ kt_javac_options(
   no_proc = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "util-ui_resources",
-  files = glob(["ui/resources/**/*"]),
+  srcs = glob(["ui/resources/**/*"]),
   strip_prefix = "ui/resources"
 )
 
@@ -167,6 +167,7 @@ jvm_library(
   module_name = "intellij.platform.util.ui",
   visibility = ["//visibility:public"],
   srcs = glob(["ui/src/**/*.kt", "ui/src/**/*.java", "ui/src/**/*.form"], allow_empty = True),
+  resources = [":util-ui_resources"],
   javac_opts = ":custom-javac-options",
   deps = [
     "@lib//:eawtstub-provided",
@@ -191,7 +192,6 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "@lib//:kotlinx-serialization-protobuf",
     "@lib//:mvstore",
-  ],
-  runtime_deps = [":util-ui_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.util.ui` end

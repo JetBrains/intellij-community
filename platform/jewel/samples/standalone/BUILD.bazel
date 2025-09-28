@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.platform.jewel.samples.standalone` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_standalone",
@@ -15,9 +15,9 @@ create_kotlinc_options(
   x_explicit_api_mode = "strict"
 )
 
-jvm_resources(
+resourcegroup(
   name = "standalone_resources",
-  files = glob(["src/main/resources/**/*"]),
+  srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
@@ -26,6 +26,7 @@ jvm_library(
   module_name = "intellij.platform.jewel.samples.standalone",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":standalone_resources"],
   kotlinc_opts = ":custom_standalone",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -50,7 +51,6 @@ jvm_library(
     "@lib//:jbr-api",
   ],
   runtime_deps = [
-    ":standalone_resources",
     "@lib//:platform-jewel-samples-standalone-org-lwjgl-lwjgl-tinyfd",
     "@lib//:platform-jewel-samples-standalone-org-nibor-autolink-autolink",
     "@lib//:jna",

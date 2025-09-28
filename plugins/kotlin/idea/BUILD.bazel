@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.idea` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_idea",
@@ -15,21 +15,21 @@ create_kotlinc_options(
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "idea_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "idea_resources_1",
-  files = glob(["resources-en/**/*"]),
+  srcs = glob(["resources-en/**/*"]),
   strip_prefix = "resources-en"
 )
 
-jvm_resources(
+resourcegroup(
   name = "idea_resources_2",
-  files = glob(["resources-completion/**/*"]),
+  srcs = glob(["resources-completion/**/*"]),
   strip_prefix = "resources-completion"
 )
 
@@ -38,6 +38,11 @@ jvm_library(
   module_name = "kotlin.idea",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [
+    ":idea_resources",
+    ":idea_resources_1",
+    ":idea_resources_2",
+  ],
   kotlinc_opts = ":custom_idea",
   deps = [
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -164,11 +169,6 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-k1:kotlin-highlighting-k1",
     "//plugins/kotlin/frontend-independent",
     "//platform/statistics",
-  ],
-  runtime_deps = [
-    ":idea_resources",
-    ":idea_resources_1",
-    ":idea_resources_2",
   ]
 )
 ### auto-generated section `build kotlin.idea` end

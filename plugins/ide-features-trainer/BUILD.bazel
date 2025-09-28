@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.featuresTrainer` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "featuresTrainer_resources",
-  files = glob(["res/**/*"]),
+  srcs = glob(["res/**/*"]),
   strip_prefix = "res"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.featuresTrainer",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":featuresTrainer_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:guava",
@@ -49,8 +50,7 @@ jvm_library(
   exports = [
     "@lib//:assert_j",
     "@lib//:assertj-swing",
-  ],
-  runtime_deps = [":featuresTrainer_resources"]
+  ]
 )
 
 jvm_library(

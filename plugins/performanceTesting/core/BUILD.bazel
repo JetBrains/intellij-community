@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.performanceTesting` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "performanceTesting_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.performanceTesting",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":performanceTesting_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/remote-driver/model",
@@ -61,8 +62,7 @@ jvm_library(
     "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
     "//platform/eel-provider",
     "@lib//:jbr-api",
-  ],
-  runtime_deps = [":performanceTesting_resources"]
+  ]
 )
 
 jvm_library(

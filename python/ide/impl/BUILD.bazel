@@ -1,15 +1,15 @@
 ### auto-generated section `build intellij.pycharm.community.ide.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "impl_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -18,6 +18,7 @@ jvm_library(
   module_name = "intellij.pycharm.community.ide.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":impl_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/compose",
@@ -63,10 +64,7 @@ jvm_library(
     "@lib//:tuweni-toml-provided",
     "//platform/non-modal-welcome-screen",
   ],
-  runtime_deps = [
-    ":impl_resources",
-    "//python/python-features-trainer:featuresTrainer",
-  ],
+  runtime_deps = ["//python/python-features-trainer:featuresTrainer"],
   plugins = ["@lib//:compose-plugin"]
 )
 
@@ -74,6 +72,7 @@ jvm_library(
   name = "impl_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  resources = [":impl_test_resources"],
   associates = [":impl"],
   deps = [
     "//platform/analysis-api:analysis",
@@ -132,7 +131,6 @@ jvm_library(
     "@lib//:tuweni-toml-provided",
     "//platform/non-modal-welcome-screen",
   ],
-  runtime_deps = [":impl_test_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.pycharm.community.ide.impl` end

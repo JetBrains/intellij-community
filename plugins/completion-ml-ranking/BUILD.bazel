@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.completionMlRanking` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "completion-ml-ranking_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.completionMlRanking",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":completion-ml-ranking_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -42,8 +43,7 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//platform/vcs-impl",
     "//platform/diff-impl",
-  ],
-  runtime_deps = [":completion-ml-ranking_resources"]
+  ]
 )
 ### auto-generated section `build intellij.completionMlRanking` end
 

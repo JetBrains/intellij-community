@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.testFramework.junit5.eel` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "eel_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -36,6 +36,7 @@ jvm_library(
   name = "eel_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":eel_test_resources"],
   associates = [":eel"],
   deps = [
     "@lib//:junit5Jupiter",
@@ -59,8 +60,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util-ex",
     "//platform/execution",
-  ],
-  runtime_deps = [":eel_test_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5.eel` end
 

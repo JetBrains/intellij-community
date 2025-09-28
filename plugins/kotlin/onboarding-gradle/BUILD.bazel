@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.onboarding.gradle` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "onboarding-gradle_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "kotlin.onboarding.gradle",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":onboarding-gradle_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -34,8 +35,7 @@ jvm_library(
     "//plugins/kotlin/onboarding",
     "//plugins/kotlin/gradle/gradle-java",
     "//plugins/kotlin/gradle/gradle-tooling/impl",
-  ],
-  runtime_deps = [":onboarding-gradle_resources"]
+  ]
 )
 
 jvm_library(

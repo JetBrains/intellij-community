@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.run-configurations.junit-fe10` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "junit-fe10_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "kotlin.run-configurations.junit-fe10",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":junit-fe10_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-fe10",
@@ -24,7 +25,6 @@ jvm_library(
     "//platform/core-impl",
     "//java/java-psi-api:psi",
     "//java/execution/openapi:java-execution",
-  ],
-  runtime_deps = [":junit-fe10_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.run-configurations.junit-fe10` end

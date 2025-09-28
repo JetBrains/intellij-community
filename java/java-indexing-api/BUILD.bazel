@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.java.indexing` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "indexing_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.java.indexing",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":indexing_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -19,7 +20,6 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/util",
     "//platform/util/concurrency",
-  ],
-  runtime_deps = [":indexing_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.indexing` end

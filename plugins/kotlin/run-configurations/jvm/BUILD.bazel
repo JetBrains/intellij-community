@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.run-configurations.jvm` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "jvm_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "kotlin.run-configurations.jvm",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":jvm_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -45,7 +46,6 @@ jvm_library(
     "//java/execution/impl",
     "//platform/core-ui",
     "//plugins/kotlin/base/scripting/scripting.shared",
-  ],
-  runtime_deps = [":jvm_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.run-configurations.jvm` end

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.python.community.junit5Tests.framework` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "community-junit5Tests-framework_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -18,6 +18,7 @@ jvm_library(
   module_name = "intellij.python.community.junit5Tests.framework",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":community-junit5Tests-framework_test_resources"],
   deps = [
     "@lib//:junit4",
     "@lib//:junit5",
@@ -63,10 +64,7 @@ jvm_library(
     "//libraries/system-stubs-jupiter",
     "//python/setup-test-environment:community-testFramework-testEnv",
   ],
-  runtime_deps = [
-    ":community-junit5Tests-framework_test_resources",
-    "//python/pluginCore:community-plugin",
-  ]
+  runtime_deps = ["//python/pluginCore:community-plugin"]
 )
 ### auto-generated section `build intellij.python.community.junit5Tests.framework` end
 

@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.devkit.core` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_core",
@@ -10,9 +10,9 @@ create_kotlinc_options(
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "core_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -21,6 +21,7 @@ jvm_library(
   module_name = "intellij.devkit.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":core_resources"],
   kotlinc_opts = ":custom_core",
   deps = [
     "@lib//:jetbrains-annotations",
@@ -95,7 +96,6 @@ jvm_library(
     "//platform/eel-provider",
     "//libraries/xerces",
     "//platform/usageView-impl",
-  ],
-  runtime_deps = [":core_resources"]
+  ]
 )
 ### auto-generated section `build intellij.devkit.core` end

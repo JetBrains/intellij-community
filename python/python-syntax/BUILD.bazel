@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.python.syntax` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "syntax_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.python.syntax",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":syntax_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -29,7 +30,6 @@ jvm_library(
     "@lib//:fastutil-min",
     "@lib//:guava",
     "//libraries/kotlinx/serialization/core",
-  ],
-  runtime_deps = [":syntax_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.syntax` end

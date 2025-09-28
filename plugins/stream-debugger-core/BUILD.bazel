@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.debugger.streams.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "debugger-streams-core_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.debugger.streams.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":debugger-streams-core_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -25,7 +26,6 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
     "//plugins/stream-debugger-core/intellij.debugger.streams.shared:debugger-streams-shared",
-  ],
-  runtime_deps = [":debugger-streams-core_resources"]
+  ]
 )
 ### auto-generated section `build intellij.debugger.streams.core` end

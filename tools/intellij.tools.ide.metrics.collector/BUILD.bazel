@@ -1,15 +1,15 @@
 ### auto-generated section `build intellij.tools.ide.metrics.collector` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_ide-metrics-collector",
   opt_in = ["kotlin.time.ExperimentalTime"]
 )
 
-jvm_resources(
+resourcegroup(
   name = "ide-metrics-collector_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -41,6 +41,7 @@ jvm_library(
   name = "ide-metrics-collector_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":ide-metrics-collector_test_resources"],
   kotlinc_opts = ":custom_ide-metrics-collector",
   associates = [":ide-metrics-collector"],
   deps = [
@@ -64,8 +65,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "@lib//:fastutil-min",
     "@lib//:assert_j",
-  ],
-  runtime_deps = [":ide-metrics-collector_test_resources"]
+  ]
 )
 ### auto-generated section `build intellij.tools.ide.metrics.collector` end
 

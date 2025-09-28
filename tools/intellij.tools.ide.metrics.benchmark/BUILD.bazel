@@ -1,15 +1,15 @@
 ### auto-generated section `build intellij.tools.ide.metrics.benchmark` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "ide-metrics-benchmark_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "ide-metrics-benchmark_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -18,6 +18,7 @@ jvm_library(
   module_name = "intellij.tools.ide.metrics.benchmark",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide-metrics-benchmark_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jackson",
@@ -31,14 +32,14 @@ jvm_library(
     "@lib//:opentelemetry",
     "//platform/boot",
     "//platform/core-impl",
-  ],
-  runtime_deps = [":ide-metrics-benchmark_resources"]
+  ]
 )
 
 jvm_library(
   name = "ide-metrics-benchmark_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":ide-metrics-benchmark_test_resources"],
   associates = [":ide-metrics-benchmark"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -59,8 +60,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "//platform/boot",
     "//platform/core-impl",
-  ],
-  runtime_deps = [":ide-metrics-benchmark_test_resources"]
+  ]
 )
 ### auto-generated section `build intellij.tools.ide.metrics.benchmark` end
 

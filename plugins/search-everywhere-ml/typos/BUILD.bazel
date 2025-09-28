@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.searchEverywhereMl.typos` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "typos_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.searchEverywhereMl.typos",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":typos_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -28,8 +29,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/ml-impl",
     "@lib//:search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
-  ],
-  runtime_deps = [":typos_resources"]
+  ]
 )
 
 jvm_library(

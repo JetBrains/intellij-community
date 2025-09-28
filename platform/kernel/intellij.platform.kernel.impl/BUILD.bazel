@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.kernel.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.kernel.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -20,7 +21,6 @@ jvm_library(
     "//platform/util",
     "//platform/kernel/shared:kernel",
     "//platform/util/coroutines",
-  ],
-  runtime_deps = [":impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.kernel.impl` end

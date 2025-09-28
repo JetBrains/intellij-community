@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.platform.ide.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "kt_javac_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options", "resourcegroup")
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -18,9 +18,9 @@ kt_javac_options(
   no_proc = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "ide-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -29,6 +29,7 @@ jvm_library(
   module_name = "intellij.platform.ide.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide-impl_resources"],
   javac_opts = ":custom-javac-options",
   deps = [
     "@lib//:eawtstub-provided",
@@ -161,7 +162,6 @@ jvm_library(
     "//platform/util:util-ui",
   ],
   runtime_deps = [
-    ":ide-impl_resources",
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
     "//platform/object-serializer",

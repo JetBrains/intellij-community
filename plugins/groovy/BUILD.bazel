@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.groovy` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "groovy_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -22,6 +22,7 @@ jvm_library(
   module_name = "intellij.groovy",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":groovy_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -86,8 +87,7 @@ jvm_library(
     ":plugins_ant_provided",
     ":plugins_java-byteCodeViewer_provided",
   ],
-  exports = ["//plugins/groovy/groovy-psi:psi"],
-  runtime_deps = [":groovy_resources"]
+  exports = ["//plugins/groovy/groovy-psi:psi"]
 )
 
 jvm_library(

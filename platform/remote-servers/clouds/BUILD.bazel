@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.clouds` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "clouds_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.clouds",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":clouds_resources"],
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/core-api:core",
@@ -22,9 +23,6 @@ jvm_library(
     "//platform/remote-servers/api:remoteServers",
     "//platform/remote-servers/impl",
   ],
-  runtime_deps = [
-    ":clouds_resources",
-    "//platform/execution.dashboard",
-  ]
+  runtime_deps = ["//platform/execution.dashboard"]
 )
 ### auto-generated section `build intellij.platform.clouds` end

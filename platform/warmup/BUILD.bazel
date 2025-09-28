@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.warmup` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "warmup_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.warmup",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":warmup_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -31,9 +32,6 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/backend/observation",
   ],
-  runtime_deps = [
-    ":warmup_resources",
-    "//platform/backend",
-  ]
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.platform.warmup` end

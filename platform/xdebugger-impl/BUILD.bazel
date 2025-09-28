@@ -1,21 +1,21 @@
 ### auto-generated section `build intellij.platform.debugger.impl` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_debugger-impl",
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "debugger-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "debugger-impl_resources_1",
-  files = glob(["compatibilityResources/**/*"]),
+  srcs = glob(["compatibilityResources/**/*"]),
   strip_prefix = "compatibilityResources"
 )
 
@@ -24,6 +24,10 @@ jvm_library(
   module_name = "intellij.platform.debugger.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [
+    ":debugger-impl_resources",
+    ":debugger-impl_resources_1",
+  ],
   kotlinc_opts = ":custom_debugger-impl",
   deps = [
     "//platform/analysis-api:analysis",
@@ -69,10 +73,6 @@ jvm_library(
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
     "//platform/remote-topics/shared:rpc-topics",
-  ],
-  runtime_deps = [
-    ":debugger-impl_resources",
-    ":debugger-impl_resources_1",
   ]
 )
 

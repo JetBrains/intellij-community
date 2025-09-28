@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.java.rt` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "rt_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -17,11 +17,11 @@ jvm_library(
   module_name = "intellij.java.rt",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":rt_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:java-rt-ant-1-7-1-provided",
     ":libraries_junit4_provided",
-  ],
-  runtime_deps = [":rt_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.rt` end

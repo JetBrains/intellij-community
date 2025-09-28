@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.compose` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "compose_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.compose",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":compose_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -31,7 +32,6 @@ jvm_library(
     "//platform/jewel/ide-laf-bridge",
     "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
   ],
-  runtime_deps = [":compose_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.compose` end

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.regexp` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "regexp_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.regexp",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":regexp_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -28,8 +29,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/core-ui",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [":regexp_resources"]
+  ]
 )
 
 jvm_library(

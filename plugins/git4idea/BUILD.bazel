@@ -1,27 +1,27 @@
 ### auto-generated section `build intellij.vcs.git` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_vcs-git",
   opt_in = ["kotlin.RequiresOptIn"]
 )
 
-jvm_resources(
+resourcegroup(
   name = "vcs-git_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "vcs-git_resources_1",
-  files = glob(["compatibilityResources/**/*"]),
+  srcs = glob(["compatibilityResources/**/*"]),
   strip_prefix = "compatibilityResources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "vcs-git_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -30,6 +30,10 @@ jvm_library(
   module_name = "intellij.vcs.git",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [
+    ":vcs-git_resources",
+    ":vcs-git_resources_1",
+  ],
   kotlinc_opts = ":custom_vcs-git",
   deps = [
     "//platform/analysis-api:analysis",
@@ -108,17 +112,14 @@ jvm_library(
     "//platform/dvcs-api:vcs-dvcs",
     "@lib//:cucumber-testing",
   ],
-  runtime_deps = [
-    ":vcs-git_resources",
-    ":vcs-git_resources_1",
-    "//platform/lvcs-impl",
-  ]
+  runtime_deps = ["//platform/lvcs-impl"]
 )
 
 jvm_library(
   name = "vcs-git_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  resources = [":vcs-git_test_resources"],
   kotlinc_opts = ":custom_vcs-git",
   associates = [":vcs-git"],
   deps = [
@@ -224,8 +225,7 @@ jvm_library(
   exports = [
     "//platform/dvcs-api:vcs-dvcs",
     "@lib//:cucumber-testing",
-  ],
-  runtime_deps = [":vcs-git_test_resources"]
+  ]
 )
 ### auto-generated section `build intellij.vcs.git` end
 

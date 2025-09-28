@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.configurationStore.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "configurationStore-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.configurationStore.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":configurationStore-impl_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util/concurrency",
@@ -49,15 +50,14 @@ jvm_library(
     "//platform/workspace/storage",
     "//libraries/kotlinx/serialization/json",
     "//platform/platform-impl/initial-config-import",
-  ],
-  runtime_deps = [":configurationStore-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.configurationStore.impl` end
 
 ### auto-generated section `build intellij.platform.configurationStore.tests` start
-jvm_resources(
+resourcegroup(
   name = "configurationStore-tests_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
@@ -71,6 +71,7 @@ jvm_library(
   name = "configurationStore-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":configurationStore-tests_test_resources"],
   associates = ["//platform/configuration-store-impl:configurationStore-impl"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -103,8 +104,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
     "//java/java-impl:impl",
-  ],
-  runtime_deps = [":configurationStore-tests_test_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.configurationStore.tests` end
 

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.jsonpath` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "jsonpath_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.jsonpath",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":jsonpath_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jsonpath",
@@ -27,8 +28,7 @@ jvm_library(
     "//platform/core-ui",
     "@lib//:fastutil-min",
     "@lib//:guava",
-  ],
-  runtime_deps = [":jsonpath_resources"]
+  ]
 )
 
 jvm_library(

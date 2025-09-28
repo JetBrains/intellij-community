@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.libraries.ktor.client` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "ktor-client_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,6 +11,7 @@ jvm_library(
   name = "ktor-client",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  resources = [":ktor-client_resources"],
   exports = [
     "@lib//:ktor-client-core",
     "@lib//:ktor-client-java",
@@ -22,7 +23,6 @@ jvm_library(
     "@lib//:ktor-client-logging",
   ],
   runtime_deps = [
-    ":ktor-client_resources",
     "@lib//:ktor-client-core",
     "@lib//:ktor-client-java",
     "@lib//:ktor-client-encoding",
