@@ -15,8 +15,10 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+data class FlowContext(val typeEvalContext: TypeEvalContext, val checkNoReturnCalls: Boolean)
+
 @ApiStatus.Internal
-class PyDataFlow(scopeOwner: ScopeOwner, controlFlow: ControlFlow, context: TypeEvalContext) : ControlFlow by controlFlow {
+class PyDataFlow(scopeOwner: ScopeOwner, controlFlow: ControlFlow, context: FlowContext) : ControlFlow by controlFlow {
   private val reachability: BooleanArray = BooleanArray(instructions.size)
 
   init {
@@ -44,14 +46,14 @@ class PyDataFlow(scopeOwner: ScopeOwner, controlFlow: ControlFlow, context: Type
     }
   }
 
-  private fun getReachableSuccessors(instruction: Instruction, languageVersion: Version, context: TypeEvalContext): Collection<Instruction> {
-    if (instruction is CallInstruction && instruction.isNoReturnCall(context)) return emptyList()
-    if (instruction is PyWithContextExitInstruction && !instruction.isSuppressingExceptions(context)) return emptyList()
+  private fun getReachableSuccessors(instruction: Instruction, languageVersion: Version, context: FlowContext): Collection<Instruction> {
+    if (context.checkNoReturnCalls && instruction is CallInstruction && instruction.isNoReturnCall(context.typeEvalContext)) return emptyList()
+    if (instruction is PyWithContextExitInstruction && !instruction.isSuppressingExceptions(context.typeEvalContext)) return emptyList()
     return instruction.allSucc()
       .filter { it.isReachableWithVersionChecks(languageVersion) }
       .filter { next: Instruction ->
         if (next is ReadWriteInstruction && next.access.isAssertTypeAccess) {
-          val type = next.getType(context, null)
+          val type = next.getType(context.typeEvalContext, null)
           return@filter !(type != null && type.get() is PyNeverType)
         }
         return@filter true
@@ -82,10 +84,14 @@ class PyDataFlow(scopeOwner: ScopeOwner, controlFlow: ControlFlow, context: Type
  * - calls to functions annotated with `NoReturn`
  */
 fun PsiElement.isUnreachableForInspection(context: TypeEvalContext): Boolean {
+  return isUnreachableForInspection(FlowContext(context, true))
+}
+
+private fun PsiElement.isUnreachableForInspection(context: FlowContext): Boolean {
   return PyUtil.getParameterizedCachedValue(this, context) { isUnreachableForInspectionNoCache(it) }
 }
 
-private fun PsiElement.isUnreachableForInspectionNoCache(context: TypeEvalContext): Boolean {
+private fun PsiElement.isUnreachableForInspectionNoCache(context: FlowContext): Boolean {
   if (parent is PyElement && parent.isUnreachableForInspection(context)) return true
   return isUnreachableByControlFlow(context) && when (this) {
     is PyStatementList -> !(statements.firstOrNull()?.isIgnoredUnreachableStatement(context) ?: true)
@@ -98,11 +104,11 @@ private fun PsiElement.isUnreachableForInspectionNoCache(context: TypeEvalContex
  * Determines if the element is unreachable by control flow analysis.
  * If the element does not have corresponding instruction in CFG, searches for the nearest parent that has.
  */
-fun PsiElement.isUnreachableByControlFlow(context: TypeEvalContext): Boolean {
+fun PsiElement.isUnreachableByControlFlow(context: FlowContext): Boolean {
   return PyUtil.getParameterizedCachedValue(this, context) { this.isUnreachableByControlFlowNoCache(it) }
 }
 
-private fun PsiElement.isUnreachableByControlFlowNoCache(context: TypeEvalContext): Boolean {
+private fun PsiElement.isUnreachableByControlFlowNoCache(context: FlowContext): Boolean {
   val scope = ScopeUtil.getScopeOwner(this)
   if (scope != null) {
     val flow = ControlFlowCache.getDataFlow(scope, context)
@@ -131,11 +137,11 @@ fun PsiElement.findInstructionNumber(flow: Array<Instruction>): Int {
   return -1
 }
 
-private fun PyStatement.isIgnoredUnreachableStatement(context: TypeEvalContext): Boolean {
+private fun PyStatement.isIgnoredUnreachableStatement(context: FlowContext): Boolean {
   val parentBlock = this.parent as? PyStatementList ?: return false
   if (parentBlock.statements[0] != this) return false
   val parentCompoundStatement = parentBlock.findParentOfType<PyStatement>() ?: return false
-  return !parentCompoundStatement.isUnreachableByControlFlow(context) && isTerminatingStatement(context)
+  return !parentCompoundStatement.isUnreachableByControlFlow(context) && isTerminatingStatement(context.typeEvalContext)
 }
 
 private fun PsiElement.isTerminatingStatement(context: TypeEvalContext): Boolean {
