@@ -45,5 +45,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.pluginManager.shared" />
     <orderEntry type="module" module-name="intellij.platform.project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.updateChecker" />
   </component>
 </module>

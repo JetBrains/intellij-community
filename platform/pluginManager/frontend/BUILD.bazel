@@ -25,6 +25,7 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/util/coroutines",
     "//platform/lang-impl",
+    "//platform/platform-impl/update-checker",
   ]
 )
 ### auto-generated section `build intellij.platform.pluginManager.frontend` end

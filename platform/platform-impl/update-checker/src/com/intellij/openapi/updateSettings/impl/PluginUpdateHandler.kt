@@ -3,10 +3,9 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginUiModel
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -14,6 +13,9 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 import javax.swing.JComponent
 
+// Class used for loading and installing plugin updates on the backend and frontend.
+// Allows us to override default implementation with the combined one when application started in Remote Development mode.
+// Eventually should be responsible for all plugin updates.
 @ApiStatus.Internal
 interface PluginUpdateHandler {
   suspend fun loadAndStorePluginUpdates(buildNumber: String?, sessionId: String = UUID.randomUUID().toString(), indicator: ProgressIndicator? = null): PluginUpdatesModel

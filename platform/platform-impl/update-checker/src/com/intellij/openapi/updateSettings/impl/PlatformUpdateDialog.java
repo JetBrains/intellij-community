@@ -36,6 +36,7 @@ import java.awt.event.ActionEvent;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.updateSettings.impl.UpdateCheckerService.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
 

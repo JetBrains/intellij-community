@@ -24,6 +24,7 @@ jvm_library(
     "//platform/plugins/parser/impl",
     "//platform/core-impl",
     "//platform/project/shared:project",
+    "//platform/platform-impl/update-checker",
   ]
 )
 ### auto-generated section `build intellij.platform.pluginManager.shared` end

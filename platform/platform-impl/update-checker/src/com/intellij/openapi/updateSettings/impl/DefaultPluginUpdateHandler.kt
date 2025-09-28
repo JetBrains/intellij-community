@@ -3,19 +3,26 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
 
+@OptIn(IntellijInternalApi::class)
 @ApiStatus.Internal
 object DefaultPluginUpdateHandler : PluginUpdateHandler {
   private val downloaders = ConcurrentHashMap<String, PluginDownloaders>()
 
-  override suspend fun loadAndStorePluginUpdates(buildNumber: String?, sessionId: String, indicator: ProgressIndicator?): PluginUpdatesModel {
+  override suspend fun loadAndStorePluginUpdates(
+    buildNumber: String?,
+    sessionId: String,
+    indicator: ProgressIndicator?,
+  ): PluginUpdatesModel {
     val buildNumber = BuildNumber.fromString(buildNumber)
-    val internalPluginUpdates = UpdateChecker.getInternalPluginUpdates(buildNumber, indicator)
+    val internalPluginUpdates = service<UpdateCheckerFacade>().getInternalPluginUpdates(buildNumber, indicator)
     val pluginUpdates = internalPluginUpdates.pluginUpdates
     val notIgnoredDownloaders = pluginUpdates.allEnabled.filterNot { UpdateChecker.isIgnored(it.descriptor) }
     val updateModels = notIgnoredDownloaders.mapNotNull { it.uiModel }
@@ -41,7 +48,7 @@ object DefaultPluginUpdateHandler : PluginUpdateHandler {
   }
 
   override suspend fun ignorePluginUpdates(sessionId: String) {
-    UpdateChecker.ignorePlugins(getDownloaders(sessionId).map { it.descriptor })
+    service<UpdateCheckerFacade>().ignorePlugins(getDownloaders(sessionId).map { it.descriptor })
   }
 
   private fun registerDownloader(sessionId: String, pluginId: String, downloader: PluginDownloader) {
