@@ -4,7 +4,6 @@ import com.intellij.codeInsight.controlflow.ControlFlow
 import com.intellij.codeInsight.controlflow.Instruction
 import com.intellij.openapi.util.Version
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.*
@@ -166,8 +165,4 @@ private fun Instruction.isAuxiliary(): Boolean {
 
 private fun PyExpression.asBooleanNoResolve(): Boolean? {
   return PyEvaluator.evaluateAsBooleanNoResolve(this)
-}
-
-private inline fun <reified T: PsiElement> PsiElement.prevSiblingOfType(): T? {
-  return PsiTreeUtil.getPrevSiblingOfType(this, T::class.java)
 }
