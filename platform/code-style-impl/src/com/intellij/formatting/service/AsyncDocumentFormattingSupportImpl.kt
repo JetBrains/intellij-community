@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.SystemProperties
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -43,8 +44,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     quickFormat: Boolean
   ) {
     val currRequest = pendingRequests[document]
-    val forceSync = true == document.getUserData(FORMAT_DOCUMENT_SYNCHRONOUSLY)
-    val isSyncMode = forceSync || ApplicationManager.getApplication().isHeadlessEnvironment()
+    val isSync = isSyncFormat(document)
     if (currRequest != null) {
       if (!currRequest.cancel()) {
         LOG.warn("Pending request can't be cancelled")
@@ -53,12 +53,12 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     }
     prepareForFormatting(service, document, formattingContext)
     val formattingRequest = FormattingRequestImpl(formattingContext, document, formattingRanges,
-                                                  canChangeWhiteSpaceOnly, quickFormat, isSyncMode)
+                                                  canChangeWhiteSpaceOnly, quickFormat, isSync)
     val formattingTask = createFormattingTask(service, formattingRequest)
     if (formattingTask != null) {
       formattingRequest.setTask(formattingTask)
       pendingRequests[document] = formattingRequest
-      if (isSyncMode) {
+      if (isSync) {
         runAsyncFormatBlocking(formattingRequest)
       }
       else {
@@ -69,6 +69,13 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
         }
       }
     }
+  }
+
+  private fun isSyncFormat(document: Document): Boolean {
+    val forceSync = document.getUserData(FORMAT_DOCUMENT_SYNCHRONOUSLY) == true
+    val isHeadless = ApplicationManager.getApplication().isHeadlessEnvironment()
+    val isIgnoreHeadless = SystemProperties.getBooleanProperty("intellij.async.formatting.ignoreHeadless", false)
+    return forceSync || (isHeadless && !isIgnoreHeadless)
   }
 
   @Suppress("RAW_RUN_BLOCKING")
