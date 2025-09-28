@@ -122,8 +122,6 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
 
     @Volatile
     private var task: FormattingTask? = null
-    @Volatile
-    private var taskStarted = false
 
     private var result = CompletableDeferred<String?>()
 
@@ -174,38 +172,46 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
         }
         // There is an implicit contract that a task that was already created is also started.
         // GlobalScope is used here to prevent cancellation before that can happen.
-        GlobalScope.launch(dispatcher) {
+        val taskJob = GlobalScope.launch(dispatcher) {
           runTask(task)
         }
-        val formattedText = withTimeoutOrNull(getTimeout(service).toMillis()) {
-          result.await()
-        }
-        if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
-          FormattingNotificationService.getInstance(_context.project).reportError(
-            getNotificationGroupId(service),
-            getTimeoutNotificationDisplayId(service), getName(service),
-            CodeStyleBundle.message("async.formatting.service.timeout", getName(service),
-                                    getTimeout(service).seconds.toString()),
-            *getTimeoutActions(service, _context)
-          )
-        }
-        else if (formattedText != null) {
-          if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-            updateDocument(formattedText)
+        try {
+          val formattedText = withTimeoutOrNull(getTimeout(service).toMillis()) {
+            result.await()
           }
-          else {
-            withContext(Dispatchers.EDT) {
-              CommandProcessor.getInstance().runUndoTransparentAction {
-                try {
-                  WriteAction.run<Throwable> {
-                    updateDocument(formattedText)
+          if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
+            FormattingNotificationService.getInstance(_context.project).reportError(
+              getNotificationGroupId(service),
+              getTimeoutNotificationDisplayId(service), getName(service),
+              CodeStyleBundle.message("async.formatting.service.timeout", getName(service),
+                                      getTimeout(service).seconds.toString()),
+              *getTimeoutActions(service, _context)
+            )
+          }
+          else if (formattedText != null) {
+            if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+              updateDocument(formattedText)
+            }
+            else {
+              withContext(Dispatchers.EDT) {
+                CommandProcessor.getInstance().runUndoTransparentAction {
+                  try {
+                    WriteAction.run<Throwable> {
+                      updateDocument(formattedText)
+                    }
                   }
-                }
-                catch (throwable: Throwable) {
-                  LOG.error(throwable)
+                  catch (throwable: Throwable) {
+                    LOG.error(throwable)
+                  }
                 }
               }
             }
+          }
+        }
+        finally {
+          this@FormattingRequestImpl.cancel()
+          withContext(NonCancellable) {
+            taskJob.join()
           }
         }
       }
