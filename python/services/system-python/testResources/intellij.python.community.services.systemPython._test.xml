@@ -4,4 +4,11 @@
     <module name="intellij.python.community.junit5Tests.framework._test"/>
     <module name="intellij.python.community.services.systemPython"/>
   </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.python.junit5Tests.env.systemPython.SystemPythonRootsFixer"/>
+  </extensions>
+  <extensions defaultExtensionNs="Pythonid">
+    <systemPythonProvider implementation="com.intellij.python.junit5Tests.env.systemPython.impl.EnvTestPythonProvider"/>
+  </extensions>
 </idea-plugin>

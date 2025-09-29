@@ -1,5 +1,4 @@
 <idea-plugin>
-
   <id>pycharm.systemPython.tests</id>
   <dependencies>
     <plugin id="com.intellij.modules.python"/>
