@@ -62,15 +62,16 @@ public interface CachedValueProvider<T> {
      * and to compare that to the state of the world when querying {@link CachedValue#getValue()}.
      * <p>
      * The state is remembered as a collection of {@code long} values representing some time stamps.
-     * Whenever changes occur, these stamps are incremented.
+     * Whenever changes to the dependencies occur, these stamps are incremented.
      * <p>
      * Dependencies can be the following:
      * <ul>
      *   <li/>Instances of {@link com.intellij.openapi.util.ModificationTracker ModificationTracker} returning stamps explicitly
      *   <li/>Constant fields of {@link PsiModificationTracker} class, e.g. {@link PsiModificationTracker#MODIFICATION_COUNT}
      *   <li/>Instances of {@link com.intellij.openapi.editor.Document Document} or {@link com.intellij.openapi.vfs.VirtualFile VirtualFile}.
-     *      Invalidated on any change in the corresponding file.
-     *   <li/>Instances of {@link PsiElement}. Invalidated on any change in the {@link PsiElement#getContainingFile() element's containing file}.
+     *      Such a cache is invalidated any change in the corresponding file.
+     *   <li/>Instances of {@link PsiElement}.
+     *      Such a cache is invalidated on any change in the {@link PsiElement#getContainingFile() element's containing file}.
      * </ul>
      * <p>
      * If your cached value uses a document instance as an input, you should use that document as a dependency.
