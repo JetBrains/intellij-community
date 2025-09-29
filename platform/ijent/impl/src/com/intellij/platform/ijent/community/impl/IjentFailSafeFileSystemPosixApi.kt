@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl
 
 import com.intellij.platform.eel.EelDescriptor
@@ -9,6 +9,7 @@ import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
 import com.intellij.platform.eel.fs.EelOpenedFile
 import com.intellij.platform.eel.fs.EelPosixFileInfo
+import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentPosixApi
@@ -164,15 +165,18 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
 
   override suspend fun openForReading(
-    path: EelPath,
+    args: EelFileSystemApi.OpenForReadingArgs,
   ): EelResult<EelOpenedFile.Reader, EelFileSystemApi.FileReaderError> =
     holder.withDelegateRetrying {
-      openForReading(path)
+      openForReading(args)
     }
 
-  override suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> = holder.withDelegateRetrying {
-    readFully(path, limit, overflowPolicy)
-  }
+  override suspend fun readFile(
+    args: EelFileSystemApi.ReadFileArgs,
+  ): EelResult<EelFileSystemApi.ReadFileResult, EelFileSystemApi.FileReaderError> =
+    holder.withDelegateRetrying {
+      readFile(args)
+    }
 
   override suspend fun openForWriting(
     options: EelFileSystemApi.WriteOptions,

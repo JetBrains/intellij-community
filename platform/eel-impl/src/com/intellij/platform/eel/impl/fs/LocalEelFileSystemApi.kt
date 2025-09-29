@@ -7,6 +7,7 @@ import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.EelUserWindowsInfo
 import com.intellij.platform.eel.ReadResult
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode.*
 import com.intellij.platform.eel.path.EelPath
@@ -30,12 +31,8 @@ import java.nio.file.attribute.*
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import kotlin.io.path.exists
-import kotlin.io.path.fileAttributesView
-import kotlin.io.path.fileStore
-import kotlin.io.path.isDirectory
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.pathString
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.*
 import kotlin.streams.asSequence
 
 abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) : EelFileSystemApi {
@@ -51,10 +48,16 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
   }
 
   inline fun <T, reified E : EelFsError> wrapIntoEelResult(body: () -> T): EelResult<T, E> =
+    wrapIntoEelResult(null, body)
+
+  inline fun <T, reified E : EelFsError> wrapIntoEelResult(isClosed: AtomicReference<Boolean?>?, body: () -> T): EelResult<T, E> =
     try {
-      EelFsResultImpl.Ok(body())
+      val result = EelFsResultImpl.Ok(body())
+      isClosed?.updateAndGet { it ?: false }
+      result
     }
     catch (err: FileSystemException) {
+      isClosed?.set(true)
       val path =
         try {
           EelPath.parse(err.file.toString(), LocalEelDescriptor)
@@ -122,15 +125,58 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
       Files.isSameFile(source.toNioPath(), target.toNioPath())
     }
 
-  override suspend fun openForReading(path: EelPath): EelResult<
+  @OptIn(EelDelicateApi::class)
+  override suspend fun openForReading(args: EelFileSystemApi.OpenForReadingArgs): EelResult<
     EelOpenedFile.Reader,
     EelFileSystemApi.FileReaderError
-    > =
-    wrapIntoEelResult {
-      val nioPath = path.toNioPath()
-      val byteChannel: SeekableByteChannel = nioPath.fileSystem.provider().newByteChannel(nioPath, setOf(StandardOpenOption.READ))
-      LocalEelOpenedFileReader(this, byteChannel, path)
+    > {
+    val result = openForReadingImpl(
+      path = args.path,
+      autoCloseAfterLastChunk = args.autoCloseAfterLastChunk,
+      closeImmediatelyIfFileBiggerThan = args.closeImmediatelyIfFileBiggerThan,
+    )
+    // Not filling the buffer. This optimization makes no sense for the local case.
+    args.readFirstChunkInto?.run {
+      position(0)
+      limit(0)
     }
+    return result
+  }
+
+  @OptIn(EelDelicateApi::class)
+  private fun openForReadingImpl(
+    path: EelPath,
+    autoCloseAfterLastChunk: Boolean,
+    closeImmediatelyIfFileBiggerThan: Long?,
+  ): EelResult<LocalEelOpenedFileReader, EelFileSystemApi.FileReaderError> = wrapIntoEelResult {
+    val nioPath = path.toNioPath()
+    val byteChannel: SeekableByteChannel = nioPath.fileSystem.provider().newByteChannel(nioPath, setOf(StandardOpenOption.READ))
+    val isClosed = AtomicReference<Boolean?>(null)
+
+    if (closeImmediatelyIfFileBiggerThan != null) {
+      if (byteChannel.size() > closeImmediatelyIfFileBiggerThan) {
+        isClosed.set(true)
+        try {
+          doClose(this@NioBasedEelFileSystemApi, byteChannel, path)
+        }
+        catch (_: IOException) {
+          // Ignored.
+        }
+        return EelFsResultImpl.Error(EelFsResultImpl.FileBiggerThanRequested(path, "The file is bigger than the requested size"))
+      }
+    }
+
+    LocalEelOpenedFileReader(
+      eelFs = this,
+      byteChannel = byteChannel,
+      path_ = path,
+      isClosed_ = isClosed,
+      autoCloseAfterLastChunk = autoCloseAfterLastChunk,
+    )
+  }
+
+  override suspend fun readFile(args: EelFileSystemApi.ReadFileArgs): EelResult<EelFileSystemApi.ReadFileResult, EelFileSystemApi.FileReaderError> =
+    readFileImpl(args)
 
   override suspend fun openForWriting(options: EelFileSystemApi.WriteOptions): EelResult<
     EelOpenedFile.Writer,
@@ -140,7 +186,7 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
       val nioPath = path.toNioPath()
       val nioOptions = writeOptionsToNioOptions(options)
       val byteChannel: SeekableByteChannel = nioPath.fileSystem.provider().newByteChannel(nioPath, nioOptions)
-      LocalEelOpenedFileWriter(this, byteChannel, path)
+      LocalEelOpenedFileWriter(this, byteChannel, path, AtomicReference(null))
     }
 
   private fun writeOptionsToNioOptions(options: EelFileSystemApi.WriteOptions): MutableSet<StandardOpenOption> {
@@ -168,15 +214,16 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
       val nioOptions = writeOptionsToNioOptions(options)
       nioOptions += StandardOpenOption.READ
       val byteChannel: SeekableByteChannel = nioPath.fileSystem.provider().newByteChannel(nioPath, nioOptions)
-      object : EelOpenedFile.ReaderWriter, EelOpenedFile.Writer by LocalEelOpenedFileWriter(this, byteChannel, path) {
+      val isClosed = AtomicReference<Boolean?>(null)
+      object : EelOpenedFile.ReaderWriter, EelOpenedFile.Writer by LocalEelOpenedFileWriter(this, byteChannel, path, isClosed) {
         override suspend fun read(buf: ByteBuffer): EelResult<ReadResult, EelOpenedFile.Reader.ReadError> =
-          doRead(this@NioBasedEelFileSystemApi, byteChannel, buf)
+          doRead(this@NioBasedEelFileSystemApi, byteChannel, buf, isClosed, autoCloseAfterLastChunk = false)
 
         override suspend fun read(
           buf: ByteBuffer,
           offset: Long,
         ): EelResult<ReadResult, EelOpenedFile.Reader.ReadError> =
-          doRead(this@NioBasedEelFileSystemApi, byteChannel, offset, buf)
+          doRead(this@NioBasedEelFileSystemApi, byteChannel, offset, buf, isClosed)
       }
     }
 
@@ -231,32 +278,40 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
         EelPathUtils.walkingTransfer(sourceNioPath, targetNioPath, removeSource = true, copyAttributes = true)
       }
     }
-  }
+}
 
+@EelDelicateApi
 internal class LocalEelOpenedFileReader(
   private val eelFs: NioBasedEelFileSystemApi,
   private val byteChannel: SeekableByteChannel,
   private val path_: EelPath,
+  private val isClosed_: AtomicReference<Boolean?>,
+  private val autoCloseAfterLastChunk: Boolean,
 ) : EelOpenedFile.Reader {
+  override val isClosed: Boolean?
+    get() = isClosed_.get()
+
   override suspend fun read(buf: ByteBuffer): EelResult<ReadResult, EelOpenedFile.Reader.ReadError> =
-    doRead(eelFs, byteChannel, buf)
+    doRead(eelFs, byteChannel, buf, isClosed_, autoCloseAfterLastChunk)
 
   override suspend fun read(buf: ByteBuffer, offset: Long): EelResult<
     ReadResult,
     EelOpenedFile.Reader.ReadError
     > =
-    doRead(eelFs, byteChannel, offset, buf)
+    doRead(eelFs, byteChannel, offset, buf, isClosed_)
 
   override val path: EelPath = path_
 
-  override suspend fun close(): EelResult<Unit, EelOpenedFile.CloseError> =
-    doClose(eelFs, byteChannel, path_)
+  override suspend fun close(): EelResult<Unit, EelOpenedFile.CloseError> {
+    isClosed_.set(true)
+    return doClose(eelFs, byteChannel, path_)
+  }
 
   override suspend fun tell(): EelResult<Long, EelOpenedFile.TellError> =
-    doTell(eelFs, byteChannel, path_)
+    doTell(eelFs, byteChannel, isClosed_)
 
   override suspend fun seek(offset: Long, whence: EelOpenedFile.SeekWhence): EelResult<Long, EelOpenedFile.SeekError> =
-    doSeek(eelFs, byteChannel, path_, whence, offset)
+    doSeek(eelFs, byteChannel, path_, whence, offset, isClosed_)
 
   override suspend fun stat(): EelResult<EelFileInfo, EelFileSystemApi.StatError> =
     eelFs.stat(path_, EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)
@@ -266,14 +321,19 @@ private class LocalEelOpenedFileWriter(
   private val eelFs: NioBasedEelFileSystemApi,
   private val byteChannel: SeekableByteChannel,
   private val path_: EelPath,
+  private val isClosed_: AtomicReference<Boolean?>,
 ) : EelOpenedFile.Writer {
+  @EelDelicateApi
+  override val isClosed: Boolean?
+    get() = isClosed_.get()
+
   override suspend fun write(buf: ByteBuffer): EelResult<Int, EelOpenedFile.Writer.WriteError> =
-    eelFs.wrapIntoEelResult {
+    eelFs.wrapIntoEelResult(isClosed_) {
       byteChannel.write(buf)
     }
 
   override suspend fun write(buf: ByteBuffer, pos: Long): EelResult<Int, EelOpenedFile.Writer.WriteError> =
-    eelFs.wrapIntoEelResult {
+    eelFs.wrapIntoEelResult(isClosed_) {
       val oldPosition = byteChannel.position()
       byteChannel.position(pos)
       val written = byteChannel.write(buf)
@@ -286,20 +346,22 @@ private class LocalEelOpenedFileWriter(
   }
 
   override suspend fun truncate(size: Long): EelResult<Unit, EelOpenedFile.Writer.TruncateError> =
-    eelFs.wrapIntoEelResult {
+    eelFs.wrapIntoEelResult(isClosed_) {
       byteChannel.truncate(size)
     }
 
   override val path: EelPath = path_
 
-  override suspend fun close(): EelResult<Unit, EelOpenedFile.CloseError> =
-    doClose(eelFs, byteChannel, path_)
+  override suspend fun close(): EelResult<Unit, EelOpenedFile.CloseError> {
+    isClosed_.set(true)
+    return doClose(eelFs, byteChannel, path_)
+  }
 
   override suspend fun tell(): EelResult<Long, EelOpenedFile.TellError> =
-    doTell(eelFs, byteChannel, path_)
+    doTell(eelFs, byteChannel, isClosed_)
 
   override suspend fun seek(offset: Long, whence: EelOpenedFile.SeekWhence): EelResult<Long, EelOpenedFile.SeekError> =
-    doSeek(eelFs, byteChannel, path_, whence, offset)
+    doSeek(eelFs, byteChannel, path_, whence, offset, isClosed_)
 
   override suspend fun stat(): EelResult<EelFileInfo, EelFileSystemApi.StatError> =
     eelFs.stat(path_, EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)
@@ -309,11 +371,19 @@ private fun doRead(
   eelFs: NioBasedEelFileSystemApi,
   byteChannel: SeekableByteChannel,
   buf: ByteBuffer,
+  isClosed: AtomicReference<Boolean?>,
+  autoCloseAfterLastChunk: Boolean,
 ): EelResult<ReadResult, EelOpenedFile.Reader.ReadError> =
-  eelFs.wrapIntoEelResult {
+  eelFs.wrapIntoEelResult(isClosed) {
     val read = byteChannel.read(buf)
-
-    ReadResult.fromNumberOfReadBytes(read)
+    val result = ReadResult.fromNumberOfReadBytes(read)
+    if (autoCloseAfterLastChunk) {
+      when (result) {
+        ReadResult.EOF -> isClosed.set(true)
+        ReadResult.NOT_EOF -> isClosed.set(false)
+      }
+    }
+    result
   }
 
 private fun doRead(
@@ -321,8 +391,9 @@ private fun doRead(
   byteChannel: SeekableByteChannel,
   offset: Long,
   buf: ByteBuffer,
+  isClosed: AtomicReference<Boolean?>,
 ): EelResult<ReadResult, EelOpenedFile.Reader.ReadError> =
-  eelFs.wrapIntoEelResult {
+  eelFs.wrapIntoEelResult(isClosed) {
     val oldPosition = byteChannel.position()
     byteChannel.position(offset)
     val read = byteChannel.read(buf)
@@ -337,7 +408,8 @@ private fun doSeek(
   path: EelPath,
   whence: EelOpenedFile.SeekWhence,
   offset: Long,
-): EelResult<Long, EelOpenedFile.SeekError> = eelFs.wrapIntoEelResult {
+  isClosed: AtomicReference<Boolean?>,
+): EelResult<Long, EelOpenedFile.SeekError> = eelFs.wrapIntoEelResult(isClosed) {
   val newPosition = when (whence) {
     EelOpenedFile.SeekWhence.START -> offset
     EelOpenedFile.SeekWhence.CURRENT -> byteChannel.position() + offset
@@ -347,8 +419,12 @@ private fun doSeek(
   newPosition
 }
 
-private fun doTell(eelFs: NioBasedEelFileSystemApi, byteChannel: SeekableByteChannel, path: EelPath): EelResult<Long, EelOpenedFile.TellError> =
-  eelFs.wrapIntoEelResult {
+private fun doTell(
+  eelFs: NioBasedEelFileSystemApi,
+  byteChannel: SeekableByteChannel,
+  isClosed: AtomicReference<Boolean?>,
+): EelResult<Long, EelOpenedFile.TellError> =
+  eelFs.wrapIntoEelResult(isClosed) {
     byteChannel.position().toLong()
   }
 
@@ -423,10 +499,6 @@ abstract class PosixNioBasedEelFileSystemApi(
 
       Files.createSymbolicLink(linkPath.toNioPath(), targetPath)
     }
-
-  override suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> {
-    TODO("Not yet implemented")
-  }
 
   override suspend fun walkDirectory(options: EelFileSystemApi.WalkDirectoryOptions): Flow<WalkDirectoryEntryResult> = flow {
     val rootDir = options.path.asNioPath()
@@ -514,7 +586,7 @@ abstract class PosixNioBasedEelFileSystemApi(
     currentItem: Path,
     sourceAttrs: PosixFileAttributes,
     emptyFileHash: Long,
-    options: EelFileSystemApi.WalkDirectoryOptions
+    options: EelFileSystemApi.WalkDirectoryOptions,
   ): WalkDirectoryEntryResult? {
     var creationTime: ZonedDateTime? = null
     var lastModifiedTime: ZonedDateTime? = null
@@ -656,10 +728,6 @@ abstract class WindowsNioBasedEelFileSystemApi(
       // TODO File permissions for windows.
     }
 
-  override suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> {
-    TODO("Not yet implemented")
-  }
-
   override suspend fun walkDirectory(options: EelFileSystemApi.WalkDirectoryOptions): Flow<WalkDirectoryEntryResult> = flow {
     val rootDir = options.path.asNioPath()
 
@@ -746,7 +814,7 @@ abstract class WindowsNioBasedEelFileSystemApi(
     currentItem: Path,
     sourceAttrs: DosFileAttributes,
     emptyFileHash: Long,
-    options: EelFileSystemApi.WalkDirectoryOptions
+    options: EelFileSystemApi.WalkDirectoryOptions,
   ): WalkDirectoryEntryResult? {
     var creationTime: ZonedDateTime? = null
     var lastModifiedTime: ZonedDateTime? = null

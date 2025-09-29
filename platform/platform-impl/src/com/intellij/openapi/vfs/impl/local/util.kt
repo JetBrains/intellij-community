@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase.LOG
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase.toIoPath
 import com.intellij.openapi.vfs.limits.FileSizeLimit
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.LocalEelApi
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.getOr
 import com.intellij.platform.eel.path.EelPath
@@ -26,6 +26,7 @@ import com.intellij.platform.ijent.community.impl.nio.IjentNioPosixFileAttribute
 import com.intellij.platform.ijent.community.impl.nio.fsBlocking
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.nio.file.*
@@ -38,34 +39,39 @@ private val map = ContainerUtil.createConcurrentWeakMap<Path, EelApi>()
  * This is unacceptable in the remote setting when each request to IO results in RPC.
  * Here we try to invoke a specialized function that can read all bytes from [path] in one request.
  */
+@OptIn(EelDelicateApi::class)
 @Suppress("RAW_RUN_BLOCKING")
 internal fun readWholeFileIfNotTooLargeWithEel(path: Path): ByteArray? {
   if (!Registry.`is`("vfs.try.eel.for.content.loading", false)) {
     return null
   }
   val root = path.root ?: return null
+
+  // TODO Check if this if-else can be removed. The only reason why it's kept is to avoid possible performance degradations in hot code.
   val eelDescriptor = root.getEelDescriptor()
   if (eelDescriptor == LocalEelDescriptor) {
     return null
   }
-  val api = map.computeIfAbsent(root) {
+
+  val api = map.computeIfAbsent(root) {  // TODO Does this cache make sense nowadays?
     runBlocking {
       root.getEelDescriptor().toEelApi()
     }
   }
-  if (api is LocalEelApi) {
-    return null
-  }
+
   val eelPath = path.asEelPath()
   val limit = FileSizeLimit.getContentLoadLimit(FileUtilRt.getExtension(path.fileName.toString()))
 
-  return runBlocking {
-    when (val res = api.fs.readFully(eelPath, limit.toULong(), EelFileSystemApi.OverflowPolicy.DROP).getOrThrowFileSystemException()) {
-      is EelFileSystemApi.FullReadResult.Bytes -> res.bytes
-      is EelFileSystemApi.FullReadResult.BytesOverflown -> error("Never returned")
-      is EelFileSystemApi.FullReadResult.Overflow -> throw FileTooBigException("File $path is bigger than $limit bytes")
+  val result = runBlocking {
+    try {
+      api.fs.readFile(eelPath).limit(limit).failFastIfBeyondLimit(true).getOrThrowFileSystemException()
+    }
+    catch (err: FileSystemException) {
+      throw err.cause.takeIf { it is FileTooBigException } ?: err
     }
   }
+
+  return result.bytes.toByteArray()
 }
 
 internal fun toEelPath(parent: VirtualFile, childName: String): EelPath? =

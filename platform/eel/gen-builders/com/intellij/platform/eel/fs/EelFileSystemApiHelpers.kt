@@ -7,6 +7,7 @@ package com.intellij.platform.eel.fs
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.OwnedBuilder
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.EelFileInfo.Permissions
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileChangeType
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode
@@ -23,6 +24,7 @@ import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
+import java.nio.ByteBuffer
 
 
 @GeneratedBuilder.Result
@@ -89,6 +91,39 @@ fun EelFileSystemApi.move(
     owner = this,
     source = source,
     target = target,
+  )
+
+/**
+ * Opens the file only for reading.
+ * 
+ * In many cases [readFile] suits better than [openForReading].
+ */
+@GeneratedBuilder.Result
+@ApiStatus.Internal
+fun EelFileSystemApi.openForReading(
+  path: EelPath,
+): EelFileSystemApiHelpers.OpenForReading =
+  EelFileSystemApiHelpers.OpenForReading(
+    owner = this,
+    path = path,
+  )
+
+/**
+ * Fully or partially reads the file.
+ * 
+ * Although it's possible to implement file reading with [openForReading],
+ * this function is optimized and covered with tests.
+ * 
+ * The returned [ReadFileResult.bytes] is prepared for reading.
+ */
+@GeneratedBuilder.Result
+@ApiStatus.Internal
+fun EelFileSystemApi.readFile(
+  path: EelPath,
+): EelFileSystemApiHelpers.ReadFile =
+  EelFileSystemApiHelpers.ReadFile(
+    owner = this,
+    path = path,
   )
 
 /**
@@ -490,6 +525,156 @@ object EelFileSystemApiHelpers {
           replaceExisting = replaceExisting,
           source = source,
           target = target,
+        )
+      )
+  }
+
+  /**
+   * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.openForReading].
+   */
+  @GeneratedBuilder.Result
+  @ApiStatus.Internal
+  class OpenForReading(
+    private val owner: EelFileSystemApi,
+    private var path: EelPath,
+  ) : OwnedBuilder<EelResult<EelOpenedFile.Reader, EelFileSystemApi.FileReaderError>> {
+    private var autoCloseAfterLastChunk: Boolean = false
+
+    private var closeImmediatelyIfFileBiggerThan: Long? = null
+
+    private var readFirstChunkInto: ByteBuffer? = null
+
+    /**
+     * When specified, the implementation closes its internal file descriptor
+     * as soon as it internally reaches the end of the file.
+     *
+     * There are two ways to figure out if the file is closed after calling [openForReading] or [EelOpenedFile.Reader.read]
+     * * By calling [EelOpenedFile.Reader.read], which implies an additional system call or an RPC call.
+     * * By checking inexpensive but unreliable [EelOpenedFile.isClosed].
+     */
+    @EelDelicateApi
+    fun autoCloseAfterLastChunk(arg: Boolean): OpenForReading = apply {
+      this.autoCloseAfterLastChunk = arg
+    }
+
+    /**
+     * An optimization suitable for reading into memory.
+     * It allows aborting the reading fast if the whole file content
+     * won't fit into some buffer.
+     *
+     * If it happens, [readFile] returns [FileReaderError.FileBiggerThanRequested].
+     */
+    @EelDelicateApi
+    fun closeImmediatelyIfFileBiggerThan(arg: Long?): OpenForReading = apply {
+      this.closeImmediatelyIfFileBiggerThan = arg
+    }
+
+    fun path(arg: EelPath): OpenForReading = apply {
+      this.path = arg
+    }
+
+    /**
+     * When specified, data from the file MAY be written into this buffer.
+     * [ByteBuffer.position] and [ByteBuffer.limit] are always changed.
+     * The buffer is prepared for reading after the call,
+     * so the caller SHOULD NOT call [ByteBuffer.flip] after calling [openForReading].
+     *
+     * If some data is written into this buffer,
+     * the first call of [EelOpenedFile.Reader.read] reads the data following this buffer.
+     */
+    @EelDelicateApi
+    fun readFirstChunkInto(arg: ByteBuffer?): OpenForReading = apply {
+      this.readFirstChunkInto = arg
+    }
+
+    /**
+     * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.openForReading]
+     * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.OpenForReadingArgs].
+     */
+    @CheckReturnValue
+    override suspend fun eelIt(): EelResult<EelOpenedFile.Reader, EelFileSystemApi.FileReaderError> =
+      owner.openForReading(
+        OpenForReadingArgsImpl(
+          autoCloseAfterLastChunk = autoCloseAfterLastChunk,
+          closeImmediatelyIfFileBiggerThan = closeImmediatelyIfFileBiggerThan,
+          path = path,
+          readFirstChunkInto = readFirstChunkInto,
+        )
+      )
+  }
+
+  /**
+   * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.readFile].
+   */
+  @GeneratedBuilder.Result
+  @ApiStatus.Internal
+  class ReadFile(
+    private val owner: EelFileSystemApi,
+    private var path: EelPath,
+  ) : OwnedBuilder<EelResult<EelFileSystemApi.ReadFileResult, EelFileSystemApi.FileReaderError>> {
+    private var buffer: ByteBuffer? = null
+
+    private var failFastIfBeyondLimit: Boolean = false
+
+    private var limit: Int? = null
+
+    private var mayReturnSameBuffer: Boolean = true
+
+    /**
+     * Use some specific buffer for reading files instead of creating a temporary buffer.
+     *
+     * The implementation MAY use only a fraction of this buffer for invoking a single system or RPC call.
+     *
+     * The buffer is ready for reading, no need to call `flip`.
+     */
+    @EelDelicateApi
+    fun buffer(arg: ByteBuffer?): ReadFile = apply {
+      this.buffer = arg
+    }
+
+    /**
+     * If this flag is set, the implementation checks the file size before trying to read data,
+     * and if the file is certainly bigger than [limit], no data is read.
+     */
+    @EelDelicateApi
+    fun failFastIfBeyondLimit(arg: Boolean): ReadFile = apply {
+      this.failFastIfBeyondLimit = arg
+    }
+
+    /**
+     * Maximal number of bytes to read.
+     */
+    fun limit(arg: Int?): ReadFile = apply {
+      this.limit = arg
+    }
+
+    /**
+     * If this flag is set and [buffer] is specified, the implementation reads the whole
+     * file into [buffer] and [ReadFileResult.bytes] contains a reference to [buffer]. However, if the file size is greater than the capacity of the buffer, the implementation returns a different buffer.
+     *
+     * If [buffer] is not specified, the value of the flag is ignored.
+     */
+    @EelDelicateApi
+    fun mayReturnSameBuffer(arg: Boolean): ReadFile = apply {
+      this.mayReturnSameBuffer = arg
+    }
+
+    fun path(arg: EelPath): ReadFile = apply {
+      this.path = arg
+    }
+
+    /**
+     * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.readFile]
+     * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.ReadFileArgs].
+     */
+    override suspend fun eelIt(): EelResult<EelFileSystemApi.ReadFileResult, EelFileSystemApi.FileReaderError> =
+      owner.readFile(
+        ReadFileArgsImpl(
+          buffer = buffer,
+          failFastIfBeyondLimit = failFastIfBeyondLimit,
+          limit = limit,
+          mayReturnSameBuffer = mayReturnSameBuffer,
+          path = path,
         )
       )
   }

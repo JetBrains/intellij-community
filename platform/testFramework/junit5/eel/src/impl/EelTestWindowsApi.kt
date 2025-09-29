@@ -30,10 +30,6 @@ internal class EelTestWindowsApi(override val descriptor: EelTestDescriptor, fil
 
 private class EelTestFileSystemWindowsApi(override val descriptor: EelDescriptor, fileSystem: EelUnitTestFileSystem) : WindowsNioBasedEelFileSystemApi(fileSystem, EelTestWindowsUserInfo(descriptor)) {
 
-  override suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> {
-    TODO("Not yet implemented")
-  }
-
   override suspend fun createTemporaryDirectory(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> {
     return wrapIntoEelResult {
       val nioTempDir = Files.createTempDirectory(options.prefix)
