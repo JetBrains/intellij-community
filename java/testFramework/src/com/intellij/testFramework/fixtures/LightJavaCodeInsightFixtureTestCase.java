@@ -221,4 +221,9 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
   public @NotNull IndexingMode getIndexingMode() {
     return myIndexingMode;
   }
+
+  protected void configureByJavaText(@NotNull String fileName,
+                                     @NotNull @org.intellij.lang.annotations.Language("Java") String text) {
+    myFixture.configureByText(fileName, text);
+  }
 }
