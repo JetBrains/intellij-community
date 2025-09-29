@@ -110,11 +110,6 @@ final class LineMarkersUtil {
         null, lineMarkerInfo.startOffset, lineMarkerInfo.endOffset,
         HighlighterLayer.ADDITIONAL_SYNTAX, HighlighterTargetArea.LINES_IN_RANGE, false,
         changeAttributes(lineMarkerInfo, project, true, newRenderer, context, true, true));
-
-      MarkupEditorFilter editorFilter = lineMarkerInfo.getEditorFilter();
-      if (editorFilter != MarkupEditorFilter.EMPTY) {
-        highlighter.setEditorFilter(editorFilter);
-      }
     }
     else {
       list.remove(highlighter);
@@ -123,7 +118,7 @@ final class LineMarkersUtil {
       boolean lineSeparatorColorChanged = !Comparing.equal(highlighter.getLineSeparatorColor(), lineMarkerInfo.separatorColor);
       boolean lineSeparatorPlacementChanged = !Comparing.equal(highlighter.getLineSeparatorPlacement(), lineMarkerInfo.separatorPlacement);
 
-      if (rendererChanged || lineSeparatorColorChanged || lineSeparatorPlacementChanged) {
+      if (rendererChanged || lineSeparatorColorChanged || lineSeparatorPlacementChanged || lineMarkerInfo.getEditorFilter() != highlighter.getEditorFilter()) {
         markupModel.changeAttributesInBatch(highlighter, changeAttributes(lineMarkerInfo, project, rendererChanged, newRenderer, context, lineSeparatorColorChanged, lineSeparatorPlacementChanged));
       }
       HighlightingNecromancer.unmarkZombieMarkup(highlighter);
@@ -154,6 +149,8 @@ final class LineMarkersUtil {
       if (lineSeparatorPlacementChanged) {
         markerEx.setLineSeparatorPlacement(info.separatorPlacement);
       }
+      MarkupEditorFilter editorFilter = info.getEditorFilter();
+      markerEx.setEditorFilter(editorFilter);
 
       CodeInsightContextHighlightingUtil.installCodeInsightContext(markerEx, project, context);
     };
