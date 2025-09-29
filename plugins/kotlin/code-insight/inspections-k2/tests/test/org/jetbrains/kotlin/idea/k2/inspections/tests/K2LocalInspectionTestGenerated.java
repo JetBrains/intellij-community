@@ -1401,11 +1401,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/extensionMethodSuitableForList.kt");
         }
 
-        @TestMetadata("featureDisabled.kt")
-        public void testFeatureDisabled() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/featureDisabled.kt");
-        }
-
         @TestMetadata("forEachInsideEnumBody.kt")
         public void testForEachInsideEnumBody() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/forEachInsideEnumBody.kt");
@@ -4699,11 +4694,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("notApplicableEnumEntries.kt")
         public void testNotApplicableEnumEntries() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/notApplicableEnumEntries.kt");
-        }
-
-        @TestMetadata("notApplicableEnumEntries2.kt")
-        public void testNotApplicableEnumEntries2() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/notApplicableEnumEntries2.kt");
         }
 
         @TestMetadata("notApplicableEnumEntry.kt")
@@ -17009,11 +16999,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("enumEntries2.kt")
         public void testEnumEntries2() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/enumEntries2.kt");
-        }
-
-        @TestMetadata("enumEntries3.kt")
-        public void testEnumEntries3() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/enumEntries3.kt");
         }
 
         @TestMetadata("enumValueOf.kt")

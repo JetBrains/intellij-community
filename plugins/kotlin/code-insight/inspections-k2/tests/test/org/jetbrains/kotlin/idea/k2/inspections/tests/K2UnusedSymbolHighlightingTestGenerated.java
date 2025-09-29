@@ -732,11 +732,6 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumEntries5.kt");
         }
 
-        @TestMetadata("unusedEnumEntries6.kt")
-        public void testUnusedEnumEntries6() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumEntries6.kt");
-        }
-
         @TestMetadata("unusedEnumEntry.kt")
         public void testUnusedEnumEntry() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumEntry.kt");

@@ -161,11 +161,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/emptyRange/inspectionData/inspections.test");
         }
 
-        @TestMetadata("enumValuesSoftDeprecateInJava/inspectionData/inspections.test")
-        public void testEnumValuesSoftDeprecateInJava_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/enumValuesSoftDeprecateInJava/inspectionData/inspections.test");
-        }
-
         @TestMetadata("enumValuesSoftDeprecateInKotlinBefore1_9/inspectionData/inspections.test")
         public void testEnumValuesSoftDeprecateInKotlinBefore1_9_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/enumValuesSoftDeprecateInKotlinBefore1_9/inspectionData/inspections.test");
