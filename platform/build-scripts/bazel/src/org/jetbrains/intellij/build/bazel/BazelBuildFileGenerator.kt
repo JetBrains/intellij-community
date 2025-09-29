@@ -310,7 +310,7 @@ internal class BazelBuildFileGenerator(
     return internedLib
   }
 
-  fun computeModuleList(): ModuleList {
+  fun computeModuleList(m2Repo: Path): ModuleList {
     val community = ArrayList<ModuleDescriptor>()
     val ultimate = ArrayList<ModuleDescriptor>()
     val skippedModules = ArrayList<String>()
@@ -336,12 +336,12 @@ internal class BazelBuildFileGenerator(
     for (module in (community + ultimate)) {
       val hasSources = module.sources.isNotEmpty()
       if (hasSources || module.testSources.isEmpty()) {
-        result.deps.put(module, generateDeps(module = module, isTest = false, context = this, hasSources = hasSources))
+        result.deps.put(module, generateDeps(m2Repo, module = module, isTest = false, context = this, hasSources = hasSources))
       }
 
       val hasTestSources = module.testSources.isNotEmpty()
       if (hasTestSources || isTestClasspathModule(module)) {
-        result.testDeps.put(module, generateDeps(module = module, isTest = true, context = this, hasSources = hasTestSources))
+        result.testDeps.put(module, generateDeps(m2Repo = m2Repo, module = module, hasSources = hasTestSources, isTest = true, context = this))
       }
     }
 

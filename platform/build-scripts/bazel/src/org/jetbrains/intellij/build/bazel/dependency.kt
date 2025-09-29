@@ -49,6 +49,7 @@ internal data class ModuleDeps(
 }
 
 internal fun generateDeps(
+  m2Repo: Path,
   module: ModuleDescriptor,
   hasSources: Boolean,
   isTest: Boolean,
@@ -258,9 +259,9 @@ internal fun generateDeps(
           libraryContainer = context.addMavenLibrary(
             MavenLibrary(
               mavenCoordinates = "${jpsMavenLibraryDescriptor.groupId}:${jpsMavenLibraryDescriptor.artifactId}:${jpsMavenLibraryDescriptor.version}",
-              jars = repositoryJpsLibrary.getPaths(JpsOrderRootType.COMPILED).map { getFileMavenFileDescription(repositoryJpsLibrary, it) },
-              sourceJars = repositoryJpsLibrary.getPaths(JpsOrderRootType.SOURCES).map { getFileMavenFileDescription(repositoryJpsLibrary, it) },
-              javadocJars = repositoryJpsLibrary.getPaths(JpsOrderRootType.DOCUMENTATION).map { getFileMavenFileDescription(repositoryJpsLibrary, it) },
+              jars = repositoryJpsLibrary.getPaths(JpsOrderRootType.COMPILED).map { getFileMavenFileDescription(m2Repo, repositoryJpsLibrary, it) },
+              sourceJars = repositoryJpsLibrary.getPaths(JpsOrderRootType.SOURCES).map { getFileMavenFileDescription(m2Repo, repositoryJpsLibrary, it) },
+              javadocJars = repositoryJpsLibrary.getPaths(JpsOrderRootType.DOCUMENTATION).map { getFileMavenFileDescription(m2Repo, repositoryJpsLibrary, it) },
               target = LibraryTarget(targetName = targetName, container = libraryContainer, jpsName = jpsLibrary.name, isModuleLibrary = isModuleLibrary),
             ),
             isProvided = isProvided,
@@ -355,7 +356,7 @@ private fun getLocalLibBazelFileDir(files: List<Path>, communityRoot: Path): Pat
 private fun underKotlinSnapshotLibRoot(dir: Path, communityRoot: Path) =
   dir.startsWith(communityRoot.resolve("lib").resolve("kotlin-snapshot"))
 
-private fun getFileMavenFileDescription(lib: JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>, jar: Path): MavenFileDescription {
+private fun getFileMavenFileDescription(m2Repo: Path, lib: JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>, jar: Path): MavenFileDescription {
   require(jar.isAbsolute) {
     "jar path for jps library ${lib.name} must be absolute: $jar"
   }
@@ -364,19 +365,20 @@ private fun getFileMavenFileDescription(lib: JpsTypedLibrary<JpsSimpleElement<Jp
     "jar path for jps library ${lib.name} must not contain redundant . and .. segments: $jar"
   }
 
-  if (jar.nameCount < 3) throw IllegalStateException("Unable to get maven coordinates for $jar by its path")
+  val repositoryJarSegments = jar.drop(m2Repo.nameCount).toList()
+  val initSubPath = repositoryJarSegments.firstOrNull() ?: throw IllegalStateException("Unable to get .m2/repository/ location for $jar")
+  val jarSubPath = Path(initSubPath.toString(), *repositoryJarSegments.drop(1).map { it.toString() }.toTypedArray())
 
-  val version = jar.getName(jar.nameCount - 2).toString()
-  val artifactId = jar.getName(jar.nameCount - 3).toString()
+  if (jarSubPath.nameCount < 3) throw IllegalStateException("Unable to get maven coordinates for $jar by its path")
 
-  val repositoryStartIndex = jar.indexOf(Path("repository"))
-  if (repositoryStartIndex == -1) throw IllegalStateException("Unable to get .m2/repository/ location for $jar")
-
-  val artifactStartIndex = jar.nameCount - 3
+  val artifactStartIndex = jarSubPath.nameCount - 3
   if (artifactStartIndex < 0) throw IllegalStateException("Unable to get artifactId for $jar")
 
-  val groupIdPaths = jar.subpath(repositoryStartIndex + 1, artifactStartIndex)
+  val groupIdPaths = jarSubPath.subpath(0, artifactStartIndex)
   val groupId = groupIdPaths.joinToString(".")
+
+  val version = jarSubPath.getName(jarSubPath.nameCount - 2).toString()
+  val artifactId = jarSubPath.getName(jarSubPath.nameCount - 3).toString()
 
   val libraryDescriptor = lib.properties.data
   for (verification in libraryDescriptor.artifactsVerification) {
