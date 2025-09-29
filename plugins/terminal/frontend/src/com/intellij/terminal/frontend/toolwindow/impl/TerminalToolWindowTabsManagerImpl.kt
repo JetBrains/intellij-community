@@ -1,7 +1,5 @@
 package com.intellij.terminal.frontend.toolwindow.impl
 
-import com.intellij.frontend.FrontendApplicationInfo
-import com.intellij.frontend.FrontendType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
@@ -93,31 +91,15 @@ internal class TerminalToolWindowTabsManagerImpl(
   private suspend fun createNewTabIfEmpty(toolWindow: ToolWindow) {
     val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.OPEN_TOOLWINDOW)
 
-    fun doCreateTab() {
-      val engine = TerminalOptionsProvider.instance.terminalEngine
-      val frontendType = FrontendApplicationInfo.getFrontendType()
-      val isCodeWithMe = frontendType is FrontendType.Remote && frontendType.isGuest()
-      if (ExperimentalUI.isNewUI()
-          && engine == TerminalEngine.REWORKED
-          && !isCodeWithMe) {
-        // todo: pass fusInfo there as well
-        createTabBuilder().createTab()
-      }
-      else {
-        // Otherwise, create the Classic or Gen1 terminal tab using old API.
-        TerminalToolWindowManager.getInstance(project).createNewTab(engine, fusInfo, null, null)
-      }
-    }
-
     if (toolWindow.isVisible && toolWindow.contentManager.isEmpty) {
       if (tabsRestoredDeferred.isCompleted) {
-        doCreateTab()
+        createTerminalTab(project, startupFusInfo = fusInfo)
       }
       else {
         // Wait for some time for backend tabs to be restored.
         withTimeoutOrNull(2.seconds) { tabsRestoredDeferred.await() }
         if (toolWindow.isVisible && toolWindow.contentManager.isEmpty) {
-          doCreateTab()
+          createTerminalTab(project, startupFusInfo = fusInfo)
         }
       }
     }

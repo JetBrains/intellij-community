@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBUI
 import fleet.rpc.client.durable
@@ -16,9 +17,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.DetectedShellInfo
-import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.TerminalTabState
-import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalShellsDetectorApi
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
@@ -122,16 +120,13 @@ internal class TerminalNewPredefinedSessionAction : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project ?: return
       val contentManager = e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER)
-
-      val tabState = TerminalTabState()
-      tabState.myTabName = templateText
-      tabState.myShellCommand = myCommand
       val startupFusInfo = TerminalStartupFusInfo(TerminalOpeningWay.START_NEW_PREDEFINED_SESSION)
-      TerminalToolWindowManager.getInstance(project).createNewTab(
-        TerminalOptionsProvider.instance.terminalEngine,
-        startupFusInfo,
-        tabState,
-        contentManager,
+      createTerminalTab(
+        project,
+        shellCommand = myCommand,
+        tabName = templateText,
+        contentManager = contentManager,
+        startupFusInfo = startupFusInfo,
       )
     }
   }

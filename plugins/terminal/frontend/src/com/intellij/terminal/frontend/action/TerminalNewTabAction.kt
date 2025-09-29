@@ -4,9 +4,9 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
-import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
@@ -33,11 +33,10 @@ open class TerminalNewTabAction : TerminalPromotedDumbAwareAction() {
     val project = e.project ?: return
     val contentManager = e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER)
     val startupFusInfo = TerminalStartupFusInfo(TerminalOpeningWay.OPEN_NEW_TAB)
-    TerminalToolWindowManager.getInstance(project).createNewTab(
-      TerminalOptionsProvider.instance.terminalEngine,
-      startupFusInfo,
-      null,
-      contentManager,
+    createTerminalTab(
+      project,
+      contentManager = contentManager,
+      startupFusInfo = startupFusInfo,
     )
   }
 }

@@ -6,11 +6,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.application
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
@@ -33,12 +33,10 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
       // Call save manually, because otherwise this change will be synced to backend only at some time later.
       saveSettingsForRemoteDevelopment(application)
 
-      val startupFusInfo = TerminalStartupFusInfo(TerminalOpeningWay.SWITCH_ENGINE)
-      TerminalToolWindowManager.getInstance(project).createNewTab(
-        TerminalOptionsProvider.instance.terminalEngine,
-        startupFusInfo,
-        null,
-        e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER)
+      createTerminalTab(
+        project,
+        contentManager = e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER),
+        startupFusInfo = TerminalStartupFusInfo(TerminalOpeningWay.SWITCH_ENGINE),
       )
     }
   }
