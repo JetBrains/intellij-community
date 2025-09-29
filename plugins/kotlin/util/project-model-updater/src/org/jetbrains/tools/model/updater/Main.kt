@@ -10,12 +10,12 @@ import java.util.*
 import kotlin.io.path.*
 
 class GeneratorPreferences(properties: Properties) : Preferences(properties) {
-    val jpsPluginVersion: String by Preference()
-    val jpsPluginArtifactsMode: ArtifactMode by Preference(ArtifactMode::valueOf)
+    val jpsPluginVersion: String by MandatoryPreference()
+    val jpsPluginArtifactsMode: ArtifactMode by MandatoryPreference(ArtifactMode::valueOf)
 
-    val kotlincVersion: String by Preference()
-    val kotlinGradlePluginVersion: String by Preference()
-    val kotlincArtifactsMode: ArtifactMode by Preference(ArtifactMode::valueOf)
+    val kotlincVersion: String by MandatoryPreference()
+    val kotlinGradlePluginVersion: String by MandatoryPreference()
+    val kotlincArtifactsMode: ArtifactMode by MandatoryPreference(ArtifactMode::valueOf)
 
     enum class ArtifactMode {
         MAVEN, BOOTSTRAP
