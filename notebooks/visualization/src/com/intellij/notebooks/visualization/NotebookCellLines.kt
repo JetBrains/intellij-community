@@ -22,9 +22,6 @@ import java.util.*
  * while UI of PyCharm DS doesn't allow to create a stem cell at all.
  */
 interface NotebookCellLines {
-  enum class CellType {
-    CODE, MARKDOWN, RAW
-  }
 
   enum class MarkersAtLines(val hasTopLine: Boolean, val hasBottomLine: Boolean) {
     NO(false, false),

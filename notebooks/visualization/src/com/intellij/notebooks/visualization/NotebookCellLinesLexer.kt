@@ -2,10 +2,9 @@ package com.intellij.notebooks.visualization
 
 import com.intellij.lang.Language
 import com.intellij.lexer.Lexer
+import com.intellij.notebooks.visualization.NotebookCellLines.MarkersAtLines
 import com.intellij.openapi.editor.Document
 import com.intellij.util.keyFMap.KeyFMap
-import com.intellij.notebooks.visualization.NotebookCellLines.CellType
-import com.intellij.notebooks.visualization.NotebookCellLines.MarkersAtLines
 import kotlin.math.max
 
 interface NotebookCellLinesLexer {

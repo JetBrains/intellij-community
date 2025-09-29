@@ -3,7 +3,7 @@ package com.intellij.notebooks.visualization.ui.cell.runCell
 
 import com.intellij.icons.AllIcons
 import com.intellij.notebooks.ui.afterDistinctChange
-import com.intellij.notebooks.visualization.NotebookCellLines.CellType
+import com.intellij.notebooks.visualization.CellType
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedCellController
 import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.notebooks.visualization.ui.ProgressStatus

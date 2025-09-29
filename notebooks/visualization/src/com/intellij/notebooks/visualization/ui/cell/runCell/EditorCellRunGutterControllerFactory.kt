@@ -3,7 +3,7 @@ package com.intellij.notebooks.visualization.ui.cell.runCell
 
 import com.intellij.notebooks.ui.visualization.NotebookUtil.isOrdinaryNotebookEditor
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
-import com.intellij.notebooks.visualization.NotebookCellLines
+import com.intellij.notebooks.visualization.CellType
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedCellController
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedControllerFactory
 import com.intellij.notebooks.visualization.ui.EditorCell
@@ -20,6 +20,6 @@ class EditorCellRunGutterControllerFactory : SelfManagedControllerFactory {
   private fun shouldShowRunButton(cell: EditorCell): Boolean {
     return cell.editor.isOrdinaryNotebookEditor() &&
            cell.editor.notebookAppearance.shouldShowRunButtonInGutter() &&
-           cell.type == NotebookCellLines.CellType.CODE
+           cell.type == CellType.CODE
   }
 }

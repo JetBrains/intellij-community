@@ -23,7 +23,7 @@ class CodeCellLinesChecker(private val description: String,
       markers = mutableListOf()
     }
 
-    fun marker(cellType: NotebookCellLines.CellType, offset: Int, length: Int, language: Language) {
+    fun marker(cellType: CellType, offset: Int, length: Int, language: Language) {
       markers!!.add(
         NotebookCellLinesLexer.Marker(ordinal = markers!!.size + markersStartOrdinal, type = cellType, offset = offset, length = length,
                                       data = makeLanguageData(language)))
@@ -38,16 +38,18 @@ class CodeCellLinesChecker(private val description: String,
   }
 
   class IntervalsSetter(private val list: MutableList<NotebookCellLines.Interval>, private val startOrdinal: Int) {
-    fun interval(cellType: NotebookCellLines.CellType,
-                 lines: IntRange,
-                 markers: NotebookCellLines.MarkersAtLines,
-                 language: Language) {
+    fun interval(
+      cellType: CellType,
+      lines: IntRange,
+      markers: NotebookCellLines.MarkersAtLines,
+      language: Language,
+    ) {
       list += NotebookCellLines.Interval(list.size + startOrdinal, cellType, lines, markers, makeLanguageData(language))
     }
 
-    fun interval(cellType: NotebookCellLines.CellType, lines: IntRange, language: Language) {
+    fun interval(cellType: CellType, lines: IntRange, language: Language) {
       val markers =
-        if (cellType == NotebookCellLines.CellType.RAW && lines.first == 0)
+        if (cellType == CellType.RAW && lines.first == 0)
           NotebookCellLines.MarkersAtLines.NO
         else
           NotebookCellLines.MarkersAtLines.TOP
