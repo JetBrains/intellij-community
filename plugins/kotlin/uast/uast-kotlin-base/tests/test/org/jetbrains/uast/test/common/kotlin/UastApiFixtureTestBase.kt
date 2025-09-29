@@ -2253,6 +2253,84 @@ interface UastApiFixtureTestBase {
         TestCase.assertEquals(1, count)
     }
 
+    fun checkAnnotationOnReifiedInlineAndBackToUAnnotation(myFixture: JavaCodeInsightTestFixture) {
+        // https://issuetracker.google.com/issues/351244334
+        // https://youtrack.jetbrains.com/issue/KTIJ-35762
+        myFixture.configureByText(
+            "test.kt",
+            """
+                annotation class CheckResult
+
+                class Example {
+                    @CheckResult
+                    fun regular(): Int = 1 
+
+                    @CheckResult
+                    inline fun inlined(crossinline block: () -> Int) = block()
+
+                    @CheckResult
+                    inline fun <reified T : Any> reified(crossinline block: () -> T): String {
+                        val t = block()
+                        return t::class.java.simpleName
+                    }
+
+                    // usage example
+                    fun usage() {
+                        val a = Example()
+                        a.regular()
+                        a.inlined { 2 }
+                        a.reified { 3 }
+                    }
+                }
+            """.trimIndent()
+        )
+
+        var count = 0
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                private var currentMethod: UMethod? = null
+
+                override fun visitMethod(node: UMethod): Boolean {
+                    currentMethod = node
+                    return super.visitMethod(node)
+                }
+
+                override fun afterVisitMethod(node: UMethod) {
+                    currentMethod = null
+                    super.afterVisitMethod(node)
+                }
+
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    if (currentMethod?.name != "usage") {
+                        return super.visitCallExpression(node)
+                    }
+
+                    // E.g., Example()
+                    if (node.isConstructorCall()) {
+                        return super.visitCallExpression(node)
+                    }
+
+                    val resolved = node.resolve()
+                        ?: return super.visitCallExpression(node)
+
+                    // PsiAnnotation on the resolved call, even including reified inline, i.e., fake PSI
+                    val anno = resolved.annotations.find { it.qualifiedName == "CheckResult" }
+                    TestCase.assertNotNull(node.sourcePsi?.text, anno)
+                    // Converting that back to UAnnotation
+                    val uAnno =
+                        UastFacade.convertElement(anno!!, node.uastParent, UAnnotation::class.java) as? UAnnotation
+                    TestCase.assertNotNull(node.sourcePsi?.text, uAnno)
+                    TestCase.assertEquals(anno.qualifiedName, uAnno!!.qualifiedName)
+
+                    count++
+                    return super.visitCallExpression(node)
+                }
+            }
+        )
+        TestCase.assertEquals(3, count)
+    }
+
     fun checkTypealiasAnnotation(myFixture: JavaCodeInsightTestFixture) {
         myFixture.addClass(
             """
