@@ -34,8 +34,6 @@ We strongly recommend following this commit message format:
 
    Avoid including links to any discussions in commit messages (Slack, https://platform.jetbrains.com/, etc.). Instead, summarize the discussion right in the commit message,
    or create a YouTrack issue and summarize it there.
-   If the commit introduces a user-visible change, it is especially important to [create a YouTrack issue](https://jetbrains.team/blog/1GoECK1PVcf2), if needed,
-   and mention it in the commit message.
 
   1. If the commit changes a product's distribution, always include a link to the corresponding YouTrack ticket.
   2. If the commit does not change a product's distribution (e.g., tests, documentation, formatting, etc.), it should contain category keyword instead of ticket id.
