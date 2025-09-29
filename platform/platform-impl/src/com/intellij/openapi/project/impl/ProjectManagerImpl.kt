@@ -1427,12 +1427,15 @@ private suspend fun runApprovedExtensions(project: Project, epName: String, esse
   val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl).getExtensionPoint<InitProjectActivity>(epName)
   for (adapter in ep.sortedAdapters) {
     val pluginDescriptor = adapter.pluginDescriptor
-    if (!isCorePlugin(pluginDescriptor)) {
+    val assignableToClassName = adapter.assignableToClassName
+    if (!isCorePlugin(pluginDescriptor)
+        // todo develar
+        && !(pluginDescriptor.pluginId.idString == "org.jetbrains.bazel" && assignableToClassName == "org.jetbrains.bazel.sdkcompat.OpenBazelProjectAndSyncStartupActivity")) {
       LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
       continue
     }
 
-    span("run $epName ${adapter.assignableToClassName.substringAfterLast('.')}") {
+    span("run $epName ${assignableToClassName.substringAfterLast('.')}") {
       val activity = adapter.createInstance<InitProjectActivity>(ep.componentManager) ?: return@span
       if (activity.isEssential || !essentialOnly) {
         activity.run(project)
