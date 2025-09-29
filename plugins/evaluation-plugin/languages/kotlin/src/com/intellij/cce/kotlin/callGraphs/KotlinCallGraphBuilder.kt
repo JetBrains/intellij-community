@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
@@ -69,7 +70,7 @@ class KotlinCallGraphBuilder : CallGraphBuilder {
           override fun visitCallExpression(expression: KtCallExpression) {
             super.visitCallExpression(expression)
             val calleeExpr = expression.calleeExpression ?: return
-            val resolved = calleeExpr.references.firstOrNull()?.resolve()
+            val resolved = calleeExpr.mainReference?.resolve() ?: return
             val calleeFunction = resolved as? KtNamedFunction ?: return
             val calleeId = findNodeId(calleeFunction) ?: return
             edges.add(CallGraphEdge(callerId, calleeId))
