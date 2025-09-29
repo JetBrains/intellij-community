@@ -306,12 +306,9 @@ public final class ClasspathBootstrap {
     }
     else {
       var relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
-      Map<String, List<String>> mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
+      Map<String, String> mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
       if (relevantJarsRoot != null && mapping != null && instrumentationUtilPath.startsWith(relevantJarsRoot)) {
-        List<String> result = new ArrayList<>();
-        result.add(instrumentationUtilPath);
-        result.addAll(mapping.get("production/intellij.java.compiler.instrumentationUtil.java8"));
-        return result;
+        return Arrays.asList(instrumentationUtilPath, mapping.get("production/intellij.java.compiler.instrumentationUtil.java8"));
       }
       //running from jars: intellij.java.compiler.instrumentationUtil.java8 is located in the same jar
       return Collections.singletonList(instrumentationUtilPath);

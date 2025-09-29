@@ -326,7 +326,7 @@ public final class PathManagerEx {
     }
     if (!root.isDirectory()) {
       String relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
-      Map<String, List<String>> mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
+      Map<String, String> mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
       if (relevantJarsRoot != null && mapping != null && root.toPath().toAbsolutePath().startsWith(relevantJarsRoot)) {
         // .../idea-compile-parts-v2/test/intellij.java.compiler.tests/$sha256.jar
         String moduleName = root.getParentFile().getName();
@@ -336,8 +336,8 @@ public final class PathManagerEx {
 
         // .../out/bazel-out/jvm-fastbuild/bin/external/community+/java/compiler/compiler-tests_test_lib.jar
         return ContainerUtil.exists(getCommunityModules(),
-                                    s -> mapping.getOrDefault("production/" + s, Collections.emptyList()).contains(classRootPath) ||
-                                         mapping.getOrDefault("test/" + s, Collections.emptyList()).contains(classRootPath))
+                                    s -> Objects.equals(mapping.get("production/" + s), classRootPath) ||
+                                         Objects.equals(mapping.get("test/" + s), classRootPath))
                ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
       }
       //this means that clazz is located in a library; perhaps we should throw exception here

@@ -51,12 +51,12 @@ class ApiIndex private constructor(
     return classes[className]
   }
 
-  internal fun discoverPackages(packages: Map<String, ApiAnnotations>, roots: List<Path>): ApiIndex {
+  internal fun discoverPackages(packages: Map<String, ApiAnnotations>, root: Path): ApiIndex {
     val builder = this.packages.builder()
     for ((packageName, packageAnnotations) in packages) {
       val existingAnnotations = this.packages[packageName]
       if (existingAnnotations != null && existingAnnotations != packageAnnotations) {
-        error("$packageName has different annotations in different modules. The current roots = $roots")
+        error("$packageName has different annotations in different modules. The current root = $root")
       }
       builder[packageName] = packageAnnotations
     }
@@ -66,7 +66,7 @@ class ApiIndex private constructor(
     )
   }
 
-  internal fun discoverClass(signature: ClassBinarySignature, roots: List<Path>): ApiIndex {
+  internal fun discoverClass(signature: ClassBinarySignature, root: Path): ApiIndex {
     val className = signature.name
     if (className.endsWith("/package-info")) {
       // ignore package-info.java
@@ -74,7 +74,7 @@ class ApiIndex private constructor(
     }
 
     check(classes[className] == null) {
-      "$className already declared. The current roots = $roots"
+      "$className already declared. The current root = $root"
     }
 
     return ApiIndex(
@@ -105,13 +105,13 @@ class API internal constructor(
 /**
  * @return a list of classes (with members) in [root], which are considered API
  */
-fun api(index: ApiIndex, roots: List<Path>): API {
+fun api(index: ApiIndex, root: Path): API {
   @Suppress("NAME_SHADOWING")
   var index = index
-  val classFilePaths: Sequence<Path> = classFilePaths(roots)
+  val classFilePaths: Sequence<Path> = classFilePaths(root)
 
   val packages: Map<String, ApiAnnotations> = classFilePaths.packages()
-  index = index.discoverPackages(packages, roots)
+  index = index.discoverPackages(packages, root)
 
   val signatures: List<ClassBinarySignature> = classFilePaths
     .map { it.inputStream() }
@@ -126,7 +126,7 @@ fun api(index: ApiIndex, roots: List<Path>): API {
          * because the next [handleAnnotationsAndVisibility] call relies on it
          * to resolve the outer class name.
          */
-        index = index.discoverClass(it, roots)
+        index = index.discoverClass(it, root)
       }
     }
   return API(index, signatures)
@@ -307,14 +307,13 @@ private fun stableAndExperimentalApi(classSignatures: List<ApiClass>): Pair<List
 }
 
 @OptIn(ExperimentalPathApi::class)
-private fun classFilePaths(classRoots: List<Path>): Sequence<Path> {
-  return classRoots.flatMap { classRoot -> classRoot
+private fun classFilePaths(classRoot: Path): Sequence<Path> {
+  return classRoot
     .walk()
     .filter { path ->
       path.extension == "class" &&
       !classRoot.relativize(path).startsWith("META-INF/")
     }
-  }.asSequence()
 }
 
 internal data class ApiAnnotations(val isInternal: Boolean, val isExperimental: Boolean) {

@@ -16,8 +16,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ObjectUtils
 import com.intellij.util.PathUtil
-import com.intellij.util.io.DigestUtil.digestToHash
-import com.intellij.util.io.DigestUtil.sha256
 import com.intellij.util.net.NetUtils
 import org.apache.commons.lang3.SystemUtils
 import org.jetbrains.annotations.SystemIndependent
@@ -33,20 +31,14 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenUtil.isCompatibleWith
 import java.io.File
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import java.rmi.RemoteException
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import java.util.function.Predicate
-import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
-import java.util.zip.ZipOutputStream
 import kotlin.io.path.exists
-import kotlin.io.path.nameWithoutExtension
 
 internal class MavenServerManagerImpl : MavenServerManager {
   private val myMultimoduleDirToConnectorMap: MutableMap<String, MavenServerConnector> = HashMap()
@@ -464,53 +456,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
 
     private val eventSpyPathForLocalBuild: Path
       get() {
-        val result = MavenUtil.locateModuleOutputs("intellij.maven.server.eventListener")!!
-        if (result.size == 1) {
-          return result.single()
-        }
-
-        // merge the result into a single jar, check if already exists
-        val digest = sha256()
-        result.forEach {
-          Files.newInputStream(it).use {
-            digest.update(it.readAllBytes())
-          }
-        }
-        val eventListenerJar = result.first().resolveSibling("${result.joinToString("-") { it.nameWithoutExtension }}-${digestToHash(digest)}.jar")
-        if (eventListenerJar.exists()) {
-          return eventListenerJar
-        }
-
-        // merge
-        var tmp = Files.createTempFile(eventListenerJar.parent, null, null)
-        try {
-          ZipOutputStream(Files.newOutputStream(tmp)).use { out ->
-            result.forEach {
-              ZipFile(it.toFile()).use { input ->
-                input.entries().asSequence().forEach {
-                  out.putNextEntry(ZipEntry(it.name))
-                  input.getInputStream(it).copyTo(out)
-                }
-              }
-            }
-          }
-          try {
-            Files.move(tmp, eventListenerJar, StandardCopyOption.ATOMIC_MOVE)
-            tmp = null
-          }
-          catch (_: AccessDeniedException) {
-            // ATOMIC_MOVE uses MOVEFILE_REPLACE_EXISTING, ignore
-          }
-          catch (_: FileAlreadyExistsException) {
-            // ignore
-          }
-        }
-        finally {
-          if (tmp != null) {
-            Files.delete(tmp)
-          }
-        }
-        return eventListenerJar
+        return MavenUtil.locateModuleOutput("intellij.maven.server.eventListener")!!
       }
   }
 }

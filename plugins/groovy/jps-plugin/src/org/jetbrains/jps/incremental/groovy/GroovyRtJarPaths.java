@@ -33,16 +33,16 @@ public final class GroovyRtJarPaths {
       String relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
       if (relevantJarsRoot != null && jpsPluginClassesRoot.getAbsolutePath().startsWith(relevantJarsRoot)) {
         // running from archived compilation output
-        Map<String, List<String>> mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
+        Map<String, String> mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
         if (mapping == null) {
           throw new IllegalStateException("Mapping cannot be null at this point. 'intellij.test.jars.location' is not null");
         }
         for (String moduleName : moduleNames) {
-          List<String> paths = mapping.get("production/" + moduleName);
-          if (paths == null) {
+          String path = mapping.get("production/" + moduleName);
+          if (path == null) {
             throw new IllegalStateException("Mapping for module '" + moduleName + "' not found in " + mapping);
           }
-          to.addAll(paths);
+          to.add(path);
         }
         return;
       }

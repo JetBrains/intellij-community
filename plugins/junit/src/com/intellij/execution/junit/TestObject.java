@@ -249,9 +249,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     javaParameters.getClassPath().addFirst(path != null ? path : getJUnitRtPath().getAbsolutePath());
 
     //include junit5 listeners for the case custom junit 5 engines would be detected on runtime
-    javaParameters.getClassPath().addAllFiles(getJUnitRtFiles(JUnitStarter.JUNIT5_PARAMETER));
+    javaParameters.getClassPath().addFirst(getJUnitRtFile(JUnitStarter.JUNIT5_PARAMETER));
     //include junit6 listeners for the case custom junit 6 engines would be detected on runtime
-    javaParameters.getClassPath().addAllFiles(getJUnitRtFiles(JUnitStarter.JUNIT6_PARAMETER));
+    javaParameters.getClassPath().addFirst(getJUnitRtFile(JUnitStarter.JUNIT6_PARAMETER));
 
     appendDownloadedDependenciesForForkedConfigurations(javaParameters, module);
   }
@@ -274,7 +274,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
-  public static List<File> getJUnitRtFiles(@NotNull String runner) {
+  public static File getJUnitRtFile(@NotNull String runner) {
     String version = RUNNER_VERSIONS.getOrDefault(runner, "5");
     File junit4Rt = getJUnitRtPath();
     String junit4Name = junit4Rt.getName();
@@ -284,15 +284,15 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
     else {
       var relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
-      Map<String, List<String>> mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
+      Map<String, String> mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
       if (relevantJarsRoot != null && junit4Rt.toPath().startsWith(relevantJarsRoot) && mapping != null) {
-        return ContainerUtil.map(mapping.get("production/intellij.junit.v" + version + ".rt"), File::new);
+        return new File(mapping.get("production/intellij.junit.v" + version + ".rt"));
       }
       else {
         junitCurrentName = junit4Name.replace("junit", "junit" + version);
       }
     }
-    return Collections.singletonList(new File(junit4Rt.getParent(), junitCurrentName));
+    return new File(junit4Rt.getParent(), junitCurrentName);
   }
 
   public static File getJUnitRtPath() {
