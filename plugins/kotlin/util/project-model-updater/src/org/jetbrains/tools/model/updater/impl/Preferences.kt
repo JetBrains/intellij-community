@@ -17,4 +17,12 @@ abstract class Preferences(private val properties: Properties) {
             return mapper(rawValue) ?: error("Property \"$key\" contains invalid value")
         }
     }
+
+    protected class OptionalPreference<T: Any>(private val mapper: (String) -> T?) : ReadOnlyProperty<Preferences, T?> {
+        override fun getValue(thisRef: Preferences, property: KProperty<*>): T? {
+            val key = property.name
+            val rawValue = thisRef.properties.getProperty(key) ?: return null
+            return mapper(rawValue) ?: error("Property \"$key\" contains invalid value")
+        }
+    }
 }
