@@ -10,6 +10,7 @@ import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.*
 import kotlin.jvm.optionals.getOrNull
 
@@ -179,7 +180,7 @@ object KotlinTestsDependenciesUtil {
             if (sha256 == null) {
                 error("cannot find sha256 in '$block'")
             }
-            val checksum = calculateSha256SumForUrl(url)
+            val checksum = sha256SumForUrl(url)
             if (isUpToDateCheck) {
                 if (checksum != sha256) {
                     errors.add("sha256 mismatch for '$url' expected '$sha256' but got '$checksum'")
@@ -200,6 +201,10 @@ object KotlinTestsDependenciesUtil {
             kotlinDependenciesBazelFile.writeText(result)
         }
     }
+
+    private val sha256Cache = ConcurrentHashMap<String, String>()
+
+    internal fun sha256SumForUrl(url: String): String = sha256Cache.getOrPut(url) { calculateSha256SumForUrl(url) }
 
     private fun calculateSha256SumForUrl(url: String): String {
         println("Calculating SHA256 checksum for '$url'")
