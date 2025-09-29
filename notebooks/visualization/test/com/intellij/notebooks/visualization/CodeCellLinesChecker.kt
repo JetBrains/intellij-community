@@ -1,6 +1,7 @@
 package com.intellij.notebooks.visualization
 
 import com.intellij.lang.Language
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.keyFMap.KeyFMap
 import org.assertj.core.api.Assertions.assertThat

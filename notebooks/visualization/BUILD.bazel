@@ -43,6 +43,7 @@ jvm_library(
     "//plugins/markdown/core:markdown",
     "//platform/util",
     "//platform/util/jdom",
+    "//jupyter:notebooks-jupyter-core",
   ]
 )
 
@@ -75,6 +76,7 @@ jvm_library(
     "//plugins/markdown/core:markdown",
     "//platform/util",
     "//platform/util/jdom",
+    "//jupyter:notebooks-jupyter-core",
   ]
 )
 ### auto-generated section `build intellij.notebooks.visualization` end

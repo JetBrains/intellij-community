@@ -1,6 +1,6 @@
 package com.intellij.notebooks.visualization.ui
 
-import com.intellij.notebooks.visualization.CellType
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
 import com.intellij.notebooks.visualization.NotebookCellLines.Interval
 import com.intellij.notebooks.visualization.NotebookIntervalPointer

@@ -1,6 +1,7 @@
 package com.intellij.notebooks.visualization
 
 import com.intellij.lang.Language
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager

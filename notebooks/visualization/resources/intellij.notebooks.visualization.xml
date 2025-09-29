@@ -2,6 +2,7 @@
   <dependencies>
     <module name="intellij.notebooks.ui"/>
     <plugin id="org.intellij.plugins.markdown"/>
+    <module name="intellij.notebooks.jupyter.core"/>
   </dependencies>
 
   <extensionPoints>

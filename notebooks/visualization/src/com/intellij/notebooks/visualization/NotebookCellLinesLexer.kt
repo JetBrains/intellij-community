@@ -2,6 +2,7 @@ package com.intellij.notebooks.visualization
 
 import com.intellij.lang.Language
 import com.intellij.lexer.Lexer
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.notebooks.visualization.NotebookCellLines.MarkersAtLines
 import com.intellij.openapi.editor.Document
 import com.intellij.util.keyFMap.KeyFMap

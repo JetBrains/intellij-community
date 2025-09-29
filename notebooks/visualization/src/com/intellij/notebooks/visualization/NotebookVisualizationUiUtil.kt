@@ -1,5 +1,6 @@
 package com.intellij.notebooks.visualization
 
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.notebooks.visualization.NotebookCellLines.Companion.get
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor

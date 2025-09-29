@@ -1,7 +1,7 @@
 package com.intellij.notebooks.visualization.ui
 
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.notebooks.ui.bind
-import com.intellij.notebooks.visualization.CellType
 import com.intellij.notebooks.visualization.UpdateContext
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedCellController
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedControllerFactory

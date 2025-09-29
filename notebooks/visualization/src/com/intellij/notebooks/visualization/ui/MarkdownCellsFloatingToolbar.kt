@@ -2,7 +2,7 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.notebooks.visualization.CellType
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.getCells
 import com.intellij.notebooks.visualization.getSelectionLines
