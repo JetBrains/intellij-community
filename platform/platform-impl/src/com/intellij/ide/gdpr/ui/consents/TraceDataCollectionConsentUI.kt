@@ -4,6 +4,7 @@ package com.intellij.ide.gdpr.ui.consents
 
 import com.intellij.ide.gdpr.Consent
 import com.intellij.ide.gdpr.DataCollectionAgreement
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 
@@ -14,6 +15,7 @@ internal class TraceDataCollectionConsentUI(
 
   override fun getCheckBoxCommentText(): @NlsSafe String = consent.text
 
+  @OptIn(IntellijInternalApi::class)
   override fun getForcedState(): ConsentForcedState? {
     val externalSettings = AiDataCollectionExternalSettings.findSettingsImplementedByAiAssistant()
     if (externalSettings != null && externalSettings.isForciblyDisabled()) {

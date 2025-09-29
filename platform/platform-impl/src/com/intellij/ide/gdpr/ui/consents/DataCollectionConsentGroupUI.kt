@@ -5,11 +5,13 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.DataCollectionAgreement
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 
 internal data class DataCollectionConsentGroupUI(
   override val consentUis: List<ConsentUi>,
 ) : ConsentGroupUi {
+  @OptIn(IntellijInternalApi::class)
   override val forcedStateDescription: @NlsSafe String? = run {
     val externalSettings = AiDataCollectionExternalSettings.findSettingsImplementedByAiAssistant()
     if (LOG.isDebugEnabled) {

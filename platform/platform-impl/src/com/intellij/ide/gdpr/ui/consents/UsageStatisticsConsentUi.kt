@@ -9,6 +9,7 @@ import com.intellij.ide.gdpr.DataCollectionAgreement
 import com.intellij.ide.gdpr.ui.consents.ConsentForcedState.ExternallyDisabled
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 
@@ -23,6 +24,7 @@ internal class UsageStatisticsConsentUi(private val consent: Consent) : ConsentU
 
   override fun getCheckBoxCommentText(): @NlsSafe String = consent.text
 
+  @OptIn(IntellijInternalApi::class)
   override fun getForcedState(): ConsentForcedState? {
     if (StatisticsUploadAssistant.isCollectionForceDisabled()) {
       return ExternallyDisabled(StatisticsUploadAssistant.getConsentWarning() ?: IdeBundle.message("gdpr.usage.statistics.disabled.externally.warning"))
