@@ -81,6 +81,7 @@ class JavaCallGraphBuilder : CallGraphBuilder {
   override val language: Language = Language.JAVA
   override fun build(project: Project): CallGraph {
     val psiFiles = collectPsiFiles(project)
+    println("number of psiFiles")
     val nodes = collectNodes(psiFiles)
     val edges = collectEdges(nodes, psiFiles)
     return CallGraph(nodes, edges)

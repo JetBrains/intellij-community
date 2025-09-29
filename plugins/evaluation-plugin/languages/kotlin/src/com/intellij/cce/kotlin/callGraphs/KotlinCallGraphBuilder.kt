@@ -16,8 +16,11 @@ class KotlinCallGraphBuilder : CallGraphBuilder {
 
   override fun build(project: Project): CallGraph {
     val psiFiles = collectPsiFiles(project)
+    println("number of psiFiles: ${psiFiles.size}")
     val nodes = collectNodes(psiFiles)
+    println("number of nodes: ${nodes.size}")
     val edges = collectEdges(nodes, psiFiles)
+    println("number of edges: ${edges.size}")
     return CallGraph(nodes, edges)
   }
 
