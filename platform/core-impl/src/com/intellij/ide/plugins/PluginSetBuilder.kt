@@ -5,7 +5,6 @@ package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.PluginModuleId.Companion.asPluginId
-import com.intellij.ide.plugins.PluginModuleId.Companion.asPluginModuleId
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.graph.DFSTBuilder
@@ -204,9 +203,6 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
           enabledPluginIds.put(module.pluginId, module)
           for (pluginAlias in module.pluginAliases) {
             enabledPluginIds.put(pluginAlias, module)
-          }
-          if (module.packagePrefix != null) {
-            enabledModuleV2Ids.put(module.pluginId.asPluginModuleId(), module)
           }
           if (module.pluginId != PluginManagerCore.CORE_ID) {
             for (contentModule in module.contentModules) {

@@ -532,14 +532,6 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `plugin is loaded if it has a module dependency on a plugin with package prefix`() {
-    plugin("bar") { packagePrefix = "idk" }.buildDir(pluginDirPath.resolve("bar"))
-    `foo module-dependency bar`()
-    val pluginSet = buildPluginSet()
-    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
-  }
-
-  @Test
   fun `plugin is not loaded if it has a module dependency on plugin alias of a plugin without package prefix`() {
     `baz with alias bar`()
     `foo module-dependency bar`()
