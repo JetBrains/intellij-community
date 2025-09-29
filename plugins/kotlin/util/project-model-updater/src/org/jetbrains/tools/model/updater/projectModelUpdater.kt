@@ -5,7 +5,12 @@ import org.jetbrains.tools.model.updater.impl.JpsLibrary
 import org.jetbrains.tools.model.updater.impl.JpsResolverSettings
 import org.jetbrains.tools.model.updater.impl.readJpsResolverSettings
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.deleteExisting
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 internal fun updateProjectModel(preferences: GeneratorPreferences) {
     copyBootstrapArtifactsToMavenRepositoryIfExists()
@@ -46,9 +51,7 @@ internal fun updateProjectModel(preferences: GeneratorPreferences) {
     processRoot(communityRoot, isCommunity = true)
     updateLatestGradlePluginVersion(communityRoot, preferences.kotlinGradlePluginVersion)
     updateKGPVersionForKotlinNativeTests(communityRoot, preferences.kotlinGradlePluginVersion)
-    updateCoopRunConfiguration(monorepoRoot, communityRoot)
 }
-
 
 private fun regenerateProjectLibraries(dotIdea: Path, newLibraries: List<JpsLibrary>, resolverSettings: JpsResolverSettings) {
     val librariesDir = dotIdea.resolve("libraries")
@@ -73,29 +76,6 @@ private fun regenerateProjectLibraries(dotIdea: Path, newLibraries: List<JpsLibr
         redundantLibrary.deleteExisting()
     }
 }
-
-private fun updateCoopRunConfiguration(monorepoRoot: Path?, communityRoot: Path) {
-    val runConfigurationFilePath = ".idea/runConfigurations/Kotlin_Coop__Publish_compiler_for_ide_JARs.xml"
-    val communityRunConfigurationFile = communityRoot.resolve(runConfigurationFilePath)
-    val originalText = communityRunConfigurationFile.readText()
-
-    val communityResultText = originalText.replace(bootstrapVersionRegex) { matchResult ->
-        "${matchResult.groupValues[1]}$BOOTSTRAP_VERSION${matchResult.groupValues[4]}"
-    }
-
-    communityRunConfigurationFile.writeText(communityResultText)
-
-    val monorepoResultText = communityResultText.replace(Regex.fromLiteral("-Pkotlin.build.deploy-path=intellij/")) { matchResult ->
-        matchResult.groupValues[0] + "community/"
-    }
-
-    require(monorepoResultText != communityResultText)
-
-    val monorepoRunConfigurationFile = monorepoRoot?.resolve(runConfigurationFilePath)
-    monorepoRunConfigurationFile?.writeText(monorepoResultText)
-}
-
-private val bootstrapVersionRegex = Regex("(-P(deployVersion|build\\.number)=)(.+?)([ \"])")
 
 internal val kotlinCompilerCliVersionRegex: Regex = Regex("""kotlinCompilerCliVersion\s*=\s*"(\S+)"""")
 internal val kotlincKotlinJpsPluginTestsVersionRegex: Regex = Regex("""kotlincKotlinJpsPluginTestsVersion\s*=\s*"(\S+)"""")

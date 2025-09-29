@@ -15,6 +15,8 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
 
     val applicationMode: ApplicationMode? by OptionalPreference(ApplicationMode::valueOf)
 
+    val kotlinCompilerRepoPath: String by MandatoryPreference()
+
     /**
      * Represents modes of the application. [PROJECT_MODEL_UPDATER] is the default one.
      */
@@ -27,6 +29,14 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
          * @see updateProjectModel
          */
         PROJECT_MODEL_UPDATER,
+
+        /**
+         * Runs the compiler artifacts publication, so they might be consumed by [PROJECT_MODEL_UPDATER]
+         * mode later
+         *
+         * @see publishCompiler
+         */
+        COMPILER_PUBLICATION,
         ;
     }
 
@@ -73,5 +83,6 @@ fun main(args: Array<String>) {
     val preferences = GeneratorPreferences.parse(args)
     when (preferences.applicationMode) {
         null, ApplicationMode.PROJECT_MODEL_UPDATER -> updateProjectModel(preferences)
+        ApplicationMode.COMPILER_PUBLICATION -> publishCompiler(preferences)
     }
 }

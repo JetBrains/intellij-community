@@ -66,6 +66,12 @@ object KotlinTestsDependenciesUtil {
         error("cannot detect community root path for class $aClassLocation")
     }
 
+    val monorepoRoot: Path?
+        get() = communityRoot.parent?.takeIf { it.resolve(ULTIMATE_MARKER).exists() }
+
+    val projectRoot: Path
+        get() = monorepoRoot ?: communityRoot
+
     private val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()
 
     data class DownloadFile(
