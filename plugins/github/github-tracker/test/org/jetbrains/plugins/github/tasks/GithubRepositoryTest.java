@@ -11,15 +11,12 @@ import org.jetbrains.plugins.github.api.data.GithubIssueLabel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class GithubRepositoryTest {
-
+class GithubRepositoryTest {
   private GithubRepository repository;
 
   @BeforeEach
@@ -28,21 +25,21 @@ public class GithubRepositoryTest {
   }
 
   @Test
-  public void testCreateTaskBug() throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
+  public void testCreateTaskBug() {
     GithubIssueBase issue = makeIssueWithLabels(Collections.singletonList("bug"));
     Task task = createTask(repository, issue, Collections.emptyList());
     assertEquals(TaskType.BUG, task.getType());
   }
 
   @Test
-  public void testCreateTaskFeature() throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
+  public void testCreateTaskFeature() {
     GithubIssueBase issue = makeIssueWithLabels(Collections.singletonList("enhancement"));
     Task task = createTask(repository, issue, Collections.emptyList());
     assertEquals(TaskType.FEATURE, task.getType());
   }
 
   @Test
-  public void testCreateTaskUnmapped() throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
+  public void testCreateTaskUnmapped() {
     // Test with a label that is not recognized as a specific type
     GithubIssueBase issue = makeIssueWithLabels(Collections.singletonList("question"));
     Task task = createTask(repository, issue, Collections.emptyList());
@@ -50,7 +47,7 @@ public class GithubRepositoryTest {
   }
 
   @Test
-  public void testCreateTaskMultipleLabelsMatchFirstWins() throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
+  public void testCreateTaskMultipleLabelsMatchFirstWins() {
     GithubIssueBase issue = makeIssueWithLabels(
       List.of("bug", "enhancement", "feature", "task", "question") // Multiple labels including bug and enhancement
     );
@@ -59,7 +56,7 @@ public class GithubRepositoryTest {
   }
 
   @Test
-  public void testCreateTaskMultipleLabelsSingleMatch() throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
+  public void testCreateTaskMultipleLabelsSingleMatch() {
     GithubIssueBase issue = makeIssueWithLabels(
       List.of("custom1", "enhancement", "custom2") // Multiple labels including enhancement in the middle
     );
@@ -68,7 +65,7 @@ public class GithubRepositoryTest {
   }
 
   @Test
-  public void testCreateTaskNoLabel() throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
+  public void testCreateTaskNoLabel() {
     GithubIssueBase issue = makeIssueWithLabels(
       Collections.emptyList()
     );
@@ -114,15 +111,9 @@ public class GithubRepositoryTest {
    * @param issue    the GithubIssueBase instance
    * @param comments the list of comments associated with the issue
    * @return a Task object created by the private createTask method
-   * @throws NoSuchMethodException     if the method is not found
-   * @throws InvocationTargetException if the method invocation fails
-   * @throws IllegalAccessException    if access to the method is denied
    */
-  private static Task createTask(GithubRepository repo, GithubIssueBase issue, List<GithubIssueCommentWithHtml> comments)
-    throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-    Method createTask = GithubRepository.class.getDeclaredMethod("createTask", GithubIssueBase.class, List.class);
-    createTask.setAccessible(true);
-    Task task = (Task) createTask.invoke(repo, issue, comments);
+  private static Task createTask(GithubRepository repo, GithubIssueBase issue, List<GithubIssueCommentWithHtml> comments) {
+    Task task = repo.createTask(issue, comments);
     return task;
   }
 
