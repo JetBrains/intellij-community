@@ -204,7 +204,10 @@ fun EelPosixFileInfo.toVfs(eelFsApi: EelFileSystemPosixApi): FileAttributes {
   val length = nioAttributes.size()
   val lastModified = nioAttributes.lastModifiedTime().toMillis()
   val isWritable: Boolean = EelPathUtils.checkAccess(eelFsApi.user, attrs, AccessMode.WRITE) == null
-  val caseSensitivity = FileAttributes.CaseSensitivity.UNKNOWN // TODO get from eel api
+  val caseSensitivity = when (val type = attrs.type) {
+    is EelFileInfo.Type.Directory -> EelPathUtils.getCaseSensitivity(type)
+    else -> FileAttributes.CaseSensitivity.UNKNOWN
+  }
 
   return FileAttributes(isDirectory, isSpecial, isSymLink, isHidden, length, lastModified, isWritable, caseSensitivity)
 }
