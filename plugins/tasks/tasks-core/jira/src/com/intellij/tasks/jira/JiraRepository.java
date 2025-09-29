@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira;
 
 import com.google.gson.Gson;
@@ -341,10 +341,6 @@ public final class JiraRepository extends BaseRepositoryImpl {
     return myInCloud;
   }
 
-  public void setInCloud(boolean inCloud) {
-    myInCloud = inCloud;
-  }
-
   public boolean isUseBearerTokenAuthentication() {
     return myUseBearerTokenAuthentication;
   }
@@ -436,21 +432,6 @@ public final class JiraRepository extends BaseRepositoryImpl {
     if (!getUrl().equals(oldUrl)) {
       myApiVersion = null;
       myInCloud = isAtlassianNetSubDomain(getUrl());
-    }
-  }
-
-  /**
-   * Used to preserve discovered API version for the next initialization.
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public @Nullable JiraRemoteApi.ApiType getApiType() {
-    return myApiVersion == null ? null : myApiVersion.getType();
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  public void setApiType(@Nullable JiraRemoteApi.ApiType type) {
-    if (type != null) {
-      myApiVersion = type.createApi(this);
     }
   }
 
