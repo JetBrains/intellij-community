@@ -138,7 +138,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
 
     fun cancel(): Boolean {
       while (true) {
-        when (stateRef.get()) {
+        when (val state = stateRef.get()) {
           FormattingRequestState.RUNNING -> {
             val formattingTask = checkNotNull(task)
             if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.CANCELLING)) {
@@ -157,7 +157,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
               return formattingTask.cancel()
             }
           }
-          else -> return false
+          else -> { LOG.warn(state.name); return false }
         }
       }
     }
@@ -233,7 +233,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
         finally {
           this@FormattingRequestImpl.cancel()
           withContext(NonCancellable) {
-            taskJob.join()
+            taskJob.cancelAndJoin()
           }
         }
       }
