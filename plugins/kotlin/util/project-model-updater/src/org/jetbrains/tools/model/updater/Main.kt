@@ -44,6 +44,10 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
                 properties[parts[0]] = parts[1]
             }
 
+            println("Preferences:")
+            properties.forEach { (k, v) -> println("$k=$v") }
+            println()
+
             return GeneratorPreferences(properties)
         }
     }
