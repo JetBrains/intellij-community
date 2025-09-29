@@ -7,6 +7,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.codeStyle.SuggestedNameInfo
 import com.intellij.refactoring.rename.NameSuggestionProvider
 import com.intellij.refactoring.rename.RenameUtil
+import com.intellij.spellchecker.SpellCheckerManager
 import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
 
 class SpellcheckingNameSuggestionProvider : NameSuggestionProvider {
@@ -18,6 +19,7 @@ class SpellcheckingNameSuggestionProvider : NameSuggestionProvider {
 
     val engine = element.project.service<GrazieSpellCheckerEngine>()
     val speller = engine.getSpeller() ?: return null
+    if (!speller.isMisspelled(name)) return null
 
     val suggestions = speller.suggestAndRank(name, suggestionLimit)
       .toList()
