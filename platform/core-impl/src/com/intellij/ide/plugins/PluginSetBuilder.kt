@@ -100,7 +100,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     }
     val moduleIncompatibleWithCurrentMode = getModuleIncompatibleWithCurrentProductMode(currentProductModeEvaluator)
     val usedPackagePrefixes = HashMap<String, IdeaPluginDescriptorImpl>()
-    val isDisabledDueToPackagePrefixConflict = HashMap<String, IdeaPluginDescriptorImpl>()
+    val isDisabledDueToPackagePrefixConflict = HashMap<PluginModuleId, IdeaPluginDescriptorImpl>()
 
     fun registerLoadingError(plugin: IdeaPluginDescriptorImpl, disabledModule: ContentModuleDescriptor) {
       loadingErrors.add(createCannotLoadError(
@@ -174,7 +174,9 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
         val alreadyRegistered = usedPackagePrefixes.putIfAbsent(module.packagePrefix, module)
         if (alreadyRegistered != null) {
           module.isMarkedForLoading = false
-          isDisabledDueToPackagePrefixConflict.put(module.contentModuleId ?: module.pluginId.idString, alreadyRegistered)
+          if (module is ContentModuleDescriptor) {
+            isDisabledDueToPackagePrefixConflict.put(module.moduleId, alreadyRegistered)
+          }
           logMessages.add("Module ${module.contentModuleId ?: module.pluginId} is not enabled because package prefix ${module.packagePrefix} is already used by " +
                           "${alreadyRegistered.contentModuleId ?: alreadyRegistered.pluginId}")
           loadingErrors.add(PluginPackagePrefixConflict(module, module, alreadyRegistered))
@@ -188,8 +190,8 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
             for (contentModule in module.contentModules) {
               if (contentModule.moduleLoadingRule.required && !enabledRequiredContentModules.containsKey(contentModule.moduleId)) {
                 module.isMarkedForLoading = false
-                if (isDisabledDueToPackagePrefixConflict.containsKey(contentModule.moduleId.id)) {
-                  val alreadyRegistered = isDisabledDueToPackagePrefixConflict[contentModule.moduleId.id]!!
+                if (isDisabledDueToPackagePrefixConflict.containsKey(contentModule.moduleId)) {
+                  val alreadyRegistered = isDisabledDueToPackagePrefixConflict[contentModule.moduleId]!!
                   loadingErrors.add(PluginPackagePrefixConflict(module, contentModule, alreadyRegistered))
                 } else {
                   registerLoadingError(module, contentModule)
