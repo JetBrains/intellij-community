@@ -130,9 +130,9 @@ fun startApplication(
     }
   }
 
-  val initAwtToolkitJob = scheduleInitAwtToolkit(scope = scope, lockSystemDirsJob = lockSystemDirsJob, busyThread = busyThread)
+  val initAwtToolkitJob = scheduleInitAwtToolkit(scope, lockSystemDirsJob, busyThread)
   val initBaseLafJob = scope.launch {
-    initUi(initAwtToolkitJob = initAwtToolkitJob, isHeadless = isHeadless, asyncScope = scope)
+    initUi(initAwtToolkitJob, isHeadless, scope)
   }
 
   var initUiScale: Job? = null
@@ -150,9 +150,9 @@ fun startApplication(
       }
     }
 
-    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(scope = scope, initAwtToolkitJob = initAwtToolkitJob, initUiScale = initUiScale, appInfoDeferred = appInfoDeferred)
+    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(scope, initAwtToolkitJob, initUiScale, appInfoDeferred)
 
-    scheduleShowSplashIfNeeded(scope = scope, lockSystemDirsJob = lockSystemDirsJob, initUiScale = initUiScale, appInfoDeferred = appInfoDeferred, args = args)
+    scheduleShowSplashIfNeeded(scope, lockSystemDirsJob, initUiScale, appInfoDeferred, args)
   }
 
   val initLafJob = scope.launch {
@@ -205,30 +205,14 @@ fun startApplication(
     }
   }
 
-  scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
-    scope = scope,
-    logDeferred = logDeferred,
-    appInfoDeferred = appInfoDeferred,
-    initUiDeferred = initLafJob,
-    args = args,
-    mainScope = mainScope,
-  )
+  scheduleLoadSystemLibsAndLogInfoAndInitMacApp(scope, logDeferred, appInfoDeferred, initLafJob, args, mainScope)
 
   val euaDocumentDeferred = scope.async { loadEuaDocument(appInfoDeferred) }
 
   val configImportDeferred: Deferred<Job?> = scope.async {
     importConfigIfNeeded(
-      scope = scope,
-      isHeadless = isHeadless,
-      configImportNeededDeferred = configImportNeededDeferred,
-      lockSystemDirsJob = lockSystemDirsJob,
-      logDeferred = logDeferred,
-      args = args,
-      customTargetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
-      appStarterDeferred = appStarterDeferred,
-      euaDocumentDeferred = euaDocumentDeferred,
-      initLafJob = initLafJob,
-    )
+      scope, isHeadless, configImportNeededDeferred, lockSystemDirsJob, logDeferred, args, customTargetDirectoryToImportConfig,
+      appStarterDeferred, euaDocumentDeferred, initLafJob)
   }
 
   val appStartPreparedJob = CompletableDeferred<Unit>()
@@ -245,12 +229,7 @@ fun startApplication(
       }
     }
 
-    PluginManagerCore.scheduleDescriptorLoading(
-      coroutineScope = this,
-      zipPoolDeferred = zipPoolDeferred,
-      mainClassLoaderDeferred = mainClassLoaderDeferred,
-      logDeferred = logDeferred,
-    )
+    PluginManagerCore.scheduleDescriptorLoading(coroutineScope = this, zipPoolDeferred, mainClassLoaderDeferred, logDeferred)
   }
 
   val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
@@ -295,18 +274,8 @@ fun startApplication(
       ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job + kernelStarted.await().coroutineContext).childScope("Application"), isInternal)
     }
 
-    loadApp(
-      app = app,
-      pluginSetDeferred = pluginSetDeferred,
-      appInfoDeferred = appInfoDeferred,
-      euaDocumentDeferred = euaDocumentDeferred,
-      asyncScope = scope,
-      initLafJob = initLafJob,
-      logDeferred = logDeferred,
-      appRegisteredJob = appRegisteredJob,
-      args = args.filterNot { CommandLineArgs.isKnownArgument(it) },
-      initAwtToolkitAndEventQueueJob = initEventQueueJob,
-    )
+    val args = args.filterNot { CommandLineArgs.isKnownArgument(it) }
+    loadApp(app, pluginSetDeferred, appInfoDeferred, euaDocumentDeferred, scope, initLafJob, logDeferred, appRegisteredJob, args, initEventQueueJob)
   }
 
   scope.launch {
@@ -645,6 +614,7 @@ private fun shouldLoadShellEnv(log: Logger): Boolean {
   }
 
   val shLvl = System.getenv("SHLVL")
+  @Suppress("RemoveUnnecessaryParentheses")
   if (shLvl != null && (shLvl.toIntOrNull() ?: 1) > 0) {
     log.info("skipping shell environment: the IDE is likely launched from a terminal (SHLVL=${shLvl})")
     return false

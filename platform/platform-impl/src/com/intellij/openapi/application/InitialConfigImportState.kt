@@ -46,7 +46,6 @@ object InitialConfigImportState {
 
   @JvmStatic
   fun isStartupWizardEnabled(): Boolean =
-    (!ApplicationManagerEx.isInIntegrationTest() || java.lang.Boolean.getBoolean("show.wizard.in.test")) &&
     !AppMode.isRemoteDevHost() &&
-    System.getProperty("intellij.startup.wizard", "true").toBoolean()
+    System.getProperty("intellij.startup.wizard", if (ApplicationManagerEx.isInIntegrationTest()) "false" else "true").toBoolean()
 }

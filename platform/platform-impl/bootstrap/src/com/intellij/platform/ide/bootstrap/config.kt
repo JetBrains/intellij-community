@@ -10,15 +10,16 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.RawSwingDispatcher
 import kotlinx.coroutines.*
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
+import kotlin.io.path.name
 
 internal suspend fun importConfigIfNeeded(
   scope: CoroutineScope,
@@ -35,9 +36,9 @@ internal suspend fun importConfigIfNeeded(
   if (!configImportNeededDeferred.await()) {
     val configDir = PathManager.getConfigDir()
     val configDirExists = Files.exists(configDir)
-    val entries: Array<File>? = PathManager.getConfigDir().toFile().listFiles()
+    val entries = NioFiles.list(configDir).joinToString(", ") { "\"${it.name}\"" }
     scope.launch {
-      logDeferred.await().info("Will skip the config import to directory \"$configDir\" (exists = $configDirExists). Current entries: ${entries?.joinToString(", ") { "\"${it.name}\"" }}.")
+      logDeferred.await().info("Will skip the config import to directory \"$configDir\" (exists = $configDirExists). Current entries: ${entries}.")
     }
     return null
   }
@@ -59,19 +60,13 @@ internal suspend fun importConfigIfNeeded(
   initLafJob.join()
   val log = logDeferred.await()
   val targetDirectoryToImportConfig = customTargetDirectoryToImportConfig ?: PathManager.getConfigDir()
-  val entries: Array<File>? = targetDirectoryToImportConfig.toFile().listFiles()
-  log.info("Will import config to directory \"$targetDirectoryToImportConfig\" (exists = ${Files.exists(targetDirectoryToImportConfig)}). Current entries: ${entries?.joinToString(", ") { "\"${it.name}\"" }}.")
-  importConfig(
-    args = args,
-    targetDirectoryToImportConfig = targetDirectoryToImportConfig,
-    log = log,
-    appStarter = appStarterDeferred.await(),
-    euaDocumentDeferred = euaDocumentDeferred,
-  )
+  val entries = NioFiles.list(targetDirectoryToImportConfig).joinToString(", ") { "\"${it.name}\"" }
+  log.info("Will import config to directory \"$targetDirectoryToImportConfig\" (exists = ${Files.exists(targetDirectoryToImportConfig)}). Current entries: ${entries}.")
+  importConfig(args, targetDirectoryToImportConfig, log, appStarterDeferred.await(), euaDocumentDeferred)
 
   val isNewUser = InitialConfigImportState.isNewUser()
   enableNewUi(logDeferred, isNewUser)
-  if (isNewUser && isIdeStartupDialogEnabled) {
+  if (isNewUser && InitialConfigImportState.isStartupWizardEnabled()) {
     log.info("Will enter initial app wizard flow.")
     val result = CompletableDeferred<Boolean>()
     isInitialStart = result
@@ -91,7 +86,7 @@ private fun shouldMigrateConfigOnNextRun(args: List<String>): Boolean {
 private suspend fun importConfigHeadless(lockSystemDirsJob: Job, logDeferred: Deferred<Logger>) {
   // make sure we lock the dir before writing
   lockSystemDirsJob.join()
-  enableNewUi(logDeferred = logDeferred, isBackgroundSwitch = !AppMode.isRemoteDevHost())
+  enableNewUi(logDeferred, isBackgroundSwitch = !AppMode.isRemoteDevHost())
 }
 
 private suspend fun importConfig(

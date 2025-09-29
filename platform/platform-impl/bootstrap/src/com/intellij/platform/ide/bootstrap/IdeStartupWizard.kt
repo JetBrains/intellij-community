@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.InitialConfigImportState
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -21,11 +20,6 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG: Logger
   get() = logger<IdeStartupWizard>()
-
-internal val isIdeStartupDialogEnabled: Boolean
-  get() = (!ApplicationManagerEx.isInIntegrationTest() ||
-           System.getProperty("show.wizard.in.test", "false").toBoolean()) &&
-          System.getProperty("intellij.startup.dialog", "true").toBoolean()
 
 @ExperimentalCoroutinesApi
 internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
@@ -65,10 +59,7 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
             IdeStartupWizardCollector.logInitialStartTimeout()
           }
           finally {
-            IdeStartupWizardCollector.logStartupStageTime(
-              StartupWizardStage.InitialStart,
-              Duration.ofNanos(System.nanoTime() - startTimeNs)
-            )
+            IdeStartupWizardCollector.logStartupStageTime(StartupWizardStage.InitialStart, Duration.ofNanos(System.nanoTime() - startTimeNs))
           }
         }
       }
@@ -161,9 +152,7 @@ object IdeStartupWizardCollector : CounterUsagesCollector() {
   internal fun logWizardExperimentState() {
     assert(InitialConfigImportState.isFirstSession())
     val isEnabled = IdeStartupExperiment.isWizardExperimentEnabled()
-    LOG.info("IDE startup isEnabled = $isEnabled," +
-             " IDEStartupKind = ${IdeStartupExperiment.experimentGroupKind}, " +
-             "IDEStartup = ${IdeStartupExperiment.experimentGroup}")
+    LOG.info("IDE startup isEnabled = $isEnabled, IDEStartupKind = ${IdeStartupExperiment.experimentGroupKind}, IDEStartup = ${IdeStartupExperiment.experimentGroup}")
     experimentState.log(
       IdeStartupExperiment.experimentGroupKind,
       IdeStartupExperiment.experimentGroup,

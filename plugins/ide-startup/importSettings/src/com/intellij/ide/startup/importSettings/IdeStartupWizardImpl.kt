@@ -6,7 +6,6 @@ import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.ide.startup.importSettings.data.StartupWizardService
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ide.bootstrap.IdeStartupWizard
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -15,10 +14,6 @@ import kotlinx.coroutines.coroutineScope
 
 private class IdeStartupWizardImpl : IdeStartupWizard {
   override suspend fun run() {
-    if (!InitialConfigImportState.isStartupWizardEnabled()) {
-      return
-    }
-
     logger.info("Initial startup wizard is enabled. Will start the wizard.")
     ThreadingAssertions.assertEventDispatchThread()
 
@@ -30,7 +25,7 @@ private class IdeStartupWizardImpl : IdeStartupWizard {
       if (settingsService.shouldShowImport()) {
         logger.info("Settings service reports that we should show the import wizard.")
         OnboardingController.getInstance().startImport(
-          { settingsService.importCancelled.fire() },
+          cancelCallback = { settingsService.importCancelled.fire() },
           titleGetter = { ApplicationNamesInfo.getInstance().fullProductName }
         )
         return@coroutineScope
