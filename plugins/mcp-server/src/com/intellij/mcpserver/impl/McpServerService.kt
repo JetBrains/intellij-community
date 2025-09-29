@@ -38,6 +38,7 @@ import io.ktor.server.cio.CIOApplicationEngine
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.response.respond
+import io.ktor.util.toMap
 import io.modelcontextprotocol.kotlin.sdk.*
 import io.modelcontextprotocol.kotlin.sdk.server.RegisteredTool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
@@ -310,6 +311,7 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
     }
 
     val authToken = httpRequest?.headers[IJ_MCP_AUTH_TOKEN]
+    val headersWithoutAuthToken = httpRequest?.headers?.toMap()?.let { it - IJ_MCP_AUTH_TOKEN }
 
     val sessionOptions = getSessionOptions(authToken)
 
@@ -324,7 +326,8 @@ private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromIniti
         mcpToolDescriptor = descriptor,
         rawArguments = request.arguments,
         meta = request._meta,
-        mcpSessionOptions = sessionOptions
+        mcpSessionOptions = sessionOptions,
+        headers = headersWithoutAuthToken ?: emptyMap(),
       )
 
       val callResult = coroutineScope {
