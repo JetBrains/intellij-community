@@ -67,11 +67,9 @@ internal val DEFAULT_CUSTOM_MODULES: Map<String, CustomModuleDescription> = list
   CustomModuleDescription(moduleName = "intellij.idea.community.build.zip", bazelPackage = "@community//build", bazelTargetName = "zip",
                           outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/build"),
   CustomModuleDescription(moduleName = "intellij.platform.jps.build.dependencyGraph", bazelPackage = "@community//build", bazelTargetName = "dependency-graph",
-                          outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/build",
-                          additionalProductionTargets = listOf("@rules_jvm//dependency-graph:dependency-graph_resources"), additionalProductionJars = listOf("out/bazel-out/jvm-fastbuild/bin/external/rules_jvm+/dependency-graph/dependency-graph_resources.jar")),
+                          outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/build"),
   CustomModuleDescription(moduleName = "intellij.platform.jps.build.javac.rt", bazelPackage = "@community//build", bazelTargetName = "build-javac-rt",
-                          outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/build",
-                          additionalProductionTargets = listOf("@rules_jvm//jps-builders-6:build-javac-rt_resources"), additionalProductionJars = listOf("out/bazel-out/jvm-fastbuild/bin/external/rules_jvm+/jps-builders-6/build-javac-rt_resources.jar")),
+                          outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/build"),
 ).associateBy { it.moduleName }
 
 @Suppress("ReplaceGetOrSet", "SSBasedInspection")
