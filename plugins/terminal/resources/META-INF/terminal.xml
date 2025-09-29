@@ -158,6 +158,8 @@
                     interface="org.jetbrains.plugins.terminal.TerminalWidgetProvider"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalCloudCompletionSettingsProvider" dynamic="true"
                     interface="org.jetbrains.plugins.terminal.TerminalCloudCompletionSettingsProvider"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.toolWindowInitializer"
+                    interface="org.jetbrains.plugins.terminal.TerminalToolWindowInitializer" dynamic="true"/>
   </extensionPoints>
 
   <applicationListeners>

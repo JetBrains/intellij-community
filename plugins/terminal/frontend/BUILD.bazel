@@ -46,6 +46,7 @@ jvm_library(
     "@lib//:kotlinx-datetime-jvm",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
+    "//platform/project/shared:project",
   ]
 )
 ### auto-generated section `build intellij.terminal.frontend` end

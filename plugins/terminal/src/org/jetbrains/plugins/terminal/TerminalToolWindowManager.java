@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableLazyValue;
@@ -26,8 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -37,7 +34,6 @@ import com.intellij.terminal.TerminalTitle;
 import com.intellij.terminal.TerminalTitleListener;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TerminalWidgetKt;
-import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -52,8 +48,6 @@ import kotlin.Unit;
 import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction;
 import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction;
-import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
-import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
 import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
@@ -61,7 +55,6 @@ import org.jetbrains.plugins.terminal.block.reworked.FrontendTerminalTabsApi;
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab;
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
 import org.jetbrains.plugins.terminal.fus.TerminalFocusFusService;
-import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay;
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 
@@ -72,9 +65,7 @@ import java.awt.event.FocusListener;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @Service(Service.Level.PROJECT)
@@ -92,8 +83,6 @@ public final class TerminalToolWindowManager implements Disposable {
    * See {@link org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi} for operations with tab ID.
    */
   private final Map<TerminalWidget, Integer> myTabIdByWidgetMap = new HashMap<>();
-
-  private CompletableFuture<Void> myTabsRestoredFuture = CompletableFuture.completedFuture(null);
 
   public @NotNull AbstractTerminalRunner<?> getTerminalRunner() {
     return myTerminalRunner;
@@ -147,44 +136,6 @@ public final class TerminalToolWindowManager implements Disposable {
     }
     myToolWindow = toolWindow;
 
-    toolWindow.setTabActions(ActionManager.getInstance().getAction("TerminalToolwindowActionGroup"));
-    toolWindow.setTabDoubleClickActions(Collections.singletonList(new RenameTerminalSessionAction()));
-
-    ToolWindowContentUi.setAllowTabsReordering(toolWindow, true);
-
-    myProject.getMessageBus().connect(toolWindow.getDisposable())
-      .subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
-        @Override
-        public void toolWindowShown(@NotNull ToolWindow toolWindow) {
-          var startupFusInfo = new TerminalStartupFusInfo(TerminalOpeningWay.OPEN_TOOLWINDOW);
-
-          if (isTerminalToolWindow(toolWindow) && myToolWindow == toolWindow &&
-              toolWindow.isVisible() && toolWindow.getContentManager().isEmpty()) {
-            if (myTabsRestoredFuture.isDone()) {
-              // Open a new session if all tabs were closed manually.
-              createNewTab(TerminalOptionsProvider.getInstance().getTerminalEngine(), startupFusInfo, null, null);
-            }
-            else {
-              // Wait for tabs restoration for some time and check if there are any tabs restored.
-              Runnable createSessionIfNeeded = () -> {
-                ApplicationManager.getApplication().invokeLater(() -> {
-                  if (!myProject.isDisposed() && toolWindow.getContentManager().isEmpty()) {
-                    createNewTab(TerminalOptionsProvider.getInstance().getTerminalEngine(), startupFusInfo, null, null);
-                  }
-                }, ModalityState.any());
-              };
-
-              myTabsRestoredFuture.thenRun(createSessionIfNeeded)
-                .orTimeout(2, TimeUnit.SECONDS)
-                .exceptionally((t) -> {
-                  createSessionIfNeeded.run();
-                  return null;
-                });
-            }
-          }
-        }
-      });
-
     installDirectoryDnD(toolWindow);
 
     TerminalDockContainer.install(myProject, toolWindow.getDecorator());
@@ -209,49 +160,6 @@ public final class TerminalToolWindowManager implements Disposable {
       if (content != null) {
         contentManager.setSelectedContent(content);
       }
-    }
-  }
-
-  /**
-   * Requests tabs from the backend and reopens them asynchronously.
-   * Should be used only with Reworked Terminal (Gen2).
-   */
-  void restoreTabsFromBackend() {
-    myTabsRestoredFuture = new CompletableFuture<Void>()
-      .orTimeout(5, TimeUnit.SECONDS)
-      .exceptionally((t) -> {
-        LOG.error("Failed to restore tabs from the backend in the given timeout", t);
-        return null;
-      });
-
-    FrontendTerminalTabsApi.getInstance(myProject).getStoredTerminalTabs().thenAccept(tabs -> {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        doRestoreTabsFromBackend(tabs);
-        // Store tabs to the local state too. To not lose the stored tabs in case of disabling the Gen2 Terminal.
-        TerminalArrangementManager.getInstance(myProject).setToolWindow(myToolWindow);
-        myTabsRestoredFuture.complete(null);
-      }, ModalityState.any());
-    });
-  }
-
-  private void doRestoreTabsFromBackend(List<TerminalSessionTab> tabs) {
-    for (TerminalSessionTab tab : tabs) {
-      TerminalTabState tabState = new TerminalTabState();
-      //noinspection HardCodedStringLiteral
-      tabState.myTabName = tab.getName();
-      tabState.myIsUserDefinedTabTitle = tab.isUserDefinedName();
-      tabState.myShellCommand = tab.getShellCommand();
-      tabState.myWorkingDirectory = tab.getWorkingDirectory();
-
-      createNewSession(null, myTerminalRunner, TerminalEngine.REWORKED, tabState, tab, null, false, true);
-    }
-
-    ReworkedTerminalUsageCollector.logSessionRestored(myProject, tabs.size());
-
-    ContentManager contentManager = myToolWindow.getContentManager();
-    Content firstContent = contentManager.getContent(0);
-    if (firstContent != null) {
-      contentManager.setSelectedContent(firstContent);
     }
   }
 

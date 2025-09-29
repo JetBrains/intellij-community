@@ -10,6 +10,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager"
+                    serviceImplementation="com.intellij.terminal.frontend.toolwindow.impl.TerminalToolWindowTabsManagerImpl"/>
+
     <actionPromoter implementation="com.intellij.terminal.frontend.action.SendShortcutToTerminalActionPromoter"/>
 
     <editorActionHandler action="Find" implementationClass="com.intellij.terminal.frontend.action.TerminalFindHandler"
@@ -49,6 +52,7 @@
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <terminalWidgetProvider implementation="com.intellij.terminal.frontend.ReworkedTerminalWidgetProvider"/>
+    <toolWindowInitializer implementation="com.intellij.terminal.frontend.toolwindow.impl.TerminalToolWindowTabsManagerImpl$Initializer"/>
 
     <escapeHandler implementation="com.intellij.terminal.frontend.action.CancelSelection"/>
     <escapeHandler implementation="com.intellij.terminal.frontend.action.CloseSearch"/>
