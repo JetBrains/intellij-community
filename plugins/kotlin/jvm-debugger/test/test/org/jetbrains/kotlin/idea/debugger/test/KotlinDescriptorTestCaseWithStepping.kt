@@ -30,7 +30,7 @@ import com.intellij.xdebugger.impl.XSourcePositionImpl
 import junit.framework.AssertionFailedError
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.loadDependency
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.areLogErrorsIgnored
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.isIgnoredTarget
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
@@ -374,12 +374,12 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         val dependencies = mutableListOf<OrderRoot>()
         for (libraryLabel in libraryLabels) {
             val bazelLabelDescriptor = BazelDependencyLabelDescriptor.fromString(libraryLabel)
-            dependencies.add(loadDependency(bazelLabelDescriptor))
+            dependencies.add(loadDependency(bazelLabelDescriptor.label, bazelLabelDescriptor.type))
         }
         for (agentLabel in agentLabels) {
             val bazelLabelDescriptor = BazelDependencyLabelDescriptor.fromString(agentLabel)
             agentList.add(bazelLabelDescriptor)
-            dependencies.add(loadDependency(bazelLabelDescriptor))
+            dependencies.add(loadDependency(bazelLabelDescriptor.label, bazelLabelDescriptor.type))
         }
         compilerFacility.addDependencies(dependencies.map { it.file.presentableUrl })
         addLibraries(dependencies, module)
@@ -392,7 +392,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         }
 
         for (dependencyDescriptor in agentList) {
-            val dependency = loadDependency(dependencyDescriptor)
+            val dependency = loadDependency(dependencyDescriptor.label, dependencyDescriptor.type)
             if (dependency.type == OrderRootType.CLASSES) {
                 params.vmParametersList.add("-javaagent:${dependency.file.presentableUrl}")
             }
@@ -429,22 +429,6 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         return RemoteRepositoryDescription.DEFAULT_REPOSITORIES
     }
 
-    protected fun loadDependency(
-        bazelLabelDescriptor: BazelDependencyLabelDescriptor
-    ): OrderRoot {
-        val libFile = TestKotlinArtifacts.getKotlinDepsByLabel(bazelLabelDescriptor.label)
-
-        val manager = VirtualFileManager.getInstance()
-        val url: String = VfsUtil.getUrlForLibraryRoot(libFile)
-        val file = manager.refreshAndFindFileByUrl(url) ?: error("Cannot find $url")
-
-        val orderRootType = when (bazelLabelDescriptor.type) {
-            BazelDependencyLabelDescriptor.Companion.Type.SOURCES -> OrderRootType.SOURCES
-            BazelDependencyLabelDescriptor.Companion.Type.CLASSES -> OrderRootType.CLASSES
-        }
-        return OrderRoot(file, orderRootType)
-    }
-
     protected fun loadDependencies(
         description: JpsMavenRepositoryLibraryDescriptor
     ): MutableList<OrderRoot> {
@@ -479,18 +463,23 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         }
     }
 
-    protected data class BazelDependencyLabelDescriptor(val type: Type, val label: String) {
+    protected data class BazelDependencyLabelDescriptor(val type: OrderRootType, val label: String) {
         companion object {
             fun fromString(text: String): BazelDependencyLabelDescriptor {
                 val regex = Regex(pattern = BAZEL_DEPENDENCY_LABEL_REGEX)
                 val result = regex.matchEntire(text) ?: error("Unable to parse '$text' in // ATTACH_LABEL: specification")
                 val (_, type: String, label: String) = result.groupValues
-                return BazelDependencyLabelDescriptor(Type.valueOf(type.uppercase()), label)
+                return BazelDependencyLabelDescriptor(Type.valueOf(type.uppercase()).toOrderRootType(), label)
             }
 
-            enum class Type {
+            private enum class Type {
                 CLASSES,
                 SOURCES;
+
+                fun toOrderRootType() : OrderRootType = when (this) {
+                    SOURCES -> OrderRootType.SOURCES
+                    CLASSES -> OrderRootType.CLASSES
+                }
             }
         }
     }

@@ -3,6 +3,10 @@ package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.libraries.ui.OrderRoot
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.common.BazelTestUtil
 import com.intellij.testFramework.common.BazelTestUtil.getFileFromBazelRuntime
 import com.intellij.testFramework.common.bazel.BazelLabel
@@ -129,6 +133,20 @@ object TestKotlinArtifacts {
             Files.copy(fileInCache, target, StandardCopyOption.REPLACE_EXISTING)
         }
         return target
+    }
+
+    @JvmStatic
+    fun loadDependency(
+        label: String,
+        type: OrderRootType
+    ): OrderRoot {
+        val libFile = getKotlinDepsByLabel(label)
+
+        val manager = VirtualFileManager.getInstance()
+        val url: String = VfsUtil.getUrlForLibraryRoot(libFile)
+        val file = manager.refreshAndFindFileByUrl(url) ?: error("Cannot find $url")
+
+        return OrderRoot(file, type)
     }
 
     // @kotlin_test_deps//:kotlin-stdlib.jar
@@ -302,6 +320,8 @@ object TestKotlinArtifacts {
     val trove4j: Path by lazy {
         PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("gnu.trove.THashMap"))!!
     }
+    @JvmStatic
+    val jetbrainsAnnotationsJava5: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:annotations-java5-24.0.0.jar") }
     @JvmStatic
     val jetbrainsAnnotations: Path by lazy { getKotlinDepsByLabel("@kotlin_test_deps//:annotations.jar") }
     @JvmStatic
