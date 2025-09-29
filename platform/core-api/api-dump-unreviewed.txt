@@ -1521,7 +1521,6 @@ a:com.intellij.openapi.project.DumbService
 - f:withAlternativeResolveEnabled(java.lang.Runnable):V
 - f:withAlternativeResolveEnabled(kotlin.jvm.functions.Function0):java.lang.Object
 - a:wrapGently(javax.swing.JComponent,com.intellij.openapi.Disposable):javax.swing.JComponent
-- a:wrapWithSpoiler(javax.swing.JComponent,java.lang.Runnable,com.intellij.openapi.Disposable):javax.swing.JComponent
 f:com.intellij.openapi.project.DumbService$Companion
 - f:allowStartingDumbModeInside(com.intellij.openapi.project.DumbModePermission,java.lang.Runnable):V
 - f:getDumbAwareExtensions(com.intellij.openapi.project.Project,com.intellij.openapi.extensions.ExtensionPointName):java.util.List

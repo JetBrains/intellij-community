@@ -66,14 +66,6 @@ public final class LightEditDumbService extends DumbServiceImpl {
   }
 
   @Override
-  public JComponent wrapWithSpoiler(@NotNull JComponent dumbAwareContent,
-                                    @NotNull Runnable updateRunnable,
-                                    @NotNull Disposable parentDisposable) {
-    reportUnavailable();
-    return null;
-  }
-
-  @Override
   public void setAlternativeResolveEnabled(boolean enabled) {
 
   }

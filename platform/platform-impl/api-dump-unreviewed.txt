@@ -3043,7 +3043,6 @@ f:com.intellij.ide.lightEdit.project.LightEditDumbService
 - unsafeRunWhenSmart(java.lang.Runnable):V
 - waitForSmartMode():V
 - wrapGently(javax.swing.JComponent,com.intellij.openapi.Disposable):javax.swing.JComponent
-- wrapWithSpoiler(javax.swing.JComponent,java.lang.Runnable,com.intellij.openapi.Disposable):javax.swing.JComponent
 a:com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension
 - com.intellij.ide.navigationToolbar.NavBarModelExtension
 - <init>():V
