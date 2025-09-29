@@ -144,6 +144,7 @@ public final class ConfigImportHelper {
     }
 
     var guessedOldConfigDirs = findConfigDirectories(newConfigDir, settings, args);
+    var bestConfigGuess = guessedOldConfigDirs.isEmpty() ? null : guessedOldConfigDirs.getFirstItem();
     var tempBackup = (Path)null;
     var vmOptionFileChanged = false;
     var vmOptionsLines = (List<String>)null;
@@ -192,15 +193,12 @@ public final class ConfigImportHelper {
           log.error("Couldn't backup current config or delete current config directory", e);
         }
       }
-      else if (InitialConfigImportState.INSTANCE.isStartupWizardEnabled()) {
-        if (!guessedOldConfigDirs.isEmpty() && !shouldAskForConfig()) {
-          var bestConfigGuess = guessedOldConfigDirs.getFirstItem();
-          if (!isConfigOld(bestConfigGuess.second)) {
-            oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
-            if (oldConfigDirAndOldIdePath == null) {
-              logRejectedConfigDirectory(log, "Previous config directory", bestConfigGuess.first);
-              importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.CONFIG_DIRECTORY_NOT_FOUND;
-            }
+      else if (InitialConfigImportState.isStartupWizardEnabled()) {
+        if (bestConfigGuess != null && !shouldAskForConfig() && !isConfigOld(bestConfigGuess.second)) {
+          oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
+          if (oldConfigDirAndOldIdePath == null) {
+            logRejectedConfigDirectory(log, "Previous config directory", bestConfigGuess.first);
+            importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.CONFIG_DIRECTORY_NOT_FOUND;
           }
         }
       }
@@ -208,25 +206,22 @@ public final class ConfigImportHelper {
         oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
         importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_REQUESTED_BY_PROPERTY;
       }
-      else if (guessedOldConfigDirs.isEmpty()) {
+      else if (bestConfigGuess == null) {
         if (!veryFirstStartOnThisComputer) {
           oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
           importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_NO_CONFIGS_FOUND;
         }
       }
+      else if (isConfigOld(bestConfigGuess.second)) {
+        log.info("The best config guess [" + bestConfigGuess.first + "] is too old, it won't be used for importing.");
+        oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
+        importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_CONFIGS_ARE_TOO_OLD;
+      }
       else {
-        var bestConfigGuess = guessedOldConfigDirs.getFirstItem();
-        if (isConfigOld(bestConfigGuess.second)) {
-          log.info("The best config guess [" + bestConfigGuess.first + "] is too old, it won't be used for importing.");
-          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
-          importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_CONFIGS_ARE_TOO_OLD;
-        }
-        else {
-          oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
-          if (oldConfigDirAndOldIdePath == null) {
-            logRejectedConfigDirectory(log, "Previous config directory", bestConfigGuess.first);
-            importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.CONFIG_DIRECTORY_NOT_FOUND;
-          }
+        oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
+        if (oldConfigDirAndOldIdePath == null) {
+          logRejectedConfigDirectory(log, "Previous config directory", bestConfigGuess.first);
+          importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.CONFIG_DIRECTORY_NOT_FOUND;
         }
       }
 
