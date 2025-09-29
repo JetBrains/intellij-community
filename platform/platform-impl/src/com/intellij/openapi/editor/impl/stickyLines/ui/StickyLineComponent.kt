@@ -18,7 +18,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.ui.MouseEventAdapter
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
-import java.awt.*
+import java.awt.Component
+import java.awt.Graphics
 import java.awt.event.*
 import java.awt.image.BufferedImage
 import javax.swing.JComponent
@@ -92,17 +93,23 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     val editorBackground = editor.backgroundColor
     var isBackgroundChanged = false
     (editor as EditorImpl).isStickyLinePainting = true
+
+    var graphics: Graphics? = null
     try {
+      graphics = graphicsOrDumb?.create()
       isBackgroundChanged = setStickyLineBackgroundColor()
-      if (graphicsOrDumb != null) {
+      if (graphics != null) {
         val editorStartY = if (isLineOutOfPanel()) editorY + y else editorY
-        graphicsOrDumb.translate(0, -editorStartY)
-        paintGutter(graphicsOrDumb, editorY, lineHeight, gutterWidth)
-        paintText(graphicsOrDumb, editorY, lineHeight, gutterWidth, textWidth)
-      } else {
+        graphics.translate(0, -editorStartY)
+        paintGutter(graphics, editorY, lineHeight, gutterWidth)
+        paintText(graphics, editorY, lineHeight, gutterWidth, textWidth)
+      }
+      else {
         dumbTextImage = prepareDumbTextImage(editorY, lineHeight, textWidth)
       }
-    } finally {
+    }
+    finally {
+      graphics?.dispose()
       editor.isStickyLinePainting = false
       if (isBackgroundChanged) {
         editor.backgroundColor = editorBackground
@@ -134,22 +141,33 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     return false
   }
 
-  @Suppress("SSBasedInspection")
   private fun paintGutter(g: Graphics, editorY: Int, lineHeight: Int, gutterWidth: Int) {
-    g.setClip(0, editorY, gutterWidth, lineHeight)
-    editor.gutterComponentEx.paint(g)
+    val graphics = g.create()
+    try {
+      graphics.clipRect(0, editorY, gutterWidth, lineHeight)
+      editor.gutterComponentEx.print(graphics)
+    }
+    finally {
+      graphics.dispose()
+    }
   }
 
-  @Suppress("SSBasedInspection")
   private fun paintText(g: Graphics, editorY: Int, lineHeight: Int, gutterWidth: Int, textWidth: Int) {
-    g.translate(gutterWidth, 0)
-    g.setClip(0, editorY, textWidth, lineHeight)
-    val textImage = dumbTextImage
-    if (textImage != null && (editor as EditorImpl).isDumb) {
-      StartupUiUtil.drawImage(g, textImage, 0, editorY, null)
-    } else {
-      doPaintText(g)
-      dumbTextImage = null
+    val graphics = g.create()
+    try {
+      graphics.translate(gutterWidth, 0)
+      graphics.clipRect(0, editorY, textWidth, lineHeight)
+      val textImage = dumbTextImage
+      if (textImage != null && (editor as EditorImpl).isDumb) {
+        StartupUiUtil.drawImage(graphics, textImage, 0, editorY, null)
+      }
+      else {
+        doPaintText(graphics)
+        dumbTextImage = null
+      }
+    }
+    finally {
+      graphics.dispose()
     }
   }
 
@@ -170,7 +188,7 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
   }
 
   private fun doPaintText(g: Graphics) {
-    editor.contentComponent.paint(g)
+    editor.contentComponent.print(g)
   }
 
   private fun lineWidth(): Int {
