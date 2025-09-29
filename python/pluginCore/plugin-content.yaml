@@ -30,10 +30,6 @@
   - name: intellij.python.community.impl.installer
 - name: lib/modules/intellij.python.community.impl.jar
   projectLibraries:
-  - name: io.github.z4kn4fein.semver.jvm
-    files:
-    - name: $MAVEN_REPOSITORY$/io/github/z4kn4fein/semver-jvm/2/semver-jvm-2.jar
-    reason: <- intellij.python.community.impl
   - name: jackson-dataformat-yaml
     files:
     - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2/jackson-dataformat-yaml-2.jar
