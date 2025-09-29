@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.recentFiles.frontend.model
 
+import com.intellij.icons.AllIcons
+import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -125,7 +128,27 @@ class FrontendRecentFilesModel(private val project: Project) {
     LOG.debug("Started collecting recent files updates for kind: $targetFilesKind")
     FileSwitcherApi.getInstance()
       .getRecentFileEvents(targetFilesKind, project.projectId())
-      .collect { update -> modelState.applyChangesToModel(update, targetFilesKind) }
+      .collect { update -> applyChangesToModel(update, targetFilesKind) }
+  }
+
+  private suspend fun applyChangesToModel(event: RecentFilesEvent, targetFilesKind: RecentFileKind) {
+    when (event) {
+      is RecentFilesEvent.ItemsAdded -> modelState.addEvent(targetFilesKind, event.batch.map { convertDtoToModel(it) })
+      is RecentFilesEvent.ItemsUpdated -> modelState.updateEvent(targetFilesKind, event.batch.map { convertDtoToModel(it) }, event.putOnTop)
+      is RecentFilesEvent.ItemsRemoved -> modelState.removeEvent(targetFilesKind, event.batch.mapNotNull { convertVirtualFileIdToModel(it) })
+      is RecentFilesEvent.AllItemsRemoved -> modelState.removeAllEvent(targetFilesKind)
+    }
+  }
+
+  private fun convertDtoToModel(rpcDto: SwitcherRpcDto): SwitcherVirtualFile {
+    return when (rpcDto) {
+      is SwitcherRpcDto.File -> SwitcherVirtualFile(rpcDto)
+    }
+  }
+
+  private fun convertVirtualFileIdToModel(virtualFileId: VirtualFileId): SwitcherVirtualFile? {
+    val localFile = virtualFileId.virtualFile() ?: return null
+    return SwitcherVirtualFile(localFile, "deleted file", AllIcons.FileTypes.Unknown)
   }
 
   companion object {

@@ -23,7 +23,16 @@ internal class BackendRecentFilesModel(private val project: Project) {
     LOG.debug("Started collecting recent files updates for kind: $targetFilesKind")
     BackendRecentFileEventsModel.getInstanceAsync(project)
       .getRecentFiles(targetFilesKind)
-      .collect { update -> modelState.applyChangesToModel(update, targetFilesKind) }
+      .collect { update -> applyChangesToModel(update, targetFilesKind) }
+  }
+
+  private fun applyChangesToModel(event: BackendRecentFilesEvent, targetFilesKind: RecentFileKind) {
+    when (event) {
+      is BackendRecentFilesEvent.ItemsAdded -> modelState.addEvent(targetFilesKind, event.batch.map { it.virtualFile })
+      is BackendRecentFilesEvent.ItemsUpdated -> modelState.updateEvent(targetFilesKind, event.batch.map { it.virtualFile }, event.putOnTop)
+      is BackendRecentFilesEvent.ItemsRemoved -> modelState.removeEvent(targetFilesKind, event.batch)
+      is BackendRecentFilesEvent.AllItemsRemoved -> modelState.removeAllEvent(targetFilesKind)
+    }
   }
 
   companion object {

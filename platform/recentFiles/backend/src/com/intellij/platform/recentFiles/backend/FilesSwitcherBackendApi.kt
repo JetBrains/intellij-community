@@ -12,12 +12,14 @@ import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
 
 private class FilesSwitcherBackendApi : FileSwitcherApi {
 
   override suspend fun getRecentFileEvents(fileKind: RecentFileKind, projectId: ProjectId): Flow<RecentFilesEvent> {
     LOG.debug("Switcher fetching recent files for projectId: $projectId and fileKind: $fileKind")
-    return getBackendRecentFilesModel(projectId)?.getRecentFiles(fileKind) ?: emptyFlow()
+    val backendRecentFilesModel = getBackendRecentFilesModel(projectId) ?: return emptyFlow()
+    return backendRecentFilesModel.getRecentFiles(fileKind).map { event -> event.toRpcModel() }
   }
 
   override suspend fun updateRecentFilesBackendState(request: RecentFilesBackendRequest): Boolean {
