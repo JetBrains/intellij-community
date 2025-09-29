@@ -75,7 +75,11 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
             return (int)(pane.getContentsScaleFactor() * num);
           });
         })
-        .extensions(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_ADAPTIVE_IMAGE_EXTENSION)
+        .extensions(
+          CachingAdaptiveImageManagerService.isEnabled()
+          ? ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_ADAPTIVE_IMAGE_EXTENSION
+          : ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES
+        )
         .build()
     );
     setBackground(BACKGROUND_COLOR);
@@ -88,8 +92,10 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
   }
 
   @Override
-  public void setDocument(Document doc) {
-    doc.putProperty(AdaptiveImageView.ADAPTIVE_IMAGES_MANAGER_PROPERTY, CachingAdaptiveImageManagerService.getInstance());
+  public void setDocument(@NotNull Document doc) {
+    if (CachingAdaptiveImageManagerService.isEnabled()) {
+      doc.putProperty(AdaptiveImageView.ADAPTIVE_IMAGES_MANAGER_PROPERTY, CachingAdaptiveImageManagerService.getInstance());
+    }
     super.setDocument(doc);
     myCachedPreferredSize = null;
   }
