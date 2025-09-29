@@ -15,7 +15,6 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditUtil;
@@ -54,6 +53,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.TestModeFlags;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ModalityUiUtil;
@@ -281,7 +281,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   private void addDefaultAdvertisements(@NotNull CompletionParameters parameters) {
     if (DumbService.isDumb(getProject())) {
-      addAdvertisement(IdeBundle.message("dumb.mode.results.might.be.incomplete"), AllIcons.General.Warning);
+      addAdvertisement(IdeBundle.message("dumb.mode.results.might.be.incomplete"), AnimatedIcon.Default.INSTANCE);
       return;
     }
 
