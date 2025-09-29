@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
@@ -17,14 +16,10 @@ import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
-
 class RemoveUnnecessaryParenthesesInspection : KotlinApplicableInspectionBase.Simple<KtParenthesizedExpression, Unit>() {
     override fun getProblemDescription(
         element: KtParenthesizedExpression, context: Unit
     ): @InspectionMessage String = KotlinBundle.message("inspection.remove.unnecessary.parentheses.display.name")
-
-    override fun getProblemHighlightType(element: KtParenthesizedExpression, context: Unit): ProblemHighlightType =
-        ProblemHighlightType.LIKE_UNUSED_SYMBOL
 
     override fun createQuickFix(
         element: KtParenthesizedExpression, context: Unit
