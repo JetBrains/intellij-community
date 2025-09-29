@@ -698,7 +698,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
                            try (var out = switch (arg) {
                                case DEV_NULL -> openDevUrandom();
                                case DEV_URANDOM ->{
-                                 InputStream a = <warning descr="'InputStream' used without 'try'-with-resources statement">openDevUrandom</warning>()<EOLError descr="';' expected"></EOLError>
+                                 InputStream a = <warning descr="'InputStream' used without 'try'-with-resources statement">openDevUrandom</warning>();
                                  yield openDevUrandom();
                                }
                                case UNKNOWN -> throw new IllegalArgumentException("unknown");
