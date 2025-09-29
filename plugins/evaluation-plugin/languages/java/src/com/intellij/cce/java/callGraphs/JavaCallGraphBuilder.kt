@@ -1,6 +1,7 @@
 package com.intellij.cce.java.callGraphs
 
 import com.intellij.cce.callGraphs.*
+import com.intellij.cce.core.Language
 import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -77,6 +78,7 @@ private class EdgeCollectorVisitor(
 
 
 class JavaCallGraphBuilder : CallGraphBuilder {
+  override val language: Language = Language.JAVA
   override fun build(project: Project): CallGraph {
     val psiFiles = collectPsiFiles(project)
     val nodes = collectNodes(psiFiles)

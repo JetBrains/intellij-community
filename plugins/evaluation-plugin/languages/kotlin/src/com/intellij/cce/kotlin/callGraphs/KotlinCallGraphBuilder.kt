@@ -1,6 +1,7 @@
 package com.intellij.cce.kotlin.callGraphs
 
 import com.intellij.cce.callGraphs.*
+import com.intellij.cce.core.Language
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -11,6 +12,8 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 
 class KotlinCallGraphBuilder : CallGraphBuilder {
+  override val language: Language = Language.KOTLIN
+
   override fun build(project: Project): CallGraph {
     val psiFiles = collectPsiFiles(project)
     val nodes = collectNodes(psiFiles)
