@@ -63,6 +63,9 @@
     <extensionPoint qualifiedName="com.intellij.cce.completionEvaluationVisitor"
                     interface="com.intellij.cce.visitor.EvaluationVisitor"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.callGraphBuilder"
+                    interface="com.intellij.cce.callGraphs.CallGraphBuilder"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.cce.lineCompletionVisitorFactory"
                     interface="com.intellij.cce.visitor.LineCompletionVisitorFactory"
                     dynamic="true"/>

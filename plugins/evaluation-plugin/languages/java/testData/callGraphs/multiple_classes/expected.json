@@ -1,0 +1,12 @@
+{
+  "nodes": [
+    "methodOne",
+    "methodTwo"
+  ],
+  "edges": [
+    [
+      "methodOne",
+      "methodTwo"
+    ]
+  ]
+}

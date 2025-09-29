@@ -1,0 +1,12 @@
+{
+  "nodes": [
+    "callerMethod",
+    "calleeMethod"
+  ],
+  "edges": [
+    [
+      "callerMethod",
+      "calleeMethod"
+    ]
+  ]
+}

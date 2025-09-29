@@ -1,0 +1,12 @@
+{
+  "nodes": [
+    "method",
+    "Inner"
+  ],
+  "edges": [
+    [
+      "method",
+      "Inner"
+    ]
+  ]
+}

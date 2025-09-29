@@ -23,6 +23,10 @@ jvm_library(
     "//platform/core-impl",
     "//plugins/evaluation-plugin/core",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
   ]
 )
 ### auto-generated section `build intellij.evaluationPlugin.languages.kotlin` end
