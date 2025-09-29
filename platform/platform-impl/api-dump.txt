@@ -182,6 +182,20 @@ com.intellij.ide.actions.SettingsEntryPointAction$IconCustomizer
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getCustomIcon(com.intellij.ui.BadgeIconSupplier):javax.swing.Icon
 - getSecondIcon():javax.swing.Icon
+c:com.intellij.ide.browsers.StartBrowserSettings
+- <init>():V
+- getBrowser():com.intellij.ide.browsers.WebBrowser
+- getBrowserReference():java.lang.String
+- getUrl():java.lang.String
+- isSelected():Z
+- isStartJavaScriptDebugger():Z
+- s:readExternal(org.jdom.Element):com.intellij.ide.browsers.StartBrowserSettings
+- setBrowser(com.intellij.ide.browsers.WebBrowser):V
+- setBrowserReference(java.lang.String):V
+- setSelected(Z):V
+- setStartJavaScriptDebugger(Z):V
+- setUrl(java.lang.String):V
+- writeExternal(org.jdom.Element):V
 c:com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserFloatingToolbarProvider
 - com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
 - <init>():V

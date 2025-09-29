@@ -2483,17 +2483,6 @@ e:com.intellij.ide.browsers.DefaultBrowserPolicy
 - sf:SYSTEM:com.intellij.ide.browsers.DefaultBrowserPolicy
 - s:valueOf(java.lang.String):com.intellij.ide.browsers.DefaultBrowserPolicy
 - s:values():com.intellij.ide.browsers.DefaultBrowserPolicy[]
-com.intellij.ide.browsers.JavaScriptDebuggerStarter
-- a:isApplicable(com.intellij.execution.configurations.RunConfiguration):Z
-- a:start(java.lang.String,com.intellij.execution.configurations.RunConfiguration,java.lang.Object,com.intellij.ide.browsers.WebBrowser):V
-f:com.intellij.ide.browsers.JavaScriptDebuggerStarter$Util
-- <init>():V
-- s:get(com.intellij.execution.configurations.RunConfiguration):com.intellij.ide.browsers.JavaScriptDebuggerStarter
-- s:hasStarters():Z
-- s:start(com.intellij.execution.configurations.RunConfiguration,java.lang.String):Z
-- s:start(com.intellij.execution.configurations.RunConfiguration,java.lang.String,com.intellij.ide.browsers.WebBrowser):Z
-- s:startDebugOrLaunchBrowser(com.intellij.execution.configurations.RunConfiguration,com.intellij.ide.browsers.StartBrowserSettings):V
-- s:startDebugOrLaunchBrowser(com.intellij.execution.configurations.RunConfiguration,java.lang.String,com.intellij.ide.browsers.WebBrowser,Z):V
 f:com.intellij.ide.browsers.StartBrowserPanel
 - b:$$$getRootComponent$$$():javax.swing.JComponent
 - <init>():V
@@ -2507,18 +2496,6 @@ f:com.intellij.ide.browsers.StartBrowserPanel
 - setSelected(Z):V
 - setUrl(java.lang.String):V
 - s:setupUrlField(com.intellij.openapi.ui.TextFieldWithBrowseButton,com.intellij.openapi.project.Project):V
-c:com.intellij.ide.browsers.StartBrowserSettings
-- <init>():V
-- getBrowser():com.intellij.ide.browsers.WebBrowser
-- getUrl():java.lang.String
-- isSelected():Z
-- isStartJavaScriptDebugger():Z
-- s:readExternal(org.jdom.Element):com.intellij.ide.browsers.StartBrowserSettings
-- setBrowser(com.intellij.ide.browsers.WebBrowser):V
-- setSelected(Z):V
-- setStartJavaScriptDebugger(Z):V
-- setUrl(java.lang.String):V
-- writeExternal(org.jdom.Element):V
 f:com.intellij.ide.browsers.WebBrowserManager
 - com.intellij.openapi.util.SimpleModificationTracker
 - com.intellij.openapi.components.PersistentStateComponent
