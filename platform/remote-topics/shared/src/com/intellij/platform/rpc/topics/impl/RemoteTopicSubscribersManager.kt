@@ -15,6 +15,8 @@ import com.intellij.platform.rpc.topics.RemoteTopic
 import fleet.util.openmap.SerializedValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -31,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap
 class RemoteTopicSubscribersManager(cs: CoroutineScope) {
   private val events = Channel<RemoteTopicInternalEvent>(Channel.UNLIMITED)
   private val clients = ConcurrentHashMap<ClientId, (RemoteTopicEventDto) -> Unit>()
+  private val connectedClientsStateFlow: MutableStateFlow<Set<ClientId>> = MutableStateFlow(emptySet())
 
   init {
     registerLocalClient()
@@ -73,6 +76,7 @@ class RemoteTopicSubscribersManager(cs: CoroutineScope) {
         }
       }
     }
+    connectedClientsStateFlow.value = clients.keys.toSet()
   }
 
   private fun <E : Any> ApplicationRemoteTopicListener<E>.handleEventLocally(event: RemoteTopicEventDto) {
@@ -88,8 +92,10 @@ class RemoteTopicSubscribersManager(cs: CoroutineScope) {
   fun registerClient(cs: CoroutineScope, clientId: ClientId, onEvent: (RemoteTopicEventDto) -> Unit) {
     val previousCallback = clients.putIfAbsent(clientId, onEvent)
     if (previousCallback == null) {
+      connectedClientsStateFlow.value = clients.keys.toSet()
       cs.coroutineContext.job.invokeOnCompletion {
         clients.remove(clientId)
+        connectedClientsStateFlow.value = clients.keys.toSet()
       }
     }
   }
@@ -100,6 +106,10 @@ class RemoteTopicSubscribersManager(cs: CoroutineScope) {
 
   fun <E : Any> broadcastEvent(topic: RemoteTopic<E>, project: Project?, event: E) {
     events.trySend(RemoteTopicInternalEvent.Broadcast(createInternalEvent(topic, project, event)))
+  }
+
+  suspend fun awaitClientSubscription(clientId: ClientId) {
+    connectedClientsStateFlow.first { clientId in it }
   }
 
   @VisibleForTesting
