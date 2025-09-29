@@ -16,8 +16,8 @@ final class UndoCommandListener implements CommandListener {
   private boolean isTransparentActionStarted;
 
   @SuppressWarnings("unused")
-  UndoCommandListener(Project project) {
-    this(project, project.getService(UndoManager.class));
+  UndoCommandListener(@NotNull Project project) {
+    this(project, UndoManager.getInstance(project));
   }
 
   @SuppressWarnings("unused")

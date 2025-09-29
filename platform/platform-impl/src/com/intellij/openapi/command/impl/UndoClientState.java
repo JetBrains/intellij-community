@@ -3,13 +3,11 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.client.ClientAppSession;
 import com.intellij.openapi.client.ClientProjectSession;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
-import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -61,12 +59,12 @@ final class UndoClientState implements Disposable {
 
   @SuppressWarnings("unused")
   UndoClientState(@NotNull ClientProjectSession session) {
-    this(getUndoManager(session.getProject()), session.getClientId());
+    this((UndoManagerImpl) UndoManager.getInstance(session.getProject()), session.getClientId());
   }
 
   @SuppressWarnings("unused")
   UndoClientState(@NotNull ClientAppSession session) {
-    this(getUndoManager(ApplicationManager.getApplication()), session.getClientId());
+    this((UndoManagerImpl) UndoManager.getGlobalInstance(), session.getClientId());
   }
 
   private UndoClientState(@NotNull UndoManagerImpl undoManager, @NotNull ClientId clientId) {
@@ -589,10 +587,6 @@ final class UndoClientState implements Disposable {
 
   private static boolean isRefresh() {
     return ExternalChangeActionUtil.isExternalChangeInProgress();
-  }
-
-  private static @NotNull UndoManagerImpl getUndoManager(@NotNull ComponentManager manager) {
-    return (UndoManagerImpl) manager.getService(UndoManager.class);
   }
 
   private enum OperationInProgress { NONE, UNDO, REDO }
