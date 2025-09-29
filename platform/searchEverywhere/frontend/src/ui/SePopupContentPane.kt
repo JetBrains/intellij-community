@@ -350,11 +350,16 @@ class SePopupContentPane(
         }
 
         if (isVisible) {
-          selectedItemDataFlow.mapLatest {
-            configuration.fetchPreview(it)
-          }.collectLatest { usageInfos ->
+          selectedItemDataFlow.collectLatest { itemData ->
             withContext(Dispatchers.EDT) {
-              usagePreviewPanel?.updateLayout(configuration.project, usageInfos)
+              if (itemData != null) {
+                val usageInfos = configuration.fetchPreview(itemData)
+                usagePreviewPanel?.isVisible = true
+                usagePreviewPanel?.updateLayout(configuration.project, usageInfos)
+              }
+              else {
+                usagePreviewPanel?.isVisible = false
+              }
             }
           }
         }
@@ -528,8 +533,6 @@ class SePopupContentPane(
       if (firstSelectedIndex != -1) {
         extendedInfoComponent?.updateElement(resultList.selectedValue, this@SePopupContentPane)
       }
-
-      updatePreviewVisibility()
     }
   }
 

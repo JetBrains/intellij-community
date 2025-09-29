@@ -232,8 +232,8 @@ class SePopupVm(
     _searchPattern.value = text
   }
 
-  private suspend fun fetchPreview(newValue: SeItemData?): List<UsageInfo>? {
-    if (project == null || newValue == null) return null
+  private suspend fun fetchPreview(newValue: SeItemData): List<UsageInfo>? {
+    if (project == null) return null
     val usageInfo = currentTab.getPreviewInfo(newValue) ?: return null
 
     val virtualFile = usageInfo.fileUrl.virtualFile() ?: return null
@@ -281,4 +281,4 @@ private fun <T> Flow<T>.withPrevious(): Flow<Pair<T?, T>> = flow {
 
 @ApiStatus.Internal
 class SePreviewConfiguration(val project: Project,
-                             val fetchPreview: (suspend (SeItemData?) -> (List<UsageInfo>?))?)
+                             val fetchPreview: (suspend (SeItemData) -> (List<UsageInfo>?))?)
