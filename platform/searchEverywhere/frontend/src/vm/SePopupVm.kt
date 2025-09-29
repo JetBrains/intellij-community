@@ -250,8 +250,8 @@ class SePopupVm(
     return previewFetcher?.fetchPreview(usages)
   }
 
-  suspend fun isExtendedInfoEnabledInTab(): Boolean {
-    return currentTab.isExtendedInfoEnabled()
+  suspend fun isExtendedInfoEnabled(): Boolean {
+    return SearchEverywhereUI.isExtendedInfoEnabled() && currentTab.isExtendedInfoEnabled()
   }
 
   private val popupVm = this

@@ -13,7 +13,6 @@ import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -703,7 +702,7 @@ class SePopupContentPane(
     textField.addExtension(
       object : ExtendableTextComponent.Extension {
         override fun getIcon(hovered: Boolean): Icon {
-          return if (isExtendedInfoEnabled()) AllIcons.Actions.SearchWithHistory else AllIcons.Actions.Search
+          return AllIcons.Actions.SearchWithHistory
         }
 
         override fun isIconBeforeText(): Boolean {
@@ -714,9 +713,7 @@ class SePopupContentPane(
           return scale(if (isNewUI()) 6 else 10)
         }
 
-        override fun getActionOnClick(): Runnable? {
-          if (!isExtendedInfoEnabled()) return null
-
+        override fun getActionOnClick(): Runnable {
           val bounds = (textField.getUI() as TextFieldWithPopupHandlerUI).getExtensionIconBounds(this)
           val point = bounds.location
           point.y += bounds.width + scale(2)
@@ -751,7 +748,7 @@ class SePopupContentPane(
   }
 
   private suspend fun createExtendedInfoComponent(): ExtendedInfoComponent? {
-    if (isExtendedInfoEnabled() && vm.isExtendedInfoEnabledInTab()) {
+    if (vmState.value?.isExtendedInfoEnabled() == true) {
       val leftText = fun(element: Any): String? {
         val leftText = (element as? SeResultListItemRow)?.item?.presentation?.extendedInfo?.text
         return leftText
@@ -825,7 +822,7 @@ class SePopupContentPane(
   }
 
   private fun updateViewMode(compact: Boolean) {
-    extendedInfoContainer.isVisible = !compact && isExtendedInfoEnabled()
+    extendedInfoContainer.isVisible = !compact
 
     if (compact == isCompactViewMode) return
     isCompactViewMode = compact
@@ -970,10 +967,5 @@ class SePopupContentPane(
   companion object {
     const val DEFAULT_FROZEN_VISIBLE_PART: Double = 1.1
     const val DEFAULT_FREEZING_DELAY_MS: Long = 800
-
-    @JvmStatic
-    fun isExtendedInfoEnabled(): Boolean {
-      return Registry.`is`("search.everywhere.footer.extended.info") || ApplicationManager.getApplication().isInternal()
-    }
   }
 }
