@@ -20,7 +20,8 @@ class McpCallInfo(
   val mcpToolDescriptor: McpToolDescriptor,
   val rawArguments: JsonObject,
   val meta: JsonObject,
-  val mcpSessionOptions: McpServerService.McpSessionOptions
+  val mcpSessionOptions: McpServerService.McpSessionOptions,
+  val headers: Map<String, List<String>> = emptyMap(),
 ) {
   override fun toString(): String {
     return "McpCallAdditionalData(id=$callId, clientInfo=$clientInfo, toolName=${mcpToolDescriptor.name}"
