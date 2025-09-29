@@ -33,6 +33,7 @@
     <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls"
                         serviceImplementation="com.intellij.pycharm.community.customization.PyCharmExternalResourceUrls"
                         overrides="true"/>
+    <defaultToolWindowLayout implementation="com.intellij.pycharm.community.customization.PyToolWindowLayoutProvider" order="last"/>
     <ide.newUiOnboarding ideHelpName="pycharm">
       <remove stepId="codeWithMe"/>
     </ide.newUiOnboarding>
