@@ -1560,6 +1560,20 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     myFixture.completeBasic()
   }
 
+  fun testCompletionInsideLiteral() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      public class B<T> {
+        static void main() {
+            call("class A{}.<caret>");
+        }
+    
+        private static void call(String number) {}
+    }""".trimIndent())
+    val basic = myFixture.completeBasic()
+    assertTrue(basic.none { element -> element.`as`(CommandCompletionLookupElement::class.java) != null })
+  }
+
 
   fun testHighlightingFormat() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())

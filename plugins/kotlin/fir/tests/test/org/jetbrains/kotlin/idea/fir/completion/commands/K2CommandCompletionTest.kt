@@ -677,6 +677,65 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         assertTrue(elements[0].`as`(CommandCompletionLookupElement::class.java) != null)
     }
 
+    fun testNoCompletionInsideStringBlock() {
+      Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+      myFixture.configureByText(
+        "x.kt", """
+            class A {
+                fun test() {
+                    call(
+                        ""${'"'}some.a.<caret>
+                    ""${'"'}.trimMargin(), "1"
+                    )
+                }
+            }
+            
+            fun call(key: String, key2: String) {
+                println(key + key2)
+            }""".trimIndent()
+      )
+      val elements = myFixture.complete(CompletionType.BASIC, 0)
+      assertTrue(elements.none { it.`as`(CommandCompletionLookupElement::class.java) != null })
+    }
+
+    fun testNoCompletionInsideStringLiteral() {
+      Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+      myFixture.configureByText(
+        "x.kt", """
+            class A {
+                fun test3() {
+                   call("some.a.<caret>", "1")
+                }
+            }
+            
+            fun call(key: String, key2: String) {
+                println(key + key2)
+            }""".trimIndent()
+      )
+      val elements = myFixture.complete(CompletionType.BASIC, 0)
+      assertTrue(elements.none { it.`as`(CommandCompletionLookupElement::class.java) != null })
+    }
+
+    fun testNoCompletionInsideStringInsideInterpolation() {
+      Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+      myFixture.configureByText(
+        "x.kt", """
+            class A {
+                fun test2(a: String) {
+                    call(
+                        "some.a.${'$'}{a.<caret>}".trimMargin(), "1"
+                    )
+                }
+            }
+            
+            fun call(key: String, key2: String) {
+                println(key + key2)
+            }""".trimIndent()
+      )
+      val elements = myFixture.complete(CompletionType.BASIC, 0)
+      assertFalse(elements.none { it.`as`(CommandCompletionLookupElement::class.java) != null })
+    }
+
     fun testNotFirstCompletion() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(
