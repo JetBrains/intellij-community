@@ -35,18 +35,6 @@ final class FormattingUiNotificationService implements FormattingNotificationSer
   public void reportError(@NotNull String groupId,
                           @Nullable String displayId,
                           @NotNull @NlsContexts.NotificationTitle String title,
-                          @NotNull @NlsContexts.NotificationContent String message) {
-    Notification notification = new Notification(groupId, title, message, NotificationType.ERROR);
-    if (displayId != null) {
-      notification.setDisplayId(displayId);
-    }
-    Notifications.Bus.notify(notification, myProject);
-  }
-
-  @Override
-  public void reportError(@NotNull String groupId,
-                          @Nullable String displayId,
-                          @NotNull @NlsContexts.NotificationTitle String title,
                           @NotNull @NlsContexts.NotificationContent String message, AnAction... actions) {
     Notification notification = new Notification(groupId, title, message, NotificationType.ERROR);
     if (displayId != null) {

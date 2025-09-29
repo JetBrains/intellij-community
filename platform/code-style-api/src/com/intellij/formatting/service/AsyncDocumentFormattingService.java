@@ -340,6 +340,11 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     }
 
     @Override
+    public void onError(@NotNull String title, @NotNull String message) {
+      onError(title, message, null);
+    }
+
+    @Override
     public void onError(@NotNull @NlsContexts.NotificationTitle String title,
                         @NotNull @NlsContexts.NotificationContent String message,
                         @Nullable String displayId) {
@@ -348,6 +353,11 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
         FormattingNotificationService.getInstance(myContext.getProject())
           .reportError(getNotificationGroupId(), displayId, title, message);
       }
+    }
+
+    @Override
+    public void onError(@NotNull String title, @NotNull String message, int offset) {
+      onError(title, message, null, offset);
     }
 
     @Override

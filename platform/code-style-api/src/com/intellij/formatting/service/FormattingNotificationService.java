@@ -19,16 +19,36 @@ public interface FormattingNotificationService {
     }
   }
 
-  void reportError(@NotNull String groupId,
-                   @Nullable String displayId,
-                   @NotNull @NlsContexts.NotificationTitle String title,
-                   @NotNull @NlsContexts.NotificationContent String message);
+  default void reportError(@NotNull String groupId,
+                           @NotNull @NlsContexts.NotificationTitle String title,
+                           @NotNull @NlsContexts.NotificationContent String message) {
+    reportError(groupId, null, title, message);
+  }
 
   default void reportError(@NotNull String groupId,
                            @Nullable String displayId,
                            @NotNull @NlsContexts.NotificationTitle String title,
+                           @NotNull @NlsContexts.NotificationContent String message) {
+    reportError(groupId, displayId, title, message, AnAction.EMPTY_ARRAY);
+  }
+
+  default void reportError(@NotNull String groupId,
+                           @NotNull @NlsContexts.NotificationTitle String title,
                            @NotNull @NlsContexts.NotificationContent String message, AnAction... actions) {
-    reportError(groupId, displayId, title, message);
+    reportError(groupId, null, title, message, actions);
+  }
+
+  void reportError(@NotNull String groupId,
+                   @Nullable String displayId,
+                   @NotNull @NlsContexts.NotificationTitle String title,
+                   @NotNull @NlsContexts.NotificationContent String message, AnAction... actions);
+
+  default void reportErrorAndNavigate(@NotNull String groupId,
+                                      @NotNull @NlsContexts.NotificationTitle String title,
+                                      @NotNull @NlsContexts.NotificationContent String message,
+                                      @NotNull FormattingContext context,
+                                      int offset) {
+    reportErrorAndNavigate(groupId, null, title, message, context, offset);
   }
 
   void reportErrorAndNavigate(@NotNull String groupId,
