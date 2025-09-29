@@ -119,16 +119,11 @@ private fun cloneModuleStructure(monorepoRoot: Path, communityRoot: Path) {
     val communityModulesFile = communityRoot.resolve(".idea/modules.xml")
 
     val monorepoModulesXml = monorepoModulesFile.readXml()
-    val communityModulesXml = communityModulesFile.readXml()
-
     val monorepoModules = readModules(monorepoRoot, monorepoModulesXml)
 
     val communityModules = monorepoModules
         .filterValues { module -> module.isCommunity && module.dependencies.all { dep -> monorepoModules[dep]?.isCommunity ?: false } }
         .mapValues { (_, module) -> module.copy(path = module.path.removePrefix("community/")) }
-
-    // Leave community renames as is. They're rarely changed, and it seems there are a number of old ones
-    val communityModuleRenames = readModuleRenames(communityModulesXml)
 
     val newCommunityModulesXmlContent = xml("project", "version" to "4") {
         xml("component", "name" to "ProjectModuleManager") {
@@ -232,19 +227,5 @@ private fun readModules(root: Path, document: Document): Map<String, JpsModule> 
         result[moduleName] = JpsModule(moduleName, modulePath, dependencies)
     }
 
-    return result
-}
-
-private fun readModuleRenames(document: Document): Map<String, String> {
-    val moduleRenamingHistoryComponent = document.rootElement.getChildren("component")
-        .firstOrNull { it.getAttributeValue("name") == "ModuleRenamingHistory" }
-        ?: return emptyMap()
-
-    val result = mutableMapOf<String, String>()
-    for (moduleEntry in moduleRenamingHistoryComponent.getChildren("module")) {
-        val oldName = moduleEntry.getAttributeValue("old-name") ?: continue
-        val newName = moduleEntry.getAttributeValue("new-name") ?: continue
-        result[oldName] = newName
-    }
     return result
 }
