@@ -5,7 +5,6 @@ import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrappe
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.ItemWithPresentation
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewFetcher
-import com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.ide.vfs.rpcId
 import com.intellij.idea.AppMode
@@ -125,10 +124,6 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
    */
   fun canBeShownInFindResults(): Boolean {
     return contributor.showInFindResults()
-  }
-
-  fun isPreviewEnabled(): Boolean {
-    return contributor is SearchEverywherePreviewProvider
   }
 
   private fun createDefaultMatchers(rawPattern: String): ItemMatchers {
