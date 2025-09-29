@@ -214,7 +214,6 @@ open class ActionCompletionCommand(
       return null
     }
 
-  @ApiStatus.Experimental
   @ApiStatus.Internal
   protected open fun customizeEvent(event: AnActionEvent) {
   }

@@ -78,7 +78,6 @@ interface CommandCompletionFactory : PossiblyDumbAware {
    * Adjust the caret position after GoTo command completion.
    * @return the new caret position or null if no adjustment is needed
    */
-  @ApiStatus.Experimental
   fun adjustCaret(psiFile: PsiFile, offset: Int): Int? {
     val element = psiFile.findElementAt(offset) ?: return null
     if (element.textRange.startOffset != offset) return null
