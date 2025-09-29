@@ -12,6 +12,7 @@ jvm_library(
     "//platform/util",
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/util/concurrency",
   ]
 )
 ### auto-generated section `build intellij.platform.credentialStore` end

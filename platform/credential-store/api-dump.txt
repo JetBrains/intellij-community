@@ -77,7 +77,6 @@ a:com.intellij.ide.passwordSafe.PasswordSafe
 - com.intellij.ide.passwordSafe.PasswordStorage
 - sf:Companion:com.intellij.ide.passwordSafe.PasswordSafe$Companion
 - <init>():V
-- a:getAsync(com.intellij.credentialStore.CredentialAttributes):org.jetbrains.concurrency.Promise
 - sf:getInstance():com.intellij.ide.passwordSafe.PasswordSafe
 - a:isMemoryOnly():Z
 - a:isPasswordStoredOnlyInMemory(com.intellij.credentialStore.CredentialAttributes,com.intellij.credentialStore.Credentials):Z
