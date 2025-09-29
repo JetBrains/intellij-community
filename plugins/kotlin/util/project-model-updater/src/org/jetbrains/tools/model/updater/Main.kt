@@ -19,11 +19,21 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     }
 
     companion object {
+        private val configurationResources: List<String> = listOf(
+            "/model.properties",
+
+            // A file for overriding default settings. Has to be the last argument
+            "/local.properties",
+        )
+
         fun parse(args: Array<String>): GeneratorPreferences {
             val properties = Properties()
 
-            val configurationFile = object {}::class.java.getResource("/model.properties")
-            configurationFile?.openStream()?.use { stream -> properties.load(stream) }
+            val classForResources = object {}::class.java
+            for (resourceFilePath in configurationResources) {
+                val configurationFile = classForResources.getResource(resourceFilePath)
+                configurationFile?.openStream()?.use { stream -> properties.load(stream) }
+            }
 
             // Preferences passed as command line arguments override those from a configuration file
             for (arg in args.flatMap { it.split(" ") }) {
