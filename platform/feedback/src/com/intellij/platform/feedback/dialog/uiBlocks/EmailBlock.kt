@@ -52,9 +52,6 @@ class EmailBlock(private val myProject: Project?,
         }
 
       row {
-        //feedbackAgreement(myProject, CommonFeedbackBundle.message("dialog.feedback.consent.withEmail")) {
-        //  showFeedbackSystemInfoDialog()
-        //}
         feedbackAgreementBlock(myProject)
       }.bottomGap(BottomGap.SMALL)
     }
