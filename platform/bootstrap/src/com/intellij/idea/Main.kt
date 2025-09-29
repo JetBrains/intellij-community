@@ -71,7 +71,7 @@ internal fun mainImpl(
         addBootstrapTiming("init scope creating", startupTimings)
         StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixNano)
 
-        startApp(args = args, mainScope = this@runBlocking, busyThread = busyThread, changeClassPath = changeClassPath)
+        startApp(args, mainScope = this@runBlocking, busyThread, changeClassPath)
       }
 
       awaitCancellation()
@@ -91,13 +91,8 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
 
         override fun rootTrace() = rootTask()
 
-        override suspend fun <T> span(
-          name: String,
-          context: CoroutineContext,
-          action: suspend CoroutineScope.() -> T,
-        ): T {
-          return com.intellij.platform.diagnostic.telemetry.impl.span(name, context, action)
-        }
+        override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T =
+          com.intellij.platform.diagnostic.telemetry.impl.span(name, context, action)
       }
     }
     launch {
@@ -182,17 +177,16 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
 
 /**
  * Directory where the configuration files should be imported to.
- * This property is used to override the default target directory ([PathManager.getConfigPath]) when a custom way to read and write
+ * This property is used to override the default target directory ([PathManager.getConfigDir]) when a custom way to read and write
  * configuration files is implemented.
  */
 @JvmField
 internal var customTargetDirectoryToImportConfig: Path? = null
 
-internal fun isConfigImportNeeded(configPath: Path): Boolean {
-  return Files.notExists(configPath) ||
-         Files.exists(configPath.resolve(InitialConfigImportState.CUSTOM_MARKER_FILE_NAME)) ||
-         customTargetDirectoryToImportConfig != null
-}
+internal fun isConfigImportNeeded(configPath: Path): Boolean =
+  Files.notExists(configPath) ||
+  Files.exists(configPath.resolve(InitialConfigImportState.CUSTOM_MARKER_FILE_NAME)) ||
+  customTargetDirectoryToImportConfig != null
 
 private fun initRemoteDev(args: List<String>) {
   if (!JBR.isGraphicsUtilsSupported()) {
@@ -338,9 +332,6 @@ private fun installPluginUpdates() {
 
 // separate class for nicer presentation in dumps
 private class StartupAbortedExceptionHandler : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
-  override fun handleException(context: CoroutineContext, exception: Throwable) {
-    StartupErrorReporter.processException(exception)
-  }
-
+  override fun handleException(context: CoroutineContext, exception: Throwable) = StartupErrorReporter.processException(exception)
   override fun toString() = "StartupAbortedExceptionHandler"
 }

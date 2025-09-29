@@ -9,48 +9,44 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 
-internal const val FIRST_SESSION_KEY = "intellij.first.ide.session"
-internal const val CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session"
-
 @ApiStatus.Internal
 object InitialConfigImportState {
+  const val FIRST_SESSION_KEY: String = "intellij.first.ide.session"
+  const val CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY: String = "intellij.config.imported.in.current.session"
   const val CUSTOM_MARKER_FILE_NAME: String = "migrate.config"
   const val FRONTEND_PLUGINS_TO_MIGRATE_DIR_NAME: String = "frontend-to-migrate"
 
-  internal val OPTIONS: Array<String> = arrayOf(
+  // copy of `ConfigImportHelper#OPTIONS`
+  private val OPTIONS: Array<String> = arrayOf(
     PathManager.OPTIONS_DIRECTORY + '/' + StoragePathMacros.NON_ROAMABLE_FILE,
     PathManager.OPTIONS_DIRECTORY + '/' + GeneralSettings.IDE_GENERAL_XML,
     PathManager.OPTIONS_DIRECTORY + "/options.xml",
   )
 
-
   /**
    * Returns `true` when the IDE is launched for the first time (i.e., there was no config directory).
    **/
+  @JvmStatic
   fun isFirstSession(): Boolean = System.getProperty(FIRST_SESSION_KEY).toBoolean()
 
   /**
    * Returns `true` when the IDE is launched for the first time, and configs were imported from another installation.
    */
+  @JvmStatic
   fun isConfigImported(): Boolean = System.getProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY).toBoolean()
 
   /**
    * Checking that the current user is a "new" one (i.e., this is the very first launch of the IDE on this machine).
    */
+  @JvmStatic
   fun isNewUser(): Boolean = isFirstSession() && !isConfigImported()
 
-  fun isConfigDirectory(candidate: Path): Boolean {
-    for (t in OPTIONS) {
-      if (Files.exists(candidate.resolve(t))) {
-        return true
-      }
-    }
-    return false
-  }
+  @Deprecated(message = "Use `ConfigImportHelper.isConfigDirectory()` instead")
+  fun isConfigDirectory(candidate: Path): Boolean = OPTIONS.any { Files.exists(candidate.resolve(it)) }
 
-  fun isStartupWizardEnabled(): Boolean {
-    return (!ApplicationManagerEx.isInIntegrationTest() || java.lang.Boolean.getBoolean("show.wizard.in.test")) &&
-           !AppMode.isRemoteDevHost() &&
-           System.getProperty("intellij.startup.wizard", "true").toBoolean()
-  }
+  @JvmStatic
+  fun isStartupWizardEnabled(): Boolean =
+    (!ApplicationManagerEx.isInIntegrationTest() || java.lang.Boolean.getBoolean("show.wizard.in.test")) &&
+    !AppMode.isRemoteDevHost() &&
+    System.getProperty("intellij.startup.wizard", "true").toBoolean()
 }

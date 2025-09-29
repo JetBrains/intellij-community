@@ -107,7 +107,7 @@ public class UpdateCheckerService {
     if (appInfo.isMajorEAP() && current != ChannelStatus.EAP && customization.forceEapUpdateChannelForEapBuilds()) {
       settings.setSelectedChannelStatus(ChannelStatus.EAP);
       LOG.info("channel forced to 'eap'");
-      if (!InitialConfigImportState.INSTANCE.isFirstSession()) {
+      if (!InitialConfigImportState.isFirstSession()) {
         var title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
         var message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
         UpdateChecker.getNotificationGroup()
@@ -117,7 +117,7 @@ public class UpdateCheckerService {
       }
     }
 
-    if (!appInfo.isEAP() && !appInfo.isPreview() && current == ChannelStatus.EAP && InitialConfigImportState.INSTANCE.isConfigImported()) {
+    if (!appInfo.isEAP() && !appInfo.isPreview() && current == ChannelStatus.EAP && InitialConfigImportState.isConfigImported()) {
       settings.setSelectedChannelStatus(ChannelStatus.RELEASE);
       LOG.info("channel set to 'release'");
     }

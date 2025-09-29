@@ -90,7 +90,13 @@ public final class ConfigImportHelper {
   private static final String PLIST = "Info.plist";
   private static final String PLUGINS = "plugins";
   private static final String SYSTEM = "system";
-  private static final Set<String> SESSION_FILES = Set.of(InitialConfigImportState.CUSTOM_MARKER_FILE_NAME, SpecialConfigFiles.LOCK_FILE, SpecialConfigFiles.PORT_LOCK_FILE, SpecialConfigFiles.TOKEN_FILE, SpecialConfigFiles.USER_WEB_TOKEN);
+  private static final Set<String> SESSION_FILES = Set.of(
+    SpecialConfigFiles.LOCK_FILE, SpecialConfigFiles.PORT_LOCK_FILE, SpecialConfigFiles.TOKEN_FILE, SpecialConfigFiles.USER_WEB_TOKEN,
+    InitialConfigImportState.CUSTOM_MARKER_FILE_NAME);
+  private static final String[] OPTIONS = {
+    PathManager.OPTIONS_DIRECTORY + '/' + StoragePathMacros.NON_ROAMABLE_FILE,
+    PathManager.OPTIONS_DIRECTORY + '/' + GeneralSettings.IDE_GENERAL_XML,
+    PathManager.OPTIONS_DIRECTORY + "/options.xml"};
 
   private static final long PLUGIN_UPDATES_TIMEOUT_MS = 7000L;
   private static final long BROKEN_PLUGINS_TIMEOUT_MS = 3000L;
@@ -104,7 +110,7 @@ public final class ConfigImportHelper {
     @NotNull Logger log
   ) {
     log.info("Importing configs to " + newConfigDir);
-    System.setProperty(InitialConfigImportStateKt.FIRST_SESSION_KEY, Boolean.TRUE.toString());
+    System.setProperty(InitialConfigImportState.FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
     var customMigrationOption = CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile(newConfigDir);
     log.info("Custom migration option: " + customMigrationOption);
@@ -240,7 +246,7 @@ public final class ConfigImportHelper {
 
         doImport(oldConfigDir, newConfigDir, oldIdeHome, log, configImportOptions);
 
-        System.setProperty(InitialConfigImportStateKt.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
+        System.setProperty(InitialConfigImportState.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
 
         if (currentlyDisabledPlugins != null) {
           try {
@@ -375,9 +381,9 @@ public final class ConfigImportHelper {
 
   private static void writeOptionsForRestart(Path newConfigDir) throws IOException {
     var properties = new ArrayList<String>();
-    properties.add(InitialConfigImportStateKt.FIRST_SESSION_KEY);
-    if (InitialConfigImportState.INSTANCE.isConfigImported()) {
-      properties.add(InitialConfigImportStateKt.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
+    properties.add(InitialConfigImportState.FIRST_SESSION_KEY);
+    if (InitialConfigImportState.isConfigImported()) {
+      properties.add(InitialConfigImportState.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
     }
     new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile(newConfigDir);
   }
@@ -479,38 +485,14 @@ public final class ConfigImportHelper {
     return result;
   }
 
-  /**
-   * @deprecated Use InitialConfigImportState#isFirstSession() instead.
-   **/
-  @Deprecated(since = "2025.3.0", forRemoval = true)
-  public static boolean isFirstSession() {
-    return InitialConfigImportState.INSTANCE.isFirstSession();
-  }
-
-  /**
-   * @deprecated Use InitialConfigImportState#isNewUser() instead.
-   **/
-  @Deprecated(since = "2025.3.0", forRemoval = true)
-  public static boolean isNewUser() {
-    return InitialConfigImportState.INSTANCE.isNewUser();
-  }
-
   public static void setSettingsFilter(@NotNull FileChooserDescriptor descriptor) {
     descriptor
       .withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE))
       .withExtensionFilter(BootstrapBundle.message("import.settings.filter"), "zip", "jar");
   }
 
-  /**
-   * @deprecated Use InitialConfigImportState#isConfigImported() instead.
-   **/
-  @Deprecated(since = "2025.3.0", forRemoval = true)
-  public static boolean isConfigImported() {
-    return InitialConfigImportState.INSTANCE.isConfigImported();
-  }
-
   public static boolean isConfigDirectory(@NotNull Path candidate) {
-    for (var t : InitialConfigImportState.INSTANCE.getOPTIONS$intellij_platform_ide_impl()) {
+    for (var t : OPTIONS) {
       if (Files.exists(candidate.resolve(t))) {
         return true;
       }
@@ -550,7 +532,7 @@ public final class ConfigImportHelper {
 
   public static @Nullable FileTime getConfigLastModifiedTime(@NotNull Path configDir) {
     var max = (FileTime)null;
-    for (var name : InitialConfigImportState.INSTANCE.getOPTIONS$intellij_platform_ide_impl()) {
+    for (var name : OPTIONS) {
       try {
         var cur = Files.getLastModifiedTime(configDir.resolve(name));
         if (max == null || cur.compareTo(max) > 0) {
@@ -989,10 +971,10 @@ public final class ConfigImportHelper {
     }
 
     if (!PlatformUtils.isJetBrainsClient()) {
-      /* The plugins for the frontend process are stored in a 'frontend' subdirectory. 
-         If a new version of a regular IDE is started, we need to store the frontend plugins from the previous version somewhere in 
-         the new plugin directory. 
-         When the frontend variant of the new version starts, it migrates these plugins. 
+      /* The plugins for the frontend process are stored in a 'frontend' subdirectory.
+         If a new version of a regular IDE is started, we need to store the frontend plugins from the previous version somewhere in
+         the new plugin directory.
+         When the frontend variant of the new version starts, it migrates these plugins.
          This logic can be removed when IJPL-170369 is fixed. */
       var oldFrontendPlugins = oldPluginsDir.resolve("frontend");
       if (Files.isDirectory(oldFrontendPlugins)) {
@@ -1017,7 +999,7 @@ public final class ConfigImportHelper {
   }
 
   /**
-   * Collects plugins which should be migrated from the previous IDE's version, and stores plugins which should be copied in 
+   * Collects plugins which should be migrated from the previous IDE's version, and stores plugins which should be copied in
    * {@code pluginsToMigrate} and the plugins which should be downloaded from the plugin repository in {@code pluginsToDownload}.
    * @return {@code false} if failed to collect plugins or {@code true} otherwise
    */
@@ -1573,7 +1555,7 @@ public final class ConfigImportHelper {
         fileName.toString().equals(P3DynamicPluginSynchronizerKt.DYNAMIC_PLUGINS_SYNCHRONIZER_FILE_NAME)) {
       return true;
     }
-      
+
     if (settings != null && settings.shouldSkipPath(path)) {
       return true; // this check needs to repeat even for non-root paths
     }
