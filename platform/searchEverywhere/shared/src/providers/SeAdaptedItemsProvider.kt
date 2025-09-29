@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.providers
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
@@ -49,6 +50,10 @@ class SeAdaptedItemsProvider(contributor: SearchEverywhereContributor<Any>) : Se
   }
 
   override suspend fun canBeShownInFindResults(): Boolean = contributorWrapper.contributor.showInFindResults()
+
+  fun isPreviewProvider(): Boolean {
+    return contributorWrapper.contributor is SearchEverywherePreviewProvider
+  }
 
   override fun dispose() {
     Disposer.dispose(contributorWrapper)

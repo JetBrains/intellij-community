@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
+import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProvider
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -109,6 +110,11 @@ class SeLocalItemDataProvider(
   }
 
   fun isPreviewEnabled(): Boolean {
+    if (provider is SeTopHitItemsProvider) {
+      return provider.isPreviewProvider()
+    } else if (provider is SeAdaptedItemsProvider) {
+      return provider.isPreviewProvider()
+    }
     return provider is SeItemsPreviewProvider
   }
 
