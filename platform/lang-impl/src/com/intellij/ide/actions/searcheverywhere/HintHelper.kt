@@ -2,9 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.find.impl.TextSearchRightActionAction
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.AnimatedIcon
@@ -21,40 +19,40 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 class HintHelper(private val myTextField: ExtendableTextField) {
-  private val myHintTextIcon = TextIcon("", JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground(), Gray.TRANSPARENT, 0)
-  private val myWarnIcon = RowIcon(2, com.intellij.ui.icons.RowIcon.Alignment.BOTTOM)
-  private val myHintExtension = createExtension(myHintTextIcon)
+  private val myText = TextIcon("", JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground(), Gray.TRANSPARENT, 0)
+  private val myLoadingIcon = RowIcon(2, com.intellij.ui.icons.RowIcon.Alignment.CENTER)
+  private val myExtensionWithHintText = createExtension(myText)
   private val mySearchProcessExtension = createExtension(AnimatedIcon.Default.INSTANCE)
-  private val myWarningExtension: ExtendableTextComponent.Extension
+  private val myExtensionWithLoadingText: ExtendableTextComponent.Extension
   private val myRightExtensions: MutableList<ExtendableTextComponent.Extension> = ArrayList()
 
   init {
-    myHintTextIcon.setFont(myTextField.getFont())
-    myHintTextIcon.setFontTransform(FontInfo.getFontRenderContext(myTextField).transform)
+    myText.setFont(myTextField.getFont())
+    myText.setFontTransform(FontInfo.getFontRenderContext(myTextField).transform)
     // Try aligning hint by baseline with the text field
-    myHintTextIcon.setInsets(scale(3), 0, 0, 0)
+    myText.setInsets(scale(3), scale(3), 0, 0)
 
-    myWarnIcon.setIcon(AllIcons.General.Warning, 0)
-    myWarnIcon.setIcon(myHintTextIcon, 1)
-    myWarningExtension = createExtension(myWarnIcon)
+    myLoadingIcon.setIcon(AnimatedIcon.Default.INSTANCE, 0)
+    myLoadingIcon.setIcon(myText, 1)
+    myExtensionWithLoadingText = createExtension(myLoadingIcon)
   }
 
   fun setHint(hintText: String?) {
-    myTextField.removeExtension(myHintExtension)
-    myTextField.removeExtension(myWarningExtension)
+    myTextField.removeExtension(myExtensionWithHintText)
+    myTextField.removeExtension(myExtensionWithLoadingText)
     if (StringUtil.isNotEmpty(hintText)) {
-      myHintTextIcon.setText(hintText)
-      addExtensionAsLast(myHintExtension)
+      myText.setText(hintText)
+      addExtensionAsLast(myExtensionWithHintText)
     }
   }
 
-  fun setWarning(warnText: String?) {
-    myTextField.removeExtension(myHintExtension)
-    myTextField.removeExtension(myWarningExtension)
-    if (StringUtil.isNotEmpty(warnText)) {
-      myHintTextIcon.setText(warnText)
-      myWarnIcon.setIcon(myHintTextIcon, 1)
-      addExtensionAsLast(myWarningExtension)
+  fun setLoadingText(text: String?) {
+    myTextField.removeExtension(myExtensionWithHintText)
+    myTextField.removeExtension(myExtensionWithLoadingText)
+    if (StringUtil.isNotEmpty(text)) {
+      myText.setText(text)
+      myLoadingIcon.setIcon(myText, 1)
+      addExtensionAsLast(myExtensionWithLoadingText)
     }
   }
 
@@ -71,8 +69,8 @@ class HintHelper(private val myTextField: ExtendableTextField) {
   }
 
   fun setRightExtensions(actions: List<AnAction>) {
-    myTextField.removeExtension(myHintExtension)
-    myTextField.removeExtension(myWarningExtension)
+    myTextField.removeExtension(myExtensionWithHintText)
+    myTextField.removeExtension(myExtensionWithLoadingText)
     actions.map { createRightActionExtension(it) }.forEach { extension ->
       addExtensionAsLast(extension)
       myRightExtensions.add(extension)

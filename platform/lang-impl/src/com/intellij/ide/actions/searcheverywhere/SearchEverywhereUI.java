@@ -384,7 +384,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     List<SearchEverywhereContributor<?>> contributors = myHeader.getSelectedTab().getContributors();
     String advertisementText = ReadAction.compute(() -> getWarning(contributors));
     if (advertisementText != null) {
-      myHintHelper.setWarning(advertisementText);
+      myHintHelper.setLoadingText(advertisementText);
       updateRightActions(contributors);
       return;
     }

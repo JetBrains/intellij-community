@@ -325,7 +325,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     vm.coroutineScope.launch {
       vm.searchFieldWarning.collect { warning ->
         withContext(Dispatchers.EDT) {
-          hintHelper.setWarning(warning)
+          hintHelper.setLoadingText(warning)
         }
       }
     }
