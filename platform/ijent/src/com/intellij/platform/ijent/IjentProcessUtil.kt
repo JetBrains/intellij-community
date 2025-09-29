@@ -16,14 +16,13 @@ fun getIjentGrpcArgv(
   usrBinEnv: String = "/usr/bin/env",
   tcpConfig: TcpConnectionInfo? = null,
 ): List<String> {
-  val command = if (tcpConfig != null) arrayOf("grpc-socket-server", "--port=${tcpConfig.remotePort}") else arrayOf("grpc-stdio-server")
-  LOG.info("Ijent gRPC command: ${command.joinToString(" ")}")
   return listOfNotNull(
     usrBinEnv,
     *additionalEnv.entries.map2Array { (k, v) -> "$k=$v" },
     // "gdbserver", "0.0.0.0:12345",  // https://sourceware.org/gdb/onlinedocs/gdb/Connecting.html
     remotePathToIjent,
-    *command,
+    "grpc-server",
+    if (tcpConfig != null) "--port=${tcpConfig.remotePort}" else null,
     if (selfDeleteOnExit) "--self-delete-on-exit" else null,
   )
 }
