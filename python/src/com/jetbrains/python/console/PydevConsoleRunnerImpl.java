@@ -1347,7 +1347,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       myConsoleSettings = consoleSettings;
       myWorkingDir = workingDir;
       mySdk = sdk;
-      myEnvironmentVariables = envs;
+      myEnvironmentVariables = new HashMap<>();
+      myEnvironmentVariables.putAll(envs);
       myEnvironmentVariables.putAll(consoleSettings.getEnvs());
       myEnvFiles = consoleSettings.myEnvFiles;
       PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
