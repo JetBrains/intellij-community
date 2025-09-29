@@ -84,7 +84,7 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
 
     companion object {
       @JvmStatic
-      fun html(html: String): Request = Request(html = html, url = null)
+      fun html(html: String, url: String? = null): Request = Request(html = html, url = url)
 
       @JvmStatic
       fun url(url: String): Request = Request(html = null, url = url)
