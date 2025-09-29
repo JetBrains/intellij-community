@@ -138,7 +138,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
 
     fun cancel(): Boolean {
       while (true) {
-        when (val state = stateRef.get()) {
+        when (stateRef.get()) {
           FormattingRequestState.RUNNING -> {
             val formattingTask = checkNotNull(task)
             if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.CANCELLING)) {
@@ -157,7 +157,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
               return formattingTask.cancel()
             }
           }
-          else -> { LOG.warn(state.name); return false }
+          else -> return false
         }
       }
     }
@@ -166,75 +166,77 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       task = formattingTask
     }
 
-    suspend fun runTask(task: FormattingTask) {
-      if (task.isRunUnderProgress) {
+    private suspend fun underProgressIfNeeded(isNeeded: Boolean, block: () -> Unit) {
+      if (isNeeded) {
         withBackgroundProgress(context.project,
                                CodeStyleBundle.message("async.formatting.service.running", getName(service)),
                                TaskCancellation.cancellable().withButtonText(CodeStyleBundle.message("async.formatting.service.cancel", getName(service)))) {
           coroutineToIndicator {
-            task.run()
+            block()
           }
         }
       }
       else {
-        task.run()
+        block()
       }
     }
 
     @OptIn(DelicateCoroutinesApi::class)
     suspend fun runAndAwaitTask() = coroutineScope {
-      val task = task
-      if (task != null && stateRef.compareAndSet(FormattingRequestState.NOT_STARTED, FormattingRequestState.RUNNING)) {
-        val dispatcher = if (isSync) {
-          // Keep sync tasks in the runBlocking event loop; otherwise, deadlocks ensue.
-          requireNotNull(coroutineContext[CoroutineDispatcher])
-        }
-        else {
-          Dispatchers.IO
-        }
-        // There is an implicit contract that a task that was already created is also started.
-        // GlobalScope is used here to prevent cancellation before that can happen.
-        val taskJob = GlobalScope.launch(dispatcher) {
-          runTask(task)
-        }
-        try {
-          val formattedText = withTimeoutOrNull(getTimeout(service).toMillis()) {
-            result.await()
+      val task = task ?: return@coroutineScope
+      val dispatcher = if (isSync) {
+        // Keep sync tasks in the runBlocking event loop; otherwise, deadlocks ensue.
+        requireNotNull(coroutineContext[CoroutineDispatcher])
+      }
+      else {
+        Dispatchers.IO
+      }
+      // There is an implicit contract that a task that was already created is also started.
+      // GlobalScope is used here to prevent cancellation before that can happen.
+      val taskJob = GlobalScope.launch(dispatcher) {
+        underProgressIfNeeded(task.isRunUnderProgress) {
+          if (stateRef.compareAndSet(FormattingRequestState.NOT_STARTED, FormattingRequestState.RUNNING)) {
+            task.run()
           }
-          if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
-            FormattingNotificationService.getInstance(_context.project).reportError(
-              getNotificationGroupId(service),
-              getTimeoutNotificationDisplayId(service), getName(service),
-              CodeStyleBundle.message("async.formatting.service.timeout", getName(service),
-                                      getTimeout(service).seconds.toString()),
-              *getTimeoutActions(service, _context)
-            )
+        }
+      }
+      try {
+        val formattedText = withTimeoutOrNull(getTimeout(service).toMillis()) {
+          result.await()
+        }
+        if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
+          FormattingNotificationService.getInstance(_context.project).reportError(
+            getNotificationGroupId(service),
+            getTimeoutNotificationDisplayId(service), getName(service),
+            CodeStyleBundle.message("async.formatting.service.timeout", getName(service),
+                                    getTimeout(service).seconds.toString()),
+            *getTimeoutActions(service, _context)
+          )
+        }
+        else if (formattedText != null) {
+          if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+            updateDocument(formattedText)
           }
-          else if (formattedText != null) {
-            if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-              updateDocument(formattedText)
-            }
-            else {
-              withContext(Dispatchers.EDT) {
-                CommandProcessor.getInstance().runUndoTransparentAction {
-                  try {
-                    WriteAction.run<Throwable> {
-                      updateDocument(formattedText)
-                    }
+          else {
+            withContext(Dispatchers.EDT) {
+              CommandProcessor.getInstance().runUndoTransparentAction {
+                try {
+                  WriteAction.run<Throwable> {
+                    updateDocument(formattedText)
                   }
-                  catch (throwable: Throwable) {
-                    LOG.error(throwable)
-                  }
+                }
+                catch (throwable: Throwable) {
+                  LOG.error(throwable)
                 }
               }
             }
           }
         }
-        finally {
-          this@FormattingRequestImpl.cancel()
-          withContext(NonCancellable) {
-            taskJob.cancelAndJoin()
-          }
+      }
+      finally {
+        this@FormattingRequestImpl.cancel()
+        withContext(NonCancellable) {
+          taskJob.cancelAndJoin()
         }
       }
     }
