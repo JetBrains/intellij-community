@@ -92,6 +92,11 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
         return null;
     }
   }
+  
+  @Override
+  public boolean isUnboundedWildcard() {
+    return myVariance == VARIANCE_INVARIANT;
+  }
 
   public String getCanonicalText() {
     return decorateTypeText(myTypeText);

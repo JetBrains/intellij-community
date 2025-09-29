@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.RecursionGuard;
@@ -47,6 +49,11 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   @Override
   public @NotNull PsiType getType() {
     return CachedValuesManager.getProjectPsiDependentCache(this, __ -> calculateType());
+  }
+
+  @Override
+  public boolean isUnboundedWildcard() {
+    return PsiUtil.isJavaToken(getLastChild(), JavaTokenType.QUEST);
   }
 
   private @NotNull PsiType calculateType() {
@@ -118,6 +125,17 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
           type = PsiWildcardType.createUnbounded(getManager());
         }
         type = type.annotate(createProvider(annotations));
+        if (isUnboundedWildcard()) {
+          // For bounded wildcard, nullability is defined by the bound.
+          // For unbounded, however, the context default annotation may affect the nullability, so we have to take this into account.
+          NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());
+          if (manager != null) {
+            NullabilityAnnotationInfo nullability = manager.findDefaultTypeUseNullability(this);
+            if (nullability != null) {
+              type = type.withNullability(nullability.toTypeNullability());
+            }
+          }
+        }
         break;
       }
       else {

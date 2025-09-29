@@ -39,12 +39,14 @@ final class CheckerFrameworkSupport implements AnnotationPackageSupport {
         if (result == null) return ContextNullabilityInfo.EMPTY;
         return ContextNullabilityInfo.constant(result)
           .filtering(context -> {
-            // DefaultQualifier is not applicable to type parameter declarations
-            if (context instanceof PsiTypeParameter) return false;
-            // DefaultQualifier is not applicable to type parameter uses
-            return !(PsiUtil.getTypeByPsiElement(context) instanceof PsiClassType classType) || 
-                   !(classType.resolve() instanceof PsiTypeParameter);
-          });
+          // Unbounded type elements should not be processed
+            if (context instanceof PsiTypeElement typeElement && typeElement.isUnboundedWildcard()) return false;
+          // DefaultQualifier is not applicable to type parameter declarations
+          if (context instanceof PsiTypeParameter) return false;
+          // DefaultQualifier is not applicable to type parameter uses
+          return !(PsiUtil.getTypeByPsiElement(context) instanceof PsiClassType classType) ||
+                 !(classType.resolve() instanceof PsiTypeParameter);
+        });
       }
       return ContextNullabilityInfo.EMPTY;
     }

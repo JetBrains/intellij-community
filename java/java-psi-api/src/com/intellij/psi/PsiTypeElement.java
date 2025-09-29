@@ -59,6 +59,18 @@ public interface PsiTypeElement extends PsiElement, PsiAnnotationOwner {
   }
 
   /**
+   * Returns true if the type element represents an unbounded wildcard type like {@code ?} (possibly annotated).
+   * Strictly speaking, {@code isUnboundedWildcard() == getType() instanceof PsiWildcardType wt && !wt.isBounded()}.
+   * This method can be helpful for nullability annotation processing to avoid computing the type, 
+   * as the type may in turn depend on the nullability.
+   * 
+   * @return true if the type element represents an unbounded wildcard.
+   */
+  default boolean isUnboundedWildcard() {
+    return getText().endsWith("?");
+  }
+
+  /**
    * @return false if annotations cannot be added to this type element 
    * For example, the JVM language that doesn't support type-use annotations;
    * or type element represents the void type.
