@@ -76,20 +76,19 @@ final class RecordBuilder {
     myRecordText.append(ctor.getText());
   }
 
-  //@formatter:off Temporarily disable formatter because of bug IDEA-371809
   /// Converts the non-canonical, non-delegating `ctor` (that directly assigns all instance fields) to
   /// a single call to the canonical constructor.
-  /// 
+  ///
   /// A sample record with an implicit canonical constructor and a delegating constructor:
-  /// 
+  ///
   /// Before:
-  /// 
+  ///
   /// ```java
   /// class Person {
   ///   final String name;
   ///   final int age;
   ///   final int weight;
-  /// 
+  ///
   ///   Person(String name, int age, int weight) {
   ///     this.name = name;
   ///     this.age = age;
@@ -98,9 +97,9 @@ final class RecordBuilder {
   ///   }
   /// }
   /// ```
-  /// 
+  ///
   /// After:
-  /// 
+  ///
   /// ```java
   /// record Person(String name, int age, int weight) {
   ///   Person(String name) {
@@ -109,7 +108,6 @@ final class RecordBuilder {
   ///   }
   /// }
   /// ```
-  //@formatter:on
   void addDelegatingCtor(PsiMethod canonicalCtor,
                          PsiMethod ctor,
                          Map<String, PsiExpression> fieldNamesToInitializers,
