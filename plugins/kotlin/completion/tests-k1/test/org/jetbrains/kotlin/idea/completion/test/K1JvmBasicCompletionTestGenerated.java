@@ -4681,6 +4681,16 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AliasedJavaClassFirstInvocation.kt")
+            public void testAliasedJavaClassFirstInvocation() throws Exception {
+                runTest("../testData/basic/java/AliasedJavaClassFirstInvocation.kt");
+            }
+
+            @TestMetadata("AliasedJavaClassSecondInvocation.kt")
+            public void testAliasedJavaClassSecondInvocation() throws Exception {
+                runTest("../testData/basic/java/AliasedJavaClassSecondInvocation.kt");
+            }
+
             @TestMetadata("AutoForceCompletion.kt")
             public void testAutoForceCompletion() throws Exception {
                 runTest("../testData/basic/java/AutoForceCompletion.kt");
