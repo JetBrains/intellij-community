@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -115,7 +116,8 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   }
 
   private boolean isMainMethodFirstUntypedParameter() {
-    if (getTypeElementGroovy() != null) return false;
+    GrTypeElement typeElement = getTypeElementGroovy();
+    if (typeElement != null && !TypeUtils.isJavaLangObject(typeElement.getType())) return false;
     if (!(getParent() instanceof GrParameterList parameterList)) return false;
     if (isOptional()) return false;
 

@@ -14,7 +14,7 @@ class Bar<T, <warning descr="Class Unused is unused">Unused</warning>> {
 
   Bar getUsedPropertyGetter() {}
 
-  public static void main(String[] args) { usedPrivately() }
+  public static void main(String[] <warning descr="Parameter args is unused">args</warning>) { usedPrivately() }
 
   private static void usedPrivately() {}
   private void <warning descr="Method unusedPrivately is unused">unusedPrivately</warning>() {}
