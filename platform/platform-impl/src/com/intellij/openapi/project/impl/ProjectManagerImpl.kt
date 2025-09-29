@@ -94,6 +94,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.runSuppressing
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
+import com.intellij.workspaceModel.ide.registerProjectRoot
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -681,6 +682,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             if (Registry.`is`("ide.create.project.root.entity") && options.projectRootDir != null) {
               val root = options.projectRootDir!!.toUri().toString().removeSuffix("/")
               project.serviceAsync<ProjectRootPersistentStateComponent>().projectRootUrls += root
+
+              // We also register the project root here, so project view will have "files" node immediately.
+              // Otherwise, it might appear too late causing issues like AMPER-4695
+              registerProjectRoot(project, options.projectRootDir!!)
             }
 
             if (!addToOpened(project)) {
