@@ -193,7 +193,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
 
     @OptIn(DelicateCoroutinesApi::class)
     suspend fun runAndAwaitTask() = coroutineScope {
-      val task = task ?: return@coroutineScope
+      val task = checkNotNull(task)
       val dispatcher = if (isSync) {
         // Keep sync tasks in the runBlocking event loop; otherwise, deadlocks ensue.
         requireNotNull(coroutineContext[CoroutineDispatcher])
