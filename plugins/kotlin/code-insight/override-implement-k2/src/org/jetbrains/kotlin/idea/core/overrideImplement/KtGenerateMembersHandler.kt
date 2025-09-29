@@ -182,7 +182,7 @@ abstract class KtGenerateMembersHandler(
      * implementation for the chosen symbol.
      */
     context(_: KaSession)
-private fun getMembersOrderedByRelativePositionsInSuperTypes(
+    private fun getMembersOrderedByRelativePositionsInSuperTypes(
         currentClass: KtClassOrObject,
         newMemberSymbolsAndGeneratedPsi: Map<KaCallableSymbol, KtCallableDeclaration>
     ): List<MemberEntry> {
