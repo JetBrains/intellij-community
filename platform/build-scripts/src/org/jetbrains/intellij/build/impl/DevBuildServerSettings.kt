@@ -5,7 +5,8 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
+import kotlin.io.path.exists
 import kotlin.io.path.readText
 
 @ApiStatus.Internal
@@ -19,7 +20,13 @@ data class DevBuildServerSettings(
 ) {
   companion object {
     private val runners: List<DevBuildServerSettings> by lazy {
-      val intellijYaml = ULTIMATE_HOME.resolve("intellij.yaml")
+      var intellijYaml = COMMUNITY_ROOT.communityRoot.parent.resolve("intellij.yaml")
+      if (!intellijYaml.exists()) {
+        intellijYaml = COMMUNITY_ROOT.communityRoot.resolve("intellij.yaml")
+      }
+      if (!intellijYaml.exists()) {
+        return@lazy emptyList()
+      }
       val yamlRoot = ObjectMapper(YAMLFactory()).readTree(intellijYaml.readText())
       yamlRoot.path("unitTesting").path("runners").map {
         DevBuildServerSettings(
