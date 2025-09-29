@@ -181,6 +181,16 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       }
     }
 
+    private fun notifyExpired() {
+      FormattingNotificationService.getInstance(_context.project).reportError(
+        getNotificationGroupId(service),
+        getTimeoutNotificationDisplayId(service), getName(service),
+        CodeStyleBundle.message("async.formatting.service.timeout", getName(service),
+                                getTimeout(service).seconds.toString()),
+        *getTimeoutActions(service, _context)
+      )
+    }
+
     @OptIn(DelicateCoroutinesApi::class)
     suspend fun runAndAwaitTask() = coroutineScope {
       val task = task ?: return@coroutineScope
@@ -205,13 +215,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
           result.await()
         }
         if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
-          FormattingNotificationService.getInstance(_context.project).reportError(
-            getNotificationGroupId(service),
-            getTimeoutNotificationDisplayId(service), getName(service),
-            CodeStyleBundle.message("async.formatting.service.timeout", getName(service),
-                                    getTimeout(service).seconds.toString()),
-            *getTimeoutActions(service, _context)
-          )
+          notifyExpired()
         }
         else if (formattedText != null) {
           if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
