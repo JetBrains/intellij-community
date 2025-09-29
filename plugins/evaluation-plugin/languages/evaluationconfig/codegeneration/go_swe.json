@@ -1,0 +1,35 @@
+{
+  "projectPath": "../ml-eval/bytedance-sonic/",
+  "repository": "https://github.com/bytedance/sonic/",
+  "revision": "0a710eeb9da7e2fb9afe3c3c9784b37389fc705f",
+  "outputDir": "bin/ml-eval-code-generation-swe-go-output",
+  "strategy": {
+    "instanceId": "bytedance__sonic-118",
+    "runner": "GOLDEN"
+  },
+  "fileDataset": {
+    "url": "remote:https://huggingface.co/datasets/JetBrains/eval_plugin/resolve/main/code-generation-swe/go/go_tasks.json"
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 400,
+    "filesLimit": 100,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry": "",
+    "iterationCount": 1
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  },
+  "language": "Go",
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ]
+  }
+}
