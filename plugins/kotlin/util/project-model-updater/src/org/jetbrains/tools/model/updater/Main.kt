@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
-import org.jdom.Document
-import org.jetbrains.tools.model.updater.impl.*
+import org.jetbrains.tools.model.updater.impl.JpsLibrary
+import org.jetbrains.tools.model.updater.impl.JpsResolverSettings
+import org.jetbrains.tools.model.updater.impl.Preferences
+import org.jetbrains.tools.model.updater.impl.readJpsResolverSettings
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.*
@@ -90,7 +92,6 @@ fun main(args: Array<String>) {
 
     if (monorepoRoot != null) {
         processRoot(monorepoRoot, isCommunity = false)
-        cloneModuleStructure(monorepoRoot, communityRoot)
     }
 
     processRoot(communityRoot, isCommunity = true)
@@ -112,31 +113,6 @@ private fun regenerateProjectLibraries(dotIdea: Path, libraries: List<JpsLibrary
         println("Writing $xmlFile")
         xmlFile.writeText(library.render(resolverSettings))
     }
-}
-
-private fun cloneModuleStructure(monorepoRoot: Path, communityRoot: Path) {
-    val monorepoModulesFile = monorepoRoot.resolve(".idea/modules.xml")
-    val communityModulesFile = communityRoot.resolve(".idea/modules.xml")
-
-    val monorepoModulesXml = monorepoModulesFile.readXml()
-    val monorepoModules = readModules(monorepoRoot, monorepoModulesXml)
-
-    val communityModules = monorepoModules
-        .filterValues { module -> module.isCommunity && module.dependencies.all { dep -> monorepoModules[dep]?.isCommunity ?: false } }
-        .mapValues { (_, module) -> module.copy(path = module.path.removePrefix("community/")) }
-
-    val newCommunityModulesXmlContent = xml("project", "version" to "4") {
-        xml("component", "name" to "ProjectModuleManager") {
-            xml("modules") {
-                for (module in communityModules.values) {
-                    val modulePath = $$"$PROJECT_DIR$/$${module.path}"
-                    xml("module", "fileurl" to "file://$modulePath", "filepath" to modulePath)
-                }
-            }
-        }
-    }
-
-    communityModulesFile.writeText(newCommunityModulesXmlContent.render(addXmlDeclaration = true))
 }
 
 private fun updateCoopRunConfiguration(monorepoRoot: Path?, communityRoot: Path) {
@@ -199,33 +175,4 @@ private fun updateFile(sourceFile: Path, regexp: String, replacement: String) {
     )
 
     sourceFile.writeText(updatedFileContent)
-}
-
-private data class JpsModule(val name: String, val path: String, val dependencies: List<String>) {
-    val isCommunity: Boolean
-        get() = path.startsWith("community/")
-}
-
-private fun readModules(root: Path, document: Document): Map<String, JpsModule> {
-    val projectModuleManagerComponent = document.rootElement.getChildren("component")
-        .first { it.getAttributeValue("name") == "ProjectModuleManager" }
-
-    val result = LinkedHashMap<String, JpsModule>()
-
-    for (moduleEntry in projectModuleManagerComponent.getChild("modules").getChildren("module")) {
-        val modulePath = moduleEntry.getAttributeValue("filepath").removePrefix($$"$PROJECT_DIR$/")
-        val moduleName = modulePath.substringAfterLast("/").removeSuffix(".iml")
-
-        val moduleXml = root.resolve(modulePath).readXml()
-        val moduleRootManagerComponent = moduleXml.rootElement.getChildren("component")
-            .first { it.getAttributeValue("name") == "NewModuleRootManager" }
-
-        val dependencies = moduleRootManagerComponent.getChildren("orderEntry")
-            .filter { it.getAttributeValue("type") == "module" }
-            .mapNotNull { it.getAttributeValue("module-name") }
-
-        result[moduleName] = JpsModule(moduleName, modulePath, dependencies)
-    }
-
-    return result
 }
