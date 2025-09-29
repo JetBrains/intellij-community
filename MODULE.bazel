@@ -29,14 +29,7 @@ register_toolchains(
     "@zig_sdk//libc_aware/toolchain/...",
 )
 
-# allows aarch64 windows as a valid platform, uses x64 python in that case
-# https://github.com/JetBrains/rules_python/commit/92bf73a6867f143c5af49274f02140d118b84bb0
-bazel_dep(name = "rules_python", version = "1.4.1")
-git_override(
-    module_name = "rules_python",
-    commit = "92bf73a6867f143c5af49274f02140d118b84bb0",
-    remote = "https://github.com/JetBrains/rules_python.git",
-)
+bazel_dep(name = "rules_python", version = "1.6.3")
 
 kotlin_test_deps = use_repo_rule("//plugins/kotlin:kotlin_test_dependencies.bzl", "kotlin_test_deps")
 kotlin_test_deps(name = "kotlin_test_deps")

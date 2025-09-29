@@ -881,11 +881,4 @@ http_jar(
     url = "https://repo1.maven.org/maven2/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar",
 )
 
-# allows aarch64 windows as a valid platform, uses x64 python in that case
-# https://github.com/JetBrains/rules_python/commit/92bf73a6867f143c5af49274f02140d118b84bb0
-bazel_dep(name = "rules_python", version = "1.4.1")
-git_override(
-    module_name = "rules_python",
-    remote = "https://github.com/JetBrains/rules_python.git",
-    commit = "92bf73a6867f143c5af49274f02140d118b84bb0"
-)
+bazel_dep(name = "rules_python", version = "1.6.3")
