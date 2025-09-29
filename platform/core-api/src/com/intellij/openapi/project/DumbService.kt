@@ -335,7 +335,7 @@ abstract class DumbService {
   abstract fun wrapGently(dumbUnawareContent: JComponent, parentDisposable: Disposable): JComponent
 
   /**
-   * Adds a `Results might be incomplete during indexing` decorator to a given component during dumb mode.
+   * Adds a `Analyzing project` decorator to a given component during dumb mode.
    *
    * @param dumbAwareContent - a component to wrap
    * @param updateRunnable - an action to execute when dumb mode state changed or user explicitly requests reloading of the panel
