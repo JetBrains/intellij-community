@@ -872,11 +872,11 @@
       <reference ref="Maven.Reimport"/>
     </group>
 
+    <action id="Maven.SyncAllSplitAction" class="org.jetbrains.idea.maven.project.actions.SyncAllSplitAction"
+            icon="MavenIcons.UpdateFolders"/>
+
     <group id="Maven.NavigatorActionsToolbar">
-      <group id="Maven.SyncAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.SyncActionGroup"
-             icon="AllIcons.Actions.Refresh">
-        <reference ref="Maven.SyncAllGroup"/>
-      </group>
+      <reference ref="Maven.SyncAllSplitAction"/>
       <reference ref="Maven.UpdateFolders"/>
       <group id="Maven.DownloadAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
              icon="AllIcons.Actions.Download">
