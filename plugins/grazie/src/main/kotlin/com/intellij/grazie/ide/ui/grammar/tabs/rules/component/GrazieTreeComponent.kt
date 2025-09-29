@@ -105,6 +105,13 @@ class GrazieTreeComponent(
 
   fun getCurrentFilterString(): String? = filter.text
 
+  fun focusRule(rule: Rule) {
+    val ruleNode = (model.root as GrazieRulesTreeNode).findRuleNode(rule.globalId)
+    if (ruleNode != null) {
+      TreeUtil.selectNode(this, ruleNode)
+    }
+  }
+
   fun resetTreeModel(rules: List<Rule>) {
     val root = GrazieRulesTreeNode(domain)
     val model = model as DefaultTreeModel

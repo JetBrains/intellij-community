@@ -1,6 +1,7 @@
 package com.intellij.grazie.grammar
 
 import com.intellij.grazie.GrazieBundle
+import com.intellij.grazie.detection.toLanguage
 import com.intellij.grazie.ide.ui.components.utils.html
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
@@ -17,7 +18,7 @@ import java.util.*
 // ltRule used in ReSharper
 class LanguageToolRule(
   private val lang: Lang, val ltRule: org.languagetool.rules.Rule, private val similarLtRules: List<org.languagetool.rules.Rule> = emptyList(),
-) : Rule(LangTool.globalIdPrefix(lang) + ltRule.id, ltRule.description, categories(ltRule, lang)) {
+) : Rule(LangTool.globalIdPrefix(lang) + ltRule.id, lang.toLanguage(), ltRule.description, categories(ltRule, lang)) {
 
   override fun isEnabledByDefault(domain: TextStyleDomain): Boolean = LangTool.isRuleEnabledByDefault(lang, ltRule.id, domain)
 

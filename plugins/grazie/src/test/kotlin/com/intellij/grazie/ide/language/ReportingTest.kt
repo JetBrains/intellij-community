@@ -1,5 +1,6 @@
 package com.intellij.grazie.ide.language
 
+import ai.grazie.nlp.langs.Language
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
 import com.intellij.codeInsight.intention.CustomizableIntentionAction
@@ -180,7 +181,7 @@ class ReportingTest : BasePlatformTestCase() {
                                          range: TextRange,
                                          suggestions: List<TextProblem.Suggestion>,
                                          customFixes: List<LocalQuickFix>): TextProblem {
-    val rule = object : Rule("something.something", "something", "something") {
+    val rule = object : Rule("something.something", Language.UNKNOWN, "something", "something") {
       override fun getDescription() = "something"
     }
     return object : TextProblem(rule, text, range) {

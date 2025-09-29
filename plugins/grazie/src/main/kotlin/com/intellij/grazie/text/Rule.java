@@ -1,9 +1,10 @@
 package com.intellij.grazie.text;
 
+import ai.grazie.nlp.langs.Language;
+import ai.grazie.rules.settings.Setting;
 import com.intellij.grazie.GrazieConfig;
 import com.intellij.grazie.utils.TextStyleDomain;
 import com.intellij.grazie.utils.TextUtilsKt;
-import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,15 +15,16 @@ import java.util.Objects;
 /** A representation of rules from various {@link TextChecker}s. */
 public abstract class Rule {
   private final String globalId;
+  private final Language language;
   private final String presentableName;
   private final List<String> categories;
 
   /**
    * Create a rule in a single category
-   * @see #Rule(String, String, List)
+   * @see #Rule(String, Language, String, List)
    */
-  public Rule(String globalId, String presentableName, String category) {
-    this(globalId, presentableName, List.of(category));
+  public Rule(String globalId, Language language, String presentableName, String category) {
+    this(globalId, language, presentableName, List.of(category));
   }
 
   /**
@@ -34,8 +36,9 @@ public abstract class Rule {
    * @param categories a non-empty list of the presentable names of the rule's categories.
    *                   It's used to group the rules in the settings, starting from the language node.
    */
-  public Rule(String globalId, String presentableName, List<String> categories) {
+  public Rule(String globalId, Language language, String presentableName, List<String> categories) {
     this.globalId = globalId;
+    this.language = language;
     this.presentableName = presentableName;
     this.categories = List.copyOf(categories);
     if (categories.isEmpty()) {
@@ -52,6 +55,13 @@ public abstract class Rule {
 
   public String getPresentableName() {
     return presentableName;
+  }
+
+  /**
+   * @return the language that the rule is applicable to
+   */
+  public Language getLanguage() {
+    return language;
   }
 
   /**
@@ -100,9 +110,9 @@ public abstract class Rule {
   }
 
   /**
-   * @return an optional navigatable to open from "Rule X settings" quick fix.
+   * @return an optional featured rule setting to open from "Rule X settings" quick fix.
    */
-  public @Nullable Navigatable editSettings() {
+  public @Nullable Setting getFeaturedSetting() {
     return null;
   }
 

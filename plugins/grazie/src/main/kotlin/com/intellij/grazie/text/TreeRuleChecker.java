@@ -11,6 +11,7 @@ import ai.grazie.rules.document.Delimiter;
 import ai.grazie.rules.document.DocumentRule;
 import ai.grazie.rules.document.DocumentSentence;
 import ai.grazie.rules.settings.RuleSetting;
+import ai.grazie.rules.settings.Setting;
 import ai.grazie.rules.settings.TextStyle;
 import ai.grazie.rules.toolkit.LanguageToolkit;
 import ai.grazie.rules.tree.ActionSuggestion;
@@ -35,15 +36,12 @@ import com.intellij.grazie.text.TextContent.TextDomain;
 import com.intellij.grazie.utils.HighlightingUtil;
 import com.intellij.grazie.utils.Text;
 import com.intellij.grazie.utils.TextStyleDomain;
-import com.intellij.grazie.utils.TextUtilsKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.ui.CommitMessage;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.util.CachedValueProvider;
@@ -134,7 +132,7 @@ public final class TreeRuleChecker {
     List<String> categories = rule.isStyleLike()
                               ? List.of(styleCategories.get(langCode))
                               : List.of(category);
-    return new Rule(id, rule.displayName, categories.getFirst()) {
+    return new Rule(id, rule.language(), rule.displayName, categories.getFirst()) {
 
       @Override
       public List<String> getCategories() {
@@ -170,14 +168,9 @@ public final class TreeRuleChecker {
         return rule.isRuleEnabledByDefault(GrazieConfig.Companion.get().getTextStyle(domain), RuleIdeClient.INSTANCE);
       }
 
-      @SuppressWarnings("SuspiciousMethodCalls")//false negative in Qodana
       @Override
-      public Navigatable editSettings() {
-        RuleSetting setting = new RuleSetting(rule);
-        LanguageToolkit toolkit = LanguageToolkit.forLanguage(rule.language());
-        return StyleConfigurable.featuredSettings(toolkit).contains(setting)
-               ? StyleConfigurable.focusSetting(setting, null)
-               : null;
+      public Setting getFeaturedSetting() {
+        return new RuleSetting(rule);
       }
 
       @Override
@@ -540,6 +533,7 @@ public final class TreeRuleChecker {
   public static class TreeProblem extends GrazieProblem {
     public final RuleMatch match;
     private final List<LocalQuickFix> customFixes;
+    private final TextStyleDomain domain;
 
     TreeProblem(Problem problem, RuleMatch match, TextContent text) {
       this(problem, toGrazieRule(match.rule()), text, match, List.of());
@@ -551,6 +545,7 @@ public final class TreeRuleChecker {
       super(problem, ideaRule, text);
       this.match = match;
       this.customFixes = customFixes;
+      this.domain = getTextDomain(text);
     }
 
     @Override
@@ -567,7 +562,7 @@ public final class TreeRuleChecker {
           if (parameter.id().equals(Parameter.LANGUAGE_VARIANT)) {
             return ChangeLanguageVariant.create(match.rule().language(), Objects.requireNonNull(suggestedValue), quickFixText);
           }
-          return new ConfigureSuggestedParameter(parameter, quickFixText);
+          return new ConfigureSuggestedParameter(parameter, domain, match.rule().language(), quickFixText);
         }
         if (sug == ActionSuggestion.REPHRASE) {
           return new RephraseAction();
@@ -611,24 +606,6 @@ public final class TreeRuleChecker {
     @Override
     public boolean shouldSuppressInCodeLikeFragments() {
       return match.rule().shouldSuppressInCodeLikeFragments();
-    }
-
-    private record MySuggestion(ProblemFix fix, TextContent text) implements TextProblem.Suggestion {
-
-      @Override
-      public List<StringOperation> getChanges() {
-        return ContainerUtil.map(fix.getChanges(), r -> StringOperation.replace(ijRange(r), r.getText()));
-      }
-
-      @Override
-      public String getPresentableText() {
-        return getQuickFixText(fix);
-      }
-
-      @Override
-      public @Nullable String getBatchId() {
-        return fix.getBatchId();
-      }
     }
   }
 

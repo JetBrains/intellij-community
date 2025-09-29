@@ -20,6 +20,7 @@ import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieCustomFixWrappe
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
+import com.intellij.grazie.utils.getTextDomain
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
@@ -233,7 +234,7 @@ class CheckerRunner(val text: TextContent) {
         super.applyFix(project, psiFile, editor)
       }
     })
-    result.add(GrazieRuleSettingsAction(problem.rule.presentableName, problem.rule))
+    result.add(GrazieRuleSettingsAction(problem.rule, problem.text.getTextDomain()))
     return result.toTypedArray()
   }
 

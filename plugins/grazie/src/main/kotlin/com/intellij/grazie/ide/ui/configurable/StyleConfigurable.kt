@@ -11,14 +11,12 @@ import ai.grazie.rules.toolkit.LanguageToolkit
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.detection.toLanguage
+import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.ide.ui.configurable.StyleConfigurable.Companion.ruleEngineLanguages
 import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.GrazieDescriptionComponent
 import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.GrazieTreeComponent
 import com.intellij.grazie.rule.RuleIdeClient
-import com.intellij.grazie.utils.TextStyleDomain
-import com.intellij.grazie.utils.getAffectedGlobalRules
-import com.intellij.grazie.utils.getOtherDomainStyles
-import com.intellij.grazie.utils.getTextDomain
+import com.intellij.grazie.utils.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable
@@ -31,7 +29,6 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.getParentOfType
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.pom.Navigatable
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
@@ -55,7 +52,6 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.HyperlinkEvent
 
 class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.settings.grammar.tabs.rules"), null), Disposable, Configurable.NoScroll {
-  private var focusedControl: JComponent? = null
   private val settings: Settings = Settings()
   private val langComboModel = CollectionComboBoxModel(ArrayList<Language>())
   private lateinit var langCombo: ComboBox<Language>
@@ -72,7 +68,7 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
 
   private val treeWrapper by lazy {
     JBSplitter(false, 0.45f).apply {
-      firstComponent = createScrollTreeComponent()
+      firstComponent = createScrollTreeComponent(textStyle, Language.ENGLISH)
       secondComponent = settings.getTreeSettings(textStyle, Language.ENGLISH).description.component
     }
   }
@@ -118,7 +114,6 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
         label(GrazieBundle.message("grazie.settings.writing.style.domain"))
         domainComboBox = domainComboBox()
           .whenItemSelectedFromUi { domainId ->
-            styleRowVisibleUpdater.invoke(domainId == TextStyleDomain.Other)
             val textStyle = if (domainId == TextStyleDomain.Other) GrazieConfig.get().getTextStyle() else domainId.textStyle
             selectTextStyle(textStyle, langComboModel.selected!!)
           }
@@ -151,8 +146,7 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
         langCombo = comboBox(langComboModel, SimpleListCellRenderer.create { label, lang, _ -> label.text = lang.nativeName })
           .widthGroup("TopCombo")
           .whenItemSelectedFromUi { language ->
-            settings.addTextStyle(textStyle, language, filterComponent)
-            selectLanguage(textStyle, language)
+            selectTextStyle(textStyle, language)
             separator.text = GrazieBundle.message(if (language in ruleEngineLanguages) "grazie.settings.style.rules.other" else "grazie.settings.style.rules.all")
             if (filterComponent.text.isNotBlank()) settings.updateFilter(textStyle, language, filterComponent.text)
             settings.getTreeSettings(textStyle, language).description.listener(language)
@@ -190,11 +184,11 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
 
   override fun createPanel(): DialogPanel = component
 
-  override fun isModified(): Boolean = super<BoundConfigurable>.isModified || settings.isModified()
+  override fun isModified(): Boolean = super<BoundConfigurable>.isModified || settings.isModified(GrazieConfig.get())
 
   override fun apply() {
     super.apply()
-    settings.apply()
+    settings.apply(GrazieConfig.get())
   }
 
   override fun reset() {
@@ -207,7 +201,12 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
   }
 
   private fun selectTextStyle(textStyle: TextStyle, language: Language) {
+    val domain = textStyle.getTextDomain()
+    if (domain != TextStyleDomain.Other) domainComboBox.selectedItem = domain else styleProfileCombo.selectedItem = textStyle
+    styleRowVisibleUpdater.invoke(domain == TextStyleDomain.Other)
+
     settings.addTextStyle(textStyle, language, filterComponent)
+    langCombo.selectedItem = language
     repaintSettings(textStyle, language)
   }
 
@@ -226,7 +225,8 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
       settingWrapper.maximumSize = Dimension(Int.MAX_VALUE, settingWrapper.preferredSize.height)
       settingWrapper.repaint()
     }
-    treeWrapper.firstComponent = createScrollTreeComponent()
+    treeWrapper.removeAll()
+    treeWrapper.firstComponent = createScrollTreeComponent(textStyle, language)
     treeWrapper.secondComponent = settings.getTreeSettings(textStyle, language).description.component
     treeWrapper.repaint()
   }
@@ -248,15 +248,11 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
     return true
   }
 
-  override fun getDisplayName(): @NlsContexts.ConfigurableName String = ""
+  override fun getDisplayName(): @NlsContexts.ConfigurableName String = msg("grazie.settings.page.name")
 
-  override fun getPreferredFocusedComponent(): JComponent? {
-    return focusedControl ?: super.getPreferredFocusedComponent()
-  }
-
-  private fun createScrollTreeComponent(): JScrollPane {
+  private fun createScrollTreeComponent(textStyle: TextStyle, language: Language): JScrollPane {
     return ScrollPaneFactory.createScrollPane(
-      settings.getTreeSettings(textStyle, Language.ENGLISH).tree,
+      settings.getTreeSettings(textStyle, language).tree,
       VERTICAL_SCROLLBAR_AS_NEEDED,
       HORIZONTAL_SCROLLBAR_AS_NEEDED
     )
@@ -268,37 +264,61 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
     val ruleEngineLanguages: List<Language> = listOf(Language.ENGLISH, Language.GERMAN, Language.RUSSIAN, Language.UKRAINIAN)
 
     @JvmStatic
-    fun featuredSettings(toolkit: LanguageToolkit): List<Setting> = toolkit.getSettings(RuleIdeClient.INSTANCE).flatMap { it.settings }
+    fun focusSetting(setting: Setting, domain: TextStyleDomain, language: Language, project: Project): Boolean {
+      return focusSetting(setting, null, domain, language, project)
+    }
 
     @JvmStatic
-    fun focusSetting(setting: Setting, contextProject: Project): Navigatable {
-      return object : Navigatable {
-        override fun navigate(requestFocus: Boolean) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(contextProject, StyleConfigurable::class.java) { conf ->
-            conf.createComponent()
-            val style = getTextStyle(GrazieConfig.get().styleProfile ?: TextStyle.Unspecified.id)
-            val featuredSettings = conf.settings.featuredSettings[style.id]!!
-            for ((lang, data) in featuredSettings) {
-              val settingComponent = data.component.findParentSettingComponent(setting)
-              val paramComponent = data.component.findOwnSettingComponent(setting)
-              if (paramComponent != null && settingComponent != null) {
-                conf.langComboModel.add(lang)
-                conf.selectLanguage(style, lang)
-                UiNotifyConnector.doWhenFirstShown(data.component) {
-                  SwingUtilities.invokeLater {
-                    val scrollPane = settingComponent.getParentOfType<JBScrollPane>()!!
-                    settingComponent.scrollRectToVisible(Rectangle(settingComponent.width, scrollPane.height))
-                    IdeFocusManager.getInstance(contextProject).requestFocus(paramComponent, true)
-                  }
-                }
-                break
-              }
-            }
+    fun focusSetting(setting: Setting?, rule: com.intellij.grazie.text.Rule?, domain: TextStyleDomain, language: Language, project: Project): Boolean {
+      require(setting != null || rule != null) { "Setting and Rule can't be null" }
+      val configurable = StyleConfigurable().apply {
+        createComponent()
+        val style = if (domain == TextStyleDomain.Other) GrazieConfig.get().getTextStyle() else domain.textStyle
+        selectTextStyle(style, language)
+
+        if (setting != null && featuredSettings(language).contains(setting)) focusFeaturedSetting(this, setting, style, language, project)
+        else if (rule != null) focusTreeSetting(this, rule, style, language, project)
+      }
+      return ShowSettingsUtil.getInstance().editConfigurable(project, configurable)
+    }
+  }
+
+  private fun focusFeaturedSetting(styleConfigurable: StyleConfigurable, setting: Setting, style: TextStyle, language: Language, project: Project) {
+    val data = settings.getFeaturedSettings(style, language)
+    if (data == null) return
+    styleConfigurable.apply {
+      val settingComponent = data.component.findParentSettingComponent(setting)
+      val paramComponent = data.component.findOwnSettingComponent(setting)
+      if (paramComponent != null && settingComponent != null) {
+        UiNotifyConnector.doWhenFirstShown(data.component) {
+          SwingUtilities.invokeLater {
+            val scrollPane = settingComponent.getParentOfType<JBScrollPane>()!!
+            settingComponent.scrollRectToVisible(Rectangle(settingComponent.width, scrollPane.height))
+            IdeFocusManager.getInstance(project).requestFocus(paramComponent, true)
           }
         }
+      }
+    }
+  }
 
-        override fun canNavigate() = true
-        override fun canNavigateToSource() = false
+  private fun focusTreeSetting(styleConfigurable: StyleConfigurable, rule: com.intellij.grazie.text.Rule, style: TextStyle, language: Language, project: Project) {
+    val data = settings.getTreeSettings(style, language)
+    styleConfigurable.apply {
+      data.tree.focusRule(rule)
+      UiNotifyConnector.doWhenFirstShown(data.tree) {
+        SwingUtilities.invokeLater {
+          val scroll = data.tree.getParentOfType<JBScrollPane>()
+          val dataTreeScroll = scroll?.getParentOfType<JBScrollPane>()
+          val componentScroll = dataTreeScroll?.getParentOfType<JBScrollPane>()
+          if (dataTreeScroll == null || componentScroll == null) return@invokeLater
+          val destination = SwingUtilities.convertRectangle(
+            scroll,
+            Rectangle(0, 0, scroll.width, scroll.height),
+            dataTreeScroll.viewport.view
+          )
+          componentScroll.scrollRectToVisible(destination)
+          IdeFocusManager.getInstance(project).requestFocus(data.tree, true)
+        }
       }
     }
   }
@@ -306,19 +326,19 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
 
 data class Settings(
   val featuredSettings: MutableMap<String, MutableMap<Language, FeaturedSettings>> = HashMap(),
-  private val treeSettings: MutableMap<String, MutableMap<Language, TreeSettings>> = HashMap(),
+  val treeSettings: MutableMap<String, MutableMap<Language, TreeSettings>> = HashMap(),
 ) {
   fun getFeaturedSettings(textStyle: TextStyle, language: Language): FeaturedSettings? = featuredSettings[textStyle.id]?.get(language)
   fun getTreeSettings(textStyle: TextStyle, language: Language): TreeSettings = treeSettings[textStyle.id]!![language]!!
 
-  fun isModified(): Boolean =
-    featuredSettings.values.any { isModifiedFeaturedSettings(it) } ||
-    treeSettings.values.any { isModifiedTreeSettings(it) }
+  fun isModified(state: GrazieConfig.State): Boolean =
+    featuredSettings.values.any { areModifiedFeaturedSettings(it) } ||
+    treeSettings.values.any { areModifiedTreeSettings(it, state) }
 
   fun reset(state: GrazieConfig.State) {
     featuredSettings.forEach { (domain, featuredSettings) ->
-      if (isModifiedFeaturedSettings(featuredSettings)) {
-        featuredSettings.forEach { (language, settings) ->
+      if (areModifiedFeaturedSettings(featuredSettings)) {
+        featuredSettings.filter { areModifiedFeaturedSettings(it.value) }.forEach { (language, settings) ->
           val textStyle = getTextStyle(domain)
           settings.component.loadState(getSettingsState(language, textStyle), textStyle)
           settings.resetState = settings.component.state
@@ -326,57 +346,63 @@ data class Settings(
       }
     }
     treeSettings.forEach { (_, treesSettings) ->
-      if (isModifiedTreeSettings(treesSettings)) {
-        treesSettings.forEach { (_, settings) -> settings.tree.reset(state) }
+      if (areModifiedTreeSettings(treesSettings, state)) {
+        treesSettings.filter { areModifiedTreeSettings(it.value, state) }.forEach { (_, settings) -> settings.tree.reset(state) }
       }
     }
   }
 
-  fun apply() {
+  fun apply(originalState: GrazieConfig.State) {
     treeSettings
-      .filter { (domainId, treeSettingsMap) -> isModifiedFeaturedSettings(featuredSettings[domainId]!!) || isModifiedTreeSettings(treeSettingsMap) }
+      .filter { (domainId, treeSettingsMap) -> areModifiedFeaturedSettings(featuredSettings[domainId]!!) || areModifiedTreeSettings(treeSettingsMap, originalState) }
       .forEach { (domainId, treeSettingsMap) ->
         val domain = getTextStyle(domainId).getTextDomain()
         val userEnabledRules = HashSet<String>()
         val userDisabledRules = HashSet<String>()
         val parameters = HashMap<Language, Map<String, String>>()
 
-        featuredSettings[domainId]?.forEach { (language, settings) ->
-          val prefix = Rule.globalIdPrefix(language)
-          val settingsState = settings.component.state
-          settings.resetState = settingsState
+        treeSettingsMap.filter { areModifiedTreeSettings(it.value, originalState) }.forEach { (language, treeSettings) ->
+          val userEnabledRulesPerLanguage = HashSet<String>()
+          val userDisabledRulesPerLanguage = HashSet<String>()
 
-          for (id in settingsState.enabledRules) {
-            userEnabledRules.add(prefix + id)
-            userDisabledRules.remove(prefix + id)
+          featuredSettings[domainId]?.filter { areModifiedFeaturedSettings(it.value) }?.get(language)?.let { featuredSettings ->
+            val prefix = Rule.globalIdPrefix(language)
+            val settingsState = featuredSettings.component.state
+            featuredSettings.resetState = settingsState
+
+            for (id in settingsState.enabledRules) {
+              userEnabledRulesPerLanguage.add(prefix + id)
+              userDisabledRulesPerLanguage.remove(prefix + id)
+            }
+            for (id in settingsState.disabledRules) {
+              userEnabledRulesPerLanguage.remove(prefix + id)
+              userDisabledRulesPerLanguage.add(prefix + id)
+            }
+            parameters[language] = settingsState.paramValues
           }
-          for (id in settingsState.disabledRules) {
-            userEnabledRules.remove(prefix + id)
-            userDisabledRules.add(prefix + id)
+
+          val updatedState = treeSettings.tree.apply(originalState)
+          val affectedGlobalRules = getAffectedGlobalRules(language)
+          updatedState.getUserChangedRules(domain).let { (enabledRules, disabledRules) ->
+            userEnabledRulesPerLanguage.addAll(enabledRules - affectedGlobalRules)
+            userDisabledRulesPerLanguage.addAll(disabledRules - affectedGlobalRules)
           }
-          parameters[language] = settingsState.paramValues
+          userEnabledRules.addAll(userEnabledRulesPerLanguage)
+          userDisabledRules.addAll(userDisabledRulesPerLanguage)
         }
 
         if (domain == TextStyleDomain.Other) GrazieConfig.update { it.copy(parameters = parameters) }
         else GrazieConfig.update { it.copy(parametersPerDomain = mapOf(domain to parameters)) }
-
-        treeSettingsMap.forEach {
-          val updatedState = it.value.tree.apply(GrazieConfig.get())
-          val affectedGlobalRules = getAffectedGlobalRules(it.key)
-          updatedState.getUserChangedRules(domain).let { (enabledRules, disabledRules) ->
-            userEnabledRules.addAll(enabledRules - affectedGlobalRules)
-            userDisabledRules.addAll(disabledRules - affectedGlobalRules)
-          }
-        }
         GrazieConfig.update { it.updateUserRules(domain, userEnabledRules, userDisabledRules) }
         treeSettingsMap.forEach { it.value.tree.reset(GrazieConfig.get()) }
       }
   }
 
   fun addTextStyle(textStyle: TextStyle, language: Language, filterComponent: SearchTextField) {
-    if (textStyle.id in featuredSettings && textStyle.id in treeSettings) return
-    featuredSettings[textStyle.id] = HashMap()
-    treeSettings[textStyle.id] = HashMap()
+    val settings = treeSettings[textStyle.id]
+    if (settings != null && language in settings) return
+    if (featuredSettings[textStyle.id] == null) featuredSettings[textStyle.id] = HashMap()
+    if (treeSettings[textStyle.id] == null) treeSettings[textStyle.id] = HashMap()
     addLanguage(textStyle, language, filterComponent)
   }
 
@@ -451,12 +477,20 @@ data class Settings(
     treeSettings.clear()
   }
 
-  private fun isModifiedFeaturedSettings(featuredSettings: MutableMap<Language, FeaturedSettings>): Boolean {
-    return featuredSettings.any { it.value.component.state != it.value.resetState }
+  private fun areModifiedFeaturedSettings(featuredSettings: MutableMap<Language, FeaturedSettings>): Boolean {
+    return featuredSettings.any { areModifiedFeaturedSettings(it.value) }
   }
 
-  private fun isModifiedTreeSettings(treeSettings: MutableMap<Language, TreeSettings>): Boolean {
-    return treeSettings.any { it.value.tree.isModified(GrazieConfig.get()) }
+  private fun areModifiedTreeSettings(treeSettings: MutableMap<Language, TreeSettings>, state: GrazieConfig.State): Boolean {
+    return treeSettings.any { areModifiedTreeSettings(it.value, state) }
+  }
+
+  private fun areModifiedFeaturedSettings(featuredSettings: FeaturedSettings): Boolean {
+    return featuredSettings.component.state != featuredSettings.resetState
+  }
+
+  private fun areModifiedTreeSettings(treeSettings: TreeSettings, state: GrazieConfig.State): Boolean {
+    return treeSettings.tree.isModified(state)
   }
 }
 
