@@ -102,9 +102,13 @@ public final class PluginManagerConfigurable
   }
 
   private PluginManagerConfigurablePanel createPanelIfNeeded() {
+    return createPanelIfNeeded(null);
+  }
+
+  private PluginManagerConfigurablePanel createPanelIfNeeded(@Nullable String searchQuery) {
     if (myPanel == null) {
       myPanel = new PluginManagerConfigurablePanel();
-      myPanel.init();
+      myPanel.init(searchQuery);
     }
     return myPanel;
   }
@@ -264,11 +268,11 @@ public final class PluginManagerConfigurable
 
   @Override
   public @Nullable Runnable enableSearch(String option) {
-    return createPanelIfNeeded().enableSearch(option);
+    return createPanelIfNeeded(option).enableSearch(option);
   }
 
   public @Nullable Runnable enableSearch(String option, boolean ignoreTagMarketplaceTab) {
-    return createPanelIfNeeded().enableSearch(option, ignoreTagMarketplaceTab);
+    return createPanelIfNeeded(option).enableSearch(option, ignoreTagMarketplaceTab);
   }
 
   public boolean isMarketplaceTabShowing() {
@@ -280,11 +284,11 @@ public final class PluginManagerConfigurable
   }
 
   public void openMarketplaceTab(@NotNull String option) {
-    createPanelIfNeeded().openMarketplaceTab(option);
+    createPanelIfNeeded(option).openMarketplaceTab(option);
   }
 
   public void openInstalledTab(@NotNull String option) {
-    createPanelIfNeeded().openInstalledTab(option);
+    createPanelIfNeeded(option).openInstalledTab(option);
   }
 
   private void setInstallSource(@Nullable FUSEventSource source) {

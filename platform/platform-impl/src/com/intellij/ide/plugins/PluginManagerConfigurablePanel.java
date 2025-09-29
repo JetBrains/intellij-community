@@ -167,7 +167,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     return getCenterComponent(Configurable.TopComponentController.EMPTY);
   }
 
-  public void init() {
+  public void init(@Nullable String searchQuery) {
     myTabHeaderComponent = new TabbedPaneHeaderComponent(createGearActions(), index -> {
       myCardPanel.select(index, true);
       storeSelectionTab(index);
@@ -181,7 +181,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       }
     };
     createGearGotIt();
-
+    myLaterSearchQuery = searchQuery;
     myUpdateAll.setVisible(false);
     myUpdateAllBundled.setVisible(false);
     myUpdateCounter.setVisible(false);
@@ -2033,12 +2033,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   }
 
   public @Nullable Runnable enableSearch(String option, boolean ignoreTagMarketplaceTab) {
-    if (myTabHeaderComponent == null) {
-      myLaterSearchQuery = option;
-      return () -> {
-      };
-    }
-
     if (StringUtil.isEmpty(option) && (myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB || myInstalledSearchPanel.isEmpty())) {
       return null;
     }
