@@ -51,9 +51,10 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     context(_: KaSession)
     private fun KaAnnotation.toFakeDeserializedSymbol(
         parent: KtDeclaration,
-        symbol: KaDeclarationSymbol
+        symbol: KaDeclarationSymbol,
+        ktAnnotationEntry: KtAnnotationEntry,
     ): UastFakeDeserializedSymbolAnnotation {
-        return UastFakeDeserializedSymbolAnnotation(symbol.createPointer(), classId, parent)
+        return UastFakeDeserializedSymbolAnnotation(symbol.createPointer(), classId, parent, ktAnnotationEntry)
     }
 
     override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
@@ -64,17 +65,17 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 analyzeForUast(declaration) {
                     val declarationSymbol = declaration.symbol
                     declaration.symbol.annotations.firstOrNull { it.psi == entry }?.let { annotation ->
-                        return annotation.toFakeDeserializedSymbol(declaration, declarationSymbol)
+                        return annotation.toFakeDeserializedSymbol(declaration, declarationSymbol, entry)
                     }
 
                     if (entry.useSiteTarget == null || declarationSymbol !is KaPropertySymbol) return null
 
                     declarationSymbol.getter?.annotations?.firstOrNull { it.psi == entry }?.let { annotation ->
-                        return annotation.toFakeDeserializedSymbol(declaration, declarationSymbol.getter!!)
+                        return annotation.toFakeDeserializedSymbol(declaration, declarationSymbol.getter!!, entry)
                     }
 
                     declarationSymbol.setter?.annotations?.firstOrNull { it.psi == entry }?.let { annotation ->
-                        return annotation.toFakeDeserializedSymbol(declaration, declarationSymbol.setter!!)
+                        return annotation.toFakeDeserializedSymbol(declaration, declarationSymbol.setter!!, entry)
                     }
                 }
             }

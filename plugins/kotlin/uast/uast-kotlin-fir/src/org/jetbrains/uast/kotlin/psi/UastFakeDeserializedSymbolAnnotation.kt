@@ -26,9 +26,8 @@ internal class UastFakeDeserializedSymbolAnnotation(
     private val parentOriginal: KaSymbolPointer<KaDeclarationSymbol>,
     private val classId: ClassId?,
     private val parent: KtElement,
+    override val kotlinOrigin: KtCallElement?,
 ) : KtLightAbstractAnnotation(parent) {
-    override val kotlinOrigin: KtCallElement?
-        get() = null
 
     override fun getQualifiedName(): @NlsSafe String? =
         classId?.asFqNameString()
