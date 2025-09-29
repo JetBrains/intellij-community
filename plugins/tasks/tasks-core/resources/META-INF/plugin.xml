@@ -153,5 +153,9 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.tasks.impl.TaskManagementUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.tasks.impl.TaskManagementConfigurationCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.tasks.core.fus.TasksStateCollector"/>
+
+    <registryKey key="tasks.jira.use.rest.api.version" defaultValue="" restartRequired="true"
+                 description="Use &quot;2&quot; for REST API version 2,
+                              &quot;3&quot; for REST API version 3 in Cloud, leave empty for autodetection (legacy non-REST API included)"/>
   </extensions>
 </idea-plugin>
