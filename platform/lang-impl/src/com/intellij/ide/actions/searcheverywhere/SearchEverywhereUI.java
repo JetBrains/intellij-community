@@ -1074,7 +1074,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     }
   }
 
-  static boolean isExtendedInfoEnabled() {
+  @ApiStatus.Internal
+  public static boolean isExtendedInfoEnabled() {
     return Registry.is("search.everywhere.footer.extended.info") || ApplicationManager.getApplication().isInternal();
   }
 
