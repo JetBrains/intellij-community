@@ -3,13 +3,11 @@ package com.intellij.codeInsight.documentation
 
 import com.intellij.codeInsight.documentation.render.CachingDataReader
 import com.intellij.diagnostic.VMOptions
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -37,7 +35,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.max
 
 @Service(Service.Level.APP)
-internal class CachingAdaptiveImageManagerService(val coroutineScope: CoroutineScope) : AdaptiveImagesManager, Disposable {
+internal class CachingAdaptiveImageManagerService(private val coroutineScope: CoroutineScope) : AdaptiveImagesManager {
   companion object {
     @JvmStatic
     fun isEnabled(): Boolean = Registry.`is`("doc.render.adaptive.image", defaultValue = false)
@@ -59,8 +57,7 @@ internal class CachingAdaptiveImageManagerService(val coroutineScope: CoroutineS
   )
 
   init {
-    Disposer.register(this, delegate)
-    ApplicationManager.getApplication().messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: MutableList<out VFileEvent>) = delegate.processVfsEvents(events)
     })
   }
@@ -71,8 +68,6 @@ internal class CachingAdaptiveImageManagerService(val coroutineScope: CoroutineS
 
   override fun createRenderer(eventListener: (AdaptiveImageRendererEvent) -> Unit) =
     delegate.createRenderer(eventListener)
-
-  override fun dispose() = Unit
 }
 
 private fun determineCacheSize(): Long {
@@ -166,22 +161,20 @@ fun adaptiveImageOriginToSource(origin: AdaptiveImageOrigin): AdaptiveImageSourc
  */
 @ApiStatus.Internal
 class CachingAdaptiveImageManager(
-  val coroutineScope: CoroutineScope,
-  val contentLoadContext: CoroutineContext = EmptyCoroutineContext,
-  val rasterizationContext: CoroutineContext = EmptyCoroutineContext,
-  val contentLoader: suspend (AdaptiveImageSource) -> DataWithMimeType,
-  val svgRasterizer: (SVGRasterizationConfig) -> RasterizedVectorImage,
+  private val coroutineScope: CoroutineScope,
+  private val contentLoadContext: CoroutineContext = EmptyCoroutineContext,
+  private val rasterizationContext: CoroutineContext = EmptyCoroutineContext,
+  private val contentLoader: suspend (AdaptiveImageSource) -> DataWithMimeType,
+  private val svgRasterizer: (SVGRasterizationConfig) -> RasterizedVectorImage,
   val sourceResolver: (AdaptiveImageOrigin) -> AdaptiveImageSource?,
-  val unloadListener: ((Unloadable<*, *>) -> Unit)? = null,
-  val timeProvider: () -> Milliseconds,
-  val maxSize: Long,
-) : AdaptiveImagesManager, MemorySizeAware, Disposable {
+  private val unloadListener: ((Unloadable<*, *>) -> Unit)? = null,
+  private val timeProvider: () -> Milliseconds,
+  private val maxSize: Long,
+) : AdaptiveImagesManager, MemorySizeAware {
 
   companion object {
     const val RENDER_THROTTLE_MS: Long = 100L
   }
-
-  private val supervisor: CompletableJob = SupervisorJob(coroutineScope.coroutineContext.job)
 
   internal class RasterizationIntention(
     val deferred: CompletableDeferred<UnloadableRasterizedImage>,
@@ -203,7 +196,7 @@ class CachingAdaptiveImageManager(
     myLoadedImagesCache.get(src)?.also { return it }
 
     val deferred = myImagesBeingLoaded.computeIfAbsent(src) {
-      coroutineScope.async(contentLoadContext + supervisor + CoroutineName("loading $src")) {
+      coroutineScope.async(contentLoadContext + CoroutineName("loading $src")) {
         UnloadableAdaptiveImage(src, com.intellij.ui.svg.loadAdaptiveImage(contentLoader(src), src.toString()))
       }
     }
@@ -242,7 +235,7 @@ class CachingAdaptiveImageManager(
 
     val deferred = myImagesBeingRasterized.computeIfAbsent(rasterizationConfig) {
       val name = "rasterizing ${it.svgImage.src} ${it.logicalWidth}x${it.logicalHeight}@${it.scale}"
-      coroutineScope.async(rasterizationContext + supervisor + CoroutineName(name)) {
+      coroutineScope.async(rasterizationContext + CoroutineName(name)) {
         UnloadableRasterizedImage(it, svgRasterizer(it))
       }
     }
@@ -338,12 +331,6 @@ class CachingAdaptiveImageManager(
   override fun createRenderer(eventListener: (AdaptiveImageRendererEvent) -> Unit) =
     createRenderer(GlobalScope.namedChildScope("AdaptiveImageRenderer", Dispatchers.EDT), eventListener)
 
-
-  override fun dispose() {
-    if (!supervisor.isCancelled) {
-      supervisor.cancel()
-    }
-  }
 
   @TestOnly
   fun getImagesBeingLoadedCount() = myImagesBeingLoaded.size

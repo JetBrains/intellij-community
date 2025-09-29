@@ -2,17 +2,18 @@ package com.intellij.codeInsight.documentation
 
 
 import com.intellij.codeInsight.documentation.CachingAdaptiveImageManager.Companion.RENDER_THROTTLE_MS
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.rd.fill2DRoundRect
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.icons.HiDPIImage
 import com.intellij.ui.svg.*
 import com.intellij.util.DataUrl
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.*
 import kotlinx.coroutines.yield
 import org.junit.jupiter.api.Test
@@ -30,8 +31,7 @@ import com.intellij.ui.svg.ImageDimension.Unit as IDUnit
 class CachingAdaptiveImageManagerBehaviorTest {
 
   private val testScope = TestScope()
-
-  private lateinit var testDisposable: Disposable
+  private lateinit var currentTestScope: CoroutineScope
 
   @Test
   fun `load and rasterize svg`() = runTest {
@@ -1093,12 +1093,13 @@ class CachingAdaptiveImageManagerBehaviorTest {
    * Otherwise tests fail with timeout waiting for that job to finish
    */
   private fun runTest(testBody: suspend TestScope.() -> Unit) {
-    testDisposable = Disposer.newDisposable("testDisposable")
     testScope.runTest {
+      currentTestScope = testScope.childScope("per-test scope")
       try {
         testBody()
-      } finally {
-        Disposer.dispose(testDisposable)
+      }
+      finally {
+        currentTestScope.cancel()
       }
     }
   }
@@ -1111,7 +1112,7 @@ class CachingAdaptiveImageManagerBehaviorTest {
     cacheSize: Long = 1024L * 1024,
   ): CachingAdaptiveImageManager {
     val mgr = CachingAdaptiveImageManager(
-      coroutineScope = testScope,
+      coroutineScope = currentTestScope,
       contentLoader = contentLoader,
       svgRasterizer = svgRasterizer,
       sourceResolver = sourceResolver,
@@ -1119,7 +1120,6 @@ class CachingAdaptiveImageManagerBehaviorTest {
       timeProvider = { Milliseconds(testScope.currentTime) },
       maxSize = cacheSize,
     )
-    Disposer.register(testDisposable, mgr)
     return mgr
   }
 
