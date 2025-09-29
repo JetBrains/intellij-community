@@ -38,6 +38,7 @@
                         factoryClass="com.intellij.devkit.compose.preview.ComposePreviewToolWindowFactory"
                         icon="org.jetbrains.idea.devkit.DevKitIcons.ComposeToolWindow"
                         librarySearchClass="com.intellij.devkit.compose.preview.ComposePreviewSearcher"/>
+    <implicitUsageProvider implementation="com.intellij.devkit.compose.preview.ComposePreviewImplicitUsageProvider"/>
   </extensions>
 
   <actions>

@@ -8,8 +8,8 @@ import java.lang.reflect.Modifier
 
 private val logger = Logger.getInstance(ComposableFunctionFinder::class.java)
 
-internal val PREVIEW_ANNOTATIONS = setOf(
-  "androidx.compose.desktop.ui.tooling.preview.Preview",
+internal val PREVIEW_ANNOTATIONS: Set<String> = setOf(
+  "org.jetbrains.compose.ui.tooling.preview.Preview",
   "androidx.compose.ui.tooling.preview.Preview", // Android fallback
 )
 
