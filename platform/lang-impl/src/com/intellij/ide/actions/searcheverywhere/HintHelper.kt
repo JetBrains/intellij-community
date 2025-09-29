@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere
 import com.intellij.find.impl.TextSearchRightActionAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.impl.FontInfo
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.Gray
@@ -21,9 +22,9 @@ import javax.swing.Icon
 class HintHelper(private val myTextField: ExtendableTextField) {
   private val myText = TextIcon("", JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground(), Gray.TRANSPARENT, 0)
   private val myLoadingIcon = RowIcon(2, com.intellij.ui.icons.RowIcon.Alignment.CENTER)
-  private val myExtensionWithHintText = createExtension(myText)
-  private val mySearchProcessExtension = createExtension(AnimatedIcon.Default.INSTANCE)
-  private val myExtensionWithLoadingText: ExtendableTextComponent.Extension
+  private val myExtensionWithHintText = ExtendableTextComponent.Extension { myText }
+  private val mySearchProcessExtension = ExtendableTextComponent.Extension { AnimatedIcon.Default.INSTANCE }
+  private var myExtensionWithLoadingText: ExtendableTextComponent.Extension? = null
   private val myRightExtensions: MutableList<ExtendableTextComponent.Extension> = ArrayList()
 
   init {
@@ -34,24 +35,27 @@ class HintHelper(private val myTextField: ExtendableTextField) {
 
     myLoadingIcon.setIcon(AnimatedIcon.Default.INSTANCE, 0)
     myLoadingIcon.setIcon(myText, 1)
-    myExtensionWithLoadingText = createExtension(myLoadingIcon)
   }
 
   fun setHint(hintText: String?) {
     myTextField.removeExtension(myExtensionWithHintText)
-    myTextField.removeExtension(myExtensionWithLoadingText)
+    myExtensionWithLoadingText?.let { myTextField.removeExtension(it) }
     if (StringUtil.isNotEmpty(hintText)) {
       myText.setText(hintText)
       addExtensionAsLast(myExtensionWithHintText)
     }
   }
 
-  fun setLoadingText(text: String?) {
+  fun setLoadingText(text: String?, tooltip: @NlsContexts.Tooltip String? = null) {
     myTextField.removeExtension(myExtensionWithHintText)
-    myTextField.removeExtension(myExtensionWithLoadingText)
+    myExtensionWithLoadingText?.let { myTextField.removeExtension(it) }
     if (StringUtil.isNotEmpty(text)) {
       myText.setText(text)
       myLoadingIcon.setIcon(myText, 1)
+      myExtensionWithLoadingText = object : ExtendableTextComponent.Extension {
+        override fun getIcon(hovered: Boolean): Icon = myLoadingIcon
+        override fun getTooltip(): @NlsContexts.Tooltip String? = tooltip
+      }
       addExtensionAsLast(myExtensionWithLoadingText)
     }
   }
@@ -70,7 +74,7 @@ class HintHelper(private val myTextField: ExtendableTextField) {
 
   fun setRightExtensions(actions: List<AnAction>) {
     myTextField.removeExtension(myExtensionWithHintText)
-    myTextField.removeExtension(myExtensionWithLoadingText)
+    myExtensionWithLoadingText?.let { myTextField.removeExtension(it) }
     actions.map { createRightActionExtension(it) }.forEach { extension ->
       addExtensionAsLast(extension)
       myRightExtensions.add(extension)
@@ -82,10 +86,6 @@ class HintHelper(private val myTextField: ExtendableTextField) {
   }
 
   companion object {
-    private fun createExtension(icon: Icon): ExtendableTextComponent.Extension {
-      return ExtendableTextComponent.Extension { icon }
-    }
-
     private fun createRightActionExtension(action: AnAction): ExtendableTextComponent.Extension {
       return object : ExtendableTextComponent.Extension {
         override fun getIcon(hovered: Boolean): Icon? {

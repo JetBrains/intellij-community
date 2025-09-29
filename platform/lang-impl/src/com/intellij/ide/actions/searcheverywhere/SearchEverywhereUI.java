@@ -53,6 +53,7 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -382,15 +383,15 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     if (mySearchField == null) return;
 
     List<SearchEverywhereContributor<?>> contributors = myHeader.getSelectedTab().getContributors();
-    String advertisementText = ReadAction.compute(() -> getWarning(contributors));
-    if (advertisementText != null) {
-      myHintHelper.setLoadingText(advertisementText);
+    Pair<@Nls String, @Nls String> advertisementTextAndTooltip = ReadAction.compute(() -> getLoadingTextAndTooltip(contributors));
+    if (advertisementTextAndTooltip != null) {
+      myHintHelper.setLoadingText(advertisementTextAndTooltip.first, advertisementTextAndTooltip.second);
       updateRightActions(contributors);
       return;
     }
 
-    advertisementText = getAdvertisement(contributors);
-    myHintHelper.setHint(advertisementText);
+    String hint = getAdvertisement(contributors);
+    myHintHelper.setHint(hint);
 
     updateRightActions(contributors);
   }
@@ -427,7 +428,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   }
 
   @RequiresReadLock
-  private @Nls @Nullable String getWarning(List<SearchEverywhereContributor<?>> contributors) {
+  private @Nullable Pair<@Nls String, @Nls String> getLoadingTextAndTooltip(List<SearchEverywhereContributor<?>> contributors) {
     if (myProject == null) return null;
 
     boolean isDumb = DumbService.isDumb(myProject);
@@ -439,8 +440,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     if (!containsPSIContributors) return null;
 
     return isDumb
-           ? IdeBundle.message("dumb.mode.results.might.be.incomplete")
-           : IdeBundle.message("incomplete.mode.results.might.be.incomplete");
+           ? new Pair<>(IdeBundle.message("dumb.mode.results.might.be.incomplete"), IdeBundle.message("dumb.mode.results.might.be.incomplete.during.project.analysis"))
+           : new Pair<>(IdeBundle.message("incomplete.mode.results.might.be.incomplete"), null);
   }
 
   @Override
