@@ -100,18 +100,27 @@ fun main(args: Array<String>) {
     updateCoopRunConfiguration(monorepoRoot, communityRoot)
 }
 
-private fun regenerateProjectLibraries(dotIdea: Path, libraries: List<JpsLibrary>, resolverSettings: JpsResolverSettings) {
+private fun regenerateProjectLibraries(dotIdea: Path, newLibraries: List<JpsLibrary>, resolverSettings: JpsResolverSettings) {
     val librariesDir = dotIdea.resolve("libraries")
-    for (it in librariesDir.listDirectoryEntries("kotlinc_*")) {
-        println("Removing $it")
-        it.deleteIfExists()
-    }
+    val oldLibraries = librariesDir.listDirectoryEntries("kotlinc_*").toMutableSet()
 
-    for (library in libraries) {
+    for (library in newLibraries) {
         val libraryFileName = library.name.replace("\\W".toRegex(), "_") + ".xml"
         val xmlFile = librariesDir.resolve(libraryFileName)
-        println("Writing $xmlFile")
+        val isRegeneration = oldLibraries.remove(xmlFile)
+        if (isRegeneration) {
+            println("Rewriting $xmlFile")
+        } else {
+            println("Writing $xmlFile")
+        }
+
         xmlFile.writeText(library.render(resolverSettings))
+    }
+
+    // Drop redundant libraries
+    for (redundantLibrary in oldLibraries) {
+        println("Removing $redundantLibrary")
+        redundantLibrary.deleteExisting()
     }
 }
 
