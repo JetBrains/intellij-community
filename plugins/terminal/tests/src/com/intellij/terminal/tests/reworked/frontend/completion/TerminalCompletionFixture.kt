@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.completion.spec.ShellCommandSpec
-import com.intellij.terminal.frontend.ReworkedTerminalView
+import com.intellij.terminal.frontend.impl.ReworkedTerminalView
 import com.intellij.terminal.frontend.TimedKeyEvent
 import com.intellij.terminal.frontend.completion.TerminalLookupPrefixUpdater
 import com.intellij.terminal.session.TerminalBlocksModelState

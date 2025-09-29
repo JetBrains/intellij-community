@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.terminal.TerminalTitle
+import com.intellij.terminal.frontend.impl.ReworkedTerminalView
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.terminal.ui.TtyConnectorAccessor

@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.frontend
+package com.intellij.terminal.frontend.impl
 
 import com.intellij.codeInsight.completion.CompletionPhase
 import com.intellij.codeInsight.inline.completion.InlineCompletion
@@ -23,11 +22,30 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.actions.TerminalActionUtil
+import com.intellij.terminal.frontend.TerminalBlocksDecorator
+import com.intellij.terminal.frontend.TerminalCursorPainter
+import com.intellij.terminal.frontend.TerminalEditorFactory
+import com.intellij.terminal.frontend.TerminalEventsHandler
+import com.intellij.terminal.frontend.TerminalEventsHandlerImpl
+import com.intellij.terminal.frontend.TerminalInput
+import com.intellij.terminal.frontend.TerminalKeyEncodingManager
+import com.intellij.terminal.frontend.TerminalOutputModelControllerImpl
+import com.intellij.terminal.frontend.TerminalOutputScrollingModel
+import com.intellij.terminal.frontend.TerminalOutputScrollingModelImpl
+import com.intellij.terminal.frontend.TerminalSearchController
+import com.intellij.terminal.frontend.TerminalSearchControllerListener
+import com.intellij.terminal.frontend.TerminalSearchSession
+import com.intellij.terminal.frontend.TerminalSessionController
+import com.intellij.terminal.frontend.TerminalTypeAhead
+import com.intellij.terminal.frontend.TerminalTypeAheadOutputModelController
+import com.intellij.terminal.frontend.TerminalVfsSynchronizer
 import com.intellij.terminal.frontend.completion.ShellDataGeneratorsExecutorReworkedImpl
 import com.intellij.terminal.frontend.completion.ShellRuntimeContextProviderReworkedImpl
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
 import com.intellij.terminal.frontend.hyperlinks.FrontendTerminalHyperlinkFacade
+import com.intellij.terminal.frontend.setupKeyEventHandling
+import com.intellij.terminal.frontend.setupMouseListener
 import com.intellij.terminal.session.TerminalHyperlinkId
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.ui.components.JBLayeredPane
@@ -35,8 +53,13 @@ import com.intellij.util.asDisposable
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalPanelMarker
@@ -45,7 +68,14 @@ import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerI
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
-import org.jetbrains.plugins.terminal.block.reworked.*
+import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
+import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModelImpl
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.isSplitHyperlinksSupportEnabled
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputPsiFile
@@ -55,12 +85,16 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.ui.addToLayer
 import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.block.ui.isTerminalOutputScrollChangingActionInProgress
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_ALTERNATE_BUFFER_DATA_KEY
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Component
 import java.awt.Dimension
-import java.awt.event.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
+import java.awt.event.KeyEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import kotlin.math.min
@@ -161,14 +195,15 @@ class ReworkedTerminalView(
     }
 
     outputEditor = TerminalEditorFactory.createOutputEditor(project, settings, parentDisposable = this)
-    outputEditor.putUserData(TerminalInput.KEY, terminalInput)
+    outputEditor.putUserData(TerminalInput.Companion.KEY, terminalInput)
     outputModel = TerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
 
-    scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, sessionModel, coroutineScope.childScope("TerminalOutputScrollingModel"))
-    outputEditor.putUserData(TerminalOutputScrollingModel.KEY, scrollingModel)
+    scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, sessionModel,
+                                                      coroutineScope.childScope("TerminalOutputScrollingModel"))
+    outputEditor.putUserData(TerminalOutputScrollingModel.Companion.KEY, scrollingModel)
 
     blocksModel = TerminalBlocksModelImpl(outputEditor.document)
-    outputEditor.putUserData(TerminalBlocksModel.KEY, blocksModel)
+    outputEditor.putUserData(TerminalBlocksModel.Companion.KEY, blocksModel)
     TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
 
     val outputModelController = TerminalTypeAheadOutputModelController(
@@ -177,7 +212,7 @@ class ReworkedTerminalView(
       blocksModel,
       coroutineScope.childScope("TerminalTypeAheadOutputModelController")
     )
-    outputEditor.putUserData(TerminalTypeAhead.KEY, outputModelController)
+    outputEditor.putUserData(TerminalTypeAhead.Companion.KEY, outputModelController)
 
     outputEditorEventsHandler = TerminalEventsHandlerImpl(
       sessionModel,
@@ -203,7 +238,7 @@ class ReworkedTerminalView(
       outputEditorEventsHandler,
     )
 
-    outputEditor.putUserData(TerminalSessionModel.KEY, sessionModel)
+    outputEditor.putUserData(TerminalSessionModel.Companion.KEY, sessionModel)
     terminalSearchController = TerminalSearchController(project)
 
     outputHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
@@ -219,7 +254,7 @@ class ReworkedTerminalView(
       null
     }
 
-    outputEditor.putUserData(CompletionPhase.CUSTOM_CODE_COMPLETION_ACTION_ID, "Terminal.CommandCompletion.Gen2")
+    outputEditor.putUserData(CompletionPhase.Companion.CUSTOM_CODE_COMPLETION_ACTION_ID, "Terminal.CommandCompletion.Gen2")
 
     val terminalAliasesStorage = TerminalAliasesStorage()
 
@@ -234,7 +269,7 @@ class ReworkedTerminalView(
       coroutineScope.childScope("TerminalSessionController"),
       terminalAliasesStorage
     )
-    outputEditor.putUserData(TerminalAliasesStorage.KEY, terminalAliasesStorage)
+    outputEditor.putUserData(TerminalAliasesStorage.Companion.KEY, terminalAliasesStorage)
 
     sessionFuture.thenAccept { session ->
       controller.handleEvents(session)
@@ -261,7 +296,7 @@ class ReworkedTerminalView(
       terminalPanel,
       coroutineScope.childScope("TerminalVfsSynchronizer"),
     )
-    outputEditor.putUserData(TerminalVfsSynchronizer.KEY, synchronizer)
+    outputEditor.putUserData(TerminalVfsSynchronizer.Companion.KEY, synchronizer)
   }
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
@@ -374,7 +409,7 @@ class ReworkedTerminalView(
   ) {
     val parentDisposable = coroutineScope.asDisposable() // same lifecycle as `this@ReworkedTerminalView`
 
-    editor.putUserData(TerminalOutputModel.KEY, outputModel)
+    editor.putUserData(TerminalOutputModel.Companion.KEY, outputModel)
 
     // Document modifications can change the scroll position.
     // Mark them with the corresponding flag to indicate that this change is not caused by the explicit user action.
@@ -402,10 +437,10 @@ class ReworkedTerminalView(
     editor.highlighter = TerminalTextHighlighter { model.getHighlightings() }
 
     if (!isSplitHyperlinksSupportEnabled()) {
-      TerminalHyperlinkHighlighter.install(project, model, editor, coroutineScope)
+      TerminalHyperlinkHighlighter.Companion.install(project, model, editor, coroutineScope)
     }
 
-    val cursorPainter = TerminalCursorPainter.install(editor, model, sessionModel, coroutineScope.childScope("TerminalCursorPainter"))
+    val cursorPainter = TerminalCursorPainter.Companion.install(editor, model, sessionModel, coroutineScope.childScope("TerminalCursorPainter"))
     if (fusCursorPainterListener != null) {
       cursorPainter.addListener(parentDisposable, fusCursorPainterListener)
     }
@@ -454,7 +489,7 @@ class ReworkedTerminalView(
 
       override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
         val inlineCompletionTypingSession = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
-        val lastBlock = editor.getUserData(TerminalBlocksModel.KEY)?.blocks?.lastOrNull() ?: return
+        val lastBlock = editor.getUserData(TerminalBlocksModel.Companion.KEY)?.blocks?.lastOrNull() ?: return
         val lastBlockCommandStartIndex = if (lastBlock.commandStartOffset != -1) lastBlock.commandStartOffset else lastBlock.startOffset
 
         // When resizing the terminal, the blocks model may fall out of sync for a short time.
@@ -488,11 +523,12 @@ class ReworkedTerminalView(
   ) {
     val eelDescriptor = LocalEelDescriptor // TODO: it should be determined by where shell is running to work properly in WSL and Docker
     val services = TerminalCommandCompletionServices(
-      commandSpecsManager = ShellCommandSpecsManagerImpl.getInstance(),
+      commandSpecsManager = ShellCommandSpecsManagerImpl.Companion.getInstance(),
       runtimeContextProvider = ShellRuntimeContextProviderReworkedImpl(project, sessionModel, eelDescriptor),
-      dataGeneratorsExecutor = ShellDataGeneratorsExecutorReworkedImpl(controller, coroutineScope.childScope("ShellDataGeneratorsExecutorReworkedImpl"))
+      dataGeneratorsExecutor = ShellDataGeneratorsExecutorReworkedImpl(controller,
+                                                                       coroutineScope.childScope("ShellDataGeneratorsExecutorReworkedImpl"))
     )
-    editor.putUserData(TerminalCommandCompletionServices.KEY, services)
+    editor.putUserData(TerminalCommandCompletionServices.Companion.KEY, services)
   }
 
   private inner class TerminalPanel(initialContent: Editor) : BorderLayoutPanel(), UiDataProvider, TerminalPanelMarker {
@@ -519,13 +555,13 @@ class ReworkedTerminalView(
 
     override fun uiDataSnapshot(sink: DataSink) {
       sink[TerminalActionUtil.EDITOR_KEY] = curEditor
-      sink[TerminalInput.DATA_KEY] = terminalInput
-      sink[TerminalOutputModel.DATA_KEY] = outputModel
-      sink[TerminalSearchController.KEY] = terminalSearchController
-      sink[TerminalSessionId.KEY] = (sessionFuture.getNow(null) as? FrontendTerminalSession?)?.id
-      sink[IS_ALTERNATE_BUFFER_DATA_KEY] = isAlternateScreenBuffer
+      sink[TerminalInput.Companion.DATA_KEY] = terminalInput
+      sink[TerminalOutputModel.Companion.DATA_KEY] = outputModel
+      sink[TerminalSearchController.Companion.KEY] = terminalSearchController
+      sink[TerminalSessionId.Companion.KEY] = (sessionFuture.getNow(null) as? FrontendTerminalSession?)?.id
+      sink[TerminalDataContextUtils.IS_ALTERNATE_BUFFER_DATA_KEY] = isAlternateScreenBuffer
       val hyperlinkFacade = if (isAlternateScreenBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
-      sink[TerminalHyperlinkId.KEY] = hyperlinkFacade?.getHoveredHyperlinkId()
+      sink[TerminalHyperlinkId.Companion.KEY] = hyperlinkFacade?.getHoveredHyperlinkId()
       sink.setNull(PlatformDataKeys.COPY_PROVIDER)
     }
 
