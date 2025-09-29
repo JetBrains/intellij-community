@@ -67,7 +67,8 @@ fun main(args: Array<String>) {
     }
 
     val monorepoRoot = communityRoot.parent.takeIf {
-        it.resolve(".idea").isDirectory()
+        // The community name check is required since the community might be placed directly inside another repo (e.g., kotlin)
+        it.resolve(".idea").isDirectory() && it.resolve("community").isDirectory()
     }
 
     val resolverSettings = readJpsResolverSettings(communityRoot, monorepoRoot)
