@@ -2,6 +2,8 @@ package com.intellij.terminal.frontend
 
 import com.intellij.codeInsight.highlighting.BackgroundHighlightingUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -12,9 +14,12 @@ import com.intellij.openapi.editor.impl.softwrap.EmptySoftWrapPainter
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalFontSizeProvider
+import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.awaitCancellationAndInvoke
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalFontSettingsListener
 import org.jetbrains.plugins.terminal.TerminalFontSettingsService
@@ -28,10 +33,10 @@ object TerminalEditorFactory {
   fun createOutputEditor(
     project: Project,
     settings: JBTerminalSystemSettingsProviderBase,
-    parentDisposable: Disposable,
+    coroutineScope: CoroutineScope,
   ): EditorImpl {
     val document = createDocument(withLanguage = true)
-    val editor = createEditor(document, project, settings, parentDisposable)
+    val editor = createEditor(document, project, settings, coroutineScope)
     editor.putUserData(TerminalDataContextUtils.IS_OUTPUT_MODEL_EDITOR_KEY, true)
     addTopAndBottomInsets(editor)
 
@@ -43,10 +48,10 @@ object TerminalEditorFactory {
   fun createAlternateBufferEditor(
     project: Project,
     settings: JBTerminalSystemSettingsProviderBase,
-    parentDisposable: Disposable,
+    coroutineScope: CoroutineScope,
   ): EditorImpl {
     val document = createDocument(withLanguage = false)
-    val editor = createEditor(document, project, settings, parentDisposable)
+    val editor = createEditor(document, project, settings, coroutineScope)
     editor.putUserData(TerminalDataContextUtils.IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY, true)
     editor.scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_NEVER
     editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
@@ -89,11 +94,12 @@ object TerminalEditorFactory {
     })
   }
 
+  @OptIn(AwaitCancellationAndInvoke::class)
   private fun createEditor(
     document: Document,
     project: Project,
     settings: JBTerminalSystemSettingsProviderBase,
-    parentDisposable: Disposable,
+    coroutineScope: CoroutineScope,
   ): EditorImpl {
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = false)
     editor.contentComponent.focusTraversalKeysEnabled = false
@@ -101,7 +107,7 @@ object TerminalEditorFactory {
     configureSoftWraps(editor)
     CopyOnSelectionHandler.install(editor, settings)
 
-    Disposer.register(parentDisposable) {
+    coroutineScope.awaitCancellationAndInvoke(Dispatchers.UiWithModelAccess) {
       EditorFactory.getInstance().releaseEditor(editor)
     }
     return editor
@@ -109,7 +115,9 @@ object TerminalEditorFactory {
 
   private fun createDocument(withLanguage: Boolean): Document {
     return if (withLanguage) {
-      FileDocumentManager.getInstance().getDocument(TerminalOutputVirtualFile())!!
+      runReadAction {
+        FileDocumentManager.getInstance().getDocument(TerminalOutputVirtualFile())!!
+      }
     }
     else DocumentImpl("", true)
   }

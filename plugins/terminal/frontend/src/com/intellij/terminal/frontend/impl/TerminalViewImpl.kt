@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.MockDocumentEvent
@@ -31,7 +32,9 @@ import com.intellij.terminal.frontend.hyperlinks.FrontendTerminalHyperlinkFacade
 import com.intellij.terminal.session.TerminalHyperlinkId
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.ui.components.JBLayeredPane
+import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CoroutineName
@@ -123,7 +126,11 @@ class TerminalViewImpl(
     val fusCursorPaintingListener = startupFusInfo?.let { TerminalFusCursorPainterListener(it) }
     val fusFirstOutputListener = startupFusInfo?.let { TerminalFusFirstOutputListener(it) }
 
-    alternateBufferEditor = TerminalEditorFactory.createAlternateBufferEditor(project, settings, coroutineScope.asDisposable())
+    alternateBufferEditor = TerminalEditorFactory.createAlternateBufferEditor(
+      project,
+      settings,
+      coroutineScope.childScope("TerminalAlternateBufferEditor")
+    )
     val alternateBufferModel = TerminalOutputModelImpl(alternateBufferEditor.document, maxOutputLength = 0)
     val alternateBufferModelController = TerminalOutputModelControllerImpl(alternateBufferModel)
     val alternateBufferEventsHandler = TerminalEventsHandlerImpl(
@@ -161,7 +168,7 @@ class TerminalViewImpl(
       null
     }
 
-    outputEditor = TerminalEditorFactory.createOutputEditor(project, settings, coroutineScope.asDisposable())
+    outputEditor = TerminalEditorFactory.createOutputEditor(project, settings, coroutineScope.childScope("TerminalOutputEditor"))
     outputEditor.putUserData(TerminalInput.Companion.KEY, terminalInput)
     outputModel = TerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
 
@@ -418,10 +425,11 @@ class TerminalViewImpl(
     }
   }
 
+  @OptIn(AwaitCancellationAndInvoke::class)
   private fun configureInlineCompletion(editor: EditorEx, model: TerminalOutputModel, coroutineScope: CoroutineScope) {
     InlineCompletion.install(editor, coroutineScope)
     // Inline completion handler needs to be manually disposed
-    Disposer.register(coroutineScope.asDisposable()) {
+    coroutineScope.awaitCancellationAndInvoke(Dispatchers.UiWithModelAccess) {
       InlineCompletion.remove(editor)
     }
 

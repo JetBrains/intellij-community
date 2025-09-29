@@ -3,6 +3,7 @@ package com.intellij.terminal.tests.reworked.frontend
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.TerminalEditorFactory
 import com.intellij.terminal.frontend.TerminalOutputScrollingModelImpl
@@ -21,6 +22,7 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
+import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -472,7 +474,9 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
   }
 
   private fun createEditor(rows: Int, columns: Int = 20): EditorEx {
-    val editor = TerminalEditorFactory.createOutputEditor(project, JBTerminalSystemSettingsProvider(), testRootDisposable)
+    val scope = terminalProjectScope(project).childScope("TerminalOutputEditor")
+    Disposer.register(testRootDisposable) { scope.cancel() }
+    val editor = TerminalEditorFactory.createOutputEditor(project, JBTerminalSystemSettingsProvider(), scope)
     setTerminalEditorSize(editor, rows, columns)
     return editor
   }

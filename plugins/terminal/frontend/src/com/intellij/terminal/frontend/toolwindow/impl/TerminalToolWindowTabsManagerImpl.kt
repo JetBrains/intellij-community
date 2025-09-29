@@ -3,6 +3,7 @@ package com.intellij.terminal.frontend.toolwindow.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -61,7 +62,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     project.messageBus.connect(coroutineScope).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
       override fun toolWindowShown(toolWindow: ToolWindow) {
         if (toolWindow.id == TerminalToolWindowFactory.TOOL_WINDOW_ID) {
-          coroutineScope.launch(Dispatchers.UI) {
+          coroutineScope.launch(Dispatchers.UiWithModelAccess) {
             createNewTabIfEmpty(toolWindow)
           }
         }
@@ -162,7 +163,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     // Close the tab if the terminal session was terminated.
     terminal.addTerminationCallback(content) {
-      coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
+      coroutineScope.launch(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
         if (TerminalOptionsProvider.instance.closeSessionOnLogout) {
           val tab = mutableTabs.find { it.content == content } ?: return@launch
           closeTab(tab)
@@ -305,7 +306,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     private fun scheduleTabsRestoring(manager: TerminalToolWindowTabsManagerImpl) {
       manager.tabsRestoredDeferred = manager.coroutineScope.async(Dispatchers.IO) {
         val tabs: List<TerminalSessionTab> = TerminalTabsManagerApi.getInstance().getTerminalTabs(manager.project.projectId())
-        withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
+        withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
           restoreTabs(tabs, manager)
         }
       }
