@@ -3,6 +3,7 @@ package com.intellij.grazie.utils
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.grazie.text.TextContent
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.ApiStatus
 
 fun TextContent.replaceBackslashEscapes(): TextContent {
   val text = this.replaceBackslashEscapedWhitespace()
@@ -10,7 +11,7 @@ fun TextContent.replaceBackslashEscapes(): TextContent {
   CodeInsightUtilCore.parseStringCharacters(text.toString(), offsets)
   val exclusions = (1 until offsets.size).asSequence()
     .filter { i -> offsets[i] != 0 && offsets[i] - offsets[i - 1] != 1 }
-    .mapNotNull { index -> keepTrailingWhitespaces(text, offsets, index) }
+    .map { index -> TextRange(offsets[index - 1], offsets[index]) }
     .map(TextContent.Exclusion::markUnknown)
     .toList()
   return text.excludeRanges(exclusions)
@@ -20,13 +21,21 @@ fun TextContent.replaceBackslashEscapedWhitespace(): TextContent {
   return this.replaceBackslashEscapedWhitespace('n').replaceBackslashEscapedWhitespace('t')
 }
 
+fun TextContent.replaceEscapedVerticalTab(): TextContent {
+  return this.replaceBackslashEscapedWhitespace('v')
+}
+
 private fun TextContent.replaceBackslashEscapedWhitespace(separator: Char): TextContent {
   val excluded = getBackslashExcludeRanges(this, separator)
   if (excluded.isEmpty()) return this
 
   val components = invertExcludedToContentRanges(excluded, this.length)
     .mapNotNull { this.subText(it) }
-  return if (components.size > 1) TextContent.joinWithWhitespace(mapSeparator(separator), components)!! else this
+  return when (components.size) {
+    0 -> this
+    1 -> components.first()
+    else -> TextContent.joinWithWhitespace(mapSeparator(separator), components)!!
+  }
 }
 
 private fun getBackslashExcludeRanges(content: TextContent, symbol: Char): List<TextRange> {
@@ -70,19 +79,13 @@ private fun invertExcludedToContentRanges(excluded: List<TextRange>, length: Int
   return result.sortedBy { it.startOffset }
 }
 
-private fun keepTrailingWhitespaces(text: TextContent, offsets: IntArray, index: Int): TextRange? {
-  var offset = 0
-  while (text[index - 1 + offset].isWhitespace() && offset < offsets[index] - offsets[index - 1]) offset++
-  if (offsets[index - 1] + offset == offsets[index]) return null
-  return TextRange(offsets[index - 1] + offset, offsets[index])
-}
-
-private fun isSeparator(text: CharSequence, index: Int, symbol: Char): Boolean = text[index] == '\\' && (text[index + 1] == symbol)
+private fun isSeparator(text: CharSequence, index: Int, symbol: Char): Boolean = text[index] == '\\' && text[index + 1] == symbol
 
 private fun mapSeparator(symbol: Char): Char {
   return when (symbol) {
     'n' -> '\n'
     't' -> '\t'
+    'v' -> Char(0x0b)
     else -> ' '
   }
 }
