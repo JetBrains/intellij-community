@@ -61,7 +61,6 @@ jvm_library(
     "//python/python-pyproject:pyproject",
     "//python/python-hatch:hatch",
     "@lib//:io-github-z4kn4fein-semver-jvm-provided",
-    "@lib//:tuweni-toml-provided",
     "//platform/non-modal-welcome-screen",
   ],
   runtime_deps = ["//python/python-features-trainer:featuresTrainer"],
@@ -128,7 +127,6 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:junit5",
     "@lib//:io-github-z4kn4fein-semver-jvm-provided",
-    "@lib//:tuweni-toml-provided",
     "//platform/non-modal-welcome-screen",
   ],
   plugins = ["@lib//:compose-plugin"]

@@ -4,17 +4,17 @@ package com.intellij.pycharm.community.ide.impl.configuration
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.readText
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.pyproject.model.internal.projectModelEnabled
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.onSuccess
-import com.jetbrains.python.projectModel.enablePyProjectToml
-import com.jetbrains.python.projectModel.uv.UvProjectModelService
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -33,6 +33,11 @@ private val logger = fileLogger()
 
 @ApiStatus.Internal
 class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
+
+  init {
+    if (projectModelEnabled) throw ExtensionNotApplicableException.create()
+  }
+
   override suspend fun getIntention(module: Module): @IntentionName String? {
     val tomlFile = PyProjectToml.findFile(module) ?: return null
     getUvExecutable() ?: return null
@@ -61,14 +66,7 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
   override fun supportsHeadlessModel(): Boolean = true
 
   private suspend fun createUv(module: Module): PyResult<Sdk> {
-    val sdkAssociatedModule: Module
-    if (enablePyProjectToml) {
-      val uvWorkspace = UvProjectModelService.findWorkspace(module)
-      sdkAssociatedModule = uvWorkspace?.root ?: module
-    }
-    else {
-      sdkAssociatedModule = module
-    }
+    val sdkAssociatedModule: Module = module
     val workingDir: Path? = tryResolvePath(sdkAssociatedModule.basePath)
     if (workingDir == null) {
       return PyResult.failure(MessageError("Can't determine working dir for the module"))

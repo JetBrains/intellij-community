@@ -20,14 +20,11 @@ import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.projectModel.enablePyProjectToml
-import com.jetbrains.python.projectModel.uv.UvProjectModelService
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.configuration.suppressors.PyInterpreterInspectionSuppressor
 import com.jetbrains.python.sdk.configuration.suppressors.PyPackageRequirementsInspectionSuppressor
 import com.jetbrains.python.sdk.configuration.suppressors.TipOfTheDaySuppressor
 import com.jetbrains.python.sdk.configurePythonSdk
-import com.jetbrains.python.sdk.uv.isUv
 import com.jetbrains.python.statistics.ConfiguredPythonInterpreterIdsHolder.Companion.SDK_HAS_BEEN_CONFIGURED_AS_THE_PROJECT_INTERPRETER
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
@@ -61,15 +58,6 @@ object PyProjectSdkConfiguration {
     } ?: return false
 
     // TODO Move this to PyUvSdkConfiguration, show better notification
-    if (sdk.isUv && enablePyProjectToml) {
-      val ws = UvProjectModelService.findWorkspace(module)
-      if (ws != null) {
-        for (wsModule in ws.members + ws.root) {
-          setReadyToUseSdk(wsModule.project, wsModule, sdk)
-        }
-        return true
-      }
-    }
     setReadyToUseSdk(module.project, module, sdk)
     return true
   }

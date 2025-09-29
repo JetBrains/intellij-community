@@ -5,4 +5,22 @@
     <module name="intellij.python.sdk"/>
     <plugin id="org.toml.lang"/>
   </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="false" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model" restartRequired="true"/>
+
+    <externalSystemUnlinkedProjectAware
+      implementation="com.intellij.python.pyproject.model.internal.PyExternalSystemUnlinkedProjectAware"/>
+
+    <projectOpenProcessor implementation="com.intellij.python.pyproject.model.internal.PyProjectOpenProcessor"/>
+
+    <postStartupActivity implementation="com.intellij.python.pyproject.model.internal.PyProjectSyncActivity"/>
+  </extensions>
+  <actions>
+    <action class="com.intellij.python.pyproject.model.internal.PyProjectTomlSyncAction" id="PyProjectTomlSyncAction"/>
+  </actions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.python.pyproject.model.tool" interface="com.intellij.python.pyproject.model.spi.Tool"
+                    dynamic="true"/>
+  </extensionPoints>
+
 </idea-plugin>

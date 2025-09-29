@@ -22,7 +22,7 @@ interface PyProjectSdkConfigurationExtension {
 
   companion object {
     @JvmStatic
-    val EP_NAME = ExtensionPointName.create<PyProjectSdkConfigurationExtension>("Pythonid.projectSdkConfigurationExtension")
+    val EP_NAME: ExtensionPointName<PyProjectSdkConfigurationExtension> = ExtensionPointName.create<PyProjectSdkConfigurationExtension>("Pythonid.projectSdkConfigurationExtension")
 
     @JvmStatic
     @RequiresBackgroundThread

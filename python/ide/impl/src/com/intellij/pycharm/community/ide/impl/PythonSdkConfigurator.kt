@@ -51,6 +51,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized {
       PyPackageCoroutine.launch(project) {
+        if (module.isDisposed) return@launch
         val extension = findExtension(module)
         val title = extension?.getIntention(module) ?: PySdkBundle.message("python.configuring.interpreter.progress")
         withBackgroundProgress(project, title, true) {

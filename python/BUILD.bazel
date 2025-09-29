@@ -302,7 +302,6 @@ jvm_library(
     "@lib//:jna",
     "//plugins/toml",
     "//plugins/toml/core",
-    "@lib//:tuweni-toml-provided",
     "@lib//:jsr305",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",

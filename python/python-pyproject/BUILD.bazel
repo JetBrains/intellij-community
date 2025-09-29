@@ -17,7 +17,7 @@ jvm_library(
   name = "pyproject",
   module_name = "intellij.python.pyproject",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   resources = [":pyproject_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -28,7 +28,16 @@ jvm_library(
     "//platform/util",
     "//plugins/toml/core",
     "@lib//:tuweni-toml",
-  ]
+    "//platform/external-system-api:externalSystem",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/workspace/jps",
+  ],
+  exports = ["@lib//:tuweni-toml"]
 )
 
 jvm_library(
@@ -50,7 +59,16 @@ jvm_library(
     "@lib//:tuweni-toml",
     "@lib//:junit5",
     "@lib//:junit5Params",
-  ]
+    "//platform/external-system-api:externalSystem",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/workspace/jps",
+  ],
+  exports = ["@lib//:tuweni-toml"]
 )
 ### auto-generated section `build intellij.python.pyproject` end
 
