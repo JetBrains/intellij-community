@@ -21,8 +21,6 @@ internal fun publishCompiler(preferences: GeneratorPreferences) {
     val kotlinSnapshotPath = KotlinTestsDependenciesUtil.communityRoot
         .resolve("lib")
         .resolve("kotlin-snapshot")
-        .absolute()
-        .normalize()
 
     println("Artifacts path: $kotlinSnapshotPath")
 

@@ -23,19 +23,25 @@ object KotlinTestsDependenciesUtil {
 
     // We cannot reference PathManager or build scripts here because we call this code from Gradle in TeamCity
     val communityRoot: Path by lazy {
+        findCommunityRoot().toAbsolutePath().normalize()
+    }
+
+    private fun findCommunityRoot(): Path {
         val possibleHomePaths = mutableListOf<Path>()
         System.getProperty(PROPERTY_HOME_PATH)?.let { possibleHomePaths.add(Path(it)) }
         System.getenv(IDEA_HOME)?.let { possibleHomePaths.add(Path(it)) }
         possibleHomePaths.add(Path("."))
         for (explicit in possibleHomePaths) {
             if (explicit.resolve(COMMUNITY_MARKER).isRegularFile()) {
-                return@lazy explicit
+                return explicit
             }
+
             val communityPath = explicit.resolve("community")
             if (communityPath.resolve(COMMUNITY_MARKER).isRegularFile()) {
-                return@lazy communityPath.toAbsolutePath()
+                return communityPath.toAbsolutePath()
             }
         }
+
         val aClass: Class<*> = KotlinTestsDependenciesUtil::class.java
         val aClassFilename = "${aClass.getName().replace('.', '/')}.class"
         val aClassLocation = aClass.classLoader.getResource(aClassFilename)?.toString()?.substringAfter("file:")
@@ -54,15 +60,16 @@ object KotlinTestsDependenciesUtil {
 
         while (rootPath != null) {
             if (rootPath.resolve(COMMUNITY_MARKER).isRegularFile()) {
-                return@lazy rootPath.toAbsolutePath()
+                return rootPath.toAbsolutePath()
             } else if (rootPath.resolve(ULTIMATE_MARKER).isRegularFile()) {
                 val communityPath = rootPath.resolve("community")
                 if (communityPath.isDirectory()) {
-                    return@lazy communityPath.toAbsolutePath()
+                    return communityPath.toAbsolutePath()
                 }
             }
             rootPath = rootPath.parent
         }
+
         error("cannot detect community root path for class $aClassLocation")
     }
 

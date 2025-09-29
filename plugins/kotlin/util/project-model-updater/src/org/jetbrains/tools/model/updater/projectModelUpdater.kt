@@ -5,9 +5,7 @@ import org.jetbrains.tools.model.updater.impl.JpsLibrary
 import org.jetbrains.tools.model.updater.impl.JpsResolverSettings
 import org.jetbrains.tools.model.updater.impl.readJpsResolverSettings
 import java.nio.file.Path
-import kotlin.io.path.Path
 import kotlin.io.path.deleteExisting
-import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
@@ -15,17 +13,8 @@ import kotlin.io.path.writeText
 internal fun updateProjectModel(preferences: GeneratorPreferences) {
     copyBootstrapArtifactsToMavenRepositoryIfExists()
 
-    val communityRoot = generateSequence(Path(".").toRealPath()) { it.parent }.first {
-        it.resolve(".idea").isDirectory() &&
-                !it.resolve("community").isDirectory() &&
-                // This file name check is needed since the project model updater might be opened as a standalone project
-                it.fileName.toString() != "project-model-updater"
-    }
-
-    val monorepoRoot = communityRoot.parent.takeIf {
-        // The community name check is required since the community might be placed directly inside another repo (e.g., kotlin)
-        it.resolve(".idea").isDirectory() && it.resolve("community").isDirectory()
-    }
+    val communityRoot = KotlinTestsDependenciesUtil.communityRoot
+    val monorepoRoot = KotlinTestsDependenciesUtil.monorepoRoot
 
     val resolverSettings = readJpsResolverSettings(communityRoot, monorepoRoot)
 
