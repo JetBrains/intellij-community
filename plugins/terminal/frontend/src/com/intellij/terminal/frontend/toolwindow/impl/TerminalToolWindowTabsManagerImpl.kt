@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
@@ -24,6 +25,7 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.EventDispatcher
+import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.initOnShow
 import com.jediterm.core.util.TermSize
@@ -289,9 +291,14 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   internal class Initializer : TerminalToolWindowInitializer {
     override fun initialize(toolWindow: ToolWindow) {
+      val manager = TerminalToolWindowTabsManager.getInstance(toolWindow.project) as TerminalToolWindowTabsManagerImpl
+
       if (ExperimentalUI.isNewUI() && TerminalOptionsProvider.instance.terminalEngine == TerminalEngine.REWORKED) {
-        val manager = TerminalToolWindowTabsManager.getInstance(toolWindow.project) as TerminalToolWindowTabsManagerImpl
         scheduleTabsRestoring(manager)
+      }
+
+      if (toolWindow is ToolWindowEx) {
+        installDirectoryDnD(toolWindow, manager.coroutineScope.asDisposable())
       }
     }
 

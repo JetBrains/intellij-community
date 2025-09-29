@@ -5,10 +5,6 @@ import com.google.common.collect.Sets;
 import com.intellij.frontend.FrontendApplicationInfo;
 import com.intellij.frontend.FrontendType;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.dnd.DnDDropHandler;
-import com.intellij.ide.dnd.DnDEvent;
-import com.intellij.ide.dnd.DnDSupport;
-import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -25,9 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.TerminalTitle;
@@ -38,12 +31,9 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
-import com.intellij.util.ui.UIUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction;
@@ -135,8 +125,6 @@ public final class TerminalToolWindowManager implements Disposable {
       return;
     }
     myToolWindow = toolWindow;
-
-    installDirectoryDnD(toolWindow);
 
     TerminalDockContainer.install(myProject, toolWindow.getDecorator());
 
@@ -742,59 +730,11 @@ public final class TerminalToolWindowManager implements Disposable {
     return toolWindow != null && TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId());
   }
 
-  /**
-   * Creates the new terminal tab on dropping the directory node inside the terminal tool window.
-   * For example, from Project View.
-   */
-  private void installDirectoryDnD(@NotNull ToolWindow window) {
-    var toolWindowEx = window instanceof ToolWindowEx ? (ToolWindowEx)window : null;
-    if (toolWindowEx == null) return;
-
-    DnDDropHandler handler = new DnDDropHandler() {
-      @Override
-      public void drop(DnDEvent event) {
-        TransferableWrapper tw = ObjectUtils.tryCast(event.getAttachedObject(), TransferableWrapper.class);
-        if (tw != null) {
-          PsiDirectory dir = getDirectory(ArrayUtil.getFirstElement(tw.getPsiElements()));
-          if (dir != null && tw.getPsiElements().length == 1) {
-            // Find the right split to create the new tab in
-            var nearestManager = findNearestContentManager(event);
-
-            TerminalTabState state = new TerminalTabState();
-            state.myWorkingDirectory = dir.getVirtualFile().getPath();
-            createNewTab(TerminalOptionsProvider.getInstance().getTerminalEngine(), null, state, nearestManager);
-          }
-        }
-      }
-    };
-    DnDSupport.createBuilder(toolWindowEx.getDecorator())
-      .setDropHandler(handler)
-      .setDisposableParent(this)
-      .disableAsSource()
-      .install();
-  }
-
-  private static @Nullable ContentManager findNearestContentManager(@NotNull DnDEvent event) {
-    Component handlerComponent = event.getHandlerComponent();
-    Point point = event.getPoint();
-    if (handlerComponent == null || point == null) return null;
-
-    Component deepestComponent = UIUtil.getDeepestComponentAt(handlerComponent, point.x, point.y);
-    return findNearestContentManager(deepestComponent);
-  }
-
   @ApiStatus.Internal
   static @Nullable ContentManager findNearestContentManager(@Nullable Component component) {
     if (component == null) return null;
     var dataContext = DataManager.getInstance().getDataContext(component);
     return dataContext.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER);
-  }
-
-  private static @Nullable PsiDirectory getDirectory(@Nullable PsiElement item) {
-    if (item instanceof PsiFile) {
-      return ((PsiFile)item).getParent();
-    }
-    return ObjectUtils.tryCast(item, PsiDirectory.class);
   }
 
   /**
