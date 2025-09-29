@@ -55,16 +55,11 @@ internal class GitVersionUpdateSettingsEntryProvider : SettingsEntryPointAction.
       val versionToUpdate = versionChecker.newAvailableVersion
       val gitNotInstalled = versionChecker.gitNotInstalled
 
-      if (versionToUpdate.isNull || versionToUpdate.isWSL) {
-        presentation.isEnabledAndVisible = false
-      }
-      else {
-        presentation.text =
-          if (gitNotInstalled) GitBundle.message("git.executable.install.available", versionToUpdate.presentation)
-          else GitBundle.message("git.executable.new.version.update.available", versionToUpdate.presentation)
+      presentation.text =
+        if (gitNotInstalled) GitBundle.message("git.executable.install.available", versionToUpdate.presentation)
+        else GitBundle.message("git.executable.new.version.update.available", versionToUpdate.presentation)
 
-        presentation.isEnabledAndVisible = true
-      }
+      presentation.isEnabledAndVisible = isUpdateSupported(versionToUpdate)
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -129,7 +124,7 @@ internal class GitNewVersionChecker(private val project: Project, private val cs
             val currentVersion = GitExecutableManager.getInstance().getVersionOrIdentifyIfNeeded(project)
             gitNotInstalled = currentVersion.isNull
 
-            if (currentVersion.isWSL) {
+            if (!isUpdateSupported(currentVersion)) {
               newAvailableVersion = currentVersion
               return@withContext
             }
@@ -146,6 +141,15 @@ internal class GitNewVersionChecker(private val project: Project, private val cs
           }
         }
     }
+  }
+
+}
+
+private fun isUpdateSupported(version: GitVersion): Boolean {
+  return when (version.type) {
+    GitVersion.Type.MSYS -> true
+    GitVersion.Type.CYGWIN -> true
+    else -> false
   }
 }
 
