@@ -93,7 +93,7 @@ internal class TerminalToolWindowTabsManagerImpl(
   private suspend fun createNewTabIfEmpty(toolWindow: ToolWindow) {
     val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.OPEN_TOOLWINDOW)
 
-    suspend fun doCreateTab() {
+    fun doCreateTab() {
       val engine = TerminalOptionsProvider.instance.terminalEngine
       val frontendType = FrontendApplicationInfo.getFrontendType()
       val isCodeWithMe = frontendType is FrontendType.Remote && frontendType.isGuest()
@@ -123,7 +123,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     }
   }
 
-  private suspend fun createTab(builder: TerminalTabBuilderImpl): TerminalToolWindowTab = withContext(Dispatchers.UI) {
+  private fun createTab(builder: TerminalTabBuilderImpl): TerminalToolWindowTab {
     val toolWindow = getToolWindow() // init tool window
 
     val tab = doCreateTab(builder)
@@ -147,24 +147,16 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     eventDispatcher.multicaster.tabCreated(tab)
 
-    tab
+    return tab
   }
 
-  private suspend fun doCreateTab(builder: TerminalTabBuilderImpl): TerminalToolWindowTab {
+  private fun doCreateTab(builder: TerminalTabBuilderImpl): TerminalToolWindowTab {
     val title = TerminalTitle()
     val tabName = builder.tabName ?: createDefaultTabName(getToolWindow())
     title.change { defaultTitle = tabName }
 
-    val backendTabId = getOrCreateBackendTabId(builder)
-    val terminal = createTerminalView(backendTabId)
-    // Ideally, the backend tab should be under the tab scope, but now it has the lifecycle of the terminal scope
-    updateBackendTabNameOnTitleChange(
-      title,
-      backendTabId,
-      project,
-      scope = terminal.coroutineScope.childScope("Backend tab name updating")
-    )
-    scheduleSessionStart(terminal, builder, backendTabId, terminal.coroutineScope)
+    val terminal = createTerminalView()
+    createBackendTabAndStartSession(terminal, title, builder)
 
     val panel = TerminalToolWindowPanel()
     panel.setContent(terminal.component)
@@ -197,18 +189,21 @@ internal class TerminalToolWindowTabsManagerImpl(
     return TerminalToolWindowTabImpl(terminal, title, content)
   }
 
-  private suspend fun getOrCreateBackendTabId(builder: TerminalTabBuilderImpl): Int {
-    return builder.backendTabId ?: withContext(Dispatchers.IO) {
-      TerminalTabsManagerApi.getInstance().createNewTerminalTab(project.projectId()).id
-    }
+  private fun createTerminalView(): TerminalViewImpl {
+    val scope = coroutineScope.childScope("Terminal")
+    return TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), null, scope)
   }
 
   @OptIn(AwaitCancellationAndInvoke::class)
-  private fun createTerminalView(backendTabId: Int): TerminalViewImpl {
-    val scope = coroutineScope.childScope("Terminal")
-    val terminal = TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), null, scope)
+  private fun createBackendTabAndStartSession(
+    terminal: TerminalViewImpl,
+    title: TerminalTitle,
+    builder: TerminalTabBuilderImpl,
+  ) = terminal.coroutineScope.launch(Dispatchers.IO) {
+    val backendTabId = builder.backendTabId
+                       ?: TerminalTabsManagerApi.getInstance().createNewTerminalTab(project.projectId()).id
 
-    scope.awaitCancellationAndInvoke(Dispatchers.IO) {
+    terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.IO) {
       // Backend terminal session tab lifecycle is not directly bound to the terminal frontend lifecycle.
       // We need to close the backend session when the terminal is closed explicitly.
       // And don't need it when a user is closing the project leaving the terminal tabs opened: to be able to reconnect back.
@@ -220,23 +215,32 @@ internal class TerminalToolWindowTabsManagerImpl(
       }
     }
 
-    return terminal
+    // Ideally, the backend tab should be under the tab scope, but now it has the lifecycle of the terminal scope
+    updateBackendTabNameOnTitleChange(
+      title,
+      backendTabId,
+      project,
+      scope = terminal.coroutineScope.childScope("Backend tab name updating")
+    )
+
+    scheduleSessionStart(terminal, builder, backendTabId)
   }
 
-  private fun scheduleSessionStart(
+  private suspend fun scheduleSessionStart(
     terminal: TerminalViewImpl,
     builder: TerminalTabBuilderImpl,
     backendTabId: Int,
-    coroutineScope: CoroutineScope,
   ) {
     if (builder.deferSessionStartUntilUiShown) {
-      // Non-cancellable because we expect it to be called only once even if the component was hidden immediately.
-      terminal.component.initOnShow("Terminal Session start", context = NonCancellable) {
-        doScheduleSessionStart(terminal, builder, backendTabId, coroutineScope, calculateSizeFromComponent = true)
+      withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
+        // Non-cancellable because we expect it to be called only once even if the component was hidden immediately.
+        terminal.component.initOnShow("Terminal Session start", context = NonCancellable) {
+          doScheduleSessionStart(terminal, builder, backendTabId, calculateSizeFromComponent = true)
+        }
       }
     }
     else {
-      doScheduleSessionStart(terminal, builder, backendTabId, coroutineScope, calculateSizeFromComponent = false)
+      doScheduleSessionStart(terminal, builder, backendTabId, calculateSizeFromComponent = false)
     }
   }
 
@@ -244,9 +248,8 @@ internal class TerminalToolWindowTabsManagerImpl(
     terminal: TerminalViewImpl,
     builder: TerminalTabBuilderImpl,
     backendTabId: Int,
-    coroutineScope: CoroutineScope,
     calculateSizeFromComponent: Boolean,
-  ) = coroutineScope.launch(Dispatchers.IO) {
+  ) = terminal.coroutineScope.launch(Dispatchers.IO) {
     if (builder.sessionId != null) {
       // Session is already started for this tab, reuse it
       connectSessionToTerminal(terminal, builder.sessionId!!, builder.portForwardingId)
@@ -272,7 +275,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       .workingDirectory(builder.workingDirectory)
 
     return if (calculateSizeFromComponent) {
-      withContext(Dispatchers.UI) {
+      withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
         TerminalUiUtils.getComponentSizeInitializedFuture(terminal.component).await()
         baseOptions.initialTermSize(terminal.size).build()
       }
@@ -286,7 +289,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     terminal: TerminalViewImpl,
     sessionId: TerminalSessionId,
     portForwardingId: TerminalPortForwardingId?,
-  ) = withContext(Dispatchers.UI) {
+  ) = withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
     val session = FrontendTerminalSession(sessionId)
     terminal.connectToSession(session)
 
@@ -319,7 +322,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       }
     }
 
-    private suspend fun restoreTabs(tabs: List<TerminalSessionTab>, manager: TerminalToolWindowTabsManagerImpl) {
+    private fun restoreTabs(tabs: List<TerminalSessionTab>, manager: TerminalToolWindowTabsManagerImpl) {
       for (tab in tabs) {
         val builder = manager.createTabBuilder() as TerminalTabBuilderImpl
         with(builder) {
@@ -417,7 +420,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       return this
     }
 
-    override suspend fun createTab(): TerminalToolWindowTab {
+    override fun createTab(): TerminalToolWindowTab {
       return createTab(this)
     }
   }

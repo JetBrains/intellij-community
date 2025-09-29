@@ -2,6 +2,7 @@ package com.intellij.terminal.frontend
 
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.ui.content.ContentManager
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -19,5 +20,6 @@ interface TerminalTabBuilder {
 
   fun contentManager(manager: ContentManager?): TerminalTabBuilder
 
-  suspend fun createTab(): TerminalToolWindowTab
+  @RequiresEdt
+  fun createTab(): TerminalToolWindowTab
 }
