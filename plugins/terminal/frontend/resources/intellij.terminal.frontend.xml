@@ -134,6 +134,19 @@
       <reference ref="Terminal.PromptStyle"/>
     </group>
 
+    <group id="TerminalToolwindowActionGroup">
+      <action id="Terminal.NewTab" class="com.intellij.terminal.frontend.action.TerminalNewTabAction">
+        <keyboard-shortcut first-keystroke="control shift T" keymap="$default"/>
+        <keyboard-shortcut first-keystroke="meta T" keymap="Mac OS X" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="meta T" keymap="Mac OS X 10.5+" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE" keymap="VSCode" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE" keymap="VSCode OSX" replace-all="true"/>
+      </action>
+      <action id="TerminalNewPredefinedSession"
+              class="com.intellij.terminal.frontend.action.TerminalNewPredefinedSessionAction"
+              icon="AllIcons.Toolbar.Expand"/>
+    </group>
+
     <group id="Terminal.ReworkedTerminalContextMenu">
       <reference ref="Terminal.Find"/>
       <reference ref="Terminal.NewTab"/>

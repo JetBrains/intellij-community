@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.action
+package com.intellij.terminal.frontend.action
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
@@ -13,8 +12,8 @@ import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 
+@ApiStatus.Internal
 open class TerminalNewTabAction : TerminalPromotedDumbAwareAction() {
-
   init {
     templatePresentation.also {
       it.setText(TerminalBundle.messagePointer("action.Terminal.NewTab.text"))
@@ -40,9 +39,5 @@ open class TerminalNewTabAction : TerminalPromotedDumbAwareAction() {
       null,
       contentManager,
     )
-  }
-
-  companion object {
-    const val ACTION_ID: String = "Terminal.NewTab"
   }
 }

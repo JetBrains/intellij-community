@@ -13,7 +13,6 @@ import com.jediterm.terminal.HyperlinkStyle;
 import com.jediterm.terminal.model.TerminalTypeAheadSettings;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.terminal.action.TerminalNewTabAction;
 
 import java.awt.*;
 import java.util.concurrent.TimeUnit;
@@ -115,7 +114,7 @@ public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSett
 
   public @NotNull TerminalActionPresentation getNewTabActionPresentation() {
     return new TerminalActionPresentation(TerminalBundle.message("action.Terminal.NewTab.text"),
-                                          getKeyStrokesByActionId(TerminalNewTabAction.ACTION_ID));
+                                          getKeyStrokesByActionId("Terminal.NewTab"));
   }
 
   public @NotNull TerminalActionPresentation getCloseTabActionPresentation() {
