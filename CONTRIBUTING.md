@@ -44,7 +44,7 @@ We strongly recommend following this commit message format:
     - `docs`, `doc`
     - `format`, `style`
 
-     Example: `[ui] typo “accross” → “across”`
+     Example: ```[ui] typo “accross” → “across”```
 
 ## Building the IDE
 
