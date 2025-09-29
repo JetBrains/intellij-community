@@ -4,7 +4,6 @@
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
-import com.intellij.ide.plugins.PluginModuleId.Companion.asPluginId
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.graph.DFSTBuilder
@@ -106,7 +105,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       loadingErrors.add(createCannotLoadError(
         descriptor = plugin,
         dependencyPluginId = disabledModuleToProblematicPlugin.get(disabledModule.moduleId)
-                             ?: disabledModule.moduleId.asPluginId(),
+                             ?: disabledModule.parent.pluginId,
         errors = emptyMap(),
         isNotifyUser = !plugin.isImplementationDetail))
     }

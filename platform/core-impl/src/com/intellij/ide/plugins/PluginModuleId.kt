@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.PluginModuleId.Companion.getId
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.ApiStatus
@@ -45,11 +44,5 @@ class PluginModuleId private constructor(val id: String) {
 
     /** shorthand for [getId] in kotlin */
     operator fun invoke(id: String): PluginModuleId = getId(id)
-
-    @Deprecated("plugin and module id namespaces are separate")
-    fun PluginId.asPluginModuleId(): PluginModuleId = getId(idString)
-
-    @Deprecated("plugin and module id namespaces are separate")
-    fun PluginModuleId.asPluginId(): PluginId = PluginId.getId(id)
   }
 }
