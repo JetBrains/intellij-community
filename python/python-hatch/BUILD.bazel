@@ -37,7 +37,7 @@ jvm_library(
     "//python/python-pyproject:pyproject",
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
-    "@lib//:io-github-z4kn4fein-semver-jvm",
+    "@lib//:io-github-z4kn4fein-semver-jvm-provided",
   ]
 )
 ### auto-generated section `build intellij.python.hatch` end
