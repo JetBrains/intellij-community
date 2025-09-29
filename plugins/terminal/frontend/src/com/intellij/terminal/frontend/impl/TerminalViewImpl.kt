@@ -22,60 +22,31 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.actions.TerminalActionUtil
-import com.intellij.terminal.frontend.TerminalBlocksDecorator
-import com.intellij.terminal.frontend.TerminalCursorPainter
-import com.intellij.terminal.frontend.TerminalEditorFactory
-import com.intellij.terminal.frontend.TerminalEventsHandler
-import com.intellij.terminal.frontend.TerminalEventsHandlerImpl
-import com.intellij.terminal.frontend.TerminalInput
-import com.intellij.terminal.frontend.TerminalKeyEncodingManager
-import com.intellij.terminal.frontend.TerminalOutputModelControllerImpl
-import com.intellij.terminal.frontend.TerminalOutputScrollingModel
-import com.intellij.terminal.frontend.TerminalOutputScrollingModelImpl
-import com.intellij.terminal.frontend.TerminalSearchController
-import com.intellij.terminal.frontend.TerminalSearchControllerListener
-import com.intellij.terminal.frontend.TerminalSearchSession
-import com.intellij.terminal.frontend.TerminalSessionController
-import com.intellij.terminal.frontend.TerminalTypeAhead
-import com.intellij.terminal.frontend.TerminalTypeAheadOutputModelController
-import com.intellij.terminal.frontend.TerminalVfsSynchronizer
+import com.intellij.terminal.frontend.*
 import com.intellij.terminal.frontend.completion.ShellDataGeneratorsExecutorReworkedImpl
 import com.intellij.terminal.frontend.completion.ShellRuntimeContextProviderReworkedImpl
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
 import com.intellij.terminal.frontend.hyperlinks.FrontendTerminalHyperlinkFacade
-import com.intellij.terminal.frontend.setupKeyEventHandling
-import com.intellij.terminal.frontend.setupMouseListener
 import com.intellij.terminal.session.TerminalHyperlinkId
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.asDisposable
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.core.util.TermSize
-import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalPanelMarker
-import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
-import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
-import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModelImpl
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
-import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
+import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.isSplitHyperlinksSupportEnabled
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputPsiFile
@@ -87,27 +58,24 @@ import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.block.ui.isTerminalOutputScrollChangingActionInProgress
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
-import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
-import java.awt.event.KeyEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import kotlin.math.min
 
 @ApiStatus.Internal
-class ReworkedTerminalView(
+class TerminalViewImpl(
   private val project: Project,
   settings: JBTerminalSystemSettingsProviderBase,
-  private val sessionFuture: CompletableFuture<TerminalSession>,
   startupFusInfo: TerminalStartupFusInfo?,
-) : TerminalContentView {
-  private val coroutineScope = terminalProjectScope(project).childScope("ReworkedTerminalView")
-
+  override val coroutineScope: CoroutineScope,
+) : TerminalView {
+  private val sessionFuture: CompletableFuture<TerminalSession> = CompletableFuture()
   private val sessionModel: TerminalSessionModel
 
   @VisibleForTesting
@@ -137,12 +105,11 @@ class ReworkedTerminalView(
     get() = terminalPanel
   override val preferredFocusableComponent: JComponent
     get() = terminalPanel.preferredFocusableComponent
+  override val size: TermSize?
+    get() = getCurEditor().calculateTerminalSize()
 
   init {
-    Disposer.register(this) {
-      coroutineScope.cancel()
-    }
-    val hyperlinkScope = coroutineScope.childScope("ReworkedTerminalView hyperlink facades")
+    val hyperlinkScope = coroutineScope.childScope("TerminalViewImpl hyperlink facades")
 
     sessionModel = TerminalSessionModelImpl()
     encodingManager = TerminalKeyEncodingManager(sessionModel, coroutineScope.childScope("TerminalKeyEncodingManager"))
@@ -156,7 +123,7 @@ class ReworkedTerminalView(
     val fusCursorPaintingListener = startupFusInfo?.let { TerminalFusCursorPainterListener(it) }
     val fusFirstOutputListener = startupFusInfo?.let { TerminalFusFirstOutputListener(it) }
 
-    alternateBufferEditor = TerminalEditorFactory.createAlternateBufferEditor(project, settings, parentDisposable = this)
+    alternateBufferEditor = TerminalEditorFactory.createAlternateBufferEditor(project, settings, coroutineScope.asDisposable())
     val alternateBufferModel = TerminalOutputModelImpl(alternateBufferEditor.document, maxOutputLength = 0)
     val alternateBufferModelController = TerminalOutputModelControllerImpl(alternateBufferModel)
     val alternateBufferEventsHandler = TerminalEventsHandlerImpl(
@@ -194,7 +161,7 @@ class ReworkedTerminalView(
       null
     }
 
-    outputEditor = TerminalEditorFactory.createOutputEditor(project, settings, parentDisposable = this)
+    outputEditor = TerminalEditorFactory.createOutputEditor(project, settings, coroutineScope.asDisposable())
     outputEditor.putUserData(TerminalInput.Companion.KEY, terminalInput)
     outputModel = TerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
 
@@ -271,11 +238,7 @@ class ReworkedTerminalView(
     )
     outputEditor.putUserData(TerminalAliasesStorage.Companion.KEY, terminalAliasesStorage)
 
-    sessionFuture.thenAccept { session ->
-      controller.handleEvents(session)
-    }
-
-    configureInlineCompletion(outputEditor, outputModel, coroutineScope, parentDisposable = this)
+    configureInlineCompletion(outputEditor, outputModel, coroutineScope.childScope("TerminalInlineCompletion"))
     configureCommandCompletion(
       outputEditor,
       sessionModel,
@@ -299,36 +262,21 @@ class ReworkedTerminalView(
     outputEditor.putUserData(TerminalVfsSynchronizer.Companion.KEY, synchronizer)
   }
 
-  override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
-    controller.addTerminationCallback(onTerminated, parentDisposable)
+  fun connectToSession(session: TerminalSession) {
+    sessionFuture.complete(session)
+    controller.handleEvents(session)
   }
 
-  override fun sendCommandToExecute(shellCommand: String) {
-    val newLineBytes = encodingManager.getCode(KeyEvent.VK_ENTER, 0)!!
-    // TODO: should we always use UTF8?
-    val bytes = shellCommand.toByteArray(Charsets.UTF_8) + newLineBytes
-    terminalInput.sendBytes(bytes)
+  override fun addTerminationCallback(parentDisposable: Disposable, callback: () -> Unit) {
+    controller.addTerminationCallback(callback, parentDisposable)
   }
 
-  override fun getText(): CharSequence {
-    return getCurEditor().document.immutableCharSequence
-  }
-
-  override fun getCurrentDirectory(): String? {
-    return sessionModel.terminalState.value.currentDirectory
-  }
-
-  override fun getTerminalSize(): TermSize? {
-    return getCurEditor().calculateTerminalSize()
-  }
-
-  override fun getTerminalSizeInitializedFuture(): CompletableFuture<*> {
-    return TerminalUiUtils.getComponentSizeInitializedFuture(component)
-  }
-
-  override fun isFocused(): Boolean {
-    return component.hasFocus()
-  }
+  //override fun sendCommandToExecute(shellCommand: String) {
+  //  val newLineBytes = encodingManager.getCode(KeyEvent.VK_ENTER, 0)!!
+  //   TODO: should we always use UTF8?
+  //val bytes = shellCommand.toByteArray(Charsets.UTF_8) + newLineBytes
+  //terminalInput.sendBytes(bytes)
+  //}
 
   fun setTopComponent(component: JComponent, disposable: Disposable) {
     val resizeListener = object : ComponentAdapter() {
@@ -368,7 +316,7 @@ class ReworkedTerminalView(
   }
 
   private fun sendResizeEvent() {
-    val newSize = getTerminalSize() ?: return
+    val newSize = size ?: return
     terminalInput.sendResize(newSize)
   }
 
@@ -470,20 +418,14 @@ class ReworkedTerminalView(
     }
   }
 
-  override fun dispose() {}
-
-  override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
-    error("connectToTty is not supported in ReworkedTerminalView")
-  }
-
-  private fun configureInlineCompletion(editor: EditorEx, model: TerminalOutputModel, coroutineScope: CoroutineScope, parentDisposable: Disposable) {
+  private fun configureInlineCompletion(editor: EditorEx, model: TerminalOutputModel, coroutineScope: CoroutineScope) {
     InlineCompletion.install(editor, coroutineScope)
     // Inline completion handler needs to be manually disposed
-    Disposer.register(parentDisposable) {
+    Disposer.register(coroutineScope.asDisposable()) {
       InlineCompletion.remove(editor)
     }
 
-    model.addListener(parentDisposable, object : TerminalOutputModelListener {
+    model.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
       var commandText: String? = null
       var cursorPosition: Int? = null
 

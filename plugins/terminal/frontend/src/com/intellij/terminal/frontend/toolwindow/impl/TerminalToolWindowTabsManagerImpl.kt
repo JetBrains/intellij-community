@@ -206,7 +206,7 @@ internal class TerminalToolWindowTabsManagerImpl(
   @OptIn(AwaitCancellationAndInvoke::class)
   private fun createTerminalView(backendTabId: Int): TerminalViewImpl {
     val scope = coroutineScope.childScope("Terminal")
-    val terminal = TerminalViewImpl(scope)
+    val terminal = TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), null, scope)
 
     scope.awaitCancellationAndInvoke(Dispatchers.IO) {
       // Backend terminal session tab lifecycle is not directly bound to the terminal frontend lifecycle.

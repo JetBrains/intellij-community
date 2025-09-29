@@ -17,7 +17,7 @@ interface TerminalView {
 
   val size: TermSize?
 
-  fun addTerminationCallback(parentDisposable: Disposable, callback: Runnable)
+  fun addTerminationCallback(parentDisposable: Disposable, callback: () -> Unit)
 
   // todo
 }

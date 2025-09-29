@@ -13,39 +13,41 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.completion.spec.ShellCommandSpec
-import com.intellij.terminal.frontend.impl.ReworkedTerminalView
 import com.intellij.terminal.frontend.TimedKeyEvent
 import com.intellij.terminal.frontend.completion.TerminalLookupPrefixUpdater
+import com.intellij.terminal.frontend.impl.TerminalViewImpl
 import com.intellij.terminal.session.TerminalBlocksModelState
 import com.intellij.terminal.session.TerminalOutputBlock
-import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.tests.block.util.TestCommandSpecsProvider
 import com.intellij.testFramework.ExtensionTestUtil
+import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.junit.Assume
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.VK_UNDEFINED
-import java.util.concurrent.CompletableFuture
-import kotlin.text.iterator
 import kotlin.time.TimeSource
 
 class TerminalCompletionFixture(val project: Project, val testRootDisposable: Disposable) {
 
-  private val view: ReworkedTerminalView
+  private val view: TerminalViewImpl
 
   val outputModel: TerminalOutputModel
     get() = view.outputModel
 
   init {
-    val sessionFuture: CompletableFuture<TerminalSession> = CompletableFuture<TerminalSession>()
-    view = ReworkedTerminalView(project, JBTerminalSystemSettingsProvider(), sessionFuture, null)
-    Disposer.register(testRootDisposable, view)
+    val terminalScope = terminalProjectScope(project).childScope("TerminalViewImpl")
+    Disposer.register(testRootDisposable) {
+      terminalScope.cancel()
+    }
+    view = TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), null, terminalScope)
     val terminalOutputBlock = TerminalOutputBlock(0, 0, 0, -1, 0, null)
     val blocksModelState = TerminalBlocksModelState(listOf(terminalOutputBlock), 0)
     view.blocksModel.restoreFromState(blocksModelState)
