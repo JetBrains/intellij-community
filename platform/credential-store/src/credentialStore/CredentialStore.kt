@@ -1,23 +1,34 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.credentialStore;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.credentialStore
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.Ephemeral
+import com.intellij.util.StaticEphemeral
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.concurrency.await
+import org.jetbrains.concurrency.runAsync
 
 /**
- * Please see <a href="https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html">Storing Sensitive Data</a>.
+ * Please see [Storing Sensitive Data](https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html).
  */
-public interface CredentialStore {
-  @Nullable Credentials get(@NotNull CredentialAttributes attributes);
+interface CredentialStore {
+  operator fun get(attributes: CredentialAttributes): Credentials?
 
-  default @Nullable String getPassword(@NotNull CredentialAttributes attributes) {
-    var credentials = get(attributes);
-    return credentials == null ? null : credentials.getPasswordAsString();
+  fun getPassword(attributes: CredentialAttributes): String? {
+    val credentials = get(attributes)
+    return credentials?.getPasswordAsString()
   }
 
-  void set(@NotNull CredentialAttributes attributes, @Nullable Credentials credentials);
+  @ApiStatus.Experimental
+  suspend fun getAsync(attributes: CredentialAttributes): Ephemeral<Credentials> =
+    ephemeral(runAsync { get(attributes) }.await() )
 
-  default void setPassword(@NotNull CredentialAttributes attributes, @Nullable String password) {
-    set(attributes, password == null ? null : new Credentials(attributes.getUserName(), password));
+  @ApiStatus.Experimental
+  suspend fun <T : Any> ephemeral(value: T?): Ephemeral<T> =
+    StaticEphemeral(value)
+
+  operator fun set(attributes: CredentialAttributes, credentials: Credentials?)
+
+  fun setPassword(attributes: CredentialAttributes, password: String?) {
+    set(attributes, password?.let { Credentials(attributes.userName, it) })
   }
 }
