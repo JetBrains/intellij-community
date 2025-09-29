@@ -1,13 +1,3 @@
-### auto-generated section `local-libs` start
-load("@rules_java//java:defs.bzl", "java_import")
-
-java_import(
-  name = "jshell-frontend",
-  jars = ["jshell-frontend.jar"],
-  visibility = ["//visibility:public"]
-)
-### auto-generated section `local-libs` end
-
 ### auto-generated section `build intellij.java.execution.impl` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
@@ -47,7 +37,6 @@ jvm_library(
     "//java/java-impl:impl",
     "//java/java-indexing-api:indexing",
     "//platform/smRunner",
-    "//java/execution/jshell-protocol:java-jshell-protocol",
     "@lib//:intellij-test-discovery",
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",
@@ -76,7 +65,6 @@ jvm_library(
     "//java/execution/openapi:java-execution",
     "//platform/testRunner",
     "//platform/statistics",
-  ],
-  runtime_deps = ["//java/execution/impl:jshell-frontend"]
+  ]
 )
 ### auto-generated section `build intellij.java.execution.impl` end

@@ -4,15 +4,12 @@
   <category>JVM Tools</category>
   <vendor url="https://www.jetbrains.com/">JetBrains</vendor>
 
-  <dependencies>
-    <plugin id="com.intellij.modules.lang"/>
-    <plugin id="com.intellij.java"/>
-  </dependencies>
+  <content>
+    <module name="intellij.java.jshell.console"/>
+  </content>
 
   <description>
     Provides an interactive Java Shell (JShell) console for quick prototyping and testing of Java code directly within the IDE.
   </description>
 
-  <extensions defaultExtensionNs="com.intellij">
-  </extensions>
 </idea-plugin>

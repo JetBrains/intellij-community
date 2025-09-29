@@ -215,6 +215,10 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("package-search-api-client")
       spec.withProjectLibrary("ktor-client-logging")
       spec.withProjectLibrary("kotlinx-document-store-mvstore")
+    },
+    pluginAuto("intellij.java.jshell") { spec ->
+      spec.withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
+      spec.withModuleLibrary("jshell-frontend", "intellij.java.jshell.execution", "jshell-frontend.jar")
     }
   )
 

@@ -62,10 +62,7 @@
     <action class="com.intellij.execution.testDiscovery.actions.FindUnusedTestDataAction" id="FindUsedTestData"
             internal="true"/>
 
-    <action id="JShell.Console"
-            class="com.intellij.execution.jshell.LaunchJShellConsoleAction">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
+
 
     <action id="JavaSoftExit" class="com.intellij.execution.impl.DefaultJavaProgramRunner$SoftExitAction">
       <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Stop"/>

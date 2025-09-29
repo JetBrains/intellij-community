@@ -272,8 +272,6 @@ java/debugger/shared
 java/execution/backend
 java/execution/frontend
 java/execution/impl
-java/execution/jshell-frontend
-java/execution/jshell-protocol
 java/execution/openapi
 java/execution/shared
 java/ide-customization
@@ -880,6 +878,10 @@ plugins/javaFX/community
 plugins/javaFX/jps
 plugins/javaFX/sceneBuilder
 plugins/jshell
+plugins/jshell/console
+plugins/jshell/execution
+plugins/jshell/frontend
+plugins/jshell/protocol
 plugins/jsonpath
 plugins/junit
 plugins/junit/groovy-tests
