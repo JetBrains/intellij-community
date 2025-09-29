@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira;
 
 import com.intellij.tasks.CustomTaskState;
@@ -6,6 +6,7 @@ import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.jira.rest.api2.JiraRestApi2;
 import com.intellij.tasks.jira.rest.api20alpha1.JiraRestApi20Alpha1;
+import com.intellij.tasks.jira.rest.api3.JiraRestApiCloud3;
 import com.intellij.tasks.jira.soap.JiraLegacyApi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,10 +36,6 @@ public abstract class JiraRemoteApi {
 
   public abstract void updateTimeSpend(@NotNull LocalTask task, @NotNull String timeSpent, String comment) throws Exception;
 
-  public final @NotNull String getVersionName() {
-    return getType().getVersionName();
-  }
-
   @Override
   public final String toString() {
     return "JiraRemoteApi(" + getType().getVersionName() + ")";
@@ -64,6 +61,13 @@ public abstract class JiraRemoteApi {
       public @NotNull JiraRestApi20Alpha1 createApi(@NotNull JiraRepository repository) {
         return new JiraRestApi20Alpha1(repository);
       }
+    },
+    /**
+     * @see  JiraRestApiCloud3
+     */
+    REST_3_CLOUD("REST 3.0 Cloud") {
+      @Override
+      public @NotNull JiraRestApiCloud3 createApi(@NotNull JiraRepository repository) { return new JiraRestApiCloud3(repository); }
     };
 
     ApiType(String versionName) {
