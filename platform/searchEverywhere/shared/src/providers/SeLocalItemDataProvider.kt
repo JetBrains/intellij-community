@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.providers
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
@@ -121,8 +120,9 @@ class SeLocalItemDataProvider(
 
   fun isExtendedInfoEnabled(): Boolean {
     if (provider is SeTopHitItemsProvider) {
-      return provider.contributor is SearchEverywhereExtendedInfoProvider
-    } else if (provider is SeAdaptedItemsProvider) {
+      return provider.isExtendedInfoProvider()
+    }
+    else if (provider is SeAdaptedItemsProvider) {
       return provider.isExtendedInfoProvider()
     }
     return provider is SeExtendedInfoProvider
