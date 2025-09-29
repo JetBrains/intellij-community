@@ -2314,20 +2314,51 @@ public class Test {
       RIGHT_MARGIN = 120
     }
 
-    doTextTest("""
+    val before = """
       ///    only this should be reformated
         ///  ```java
           ///   @Annotation  public static final @Annotation2 List<String> myList = List.of("a", "b", "c");
       ///  ```
       public class Foo {
       }
-      """.trimIndent(), """
+      """.trimIndent()
+
+    val after = """
       /// only this should be reformated
       ///  ```java
       ///   @Annotation  public static final @Annotation2 List<String> myList = List.of("a", "b", "c");
       ///  ```
       public class Foo {
       }
-      """.trimIndent())
+      """.trimIndent()
+
+    doTextTest(before, after)
+    doTextTest(after, after)
+  }
+
+  fun testMarkdownTildeCodeBlock() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 120
+    }
+
+    val before = """
+      ///    only this should be reformated
+        ///  ~~~java ~
+          ///   @Annotation  public static final @Annotation2 List<String> myList = List.of("a", "b", "c");
+      ///  ~~~
+      public class Foo {
+      }
+      """.trimIndent()
+    val after = """
+      /// only this should be reformated
+      ///  ~~~java ~
+      ///   @Annotation  public static final @Annotation2 List<String> myList = List.of("a", "b", "c");
+      ///  ~~~
+      public class Foo {
+      }
+      """.trimIndent()
+    doTextTest(before, after)
+    doTextTest(after, after)
   }
 }
