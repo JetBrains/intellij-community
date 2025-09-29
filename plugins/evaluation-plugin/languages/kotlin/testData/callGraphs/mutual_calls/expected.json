@@ -1,0 +1,16 @@
+{
+  "nodes": [
+    "foo",
+    "bar"
+  ],
+  "edges": [
+    [
+      "foo",
+      "bar"
+    ],
+    [
+      "bar",
+      "foo"
+    ]
+  ]
+}
