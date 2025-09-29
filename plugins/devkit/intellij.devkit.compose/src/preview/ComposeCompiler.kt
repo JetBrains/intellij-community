@@ -67,13 +67,15 @@ internal suspend fun compileCode(fileToCompile: VirtualFile, project: Project): 
     analyzeClass(project, fileToCompile)
   } ?: return null
 
-  withContext(Dispatchers.EDT) {
-    if (moduleData.module.isDisposed) return@withContext null
-    if (!fileToCompile.isValid) return@withContext null
+  val compiled = withContext(Dispatchers.EDT) {
+    if (moduleData.module.isDisposed) return@withContext emptyList()
+    if (!fileToCompile.isValid) return@withContext emptyList()
 
     val files = compileFiles(fileToCompile, project)
-    if (files.isEmpty()) return@withContext null
+    files
   }
+
+  if (compiled.isEmpty()) return null
 
   val diskPaths = moduleData.paths
     .mapNotNull { p -> Path(p).takeIf { Files.exists(it) }?.toUri()?.toURL() }
