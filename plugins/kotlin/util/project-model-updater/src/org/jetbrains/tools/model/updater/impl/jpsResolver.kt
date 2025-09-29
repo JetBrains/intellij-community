@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater.impl
 
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.isRegularFile
 
 data class JpsRemoteRepository(val id: String, val url: String) {
   init {
@@ -32,12 +33,12 @@ data class JpsResolverSettings(val sha256ChecksumsEnabled: Boolean, val bindRepo
     }
 }
 
-fun readJpsResolverSettings(communityRoot: File, monorepoRoot: File?): JpsResolverSettings {
+fun readJpsResolverSettings(communityRoot: Path, monorepoRoot: Path?): JpsResolverSettings {
     val isUnderTeamcity = System.getenv("TEAMCITY_VERSION") != null
     
     println("State of JpsResolverSettings.useMavenResolver == ${JpsResolverSettings.useMavenResolver}")
 
-    // Checksums and bind repository must be set locally and committed by developer:
+    // Checksums and bind repository must be set locally and committed by a developer:
     // don't update them automatically on teamcity.
     if (
         isUnderTeamcity &&
@@ -50,7 +51,7 @@ fun readJpsResolverSettings(communityRoot: File, monorepoRoot: File?): JpsResolv
 
     val effectiveRoot = monorepoRoot ?: communityRoot
     val resolverSettingsFile = effectiveRoot.resolve(".idea").resolve("dependencyResolver.xml")
-    if (!resolverSettingsFile.isFile) return JpsResolverSettings(false, false)
+    if (!resolverSettingsFile.isRegularFile()) return JpsResolverSettings(false, false)
 
     val settingsOptions = resolverSettingsFile.readXml().rootElement.getChildren("component")
         .single { it.getAttributeValue("name") == "MavenDependencyResolverConfiguration" }

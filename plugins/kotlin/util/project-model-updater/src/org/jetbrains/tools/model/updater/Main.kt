@@ -3,8 +3,9 @@ package org.jetbrains.tools.model.updater
 
 import org.jdom.Document
 import org.jetbrains.tools.model.updater.impl.*
-import java.io.File
+import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.*
 
 class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val jpsPluginVersion: String by Preference()
@@ -55,14 +56,19 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
 
 fun main(args: Array<String>) {
     copyBootstrapArtifactsToMavenRepositoryIfExists()
-    
+
     val preferences = GeneratorPreferences.parse(args)
 
-    val communityRoot = generateSequence(File(".").canonicalFile) { it.parentFile }.first {
-        it.resolve(".idea").isDirectory && !it.resolve("community").isDirectory && it.name != "project-model-updater"
-    }.normalize()
+    val communityRoot = generateSequence(Path(".").toRealPath()) { it.parent }.first {
+        it.resolve(".idea").isDirectory() &&
+                !it.resolve("community").isDirectory() &&
+                // This file name check is needed since the project model updater might be opened as a standalone project
+                it.fileName.toString() != "project-model-updater"
+    }
 
-    val monorepoRoot = communityRoot.resolve("..").takeIf { it.resolve(".idea").isDirectory }?.normalize()
+    val monorepoRoot = communityRoot.parent.takeIf {
+        it.resolve(".idea").isDirectory()
+    }
 
     val resolverSettings = readJpsResolverSettings(communityRoot, monorepoRoot)
 
@@ -75,7 +81,7 @@ fun main(args: Array<String>) {
 
     KotlinTestsDependenciesUtil.updateChecksum(isUpToDateCheck = false)
 
-    fun processRoot(root: File, isCommunity: Boolean) {
+    fun processRoot(root: Path, isCommunity: Boolean) {
         println("Processing kotlinc libraries in root: $root")
         val libraries = generateKotlincLibraries(preferences, isCommunity)
         regenerateProjectLibraries(root.resolve(".idea"), libraries, resolverSettings)
@@ -92,11 +98,11 @@ fun main(args: Array<String>) {
     updateCoopRunConfiguration(monorepoRoot, communityRoot)
 }
 
-private fun regenerateProjectLibraries(dotIdea: File, libraries: List<JpsLibrary>, resolverSettings: JpsResolverSettings) {
+private fun regenerateProjectLibraries(dotIdea: Path, libraries: List<JpsLibrary>, resolverSettings: JpsResolverSettings) {
     val librariesDir = dotIdea.resolve("libraries")
-    librariesDir.listFiles { file -> file.name.startsWith("kotlinc_") }!!.forEach {
+    for (it in librariesDir.listDirectoryEntries("kotlinc_*")) {
         println("Removing $it")
-        it.delete()
+        it.deleteIfExists()
     }
 
     for (library in libraries) {
@@ -107,7 +113,7 @@ private fun regenerateProjectLibraries(dotIdea: File, libraries: List<JpsLibrary
     }
 }
 
-private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
+private fun cloneModuleStructure(monorepoRoot: Path, communityRoot: Path) {
     val monorepoModulesFile = monorepoRoot.resolve(".idea/modules.xml")
     val communityModulesFile = communityRoot.resolve(".idea/modules.xml")
 
@@ -127,7 +133,7 @@ private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
         xml("component", "name" to "ProjectModuleManager") {
             xml("modules") {
                 for (module in communityModules.values) {
-                    val modulePath = "\$PROJECT_DIR$/${module.path}"
+                    val modulePath = $$"$PROJECT_DIR$/$${module.path}"
                     xml("module", "fileurl" to "file://$modulePath", "filepath" to modulePath)
                 }
             }
@@ -137,7 +143,7 @@ private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
     communityModulesFile.writeText(newCommunityModulesXmlContent.render(addXmlDeclaration = true))
 }
 
-private fun updateCoopRunConfiguration(monorepoRoot: File?, communityRoot: File) {
+private fun updateCoopRunConfiguration(monorepoRoot: Path?, communityRoot: Path) {
     val runConfigurationFilePath = ".idea/runConfigurations/Kotlin_Coop__Publish_compiler_for_ide_JARs.xml"
     val communityRunConfigurationFile = communityRoot.resolve(runConfigurationFilePath)
     val originalText = communityRunConfigurationFile.readText()
@@ -168,29 +174,30 @@ internal val kotlincKotlinJpsPluginTestsVersionRegex: Regex = Regex("""kotlincKo
  * in the source code. The `KotlinGradlePluginVersions` source file can't directly read the `model.properties` file directly, since
  * the project model can be overwritten by the [main] args (see also [GeneratorPreferences.parse])
  */
-private fun updateLatestGradlePluginVersion(communityRoot: File, kotlinGradlePluginVersion: String) {
+private fun updateLatestGradlePluginVersion(communityRoot: Path, kotlinGradlePluginVersion: String) {
     val kotlinGradlePluginVersionsKt = communityRoot.resolve(
         "plugins/kotlin/gradle/gradle-java/tests.shared/test/org/jetbrains/kotlin/idea/codeInsight/gradle/KotlinGradlePluginVersions.kt"
     )
+
     updateFile(
         kotlinGradlePluginVersionsKt,
         """val latest = .*""",
-        "val latest = KotlinToolingVersion(\"$kotlinGradlePluginVersion\")"
+        "val latest = KotlinToolingVersion(\"$kotlinGradlePluginVersion\")",
     )
 }
 
-private fun updateKGPVersionForKotlinNativeTests(communityRoot: File, kotlinGradlePluginVersion: String) {
+private fun updateKGPVersionForKotlinNativeTests(communityRoot: Path, kotlinGradlePluginVersion: String) {
     val kotlinNativeVersionsKt = communityRoot.resolve(
         "plugins/kotlin/base/plugin/test/org/jetbrains/kotlin/idea/artifacts/KotlinNativeVersion.kt"
     )
     updateFile(
         kotlinNativeVersionsKt,
         """private const val kotlinGradlePluginVersion: String =.*""",
-        "private const val kotlinGradlePluginVersion: String = \"$kotlinGradlePluginVersion\""
+        "private const val kotlinGradlePluginVersion: String = \"$kotlinGradlePluginVersion\"",
     )
 }
 
-private fun updateFile(sourceFile: File, regexp: String, replacement: String) {
+private fun updateFile(sourceFile: Path, regexp: String, replacement: String) {
     val updatedFileContent = sourceFile.readText().replace(
         Regex(regexp), replacement
     )
@@ -203,14 +210,14 @@ private data class JpsModule(val name: String, val path: String, val dependencie
         get() = path.startsWith("community/")
 }
 
-private fun readModules(root: File, document: Document): Map<String, JpsModule> {
+private fun readModules(root: Path, document: Document): Map<String, JpsModule> {
     val projectModuleManagerComponent = document.rootElement.getChildren("component")
         .first { it.getAttributeValue("name") == "ProjectModuleManager" }
 
     val result = LinkedHashMap<String, JpsModule>()
 
     for (moduleEntry in projectModuleManagerComponent.getChild("modules").getChildren("module")) {
-        val modulePath = moduleEntry.getAttributeValue("filepath").removePrefix("\$PROJECT_DIR$/")
+        val modulePath = moduleEntry.getAttributeValue("filepath").removePrefix($$"$PROJECT_DIR$/")
         val moduleName = modulePath.substringAfterLast("/").removeSuffix(".iml")
 
         val moduleXml = root.resolve(modulePath).readXml()
