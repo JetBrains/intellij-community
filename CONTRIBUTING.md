@@ -15,6 +15,38 @@ Before you start, make sure you:
 - Have read:
   - [IntelliJ Coding Guidelines](https://plugins.jetbrains.com/docs/intellij/intellij-coding-guidelines.html)
   - [Contribute Code](https://www.jetbrains.com/opensource/idea/)
+  - Follow the recommended [commit message format](#commit-message-format)
+
+## Commit message format
+
+We strongly recommend following this commit message format:
+   ```
+      [<subsystem>] <YouTrack ticket ID/category keyword for non-production changes (see allowed list below)> short description
+
+      detailed description
+   ```
+   E.g.:
+   ```
+      [groovy] IDEA-125730 Declare explicit type 
+
+      Broken template should revert all its changes and move the caret back to the original position
+   ```
+
+   Avoid including links to any discussions in commit messages (Slack, https://platform.jetbrains.com/, etc.). Instead, summarize the discussion right in the commit message,
+   or create a YouTrack issue and summarize it there.
+   If the commit introduces a user-visible change, it is especially important to [create a YouTrack issue](https://jetbrains.team/blog/1GoECK1PVcf2), if needed,
+   and mention it in the commit message.
+
+  1. If the commit changes a product's distribution, always include a link to the corresponding YouTrack ticket.
+  2. If the commit does not change a product's distribution (e.g., tests, documentation, formatting, etc.), it should contain category keyword instead of ticket id.
+     Possible keywords:
+    - `tests`, `test`
+    - `cleanup`, `typo`
+    - `refactor`, `refactoring` for small refactorings (e.g., renaming a local variable, extracting private method, changes which don't affect public API signatures)
+    - `docs`, `doc`
+    - `format`, `style`
+
+     Example: `[ui] typo “accross” → “across”`
 
 ## Building the IDE
 
