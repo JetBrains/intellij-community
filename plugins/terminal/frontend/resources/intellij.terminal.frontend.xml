@@ -14,6 +14,7 @@
                     serviceImplementation="com.intellij.terminal.frontend.toolwindow.impl.TerminalToolWindowTabsManagerImpl"/>
 
     <actionPromoter implementation="com.intellij.terminal.frontend.action.SendShortcutToTerminalActionPromoter"/>
+    <selectInTarget implementation="com.intellij.terminal.frontend.impl.SelectInTerminal"/>
 
     <editorActionHandler action="Find" implementationClass="com.intellij.terminal.frontend.action.TerminalFindHandler"
                          id="terminalFind" order="first"/>
