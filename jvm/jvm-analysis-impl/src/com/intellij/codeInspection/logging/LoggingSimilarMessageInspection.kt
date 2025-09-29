@@ -75,7 +75,7 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
   ) : AbstractUastNonRecursiveVisitor() {
 
     override fun visitFile(node: UFile): Boolean {
-      val calls = collectCalls(node)
+      val calls = collectUsagesWithSuppressions(node)
       if (calls.isEmpty()) return true
       val groupedCalls: List<List<UCallExpression>> = calls.keys.groupBy { it.receiver?.tryResolve().toUElementOfType<UVariable>() }
         .values.map { group ->
@@ -175,7 +175,7 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
       return false
     }
 
-    private fun collectCalls(file: UFile): Map<UCallExpression, Boolean> {
+    private fun collectUsagesWithSuppressions(file: UFile): Map<UCallExpression, Boolean> {
       val result = mutableMapOf<UCallExpression, Boolean>()
       file.accept(object : AbstractUastVisitor() {
         override fun visitCallExpression(node: UCallExpression): Boolean {
