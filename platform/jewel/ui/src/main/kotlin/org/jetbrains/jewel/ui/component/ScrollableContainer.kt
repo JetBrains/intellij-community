@@ -49,12 +49,6 @@ private const val ID_CONTENT = "VerticallyScrollableContainer_content"
 private const val ID_VERTICAL_SCROLLBAR = "VerticallyScrollableContainer_verticalScrollbar"
 private const val ID_HORIZONTAL_SCROLLBAR = "VerticallyScrollableContainer_horizontalScrollbar"
 
-// Compose constraints are packed with limited bits per axis.
-// To ensure representability for BOTH axes simultaneously, we must keep each dimension within 15 bits.
-// 15-bit max is 0x7FFF - 1 = 32766 (since packing uses < mask comparisons).
-// Using larger values can require 16+16 bits (=32) and fail packing (limit is 31 bits total).
-private const val COMPOSE_MAX_RENDER_DIMENSION = 32_766
-
 /**
  * A vertically scrollable container that follows the standard visual styling.
  *
@@ -775,41 +769,15 @@ private fun ScrollableContainerImpl(
 
         val verticalScrollbarPlaceable =
             if (accountForVerticalScrollbar) {
-                val vMaxHeight = (incomingConstraints.maxHeight - sizeOffsetWhenBothVisible).coerceAtLeast(0)
-                val safeVMaxHeight = vMaxHeight.coerceAtMost(COMPOSE_MAX_RENDER_DIMENSION)
-
-                // Build safe constraints for measuring the vertical scrollbar.
-                // Always provide finite, representable max bounds on BOTH axes to avoid packing errors.
-                val vOtherAxisMax =
-                    if (incomingConstraints.hasBoundedWidth) incomingConstraints.maxWidth else COMPOSE_MAX_RENDER_DIMENSION
-                val safeVOtherAxisMax = vOtherAxisMax.coerceAtMost(COMPOSE_MAX_RENDER_DIMENSION).coerceAtLeast(0)
-
-                val verticalScrollbarConstraints = Constraints(
-                    minWidth = 0,
-                    maxWidth = safeVOtherAxisMax,
-                    minHeight = 0,
-                    maxHeight = safeVMaxHeight,
-                )
+                val verticalScrollbarConstraints =
+                    Constraints.fixedHeight(incomingConstraints.maxHeight - sizeOffsetWhenBothVisible)
                 verticalScrollbarMeasurable.measure(verticalScrollbarConstraints)
             } else null
 
         val horizontalScrollbarPlaceable =
             if (accountForHorizontalScrollbar) {
-                val hMaxWidth = (incomingConstraints.maxWidth - sizeOffsetWhenBothVisible).coerceAtLeast(0)
-                val safeHMaxWidth = hMaxWidth.coerceAtMost(COMPOSE_MAX_RENDER_DIMENSION)
-
-                // Build safe constraints for measuring the horizontal scrollbar.
-                // Always provide finite, representable max bounds on BOTH axes to avoid packing errors.
-                val hOtherAxisMax =
-                    if (incomingConstraints.hasBoundedHeight) incomingConstraints.maxHeight else COMPOSE_MAX_RENDER_DIMENSION
-                val safeHOtherAxisMax = hOtherAxisMax.coerceAtMost(COMPOSE_MAX_RENDER_DIMENSION).coerceAtLeast(0)
-
-                val horizontalScrollbarConstraints = Constraints(
-                    minWidth = 0,
-                    maxWidth = safeHMaxWidth,
-                    minHeight = 0,
-                    maxHeight = safeHOtherAxisMax,
-                )
+                val horizontalScrollbarConstraints =
+                    Constraints.fixedWidth(incomingConstraints.maxWidth - sizeOffsetWhenBothVisible)
                 horizontalScrollbarMeasurable.measure(horizontalScrollbarConstraints)
             } else null
 
@@ -914,40 +882,17 @@ private fun computeContentConstraints(
             }
         } else 0
 
-    val safeMaxWidthCap = (COMPOSE_MAX_RENDER_DIMENSION - (if (isMacOs && visibility is AlwaysVisible) scrollbarWidth else 0)).coerceAtLeast(0)
-    val safeMaxHeightCap = (COMPOSE_MAX_RENDER_DIMENSION - (if (isMacOs && visibility is AlwaysVisible) scrollbarHeight else 0)).coerceAtLeast(0)
-
     return when {
         incomingConstraints.hasBoundedWidth && incomingConstraints.hasBoundedHeight -> {
             Constraints(minWidth = minWidth(), maxWidth = maxWidth(), minHeight = minHeight(), maxHeight = maxHeight())
         }
         !incomingConstraints.hasBoundedWidth && incomingConstraints.hasBoundedHeight -> {
-            // Cap width to a finite, representable value to satisfy scrollable container checks.
-            Constraints(
-                minWidth = minWidth(),
-                maxWidth = safeMaxWidthCap,
-                minHeight = minHeight(),
-                maxHeight = maxHeight(),
-            )
+            incomingConstraints.copy(minHeight = minHeight(), maxHeight = maxHeight())
         }
         incomingConstraints.hasBoundedWidth && !incomingConstraints.hasBoundedHeight -> {
-            // Cap height to a finite, representable value to satisfy scrollable container checks.
-            Constraints(
-                minWidth = minWidth(),
-                maxWidth = maxWidth(),
-                minHeight = minHeight(),
-                maxHeight = safeMaxHeightCap,
-            )
+            incomingConstraints.copy(minWidth = minWidth(), maxWidth = maxWidth())
         }
-        else -> {
-            // Both axes are unbounded: cap both.
-            Constraints(
-                minWidth = minWidth(),
-                maxWidth = safeMaxWidthCap,
-                minHeight = minHeight(),
-                maxHeight = safeMaxHeightCap,
-            )
-        }
+        else -> incomingConstraints
     }
 }
 
