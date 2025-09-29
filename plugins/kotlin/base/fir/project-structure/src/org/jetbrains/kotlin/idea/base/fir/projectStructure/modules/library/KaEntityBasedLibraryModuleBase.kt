@@ -38,11 +38,7 @@ abstract class KaEntityBasedLibraryModuleBase<E : WorkspaceEntityWithSymbolicId,
 
     override val directDependsOnDependencies: List<KaModule> get() = emptyList()
     override val directFriendDependencies: List<KaModule> get() = emptyList()
-
-    @OptIn(KaImplementationDetail::class)
-    override val directRegularDependencies: List<KaModule>
-        // should be empty, mitigation of KT-74010
-        get() = listOf(KaBuiltinsModuleImpl(targetPlatform, project))
+    override val directRegularDependencies: List<KaModule> get() = emptyList()
 
     override val transitiveDependsOnDependencies: List<KaModule> get() = emptyList()
 }
