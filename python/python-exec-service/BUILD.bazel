@@ -40,6 +40,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
+    "//platform/remote-servers/impl",
   ]
 )
 
@@ -74,6 +75,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
+    "//platform/remote-servers/impl",
   ]
 )
 ### auto-generated section `build intellij.python.community.execService` end
