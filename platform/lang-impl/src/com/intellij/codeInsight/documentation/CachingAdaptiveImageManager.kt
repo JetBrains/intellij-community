@@ -18,12 +18,13 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.ui.svg.*
 import com.intellij.util.MemorySizeAware
 import com.intellij.util.io.URLUtil
-import com.intellij.util.ui.html.image.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.image.BufferedImage
 import java.io.IOException
@@ -36,7 +37,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.max
 
 @Service(Service.Level.APP)
-class CachingAdaptiveImageManagerService(val coroutineScope: CoroutineScope) : AdaptiveImagesManager, Disposable {
+internal class CachingAdaptiveImageManagerService(val coroutineScope: CoroutineScope) : AdaptiveImagesManager, Disposable {
   companion object {
     @JvmStatic
     fun getInstance(): CachingAdaptiveImageManagerService = ApplicationManager.getApplication().getService(CachingAdaptiveImageManagerService::class.java)
@@ -52,7 +53,7 @@ class CachingAdaptiveImageManagerService(val coroutineScope: CoroutineScope) : A
     svgRasterizer = ::rasterizeSVGImage,
     sourceResolver = ::adaptiveImageOriginToSource,
     timeProvider = { Milliseconds((System.nanoTime() - initialTimeNs) / 1_000_000) },
-    maxSize = determineCacheSize("doc.render.image.cache.size")
+    maxSize = determineCacheSize()
   )
 
   init {
@@ -72,7 +73,7 @@ class CachingAdaptiveImageManagerService(val coroutineScope: CoroutineScope) : A
   override fun dispose() = Unit
 }
 
-internal fun determineCacheSize(sizeRegistryKey: String): Long {
+private fun determineCacheSize(): Long {
   var memorySizeMb = 750 // default value, if something goes wrong
   try {
     memorySizeMb = VMOptions.readOption(VMOptions.MemoryKind.HEAP, true)
@@ -83,7 +84,7 @@ internal fun determineCacheSize(sizeRegistryKey: String): Long {
 
   var cacheSize = 20_000_00L // minimum value
   try {
-    cacheSize = max(cacheSize, (memorySizeMb.toLong() * 1024 * 1024 * Registry.get(sizeRegistryKey).asDouble()).toLong())
+    cacheSize = max(cacheSize, (memorySizeMb.toLong() * 1024 * 1024 * Registry.get("doc.render.image.cache.size").asDouble()).toLong())
   }
   catch (e: Throwable) {
     logger<CachingAdaptiveImageManagerService>().error("Error calculating cache size limit", e)
@@ -92,21 +93,23 @@ internal fun determineCacheSize(sizeRegistryKey: String): Long {
   return cacheSize
 }
 
+@ApiStatus.Internal
 data class VfsAdaptiveImageSource(val virtualFile: VirtualFile) : AdaptiveImageSource {
-  override fun toString() = "VfsAdaptiveImageSource(${virtualFile})"
+  override fun toString(): String = "VfsAdaptiveImageSource(${virtualFile})"
 }
 
+@ApiStatus.Internal
 data class UrlAdaptiveImageSource(val url: String) : AdaptiveImageSource {
-  override fun toString() = "UrlAdaptiveImageSource(${url})"
+  override fun toString(): String = "UrlAdaptiveImageSource(${url})"
 }
 
-internal fun getUrlData(url: URL): DataWithMimeType {
+private fun getUrlData(url: URL): DataWithMimeType {
   val connection = url.openConnection()
   val bytes = connection.getInputStream().use { it.readBytes() }
   return DataWithMimeType(bytes, connection.contentType)
 }
 
-internal fun getUrlDataCaching(urlStr: String): DataWithMimeType {
+private fun getUrlDataCaching(urlStr: String): DataWithMimeType {
   val url = URL(urlStr)
   val contentType = URLConnection.getFileNameMap().getContentTypeFor(url.path)
                     ?: return getUrlData(url)
@@ -116,13 +119,14 @@ internal fun getUrlDataCaching(urlStr: String): DataWithMimeType {
   return DataWithMimeType(bytes, contentType)
 }
 
-internal fun getVfsData(virtualFile: VirtualFile): DataWithMimeType {
+private fun getVfsData(virtualFile: VirtualFile): DataWithMimeType {
   val contentType = URLConnection.getFileNameMap().getContentTypeFor(virtualFile.name)
                     ?: throw IllegalArgumentException("Failed to get file mime type for $virtualFile")
   val bytes = virtualFile.contentsToByteArray()
   return DataWithMimeType(bytes, contentType)
 }
 
+@ApiStatus.Internal
 fun getImageSourceData(src: AdaptiveImageSource): DataWithMimeType {
   return when (src) {
     is DataUrlAdaptiveImageSource -> DataWithMimeType(src.dataUrl.data, src.dataUrl.contentType)
@@ -132,6 +136,7 @@ fun getImageSourceData(src: AdaptiveImageSource): DataWithMimeType {
   }
 }
 
+@ApiStatus.Internal
 fun adaptiveImageOriginToSource(origin: AdaptiveImageOrigin): AdaptiveImageSource? {
   return when (origin) {
     is AdaptiveImageOrigin.DataUrl -> DataUrlAdaptiveImageSource(origin.dataUrl)
@@ -157,6 +162,7 @@ fun adaptiveImageOriginToSource(origin: AdaptiveImageOrigin): AdaptiveImageSourc
  * Manages [UnloadableAdaptiveImage] and [UnloadableRasterizedImage] instances
  * All public methods should be called from the EDT thread / EDT dispatcher
  */
+@ApiStatus.Internal
 class CachingAdaptiveImageManager(
   val coroutineScope: CoroutineScope,
   val contentLoadContext: CoroutineContext = EmptyCoroutineContext,
@@ -164,10 +170,14 @@ class CachingAdaptiveImageManager(
   val contentLoader: suspend (AdaptiveImageSource) -> DataWithMimeType,
   val svgRasterizer: (SVGRasterizationConfig) -> RasterizedVectorImage,
   val sourceResolver: (AdaptiveImageOrigin) -> AdaptiveImageSource?,
-  val unloadListener: ((Unloadable<*,*>) -> Unit)? = null,
+  val unloadListener: ((Unloadable<*, *>) -> Unit)? = null,
   val timeProvider: () -> Milliseconds,
   val maxSize: Long,
 ) : AdaptiveImagesManager, MemorySizeAware, Disposable {
+
+  companion object {
+    const val RENDER_THROTTLE_MS: Long = 100L
+  }
 
   private val supervisor: CompletableJob = SupervisorJob(coroutineScope.coroutineContext.job)
 
@@ -192,7 +202,7 @@ class CachingAdaptiveImageManager(
 
     val deferred = myImagesBeingLoaded.computeIfAbsent(src) {
       coroutineScope.async(contentLoadContext + supervisor + CoroutineName("loading $src")) {
-        UnloadableAdaptiveImage(src, loadAdaptiveImage(contentLoader(src), src.toString()))
+        UnloadableAdaptiveImage(src, com.intellij.ui.svg.loadAdaptiveImage(contentLoader(src), src.toString()))
       }
     }
 
@@ -209,7 +219,7 @@ class CachingAdaptiveImageManager(
   }
 
   internal inline fun <T> withRasterizationIntention(config: SVGRasterizationConfig, block: (Deferred<UnloadableRasterizedImage>) -> T): T {
-    val intention = myRasterizationIntentions.computeIfAbsent(config) { RasterizationIntention(CompletableDeferred()) }
+    val intention = myRasterizationIntentions.getOrPut(config) { RasterizationIntention(CompletableDeferred()) }
     intention.numWaiting++
 
     try {
@@ -364,8 +374,6 @@ internal class RendererRef(r: AdaptiveImageRendererImpl, refQueue: ReferenceQueu
   var dependencies: List<VirtualFile> = emptyList()
 }
 
-const val RENDER_THROTTLE_MS = 100L
-
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class AdaptiveImageRendererImpl(
   private val coroutineScope: CoroutineScope,
@@ -519,11 +527,11 @@ internal class AdaptiveImageRendererImpl(
 
       val currentTimeMs = timeProvider().value
       val elapsedSinceLastRender = currentTimeMs - myLastSvgRasterizationTimeMs
-      if (RENDER_THROTTLE_MS > elapsedSinceLastRender && myLastSvgRasterizationTimeMs >= 0) {
+      if (CachingAdaptiveImageManager.RENDER_THROTTLE_MS > elapsedSinceLastRender && myLastSvgRasterizationTimeMs >= 0) {
         // wait for throttle delay and also watch if someone else completes rasterization of the same image
         rasterizedImage = adaptiveImageManager.withRasterizationIntention(rasterizationConfig) { intention ->
           select {
-            onTimeout(RENDER_THROTTLE_MS - elapsedSinceLastRender) { null }
+            onTimeout(CachingAdaptiveImageManager.RENDER_THROTTLE_MS - elapsedSinceLastRender) { null }
             intention.onAwait { it }
           }
         } ?: continue

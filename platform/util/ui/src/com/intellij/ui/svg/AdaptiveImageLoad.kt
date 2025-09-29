@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.ui.html.image
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.svg
 
 import com.github.weisj.jsvg.attributes.font.SVGFont
 import com.github.weisj.jsvg.geometry.size.Length
@@ -9,18 +9,20 @@ import com.github.weisj.jsvg.nodes.SVG
 import com.intellij.ui.icons.HiDPIImage
 import com.intellij.ui.icons.loadRasterImage
 import com.intellij.ui.paint.PaintUtil
-import com.intellij.ui.svg.createJSvgDocument
-import com.intellij.util.ui.SVGUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
-import com.intellij.util.ui.html.image.ImageDimension.Unit as IDUnit
+import com.intellij.ui.svg.ImageDimension.Unit as IDUnit
 
+@ApiStatus.Internal
 class DataWithMimeType(val data: ByteArray, val contentType: String)
 
 //TODO use svg content bounds if both width/height and viewBox are not specified
-const val DEFAULT_SVG_WIDTH = 40f
-const val DEFAULT_SVG_HEIGHT = 40f
+private const val DEFAULT_SVG_WIDTH = 40f
+private const val DEFAULT_SVG_HEIGHT = 40f
+
+private const val ESTIMATED_SVG_MEMORY_PER_SRC_BYTE = 48L
 
 internal fun loadSvg(data: ByteArray, src: String): LoadedSVGImage {
   val svg = createJSvgDocument(data)
@@ -29,9 +31,9 @@ internal fun loadSvg(data: ByteArray, src: String): LoadedSVGImage {
   return LoadedSVGImage(src, svg, dimensions, estimatedMemoryConsumption)
 }
 
-internal fun getSvgDimensions(svg: SVG): ImageDimensions {
-  val viewBox = SVGUtil.getViewBox(svg)
-  val aspectRatio = if (viewBox != null && viewBox.height > 0f) {
+private fun getSvgDimensions(svg: SVG): ImageDimensions {
+  val viewBox = SvgViewBox(svg)
+  val aspectRatio = if (viewBox.height > 0f) {
     viewBox.width / viewBox.height
   }
   else 0f
@@ -48,7 +50,7 @@ internal fun getSvgDimensions(svg: SVG): ImageDimensions {
       ImageDimension(width.unit, width.value / aspectRatio)
     }
     else {
-      ImageDimension(ImageDimension.Unit.PX, DEFAULT_SVG_HEIGHT)
+      ImageDimension(IDUnit.PX, DEFAULT_SVG_HEIGHT)
     }
   }
   else if (svg.height.isSpecified) {
@@ -57,11 +59,11 @@ internal fun getSvgDimensions(svg: SVG): ImageDimensions {
       ImageDimension(height.unit, height.value * aspectRatio)
     }
     else {
-      ImageDimension(ImageDimension.Unit.PX, DEFAULT_SVG_WIDTH)
+      ImageDimension(IDUnit.PX, DEFAULT_SVG_WIDTH)
     }
   }
   else {
-    if (viewBox != null && viewBox.width > 0 && viewBox.height > 0) {
+    if (viewBox.width > 0 && viewBox.height > 0) {
       width = ImageDimension(IDUnit.PX, viewBox.width)
       height = ImageDimension(IDUnit.PX, viewBox.height)
     }
@@ -78,28 +80,27 @@ internal fun getSvgDimensions(svg: SVG): ImageDimensions {
     fallbackWidth = width.value
     fallbackHeight = height.value
   } else {
-    fallbackWidth = viewBox?.width ?: DEFAULT_SVG_WIDTH
-    fallbackHeight = viewBox?.width ?: DEFAULT_SVG_HEIGHT
+    fallbackWidth = viewBox.width.takeIf { it > 0 } ?: DEFAULT_SVG_WIDTH
+    fallbackHeight = viewBox.width.takeIf { it > 0} ?: DEFAULT_SVG_HEIGHT
   }
 
   return ImageDimensions(width, height, FloatDimensions(fallbackWidth, fallbackHeight))
 }
 
-internal fun svgLengthToImageDimension(svgLength: Length): ImageDimension {
+private fun svgLengthToImageDimension(svgLength: Length): ImageDimension {
   when (svgLength.unit()) {
-    Unit.PX, Unit.Raw -> return ImageDimension(ImageDimension.Unit.PX, svgLength.raw())
-    Unit.EM -> return ImageDimension(ImageDimension.Unit.EM, svgLength.raw())
-    Unit.EX -> return ImageDimension(ImageDimension.Unit.EX, svgLength.raw())
-    Unit.PERCENTAGE -> return ImageDimension(ImageDimension.Unit.PERCENTAGE, svgLength.raw())
+    Unit.PX, Unit.Raw -> return ImageDimension(IDUnit.PX, svgLength.raw())
+    Unit.EM -> return ImageDimension(IDUnit.EM, svgLength.raw())
+    Unit.EX -> return ImageDimension(IDUnit.EX, svgLength.raw())
+    Unit.PERCENTAGE -> return ImageDimension(IDUnit.PERCENTAGE, svgLength.raw())
     else -> {
       val measureContext = MeasureContext(16f, 16f, 10f, 10f)
-      return ImageDimension(ImageDimension.Unit.PX, svgLength.resolveLength(measureContext))
+      return ImageDimension(IDUnit.PX, svgLength.resolveLength(measureContext))
     }
   }
 }
 
-const val ESTIMATED_SVG_MEMORY_PER_SRC_BYTE = 48L
-
+@ApiStatus.Internal
 fun rasterizeSVGImage(config: SVGRasterizationConfig): RasterizedVectorImage {
   val img = HiDPIImage(config.scale.toDouble(), config.logicalWidth.toDouble(), config.logicalHeight.toDouble(), BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.FLOOR)
   val g = img.createUnscaledGraphics()
@@ -112,6 +113,7 @@ fun rasterizeSVGImage(config: SVGRasterizationConfig): RasterizedVectorImage {
 
 }
 
+@ApiStatus.Internal
 fun loadAdaptiveImage(dataWithMimeType: DataWithMimeType, src: String): LoadedAdaptiveImage {
   when (dataWithMimeType.contentType) {
     "image/svg+xml" -> return loadSvg(dataWithMimeType.data, src)
@@ -119,8 +121,8 @@ fun loadAdaptiveImage(dataWithMimeType: DataWithMimeType, src: String): LoadedAd
       val rasterImage = loadRasterImage(ByteArrayInputStream(dataWithMimeType.data))
       val rasterWidth = rasterImage.width.toFloat()
       val rasterHeight = rasterImage.height.toFloat()
-      val width = ImageDimension(ImageDimension.Unit.PX, rasterWidth)
-      val height = ImageDimension(ImageDimension.Unit.PX, rasterHeight)
+      val width = ImageDimension(IDUnit.PX, rasterWidth)
+      val height = ImageDimension(IDUnit.PX, rasterHeight)
       val memorySize = rasterImage.width.toLong() * rasterImage.height * 4
       val dimensions = ImageDimensions(width, height, FloatDimensions(rasterWidth, rasterHeight))
       return LoadedRasterImage(rasterImage, dimensions, memorySize)

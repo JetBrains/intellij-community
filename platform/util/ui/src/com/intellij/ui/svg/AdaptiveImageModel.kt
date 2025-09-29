@@ -1,17 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.ui.html.image
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.svg
 
 import com.github.weisj.jsvg.nodes.SVG
 import com.intellij.ui.icons.HiDPIImage
 import com.intellij.util.DataUrl
 import com.intellij.util.MemorySizeAware
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.image.BufferedImage
 import java.lang.ref.ReferenceQueue
 import java.lang.ref.WeakReference
-import java.util.LinkedHashMap
-import kotlin.coroutines.CoroutineContext
 
 /**
  * Versatile image wrapper which supports:
@@ -21,62 +20,78 @@ import kotlin.coroutines.CoroutineContext
  *
  *  @see AdaptiveImageView
  */
+@ApiStatus.Internal
 class UnloadableAdaptiveImage(
   src: AdaptiveImageSource,
   value: LoadedAdaptiveImage
 ) : Unloadable<AdaptiveImageSource, LoadedAdaptiveImage>(src, value)
 
+@ApiStatus.Internal
 class UnloadableRasterizedImage(
   src: SVGRasterizationConfig,
   value: RasterizedVectorImage
 ) : Unloadable<SVGRasterizationConfig, RasterizedVectorImage>(src, value)
 
+@ApiStatus.Internal
 data class SVGRasterizationConfig(val svgImage: LoadedSVGImage, val logicalWidth: Float, val logicalHeight: Float, val scale: Float)
 
+@ApiStatus.Internal
 class RasterizedVectorImage(val image: HiDPIImage) : MemorySizeAware {
   override fun getMemorySize(): Long {
     return image.width.toLong() * image.height * 4 /*  assume rgba */
   }
 }
 
+@ApiStatus.Internal
 sealed class LoadedAdaptiveImage(val dimensions: ImageDimensions, private val memorySize: Long) : MemorySizeAware {
   override fun getMemorySize(): Long {
     return memorySize
   }
 }
 
+@ApiStatus.Internal
 class LoadedSVGImage(val src: String, val svgNode: SVG, dimensions: ImageDimensions, memorySize: Long) : LoadedAdaptiveImage(dimensions, memorySize)
 
+@ApiStatus.Internal
 class LoadedRasterImage(val image: BufferedImage, dimensions: ImageDimensions, memorySize: Long) : LoadedAdaptiveImage(dimensions, memorySize)
 
+@ApiStatus.Internal
 data class ImageDimensions(val width: ImageDimension, val height: ImageDimension, val fallBack: FloatDimensions) {
   constructor(width: Float, widthUnit: ImageDimension.Unit, height: Float, heightUnit: ImageDimension.Unit, fallbackWidth: Float, fallbackHeight: Float)
     : this(ImageDimension(widthUnit, width), ImageDimension(heightUnit, height), FloatDimensions(fallbackWidth, fallbackHeight))
 }
 
+@ApiStatus.Internal
 data class ImageDimension(val unit: Unit, val value: Float) {
   enum class Unit { PX, EM, EX, PERCENTAGE }
 }
 
+@ApiStatus.Internal
 data class FloatDimensions(val width: Float, val height: Float)
 
+@ApiStatus.Internal
 interface AdaptiveImageSource
+
+@ApiStatus.Internal
 data class DataUrlAdaptiveImageSource(val dataUrl: DataUrl) : AdaptiveImageSource {
   override fun toString() = "DataUrlAdaptiveImageSource(${dataUrl.toString(includeClassName = false, stripContent = true)})"
 }
 
+@ApiStatus.Internal
 sealed interface AdaptiveImageOrigin {
   data class Url(val url: String) : AdaptiveImageOrigin
 
   data class DataUrl(val dataUrl: com.intellij.util.DataUrl) : AdaptiveImageOrigin
 }
 
+@ApiStatus.Internal
 interface UnloadableManager<S, T : MemorySizeAware> {
   fun onUnload(u: Unloadable<S, T>)
 
   fun notifyUsed(u: Unloadable<S, T>)
 }
 
+@ApiStatus.Internal
 sealed interface AdaptiveImageRendererEvent {
 
   data class Loaded(val dimensions: ImageDimensions, val vector: Boolean) : AdaptiveImageRendererEvent
@@ -88,6 +103,7 @@ sealed interface AdaptiveImageRendererEvent {
   class Unloaded : AdaptiveImageRendererEvent
 }
 
+@ApiStatus.Internal
 interface AdaptiveImageRenderer {
   fun setOrigin(origin: AdaptiveImageOrigin?)
   fun setRenderConfig(width: Float, height: Float, scale: Float)
@@ -101,6 +117,7 @@ interface AdaptiveImageRenderer {
   fun resetError()
 }
 
+@ApiStatus.Internal
 interface AdaptiveImagesManager {
   fun createRenderer(rendererScope: CoroutineScope, eventListener: (AdaptiveImageRendererEvent) -> Unit): AdaptiveImageRenderer
 
@@ -111,6 +128,7 @@ interface AdaptiveImagesManager {
 }
 
 
+@ApiStatus.Internal
 abstract class Unloadable<S, T : MemorySizeAware>(val src: S, initialValue: T) {
   private var myValue: T? = initialValue
   private var myLastUsedNs: Long = 0
@@ -143,6 +161,7 @@ abstract class Unloadable<S, T : MemorySizeAware>(val src: S, initialValue: T) {
   }
 }
 
+@ApiStatus.Internal
 class UnloadableCache<S, V : MemorySizeAware, T : Unloadable<S, V>> : UnloadableManager<S, V>, MemorySizeAware {
   class MyReference<S, V : MemorySizeAware, T : Unloadable<S, V>>(
     val key: S,

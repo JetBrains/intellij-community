@@ -5,13 +5,22 @@ import java.util.Base64
 
 private const val DATA_URL_PREFIX = "data:"
 private const val DATA_URL_BASE64_PARAM = "base64"
-private const val DATA_URL_DEFAULT_MEDIATYPE = "text/plain;charset=US-ASCII"
+private const val DATA_URL_DEFAULT_MEDIA_TYPE = "text/plain;charset=US-ASCII"
 
-data class DataUrl(val data: ByteArray, val contentType: String, val params: List<String>) {
+interface DataUrl {
   companion object {
-    fun isDataUrl(s: String) = s.startsWith(DATA_URL_PREFIX)
-    fun parse(dataUrl: String) = parseDataUrl(dataUrl)
+    @JvmStatic fun isDataUrl(s: String): Boolean = s.startsWith(DATA_URL_PREFIX)
+    @JvmStatic fun parse(dataUrl: String): DataUrl = parseDataUrl(dataUrl)
   }
+
+  val data: ByteArray
+  val contentType: String
+  val params: List<String>
+
+  fun toString(includeClassName: Boolean, stripContent: Boolean): String
+}
+
+private data class DataUrlImpl(override val data: ByteArray, override val contentType: String, override val params: List<String>) : DataUrl {
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -33,7 +42,7 @@ data class DataUrl(val data: ByteArray, val contentType: String, val params: Lis
     return result
   }
 
-  fun toString(includeClassName: Boolean, stripContent: Boolean): String {
+  override fun toString(includeClassName: Boolean, stripContent: Boolean): String {
     val sb = StringBuilder().append(contentType)
 
     if (includeClassName) {
@@ -73,7 +82,7 @@ data class DataUrl(val data: ByteArray, val contentType: String, val params: Lis
 internal fun parseDataUrl(url: String): DataUrl {
   if (!url.startsWith(DATA_URL_PREFIX)) throw IllegalArgumentException("Not a data url: '$url'")
   val dataSeparatorIdx = url.indexOf(',').takeIf { it >= 0 } ?: throw IllegalArgumentException("Invalid data url: '$url'")
-  val mediaType = url.substring(DATA_URL_PREFIX.length, dataSeparatorIdx).takeIf { it.isNotBlank() } ?: DATA_URL_DEFAULT_MEDIATYPE
+  val mediaType = url.substring(DATA_URL_PREFIX.length, dataSeparatorIdx).takeIf { it.isNotBlank() } ?: DATA_URL_DEFAULT_MEDIA_TYPE
 
   val rawParams = mediaType.split(';')
   val contentType = rawParams[0]
@@ -81,19 +90,19 @@ internal fun parseDataUrl(url: String): DataUrl {
   val params = rawParams.subList(1, if (isBase64) rawParams.size - 1 else rawParams.size)
   val dataStr = url.substring(dataSeparatorIdx + 1)
   val data = if (isBase64) decodeBase64(dataStr) else decodeUrlEncoded(dataStr)
-  return DataUrl(data, contentType, params)
+  return DataUrlImpl(data, contentType, params)
 }
 
 
-const val ASCII_CODE_OF_0 = '0'.code
-const val ASCII_CODE_OF_9 = '9'.code
-const val ASCII_CODE_OF_A = 'A'.code
+private const val ASCII_CODE_OF_9 = '9'.code
+private const val ASCII_CODE_OF_A = 'A'.code
+
 internal fun charToHex(c: Char): Int {
-  var res = c.uppercaseChar().code - '0'.code;
+  var res = c.uppercaseChar().code - '0'.code
   if (res > 9) {
     res -= ASCII_CODE_OF_A - ASCII_CODE_OF_9 - 1
   }
-  if (res < 0 || res > 15) {
+  if (res !in 0..15) {
     throw IllegalArgumentException("Invalid hex char '$c'")
   }
 
@@ -105,14 +114,14 @@ internal fun decodeUrlEncoded(dataUrl: String): ByteArray {
   var resPos = 0
   var dataPos = 0
   while (dataPos < dataUrl.length) {
-    val cc = dataUrl.get(dataPos).code
+    val cc = dataUrl[dataPos].code
     if (cc > 127) {
       throw IllegalArgumentException("Non-ASCII character in URL-encoded data at $dataPos: '$dataUrl'")
     }
 
     if (cc == '%'.code) {
       if (dataUrl.length - dataPos < 2) throw IllegalArgumentException("Incomplete '%xx' sequence at the end if data url '$dataUrl'")
-      tmpRes[resPos++] = ((charToHex(dataUrl.get(dataPos + 1)) shl 4) or (charToHex(dataUrl.get(dataPos + 2)))).toByte()
+      tmpRes[resPos++] = ((charToHex(dataUrl[dataPos + 1]) shl 4) or (charToHex(dataUrl[dataPos + 2]))).toByte()
       dataPos += 3
     } else {
       tmpRes[resPos++] = cc.toByte()
@@ -124,5 +133,5 @@ internal fun decodeUrlEncoded(dataUrl: String): ByteArray {
 }
 
 internal fun decodeBase64(base64Str: String): ByteArray {
-  return java.util.Base64.getDecoder().decode(base64Str)
+  return Base64.getDecoder().decode(base64Str)
 }

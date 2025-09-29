@@ -11,13 +11,13 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.icons.getClassNameByIconPath
 import com.intellij.ui.icons.isReflectivePath
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.svg.AdaptiveImageView
+import com.intellij.ui.svg.FitToWidthAdaptiveImageView
 import com.intellij.util.asSafely
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extension
 import com.intellij.util.ui.html.*
 import com.intellij.util.ui.html.CssAttributesEx.BORDER_RADIUS
-import com.intellij.util.ui.html.image.AdaptiveImageView
-import com.intellij.util.ui.html.image.FitToWidthAdaptiveImageView
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.image.BufferedImage

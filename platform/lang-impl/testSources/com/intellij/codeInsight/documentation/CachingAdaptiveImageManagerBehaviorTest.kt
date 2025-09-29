@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.documentation
 
 
+import com.intellij.codeInsight.documentation.CachingAdaptiveImageManager.Companion.RENDER_THROTTLE_MS
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.rd.fill2DRoundRect
 import com.intellij.openapi.util.Disposer
@@ -9,9 +10,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.icons.HiDPIImage
+import com.intellij.ui.svg.*
 import com.intellij.util.DataUrl
-import com.intellij.util.ui.html.image.*
-import com.intellij.util.ui.html.image.ImageDimension.Unit as IDUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
 import kotlinx.coroutines.yield
@@ -24,6 +24,7 @@ import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.util.*
 import javax.imageio.ImageIO
+import com.intellij.ui.svg.ImageDimension.Unit as IDUnit
 
 @ExperimentalCoroutinesApi
 class CachingAdaptiveImageManagerBehaviorTest {
@@ -926,7 +927,7 @@ class CachingAdaptiveImageManagerBehaviorTest {
 
   @Test
   fun `least recent used items unloaded when enforcing max cache size`() = runTest {
-    val unloadedItems = mutableListOf<Unloadable<*,*>>()
+    val unloadedItems = mutableListOf<Unloadable<*, *>>()
     val manager = spy(createAdaptiveImageManager(cacheSize = 512L * 1024, unloadListener = { unloadedItems.add(it) }))
 
     // Setup: render svg and png and get actual images from the manager
@@ -1106,7 +1107,7 @@ class CachingAdaptiveImageManagerBehaviorTest {
     contentLoader: suspend (AdaptiveImageSource) -> DataWithMimeType = { getImageSourceData(it) },
     svgRasterizer: (SVGRasterizationConfig) -> RasterizedVectorImage = ::rasterizeSVGImage,
     sourceResolver: (AdaptiveImageOrigin) -> AdaptiveImageSource? = ::adaptiveImageOriginToSource,
-    unloadListener: ((Unloadable<*,*>) -> Unit)? = null,
+    unloadListener: ((Unloadable<*, *>) -> Unit)? = null,
     cacheSize: Long = 1024L * 1024,
   ): CachingAdaptiveImageManager {
     val mgr = CachingAdaptiveImageManager(

@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.ui.html.image
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.svg
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.diagnostic.thisLogger
@@ -7,7 +7,11 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.DataUrl
 import com.intellij.util.ui.StartupUiUtil
-import java.awt.*
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Container
+import java.awt.Graphics
+import java.awt.Rectangle
+import java.awt.Shape
 import java.net.URL
 import javax.swing.Icon
 import javax.swing.event.DocumentEvent
@@ -20,6 +24,7 @@ import kotlin.math.max
  * Custom view for Swing HTML facility, displays [UnloadableAdaptiveImage]s
  */
 //TODO insets, borders, alt view
+@ApiStatus.Internal
 open class AdaptiveImageView(elem: Element) : View(elem) {
   private val scaleContext: ScaleContext?
     get() = myCachedContainer?.takeIf(StartupUiUtil::isJreHiDPI)?.let(ScaleContext::create)
@@ -149,13 +154,13 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
     return try {
       max(0, value.toInt())
     }
-    catch (x: NumberFormatException) {
+    catch (_: NumberFormatException) {
       defaultValue
     }
   }
 
   private fun getImageOrigin(): AdaptiveImageOrigin? {
-    val src = element.attributes.getAttribute(HTML.Attribute.SRC) as String? ?: return null
+    val src = element.attributes.getAttribute(HTML.Attribute.SRC) as? String? ?: return null
     val filteredSrc = src.filter { !it.isWhitespace() }
     if (DataUrl.isDataUrl(filteredSrc)) {
       try {
@@ -277,13 +282,13 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
 
   companion object {
     private const val DEFAULT_BORDER = 0
-    const val DEFAULT_WIDTH = 32
-    const val DEFAULT_HEIGHT = 32
+    private const val DEFAULT_WIDTH = 32
+    private const val DEFAULT_HEIGHT = 32
 
     /**
      * Property name in [Document] where instance of [AdaptiveImagesManager] should be stored
      */
-    const val ADAPTIVE_IMAGES_MANAGER_PROPERTY = "adaptiveImagesManager"
+    const val ADAPTIVE_IMAGES_MANAGER_PROPERTY: String = "adaptiveImagesManager"
   }
 }
 
@@ -294,10 +299,10 @@ private val notLoadedIcon: Icon
   get() = AllIcons.FileTypes.Image
 
 //TODO use font size from container
-const val DEFAULT_PX_PER_EM = 10.0f
-const val DEFAULT_PX_PER_EX = 5.0f
+private const val DEFAULT_PX_PER_EM = 10.0f
+private const val DEFAULT_PX_PER_EX = 5.0f
 
-sealed interface ViewState {
+private sealed interface ViewState {
   class Idle : ViewState
   class Loaded(val dims: ImageDimensions, val isVector: Boolean) : ViewState
   class LoadError : ViewState
