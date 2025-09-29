@@ -144,7 +144,7 @@ public final class ConfigImportHelper {
     }
 
     var guessedOldConfigDirs = findConfigDirectories(newConfigDir, settings, args);
-    var bestConfigGuess = guessedOldConfigDirs.isEmpty() ? null : guessedOldConfigDirs.getFirstItem();
+    var bestConfigGuess = guessedOldConfigDirs.directories.isEmpty() ? null : guessedOldConfigDirs.directories.getFirst();
     var tempBackup = (Path)null;
     var vmOptionFileChanged = false;
     var vmOptionsLines = (List<String>)null;
@@ -218,11 +218,7 @@ public final class ConfigImportHelper {
         importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_CONFIGS_ARE_TOO_OLD;
       }
       else {
-        oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
-        if (oldConfigDirAndOldIdePath == null) {
-          logRejectedConfigDirectory(log, "Previous config directory", bestConfigGuess.first);
-          importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.CONFIG_DIRECTORY_NOT_FOUND;
-        }
+        oldConfigDirAndOldIdePath = new Pair<>(bestConfigGuess.first, null);
       }
 
       if (oldConfigDirAndOldIdePath != null) {
@@ -508,14 +504,6 @@ public final class ConfigImportHelper {
       return ContainerUtil.map(directories, it -> it.first);
     }
 
-    boolean isEmpty() {
-      return directories.isEmpty();
-    }
-
-    @NotNull Pair<Path, FileTime> getFirstItem() {
-      return directories.getFirst();
-    }
-
     public @NotNull @NlsSafe String getNameAndVersion(@NotNull Path config) {
       return getNameWithVersion(config);
     }
@@ -607,23 +595,21 @@ public final class ConfigImportHelper {
       return new ConfigDirsSearchResult(List.of(), true);
     }
 
-    var lastModified = new ArrayList<Pair<Path, FileTime>>();
+    var candidatesSorted = new ArrayList<Pair<Path, FileTime>>();
     for (var child : candidates) {
       var config = child.resolve(CONFIG);
       var candidate = Files.isDirectory(config) ? config : child;
       var max = getConfigLastModifiedTime(candidate);
-      lastModified.add(new Pair<>(candidate, max != null ? max : FileTime.fromMillis(0)));
+      candidatesSorted.add(new Pair<>(candidate, max != null ? max : FileTime.fromMillis(0)));
     }
-
-    lastModified.sort((o1, o2) -> {
+    candidatesSorted.sort((o1, o2) -> {
       var diff = o2.second.compareTo(o1.second);
       if (diff == 0) {
         diff = NaturalComparator.INSTANCE.compare(o2.first.toString(), o1.first.toString());
       }
       return diff;
     });
-
-    return new ConfigDirsSearchResult(lastModified, exact);
+    return new ConfigDirsSearchResult(candidatesSorted, exact);
   }
 
   private static boolean nameMatchesPrefixStrictly(String name, String prefix, boolean dotted) {
