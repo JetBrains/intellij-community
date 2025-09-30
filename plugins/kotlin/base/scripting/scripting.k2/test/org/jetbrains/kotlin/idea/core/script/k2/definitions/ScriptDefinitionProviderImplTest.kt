@@ -124,8 +124,8 @@ class ScriptDefinitionProviderImplTest : LightPlatformTestCase(), ExpectedPlugin
 
         settings.setSettings(
             listOf(
-                ScriptDefinitionSetting("A", false),
-                ScriptDefinitionSetting("C", false)
+                ScriptDefinitionSetting(name = "Any", definitionId = "A", enabled = false),
+                ScriptDefinitionSetting(name = "Any", definitionId = "C", enabled = false)
             )
         )
 
@@ -141,9 +141,9 @@ class ScriptDefinitionProviderImplTest : LightPlatformTestCase(), ExpectedPlugin
 
         settings.setSettings(
             listOf(
-                ScriptDefinitionSetting("B", true),
-                ScriptDefinitionSetting("A", true),
-                ScriptDefinitionSetting("C", true)
+                ScriptDefinitionSetting(name = "Any", definitionId = "B", enabled = true),
+                ScriptDefinitionSetting(name = "Any", definitionId = "A", enabled = true),
+                ScriptDefinitionSetting(name = "Any", definitionId = "C", enabled = true)
             )
         )
 
