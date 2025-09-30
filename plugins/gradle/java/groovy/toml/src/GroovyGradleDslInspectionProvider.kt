@@ -58,4 +58,9 @@ class GroovyGradleDslInspectionProvider : GradleDslInspectionProvider {
   override fun getAvoidDuplicateDependenciesInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     TODO("Not yet implemented")
   }
+
+  override fun isTaskMissingGroupAndDescriptionInspectionAvailable(file: PsiFile): Boolean = false
+  override fun getTaskMissingGroupAndDescriptionInspectionVisitor(holder: ProblemsHolder, onTheFly: Boolean): PsiElementVisitor {
+    TODO("Not yet implemented")
+  }
 }

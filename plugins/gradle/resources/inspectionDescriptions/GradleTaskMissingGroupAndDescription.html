@@ -1,0 +1,24 @@
+<html>
+<body>
+<p>Detects registration of tasks without assigning them a group or description.
+  Suggests a quick fix to add a template for group and description fields.
+</p>
+<p><b>Example:</b></p>
+<pre><code lang="kotlin">
+tasks.register("generateDocs") { // reports method 'register'
+    // Build logic to generate documentation
+}
+</code></pre>
+<p>After the quick fix is applied:</p>
+<pre><code lang="kotlin">
+tasks.register("generateDocs") {
+    group = "&lt;caret&gt;"
+    description = ""
+    // Build logic to generate documentation
+}
+</code></pre>
+
+<p>Best practice described <a
+  href="https://docs.gradle.org/current/userguide/best_practices_tasks.html#group_describe_tasks">here</a>.</p>
+</body>
+</html>
