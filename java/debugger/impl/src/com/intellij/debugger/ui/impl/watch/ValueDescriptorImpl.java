@@ -794,6 +794,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   private static class DelayedDescriptorLabelListener implements DescriptorLabelListener {
     private final DescriptorLabelListener myLabelListener;
     private volatile boolean started = false;
+    private volatile boolean fired = false;
 
     DelayedDescriptorLabelListener(DescriptorLabelListener labelListener) {
       myLabelListener = labelListener;
@@ -801,6 +802,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
     @Override
     public void labelChanged() {
+      fired = true;
       if (started) {
         myLabelListener.labelChanged();
       }
@@ -808,7 +810,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
     public void start() {
       started = true;
-      myLabelListener.labelChanged();
+      if (fired) {
+        myLabelListener.labelChanged();
+      }
     }
   }
 }
