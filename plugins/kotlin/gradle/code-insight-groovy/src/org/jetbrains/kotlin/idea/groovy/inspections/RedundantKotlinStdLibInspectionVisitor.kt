@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.groovy.inspections
 
 import com.intellij.codeInspection.CommonQuickFixBundle
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
@@ -36,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvalua
 
 private val LOG = logger<RedundantKotlinStdLibInspectionVisitor>()
 
-class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : KotlinGradleInspectionVisitor() {
+class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder) : KotlinGradleInspectionVisitor() {
     override fun visitCallExpression(callExpression: GrCallExpression) {
         if (!apiDependencyPattern.accepts(callExpression)) return
         if (callExpression.hasClosureArguments()) return // dependency declaration with a closure probably has a custom configuration
@@ -52,9 +51,7 @@ class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : Kotli
 
         val singleArgument = callExpression.expressionArguments.singleOrNull()
         if (singleArgument != null) {
-            if (isKotlinStdLibSingleString(singleArgument)
-                || isKotlinStdLibDependencyVersionCatalog(singleArgument)
-            ) {
+            if (isKotlinStdLibSingleString(singleArgument) || isKotlinStdLibDependencyVersionCatalog(singleArgument)) {
                 registerProblem(callExpression)
             }
             return
@@ -81,7 +78,6 @@ class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : Kotli
         holder.registerProblem(
             element,
             KotlinGradleCodeInsightCommonBundle.message("inspection.message.redundant.kotlin.std.lib.dependency.descriptor"),
-            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
             RemoveDependencyFix()
         )
     }

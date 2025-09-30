@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import com.intellij.codeInspection.CommonQuickFixBundle
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
@@ -21,7 +20,7 @@ import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.utils.PathUtil.KOTLIN_JAVA_STDLIB_NAME
 
-class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : KtVisitorVoid() {
+class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
     override fun visitCallExpression(expression: KtCallExpression) {
         val dependencyType = findDependencyType(expression) ?: return
         if (dependencyType == DependencyType.OTHER) return
@@ -78,7 +77,6 @@ class RedundantKotlinStdLibInspectionVisitor(val holder: ProblemsHolder) : KtVis
         holder.registerProblem(
             element,
             KotlinGradleCodeInsightCommonBundle.message("inspection.message.redundant.kotlin.std.lib.dependency.descriptor"),
-            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
             RemoveDependencyFix()
         )
     }
