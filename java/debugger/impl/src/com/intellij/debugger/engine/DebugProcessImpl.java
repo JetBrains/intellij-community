@@ -1176,6 +1176,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     requestManager.setThreadFilter(null);
   }
 
+  /**
+   * Prefer using {@link SuspendContextImpl#getManagerThread()},
+   * {@link EvaluationContextImpl#getManagerThread()},
+   * or {@link DebuggerContextImpl#getManagerThread()} instead.
+   */
   @ApiStatus.Obsolete
   @Override
   public final @NotNull DebuggerManagerThreadImpl getManagerThread() {
