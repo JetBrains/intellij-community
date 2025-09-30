@@ -22,30 +22,22 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_CORE_PLUGIN_SHORT_NAMES
 
-class KotlinAvoidApplyPluginMethodInspectionVisitor(val holder: ProblemsHolder) : KtVisitorVoid() {
+class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
     private val constEvaluator = KotlinFirConstantExpressionEvaluator()
 
     override fun visitCallExpression(expression: KtCallExpression) {
         analyze(expression) {
-            val symbol = expression.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return
-            if (symbol.callableId?.callableName?.asString() != "apply") return
-            if (symbol.callableId?.packageName != FqName("org.gradle.kotlin.dsl")) return
+            val callableId = expression.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId ?: return
+            if (callableId.callableName.asString() != "apply") return
+            if (callableId.packageName != FqName(GRADLE_KOTLIN_PACKAGE)) return
         }
 
         val pluginFixInfo = canBeFixed(expression)
+        val potentialFix = if (pluginFixInfo != null) GradleMoveApplyPluginToPluginsBlockFix(pluginFixInfo) else null
 
-        if (pluginFixInfo != null) {
-            holder.registerProblem(
-                expression,
-                GradleInspectionBundle.message("inspection.message.avoid.apply.plugin.method.descriptor"),
-                GradleMoveApplyPluginToPluginsBlockFix(pluginFixInfo)
-            )
-        } else {
-            holder.registerProblem(
-                expression,
-                GradleInspectionBundle.message("inspection.message.avoid.apply.plugin.method.descriptor")
-            )
-        }
+        holder.problem(expression, GradleInspectionBundle.message("inspection.message.avoid.apply.plugin.method.descriptor"))
+            .maybeFix(potentialFix)
+            .register()
     }
 
     /**
@@ -118,13 +110,9 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(val holder: ProblemsHolder) 
 private class GradleMoveApplyPluginToPluginsBlockFix(
     val pluginFixInfo: PluginFixInfo
 ) : KotlinModCommandQuickFix<KtCallExpression>() {
-    override fun getName(): @IntentionName String {
-        return GradleInspectionBundle.message("intention.name.move.apply.to.plugins.block")
-    }
+    override fun getName(): @IntentionName String = GradleInspectionBundle.message("intention.name.move.apply.to.plugins.block")
 
-    override fun getFamilyName(): @IntentionFamilyName String {
-        return name
-    }
+    override fun getFamilyName(): @IntentionFamilyName String = name
 
     override fun applyFix(project: Project, element: KtCallExpression, updater: ModPsiUpdater) {
         val psiFactory = KtPsiFactory(project, true)
