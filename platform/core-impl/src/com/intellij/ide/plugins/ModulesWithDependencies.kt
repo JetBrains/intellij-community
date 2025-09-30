@@ -12,8 +12,6 @@ private val LANG_PLUGIN_ALIAS_ID = PluginId.getId("com.intellij.modules.lang")
 private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
 private val RIDER_ALIAS_ID = PluginId.getId("com.intellij.modules.rider")
 private val RIDER_MODULE_ID = PluginModuleId("intellij.rider")
-private val COVERAGE_ALIAS_ID = PluginId.getId("com.intellij.modules.coverage")
-private val PLATFORM_COVERAGE_MODULE_ID = PluginModuleId("intellij.platform.coverage")
 private val JSON_ALIAS_ID = PluginId.getId("com.intellij.modules.json")
 private val JSON_BACKEND_MODULE_ID = PluginModuleId("intellij.json.backend")
 
@@ -96,9 +94,6 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
 
       if (doesDependOnPluginAlias(module, RIDER_ALIAS_ID)) {
         moduleIdToModule.get(RIDER_MODULE_ID)?.let { dependenciesCollector.add(it) }
-      }
-      if (doesDependOnPluginAlias(module, COVERAGE_ALIAS_ID)) {
-        moduleIdToModule.get(PLATFORM_COVERAGE_MODULE_ID)?.let { dependenciesCollector.add(it) }
       }
       if (doesDependOnPluginAlias(module, PluginId.getId("org.jetbrains.completion.full.line"))) {
         fullLineApiContentModules.mapNotNullTo(dependenciesCollector) { moduleIdToModule.get(it) }
