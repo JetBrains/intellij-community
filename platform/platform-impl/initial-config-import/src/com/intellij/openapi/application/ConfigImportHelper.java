@@ -443,21 +443,14 @@ public final class ConfigImportHelper {
   }
 
   private static boolean shouldAskForConfig() {
-    if (!canAskForConfig()) {
-      return false;
-    }
-    var showImportDialog = System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
-    if ("default-production".equals(showImportDialog)) {
-      return false;
-    }
-    return PluginManagerCore.isRunningFromSources() ||
-           System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null ||
-           "true".equals(showImportDialog);
+    return canAskForConfig() && (
+      System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null ||
+      Boolean.getBoolean(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY)
+    );
   }
 
   private static boolean canAskForConfig() {
-    var showImportDialog = System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
-    return !"never".equals(showImportDialog) && !AppMode.isRemoteDevHost();
+    return !("never".equals(System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY)) || AppMode.isRemoteDevHost());
   }
 
   private static @Nullable Pair<Path, Path> showDialogAndGetOldConfigPath(List<Path> guessedOldConfigDirs) {
