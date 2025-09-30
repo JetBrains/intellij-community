@@ -199,13 +199,15 @@ class Lexer(private val source: String) {
       }
       when (peek()) {
         'f', 'F' -> {
+          val value = currentLexeme()
           advance()
-          newToken(TokenType.FLOAT, currentLexeme().toFloat())
+          newToken(TokenType.FLOAT, value.toFloat())
         }
 
         'd', 'D' -> {
+          val value = currentLexeme()
           advance()
-          newToken(TokenType.DOUBLE, currentLexeme().toDouble())
+          newToken(TokenType.DOUBLE, value.toDouble())
         }
 
         else -> {
