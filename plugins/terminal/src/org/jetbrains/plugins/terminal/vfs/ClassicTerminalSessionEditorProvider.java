@@ -17,7 +17,7 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions;
 import org.jetbrains.plugins.terminal.ShellStartupOptionsKt;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
-final class TerminalSessionEditorProvider implements FileEditorProvider, DumbAware {
+final class ClassicTerminalSessionEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     return file instanceof TerminalSessionVirtualFileImpl;
@@ -32,7 +32,7 @@ final class TerminalSessionEditorProvider implements FileEditorProvider, DumbAwa
   public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)file;
     if (file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) != null) {
-      return new TerminalSessionEditor(project, terminalFile);
+      return new ClassicTerminalSessionEditor(project, terminalFile);
     }
     else {
       TerminalWidget widget = terminalFile.getTerminalWidget();
@@ -44,7 +44,7 @@ final class TerminalSessionEditorProvider implements FileEditorProvider, DumbAwa
       TerminalSessionVirtualFileImpl newSessionVirtualFile = new TerminalSessionVirtualFileImpl(terminalFile.getName(),
                                                                                                 newWidget,
                                                                                                 terminalFile.getSettingsProvider());
-      TerminalSessionEditor editor = new TerminalSessionEditor(project, newSessionVirtualFile);
+      ClassicTerminalSessionEditor editor = new ClassicTerminalSessionEditor(project, newSessionVirtualFile);
       Disposer.dispose(tempDisposable); // newWidget's parent disposable should be changed now
       return editor;
     }
@@ -52,7 +52,7 @@ final class TerminalSessionEditorProvider implements FileEditorProvider, DumbAwa
 
   @Override
   public @NotNull String getEditorTypeId() {
-    return "terminal-session-editor";
+    return "classic-terminal-session-editor";
   }
 
   @Override

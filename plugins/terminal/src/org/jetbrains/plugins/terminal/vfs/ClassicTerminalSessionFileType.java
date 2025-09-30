@@ -8,11 +8,11 @@ import org.jetbrains.plugins.terminal.TerminalIcons;
 
 import javax.swing.*;
 
-public final class TerminalSessionFileType extends FakeFileType {
+final class ClassicTerminalSessionFileType extends FakeFileType {
 
-  public static final TerminalSessionFileType INSTANCE = new TerminalSessionFileType();
+  public static final ClassicTerminalSessionFileType INSTANCE = new ClassicTerminalSessionFileType();
 
-  private TerminalSessionFileType() {
+  private ClassicTerminalSessionFileType() {
   }
 
   @Override

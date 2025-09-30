@@ -24,15 +24,15 @@ import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 
-public final class TerminalSessionEditor extends UserDataHolderBase implements FileEditor {
-  private static final Logger LOG = Logger.getInstance(TerminalSessionEditor.class);
+final class ClassicTerminalSessionEditor extends UserDataHolderBase implements FileEditor {
+  private static final Logger LOG = Logger.getInstance(ClassicTerminalSessionEditor.class);
 
   private final Project myProject;
   private final TerminalSessionVirtualFileImpl myFile;
   private final TerminalWidgetListener myListener;
   private final Disposable myWidgetParentDisposable = Disposer.newDisposable("terminal widget parent");
 
-  public TerminalSessionEditor(Project project, @NotNull TerminalSessionVirtualFileImpl terminalFile) {
+  ClassicTerminalSessionEditor(Project project, @NotNull TerminalSessionVirtualFileImpl terminalFile) {
     myProject = project;
     myFile = terminalFile;
     TerminalWidgetKt.setNewParentDisposable(terminalFile.getTerminalWidget(), myWidgetParentDisposable);

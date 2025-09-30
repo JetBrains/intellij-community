@@ -4,10 +4,12 @@ package org.jetbrains.plugins.terminal.vfs;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.testFramework.LightVirtualFile;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+@ApiStatus.Internal
 public final class TerminalSessionVirtualFileImpl extends LightVirtualFile {
   private final TerminalWidget myTerminalWidget;
   private final SettingsProvider mySettingsProvider;
@@ -17,7 +19,7 @@ public final class TerminalSessionVirtualFileImpl extends LightVirtualFile {
                                         @NotNull SettingsProvider settingsProvider) {
     myTerminalWidget = terminalWidget;
     mySettingsProvider = settingsProvider;
-    setFileType(TerminalSessionFileType.INSTANCE);
+    setFileType(ClassicTerminalSessionFileType.INSTANCE);
     setWritable(true);
     try {
       rename(null, name);
