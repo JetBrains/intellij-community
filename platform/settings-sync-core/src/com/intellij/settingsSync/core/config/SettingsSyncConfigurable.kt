@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -539,7 +540,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           userComboBoxModel.selectedItem = userProviderHolder
           return
         }
-        val syncTypeDialog = AddAccountDialog(configPanel)
+        val syncTypeDialog = AddAccountDialog(configPanel, userAccountsList)
         if (syncTypeDialog.showAndGet()) {
           val providerCode = syncTypeDialog.providerCode
           val provider = RemoteCommunicatorHolder.getProvider(providerCode) ?: return
@@ -963,7 +964,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       arrayOf(cancelAction, okAction)
   }
 
-  private class AddAccountDialog(parent: JComponent) : DialogWrapper(parent, false) {
+  private class AddAccountDialog(parent: JComponent, private val currentUserAccounts: List<UserProviderHolder>) : DialogWrapper(parent, false) {
 
     var providerCode: String = ""
     private val loginAction = object : DialogWrapperAction(message("enable.sync.choose.data.provider.login.button")) {
@@ -1006,6 +1007,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
                 browserLink(linkPair.first, linkPair.second)
               }
             }
+            val currentUserProviders = currentUserAccounts.filter { it != UserProviderHolder.ADD_ACCOUNT }.map { it.providerCode }.toSet()
 
             row {
               text(message("enable.sync.choose.data.provider.text"))
@@ -1021,7 +1023,8 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
               if (index > 0) {
                 radioButtonPanel.add(Box.createHorizontalStrut(5))
               }
-              val providerPanel = createRadioButtonPanelForProvider(provider, buttonGroup)
+              val isEnabled = provider.supportsMultipleAccounts || !currentUserProviders.contains(provider.providerCode)
+              val providerPanel = createRadioButtonPanelForProvider(provider, buttonGroup, isEnabled)
               radioButtonPanel.add(providerPanel)
             }
             row {
@@ -1036,11 +1039,14 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       arrayOf(cancelAction, loginAction)
 
 
-    private fun createRadioButtonPanelForProvider(provider: SettingsSyncCommunicatorProvider, buttonGroup: ButtonGroup): JPanel {
+    private fun createRadioButtonPanelForProvider(provider: SettingsSyncCommunicatorProvider, buttonGroup: ButtonGroup, enabled: Boolean): JPanel {
+      val alreadyLoggedInMessage = message("enable.sync.provider.already.logged.in", provider.authService.providerName)
       val radioButton = JBRadioButton().apply {
         actionCommand = provider.providerCode
+        this.isEnabled = enabled
+        if (!enabled) toolTipText = alreadyLoggedInMessage
         addActionListener {
-          if (isSelected) {
+          if (isSelected && enabled) {
             providerCode = provider.providerCode
             loginAction.isEnabled = true
           }
@@ -1055,8 +1061,18 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         }
       }
 
-      val iconLabel = provider.authService.icon?.let { JLabel(it).apply { addMouseListener(mouseListener) } }
-      val textLabel = JLabel(provider.authService.providerName).apply { addMouseListener(mouseListener) }
+      val iconLabel = provider.authService.icon?.let {
+        JLabel(it).apply {
+          if (enabled) addMouseListener(mouseListener)
+          if (!enabled) toolTipText = alreadyLoggedInMessage
+          if (!enabled) icon = IconLoader.getDisabledIcon(provider.authService.icon!!)
+        }
+      }
+      val textLabel = JLabel(provider.authService.providerName).apply {
+        if (enabled) addMouseListener(mouseListener)
+        if (!enabled) toolTipText = alreadyLoggedInMessage
+        isEnabled = enabled
+      }
       return JPanel().apply {
         layout = BoxLayout(this, BoxLayout.X_AXIS)
         isOpaque = false

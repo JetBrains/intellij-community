@@ -45,6 +45,13 @@ interface SettingsSyncCommunicatorProvider {
     get() = null
 
   /**
+   * Indicates whether the provider supports multiple user accounts.
+   * If false, it will be disabled in the "Add Account" dialog if the user is already logged in with this provider
+   */
+  val supportsMultipleAccounts: Boolean
+    get() = true
+
+  /**
    * Creates a communicator (using the login data from authService)
    */
   fun createCommunicator(userId: String): SettingsSyncRemoteCommunicator?
