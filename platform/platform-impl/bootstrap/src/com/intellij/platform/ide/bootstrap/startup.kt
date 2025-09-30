@@ -328,7 +328,9 @@ fun startApplication(
         }.getOrLogException(log)
       }
 
-      applyIslandsTheme(false)
+      withContext(Dispatchers.EDT) {
+        applyIslandsTheme(false)
+      }
       executeApplicationStarter(starter, args)
     }
     // no need to use a pool once started
