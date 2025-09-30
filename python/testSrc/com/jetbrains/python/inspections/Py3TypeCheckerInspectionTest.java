@@ -3550,18 +3550,22 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                        def bad_meth(self):
                            y1: int = <warning descr="Expected type 'int', got 'Self@Shape' instead">self</warning>
                            y2: type[Shape] = <warning descr="Expected type 'type[Shape]', got 'Self@Shape' instead">self</warning>
-                           y3: type["Circle"] = <warning descr="Expected type 'type[Circle]', got 'Self@Shape' instead">self</warning>
+                           y21: Shape = self
+                           y22: Base = self
+                           y3: type[Circle] = <warning descr="Expected type 'type[Circle]', got 'Self@Shape' instead">self</warning>
                            y4: type[Self] = <warning descr="Expected type 'type[Self@Shape]', got 'Self@Shape' instead">self</warning>
-                           y5: "Circle" = <warning descr="Expected type 'Circle', got 'Self@Shape' instead">self</warning>
+                           y5: Circle = <warning descr="Expected type 'Circle', got 'Self@Shape' instead">self</warning>
                    
                        @classmethod
                        def bad_cls(cls):
                            y1: int = <warning descr="Expected type 'int', got 'type[Self@Shape]' instead">cls</warning>
                            y2: Shape = <warning descr="Expected type 'Shape', got 'type[Self@Shape]' instead">cls</warning>
+                           y21: type[Shape] = cls
+                           y22: type[Base] = cls
                            y3: Base = <warning descr="Expected type 'Base', got 'type[Self@Shape]' instead">cls</warning>
-                           y4: "Circle" = <warning descr="Expected type 'Circle', got 'type[Self@Shape]' instead">cls</warning>
+                           y4: Circle = <warning descr="Expected type 'Circle', got 'type[Self@Shape]' instead">cls</warning>
                            y5: Self = <warning descr="Expected type 'Self@Shape', got 'type[Self@Shape]' instead">cls</warning>
-                           y6: "Circle" = <warning descr="Expected type 'Circle', got 'Self@Shape' instead">cls()</warning>
+                           y6: Circle = <warning descr="Expected type 'Circle', got 'Self@Shape' instead">cls()</warning>
                    
                    class Circle(Shape): ...
                    """);
