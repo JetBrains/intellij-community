@@ -3,6 +3,7 @@ package org.jetbrains.jewel.ui.component
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 
 /**
@@ -15,6 +16,7 @@ import org.jetbrains.jewel.foundation.ExperimentalJewelApi
  * @param name An optional name given to the instance.
  * @param onPopupVisibleChange A lambda to call when the popup visibility changes.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public class PopupManager(public val onPopupVisibleChange: (Boolean) -> Unit = {}, public val name: String? = null) {
     private val _isPopupVisible: MutableState<Boolean> = mutableStateOf(false)

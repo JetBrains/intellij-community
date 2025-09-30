@@ -1,8 +1,15 @@
 package org.jetbrains.jewel.ui.theme
 
+import androidx.compose.foundation.IndicationNodeFactory
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.node.DelegatableNode
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalColorPalette
 import org.jetbrains.jewel.foundation.theme.LocalIconData
@@ -55,6 +62,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalSliderStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
+import org.jetbrains.jewel.ui.component.styling.LocalTransparentIconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
@@ -170,6 +178,11 @@ public val JewelTheme.Companion.tooltipStyle: TooltipStyle
 public val JewelTheme.Companion.iconButtonStyle: IconButtonStyle
     @Composable @ReadOnlyComposable get() = LocalIconButtonStyle.current
 
+@get:ApiStatus.Experimental
+@ExperimentalJewelApi
+public val JewelTheme.Companion.transparentIconButtonStyle: IconButtonStyle
+    @Composable @ReadOnlyComposable get() = LocalTransparentIconButtonStyle.current
+
 public val JewelTheme.Companion.sliderStyle: SliderStyle
     @Composable @ReadOnlyComposable get() = LocalSliderStyle.current
 
@@ -186,8 +199,20 @@ public fun BaseJewelTheme(
     content: @Composable () -> Unit,
 ) {
     JewelTheme(theme, swingCompatMode) {
-        CompositionLocalProvider(LocalColorPalette provides theme.colorPalette, LocalIconData provides theme.iconData) {
+        CompositionLocalProvider(
+            LocalColorPalette provides theme.colorPalette,
+            LocalIconData provides theme.iconData,
+            LocalIndication provides NoIndication,
+        ) {
             CompositionLocalProvider(values = styling.styles(), content = content)
         }
     }
+}
+
+private object NoIndication : IndicationNodeFactory {
+    override fun create(interactionSource: InteractionSource): DelegatableNode = object : Modifier.Node() {}
+
+    override fun hashCode(): Int = System.identityHashCode(this)
+
+    override fun equals(other: Any?): Boolean = this === other
 }

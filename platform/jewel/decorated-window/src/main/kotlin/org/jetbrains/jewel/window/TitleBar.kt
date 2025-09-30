@@ -35,6 +35,8 @@ import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.NoInspectorInfo
 import androidx.compose.ui.platform.debugInspectorInfo
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -73,6 +75,7 @@ public fun DecoratedWindowScope.TitleBar(
     }
 }
 
+@Suppress("ComposableParamOrder")
 @Composable
 internal fun DecoratedWindowScope.TitleBarImpl(
     modifier: Modifier = Modifier,
@@ -129,12 +132,18 @@ internal fun DecoratedWindowScope.TitleBarImpl(
                     }
                 }
             },
-            modifier = modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             measurePolicy = rememberTitleBarMeasurePolicy(window, state, applyTitleBar),
         )
     }
 
-    Spacer(Modifier.layoutId(TITLE_BAR_BORDER_LAYOUT_ID).height(1.dp).fillMaxWidth().background(style.colors.border))
+    Spacer(
+        Modifier.layoutId(TITLE_BAR_BORDER_LAYOUT_ID)
+            .height(1.dp)
+            .fillMaxWidth()
+            .background(style.colors.border)
+            .semantics { hideFromAccessibility() }
+    )
 }
 
 internal class TitleBarMeasurePolicy(

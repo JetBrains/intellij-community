@@ -2,9 +2,7 @@ import java.net.URI
 
 plugins {
     jewel
-    `jewel-publish`
     `jewel-check-public-api`
-    `ide-version-checker`
     alias(libs.plugins.composeDesktop)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ideaPluginModule)

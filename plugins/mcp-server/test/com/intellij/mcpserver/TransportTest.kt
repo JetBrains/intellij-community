@@ -80,7 +80,7 @@ class TransportTest {
   @com.intellij.mcpserver.annotations.McpTool()
   @McpDescription("Test description")
   suspend fun test_tool() {
-    projectFromTool.complete(currentCoroutineContext().getProjectOrNull(lookForAnyProject = false))
+    projectFromTool.complete(currentCoroutineContext().projectOrNull)
   }
 
   private fun transportTest(transportHolder: TransportHolder, action: suspend (Client) -> Unit) = runBlocking {

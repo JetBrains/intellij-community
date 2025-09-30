@@ -34,8 +34,9 @@ public fun SplitLayouts(
     verticalSplitState: SplitLayoutState,
     innerSplitState: SplitLayoutState,
     onResetState: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Column(Modifier.fillMaxSize()) {
+    Column(modifier.fillMaxSize()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Reset split state:")
             Spacer(Modifier.width(8.dp))

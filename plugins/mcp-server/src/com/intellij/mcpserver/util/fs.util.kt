@@ -1,7 +1,10 @@
 package com.intellij.mcpserver.util
 
 import com.intellij.mcpserver.mcpFail
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import kotlinx.coroutines.CancellationException
@@ -13,6 +16,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.Path
 
+private val logger = fileLogger()
 /**
  * Returns the project's base directory as a [Path].
  *
@@ -38,6 +42,28 @@ fun Project.resolveInProject(pathInProject: String, throwWhenOutside: Boolean = 
   val filePath = projectDirectory.resolve(pathInProject).normalize()
   if (throwWhenOutside && !filePath.startsWith(projectDirectory)) mcpFail("Specified path '$filePath' points to the location outside of the project directory")
   return filePath
+}
+
+fun findMostRelevantProject(path: Path): Project? {
+  if (!path.isAbsolute) {
+    logger.trace { "Path is not absolute: $path" }
+    return null
+  }
+  val targetNormalizedPath = path.normalize()
+  val openProjects = ProjectManager.getInstance().openProjects
+
+  // prefer most inner directories
+  // let's say we have
+  // - frontend (a project)
+  // - frontend/common (also a separate project but in the inner dir)
+  // - frontend/common/src  <-- this path passed as `path`
+  // here we will have 2 project matches: `frontend/common` and `frontend` and better to prefer `frontend/common`
+  val pairs = openProjects.mapNotNull { project ->
+    val openProjectPath = project.basePath?.let { Path(it) }?.normalize() ?: return@mapNotNull null
+    if (targetNormalizedPath.startsWith(openProjectPath)) project to path else null
+  }.sortedByDescending { it.second.nameCount }
+  logger.trace { "Found projects for path $path: ${pairs.joinToString { it.first.basePath ?: "null"}}" }
+  return pairs.firstOrNull()?.first
 }
 
 fun Path.relativizeIfPossible(virtualFile: VirtualFile): String {

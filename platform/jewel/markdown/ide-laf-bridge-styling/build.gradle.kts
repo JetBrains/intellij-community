@@ -2,7 +2,6 @@ import java.net.URI
 
 plugins {
     jewel
-    `jewel-publish`
     `jewel-check-public-api`
     alias(libs.plugins.composeDesktop)
     alias(libs.plugins.compose.compiler)
@@ -40,9 +39,4 @@ dependencies {
     intellijPlatform { intellijIdeaCommunity(libs.versions.idea) }
 
     testImplementation(compose.desktop.uiTestJUnit4)
-}
-
-publishing.publications.named<MavenPublication>("main") {
-    val ijpTarget = project.property("ijp.target") as String
-    artifactId = "jewel-markdown-${project.name}-$ijpTarget"
 }

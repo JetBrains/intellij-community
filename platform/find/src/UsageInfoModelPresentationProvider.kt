@@ -10,7 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.usages.UsageInfoAdapter
 
 private class UsageInfoModelPresentationProvider: UsagePresentationProvider {
-  override fun getUsagePresentation(usageInfo: UsageInfoAdapter, project: Project, scope: GlobalSearchScope): UsagePresentation? {
+  override fun getUsagePresentation(usageInfo: UsageInfoAdapter, project: Project, scope: GlobalSearchScope?): UsagePresentation? {
     if (usageInfo !is UsageInfoModel) return null
     val model = usageInfo.model
     return UsagePresentation(model.presentation.map { it.textChunk() }.toTypedArray(),

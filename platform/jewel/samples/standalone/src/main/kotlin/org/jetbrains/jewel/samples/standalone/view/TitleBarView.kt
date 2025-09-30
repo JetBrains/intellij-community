@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import java.awt.Desktop
 import java.net.URI
-import org.jetbrains.jewel.samples.showcase.components.ShowcaseIcons
+import org.jetbrains.jewel.samples.showcase.ShowcaseIcons
 import org.jetbrains.jewel.samples.showcase.views.forCurrentOs
 import org.jetbrains.jewel.samples.standalone.IntUiThemes
 import org.jetbrains.jewel.samples.standalone.viewmodel.MainViewModel

@@ -5,6 +5,7 @@ import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.input.InputMode
 import javax.swing.KeyStroke
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.InternalJewelApi
 
 public interface MenuController {
@@ -29,6 +30,7 @@ public interface MenuController {
     public fun findAndExecuteShortcut(keyStroke: KeyStroke?): Boolean?
 }
 
+@ApiStatus.Internal
 @InternalJewelApi
 public class DefaultMenuController(
     override val onDismissRequest: (InputMode) -> Boolean,

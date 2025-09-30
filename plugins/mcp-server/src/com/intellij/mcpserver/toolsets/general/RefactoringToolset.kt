@@ -1,10 +1,8 @@
 package com.intellij.mcpserver.toolsets.general
 
-import com.intellij.mcpserver.McpToolset
+import com.intellij.mcpserver.*
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
-import com.intellij.mcpserver.mcpFail
-import com.intellij.mcpserver.project
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.EDT
@@ -44,6 +42,7 @@ class RefactoringToolset : McpToolset {
     @McpDescription("New name for the symbol")
     newName: String,
   ): String {
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.renaming.symbol", symbolName, newName, pathInProject))
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(pathInProject)
 
@@ -68,7 +67,7 @@ class RefactoringToolset : McpToolset {
       mcpFail("Element is not renamable: $symbolName")
     }
 
-    val renameProcessor = RenameProcessor(project, targetElement, newName, true, true)
+    val renameProcessor = readAction { RenameProcessor(project, targetElement, newName, true, true) }
 
     val usages = readAction { renameProcessor.findUsages() }
 

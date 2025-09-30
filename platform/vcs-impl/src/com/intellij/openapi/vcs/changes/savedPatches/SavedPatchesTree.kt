@@ -33,10 +33,18 @@ import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 
-class SavedPatchesTree(project: Project,
-                       private val savedPatchesProviders: List<SavedPatchesProvider<*>>,
-                       private val isProviderVisible: (SavedPatchesProvider<*>) -> Boolean,
-                       parentDisposable: Disposable) : AsyncChangesTree(project, false, false, false) {
+class SavedPatchesTree(
+  project: Project,
+  private val savedPatchesProviders: List<SavedPatchesProvider<*>>,
+  private val isProviderVisible: (SavedPatchesProvider<*>) -> Boolean,
+  parentDisposable: Disposable,
+) : AsyncChangesTree(
+  project,
+  showCheckboxes = false,
+  highlightProblems = false,
+  showConflictsNode = false,
+  withSpeedSearch = false
+) {
   @ApiStatus.Internal
   val speedSearch: SpeedSearchSupply
   override val changesTreeModel: AsyncChangesTreeModel = SavedPatchesTreeModel()

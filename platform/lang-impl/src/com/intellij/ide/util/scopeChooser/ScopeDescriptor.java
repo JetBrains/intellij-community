@@ -36,7 +36,7 @@ public class ScopeDescriptor implements ColoredItem {
   /**
    * @return true if obtaining this scope requires user interaction (e.g., UI dialog, confirmation); false if it can be resolved programmatically.
    */
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public boolean needsUserInputForScope() {
     return false;
   }

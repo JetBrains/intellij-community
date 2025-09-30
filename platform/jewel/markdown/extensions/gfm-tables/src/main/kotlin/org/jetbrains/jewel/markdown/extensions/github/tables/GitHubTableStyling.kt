@@ -7,9 +7,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class GfmTableStyling(
@@ -64,6 +66,7 @@ public class GfmTableStyling(
     public companion object
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class GfmTableColors(
@@ -105,6 +108,7 @@ public class GfmTableColors(
     public companion object
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public enum class RowBackgroundStyle {
     /**
@@ -120,6 +124,7 @@ public enum class RowBackgroundStyle {
     Striped,
 }
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class GfmTableMetrics(

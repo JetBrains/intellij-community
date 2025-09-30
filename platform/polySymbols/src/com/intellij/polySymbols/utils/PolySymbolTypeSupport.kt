@@ -3,12 +3,15 @@ package com.intellij.polySymbols.utils
 
 import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.impl.PolySymbolTypeSupportTypeReferenceData
+import com.intellij.psi.PsiElement
 
 interface PolySymbolTypeSupport {
 
   val typeProperty: PolySymbolProperty<*>?
 
   fun resolve(types: List<TypeReference>): Any?
+
+  fun <T> withEvaluationLocation(location: PsiElement?, action: () -> T): T
 
   interface TypeReference {
     val module: String?

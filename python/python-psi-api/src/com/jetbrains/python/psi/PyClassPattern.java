@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public interface PyClassPattern extends PyAstClassPattern, PyPattern, PyCaptureContext {
+public interface PyClassPattern extends PyAstClassPattern, PyPattern {
   Set<String> SPECIAL_BUILTINS = Set.of(
     "bool", "bytearray", "bytes", "dict", "float", "frozenset", "int", "list", "set", "str", "tuple");
   

@@ -255,18 +255,18 @@ private fun SliderImpl(
     width: Float,
     minHeight: Dp,
     interactionSource: MutableInteractionSource,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     Box(modifier.then(Modifier.widthIn(min = SliderMinWidth).heightIn(min = minHeight))) {
         val widthDp: Dp
         with(LocalDensity.current) { widthDp = width.toDp() }
 
         Track(
-            modifier = Modifier.fillMaxWidth(),
             style = style,
             enabled = enabled,
             positionFractionEnd = positionFraction,
             tickFractions = tickFractions,
+            modifier = Modifier.fillMaxWidth(),
         )
 
         val offset = (widthDp + style.metrics.thumbSize.width) * positionFraction
@@ -276,11 +276,11 @@ private fun SliderImpl(
 
 @Composable
 private fun Track(
-    modifier: Modifier,
     style: SliderStyle,
     enabled: Boolean,
     positionFractionEnd: Float,
     tickFractions: List<Float>,
+    modifier: Modifier = Modifier,
 ) {
     val trackStrokeWidthPx: Float
     val thumbWidthPx: Float
@@ -343,13 +343,14 @@ private fun Track(
     }
 }
 
+@Suppress("ModifierNaming")
 @Composable
 private fun BoxScope.SliderThumb(
     offset: Dp,
     interactionSource: MutableInteractionSource,
     style: SliderStyle,
     enabled: Boolean,
-    modifier: Modifier = Modifier,
+    thumbModifier: Modifier = Modifier,
 ) {
     Box(Modifier.padding(start = offset, top = style.metrics.thumbBorderWidth).align(Alignment.TopStart)) {
         var state by remember { mutableStateOf(SliderState.of(enabled)) }
@@ -376,7 +377,7 @@ private fun BoxScope.SliderThumb(
 
         val thumbSize = style.metrics.thumbSize
         Spacer(
-            modifier
+            thumbModifier
                 .size(thumbSize)
                 .hoverable(interactionSource, enabled)
                 .background(style.colors.thumbFillFor(state).value, style.thumbShape)
@@ -405,6 +406,7 @@ private fun scale(a1: Float, b1: Float, x1: Float, a2: Float, b2: Float) = lerp(
 private fun calcFraction(a: Float, b: Float, pos: Float) =
     (if (b - a == 0f) 0f else (pos - a) / (b - a)).coerceIn(0f, 1f)
 
+@Suppress("MutableStateParam") // To fix in JEWEL-922
 @Composable
 private fun CorrectValueSideEffect(
     scaleToOffset: (Float) -> Float,
@@ -469,6 +471,7 @@ private fun Modifier.sliderSemantics(
         .progressSemantics(value, valueRange, steps)
 }
 
+@Suppress("ModifierComposed") // To fix in JEWEL-921
 private fun Modifier.sliderTapModifier(
     draggableState: DraggableState,
     interactionSource: MutableInteractionSource,
@@ -530,6 +533,7 @@ private suspend fun animateToTarget(draggableState: DraggableState, current: Flo
         var latestValue = current
         Animatable(initialValue = current).animateTo(target, SliderToTickAnimation, velocity) {
             dragBy(this.value - latestValue)
+            @Suppress("AssignedValueIsNeverRead")
             latestValue = this.value
         }
     }

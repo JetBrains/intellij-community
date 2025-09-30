@@ -14,9 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.0/kotlin-compose-compiler-plugin-2.2.0.jar</arg>
-              </args>
+              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.0/kotlin-compose-compiler-plugin-2.2.0.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -40,5 +38,8 @@
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-test-assertions-core-jvm" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
   </component>
 </module>

@@ -5,6 +5,8 @@ import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.ide.util.treeView.AlphaComparator
+import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -17,6 +19,8 @@ open class TreeFileChooserSupport(val project: Project) {
   companion object {
     fun getInstance(project: Project): TreeFileChooserSupport = project.service<TreeFileChooserSupport>()
   }
+
+  open fun getDefaultComparator(): Comparator<NodeDescriptor<*>> = AlphaComparator.getInstance()
 
   open fun createRoot(settings: ViewSettings): AbstractTreeNode<*> {
     return ProjectViewProjectNode(project, settings)

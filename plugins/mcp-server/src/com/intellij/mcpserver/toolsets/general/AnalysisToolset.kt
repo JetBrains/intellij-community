@@ -4,20 +4,20 @@
 package com.intellij.mcpserver.toolsets.general
 
 import com.intellij.analysis.problemsView.ProblemsCollector
+import com.intellij.build.BuildViewProblemsService
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.mcpserver.McpServerBundle
-import com.intellij.mcpserver.McpToolset
+import com.intellij.mcpserver.*
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
-import com.intellij.mcpserver.mcpFail
-import com.intellij.mcpserver.project
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.projectDirectory
+import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleManager
@@ -25,17 +25,23 @@ import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.task.ProjectTaskContext
+import com.intellij.task.ProjectTaskManager
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import org.jetbrains.concurrency.await
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.milliseconds
+
+private val logger = logger<AnalysisToolset>()
 
 class AnalysisToolset : McpToolset {
   @McpTool
@@ -54,6 +60,7 @@ class AnalysisToolset : McpToolset {
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
   ): FileProblemsResult {
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.collecting.file.problems", filePath))
     val project = currentCoroutineContext().project
     val projectDir = project.projectDirectory
 
@@ -68,11 +75,9 @@ class AnalysisToolset : McpToolset {
         McpServerBundle.message("progress.title.analyzing.file", resolvedPath.fileName),
         cancellable = true
       ) {
+        val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
+                   ?: mcpFail("Cannot access file: $filePath")
         readAction {
-          val file = LocalFileSystem.getInstance()
-                       .refreshAndFindFileByNioFile(resolvedPath)
-                     ?: mcpFail("Cannot access file: $filePath")
-
           val document = FileDocumentManager.getInstance().getDocument(file)
                          ?: mcpFail("Cannot read file: $filePath")
 
@@ -97,22 +102,40 @@ class AnalysisToolset : McpToolset {
     )
   }
 
-  @McpTool
+  // IJPL-200264 Sometimes `build_project` tool reports as success=true and no errors, while Build toolwindow contains errors
+  //@McpTool
   @McpDescription("""
-        |Retrieves all project problems (errors, warnings, etc.) detected in the project by IntelliJ's inspections.
-        |Use this tool to get a comprehensive list of global project issues (compilation errors, inspection problems, etc.).
-        |Does not require any parameters.
-        |
-        |Returns a list of problems with text, detailed description, and group information.
+      |Triggers building of the project, waits for completion, and returns build errors.
+      |Use this tool to build the project and get detailed information about compilation errors and warnings.
+      |The build will compile all modules in the project and return structured error information.
+      |You have to use this tool after performing edits to validate if the edits are valid.
+      |
+      |If you see any unexpected errors after build you may try to call this tool again with `rebuild=true` parameter to perform full rebuild.
     """)
-  suspend fun get_project_problems(
+  suspend fun build_project(
+    @McpDescription("Whether to perform full rebuild the project")
+    rebuild: Boolean = false,
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = Constants.LONG_TIMEOUT_MILLISECONDS_VALUE,
-  ): ProjectProblemsResult {
+  ): BuildProjectResult {
+    currentCoroutineContext().reportToolActivity(if (rebuild) McpServerBundle.message("tool.activity.rebuilding.project")
+                                                 else McpServerBundle.message("tool.activity.building.project"))
     val project = currentCoroutineContext().project
+    val projectDirectory = project.projectDirectory
+
+    val callId = currentCoroutineContext().mcpCallInfo.callId
 
     val problems = CopyOnWriteArrayList<ProjectProblem>()
-    val timedOut = withTimeoutOrNull(timeout.milliseconds) {
+
+    val buildResult = withTimeoutOrNull(timeout.milliseconds) {
+      return@withTimeoutOrNull coroutineScope {
+        val task = ProjectTaskManager.getInstance(project).createAllModulesBuildTask(!rebuild, project)
+        val context = ProjectTaskContext(callId)
+        return@coroutineScope ProjectTaskManager.getInstance(project).run(context, task).await()
+      }
+    }
+
+    val problemsCollectionTimedOut = withTimeoutOrNull(timeout.milliseconds / 2) {
       withBackgroundProgress(
         project,
         McpServerBundle.message("progress.title.collecting.project.problems"),
@@ -125,19 +148,33 @@ class AnalysisToolset : McpToolset {
                             } + collector.getOtherProblems()
         for (problem in allProblems) {
           if (!coroutineContext.isActive) break
-          problems.add(ProjectProblem(
-            problemText = problem.text,
-            group = problem.group,
-            description = problem.description
-          ))
+          val problem = if (problem is com.intellij.analysis.problemsView.FileProblem) {
+            val kind = (problem as? BuildViewProblemsService.FileBuildProblem)?.event?.kind
+            ProjectProblem(
+              message = problem.text,
+              group = problem.group,
+              description = problem.description,
+              kind = kind?.name,
+              file = projectDirectory.relativizeIfPossible(problem.file),
+              line = problem.line,
+              column = problem.column,
+            )
+          }
+          else {
+            ProjectProblem(
+              message = problem.text,
+              group = problem.group,
+              description = problem.description,
+            )
+          }
+          problems.add(problem)
         }
       }
     } == null
 
-    return ProjectProblemsResult(
-      problems = problems,
-      timedOut = timedOut
-    )
+    return BuildProjectResult(timedOut = buildResult == null || problemsCollectionTimedOut,
+                              isSuccess = (buildResult != null && !buildResult.hasErrors()),
+                              problems = problems)
   }
 
   @McpTool
@@ -146,6 +183,7 @@ class AnalysisToolset : McpToolset {
     |Returns structured information about each module including name and type.
   """)
   suspend fun get_project_modules(): ProjectModulesResult {
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.listing.modules"))
     val project = currentCoroutineContext().project
 
     val modules = readAction {
@@ -167,6 +205,7 @@ class AnalysisToolset : McpToolset {
     |Returns structured information about project library names.
   """)
   suspend fun get_project_dependencies(): ProjectDependenciesResult {
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.checking.dependencies"))
     val project = currentCoroutineContext().project
 
     val dependencies = readAction {
@@ -219,24 +258,42 @@ class AnalysisToolset : McpToolset {
   data class FileProblemsResult(
     val filePath: String,
     val errors: List<FileProblem>,
+    @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
-    val timedOut: Boolean = false,
+    val timedOut: Boolean? = false,
   )
 
   @Serializable
+  enum class Kind {
+    ERROR, WARNING, INFO, STATISTICS, SIMPLE
+  }
+
+  @Serializable
   data class ProjectProblem(
-    val problemText: String,
+    val message: String,
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    val kind: String? = null,
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val group: String? = null,
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val description: String? = null,
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    val file: String? = null,
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    val line: Int? = null,
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    val column: Int? = null,
   )
 
   @Serializable
-  data class ProjectProblemsResult(
+  data class BuildProjectResult(
+    @property:McpDescription("Whether the build was successful")
+    val isSuccess: Boolean?,
+    @property:McpDescription("A list of problems encountered during the build. May be empty if the build was successful.")
     val problems: List<ProjectProblem>,
+    @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
-    val timedOut: Boolean = false,
+    val timedOut: Boolean? = false,
   )
 
   @Serializable

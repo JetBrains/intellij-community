@@ -40,6 +40,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.grazie.GrazieConfig"/>
+    <spellchecker.languages implementation="com.intellij.grazie.spellcheck.GrazieConfigNaturalLanguagesProvider"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.grazie.ide.notification.GrazieNotificationComponent"/>
 

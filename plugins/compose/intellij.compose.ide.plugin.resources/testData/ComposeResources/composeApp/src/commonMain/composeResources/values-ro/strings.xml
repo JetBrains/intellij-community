@@ -1,0 +1,16 @@
+<resources>
+  <string name="test">test</string>
+  <string-array name="test">
+    <item>item 1</item>
+    <item>item 2</item>
+    <item>item 3</item>
+  </string-array>
+  <plurals name="test">
+    <item quantity="zero">%d zero</item>
+    <item quantity="one">%d one</item>
+    <item quantity="two">%d two</item>
+    <item quantity="few">%d few</item>
+    <item quantity="many">%d many</item>
+    <item quantity="other">%d other</item>
+  </plurals>
+</resources>

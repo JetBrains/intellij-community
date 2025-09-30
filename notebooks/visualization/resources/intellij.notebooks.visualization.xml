@@ -102,6 +102,8 @@
     <notebookCellSelfManagedController
       implementation="com.intellij.notebooks.visualization.ui.cell.runCell.EditorCellRunGutterControllerFactory"/>
 
+    <notebookCellSelectionModelProvider language="Python"
+                                        implementationClass="com.intellij.notebooks.visualization.PythonCellSelectionModelProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.markdown">

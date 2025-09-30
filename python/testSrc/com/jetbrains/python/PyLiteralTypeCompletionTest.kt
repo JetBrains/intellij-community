@@ -75,6 +75,16 @@ class PyLiteralTypeCompletionTest : PyTestCase() {
     myFixture.testCompletionVariants("nestedArgumentLists.py")
   }
 
+  // PY-83039
+  fun testNoLiteralVariantsOnQualifiedReferenceInAssignmentValue() {
+    doTestCompletionVariantsDoesNotContain("noLiteralVariantsOnQualifiedReferenceInAssignmentValue.py", "\"upper\"")
+  }
+
+  // PY-83039
+  fun testNoLiteralVariantsOnQualifiedReferenceInCallArgument() {
+    doTestCompletionVariantsDoesNotContain("noLiteralVariantsOnQualifiedReferenceInCallArgument.py", "\"upper\"")
+  }
+
   override fun getTestDataPath(): String {
     return super.getTestDataPath() + "/completion/literalType"
   }
@@ -83,5 +93,11 @@ class PyLiteralTypeCompletionTest : PyTestCase() {
     val result = myFixture.getCompletionVariants(fileBefore)
     assertNotNull(result)
     assertContainsElements(result!!, *items)
+  }
+
+  private fun doTestCompletionVariantsDoesNotContain(fileBefore: String, vararg items: String) {
+    val result = myFixture.getCompletionVariants(fileBefore)
+    assertNotNull(result)
+    assertDoesntContain(result!!, *items)
   }
 }

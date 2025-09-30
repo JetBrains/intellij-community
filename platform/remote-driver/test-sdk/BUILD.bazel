@@ -20,6 +20,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "//platform/remote-driver/model",
     "//platform/util",
+    "//platform/ui.jcef",
   ],
   exports = [
     "//platform/remote-driver/client",

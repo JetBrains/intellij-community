@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.AncestorListenerAdapter;
+import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.Url;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ import javax.swing.event.AncestorEvent;
 
 public final class StartBrowserPanel {
   private JCheckBox myStartBrowserCheckBox;
-  private JComponent myBrowserComboBox;
+  private ComboboxWithBrowseButton myBrowserComboBox;
 
   private JCheckBox myStartJavaScriptDebuggerCheckBox;
 
@@ -102,7 +103,10 @@ public final class StartBrowserPanel {
 
   private void createUIComponents() {
     myBrowserSelector = new BrowserSelector();
-    myBrowserComboBox = myBrowserSelector.getMainComponent();
+    myBrowserComboBox = (ComboboxWithBrowseButton)myBrowserSelector.getMainComponent();
+    myBrowserComboBox.getComboBox().addActionListener(e -> {
+      myStartJavaScriptDebuggerCheckBox.setEnabled(isDebugAllowed(myBrowserSelector.getSelected()));
+    });
   }
 
   private static @Nullable Url virtualFileToUrl(@NotNull VirtualFile file, @NotNull Project project) {
@@ -114,7 +118,8 @@ public final class StartBrowserPanel {
     StartBrowserSettings browserSettings = new StartBrowserSettings();
     browserSettings.setSelected(isSelected());
     browserSettings.setBrowser(myBrowserSelector.getSelected());
-    browserSettings.setStartJavaScriptDebugger(myStartJavaScriptDebuggerCheckBox.isSelected());
+    boolean isDebugEnabled = myStartJavaScriptDebuggerCheckBox.isSelected() && isDebugAllowed(myBrowserSelector.getSelected());
+    browserSettings.setStartJavaScriptDebugger(isDebugEnabled);
     browserSettings.setUrl(getNormalizedUrl());
     return browserSettings;
   }
@@ -124,6 +129,11 @@ public final class StartBrowserPanel {
     setUrl(settings.getUrl());
     myStartJavaScriptDebuggerCheckBox.setSelected(settings.isStartJavaScriptDebugger());
     myBrowserSelector.setSelected(settings.getBrowser());
+  }
+
+  // we don't allow starting debug session for the default && non-chromium browsers
+  private static boolean isDebugAllowed(@Nullable WebBrowser browser) {
+    return browser != null && browser.getFamily().equals(BrowserFamily.CHROME);
   }
 
   public static void setupUrlField(@NotNull TextFieldWithBrowseButton field, final @NotNull Project project) {

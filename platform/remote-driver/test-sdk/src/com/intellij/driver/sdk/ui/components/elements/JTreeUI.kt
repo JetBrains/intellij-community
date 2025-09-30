@@ -161,7 +161,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     fixture.collapseRow(findExpandedPath(*path, fullMatch = fullMatch)?.row ?: throw PathNotFoundException(path.toList()))
   }
 
-  protected fun findExpandedPath(vararg path: String, fullMatch: Boolean): TreePathToRow? = findExpandedPaths(*path, fullMatch = fullMatch).singleOrNull()
+  fun findExpandedPath(vararg path: String, fullMatch: Boolean): TreePathToRow? = findExpandedPaths(*path, fullMatch = fullMatch).singleOrNull()
 
   private fun findExpandedPaths(
     vararg path: String,

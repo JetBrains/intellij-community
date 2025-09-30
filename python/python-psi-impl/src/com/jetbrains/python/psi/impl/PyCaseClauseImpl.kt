@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.PyPattern
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
-class PyCaseClauseImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyCaseClause {
+class PyCaseClauseImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyCaseClause, PyCaptureContext {
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
     pyVisitor.visitPyCaseClause(this)
   }

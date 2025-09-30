@@ -170,10 +170,12 @@ fun KFunction<*>.asToolDescriptor(name: String? = null, description: String? = n
     val toolDescription = description ?: this.getPreferredToolDescriptionAnnotation()?.description?.trimMargin() ?: this.name
 
   val parametersSchema = this.parametersSchema()
+  val returnTypeSchema = this.returnTypeSchema()
   return McpToolDescriptor(
         name = toolName,
         description = toolDescription,
-        inputSchema = parametersSchema)
+        inputSchema = parametersSchema,
+        outputSchema = returnTypeSchema)
 }
 
 private fun KFunction<*>.getPreferredToolAnnotation(): McpTool? {

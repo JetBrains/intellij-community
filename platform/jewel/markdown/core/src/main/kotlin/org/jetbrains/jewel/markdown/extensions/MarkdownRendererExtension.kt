@@ -1,8 +1,10 @@
 package org.jetbrains.jewel.markdown.extensions
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 
 /** An extension for the Jewel Markdown rendering engine. */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public interface MarkdownRendererExtension {
     /**

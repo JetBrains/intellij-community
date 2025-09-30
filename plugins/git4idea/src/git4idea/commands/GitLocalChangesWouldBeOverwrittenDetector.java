@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -49,7 +50,7 @@ public class GitLocalChangesWouldBeOverwrittenDetector extends GitMessageWithFil
 
   private final @NotNull Operation myOperation;
 
-  private boolean singleLineAffectedFilesOutput = false;
+  private final @NotNull Set<String> myAffectedFilesRawLines = new HashSet<>();
 
   public enum Operation {
     CHECKOUT(OLD_CHECKOUT_PATTERN),
@@ -74,16 +75,25 @@ public class GitLocalChangesWouldBeOverwrittenDetector extends GitMessageWithFil
 
   @Override
   public @NotNull Set<String> getRelativeFilePaths() {
-    if (singleLineAffectedFilesOutput) {
-      String onlyLine = ContainerUtil.getOnlyItem(myAffectedFiles);
-      if (onlyLine != null) {
+    // In some cases the error message is not formatted as 1 line per 1 file name.
+    // The line also starts with 2 spaces instead of a tab and files are space-separated.
+    if (myAffectedFiles.size() == 1) {
+      String onlyLine = ContainerUtil.getOnlyItem(myAffectedFilesRawLines);
+      // E.g., "  file1 dir/file2 dir/subdir/file3"
+      if (onlyLine != null && onlyLine.matches("^ {2}([^ ].*)")) {
         myAffectedFiles.clear();
-        myAffectedFiles.addAll(Arrays.asList(onlyLine.split(" ")));
-        singleLineAffectedFilesOutput = false;
+        myAffectedFilesRawLines.clear();
+        myAffectedFiles.addAll(Arrays.asList(onlyLine.trim().split(" ")));
       }
     }
 
     return super.getRelativeFilePaths();
+  }
+
+  @Override
+  protected void handleAsAffectedFiles(@NotNull String line) {
+    myAffectedFilesRawLines.add(line);
+    super.handleAsAffectedFiles(line);
   }
 
   @Override
@@ -98,7 +108,6 @@ public class GitLocalChangesWouldBeOverwrittenDetector extends GitMessageWithFil
       if (line.matches("^<stdin>:\\d+:.*") && myAffectedFiles.size() == 1) {
         // Ignore further lines
         myMessageOutputType = null;
-        singleLineAffectedFilesOutput = true;
       }
     }
     super.onLineAvailable(line, outputType);

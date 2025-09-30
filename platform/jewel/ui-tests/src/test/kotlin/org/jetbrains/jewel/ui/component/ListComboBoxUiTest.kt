@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -35,8 +35,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.unit.dp
 import junit.framework.TestCase.assertEquals
+import org.jetbrains.jewel.IntUiTestTheme
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
-import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -87,7 +87,7 @@ class ListComboBoxUiTest {
     fun `TAB navigation focuses only the editable combo box's text field`() {
         val focusRequester = FocusRequester()
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 Box(modifier = Modifier.size(20.dp).focusRequester(focusRequester).testTag("Pre-Box").focusable(true))
                 EditableListComboBox(
                     items = comboBoxItems,
@@ -393,14 +393,14 @@ class ListComboBoxUiTest {
         var selectedIndex = 0
 
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
                     selectedIndex = selectedIndex,
                     onSelectedItemChange = { index: Int -> selectedIndex = index },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
                     enabled = true,
-                    itemKeys = { index: Int, item: String -> index }, // Explicitly use index as key for tests
+                    itemKeys = { index: Int, _: String -> index }, // Explicitly use index as key for tests
                 )
             }
         }
@@ -431,14 +431,14 @@ class ListComboBoxUiTest {
         var selectedIndex = 0
 
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
                     selectedIndex = selectedIndex,
                     onSelectedItemChange = { index: Int -> selectedIndex = index },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
                     enabled = true,
-                    itemKeys = { index: Int, item: String -> index }, // Explicitly use index as key for tests
+                    itemKeys = { index: Int, _: String -> index }, // Explicitly use index as key for tests
                     listState = rememberSelectableLazyListState(),
                 )
             }
@@ -504,7 +504,7 @@ class ListComboBoxUiTest {
         var selectedText = "Item 3"
 
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 ListComboBox(
                     items = comboBoxItems,
                     selectedIndex = selectedIndex,
@@ -513,7 +513,7 @@ class ListComboBoxUiTest {
                         selectedText = comboBoxItems[index]
                     },
                     modifier = Modifier.testTag("ComboBox").width(200.dp),
-                    itemKeys = { index: Int, item: String -> index },
+                    itemKeys = { index: Int, _: String -> index },
                 )
             }
         }
@@ -537,16 +537,16 @@ class ListComboBoxUiTest {
 
     @Test
     fun `when selectedIndex changes externally ListComboBox updates`() {
-        var selectedIndex by mutableStateOf(0)
+        var selectedIndex by mutableIntStateOf(0)
 
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 ListComboBox(
                     items = comboBoxItems,
                     selectedIndex = selectedIndex,
                     onSelectedItemChange = { index -> selectedIndex = index },
                     modifier = Modifier.testTag("ComboBox").width(200.dp),
-                    itemKeys = { index: Int, item: String -> index },
+                    itemKeys = { index: Int, _: String -> index },
                 )
             }
         }
@@ -582,13 +582,13 @@ class ListComboBoxUiTest {
         val focusRequester = FocusRequester()
 
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
                     selectedIndex = selectedIndex,
                     onSelectedItemChange = { index: Int -> selectedIndex = index },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
-                    itemKeys = { index: Int, item: String -> index },
+                    itemKeys = { index: Int, _: String -> index },
                     listState = rememberSelectableLazyListState(),
                 )
             }
@@ -608,17 +608,17 @@ class ListComboBoxUiTest {
 
     @Test
     fun `when editable ListComboBox selectedIndex changes then text field updates`() {
-        var selectedIndex by mutableStateOf(0)
+        var selectedIndex by mutableIntStateOf(0)
         val focusRequester = FocusRequester()
 
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
                     selectedIndex = selectedIndex,
                     onSelectedItemChange = { index: Int -> selectedIndex = index },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
-                    itemKeys = { index: Int, item: String -> index },
+                    itemKeys = { index: Int, _: String -> index },
                 )
             }
         }
@@ -659,14 +659,14 @@ class ListComboBoxUiTest {
     private fun editableListComboBox(): SemanticsNodeInteraction {
         val focusRequester = FocusRequester()
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
                     selectedIndex = 0,
                     onSelectedItemChange = { _: Int -> },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
                     enabled = true,
-                    itemKeys = { index: Int, item: String -> index }, // Explicitly use index as key for tests
+                    itemKeys = { index: Int, _: String -> index }, // Explicitly use index as key for tests
                 )
             }
         }
@@ -701,14 +701,14 @@ class ListComboBoxUiTest {
 
     private fun injectListComboBox(focusRequester: FocusRequester, isEnabled: Boolean) {
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 ListComboBox(
                     items = comboBoxItems,
                     selectedIndex = 0,
                     onSelectedItemChange = {},
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
                     enabled = isEnabled,
-                    itemKeys = { index: Int, item: String -> index },
+                    itemKeys = { index: Int, _: String -> index },
                 )
             }
         }
@@ -716,14 +716,14 @@ class ListComboBoxUiTest {
 
     private fun injectEditableListComboBox(focusRequester: FocusRequester, isEnabled: Boolean) {
         composeRule.setContent {
-            IntUiTheme {
+            IntUiTestTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
                     selectedIndex = 0,
                     onSelectedItemChange = { _: Int -> },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
                     enabled = isEnabled,
-                    itemKeys = { index: Int, item: String -> index },
+                    itemKeys = { index: Int, _: String -> index },
                 )
             }
         }

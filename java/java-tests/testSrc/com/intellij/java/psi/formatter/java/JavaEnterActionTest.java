@@ -1181,4 +1181,50 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
                  """
     );
   }
+
+  public void testEnterAfterTheFirstAnnotationBeforePackage() {
+    doTextTest("java",
+               """
+                 @MyAnno<caret>
+                 package test;
+                 """,
+               """
+                 @MyAnno
+                 <caret>
+                 package test;
+                 """
+    );
+  }
+
+  public void testEnterBetweenAnnotationBeforePackage() {
+    doTextTest("java",
+               """
+                 @MyAnno<caret>
+                 @MyAnno2
+                 package test;
+                 """,
+               """
+                 @MyAnno
+                 <caret>
+                 @MyAnno2
+                 package test;
+                 """
+    );
+  }
+
+  public void testEnterAfterTheLastAnnotationBeforePackage() {
+    doTextTest("java",
+               """
+                 @MyAnno
+                 @MyAnno2<caret>
+                 package test;
+                 """,
+               """
+                 @MyAnno
+                 @MyAnno2
+                 <caret>
+                 package test;
+                 """
+    );
+  }
 }

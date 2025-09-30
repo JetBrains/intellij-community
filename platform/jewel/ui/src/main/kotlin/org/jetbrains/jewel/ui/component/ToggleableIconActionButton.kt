@@ -43,14 +43,15 @@ public fun ToggleableIconActionButton(
         focusable = focusable,
         style = style,
         interactionSource = interactionSource,
-        modifier = modifier,
-        iconModifier = iconModifier,
         colorFilter = colorFilter,
         extraHint = extraHint,
         onValueChange = onValueChange,
+        modifier = modifier,
+        iconModifier = iconModifier,
     )
 }
 
+@Suppress("ComposableParamOrder") // To fix in JEWEL-932
 @Composable
 public fun ToggleableIconActionButton(
     key: IconKey,
@@ -72,10 +73,9 @@ public fun ToggleableIconActionButton(
     tooltip: @Composable () -> Unit,
 ) {
     Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
+        @Suppress("ModifierNotUsedAtRoot") // This is intentional
         BaseToggleableIconActionButton(
             key = key,
-            modifier = modifier,
-            iconModifier = iconModifier,
             contentDescription = contentDescription,
             iconClass = iconClass,
             value = value,
@@ -86,6 +86,8 @@ public fun ToggleableIconActionButton(
             colorFilter = colorFilter,
             extraHint = extraHint,
             onValueChange = onValueChange,
+            modifier = modifier,
+            iconModifier = iconModifier,
         )
     }
 }
@@ -115,14 +117,15 @@ public fun ToggleableIconActionButton(
         focusable = focusable,
         style = style,
         interactionSource = interactionSource,
+        extraHints = extraHints,
+        onValueChange = onValueChange,
         modifier = modifier,
         iconModifier = iconModifier,
         colorFilter = colorFilter,
-        extraHints = extraHints,
-        onValueChange = onValueChange,
     )
 }
 
+@Suppress("ComposableParamOrder") // To fix in JEWEL-932
 @Composable
 public fun ToggleableIconActionButton(
     key: IconKey,
@@ -144,10 +147,9 @@ public fun ToggleableIconActionButton(
     tooltip: @Composable () -> Unit,
 ) {
     Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
+        @Suppress("ModifierNotUsedAtRoot") // This is intentional
         CoreToggleableIconActionButton(
             key = key,
-            modifier = modifier,
-            iconModifier = iconModifier,
             contentDescription = contentDescription,
             iconClass = iconClass,
             value = value,
@@ -155,9 +157,11 @@ public fun ToggleableIconActionButton(
             focusable = focusable,
             style = style,
             interactionSource = interactionSource,
-            colorFilter = colorFilter,
             extraHints = extraHints,
             onValueChange = onValueChange,
+            modifier = modifier,
+            iconModifier = iconModifier,
+            colorFilter = colorFilter,
         )
     }
 }
@@ -172,11 +176,11 @@ private fun BaseToggleableIconActionButton(
     focusable: Boolean,
     style: IconButtonStyle,
     interactionSource: MutableInteractionSource,
-    modifier: Modifier,
-    iconModifier: Modifier,
     colorFilter: ColorFilter?,
     extraHint: PainterHint?,
     onValueChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
 ) {
     if (extraHint != null) {
         CoreToggleableIconActionButton(
@@ -188,11 +192,11 @@ private fun BaseToggleableIconActionButton(
             focusable = focusable,
             style = style,
             interactionSource = interactionSource,
+            extraHint = extraHint,
+            onValueChange = onValueChange,
             modifier = modifier,
             iconModifier = iconModifier,
             colorFilter = colorFilter,
-            extraHint = extraHint,
-            onValueChange = onValueChange,
         )
     } else {
         CoreToggleableIconActionButton(
@@ -204,11 +208,11 @@ private fun BaseToggleableIconActionButton(
             focusable = focusable,
             style = style,
             interactionSource = interactionSource,
+            extraHints = emptyArray(),
+            onValueChange = onValueChange,
             modifier = modifier,
             iconModifier = iconModifier,
             colorFilter = colorFilter,
-            extraHints = emptyArray(),
-            onValueChange = onValueChange,
         )
     }
 }
@@ -223,11 +227,11 @@ private fun CoreToggleableIconActionButton(
     focusable: Boolean,
     style: IconButtonStyle,
     interactionSource: MutableInteractionSource,
-    modifier: Modifier,
-    iconModifier: Modifier,
-    colorFilter: ColorFilter? = null,
     extraHints: Array<PainterHint>,
     onValueChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
+    colorFilter: ColorFilter? = null,
 ) {
     ToggleableIconButton(value, onValueChange, modifier, enabled, focusable, style, interactionSource) {
         val strokeColor by style.colors.toggleableForegroundFor(it)
@@ -252,11 +256,11 @@ private fun CoreToggleableIconActionButton(
     focusable: Boolean,
     style: IconButtonStyle,
     interactionSource: MutableInteractionSource,
-    modifier: Modifier,
-    iconModifier: Modifier,
-    colorFilter: ColorFilter? = null,
     extraHint: PainterHint,
     onValueChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
+    colorFilter: ColorFilter? = null,
 ) {
     ToggleableIconButton(value, onValueChange, modifier, enabled, focusable, style, interactionSource) {
         val strokeColor by style.colors.toggleableForegroundFor(it)

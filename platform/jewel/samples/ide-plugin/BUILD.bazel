@@ -45,6 +45,7 @@ jvm_library(
     "//platform/jewel/markdown/core",
     "@lib//:kotlinx-datetime-jvm",
     "//platform/jewel/samples/showcase",
+    "//platform/jewel/markdown/extensions/images",
   ],
   runtime_deps = [":ide-plugin_resources"],
   plugins = ["@lib//:compose-plugin"]

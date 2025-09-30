@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.project.module.ModulesStateService;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
@@ -79,12 +78,15 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
     myModuleComboBox.setSwingPopup(false);
     myModuleComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(300)); // as ScopeChooser
 
-    ActionListener restartSearchListener = e -> scheduleResultsUpdate();
-    myModuleComboBox.addActionListener(restartSearchListener);
+    myModuleComboBox.addActionListener(e -> {
+      if (myFindPopupPanel.isScopeSelected(MODULE)) {
+        scheduleResultsUpdate();
+      }
+    });
 
     myDirectoryChooser = new FindPopupDirectoryChooser(myFindPopupPanel);
 
-    initScopeCombo(restartSearchListener);
+    initScopeCombo();
   }
 
   private JComponent getScopeChooser() {
@@ -95,23 +97,15 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
     return FindKey.isEnabled() ? newScopeCombo.getComboBox() : myScopeCombo.getComboBox();
   }
 
-  private void initScopeCombo(ActionListener restartSearchListener) {
+  private void initScopeCombo() {
+    ActionListener restartSearchListener = e -> {
+      if (myFindPopupPanel.isScopeSelected(SCOPE)) {
+        scheduleResultsUpdate();
+      }
+    };
     String selection = ObjectUtils.coalesce(myHelper.getModel().getCustomScopeName(), FindSettings.getInstance().getDefaultScopeName());
     if (FindKey.isEnabled()) {
       newScopeCombo = new FrontendScopeChooser(myProject, selection, ScopesFilterConditionType.FIND);
-      ScopeChooserCombo.BrowseListener browseListener = new ScopeChooserCombo.BrowseListener() {
-        @Override
-        public void onBeforeBrowseStarted() {
-          myFindPopupPanel.getCanClose().set(false);
-        }
-
-        @Override
-        public void onAfterBrowseFinished() {
-          myFindPopupPanel.getCanClose().set(true);
-          IdeFocusManager.getInstance(myProject).requestFocus(getScopeCombo(), true);
-        }
-      };
-      newScopeCombo.setBrowseListener(browseListener);
       Disposer.register(myFindPopupPanel.getDisposable(), newScopeCombo);
     }
     else {
@@ -142,6 +136,7 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
       });
       Disposer.register(myFindPopupPanel.getDisposable(), myScopeCombo);
     }
+    getScopeChooser().getAccessibleContext().setAccessibleName(FindBundle.message("find.scope.combo.accessibleName"));
     getScopeCombo().addActionListener(restartSearchListener);
   }
 

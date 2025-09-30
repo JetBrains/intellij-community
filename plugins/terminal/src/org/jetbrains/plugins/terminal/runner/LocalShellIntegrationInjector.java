@@ -82,7 +82,7 @@ public final class LocalShellIntegrationInjector {
         // remove --login to enable --rcfile sourcing
         boolean loginShell = arguments.removeAll(LOGIN_CLI_OPTIONS);
         setLoginShellEnv(envs, loginShell);
-        setCommandHistoryFile(options, envs);
+        setCommandHistoryFile(options, envs, eelDescriptor);
         integration = new ShellIntegration(ShellType.BASH, addBlocksIntegration ? new CommandBlockIntegration() : null);
       }
       else if (ShellNameUtil.isZshName(shellName)) {
@@ -274,7 +274,12 @@ public final class LocalShellIntegrationInjector {
     }
   }
 
-  private static void setCommandHistoryFile(@NotNull ShellStartupOptions startupOptions, @NotNull Map<String, String> envs) {
+  private static void setCommandHistoryFile(
+    @NotNull ShellStartupOptions startupOptions,
+    @NotNull Map<String, String> envs,
+    @NotNull EelDescriptor eelDescriptor
+  ) {
+    if (eelDescriptor != LocalEelDescriptor.INSTANCE) return;
     Function0<Path> commandHistoryFileProvider = startupOptions.getCommandHistoryFileProvider();
     Path commandHistoryFile = commandHistoryFileProvider != null ? commandHistoryFileProvider.invoke() : null;
     if (commandHistoryFile != null) {

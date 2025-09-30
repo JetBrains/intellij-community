@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.ui.component
 
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.takeOrElse
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
@@ -72,6 +74,7 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
  * @param itemContent Composable content for rendering each item in the list
  * @see com.intellij.openapi.ui.ComboBox
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun <T : Any> ListComboBox(
@@ -89,7 +92,14 @@ public fun <T : Any> ListComboBox(
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
     itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
-    LaunchedEffect(Unit) { listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex])) }
+    LaunchedEffect(itemKeys) {
+        val item = items.getOrNull(selectedIndex)
+        if (item != null) {
+            listState.selectedKeys = setOf(itemKeys(selectedIndex, item))
+        } else {
+            listState.selectedKeys = emptySet()
+        }
+    }
 
     var previewSelectedIndex by remember { mutableIntStateOf(selectedIndex) }
     val scope = rememberCoroutineScope()
@@ -167,24 +177,31 @@ public fun <T : Any> ListComboBox(
         interactionSource = interactionSource,
         outline = outline,
         popupManager = popupManager,
-        labelContent = { itemContent(items[selectedIndex], false, false) },
-    ) {
-        PopupContent(
-            items = items,
-            previewSelectedItemIndex = previewSelectedIndex,
-            listState = listState,
-            popupMaxHeight = popupMaxHeight,
-            contentPadding = contentPadding,
-            onPreviewSelectedItemChange = {
-                if (it >= 0 && previewSelectedIndex != it) {
-                    previewSelectedIndex = it
-                }
-            },
-            onSelectedItemChange = { index: Int -> setSelectedItem(index) },
-            itemKeys = itemKeys,
-            itemContent = itemContent,
-        )
-    }
+        labelContent = {
+            val item = items.getOrNull(selectedIndex)
+            if (item != null) {
+                // We draw label items as not selected and not active
+                itemContent(item, false, false)
+            }
+        },
+        popupContent = {
+            PopupContent(
+                items = items,
+                previewSelectedItemIndex = previewSelectedIndex,
+                listState = listState,
+                popupMaxHeight = popupMaxHeight,
+                contentPadding = contentPadding,
+                onPreviewSelectedItemChange = {
+                    if (it >= 0 && previewSelectedIndex != it) {
+                        previewSelectedIndex = it
+                    }
+                },
+                onSelectedItemChange = { index: Int -> setSelectedItem(index) },
+                itemKeys = itemKeys,
+                itemContent = itemContent,
+            )
+        },
+    )
 }
 
 /**
@@ -233,13 +250,13 @@ public fun ListComboBox(
     itemKeys: (Int, String) -> Any = { _, item -> item },
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
 ) {
-    var labelText by remember { mutableStateOf(items[selectedIndex]) }
+    var labelText by remember { mutableStateOf(items.getOrNull(selectedIndex).orEmpty()) }
     var previewSelectedIndex by remember { mutableIntStateOf(-1) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(itemKeys) {
         // Select the first item in the list when creating
-        listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex]))
+        listState.selectedKeys = setOf(itemKeys(selectedIndex, items.getOrNull(selectedIndex).orEmpty()))
     }
 
     fun setSelectedItem(index: Int) {
@@ -388,13 +405,13 @@ public fun EditableListComboBox(
     itemKeys: (Int, String) -> Any = { _, item -> item },
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
 ) {
-    val textFieldState = rememberTextFieldState(items[selectedIndex])
+    val textFieldState = rememberTextFieldState(items.getOrNull(selectedIndex).orEmpty())
     var previewSelectedIndex by remember { mutableIntStateOf(-1) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(itemKeys) {
         // Select the first item in the list when creating
-        listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex]))
+        listState.selectedKeys = setOf(itemKeys(selectedIndex, items.getOrNull(selectedIndex).orEmpty()))
     }
 
     fun setSelectedItem(index: Int) {
@@ -436,6 +453,7 @@ public fun EditableListComboBox(
             // selected value to the one underneath it (unless it's the last one)
             if (previewSelectedIndex >= 0 && previewSelectedIndex < items.lastIndex) {
                 currentSelectedIndex = previewSelectedIndex
+                @Suppress("AssignedValueIsNeverRead")
                 previewSelectedIndex = -1
             }
 
@@ -448,6 +466,7 @@ public fun EditableListComboBox(
             // selected value to the one above it (unless it's the first one)
             if (previewSelectedIndex > 0) {
                 currentSelectedIndex = previewSelectedIndex
+                @Suppress("AssignedValueIsNeverRead")
                 previewSelectedIndex = -1
             }
 
@@ -478,18 +497,14 @@ public fun EditableListComboBox(
                 contentPadding = contentPadding,
                 onPreviewSelectedItemChange = {
                     if (it >= 0 && previewSelectedIndex != it) {
+                        @Suppress("AssignedValueIsNeverRead")
                         previewSelectedIndex = it
                     }
                 },
                 onSelectedItemChange = ::setSelectedItem,
                 itemKeys = itemKeys,
                 itemContent = { item, isSelected, isActive ->
-                    SimpleListItem(
-                        text = item,
-                        isSelected = isSelected,
-                        isActive = isActive,
-                        iconContentDescription = item,
-                    )
+                    SimpleListItem(text = item, selected = isSelected, active = isActive, iconContentDescription = item)
                 },
             )
         },
@@ -549,7 +564,7 @@ private fun <T : Any> PopupContent(
     itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     VerticallyScrollableContainer(
-        scrollState = listState.lazyListState,
+        scrollState = listState.lazyListState as ScrollableState,
         modifier = Modifier.heightIn(max = popupMaxHeight),
     ) {
         SelectableLazyColumn(
@@ -560,7 +575,7 @@ private fun <T : Any> PopupContent(
                 val selectedIndex = selectedItemsIndexes.firstOrNull()
                 if (selectedIndex != null) onSelectedItemChange(selectedIndex)
             },
-        ) { ->
+        ) {
             itemsIndexed(
                 items = items,
                 key = { itemIndex, item -> itemKeys(itemIndex, item) },
@@ -583,7 +598,8 @@ private fun <T : Any> PopupContent(
                         val showAsSelected =
                             (isItemSelected && previewSelectedItemIndex < 0) || previewSelectedItemIndex == index
 
-                        itemContent(item, showAsSelected, isActive)
+                        // We assume items are active when visible (the popup isn't really, but should show as such)
+                        itemContent(item, showAsSelected, true)
                     }
                 },
             )

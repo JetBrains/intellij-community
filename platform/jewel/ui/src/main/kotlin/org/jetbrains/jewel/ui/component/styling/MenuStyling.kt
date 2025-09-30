@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package org.jetbrains.jewel.ui.component.styling
 
 import androidx.compose.foundation.layout.PaddingValues

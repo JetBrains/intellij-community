@@ -264,10 +264,10 @@ private fun collectDirectDependenciesInNewFormat(
     }
   }
   for (item in module.moduleDependencies.plugins) {
-    val descriptor = idMap.get(item.id.idString)
+    val targetModule = idMap.get(item.id.idString)
     // fake v1 module maybe located in a core plugin
-    if (descriptor != null && descriptor.pluginId != PluginManagerCore.CORE_ID) {
-      dependenciesCollector.add(descriptor)
+    if (targetModule != null && (targetModule is ContentModuleDescriptor || targetModule.pluginId != PluginManagerCore.CORE_ID)) {
+      dependenciesCollector.add(targetModule)
     }
   }
 

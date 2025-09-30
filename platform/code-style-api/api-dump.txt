@@ -303,6 +303,7 @@ a:com.intellij.formatting.service.AsyncDocumentFormattingService
 - p:getTimeout():java.time.Duration
 - p:getTimeoutActions(com.intellij.formatting.FormattingContext):com.intellij.openapi.actionSystem.AnAction[]
 - p:needToUpdate():Z
+- p:prepareForFormatting(com.intellij.openapi.editor.Document,com.intellij.formatting.FormattingContext):V
 p:com.intellij.formatting.service.AsyncDocumentFormattingService$FormattingTask
 - java.lang.Runnable
 - a:cancel():Z

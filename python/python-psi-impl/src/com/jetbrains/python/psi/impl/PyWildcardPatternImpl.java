@@ -1,7 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.psi.PyCaptureContext;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyWildcardPattern;
 import com.jetbrains.python.psi.types.PyType;

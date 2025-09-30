@@ -1,9 +1,0 @@
-f:org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension
-- org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
-- sf:$stable:I
-- sf:Companion:org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension$Companion
-- <init>(coil3.ImageLoader):V
-- getImageRendererExtension():org.jetbrains.jewel.markdown.extensions.ImageRendererExtension
-f:org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension$Companion
-- f:withDefaultLoader(androidx.compose.runtime.Composer,I):org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension
-- f:withDefaultLoader(coil3.PlatformContext):org.jetbrains.jewel.markdown.extensions.images.Coil3ImageRendererExtension

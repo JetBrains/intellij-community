@@ -20,7 +20,6 @@ import org.jetbrains.jewel.bridge.theme.createBridgeComponentStyling
 import org.jetbrains.jewel.bridge.theme.createBridgeThemeDefinition
 import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.ui.ComponentStyling
-import org.jetbrains.jewel.ui.component.copyWithSize
 
 @Suppress("UnstableApiUsage")
 internal class SwingBridgeReader {
@@ -74,7 +73,9 @@ internal class SwingBridgeReader {
     internal data class BridgeThemeData(val themeDefinition: ThemeDefinition, val componentStyling: ComponentStyling) {
         companion object Companion {
             val DEFAULT = run {
-                val textStyle = TextStyle.Default.copyWithSize(fontSize = 13.sp)
+                // Note that the line height on this textStyle is not properly computed, but it's fine as this default
+                // value is only a placeholder that should only be used before the first composition.
+                val textStyle = TextStyle.Default.copy(fontSize = 13.sp)
                 val monospaceTextStyle = textStyle.copy(fontFamily = FontFamily.Monospace)
                 val themeDefinition =
                     createBridgeThemeDefinition(

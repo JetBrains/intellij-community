@@ -1,5 +1,0 @@
-f:org.jetbrains.jewel.samples.standalone.markdown.ComposableSingletons$MarkdownEditorKt
-- sf:INSTANCE:org.jetbrains.jewel.samples.standalone.markdown.ComposableSingletons$MarkdownEditorKt
-- <init>():V
-- f:getLambda$-1551256022$intellij_platform_jewel_samples_standalone():kotlin.jvm.functions.Function2
-- f:getLambda$1854364929$intellij_platform_jewel_samples_standalone():kotlin.jvm.functions.Function2

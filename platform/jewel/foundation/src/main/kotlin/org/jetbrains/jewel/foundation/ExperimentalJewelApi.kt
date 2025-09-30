@@ -23,5 +23,7 @@ import kotlin.RequiresOptIn.Level
  *
  * Using any API annotated as experimental in client code should be done with caution, and you will have to take care of
  * breakages in your code when usages are impacted by a change in a Jewel update.
+ *
+ * Must always be paired with [org.jetbrains.annotations.ApiStatus.Experimental].
  */
 public annotation class ExperimentalJewelApi

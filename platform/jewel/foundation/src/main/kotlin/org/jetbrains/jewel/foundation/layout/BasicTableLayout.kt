@@ -40,7 +40,7 @@ import org.jetbrains.jewel.foundation.modifier.thenIf
  * @param cellBorderWidth The width of the table's borders.
  * @param rows The rows that make up the table. Each row is a list of composables, one per row cell.
  */
-@Suppress("KDocUnresolvedReference")
+@Suppress("KDocUnresolvedReference", "ComposableParamOrder")
 @Composable
 public fun BasicTableLayout(
     rowCount: Int,
@@ -72,7 +72,7 @@ public fun BasicTableLayout(
                     "Row $rowIndex contains ${rowCells.size} cells, but it should have $columnCount cells."
                 }
 
-                for ((columnIndex, cell) in rowCells.withIndex()) {
+                for ((columnIndex, _) in rowCells.withIndex()) {
                     // Measure each cell individually
                     val measurable = measurablesByRow[rowIndex][columnIndex]
 
@@ -149,7 +149,7 @@ public fun BasicTableLayout(
                 // Place cells. We start by leaving space for the top and start-side borders
                 var y = cellBorderWidthPx
 
-                placeables.forEachIndexed { rowIndex, cellPlaceables ->
+                placeables.forEachIndexed { _, cellPlaceables ->
                     var x = cellBorderWidthPx
 
                     var rowHeight = 0

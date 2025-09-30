@@ -10,10 +10,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.referentialEqualityPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,7 +58,11 @@ public fun SelectableLazyColumn(
     content: SelectableLazyListScope.() -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val container = remember(content) { SelectableLazyListScopeContainer().apply(content) }
+    val latestContent = rememberUpdatedState(content)
+    val containerState by remember {
+        derivedStateOf(referentialEqualityPolicy()) { SelectableLazyListScopeContainer().apply(latestContent.value) }
+    }
+    val container = containerState
 
     val keys = remember(container) { container.getKeys() }
     var isFocused by remember { mutableStateOf(false) }

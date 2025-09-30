@@ -1,4 +1,4 @@
-@file:Suppress("RedundantSuppression")
+@file:Suppress("RedundantSuppression", "DEPRECATION")
 
 package org.jetbrains.jewel.ui.component
 
@@ -36,6 +36,7 @@ import java.awt.font.FontRenderContext
 import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.awt.image.BufferedImage.TYPE_INT_ARGB
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Typography.DefaultLineHeightMultiplier
@@ -129,7 +130,6 @@ public object Typography {
  *
  * @see Typography.DefaultLineHeightMultiplier
  */
-@Suppress("DEPRECATION")
 @Deprecated("Use computeLineHeightPx() to set the line height appropriately instead.")
 public fun TextStyle.copyWithSize(
     fontSize: TextUnit,
@@ -188,7 +188,6 @@ public fun TextStyle.copyWithSize(
  *
  * @see Typography.DefaultLineHeightMultiplier
  */
-@Suppress("DEPRECATION")
 @Deprecated("Use computeLineHeightPx() to set the line height appropriately instead.")
 public fun TextStyle.copyWithSize(
     fontSize: TextUnit,
@@ -269,6 +268,7 @@ private val image = BufferedImage(1, 1, TYPE_INT_ARGB)
  *
  * This is useful to set a valid [TextStyle.lineHeight] when trying to match the metrics used by Swing and the IJP.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Px
 public fun Font.computeLineHeightPx(): Int {

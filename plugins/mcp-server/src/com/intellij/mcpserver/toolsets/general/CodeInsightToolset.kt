@@ -1,11 +1,9 @@
 package com.intellij.mcpserver.toolsets.general
 
 import com.intellij.lang.documentation.impl.documentationTargets
-import com.intellij.mcpserver.McpToolset
+import com.intellij.mcpserver.*
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
-import com.intellij.mcpserver.mcpFail
-import com.intellij.mcpserver.project
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.SymbolInfo
 import com.intellij.mcpserver.util.convertHtmlToMarkdown
@@ -45,6 +43,7 @@ class CodeInsightToolset : McpToolset {
     @McpDescription("1-based column number")
     column: Int,
   ): SymbolInfoResult {
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.getting.symbol.info", filePath, line, column))
     val project = currentCoroutineContext().project
 
     val resolvedPath = project.resolveInProject(filePath)

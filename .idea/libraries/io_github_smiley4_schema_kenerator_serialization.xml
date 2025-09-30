@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="io.github.smiley4.schema.kenerator.serialization" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.github.smiley4:schema-kenerator-serialization:2.1.2">
+    <properties include-transitive-deps="false" maven-id="io.github.smiley4:schema-kenerator-serialization:2.2.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2.1.2/schema-kenerator-serialization-2.1.2.jar">
-          <sha256sum>94e34625dab2aa5af5d02c74e5aa210bb6c2738673dd9685dadeb15a0d6eb55c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2.2.0/schema-kenerator-serialization-2.2.0.jar">
+          <sha256sum>9c4a9713b2722b3b124210e89c3702c3e18c19156a3a06fa6bcef43a850299ca</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2.1.2/schema-kenerator-serialization-2.1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2.2.0/schema-kenerator-serialization-2.2.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2.1.2/schema-kenerator-serialization-2.1.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2.2.0/schema-kenerator-serialization-2.2.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

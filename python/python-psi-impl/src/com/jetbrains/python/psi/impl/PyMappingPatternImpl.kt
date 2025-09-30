@@ -4,12 +4,11 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiListLikeElement
 import com.intellij.psi.util.findParentInFile
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.PyCaptureContext.Companion.getCaptureType
 import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
 import com.jetbrains.python.psi.types.*
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.upcastLiteralToClass
 
-class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappingPattern, PsiListLikeElement {
+class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappingPattern, PyCaptureContext, PsiListLikeElement {
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
     pyVisitor.visitPyMappingPattern(this)
   }
@@ -30,7 +29,7 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
 
     val patternMappingType = wrapInMappingType(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes))
 
-    val filteredType = getCaptureType(this, context).toList().filter { captureType: PyType? ->
+    val filteredType = PyCaptureContext.getCaptureType(this, context).toList().filter { captureType: PyType? ->
       val mappingType = PyTypeUtil.convertToType(captureType, "typing.Mapping", this, context) ?: return@filter false
       PyTypeChecker.match(mappingType, patternMappingType, context)
     }.let { 
@@ -53,7 +52,7 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
     
     if (sequenceMember !is PyKeyValuePattern) return null
     
-    return getCaptureType(this, context).toList()
+    return PyCaptureContext.getCaptureType(this, context).toList()
       .map { possibleMapping -> possibleMapping.getValueType(sequenceMember, context) }
       .let { PyUnionType.union(it) }
   }

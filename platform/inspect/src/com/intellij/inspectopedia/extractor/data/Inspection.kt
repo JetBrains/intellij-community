@@ -46,6 +46,7 @@ internal data class Inspection(
 internal data class OptionsPanelInfo(
   @JvmField var type: String? = null,
   @JvmField var text: String? = null,
+  @JvmField var id: String? = null,
 ) {
   @JvmField
   var description: String? = null

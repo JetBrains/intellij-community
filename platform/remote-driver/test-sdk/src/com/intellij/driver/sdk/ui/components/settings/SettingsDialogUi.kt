@@ -11,11 +11,12 @@ import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
 import com.intellij.driver.sdk.ui.components.elements.accessibleTree
 import com.intellij.driver.sdk.ui.components.elements.button
 import com.intellij.driver.sdk.ui.should
+import com.intellij.driver.sdk.ui.ui
 import javax.swing.JDialog
 import kotlin.time.Duration.Companion.seconds
 
-fun IdeaFrameUI.settingsDialog(action: SettingsDialogUiComponent.() -> Unit = {}): SettingsDialogUiComponent = onSettingsDialog(action = action)
-fun WelcomeScreenUI.settingsDialog(action: SettingsDialogUiComponent.() -> Unit = {}): SettingsDialogUiComponent = onSettingsDialog(action = action)
+fun IdeaFrameUI.settingsDialog(action: SettingsDialogUiComponent.() -> Unit = {}): SettingsDialogUiComponent = driver.ui.onSettingsDialog(action = action)
+fun WelcomeScreenUI.settingsDialog(action: SettingsDialogUiComponent.() -> Unit = {}): SettingsDialogUiComponent = driver.ui.onSettingsDialog(action = action)
 
 private fun Finder.onSettingsDialog(
   locator: QueryBuilder.() -> String = { and(byType(JDialog::class.java), byAccessibleName("Settings")) },

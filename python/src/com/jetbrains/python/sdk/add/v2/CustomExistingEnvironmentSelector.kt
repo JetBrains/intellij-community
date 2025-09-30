@@ -31,7 +31,7 @@ internal abstract class CustomExistingEnvironmentSelector(
 ) : PythonExistingEnvironmentConfigurator(model) {
 
   private lateinit var comboBox: PythonInterpreterComboBox
-  private val existingEnvironments: MutableStateFlow<List<PythonSelectableInterpreter>> = MutableStateFlow(emptyList())
+  private val existingEnvironments: MutableStateFlow<List<PythonSelectableInterpreter>?> = MutableStateFlow(null)
   protected val selectedEnv: ObservableMutableProperty<PythonSelectableInterpreter?> = propertyGraph.property(null)
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
@@ -47,7 +47,6 @@ internal abstract class CustomExistingEnvironmentSelector(
       comboBox = pythonInterpreterComboBox(
         title = message("sdk.create.custom.existing.env.title", nameTitle),
         selectedSdkProperty = selectedEnv,
-        model = model,
         validationRequestor = validationRequestor,
         onPathSelected = { path -> addEnvByPath(path) }
       ) {
@@ -69,6 +68,7 @@ internal abstract class CustomExistingEnvironmentSelector(
     comboBox.initialize(
       scope = scope,
       flow = existingEnvironments.map { existing ->
+        existing ?: return@map null
         val withUniquePath = existing.distinctBy { interpreter ->  interpreter.homePath }
         sortForExistingEnvironment(withUniquePath, module)
       }
@@ -89,7 +89,7 @@ internal abstract class CustomExistingEnvironmentSelector(
 
   private fun addEnvByPath(python: VanillaPythonWithLanguageLevel): PythonSelectableInterpreter {
     val interpreter = ManuallyAddedSelectableInterpreter(python)
-    existingEnvironments.value += interpreter
+    existingEnvironments.value = (existingEnvironments.value ?: emptyList()) + interpreter
     return interpreter
   }
 

@@ -5,17 +5,17 @@ package com.intellij.mcpserver.toolsets.general
 import com.intellij.find.FindBundle
 import com.intellij.find.FindManager
 import com.intellij.find.impl.FindInProjectUtil
-import com.intellij.mcpserver.McpToolset
+import com.intellij.mcpserver.*
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
-import com.intellij.mcpserver.mcpFail
-import com.intellij.mcpserver.project
 import com.intellij.mcpserver.toolsets.Constants
+import com.intellij.mcpserver.toolsets.Constants.MAX_USAGE_TEXT_CHARS
 import com.intellij.mcpserver.util.*
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -51,13 +51,13 @@ class TextToolset : McpToolset {
     @McpDescription("Max number of lines to return. Truncation will be performed depending on truncateMode.")
     maxLinesCount: Int = 1000,
   ): String {
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.reading.file", pathInProject))
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(pathInProject)
 
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
+               ?: mcpFail("File $resolvedPath doesn't exist or can't be opened")
     val originalText = readAction {
-      val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
-                 ?: mcpFail("File $resolvedPath doesn't exist or can't be opened")
-
       if (file.fileType.isBinary) mcpFail("File $resolvedPath is binary")
       file.readText()
     }
@@ -102,25 +102,34 @@ class TextToolset : McpToolset {
     @McpDescription("Case-sensitive search")
     caseSensitive: Boolean = true,
   ) {
+    // Validate that oldText is not empty to prevent endless loop
+    if (oldText.isEmpty()) mcpFail("oldText is empty")
+    
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.replacing.text.in.file", pathInProject, oldText, newText))
     val project = currentCoroutineContext().project
     val resolvedPath = project.resolveInProject(pathInProject)
-    val (document, text) = readAction {
-      val file: VirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
-                              ?: mcpFail("file not found: $pathInProject")
+    val file: VirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
+                            ?: mcpFail("file not found: $pathInProject")
+    val (document, rangeMarkers) = readAction {
+      Cancellation.ensureActive()
+      val rangeMarkers = mutableListOf<RangeMarker>()
       val document = FileDocumentManager.getInstance().getDocument(file) ?: mcpFail("Could not get document for $file")
-      document to document.text
+      val text = document.text
+      var currentStartIndex = 0
+
+      while (true) {
+        Cancellation.checkCancelled()
+        val occurrenceStart = text.indexOf(oldText, currentStartIndex, !caseSensitive)
+        if (occurrenceStart < 0) break
+        val rangeMarker = document.createRangeMarker(occurrenceStart, occurrenceStart + oldText.length, true)
+        rangeMarkers.add(rangeMarker)
+        if (!replaceAll) break // only the first occurence
+        currentStartIndex = occurrenceStart + oldText.length
+      }
+      document to rangeMarkers.toList()
     }
 
-    val rangeMarkers = mutableListOf<RangeMarker>()
-    var currentStartIndex = 0
-    while (true) {
-      val occurrenceStart = text.indexOf(oldText, currentStartIndex, !caseSensitive)
-      if (occurrenceStart < 0) break
-      val rangeMarker = document.createRangeMarker(occurrenceStart, occurrenceStart + oldText.length, true)
-      rangeMarkers.add(rangeMarker)
-      if (!replaceAll) break // only the first occurence
-      currentStartIndex = occurrenceStart + oldText.length
-    }
+    if (rangeMarkers.isEmpty()) mcpFail("No occurrences found")
 
     writeCommandAction(project, commandName = FindBundle.message("find.replace.text.dialog.title")) {
       for (marker in rangeMarkers.reversed()) {
@@ -153,7 +162,10 @@ class TextToolset : McpToolset {
     maxUsageCount: Int = 1000,
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
-  ): UsageInfoResult = search_in_files(searchText, false, directoryToSearch, fileMask, caseSensitive, maxUsageCount, timeout)
+  ): UsageInfoResult {
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.searching.files.for.text", searchText))
+    return search_in_files(searchText, false, directoryToSearch, fileMask, caseSensitive, maxUsageCount, timeout)
+  }
 
   @McpTool
   @McpDescription("""
@@ -175,7 +187,10 @@ class TextToolset : McpToolset {
     maxUsageCount: Int = 1000,
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
-  ): UsageInfoResult = search_in_files(regexPattern, true, directoryToSearch, fileMask, caseSensitive, maxUsageCount, timeout)
+  ): UsageInfoResult {
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.searching.content.with.regex", regexPattern))
+    return search_in_files(regexPattern, true, directoryToSearch, fileMask, caseSensitive, maxUsageCount, timeout)
+  }
 
   private suspend fun search_in_files(
     searchTextOrRegex: String,
@@ -235,9 +250,9 @@ class TextToolset : McpToolset {
       val startLineStartOffset = document.getLineStartOffset(startLineNumber)
       val endLineNumber = document.getLineNumber(textRange.endOffset)
       val endLineEndOffset = document.getLineEndOffset(endLineNumber)
-      val textBeforeOccurrence = document.getText(TextRange(startLineStartOffset, textRange.startOffset))
-      val textInner = document.getText(TextRange(textRange.startOffset, textRange.endOffset))
-      val textAfterOccurrence = document.getText(TextRange(textRange.endOffset, endLineEndOffset))
+      val textBeforeOccurrence = document.getText(TextRange(startLineStartOffset, textRange.startOffset)).take(MAX_USAGE_TEXT_CHARS)
+      val textInner = document.getText(TextRange(textRange.startOffset, textRange.endOffset)).take(MAX_USAGE_TEXT_CHARS)
+      val textAfterOccurrence = document.getText(TextRange(textRange.endOffset, endLineEndOffset)).take(MAX_USAGE_TEXT_CHARS)
       UsageInfoEntry(projectDir.relativizeIfPossible(file), startLineNumber + 1, "$textBeforeOccurrence||$textInner||$textAfterOccurrence")
     }
 
@@ -257,7 +272,8 @@ class TextToolset : McpToolset {
     val entries: List<UsageInfoEntry>,
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val probablyHasMoreMatchingEntries: Boolean = false,
+    @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
-    val timedOut: Boolean = false
+    val timedOut: Boolean? = false
   )
 }

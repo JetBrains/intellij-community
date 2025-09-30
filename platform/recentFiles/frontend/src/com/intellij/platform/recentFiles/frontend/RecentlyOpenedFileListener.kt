@@ -20,10 +20,13 @@ private class RecentlySelectedEditorListener : FileEditorManagerListener {
   }
 
   override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-    thisLogger().trace { "Remove closed frontend file from model: ${file.name}" }
+    thisLogger().trace { "Maybe remove closed frontend file from model: ${file.name}" }
     val frontendRecentFilesModel = FrontendRecentFilesModel.getInstance(source.project)
-    frontendRecentFilesModel.applyFrontendChanges(RecentFileKind.RECENTLY_OPENED_UNPINNED, listOf(file), FileChangeKind.REMOVED)
-  }
+    if (source.getEditors(file).isEmpty()) {
+      thisLogger().trace { "Do remove closed frontend file from model: ${file.name}" }
+      frontendRecentFilesModel.applyFrontendChanges(RecentFileKind.RECENTLY_OPENED_UNPINNED, listOf(file), FileChangeKind.REMOVED)
+    }
+   }
 
   override fun selectionChanged(event: FileEditorManagerEvent) {
     val file = event.newFile ?: return

@@ -7,12 +7,10 @@ import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
-import com.intellij.ui.LayeredIcon
 import com.intellij.ui.icons.IconWrapperWithToolTip
 import org.jetbrains.idea.devkit.DevKitIcons
 import java.util.function.Supplier
 import javax.swing.Icon
-import javax.swing.SwingConstants
 
 internal class ScaffoldingDirectoryIconProvider : IconProvider() {
 
@@ -39,18 +37,10 @@ internal class ScaffoldingDirectoryIconProvider : IconProvider() {
 private val pluginDirectoryIcon = AllIcons.Nodes.Plugin
   .withTooltip(messagePointer("plugin.directory.tooltip"))
 
-private val moduleDirectoryIcon = LayeredIcon(2)
-  .apply {
-    setIcon(AllIcons.Nodes.Plugin, 0)
-    setIcon(AllIcons.Nodes.Module8x8, 1, SwingConstants.SOUTH_EAST)
-  }
+private val moduleDirectoryIcon = DevKitIcons.PluginModule
   .withTooltip(messagePointer("module.directory.tooltip"))
 
-private val legacyPluginWithModuleIcon = LayeredIcon(2)
-  .apply {
-    setIcon(AllIcons.Nodes.Plugin, 0)
-    setIcon(DevKitIcons.LegacyPlugin, 1, SwingConstants.SOUTH_EAST)
-  }
+private val legacyPluginWithModuleIcon = DevKitIcons.LegacyPluginModule
   .withTooltip(messagePointer("plugin.and.module.directory.tooltip"))
 
 private fun Icon.withTooltip(message: Supplier<String>): Icon {

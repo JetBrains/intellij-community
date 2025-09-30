@@ -27,7 +27,6 @@ import javax.swing.JLabel
 
 internal class PythonSdkComboBoxWithBrowseButtonEditor(
   val comboBox: ComboBox<PythonSelectableInterpreter?>,
-  val controller: PythonAddInterpreterModel,
   onPathSelected: (String) -> Unit,
 ) : ComboBoxEditor {
   private val component = SimpleColoredComponent()
@@ -104,7 +103,7 @@ internal class PythonSdkComboBoxWithBrowseButtonEditor(
     if (_item == anObject) return
     _item = anObject
     component.clear()
-    component.customizeForPythonInterpreter(controller.interpreterLoading.value, anObject as? PythonSelectableInterpreter)
+    component.customizeForPythonInterpreter(isBusy, anObject as? PythonSelectableInterpreter)
   }
 
   fun setBusy(busy: Boolean) {
@@ -114,7 +113,7 @@ internal class PythonSdkComboBoxWithBrowseButtonEditor(
     comboBox.isEnabled = !isBusy
     component.clear()
     (item as? PythonSelectableInterpreter).takeIf { !busy }.let {
-      component.customizeForPythonInterpreter(controller.interpreterLoading.value, it)
+      component.customizeForPythonInterpreter(busy, it)
     }
   }
 

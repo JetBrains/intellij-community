@@ -103,7 +103,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     myInitialFile = initialFile;
     myFilter = filter;
     myFileType = fileType;
-    myComparator = comparator == null ? AlphaComparator.getInstance() : comparator;
+    myComparator = comparator == null ? TreeFileChooserSupport.Companion.getInstance(project).getDefaultComparator() : comparator;
     myDisableStructureProviders = disableStructureProviders;
     myShowLibraryContents = showLibraryContents;
     setTitle(title);

@@ -63,6 +63,7 @@ public fun IconActionButton(
     )
 }
 
+@Suppress("ComposableParamOrder") // To fix in JEWEL-924
 @Composable
 public fun IconActionButton(
     key: IconKey,
@@ -83,6 +84,7 @@ public fun IconActionButton(
     tooltip: @Composable () -> Unit,
 ) {
     Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
+        @Suppress("ModifierNotUsedAtRoot") // This is intentional
         BaseIconActionButton(
             key = key,
             contentDescription = contentDescription,
@@ -123,14 +125,15 @@ public fun IconActionButton(
         focusable = focusable,
         style = style,
         interactionSource = interactionSource,
-        modifier = modifier,
-        iconModifier = iconModifier,
         colorFilter = colorFilter,
         hints = hints,
         onClick = onClick,
+        modifier = modifier,
+        iconModifier = iconModifier,
     )
 }
 
+@Suppress("ComposableParamOrder") // To fix in JEWEL-924
 @Composable
 public fun IconActionButton(
     key: IconKey,
@@ -151,6 +154,7 @@ public fun IconActionButton(
     tooltip: @Composable () -> Unit,
 ) {
     Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
+        @Suppress("ModifierNotUsedAtRoot") // This is intentional
         CoreIconActionButton(
             key = key,
             modifier = modifier,
@@ -170,6 +174,7 @@ public fun IconActionButton(
 
 @Composable
 private fun BaseIconActionButton(
+    onClick: () -> Unit,
     key: IconKey,
     contentDescription: String?,
     iconClass: Class<*>,
@@ -177,11 +182,10 @@ private fun BaseIconActionButton(
     focusable: Boolean,
     style: IconButtonStyle,
     interactionSource: MutableInteractionSource,
-    modifier: Modifier,
-    iconModifier: Modifier,
     colorFilter: ColorFilter?,
     hint: PainterHint?,
-    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
 ) {
     if (hint != null) {
         CoreIconActionButton(
@@ -192,11 +196,11 @@ private fun BaseIconActionButton(
             focusable = focusable,
             style = style,
             interactionSource = interactionSource,
-            modifier = modifier,
-            iconModifier = iconModifier,
             colorFilter = colorFilter,
             hint = hint,
             onClick = onClick,
+            modifier = modifier,
+            iconModifier = iconModifier,
         )
     } else {
         CoreIconActionButton(
@@ -207,11 +211,11 @@ private fun BaseIconActionButton(
             focusable = focusable,
             style = style,
             interactionSource = interactionSource,
-            modifier = modifier,
-            iconModifier = iconModifier,
             colorFilter = colorFilter,
             hints = emptyArray(),
             onClick = onClick,
+            modifier = modifier,
+            iconModifier = iconModifier,
         )
     }
 }
@@ -225,11 +229,11 @@ private fun CoreIconActionButton(
     focusable: Boolean,
     style: IconButtonStyle,
     interactionSource: MutableInteractionSource,
-    modifier: Modifier,
-    iconModifier: Modifier,
     colorFilter: ColorFilter?,
     hints: Array<PainterHint>,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
 ) {
     IconButton(onClick, modifier, enabled, focusable, style, interactionSource) {
         Icon(
@@ -252,11 +256,11 @@ private fun CoreIconActionButton(
     focusable: Boolean,
     style: IconButtonStyle,
     interactionSource: MutableInteractionSource,
-    modifier: Modifier,
-    iconModifier: Modifier,
     colorFilter: ColorFilter?,
     hint: PainterHint,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
 ) {
     IconButton(onClick, modifier, enabled, focusable, style, interactionSource) {
         Icon(
@@ -289,12 +293,13 @@ public fun IconActionButton(
         focusable = focusable,
         style = style,
         interactionSource = interactionSource,
+        onClick = onClick,
         modifier = modifier,
         iconModifier = iconModifier,
-        onClick = onClick,
     )
 }
 
+@Suppress("ComposableParamOrder") // To fix in JEWEL-924
 @Composable
 public fun IconActionButton(
     painter: Painter,
@@ -312,6 +317,7 @@ public fun IconActionButton(
     tooltip: @Composable () -> Unit,
 ) {
     Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
+        @Suppress("ModifierNotUsedAtRoot") // This is intentional
         CoreIconActionButton(
             painter = painter,
             modifier = modifier,
@@ -334,9 +340,9 @@ private fun CoreIconActionButton(
     focusable: Boolean,
     style: IconButtonStyle,
     interactionSource: MutableInteractionSource,
-    modifier: Modifier = Modifier,
-    iconModifier: Modifier,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
 ) {
     IconButton(onClick, modifier, enabled, focusable, style, interactionSource) {
         Icon(painter, contentDescription, modifier = iconModifier)

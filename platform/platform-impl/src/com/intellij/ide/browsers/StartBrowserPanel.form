@@ -30,7 +30,7 @@
           <verticalTextPosition value="0"/>
         </properties>
       </component>
-      <component id="38a44" class="javax.swing.JComponent" binding="myBrowserComboBox" custom-create="true">
+      <component id="69cbf" class="com.intellij.ui.ComboboxWithBrowseButton" binding="myBrowserComboBox" custom-create="true">
         <constraints>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>

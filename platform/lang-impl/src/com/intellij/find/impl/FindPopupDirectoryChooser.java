@@ -106,10 +106,8 @@ public final class FindPopupDirectoryChooser extends JPanel {
       });
     } else {
       mySelectDirectoryButton.addActionListener(__ -> {
-        myFindPopupPanel.getCanClose().set(false);
-        OpenFileChooserService.getInstance().chooseDirectory(myProject, getDirectory(), (result) -> {
+        OpenFileChooserService.getInstance(myProject).chooseDirectory(getDirectory(), (result) -> {
           ApplicationManager.getApplication().invokeLater(() -> {
-            myFindPopupPanel.getCanClose().set(true);
             IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
             if (result == null) return;
             myHelper.getModel().setDirectoryName(result);

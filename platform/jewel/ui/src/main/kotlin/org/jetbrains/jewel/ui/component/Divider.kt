@@ -9,6 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.takeOrElse
 import org.jetbrains.jewel.foundation.modifier.thenIf
@@ -39,5 +41,6 @@ public fun Divider(
             .thenIf(startIndent.value != 0f) { padding(start = startIndent.takeOrElse { style.metrics.startIndent }) }
             .then(orientationModifier)
             .background(color = lineColor)
+            .semantics { hideFromAccessibility() }
     )
 }

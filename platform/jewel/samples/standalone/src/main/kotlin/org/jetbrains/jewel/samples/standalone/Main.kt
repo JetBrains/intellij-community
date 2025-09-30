@@ -35,7 +35,6 @@ import org.jetbrains.jewel.window.styling.TitleBarStyle
 @ExperimentalLayoutApi
 public fun main() {
     JewelLogger.getInstance("StandaloneSample").info("Starting Jewel Standalone sample")
-
     val icon = svgResource("icons/jewel-logo.svg")
 
     application {

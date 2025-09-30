@@ -27,6 +27,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/kotlin" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/kotlin" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
@@ -34,7 +35,6 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
     <orderEntry type="module-library" exported="">
       <library name="org.commonmark.commonmark" type="repository">
         <properties include-transitive-deps="false" maven-id="org.commonmark:commonmark:0.24.0">
@@ -53,6 +53,7 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
   </component>

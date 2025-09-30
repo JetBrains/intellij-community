@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.samples.standalone.markdown
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -13,8 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import coil3.compose.LocalPlatformContext
-import java.awt.Desktop
-import java.net.URI
+import java.awt.Desktop.getDesktop
+import java.net.URI.create
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
@@ -49,8 +50,9 @@ import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 @Composable
 internal fun MarkdownPreview(rawMarkdown: CharSequence, modifier: Modifier = Modifier) {
     val isDark = JewelTheme.isDark
+    val instanceUuid = JewelTheme.instanceUuid
 
-    val markdownStyling = remember(isDark) { if (isDark) MarkdownStyling.dark() else MarkdownStyling.light() }
+    val markdownStyling = remember(instanceUuid) { if (isDark) MarkdownStyling.dark() else MarkdownStyling.light() }
 
     var markdownBlocks by remember { mutableStateOf(emptyList<MarkdownBlock>()) }
 
@@ -108,22 +110,20 @@ internal fun MarkdownPreview(rawMarkdown: CharSequence, modifier: Modifier = Mod
         }
 
     // Using the values from the GitHub rendering to ensure contrast
-    val background = remember(isDark) { if (isDark) Color(0xff0d1117) else Color.White }
+    val background = remember(instanceUuid) { if (isDark) Color(0xff0d1117) else Color.White }
 
     ProvideMarkdownStyling(markdownStyling, blockRenderer, NoOpCodeHighlighter) {
         val lazyListState = rememberLazyListState()
-        VerticallyScrollableContainer(lazyListState, modifier.background(background)) {
+        VerticallyScrollableContainer(lazyListState as ScrollableState, modifier.background(background)) {
             LazyMarkdown(
-                markdownBlocks = markdownBlocks,
+                blocks = markdownBlocks,
                 modifier = Modifier.background(background),
                 contentPadding =
                     PaddingValues(start = 8.dp, top = 8.dp, end = 8.dp + scrollbarContentSafePadding(), bottom = 8.dp),
                 state = lazyListState,
                 selectable = true,
-                onUrlClick = onUrlClick(),
+                onUrlClick = { url: String -> getDesktop().browse(create(url)) },
             )
         }
     }
 }
-
-private fun onUrlClick(): (String) -> Unit = { url -> Desktop.getDesktop().browse(URI.create(url)) }

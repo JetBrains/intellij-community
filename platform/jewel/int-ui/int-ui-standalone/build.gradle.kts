@@ -1,13 +1,15 @@
 plugins {
     jewel
-    `jewel-publish`
     `jewel-check-public-api`
     alias(libs.plugins.composeDesktop)
     alias(libs.plugins.compose.compiler)
     `intellij-theme-generator`
 }
 
-dependencies { api(projects.ui) }
+dependencies {
+    api(projects.ui)
+    implementation(libs.jbr.api)
+}
 
 intelliJThemeGenerator {
     register("intUiLight") {

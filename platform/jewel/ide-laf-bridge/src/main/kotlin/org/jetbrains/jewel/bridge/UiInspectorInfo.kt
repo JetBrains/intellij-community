@@ -41,31 +41,16 @@ private fun findSkiaLayer(composePanel: JComponent): SkiaSwingLayer? =
     UIUtil.findComponentOfType(composePanel, SkiaSwingLayer::class.java)
 
 private fun configureSkiaLayer(skiaComponent: JComponent) {
-    skiaComponent.putClientProperty(
-        UiInspectorCustomComponentProvider.Companion.KEY,
-        ComposeUiInspectorProvider(skiaComponent),
-    )
+    skiaComponent.putClientProperty(UiInspectorCustomComponentProvider.KEY, ComposeUiInspectorProvider(skiaComponent))
 }
 
 private class ComposeUiInspectorProvider(private val composePanel: JComponent) : UiInspectorCustomComponentProvider {
-    override fun getChildren(): List<UiInspectorCustomComponentChildProvider> {
-        val context = composePanel.accessibleContext ?: return emptyList()
-        val count = context.accessibleChildrenCount
-        val composeChildren = mutableListOf<UiInspectorCustomComponentChildProvider>()
-
-        for (i in 0 until count) {
-            val component = context.getAccessibleChild(i).accessibleContext
-            if (component != null) {
-                composeChildren.add(InspectorObject(component))
-            }
-        }
-
-        return composeChildren
-    }
+    override fun getChildren(): List<UiInspectorCustomComponentChildProvider> =
+        getChildren(composePanel.accessibleContext)
 }
 
 private val PROPERTIES =
-    listOf<String>(
+    listOf(
         "isEnabled",
         "isVisible",
         "isShowing",
@@ -86,19 +71,7 @@ private class InspectorObject(private val component: AccessibleContext) : UiInsp
         return name
     }
 
-    override fun getChildren(): List<UiInspectorCustomComponentChildProvider> {
-        val count = component.accessibleChildrenCount
-        val composeChildren = mutableListOf<UiInspectorCustomComponentChildProvider>()
-
-        for (i in 0 until count) {
-            val childComponent = component.getAccessibleChild(i).accessibleContext
-            if (childComponent != null) {
-                composeChildren.add(InspectorObject(childComponent))
-            }
-        }
-
-        return composeChildren
-    }
+    override fun getChildren(): List<UiInspectorCustomComponentChildProvider> = getChildren(component)
 
     override fun getObjectForProperties() = component
 
@@ -111,5 +84,19 @@ private class InspectorObject(private val component: AccessibleContext) : UiInsp
             return component.bounds
         }
         return null
+    }
+}
+
+private fun getChildren(context: AccessibleContext?): List<UiInspectorCustomComponentChildProvider> {
+    if (context == null) return emptyList()
+
+    val count = context.accessibleChildrenCount
+    return buildList(capacity = count) {
+        for (i in 0 until count) {
+            val childComponent = context.getAccessibleChild(i)?.accessibleContext
+            if (childComponent != null) {
+                add(InspectorObject(childComponent))
+            }
+        }
     }
 }

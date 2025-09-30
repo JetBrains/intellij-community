@@ -1,3 +1,5 @@
+@file:Suppress("DuplicatedCode")
+
 package org.jetbrains.jewel.intui.standalone.theme
 
 import androidx.compose.runtime.Composable
@@ -25,7 +27,9 @@ import org.jetbrains.jewel.intui.standalone.styling.Editor
 import org.jetbrains.jewel.intui.standalone.styling.Outlined
 import org.jetbrains.jewel.intui.standalone.styling.Undecorated
 import org.jetbrains.jewel.intui.standalone.styling.dark
+import org.jetbrains.jewel.intui.standalone.styling.darkTransparentBackground
 import org.jetbrains.jewel.intui.standalone.styling.light
+import org.jetbrains.jewel.intui.standalone.styling.lightTransparentBackground
 import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.ui.DefaultComponentStyling
 import org.jetbrains.jewel.ui.LocalMenuItemShortcutHintProvider
@@ -104,6 +108,80 @@ public fun JewelTheme.Companion.lightThemeDefinition(
     )
 
 /**
+ * Create a light theme definition.
+ *
+ * @param colors The [GlobalColors] for this theme definition.
+ * @param metrics The [GlobalMetrics] for this theme definition.
+ * @param palette The [ThemeColorPalette] for this theme definition.
+ * @param iconData The [ThemeIconData] for this theme definition.
+ * @param defaultTextStyle The default text style for this theme definition.
+ * @param editorTextStyle The editor text style for this theme definition.
+ * @param consoleTextStyle The console text style for this theme definition. Same as [editorTextStyle] by default.
+ * @param contentColor The default content (text) color for this theme definition.
+ */
+@Deprecated("Please, use the overload with disabledAppearanceValues.")
+public fun JewelTheme.Companion.lightThemeDefinition(
+    colors: GlobalColors = GlobalColors.light(),
+    metrics: GlobalMetrics = GlobalMetrics.defaults(),
+    palette: ThemeColorPalette = IntUiLightTheme.colors,
+    iconData: ThemeIconData = IntUiLightTheme.iconData,
+    defaultTextStyle: TextStyle = JewelTheme.createDefaultTextStyle(),
+    editorTextStyle: TextStyle = JewelTheme.createEditorTextStyle(),
+    consoleTextStyle: TextStyle = editorTextStyle,
+    contentColor: Color = colors.text.normal,
+): ThemeDefinition =
+    ThemeDefinition(
+        name = "IntUI Light",
+        isDark = false,
+        colors,
+        metrics,
+        defaultTextStyle,
+        editorTextStyle,
+        consoleTextStyle,
+        contentColor,
+        palette,
+        iconData,
+        DisabledAppearanceValues.light(),
+    )
+
+/**
+ * Create a dark theme definition.
+ *
+ * @param colors The [GlobalColors] for this theme definition.
+ * @param metrics The [GlobalMetrics] for this theme definition.
+ * @param palette The [ThemeColorPalette] for this theme definition.
+ * @param iconData The [ThemeIconData] for this theme definition.
+ * @param defaultTextStyle The default text style for this theme definition.
+ * @param editorTextStyle The editor text style for this theme definition.
+ * @param consoleTextStyle The console text style for this theme definition. Same as [editorTextStyle] by default.
+ * @param contentColor The default content (text) color for this theme definition.
+ */
+@Deprecated("Please, use the overload with disabledAppearanceValues.")
+public fun JewelTheme.Companion.darkThemeDefinition(
+    colors: GlobalColors = GlobalColors.dark(),
+    metrics: GlobalMetrics = GlobalMetrics.defaults(),
+    palette: ThemeColorPalette = IntUiDarkTheme.colors,
+    iconData: ThemeIconData = IntUiDarkTheme.iconData,
+    defaultTextStyle: TextStyle = JewelTheme.createDefaultTextStyle(),
+    editorTextStyle: TextStyle = JewelTheme.createEditorTextStyle(),
+    consoleTextStyle: TextStyle = editorTextStyle,
+    contentColor: Color = colors.text.normal,
+): ThemeDefinition =
+    ThemeDefinition(
+        name = "IntUI Dark",
+        isDark = true,
+        colors,
+        metrics,
+        defaultTextStyle,
+        editorTextStyle,
+        consoleTextStyle,
+        contentColor,
+        palette,
+        iconData,
+        DisabledAppearanceValues.dark(),
+    )
+
+/**
  * Create a dark theme definition.
  *
  * @param colors The [GlobalColors] for this theme definition.
@@ -144,9 +222,89 @@ public fun JewelTheme.Companion.darkThemeDefinition(
 @Composable
 public fun ComponentStyling.default(): ComponentStyling = with {
     val isDark = JewelTheme.isDark
-    remember(isDark) { if (isDark) dark() else light() }
+    remember(JewelTheme.instanceUuid) {
+        if (isDark) {
+            dark(transparentIconButtonStyle = IconButtonStyle.darkTransparentBackground())
+        } else {
+            light(transparentIconButtonStyle = IconButtonStyle.lightTransparentBackground())
+        }
+    }
 }
 
+@Suppress("UnusedReceiverParameter")
+public fun ComponentStyling.dark(
+    checkboxStyle: CheckboxStyle = CheckboxStyle.dark(),
+    chipStyle: ChipStyle = ChipStyle.dark(),
+    circularProgressStyle: CircularProgressStyle = CircularProgressStyle.dark(),
+    defaultBannerStyle: DefaultBannerStyles = DefaultBannerStyles.Default.dark(),
+    comboBoxStyle: ComboBoxStyle = ComboBoxStyle.Default.dark(),
+    defaultButtonStyle: ButtonStyle = ButtonStyle.Default.dark(),
+    defaultSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Default.dark(),
+    defaultTabStyle: TabStyle = TabStyle.Default.dark(),
+    dividerStyle: DividerStyle = DividerStyle.dark(),
+    dropdownStyle: DropdownStyle = DropdownStyle.Default.dark(),
+    editorTabStyle: TabStyle = TabStyle.Editor.dark(),
+    groupHeaderStyle: GroupHeaderStyle = GroupHeaderStyle.dark(),
+    horizontalProgressBarStyle: HorizontalProgressBarStyle = HorizontalProgressBarStyle.dark(),
+    iconButtonStyle: IconButtonStyle = IconButtonStyle.dark(),
+    transparentIconButtonStyle: IconButtonStyle = IconButtonStyle.darkTransparentBackground(),
+    inlineBannerStyle: InlineBannerStyles = InlineBannerStyles.Default.dark(),
+    lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.dark(),
+    linkStyle: LinkStyle = LinkStyle.dark(),
+    menuStyle: MenuStyle = MenuStyle.dark(),
+    outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.dark(),
+    popupContainerStyle: PopupContainerStyle = PopupContainerStyle.dark(),
+    outlinedSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Outlined.dark(),
+    radioButtonStyle: RadioButtonStyle = RadioButtonStyle.dark(),
+    scrollbarStyle: ScrollbarStyle = ScrollbarStyle.dark(),
+    segmentedControlButtonStyle: SegmentedControlButtonStyle = SegmentedControlButtonStyle.dark(),
+    segmentedControlStyle: SegmentedControlStyle = SegmentedControlStyle.dark(),
+    selectableLazyColumnStyle: SelectableLazyColumnStyle = SelectableLazyColumnStyle.dark(),
+    sliderStyle: SliderStyle = SliderStyle.dark(),
+    simpleListItemStyle: SimpleListItemStyle = SimpleListItemStyle.dark(),
+    textAreaStyle: TextAreaStyle = TextAreaStyle.dark(),
+    textFieldStyle: TextFieldStyle = TextFieldStyle.dark(),
+    tooltipStyle: TooltipStyle = TooltipStyle.dark(autoHideBehavior = TooltipAutoHideBehavior.Normal),
+    undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.dark(),
+): ComponentStyling =
+    DefaultComponentStyling(
+        checkboxStyle = checkboxStyle,
+        chipStyle = chipStyle,
+        circularProgressStyle = circularProgressStyle,
+        defaultBannerStyle = defaultBannerStyle,
+        comboBoxStyle = comboBoxStyle,
+        defaultButtonStyle = defaultButtonStyle,
+        defaultDropdownStyle = dropdownStyle,
+        defaultSplitButtonStyle = defaultSplitButtonStyle,
+        defaultTabStyle = defaultTabStyle,
+        dividerStyle = dividerStyle,
+        editorTabStyle = editorTabStyle,
+        groupHeaderStyle = groupHeaderStyle,
+        horizontalProgressBarStyle = horizontalProgressBarStyle,
+        iconButtonStyle = iconButtonStyle,
+        transparentIconButtonStyle = transparentIconButtonStyle,
+        inlineBannerStyle = inlineBannerStyle,
+        lazyTreeStyle = lazyTreeStyle,
+        linkStyle = linkStyle,
+        menuStyle = menuStyle,
+        outlinedButtonStyle = outlinedButtonStyle,
+        popupContainerStyle = popupContainerStyle,
+        outlinedSplitButtonStyle = outlinedSplitButtonStyle,
+        radioButtonStyle = radioButtonStyle,
+        scrollbarStyle = scrollbarStyle,
+        segmentedControlButtonStyle = segmentedControlButtonStyle,
+        segmentedControlStyle = segmentedControlStyle,
+        selectableLazyColumnStyle = selectableLazyColumnStyle,
+        simpleListItemStyle = simpleListItemStyle,
+        sliderStyle = sliderStyle,
+        textAreaStyle = textAreaStyle,
+        textFieldStyle = textFieldStyle,
+        tooltipStyle = tooltipStyle,
+        undecoratedDropdownStyle = undecoratedDropdownStyle,
+    )
+
+@Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
+@Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.ERROR)
 public fun ComponentStyling.dark(
     checkboxStyle: CheckboxStyle = CheckboxStyle.dark(),
     chipStyle: ChipStyle = ChipStyle.dark(),
@@ -181,43 +339,115 @@ public fun ComponentStyling.dark(
     tooltipStyle: TooltipStyle = TooltipStyle.dark(autoHideBehavior = TooltipAutoHideBehavior.Normal),
     undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.dark(),
 ): ComponentStyling =
-    with(
-        DefaultComponentStyling(
-            checkboxStyle = checkboxStyle,
-            chipStyle = chipStyle,
-            circularProgressStyle = circularProgressStyle,
-            defaultBannerStyle = defaultBannerStyle,
-            comboBoxStyle = comboBoxStyle,
-            defaultButtonStyle = defaultButtonStyle,
-            defaultDropdownStyle = dropdownStyle,
-            defaultSplitButtonStyle = defaultSplitButtonStyle,
-            defaultTabStyle = defaultTabStyle,
-            dividerStyle = dividerStyle,
-            editorTabStyle = editorTabStyle,
-            groupHeaderStyle = groupHeaderStyle,
-            horizontalProgressBarStyle = horizontalProgressBarStyle,
-            iconButtonStyle = iconButtonStyle,
-            inlineBannerStyle = inlineBannerStyle,
-            lazyTreeStyle = lazyTreeStyle,
-            linkStyle = linkStyle,
-            menuStyle = menuStyle,
-            outlinedButtonStyle = outlinedButtonStyle,
-            popupContainerStyle = popupContainerStyle,
-            outlinedSplitButtonStyle = outlinedSplitButtonStyle,
-            radioButtonStyle = radioButtonStyle,
-            scrollbarStyle = scrollbarStyle,
-            segmentedControlButtonStyle = segmentedControlButtonStyle,
-            segmentedControlStyle = segmentedControlStyle,
-            selectableLazyColumnStyle = selectableLazyColumnStyle,
-            simpleListItemStyle = simpleListItemStyle,
-            sliderStyle = sliderStyle,
-            textAreaStyle = textAreaStyle,
-            textFieldStyle = textFieldStyle,
-            tooltipStyle = tooltipStyle,
-            undecoratedDropdownStyle = undecoratedDropdownStyle,
-        )
+    DefaultComponentStyling(
+        checkboxStyle = checkboxStyle,
+        chipStyle = chipStyle,
+        circularProgressStyle = circularProgressStyle,
+        defaultBannerStyle = defaultBannerStyle,
+        comboBoxStyle = comboBoxStyle,
+        defaultButtonStyle = defaultButtonStyle,
+        defaultDropdownStyle = dropdownStyle,
+        defaultSplitButtonStyle = defaultSplitButtonStyle,
+        defaultTabStyle = defaultTabStyle,
+        dividerStyle = dividerStyle,
+        editorTabStyle = editorTabStyle,
+        groupHeaderStyle = groupHeaderStyle,
+        horizontalProgressBarStyle = horizontalProgressBarStyle,
+        iconButtonStyle = iconButtonStyle,
+        inlineBannerStyle = inlineBannerStyle,
+        lazyTreeStyle = lazyTreeStyle,
+        linkStyle = linkStyle,
+        menuStyle = menuStyle,
+        outlinedButtonStyle = outlinedButtonStyle,
+        popupContainerStyle = popupContainerStyle,
+        outlinedSplitButtonStyle = outlinedSplitButtonStyle,
+        radioButtonStyle = radioButtonStyle,
+        scrollbarStyle = scrollbarStyle,
+        segmentedControlButtonStyle = segmentedControlButtonStyle,
+        segmentedControlStyle = segmentedControlStyle,
+        selectableLazyColumnStyle = selectableLazyColumnStyle,
+        simpleListItemStyle = simpleListItemStyle,
+        sliderStyle = sliderStyle,
+        textAreaStyle = textAreaStyle,
+        textFieldStyle = textFieldStyle,
+        tooltipStyle = tooltipStyle,
+        undecoratedDropdownStyle = undecoratedDropdownStyle,
     )
 
+@Suppress("UnusedReceiverParameter")
+public fun ComponentStyling.light(
+    checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
+    chipStyle: ChipStyle = ChipStyle.light(),
+    circularProgressStyle: CircularProgressStyle = CircularProgressStyle.light(),
+    defaultBannerStyle: DefaultBannerStyles = DefaultBannerStyles.Default.light(),
+    comboBoxStyle: ComboBoxStyle = ComboBoxStyle.Default.light(),
+    defaultButtonStyle: ButtonStyle = ButtonStyle.Default.light(),
+    defaultSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Default.light(),
+    defaultTabStyle: TabStyle = TabStyle.Default.light(),
+    dividerStyle: DividerStyle = DividerStyle.light(),
+    dropdownStyle: DropdownStyle = DropdownStyle.Default.light(),
+    editorTabStyle: TabStyle = TabStyle.Editor.light(),
+    groupHeaderStyle: GroupHeaderStyle = GroupHeaderStyle.light(),
+    horizontalProgressBarStyle: HorizontalProgressBarStyle = HorizontalProgressBarStyle.light(),
+    iconButtonStyle: IconButtonStyle = IconButtonStyle.light(),
+    transparentIconButtonStyle: IconButtonStyle = IconButtonStyle.lightTransparentBackground(),
+    inlineBannerStyle: InlineBannerStyles = InlineBannerStyles.Default.light(),
+    lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.light(),
+    linkStyle: LinkStyle = LinkStyle.light(),
+    menuStyle: MenuStyle = MenuStyle.light(),
+    popupContainerStyle: PopupContainerStyle = PopupContainerStyle.light(),
+    outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.light(),
+    outlinedSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Outlined.light(),
+    radioButtonStyle: RadioButtonStyle = RadioButtonStyle.light(),
+    scrollbarStyle: ScrollbarStyle = ScrollbarStyle.light(),
+    segmentedControlButtonStyle: SegmentedControlButtonStyle = SegmentedControlButtonStyle.light(),
+    segmentedControlStyle: SegmentedControlStyle = SegmentedControlStyle.light(),
+    sliderStyle: SliderStyle = SliderStyle.light(),
+    selectableLazyColumnStyle: SelectableLazyColumnStyle = SelectableLazyColumnStyle.light(),
+    simpleListItemStyle: SimpleListItemStyle = SimpleListItemStyle.light(),
+    textAreaStyle: TextAreaStyle = TextAreaStyle.light(),
+    textFieldStyle: TextFieldStyle = TextFieldStyle.light(),
+    tooltipStyle: TooltipStyle = TooltipStyle.light(autoHideBehavior = TooltipAutoHideBehavior.Normal),
+    undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.light(),
+): ComponentStyling =
+    DefaultComponentStyling(
+        checkboxStyle = checkboxStyle,
+        chipStyle = chipStyle,
+        circularProgressStyle = circularProgressStyle,
+        comboBoxStyle = comboBoxStyle,
+        defaultBannerStyle = defaultBannerStyle,
+        defaultButtonStyle = defaultButtonStyle,
+        defaultDropdownStyle = dropdownStyle,
+        defaultSplitButtonStyle = defaultSplitButtonStyle,
+        defaultTabStyle = defaultTabStyle,
+        dividerStyle = dividerStyle,
+        editorTabStyle = editorTabStyle,
+        groupHeaderStyle = groupHeaderStyle,
+        horizontalProgressBarStyle = horizontalProgressBarStyle,
+        iconButtonStyle = iconButtonStyle,
+        transparentIconButtonStyle = transparentIconButtonStyle,
+        inlineBannerStyle = inlineBannerStyle,
+        lazyTreeStyle = lazyTreeStyle,
+        linkStyle = linkStyle,
+        menuStyle = menuStyle,
+        outlinedButtonStyle = outlinedButtonStyle,
+        popupContainerStyle = popupContainerStyle,
+        outlinedSplitButtonStyle = outlinedSplitButtonStyle,
+        radioButtonStyle = radioButtonStyle,
+        scrollbarStyle = scrollbarStyle,
+        segmentedControlButtonStyle = segmentedControlButtonStyle,
+        segmentedControlStyle = segmentedControlStyle,
+        selectableLazyColumnStyle = selectableLazyColumnStyle,
+        sliderStyle = sliderStyle,
+        simpleListItemStyle = simpleListItemStyle,
+        textAreaStyle = textAreaStyle,
+        textFieldStyle = textFieldStyle,
+        tooltipStyle = tooltipStyle,
+        undecoratedDropdownStyle = undecoratedDropdownStyle,
+    )
+
+@Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
+@Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.ERROR)
 public fun ComponentStyling.light(
     checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
     chipStyle: ChipStyle = ChipStyle.light(),
@@ -252,51 +482,49 @@ public fun ComponentStyling.light(
     tooltipStyle: TooltipStyle = TooltipStyle.light(autoHideBehavior = TooltipAutoHideBehavior.Normal),
     undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.light(),
 ): ComponentStyling =
-    with(
-        DefaultComponentStyling(
-            checkboxStyle = checkboxStyle,
-            chipStyle = chipStyle,
-            circularProgressStyle = circularProgressStyle,
-            comboBoxStyle = comboBoxStyle,
-            defaultBannerStyle = defaultBannerStyle,
-            defaultButtonStyle = defaultButtonStyle,
-            defaultDropdownStyle = dropdownStyle,
-            defaultSplitButtonStyle = defaultSplitButtonStyle,
-            defaultTabStyle = defaultTabStyle,
-            dividerStyle = dividerStyle,
-            editorTabStyle = editorTabStyle,
-            groupHeaderStyle = groupHeaderStyle,
-            horizontalProgressBarStyle = horizontalProgressBarStyle,
-            iconButtonStyle = iconButtonStyle,
-            inlineBannerStyle = inlineBannerStyle,
-            lazyTreeStyle = lazyTreeStyle,
-            linkStyle = linkStyle,
-            menuStyle = menuStyle,
-            outlinedButtonStyle = outlinedButtonStyle,
-            popupContainerStyle = popupContainerStyle,
-            outlinedSplitButtonStyle = outlinedSplitButtonStyle,
-            radioButtonStyle = radioButtonStyle,
-            scrollbarStyle = scrollbarStyle,
-            segmentedControlButtonStyle = segmentedControlButtonStyle,
-            segmentedControlStyle = segmentedControlStyle,
-            selectableLazyColumnStyle = selectableLazyColumnStyle,
-            sliderStyle = sliderStyle,
-            simpleListItemStyle = simpleListItemStyle,
-            textAreaStyle = textAreaStyle,
-            textFieldStyle = textFieldStyle,
-            tooltipStyle = tooltipStyle,
-            undecoratedDropdownStyle = undecoratedDropdownStyle,
-        )
+    DefaultComponentStyling(
+        checkboxStyle = checkboxStyle,
+        chipStyle = chipStyle,
+        circularProgressStyle = circularProgressStyle,
+        comboBoxStyle = comboBoxStyle,
+        defaultBannerStyle = defaultBannerStyle,
+        defaultButtonStyle = defaultButtonStyle,
+        defaultDropdownStyle = dropdownStyle,
+        defaultSplitButtonStyle = defaultSplitButtonStyle,
+        defaultTabStyle = defaultTabStyle,
+        dividerStyle = dividerStyle,
+        editorTabStyle = editorTabStyle,
+        groupHeaderStyle = groupHeaderStyle,
+        horizontalProgressBarStyle = horizontalProgressBarStyle,
+        iconButtonStyle = iconButtonStyle,
+        inlineBannerStyle = inlineBannerStyle,
+        lazyTreeStyle = lazyTreeStyle,
+        linkStyle = linkStyle,
+        menuStyle = menuStyle,
+        outlinedButtonStyle = outlinedButtonStyle,
+        popupContainerStyle = popupContainerStyle,
+        outlinedSplitButtonStyle = outlinedSplitButtonStyle,
+        radioButtonStyle = radioButtonStyle,
+        scrollbarStyle = scrollbarStyle,
+        segmentedControlButtonStyle = segmentedControlButtonStyle,
+        segmentedControlStyle = segmentedControlStyle,
+        selectableLazyColumnStyle = selectableLazyColumnStyle,
+        sliderStyle = sliderStyle,
+        simpleListItemStyle = simpleListItemStyle,
+        textAreaStyle = textAreaStyle,
+        textFieldStyle = textFieldStyle,
+        tooltipStyle = tooltipStyle,
+        undecoratedDropdownStyle = undecoratedDropdownStyle,
     )
 
 @Composable
 public fun IntUiTheme(isDark: Boolean = false, swingCompatMode: Boolean = false, content: @Composable () -> Unit) {
     val themeDefinition =
-        remember(isDark) {
+        remember(JewelTheme.instanceUuid) {
             if (isDark) {
-                JewelTheme.darkThemeDefinition()
+                JewelTheme.darkThemeDefinition(disabledAppearanceValues = DisabledAppearanceValues.dark())
             } else {
-                JewelTheme.lightThemeDefinition()
+                JewelTheme.lightThemeDefinition(disabledAppearanceValues = DisabledAppearanceValues.light())
             }
         }
 

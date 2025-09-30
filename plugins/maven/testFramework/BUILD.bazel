@@ -28,6 +28,9 @@ jvm_library(
     "//platform/core-api:core",
     "//xml/xml-psi-api:psi",
     "//platform/backend/observation",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
+    "@lib//:bouncy-castle-provider",
   ]
 )
 ### auto-generated section `build intellij.maven.testFramework` end

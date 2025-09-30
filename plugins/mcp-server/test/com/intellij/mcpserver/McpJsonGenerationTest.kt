@@ -56,8 +56,9 @@ class McpJsonGenerationTest {
   @Test
   fun test_createSseServerJsonEntry() {
     val port = 8080
+    val projectPath = "/test/project/path"
 
-    val jsonConfig = createSseServerJsonEntry(port)
+    val jsonConfig = createSseServerJsonEntry(port, projectBasePath = projectPath)
 
     // Verify the JSON structure
     Assertions.assertEquals("sse", jsonConfig["type"]?.jsonPrimitive?.content)

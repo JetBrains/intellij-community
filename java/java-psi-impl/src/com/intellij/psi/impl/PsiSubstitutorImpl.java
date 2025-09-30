@@ -46,7 +46,6 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
   private static final UnmodifiableHashMap<PsiTypeParameter, PsiType> EMPTY_MAP = UnmodifiableHashMap.empty(PSI_EQUIVALENCE);
 
   private final @NotNull UnmodifiableHashMap<PsiTypeParameter, PsiType> mySubstitutionMap;
-  private final SubstitutionVisitor mySimpleSubstitutionVisitor = new SubstitutionVisitor();
 
   PsiSubstitutorImpl(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     mySubstitutionMap = UnmodifiableHashMap.fromMap(PSI_EQUIVALENCE, map);
@@ -78,7 +77,7 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
   }
 
   /**
-   * @return type mapped to type parameter; null if type parameter is mapped to null; or PsiType.VOID if no mapping exists
+   * @return type mapped to type parameter; null if the type parameter is mapped to null; or PsiType.VOID if no mapping exists
    */
   private PsiType getFromMap(@NotNull PsiTypeParameter typeParameter) {
     if (typeParameter instanceof LightTypeParameter && ((LightTypeParameter)typeParameter).useDelegateToSubstitute()) {
@@ -88,12 +87,19 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
   }
 
   @Override
-  public PsiType substitute(PsiType type) {
-    if (type == null) {
-      return null;
-    }
+  public PsiType substitute(@Nullable PsiType type) {
+    return doSubstitute(type, false);
+  }
+
+  @Override
+  public PsiType substituteIgnoringNullability(@Nullable PsiType type) {
+    return doSubstitute(type, true);
+  }
+
+  private @Nullable PsiType doSubstitute(@Nullable PsiType type, boolean ignoreNullity) {
+    if (type == null) return null;
     PsiUtil.ensureValidType(type);
-    PsiType substituted = type.accept(mySimpleSubstitutionVisitor);
+    PsiType substituted = type.accept(new SubstitutionVisitor(ignoreNullity));
     return correctExternalSubstitution(substituted, type);
   }
 
@@ -151,6 +157,11 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
   }
 
   private class SubstitutionVisitor extends PsiTypeMapper {
+    private final boolean ignoreNullity;
+
+    private SubstitutionVisitor(boolean ignoreNullity) {
+      this.ignoreNullity = ignoreNullity; 
+    }
 
     @Override
     public PsiType visitType(@NotNull PsiType type) {
@@ -210,8 +221,10 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
             // TODO: remove once nullability works better than annotations
             result = result.annotate(getMergedProvider(classType, result));
           }
-          TypeNullability origNullability = classType.getNullability();
-          result = origNullability.equals(TypeNullability.UNKNOWN) ? result : result.withNullability(origNullability.instantiatedWith(result.getNullability()));
+          if (!ignoreNullity) {
+            TypeNullability origNullability = classType.getNullability();
+            result = origNullability.equals(TypeNullability.UNKNOWN) ? result : result.withNullability(origNullability.instantiatedWith(result.getNullability()));
+          }
         }
         return result;
       }

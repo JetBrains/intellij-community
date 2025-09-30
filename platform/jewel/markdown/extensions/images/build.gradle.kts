@@ -1,6 +1,5 @@
 plugins {
     jewel
-    `jewel-publish`
     `jewel-check-public-api`
     alias(libs.plugins.composeDesktop)
     alias(libs.plugins.compose.compiler)
@@ -13,10 +12,7 @@ dependencies {
 
     implementation(projects.markdown.core)
     runtimeOnly(libs.ktor.client.java)
+    testImplementation(libs.coil.test)
     testImplementation(compose.desktop.uiTestJUnit4)
-}
-
-publishing.publications.named<MavenPublication>("main") {
-    val ijpTarget = project.property("ijp.target") as String
-    artifactId = "jewel-markdown-extension-${project.name}-$ijpTarget"
+    testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
 }

@@ -16,12 +16,11 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
-import java.util.*
 import javax.swing.Icon
 
 @ApiStatus.Internal
 @Serializable
-class SearchScopeData(val scopeId: String, val name: @Nls String, val iconId: IconId?, val colorId: ColorId?, val isSeparator: Boolean) {
+class SearchScopeData(val scopeId: String, val name: @Nls String, val iconId: IconId?, val colorId: ColorId?, val isSeparator: Boolean, val uiNeeded: Boolean) {
   companion object {
     fun from(descriptor: ScopeDescriptor, scopeId: String): SearchScopeData? {
       val name = descriptor.displayName ?: return null
@@ -29,7 +28,8 @@ class SearchScopeData(val scopeId: String, val name: @Nls String, val iconId: Ic
                              name,
                              descriptor.icon?.rpcId(),
                              descriptor.color?.rpcId(),
-                             descriptor is ScopeSeparator)
+                             descriptor is ScopeSeparator,
+                             descriptor.needsUserInputForScope())
     }
   }
 }
@@ -44,17 +44,23 @@ class SearchScopesInfo(val scopes: List<SearchScopeData>,
     return scopes.associate {
       val descriptor =
         if (it.isSeparator) ScopeSeparator(it.name)
-        else object : ScopeDescriptor(object : GlobalSearchScope() {
-          override fun contains(file: VirtualFile): Boolean = throw IllegalStateException("Should not be called")
-          override fun isSearchInModuleContent(aModule: Module): Boolean = throw IllegalStateException("Should not be called")
-          override fun isSearchInLibraries(): Boolean = throw IllegalStateException("Should not be called")
-        }) {
-          override fun getColor(): Color? = it.colorId?.color()
-          override fun getDisplayName(): @Nls(capitalization = Nls.Capitalization.Sentence) String = it.name
-          override fun getIcon(): Icon? = it.iconId?.icon()
-        }
+        else FrontendScopeDescriptor(it)
 
       it.scopeId to descriptor
     }
+  }
+}
+
+
+private class FrontendScopeDescriptor(private val searchScopeData: SearchScopeData) : ScopeDescriptor(object : GlobalSearchScope() {
+  override fun contains(file: VirtualFile): Boolean = throw IllegalStateException("Should not be called")
+  override fun isSearchInModuleContent(aModule: Module): Boolean = throw IllegalStateException("Should not be called")
+  override fun isSearchInLibraries(): Boolean = throw IllegalStateException("Should not be called")
+}) {
+  override fun getColor(): Color? = searchScopeData.colorId?.color()
+  override fun getDisplayName(): @Nls(capitalization = Nls.Capitalization.Sentence) String = searchScopeData.name
+  override fun getIcon(): Icon? = searchScopeData.iconId?.icon()
+  override fun needsUserInputForScope(): Boolean {
+    return searchScopeData.uiNeeded
   }
 }

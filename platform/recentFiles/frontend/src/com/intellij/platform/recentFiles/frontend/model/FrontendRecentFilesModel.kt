@@ -6,15 +6,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.platform.recentFiles.frontend.*
-import com.intellij.platform.recentFiles.shared.FileChangeKind
-import com.intellij.platform.recentFiles.shared.FileSwitcherApi
-import com.intellij.platform.recentFiles.shared.RecentFileKind
-import com.intellij.platform.recentFiles.shared.RecentFilesCoroutineScopeProvider
-import com.intellij.platform.recentFiles.shared.RecentFilesState
+import com.intellij.platform.recentFiles.shared.*
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -28,9 +26,20 @@ class FrontendRecentFilesModel(private val project: Project) {
   private val modelUpdateScope = RecentFilesCoroutineScopeProvider.getInstance(project).coroutineScope.childScope("RecentFilesModel updates")
 
   private val modelState = FrontendRecentFilesMutableState(project)
-
   fun getRecentFiles(fileKind: RecentFileKind): List<SwitcherVirtualFile> {
     val capturedModelState = modelState.chooseStateToReadFrom(fileKind).value.entries
+    val filteredModel = filterOutExcludedFiles(capturedModelState, fileKind)
+
+    return when (fileKind) {
+      RecentFileKind.RECENTLY_OPENED_UNPINNED -> considerOpenedEditorWindowsForFiles(filteredModel)
+      else -> filteredModel
+    }
+  }
+
+  private fun filterOutExcludedFiles(
+    capturedModelState: List<SwitcherVirtualFile>,
+    fileKind: RecentFileKind,
+  ): List<SwitcherVirtualFile> {
     val filteredModel = capturedModelState.filter { fileModel ->
       val file = fileModel.virtualFile ?: return@filter true
       val excluder = RecentFilesExcluder.EP_NAME.findFirstSafe { ext ->
@@ -48,8 +57,27 @@ class FrontendRecentFilesModel(private val project: Project) {
         ""
       "Return requested $fileKind list: ${capturedModelState.joinToString { it.virtualFile?.name ?: "null" }} $modelData"
     }
-
     return filteredModel
+  }
+
+  private fun considerOpenedEditorWindowsForFiles(filteredModel: List<SwitcherVirtualFile>): List<SwitcherVirtualFile> {
+    val editorsByFile = (FileEditorManager.getInstance(project) as? FileEditorManagerImpl)
+      ?.getSelectionHistoryList().orEmpty()
+      .groupBy(
+        keySelector = { (file, _) -> file },
+        valueTransform = { (_, editor) -> editor }
+      )
+
+    return filteredModel.asSequence()
+      .distinct()
+      .map { fileModel ->
+        val editorsForSpecificFile = editorsByFile[fileModel.virtualFile]
+        if (editorsForSpecificFile.isNullOrEmpty()) {
+          return@map sequenceOf(fileModel)
+        }
+        return@map editorsForSpecificFile.asSequence().map { editor -> fileModel.withAssociatedEditorWindow(editor) }
+      }.flatten()
+      .toList()
   }
 
   fun applyFrontendChanges(filesKind: RecentFileKind, files: List<VirtualFile>, changeKind: FileChangeKind) {

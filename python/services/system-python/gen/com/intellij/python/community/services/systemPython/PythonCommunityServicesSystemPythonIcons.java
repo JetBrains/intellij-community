@@ -15,6 +15,6 @@ public final class PythonCommunityServicesSystemPythonIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, PythonCommunityServicesSystemPythonIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon Asdf = load("icons/com/intellij/python/community/system/providers/expui/asdf.svg", 1124514615, 0);
-  /** 16x16 */ public static final @NotNull Icon Homebrew = load("icons/com/intellij/python/community/system/providers/expui/homebrew.svg", -2104807435, 0);
-  /** 16x16 */ public static final @NotNull Icon Pyenv = load("icons/com/intellij/python/community/system/providers/expui/pyenv.svg", -770384196, 0);
+  /** 16x16 */ public static final @NotNull Icon Homebrew = load("icons/com/intellij/python/community/system/providers/expui/homebrew.svg", -1376464786, 2);
+  /** 16x16 */ public static final @NotNull Icon Pyenv = load("icons/com/intellij/python/community/system/providers/expui/pyenv.svg", -91622686, 2);
 }

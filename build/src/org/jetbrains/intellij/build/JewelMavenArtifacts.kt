@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.util.text.SemVer
+import kotlin.io.path.exists
+import kotlin.io.path.name
 import org.apache.maven.model.Developer
 import org.apache.maven.model.License
 import org.apache.maven.model.Model
@@ -9,11 +11,17 @@ import org.apache.maven.model.Scm
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.libraries.isLibraryModule
-import org.jetbrains.intellij.build.impl.maven.*
+import org.jetbrains.intellij.build.impl.maven.DependencyScope
+import org.jetbrains.intellij.build.impl.maven.GeneratedMavenArtifacts
+import org.jetbrains.intellij.build.impl.maven.MavenArtifactDependency
+import org.jetbrains.intellij.build.impl.maven.MavenCentralPublication
+import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.module.JpsDependencyElement
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
-import kotlin.io.path.exists
-import kotlin.io.path.name
 
 internal object JewelMavenArtifacts {
   private const val GROUP_ID: String = "org.jetbrains.jewel"
@@ -41,7 +49,7 @@ internal object JewelMavenArtifacts {
   private val transitiveJewelDependencies = mapOf(
     "jewel-foundation" to emptySet(),
     "jewel-ui" to emptySet(),
-    "jewel-decorated-window" to setOf("jewel-foundation"),
+    "jewel-decorated-window" to setOf("jewel-foundation", "jewel-ui"),
     "jewel-markdown-core" to setOf("jewel-foundation"),
     "jewel-markdown-extensions-autolink" to setOf("jewel-foundation", "jewel-ui"),
     "jewel-markdown-extensions-gfm-alerts" to setOf("jewel-foundation", "jewel-ui"),
@@ -109,6 +117,13 @@ internal object JewelMavenArtifacts {
           // Add CommonMark dependencies as "compile" dependencies when present
           add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
         }
+        coordinates.groupId == "io.coil-kt.coil3" -> {
+          // Add Coil 3 dependencies as "compile" dependencies when present
+          add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
+        }
+        coordinates.groupId == "org.jetbrains.compose.components" -> {
+          add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
+        }
 
         // else -> ignore the dependency, as it comes through transitively, usually from Compose.
 
@@ -155,10 +170,18 @@ internal object JewelMavenArtifacts {
   }
 
   private fun JpsModule.modulesTree(): Sequence<JpsModule> {
-    return sequenceOf(this) + dependenciesList.dependencies.asSequence()
+    return sequenceOf(this) + dependenciesList
+      .dependencies
+      .asSequence()
       .filterIsInstance<JpsModuleDependency>()
+      .filter { isProductionDependency(it) }
       .mapNotNull { it.module }
       .flatMap { it.modulesTree() }
+  }
+
+  private fun isProductionDependency(dep: JpsDependencyElement): Boolean {
+    val scope = JpsJavaExtensionService.getInstance().getDependencyExtension(dep)?.scope ?: return false
+    return (scope == JpsJavaDependencyScope.COMPILE || scope == JpsJavaDependencyScope.PROVIDED)
   }
 
   fun validate(context: BuildContext, mavenArtifacts: Collection<GeneratedMavenArtifacts>) {
@@ -197,13 +220,15 @@ internal object JewelMavenArtifacts {
 
   /** See https://central.sonatype.org/publish/requirements */
   private fun validateForMavenCentralPublication(artifacts: GeneratedMavenArtifacts) {
-    val sources = artifacts.coordinates.getFileName("sources", "jar")
-    check(artifacts.files.any { it.name == sources }) {
-      "No $sources is generated for the module ${artifacts.module.name}"
-    }
-    val javadoc = artifacts.coordinates.getFileName("javadoc", "jar")
-    check(artifacts.files.any { it.name == javadoc }) {
-      "No $javadoc is generated for the module ${artifacts.module.name}"
+    if (artifacts.module.getSourceRoots(JavaSourceRootType.SOURCE).any()) {
+      val sources = artifacts.coordinates.getFileName("sources", "jar")
+      check(artifacts.files.any { it.name == sources }) {
+        "No $sources is generated for the module ${artifacts.module.name}"
+      }
+      val javadoc = artifacts.coordinates.getFileName("javadoc", "jar")
+      check(artifacts.files.any { it.name == javadoc }) {
+        "No $javadoc is generated for the module ${artifacts.module.name}"
+      }
     }
     val pom = artifacts.coordinates.getFileName(packaging = "pom")
     val pomXml = artifacts.files.singleOrNull { it.name == pom }

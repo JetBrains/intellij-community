@@ -2183,6 +2183,7 @@ open class FileEditorManagerImpl(
     val tabs = mutableListOf<TabInfo>()
     val editorActionGroup = serviceAsync<ActionManager>().getAction("EditorTabActionGroup")
 
+    var tabToSelect: TabInfo? = null
     for (item in items) {
       val fileEntry = item.fileEntry
       val file = item.file
@@ -2196,7 +2197,11 @@ open class FileEditorManagerImpl(
           model = item.model,
           coroutineScope = item.scope,
         )
-      } ?: continue
+      }
+      if (composite == null) {
+        LOG.warn("Couldn't create composite for ${file.url}, file won't be reopened")
+        continue
+      }
 
       if (fileEntry.currentInTab || !isLazyComposite) {
         composite.initDeferred.complete(Unit)
@@ -2220,14 +2225,18 @@ open class FileEditorManagerImpl(
         item.customizer(tab)
       }
 
-      tabs.add(createTabInfo(
+      val tabInfo = createTabInfo(
         component = composite.component,
         file = file,
         parentDisposable = composite,
         window = window,
         editorActionGroup = editorActionGroup,
         customizer = customizer,
-      ))
+      )
+      tabs.add(tabInfo)
+      if (tabToSelect == null && fileEntry.currentInTab) {
+        tabToSelect = tabInfo
+      }
 
       val editorCompositeEntry = EditorCompositeEntry(composite = composite, delayedState = fileEntry)
       openedCompositeEntries.add(editorCompositeEntry)
@@ -2247,7 +2256,7 @@ open class FileEditorManagerImpl(
     }
 
     window.selectTabOnStartup(
-      tab = tabs.get(max(items.indexOfFirst { it.fileEntry.currentInTab }, 0)),
+      tab = tabToSelect ?: tabs.first(),
       requestFocus = requestFocus,
       windowAdded = windowAdded,
     )

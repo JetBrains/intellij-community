@@ -28,7 +28,9 @@ private val LIBRARY_MODULE_NAMES: Set<String> = setOf(
   "intellij.libraries.kotlinTest",
   "intellij.libraries.ktor.client",
   "intellij.libraries.ktor.client.cio",
+  "intellij.libraries.kotlinx.io",
   "intellij.libraries.skiko",
+  "intellij.libraries.coil",
   "intellij.libraries.testng",
   "intellij.libraries.dokka",
 )

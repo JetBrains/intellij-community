@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.takeOrElse
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 import org.jetbrains.jewel.foundation.lazy.tree.BasicLazyTree
@@ -19,6 +20,7 @@ import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.contentFor
 import org.jetbrains.jewel.ui.theme.treeStyle
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun <T> LazyTree(

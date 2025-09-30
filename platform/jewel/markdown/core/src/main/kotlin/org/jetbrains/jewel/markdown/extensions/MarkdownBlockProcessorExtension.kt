@@ -1,12 +1,14 @@
 package org.jetbrains.jewel.markdown.extensions
 
 import org.commonmark.node.CustomBlock
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 
-@ExperimentalJewelApi
 /** Extension that can process a custom block-level [CustomBlock]. */
+@ApiStatus.Experimental
+@ExperimentalJewelApi
 public interface MarkdownBlockProcessorExtension {
     /**
      * Returns true if the [block] can be processed by this extension instance.

@@ -2,6 +2,7 @@ package com.intellij.mcpserver
 
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.impl.util.asTool
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.Serializable
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
@@ -36,7 +37,9 @@ class Object(
   @property:McpDescription("Field description b1") val b1: Char,
   @property:McpDescription("Field description c") val c: Kind,
   @property:McpDescription("Field description d") val d: Inner,
-  @property:McpDescription("Field description dOptional") val dOptional: Inner? = null) {
+  @property:McpDescription("Field description dOptional") val dOptional: Inner? = null,
+  @property:McpDescription("Field description eEncodeDefault") @EncodeDefault(EncodeDefault.Mode.NEVER) val eEncodeDefault: Boolean = true,
+  @property:McpDescription("Field description fEncodeDefaultNullable") @EncodeDefault(EncodeDefault.Mode.NEVER) val fEncodeDefaultNullable: Boolean? = null) {
 }
 
 fun fun1(
@@ -130,7 +133,8 @@ class InputSchemaTest {
                 "b",
                 "b1",
                 "c",
-                "d"
+                "d",
+                "eEncodeDefault"
             ],
             "properties": {
                 "a": {
@@ -168,7 +172,10 @@ class InputSchemaTest {
                     "description": "Field description d"
                 },
                 "dOptional": {
-                    "type": "object",
+                    "type": [
+                        "object",
+                        "null"
+                    ],
                     "required": [
                         "e"
                     ],
@@ -178,6 +185,17 @@ class InputSchemaTest {
                         }
                     },
                     "description": "Field description dOptional"
+                },
+                "eEncodeDefault": {
+                    "type": "boolean",
+                    "description": "Field description eEncodeDefault"
+                },
+                "fEncodeDefaultNullable": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ],
+                    "description": "Field description fEncodeDefaultNullable"
                 }
             },
             "description": "object description on parameter"
@@ -198,7 +216,8 @@ class InputSchemaTest {
                 "b",
                 "b1",
                 "c",
-                "d"
+                "d",
+                "eEncodeDefault"
             ],
             "properties": {
                 "a": {
@@ -236,7 +255,10 @@ class InputSchemaTest {
                     "description": "Field description d"
                 },
                 "dOptional": {
-                    "type": "object",
+                    "type": [
+                        "object",
+                        "null"
+                    ],
                     "required": [
                         "e"
                     ],
@@ -246,6 +268,17 @@ class InputSchemaTest {
                         }
                     },
                     "description": "Field description dOptional"
+                },
+                "eEncodeDefault": {
+                    "type": "boolean",
+                    "description": "Field description eEncodeDefault"
+                },
+                "fEncodeDefaultNullable": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ],
+                    "description": "Field description fEncodeDefaultNullable"
                 }
             },
             "description": "object optional description on parameter"

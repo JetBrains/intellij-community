@@ -2,11 +2,9 @@
 
 package com.intellij.mcpserver.toolsets.terminal
 
-import com.intellij.mcpserver.McpServerBundle
-import com.intellij.mcpserver.McpToolset
+import com.intellij.mcpserver.*
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
-import com.intellij.mcpserver.project
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.TruncateMode
 import com.intellij.mcpserver.util.checkUserConfirmationIfNeeded
@@ -53,11 +51,11 @@ class TerminalToolset : McpToolset {
     @McpDescription(Constants.TRUNCATE_MODE_DESCRIPTION)
     truncateMode: TruncateMode = Constants.TRUCATE_MODE_VALUE,
   ): CommandExecutionResult {
+    currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.running.command", command))
     val project = currentCoroutineContext().project
     checkUserConfirmationIfNeeded(McpServerBundle.message("label.do.you.want.to.execute.command.in.terminal"), command, project)
 
-    // TODO pass from http request later (MCP Client name or something else)
-    val id = "mcp_session"
+    val id = currentCoroutineContext().clientInfo.name
     val window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID)
     return executeShellCommand(window = window,
                                project = project,
@@ -73,8 +71,9 @@ class TerminalToolset : McpToolset {
   @OptIn(ExperimentalSerializationApi::class)
   @Serializable
   class CommandExecutionResult(
+    @property:McpDescription(Constants.TIMED_OUT_DESCRIPTION)
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
-    val is_timed_out: Boolean? = null,
+    val is_timed_out: Boolean? = false,
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val command_exit_code: Int? = null,
     val command_output: String)

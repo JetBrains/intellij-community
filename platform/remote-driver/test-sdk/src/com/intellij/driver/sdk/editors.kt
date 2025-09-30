@@ -41,6 +41,8 @@ interface Document {
   fun getText(): String
   fun setText(text: String)
   fun getLineNumber(offset: Int): Int
+  fun getLineStartOffset(line: Int): Int
+  fun getLineEndOffset(line: Int): Int
 }
 
 @Remote("com.intellij.openapi.editor.CaretModel")
@@ -49,11 +51,13 @@ interface CaretModel {
   fun moveToVisualPosition(pos: VisualPosition)
   fun getLogicalPosition(): LogicalPosition
   fun moveToOffset(offset: Int)
+  fun getOffset(): Int
 }
 
 @Remote("com.intellij.openapi.editor.InlayModel")
 interface InlayModel {
   fun getInlineElementsInRange(startOffset: Int, endOffset: Int): List<Inlay>
+  fun getAfterLineEndElementsForLogicalLine(logicalLine: Int): List<Inlay>
 }
 
 @Remote("com.intellij.openapi.editor.Inlay")
@@ -76,6 +80,21 @@ interface EditorCustomElementRenderer {
 @Remote("com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayRenderer")
 interface DeclarativeInlayRenderer {
   fun getPresentationList(): InlayPresentationList
+}
+
+@Remote("com.intellij.codeInsight.daemon.impl.HintRenderer")
+interface HintRenderer {
+  fun getText(): String
+}
+
+@Remote("com.intellij.codeInsight.inline.completion.render.InlineCompletionLineRenderer")
+interface InlineCompletionLineRenderer {
+  fun getBlocks(): List<InlineCompletionRenderTextBlock>
+}
+
+@Remote("com.intellij.codeInsight.inline.completion.render.InlineCompletionRenderTextBlock")
+interface InlineCompletionRenderTextBlock {
+  val text: String
 }
 
 @Remote("com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList")
@@ -108,6 +127,7 @@ interface FileEditor
 interface FileEditorManager {
   fun openFile(file: VirtualFile, focusEditor: Boolean, searchForOpen: Boolean): Array<FileEditor>
   fun getSelectedTextEditor(): Editor?
+  fun getCurrentFile(): VirtualFile
 }
 
 @Remote("com.intellij.openapi.editor.colors.EditorColorsScheme")
@@ -128,7 +148,7 @@ fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEd
   }
 }
 
-fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true) = step("Open file $relativePath") {
+fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true, isTextEditor: Boolean = true) = step("Open file $relativePath") {
   withContext {
     val openedFile = if (!isRemDevMode) {
       val fileToOpen = findFile(relativePath = relativePath, project = project)
@@ -144,7 +164,8 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
         service.navigateViaBackend(relativePath, 0)
         waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,
                 getter = {
-                  service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
+                  if (isTextEditor) service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
+                  else service<FileEditorManager>(project).getCurrentFile()
                 },
                 checker = { virtualFile ->
                   virtualFile != null &&

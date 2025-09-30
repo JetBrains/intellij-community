@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import java.awt.Font
 import kotlin.math.roundToInt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.Inter
@@ -435,6 +436,7 @@ private fun computeJetBrainsMonoLineHeightPx(@Px fontSize: Float): Int {
  */
 private const val EDITOR_LINE_HEIGHT_FACTOR = 0.87f
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Suppress("ktlint:standard:property-naming", "TopLevelPropertyNaming")
 public const val EditorLineHeightMultiplier: Float = 1.2f

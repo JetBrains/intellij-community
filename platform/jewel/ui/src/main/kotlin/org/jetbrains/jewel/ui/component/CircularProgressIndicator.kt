@@ -39,7 +39,9 @@ public fun CircularProgressIndicator(
         iconSize = DpSize(16.dp, 16.dp),
         style = style,
         dispatcher = loadingDispatcher,
-        frameRetriever = { color -> SpinnerProgressIconGenerator.Small.generateSvgFrames(color.toRgbaHexString()) },
+        frameRetriever = { color ->
+            SpinnerProgressIconGenerator.Small.generateSvgFrames(color.toRgbaHexString(omitAlphaWhenFullyOpaque = true))
+        },
     )
 }
 
@@ -54,24 +56,26 @@ public fun CircularProgressIndicatorBig(
         iconSize = DpSize(32.dp, 32.dp),
         style = style,
         dispatcher = loadingDispatcher,
-        frameRetriever = { color -> SpinnerProgressIconGenerator.Big.generateSvgFrames(color.toRgbaHexString()) },
+        frameRetriever = { color ->
+            SpinnerProgressIconGenerator.Big.generateSvgFrames(color.toRgbaHexString(omitAlphaWhenFullyOpaque = true))
+        },
     )
 }
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 private fun CircularProgressIndicatorImpl(
-    modifier: Modifier = Modifier,
     iconSize: DpSize,
     style: CircularProgressStyle,
     dispatcher: CoroutineDispatcher,
     frameRetriever: (Color) -> List<String>,
+    modifier: Modifier = Modifier,
 ) {
     val defaultColor = if (JewelTheme.isDark) Color(0xFF6F737A) else Color(0xFFA8ADBD)
 
     val density = LocalDensity.current
     val frames by
-        produceState(emptyList(), density, style.color, defaultColor, dispatcher) {
+        produceState(emptyList(), density, style.color, defaultColor, dispatcher, frameRetriever) {
             value =
                 withContext(dispatcher) {
                     frameRetriever(style.color.takeOrElse { defaultColor }).map {

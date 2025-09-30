@@ -19,7 +19,7 @@ class ReflectionCallableMcpTool(override val descriptor: McpToolDescriptor, priv
       result.result.javaClass.isPrimitive -> McpToolCallResult.text(result.result.toString())
       result.result is McpToolCallResult -> result.result
       result.result is McpToolCallResultContent -> McpToolCallResult(arrayOf(result.result), isError = false)
-      else -> McpToolCallResult.text(result.encodeToString())
+      else -> McpToolCallResult.text(result.encodeToString(), structuredContent = result.encodeToJson())
     }
   }
 }

@@ -8,8 +8,16 @@ import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilitySupportUpdater
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
+import org.junit.jupiter.api.Assertions
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 abstract class GradleJvmSupportMatricesTestCase : LightIdeaTestCase() {
+
+  private companion object {
+    val GRADLE_VERSION_PATTERN: Pattern = Pattern.compile("((\\d+)(\\.\\d+)+)(-(\\p{Alpha}+)-(\\w+))?(-(SNAPSHOT|\\d{14}([-+]\\d{4})?))?")
+  }
+
   override fun setUp() {
     super.setUp()
     ApplicationManager.getApplication().replaceService(GradleCompatibilitySupportUpdater::class.java,
@@ -38,4 +46,24 @@ abstract class GradleJvmSupportMatricesTestCase : LightIdeaTestCase() {
 
   fun suggestOldestSupportedJavaVersion(gradleVersion: String): Int? =
     GradleJvmSupportMatrix.suggestOldestSupportedJavaVersion(GradleVersion.version(gradleVersion))?.feature
+
+  fun assertSupportedGradleVersion(gradleVersion: String, chooseGradleVersion: List<GradleVersion>.() -> GradleVersion?) {
+    val expectedGradleVersion = GradleVersion.version(gradleVersion)
+    val allSupportedGradleVersions = GradleJvmSupportMatrix.getAllSupportedGradleVersionsByIdea()
+    val actualGradleVersions = allSupportedGradleVersions
+      .filter { it.getMajorVersion() == expectedGradleVersion.getMajorVersion() }
+    Assertions.assertEquals(expectedGradleVersion, actualGradleVersions.chooseGradleVersion()) {
+      "Incorrect Gradle version format\n" +
+      "All supported versions = $allSupportedGradleVersions\n" +
+      "Chosen versions = $actualGradleVersions\n"
+    }
+  }
+
+  private fun GradleVersion.getMajorVersion(): Int {
+    val matcher: Matcher = GRADLE_VERSION_PATTERN.matcher(version)
+    if (!matcher.matches()) {
+      throw IllegalStateException("Unable to parse Gradle version: $version")
+    }
+    return matcher.group(2).toInt(10)
+  }
 }

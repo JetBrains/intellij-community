@@ -10,16 +10,17 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.usageView.UsageInfo
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 @Rpc
-//TODO provide custom scope (it's not serializable in FindModel)
 interface FindRemoteApi : RemoteApi<Unit> {
   /**
    * Searches for matches based on the specified find model within a given project and initial set of files.
@@ -29,7 +30,7 @@ interface FindRemoteApi : RemoteApi<Unit> {
    * @param filesToScanInitially a list of file identifiers to be scanned initially as part of the search
    * @return a flow emitting search results as instances of [FindInFilesResult]
    */
-  suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>): Flow<FindInFilesResult>
+  suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>, maxUsagesCount: Int): Flow<FindInFilesResult>
 
   /**
    * Initiates a "Find all"/"Replace all" operation on the backend and displays results in the Find tool window.
@@ -64,7 +65,6 @@ interface FindRemoteApi : RemoteApi<Unit> {
  * @property navigationOffset The character offset from the start of the file to the result's location.
  * @property mergedOffsets A list of integer offsets that indicate additional positions related to the search result.
  * @property length The length of the search result in characters.
- * @property originalLength The original length of the search result text before the merging results, if applicable.
  * @property fileId The unique identifier of the file containing the search result.
  * @property presentablePath A user-readable path to the file containing the search result in the preview line.
  * @property shortenPresentablePath A user-readable path to the file containing the search result in the list of results.
@@ -80,11 +80,12 @@ data class FindInFilesResult(
   val navigationOffset: Int,
   val mergedOffsets: List<Int>,
   val length: Int,
-  val originalLength: Int,
   val fileId: VirtualFileId,
   val presentablePath: @NlsSafe String,
   val shortenPresentablePath: @NlsSafe String,
   val backgroundColor: ColorId?,
   val tooltipText: @NlsContexts.Tooltip String?,
   val iconId: IconId?,
+  val fileLength: Int,
+  @Transient val usageInfos: List<UsageInfo> = emptyList(),
 )

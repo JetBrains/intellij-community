@@ -13,6 +13,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.IconButtonState
 import org.jetbrains.jewel.ui.component.SelectableIconButtonState
@@ -272,4 +274,10 @@ public class IconButtonMetrics(
 
 public val LocalIconButtonStyle: ProvidableCompositionLocal<IconButtonStyle> = staticCompositionLocalOf {
     error("No IconButtonStyle provided. Have you forgotten the theme?")
+}
+
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+public val LocalTransparentIconButtonStyle: ProvidableCompositionLocal<IconButtonStyle> = staticCompositionLocalOf {
+    error("No LocalTransparentIconButtonStyle provided. Have you forgotten the theme?")
 }

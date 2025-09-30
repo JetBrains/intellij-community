@@ -169,8 +169,8 @@
     <configurationType implementation="com.jetbrains.python.run.FastAPILockedRunConfigurationType" order="first"/>
     <facetIgnorer implementation="com.jetbrains.python.run.DjangoFacetIgnorer"/>
 
-    <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
-    <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>
+    <programRunner implementation="com.jetbrains.python.run.PythonRunner" order="before defaultRunRunner"/>
+    <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner" order="before defaultDebugRunner"/>
     <runConfigurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>

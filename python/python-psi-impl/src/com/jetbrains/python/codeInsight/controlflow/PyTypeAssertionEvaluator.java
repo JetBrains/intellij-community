@@ -131,9 +131,9 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   private void processIn(@NotNull PyExpression lhs, @NotNull PyExpression rhs) {
-    if (rhs instanceof PyTupleExpression tupleExpr) {
+    if (rhs instanceof PyTupleExpression || rhs instanceof PyListLiteralExpression || rhs instanceof PySetLiteralExpression) {
       pushAssertion(lhs, myPositive, (TypeEvalContext context) -> {
-        PyExpression[] elements = tupleExpr.getElements();
+        PyExpression[] elements = ((PySequenceExpression)rhs).getElements();
         List<PyType> types = new ArrayList<>(elements.length);
         for (PyExpression element : elements) {
           PyType type = PyLiteralType.isNone(element) ? PyBuiltinCache.getInstance(element).getNoneType() : getLiteralType(element, context);

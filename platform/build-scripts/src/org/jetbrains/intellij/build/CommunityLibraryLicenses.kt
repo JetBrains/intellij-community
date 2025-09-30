@@ -49,8 +49,6 @@ object CommunityLibraryLicenses {
     LibraryLicense("Android libwebp library", libraryName = "libwebp.jar", url = "https://github.com/webmproject/libwebp", version = LibraryLicense.CUSTOM_REVISION)
       .newBsd("https://github.com/webmproject/libwebp/blob/main/COPYING"),
 
-    androidDependency("Android SDK Common", libraryName = "android.tools.sdk.common"),
-
     androidDependency("Android Studio Platform", libraryName = "studio-platform"),
 
     LibraryLicense("antlr4-runtime", libraryName = "antlr4-runtime", url = "https://github.com/antlr/antlr4")
@@ -311,6 +309,9 @@ object CommunityLibraryLicenses {
 
     LibraryLicense("Detekt", libraryName = "io.gitlab.arturbosch.detekt.api", url = "https://github.com/detekt/detekt")
       .apache("https://github.com/detekt/detekt/blob/master/LICENSE"),
+
+    LibraryLicense("Detekt Compose Rules", libraryName = "io.nlopez.compose.rules.detekt", url = "https://github.com/mrmans0n/compose-rules")
+      .apache("https://github.com/mrmans0n/compose-rules/blob/main/LICENSE.md"),
 
     LibraryLicense("docutils", version = "0.12", attachedTo = "intellij.python", url = "https://docutils.sourceforge.io/")
       .public("https://sourceforge.net/p/docutils/code/HEAD/tree/trunk/docutils/COPYING.rst"),

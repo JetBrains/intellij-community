@@ -29,6 +29,11 @@ from distutils.extension import Extension
 from setuptools import setup
 from setuptools.dist import Distribution
 
+# PEP 517 compatibility
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from setup_cython import get_frame_eval_extension_name
+del sys.path[0]
+
 
 class BinaryDistribution(Distribution):
     def is_pure(self):
@@ -192,7 +197,6 @@ if sys.platform not in ('darwin', 'win32'):
         ]
     ))
     if (3, 6) <= sys.version_info <= (3, 10):
-        from setup_cython import get_frame_eval_extension_name
         frame_eval_extension_name = get_frame_eval_extension_name()
         args_with_binaries["ext_modules"].append(
             # In this setup, don't even try to compile with cython, just go with the .c file which should've

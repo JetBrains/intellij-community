@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupPositionProviderAtPosition
 import kotlinx.coroutines.delay
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
@@ -63,6 +64,7 @@ import org.jetbrains.jewel.ui.util.isDark
  * @param content The component for which to show the tooltip on hover
  * @see com.intellij.ide.HelpTooltip
  */
+@Suppress("DEPRECATION")
 @Deprecated("Please, use the overload without the [AutoHideBehavior].")
 @Composable
 public fun Tooltip(
@@ -91,6 +93,7 @@ public fun Tooltip(
         modifier = modifier,
         delayMillis = style.metrics.showDelay.inWholeMilliseconds.toInt(),
         tooltipPlacement = tooltipPlacement,
+        cornerSize = style.metrics.cornerSize,
         content = content,
     )
 }
@@ -132,6 +135,7 @@ public fun Tooltip(
         modifier = modifier,
         delayMillis = style.metrics.showDelay.inWholeMilliseconds.toInt(),
         tooltipPlacement = tooltipPlacement,
+        cornerSize = style.metrics.cornerSize,
         content = content,
     )
 }
@@ -200,6 +204,7 @@ private fun TooltipImpl(
  * @param alignment The alignment of the tooltip relative to the cursor position
  * @param windowMargin The minimum distance to maintain from window edges
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public class FixedCursorPoint(
     private val offset: DpOffset = DpOffset.Zero,
@@ -229,6 +234,7 @@ public class FixedCursorPoint(
  * @param windowMargin The minimum distance to maintain from window edges
  * @return A [PopupPositionProvider] that maintains the specified positioning
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun rememberPopupPositionProviderAtFixedPosition(

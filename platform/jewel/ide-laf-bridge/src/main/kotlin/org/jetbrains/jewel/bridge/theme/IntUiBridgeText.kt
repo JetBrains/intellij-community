@@ -13,6 +13,7 @@ import com.intellij.util.ui.JBFont
 import java.awt.Font
 import java.awt.image.BufferedImage.TYPE_INT_ARGB
 import javax.swing.UIManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.keyNotFound
 import org.jetbrains.jewel.bridge.retrieveEditorColorScheme
 import org.jetbrains.jewel.bridge.retrieveTextStyle
@@ -34,6 +35,7 @@ public fun retrieveDefaultTextStyle(): TextStyle = retrieveDefaultTextStyle(1.0f
  *
  * This is the font set in _Settings | Appearance & Behavior | Appearance_, and defaults to 13px Inter.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun retrieveDefaultTextStyle(lineHeightMultiplier: Float): TextStyle {
     val lafFont = UIManager.getFont(KEY_LABEL_FONT) ?: keyNotFound(KEY_LABEL_FONT, "Font")
@@ -68,7 +70,7 @@ public fun retrieveEditorTextStyle(): TextStyle {
             fontFamily = font.asComposeFontFamily(),
             fontSize = editorColorScheme.editorFontSize.sp,
             lineHeight = (computedLineHeight * EDITOR_LINE_HEIGHT_FACTOR).coerceAtLeast(1f).sp,
-            fontFeatureSettings = if (!editorColorScheme.isUseLigatures) "liga 0" else "liga 1",
+            fontFeatureSettings = if (!editorColorScheme.isUseLigatures) "liga 0, calt 0" else "liga 1, calt 1",
         )
 }
 
@@ -96,7 +98,7 @@ public fun retrieveConsoleTextStyle(): TextStyle {
             fontFamily = font.asComposeFontFamily(),
             fontSize = fontSize,
             lineHeight = (baseLineHeight * editorColorScheme.lineSpacing).coerceAtLeast(1f).sp,
-            fontFeatureSettings = if (!editorColorScheme.isUseLigatures) "liga 0" else "liga 1",
+            fontFeatureSettings = if (!editorColorScheme.isUseLigatures) "liga 0, calt 0" else "liga 1, calt 1",
         )
 }
 

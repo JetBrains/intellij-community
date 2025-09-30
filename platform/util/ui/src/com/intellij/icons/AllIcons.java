@@ -70,9 +70,9 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon FindAndShowNextMatchesSmall = load("expui/general/chevronDown.svg", "actions/findAndShowNextMatchesSmall.svg", 1412713913, 2);
     /** 16x16 */ public static final @NotNull Icon FindAndShowPrevMatches = load("expui/general/chevronUp.svg", "actions/findAndShowPrevMatches.svg", 1577129294, 2);
     /** 16x16 */ public static final @NotNull Icon FindAndShowPrevMatchesSmall = load("expui/general/chevronUp.svg", "actions/findAndShowPrevMatchesSmall.svg", -641725766, 2);
-    /** 16x16 */ public static final @NotNull Icon FindBackward = load("actions/findBackward.svg", 1373712790, 2);
-    /** 16x16 */ public static final @NotNull Icon FindEntireFile = load("actions/findEntireFile.svg", -875287273, 2);
-    /** 16x16 */ public static final @NotNull Icon FindForward = load("actions/findForward.svg", -2015650359, 2);
+    /** 16x16 */ public static final @NotNull Icon FindBackward = load("expui/actions/findBackward.svg", "actions/findBackward.svg", 1373712790, 2);
+    /** 16x16 */ public static final @NotNull Icon FindEntireFile = load("expui/actions/findEntireFile.svg", "actions/findEntireFile.svg", -875287273, 2);
+    /** 16x16 */ public static final @NotNull Icon FindForward = load("expui/actions/findForward.svg", "actions/findForward.svg", -2015650359, 2);
     /** 16x16 */ public static final @NotNull Icon ForceRefresh = load("expui/actions/forceRefresh.svg", "actions/forceRefresh.svg", 1506719599, 2);
     /** 16x16 */ public static final @NotNull Icon Forward = load("expui/general/right.svg", "actions/forward.svg", 625314766, 2);
     /** 16x16 */ public static final @NotNull Icon GC = load("expui/general/delete.svg", "actions/gc.svg", -382610359, 2);

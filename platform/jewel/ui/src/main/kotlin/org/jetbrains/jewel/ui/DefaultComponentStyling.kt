@@ -53,6 +53,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalSliderStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
+import org.jetbrains.jewel.ui.component.styling.LocalTransparentIconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalUndecoratedDropdownStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
@@ -86,6 +87,7 @@ public class DefaultComponentStyling(
     public val groupHeaderStyle: GroupHeaderStyle,
     public val horizontalProgressBarStyle: HorizontalProgressBarStyle,
     public val iconButtonStyle: IconButtonStyle,
+    public val transparentIconButtonStyle: IconButtonStyle,
     public val inlineBannerStyle: InlineBannerStyles,
     public val lazyTreeStyle: LazyTreeStyle,
     public val linkStyle: LinkStyle,
@@ -105,6 +107,77 @@ public class DefaultComponentStyling(
     public val tooltipStyle: TooltipStyle,
     public val undecoratedDropdownStyle: DropdownStyle,
 ) : ComponentStyling {
+
+    @Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.ERROR)
+    public constructor(
+        checkboxStyle: CheckboxStyle,
+        chipStyle: ChipStyle,
+        circularProgressStyle: CircularProgressStyle,
+        defaultBannerStyle: DefaultBannerStyles,
+        comboBoxStyle: ComboBoxStyle,
+        defaultButtonStyle: ButtonStyle,
+        defaultDropdownStyle: DropdownStyle,
+        defaultSplitButtonStyle: SplitButtonStyle,
+        defaultTabStyle: TabStyle,
+        dividerStyle: DividerStyle,
+        editorTabStyle: TabStyle,
+        groupHeaderStyle: GroupHeaderStyle,
+        horizontalProgressBarStyle: HorizontalProgressBarStyle,
+        iconButtonStyle: IconButtonStyle,
+        inlineBannerStyle: InlineBannerStyles,
+        lazyTreeStyle: LazyTreeStyle,
+        linkStyle: LinkStyle,
+        menuStyle: MenuStyle,
+        outlinedButtonStyle: ButtonStyle,
+        popupContainerStyle: PopupContainerStyle,
+        outlinedSplitButtonStyle: SplitButtonStyle,
+        radioButtonStyle: RadioButtonStyle,
+        scrollbarStyle: ScrollbarStyle,
+        segmentedControlButtonStyle: SegmentedControlButtonStyle,
+        segmentedControlStyle: SegmentedControlStyle,
+        selectableLazyColumnStyle: SelectableLazyColumnStyle,
+        simpleListItemStyle: SimpleListItemStyle,
+        sliderStyle: SliderStyle,
+        textAreaStyle: TextAreaStyle,
+        textFieldStyle: TextFieldStyle,
+        tooltipStyle: TooltipStyle,
+        undecoratedDropdownStyle: DropdownStyle,
+    ) : this(
+        checkboxStyle,
+        chipStyle,
+        circularProgressStyle,
+        defaultBannerStyle,
+        comboBoxStyle,
+        defaultButtonStyle,
+        defaultDropdownStyle,
+        defaultSplitButtonStyle,
+        defaultTabStyle,
+        dividerStyle,
+        editorTabStyle,
+        groupHeaderStyle,
+        horizontalProgressBarStyle,
+        iconButtonStyle,
+        transparentIconButtonStyle = iconButtonStyle,
+        inlineBannerStyle,
+        lazyTreeStyle,
+        linkStyle,
+        menuStyle,
+        outlinedButtonStyle,
+        popupContainerStyle,
+        outlinedSplitButtonStyle,
+        radioButtonStyle,
+        scrollbarStyle,
+        segmentedControlButtonStyle,
+        segmentedControlStyle,
+        selectableLazyColumnStyle,
+        simpleListItemStyle,
+        sliderStyle,
+        textAreaStyle,
+        textFieldStyle,
+        tooltipStyle,
+        undecoratedDropdownStyle,
+    )
+
     @Composable
     override fun styles(): Array<out ProvidedValue<*>> =
         arrayOf(
@@ -124,6 +197,7 @@ public class DefaultComponentStyling(
             LocalGroupHeaderStyle provides groupHeaderStyle,
             LocalHorizontalProgressBarStyle provides horizontalProgressBarStyle,
             LocalIconButtonStyle provides iconButtonStyle,
+            LocalTransparentIconButtonStyle provides transparentIconButtonStyle,
             LocalInlineBannerStyle provides inlineBannerStyle,
             LocalLazyTreeStyle provides lazyTreeStyle,
             LocalLinkStyle provides linkStyle,
@@ -164,6 +238,7 @@ public class DefaultComponentStyling(
         if (groupHeaderStyle != other.groupHeaderStyle) return false
         if (horizontalProgressBarStyle != other.horizontalProgressBarStyle) return false
         if (iconButtonStyle != other.iconButtonStyle) return false
+        if (transparentIconButtonStyle != other.transparentIconButtonStyle) return false
         if (inlineBannerStyle != other.inlineBannerStyle) return false
         if (lazyTreeStyle != other.lazyTreeStyle) return false
         if (linkStyle != other.linkStyle) return false
@@ -201,6 +276,7 @@ public class DefaultComponentStyling(
         result = 31 * result + groupHeaderStyle.hashCode()
         result = 31 * result + horizontalProgressBarStyle.hashCode()
         result = 31 * result + iconButtonStyle.hashCode()
+        result = 31 * result + transparentIconButtonStyle.hashCode()
         result = 31 * result + inlineBannerStyle.hashCode()
         result = 31 * result + lazyTreeStyle.hashCode()
         result = 31 * result + linkStyle.hashCode()
@@ -238,6 +314,7 @@ public class DefaultComponentStyling(
             "groupHeaderStyle=$groupHeaderStyle, " +
             "horizontalProgressBarStyle=$horizontalProgressBarStyle, " +
             "iconButtonStyle=$iconButtonStyle, " +
+            "transparentIconButtonStyle=$transparentIconButtonStyle, " +
             "inlineBannerStyle=$inlineBannerStyle, " +
             "lazyTreeStyle=$lazyTreeStyle, " +
             "linkStyle=$linkStyle, " +

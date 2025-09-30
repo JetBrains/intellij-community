@@ -109,6 +109,9 @@ public final class ReincludedRootsUtil {
           filesFromIndexableSetContributors.add(file);
           continue;
         }
+        if (!fileSet.getKind().isIndexable()) {
+          continue;
+        }
 
         EntityPointer<?> entityPointer = WorkspaceFileSetRecognizer.INSTANCE.getEntityPointer(fileSet);
 

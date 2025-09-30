@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.offset
 import kotlin.math.max
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
@@ -95,7 +96,6 @@ public fun TextField(
 ) {
     InputField(
         state = state,
-        modifier = modifier,
         enabled = enabled,
         readOnly = readOnly,
         inputTransformation = inputTransformation,
@@ -137,6 +137,7 @@ public fun TextField(
             },
         undecorated = undecorated,
         scrollState = rememberScrollState(),
+        modifier = modifier,
     )
 }
 
@@ -177,6 +178,7 @@ public fun TextField(
  * @param interactionSource Source of interactions for this text field
  * @see com.intellij.ui.components.JBTextField
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun TextField(
@@ -202,7 +204,6 @@ public fun TextField(
     InputField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier,
         enabled = enabled,
         readOnly = readOnly,
         outline = outline,
@@ -213,24 +214,26 @@ public fun TextField(
         singleLine = true,
         maxLines = 1,
         onTextLayout = onTextLayout,
+        interactionSource = interactionSource,
         style = style,
         textStyle = textStyle,
-        interactionSource = interactionSource,
-    ) { innerTextField, _ ->
-        val minSize = style.metrics.minSize
+        { innerTextField, _ ->
+            val minSize = style.metrics.minSize
 
-        TextFieldDecorationBox(
-            modifier =
-                Modifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height)
-                    .padding(style.metrics.contentPadding),
-            innerTextField = innerTextField,
-            textStyle = textStyle,
-            placeholderTextColor = style.colors.placeholder,
-            placeholder = if (value.text.isEmpty()) placeholder else null,
-            leadingIcon = leadingIcon,
-            trailingIcon = trailingIcon,
-        )
-    }
+            TextFieldDecorationBox(
+                modifier =
+                    Modifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height)
+                        .padding(style.metrics.contentPadding),
+                innerTextField = innerTextField,
+                textStyle = textStyle,
+                placeholderTextColor = style.colors.placeholder,
+                placeholder = if (value.text.isEmpty()) placeholder else null,
+                leadingIcon = leadingIcon,
+                trailingIcon = trailingIcon,
+            )
+        },
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -255,10 +258,10 @@ private fun UndecoratedTextFieldDecorationBox(
 
 @Composable
 private fun TextFieldDecorationBox(
-    modifier: Modifier = Modifier,
     innerTextField: @Composable () -> Unit,
     textStyle: TextStyle,
     placeholderTextColor: Color,
+    modifier: Modifier = Modifier,
     placeholder: @Composable (() -> Unit)? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,

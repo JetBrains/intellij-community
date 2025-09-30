@@ -9,7 +9,7 @@ import com.jetbrains.python.psi.types.PyLiteralType.Companion.upcastLiteralToCla
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
-class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySequencePattern, PsiListLikeElement {
+class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySequencePattern, PyCaptureContext, PsiListLikeElement {
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
     pyVisitor.visitPySequencePattern(this)
   }

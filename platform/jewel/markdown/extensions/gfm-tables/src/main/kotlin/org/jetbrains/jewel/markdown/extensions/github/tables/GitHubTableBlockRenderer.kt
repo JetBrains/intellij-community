@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.layout.BasicTableLayout
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -21,28 +22,35 @@ import org.jetbrains.jewel.markdown.rendering.InlinesStyling
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 
+/**
+ * Renders a [TableBlock] as a [BasicTableLayout].
+ *
+ * @param rootStyling The root styling to use.
+ * @param tableStyling The styling to use for the table.
+ */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
-public class GitHubTableBlockRenderer(
+internal class GitHubTableBlockRenderer(
     private val rootStyling: MarkdownStyling,
     private val tableStyling: GfmTableStyling,
 ) : MarkdownBlockRendererExtension {
     override fun canRender(block: CustomBlock): Boolean = block is TableBlock
 
+    @Suppress("LambdaParameterEventTrailing")
     @Composable
-    override fun render(
+    override fun RenderCustomBlock(
         block: CustomBlock,
         blockRenderer: MarkdownBlockRenderer,
         inlineRenderer: InlineMarkdownRenderer,
         enabled: Boolean,
         modifier: Modifier,
         onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
     ) {
         val tableBlock = block as TableBlock
 
         // Headers usually have a tweaked font weight
         val headerRootStyling =
-            remember(JewelTheme.name, blockRenderer, tableStyling.headerBaseFontWeight) {
+            remember(JewelTheme.instanceUuid, blockRenderer, tableStyling.headerBaseFontWeight) {
                 val rootStyling = blockRenderer.rootStyling
                 val semiboldInlinesStyling =
                     rootStyling.paragraph.inlinesStyling.withFontWeight(tableStyling.headerBaseFontWeight)
@@ -78,7 +86,6 @@ public class GitHubTableBlockRenderer(
                                 enabled = enabled,
                                 paragraphStyling = headerRenderer.rootStyling.paragraph,
                                 onUrlClick = onUrlClick,
-                                onTextClick = onTextClick,
                             )
                         }
                     }
@@ -107,7 +114,6 @@ public class GitHubTableBlockRenderer(
                                     enabled = enabled,
                                     paragraphStyling = rootStyling.paragraph,
                                     onUrlClick = onUrlClick,
-                                    onTextClick = onTextClick,
                                 )
                             }
                         }
@@ -151,18 +157,16 @@ public class GitHubTableBlockRenderer(
         enabled: Boolean,
         paragraphStyling: MarkdownStyling.Paragraph,
         onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
     ) {
         Box(
             modifier = Modifier.background(backgroundColor).padding(padding),
             contentAlignment = (cell.alignment ?: defaultAlignment).asContentAlignment(),
         ) {
-            blockRenderer.render(
+            blockRenderer.RenderParagraph(
                 block = MarkdownBlock.Paragraph(cell.content),
                 styling = paragraphStyling,
                 enabled = enabled,
                 onUrlClick = onUrlClick,
-                onTextClick = onTextClick,
                 modifier = Modifier,
             )
         }

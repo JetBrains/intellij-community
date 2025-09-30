@@ -90,7 +90,6 @@ public fun RadioButton(
     RadioButtonImpl(
         selected = selected,
         onClick = onClick,
-        modifier = modifier,
         enabled = enabled,
         outline = outline,
         interactionSource = interactionSource,
@@ -98,6 +97,7 @@ public fun RadioButton(
         textStyle = textStyle,
         verticalAlignment = verticalAlignment,
         content = null,
+        modifier = modifier,
     )
 }
 
@@ -145,16 +145,15 @@ public fun RadioButtonRow(
     RadioButtonImpl(
         selected = selected,
         onClick = onClick,
-        modifier = modifier,
         enabled = enabled,
         outline = outline,
         interactionSource = interactionSource,
         style = style,
         textStyle = textStyle,
         verticalAlignment = verticalAlignment,
-    ) {
-        Text(text)
-    }
+        content = { Text(text) },
+        modifier = modifier,
+    )
 }
 
 /**
@@ -201,7 +200,6 @@ public fun RadioButtonRow(
     RadioButtonImpl(
         selected = selected,
         onClick = onClick,
-        modifier = modifier,
         enabled = enabled,
         outline = outline,
         interactionSource = interactionSource,
@@ -209,6 +207,7 @@ public fun RadioButtonRow(
         textStyle = textStyle,
         verticalAlignment = verticalAlignment,
         content = content,
+        modifier = modifier,
     )
 }
 
@@ -216,7 +215,6 @@ public fun RadioButtonRow(
 private fun RadioButtonImpl(
     selected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier,
     enabled: Boolean,
     outline: Outline,
     interactionSource: MutableInteractionSource,
@@ -224,6 +222,7 @@ private fun RadioButtonImpl(
     textStyle: TextStyle,
     verticalAlignment: Alignment.Vertical,
     content: (@Composable RowScope.() -> Unit)?,
+    modifier: Modifier = Modifier,
 ) {
     var radioButtonState by remember { mutableStateOf(RadioButtonState.of(selected = selected, enabled = enabled)) }
 

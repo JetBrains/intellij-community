@@ -8,7 +8,7 @@ import static org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct.fro
 public class IntelliJPlatformProductTest extends UsefulTestCase {
 
   public void testFromMavenCoordinates() {
-    assertSame(fromMavenCoordinates("com.jetbrains.intellij.idea", "ideaIU"), IntelliJPlatformProduct.IDEA);
+    assertSame(fromMavenCoordinates("com.jetbrains.intellij.idea", "ideaIU"), IntelliJPlatformProduct.IDEA_IU);
     assertSame(fromMavenCoordinates("com.jetbrains.intellij.idea", "ideaIC"), IntelliJPlatformProduct.IDEA_IC);
     assertSame(fromMavenCoordinates("com.jetbrains.intellij.phpstorm", "phpstorm"), IntelliJPlatformProduct.PHPSTORM);
     assertSame(fromMavenCoordinates("foo", "bar"), null);

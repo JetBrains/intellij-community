@@ -28,7 +28,10 @@ fun VirtualFile.isJavaFileType(): Boolean {
             FileTypeManager.getInstance().getFileTypeByFileName(nameSequence) == JavaFileType.INSTANCE
 }
 
-fun VirtualFile.getOriginalOrDelegateFile(): VirtualFile =
+fun VirtualFile.getOriginalOrDelegateFileOrSelf(): VirtualFile =
+    getOriginalOrDelegateFile() ?: this
+
+fun VirtualFile.getOriginalOrDelegateFile(): VirtualFile? =
     when (this) {
         is VirtualFileWindow -> delegate.getOriginalOrDelegateFile()
         is LightVirtualFileBase -> originalFile

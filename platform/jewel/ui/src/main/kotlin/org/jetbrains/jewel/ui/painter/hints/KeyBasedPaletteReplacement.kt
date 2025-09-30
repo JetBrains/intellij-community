@@ -62,7 +62,7 @@ private fun Element.patchColorAttribute(attrName: String, newColor: Color?) {
     if (newColor == null) return
     if (!hasAttribute(attrName)) return
 
-    setAttribute(attrName, newColor.copy(alpha = 1.0f).toRgbaHexString())
+    setAttribute(attrName, newColor.copy(alpha = 1.0f).toRgbaHexString(omitAlphaWhenFullyOpaque = true))
     if (newColor.alpha != 1f) {
         setAttribute("$attrName-opacity", newColor.alpha.toString())
     } else {

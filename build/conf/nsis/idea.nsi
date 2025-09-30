@@ -338,13 +338,14 @@ Function silentConfigReader
   ${LogText} "Silent installation, options"
   ${GetParameters} $R0
 
+  StrCpy $startMenuFolder "${MANUFACTURER}"
+
   ClearErrors
   ${GetOptions} $R0 /CONFIG= $R1
   ${If} ${Errors}
     ${LogText} "  config file was not provided"
     ${LogText} "  defaulting to admin mode"
     StrCpy $silentMode "admin"
-    StrCpy $startMenuFolder "${MANUFACTURER}"
     Return
   ${EndIf}
   ${LogText} "  config file: $R1"
@@ -895,6 +896,7 @@ skip_ipr:
     !insertmacro MUI_STARTMENU_WRITE_END
   ${Else}
     DetailPrint "Skipping start menu shortcut."
+    ${LogText} "Skipping start menu shortcut."
   ${EndIf}
 
   ; enabling Java assistive technologies if a screen reader is active (0x0046 = SPI_GETSCREENREADER)

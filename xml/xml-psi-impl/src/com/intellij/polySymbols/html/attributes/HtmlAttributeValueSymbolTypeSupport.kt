@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.html.attributes
 
-import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport
@@ -14,7 +13,7 @@ interface HtmlAttributeValueSymbolTypeSupport : PolySymbolTypeSupport {
    * [ThreeState.UNSURE] if the boolean is assignable to the type and
    * [ThreeState.NO] if boolean is not assignable to the type
    */
-  fun isBoolean(symbol: PolySymbol, type: Any?, context: PsiElement): ThreeState
+  fun isBoolean(symbol: PolySymbol, type: Any?): ThreeState
 
   fun createStringType(symbol: PolySymbol): Any?
 

@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.samples.ideplugin
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,7 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import java.util.Locale
-import org.jetbrains.jewel.bridge.LocalComponent
+import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.modifier.trackComponentActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -47,7 +48,7 @@ internal fun ScrollbarsShowcaseTab() {
 
             val scrollState = rememberLazyListState()
             VerticallyScrollableContainer(
-                scrollState,
+                scrollState as ScrollableState,
                 Modifier.width(200.dp).border(1.dp, JewelTheme.globalColors.borders.normal),
             ) {
                 LazyColumn(state = scrollState, contentPadding = PaddingValues(vertical = 8.dp)) {

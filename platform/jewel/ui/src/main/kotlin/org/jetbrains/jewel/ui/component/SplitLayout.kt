@@ -73,13 +73,13 @@ public fun HorizontalSplitLayout(
     SplitLayoutImpl(
         first = first,
         second = second,
-        modifier = modifier,
-        dividerStyle = dividerStyle,
+        strategy = horizontalTwoPaneStrategy(),
         draggableWidth = draggableWidth,
         firstPaneMinWidth = firstPaneMinWidth,
         secondPaneMinWidth = secondPaneMinWidth,
-        strategy = horizontalTwoPaneStrategy(),
+        dividerStyle = dividerStyle,
         state = state,
+        modifier = modifier,
     )
 }
 
@@ -113,13 +113,13 @@ public fun VerticalSplitLayout(
     SplitLayoutImpl(
         first = first,
         second = second,
-        modifier = modifier,
-        dividerStyle = dividerStyle,
+        strategy = verticalTwoPaneStrategy(),
         draggableWidth = draggableWidth,
         firstPaneMinWidth = firstPaneMinWidth,
         secondPaneMinWidth = secondPaneMinWidth,
-        strategy = verticalTwoPaneStrategy(),
+        dividerStyle = dividerStyle,
         state = state,
+        modifier = modifier,
     )
 }
 
@@ -165,12 +165,12 @@ private fun SplitLayoutImpl(
     first: @Composable () -> Unit,
     second: @Composable () -> Unit,
     strategy: SplitLayoutStrategy,
-    modifier: Modifier,
     draggableWidth: Dp,
     firstPaneMinWidth: Dp,
     secondPaneMinWidth: Dp,
     dividerStyle: DividerStyle,
     state: SplitLayoutState,
+    modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
     var isDragging by remember { mutableStateOf(false) }

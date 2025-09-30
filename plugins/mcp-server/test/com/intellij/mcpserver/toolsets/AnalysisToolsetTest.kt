@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import io.kotest.common.runBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import org.junit.jupiter.api.Test
 
@@ -20,17 +21,19 @@ class AnalysisToolsetTest : McpToolsetTestBase() {
     }
     testMcpTool(
       AnalysisToolset::get_file_problems.name,
-      buildJsonObject {},
-      "[]"
+      buildJsonObject {
+        put("filePath", JsonPrimitive(mainJavaFile.path))
+      },
+      /*language=JSON*/ """{"filePath":"src/Main.java","errors":[]}"""
     )
   }
 
   @Test
-  fun get_project_problems() = runBlocking {
+  fun build_project() = runBlocking {
     testMcpTool(
-      AnalysisToolset::get_project_problems.name,
+      AnalysisToolset::build_project.name,
       buildJsonObject {},
-      "[]"
+      /*language=JSON*/ """{"isSuccess":true,"problems":[]}"""
     )
   }
 
@@ -39,7 +42,7 @@ class AnalysisToolsetTest : McpToolsetTestBase() {
     testMcpTool(
       AnalysisToolset::get_project_modules.name,
       buildJsonObject {},
-      """{"modules":[{"name":"testModule","type":"JAVA_MODULE"}]}"""
+      /*language=JSON*/ """{"modules":[{"name":"testModule","type":""}]}"""
     )
   }
 

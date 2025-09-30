@@ -2,6 +2,7 @@
 package com.intellij.find
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolder
@@ -20,6 +21,9 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.UnknownNullability
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
+
+
+private val LOG = Logger.getInstance(FindModel::class.java)
 
 @Serializable
 open class FindModel : UserDataHolder, Cloneable {
@@ -746,7 +750,9 @@ open class FindModel : UserDataHolder, Cloneable {
 
    private fun notifyObservers() {
     for (observer in myObservers) {
-      observer.findModelChanged(this)
+      LOG.runAndLogException {
+        observer.findModelChanged(this)
+      }
     }
   }
 
@@ -767,6 +773,28 @@ open class FindModel : UserDataHolder, Cloneable {
     ANY, IN_STRING_LITERALS, IN_COMMENTS, EXCEPT_STRING_LITERALS, EXCEPT_COMMENTS, EXCEPT_COMMENTS_AND_STRING_LITERALS
   }
 
+  /**
+   * Determines whether an already running or prepared search can be reused without a restart.
+   *
+   * Returns true when:
+   * - all settings are identical between the given [oldModel] and this model; or
+   * - the only differences are Preserve Case ([isPreserveCase]),
+   * Replace/Find mode ([isReplaceState]), and/or String to Replace ([myStringToReplace]).
+   *
+   * Any change to any other field requires a restart, and the method returns false.
+   *
+   * @param oldModel previously used FindModel to compare with
+   * @return true if no restart is needed (only Preserve Case, Replace State, and/or String to Replace may differ), false otherwise
+   */
+  @ApiStatus.Internal
+  fun noRestartSearchNeeded(oldModel: FindModel): Boolean {
+    if (oldModel == this) return true
+    val adjusted = this.clone()
+    adjusted.isPreserveCase = oldModel.isPreserveCase
+    adjusted.isReplaceState = oldModel.isReplaceState
+    adjusted.myStringToReplace = oldModel.myStringToReplace
+    return adjusted == oldModel
+  }
 
   override fun <T> getUserData(key: Key<T>): T? {
     return dataHolder.getUserData<T>(key)

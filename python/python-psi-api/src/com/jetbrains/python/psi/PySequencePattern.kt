@@ -4,7 +4,7 @@ package com.jetbrains.python.psi
 import com.jetbrains.python.ast.PyAstSequencePattern
 import com.jetbrains.python.ast.findChildrenByClass
 
-interface PySequencePattern : PyAstSequencePattern, PyPattern, PyCaptureContext {
+interface PySequencePattern : PyAstSequencePattern, PyPattern {
   val elements: List<PyPattern> 
     get() = findChildrenByClass(PyPattern::class.java).toList()
 }

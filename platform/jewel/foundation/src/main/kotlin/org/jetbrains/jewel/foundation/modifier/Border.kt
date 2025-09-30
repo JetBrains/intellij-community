@@ -83,6 +83,7 @@ public fun Modifier.border(
         drawBorderWithAlignment(alignment, width, brush, shape, expand)
     }
 
+@Suppress("ModifierComposed") // To fix in JEWEL-921
 private fun Modifier.drawBorderWithAlignment(
     alignment: Stroke.Alignment,
     width: Dp,
@@ -203,7 +204,7 @@ private class BorderCache(
         return targetImageBitmap
     }
 
-    public fun obtainPath(): Path = borderPath ?: Path().also { borderPath = it }
+    fun obtainPath(): Path = borderPath ?: Path().also { borderPath = it }
 }
 
 private fun Ref<BorderCache>.obtain(): BorderCache = this.value ?: BorderCache().also { value = it }

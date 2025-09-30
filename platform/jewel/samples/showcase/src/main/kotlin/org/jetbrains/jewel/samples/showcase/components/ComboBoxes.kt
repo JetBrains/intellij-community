@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.samples.showcase.ShowcaseIcons
 import org.jetbrains.jewel.ui.component.ComboBox
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.EditableComboBox
@@ -59,15 +60,17 @@ private val languageOptions =
     )
 
 @Composable
-public fun ComboBoxes() {
-    GroupHeader("List combo box (aka dropdown)")
-    ListComboBoxes()
+public fun ComboBoxes(modifier: Modifier = Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        GroupHeader("List combo box (aka dropdown)")
+        ListComboBoxes()
 
-    GroupHeader("Editable list combo box")
-    EditableListComboBoxes()
+        GroupHeader("Editable list combo box")
+        EditableListComboBoxes()
 
-    GroupHeader("Custom combo boxes")
-    CustomComboBoxes()
+        GroupHeader("Custom combo boxes")
+        CustomComboBoxes()
+    }
 }
 
 @Composable

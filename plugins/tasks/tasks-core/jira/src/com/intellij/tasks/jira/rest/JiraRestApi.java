@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.rest;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.Task;
@@ -75,7 +76,13 @@ public abstract class JiraRestApi extends JiraRemoteApi {
   }
 
   protected @NotNull GetMethod getMultipleIssuesSearchMethod(String jql, int max) {
-    GetMethod method = new GetMethod(myRepository.getRestUrl("search"));
+    GetMethod method;
+    if (Registry.is("tasks.use.search.jql.api", true)) {
+      method = new GetMethod(myRepository.getRestUrl("search/jql"));
+    }
+    else {
+      method = new GetMethod(myRepository.getRestUrl("search"));
+    }
     method.setQueryString(new NameValuePair[]{
       new NameValuePair("jql", jql),
       new NameValuePair("maxResults", String.valueOf(max))

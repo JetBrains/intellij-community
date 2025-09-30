@@ -305,12 +305,20 @@ internal object AndroidReleases : ContentSource<ContentItem.AndroidRelease>() {
                 releaseDate = LocalDate(2023, 10, 4),
             ),
             ContentItem.AndroidRelease(
-                displayText = "Android 15 (preview)",
+                displayText = "Android 15",
                 imagePath = "/android-releases/15.svg",
                 versionName = "15",
                 codename = "Vanilla Ice Cream",
                 apiLevel = 35,
                 releaseDate = LocalDate(2024, 2, 17),
+            ),
+            ContentItem.AndroidRelease(
+                displayText = "Android 16",
+                imagePath = "/android-releases/16.svg",
+                versionName = "16",
+                codename = "Baklava",
+                apiLevel = 36,
+                releaseDate = LocalDate(2025, 1, 23),
             ),
         )
 

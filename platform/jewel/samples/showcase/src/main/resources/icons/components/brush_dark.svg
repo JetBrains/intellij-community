@@ -1,0 +1,10 @@
+<!-- Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#CED0D6" stroke-width="1"
+     stroke-linecap="round"
+     stroke-linejoin="round">
+
+    <rect x="6" y="0.5" width="4" height="7" rx="1"/>
+    <rect x="5" y="7.5" width="6" height="2"/>
+    <polygon points="5,9.5 11,9.5 12,13.5 4,13.5"/>
+    <polygon points="3,15.5 4,14.25 12.2,14.25 11.2,15.5" stroke="none" fill="#CED0D6" />
+</svg>
