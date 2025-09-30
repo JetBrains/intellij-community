@@ -22,6 +22,14 @@ public interface ConfigImportSettings {
   default void importFinished(@NotNull Path newConfigDir, @Nullable Path oldConfigDir) { }
 
   /**
+   * Allows a product to provide an additional set of prefixes to locate directories to import from;
+   * useful e.g. when a product changes a prefix after an upgrade.
+   */
+  default @NotNull List<String> getEditionsToImportFrom() {
+    return List.of();
+  }
+
+  /**
    * If there are no configs for previous versions of this product,
    * then configs will be imported from the IDE path selector returned from this method, if they exist.
    *

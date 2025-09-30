@@ -7,18 +7,17 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import javax.swing.JRadioButton
 
-private enum class ImportOldConfigType {
-  FROM_PREVIOUS, FROM_CUSTOM, DO_NOT_IMPORT, OTHER, NOT_INITIALIZED
-}
-
 internal object ImportOldConfigsUsagesCollector : CounterUsagesCollector() {
-  enum class InitialImportScenario {
-    CLEAN_CONFIGS, IMPORTED_FROM_PREVIOUS_VERSION, IMPORTED_FROM_OTHER_PRODUCT, @Suppress("unused") IMPORTED_FROM_CLOUD, CONFIG_DIRECTORY_NOT_FOUND,
-    SHOW_DIALOG_NO_CONFIGS_FOUND, SHOW_DIALOG_CONFIGS_ARE_TOO_OLD, SHOW_DIALOG_REQUESTED_BY_PROPERTY, IMPORT_SETTINGS_ACTION,
-    RESTORE_DEFAULT_ACTION
+  private enum class ImportOldConfigType {
+    FROM_PREVIOUS, FROM_CUSTOM, DO_NOT_IMPORT, OTHER, NOT_INITIALIZED
   }
 
-  private val GROUP = EventLogGroup("import.old.config", 4)
+  enum class InitialImportScenario {
+    CLEAN_CONFIGS, IMPORTED_FROM_PREVIOUS_VERSION, IMPORT_SETTINGS_ACTION, RESTORE_DEFAULT_ACTION,
+    SHOW_DIALOG_NO_CONFIGS_FOUND, SHOW_DIALOG_CONFIGS_ARE_TOO_OLD, SHOW_DIALOG_REQUESTED_BY_PROPERTY, SHOW_DIALOG_MIXED_EDITIONS,
+  }
+
+  private val GROUP = EventLogGroup("import.old.config", 5)
 
   private val IMPORT_DIALOG_SHOWN_EVENT =
     GROUP.registerEvent("import.dialog.shown", Enum("selected", ImportOldConfigType::class.java), Boolean("config_folder_exists"))

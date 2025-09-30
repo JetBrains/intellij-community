@@ -75,6 +75,7 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @ApiStatus.Internal
 public final class ConfigImportHelper {
@@ -198,7 +199,11 @@ public final class ConfigImportHelper {
         oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
         importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_REQUESTED_BY_PROPERTY;
       }
-      else if (bestConfigGuess != null && !isConfigOld(bestConfigGuess.second)) {
+      else if (!(
+        bestConfigGuess == null ||
+        isConfigOld(bestConfigGuess.second) ||
+        guessedOldConfigDirs.mixedEditions && !canAskForConfig()  // can't ask for clarification, use whatever edition fits best
+      )) {
         oldConfigDirAndOldIdePath = new Pair<>(bestConfigGuess.first, null);
         log.info("choosing [" + bestConfigGuess.first + "] to import from");
       }
@@ -217,16 +222,18 @@ public final class ConfigImportHelper {
         oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
         importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_CONFIGS_ARE_TOO_OLD;
       }
+      else if (guessedOldConfigDirs.mixedEditions) {
+        log.info("configs from different editions are applicable, it's better to confirm");
+        oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
+        importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_MIXED_EDITIONS;
+      }
 
       if (oldConfigDirAndOldIdePath != null) {
         var oldConfigDir = oldConfigDirAndOldIdePath.first;
         var oldIdeHome = oldConfigDirAndOldIdePath.second;
         var configImportOptions = createConfigImportOptions(settings, customMigrationOption, log);
 
-        if (!guessedOldConfigDirs.fromSameProduct) {
-          importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.IMPORTED_FROM_OTHER_PRODUCT;
-        }
-        else if (importScenarioStatistics == null) {
+        if (importScenarioStatistics == null) {
           importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.IMPORTED_FROM_PREVIOUS_VERSION;
         }
 
@@ -481,11 +488,11 @@ public final class ConfigImportHelper {
 
   public static final class ConfigDirsSearchResult {
     private final List<? extends Pair<Path, FileTime>> directories;
-    private final boolean fromSameProduct;
+    private final boolean mixedEditions;
 
-    private ConfigDirsSearchResult(List<? extends Pair<Path, FileTime>> directories, boolean fromSameProduct) {
+    private ConfigDirsSearchResult(List<? extends Pair<Path, FileTime>> directories, boolean mixedEditions) {
       this.directories = directories;
-      this.fromSameProduct = fromSameProduct;
+      this.mixedEditions = mixedEditions;
     }
 
     public @Unmodifiable @NotNull List<Path> getPaths() {
@@ -520,6 +527,7 @@ public final class ConfigImportHelper {
     @Nullable ConfigImportSettings settings,
     @NotNull List<String> args
   ) {
+    var otherEditionPrefixes = settings != null ? settings.getEditionsToImportFrom() : List.<String>of();
     var otherProductPrefixes = settings != null ? settings.getProductsToImportFrom(args) : List.<String>of();
 
     var homes = new HashSet<Path>();  // looking for existing config directories ...
@@ -537,8 +545,10 @@ public final class ConfigImportHelper {
     }
     if (prefix == null) prefix = PlatformUtils.getPlatformPrefix();
 
-    var exactCandidates = new ArrayList<Path>();
-    var otherPreferredCandidates = new ArrayList<Path>();
+    var exactCandidates = new HashSet<Path>();
+    var otherEditionCandidates = new HashSet<Path>();
+    var otherProductCandidates = new ArrayList<Path>();
+
     for (var home : homes) {
       if (home == null || !Files.isDirectory(home)) {
         continue;
@@ -556,12 +566,15 @@ public final class ConfigImportHelper {
                 exactCandidates.add(path);
               }
             }
-            else if (
-              exactCandidates.isEmpty() &&
-              ContainerUtil.exists(otherProductPrefixes, other -> nameMatchesPrefixStrictly(name, other, dotted)) &&
-              (settings == null || settings.shouldBeSeenAsImportCandidate(path, pathPrefix, otherProductPrefixes))
-            ) {
-              otherPreferredCandidates.add(path);
+            else if (ContainerUtil.exists(otherEditionPrefixes, other -> nameMatchesPrefixStrictly(name, other, dotted))) {
+              if (settings == null || settings.shouldBeSeenAsImportCandidate(path, pathPrefix, otherProductPrefixes)) {
+                otherEditionCandidates.add(path);
+              }
+            }
+            else if (ContainerUtil.exists(otherProductPrefixes, other -> nameMatchesPrefixStrictly(name, other, dotted))) {
+              if (settings == null || settings.shouldBeSeenAsImportCandidate(path, pathPrefix, otherProductPrefixes)) {
+                otherProductCandidates.add(path);
+              }
             }
           }
         }
@@ -570,17 +583,14 @@ public final class ConfigImportHelper {
     }
 
     List<Path> candidates;
-    boolean exact;
-    if (!exactCandidates.isEmpty()) {
-      candidates = exactCandidates;
-      exact = true;
+    if (!exactCandidates.isEmpty() || !otherEditionCandidates.isEmpty()) {
+      candidates = Stream.concat(exactCandidates.stream(), otherEditionCandidates.stream()).toList();
     }
-    else if (!otherPreferredCandidates.isEmpty()) {
-      candidates = otherPreferredCandidates;
-      exact = false;
+    else if (!otherProductCandidates.isEmpty()) {
+      candidates = otherProductCandidates;
     }
     else {
-      return new ConfigDirsSearchResult(List.of(), true);
+      return new ConfigDirsSearchResult(List.of(), false);
     }
 
     var candidatesSorted = new ArrayList<Pair<Path, FileTime>>();
@@ -597,7 +607,12 @@ public final class ConfigImportHelper {
       }
       return diff;
     });
-    return new ConfigDirsSearchResult(candidatesSorted, exact);
+
+    var mixedBag =
+      otherEditionCandidates.contains(candidatesSorted.getFirst().first) &&
+      !exactCandidates.isEmpty() &&
+      ContainerUtil.exists(candidatesSorted, candidate -> exactCandidates.contains(candidate.first) && !isConfigOld(candidate.second));
+    return new ConfigDirsSearchResult(candidatesSorted, mixedBag);
   }
 
   private static boolean nameMatchesPrefixStrictly(String name, String prefix, boolean dotted) {
