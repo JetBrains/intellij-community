@@ -2,6 +2,8 @@ package com.intellij.cce.callGraphs
 
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -20,8 +22,10 @@ fun collectPsiFiles(project: Project, fileTypes: List<FileType>): List<PsiFile> 
 }
 
 fun PsiElement.getNodeLocation(): CallGraphNodeLocation {
+  val vFile = containingFile.virtualFile
+  val relativePath = VfsUtilCore.getRelativePath(vFile, project.guessProjectDir()!!, '/')!!
   return CallGraphNodeLocation(
-    projectRootFilePath = containingFile.virtualFile.path,
+    projectRootFilePath = relativePath,
     textRange = textRange.startOffset..textRange.endOffset
   )
 }

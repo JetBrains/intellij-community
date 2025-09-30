@@ -1,6 +1,17 @@
 {
   "nodes": [
-    "TestClass#testMethod"
+    {
+      "address": {
+        "project_root_file_path": "TestClass.java",
+        "text_range": [
+          29,
+          61
+        ]
+      },
+      "project_name": "dumpGraph",
+      "id": "0",
+      "qualified_name": "TestClass#testMethod"
+    }
   ],
   "edges": []
 }

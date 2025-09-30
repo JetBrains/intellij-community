@@ -1,6 +1,5 @@
 package com.intellij.cce.callGraphs
 
-import com.google.gson.Gson
 import com.intellij.cce.java.callGraphs.JavaCallGraphBuilder
 import com.intellij.testFramework.PlatformTestUtil.getCommunityPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -11,8 +10,6 @@ import java.io.File
 
 @RunWith(Parameterized::class)
 class JavaCallGraphBuilderTest(private val scenario: String) : BasePlatformTestCase() {
-
-  private data class ExpectedRaw(val nodes: List<String> = emptyList(), val edges: List<List<String>> = emptyList())
 
   companion object {
     @JvmStatic
@@ -26,7 +23,6 @@ class JavaCallGraphBuilderTest(private val scenario: String) : BasePlatformTestC
     fun getStaticTestDataPath(): String {
       return getCommunityPath().replace(File.separatorChar, '/') + "/plugins/evaluation-plugin/languages/java/testData"
     }
-
   }
 
   override fun getTestDataPath(): String = getStaticTestDataPath()
@@ -35,17 +31,7 @@ class JavaCallGraphBuilderTest(private val scenario: String) : BasePlatformTestC
 
   private fun expectedCallGraph(): CallGraph {
     val text = File(scenarioDir(), "expected.json").readText()
-    val raw = Gson().fromJson(text, ExpectedRaw::class.java)
-    val nodes = raw.nodes.map { id ->
-      CallGraphNode(
-        address = CallGraphNodeLocation(projectRootFilePath = "", textRange = 0..0),
-        projectName = "",
-        id = id,
-        qualifiedName = id
-      )
-    }
-    val edges = raw.edges.map { pair -> CallGraphEdge(callerId = pair[0], calleeId = pair[1]) }
-    return CallGraph(nodes, edges)
+    return CallGraph.deserialise(text)
   }
 
   private fun copyScenarioSources() {
@@ -55,24 +41,75 @@ class JavaCallGraphBuilderTest(private val scenario: String) : BasePlatformTestC
     }
   }
 
+  private fun buildActualGraph(): CallGraph = JavaCallGraphBuilder().build(myFixture.project)
+
+  private fun buildExpectedToActualIdMapByLocation(expected: CallGraph, actual: CallGraph): Map<String, String> {
+    val actualByAddr: Map<CallGraphNodeLocation, CallGraphNode> = actual.nodes.associateBy { it.address }
+    val mapping = mutableMapOf<String, String>()
+    val usedActualIds = mutableSetOf<String>()
+
+    for (en in expected.nodes) {
+      val actualNode = actualByAddr[en.address]
+      assertNotNull(
+        "No actual node found by address for expected node '${en.qualifiedName}' in scenario '$scenario'. Address: ${en.address}",
+        actualNode
+      )
+      val actualId = actualNode!!.id
+      assertTrue(
+        "Address mapping is not a bijection: multiple expected nodes map to the same actual node id '$actualId' in scenario '$scenario'",
+        usedActualIds.add(actualId)
+      )
+      mapping[en.id] = actualId
+    }
+
+    assertEquals(
+      "Address mapping is not a bijection by size in scenario '$scenario'",
+      expected.nodes.size,
+      mapping.size
+    )
+
+    return mapping
+  }
+
+  private fun remapExpectedToActual(expected: CallGraph, actual: CallGraph, idMap: Map<String, String>): CallGraph {
+    val actualByAddr: Map<CallGraphNodeLocation, CallGraphNode> = actual.nodes.associateBy { it.address }
+
+    val remappedNodes = expected.nodes.map { en ->
+      val actualNode = actualByAddr.getValue(en.address)
+      actualNode.copy(id = idMap.getValue(en.id))
+    }
+
+    val remappedEdges = expected.edges.map { e ->
+      CallGraphEdge(
+        callerId = idMap.getValue(e.callerId),
+        calleeId = idMap.getValue(e.calleeId)
+      )
+    }
+
+    return CallGraph(remappedNodes, remappedEdges)
+  }
+
+  private fun assertGraphsEqualAsDataClasses(expectedRemapped: CallGraph, actual: CallGraph) {
+    assertEquals(
+      "Mismatch in nodes for scenario '$scenario'",
+      actual.nodes.toSet(),
+      expectedRemapped.nodes.toSet()
+    )
+    assertEquals(
+      "Mismatch in edges for scenario '$scenario'",
+      actual.edges.toSet(),
+      expectedRemapped.edges.toSet()
+    )
+  }
+
   @Test
   fun testCallGraphAgainstExpected() {
     copyScenarioSources()
     val expected = expectedCallGraph()
+    val actual = buildActualGraph()
 
-    val callGraph = JavaCallGraphBuilder().build(myFixture.project)
-
-    val actualQualifiedNames = callGraph.nodes.map { it.qualifiedName }.toSet()
-
-    val expectedQualifiedNames = expected.nodes.map { it.qualifiedName }.toSet()
-
-    assertEquals("Mismatch in node qualifiedNames for scenario '$scenario'", expectedQualifiedNames, actualQualifiedNames)
-
-    val idToQualifiedName = callGraph.nodes.associate { it.id to it.qualifiedName }
-    val actualEdgesByQualifiedNames = callGraph.edges.map { idToQualifiedName.getValue(it.callerId) to idToQualifiedName.getValue(it.calleeId) }.toSet()
-
-    val expectedEdgesByQualifiedNames = expected.edges.map { it.callerId to it.calleeId }.toSet()
-
-    assertEquals("Mismatch in edges (by qualifiedName) for scenario '$scenario'", expectedEdgesByQualifiedNames, actualEdgesByQualifiedNames)
+    val expectedToActualId = buildExpectedToActualIdMapByLocation(expected, actual)
+    val expectedRemapped = remapExpectedToActual(expected, actual, expectedToActualId)
+    assertGraphsEqualAsDataClasses(expectedRemapped, actual)
   }
 }

@@ -12,6 +12,22 @@ private class IntRangeSerializer : JsonSerializer<IntRange> {
   }
 }
 
+private class IntRangeDeserializer : JsonDeserializer<IntRange> {
+  override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): IntRange {
+    return when {
+      json.isJsonArray -> {
+        val arr = json.asJsonArray
+        arr[0].asInt..arr[1].asInt
+      }
+      json.isJsonObject -> {
+        val obj = json.asJsonObject
+        obj.get("first").asInt..obj.get("last").asInt
+      }
+      else -> throw JsonParseException("Unsupported IntRange JSON: $json")
+    }
+  }
+}
+
 data class CallGraphNodeLocation(
   val projectRootFilePath: String,
   val textRange: IntRange,
@@ -40,5 +56,15 @@ data class CallGraph(
       .setPrettyPrinting()
       .create()
     return gson.toJson(this)
+  }
+
+  companion object {
+    fun deserialise(text: String): CallGraph {
+      val gson = GsonBuilder()
+        .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+        .registerTypeAdapter(IntRange::class.java, IntRangeDeserializer())
+        .create()
+      return gson.fromJson(text, CallGraph::class.java)
+    }
   }
 }
