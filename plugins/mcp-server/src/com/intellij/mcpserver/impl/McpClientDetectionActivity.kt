@@ -76,6 +76,7 @@ internal class McpClientDetectionActivity : ProjectActivity {
       notification
         .addAction(AutoconfigureAction(project, notMatchingPort, notification))
         .addAction(ShowSettingsAction(project)).notify(project)
+      notification.notify(project)
     }
   }
 
