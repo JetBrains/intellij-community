@@ -19,6 +19,8 @@ import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.NewUiValue
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ComponentTreeEventDispatcher
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Transient
@@ -768,6 +770,14 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
    * Notifies all registered listeners that UI settings have been changed.
    */
   fun fireUISettingsChanged() {
+    if (!EDT.isCurrentThreadEdt()) {
+      LOG.error(Throwable("UISettings should only be changed on the EDT"))
+      // Fall back to invokeLater. It doesn't matter which invokeLater we use here, as this is something that shouldn't happen either way.
+      SwingUtilities.invokeLater {
+        fireUISettingsChanged()
+      }
+      return
+    }
     updateDeprecatedProperties()
 
     // todo remove when all old properties will be converted
