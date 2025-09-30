@@ -953,6 +953,12 @@ com.intellij.task.ProjectModelBuildTask
 - a:getBuildableElement():com.intellij.openapi.roots.ProjectModelBuildableElement
 com.intellij.task.ProjectTask
 - a:getPresentableName():java.lang.String
+c:com.intellij.task.ProjectTaskContext
+- b:<init>(java.lang.Object,com.intellij.execution.configurations.RunConfiguration,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getRunConfiguration():com.intellij.execution.configurations.RunConfiguration
+- f:getSessionId():java.lang.Object
+- f:isAutoRun():Z
+- f:withUserData(com.intellij.openapi.util.Key,java.lang.Object):com.intellij.task.ProjectTaskContext
 com.intellij.task.ProjectTaskListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - finished(com.intellij.task.ProjectTaskManager$Result):V
