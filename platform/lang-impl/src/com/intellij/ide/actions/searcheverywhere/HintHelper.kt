@@ -27,6 +27,8 @@ class HintHelper(private val myTextField: ExtendableTextField) {
   private var myExtensionWithLoadingText: ExtendableTextComponent.Extension? = null
   private val myRightExtensions: MutableList<ExtendableTextComponent.Extension> = ArrayList()
 
+  private var myIsSearchInProgress = false
+
   init {
     myText.setFont(myTextField.getFont())
     myText.setFontTransform(FontInfo.getFontRenderContext(myTextField).transform)
@@ -40,15 +42,18 @@ class HintHelper(private val myTextField: ExtendableTextField) {
   fun setHint(hintText: String?) {
     myTextField.removeExtension(myExtensionWithHintText)
     myExtensionWithLoadingText?.let { myTextField.removeExtension(it) }
+    myExtensionWithLoadingText = null
     if (StringUtil.isNotEmpty(hintText)) {
       myText.setText(hintText)
       addExtensionAsLast(myExtensionWithHintText)
     }
+    if (myIsSearchInProgress) myTextField.addExtension(mySearchProcessExtension)
   }
 
   fun setLoadingText(text: String?, tooltip: @NlsContexts.Tooltip String? = null) {
     myTextField.removeExtension(myExtensionWithHintText)
     myExtensionWithLoadingText?.let { myTextField.removeExtension(it) }
+    myExtensionWithLoadingText = null
     if (StringUtil.isNotEmpty(text)) {
       myText.setText(text)
       myLoadingIcon.setIcon(myText, 1)
@@ -57,12 +62,18 @@ class HintHelper(private val myTextField: ExtendableTextField) {
         override fun getTooltip(): @NlsContexts.Tooltip String? = tooltip
       }
       addExtensionAsLast(myExtensionWithLoadingText)
+      myTextField.removeExtension(mySearchProcessExtension) // don't duplicate loading icons
     }
+    else if (myIsSearchInProgress) myTextField.addExtension(mySearchProcessExtension)
   }
 
   fun setSearchInProgress(inProgress: Boolean) {
+    myIsSearchInProgress = inProgress
+
     myTextField.removeExtension(mySearchProcessExtension)
-    if (inProgress) myTextField.addExtension(mySearchProcessExtension)
+    if (inProgress && myExtensionWithLoadingText == null) {
+      myTextField.addExtension(mySearchProcessExtension)
+    }
   }
 
   //set extension which should be shown last
