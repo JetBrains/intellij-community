@@ -800,7 +800,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="WEAK WARNING"
+                     level="INFORMATION"
                      language="kotlin"
                      key="inspection.replace.substring.with.drop.last.display.name" bundle="messages.KotlinBundle"/>
 
@@ -808,7 +808,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="WEAK WARNING"
+                     level="INFORMATION"
                      language="kotlin"
                      key="inspection.replace.substring.with.indexing.operation.display.name" bundle="messages.KotlinBundle"/>
 
@@ -816,7 +816,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="WEAK WARNING"
+                     level="INFORMATION"
                      language="kotlin"
                      key="inspection.replace.substring.with.substring.after.display.name" bundle="messages.KotlinBundle"/>
 
@@ -824,7 +824,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="WEAK WARNING"
+                     level="INFORMATION"
                      language="kotlin"
                      key="inspection.replace.substring.with.substring.before.display.name" bundle="messages.KotlinBundle"/>
 
@@ -832,7 +832,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="WEAK WARNING"
+                     level="INFORMATION"
                      language="kotlin"
                      key="inspection.replace.substring.with.take.display.name" bundle="messages.KotlinBundle"/>
 
