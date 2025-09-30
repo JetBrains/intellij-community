@@ -23,5 +23,5 @@ sourceSets {
 }
 
 application {
-    mainClassName = "org.jetbrains.tools.model.updater.MainKt"
+    mainClass = "org.jetbrains.tools.model.updater.MainKt"
 }
