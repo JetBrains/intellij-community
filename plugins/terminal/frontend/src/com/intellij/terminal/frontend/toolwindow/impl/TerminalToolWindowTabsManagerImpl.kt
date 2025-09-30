@@ -1,6 +1,8 @@
 package com.intellij.terminal.frontend.toolwindow.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
@@ -12,6 +14,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.TerminalTabBuilder
@@ -32,6 +35,7 @@ import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.*
+import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction
 import org.jetbrains.plugins.terminal.block.reworked.TerminalPortForwardingUiProvider
 import org.jetbrains.plugins.terminal.block.reworked.session.FrontendTerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
@@ -323,9 +327,16 @@ internal class TerminalToolWindowTabsManagerImpl(
         scheduleTabsRestoring(manager)
       }
 
+      val toolWindowActions = ActionManager.getInstance().getAction("Terminal.ToolWindowActions") as? ActionGroup
+      toolWindow.setAdditionalGearActions(toolWindowActions)
+      ToolWindowContentUi.setAllowTabsReordering(toolWindow, true)
+
       if (toolWindow is ToolWindowEx) {
         installDirectoryDnD(toolWindow, manager.coroutineScope.asDisposable())
         TerminalDockContainer.install(toolWindow.project, toolWindow.decorator)
+
+        toolWindow.setTabActions(ActionManager.getInstance().getAction("TerminalToolwindowActionGroup"))
+        toolWindow.setTabDoubleClickActions(listOf(RenameTerminalSessionAction()))
       }
     }
 

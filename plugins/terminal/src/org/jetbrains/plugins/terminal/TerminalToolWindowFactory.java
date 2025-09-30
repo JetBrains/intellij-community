@@ -1,23 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
-
-import java.util.Collections;
 
 public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbAware {
   public static final @NonNls String TOOL_WINDOW_ID = "Terminal";
@@ -29,12 +23,6 @@ public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbA
     }
 
     var toolWindowEx = (ToolWindowEx)toolWindow;
-    toolWindowEx.setTabActions(ActionManager.getInstance().getAction("TerminalToolwindowActionGroup"));
-    toolWindowEx.setTabDoubleClickActions(Collections.singletonList(new RenameTerminalSessionAction()));
-    ActionGroup toolWindowActions = (ActionGroup)ActionManager.getInstance().getAction("Terminal.ToolWindowActions");
-    toolWindowEx.setAdditionalGearActions(toolWindowActions);
-    ToolWindowContentUi.setAllowTabsReordering(toolWindowEx, true);
-
     TerminalToolWindowManager terminalToolWindowManager = TerminalToolWindowManager.getInstance(project);
     terminalToolWindowManager.initToolWindow(toolWindowEx);
     TerminalToolWindowInitializer.performInitialization(toolWindowEx);
