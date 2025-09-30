@@ -13,8 +13,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
-import com.intellij.openapi.ui.ExitActionType
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -29,6 +27,7 @@ import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
 import com.intellij.settingsSync.jba.SettingsSyncJbaBundle
 import com.intellij.settingsSync.jba.SettingsSyncPromotion
+import com.intellij.settingsSync.jba.auth.JBAAuthService.Companion.fromJBAData
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.ui.JBAccountInfoService.AuthStateListener
 import com.intellij.ui.components.JBCheckBox
@@ -46,6 +45,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import java.awt.Component
 import java.awt.Dimension
+import java.awt.EventQueue.invokeLater
 import java.awt.event.ActionEvent
 import java.util.*
 import java.util.concurrent.CancellationException
@@ -58,6 +58,7 @@ import kotlin.time.Duration.Companion.seconds
 
 private val LOG = logger<JBAAuthService>()
 private const val JBA_USER_ID = "jba"
+private const val JBA_PROVIDER_CODE = "jba"
 
 internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuthService {
   @Volatile
@@ -67,7 +68,7 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
     listenForLogout()
   }
 
-  private fun isTokenValid(token: String?): Boolean {
+  internal fun isTokenValid(token: String?): Boolean {
     return token != null && token != invalidatedIdToken
   }
 
@@ -102,19 +103,6 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
     }
   }
 
-  private fun fromJBAData(jbaData: JBAccountInfoService.JBAData?) : SettingsSyncUserData? {
-    if (jbaData == null) {
-      return null
-    } else {
-      return SettingsSyncUserData(
-        JBA_USER_ID,
-        providerCode,
-        jbaData.email,
-        jbaData.email,
-      )
-    }
-  }
-
   val idToken: String?
     get() {
       val token = getAccountInfoService()?.idToken
@@ -123,7 +111,7 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
       return token
     }
   override val providerCode: String
-    get() = "jba"
+    get() = JBA_PROVIDER_CODE
   override val providerName: String
     get() = "JetBrains"
 
@@ -147,64 +135,41 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
 
 
     return coroutineScope {
-      val job: Job? = coroutineContext[Job]
-      var dialog: LogInProgressDialog? = null
       val executionModalityState: ModalityState = withContext(Dispatchers.EDT) { ModalityState.current() }
       try {
-        launch {
-          withContext(Dispatchers.EDT + executionModalityState.asContextElement()) {
-            dialog = LogInProgressDialog(parentComponent as JComponent)
-            dialog.show()
-          }
-        }
         val retval = suspendCancellableCoroutine<SettingsSyncUserData?> { cont ->
           try {
-            if (job != null)
-              dialog?.addJobToCancel(job)
             cont.invokeOnCancellation {
               cont.resume(null)
             }
-            accountInfoService
-              .startLoginSession(JBAccountInfoService.LoginMode.AUTO, null, loginMetadata)
-              .onCompleted()
-              .exceptionally { exc ->
-                if (exc is CancellationException) {
-                  LOG.warn("Login cancelled")
-                }
-                else {
-                  LOG.warn("Login failed", exc)
-                }
-                cont.resume(null)
-                null
-              }.thenApply { loginResult ->
-                val result: SettingsSyncUserData? = when (loginResult) {
-                  is JBAccountInfoService.LoginResult.LoginSuccessful -> {
-                    fromJBAData(loginResult.jbaUser)
-                  }
-                  is JBAccountInfoService.LoginResult.LoginFailed -> {
-                    LOG.warn("Login failed: ${loginResult.errorMessage}")
-                    null
-                  }
-                  else -> {
-                    LOG.warn("Unknown login result: $loginResult")
-                    null
-                  }
-                }
-                cont.resume(result)
+
+            launch {
+              withContext(Dispatchers.EDT + executionModalityState.asContextElement()) {
+                val dialog = LogInProgressDialog(
+                  parentComponent as JComponent,
+                  accountInfoService,
+                  loginMetadata,
+                  cont,
+                )
+                dialog.show()
               }
+            }
           }
           catch (e: Throwable) {
             LOG.error(e)
             cont.resumeWithException(e)
           }
         }
+        if (retval == null) {
+          // user may authorize via Manage Licenses dialog
+          val updatedAccountService = getAccountInfoService()
+          if (updatedAccountService != null && isTokenValid(updatedAccountService.idToken)) {
+            return@coroutineScope fromJBAData(updatedAccountService.userData)
+          }
+        }
         return@coroutineScope retval
       } catch (ex: Throwable) {
         LOG.error("An exception occurred while logging in to JBA", ex)
-      } finally {
-        withContext(Dispatchers.EDT + executionModalityState.asContextElement() ) {
-          dialog?.close(OK_EXIT_CODE, ExitActionType.OK);
-        }
       }
       return@coroutineScope null
     }
@@ -314,6 +279,19 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
   override fun getPendingUserAction(userId: String): SettingsSyncAuthService.PendingUserAction? = authRequiredAction
 
   companion object {
+    fun fromJBAData(jbaData: JBAccountInfoService.JBAData?) : SettingsSyncUserData? {
+      if (jbaData == null) {
+        return null
+      } else {
+        return SettingsSyncUserData(
+          JBA_USER_ID,
+          JBA_PROVIDER_CODE,
+          jbaData.email,
+          jbaData.email,
+        )
+      }
+    }
+
     fun showManageLicensesDialog(component: Component) {
       val actionManager = ActionManager.getInstance()
       val registerPluginAction = actionManager.getAction("RegisterPlugins")
@@ -339,17 +317,69 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
   }
 }
 
-private class LogInProgressDialog(parent: JComponent) : DialogWrapper(parent, false) {
-  private var job2Cancel: Job? = null
+private class LogInProgressDialog(
+  parent: JComponent,
+  private val accountInfoService: JBAccountInfoService,
+  private val loginMetadata: Map<String, String>,
+  private val continuation: CancellableContinuation<SettingsSyncUserData?>
+) : DialogWrapper(parent, false) {
+  private var loginSession: JBAccountInfoService.LoginSession? = null
 
   init {
     title = SettingsSyncJbaBundle.message("login.title")
     init()
     rootPane.windowDecorationStyle = JRootPane.FRAME
+
+    startLoginSession()
   }
 
-  fun addJobToCancel(job: Job) {
-    job2Cancel = job
+  private fun startLoginSession() {
+    try {
+      loginSession = accountInfoService.startLoginSession(
+        JBAccountInfoService.LoginMode.AUTO,
+        null,
+        loginMetadata
+      )
+
+      loginSession!!.onCompleted()
+        .exceptionally { exc ->
+          if (exc.cause is CancellationException || exc is CancellationException) {
+            LOG.warn("Login cancelled")
+          } else {
+            LOG.warn("Login failed", exc)
+          }
+          continuation.resume(null)
+          invokeLater {
+            close(CANCEL_EXIT_CODE)
+          }
+          null
+        }.thenApply { loginResult ->
+          val result: SettingsSyncUserData? = when (loginResult) {
+            is JBAccountInfoService.LoginResult.LoginSuccessful -> {
+              fromJBAData(loginResult.jbaUser)
+            }
+            is JBAccountInfoService.LoginResult.LoginFailed -> {
+              LOG.warn("Login failed: ${loginResult.errorMessage}")
+              null
+            }
+            else -> {
+              LOG.warn("Unknown login result: $loginResult")
+              null
+            }
+          }
+          continuation.resume(result)
+          invokeLater {
+            close(OK_EXIT_CODE)
+          }
+        }
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+      continuation.resumeWithException(e)
+      invokeLater {
+        close(CANCEL_EXIT_CODE)
+      }
+    }
   }
 
   override fun isProgressDialog() = true
@@ -363,16 +393,15 @@ private class LogInProgressDialog(parent: JComponent) : DialogWrapper(parent, fa
         }.customize(UnscaledGaps(0, 0, 0, 10))
         progressBar.preferredSize = Dimension(if (SystemInfoRt.isMac) 350 else scale(450), 4)
         button(CommonBundle.getCancelButtonText()) {
-          job2Cancel?.cancel()
-          this@LogInProgressDialog.doCancelAction()
+          loginSession?.close()
         }
       }
       row {
         text(SettingsSyncJbaBundle.message("login.troubles.message")).applyToComponent {
           addHyperlinkListener {
             if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-              job2Cancel?.cancel()
               JBAAuthService.showManageLicensesDialog(contentPane)
+              loginSession?.close()
             }
           }
           if (SystemInfoRt.isMac) {
