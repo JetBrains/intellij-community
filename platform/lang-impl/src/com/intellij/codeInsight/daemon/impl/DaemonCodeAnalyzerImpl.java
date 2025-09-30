@@ -1822,7 +1822,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     Editor editor = PsiEditorUtil.getInstance().findEditorByPsiElement(psiFile);
     if (editor != null) {
-      TextEditorHighlightingPass showAutoImportPass = new ShowAutoImportPass(psiFile, editor, ProperTextRange.create(visibleRange.isProperRange() ? visibleRange : psiFile.getTextRange()));
+      TextEditorHighlightingPass showAutoImportPass = new ShowAutoImportPass(psiFile, editor, ProperTextRange.create(visibleRange.isProperRange() ? visibleRange : psiFile.getTextRange()), false);
       // have to restart ShowAutoImportPass manually because the highlighting session might very well be over by now
       ApplicationManager.getApplication().invokeLater(() -> {
         DaemonProgressIndicator sessionIndicator = new DaemonProgressIndicator();

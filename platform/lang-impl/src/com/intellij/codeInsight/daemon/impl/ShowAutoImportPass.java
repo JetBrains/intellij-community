@@ -35,6 +35,7 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -56,11 +57,13 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   private final TextRange myVisibleRange;
   private final List<BooleanSupplier> autoImportActions = Collections.synchronizedList(new ArrayList<>());
+  private final boolean myCanChangeFileSilently;
 
   @RequiresBackgroundThread
   @RequiresReadLock
-  ShowAutoImportPass(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull ProperTextRange visibleRange) {
+  ShowAutoImportPass(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull ProperTextRange visibleRange, boolean canChangeFileSilently) {
     super(psiFile.getProject(), editor.getDocument(), false);
+    myCanChangeFileSilently = canChangeFileSilently;
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -71,31 +74,29 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    if (isInlinePromptShown()) {
-      return;
-    }
+    if (!isInlinePromptShown() && myCanChangeFileSilently) {
+      Document document = myEditor.getDocument();
+      List<HighlightInfo> infos = new ArrayList<>();
+      List<BooleanSupplier> result = new ArrayList<>();
+      int exceptCaretOffset = myEditor.getCaretModel().getOffset();
 
-    Document document = myEditor.getDocument();
-    List<HighlightInfo> infos = new ArrayList<>();
-    List<BooleanSupplier> result = new ArrayList<>();
-    int exceptCaretOffset = myEditor.getCaretModel().getOffset();
+      DaemonCodeAnalyzerEx.processHighlights(document, myProject, null, 0, document.getTextLength(), info -> {
+        if (info.hasQuickFixes() && !info.containsOffset(exceptCaretOffset, true)) {
+          infos.add(info);
+        }
+        return true;
+      });
 
-    DaemonCodeAnalyzerEx.processHighlights(document, myProject, null, 0, document.getTextLength(), info -> {
-      if (info.hasQuickFixes() && !info.containsOffset(exceptCaretOffset, true)) {
-        infos.add(info);
-      }
-      return true;
-    });
-
-    for (HighlightInfo info : infos) {
-      for (ReferenceImporter importer : ReferenceImporter.EP_NAME.getExtensionList()) {
-        if (importer.isAddUnambiguousImportsOnTheFlyEnabled(myPsiFile)) {
-          BooleanSupplier action = importer.computeAutoImportAtOffset(myEditor, myPsiFile, info.getActualStartOffset(), false);
-          ContainerUtil.addIfNotNull(result, action);
+      for (HighlightInfo info : infos) {
+        for (ReferenceImporter importer : ReferenceImporter.EP_NAME.getExtensionList()) {
+          if (importer.isAddUnambiguousImportsOnTheFlyEnabled(myPsiFile)) {
+            BooleanSupplier action = importer.computeAutoImportAtOffset(myEditor, myPsiFile, info.getActualStartOffset(), false);
+            ContainerUtil.addIfNotNull(result, action);
+          }
         }
       }
+      autoImportActions.addAll(result);
     }
-    autoImportActions.addAll(result);
   }
 
   @Override
@@ -143,17 +144,21 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
     return InlinePrompt.isInlinePromptShown(myEditor) || InlinePrompt.isInlinePromptGenerating(myEditor);
   }
 
+  @RequiresEdt
   private void importUnambiguousImports() {
     ThreadingAssertions.assertEventDispatchThread();
-    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-335057, EA-843299")) {
-      if (!autoImportActions.isEmpty() && mayAutoImportNow(myPsiFile, true, ThreeState.UNSURE)) {
-        for (BooleanSupplier autoImportAction : autoImportActions) {
-          autoImportAction.getAsBoolean();
+    if (myCanChangeFileSilently) {
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-335057, EA-843299")) {
+        if (!autoImportActions.isEmpty() && mayAutoImportNow(myPsiFile, true, ThreeState.UNSURE)) {
+          for (BooleanSupplier autoImportAction : autoImportActions) {
+            autoImportAction.getAsBoolean();
+          }
         }
       }
     }
   }
 
+  @RequiresEdt
   public static boolean mayAutoImportNow(@NotNull PsiFile psiFile, boolean isInContent,
                                          @NotNull ThreeState extensionsAllowToChangeFileSilently) {
     return isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
@@ -164,11 +169,11 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   public static boolean isAddUnambiguousImportsOnTheFlyEnabled(@NotNull PsiFile psiFile) {
     PsiFile templateFile = PsiUtilCore.getTemplateLanguageFile(psiFile);
-    if (templateFile == null) return false;
-    return ContainerUtil.exists(ReferenceImporter.EP_NAME.getExtensionList(),
-                                importer -> importer.isAddUnambiguousImportsOnTheFlyEnabled(psiFile));
+    return templateFile != null && ContainerUtil.exists(ReferenceImporter.EP_NAME.getExtensionList(),
+                                                        importer -> importer.isAddUnambiguousImportsOnTheFlyEnabled(psiFile));
   }
 
+  @RequiresEdt
   private static @NotNull List<HighlightInfo> getVisibleHints(@NotNull TextRange visibleRange,
                                                               @NotNull Project project,
                                                               @NotNull Editor editor) {
