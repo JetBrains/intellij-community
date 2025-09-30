@@ -137,13 +137,22 @@ open class LanguageToolChecker : ExternalTextChecker() {
     override fun getShortMessage(): String =
       match.shortMessage.trimToNull() ?: match.rule.description.trimToNull() ?: match.rule.category.name
 
+    @Suppress("HardCodedStringLiteral")
     override fun getDescriptionTemplate(isOnTheFly: Boolean): String =
       if (testDescription) match.rule.id
-      else match.messageSanitized
+      else {
+        when (match.rule.id) {
+          "EN_PLAIN_ENGLISH_REPLACE" -> "'there are' is a wordy or complex expression. In some cases, it might be preferable to remove it entirely."
+          else -> match.messageSanitized
+        }
+      }
 
-    override fun getTooltipTemplate(): String = toTooltipTemplate(match)
+    override fun getTooltipTemplate(): String = toTooltipTemplate(this)
 
-    override fun getSuggestions(): List<Suggestion> = match.suggestedReplacements.map { Suggestion.replace(highlightRanges[0], it) }
+    override fun getSuggestions(): List<Suggestion> = when (match.rule.id) {
+      "EN_PLAIN_ENGLISH_REPLACE" -> listOf(Suggestion.replace(highlightRanges[0], ""))
+      else -> match.suggestedReplacements.map { Suggestion.replace(highlightRanges[0], it) }
+    }
 
     override fun getPatternRange() = TextRange(match.patternFromPos, match.patternToPos)
 
@@ -277,10 +286,10 @@ private fun isPathPart(startOffset: Int, endOffset: Int, text: TextContent): Boo
 }
 
 @NlsSafe
-private fun toTooltipTemplate(match: RuleMatch): String {
+private fun toTooltipTemplate(problem: TextProblem): String {
   val html = html {
     p {
-      +match.messageSanitized
+      +problem.getDescriptionTemplate(true)
     }
 
     p {
