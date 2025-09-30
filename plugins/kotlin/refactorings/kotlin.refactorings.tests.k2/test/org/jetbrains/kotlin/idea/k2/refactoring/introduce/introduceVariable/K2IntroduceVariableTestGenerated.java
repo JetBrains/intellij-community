@@ -253,6 +253,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/insideNestedLamba.kt");
         }
 
+        @TestMetadata("insideNestedLambdaAllOccurrences.kt")
+        public void testInsideNestedLambdaAllOccurrences() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/insideNestedLambdaAllOccurrences.kt");
+        }
+
         @TestMetadata("insideNestedLambdaInFunExpression.kt")
         public void testInsideNestedLambdaInFunExpression() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/insideNestedLambdaInFunExpression.kt");
@@ -261,11 +266,6 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
         @TestMetadata("itInsideNestedLamba.kt")
         public void testItInsideNestedLamba() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/itInsideNestedLamba.kt");
-        }
-
-        @TestMetadata("KTIJ-17001.kt")
-        public void testKTIJ_17001() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/extractToScope/KTIJ-17001.kt");
         }
 
         @TestMetadata("outerItInsideNestedLamba.kt")
