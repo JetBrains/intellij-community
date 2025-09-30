@@ -29,6 +29,7 @@ import java.awt.Graphics2D
 import java.awt.RenderingHints
 import javax.swing.JComponent
 import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 
 private val LOG = logger<UISettings>()
 
@@ -831,7 +832,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
     if (LoadingState.APP_READY.isOccurred) {
-      fireUISettingsChanged()
+      SwingUtilities.invokeLater {
+        fireUISettingsChanged()
+      }
     }
   }
 
