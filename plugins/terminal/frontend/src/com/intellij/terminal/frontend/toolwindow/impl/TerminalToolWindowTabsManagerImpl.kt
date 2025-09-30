@@ -87,6 +87,12 @@ internal class TerminalToolWindowTabsManagerImpl(
     return tab.view
   }
 
+  override fun attachTab(view: TerminalView, contentManager: ContentManager?): TerminalToolWindowTab {
+    val tab = doCreateTab(view)
+    addTabToToolWindow(tab, contentManager, true)
+    return tab
+  }
+
   override fun addListener(parentDisposable: Disposable, listener: TerminalTabsManagerListener) {
     eventDispatcher.addListener(listener, parentDisposable)
   }
@@ -109,38 +115,13 @@ internal class TerminalToolWindowTabsManagerImpl(
   }
 
   private fun createTab(builder: TerminalTabBuilderImpl): TerminalToolWindowTab {
-    val toolWindow = getToolWindow() // init tool window
-
-    val tab = doCreateTab(builder)
-    mutableTabs.add(tab)
-    Disposer.register(tab.content) {
-      mutableTabs.remove(tab)
-    }
-
-    val contentManager = builder.contentManager ?: toolWindow.contentManager
-    contentManager.addContent(tab.content)
-
-    val selectTab = {
-      contentManager.setSelectedContent(tab.content)
-    }
-    if (builder.requestFocus && !toolWindow.isActive) {
-      toolWindow.activate(selectTab, false, false)
-    }
-    else {
-      selectTab()
-    }
-
-    eventDispatcher.multicaster.tabCreated(tab)
-
+    val terminal = createTerminalViewAndStartSession(builder)
+    val tab = doCreateTab(terminal)
+    addTabToToolWindow(tab, builder.contentManager, builder.requestFocus)
     return tab
   }
 
-  private fun doCreateTab(builder: TerminalTabBuilderImpl): TerminalToolWindowTab {
-    val terminal = createTerminalView()
-    val tabName = builder.tabName ?: createDefaultTabName(getToolWindow())
-    terminal.title.change { defaultTitle = tabName }
-    createBackendTabAndStartSession(terminal, builder)
-
+  private fun doCreateTab(terminal: TerminalView): TerminalToolWindowTab {
     val panel = TerminalToolWindowPanel()
     panel.setContent(terminal.component)
     val content = ContentFactory.getInstance().createContent(panel, null, false)
@@ -170,6 +151,42 @@ internal class TerminalToolWindowTabsManagerImpl(
     }
 
     return TerminalToolWindowTabImpl(terminal, content)
+  }
+
+  private fun addTabToToolWindow(
+    tab: TerminalToolWindowTab,
+    contentManager: ContentManager?,
+    requestFocus: Boolean,
+  ) {
+    val toolWindow = getToolWindow()
+
+    mutableTabs.add(tab)
+    Disposer.register(tab.content) {
+      mutableTabs.remove(tab)
+    }
+
+    val manager = contentManager ?: toolWindow.contentManager
+    manager.addContent(tab.content)
+
+    val selectTab = {
+      manager.setSelectedContent(tab.content)
+    }
+    if (requestFocus && !toolWindow.isActive) {
+      toolWindow.activate(selectTab, false, false)
+    }
+    else {
+      selectTab()
+    }
+
+    eventDispatcher.multicaster.tabCreated(tab)
+  }
+
+  private fun createTerminalViewAndStartSession(builder: TerminalTabBuilderImpl): TerminalView {
+    val terminal = createTerminalView()
+    val tabName = builder.tabName ?: createDefaultTabName(getToolWindow())
+    terminal.title.change { defaultTitle = tabName }
+    createBackendTabAndStartSession(terminal, builder)
+    return terminal
   }
 
   private fun createTerminalView(): TerminalViewImpl {
@@ -297,6 +314,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
       if (toolWindow is ToolWindowEx) {
         installDirectoryDnD(toolWindow, manager.coroutineScope.asDisposable())
+        TerminalDockContainer.install(toolWindow.project, toolWindow.decorator)
       }
     }
 

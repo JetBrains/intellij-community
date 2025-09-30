@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.frontend.TerminalTabBuilder
 import com.intellij.terminal.frontend.TerminalView
+import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -22,6 +23,9 @@ interface TerminalToolWindowTabsManager {
 
   @RequiresEdt
   fun detachTab(tab: TerminalToolWindowTab): TerminalView
+
+  @RequiresEdt
+  fun attachTab(view: TerminalView, contentManager: ContentManager?): TerminalToolWindowTab
 
   fun addListener(parentDisposable: Disposable, listener: TerminalTabsManagerListener)
 

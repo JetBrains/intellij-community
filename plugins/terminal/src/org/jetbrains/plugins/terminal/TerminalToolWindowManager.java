@@ -49,12 +49,10 @@ import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
@@ -125,8 +123,6 @@ public final class TerminalToolWindowManager implements Disposable {
       return;
     }
     myToolWindow = toolWindow;
-
-    TerminalDockContainer.install(myProject, toolWindow.getDecorator());
 
     var focusService = TerminalFocusFusService.getInstance();
     if (focusService != null) { // the service only exists on the frontend
@@ -258,15 +254,15 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   @ApiStatus.Internal
-  @NotNull Content createNewTab(@Nullable ContentManager contentManager,
-                                @Nullable TerminalWidget terminalWidget,
-                                @NotNull AbstractTerminalRunner<?> terminalRunner,
-                                @NotNull TerminalEngine preferredEngine,
-                                @Nullable TerminalTabState tabState,
-                                @Nullable TerminalSessionTab sessionTab,
-                                @Nullable TerminalStartupFusInfo startupFusInfo,
-                                boolean requestFocus,
-                                boolean deferSessionStartUntilUiShown) {
+  public @NotNull Content createNewTab(@Nullable ContentManager contentManager,
+                                       @Nullable TerminalWidget terminalWidget,
+                                       @NotNull AbstractTerminalRunner<?> terminalRunner,
+                                       @NotNull TerminalEngine preferredEngine,
+                                       @Nullable TerminalTabState tabState,
+                                       @Nullable TerminalSessionTab sessionTab,
+                                       @Nullable TerminalStartupFusInfo startupFusInfo,
+                                       boolean requestFocus,
+                                       boolean deferSessionStartUntilUiShown) {
     ToolWindow toolWindow = getOrInitToolWindow();
     TerminalStartupMoment startupMoment = requestFocus && deferSessionStartUntilUiShown ? new TerminalStartupMoment() : null;
     Content content = createTerminalContent(terminalRunner, preferredEngine, terminalWidget, tabState,
@@ -728,13 +724,6 @@ public final class TerminalToolWindowManager implements Disposable {
 
   public static boolean isTerminalToolWindow(@Nullable ToolWindow toolWindow) {
     return toolWindow != null && TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId());
-  }
-
-  @ApiStatus.Internal
-  static @Nullable ContentManager findNearestContentManager(@Nullable Component component) {
-    if (component == null) return null;
-    var dataContext = DataManager.getInstance().getDataContext(component);
-    return dataContext.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER);
   }
 
   /**
