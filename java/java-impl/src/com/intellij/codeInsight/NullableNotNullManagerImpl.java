@@ -416,6 +416,18 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     }
     return info;
   }
+  
+  @Override
+  public @NotNull List<@NotNull PsiAnnotation> getConflictingAnnotations(@NotNull PsiAnnotationOwner owner) {
+    if (!owner.hasAnnotations()) return List.of();
+    for (AnnotationPackageSupport support : myAnnotationSupports) {
+      List<@NotNull PsiAnnotation> annotations = support.getConflictingContainerAnnotations(owner);
+      if (!annotations.isEmpty()) {
+        return annotations;
+      }
+    }
+    return List.of();
+  }
 
   private @Unmodifiable @NotNull List<String> filterNickNames(@NotNull Nullability nullability) {
     return ContainerUtil.mapNotNull(getAllNullabilityNickNames(), c -> Jsr305Support.getNickNamedNullability(c) == nullability ? c.getQualifiedName() : null);

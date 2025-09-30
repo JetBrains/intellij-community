@@ -306,6 +306,12 @@ public abstract class NullableNotNullManager {
   protected abstract @NotNull ContextNullabilityInfo getNullityDefault(@NotNull PsiModifierListOwner container,
                                                                        PsiAnnotation.TargetType @NotNull [] placeTargetTypes);
 
+  /**
+   * @param owner annotation owner of container (method, class, or package statement)
+   * @return list of conflicting annotations which denote different nullability; empty list if no conflicts were found
+   */
+  public abstract @NotNull List<@NotNull PsiAnnotation> getConflictingAnnotations(@NotNull PsiAnnotationOwner owner);
+
   @ApiStatus.Internal
   @NotNull
   public List<String> getNullablesWithNickNames() {

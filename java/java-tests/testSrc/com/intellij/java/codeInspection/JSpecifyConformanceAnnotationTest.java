@@ -92,9 +92,6 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
 
   private static boolean suppressWarning(@NotNull String message, String fileName, Integer offset) {
     Set<Pair<String, Integer>> suppressed = Set.of(
-      Pair.create("Irrelevant.java", 44), // see: IDEA-377761
-      Pair.create("Irrelevant.java", 46), // see: IDEA-377761
-
       Pair.create("Other.java", 72), // see: IDEA-377763
       Pair.create("Other.java", 70) // see: IDEA-377763
     );
@@ -230,6 +227,7 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
              "inspection.nullable.problems.at.throws",
              "inspection.nullable.problems.at.type.parameter",
              "inspection.nullable.problems.Nullable.NotNull.conflict",
+             "conflicting.nullability.annotations",
              "inspection.nullable.problems.at.wildcard",
              "inspection.nullable.problems.at.local.variable" ->
           warnings.put(anchor, "test:irrelevant-annotation:" + getAnnotationShortName(((PsiAnnotationImpl)anchor).getQualifiedName()));

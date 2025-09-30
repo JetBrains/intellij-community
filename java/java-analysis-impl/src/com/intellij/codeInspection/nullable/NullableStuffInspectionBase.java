@@ -123,6 +123,17 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
             checkParameters(constructor, holder, List.of(), manager);
           }
         }
+        checkConflictingContainerAnnotations(holder, aClass.getModifierList());
+      }
+
+      @Override
+      public void visitPackageStatement(@NotNull PsiPackageStatement statement) {
+        checkConflictingContainerAnnotations(holder, statement.getAnnotationList());
+      }
+
+      @Override
+      public void visitModule(@NotNull PsiJavaModule module) {
+        checkConflictingContainerAnnotations(holder, module.getModifierList());
       }
 
       @Override
@@ -513,6 +524,17 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     };
   }
 
+  private void checkConflictingContainerAnnotations(@NotNull ProblemsHolder holder, @Nullable PsiModifierList list) {
+    if (list == null || !list.hasAnnotations()) return;
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(holder.getProject());
+    List<PsiAnnotation> conflictingAnnotations = manager.getConflictingAnnotations(list);
+    if (!conflictingAnnotations.isEmpty()) {
+      for (PsiAnnotation annotation : conflictingAnnotations) {
+        reportProblem(holder, annotation, "conflicting.nullability.annotations");
+      }
+    }
+  }
+
   private void reportProblem(@NotNull ProblemsHolder holder, PsiElement anchor, String messageKey, Object... args) {
     reportProblem(holder, anchor, LocalQuickFix.EMPTY_ARRAY, messageKey, args);
   }
@@ -861,6 +883,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     checkSupers(method, holder, annotated, superMethods);
     checkParameters(method, holder, superMethods, nullableManager);
     checkOverriders(method, holder, annotated, nullableManager);
+    checkConflictingContainerAnnotations(holder, method.getModifierList());
   }
 
   private void checkSupers(PsiMethod method,

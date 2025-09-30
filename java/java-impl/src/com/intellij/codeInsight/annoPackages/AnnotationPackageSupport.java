@@ -6,6 +6,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationOwner;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +33,14 @@ public interface AnnotationPackageSupport {
                                                                               PsiAnnotation.TargetType @NotNull [] types,
                                                                               boolean superPackage) {
     return ContextNullabilityInfo.constant(null);
+  }
+
+  /**
+   * @param owner annotation owner of container (method, class, or package statement)
+   * @return list of conflicting annotations which denote different nullability; empty list if no conflicts were found
+   */
+  default @NotNull List<@NotNull PsiAnnotation> getConflictingContainerAnnotations(@NotNull PsiAnnotationOwner owner) {
+    return Collections.emptyList();
   }
 
   /**
