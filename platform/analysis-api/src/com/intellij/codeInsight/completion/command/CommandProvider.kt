@@ -40,6 +40,11 @@ interface CommandProvider : PossiblyDumbAware {
    * @return true if the implementation supports injected files.
    */
   fun supportsInjected(): Boolean = false
+
+   /**
+   * @return true if the implementation supports calling at a new line without context.
+   */
+  fun supportNewLineCompletion(): Boolean = false
 }
 
 /**

@@ -37,6 +37,7 @@ a:com.intellij.codeInsight.completion.CompletionService
 - com.intellij.openapi.project.PossiblyDumbAware
 - a:getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
 - getId():java.lang.String
+- supportNewLineCompletion():Z
 - supportsInjected():Z
 - supportsReadOnly():Z
 *a:com.intellij.codeInsight.completion.command.CompletionCommand

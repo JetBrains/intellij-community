@@ -221,6 +221,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - <init>():V
 - a:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.CompletionCommand
 - getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
+- supportNewLineCompletion():Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractGenerateCommandProvider
 - com.intellij.codeInsight.completion.command.CommandProvider
 - com.intellij.openapi.project.DumbAware
@@ -228,6 +229,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - a:generationIsAvailable(com.intellij.psi.PsiElement,I):Z
 - getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
 - pf:isOnlySpaceInLine(com.intellij.openapi.editor.Document,I):Z
+- supportNewLineCompletion():Z
 *pf:com.intellij.codeInsight.completion.command.commands.AbstractGenerateCommandProvider$GenerateCompletionCommand
 - com.intellij.codeInsight.completion.command.CompletionCommand
 - <init>(com.intellij.codeInsight.actions.CodeInsightAction,java.lang.String,java.lang.String):V
@@ -282,6 +284,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - a:getTextRangeImportList(com.intellij.psi.PsiFile,I):com.intellij.openapi.util.TextRange
 - p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - a:isImportList(com.intellij.psi.PsiFile,I):Z
+- supportNewLineCompletion():Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractQuickDocumentationCompletionCommand
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V
@@ -388,6 +391,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 *f:com.intellij.codeInsight.completion.command.commands.ViewStructureCompletionCommandProvider
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V
+- supportNewLineCompletion():Z
 *:com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider
 - a:calcFocusZones(com.intellij.psi.PsiFile):java.util.List
 *:com.intellij.codeInsight.editorActions.TypingActionsExtension

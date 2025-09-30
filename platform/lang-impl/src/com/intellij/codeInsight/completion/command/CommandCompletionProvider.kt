@@ -158,15 +158,16 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
       }))
 
     // Fetch commands applicable to the position
-    processCommandsForContext(commandCompletionFactory,
-                              originalFile.project,
-                              copyEditor,
-                              adjustedParameters,
-                              editor,
-                              offset,
-                              originalFile,
-                              isReadOnly,
-                              isInjected) { commands ->
+    processCommandsForContext(commandCompletionFactory = commandCompletionFactory,
+                              project = originalFile.project,
+                              copyEditor = copyEditor,
+                              adjustedParameters = adjustedParameters,
+                              originalEditor = editor,
+                              originalOffset = offset,
+                              originalFile = originalFile,
+                              isReadOnly = isReadOnly,
+                              isInjected = isInjected,
+                              commandCompletionType = commandCompletionType) { commands ->
       commands.forEach { command ->
         CommandCompletionCollector.shown(command::class.java, originalFile.language, commandCompletionType::class.java)
         val customPrefixMatcher = command.customPrefixMatcher(prefix)
@@ -315,6 +316,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     originalFile: PsiFile,
     isReadOnly: Boolean,
     isInjected: Boolean,
+    commandCompletionType: InvocationCommandType,
     processor: Processor<in Collection<CompletionCommand>>,
   ) {
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
@@ -322,6 +324,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
                                                                                ?: adjustedParameters.copyFile).language)
     val afterHighlightingCommandProviders = commandProviders.filter { it is AfterHighlightingCommandProvider }.toSet()
     for (provider in commandProviders.filter { it !is AfterHighlightingCommandProvider }) {
+      if(commandCompletionType is InvocationCommandType.FullLine && !provider.supportNewLineCompletion()) continue
       try {
         if (provider is DirectIntentionCommandProvider) {
           provider.setAfterHighlightingProviders(afterHighlightingCommandProviders)
