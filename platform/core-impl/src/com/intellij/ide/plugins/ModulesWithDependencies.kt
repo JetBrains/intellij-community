@@ -62,7 +62,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
     // If a plugin does not include any module dependency tags in its plugin.xml, it's assumed to be a legacy plugin
    // and is loaded only in IntelliJ IDEA, so it may use classes from Java plugin.
     val implicitDep = if (hasAllModules && PluginCompatibilityUtils.isLegacyPluginWithoutPlatformAliasDependencies(module)) {
-      pluginIdToDescriptor.get(PluginManagerCore.JAVA_MODULE_ID)
+      pluginIdToDescriptor.get(PluginManagerCore.JAVA_PLUGIN_ALIAS_ID)
     } else null
     if (implicitDep != null) {
       if (module === implicitDep) {

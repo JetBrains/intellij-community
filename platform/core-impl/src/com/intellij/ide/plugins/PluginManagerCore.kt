@@ -72,7 +72,8 @@ object PluginManagerCore {
 
   @JvmField val CORE_ID: PluginId = PluginId.getId(CORE_PLUGIN_ID)
   @JvmField val JAVA_PLUGIN_ID: PluginId = PluginId.getId("com.intellij.java")
-  @JvmField val JAVA_MODULE_ID: PluginId = PluginId.getId("com.intellij.modules.java")
+  @ApiStatus.Internal
+  @JvmField val JAVA_PLUGIN_ALIAS_ID: PluginId = PluginId.getId("com.intellij.modules.java")
   @JvmField val ALL_MODULES_MARKER: PluginId = PluginId.getId("com.intellij.modules.all")
   @JvmField val SPECIAL_IDEA_PLUGIN_ID: PluginId = PluginId.getId("IDEA CORE")
   @ApiStatus.Internal
@@ -986,6 +987,9 @@ object PluginManagerCore {
 
 
   //<editor-fold desc="Deprecated stuff.">
+  @Deprecated("The platform code should use [JAVA_PLUGIN_ALIAS_ID] instead, plugins aren't supposed to use this")
+  @JvmField val JAVA_MODULE_ID: PluginId = JAVA_PLUGIN_ALIAS_ID
+
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link PluginManager#getPluginByClass}.")
   @JvmStatic
