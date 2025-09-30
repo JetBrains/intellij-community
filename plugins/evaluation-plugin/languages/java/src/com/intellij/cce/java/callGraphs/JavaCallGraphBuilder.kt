@@ -52,8 +52,8 @@ private class EdgeCollectorVisitor(
 class JavaCallGraphBuilder : CallGraphBuilder {
   override val supportedLanguages: List<Language> = listOf(Language.JAVA)
 
-  override fun build(project: Project): CallGraph {
-    val psiFiles = collectPsiFiles(project, listOf(JavaFileType.INSTANCE))
+  override fun build(project: Project, projectRoots: List<String>): CallGraph {
+    val psiFiles = collectPsiFiles(project, listOf(JavaFileType.INSTANCE), projectRoots)
     val nodes = buildNodes(psiFiles)
     val edges = collectEdges(nodes, psiFiles)
     return CallGraph(nodes, edges)
@@ -77,7 +77,7 @@ class JavaCallGraphBuilder : CallGraphBuilder {
   }
 
   private fun buildNodeFromMethod(method: PsiMethod, nodeId: String): CallGraphNode {
-    val nodeLocation = method.getNodeLocation()
+    val nodeLocation = method.getNodeLocation()!!
     val projectName = method.project.name
     val qualifiedName = QualifiedNameProviderUtil.getQualifiedName(method)!!
 

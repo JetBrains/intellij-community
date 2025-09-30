@@ -41,7 +41,7 @@ class JavaCallGraphBuilderTest(private val scenario: String) : BasePlatformTestC
     }
   }
 
-  private fun buildActualGraph(): CallGraph = JavaCallGraphBuilder().build(myFixture.project)
+  private fun buildActualGraph(): CallGraph = JavaCallGraphBuilder().build(myFixture.project, listOf("."))
 
   private fun buildExpectedToActualIdMapByLocation(expected: CallGraph, actual: CallGraph): Map<String, String> {
     val actualByAddr: Map<CallGraphNodeLocation, CallGraphNode> = actual.nodes.associateBy { it.address }

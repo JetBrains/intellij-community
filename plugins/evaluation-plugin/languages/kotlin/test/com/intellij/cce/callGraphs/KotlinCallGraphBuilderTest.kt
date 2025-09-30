@@ -57,7 +57,7 @@ class KotlinCallGraphBuilderTest : BasePlatformTestCase(), ExpectedPluginModePro
     copyScenarioSources()
     val expected = expectedCallGraph()
 
-    val callGraph = KotlinCallGraphBuilder().build(myFixture.project)
+    val callGraph = KotlinCallGraphBuilder().build(myFixture.project, listOf("."))
 
     val actualNodeIds = callGraph.nodes.map { it.id }.toSet()
     val expectedNodeIds = expected.nodes.map { it.id }.toSet()

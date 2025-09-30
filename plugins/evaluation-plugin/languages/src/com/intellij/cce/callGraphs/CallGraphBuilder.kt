@@ -24,7 +24,7 @@ interface CallGraphBuilder {
     }
   }
 
-  fun build(project: Project): CallGraph
+  fun build(project: Project, projectRoots: List<String>): CallGraph
 }
 
 
