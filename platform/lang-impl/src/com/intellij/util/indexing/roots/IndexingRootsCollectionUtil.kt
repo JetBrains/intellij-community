@@ -257,18 +257,6 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
       descriptions.add(EntityGenericContentRootsDescription(entry.key, entry.value))
     }
 
-    for ((libraryEntity, roots) in rootData.libraryRoots.entries) {
-      if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) {
-        descriptions.add(LibraryRootsDescription(libraryEntity, roots))
-      }
-    }
-
-    for ((libraryEntity, roots) in rootData.libraryUrlRoots.entries) {
-      if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) {
-        descriptions.add(LibraryUrlRootsDescription(libraryEntity, roots))
-      }
-    }
-
     for ((entityReference, roots) in rootData.externalRoots.entries) {
       descriptions.add(EntityExternalRootsDescription(entityReference, roots))
     }
@@ -276,9 +264,15 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
     for ((entityReference, roots) in rootData.customKindRoots.entries) {
       descriptions.add(EntityCustomKindRootsDescription(entityReference, roots))
     }
-    for ((sdkEntity, roots) in rootData.sdkRoots.entries) {
-      if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) {
+    if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) {
+      for ((sdkEntity, roots) in rootData.sdkRoots.entries) {
         descriptions.add(SdkRootsDescription(sdkEntity, roots))
+      }
+      for ((libraryEntity, roots) in rootData.libraryUrlRoots.entries) {
+        descriptions.add(LibraryUrlRootsDescription(libraryEntity, roots))
+      }
+      for ((libraryEntity, roots) in rootData.libraryRoots.entries) {
+        descriptions.add(LibraryRootsDescription(libraryEntity, roots))
       }
     }
     reincludedRoots.addAll(rootData.excludedRoots)
