@@ -46,6 +46,11 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
       return true
     }
 
+    // modules containing tests only as per https://youtrack.jetbrains.com/articles/IJPL-A-62
+    if (moduleName.endsWith(".tests")) {
+      return true
+    }
+
     if (moduleName.contains(".test.")) {
       if (module?.sourceRoots?.none { it.rootType.isForTests } == true) {
         return false
