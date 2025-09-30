@@ -24,7 +24,7 @@ public final class PyDescriptorTypeUtil {
                                                              @Nullable PyType attributeType,
                                                              @NotNull TypeEvalContext context) {
     if (!expression.isQualified()) return null;
-    final PyClassLikeType targetType = as(PySelfType.extractScopeClassTypeIfNeeded(attributeType), PyClassLikeType.class);
+    final PyClassLikeType targetType = as(attributeType, PyClassLikeType.class);
     if (targetType == null || targetType.isDefinition()) return null;
 
     final PyResolveContext resolveContext = PyResolveContext.noProperties(context);
@@ -38,7 +38,7 @@ public final class PyDescriptorTypeUtil {
   public static @Nullable Ref<PyType> getExpectedValueTypeForDunderSet(@NotNull PyTargetExpression targetExpression,
                                                                        @Nullable PyType attributeType,
                                                                        @NotNull TypeEvalContext context) {
-    final PyClassLikeType targetType = as(PySelfType.extractScopeClassTypeIfNeeded(attributeType), PyClassLikeType.class);
+    final PyClassLikeType targetType = as(attributeType, PyClassLikeType.class);
     if (targetType == null || targetType.isDefinition()) return null;
 
     final PyResolveContext resolveContext = PyResolveContext.noProperties(context);
@@ -54,8 +54,8 @@ public final class PyDescriptorTypeUtil {
                                                                          @NotNull TypeEvalContext context) {
     PyExpression qualifier = expression.getQualifier();
     if (qualifier != null && attributeType instanceof PyCallableType receiverType) {
-      PyType qualifierType = PySelfType.extractScopeClassTypeIfNeeded(context.getType(qualifier));
-      if (qualifierType instanceof PyClassType classType) {
+      PyType qualifierType = context.getType(qualifier);
+      if (qualifierType instanceof PyClassLikeType classType) {
         PyType instanceArgumentType;
         PyType instanceTypeArgument;
         final var noneType = PyBuiltinCache.getInstance(expression).getNoneType();

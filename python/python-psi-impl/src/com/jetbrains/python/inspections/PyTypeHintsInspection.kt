@@ -209,7 +209,8 @@ class PyTypeHintsInspection : PyInspection() {
       }
 
       if (node.referencedName == PyNames.CANONICAL_SELF) {
-        val typeName = myTypeEvalContext.getType(node)?.name
+        val refType = myTypeEvalContext.getType(node)
+        val typeName = (if (refType is PySelfType) refType.scopeClassType else refType)?.name
         if (typeName != null && typeName != PyNames.CANONICAL_SELF) {
           registerProblem(node, PyPsiBundle.message("INSP.type.hints.invalid.type.self"), ProblemHighlightType.GENERIC_ERROR, null,
                           ReplaceWithTypeNameQuickFix(typeName))

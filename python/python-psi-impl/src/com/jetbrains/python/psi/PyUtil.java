@@ -183,37 +183,6 @@ public final class PyUtil {
   // TODO: move to a more proper place?
 
   /**
-   * Determine the type of a special attribute. Currently supported: {@code __class__} and {@code __dict__}.
-   *
-   * @param ref reference to a possible attribute; only qualified references make sense.
-   * @return type, or null (if type cannot be determined, reference is not to a known attribute, etc.)
-   */
-  public static @Nullable PyType getSpecialAttributeType(@Nullable PyReferenceExpression ref, TypeEvalContext context) {
-    if (ref != null) {
-      PyExpression qualifier = ref.getQualifier();
-      if (qualifier != null) {
-        String attr_name = ref.getReferencedName();
-        if (PyNames.__CLASS__.equals(attr_name)) {
-          PyType qualifierType = context.getType(qualifier);
-          if (qualifierType instanceof PyClassType qClassType) {
-            return new PyClassTypeImpl(qClassType.getPyClass(), true); // always as class, never instance
-          }
-          if (qualifierType instanceof PySelfType selfType) {
-            return selfType.toClass();
-          }
-        }
-        else if (PyNames.DUNDER_DICT.equals(attr_name)) {
-          PyType qualifierType = context.getType(qualifier);
-          if (qualifierType instanceof PyClassType qClassType && qClassType.isDefinition()) {
-            return PyBuiltinCache.getInstance(ref).getDictType();
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  /**
    * Makes sure that 'thing' is not null; else throws an {@link IncorrectOperationException}.
    *
    * @param thing what we check.
@@ -1187,6 +1156,50 @@ public final class PyUtil {
       }
       default -> throw new IllegalArgumentException();
     }
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable PyClassType selectCallableTypeRuntimeClass(@NotNull PyCallableType callableType,
+                                                                     @Nullable PyExpression location,
+                                                                     @NotNull TypeEvalContext context) {
+    String className;
+    if (location instanceof PyReferenceExpression re && isBoundMethodReference(callableType, re, context)) {
+      className = PyNames.TYPES_METHOD_TYPE;
+    }
+    else {
+      className = PyNames.TYPES_FUNCTION_TYPE;
+    }
+    PyCallable callable = callableType.getCallable();
+    PyClass cls = callable != null ? PyPsiFacade.getInstance(callable.getProject()).createClassByQName(className, callable) : null;
+    return cls != null ? new PyClassTypeImpl(cls, false) : null;
+  }
+
+  private static boolean isBoundMethodReference(@NotNull PyCallableType callableType,
+                                                @NotNull PyReferenceExpression location,
+                                                @NotNull TypeEvalContext context) {
+    final PyFunction function = as(callableType.getCallable(), PyFunction.class);
+    final boolean isNonStaticMethod = function != null && function.getContainingClass() != null && function.getModifier() != STATICMETHOD;
+    if (isNonStaticMethod) {
+      // In Python 2 unbound methods have __method fake type
+      if (LanguageLevel.forElement(location).isPython2()) {
+        return true;
+      }
+      final PyExpression qualifier;
+      if (location.isQualified()) {
+        qualifier = location.getQualifier();
+      }
+      else {
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
+        qualifier = ContainerUtil.getLastItem(location.followAssignmentsChain(resolveContext).getQualifiers());
+      }
+      if (qualifier != null) {
+        final PyType qualifierType = context.getType(qualifier);
+        if (PyTypeUtil.toStream(qualifierType).select(PyClassType.class).anyMatch(it -> !it.isDefinition())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public static final class MethodFlags {

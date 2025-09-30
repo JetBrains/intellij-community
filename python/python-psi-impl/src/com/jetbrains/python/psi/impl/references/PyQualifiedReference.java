@@ -151,7 +151,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
 
   private void addDocReference(ResolveResultList ret, PyExpression qualifier, PyType qualifierType) {
     PsiElement docstring = null;
-    if (PySelfType.extractScopeClassTypeIfNeeded(qualifierType) instanceof PyClassType classType) {
+    if (qualifierType instanceof PyClassType classType) {
       PyClass qualClass = classType.getPyClass();
       docstring = qualClass.getDocStringExpression();
     }
@@ -180,7 +180,6 @@ public class PyQualifiedReference extends PyReferenceImpl {
     final PyQualifiedExpression element = CompletionUtilCoreImpl.getOriginalOrSelf(myElement);
 
     PyType qualifierType = TypeEvalContext.codeCompletion(element.getProject(), element.getContainingFile()).getType(qualifier);
-    qualifierType = PySelfType.extractScopeClassTypeIfNeeded(qualifierType);
     ProcessingContext ctx = new ProcessingContext();
     final Set<String> namesAlready = new HashSet<>();
     ctx.put(PyType.CTX_NAMES, namesAlready);

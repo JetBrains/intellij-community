@@ -3037,7 +3037,7 @@ public class PyTypeTest extends PyTestCase {
   public void testReplaceDefinitionInMethod() {
     doTest("Type[Derived]",
            """
-             class Base:
+             class Base(object):
                  def cls(self):
                      return self.__class__
              class Derived(Base):
@@ -3046,7 +3046,7 @@ public class PyTypeTest extends PyTestCase {
 
     doTest("Type[Derived]",
            """
-             class Base:
+             class Base(object):
                  def cls(self):
                      return self.__class__
              class Derived(Base):

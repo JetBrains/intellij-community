@@ -162,7 +162,14 @@ private fun PyCallExpression.getExplicitResolveResults(resolveContext: PyResolve
   val result = mutableListOf<PyCallableType>()
 
   for (type in PyTypeUtil.toStream(calleeType)) {
-    if (type is PyClassType) {
+    // When invoking cls(), turn type[Self] into Self.
+    // Otherwise, we will delegate to __init__() of its scope class and return a concrete type class
+    // as a call result, losing Self. 
+    // See e.g. Py3TypeCheckerInspectionTest.testSelfInClassMethods
+    if (type is PySelfType) {
+      result.add(type)
+    }
+    else if (type is PyClassType) {
       val implicitlyInvokedMethods = type
         .resolveImplicitlyInvokedMethods(this, resolveContext)
         .forEveryScopeTakeOverloadsOtherwiseImplementations(context)
@@ -194,7 +201,7 @@ private fun PyCallExpression.getImplicitResolveResults(resolveContext: PyResolve
     val qualifier = callee.qualifier
     if (qualifier == null || !qualifier.canQualifyAnImplicitName()) return listOf()
 
-    val qualifierType = PySelfType.extractScopeClassTypeIfNeeded(context.getType(qualifier))
+    val qualifierType = context.getType(qualifier)
     if (PyTypeChecker.isUnknown(qualifierType, context) ||
         qualifierType is PyStructuralType && qualifierType.isInferredFromUsages
     ) {
@@ -407,7 +414,7 @@ private fun PyCallable?.isQualifiedByInstance(qualifier: PyExpression, context: 
 }
 
 private fun PyCallable?.isQualifiedByClass(qualifier: PyExpression, context: TypeEvalContext): Boolean {
-  val qualifierType = PySelfType.extractScopeClassTypeIfNeeded(context.getType(qualifier))
+  val qualifierType = context.getType(qualifier)
 
   if (qualifierType is PyClassType) {
     return qualifierType.isDefinition() && belongsToSpecifiedClassHierarchy(qualifierType.pyClass, context)
@@ -594,7 +601,7 @@ private fun PyCallExpression.getSuperCallType(context: TypeEvalContext): Maybe<P
       return Maybe(getSuperCallTypeForArguments(context, possible_class, args[1]))
     }
     if (possible_class is PyNamedParameter) {
-      val paramType = PySelfType.extractScopeClassTypeIfNeeded(context.getType(possible_class))
+      val paramType = context.getType(possible_class)
       if (paramType is PyClassType) {
         return Maybe(getSuperCallTypeForArguments(context, paramType.pyClass, args[1]))
       }
@@ -609,7 +616,7 @@ private fun PyCallExpression.getSuperCallType(context: TypeEvalContext): Maybe<P
 private fun getSuperCallTypeForArguments(context: TypeEvalContext, firstClass: PyClass, second_arg: PyExpression?): PyType? {
   // check 2nd argument, too; it should be an instance
   if (second_arg != null) {
-    val second_type = PySelfType.extractScopeClassTypeIfNeeded(context.getType(second_arg));
+    val second_type = context.getType(second_arg);
     if (second_type is PyClassType) {
       // imitate isinstance(second_arg, possible_class)
       val secondClass = second_type.pyClass

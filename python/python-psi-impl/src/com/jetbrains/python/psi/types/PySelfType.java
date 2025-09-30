@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
@@ -13,9 +14,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-public final class PySelfType implements PyTypeParameterType, PyClassLikeType {
+public final class PySelfType implements PyTypeParameterType, PyClassType {
   private final @NotNull PyClassType myScopeClassType;
-  private @Nullable PyClass matchingScope = null;
 
   public PySelfType(@NotNull PyClassType scopeClassType) {
     myScopeClassType = scopeClassType;
@@ -50,13 +50,6 @@ public final class PySelfType implements PyTypeParameterType, PyClassLikeType {
     return myScopeClassType;
   }
 
-  public static @Nullable PyType extractScopeClassTypeIfNeeded(@Nullable PyType type) {
-    if (type instanceof PySelfType selfType) {
-      return selfType.myScopeClassType;
-    }
-    return type;
-  }
-
   /**
    * @return true if type[Self], false otherwise
    */
@@ -73,29 +66,6 @@ public final class PySelfType implements PyTypeParameterType, PyClassLikeType {
   @Override
   public @NotNull PySelfType toClass() {
     return new PySelfType(myScopeClassType.toClass());
-  }
-
-  /**
-   * The presense of this field indicates that we perform type-check inside the class that this type belongs to.
-   * It means that some special rules should be applied, e.g.:
-   * <pre>
-   * {@code
-   *   class Example:
-   *      def returns_instance(self) -> Self:
-   *          return Example() # Error
-   *
-   *       def returns_self(self) -> Self:
-   *          return self # OK
-   * }
-   * </pre>
-   */
-  @Nullable
-  public PyClass getMatchingScope() {
-    return matchingScope;
-  }
-
-  public void setMatchingScope(@Nullable PyClass matchingScopeClass) {
-    this.matchingScope = matchingScopeClass;
   }
 
   @Override
@@ -207,6 +177,26 @@ public final class PySelfType implements PyTypeParameterType, PyClassLikeType {
   @Override
   public int getImplicitOffset() {
     return myScopeClassType.getImplicitOffset();
+  }
+
+  @Override
+  public @NotNull PyClass getPyClass() {
+    return myScopeClassType.getPyClass();
+  }
+
+  @Override
+  public <T> @Nullable T getUserData(@NotNull Key<T> key) {
+    return null;
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+
+  }
+
+  @Override
+  public boolean isAttributeWritable(@NotNull String name, @NotNull TypeEvalContext context) {
+    return myScopeClassType.isAttributeWritable(name, context);
   }
 
   @Override

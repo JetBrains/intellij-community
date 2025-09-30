@@ -79,14 +79,18 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     final PyExpression qualifier = node.getQualifier();
     final String attrName = node.getReferencedName();
     if (qualifier != null && attrName != null) {
-      final PyType type = myTypeEvalContext.getType(qualifier);
-      if (PySelfType.extractScopeClassTypeIfNeeded(type) instanceof PyClassType classType &&
+      final PyType type = replaceSelfWithItsScopeClass(myTypeEvalContext.getType(qualifier));
+      if (type instanceof PyClassType classType &&
           !classType.isAttributeWritable(attrName, myTypeEvalContext)) {
         final ASTNode nameNode = node.getNameElement();
         final PsiElement e = nameNode != null ? nameNode.getPsi() : node;
         registerProblem(e, PyPsiBundle.message("INSP.unresolved.refs.class.object.has.no.attribute", type.getName(), attrName));
       }
     }
+  }
+
+  private static @Nullable PyType replaceSelfWithItsScopeClass(@Nullable PyType type) {
+    return type instanceof PySelfType selfType ? selfType.getScopeClassType() : type;
   }
 
   @Override
@@ -286,7 +290,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       }
       final PyExpression qualifier = getReferenceQualifier(reference);
       if (qualifier != null) {
-        final PyType type = myTypeEvalContext.getType(qualifier);
+        PyType type = replaceSelfWithItsScopeClass(myTypeEvalContext.getType(qualifier));
         if (type != null) {
           if (ignoreUnresolvedMemberForType(type, reference, refName) || isDeclaredInSlots(type, refName)) {
             return;
@@ -306,6 +310,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
                                                 ((PyOperatorReference)reference).getReadableOperatorName());
             }
             else {
+              // TODO use proper type rendering here
               description = PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.for.class", refText, type.getName());
             }
           }
@@ -792,8 +797,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
                                                                      @NotNull String refText) {
     List<LocalQuickFix> result = new ArrayList<>();
     PsiElement element = reference.getElement();
-    if (type instanceof PyClassTypeImpl) {
-      PyClass cls = ((PyClassType)type).getPyClass();
+    if (type instanceof PyClassType pyClassType) {
+      PyClass cls = pyClassType.getPyClass();
       if (!PyBuiltinCache.getInstance(element).isBuiltin(cls)) {
         if (element.getParent() instanceof PyCallExpression) {
           result.add(new AddMethodQuickFix(refText, cls.getName(), true));

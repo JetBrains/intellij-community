@@ -348,6 +348,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return null;
   }
 
+  // TODO migrate this to matching against typing.Iterable protocol with PyTypeUtil.convertToType
   public static @Nullable PyType getIterationType(@Nullable PyType iterableType, @Nullable PyExpression source, @NotNull PsiElement anchor,
                                                   @NotNull TypeEvalContext context) {
     if (iterableType instanceof PyTupleType tupleType) {
@@ -450,7 +451,13 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     PyCallableParameter firstParameter = parameters.get(0);
     if (!firstParameter.isSelf()) return false;
     PyType selfParameterType = firstParameter.getType(context);
-    return PyTypeChecker.match(selfParameterType, receiverType, context);
+    // See 
+    //  - PyTypingTest.testForLoopTargetTypeComesFromCorrectDunderIterOverload
+    //  - PyTypingTest.testIterationOverRegularStrEmitsStrNotLiteralString
+    // If `self` in an overload was annotated with an explicit type hint (e.g. a subclass), leave it as-is, 
+    // otherwise replace Self type with an actual instance type.
+    PyTypeChecker.GenericSubstitutions substitutions = PyTypeChecker.unifyReceiver(receiverType, context);
+    return PyTypeChecker.match(PyTypeChecker.substitute(selfParameterType, substitutions, context), receiverType, context);
   }
 
   public static @Nullable PyType getContextSensitiveType(@NotNull PyFunction function, @NotNull TypeEvalContext context,

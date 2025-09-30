@@ -9,7 +9,7 @@ class MyClass(object):
 
 # Unbound methods are still treated as __method in Python 2
 MyClass.method.__func__
-MyClass.method.<warning descr="Cannot find reference '__defaults__' in 'function'">__defaults__</warning>
+MyClass.method.<warning descr="Cannot find reference '__defaults__' in '(self: MyClass) -> None'">__defaults__</warning>
 
 # Bound method with qualifier
 inst = MyClass()
