@@ -1835,13 +1835,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     context(_: KaSession)
     private fun balanceType(leftType: KaType?, rightType: KaType?, forceEqualityByContent: Boolean): KaType? {
-        val leftType = leftType.toUpperBound()
-        val rightType = rightType.toUpperBound()
         return when {
             leftType == null || rightType == null -> null
             leftType.isNothingType && leftType.isMarkedNullable -> rightType.withNullability(true)
             rightType.isNothingType && rightType.isMarkedNullable -> leftType.withNullability(true)
             !forceEqualityByContent -> balanceType(leftType, rightType)
+            leftType is KaTypeParameterType && leftType.symbol.upperBounds.any { rightType.isSubtypeOf(it) } -> rightType
+            rightType is KaTypeParameterType && rightType.symbol.upperBounds.any { leftType.isSubtypeOf(it) } -> leftType
             leftType.isSubtypeOf(rightType) -> rightType
             rightType.isSubtypeOf(leftType) -> leftType
             else -> null

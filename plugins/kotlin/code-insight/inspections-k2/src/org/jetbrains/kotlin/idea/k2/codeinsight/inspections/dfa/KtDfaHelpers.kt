@@ -128,14 +128,6 @@ internal fun KaVariableSymbol.toSpecialField(): SpecialField? {
 }
 
 context(_: KaSession)
-internal fun KaType?.toUpperBound(): KaType? {
-    return when (this) {
-        is KaTypeParameterType -> symbol.upperBounds.firstOrNull() ?: this
-        else -> this
-    }
-}
-
-context(_: KaSession)
 internal fun KtExpression.getKotlinType(): KaType? {
     var parent = this.parent
     if (parent is KtDotQualifiedExpression && parent.selectorExpression == this) {
