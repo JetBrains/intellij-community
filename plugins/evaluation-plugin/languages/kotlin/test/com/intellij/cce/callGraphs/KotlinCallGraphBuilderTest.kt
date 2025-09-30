@@ -7,7 +7,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
-import org.junit.Test
 import java.io.File
 
 class KotlinCallGraphBuilderTest : BasePlatformTestCase(), ExpectedPluginModeProvider {
@@ -52,7 +51,6 @@ class KotlinCallGraphBuilderTest : BasePlatformTestCase(), ExpectedPluginModePro
     }
   }
 
-  @Test
   fun testKotlinCallGraphSimpleMutualCalls() {
     copyScenarioSources()
     val expected = expectedCallGraph()
