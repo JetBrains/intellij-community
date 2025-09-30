@@ -533,14 +533,14 @@ internal fun findActualIndex(suffix: String, text: CharSequence, offset: Int): I
   }
   if (indexOf == 0) {
     var currentIndex = 1
-    while (offset - currentIndex >= 0 && (text[offset - currentIndex].isLetter() ||
-                                          text[offset - currentIndex] == ' ' ||
-                                          text[offset - currentIndex] == '\'')
+    while (text.getOrNull(offset - currentIndex)?.isLetter() == true ||
+           text.getOrNull(offset - currentIndex) == ' ' ||
+           text.getOrNull(offset - currentIndex) == '\''
     ) {
       currentIndex++
     }
-    if (currentIndex <= 1 || offset - currentIndex >= 0 && text[offset - currentIndex] != '\n') return 0
-    while (currentIndex >= 0 && offset - currentIndex >= 0 && text[offset - currentIndex].isWhitespace()) {
+    if (currentIndex <= 1 || text.getOrNull(offset - currentIndex) != '\n') return 0
+    while (currentIndex >= 0 && text.getOrNull(offset - currentIndex)?.isWhitespace() == true) {
       currentIndex--
     }
     if (currentIndex >= 0) indexOf = currentIndex
@@ -593,7 +593,7 @@ private class LimitedToleranceMatcher(private val myCurrentPrefix: String) : Cam
     if (!super.prefixMatches(element)) return false
     val commandCompletionElement = element.`as`(CommandCompletionLookupElement::class.java) ?: return false
     val currentTags = commandCompletionElement.currentTags
-    val allLookupStrings = (currentTags.ifEmpty { element.allLookupStrings }) ?: return false
+    val allLookupStrings = currentTags.ifEmpty { element.allLookupStrings } ?: return false
     if (!matched(allLookupStrings)) return false
     val otherTags = commandCompletionElement.otherTags
     if (otherTags.isEmpty()) return true
@@ -611,7 +611,7 @@ private class LimitedToleranceMatcher(private val myCurrentPrefix: String) : Cam
       for (range in fragments) {
         if (prefix.length != range.length) continue
         if (range.startOffset >= range.endOffset ||
-            range.startOffset < 0 || range.startOffset >= (lookupString.length - 1) ||
+            range.startOffset < 0 || range.startOffset >= lookupString.length - 1 ||
             range.endOffset < 0 || range.endOffset > lookupString.length) continue
         val matchedFragment = lookupString.substring(range.startOffset, range.endOffset)
         var errors = 0
