@@ -106,6 +106,9 @@
       <override-text place="RevealInPopup"/>
       <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
     </action>
+    <action id="Terminal.MoveToEditor" class="com.intellij.terminal.frontend.action.MoveTerminalSessionToEditorAction">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
 
     <group id="Terminal.Engine" popup="true">
       <action id="Terminal.UseReworkedEngine" class="com.intellij.terminal.frontend.action.TerminalReworkedEngineAction"/>
