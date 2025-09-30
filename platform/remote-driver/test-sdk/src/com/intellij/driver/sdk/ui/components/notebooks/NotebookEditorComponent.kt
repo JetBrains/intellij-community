@@ -98,6 +98,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     get() = xx("//div[@class='MyScrollPane']//div[@class='JBViewport']").list().first()
   val selectedCellActions: UiComponent
     get() = xx("//div[@class='JupyterCellActionsToolbar']").list().first()
+  val firstFoldingBar: UiComponent
+    get() = xx("//div[@class='EditorCellFoldingBarComponent']").list().first()
 
   override val editorComponent: EditorComponentImpl
     get() = when {
@@ -219,6 +221,12 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     val cellEditors = notebookCellEditors
     val cell = cellSelector(cellEditors)
     cell.strictClick()
+  }
+
+  fun moveMouseOnCell(cellSelector: CellSelector) {
+    val cellEditors = notebookCellEditors
+    val cell = cellSelector(cellEditors)
+    cell.moveMouse()
   }
 
   fun typeInCell(

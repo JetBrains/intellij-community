@@ -492,6 +492,16 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     }
   }
 
+  fun press(point: Point? = null) {
+    LOG.info("Press at $this${point?.let { ": $it" } ?: ""}")
+    withComponent { robot.moveMouseAndPress(it, point) }
+  }
+
+  fun mouseRelease() {
+    LOG.info("Release at $this")
+    withComponent { robot.releaseMouse(RemoteMouseButton.LEFT) }
+  }
+
   fun getBackgroundColor(): Color {
     return withComponent { Color(it.getBackground().getRGB()) }
   }

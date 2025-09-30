@@ -375,6 +375,17 @@ internal class SmoothRobot @JvmOverloads constructor(
     }
   }
 
+  fun moveMouseAndPress(component: Component, where: Point?) {
+    if (where != null) {
+      moveMouse(component, where)
+    }
+    else {
+      moveMouse(component)
+    }
+    ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
+    basicRobot.pressMouse(MouseButton.LEFT_BUTTON)
+  }
+
   private fun moveMouseWithAttempts(c: Component, x: Int, y: Int, attempts: Int = 3) {
     waitFor(Duration.ofSeconds(5), Duration.ofSeconds(1)) { performOnEdt { c.isShowing }!! }
 

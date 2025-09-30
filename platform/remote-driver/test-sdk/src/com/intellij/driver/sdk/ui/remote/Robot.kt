@@ -39,6 +39,7 @@ interface Robot {
    */
   fun strictClick(component: Component, point: Point?)
 
+  fun moveMouseAndPress(component: Component, where: Point?)
   fun pressMouse(mouseButton: RemoteMouseButton)
   fun pressMouse(component: Component, point: Point)
 
