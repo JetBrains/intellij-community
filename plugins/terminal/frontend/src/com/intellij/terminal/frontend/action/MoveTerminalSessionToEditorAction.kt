@@ -3,37 +3,93 @@ package com.intellij.terminal.frontend.action
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
 import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.JBTerminalWidgetListener
+import com.intellij.terminal.frontend.editor.TerminalViewVirtualFile
+import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
+import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.content.Content
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.action.TerminalSessionContextMenuActionBase
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl
-import java.lang.Boolean
-import kotlin.let
 
-internal class MoveTerminalSessionToEditorAction : TerminalSessionContextMenuActionBase(), DumbAware {
-  override fun updateInTerminalToolWindow(e: AnActionEvent, project: Project, content: Content, terminalWidget: TerminalWidget) {
-    e.presentation.isEnabledAndVisible = !Registry.`is`("toolwindow.open.tab.in.editor")
-  }
-
-  override fun actionPerformedInTerminalToolWindow(e: AnActionEvent, project: Project, content: Content, terminalWidget: TerminalWidget) {
-    val terminalToolWindowManager = TerminalToolWindowManager.getInstance(project)
-    val file = TerminalSessionVirtualFileImpl(terminalWidget.terminalTitle.buildTitle(), terminalWidget, terminalToolWindowManager.terminalRunner.settingsProvider)
-    file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE)
-    FileEditorManager.getInstance(project).openFile(file, true).first()
-    JBTerminalWidget.asJediTermWidget(terminalWidget)?.let {
-      it.listener = TerminalEditorWidgetListener(project, file)
+internal class MoveTerminalSessionToEditorAction : ToolWindowContextMenuActionBase(), DumbAware {
+  override fun actionPerformed(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
+    val project = e.project
+    if (project == null || content == null) {
+      return
     }
 
-    terminalToolWindowManager.detachWidgetAndRemoveContent(content)
+    val reworkedTerminalTab = findReworkedTerminalTab(project, content)
+    val classicTerminal = TerminalSessionContextMenuActionBase.findContextTerminal(e, content)
+    if (reworkedTerminalTab != null) {
+      performForReworkedTerminalTab(project, reworkedTerminalTab)
+    }
+    else if (classicTerminal != null) {
+      performForClassicTerminal(project, classicTerminal, content)
+    }
+  }
 
-    file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null)
+  private fun performForReworkedTerminalTab(project: Project, terminalTab: TerminalToolWindowTab) {
+    val manager = TerminalToolWindowTabsManager.getInstance(project)
+    manager.detachTab(terminalTab)
+
+    val file = TerminalViewVirtualFile(terminalTab.view, terminalTab.title)
+    file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true)
+    try {
+      FileEditorManager.getInstance(project).openFile(file, true)
+    }
+    finally {
+      file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, null)
+    }
+  }
+
+  private fun performForClassicTerminal(project: Project, widget: TerminalWidget, content: Content) {
+    val manager = TerminalToolWindowManager.getInstance(project)
+    val file = TerminalSessionVirtualFileImpl(
+      widget.terminalTitle.buildTitle(),
+      widget,
+      manager.terminalRunner.settingsProvider
+    )
+
+    file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true)
+    try {
+      FileEditorManager.getInstance(project).openFile(file, true)
+      JBTerminalWidget.asJediTermWidget(widget)?.let {
+        it.listener = TerminalEditorWidgetListener(project, file)
+      }
+      manager.detachWidgetAndRemoveContent(content)
+    }
+    finally {
+      file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, null)
+    }
+  }
+
+  override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
+    val project = e.project
+    if (project == null
+        || !TerminalToolWindowManager.isTerminalToolWindow(toolWindow)
+        || content == null
+        || Registry.`is`("toolwindow.open.tab.in.editor")) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    val reworkedTerminalTab = findReworkedTerminalTab(project, content)
+    val classicTerminal = TerminalSessionContextMenuActionBase.findContextTerminal(e, content)
+    e.presentation.isEnabledAndVisible = reworkedTerminalTab != null || classicTerminal != null
+  }
+
+  private fun findReworkedTerminalTab(project: Project, content: Content): TerminalToolWindowTab? {
+    val manager = TerminalToolWindowTabsManager.getInstance(project)
+    return manager.tabs.find { it.content == content }
   }
 }
 

@@ -18,13 +18,15 @@ import com.intellij.terminal.TerminalTitle;
 import com.intellij.terminal.TerminalTitleListener;
 import com.intellij.terminal.ui.TerminalWidgetKt;
 import com.jediterm.terminal.ui.TerminalWidgetListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 
-final class ClassicTerminalSessionEditor extends UserDataHolderBase implements FileEditor {
+@ApiStatus.Internal
+public final class ClassicTerminalSessionEditor extends UserDataHolderBase implements FileEditor {
   private static final Logger LOG = Logger.getInstance(ClassicTerminalSessionEditor.class);
 
   private final Project myProject;
@@ -32,7 +34,7 @@ final class ClassicTerminalSessionEditor extends UserDataHolderBase implements F
   private final TerminalWidgetListener myListener;
   private final Disposable myWidgetParentDisposable = Disposer.newDisposable("terminal widget parent");
 
-  ClassicTerminalSessionEditor(Project project, @NotNull TerminalSessionVirtualFileImpl terminalFile) {
+  public ClassicTerminalSessionEditor(Project project, @NotNull TerminalSessionVirtualFileImpl terminalFile) {
     myProject = project;
     myFile = terminalFile;
     TerminalWidgetKt.setNewParentDisposable(terminalFile.getTerminalWidget(), myWidgetParentDisposable);

@@ -82,7 +82,8 @@ internal class TerminalToolWindowTabsManagerImpl(
   override fun detachTab(tab: TerminalToolWindowTab): TerminalView {
     TerminalTabCloseListener.executeContentOperationSilently(tab.content) {
       tab.content.putUserData(TAB_DETACHED_KEY, Unit)
-      closeTab(tab)
+      val manager = tab.content.manager ?: error("No content manager for $tab")
+      manager.removeContent(tab.content, true)
     }
     return tab.view
   }

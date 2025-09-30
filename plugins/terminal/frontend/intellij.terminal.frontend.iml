@@ -66,5 +66,6 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.platform.project" />
+    <orderEntry type="library" name="pty4j" level="project" />
   </component>
 </module>

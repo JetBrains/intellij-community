@@ -16,6 +16,9 @@
     <actionPromoter implementation="com.intellij.terminal.frontend.action.SendShortcutToTerminalActionPromoter"/>
     <selectInTarget implementation="com.intellij.terminal.frontend.impl.SelectInTerminal"/>
 
+    <fileEditorProvider id="terminal-view-editor"
+                        implementation="com.intellij.terminal.frontend.editor.TerminalViewFileEditorProvider"/>
+
     <editorActionHandler action="Find" implementationClass="com.intellij.terminal.frontend.action.TerminalFindHandler"
                          id="terminalFind" order="first"/>
     <editorActionHandler action="FindNext" implementationClass="com.intellij.terminal.frontend.action.TerminalFindNextHandler"
