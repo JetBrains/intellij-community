@@ -51,7 +51,8 @@ interface CustomXDescriptorSerializerProvider {
 @Serializable
 private data class XDescriptorImpl(override val kind: String) : XDescriptor
 
-private object XDescriptorSerializer : KSerializer<XDescriptor> {
+@ApiStatus.Internal
+object XDescriptorSerializer : KSerializer<XDescriptor> {
   private val json = Json {
     ignoreUnknownKeys = true
     encodeDefaults = true
