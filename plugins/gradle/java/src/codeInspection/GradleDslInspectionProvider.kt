@@ -68,4 +68,10 @@ interface GradleDslInspectionProvider {
    */
   fun isAvoidDuplicateDependenciesInspectionAvailable(file: PsiFile): Boolean
   fun getAvoidDuplicateDependenciesInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
+
+  /**
+   * @see GradleTaskMissingGroupAndDescriptionInspection
+   */
+  fun isTaskMissingGroupAndDescriptionInspectionAvailable(file: PsiFile): Boolean
+  fun getTaskMissingGroupAndDescriptionInspectionVisitor(holder: ProblemsHolder, onTheFly: Boolean): PsiElementVisitor
 }

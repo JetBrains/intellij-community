@@ -183,5 +183,12 @@
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDuplicateDependenciesInspection"/>
 
+    <localInspection language="UAST" groupPath="Gradle" shortName="TaskMissingGroupAndDescription"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.task.missing.group.and.description" groupKey="inspection.best.practises"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleTaskMissingGroupAndDescriptionInspection"/>
+
   </extensions>
 </idea-plugin>
