@@ -32,9 +32,9 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testHighlighting(
                 """
-                <weak_warning>repositories {
+                <weak_warning>repositories</weak_warning> {
                     mavenCentral()
-                }</weak_warning>
+                }
                 """.trimIndent()
             )
         }
@@ -47,9 +47,9 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
             testHighlighting(
                 """
                 buildscript {
-                    <weak_warning>repositories {
+                    <weak_warning>repositories</weak_warning> {
                         gradlePluginPortal()
-                    }</weak_warning>
+                    }
                 }
                 """.trimIndent()
             )
@@ -62,10 +62,10 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
                 """
-                repositories {
+                repositories<caret> {
                     mavenCentral()
                     gradlePluginPortal()
-                }<caret>
+                }
                 """.trimIndent(),
                 "",
                 """
@@ -73,7 +73,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
                     repositories {
                         mavenCentral()
                         gradlePluginPortal()
@@ -81,7 +81,8 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
                 
                 rootProject.name = "test-project"
-                """.trimIndent()
+                """.trimIndent(),
+                isForPlugins = false
             )
         }
     }
@@ -93,10 +94,10 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
             testMyIntention(
                 """
                 buildscript {
-                    repositories {
+                    repositories<caret> {
                         gradlePluginPortal()
                         mavenCentral()
-                    }<caret>
+                    }
                 }
                 """.trimIndent(),
                 """
@@ -115,7 +116,8 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
                 
                 rootProject.name = "test-project"
-                """.trimIndent()
+                """.trimIndent(),
+                isForPlugins = true
             )
         }
     }
@@ -126,9 +128,9 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
                 """
-                repositories {
+                repositories<caret> {
                     mavenCentral()
-                }<caret>
+                }
                 """.trimIndent(),
                 "",
                 """
@@ -151,7 +153,8 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                         mavenCentral()
                     }
                 }
-                """.trimIndent()
+                """.trimIndent(),
+                isForPlugins = false
             )
         }
     }
@@ -163,9 +166,9 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
             testMyIntention(
                 """
                 buildscript {
-                    repositories {
+                    repositories<caret> {
                         gradlePluginPortal()
-                    }<caret>
+                    }
                 }
                 """.trimIndent(),
                 """
@@ -190,7 +193,244 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                         gradlePluginPortal()
                     }
                 }
-                """.trimIndent()
+                """.trimIndent(),
+                isForPlugins = true
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testRepositoriesMergeToExistingDependencyResolutionManagement(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+            testMyIntention(
+                """
+                repositories<caret> {
+                    google()
+                    mavenCentral()
+                }
+                """.trimIndent(),
+                "",
+                """
+                dependencyResolutionManagement {
+                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositories {
+                        mavenCentral()
+                    }
+                }
+                """.trimIndent(),
+                """
+                dependencyResolutionManagement {
+                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositories {
+                        mavenCentral()
+                        google()
+                        mavenCentral()
+                    }
+                }
+                """.trimIndent(),
+                isForPlugins = false
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testRepositoriesMergeToExistingDependencyResolutionManagementOverlap(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+            testMyIntention(
+                """
+                repositories<caret> {
+                    mavenCentral()
+                    google()
+                    myRepo()
+                }
+                """.trimIndent(),
+                "",
+                """
+                dependencyResolutionManagement {
+                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositories {
+                        mavenCentral()
+                        google()
+                    }
+                }
+                """.trimIndent(),
+                """
+                dependencyResolutionManagement {
+                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositories {
+                        mavenCentral()
+                        google()
+                        myRepo()
+                    }
+                }
+                """.trimIndent(),
+                isForPlugins = false
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testRepositoriesMergeToExistingPluginManagement(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+            testMyIntention(
+                """
+                buildscript {
+                    repositories<caret> {
+                        gradlePluginPortal()
+                        mavenCentral()
+                    }
+                }
+                """.trimIndent(),
+                """
+                buildscript {
+                }
+                """.trimIndent(),
+                """
+                pluginManagement {
+                    repositories {
+                        mavenCentral()
+                    }
+                }
+                """.trimIndent(),
+                """
+                pluginManagement {
+                    repositories {
+                        mavenCentral()
+                        gradlePluginPortal()
+                        mavenCentral()
+                    }
+                }
+                """.trimIndent(),
+                isForPlugins = true
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testRepositoriesMergeToExistingEmptyDependencyResolutionManagement(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+            testMyIntention(
+                """
+                repositories<caret> {
+                    google()
+                    mavenCentral()
+                }
+                """.trimIndent(),
+                "",
+                """
+                dependencyResolutionManagement {}
+                """.trimIndent(),
+                """
+                dependencyResolutionManagement {
+                    repositories {
+                        google()
+                        mavenCentral()
+                    }
+                }
+                """.trimIndent(),
+                isForPlugins = false
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testRepositoriesMergeToExistingDependencyResolutionManagementEmptyRepositories(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+            testMyIntention(
+                """
+                repositories<caret> {
+                    google()
+                    mavenCentral()
+                }
+                """.trimIndent(),
+                "",
+                """
+                dependencyResolutionManagement {
+                    repositories {}
+                }
+                """.trimIndent(),
+                """
+                dependencyResolutionManagement {
+                    repositories {
+                        google()
+                        mavenCentral()
+                    }
+                }
+                """.trimIndent(),
+                isForPlugins = false
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testRepositoriesMoveToExistingEmptyPluginManagement(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+            testMyIntention(
+                """
+                buildscript {
+                    repositories<caret> {
+                        mavenCentral()
+                        gradlePluginPortal()
+                    }
+                }
+                """.trimIndent(),
+                """
+                buildscript {
+                }
+                """.trimIndent(),
+                """
+                pluginManagement {}
+                """.trimIndent(),
+                """
+                pluginManagement {
+                    repositories {
+                        mavenCentral()
+                        gradlePluginPortal()
+                    }
+                }
+                """.trimIndent(),
+                isForPlugins = true
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testRepositoriesMoveToExistingPluginManagementEmptyRepositories(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+            testMyIntention(
+                """
+                buildscript {
+                    repositories<caret> {
+                        mavenCentral()
+                        gradlePluginPortal()
+                    }
+                }
+                """.trimIndent(),
+                """
+                buildscript {
+                }
+                """.trimIndent(),
+                """
+                pluginManagement {
+                    repositories {}
+                }
+                """.trimIndent(),
+                """
+                pluginManagement {
+                    repositories {
+                        mavenCentral()
+                        gradlePluginPortal()
+                    }
+                }
+                """.trimIndent(),
+                isForPlugins = true
             )
         }
     }
@@ -201,13 +441,13 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testHighlighting(
                 """
-                <weak_warning>repositories {
+                <weak_warning>repositories</weak_warning> {
                     mavenCentral()
                     gradlePluginPortal()
                     maven {
                         url = uri("https://repo.spring.io/release")
                     }
-                }</weak_warning>
+                }
                 """.trimIndent()
             )
         }
@@ -219,12 +459,12 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
                 """
-                repositories {
+                repositories<caret> {
                     mavenCentral()
                     maven {
                         url = uri("https://repo.spring.io/release")
                     }
-                }<caret>
+                }
                 """.trimIndent(),
                 "",
                 """
@@ -232,7 +472,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
                     repositories {
                         mavenCentral()
                         maven {
@@ -242,7 +482,8 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
                 
                 rootProject.name = "test-project"
-                """.trimIndent()
+                """.trimIndent(),
+                isForPlugins = false
             )
         }
     }
@@ -271,17 +512,17 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testHighlighting(
                 """
-                <weak_warning>repositories {
+                <weak_warning>repositories</weak_warning> {
                     mavenCentral()
-                }</weak_warning>
+                }
                 
                 dependencies {
                     implementation("org.example:lib:1.0")
                 }
                 
-                <weak_warning>repositories {
+                <weak_warning>repositories</weak_warning> {
                     gradlePluginPortal()
-                }</weak_warning>
+                }
                 """.trimIndent()
             )
         }
@@ -293,9 +534,9 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
                 """
-                repositories {
+                repositories<caret> {
                     mavenCentral()
-                }<caret>
+                }
                 """.trimIndent(),
                 "",
                 """
@@ -315,14 +556,15 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
 
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
                     repositories {
                         mavenCentral()
                     }
                 }
 
                 rootProject.name = "test-project"
-                """.trimIndent()
+                """.trimIndent(),
+                isForPlugins = false
             )
         }
     }
@@ -333,11 +575,11 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
                 """
-                repositories {
+                repositories<caret> {
                     maven {
                         url = uri("https://jitpack.io")
                     }
-                }<caret>
+                }
                 """.trimIndent(),
                 "",
                 """
@@ -353,7 +595,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
 
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
                     repositories {
                         maven {
                             url = uri("https://jitpack.io")
@@ -362,7 +604,8 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
 
                 rootProject.name = "test-project"
-                """.trimIndent()
+                """.trimIndent(),
+                isForPlugins = false
             )
         }
     }
@@ -373,12 +616,12 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
                 """
-                repositories {
+                repositories<caret> {
                     mavenCentral()
                     maven {
                         url = uri("https://repo.spring.io/milestone")
                     }
-                }<caret>
+                }
                 """.trimIndent(),
                 "",
                 """
@@ -416,7 +659,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
 
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
                     repositories {
                         mavenCentral()
                         maven {
@@ -426,7 +669,8 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
 
                 rootProject.name = "test-project"
-                """.trimIndent()
+                """.trimIndent(),
+                isForPlugins = false
             )
         }
     }
@@ -438,12 +682,12 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
             testMyIntention(
                 """
                 buildscript {
-                    repositories {
+                    repositories<caret> {
                         gradlePluginPortal()
                         maven {
                             url = uri("https://plugins.gradle.org/m2/")
                         }
-                    }<caret>
+                    }
                 }
                 """.trimIndent(),
                 """
@@ -472,7 +716,8 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
 
                 rootProject.name = "test-project"
-                """.trimIndent()
+                """.trimIndent(),
+                isForPlugins = true
             )
         }
     }
@@ -483,10 +728,10 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
                 """
-                repositories {
+                repositories<caret> {
                     mavenCentral()
                     mavenLocal()
-                }<caret>
+                }
                 """.trimIndent(),
                 "",
                 """
@@ -516,7 +761,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
 
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
                     repositories {
                         mavenCentral()
                         mavenLocal()
@@ -526,33 +771,35 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 rootProject.name = "test-project"
 
                 include("subproject1", "subproject2")
-                """.trimIndent()
+                """.trimIndent(),
+                isForPlugins = false
             )
         }
     }
 
     @ParameterizedTest
     @BaseGradleVersionSource
-    fun testEmptySettingsFileGetsCorrectOrder(gradleVersion: GradleVersion) {
+    fun testEmptySettingsFile(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
                 """
-                repositories {
+                repositories<caret> {
                     google()
                     mavenCentral()
-                }<caret>
+                }
                 """.trimIndent(),
                 "",
                 "",
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
                     repositories {
                         google()
                         mavenCentral()
                     }
                 }
-                """.trimIndent()
+                """.trimIndent(),
+                isForPlugins = false
             )
         }
     }
@@ -563,9 +810,9 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
                 """
-                repositories {
+                repositories<caret> {
                     mavenCentral()
-                }<caret>
+                }
                 """.trimIndent(),
                 "",
                 """
@@ -579,7 +826,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
                     repositories {
                         mavenCentral()
                     }
@@ -592,7 +839,8 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
                 
                 rootProject.name = "test-project"
-                """.trimIndent()
+                """.trimIndent(),
+                isForPlugins = false
             )
         }
     }
@@ -604,7 +852,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         runTest(gradleVersion, EMPTY_PROJECT_ONLY_BUILD_FILE) {
             testHighlighting("repositories { mavenCentral() }")
             testNoIntentions(
-                "repositories { mavenCentral() }<caret>",
+                "repositories<caret> { mavenCentral() }",
                 "Move repositories to the Gradle settings file"
             )
         }
@@ -614,9 +862,9 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @BaseGradleVersionSource
     fun testNoQuickFixWithGroovySettingsFile(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_GROOVY_BUILD_FILE) {
-            testHighlighting("<weak_warning>repositories { mavenCentral() }</weak_warning>")
+            testHighlighting("<weak_warning>repositories</weak_warning> { mavenCentral() }")
             testNoIntentions(
-                "repositories { mavenCentral() }<caret>",
+                "repositories<caret> { mavenCentral() }",
                 "Move repositories to the Gradle settings file"
             )
         }
@@ -626,13 +874,20 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
      * tests intention effect on build.gradle.kts and settings.gradle.kts files
      * @param settingsBefore if null, then no settings.gradle.kts file will exist in the project before test
      */
-    private fun testMyIntention(buildBefore: String, buildAfter: String, settingsBefore: String?, settingsAfter: String) {
+    private fun testMyIntention(
+        buildBefore: String, buildAfter: String,
+        settingsBefore: String?, settingsAfter: String,
+        isForPlugins: Boolean
+    ) {
         checkCaret(buildBefore)
         writeTextAndCommit(GradleConstants.KOTLIN_DSL_SCRIPT_NAME, buildBefore)
         if (settingsBefore != null) writeTextAndCommit(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME, settingsBefore)
         runInEdtAndWait {
             codeInsightFixture.configureFromExistingVirtualFile(getFile(GradleConstants.KOTLIN_DSL_SCRIPT_NAME))
-            val intention = codeInsightFixture.findSingleIntention("Move repositories to the Gradle settings file")
+            val repositoriesParentBlockInSettingsName = if (isForPlugins) "pluginManagement" else "dependencyResolutionManagement"
+            val intention = codeInsightFixture.findSingleIntention(
+                "Move repositories to '$repositoriesParentBlockInSettingsName' in the Gradle settings file"
+            )
             codeInsightFixture.launchAction(intention)
             codeInsightFixture.checkResult(buildAfter, false)
             codeInsightFixture.configureFromExistingVirtualFile(getFile(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME))
