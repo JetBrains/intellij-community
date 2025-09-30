@@ -1,5 +1,5 @@
 <idea-plugin>
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.grid"/>
     <module name="intellij.grid.types"/>
     <module name="intellij.grid.csv.core.impl"/>

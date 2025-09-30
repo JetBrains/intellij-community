@@ -1,5 +1,5 @@
 <idea-plugin>
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.libraries.kotlinx.io"/>
 
     <module name="intellij.libraries.kotlinx.serialization.core" loading="embedded"/>

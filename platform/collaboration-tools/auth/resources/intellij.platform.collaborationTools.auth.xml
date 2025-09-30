@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <module value="com.intellij.modules.collaborationTools.auth"/>
   <dependencies>
     <module name="intellij.platform.collaborationTools.auth.base"/>
