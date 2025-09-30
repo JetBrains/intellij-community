@@ -122,7 +122,7 @@ interface AdaptiveImagesManager {
   fun createRenderer(rendererScope: CoroutineScope, eventListener: (AdaptiveImageRendererEvent) -> Unit): AdaptiveImageRenderer
 
   /**
-   * Creates new renderer using GlobalScope as parent scope and Dispatchers.EDT as dispatcher
+   * Creates new renderer using the service scope as parent scope and `Dispatchers.UI` as dispatcher
    */
   fun createRenderer(eventListener: (AdaptiveImageRendererEvent) -> Unit): AdaptiveImageRenderer
 }

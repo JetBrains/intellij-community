@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.svg.*
 import com.intellij.util.MemorySizeAware
 import com.intellij.util.io.URLUtil
@@ -329,7 +329,7 @@ class CachingAdaptiveImageManager(
   }
 
   override fun createRenderer(eventListener: (AdaptiveImageRendererEvent) -> Unit) =
-    createRenderer(GlobalScope.namedChildScope("AdaptiveImageRenderer", Dispatchers.EDT), eventListener)
+    createRenderer(coroutineScope.childScope("AdaptiveImageRenderer", Dispatchers.EDT), eventListener)
 
 
   @TestOnly
