@@ -4161,6 +4161,15 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  @TestFor(issues="PY-84524")
+  public void testBuiltinsCallable() {
+    doTest("(...) -> object", """
+      a = object()
+      if callable(a):
+          expr = a
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

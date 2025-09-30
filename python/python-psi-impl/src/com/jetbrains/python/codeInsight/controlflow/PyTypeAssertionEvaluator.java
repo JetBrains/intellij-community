@@ -50,12 +50,6 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
           transformTypeFromAssertion(context.getType(typeElement), false, context, typeElement));
       }
     }
-    else if (node.isCalleeText(PyNames.CALLABLE_BUILTIN)) {
-      final PyExpression[] args = node.getArguments();
-      if (args.length == 1) {
-        pushAssertion(args[0], myPositive, context -> PyTypingTypeProvider.createTypingCallableType(node));
-      }
-    }
     else if (node.isCalleeText(PyNames.ISSUBCLASS)) {
       final PyExpression[] args = node.getArguments();
       if (args.length == 2) {
