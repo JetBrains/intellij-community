@@ -2,6 +2,7 @@
 package com.intellij.task
 
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.containers.ContainerUtil
@@ -19,7 +20,8 @@ open class ProjectTaskContext @JvmOverloads constructor(
   /**
    * true indicates that the task was started automatically, e.g. resources compilation on frame deactivation
    */
-  val isAutoRun: Boolean = false
+  val isAutoRun: Boolean = false,
+  val dataContext: DataContext? = null,
 ) : UserDataHolderBase() {
 
   private val myGeneratedFiles: MultiMap<String, String> = MultiMap.createConcurrentSet()
