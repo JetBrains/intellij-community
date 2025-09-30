@@ -14,7 +14,7 @@
     <!--<projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardManager"-->
     <!--                serviceImplementation="com.intellij.platform.execution.dashboard.RunDashboardManagerImpl"/>-->
 
-    <runDashboardManagerProxy implementation="com.intellij.platform.execution.dashboard.backend.BackendRunDashboardManagerProxy"/>
+    <runDashboardManagerProxy implementation="com.intellij.platform.execution.dashboard.backend.BackendRunDashboardManagerProxy" order="last"/>
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.execution.dashboard.backend.BackendRunDashboardApiProviderApiProvider"/>
     <serviceViewLocatableSearcher implementation="com.intellij.platform.execution.dashboard.backend.RunDashboardLocatableSearcher"/>
     <backgroundPostStartupActivity implementation="com.intellij.platform.execution.dashboard.backend.RunDashboardCheckerActivity"/>

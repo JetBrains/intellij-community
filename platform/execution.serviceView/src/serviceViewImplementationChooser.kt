@@ -21,13 +21,16 @@ fun shouldEnableServicesViewInCurrentEnvironment(): Boolean {
   return isServicesEnabled
 }
 
-@ApiStatus.Internal
-fun isBackendAndMonolithRegistryEnabled(): Boolean = IdeProductMode.isBackend && isOldMonolithServiceViewEnabled()
+private fun isBackendAndMonolithRegistryEnabled(): Boolean {
+  return IdeProductMode.isBackend && isOldMonolithServiceViewEnabled()
+}
+
+private fun isFrontendAndSplitRegistryEnabled(): Boolean {
+  return IdeProductMode.isFrontend && isNewFrontendServiceViewEnabled()
+}
 
 @ApiStatus.Internal
-fun isFrontendAndSplitRegistryEnabled(): Boolean = IdeProductMode.isFrontend && isNewFrontendServiceViewEnabled()
-
-private fun isNewFrontendServiceViewEnabled(): Boolean {
+fun isNewFrontendServiceViewEnabled(): Boolean {
   // Split debugger's frontend works with a frontend run dashboard entities, same for backend. So registry flags must be in sync
   // when it comes to testing either the debugger or service view.
   // Otherwise we have to maintain even more registry flag combinations compatible which does not make sense

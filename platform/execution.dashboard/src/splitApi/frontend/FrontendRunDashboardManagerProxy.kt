@@ -4,11 +4,12 @@ package com.intellij.platform.execution.dashboard.splitApi.frontend
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.dashboard.RunDashboardManagerProxy
 import com.intellij.openapi.project.Project
-import com.intellij.platform.execution.serviceView.isFrontendAndSplitRegistryEnabled
+import com.intellij.platform.execution.serviceView.isNewFrontendServiceViewEnabled
+import com.intellij.platform.ide.productMode.IdeProductMode
 
 internal class FrontendRunDashboardManagerProxy: RunDashboardManagerProxy {
   override fun isEnabled(): Boolean {
-    return isFrontendAndSplitRegistryEnabled()
+    return IdeProductMode.isFrontend || (IdeProductMode.isMonolith && isNewFrontendServiceViewEnabled())
   }
 
   override fun getManager(project: Project): RunDashboardManager {
