@@ -193,32 +193,29 @@ public final class ConfigImportHelper {
           log.error("Couldn't backup current config or delete current config directory", e);
         }
       }
-      else if (InitialConfigImportState.isStartupWizardEnabled()) {
-        if (bestConfigGuess != null && !shouldAskForConfig() && !isConfigOld(bestConfigGuess.second)) {
-          oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
-          if (oldConfigDirAndOldIdePath == null) {
-            logRejectedConfigDirectory(log, "Previous config directory", bestConfigGuess.first);
-            importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.CONFIG_DIRECTORY_NOT_FOUND;
-          }
-        }
-      }
       else if (shouldAskForConfig()) {
+        log.info("shouldAskForConfig: true");
         oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
         importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_REQUESTED_BY_PROPERTY;
       }
+      else if (bestConfigGuess != null && !isConfigOld(bestConfigGuess.second)) {
+        oldConfigDirAndOldIdePath = new Pair<>(bestConfigGuess.first, null);
+        log.info("choosing [" + bestConfigGuess.first + "] to import from");
+      }
+      else if (!canAskForConfig()) {
+        log.info("canAskForConfig: false");
+      }
       else if (bestConfigGuess == null) {
+        log.info("no configs found; veryFirstStartOnThisComputer: " + veryFirstStartOnThisComputer);
         if (!veryFirstStartOnThisComputer) {
           oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
           importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_NO_CONFIGS_FOUND;
         }
       }
       else if (isConfigOld(bestConfigGuess.second)) {
-        log.info("The best config guess [" + bestConfigGuess.first + "] is too old, it won't be used for importing.");
+        log.info("the best config guess [" + bestConfigGuess.first + "] is too old, it won't be used for importing.");
         oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
         importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_CONFIGS_ARE_TOO_OLD;
-      }
-      else {
-        oldConfigDirAndOldIdePath = new Pair<>(bestConfigGuess.first, null);
       }
 
       if (oldConfigDirAndOldIdePath != null) {
@@ -454,8 +451,6 @@ public final class ConfigImportHelper {
   }
 
   private static @Nullable Pair<Path, Path> showDialogAndGetOldConfigPath(List<Path> guessedOldConfigDirs) {
-    if (!canAskForConfig()) return null;
-
     //noinspection TestOnlyProblems
     LookAndFeelThemeAdapterKt.setEarlyUiLaF();
 
