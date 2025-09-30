@@ -31,10 +31,7 @@ import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
 import org.jetbrains.plugins.github.issue.GithubIssuesLoadingHelper;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -209,7 +206,7 @@ public final class GithubRepository extends BaseRepository {
 
         // Map GitHub's default labels to TaskType
         for (GithubIssueLabel label : labels) {
-          String name = label.getName();
+          String name = label.getName().toLowerCase(Locale.getDefault());
           switch (name) {
             case "bug":
               return TaskType.BUG;
