@@ -401,7 +401,7 @@ class EditorWindow internal constructor(
         owner.setCurrentWindow(window = this@EditorWindow)
       }
 
-      composite.coroutineScope.launch(Dispatchers.UI + ClientId.coroutineContext() + ModalityState.any().asContextElement()) {
+      composite.coroutineScope.launch(Dispatchers.EDT + ClientId.coroutineContext() + ModalityState.any().asContextElement()) {
         if (!isHeadless) {
           owner.setCurrentWindow(window = this@EditorWindow)
         }
