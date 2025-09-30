@@ -23,7 +23,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <plugin id="com.intellij.modules.python-core-capable"/>
   </dependencies>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.python.parser" loading="required"/>
     <module name="intellij.python.ast" loading="required"/>
     <module name="intellij.python.syntax.core" loading="required"/>
