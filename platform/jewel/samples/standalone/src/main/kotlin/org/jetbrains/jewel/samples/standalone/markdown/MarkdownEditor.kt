@@ -19,11 +19,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.jetbrains.JBRFileDialog
 import java.awt.Component
-import java.awt.FileDialog
 import java.awt.Frame
 import java.io.File
+import javax.swing.JFileChooser
+import javax.swing.filechooser.FileNameExtensionFilter
 import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation
@@ -52,7 +52,9 @@ private fun ControlsRow(onLoadMarkdown: (String) -> Unit, modifier: Modifier = M
         OutlinedButton(
             onClick = {
                 val file = pickMarkdownFile(component)
-                if (file != null) onLoadMarkdown(file.readText())
+                if (file != null) {
+                    onLoadMarkdown(file.readText())
+                }
             },
             modifier = Modifier.padding(start = 2.dp),
         ) {
@@ -94,19 +96,21 @@ private fun Editor(state: TextFieldState, modifier: Modifier = Modifier) {
 }
 
 private fun pickMarkdownFile(component: Component): File? {
-    val dialog =
-        FileDialog(component.frame, "Select a Markdown file", FileDialog.LOAD).apply {
-            isMultipleMode = false
-
-            JBRFileDialog.get(this).apply {
-                hints = hints or JBRFileDialog.SELECT_FILES_HINT
-                setFileFilterExtensions("Markdown Files", arrayOf("md"))
-            }
+    val fileChooser =
+        JFileChooser().apply {
+            @Suppress("HardCodedStringLiteral")
+            dialogTitle = "Select a Markdown file"
+            fileSelectionMode = JFileChooser.FILES_ONLY
+            isMultiSelectionEnabled = false
+            fileFilter = FileNameExtensionFilter("Markdown Files", "md")
+            isAcceptAllFileFilterUsed = false
         }
 
-    dialog.isVisible = true
-
-    return dialog.file?.let(::File)
+    return if (fileChooser.showOpenDialog(component) == JFileChooser.APPROVE_OPTION) {
+        fileChooser.selectedFile.takeIf { it.extension == "md" }
+    } else {
+        null
+    }
 }
 
 private val Component.frame: Frame
