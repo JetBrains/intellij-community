@@ -150,7 +150,6 @@ suspend fun adaptiveImageOriginToSource(origin: AdaptiveImageOrigin): AdaptiveIm
       }
 
     }
-    else -> throw IllegalArgumentException("Unsupported adaptive image origin '$origin'")
   }
 }
 
@@ -197,7 +196,7 @@ class CachingAdaptiveImageManager(
 
     val deferred = myImagesBeingLoaded.computeIfAbsent(src) {
       coroutineScope.async(contentLoadContext + CoroutineName("loading $src")) {
-        UnloadableAdaptiveImage(src, com.intellij.ui.svg.loadAdaptiveImage(contentLoader(src), src.toString()))
+        UnloadableAdaptiveImage(src, loadAdaptiveImage(contentLoader(src), src.toString()))
       }
     }
 
@@ -291,7 +290,7 @@ class CachingAdaptiveImageManager(
   private fun processRendererRefQueue() {
     val filesToClean = HashSet<VirtualFile>()
     while (true) {
-      val ref = (myRendererRefQueue.poll() as RendererRef?) ?: break
+      val ref = myRendererRefQueue.poll() as RendererRef? ?: break
       filesToClean.addAll(ref.dependencies)
     }
 
@@ -318,7 +317,7 @@ class CachingAdaptiveImageManager(
     }
   }
 
-  override fun getMemorySize() = myLoadedImagesCache.memorySize + myRasterizedImagesCache.memorySize
+  override fun getMemorySize(): Long = myLoadedImagesCache.memorySize + myRasterizedImagesCache.memorySize
 
   override fun createRenderer(rendererScope: CoroutineScope, eventListener: (AdaptiveImageRendererEvent) -> Unit): AdaptiveImageRenderer {
     processRendererRefQueue()
@@ -328,27 +327,31 @@ class CachingAdaptiveImageManager(
     return renderer
   }
 
-  override fun createRenderer(eventListener: (AdaptiveImageRendererEvent) -> Unit) =
+  override fun createRenderer(eventListener: (AdaptiveImageRendererEvent) -> Unit): AdaptiveImageRenderer =
     createRenderer(coroutineScope.childScope("AdaptiveImageRenderer", Dispatchers.EDT), eventListener)
 
 
   @TestOnly
-  fun getImagesBeingLoadedCount() = myImagesBeingLoaded.size
+  fun getImagesBeingLoadedCount(): Int = myImagesBeingLoaded.size
 
   @TestOnly
-  fun getImagesBeingRasterizedCount() = myImagesBeingRasterized.size
+  fun getImagesBeingRasterizedCount(): Int = myImagesBeingRasterized.size
 
   @TestOnly
-  fun testProcessVfsEvents(events: MutableList<out VFileEvent>) = processVfsEvents(events)
+  fun testProcessVfsEvents(events: MutableList<out VFileEvent>) {
+    processVfsEvents(events)
+  }
 
   @TestOnly
-  fun conditionalUnloadImages(predicate: (UnloadableAdaptiveImage) -> Boolean) = myLoadedImagesCache.conditionalUnload(predicate)
+  fun conditionalUnloadImages(predicate: (UnloadableAdaptiveImage) -> Boolean) {
+    myLoadedImagesCache.conditionalUnload(predicate)
+  }
 
   @TestOnly
-  fun getCachedLoadedImages() = myLoadedImagesCache.values
+  fun getCachedLoadedImages(): List<UnloadableAdaptiveImage> = myLoadedImagesCache.values
 
   @TestOnly
-  fun getCachedRasterizedImages() = myRasterizedImagesCache.values
+  fun getCachedRasterizedImages(): List<UnloadableRasterizedImage> = myRasterizedImagesCache.values
 
   @TestOnly
   fun getVirtualFileToRenderersMappingCount(): Int {

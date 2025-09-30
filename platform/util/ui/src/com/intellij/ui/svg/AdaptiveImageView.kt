@@ -348,7 +348,7 @@ internal class FitToWidthAdaptiveImageView(element: Element) : AdaptiveImageView
       while (v != null) {
         val parent = v.parent
         if (parent is FlowView) {
-          val childCount = parent.getViewCount()
+          val childCount = parent.viewCount
           for (i in 0 until childCount) {
             if (parent.getView(i) === v) {
               return parent.getFlowSpan(i)

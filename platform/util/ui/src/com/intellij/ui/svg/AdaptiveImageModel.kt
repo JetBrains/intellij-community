@@ -74,7 +74,7 @@ interface AdaptiveImageSource
 
 @ApiStatus.Internal
 data class DataUrlAdaptiveImageSource(val dataUrl: DataUrl) : AdaptiveImageSource {
-  override fun toString() = "DataUrlAdaptiveImageSource(${dataUrl.toString(includeClassName = false, stripContent = true)})"
+  override fun toString(): String = "DataUrlAdaptiveImageSource(${dataUrl.toString(includeClassName = false, stripContent = true)})"
 }
 
 @ApiStatus.Internal
@@ -168,7 +168,7 @@ class UnloadableCache<S, V : MemorySizeAware, T : Unloadable<S, V>> : Unloadable
     ref: T,
     refQueue: ReferenceQueue<T>
   ) : WeakReference<T>(ref, refQueue) {
-    var mySize = ref.value?.memorySize ?: 0
+    var mySize: Long = ref.value?.memorySize ?: 0
   }
 
   private val myMap = LinkedHashMap<S, MyReference<S, V, T>>(16, 0.75f, true)
@@ -176,11 +176,11 @@ class UnloadableCache<S, V : MemorySizeAware, T : Unloadable<S, V>> : Unloadable
   private var myMemorySize: Long = 0
 
   val values: List<T>
-    get() = myMap.values.map { it.get() }.filterNotNull().toList()
+    get() = myMap.values.mapNotNull { it.get() }.toList()
 
   private fun processRefQueue() {
     while (true) {
-      val ref = (myRefQueue.poll() as MyReference<S, V, T>?) ?: break
+      val ref = myRefQueue.poll() as MyReference<*, *, *>? ?: break
       myMemorySize -= ref.mySize
       myMap.remove(ref.key)
     }
@@ -229,7 +229,7 @@ class UnloadableCache<S, V : MemorySizeAware, T : Unloadable<S, V>> : Unloadable
     myMap[u.src] = ref
   }
 
-  override fun getMemorySize() = myMemorySize
+  override fun getMemorySize(): Long = myMemorySize
 
   @TestOnly
   fun conditionalUnload(predicate: (T) -> Boolean) {
