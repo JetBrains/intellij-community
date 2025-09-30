@@ -66,6 +66,8 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getLineNumber(text: String): Int = document.getLineNumber(this.text.indexOf(text)) + 1
 
+  fun getLastLineNumber(text: String): Int = document.getLineNumber(this.text.lastIndexOf(text)) + 1
+
   fun expandAllFoldings() {
     driver.invokeAction("ExpandAllRegions", component = component)
   }

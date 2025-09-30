@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
@@ -123,6 +124,10 @@ interface TerminalView {
    * Creates the builder with additional options for sending text to the shell process.
    */
   fun createSendTextBuilder(): TerminalSendTextBuilder
+
+  // todo
+
+  fun getActiveOutputModel(): TerminalOutputModel
 
   companion object {
     /**
