@@ -88,7 +88,7 @@ abstract class InlayDataExternalizer(
 ) : DataExternalizer<InlayData> {
   companion object {
     // increment on format changed
-    private const val SERDE_VERSION = 9
+    private const val SERDE_VERSION = 10
   }
 
   open fun serdeVersion(): Int = SERDE_VERSION + treeExternalizer.serdeVersion()
@@ -215,7 +215,9 @@ abstract class InlayDataExternalizer(
       val payloads = ArrayList<InlayPayload>(payloadCount)
       repeat(payloadCount) {
         val inlayPayload = readInlayPayload(input)
-        payloads.add(inlayPayload)
+        if (inlayPayload != null) {
+          payloads.add(inlayPayload)
+        }
       }
       return payloads
     }
@@ -225,12 +227,17 @@ abstract class InlayDataExternalizer(
   }
 
   private fun writeInlayPayload(output: DataOutput, payload: InlayPayload) {
-    writeUTF(output, payload.payloadName)
-    treeExternalizer.writeInlayActionPayload(output, payload.payload)
+    if (payload.payload is NonPersistableInlayActionPayload) {
+      writeNullableString(output, null)
+    }
+    else {
+      writeNullableString(output, payload.payloadName)
+      treeExternalizer.writeInlayActionPayload(output, payload.payload)
+    }
   }
 
-  private fun readInlayPayload(input: DataInput): InlayPayload {
-    val payloadName = readUTF(input)
+  private fun readInlayPayload(input: DataInput): InlayPayload? {
+    val payloadName = readNullableString(input) ?: return null
     val inlayActionPayload = treeExternalizer.readInlayActionPayload(input)
     return InlayPayload(payloadName, inlayActionPayload)
   }

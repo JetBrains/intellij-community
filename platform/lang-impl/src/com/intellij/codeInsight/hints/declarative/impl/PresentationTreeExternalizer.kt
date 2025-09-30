@@ -3,7 +3,6 @@ package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.DataInputOutputUtil.readINT
 import com.intellij.util.io.DataInputOutputUtil.writeINT
 import com.intellij.util.io.IOUtil.readUTF
@@ -17,7 +16,7 @@ abstract class PresentationTreeExternalizer : TinyTree.Externalizer<Any?>() {
 
   companion object {
     // increment on format changed
-    private const val SERDE_VERSION = 1
+    private const val SERDE_VERSION = 2
   }
 
   override fun serdeVersion(): Int = SERDE_VERSION + super.serdeVersion()
@@ -50,7 +49,8 @@ abstract class PresentationTreeExternalizer : TinyTree.Externalizer<Any?>() {
       }
       1 -> {
         val content = decorateContent(readUTF(input))
-        return ActionWithContent(readInlayActionData(input), content)
+        val inlayActionData = readInlayActionData(input) ?: return content
+        return ActionWithContent(inlayActionData, content)
       }
       2 -> {
         return readInlayActionData(input)
@@ -59,30 +59,18 @@ abstract class PresentationTreeExternalizer : TinyTree.Externalizer<Any?>() {
     }
   }
 
-  private fun writeNullableString(output: DataOutput, value: String?) {
-    if (value == null) {
-      output.writeBoolean(false)
-    } else {
-      output.writeBoolean(true)
-      writeUTF(output, value)
-    }
-  }
-
-  private fun readNullableString(input: DataInput): String? {
-    return if (input.readBoolean()) {
-      readUTF(input)
-    } else {
-      null
-    }
-  }
-
   open fun writeInlayActionData(output: DataOutput, inlayActionData: InlayActionData) {
-    writeUTF(output, inlayActionData.handlerId)
-    writeInlayActionPayload(output, inlayActionData.payload)
+    if (inlayActionData.payload is NonPersistableInlayActionPayload) {
+      writeNullableString(output, null)
+    }
+    else {
+      writeNullableString(output, inlayActionData.handlerId)
+      writeInlayActionPayload(output, inlayActionData.payload)
+    }
   }
 
-  open fun readInlayActionData(input: DataInput): InlayActionData {
-    val handlerId = readUTF(input)
+  open fun readInlayActionData(input: DataInput): InlayActionData? {
+    val handlerId = readNullableString(input) ?: return null
     val payload = readInlayActionPayload(input)
     return InlayActionData(payload, handlerId)
   }
@@ -92,4 +80,21 @@ abstract class PresentationTreeExternalizer : TinyTree.Externalizer<Any?>() {
   abstract fun readInlayActionPayload(input: DataInput): InlayActionPayload
 
   protected open fun decorateContent(content: String): String = content
+}
+
+internal fun writeNullableString(output: DataOutput, value: String?) {
+  if (value == null) {
+    output.writeBoolean(false)
+  } else {
+    output.writeBoolean(true)
+    writeUTF(output, value)
+  }
+}
+
+internal fun readNullableString(input: DataInput): String? {
+  return if (input.readBoolean()) {
+    readUTF(input)
+  } else {
+    null
+  }
 }
