@@ -1,15 +1,18 @@
 package com.intellij.cce.callGraphs
 
-import com.google.gson.Gson
 import com.intellij.cce.kotlin.callGraphs.KotlinCallGraphBuilder
 import com.intellij.testFramework.PlatformTestUtil.getCommunityPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.io.File
 
-class KotlinCallGraphBuilderTest : BasePlatformTestCase(), ExpectedPluginModeProvider {
+@RunWith(Parameterized::class)
+class KotlinCallGraphBuilderTest(private val scenario: String) : BasePlatformTestCase(), ExpectedPluginModeProvider {
 
   override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
 
@@ -17,9 +20,15 @@ class KotlinCallGraphBuilderTest : BasePlatformTestCase(), ExpectedPluginModePro
     setUpWithKotlinPlugin { super.setUp() }
   }
 
-  private data class ExpectedRaw(val nodes: List<String> = emptyList(), val edges: List<List<String>> = emptyList())
-
   companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun data(): Collection<Array<String>> {
+      val base = File(getStaticTestDataPath(), "callGraphs")
+      val scenarios = base.listFiles { f -> f.isDirectory }?.map { it.name } ?: emptyList()
+      return scenarios.sorted().map { arrayOf(it) }
+    }
+
     fun getStaticTestDataPath(): String {
       return getCommunityPath().replace(File.separatorChar, '/') + "/plugins/evaluation-plugin/languages/kotlin/testData"
     }
@@ -27,42 +36,89 @@ class KotlinCallGraphBuilderTest : BasePlatformTestCase(), ExpectedPluginModePro
 
   override fun getTestDataPath(): String = getStaticTestDataPath()
 
-  private fun scenarioDir(): File = File(getStaticTestDataPath(), "callGraphs/mutual_calls")
+  private fun scenarioDir(): File = File(getTestDataPath(), "callGraphs/$scenario")
 
   private fun expectedCallGraph(): CallGraph {
     val text = File(scenarioDir(), "expected.json").readText()
-    val raw = Gson().fromJson(text, ExpectedRaw::class.java)
-    val nodes = raw.nodes.map { id ->
-      CallGraphNode(
-        address = CallGraphNodeLocation(projectRootFilePath = "", textRange = 0..0),
-        projectName = "",
-        id = id,
-        qualifiedName = id
-      )
-    }
-    val edges = raw.edges.map { pair -> CallGraphEdge(callerId = pair[0], calleeId = pair[1]) }
-    return CallGraph(nodes, edges)
+    return CallGraph.deserialise(text)
   }
 
   private fun copyScenarioSources() {
     val srcDir = File(scenarioDir(), "src")
     if (srcDir.exists()) {
-      myFixture.copyDirectoryToProject("callGraphs/mutual_calls/src", "")
+      myFixture.copyDirectoryToProject("callGraphs/$scenario/src", "")
     }
   }
 
-  fun testKotlinCallGraphSimpleMutualCalls() {
+  private fun buildActualGraph(): CallGraph = KotlinCallGraphBuilder().build(myFixture.project, listOf("."))
+
+  private fun buildExpectedToActualIdMapByLocation(expected: CallGraph, actual: CallGraph): Map<String, String> {
+    val actualByAddr: Map<CallGraphNodeLocation, CallGraphNode> = actual.nodes.associateBy { it.address }
+    val mapping = mutableMapOf<String, String>()
+    val usedActualIds = mutableSetOf<String>()
+
+    for (en in expected.nodes) {
+      val actualNode = actualByAddr[en.address]
+      assertNotNull(
+        "No actual node found by address for expected node '${en.qualifiedName}' in scenario '$scenario'. Address: ${en.address}",
+        actualNode
+      )
+      val actualId = actualNode!!.id
+      assertTrue(
+        "Address mapping is not a bijection: multiple expected nodes map to the same actual node id '$actualId' in scenario '$scenario'",
+        usedActualIds.add(actualId)
+      )
+      mapping[en.id] = actualId
+    }
+
+    assertEquals(
+      "Address mapping is not a bijection by size in scenario '$scenario'",
+      expected.nodes.size,
+      mapping.size
+    )
+
+    return mapping
+  }
+
+  private fun remapExpectedToActual(expected: CallGraph, actual: CallGraph, idMap: Map<String, String>): CallGraph {
+    val actualByAddr: Map<CallGraphNodeLocation, CallGraphNode> = actual.nodes.associateBy { it.address }
+
+    val remappedNodes = expected.nodes.map { en ->
+      val actualNode = actualByAddr.getValue(en.address)
+      actualNode.copy(id = idMap.getValue(en.id))
+    }
+
+    val remappedEdges = expected.edges.map { e ->
+      CallGraphEdge(
+        callerId = idMap.getValue(e.callerId),
+        calleeId = idMap.getValue(e.calleeId)
+      )
+    }
+
+    return CallGraph(remappedNodes, remappedEdges)
+  }
+
+  private fun assertGraphsEqualAsDataClasses(expectedRemapped: CallGraph, actual: CallGraph) {
+    assertEquals(
+      "Mismatch in nodes for scenario '$scenario'",
+      actual.nodes.toSet(),
+      expectedRemapped.nodes.toSet()
+    )
+    assertEquals(
+      "Mismatch in edges for scenario '$scenario'",
+      actual.edges.toSet(),
+      expectedRemapped.edges.toSet()
+    )
+  }
+
+  @Test
+  fun testCallGraphAgainstExpected() {
     copyScenarioSources()
     val expected = expectedCallGraph()
+    val actual = buildActualGraph()
 
-    val callGraph = KotlinCallGraphBuilder().build(myFixture.project, listOf("."))
-
-    val actualNodeIds = callGraph.nodes.map { it.id }.toSet()
-    val expectedNodeIds = expected.nodes.map { it.id }.toSet()
-    assertEquals("Mismatch in node IDs for scenario 'mutual_calls'", expectedNodeIds, actualNodeIds)
-
-    val actualEdges = callGraph.edges.map { it.callerId to it.calleeId }.toSet()
-    val expectedEdges = expected.edges.map { it.callerId to it.calleeId }.toSet()
-    assertEquals("Mismatch in edges for scenario 'mutual_calls'", expectedEdges, actualEdges)
+    val expectedToActualId = buildExpectedToActualIdMapByLocation(expected, actual)
+    val expectedRemapped = remapExpectedToActual(expected, actual, expectedToActualId)
+    assertGraphsEqualAsDataClasses(expectedRemapped, actual)
   }
 }
