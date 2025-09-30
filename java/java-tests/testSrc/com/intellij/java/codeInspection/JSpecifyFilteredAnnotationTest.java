@@ -74,8 +74,6 @@ public class JSpecifyFilteredAnnotationTest extends JSpecifyAnnotationTest {
 
         new Pair<>("WildcardCapturesToBoundOfTypeParameterNotToTypeVariableItself.java", 24), // see: IDEA-377699
 
-        new Pair<>("UnionTypeArgumentWithUseSite.java", 30), // see: IDEA-377706
-
         new Pair<>("SelfType.java", 34),  // see: IDEA-377707
         new Pair<>("SelfType.java", 43),  // see: IDEA-377707
         new Pair<>("OutOfBoundsTypeVariable.java", 21)  // see: IDEA-377707
@@ -130,7 +128,6 @@ public class JSpecifyFilteredAnnotationTest extends JSpecifyAnnotationTest {
         new Pair<>("TypeVariableUnspecToParent.java", 68), // @unspecified, skip
         new Pair<>("TypeVariableUnspecToParent.java", 83), // @unspecified, skip
         new Pair<>("TypeVariableUnspecToParent.java", 98), // @unspecified, skip
-        new Pair<>("UnionTypeArgumentWithUseSite.java", 77), // @unspecified, skip
         new Pair<>("UnionTypeArgumentWithUseSite.java", 95) // @unspecified, skip
       )
     ) {

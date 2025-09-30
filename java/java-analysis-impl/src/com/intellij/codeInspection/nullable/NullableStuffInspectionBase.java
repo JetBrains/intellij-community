@@ -1008,9 +1008,18 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   private @Nullable PsiParameter findNullableSuperForNotNullParameter(PsiParameter parameter, List<? extends PsiParameter> superParameters) {
-    return REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE && isNotNullNotInferred(parameter, false, false)
-           ? ContainerUtil.find(superParameters, sp -> isNullableNotInferred(sp, false))
-           : null;
+    if (!REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE || !isNotNullNotInferred(parameter, false, false)) return null;
+    PsiClass derived = PsiUtil.getContainingClass(parameter);
+    for (PsiParameter superParameter : superParameters) {
+      PsiClass base = PsiUtil.getContainingClass(superParameter);
+      PsiSubstitutor substitutor = base == null || derived == null ? PsiSubstitutor.EMPTY : 
+                                   TypeConversionUtil.getSuperClassSubstitutor(base, derived, PsiSubstitutor.EMPTY);
+      PsiType superType = substitutor.substitute(superParameter.getType());
+      if (DfaPsiUtil.getElementNullabilityIgnoringParameterInference(superType, superParameter) == Nullability.NULLABLE) {
+        return superParameter;
+      }
+    }
+    return null;
   }
 
   private boolean isNotNullParameterOverridingNonAnnotated(NullableNotNullManager nullableManager,
