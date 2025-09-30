@@ -1,2 +1,2 @@
-// "Change 'clas' to 'class'" "true-preview"
+// "Fix the typo 'clas' to 'class'" "true-preview"
 private class

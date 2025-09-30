@@ -1,4 +1,4 @@
-// "Change 'True' to 'true'" "false"
+// "Fix the typo 'True' to 'true'" "false"
 public class Test {
   public static void main(String[] args) {
     call(True<caret>);

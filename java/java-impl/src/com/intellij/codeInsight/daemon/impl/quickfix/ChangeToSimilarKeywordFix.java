@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -31,7 +32,8 @@ public class ChangeToSimilarKeywordFix extends PsiUpdateModCommandAction<PsiElem
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
     return Presentation.of(QuickFixBundle.message("change.to.similar.keyword.fix.name",
-                                                  tryExtendKeyword(element).first, myKeyword));
+                                                  tryExtendKeyword(element).first, myKeyword))
+      .withPriority(PriorityAction.Priority.HIGH);
   }
 
   @Override

@@ -1,2 +1,2 @@
-// "Change 'inteerface' to 'interface'" "true-preview"
+// "Fix the typo 'inteerface' to 'interface'" "true-preview"
 public inteerface<caret>

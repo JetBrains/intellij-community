@@ -1,4 +1,4 @@
-// "Change 'extend' to 'extends'" "false"
+// "Fix the typo 'extend' to 'extends'" "false"
 enum A extend<caret> Exception{
 
 }

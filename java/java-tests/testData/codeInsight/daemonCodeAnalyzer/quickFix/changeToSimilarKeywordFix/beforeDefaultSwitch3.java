@@ -1,4 +1,4 @@
-// "Change 'defaul' to 'default'" "true-preview"
+// "Fix the typo 'defaul' to 'default'" "true-preview"
 public class Test {
   public static void test(List<String> list) {
     switch (1) {

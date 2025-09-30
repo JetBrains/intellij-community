@@ -167,7 +167,59 @@ public final class HighlightFixTypoUtil {
     action = createCatchFinallyTypoFix(ref);
     if (action != null) return action;
     action = createSwitchDefaultTypoFix(ref);
+    if (action != null) return action;
+    action = createReturnTypoFix(ref);
+    if (action != null) return action;
+    action = createNewTypoFix(ref);
     return action;
+  }
+
+  @Nullable
+  private static CommonIntentionAction createNewTypoFix(@NotNull PsiJavaCodeReferenceElement ref) {
+    if (!(ref instanceof PsiReferenceExpression)) return null;
+    if (!(ref.getNextSibling() instanceof PsiErrorElement)) return null;
+    PsiElement nextVisibleLeaf = PsiTreeUtil.nextVisibleLeaf(ref);
+    if (!(nextVisibleLeaf instanceof PsiIdentifier identifier &&
+          identifier.getParent() instanceof PsiReferenceExpression referenceExpression &&
+          referenceExpression.getParent() instanceof PsiMethodCallExpression)) {
+      return null;
+    }
+    return QuickFixFactory.getInstance().createChangeToSimilarKeyword(ref, Collections.singleton(JavaKeywords.NEW));
+  }
+
+  @Nullable
+  private static CommonIntentionAction createReturnTypoFix(@NotNull PsiJavaCodeReferenceElement ref) {
+    boolean possiblePlace = false;
+    if (PsiTreeUtil.getParentOfType(ref, PsiStatement.class) instanceof PsiStatement statement &&
+        statement.getParent() instanceof PsiIfStatement) {
+      possiblePlace = true;
+    }
+
+    if (!possiblePlace) {
+      PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(ref, PsiCodeBlock.class);
+      if (codeBlock == null) return null;
+      PsiStatement[] statements = codeBlock.getStatements();
+      if (statements.length == 0) return null;
+      if (PsiTreeUtil.isAncestor(statements[statements.length - 1], ref, false)) {
+        possiblePlace = true;
+      }
+      if (statements.length > 1 &&
+          PsiTreeUtil.isAncestor(statements[statements.length - 2], ref, false) &&
+          PsiTreeUtil.hasErrorElements(statements[statements.length - 2])) {
+        possiblePlace = true;
+      }
+    }
+    if (!possiblePlace) return null;
+    if (ref instanceof PsiReferenceExpression referenceExpression &&
+        referenceExpression.getParent() instanceof PsiExpressionStatement &&
+        ref.getNextSibling() instanceof PsiErrorElement errorElement &&
+        errorElement.getErrorDescription().equals(JavaSyntaxBundle.message("expected.semicolon"))) {
+      return QuickFixFactory.getInstance().createChangeToSimilarKeyword(ref, Collections.singleton(JavaKeywords.RETURN));
+    }
+    if (ref.getParent() instanceof PsiTypeElement) {
+      return QuickFixFactory.getInstance().createChangeToSimilarKeyword(ref, Collections.singleton(JavaKeywords.RETURN));
+    }
+    return null;
   }
 
   @Nullable

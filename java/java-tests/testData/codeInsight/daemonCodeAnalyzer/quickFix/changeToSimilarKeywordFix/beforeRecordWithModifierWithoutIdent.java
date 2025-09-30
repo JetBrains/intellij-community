@@ -1,2 +1,2 @@
-// "Change 'recort' to 'record'" "true-preview"
+// "Fix the typo 'recort' to 'record'" "true-preview"
 public recort<caret>

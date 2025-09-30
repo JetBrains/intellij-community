@@ -1,4 +1,4 @@
-// "Change 'extend' to 'extends'" "true-preview"
+// "Fix the typo 'extend' to 'extends'" "true-preview"
 interface A extends Exception{
 
 }

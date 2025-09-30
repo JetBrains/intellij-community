@@ -1,4 +1,4 @@
-// "Change 'clss' to 'class'" "true-preview"
+// "Fix the typo 'clss' to 'class'" "true-preview"
 clss<caret> Test {
 
 }
