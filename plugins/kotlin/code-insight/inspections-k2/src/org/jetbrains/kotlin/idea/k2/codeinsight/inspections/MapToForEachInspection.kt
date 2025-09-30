@@ -18,18 +18,16 @@ import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.k2.refactoring.util.isUnitLiteral
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 
 private const val FOR_EACH_FUNCTION_NAME: String = "forEach"
-private const val MAP_FUNCTION_NAME: String = "map"
-private val MAP_FQ_NAME: FqName = FqName("kotlin.collections.map")
 
 internal class MapToForEachInspection : KotlinApplicableInspectionBase.Simple<KtCallExpression, MapToForEachInspection.Context>() {
 
@@ -54,8 +52,9 @@ internal class MapToForEachInspection : KotlinApplicableInspectionBase.Simple<Kt
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean {
         val calleeText = element.calleeExpression?.text ?: return false
-        if (calleeText != MAP_FUNCTION_NAME && element.containingKtFile.importDirectives.none {
-                it.importedFqName == MAP_FQ_NAME && calleeText == it.aliasName
+        val mapFqName = StandardKotlinNames.Collections.map
+        if (calleeText != mapFqName.shortName().asString() && element.containingKtFile.importDirectives.none {
+                it.importedFqName == mapFqName && calleeText == it.aliasName
             }) return false
 
         val statementCandidate = element.getQualifiedExpressionForSelectorOrThis()
@@ -72,7 +71,7 @@ internal class MapToForEachInspection : KotlinApplicableInspectionBase.Simple<Kt
         val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val functionSymbol = resolvedCall.symbol
 
-        if (functionSymbol.importableFqName != MAP_FQ_NAME) return null
+        if (functionSymbol.importableFqName != StandardKotlinNames.Collections.map) return null
         if (functionSymbol.typeParameters.size != 2) return null
         if (resolvedCall.typeArgumentsMapping.size != 2) return null
 

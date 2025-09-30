@@ -16,17 +16,14 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-
-private const val MAP_INDEXED_FUNCTION_NAME = "mapIndexed"
-private val MAP_INDEXED_FQ_NAME = FqName("kotlin.collections.mapIndexed")
 
 internal class ReplaceMapIndexedWithListGeneratorInspection :
     KotlinApplicableInspectionBase.Simple<KtCallExpression, ReplaceMapIndexedWithListGeneratorInspection.Context>() {
@@ -48,8 +45,9 @@ internal class ReplaceMapIndexedWithListGeneratorInspection :
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean {
         val calleeText = element.calleeExpression?.text ?: return false
-        if (calleeText != MAP_INDEXED_FUNCTION_NAME && element.containingKtFile.importDirectives.none {
-                it.importedFqName == MAP_INDEXED_FQ_NAME && calleeText == it.aliasName
+        val mapIndexedFqName = StandardKotlinNames.Collections.mapIndexed
+        if (calleeText != mapIndexedFqName.shortName().asString() && element.containingKtFile.importDirectives.none {
+                it.importedFqName == mapIndexedFqName && calleeText == it.aliasName
             }) return false
         val valueArgument = element.valueArguments.singleOrNull() ?: element.lambdaArguments.singleOrNull() ?: return false
         val valueParameters = when (val argumentExpression = valueArgument.getLambdaOrNamedFunction()) {
@@ -66,7 +64,7 @@ internal class ReplaceMapIndexedWithListGeneratorInspection :
     override fun KaSession.prepareContext(element: KtCallExpression): Context? {
         val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val symbol = resolvedCall.symbol as? KaNamedFunctionSymbol ?: return null
-        if (symbol.importableFqName != MAP_INDEXED_FQ_NAME) return null
+        if (symbol.importableFqName != StandardKotlinNames.Collections.mapIndexed) return null
         val partiallyAppliedSymbol = resolvedCall.partiallyAppliedSymbol
         val receiver = partiallyAppliedSymbol.dispatchReceiver ?: partiallyAppliedSymbol.extensionReceiver ?: return null
 
