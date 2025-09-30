@@ -22,6 +22,7 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.actions.TerminalActionUtil
 import com.intellij.terminal.frontend.*
 import com.intellij.terminal.frontend.completion.ShellDataGeneratorsExecutorReworkedImpl
@@ -110,6 +111,7 @@ class TerminalViewImpl(
     get() = terminalPanel.preferredFocusableComponent
   override val size: TermSize?
     get() = getCurEditor().calculateTerminalSize()
+  override val title: TerminalTitle = TerminalTitle()
 
   init {
     val hyperlinkScope = coroutineScope.childScope("TerminalViewImpl hyperlink facades")

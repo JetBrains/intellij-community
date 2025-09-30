@@ -14,7 +14,6 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.frontend.TerminalTabBuilder
 import com.intellij.terminal.frontend.TerminalView
 import com.intellij.terminal.frontend.impl.TerminalViewImpl
@@ -137,12 +136,10 @@ internal class TerminalToolWindowTabsManagerImpl(
   }
 
   private fun doCreateTab(builder: TerminalTabBuilderImpl): TerminalToolWindowTab {
-    val title = TerminalTitle()
-    val tabName = builder.tabName ?: createDefaultTabName(getToolWindow())
-    title.change { defaultTitle = tabName }
-
     val terminal = createTerminalView()
-    createBackendTabAndStartSession(terminal, title, builder)
+    val tabName = builder.tabName ?: createDefaultTabName(getToolWindow())
+    terminal.title.change { defaultTitle = tabName }
+    createBackendTabAndStartSession(terminal, builder)
 
     val panel = TerminalToolWindowPanel()
     panel.setContent(terminal.component)
@@ -150,7 +147,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     content.setPreferredFocusedComponent { terminal.preferredFocusableComponent }
 
     val tabScope = coroutineScope.childScope("TerminalToolWindowTab")
-    updateTabNameOnTitleChange(title, content, tabScope.childScope("Tab name updating"))
+    updateTabNameOnTitleChange(terminal.title, content, tabScope.childScope("Tab name updating"))
     // todo: install TerminalTabCloseListener
 
     // Terminate the session if the tab was closed.
@@ -172,7 +169,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       }
     }
 
-    return TerminalToolWindowTabImpl(terminal, title, content)
+    return TerminalToolWindowTabImpl(terminal, content)
   }
 
   private fun createTerminalView(): TerminalViewImpl {
@@ -183,7 +180,6 @@ internal class TerminalToolWindowTabsManagerImpl(
   @OptIn(AwaitCancellationAndInvoke::class)
   private fun createBackendTabAndStartSession(
     terminal: TerminalViewImpl,
-    title: TerminalTitle,
     builder: TerminalTabBuilderImpl,
   ) = terminal.coroutineScope.launch(Dispatchers.IO) {
     val backendTabId = builder.backendTabId
@@ -203,7 +199,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     // Ideally, the backend tab should be under the tab scope, but now it has the lifecycle of the terminal scope
     updateBackendTabNameOnTitleChange(
-      title,
+      terminal.title,
       backendTabId,
       project,
       scope = terminal.coroutineScope.childScope("Backend tab name updating")

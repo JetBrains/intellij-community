@@ -31,7 +31,7 @@ internal class TerminalViewFileEditor(
       }
     }
 
-    file.terminalTitle.addTitleListener(object : TerminalTitleListener {
+    terminalView.title.addTitleListener(object : TerminalTitleListener {
       override fun onTitleChanged(terminalTitle: TerminalTitle) {
         file.rename(null, terminalTitle.buildTitle())
         FileEditorManager.getInstance(project).updateFilePresentation(file)

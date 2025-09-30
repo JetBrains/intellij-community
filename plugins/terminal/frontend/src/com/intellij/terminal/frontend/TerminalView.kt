@@ -1,6 +1,7 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.openapi.Disposable
+import com.intellij.terminal.TerminalTitle
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -16,6 +17,8 @@ interface TerminalView {
   val preferredFocusableComponent: JComponent
 
   val size: TermSize?
+
+  val title: TerminalTitle
 
   fun addTerminationCallback(parentDisposable: Disposable, callback: () -> Unit)
 
