@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.util.coroutines.childScope
@@ -121,7 +122,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private var myAlternativeSourceHandler: XAlternativeSourceHandler? = null
   private var myIsTopFrame = false
 
-  private val myTopStackFrame = MutableStateFlow<XStackFrame?>(null)
   private val myPaused = MutableStateFlow(false)
   private var myValueMarkers: XValueMarkers<*, *>? = null
   private val mySessionName: @Nls String = sessionName
@@ -153,7 +153,12 @@ class XDebugSessionImpl @JvmOverloads constructor(
   val extraActions: MutableList<AnAction> = SmartList<AnAction>()
   private var myConsoleView: ConsoleView? = null
   private val myIcon: Icon? = icon
-  private val myCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager()
+
+  @Volatile
+  private var currentStackFrame: XStackFrame? = null
+
+  // Ref is used to prevent StateFlow's equals checks
+  private val topStackFrame = MutableStateFlow<Ref<XStackFrame>?>(null)
 
   @get:ApiStatus.Internal
   val fileColorsComputer: FileColorsComputer = FileColorsComputer(project, coroutineScope)
@@ -168,7 +173,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private var myUserRequestAction: String? = null
 
   private val myActiveNonLineBreakpointFlow = myActiveNonLineBreakpointAndPositionFlow
-    .combine(myTopStackFrame) { breakpointAndPosition, _ ->
+    .combine(topStackFrame) { breakpointAndPosition, _ ->
       val (breakpoint, breakpointPosition) = breakpointAndPosition ?: return@combine null
       if (breakpointPosition == null) return@combine breakpoint
       val position = topFramePosition ?: return@combine null
@@ -317,7 +322,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   override fun getCurrentStackFrame(): XStackFrame? {
-    return myCurrentStackFrameManager.getCurrentStackFrame()
+    return currentStackFrame
   }
 
   override fun getSuspendContext(): XSuspendContext? {
@@ -329,7 +334,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   override fun getTopFramePosition(): XSourcePosition? {
-    return getFrameSourcePosition(myTopStackFrame.value)
+    return getFrameSourcePosition(topStackFrame.value?.get())
   }
 
   fun getFrameSourcePosition(frame: XStackFrame?): XSourcePosition? {
@@ -770,8 +775,8 @@ class XDebugSessionImpl @JvmOverloads constructor(
     currentSuspendCoroutineScope = null
     suspendContextFlow.value = null
     this.currentExecutionStack = null
-    myCurrentStackFrameManager.setCurrentStackFrame(null)
-    myTopStackFrame.value = null
+    currentStackFrame = null
+    topStackFrame.value = null
     clearActiveNonLineBreakpoint()
     updateExecutionPosition()
   }
@@ -813,7 +818,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
     val frameChanged = currentStackFrame !== frame
     this.currentExecutionStack = executionStack
-    myCurrentStackFrameManager.setCurrentStackFrame(frame)
+    currentStackFrame = frame
     myIsTopFrame = isTopFrame
 
     if (frameChanged) {
@@ -1061,9 +1066,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
     this.currentSuspendCoroutineScope = newSuspendContext.coroutineScope ?: provideSuspendScope(this)
     this.currentExecutionStack = newSuspendContext.activeExecutionStack
     val newCurrentStackFrame = currentExecutionStack?.topFrame
-    myCurrentStackFrameManager.setCurrentStackFrame(newCurrentStackFrame)
+    currentStackFrame = newCurrentStackFrame
     myIsTopFrame = true
-    myTopStackFrame.value = newCurrentStackFrame
+    topStackFrame.value = Ref(newCurrentStackFrame)
 
     val isSteppingSuspendContext = newSuspendContext is XSteppingSuspendContext
 
