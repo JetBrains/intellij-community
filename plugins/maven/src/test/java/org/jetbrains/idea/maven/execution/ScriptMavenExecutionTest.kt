@@ -134,6 +134,50 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
   }
 
   @Test
+  fun testShouldUseExistingEncodingIfDefinedInMavenOpts() = runBlocking {
+    importProjectAsync("""
+         <groupId>test</groupId>
+         <artifactId>project</artifactId>
+         <version>1</version>
+         """
+    )
+    createFakeProjectWrapper()
+    mavenGeneralSettings.mavenHomeType = MavenWrapper
+    val executionInfo = execute(params = MavenRunnerParameters(
+      true, projectPath.toCanonicalPath(),
+      null as String?,
+      mutableListOf("verify"), emptyList()),
+                                settings = MavenRunnerSettings().also {
+                                  it.environmentProperties = mapOf("MAVEN_OPTS" to "-Dfile.encoding=CP866")
+                                })
+    assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
+    assertTrue("Should pass env variables in run configuration  but stdout: ${executionInfo.stdout}", executionInfo.stdout.contains("MAVEN_OPTS=-Dfile.encoding=CP866"))
+
+  }
+
+  @Test
+  fun testShouldUseExistingEncodingIfDefinedInJavaToolsOptions() = runBlocking {
+    importProjectAsync("""
+         <groupId>test</groupId>
+         <artifactId>project</artifactId>
+         <version>1</version>
+         """
+    )
+    createFakeProjectWrapper()
+    mavenGeneralSettings.mavenHomeType = MavenWrapper
+    val executionInfo = execute(params = MavenRunnerParameters(
+      true, projectPath.toCanonicalPath(),
+      null as String?,
+      mutableListOf("verify"), emptyList()),
+                                settings = MavenRunnerSettings().also {
+                                  it.environmentProperties = mapOf("JAVA_TOOLS_OPTIONS" to "-Dfile.encoding=CP866")
+                                })
+    assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
+    assertTrue("Should pass env variables in run configuration  but stdout: ${executionInfo.stdout}", executionInfo.stdout.contains("JAVA_TOOLS_OPTIONS=-Dfile.encoding=CP866"))
+
+  }
+
+  @Test
   fun testShouldExecuteMavenScriptWithPomFile() = runBlocking {
 
     createModulePom("m1",
