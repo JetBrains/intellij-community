@@ -25,12 +25,7 @@ internal fun createTerminalTab(
   contentManager: ContentManager? = null,
   startupFusInfo: TerminalStartupFusInfo? = null,
 ) {
-  val engine = TerminalOptionsProvider.instance.terminalEngine
-  val frontendType = FrontendApplicationInfo.getFrontendType()
-  val isCodeWithMe = frontendType is FrontendType.Remote && frontendType.isGuest()
-  if (ExperimentalUI.isNewUI()
-      && engine == TerminalEngine.REWORKED
-      && !isCodeWithMe) {
+  if (shouldUseReworkedTerminal()) {
     // todo: pass fusInfo there as well
     TerminalToolWindowTabsManager.getInstance(project).createTabBuilder()
       .shellCommand(shellCommand)
@@ -46,6 +41,17 @@ internal fun createTerminalTab(
       it.myWorkingDirectory = workingDirectory
       it.myTabName = tabName
     }
+    val engine = TerminalOptionsProvider.instance.terminalEngine
     TerminalToolWindowManager.getInstance(project).createNewTab(engine, startupFusInfo, tabState, contentManager)
   }
+}
+
+/**
+ * Checks for user settings and known restrictions and returns true if the Reworked Terminal should be used.
+ */
+internal fun shouldUseReworkedTerminal(): Boolean {
+  val engine = TerminalOptionsProvider.instance.terminalEngine
+  val frontendType = FrontendApplicationInfo.getFrontendType()
+  val isCodeWithMe = frontendType is FrontendType.Remote && frontendType.isGuest()
+  return ExperimentalUI.isNewUI() && engine == TerminalEngine.REWORKED && !isCodeWithMe
 }

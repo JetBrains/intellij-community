@@ -89,6 +89,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   override fun attachTab(view: TerminalView, contentManager: ContentManager?): TerminalToolWindowTab {
     val tab = doCreateTab(view)
+    addToTabsList(tab)
     addTabToToolWindow(tab, contentManager, true)
     return tab
   }
@@ -117,7 +118,10 @@ internal class TerminalToolWindowTabsManagerImpl(
   private fun createTab(builder: TerminalTabBuilderImpl): TerminalToolWindowTab {
     val terminal = createTerminalViewAndStartSession(builder)
     val tab = doCreateTab(terminal)
-    addTabToToolWindow(tab, builder.contentManager, builder.requestFocus)
+    addToTabsList(tab)
+    if (builder.shouldAddToToolWindow) {
+      addTabToToolWindow(tab, builder.contentManager, builder.requestFocus)
+    }
     return tab
   }
 
@@ -160,11 +164,6 @@ internal class TerminalToolWindowTabsManagerImpl(
   ) {
     val toolWindow = getToolWindow()
 
-    mutableTabs.add(tab)
-    Disposer.register(tab.content) {
-      mutableTabs.remove(tab)
-    }
-
     val manager = contentManager ?: toolWindow.contentManager
     manager.addContent(tab.content)
 
@@ -179,6 +178,13 @@ internal class TerminalToolWindowTabsManagerImpl(
     }
 
     eventDispatcher.multicaster.tabCreated(tab)
+  }
+
+  private fun addToTabsList(tab: TerminalToolWindowTab) {
+    mutableTabs.add(tab)
+    Disposer.register(tab.content) {
+      mutableTabs.remove(tab)
+    }
   }
 
   private fun createTerminalViewAndStartSession(builder: TerminalTabBuilderImpl): TerminalView {
@@ -367,6 +373,8 @@ internal class TerminalToolWindowTabsManagerImpl(
       private set
     var contentManager: ContentManager? = null
       private set
+    var shouldAddToToolWindow: Boolean = true
+      private set
 
     var backendTabId: Int? = null
       private set
@@ -407,6 +415,11 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     override fun contentManager(manager: ContentManager?): TerminalTabBuilder {
       contentManager = manager
+      return this
+    }
+
+    override fun shouldAddToToolWindow(addToToolWindow: Boolean): TerminalTabBuilder {
+      shouldAddToToolWindow = addToToolWindow
       return this
     }
 

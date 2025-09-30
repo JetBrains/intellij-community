@@ -20,6 +20,12 @@ interface TerminalTabBuilder {
 
   fun contentManager(manager: ContentManager?): TerminalTabBuilder
 
+  /**
+   * Whether to add the tab to the Terminal tool window or create the detached tab.
+   * True by default.
+   */
+  fun shouldAddToToolWindow(addToToolWindow: Boolean): TerminalTabBuilder
+
   @RequiresEdt
   fun createTab(): TerminalToolWindowTab
 }
