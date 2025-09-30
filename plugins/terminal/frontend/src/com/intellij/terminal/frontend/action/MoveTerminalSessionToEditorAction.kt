@@ -8,11 +8,11 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.JBTerminalWidget
+import com.intellij.terminal.JBTerminalWidgetListener
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.content.Content
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.action.TerminalSessionContextMenuActionBase
-import org.jetbrains.plugins.terminal.vfs.TerminalEditorWidgetListener
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl
 import java.lang.Boolean
 import kotlin.let
@@ -34,5 +34,26 @@ internal class MoveTerminalSessionToEditorAction : TerminalSessionContextMenuAct
     terminalToolWindowManager.detachWidgetAndRemoveContent(content)
 
     file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null)
+  }
+}
+
+private class TerminalEditorWidgetListener(val project: Project, val file: TerminalSessionVirtualFileImpl) : JBTerminalWidgetListener {
+  override fun onNewSession() {
+  }
+
+  override fun onTerminalStarted() {
+  }
+
+  override fun onPreviousTabSelected() {
+  }
+
+  override fun onNextTabSelected() {
+  }
+
+  override fun onSessionClosed() {
+    FileEditorManager.getInstance(project).closeFile(file)
+  }
+
+  override fun showTabs() {
   }
 }
