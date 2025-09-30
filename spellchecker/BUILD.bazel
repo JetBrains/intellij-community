@@ -42,7 +42,6 @@ jvm_library(
     "//platform/refactoring",
     "@lib//:guava",
     "//platform/statistics",
-    "//libraries/ai.grazie.spell.gec.engine.local",
     "@lib//:spellchecker-java-string-similarity",
     "//platform/core-ui",
     "//libraries/lucene.common",
@@ -51,7 +50,6 @@ jvm_library(
     "//platform/util/jdom",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:caffeine",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -79,7 +77,6 @@ jvm_library(
     "@lib//:guava",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
-    "//libraries/ai.grazie.spell.gec.engine.local",
     "@lib//:spellchecker-java-string-similarity",
     "//platform/core-ui",
     "//libraries/lucene.common",
@@ -91,7 +88,6 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:kotlin-test-junit",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:caffeine",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//xml/relaxng",

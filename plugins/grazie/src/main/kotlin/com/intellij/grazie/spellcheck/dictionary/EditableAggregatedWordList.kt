@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
-package com.intellij.spellchecker.grazie.dictionary
+package com.intellij.grazie.spellcheck.dictionary
 
 import ai.grazie.spell.lists.WordList
 import java.util.concurrent.ConcurrentHashMap

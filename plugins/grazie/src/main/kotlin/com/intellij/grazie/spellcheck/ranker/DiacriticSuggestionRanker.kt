@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.spellchecker.grazie.ranker
+package com.intellij.grazie.spellcheck.ranker
 
 import ai.grazie.spell.suggestion.ranker.SuggestionRanker
 import ai.grazie.utils.LinkedSet
-import com.intellij.spellchecker.grazie.diacritic.Diacritics
+import com.intellij.grazie.spellcheck.diacritic.Diacritics
 
 class DiacriticSuggestionRanker(
   private val fallbackSuggestionRanker: SuggestionRanker,

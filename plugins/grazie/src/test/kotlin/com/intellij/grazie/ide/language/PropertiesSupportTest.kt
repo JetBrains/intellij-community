@@ -3,9 +3,9 @@ package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
-import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import java.nio.charset.StandardCharsets
 
@@ -56,7 +56,7 @@ class PropertiesSupportTest : GrazieTestBase() {
       runHighlightTestForFile("ide/language/properties/i18n.properties")
     }.setup {
       psiManager.dropPsiCaches()
-      project.service<GrazieSpellCheckerEngine>().dropSuggestionCache()
+      GrazieSpellCheckerEngine.getInstance(project).dropSuggestionCache()
     }.start()
   }
 }

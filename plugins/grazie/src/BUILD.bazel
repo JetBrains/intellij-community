@@ -77,6 +77,7 @@ jvm_library(
     "//platform/util/text-matching",
     "//libraries/grpc",
     "//platform/util/jdom",
+    "@lib//:caffeine",
   ],
   exports = [
     "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",

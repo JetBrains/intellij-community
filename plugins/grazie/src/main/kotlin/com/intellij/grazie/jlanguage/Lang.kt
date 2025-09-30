@@ -11,9 +11,9 @@ import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.grazie.remote.HunspellDescriptor
 import com.intellij.grazie.remote.LanguageToolDescriptor
 import com.intellij.grazie.remote.RemoteLangDescriptor
+import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
+import com.intellij.grazie.spellcheck.hunspell.HunspellDictionary
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
-import com.intellij.spellchecker.hunspell.HunspellDictionary
 import org.jetbrains.annotations.NonNls
 import org.languagetool.Language
 import org.languagetool.language.English

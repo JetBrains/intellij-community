@@ -1,23 +1,24 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.spellchecker.quickfixes
+package com.intellij.grazie.spellcheck.suggestion
 
-import com.intellij.openapi.components.service
+import com.intellij.codeInsight.completion.CompletionUtilCore
+import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.codeStyle.SuggestedNameInfo
 import com.intellij.refactoring.rename.NameSuggestionProvider
 import com.intellij.refactoring.rename.RenameUtil
-import com.intellij.spellchecker.SpellCheckerManager
-import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
 
 class SpellcheckingNameSuggestionProvider : NameSuggestionProvider {
 
   private val suggestionLimit = 3
+  private val minimalWordLength = 4
 
   override fun getSuggestedNames(element: PsiElement, context: PsiElement?, result: MutableSet<String>): SuggestedNameInfo? {
     val name = getName(element) ?: return null
+    if (name.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED) || name.length < minimalWordLength) return null
 
-    val engine = element.project.service<GrazieSpellCheckerEngine>()
+    val engine = GrazieSpellCheckerEngine.getInstance(element.project)
     val speller = engine.getSpeller() ?: return null
     if (!speller.isMisspelled(name)) return null
 

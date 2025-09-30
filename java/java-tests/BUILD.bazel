@@ -157,6 +157,7 @@ jvm_library(
     "//xml/impl",
     "//platform/syntax/syntax-scripts:scripts",
     "@lib//:byte-buddy",
+    "//plugins/grazie/src:core",
   ],
   exports = [
     "//plugins/java-i18n",

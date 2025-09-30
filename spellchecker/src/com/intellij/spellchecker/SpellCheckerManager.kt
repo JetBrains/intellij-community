@@ -3,7 +3,6 @@
 
 package com.intellij.spellchecker
 
-import ai.grazie.utils.isLowercase
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
@@ -34,7 +33,6 @@ import com.intellij.spellchecker.SpellCheckerManager.Companion.restartInspection
 import com.intellij.spellchecker.dictionary.*
 import com.intellij.spellchecker.engine.SpellCheckerEngine
 import com.intellij.spellchecker.engine.SuggestionProvider
-import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
 import com.intellij.spellchecker.grazie.GrazieSuggestionProvider
 import com.intellij.spellchecker.settings.SpellCheckerSettings
 import com.intellij.spellchecker.state.AppDictionaryState
@@ -78,10 +76,6 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
   private var suggestionProvider: SuggestionProvider? = null
 
   init {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      project.service<GrazieSpellCheckerEngine>().initializeSpeller(project)
-    }
-
     fullConfigurationReload()
 
     LocalFileSystem.getInstance().addVirtualFileListener(CustomDictFileListener(project = project, manager = this), this)
@@ -124,7 +118,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
   }
 
   fun fullConfigurationReload() {
-    val spellChecker = project.service<GrazieSpellCheckerEngine>()
+    val spellChecker = project.service<SpellCheckerEngine>()
     this.spellChecker = spellChecker
     suggestionProvider = GrazieSuggestionProvider(spellChecker)
     fillEngineDictionary(spellChecker)
@@ -262,7 +256,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
   }
   
   private fun transform(word: String): String? {
-    if (StringUtil.decapitalize(word).isLowercase()) return word
+    if (StringUtil.isLowerCase(StringUtil.decapitalize(word))) return word
     return spellChecker!!.transformation.transform(word)
   }
 

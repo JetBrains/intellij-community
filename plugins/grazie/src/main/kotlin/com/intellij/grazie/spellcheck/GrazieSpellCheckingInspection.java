@@ -6,6 +6,8 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.grazie.GrazieConfig;
+import com.intellij.grazie.spellcheck.diacritic.Diacritics;
+import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
@@ -20,8 +22,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.SpellCheckerSeveritiesProvider;
-import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine;
-import com.intellij.spellchecker.grazie.diacritic.Diacritics;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.inspections.Splitter;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
@@ -302,7 +302,7 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
 
       List<String> paths = SpellCheckerSettings.getInstance(project).getCustomDictionariesPaths();
       if (paths != null && !paths.isEmpty()) {
-        GrazieSpellCheckerEngine engine = project.getService(GrazieSpellCheckerEngine.class);
+        GrazieSpellCheckerEngine engine = GrazieSpellCheckerEngine.getInstance(project);
         return !ContainerUtil.exists(paths, dictionaryName -> engine.isDictionaryLoad(dictionaryName));
       }
       return true;

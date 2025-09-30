@@ -11,6 +11,7 @@ import ai.grazie.spell.text.Typo
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection.Companion.sortByPriority
+import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.openapi.components.service
@@ -21,7 +22,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import com.intellij.psi.PsiElement
-import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
 import com.intellij.spellchecker.inspections.IdentifierSplitter.MINIMAL_TYPO_LENGTH
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy
 import com.intellij.util.containers.ContainerUtil
@@ -64,7 +64,7 @@ object GrazieTextLevelSpellCheckingExtension {
   }
 
   private fun getTextSpeller(project: Project): TextSpeller? {
-    val speller = project.service<GrazieSpellCheckerEngine>().getSpeller() ?: return null
+    val speller = GrazieSpellCheckerEngine.getInstance(project).getSpeller() ?: return null
     val enabledLanguages = GrazieConfig.get().enabledLanguages.mapNotNull { it.withVariant }
     val validPhrasesTexts = ConcurrentHashMap<CharSequence, List<ai.grazie.rules.tree.TextRange>>()
 

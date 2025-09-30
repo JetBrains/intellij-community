@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.spellchecker.grazie.async
+package com.intellij.grazie.spellcheck.async
 
 import ai.grazie.spell.lists.WordList
+import com.intellij.grazie.spellcheck.dictionary.SimpleWordList
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
@@ -10,7 +11,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.spellchecker.dictionary.Loader
-import com.intellij.spellchecker.grazie.dictionary.SimpleWordList
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.*

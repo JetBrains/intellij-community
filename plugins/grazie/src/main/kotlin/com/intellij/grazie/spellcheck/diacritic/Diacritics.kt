@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.spellchecker.grazie.diacritic
+package com.intellij.grazie.spellcheck.diacritic
 
 import ai.grazie.nlp.utils.normalization.StripAccentsNormalizer
 import com.intellij.util.io.IOUtil
