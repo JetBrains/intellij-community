@@ -1,8 +1,10 @@
-<idea-plugin implementation-detail="true">
+<idea-plugin>
   <vendor>JetBrains</vendor>
   <name>Images</name>
   <id>com.intellij.platform.images</id>
-  <description>Adds support for image file type preview, SVG file type contents language</description>
+  <description><![CDATA[
+    Provides Image file type preview, SVG file type contents language.
+  ]]></description>
 
   <resource-bundle>messages.ImagesBundle</resource-bundle>
 

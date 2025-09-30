@@ -17,7 +17,7 @@ private class WorkspaceFileIndexInitializer : InitProjectActivity {
       catch (e: RuntimeException) {
         // IDEA-345082 There is a chance that the index was not initialized due to the broken cache.
         WorkspaceModelCacheImpl.invalidateCaches()
-        throw RuntimeException(e)
+        throw e
       }
     }
   }

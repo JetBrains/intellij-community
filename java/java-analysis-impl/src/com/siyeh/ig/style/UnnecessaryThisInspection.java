@@ -83,7 +83,7 @@ public final class UnnecessaryThisInspection extends BaseInspection implements C
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryThisVisitor();
   }
 

@@ -24,7 +24,7 @@ internal class IdeProductInfoImpl : IdeProductInfo {
   private val json = Json { ignoreUnknownKeys = true }
 
   override val currentProductInfo: ProductInfoData by lazy { 
-    if (PluginManagerCore.isRunningFromSources() || AppMode.isDevServer()) {
+    if (PluginManagerCore.isRunningFromSources() || AppMode.isRunningFromDevBuild()) {
       createProductInfoFromApplicationInfo()
     }
     else {

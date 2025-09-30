@@ -27,7 +27,7 @@ import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil
-import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager

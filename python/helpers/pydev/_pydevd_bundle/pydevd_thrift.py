@@ -16,7 +16,7 @@ from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K,
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
 from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
 from _pydevd_bundle.pydevd_utils import is_string, should_evaluate_full_value, \
-    should_evaluate_shape, is_container_with_shape_dtype
+    should_evaluate_shape, has_attribute_safe
 from _pydevd_bundle.pydevd_vars import get_label, array_default_format, is_able_to_format_number, MAXIMUM_ARRAY_SIZE, \
     get_column_formatter_by_type, get_formatted_row_elements, IAtPolarsAccessor, DEFAULT_DF_FORMAT, DATAFRAME_HEADER_LOAD_MAX_SIZE
 from pydev_console.pydev_protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
@@ -334,10 +334,10 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
 
     # shape to struct
     try:
-        if should_evaluate_shape() and is_container_with_shape_dtype(type_qualifier, typeName, v):
-            if hasattr(v, 'shape') and not callable(v.shape):
+        if should_evaluate_shape():
+            if has_attribute_safe(v, 'shape') and not callable(v.shape):
                 debug_value.shape = str(tuple(v.shape))
-            elif hasattr(v, '__len__') and not is_string(v):
+            elif has_attribute_safe(v, '__len__') and not is_string(v):
                 debug_value.shape = str(len(v))
     except:
         pass
@@ -345,7 +345,7 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
     # data type info to xml (for arrays and tensors)
     debug_value.arrayElementType = ''
     try:
-        if is_container_with_shape_dtype(type_qualifier, typeName, v) and hasattr(v, 'dtype'):
+        if has_attribute_safe(v, 'shape') and has_attribute_safe(v, 'dtype'):
             debug_value.arrayElementType = str(v.dtype)
     except:
         pass

@@ -150,4 +150,10 @@ public abstract class ApplicationInfo {
 
   @ApiStatus.Internal
   public abstract boolean isEssentialPlugin(@NotNull PluginId pluginId);
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public boolean isSimplifiedSplashSupported() {
+    return false;
+  }
 }

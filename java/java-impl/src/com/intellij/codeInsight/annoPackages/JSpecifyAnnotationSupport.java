@@ -28,17 +28,24 @@ public final class JSpecifyAnnotationSupport implements AnnotationPackageSupport
     String name = anno.getQualifiedName();
     if (name == null) return ContextNullabilityInfo.EMPTY;
     if (ArrayUtil.contains(PsiAnnotation.TargetType.LOCAL_VARIABLE, types)) return ContextNullabilityInfo.EMPTY;
-    Nullability nullability;
-    switch (name) {
-      case DEFAULT_NOT_NULL -> nullability = Nullability.NOT_NULL;
-      case DEFAULT_NULLNESS_UNKNOWN -> nullability = Nullability.UNKNOWN;
-      default -> {
-        return ContextNullabilityInfo.EMPTY;
-      }
-    }
-    return ContextNullabilityInfo.constant(new NullabilityAnnotationInfo(anno, nullability, true))
+    ContextNullabilityInfo base = switch (name) {
+      case DEFAULT_NOT_NULL -> ContextNullabilityInfo.constant(new NullabilityAnnotationInfo(anno, Nullability.NOT_NULL, true))
+        .withNullabilityInContext(context -> context instanceof PsiTypeElement typeElement && typeElement.isUnboundedWildcard(),
+                                  Nullability.NULLABLE);
+      case DEFAULT_NULLNESS_UNKNOWN -> ContextNullabilityInfo.constant(new NullabilityAnnotationInfo(anno, Nullability.UNKNOWN, true));
+      default -> ContextNullabilityInfo.EMPTY;
+    };
+    return base
       .disableInCast()
       .filtering(context -> !resolvesToTypeParameter(context));
+  }
+
+  @Override
+  public @NotNull List<@NotNull PsiAnnotation> getConflictingContainerAnnotations(@NotNull PsiAnnotationOwner owner) {
+    PsiAnnotation marked = owner.findAnnotation(DEFAULT_NOT_NULL);
+    PsiAnnotation unmarked = owner.findAnnotation(DEFAULT_NULLNESS_UNKNOWN);
+    if (marked != null && unmarked != null) return List.of(marked, unmarked);
+    return List.of();
   }
 
   static boolean resolvesToTypeParameter(@NotNull PsiElement context) {

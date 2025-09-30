@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.devkit.uiDesigner` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "uiDesigner_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.devkit.uiDesigner",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":uiDesigner_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/java-indexing-api:indexing",
@@ -26,7 +27,6 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util/text-matching",
     "//platform/platform-impl/designer",
-  ],
-  runtime_deps = [":uiDesigner_resources"]
+  ]
 )
 ### auto-generated section `build intellij.devkit.uiDesigner` end

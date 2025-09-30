@@ -38,7 +38,7 @@ public class SubstringSpeedSearchMatcherTest {
         val result = matcher.matches("abcdef")
 
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
-        assertEquals(2..4, result.ranges[0])
+        assertEquals(2 until 4, result.ranges[0])
     }
 
     @Test
@@ -47,7 +47,7 @@ public class SubstringSpeedSearchMatcherTest {
         val result = matcher.matches("an eye for an eye")
 
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
-        assertEquals(3..6, result.ranges[0])
+        assertEquals(3 until 6, result.ranges[0])
     }
 
     @Test
@@ -56,7 +56,7 @@ public class SubstringSpeedSearchMatcherTest {
         val result = matcher.matches("abcdef")
 
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
-        assertEquals(0..2, result.ranges[0])
+        assertEquals(0 until 2, result.ranges[0])
     }
 
     @Test
@@ -65,7 +65,7 @@ public class SubstringSpeedSearchMatcherTest {
         val result = matcher.matches("abcdef")
 
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
-        assertEquals(4..6, result.ranges[0])
+        assertEquals(4 until 6, result.ranges[0])
     }
 
     @Test
@@ -74,7 +74,7 @@ public class SubstringSpeedSearchMatcherTest {
         val result = matcher.matches("abcdef")
 
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
-        assertEquals(2..4, result.ranges[0])
+        assertEquals(2 until 4, result.ranges[0])
     }
 
     @Test
@@ -89,7 +89,7 @@ public class SubstringSpeedSearchMatcherTest {
         val result = matcher.matches("abCDef")
 
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
-        assertEquals(2..4, result.ranges[0])
+        assertEquals(2 until 4, result.ranges[0])
     }
 
     @Test
@@ -98,6 +98,6 @@ public class SubstringSpeedSearchMatcherTest {
         val result = matcher.matches("abc-def")
 
         assertIs<SpeedSearchMatcher.MatchResult.Match>(result)
-        assertEquals(2..5, result.ranges[0])
+        assertEquals(2 until 5, result.ranges[0])
     }
 }

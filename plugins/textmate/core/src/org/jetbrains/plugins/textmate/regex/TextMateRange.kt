@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.textmate.regex
 
+import kotlin.jvm.JvmInline
+
 @JvmInline
 value class TextMateCharOffset(val offset: Int): Comparable<TextMateCharOffset> {
   operator fun plus(other: TextMateCharOffset): TextMateCharOffset {

@@ -2,9 +2,9 @@
 package com.intellij.notebooks.visualization.ui.cell.toolbar
 
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.notebooks.ui.afterDistinctChange
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
-import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.NotebookVisualizationCoroutine
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedCellController
 import com.intellij.notebooks.visualization.ui.DataProviderComponent
@@ -122,16 +122,16 @@ internal class EditorCellActionsToolbarController(
     hideToolbar()
   }
 
-  private fun getActionGroup(cellType: NotebookCellLines.CellType): ActionGroup? = when (cellType) {
-    NotebookCellLines.CellType.CODE -> {
+  private fun getActionGroup(cellType: CellType): ActionGroup? = when (cellType) {
+    CellType.CODE -> {
       hideDropdownIcon(ADDITIONAL_CODE_ELLIPSIS_ACTION_GROUP_ID)
       CustomActionsSchema.getInstance().getCorrectedAction(ADDITIONAL_CODE_ACTION_GROUP_ID) as? ActionGroup
     }
-    NotebookCellLines.CellType.MARKDOWN -> {
+    CellType.MARKDOWN -> {
       hideDropdownIcon(ADDITIONAL_MARKDOWN_ELLIPSIS_ACTION_GROUP_ID)
       ActionManager.getInstance().getAction(ADDITIONAL_MARKDOWN_ACTION_GROUP_ID) as? ActionGroup
     }
-    NotebookCellLines.CellType.RAW -> null
+    CellType.RAW -> null
   }
 
   private fun hideDropdownIcon(actionGroupId: String) = ActionManager.getInstance().getAction(actionGroupId)

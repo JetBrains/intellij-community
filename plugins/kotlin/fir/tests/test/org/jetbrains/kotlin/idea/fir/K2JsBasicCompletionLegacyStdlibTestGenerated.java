@@ -3187,6 +3187,21 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 runTest("../../completion/testData/basic/common/AfterIntSeparatedWithComments.kt");
             }
 
+            @TestMetadata("AlwaysCompleteNonSubPackages.kt")
+            public void testAlwaysCompleteNonSubPackages() throws Exception {
+                runTest("../../completion/testData/basic/common/AlwaysCompleteNonSubPackages.kt");
+            }
+
+            @TestMetadata("AlwaysCompleteTopLevelPackagesInImport.kt")
+            public void testAlwaysCompleteTopLevelPackagesInImport() throws Exception {
+                runTest("../../completion/testData/basic/common/AlwaysCompleteTopLevelPackagesInImport.kt");
+            }
+
+            @TestMetadata("AlwaysCompleteTopLevelPackagesInPackageStatement.kt")
+            public void testAlwaysCompleteTopLevelPackagesInPackageStatement() throws Exception {
+                runTest("../../completion/testData/basic/common/AlwaysCompleteTopLevelPackagesInPackageStatement.kt");
+            }
+
             @TestMetadata("ambiguousSuperMethod.kt")
             public void testAmbiguousSuperMethod() throws Exception {
                 runTest("../../completion/testData/basic/common/ambiguousSuperMethod.kt");
@@ -3265,6 +3280,11 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
             @TestMetadata("ConsiderExtensionType.kt")
             public void testConsiderExtensionType() throws Exception {
                 runTest("../../completion/testData/basic/common/ConsiderExtensionType.kt");
+            }
+
+            @TestMetadata("ContextParameter.kt")
+            public void testContextParameter() throws Exception {
+                runTest("../../completion/testData/basic/common/ContextParameter.kt");
             }
 
             @TestMetadata("CoroutineContextReleaseCoroutines.kt")
@@ -3890,6 +3910,11 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
             @TestMetadata("NoTopLevelCompletionInQualifiedUserTypes.kt")
             public void testNoTopLevelCompletionInQualifiedUserTypes() throws Exception {
                 runTest("../../completion/testData/basic/common/NoTopLevelCompletionInQualifiedUserTypes.kt");
+            }
+
+            @TestMetadata("NoTopLevelPackagesIfDisabled.kt")
+            public void testNoTopLevelPackagesIfDisabled() throws Exception {
+                runTest("../../completion/testData/basic/common/NoTopLevelPackagesIfDisabled.kt");
             }
 
             @TestMetadata("ObjectInTypePosition.kt")

@@ -1,15 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.ide.isIdeStartupWizardEnabled
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -22,11 +20,6 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG: Logger
   get() = logger<IdeStartupWizard>()
-
-internal val isIdeStartupDialogEnabled: Boolean
-  get() = (!ApplicationManagerEx.isInIntegrationTest() ||
-           System.getProperty("show.wizard.in.test", "false").toBoolean()) &&
-          System.getProperty("intellij.startup.dialog", "true").toBoolean()
 
 @ExperimentalCoroutinesApi
 internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
@@ -66,10 +59,7 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
             IdeStartupWizardCollector.logInitialStartTimeout()
           }
           finally {
-            IdeStartupWizardCollector.logStartupStageTime(
-              StartupWizardStage.InitialStart,
-              Duration.ofNanos(System.nanoTime() - startTimeNs)
-            )
+            IdeStartupWizardCollector.logStartupStageTime(StartupWizardStage.InitialStart, Duration.ofNanos(System.nanoTime() - startTimeNs))
           }
         }
       }
@@ -96,7 +86,7 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
           }
         }
 
-        if (isIdeStartupWizardEnabled) {
+        if (InitialConfigImportState.isStartupWizardEnabled()) {
           LOG.info("Passing execution control to $wizard.")
           wizard.run()
           firstWizardExecuted = true
@@ -160,11 +150,9 @@ object IdeStartupWizardCollector : CounterUsagesCollector() {
   )
 
   internal fun logWizardExperimentState() {
-    assert(ConfigImportHelper.isFirstSession())
+    assert(InitialConfigImportState.isFirstSession())
     val isEnabled = IdeStartupExperiment.isWizardExperimentEnabled()
-    LOG.info("IDE startup isEnabled = $isEnabled," +
-             " IDEStartupKind = ${IdeStartupExperiment.experimentGroupKind}, " +
-             "IDEStartup = ${IdeStartupExperiment.experimentGroup}")
+    LOG.info("IDE startup isEnabled = $isEnabled, IDEStartupKind = ${IdeStartupExperiment.experimentGroupKind}, IDEStartup = ${IdeStartupExperiment.experimentGroup}")
     experimentState.log(
       IdeStartupExperiment.experimentGroupKind,
       IdeStartupExperiment.experimentGroup,

@@ -114,10 +114,10 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
 
   private fun Collection<Path>.replaceWithArchivedIfNeeded(): Collection<Path> {
     val mapping = ArchivedCompilationContextUtil.archivedCompiledClassesMapping ?: return this
-    return flatMap { path ->
-      if (Files.isRegularFile(path)) listOf(path)
+    return map { path ->
+      if (Files.isRegularFile(path)) path
       // path is absolute, mapping contains only the last two path elements
-      else mapping[path.parent.name + "/" + path.name]?.map(Path::of) ?: listOf(path)
+      else mapping[path.parent.name + "/" + path.name]?.let { Path.of(it) } ?: path
     }
   }
 }

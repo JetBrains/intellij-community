@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.execution.ExecutableValidator;
@@ -303,12 +303,4 @@ public final class GitVersion implements Comparable<GitVersion> {
   public boolean isNull() {
     return getType() == Type.NULL;
   }
-
-  public boolean isWSL() {
-    return switch (getType()) {
-      case WSL1, WSL2 -> true;
-      default -> false;
-    };
-  }
-
 }

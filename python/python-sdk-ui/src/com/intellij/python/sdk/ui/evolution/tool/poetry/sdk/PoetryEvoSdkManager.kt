@@ -6,7 +6,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.sdk.ui.evolution.sdk.EvoSdk
 import com.intellij.python.sdk.ui.evolution.sdk.EvoSdkProvider
 import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
-import com.jetbrains.python.resolvePythonHome
+import com.jetbrains.python.sdk.impl.resolvePythonHome
 import java.nio.file.Path
 import kotlin.io.path.name
 

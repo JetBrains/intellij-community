@@ -64,7 +64,7 @@ public final class SerializableHasSerializationMethodsInspection extends Seriali
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SerializableHasSerializationMethodsVisitor();
   }
 

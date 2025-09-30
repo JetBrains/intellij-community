@@ -6,7 +6,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager.getSystemDir
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -29,6 +29,7 @@ import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.text.trimMiddle
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
@@ -210,7 +211,7 @@ fun getProjectCacheFileName(presentableUrl: String?,
  */
 @JvmOverloads
 fun Project.getProjectCachePath(@NonNls cacheDirName: String, isForceNameUse: Boolean = false, extensionWithDot: String = ""): Path {
-  return getSystemDir().resolve(cacheDirName).resolve(getProjectCacheFileName(isForceNameUse, extensionWithDot = extensionWithDot))
+  return PathManager.getSystemDir().resolve(cacheDirName).resolve(getProjectCacheFileName(isForceNameUse, extensionWithDot = extensionWithDot))
 }
 
 /**
@@ -229,13 +230,14 @@ fun Project.getProjectDataPath(@NonNls name: String): Path {
 /**
  * Root directory for all project-specific caches.
  */
+@get:Internal
 val projectsDataDir: Path
-  get() = getSystemDir().resolve("projects")
+  get() = PathManager.getSystemDir().resolve("projects")
 
 /**
  * Asynchronously deletes caches directories obtained via [getProjectDataPath] for all projects.
  */
-@ApiStatus.Experimental
+@Experimental
 fun clearCachesForAllProjects(@NonNls dataDirName: String) {
   projectsDataDir.directoryStreamIfExists { dirs ->
     val filesToDelete = dirs.asSequence().map { it.resolve(dataDirName) }.filter { it.exists() }.map { it.toFile() }.toList()
@@ -243,10 +245,10 @@ fun clearCachesForAllProjects(@NonNls dataDirName: String) {
   }
 }
 
-@ApiStatus.Experimental
+@Experimental
 fun clearCachesForAllProjectsStartingWith(@NonNls prefix: String) {
   require(!prefix.isEmpty())
-  // A snapshot list instead of stream is used - do not iterate directory while deleting its content
+  // a snapshot list instead of a stream is used - do not iterate a directory while deleting its content
   for (projectDir in NioFiles.list(projectsDataDir)) {
     for (file in NioFiles.list(projectDir)) {
       if (file.fileName.toString().startsWith(prefix)) {

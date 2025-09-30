@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.intellij.spellchecker.inspections.SpellCheckingInspection;
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
@@ -70,7 +70,7 @@ public class PySpellCheckerTest extends PyTestCase {
   }
 
   private void doTest() {
-    myFixture.enableInspections(SpellCheckingInspection.class);
+    myFixture.enableInspections(GrazieSpellCheckingInspection.class);
     myFixture.configureByFile("inspections/spelling/" + getTestName(true) + ".py");
     myFixture.checkHighlighting(true, false, true);
   }

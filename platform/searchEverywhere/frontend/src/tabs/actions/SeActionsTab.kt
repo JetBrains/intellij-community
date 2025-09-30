@@ -65,7 +65,7 @@ class SeActionsTab(private val delegate: SeTabDelegate) : SeTab {
   }
 }
 
-private class SeActionsFilterEditor : SeFilterEditorBase<SeActionsFilter>(SeActionsFilter(false)) {
+private class SeActionsFilterEditor : SeFilterEditorBase<SeActionsFilter>(SeActionsFilter(false, isAutoTogglePossible = true)) {
 
   private val actions = listOf<AnAction>(object : CheckBoxSearchEverywhereToggleAction(IdeBundle.message("checkbox.disabled.included")), AutoToggleAction {
     private var isAutoToggleEnabled: Boolean = true
@@ -75,14 +75,14 @@ private class SeActionsFilterEditor : SeFilterEditorBase<SeActionsFilter>(SeActi
     }
 
     override fun setEverywhere(state: Boolean) {
-      filterValue = SeActionsFilter(state)
+      filterValue = SeActionsFilter(state, isAutoTogglePossible = false)
       isAutoToggleEnabled = false
     }
 
     override fun autoToggle(everywhere: Boolean): Boolean {
-      if (!canToggleEverywhere() || !isAutoToggleEnabled || (isEverywhere == everywhere)) return false
+      if (!canToggleEverywhere() || !isAutoToggleEnabled || isEverywhere == everywhere) return false
 
-      filterValue = SeActionsFilter(everywhere)
+      filterValue = SeActionsFilter(everywhere, isAutoTogglePossible = !everywhere)
       return true
     }
   })

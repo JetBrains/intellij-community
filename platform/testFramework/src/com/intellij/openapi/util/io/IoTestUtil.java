@@ -111,7 +111,7 @@ public final class IoTestUtil {
   }
 
   public static void assumeLinux() throws AssumptionViolatedException {
-    assumeTrue("Need Linux, can't run on " + OS.CURRENT, OS.CURRENT == OS.Windows);
+    assumeTrue("Need Linux, can't run on " + OS.CURRENT, OS.CURRENT == OS.Linux);
   }
 
   public static void assumeUnix() throws AssumptionViolatedException {
@@ -412,18 +412,26 @@ public final class IoTestUtil {
     return "";
   }
 
+  /** @deprecated use {@link #setCaseSensitivity(Path, boolean)} instead */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public static void setCaseSensitivity(@NotNull File dir, boolean caseSensitive) throws IOException {
+    setCaseSensitivity(dir.toPath(), caseSensitive);
+  }
+
+  public static void setCaseSensitivity(@NotNull Path dir, boolean caseSensitive) throws IOException {
     assertTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
-    String changeOut = runCommand("fsutil", "file", "setCaseSensitiveInfo", dir.getPath(), caseSensitive ? "enable" : "disable");
-    String out = runCommand("fsutil", "file", "queryCaseSensitiveInfo", dir.getPath());
+    var changeOut = runCommand("fsutil", "file", "setCaseSensitiveInfo", dir.toString(), caseSensitive ? "enable" : "disable");
+    var out = runCommand("fsutil", "file", "queryCaseSensitiveInfo", dir.toString());
     if (!out.endsWith(caseSensitive ? "enabled." : "disabled.")) {
-      throw new IOException("Can't setCaseSensitivity(" + dir + ", " + caseSensitive + ")." +
-                            " 'fsutil.exe setCaseSensitiveInfo' output:" + changeOut + ";" +
-                            " 'fsutil.exe getCaseSensitiveInfo' output:" + out);
+      throw new IOException(
+        "Can't setCaseSensitivity(" + dir + ", " + caseSensitive + ")." +
+        " 'fsutil.exe setCaseSensitiveInfo' output:" + changeOut + ";" +
+        " 'fsutil.exe getCaseSensitiveInfo' output:" + out);
     }
   }
 
-  public static void unchecked(ThrowableRunnable<? extends IOException> operation) {
+  public static void unchecked(@NotNull ThrowableRunnable<? extends IOException> operation) {
     try {
       operation.run();
     }

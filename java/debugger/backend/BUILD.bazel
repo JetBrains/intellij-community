@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.java.debugger.impl.backend` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "backend_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.java.debugger.impl.backend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -21,8 +22,8 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//java/debugger/shared",
     "//platform/kernel/rpc.backend",
     "//java/debugger/impl",
@@ -36,7 +37,6 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
     "//platform/project/shared:project",
-  ],
-  runtime_deps = [":backend_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.debugger.impl.backend` end

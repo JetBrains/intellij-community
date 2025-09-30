@@ -1,3 +1,6 @@
+c:com.intellij.openapi.roots.impl.ProjectFileIndexFacade
+- com.intellij.openapi.roots.FileIndexFacade
+- *:isIndexable(com.intellij.openapi.vfs.VirtualFile):Z
 *:com.intellij.workspaceModel.core.fileIndex.DependencyDescription
 *f:com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnArbitraryEntity
 - com.intellij.workspaceModel.core.fileIndex.DependencyDescription

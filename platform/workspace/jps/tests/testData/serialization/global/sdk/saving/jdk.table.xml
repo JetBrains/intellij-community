@@ -13,6 +13,9 @@
             <root url="/Contents/Home!/java.compiler" type="simple" />
           </root>
         </classPath>
+        <javadocPath>
+          <root type="composite" />
+        </javadocPath>
         <sourcePath>
           <root type="composite">
             <root url="/lib/src.zip!/java.se" type="simple" />
@@ -33,6 +36,9 @@
         <classPath>
           <root type="composite" />
         </classPath>
+        <javadocPath>
+          <root type="composite" />
+        </javadocPath>
         <sourcePath>
           <root type="composite" />
         </sourcePath>

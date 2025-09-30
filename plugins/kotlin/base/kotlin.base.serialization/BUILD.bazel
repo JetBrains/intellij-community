@@ -20,8 +20,8 @@ jvm_library(
   kotlinc_opts = ":custom_kotlin-base-serialization",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:jetbrains-annotations",
   ]

@@ -17,6 +17,11 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBund
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+sealed interface TemplateName {
+  data class Static(val name: String) : TemplateName
+  data class SelectedOption(val options: List<WelcomeScreenNewFileTemplateOption>) : TemplateName
+}
+
 @ApiStatus.Internal
 @ApiStatus.Experimental
 object WelcomeScreenNewFileHandler {
@@ -27,9 +32,12 @@ object WelcomeScreenNewFileHandler {
 
   fun showNewFileDialog(project: Project,
                         @NlsContexts.DialogTitle dialogTitle: String,
-                        templateName: String,
+                        templateName: TemplateName,
                         dialogBuilderBlock: WelcomeScreenNewFileDialog.Builder.() -> Unit = {}) {
     val dialogBuilder = WelcomeScreenNewFileDialog.Builder(project, dialogTitle)
+    if (templateName is TemplateName.SelectedOption) {
+      dialogBuilder.templateOptions = templateName.options
+    }
     dialogBuilder.defaultDirectory = getDefaultProjectPath()
     dialogBuilder.dialogBuilderBlock()
     showDialogAndCreateFile(dialogBuilder.build(), templateName)
@@ -37,7 +45,7 @@ object WelcomeScreenNewFileHandler {
 
   private fun showDialogAndCreateFile(
     dialog: WelcomeScreenNewFileDialog,
-    templateName: String,
+    templateName: TemplateName,
   ) {
     if (!dialog.showAndGet()) return
 
@@ -48,7 +56,10 @@ object WelcomeScreenNewFileHandler {
 
     try {
       val mkdirs = CreateFileAction.MkDirs(fileName, directory)
-      val selectedTemplateName = dialog.getSelectedTemplateName() ?: templateName
+      val selectedTemplateName = when (templateName) {
+        is TemplateName.Static -> templateName.name
+        is TemplateName.SelectedOption -> dialog.getSelectedTemplateName()
+      } ?: return
       val template = FileTemplateManager.getInstance(project).getInternalTemplate(selectedTemplateName)
       val templateProperties = FileTemplateManager.getInstance(project).getDefaultProperties()
       val psiFile = FileTemplateUtil.createFromTemplate(template, mkdirs.newName, templateProperties, mkdirs.directory).getContainingFile()

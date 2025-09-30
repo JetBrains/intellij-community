@@ -8,10 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.util.concurrency.ThreadingAssertions
-import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.analysis.api.useSiteModule
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModuleOfTypeSafe
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -25,6 +22,7 @@ import org.jetbrains.kotlin.nj2k.J2KConversionPhase.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.nj2k.printing.JKCodeBuilder
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
+import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportList
@@ -76,7 +74,8 @@ class NewJavaToKotlinConverter(
             val javaFile = files[i]
             withProgressProcessor.updateState(fileIndex = i, phase = CREATE_FILES, phaseDescription)
             runUndoTransparentActionInEdt(inWriteAction = true) {
-                KtPsiFactory.contextual(javaFile.parent ?: javaFile).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
+                KtPsiFactory.contextual(javaFile.parent ?: javaFile)
+                    .createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
                     .also { it.addImports(result.importsToAdd) }
             }
         }
@@ -97,27 +96,20 @@ class NewJavaToKotlinConverter(
         forInlining: Boolean = false
     ): Result {
         val contextElement = inputElements.firstOrNull() ?: return Result.EMPTY
-
         val targetKaModule =
             targetFile?.getKaModuleOfTypeSafe<KaSourceModule>(project, useSiteModule = null)
-                // This `KaSourceModule` is not 100% waterproof, but without the target file, we don't actually know the kind of the target
-                // source module. The most reasonable assumption is that we copy the input element to a source module of the same kind.
+            // This `KaSourceModule` is not 100% waterproof, but without the target file, we don't actually know the kind of the target
+            // source module. The most reasonable assumption is that we copy the input element to a source module of the same kind.
                 ?: targetModule?.toKaSourceModuleWithElementSourceModuleKindOrProduction(contextElement)
                 ?: return Result.EMPTY
-
-        // TODO
-        // val originKtModule = ProjectStructureProvider.getInstance(project).getModule(contextElement, contextualModule = null)
-        // doesn't work for copy-pasted code, in this case the module is NotUnderContentRootModuleByModuleInfo, which can't be analyzed
-
-        return analyze(targetKaModule) {
-            doConvertElementsToKotlin(contextElement, inputElements, processor, bodyFilter, forInlining)
-        }
+        val targetPlatform = targetKaModule.targetPlatform
+        return doConvertElementsToKotlin(contextElement, inputElements, targetPlatform, processor, bodyFilter, forInlining)
     }
 
-    context(_: KaSession)
     private fun doConvertElementsToKotlin(
         contextElement: PsiElement,
         inputElements: List<PsiElement>,
+        targetPlatform: TargetPlatform,
         processor: WithProgressProcessor,
         bodyFilter: ((PsiElement) -> Boolean)?,
         forInlining: Boolean
@@ -133,7 +125,7 @@ class NewJavaToKotlinConverter(
             else -> LanguageVersionSettingsImpl.DEFAULT
         }
 
-        val importStorage = JKImportStorage(useSiteModule.targetPlatform, project)
+        val importStorage = JKImportStorage(targetPlatform, project)
         val treeBuilder = JavaToJKTreeBuilder(symbolProvider, typeFactory, referenceSearcher, importStorage, bodyFilter, forInlining)
 
         // we want to leave all imports as is in the case when user is converting only imports

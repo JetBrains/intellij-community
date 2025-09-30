@@ -211,6 +211,14 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
+  
+  public void testGuavaIterablesProblems() {
+    doTest();
+  }
+  
+  public void testGenericVarargNullability() {
+    doTest();
+  }
 
   public void testPassthroughGenericParameter() {
     doTestWith((dfi, cvi) -> dfi.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);

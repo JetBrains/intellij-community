@@ -192,7 +192,7 @@ public final class LineWrappingUtil {
     try {
       Runnable command = () -> EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER)
         .execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
-      if (commandProcessor.getCurrentCommand() == null) {
+      if (!commandProcessor.isCommandInProgress()) {
         commandProcessor.executeCommand(project, command, WRAP_LINE_COMMAND_NAME, null);
       }
       else {

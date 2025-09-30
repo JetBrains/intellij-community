@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.cancelOnDispose
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -29,7 +30,7 @@ internal open class PyPackageManagerBridge(private val sdk: Sdk) : PyPackageMana
   override fun hasManagement(): Boolean = true
 
   override fun refresh() {
-    PyPackageCoroutine.launch(null) {
+    PyPackageCoroutine.launch(null, NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
       thisLogger().debug("Refreshing SDK roots and packages cache")
       writeAction {
         val files = sdk.getRootProvider().getFiles(OrderRootType.CLASSES)

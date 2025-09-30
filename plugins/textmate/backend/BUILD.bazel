@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.textmate.backend` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "backend_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -67,6 +67,7 @@ jvm_library(
   module_name = "intellij.textmate.backend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
   deps = [
     "@lib//:jetbrains-annotations-provided",
     "@lib//:kotlin-stdlib-provided",
@@ -81,7 +82,6 @@ jvm_library(
     ":platform_indexing-impl_provided",
     ":platform_indexing_provided",
     ":java_indexing-impl_provided",
-  ],
-  runtime_deps = [":backend_resources"]
+  ]
 )
 ### auto-generated section `build intellij.textmate.backend` end

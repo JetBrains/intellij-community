@@ -341,7 +341,7 @@ public class MultiLineLabelUI extends BasicLabelUI {
     for (int idx = 0; idx < text.length(); idx++) {
       char ch = text.charAt(idx);
       if (ch == '\t') {
-        for (int i = 0; i < tabLength; i++) buf.append(' ');
+        buf.repeat(' ', tabLength);
       }
       else {
         buf.append(ch);

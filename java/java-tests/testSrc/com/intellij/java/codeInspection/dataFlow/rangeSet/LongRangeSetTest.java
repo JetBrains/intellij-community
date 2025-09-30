@@ -611,11 +611,24 @@ public class LongRangeSetTest {
   @Test
   public void testContains() {
     assertTrue(range(0, 10).contains(5));
-    assertTrue(range(0, 10).join(range(13, 20)).contains(point(5)));
-    assertTrue(range(0, 10).join(range(13, 20)).contains(empty()));
-    assertFalse(range(0, 10).join(range(13, 20)).contains(point(12)));
-    assertFalse(range(0, 10).join(range(13, 20)).contains(range(9, 15)));
-    assertTrue(range(0, 10).join(range(13, 20)).contains(range(2, 8).join(range(15, 17))));
+    LongRangeSet set = range(0, 10).join(range(13, 20));
+    assertTrue(set.contains(point(5)));
+    assertTrue(set.contains(empty()));
+    assertTrue(set.contains(set));
+    assertFalse(set.contains(point(12)));
+    assertFalse(set.contains(range(9, 15)));
+    assertTrue(set.contains(range(19, 20)));
+    assertFalse(set.contains(range(20, 21)));
+    assertFalse(set.contains(range(21, 22)));
+    assertTrue(set.contains(range(2, 8).join(range(15, 17))));
+    assertFalse(set.contains(range(-3, -2).join(range(5, 6))));
+    assertTrue(set.contains(range(0, 3).join(range(4, 5))));
+    assertFalse(set.contains(range(12, 12).join(range(18, 20))));
+    assertTrue(set.contains(range(13, 14).join(range(18, 20))));
+    assertTrue(set.contains(range(13, 13).join(range(18, 20))));
+    assertTrue(set.contains(range(0, 3).join(range(4, 5)).join(range(13, 15)).join(range(18, 20))));
+    assertFalse(set.contains(range(0, 3).join(range(4, 5)).join(range(13, 15)).join(range(18, 20)).join(range(24, 25))));
+    assertFalse(set.contains(range(0, 3).join(range(4, 5)).join(range(13, 15)).join(range(18, 21))));
   }
 
   @Test

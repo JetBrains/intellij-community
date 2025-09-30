@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.compiler-reference-index` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "compiler-reference-index_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "kotlin.compiler-reference-index",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":compiler-reference-index_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -33,7 +34,6 @@ jvm_library(
     "//jps/jps-builders:build",
     "//java/java-indexing-impl:indexing-impl",
     "//java/compiler/impl",
-  ],
-  runtime_deps = [":compiler-reference-index_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.compiler-reference-index` end

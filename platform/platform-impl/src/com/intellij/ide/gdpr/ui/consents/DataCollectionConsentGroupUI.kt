@@ -11,16 +11,6 @@ internal data class DataCollectionConsentGroupUI(
   override val consentUis: List<ConsentUi>,
 ) : ConsentGroupUi {
   override val forcedStateDescription: @NlsSafe String? = run {
-    val customerDetailedDataSharingAgreement = DataCollectionAgreement.getInstance()
-    val forcedStateDescription = when (customerDetailedDataSharingAgreement) {
-      DataCollectionAgreement.YES -> IdeBundle.message("gdpr.data.collection.consent.group.setting.enabled.warning.text")
-      DataCollectionAgreement.NO -> IdeBundle.message("gdpr.data.collection.consent.group.setting.disabled.warning.text")
-      DataCollectionAgreement.NOT_SET -> null
-      else -> null
-    }
-    if (forcedStateDescription != null) {
-      return@run forcedStateDescription
-    }
     val externalSettings = AiDataCollectionExternalSettings.findSettingsImplementedByAiAssistant()
     if (LOG.isDebugEnabled) {
       LOG.debug("AiDataCollectionExternalSettings: $externalSettings")
@@ -33,6 +23,16 @@ internal data class DataCollectionConsentGroupUI(
       if (isForciblyDisabled) {
         return@run externalSettings.getForciblyDisabledDescription() ?: IdeBundle.message("gdpr.consent.externally.disabled.warning")
       }
+    }
+    val customerDetailedDataSharingAgreement = DataCollectionAgreement.getInstance()
+    val forcedStateDescription = when (customerDetailedDataSharingAgreement) {
+      DataCollectionAgreement.YES -> IdeBundle.message("gdpr.data.collection.consent.group.setting.enabled.warning.text")
+      DataCollectionAgreement.NO -> IdeBundle.message("gdpr.data.collection.consent.group.setting.disabled.warning.text")
+      DataCollectionAgreement.NOT_SET -> null
+      else -> null
+    }
+    if (forcedStateDescription != null) {
+      return@run forcedStateDescription
     }
     return@run null
   }

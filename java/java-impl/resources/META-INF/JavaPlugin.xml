@@ -542,7 +542,6 @@
                     serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsPathPresenter"
                     overrides="true"/>
 
-    <projectService serviceImplementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"/>
     <projectService serviceImplementation="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration"/>
     <projectService serviceImplementation="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"/>
     <pathMacroFilter implementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfigurationMacroFilter"/>
@@ -682,7 +681,7 @@
 
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
 
-    <editorNotificationProvider implementation="com.intellij.execution.jshell.SnippetEditorDecorator"/>
+
 
     <projectService serviceImplementation="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
     <registryKey defaultValue="true" description="Trigger autotest on delay instead of build events" key="trigger.autotest.on.delay"/>
@@ -892,7 +891,7 @@
                          key="configurable.RemoteRepositoriesConfigurable.display.name" bundle="messages.JavaUiBundle"
                          order="last"/>
 
-    <scratch.rootType implementation="com.intellij.execution.jshell.JShellRootType"/>
+
     <scratch.creationHelper language="JAVA" implementationClass="com.intellij.ide.actions.JavaScratchFileCreationHelper"/>
 
     <intentionAction>

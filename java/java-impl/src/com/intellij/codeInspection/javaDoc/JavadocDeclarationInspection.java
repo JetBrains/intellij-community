@@ -363,6 +363,7 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
         }
         checkPointToSelf(holder, tag);
         checkSnippetTag(holder, element, tag);
+        checkLinkTag(holder, element, tag);
       }
     }
   }
@@ -409,6 +410,10 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
         else if (!isValidSeeRef(dataElements)) {
           holder.registerProblem(dataElements[0], JavaBundle.message("inspection.javadoc.problem.see.tag.expecting.ref"));
         }
+      }
+
+      if (dataElements.length > 0 && dataElements[0] instanceof PsiDocFragmentRef) {
+        checkFragmentURI(holder, dataElements);
       }
 
       checkInlineTags(dataElements, holder);
@@ -466,7 +471,7 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
     holder.registerProblem(nameElement, JavaBundle.message("inspection.javadoc.problem.pointing.to.itself"));
   }
 
-  private static final TokenSet SEE_TAG_REFS = TokenSet.create(JavaDocElementType.DOC_REFERENCE_HOLDER, JavaDocElementType.DOC_METHOD_OR_FIELD_REF, JavaDocElementType.DOC_TAG_VALUE_ELEMENT);
+  private static final TokenSet SEE_TAG_REFS = TokenSet.create(JavaDocElementType.DOC_REFERENCE_HOLDER, JavaDocElementType.DOC_METHOD_OR_FIELD_REF, JavaDocElementType.DOC_TAG_VALUE_ELEMENT, JavaDocElementType.DOC_FRAGMENT_REF);
 
   private static boolean isValidSeeRef(PsiElement... elements) {
     int referenceNumber = 0;
@@ -520,6 +525,24 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
           }
         }
       }
+    }
+  }
+
+  private static void checkLinkTag(@NotNull ProblemsHolder holder, PsiElement element, PsiInlineDocTag tag) {
+    if (tag.getName().equals("link")) {
+      final var dataElements = tag.getDataElements();
+
+      if (dataElements.length > 0 && dataElements[0] instanceof PsiDocFragmentRef) {
+        checkFragmentURI(holder, dataElements);
+      }
+    }
+  }
+
+  private static void checkFragmentURI(@NotNull ProblemsHolder holder, PsiElement[] dataElements) {
+    if (dataElements.length == 0 || !(dataElements[0] instanceof PsiDocFragmentRef)) return;
+
+    if (Arrays.stream(dataElements).skip(1).allMatch(e -> isEmpty(e))) {
+      holder.registerProblem(dataElements[0], JavaBundle.message("inspection.javadoc.problem.fragment.missing.label"));
     }
   }
 

@@ -1950,11 +1950,11 @@
   "group": "nodes",
   "data": {
     "id": "s0",
-    "name": "intellij.microservices.ui",
-    "n": "i.microservices.ui",
-    "package": "com.intellij.microservices.ui",
-    "sourceModule": "intellij.microservices.ui",
-    "descriptor": "plugins/microservices/microservices-ui/resources/META-INF/plugin.xml",
+    "name": "intellij.microservices.plugin",
+    "n": "i.microservices.plugin",
+    "package": "com.intellij.microservices.plugin",
+    "sourceModule": "intellij.microservices.plugin",
+    "descriptor": "plugins/microservices/plugin/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.microservices.ui",
     "parent": "cs0",
     "type": 2
@@ -1963,11 +1963,11 @@
   "group": "nodes",
   "data": {
     "id": "mH",
-    "name": "intellij.microservices.ui/diagram",
-    "n": "i.microservices.ui/diagram",
-    "package": "com.intellij.microservices.ui.diagrams",
-    "sourceModule": "intellij.microservices.ui",
-    "descriptor": "plugins/microservices/microservices-ui/resources/intellij.microservices.ui.diagram.xml",
+    "name": "intellij.microservices.backend/diagram",
+    "n": "i.microservices.backend/diagram",
+    "package": "com.intellij.microservices.backend.diagrams",
+    "sourceModule": "intellij.microservices.backend",
+    "descriptor": "plugins/microservices/microservices-backend/resources/intellij.microservices.backend.diagram.xml",
     "parent": "cs0",
     "type": 0
   }

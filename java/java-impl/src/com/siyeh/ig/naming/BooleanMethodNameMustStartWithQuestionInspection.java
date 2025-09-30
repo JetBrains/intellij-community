@@ -56,7 +56,7 @@ public final class BooleanMethodNameMustStartWithQuestionInspection extends NonB
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new BooleanMethodNameMustStartWithQuestionVisitor();
   }
 

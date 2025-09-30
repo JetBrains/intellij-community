@@ -25,9 +25,12 @@ import org.jetbrains.annotations.ApiStatus
 class SeProvidersHolder(
   private val allTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
   private val separateTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
-  private val legacyAllTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
-  private val legacySeparateTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
+  val legacyAllTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
+  private val legacySeparateTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>
 ) : Disposable {
+  val adaptedAllTabProviders: Set<SeProviderId> =
+    allTabProviders.values.mapNotNull { it.takeIf { it.isAdapted }?.id }.toSet()
+
   fun get(providerId: SeProviderId, isAllTab: Boolean): SeLocalItemDataProvider? =
     if (isAllTab) allTabProviders[providerId]
     else separateTabProviders[providerId] ?: allTabProviders[providerId]
@@ -35,6 +38,8 @@ class SeProvidersHolder(
   override fun dispose() {
     allTabProviders.values.forEach { Disposer.dispose(it) }
     separateTabProviders.values.forEach { Disposer.dispose(it) }
+    legacyAllTabContributors.values.forEach { Disposer.dispose(it) }
+    legacySeparateTabContributors.values.forEach { Disposer.dispose(it) }
   }
 
   fun getLegacyContributor(providerId: SeProviderId, isAllTab: Boolean): SearchEverywhereContributor<Any>? {
@@ -46,7 +51,7 @@ class SeProvidersHolder(
 
   fun getEssentialAllTabProviderIds(): Set<SeProviderId> =
     legacyAllTabContributors.filter {
-      allTabProviders.contains(it.key) && EssentialContributor.checkEssential(it.value)
+      (allTabProviders[it.key]?.isAdapted == false) && EssentialContributor.checkEssential(it.value)
     }.keys
 
   companion object {
@@ -55,7 +60,7 @@ class SeProvidersHolder(
       project: Project?,
       session: SeSession,
       logLabel: String,
-      providerIds: List<SeProviderId>? = null,
+      withAdaptedLegacyContributors: Boolean,
     ): SeProvidersHolder {
       val legacyContributors = mutableMapOf<SeProviderId, SearchEverywhereContributor<Any>>()
       val separateTabLegacyContributors = mutableMapOf<SeProviderId, SearchEverywhereContributor<Any>>()
@@ -67,9 +72,7 @@ class SeProvidersHolder(
       val providers = mutableMapOf<SeProviderId, SeLocalItemDataProvider>()
       val separateTabProviders = mutableMapOf<SeProviderId, SeLocalItemDataProvider>()
 
-      SeItemsProviderFactory.EP_NAME.extensionList.filter {
-        providerIds == null || SeProviderId(it.id) in providerIds
-      }.forEach { providerFactory ->
+      SeItemsProviderFactory.EP_NAME.extensionList.forEach { providerFactory ->
         val provider: SeItemsProvider?
         val separateTabProvider: SeItemsProvider?
 
@@ -103,8 +106,13 @@ class SeProvidersHolder(
         }
       }
 
-      legacyContributors.disposeAndFilterOutUnnecessaryLegacyContributors(providers.keys)
-      separateTabLegacyContributors.disposeAndFilterOutUnnecessaryLegacyContributors(separateTabProviders.keys)
+      if (withAdaptedLegacyContributors) {
+        val adaptedProviders = legacyContributors.filter { !providers.keys.contains(it.key) }.map {
+          it.key to SeLocalItemDataProvider(SeAdaptedItemsProvider(it.value), session, logLabel)
+        }
+
+        providers.putAll(adaptedProviders)
+      }
 
       return SeProvidersHolder(providers,
                                separateTabProviders,

@@ -137,10 +137,10 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
       }
 
       if (commentHere && found.size() == 1) {
-        CommentRange range = found.iterator().next();
+        CommentRange range = found.getFirst();
         // Is the comment in the right place?
-        if (langOpts.isRelativeBefore() && range.getFirst() == comments.get(0) ||
-            !langOpts.isRelativeBefore() && range.getLast() == comments.get(comments.size() - 1)) {
+        if (langOpts.isRelativeBefore() && range.getFirst() == comments.getFirst() ||
+            !langOpts.isRelativeBefore() && range.getLast() == comments.getLast()) {
           // Check to see if current copyright comment matches new one.
           String newComment = getCommentText("", "");
           resetCommentText();

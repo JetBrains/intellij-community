@@ -34,4 +34,9 @@ public class RuleIdeClient implements RuleClient {
   public boolean hasLocalMode() {
     return true;
   }
+
+  @Override
+  public boolean showIdeStyles() {
+    return true;
+  }
 }

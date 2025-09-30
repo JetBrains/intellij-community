@@ -2,14 +2,15 @@
 package com.intellij.openapi.application.impl.islands
 
 import com.intellij.ide.ProjectWindowCustomizerService
+import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
+import com.intellij.openapi.application.impl.TopNavBarComponentFacade
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
@@ -35,6 +36,7 @@ import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLayeredPane
+import com.intellij.ui.mac.WindowTabsComponent
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.tabs.JBTabPainter
@@ -42,6 +44,7 @@ import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -242,6 +245,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
         when (it) {
           is EditorsSplitters -> {
+            it.border = null
             it.borderPainter = DefaultBorderPainter()
           }
           is ManyIslandDivider -> {
@@ -311,9 +315,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
             val tabContainer = rootPane.getClientProperty("WINDOW_TABS_CONTAINER_KEY")
             if (tabContainer is JComponent) {
               if (isIslands) {
-                val left = if (leftVisible) JBUI.unscale(buttonManager.left.width) + 1 else gap
-                val right = if (rightVisible) JBUI.unscale(buttonManager.right.width) + 2 else gap + 1
-
                 val frame = rootPane.parent
                 if (frame is IdeFrame) {
                   val project = frame.project
@@ -322,7 +323,15 @@ internal class IslandsUICustomization : InternalUICustomization() {
                   }
                 }
 
-                tabContainer.border = JBUI.Borders.empty(0, left, 2, right)
+                if (DistractionFreeModeController.isDistractionFreeModeEnabled()) {
+                  tabContainer.border = JBUI.Borders.emptyBottom(2)
+                }
+                else {
+                  val left = if (leftVisible) JBUI.unscale(buttonManager.left.width) + 1 else gap
+                  val right = if (rightVisible) JBUI.unscale(buttonManager.right.width) + 2 else gap + 1
+
+                  tabContainer.border = JBUI.Borders.empty(0, left, 2, right)
+                }
               }
               else if (tabContainer.border != null) {
                 tabContainer.border = null
@@ -338,7 +347,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
           return@addVisibleToolbarsListener
         }
 
-        if (leftVisible && rightVisible) {
+        if (leftVisible && rightVisible || DistractionFreeModeController.isDistractionFreeModeEnabled()) {
           if (toolWindowPaneParent.border != null) {
             toolWindowPaneParent.border = null
           }
@@ -418,6 +427,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
+  override fun configureTopNavBar(navBar: TopNavBarComponentFacade) {
+    if (isManyIslandEnabled) {
+      configureMainFrameChildren(navBar as Component, true)
+    }
+  }
+
   private fun configureMainFrame(frame: IdeFrameImpl, install: Boolean) {
     if (install) {
       frame.addWindowListener(frameActiveListener)
@@ -445,6 +460,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
         component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
       }
       is ToolWindowPane -> {
+        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
+      }
+      is TopNavBarComponentFacade -> {
+        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
+      }
+      is WindowTabsComponent -> {
         component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
       }
     }
@@ -475,7 +496,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun createToolWindowBorderPainter(toolwindow: ToolWindow, component: XNextIslandHolder) {
-    component.border = null
+    component.border = JBEmptyBorder(JBUI.insets("Island.ToolWindow.border", JBUI.insets(3)))
+
     component.borderPainter = object : AbstractBorderPainter() {
       override fun paintAfterChildren(component: JComponent, g: Graphics) {
         if (toolwindow.type.isInternal) {
@@ -486,7 +508,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun createEditorBorderPainter(component: EditorsSplitters) {
+    component.border = JBEmptyBorder(JBUI.insets("Island.Editor.border", JBUI.insets(2)))
+
     ClientProperty.putRecursive(component, IdeBackgroundUtil.NO_BACKGROUND, true)
+
     component.borderPainter = object : AbstractBorderPainter() {
       override fun paintAfterChildren(component: JComponent, g: Graphics) {
         val fileEditorManager = ProjectUtil.getProjectForComponent(component)?.getServiceIfCreated(FileEditorManager::class.java)
@@ -627,13 +652,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
-  override fun configureButtonLook(look: ActionButtonLook, g: Graphics): Graphics? {
-    if (isManyIslandEnabled && isIslandsGradientEnabled && look is SquareStripeButtonLook) {
-      return IdeBackgroundUtil.getOriginalGraphics(g)
-    }
-    return null
-  }
-
   override fun transformGraphics(component: JComponent, graphics: Graphics): Graphics {
     if (isManyIslandEnabled && isIslandsGradientEnabled) {
       return JBSwingUtilities.runGlobalCGTransform(component, graphics)
@@ -697,11 +715,14 @@ internal class IslandsUICustomization : InternalUICustomization() {
     return true
   }
 
-  override fun createProjectTab(frame: JFrame) {
-    if (frame is IdeFrame) {
-      frame.project?.also { project ->
-        updateToolStripesVisibility(ToolWindowManager.getInstance(project))
+  override fun createProjectTab(frame: JFrame, tabsComponent: WindowTabsComponent) {
+    if (isManyIslandEnabled) {
+      if (frame is IdeFrame) {
+        frame.project?.also { project ->
+          updateToolStripesVisibility(ToolWindowManager.getInstance(project))
+        }
       }
+      configureMainFrameChildren(tabsComponent, true)
     }
   }
 

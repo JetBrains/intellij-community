@@ -291,19 +291,31 @@ class SeTabDelegate(
       }
 
       val hasWildcard = providerIds.any { it.isWildcard }
+      val localProvidersHolder = SeFrontendService.getInstance(project).localProvidersHolder
+                                 ?: error("Local providers holder is not initialized")
 
       val localFactories = SeItemsProviderFactory.EP_NAME.extensionList.associateBy { SeProviderId(it.id) }
       val frontendOnlyIds = localFactories.filter { it.value is SeFrontendOnlyItemsProviderFactory }.map { it.key }.toSet()
 
-      val availableRemoteProviders = if (projectId != null) SeRemoteApi.getInstance().getAvailableProviderIds(projectId, session, dataContextId) else emptyMap()
+      val availableRemoteProviders = if (projectId != null) SeRemoteApi.getInstance().getAvailableProviderIds(projectId, session, dataContextId) else null
+      val adaptedRemoteProviderItemsAreFetchable = availableRemoteProviders?.isFetchable == true
 
-      val essentialRemoteProviderIds = availableRemoteProviders[SeProviderIdUtils.ESSENTIAL_KEY]?.filter {
+      val essentialRemoteProviderIds = availableRemoteProviders?.essential?.filter {
         !frontendOnlyIds.contains(it)
       }?.toSet() ?: emptySet()
 
-      val nonEssentialRemoteProviderIds = availableRemoteProviders[SeProviderIdUtils.NON_ESSENTIAL_KEY]?.filter {
+      val nonEssentialNonAdaptedRemoteProviderIds = availableRemoteProviders?.nonEssentialNonAdapted?.filter {
         !frontendOnlyIds.contains(it)
       }?.toSet() ?: emptySet()
+
+      val adaptedAndAvailableToRenderRemoteProviderIds = if (adaptedRemoteProviderItemsAreFetchable) {
+        availableRemoteProviders.adapted.filter {
+          !frontendOnlyIds.contains(it) && localProvidersHolder.legacyAllTabContributors.containsKey(it)
+        }
+      }
+      else emptySet()
+
+      val nonEssentialRemoteProviderIds = nonEssentialNonAdaptedRemoteProviderIds + adaptedAndAvailableToRenderRemoteProviderIds
 
       val remoteProviderIds = essentialRemoteProviderIds.union(nonEssentialRemoteProviderIds).filter { hasWildcard || providerIds.contains(it) }.toSet()
 
@@ -314,8 +326,6 @@ class SeTabDelegate(
       val localProviderIds =
         (if (hasWildcard) localFactories.keys else providerIds) - remoteProviderIds
 
-      val localProvidersHolder = SeFrontendService.getInstance(project).localProvidersHolder
-                                 ?: error("Local providers holder is not initialized")
       val localProviders = localProviderIds.mapNotNull { providerId ->
         localProvidersHolder.get(providerId, hasWildcard)?.let {
           providerId to it

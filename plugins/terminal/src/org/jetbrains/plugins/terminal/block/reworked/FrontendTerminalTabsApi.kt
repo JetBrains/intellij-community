@@ -11,6 +11,7 @@ import com.intellij.platform.project.projectId
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.UiNotifyConnector
+import fleet.rpc.client.durable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -43,12 +44,14 @@ internal class FrontendTerminalTabsApi(private val project: Project, private val
 
   private suspend fun doSendRenameRequest(request: RenameTabRequest) {
     try {
-      TerminalTabsManagerApi.getInstance().renameTerminalTab(
-        project.projectId(),
-        request.tabId,
-        request.newName,
-        request.isUserDefinedName,
-      )
+      durable {
+        TerminalTabsManagerApi.getInstance().renameTerminalTab(
+          project.projectId(),
+          request.tabId,
+          request.newName,
+          request.isUserDefinedName,
+        )
+      }
     }
     catch (e: CancellationException) {
       throw e
@@ -71,19 +74,25 @@ internal class FrontendTerminalTabsApi(private val project: Project, private val
 
   fun getStoredTerminalTabs(): CompletableFuture<List<TerminalSessionTab>> {
     return coroutineScope.async {
-      TerminalTabsManagerApi.getInstance().getTerminalTabs(project.projectId())
+      durable {
+        TerminalTabsManagerApi.getInstance().getTerminalTabs(project.projectId())
+      }
     }.asCompletableFuture()
   }
 
   fun createNewTerminalTab(): CompletableFuture<TerminalSessionTab> {
     return coroutineScope.async {
-      TerminalTabsManagerApi.getInstance().createNewTerminalTab(project.projectId())
+      durable {
+        TerminalTabsManagerApi.getInstance().createNewTerminalTab(project.projectId())
+      }
     }.asCompletableFuture()
   }
 
   fun closeTerminalTab(tabId: Int) {
     coroutineScope.launch {
-      TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), tabId)
+      durable {
+        TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), tabId)
+      }
     }
   }
 
@@ -132,7 +141,9 @@ internal class FrontendTerminalTabsApi(private val project: Project, private val
       // Start the new terminal session
       val optionsWithSize = updateTerminalSizeFromWidget(options, widget)
       withContext(Dispatchers.IO) {
-        startTerminalSessionForTab(optionsWithSize, sessionTab.id)
+        durable {
+          startTerminalSessionForTab(optionsWithSize, sessionTab.id)
+        }
       }
     }
 

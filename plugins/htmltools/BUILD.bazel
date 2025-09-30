@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.html.tools` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "html-tools_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.html.tools",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":html-tools_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -27,8 +28,7 @@ jvm_library(
     "//platform/indexing-impl",
     "//xml/xml-psi-api:psi",
     "//platform/core-ui",
-  ],
-  runtime_deps = [":html-tools_resources"]
+  ]
 )
 ### auto-generated section `build intellij.html.tools` end
 
@@ -56,6 +56,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
     "//xml/xml-psi-api:psi",
     "//xml/tests:tests_test_lib",
     "//platform/core-ui",

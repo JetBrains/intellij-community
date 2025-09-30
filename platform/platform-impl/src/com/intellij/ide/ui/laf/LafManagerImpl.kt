@@ -20,8 +20,10 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.CoroutineSupport
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -66,7 +68,9 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -216,13 +220,24 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   private fun addListeners() {
-    UIThemeProvider.EP_NAME.addExtensionPointListener(service<LafDynamicPluginManager>().createUiThemeEpListener(manager = this))
+    UIThemeProvider.EP_NAME.addExtensionPointListener(coroutineScope, service<LafDynamicPluginManager>().createUiThemeEpListener(manager = this))
     @Suppress("ObjectLiteralToLambda")
     ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, object : UISettingsListener {
       override fun uiSettingsChanged(uiSettings: UISettings) {
-        val newValues = computeValuesOfUsedUiOptions()
-        if (newValues != usedValuesOfUiOptions) {
-          updateUI()
+        val task = {
+          val newValues = computeValuesOfUsedUiOptions()
+          if (newValues != usedValuesOfUiOptions) {
+            updateUI()
+          }
+        }
+
+        if (EDT.isCurrentThreadEdt()) {
+          task()
+        }
+        else {
+          coroutineScope.launch(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.RELAX)) {
+            task()
+          }
         }
       }
     })

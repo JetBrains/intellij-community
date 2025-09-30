@@ -1,0 +1,12 @@
+### auto-generated section `build intellij.java.jshell.frontend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "frontend",
+  module_name = "intellij.java.jshell.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = ["//plugins/jshell/protocol"]
+)
+### auto-generated section `build intellij.java.jshell.frontend` end

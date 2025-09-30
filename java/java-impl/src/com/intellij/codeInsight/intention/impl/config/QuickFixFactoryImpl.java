@@ -54,6 +54,7 @@ import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.siyeh.ig.controlflow.UnnecessaryDefaultInspection;
 import com.siyeh.ig.fixes.*;
 import com.siyeh.ipp.imports.ReplaceOnDemandImportIntention;
@@ -590,6 +591,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
+  @RequiresBackgroundThread
   public @NotNull ModCommandAction createOptimizeImportsFix(final boolean fixOnTheFly, @NotNull PsiFile file) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     VirtualFile virtualFile = file.getVirtualFile();
@@ -1174,5 +1176,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull List<? extends @NotNull ModCommandAction> createReplaceTypeWithWrongImportFixes(@Nullable PsiJavaCodeReferenceElement reference) {
     if(reference == null) return List.of();
     return ReplaceTypeWithWrongImportFix.createFixes(reference);
+  }
+
+  @Override
+  public @Nullable ModCommandAction createChangeToSimilarKeyword(@Nullable PsiElement old,
+                                                                 @NotNull Collection<@NotNull String> newKeywords) {
+    if (old == null) return null;
+    if (newKeywords.isEmpty()) return null;
+    return ChangeToSimilarKeywordFix.createFix(old, newKeywords);
   }
 }

@@ -7,13 +7,15 @@ import com.intellij.find.SearchSession;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
 
-public class FindInGridAction extends ToggleAction implements DumbAware, GridAction {
+public class FindInGridAction extends ToggleAction implements DumbAware, GridAction,
+                                                              ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;

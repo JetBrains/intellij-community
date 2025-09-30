@@ -22,6 +22,7 @@ import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
+import java.io.File
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.inputStream
@@ -123,6 +124,27 @@ class BazelCompilationContext(
   override suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?): Unit = delegate.compileModules(moduleNames, includingTestsInModules)
 
   override suspend fun withCompilationLock(block: suspend () -> Unit): Unit = delegate.withCompilationLock(block)
+
+  fun replaceWithCompressedIfNeededLF(files: List<File>): List<File> {
+    val out = ArrayList<File>(files.size)
+    for (file in files) {
+      val path = file.toPath()
+      if (!path.startsWith(classesOutputDirectory)) {
+        out.add(file)
+        continue
+      }
+      val roots = modulesToOutputRoots[path.name]
+      if (roots == null) {
+        out.add(file)
+        continue
+      }
+      val jars =
+        if (path.parent.name == "test") roots.testJars
+        else roots.productionJars
+      jars.mapTo(out, Path::toFile)
+    }
+    return out
+  }
 
   private class BazelTargetsInfo {
     companion object {

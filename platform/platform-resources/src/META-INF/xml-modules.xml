@@ -1,7 +1,7 @@
 <idea-plugin>
   <module value="com.intellij.modules.xml"/>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.xml.dom" loading="embedded"/>
     <module name="intellij.xml.dom.impl" loading="embedded"/>
     <module name="intellij.xml.structureView" loading="embedded"/>

@@ -4,10 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
@@ -76,7 +73,7 @@ class ProjectStoreTest {
       assertThat(project.basePath).isEqualTo(PathUtil.getParentPath((PathUtil.getParentPath(project.projectFilePath!!))))
 
       // test reload on external change
-      val file = project.stateStore.storageManager.expandMacro(PROJECT_FILE)
+      val file = project.stateStore.storageManager.expandMacro(StoragePathMacros.PROJECT_FILE)
       file.writeText(file.readText().replace("""<option name="AAValue" value="foo" />""", """<option name="AAValue" value="newValue" />"""))
 
       refreshProjectConfigDir(project)
@@ -239,19 +236,15 @@ class ProjectStoreTest {
 
     val testComponent = TestComponent()
     testComponent.loadState(TestState(AAValue = "foo"))
-    (projectManager.defaultProject as ComponentManager).stateStore.initComponent(component = testComponent,
-                                                                                 serviceDescriptor = null,
-                                                                                 pluginId = PluginManagerCore.CORE_ID)
+    (projectManager.defaultProject as ComponentManager).stateStore.initComponent(component = testComponent, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
 
-    runBlocking {
-      val newProjectPath = tempDirManager.newPath()
-      val newProject = projectManager.openProjectAsync(newProjectPath, OpenProjectTask { isNewProject = true })!!
-      newProject.useProjectAsync {
-        newProject.stateStore.save(forceSavingAllSettings = true)
-        val miscXml = newProjectPath.resolve(".idea/misc.xml").readText()
-        assertThat(miscXml).contains("AATestComponent")
-        assertThat(miscXml).contains("""<option name="AAValue" value="foo" />""")
-      }
+    val newProjectPath = tempDirManager.newPath()
+    val newProject = projectManager.openProjectAsync(newProjectPath, OpenProjectTask { isNewProject = true })!!
+    newProject.useProjectAsync {
+      newProject.stateStore.save(forceSavingAllSettings = true)
+      val miscXml = newProjectPath.resolve(".idea/misc.xml").readText()
+      assertThat(miscXml).contains("AATestComponent")
+      assertThat(miscXml).contains("""<option name="AAValue" value="foo" />""")
     }
   }
 
@@ -263,7 +256,7 @@ class ProjectStoreTest {
     testComponent.state!!.AAValue = "foo"
     project.stateStore.save()
 
-    val file = project.stateStore.storageManager.expandMacro(PROJECT_FILE)
+    val file = project.stateStore.storageManager.expandMacro(StoragePathMacros.PROJECT_FILE)
     assertThat(file).isRegularFile
     // test exact string - xml prolog, line separators, indentation and so on must be exactly the same
     // todo get rid of default component states here

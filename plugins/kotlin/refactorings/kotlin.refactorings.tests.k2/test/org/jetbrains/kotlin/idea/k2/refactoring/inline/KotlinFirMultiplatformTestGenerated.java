@@ -30,6 +30,11 @@ public class KotlinFirMultiplatformTestGenerated extends AbstractKotlinFirMultip
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("defaultValueFromAnotherModule.kt")
+    public void testDefaultValueFromAnotherModule() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/inlineMultiModule/defaultValueFromAnotherModule.kt");
+    }
+
     @TestMetadata("defaultValueFromExpect.kt")
     public void testDefaultValueFromExpect() throws Exception {
         runTest("../../idea/tests/testData/refactoring/inlineMultiModule/defaultValueFromExpect.kt");

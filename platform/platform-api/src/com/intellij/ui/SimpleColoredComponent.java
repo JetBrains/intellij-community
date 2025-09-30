@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.icons.IconWithToolTip;
 import com.intellij.ui.paint.EffectPainter;
@@ -282,6 +283,20 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   public void clear() {
     _clear();
     revalidateAndRepaint();
+  }
+
+  /**
+   * Creates a {@code SimpleColoredComponent} from {@link MarkupText}.
+   * @param text markup text
+   * @return a newly created {@code SimpleColoredComponent} that visualizes the specified text
+   */
+  @ApiStatus.Experimental
+  public static SimpleColoredComponent fromMarkupText(@NotNull MarkupText text) {
+    SimpleColoredComponent component = new SimpleColoredComponent();
+    for (MarkupText.Fragment fragment : text.fragments()) {
+      component.append(fragment.text(), SimpleTextAttributes.fromMarkupTextKind(fragment.kind()));
+    }
+    return component;
   }
 
   private void _clear() {

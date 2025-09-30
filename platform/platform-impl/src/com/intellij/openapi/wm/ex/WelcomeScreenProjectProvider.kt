@@ -2,28 +2,40 @@
 package com.intellij.openapi.wm.ex
 
 import com.intellij.diagnostic.WindowsDefenderChecker
+import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.util.TipAndTrickManager
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.PlatformProjectOpenProcessor
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import kotlin.io.path.absolute
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 
-@Service(Service.Level.APP)
-private class WelcomeProjectScopeHolder(val coroutineScope: CoroutineScope)
+private val LOG = logger<WelcomeScreenProjectProvider>()
+private val EP_NAME: ExtensionPointName<WelcomeScreenProjectProvider> = ExtensionPointName("com.intellij.welcomeScreenProjectProvider")
+
+@Internal
+fun getWelcomeScreenProjectProvider(): WelcomeScreenProjectProvider? {
+  val providers = EP_NAME.extensionList
+  if (providers.isEmpty()) {
+    return null
+  }
+
+  if (providers.size > 1) {
+    LOG.warn("Multiple WelcomeScreenProjectProvider extensions")
+    return null
+  }
+  return providers.first()
+}
 
 /**
  * Allows identifying projects that act as a welcome screen tab.
@@ -34,73 +46,48 @@ private class WelcomeProjectScopeHolder(val coroutineScope: CoroutineScope)
  *
  * This customization is intended to be used per-IDE, not per language.
  */
-@ApiStatus.Internal
+@Internal
 abstract class WelcomeScreenProjectProvider {
   companion object {
-    private val EP_NAME: ExtensionPointName<WelcomeScreenProjectProvider> = ExtensionPointName("com.intellij.welcomeScreenProjectProvider")
-
-    private fun getSingleExtension(): WelcomeScreenProjectProvider? {
-      val providers = EP_NAME.extensionList
-      if (providers.isEmpty()) return null
-      if (providers.size > 1) {
-        thisLogger().warn("Multiple WelcomeScreenProjectProvider extensions")
-        return null
-      }
-      return providers.first()
-    }
-
-    @JvmStatic
     fun isWelcomeScreenProject(project: Project): Boolean {
-      val extension = getSingleExtension() ?: return false
+      val extension = getWelcomeScreenProjectProvider() ?: return false
       return extension.doIsWelcomeScreenProject(project)
     }
 
-    @JvmStatic
     fun isForceDisabledFileColors(): Boolean {
-      val extension = getSingleExtension() ?: return false
+      val extension = getWelcomeScreenProjectProvider() ?: return false
       return extension.doIsForceDisabledFileColors()
     }
 
-    @JvmStatic
     fun getCreateNewFileProjectPrefix(): String {
-      val extension = getSingleExtension() ?: return ""
+      val extension = getWelcomeScreenProjectProvider() ?: return ""
       return extension.doGetCreateNewFileProjectPrefix()
     }
 
     fun getWelcomeScreenProjectPath(): Path? {
-      return getSingleExtension()?.getWelcomeScreenProjectPath()
+      return getWelcomeScreenProjectProvider()?.getWelcomeScreenProjectPath()
     }
 
-    @JvmStatic
-    suspend fun createOrOpenWelcomeScreenProject(): Project? {
-      val extension = getSingleExtension() ?: return null
+    suspend fun createOrOpenWelcomeScreenProject(extension: WelcomeScreenProjectProvider): Project {
       val projectPath = extension.getWelcomeScreenProjectPath()
 
       if (!projectPath.exists(LinkOption.NOFOLLOW_LINKS)) {
         projectPath.createDirectories()
       }
       TrustedProjects.setProjectTrusted(projectPath, true)
-      service<WindowsDefenderChecker>().markProjectPath(projectPath, /*skip =*/ true)
+      serviceAsync<WindowsDefenderChecker>().markProjectPath(projectPath, /*skip =*/ true)
 
-      val project = extension.doCreateOrOpenWelcomeScreenProject(projectPath) ?: return null
+      val project = extension.doCreateOrOpenWelcomeScreenProject(projectPath)
+      FUSProjectHotStartUpMeasurer.reportWelcomeScreenShown()
       LOG.info("Opened the welcome screen project at $projectPath")
       LOG.debug("Project: ", project)
 
-      val recentProjectsManager = RecentProjectsManagerBase.getInstanceEx()
+      val recentProjectsManager = serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase
       recentProjectsManager.setProjectHidden(project, true)
       TipAndTrickManager.DISABLE_TIPS_FOR_PROJECT.set(project, true)
 
       return project
     }
-
-    @JvmStatic
-    fun createOrOpenWelcomeScreenProjectAsync() {
-      service<WelcomeProjectScopeHolder>().coroutineScope.launch {
-         createOrOpenWelcomeScreenProject()
-      }
-    }
-
-    private val LOG = logger<WelcomeScreenProjectProvider>()
   }
 
   protected open fun getWelcomeScreenProjectPath(): Path {
@@ -115,7 +102,8 @@ abstract class WelcomeScreenProjectProvider {
 
   protected abstract fun doGetCreateNewFileProjectPrefix(): String
 
-  protected open suspend fun doCreateOrOpenWelcomeScreenProject(path: Path): Project? {
-    return PlatformProjectOpenProcessor.getInstance().openProjectAndFile(path, tempProject = false)
+  protected open suspend fun doCreateOrOpenWelcomeScreenProject(path: Path): Project {
+    return PlatformProjectOpenProcessor.openProjectAsync(path)
+           ?: throw IllegalStateException("Cannot open project at $path (not expected that user can cancel welcome-project loading)")
   }
 }

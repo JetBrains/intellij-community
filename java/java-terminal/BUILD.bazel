@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.java.terminal` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "terminal_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.java.terminal",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":terminal_resources"],
   deps = [
     "@lib//:kotlin-stdlib-provided",
     "//plugins/terminal",
@@ -23,8 +24,7 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/lang-impl",
     "//platform/util:util-ui",
-  ],
-  runtime_deps = [":terminal_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.terminal` end
 

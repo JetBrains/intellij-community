@@ -4,6 +4,7 @@
 package com.intellij.platform.testFramework.plugins
 
 import com.intellij.ide.plugins.ModuleLoadingRule
+import com.intellij.ide.plugins.ModuleVisibility
 import org.intellij.lang.annotations.Language
 
 
@@ -25,9 +26,11 @@ class PluginSpec internal constructor(
   val pluginDependencies: List<DependsSpec>,
   val moduleDependencies: List<String>,
   val pluginMainModuleDependencies: List<String>,
+  val moduleVisibility: ModuleVisibility,
 
   val pluginAliases: List<String>,
   val incompatibleWith: List<String>,
+  val namespace: String?,
   val content: List<ContentModuleSpec>,
 
   val resourceBundle: String?,
@@ -63,8 +66,10 @@ class PluginSpecBuilder(
   internal var moduleDependencies: List<String> = emptyList(),
   internal var pluginMainModuleDependencies: List<String> = emptyList(),
 
+  var moduleVisibility: ModuleVisibility = ModuleVisibility.PRIVATE,
   var pluginAliases: List<String> = emptyList(),
   var incompatibleWith: List<String> = emptyList(),
+  var namespace: String? = null,
   internal var content: List<ContentModuleSpec> = emptyList(),
 
   var resourceBundle: String? = null,
@@ -82,7 +87,9 @@ class PluginSpecBuilder(
     id = id, name = name, packagePrefix = packagePrefix, implementationDetail = implementationDetail, isSeparateJar = isSeparateJar,
     rootTagAttributes = rootTagAttributes, untilBuild = untilBuild, sinceBuild = sinceBuild, category = category, version = version,
     vendor = vendor, description = description, pluginDependencies = pluginDependencies, moduleDependencies = moduleDependencies,
+    moduleVisibility = moduleVisibility,
     pluginMainModuleDependencies = pluginMainModuleDependencies, pluginAliases = pluginAliases, incompatibleWith = incompatibleWith,
+    namespace = namespace,
     content = content, resourceBundle = resourceBundle, actions = actions, applicationListeners = applicationListeners,
     extensionPoints = extensionPoints, extensions = extensions, body = body, classFiles = classFiles, packageClassFiles = packageClassFiles
   )

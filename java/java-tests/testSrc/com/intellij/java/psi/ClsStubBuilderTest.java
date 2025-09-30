@@ -50,7 +50,8 @@ public class ClsStubBuilderTest extends LightJavaCodeInsightTestCase {
 
   public void testModifiers() { doTest("../repo/pack/" + getTestName(false)); }
   public void testModuleInfo() { doTest("module-info"); }
-  public void testPackageInfo() { doTest("package-info"); }
+  public void testPackageInfoWithAnnotations() { doTest("packageInfoWithAnnotations/package-info"); }
+  public void testPackageInfoWithoutAnnotations() { doTest("packageInfoWithoutAnnotations/package-info"); }
 
   private void doClassTest(String className) {
     PsiClass aClass = getJavaFacade().findClass(className);

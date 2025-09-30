@@ -57,7 +57,7 @@ public final class LombokSetterMayBeUsedInspection extends LombokGetterOrSetterM
         || method.hasModifierProperty(PsiModifier.SYNCHRONIZED)
         || method.hasModifierProperty(PsiModifier.NATIVE)
         || method.hasModifierProperty(PsiModifier.STRICTFP)
-        || 0 < method.getAnnotations().length
+        || method.hasAnnotations()
         || !PsiTypes.voidType().equals(method.getReturnType())
         || !method.isWritable()) {
       return false;
@@ -70,7 +70,7 @@ public final class LombokSetterMayBeUsedInspection extends LombokGetterOrSetterM
         && 0 < parameter.getModifierList().getChildren().length
         && (parameter.getModifierList().getChildren().length != 1 || !parameter.hasModifier(JvmModifier.FINAL))
       )
-      || 0 < parameter.getAnnotations().length
+      || parameter.hasAnnotations()
     ) {
       return false;
     }

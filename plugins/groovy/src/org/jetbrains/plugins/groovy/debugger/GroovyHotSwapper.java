@@ -31,6 +31,8 @@ import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.regex.Pattern;
 
 final class GroovyHotSwapper extends JavaProgramPatcher {
@@ -108,7 +110,12 @@ final class GroovyHotSwapper extends JavaProgramPatcher {
     if (!project.isDefault() && containsGroovyClasses(project)) {
       String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(getAgentJarPath(), "groovyHotSwap", GROOVY_HOTSWAP_AGENT_PATH);
       if (agentPath != null) {
-        javaParameters.getVMParametersList().add("-javaagent:" + agentPath);
+        if (Files.isRegularFile(Path.of(agentPath))) {
+          javaParameters.getVMParametersList().add("-javaagent:" + agentPath);
+        }
+        else {
+          LOG.error("Groovy hotswap agent is not found at: " + agentPath);
+        }
       }
     }
   }

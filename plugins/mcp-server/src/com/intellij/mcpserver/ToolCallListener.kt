@@ -25,6 +25,8 @@ sealed interface McpToolSideEffectEvent
 
 sealed interface FileEvent: McpToolSideEffectEvent
 
+class DirectoryCreatedEvent(val file: VirtualFile) : FileEvent
+class DirectoryDeletedEvent(val file: VirtualFile) : FileEvent
 class FileCreatedEvent(val file: VirtualFile, val content: String) : FileEvent
 class FileDeletedEvent(val file: VirtualFile, val content: String?) : FileEvent
 class FileMovedEvent(val file: VirtualFile, val oldParent: VirtualFile, val newParent: VirtualFile) : FileEvent

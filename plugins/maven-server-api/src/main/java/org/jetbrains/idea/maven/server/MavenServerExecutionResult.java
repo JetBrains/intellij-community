@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
@@ -43,14 +44,14 @@ public class MavenServerExecutionResult implements Serializable {
 
   public static class ProjectData implements Serializable {
     public final @NotNull MavenModel mavenModel;
-    public final @NotNull List<MavenId> managedDependencies;
+    public final @NotNull List<MavenArtifactInfo> managedDependencies;
     public final String dependencyHash;
     public final boolean dependencyResolutionSkipped;
     public final Map<String, String> mavenModelMap;
     public final Collection<String> activatedProfiles;
 
     public ProjectData(@NotNull MavenModel mavenModel,
-                       @NotNull List<MavenId> managedDependencies,
+                       @NotNull List<MavenArtifactInfo> managedDependencies,
                        @Nullable String dependencyHash,
                        boolean dependencyResolutionSkipped,
                        Map<String, String> mavenModelMap,

@@ -18,7 +18,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.ui.MouseEventAdapter
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
-import java.awt.*
+import java.awt.Component
+import java.awt.Graphics
 import java.awt.event.*
 import java.awt.image.BufferedImage
 import javax.swing.JComponent
@@ -92,17 +93,23 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     val editorBackground = editor.backgroundColor
     var isBackgroundChanged = false
     (editor as EditorImpl).isStickyLinePainting = true
+
+    var graphics: Graphics? = null
     try {
+      graphics = graphicsOrDumb?.create()
       isBackgroundChanged = setStickyLineBackgroundColor()
-      if (graphicsOrDumb != null) {
+      if (graphics != null) {
         val editorStartY = if (isLineOutOfPanel()) editorY + y else editorY
-        graphicsOrDumb.translate(0, -editorStartY)
-        paintGutter(graphicsOrDumb, editorY, lineHeight, gutterWidth)
-        paintText(graphicsOrDumb, editorY, lineHeight, gutterWidth, textWidth)
-      } else {
+        graphics.translate(0, -editorStartY)
+        paintGutter(graphics, editorY, lineHeight, gutterWidth)
+        paintText(graphics, editorY, lineHeight, gutterWidth, textWidth)
+      }
+      else {
         dumbTextImage = prepareDumbTextImage(editorY, lineHeight, textWidth)
       }
-    } finally {
+    }
+    finally {
+      graphics?.dispose()
       editor.isStickyLinePainting = false
       if (isBackgroundChanged) {
         editor.backgroundColor = editorBackground
@@ -111,7 +118,7 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
   }
 
   private fun gutterAndTextWidth(): Pair<Int, Int> {
-    val lineWidth =  lineWidth()
+    val lineWidth = lineWidth()
     val gutterWidth = editor.gutterComponentEx.width
     if (gutterWidth > lineWidth) {
       // IJPL-159801
@@ -123,7 +130,8 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
   private fun setStickyLineBackgroundColor(): Boolean {
     val backgroundColorKey = if (isHovered) {
       EditorColors.STICKY_LINES_HOVERED_COLOR
-    } else {
+    }
+    else {
       EditorColors.STICKY_LINES_BACKGROUND
     }
     val backgroundColor = editor.colorsScheme.getColor(backgroundColorKey)
@@ -134,22 +142,33 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     return false
   }
 
-  @Suppress("SSBasedInspection")
   private fun paintGutter(g: Graphics, editorY: Int, lineHeight: Int, gutterWidth: Int) {
-    g.setClip(0, editorY, gutterWidth, lineHeight)
-    editor.gutterComponentEx.paint(g)
+    val graphics = g.create()
+    try {
+      graphics.clipRect(0, editorY, gutterWidth, lineHeight)
+      editor.gutterComponentEx.print(graphics)
+    }
+    finally {
+      graphics.dispose()
+    }
   }
 
-  @Suppress("SSBasedInspection")
   private fun paintText(g: Graphics, editorY: Int, lineHeight: Int, gutterWidth: Int, textWidth: Int) {
-    g.translate(gutterWidth, 0)
-    g.setClip(0, editorY, textWidth, lineHeight)
-    val textImage = dumbTextImage
-    if (textImage != null && (editor as EditorImpl).isDumb) {
-      StartupUiUtil.drawImage(g, textImage, 0, editorY, null)
-    } else {
-      doPaintText(g)
-      dumbTextImage = null
+    val graphics = g.create()
+    try {
+      graphics.translate(gutterWidth, 0)
+      graphics.clipRect(0, editorY, textWidth, lineHeight)
+      val textImage = dumbTextImage
+      if (textImage != null && (editor as EditorImpl).isDumb) {
+        StartupUiUtil.drawImage(graphics, textImage, 0, editorY, null)
+      }
+      else {
+        doPaintText(graphics)
+        dumbTextImage = null
+      }
+    }
+    finally {
+      graphics.dispose()
     }
   }
 
@@ -170,7 +189,7 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
   }
 
   private fun doPaintText(g: Graphics) {
-    editor.contentComponent.paint(g)
+    editor.contentComponent.print(g)
   }
 
   private fun lineWidth(): Int {
@@ -178,7 +197,7 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
   }
 
   private fun lineHeight(): Int {
-    val height= editor.lineHeight
+    val height = editor.lineHeight
     return if (isLineOutOfPanel()) height + y else height
   }
 
@@ -220,13 +239,13 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
       popMenu = actionManager.createActionPopupMenu("StickyLine", actionGroup).component
     }
 
-    override fun mousePressed(e: MouseEvent?)         = handleEvent(e)
-    override fun mouseReleased(e: MouseEvent?)        = handleEvent(e)
-    override fun mouseClicked(e: MouseEvent?)         = handleEvent(e)
-    override fun mouseEntered(e: MouseEvent?)         = handleEvent(e)
-    override fun mouseExited(e: MouseEvent?)          = handleEvent(e)
-    override fun mouseDragged(e: MouseEvent?)         = handleEvent(e)
-    override fun mouseMoved(e: MouseEvent?)           = handleEvent(e)
+    override fun mousePressed(e: MouseEvent?) = handleEvent(e)
+    override fun mouseReleased(e: MouseEvent?) = handleEvent(e)
+    override fun mouseClicked(e: MouseEvent?) = handleEvent(e)
+    override fun mouseEntered(e: MouseEvent?) = handleEvent(e)
+    override fun mouseExited(e: MouseEvent?) = handleEvent(e)
+    override fun mouseDragged(e: MouseEvent?) = handleEvent(e)
+    override fun mouseMoved(e: MouseEvent?) = handleEvent(e)
     override fun mouseWheelMoved(e: MouseWheelEvent?) = handleEvent(e)
 
     private fun handleEvent(event: MouseEvent?) {
@@ -236,15 +255,18 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
       when (event.id) {
         MouseEvent.MOUSE_ENTERED,
         MouseEvent.MOUSE_EXITED,
-        MouseEvent.MOUSE_MOVED -> {
+        MouseEvent.MOUSE_MOVED,
+          -> {
           onHover(event)
         }
         MouseEvent.MOUSE_PRESSED,
         MouseEvent.MOUSE_RELEASED,
-        MouseEvent.MOUSE_CLICKED -> {
+        MouseEvent.MOUSE_CLICKED,
+          -> {
           if (isGutterEvent(event)) {
             gutterClick(event)
-          } else {
+          }
+          else {
             popupOrNavigate(event)
           }
         }
@@ -275,7 +297,8 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
           if (isGutterEvent && isHovered && !isGutterHovered) {
             onTextHover(false)
             onGutterHover(true)
-          } else if (!isGutterEvent && !isHovered && isGutterHovered) {
+          }
+          else if (!isGutterEvent && !isHovered && isGutterHovered) {
             onTextHover(true)
             onGutterHover(false)
           }
@@ -300,7 +323,7 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     }
 
     private fun gutterClick(event: MouseEvent) {
-      if (event.id == MouseEvent.MOUSE_PRESSED || (event.id == MouseEvent.MOUSE_RELEASED && event.isPopupTrigger)) {
+      if (event.id == MouseEvent.MOUSE_PRESSED || event.id == MouseEvent.MOUSE_RELEASED && event.isPopupTrigger) {
         val converted = convert(event)
         val mouseListener = (editor as EditorImpl).mouseListener
         if (!event.isPopupTrigger) {
@@ -309,7 +332,8 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
         }
         if (event.id == MouseEvent.MOUSE_PRESSED) {
           mouseListener.mousePressed(converted)
-        } else {
+        }
+        else {
           mouseListener.mouseReleased(converted)
         }
       }
@@ -365,7 +389,8 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
         val point = event.locationOnScreen
         SwingUtilities.convertPointFromScreen(point, editor.gutterComponentEx)
         point.y
-      } else {
+      }
+      else {
         editor.visualLineToY(primaryVisualLine) + event.y
       }
       return MyMouseEvent(event, editor.gutterComponentEx, y)

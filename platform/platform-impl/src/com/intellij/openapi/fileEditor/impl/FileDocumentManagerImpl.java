@@ -488,8 +488,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     if (lineSeparator == null) {
       lineSeparator = document.getUserData(LINE_SEPARATOR_KEY);
       if (lineSeparator == null) {
-        Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
-        Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
+        CommandProcessor commandProcessor = CommandProcessor.getInstance();
+        Project project = commandProcessor.isCommandInProgress() ? commandProcessor.getCurrentCommandProject() : null;
         if (project == null) {
           project = ProjectUtil.guessProjectForFile(virtualFile);
         }

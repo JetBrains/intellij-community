@@ -3074,6 +3074,101 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-82979
+  public void testImplicitTypeAliasUsingLiteralMultiFile() {
+    doMultiFileTest();
+  }
+
+  // PY-81028
+  public void testImplicitTypeAliasUsingAnnotatedMultiFile() {
+    doMultiFileTest();
+  }
+
+  // PY-83583
+  public void testImplicitTypeAliasUsingAnnotatedWithNewStyleUnion() {
+    doTestByText("""
+                   from typing import Annotated
+                   from typing_extensions import Doc
+                   
+                   class A:
+                       pass
+                   
+                   class B:
+                       pass
+                   
+                   AOrB = Annotated[
+                       A | B,
+                       Doc("An instance of either A or B"),
+                   ]
+                   
+                   a_or_b: AOrB
+                   """);
+  }
+
+  // PY-83699
+  public void testImplicitTypeAliasUsingCallableWithNewStyleUnion() {
+    doTestByText("""
+                   from typing import Awaitable, Any, Callable
+                   
+                   AsyncFunc = Callable[[int], Awaitable[Any | None]]
+                   
+                   f: AsyncFunc
+                   """);
+  }
+
+  // PY-83700
+  public void testImplicitTypeAliasAtClassLevelMultiFile() {
+    doMultiFileTest();
+  }
+
+  // PY-81926
+  public void testUnionWithClassOverridingDunderOr() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   class Cls:
+                       def __or__(self, other: Self) -> Self:
+                           return self
+                   
+                   def foo(arg: Cls | None) -> None:
+                       print(arg)
+                   """);
+  }
+
+  // PY-81439
+  public void testImplicitTypeAliasUsingLiteral() {
+    doTestByText("""
+                   from typing import Literal, TypeAlias, reveal_type
+                   
+                   A = Literal[1, 2]
+                   A1: TypeAlias = Literal[6, 7]
+                   type A2 = Literal[6, 7]
+                   A3 = Literal[666]
+                   B = Literal[False, True]
+                   C = Literal['A', 'B']
+                   
+                   def f(a: A, a1: A1, a2: A2, a3: A3, b: B, c: C) -> None:
+                       print(a, a1, a2, a3, b, c)
+                   """);
+  }
+
+  public void testSelfImportedFromNonExcludedTypingExtensionsMultiFile() {
+    doMultiFileTest();
+  }
+
+
+  // PY-84289
+  public void testExponentialAnalysisTimeWhenMapLookupKeyEqualsVariableName() {
+    long before = System.currentTimeMillis();
+    doMultiFileTest("main.py");
+    long after = System.currentTimeMillis();
+    long diff = after - before;
+    // junit3 doesn't support timeouts out of the box
+    if (diff > 5000) {
+      fail("Took too long to analyze main.py: " + diff + " ms");
+    }
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

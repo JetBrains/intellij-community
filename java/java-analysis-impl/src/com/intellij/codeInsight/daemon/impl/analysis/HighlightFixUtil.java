@@ -333,7 +333,7 @@ public final class HighlightFixUtil {
   public static void registerFixesForExpressionStatement(@NotNull Consumer<? super CommonIntentionAction> info,
                                                          @NotNull PsiElement statement) {
     if (!(statement instanceof PsiExpressionStatement)) return;
-    if (!(statement.getParent() instanceof PsiCodeBlock block)) return; 
+    if (!(statement.getParent() instanceof PsiCodeBlock block)) return;
     PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
     if (expression instanceof PsiAssignmentExpression) return;
     PsiType type = expression.getType();

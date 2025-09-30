@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.grid.types` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "types_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,11 +12,11 @@ jvm_library(
   module_name = "intellij.grid.types",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":types_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
     "//platform/util-rt",
     "@lib//:jetbrains-annotations",
-  ],
-  runtime_deps = [":types_resources"]
+  ]
 )
 ### auto-generated section `build intellij.grid.types` end

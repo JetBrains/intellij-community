@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.java.resources` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "java-resources_resources",
-  files = glob(["src/**/*"]),
+  srcs = glob(["src/**/*"]),
   strip_prefix = "src"
 )
 
@@ -11,8 +11,8 @@ jvm_library(
   name = "java-resources",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
+  resources = [":java-resources_resources"],
   runtime_deps = [
-    ":java-resources_resources",
     "//RegExpSupport:regexp",
     "//platform/backend",
     "//platform/util",

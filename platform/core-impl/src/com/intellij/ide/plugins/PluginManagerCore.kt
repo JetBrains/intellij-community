@@ -72,7 +72,8 @@ object PluginManagerCore {
 
   @JvmField val CORE_ID: PluginId = PluginId.getId(CORE_PLUGIN_ID)
   @JvmField val JAVA_PLUGIN_ID: PluginId = PluginId.getId("com.intellij.java")
-  @JvmField val JAVA_MODULE_ID: PluginId = PluginId.getId("com.intellij.modules.java")
+  @ApiStatus.Internal
+  @JvmField val JAVA_PLUGIN_ALIAS_ID: PluginId = PluginId.getId("com.intellij.modules.java")
   @JvmField val ALL_MODULES_MARKER: PluginId = PluginId.getId("com.intellij.modules.all")
   @JvmField val SPECIAL_IDEA_PLUGIN_ID: PluginId = PluginId.getId("IDEA CORE")
   @ApiStatus.Internal
@@ -111,7 +112,11 @@ object PluginManagerCore {
   private var thirdPartyPluginsNoteAccepted: Boolean? = null
 
   /**
-   * See also [AppMode.isDevServer]
+   * Returns `true` if the IDE is running from source code **without using 'dev build'**.
+   * In this mode a single classloader is used to load all modules and plugins, and the actual layout of class-files and resources differs from the real production layout.
+   * The IDE can be started in this mode from source code using a run configuration without the 'dev build' suffix. Also, tests are often started in this mode.
+   *
+   * See also [AppMode.isRunningFromDevBuild].
    */
   @JvmStatic
   fun isRunningFromSources(): Boolean {
@@ -250,10 +255,24 @@ object PluginManagerCore {
     isDevelopedByJetBrains(plugin.organization)
 
   @JvmStatic
-  fun isDevelopedByJetBrains(vendorString: String?): Boolean = when {
+  @ApiStatus.Internal
+  fun isDevelopedExclusivelyByJetBrains(plugin: PluginDescriptor): Boolean =
+    CORE_ID == plugin.getPluginId() || SPECIAL_IDEA_PLUGIN_ID == plugin.getPluginId() ||
+    isDevelopedExclusivelyByJetBrains(plugin.getVendor()) ||
+    isDevelopedExclusivelyByJetBrains(plugin.organization)
+
+  @JvmStatic
+  fun isDevelopedByJetBrains(vendorString: String?): Boolean = isDevelopedByJetBrains(vendorString, false)
+
+  @JvmStatic
+  @ApiStatus.Internal
+  fun isDevelopedExclusivelyByJetBrains(vendorString: String?): Boolean = isDevelopedByJetBrains(vendorString, true)
+
+  @JvmStatic
+  private fun isDevelopedByJetBrains(vendorString: String?, exclusively: Boolean): Boolean = when {
     vendorString == null -> false
     isVendorJetBrains(vendorString) -> true
-    else -> vendorString.splitToSequence(',').any { isVendorJetBrains(it.trim()) }
+    else -> vendorString.splitToSequence(',').run { if (exclusively) all { isVendorJetBrains(it.trim()) } else any { isVendorJetBrains(it.trim()) } }
   }
 
   @JvmStatic
@@ -968,6 +987,9 @@ object PluginManagerCore {
 
 
   //<editor-fold desc="Deprecated stuff.">
+  @Deprecated("The platform code should use [JAVA_PLUGIN_ALIAS_ID] instead, plugins aren't supposed to use this")
+  @JvmField val JAVA_MODULE_ID: PluginId = JAVA_PLUGIN_ALIAS_ID
+
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link PluginManager#getPluginByClass}.")
   @JvmStatic
@@ -1069,14 +1091,18 @@ fun pluginRequiresUltimatePlugin(rootDescriptor: IdeaPluginDescriptorImpl,
   }
 }
 
+/**
+ * Checks if the class is a part of the platform or included to a built-in plugin provided by JetBrains vendor.
+ */
 @ApiStatus.Internal
 @IntellijInternalApi
-fun isPlatformOrJetBrainsBundled(aClass: Class<*>): Boolean {
+fun isPlatformOrJetBrainsDistributionPlugin(aClass: Class<*>): Boolean {
   val classLoader = aClass.classLoader
   when {
     classLoader is PluginAwareClassLoader -> {
       val plugin = classLoader.pluginDescriptor
-      return plugin.isBundled && PluginManagerCore.isDevelopedByJetBrains(plugin)
+      return (plugin.isBundled || PluginManagerCore.isUpdatedBundledPlugin(plugin))
+             && PluginManagerCore.isDevelopedByJetBrains(plugin)
     }
     PluginManagerCore.isRunningFromSources() -> {
       return true

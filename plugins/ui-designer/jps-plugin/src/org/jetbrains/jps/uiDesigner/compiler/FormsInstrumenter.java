@@ -165,7 +165,10 @@ public final class FormsInstrumenter extends ModuleLevelBuilder implements JvmCl
         continue;
       }
       catch (Exception e) {
-        throw new ProjectBuildException(FormBundle.message("cannot.process.form.file", formFile.toString()), e);
+        String srcPath = formFile.toString();
+        String message = FormBundle.message("cannot.process.form.file", srcPath);
+        context.processMessage(new CompilerMessage(getId(), BuildMessage.Kind.ERROR, message, srcPath));
+        throw new ProjectBuildException(message, e);
       }
 
       final @NlsSafe String classToBind = rootContainer.getClassToBind();

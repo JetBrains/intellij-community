@@ -190,20 +190,22 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     return runBlockingMaybeCancellable {
       runLongRunningTask(
         LongRunningEmbedderTask { embedder, taskInput ->
-          embedder.resolveArtifactsTransitively(taskInput, ArrayList(artifacts), ArrayList(remoteRepositories), ourToken)
+          embedder.resolveProcessorPathEntries(taskInput, ArrayList(artifacts), ArrayList(remoteRepositories), HashMap(), MavenExplicitProfiles(emptyList(), emptyList()), ourToken)
         }, null, MavenLogEventHandler)
 
     }.transform()
   }
 
-  suspend fun resolveArtifactsTransitively(
+  suspend fun resolveProcessorPathEntries(
     artifacts: List<MavenArtifactInfo>,
     remoteRepositories: List<MavenRemoteRepository>,
+    managedDeps: Map<String, MavenArtifactInfo>,
+    profiles: MavenExplicitProfiles,
   ): MavenArtifactResolveResult {
     if (artifacts.isEmpty()) return MavenArtifactResolveResult(emptyList(), null)
     return runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskInput ->
-        embedder.resolveArtifactsTransitively(taskInput, ArrayList(artifacts), ArrayList(remoteRepositories), ourToken)
+        embedder.resolveProcessorPathEntries(taskInput, ArrayList(artifacts), ArrayList(remoteRepositories), HashMap(managedDeps), profiles, ourToken)
       }, null, MavenLogEventHandler)  }
 
   private fun MavenArtifact.transformPaths(transformer: RemotePathTransformerFactory.Transformer) = this.replaceFile(

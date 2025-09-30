@@ -1,18 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.backend.providers.target
 
-import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.ItemWithPresentation
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
-import com.intellij.platform.searchEverywhere.backend.providers.ScopeChooserActionProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.*
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
@@ -40,7 +35,7 @@ class SeTargetItem(
 
 @OptIn(ExperimentalAtomicApi::class)
 @Internal
-class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) {
+class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContributorWrapper<Any>) {
   private val scopeProviderDelegate = ScopeChooserActionProviderDelegate(contributorWrapper)
   private val contributor = contributorWrapper.contributor
 
@@ -48,31 +43,27 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
     val inputQuery = params.inputQuery
     val defaultMatchers = createDefaultMatchers(inputQuery)
 
-    val scopeToApply: String? = SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
-      scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
+    SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
+      val selectedScopeId = scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
         if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
-      }
+      } ?: return@let
+
+      scopeProviderDelegate.applyScope(selectedScopeId, false)
     } ?: run {
       val targetsFilter = SeTargetsFilter.from(params.filter)
       SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, targetsFilter.hiddenTypes)
-      targetsFilter.selectedScopeId
+      scopeProviderDelegate.applyScope(targetsFilter.selectedScopeId, targetsFilter.isAutoTogglePossible)
     }
-    applyScope(scopeToApply)
 
-    coroutineToIndicator {
-      val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
+    contributorWrapper.fetchElements(inputQuery, object : AsyncProcessor<Any> {
+      override suspend fun process(item: Any, weight: Int): Boolean {
+        val legacyItem = item as? ItemWithPresentation<*> ?: return true
+        val matchers = (contributor as? PSIPresentationBgRendererWrapper)
+          ?.getNonComponentItemMatchers({ _ -> defaultMatchers }, legacyItem.getItem())
 
-      contributorWrapper.fetchWeightedElements(inputQuery, indicator, object : AsyncProcessor<FoundItemDescriptor<Any>> {
-        override suspend fun process(t: FoundItemDescriptor<Any>): Boolean {
-          val weight = t.weight
-          val legacyItem = t.item as? ItemWithPresentation<*> ?: return true
-          val matchers = (contributor as? PSIPresentationBgRendererWrapper)
-            ?.getNonComponentItemMatchers({ _ -> defaultMatchers }, legacyItem.getItem())
-
-          return collector.put(SeTargetItem(legacyItem, matchers, weight, contributor, contributor.getExtendedInfo(legacyItem), contributorWrapper.contributor.isMultiSelectionSupported))
-        }
-      })
-    }
+        return collector.put(SeTargetItem(legacyItem, matchers, weight, contributor, contributor.getExtendedInfo(legacyItem), contributorWrapper.contributor.isMultiSelectionSupported))
+      }
+    })
   }
 
   suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
@@ -94,10 +85,6 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
     val namePattern = contributor.filterControlSymbols(rawPattern)
     val matcher = NameUtil.buildMatcherWithFallback("*$rawPattern", "*$namePattern", NameUtil.MatchingCaseSensitivity.NONE)
     return ItemMatchers(matcher, null)
-  }
-
-  private fun applyScope(scopeId: String?) {
-    scopeProviderDelegate.applyScope(scopeId)
   }
 
   suspend fun getSearchScopesInfo(): SearchScopesInfo? {

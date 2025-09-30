@@ -36,7 +36,7 @@ public final class ClassInitializerMayBeStaticInspection extends BaseInspection 
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ClassInitializerCanBeStaticVisitor();
   }
 

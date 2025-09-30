@@ -41,7 +41,7 @@ object ArchivedCompilationContextUtil {
   }
 
   @JvmStatic
-  val archivedCompiledClassesMapping: Map<String, List<String>>? by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  val archivedCompiledClassesMapping: Map<String, String>? by lazy(LazyThreadSafetyMode.PUBLICATION) {
     /**
      * Returns a map of IntelliJ modules to .jar absolute paths, e.g.:
      * "production/intellij.platform.util" => ".../production/intellij.platform.util/$hash.jar"
@@ -49,7 +49,7 @@ object ArchivedCompilationContextUtil {
     computeArchivedCompiledClassesMapping()
   }
 
-  private fun computeArchivedCompiledClassesMapping(): Map<String, List<String>>? {
+  private fun computeArchivedCompiledClassesMapping(): Map<String, String>? {
     val filePath = System.getProperty("intellij.test.jars.mapping.file")
     if (filePath.isNullOrBlank()) {
       if (getArchivedCompiledClassesLocationIfIsRunningFromBazelOut() != null) {
@@ -65,19 +65,19 @@ object ArchivedCompilationContextUtil {
       log("Failed to load jars mappings from $filePath")
       return null
     }
-    val mapping: MutableMap<String, List<String>> = mutableMapOf()
+    val mapping: MutableMap<String, String> = mutableMapOf()
     for (line in lines) {
       val split = line.split("=", limit = 2)
       if (split.size < 2) {
         log("Ignored jars mapping line: $line")
         continue
       }
-      mapping[split[0]] = listOf(split[1])
+      mapping[split[0]] = split[1]
     }
     return mapping
   }
 
-  private fun computeArchivedCompiledClassesMappingIfIsRunningFromBazelOut(): Map<String, List<String>>? {
+  private fun computeArchivedCompiledClassesMappingIfIsRunningFromBazelOut(): Map<String, String>? {
     val targetsFile: BazelTargetsInfo.TargetsFile
     try {
       targetsFile = BazelTargetsInfo.loadTargetsFileFromBazelTargetsJson(PathManager.getHomeDir())
@@ -87,13 +87,13 @@ object ArchivedCompilationContextUtil {
       return null
     }
 
-    val mapping: MutableMap<String, List<String>> = mutableMapOf()
+    val mapping: MutableMap<String, String> = mutableMapOf()
     targetsFile.modules.forEach { (moduleName, targetsFileModuleDescription) ->
       if (targetsFileModuleDescription.productionJars.isNotEmpty()) {
-        mapping["production/$moduleName"] = targetsFileModuleDescription.productionJars.map { PathManager.getHomeDir().resolve(it).toString() }
+        mapping["production/$moduleName"] = targetsFileModuleDescription.productionJars.map { PathManager.getHomeDir().resolve(it).toString() }.single()
       }
       if (targetsFileModuleDescription.testJars.isNotEmpty()) {
-        mapping["test/$moduleName"] = targetsFileModuleDescription.testJars.map { PathManager.getHomeDir().resolve(it).toString() }
+        mapping["test/$moduleName"] = targetsFileModuleDescription.testJars.map { PathManager.getHomeDir().resolve(it).toString() }.single()
       }
     }
     return mapping

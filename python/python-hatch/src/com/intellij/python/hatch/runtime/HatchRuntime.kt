@@ -9,7 +9,7 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.resolvePythonBinary
+import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isExecutable

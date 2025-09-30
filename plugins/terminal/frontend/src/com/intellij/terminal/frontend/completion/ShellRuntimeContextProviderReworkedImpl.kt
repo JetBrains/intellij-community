@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
 import org.jetbrains.plugins.terminal.block.completion.spec.IS_REWORKED_KEY
 import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
@@ -19,6 +18,7 @@ internal class ShellRuntimeContextProviderReworkedImpl(
   eelDescriptor: EelDescriptor,
 ) : ShellRuntimeContextProvider {
   private val shellCommandExecutor = ShellCommandExecutorReworked(eelDescriptor)
+  private val fileSystemSupport = ShellFileSystemSupportImpl(eelDescriptor)
 
   override fun getContext(typedPrefix: String): ShellRuntimeContext {
     return ShellRuntimeContextImpl(
@@ -26,6 +26,7 @@ internal class ShellRuntimeContextProviderReworkedImpl(
       typedPrefix,
       ShellType.ZSH.toShellName(),
       shellCommandExecutor,
+      fileSystemSupport,
     ).apply {
       putUserData(PROJECT_KEY, project)
       putUserData(IS_REWORKED_KEY, true)

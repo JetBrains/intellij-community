@@ -4,12 +4,15 @@ f:com.intellij.application.options.PathMacroExpandableProtocolBean
 - <init>():V
 f:com.intellij.application.options.PathMacrosCollector
 - com.intellij.openapi.components.PathMacroMap
+- sf:Companion:com.intellij.application.options.PathMacrosCollector$Companion
 - sf:MACRO_FILTER_EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:MACRO_PATTERN:java.util.regex.Pattern
-- s:getMacroNames(org.jdom.Element):java.util.Set
+- equals(java.lang.Object):Z
 - hashCode():I
 - substitute(java.lang.String,Z):java.lang.String
 - substituteRecursively(java.lang.String,Z):java.lang.CharSequence
+f:com.intellij.application.options.PathMacrosCollector$Companion
+- f:getMacroNames(org.jdom.Element):java.util.Set
 f:com.intellij.application.options.ReplacePathToMacroMap
 - com.intellij.openapi.components.PathMacroMap
 - <init>():V
@@ -129,9 +132,9 @@ com.intellij.openapi.components.PathMacroSubstitutor
 - collapsePathsRecursively(org.jdom.Element):V
 - a:expandPath(java.lang.String):java.lang.String
 - a:expandPaths(org.jdom.Element):V
-c:com.intellij.openapi.components.impl.ModulePathMacroManager
+f:com.intellij.openapi.components.impl.ModulePathMacroManager
 - com.intellij.openapi.components.PathMacroManager
-- <init>(com.intellij.openapi.module.Module):V
+- <init>(com.intellij.openapi.module.Module,com.intellij.openapi.application.PathMacros):V
 - computeReplacePathMap():com.intellij.application.options.ReplacePathToMacroMap
 - s:createInstance(java.util.function.Supplier,java.util.function.Supplier):com.intellij.openapi.components.impl.ModulePathMacroManager
 - getExpandMacroMap():com.intellij.openapi.components.ExpandMacroToPathMap
@@ -144,10 +147,8 @@ c:com.intellij.openapi.components.impl.ProjectPathMacroManager
 com.intellij.openapi.components.impl.stores.IProjectStore
 - sf:COMPONENT_STORE_LOADING_ENABLED:com.intellij.openapi.util.Key
 - a:getDirectoryStorePath():java.nio.file.Path
-- a:getPresentableUrl():java.lang.String
 - a:getProjectBasePath():java.nio.file.Path
 - a:getProjectFilePath():java.nio.file.Path
-- a:getProjectName():java.lang.String
 - a:getProjectWorkspaceId():java.lang.String
 - a:getStorageScheme():com.intellij.openapi.components.StorageScheme
 - a:getWorkspacePath():java.nio.file.Path
@@ -278,7 +279,6 @@ c:com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 - removeRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.roots.OrderRootType):V
 - removeRoot(java.lang.String,com.intellij.openapi.roots.OrderRootType):V
 - removeRoots(com.intellij.openapi.roots.OrderRootType):V
-- f:resetVersionString():V
 - setHomePath(java.lang.String):V
 - setName(java.lang.String):V
 - setSdkAdditionalData(com.intellij.openapi.projectRoots.SdkAdditionalData):V

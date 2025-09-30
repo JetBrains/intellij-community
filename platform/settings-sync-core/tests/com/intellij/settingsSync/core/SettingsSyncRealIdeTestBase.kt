@@ -143,9 +143,11 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
       setPath(configDir)
     }
 
-    override fun reinitComponents(componentNames: Set<String>,
-                                  changedStorages: Set<StateStorage>,
-                                  notReloadableComponents: Collection<String>) {
+      override suspend fun reinitComponents(
+      componentNames: Set<String>,
+      changedStorages: Set<StateStorage>,
+      notReloadableComponents: Collection<String>,
+    ) {
       super.reinitComponents(componentNames, changedStorages, notReloadableComponents)
 
       reinitedComponents.addAll(componentNames)

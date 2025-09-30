@@ -118,13 +118,12 @@ internal interface K2CompletionRunner {
                     val newCompletionContext = K2CompletionContext(
                         parameters = parameters,
                         resultSet = completionResultSet,
-                        positionContext = KotlinExpressionNameReferencePositionContext(nameExpression)
+                        positionContext = KotlinExpressionNameReferencePositionContext(nameExpression, explicitReceiver = receiverExpression)
                     )
 
                     // TODO: Remove once KT-79109 KaBaseIllegalPsiException is thrown incorrectly when using CodeFragments in KtCompletionExtensionCandidateChecker.create
                     @OptIn(KaImplementationDetail::class)
                     val commonData = createCommonSectionData(newCompletionContext) ?: return@analyze
-                    val importingStrategy = ImportStrategy.AddImport(nameToImport)
 
                     val sink = K2DelegatingLookupElementSink(completionResultSet)
 
@@ -144,7 +143,7 @@ internal interface K2CompletionRunner {
                                 }
                             )
                             context(sectionContext) {
-                                contributor.createChainedLookupElements(receiverExpression, importingStrategy)
+                                contributor.createChainedLookupElements(receiverExpression, nameToImport)
                             }
                         }.asIterable()
                     completionResultSet.addAllElements(lookupElements)

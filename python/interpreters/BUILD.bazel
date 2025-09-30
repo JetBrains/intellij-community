@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.python.community.interpreters` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "interpreters_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.python.community.interpreters",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":interpreters_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/services/shared",
@@ -28,8 +29,7 @@ jvm_library(
     "//python/openapi:community",
     "//platform/core-api:core",
     "//platform/eel-provider",
-  ],
-  runtime_deps = [":interpreters_resources"]
+  ]
 )
 
 jvm_library(
@@ -69,8 +69,7 @@ jvm_library(
     "//python/python-venv:community-impl-venv_test_lib",
     "//platform/execution",
     "//python/impl.helperLocator:community-helpersLocator",
-  ],
-  runtime_deps = [":interpreters_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.community.interpreters` end
 

@@ -24,11 +24,12 @@ import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 
+import static com.intellij.openapi.vfs.impl.local.LocalFileSystemEelUtil.listWithAttributesUsingEel;
+import static com.intellij.openapi.vfs.impl.local.LocalFileSystemEelUtil.readAttributesUsingEel;
 import static com.intellij.util.containers.CollectionFactory.createFilePathMap;
 import static java.util.Objects.requireNonNullElse;
 
@@ -54,7 +55,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   private final DiskQueryRelay<VirtualFile, Object> myContentGetter = new DiskQueryRelay<>(file -> readContent(file));
   private final DiskQueryRelay<VirtualFile, FileAttributes> myAttributeGetter = new DiskQueryRelay<>(file -> readAttributes(file));
   private final DiskQueryRelay<Pair<VirtualFile, @Nullable Set<String>>, Map<String, FileAttributes>> myChildrenAttrGetter =
-    new DiskQueryRelay<>(pair -> listWithAttributesImpl(pair.first, pair.second));
+    new DiskQueryRelay<>(pair -> listWithAttributesUsingEel(pair.first, pair.second));
 
   protected LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
@@ -365,8 +366,8 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return myChildrenAttrGetter.accessDiskWithCheckCanceled(new Pair<>(dir, childrenNames));
   }
 
-  private static Map<String, FileAttributes> listWithAttributesImpl(@NotNull VirtualFile dir,
-                                                                    @Nullable Set<String> filter) {
+  protected static Map<String, FileAttributes> listWithAttributesImpl(@NotNull VirtualFile dir,
+                                                                      @Nullable Set<String> filter) {
     if (!dir.isDirectory()) {
       return Collections.emptyMap();
     }
@@ -404,8 +405,8 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   private static @Nullable FileAttributes readAttributes(VirtualFile file) {
     try {
       var nioFile = Path.of(toIoPath(file));
-      var nioAttributes = Files.readAttributes(nioFile, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
-      return amendAttributes(nioFile, FileAttributes.fromNio(nioFile, nioAttributes));
+      FileAttributes attributes = readAttributesUsingEel(nioFile);
+      return amendAttributes(nioFile, attributes);
     }
     catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
     catch (IOException | RuntimeException e) { LOG.warn(e); }

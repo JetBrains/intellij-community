@@ -242,10 +242,10 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
       if (isModular) {
         List<PsiJavaModule> list = new ArrayList<>(modules);
 
-        ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
+        ProjectFileIndex index = ProjectFileIndex.getInstance(module.getProject());
         for (ListIterator<PsiJavaModule> i = list.listIterator(); i.hasNext(); ) {
           PsiJavaModule candidate = i.next();
-          if (index.getOrderEntryForFile(PsiImplUtil.getModuleVirtualFile(candidate)) instanceof JdkOrderEntry) {
+          if (!index.findContainingSdks(PsiImplUtil.getModuleVirtualFile(candidate)).isEmpty()) {
             if (i.previousIndex() > 0) {
               i.remove();  // not at the top -> is upgraded
             }

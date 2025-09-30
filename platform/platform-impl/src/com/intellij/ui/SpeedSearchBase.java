@@ -71,7 +71,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   private static final Key<String> SEARCH_TEXT_KEY = Key.create("SpeedSearch.searchText");
 
-  private SearchPopup mySearchPopup;
+  @ApiStatus.Internal
+  protected SearchPopup mySearchPopup;
   private JLayeredPane myPopupLayeredPane;
   protected final Comp myComponent;
   private final ToolWindowManagerListener myToolWindowListener = new ToolWindowManagerListener() {
@@ -512,8 +513,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   public void processInputMethodEvent(InputMethodEvent e) {
     if (!isSpeedSearchEnabled()) return;
 
-    if (mySearchPopup == null && e.getID() == InputMethodEvent.INPUT_METHOD_TEXT_CHANGED && e.getText().current() != CharacterIterator.DONE) {
-      showPopup();
+    if (mySearchPopup == null && e.getID() == InputMethodEvent.INPUT_METHOD_TEXT_CHANGED) {
+      var text = e.getText();
+      if (text != null && text.current() != CharacterIterator.DONE) {
+        showPopup();
+      }
     }
 
     if (mySearchPopup != null) {
@@ -720,11 +724,13 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     }
 
-    void refreshSelection() {
+    @ApiStatus.Internal
+    public void refreshSelection() {
       findAndSelectElement(mySearchField.getText());
     }
 
-    private void updateSelection(Object element, String selectedText) {
+    @ApiStatus.Internal
+    protected void updateSelection(Object element, String selectedText) {
       if (element != null) {
         selectElement(element, selectedText);
         mySearchField.setForeground(FOREGROUND_COLOR);
@@ -928,8 +934,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return isPgUpPgDown(keyCode) || isUpDownHomeEnd(keyCode);
   }
 
-
-  private void manageSearchPopup(@Nullable SearchPopup searchPopup) {
+  @ApiStatus.Internal
+  protected void manageSearchPopup(@Nullable SearchPopup searchPopup) {
     if (mySearchPopup != null) {
       Project project = CommonDataKeys.PROJECT.getData(
         DataManager.getInstance().getDataContext(myComponent.getRootPane()));
@@ -979,7 +985,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     moveSearchPopup();
   }
 
-  private void moveSearchPopup() {
+  @ApiStatus.Internal
+  protected void moveSearchPopup() {
     if (myComponent == null || mySearchPopup == null || myPopupLayeredPane == null) return;
     Point lPaneP = myPopupLayeredPane.getLocationOnScreen();
     Point componentP = getComponentLocationOnScreen();

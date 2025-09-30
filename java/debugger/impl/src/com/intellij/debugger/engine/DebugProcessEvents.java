@@ -66,7 +66,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static com.intellij.debugger.impl.DebuggerUtilsImpl.forEachSafe;
+import static com.intellij.debugger.engine.DebuggerUtils.forEachSafe;
 
 public class DebugProcessEvents extends DebugProcessImpl {
   private static final Logger LOG = Logger.getInstance(DebugProcessEvents.class);

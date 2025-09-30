@@ -3,7 +3,7 @@ package com.intellij.grazie.utils;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
-public class NaturalTextDetector {
+public final class NaturalTextDetector {
   public static boolean seemsNatural(String text) {
     int spaceCount = 0;
     for (int i = 0; i < text.length(); i++) {
@@ -13,6 +13,9 @@ public class NaturalTextDetector {
         if (spaceCount > 3) {
           return true;
         }
+      }
+      if (Character.getType(c) == Character.OTHER_LETTER) {
+        return true;
       }
     }
     if (spaceCount < 1) {

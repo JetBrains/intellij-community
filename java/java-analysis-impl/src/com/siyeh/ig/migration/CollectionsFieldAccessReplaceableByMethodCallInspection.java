@@ -124,7 +124,7 @@ public final class CollectionsFieldAccessReplaceableByMethodCallInspection exten
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new CollectionsFieldAccessReplaceableByMethodCallVisitor();
   }
 

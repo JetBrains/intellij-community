@@ -12,7 +12,7 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater;
-import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -29,6 +29,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,6 +45,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -104,7 +106,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) {
-    assertResolveNotCalledInEDTDuring(ImportHelperTest::isFromJavaCodeReferenceElementResolve, () -> {
+    assertResolveNotCalledInEDTDuring(() -> isFromJavaCodeReferenceElementResolve(), () -> {
       try {
         super.runTestRunnable(testRunnable);
       }
@@ -128,7 +130,9 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
           return; // optimization: try not to call getStackTrace() if we can
         }
         boolean isFromResolve = isInsideResolve.getAsBoolean();
-        if (isFromResolve) resolveHappened.set(true);
+        if (isFromResolve) {
+          resolveHappened.set(true);
+        }
         assertTrue("Resolve in EDT happened",
           !isFromResolve
                || !ApplicationManager.getApplication().isDispatchThread() && ApplicationManager.getApplication().isReadAccessAllowed() // allow resolve from the background thread
@@ -332,6 +336,110 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
     assertOneImportAdded("java.util.ArrayList");
   }
+
+  public void testAutoImportHintIsShownEvenForNonErrorHighlightInfo() {
+    @Language("JAVA")
+    String text = """
+      class S { XXX456 x; // for resolve
+        //showme<caret>
+      }
+      """;
+    MyHintInspection tool = new MyHintInspection();
+    enableInspectionTool(tool);
+    SHOWN.set(false);
+    configureByText(text);
+    type(" xxx"); // make undoable to enable showing autoimports
+    doHighlighting();
+    assertTrue(SHOWN.get());
+  }
+  public void testAutoImportHintIsNotShownAfterEscapePressed() {
+    @Language("JAVA")
+    String text = """
+      class S { XXX456 x; // for resolve
+        //showme<caret>
+      }
+      """;
+    MyHintInspection tool = new MyHintInspection();
+    enableInspectionTool(tool);
+    SHOWN.set(false);
+    configureByText(text);
+    type(" xxx"); // make undoable to enable showing autoimports
+    doHighlighting();
+    assertTrue(SHOWN.get());
+    UIUtil.dispatchAllInvocationEvents();
+    getEditor().getSelectionModel().setSelection(0,null, 1); // to enable escape
+    escape();
+    SHOWN.set(false);
+    doHighlighting();
+    assertFalse(SHOWN.get());
+  }
+  private static final AtomicBoolean SHOWN = new AtomicBoolean();
+  private static class MyHintInspection extends LocalInspectionTool {
+    @Nls
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      return getShortName();
+    }
+
+    @NotNull
+    @Override
+    public String getShortName() {
+      return "MyHintInspTst";
+    }
+
+    @Override
+    public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                   boolean isOnTheFly,
+                                                   @NotNull LocalInspectionToolSession session) {
+      return new JavaElementVisitor() {
+        @Override
+        public void visitComment(@NotNull PsiComment comment) {
+          if (comment.getText().contains("showme")) {
+            holder.registerProblem(comment, "showerr", new MyHint());
+          }
+        }
+      };
+    }
+    private static class MyHint implements LocalQuickFix, HintAction {
+      @Override
+      public boolean showHint(@NotNull Editor editor) {
+        SHOWN.set(true);
+        return true;
+      }
+
+      @Override
+      public @NotNull String getText() {
+        return "showme";
+      }
+
+      @Override
+      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+        return true;
+      }
+
+      @Override
+      public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+        SHOWN.set(true);
+      }
+
+      @Override
+      public boolean startInWriteAction() {
+        return false;
+      }
+
+      @Override
+      public @NotNull String getFamilyName() {
+        return getText();
+      }
+
+      @Override
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        SHOWN.set(true);
+      }
+    }
+  }
+
 
   public void testAutoImportAfterUncomment() {
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("java.util.ArrayList", GlobalSearchScope.allScope(getProject())));

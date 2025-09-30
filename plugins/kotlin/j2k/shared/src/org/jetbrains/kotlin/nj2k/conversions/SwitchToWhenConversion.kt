@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.controlFlow.ControlFlowFactory
 import com.intellij.psi.controlFlow.ControlFlowUtil
 import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.blockStatement
@@ -15,7 +14,6 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.util.takeWhileInclusive
 
 class SwitchToWhenConversion(context: ConverterContext) : RecursiveConversion(context) {
-    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKJavaSwitchBlock) return recurse(element)
         element.invalidate()

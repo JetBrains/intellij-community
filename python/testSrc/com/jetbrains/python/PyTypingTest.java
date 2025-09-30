@@ -1980,7 +1980,9 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-79861
   public void testWalrusCallable() {
-    doTest("type[Callable]",
+    // should actually be `(...) -> object` ... should actually be `Literal[42] & (...) -> object ... should actually be `Never`
+    //  but we don't support this case yet
+    doTest("int",
            """
              if callable(a := 42):
                  expr = a""");

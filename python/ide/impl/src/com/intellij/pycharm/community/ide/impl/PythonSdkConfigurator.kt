@@ -23,7 +23,6 @@ import com.intellij.platform.DirectoryProjectConfigurator
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
@@ -31,6 +30,7 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReady
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setSdkUsingExtension
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.suppressTipAndInspectionsFor
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -51,6 +51,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized {
       PyPackageCoroutine.launch(project) {
+        if (module.isDisposed) return@launch
         val extension = findExtension(module)
         val title = extension?.getIntention(module) ?: PySdkBundle.message("python.configuring.interpreter.progress")
         withBackgroundProgress(project, title, true) {
@@ -114,6 +115,10 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return@withContext
     }
 
+    if (setupFallbackSdk(module)) {
+      return@withContext
+    }
+
     findSystemWideSdk(module, existingSdks, context, project)
   }
 
@@ -128,7 +133,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     detectSystemWideSdks(module, existingSdks, context).firstOrNull()?.let {
       thisLogger().debug { "Detected system-wide interpreter: $it" }
       withContext(Dispatchers.EDT) {
-        SdkConfigurationUtil.createAndAddSDK(it.homePath!!, PythonSdkType.getInstance())?.apply {
+        SdkConfigurationUtil.createAndAddSDK(project, it.homePath!!, PythonSdkType.getInstance())?.apply {
           thisLogger().debug { "Created system-wide interpreter: $this" }
           setReadyToUseSdk(project, module, this)
         }
@@ -171,6 +176,17 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     val preferred = mostPreferred(sharedCondaEnvs) ?: return@reportRawProgress false
     setReadyToUseSdk(project, module, preferred)
     return@reportRawProgress false
+  }
+
+  private suspend fun setupFallbackSdk(
+    module: Module,
+  ): Boolean {
+    val fallback = PyCondaSdkCustomizer.instance.fallbackConfigurator
+    if (fallback == null) {
+      return false
+    }
+    fallback.createAndAddSdkForConfigurator(module)
+    return true
   }
 
   private suspend fun searchPreviousUsed(

@@ -6,6 +6,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 import com.intellij.ide.actions.searcheverywhere.HintHelper
+import com.intellij.ide.actions.searcheverywhere.SEResultsListFactory
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
@@ -21,12 +23,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.searchEverywhere.SeActionItemPresentation
-import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
-import com.intellij.platform.searchEverywhere.SeTextSearchItemPresentation
+import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.data.SeDataKeys
 import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
+import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextSearchItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
@@ -100,6 +102,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   private var extendedInfoComponent: ExtendedInfoComponent? = null
 
   private val isSearchCompleted: AtomicBoolean = AtomicBoolean(false)
+  private val adaptedProviderRenderersCache = mutableMapOf<SeProviderId, ListCellRenderer<Any>>()
 
   var isCompactViewMode: Boolean = true
     private set
@@ -124,6 +127,14 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
         }
         is SeResultListItemRow if value.item.presentation is SeTextSearchItemPresentation -> {
           textSearchItemListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        }
+        is SeResultListItemRow if value.item.presentation is SeAdaptedItemPresentation -> {
+          val adaptedPresentation = value.item.presentation as SeAdaptedItemPresentation
+          SEResultsListFactory.getNonMoreElementRenderer(null, null, resultList, adaptedPresentation.fetchedItem, index, isSelected) {
+            adaptedProviderRenderersCache.computeIfAbsent(value.item.providerId) {
+              adaptedPresentation.rendererProvider()
+            }
+          }
         }
         else -> {
           defaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
@@ -170,6 +181,8 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
         coroutineScope {
           withContext(Dispatchers.EDT) {
+            SearchEverywhereUI.associateMatcherToResultsList(resultList, searchContext.searchPattern, searchContext.searchPattern)
+
             isSearchCompleted.store(false)
             resultListModel.invalidate()
             searchStatePublisher.searchStarted(searchId, textField.text, vm.currentTab.tabId)
@@ -303,7 +316,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     vm.coroutineScope.launch {
       vm.searchFieldWarning.collect { warning ->
         withContext(Dispatchers.EDT) {
-          hintHelper.setWarning(warning)
+          hintHelper.setLoadingText(warning)
         }
       }
     }
@@ -808,6 +821,17 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[PlatformDataKeys.PREDEFINED_TEXT] = textField.text
+    sink[CommonDataKeys.PROJECT] = project
+    sink[SeDataKeys.SPLIT_SE_SESSION] = vm.session
+    sink[SeDataKeys.SPLIT_SE_IS_ALL_TAB] = vm.currentTab.tabId == SeAllTab.ID
+
+    val selectedItems = resultList.selectedIndices.toList().mapNotNull {
+      if (it < 0 || resultList.model.size <= it) return@mapNotNull null
+      val row = resultListModel.get(it)
+      (row as? SeResultListItemRow)?.item
+    }
+
+    sink[SeDataKeys.SPLIT_SE_SELECTED_ITEMS] = selectedItems
   }
 
   /**

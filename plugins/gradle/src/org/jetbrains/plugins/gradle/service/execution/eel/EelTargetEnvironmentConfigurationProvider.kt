@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.service.execution.eel
 
 import com.intellij.execution.target.HostPort
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.eel.EelTargetEnvironmentRequest
+import com.intellij.execution.target.EelTargetEnvironmentRequest
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath

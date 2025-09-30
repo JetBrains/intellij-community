@@ -5,12 +5,12 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.toolWindow.StripeButtonManager
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.components.JBPanel
+import com.intellij.ui.drag.DragButton
 import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
 import javax.swing.Icon
-import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.math.max
 
@@ -73,7 +73,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
   private var dragButton: StripeButtonManager? = null
   protected var dropRectangle: Rectangle = Rectangle(-1, -1)
   protected val drawRectangle = Rectangle()
-  private var dragButtonImage: JComponent? = null
+  private var dragButtonImage: DragButton? = null
   private var isFinishingDrop = false
   private var lastLayoutData: LayoutData? = null
 
@@ -156,7 +156,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     repaint()
   }
 
-  fun processDropButton(button: StripeButtonManager, buttonImage: JComponent, devicePoint: DevicePoint) {
+  fun processDropButton(button: StripeButtonManager, buttonImage: DragButton, devicePoint: DevicePoint) {
     if (!isDroppingButton()) {
       dragButton = button
       dragButtonImage = buttonImage
@@ -346,7 +346,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
           data.dragTargetChosen = true
         }
       }
-      layoutButton(data, button, setBounds, shouldSwapCoordinates = false)
+      layoutButton(data, b.asDragButton(), setBounds, shouldSwapCoordinates = false)
     }
 
     if (!sidesStarted && processDrop && !data.dragTargetChosen) {
@@ -408,7 +408,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     d.height = tmp
   }
 
-  private fun layoutButton(data: LayoutData, button: JComponent, setBounds: Boolean, shouldSwapCoordinates: Boolean) {
+  private fun layoutButton(data: LayoutData, button: DragButton, setBounds: Boolean, shouldSwapCoordinates: Boolean) {
     val preferredSize = button.preferredSize
     if (shouldSwapCoordinates) {
       swap(preferredSize)
@@ -456,7 +456,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     drawRectangle.x = data.eachX
     drawRectangle.y = data.eachY
     if (isNewStripes) {
-      dragButton?.getComponent()?.let { layoutButton(data, it, setBounds = false, shouldSwapCoordinates = false) }
+      dragButton?.asDragButton()?.let { layoutButton(data, it, setBounds = false, shouldSwapCoordinates = false) }
     }
     else {
       dragButtonImage?.let { layoutButton(data, it, setBounds = false, shouldSwapCoordinates = data.shouldSwapCoordinates) }

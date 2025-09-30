@@ -7,8 +7,6 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum;
-import com.intellij.ide.plugins.newui.PluginUiModel;
-import com.intellij.ide.plugins.newui.UiPluginManager;
 import com.intellij.idea.AppMode;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -27,7 +25,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -363,7 +361,7 @@ public final class PluginManagerMain {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     String action = IdeBundle.message("ide.restart.required.notification", app.isRestartCapable() ? 1 : 0);
-    UpdateChecker.getNotificationGroupForPluginUpdateResults()
+    ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getNotificationGroupForPluginUpdateResults()
       .createNotification(title, NotificationType.INFORMATION)
       .setDisplayId("plugins.updated.suggest.restart")
       .addAction(new NotificationAction(action) {

@@ -417,7 +417,7 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new PointlessBooleanExpressionVisitor();
   }
 

@@ -47,7 +47,6 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
 
   internal val debuggerThreadDispatcher = DebuggerThreadDispatcher(this)
   private val myDebugProcess = WeakReference(debugProcess)
-  internal val dispatchedCommandsCounter get() = debuggerThreadDispatcher.dispatchedCommandsCounter
 
   @ApiStatus.Internal
   var coroutineScope: CoroutineScope = createScope()
@@ -296,7 +295,9 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
    * This is determined by checking if there are no pending events.
    */
   @ApiStatus.Internal
-  fun isIdle(): Boolean = myEvents.isEmpty && dispatchedCommandsCounter.get() == 0
+  fun isIdle(): Boolean = myEvents.isEmpty && !hasDispatchedCommands()
+
+  internal fun hasDispatchedCommands(): Boolean = debuggerThreadDispatcher.hasDispatchedCommands()
 
   fun hasAsyncCommands(): Boolean {
     return myEvents.hasAsyncCommands()

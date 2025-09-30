@@ -40,6 +40,7 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
       withBackgroundProgress(project, "Counting children on disk recursively...") {
         reportRawProgress { reporter ->
           var filesOnDiskCount = 0
+          val startTime = System.currentTimeMillis()
           VfsUtilCore.visitChildrenRecursively((root as NewVirtualFile).asCacheAvoiding(), object : VirtualFileVisitor<Unit>() {
             override fun visitFile(file: VirtualFile): Boolean {
               filesOnDiskCount++
@@ -51,7 +52,8 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
           })
           filesOnDiskCount-- // don't count the directory itself
           val message = "Under <i>${root.path}</i><br/>" +
-                        "there are $filesOnDiskCount files on <b>disk</b>"
+                        "there are $filesOnDiskCount files on <b>disk</b>.<br/>" +
+                        "Counting took ${System.currentTimeMillis() - startTime} ms."
           Notification("System Messages", message, NotificationType.INFORMATION)
             .notify(project)
         }

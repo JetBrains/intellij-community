@@ -22,6 +22,9 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override var `package`: String? = null
   override var isSeparateJar: Boolean = false
 
+  override var visibility: ModuleVisibility = ModuleVisibility.PRIVATE
+  override var namespace: String? = null
+
   override var url: String? = null
   override var vendor: String? = null
   override var vendorEmail: String? = null
@@ -149,7 +152,9 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
     projectElementsContainer = projectContainerBuilder.build(),
     moduleElementsContainer = moduleContainerBuilder.build(),
     extensions = extensions,
+    namespace = namespace,
     contentModules = contentModules,
+    moduleVisibility = visibility,
     dependencies = dependencies,
   )
 }

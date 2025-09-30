@@ -1,11 +1,11 @@
 package com.intellij.settingsSync.jba.auth
 
 import com.intellij.CommonBundle
+import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.ex.ActionUtil.performAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -15,7 +15,12 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
 import com.intellij.openapi.ui.ExitActionType
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.settingsSync.core.SettingsSyncBundle.message
 import com.intellij.settingsSync.core.SettingsSyncEvents
 import com.intellij.settingsSync.core.SettingsSyncLocalSettings
 import com.intellij.settingsSync.core.SettingsSyncSettings
@@ -26,25 +31,30 @@ import com.intellij.settingsSync.jba.SettingsSyncJbaBundle
 import com.intellij.settingsSync.jba.SettingsSyncPromotion
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.ui.JBAccountInfoService.AuthStateListener
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.application
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.SettingsSyncIcons
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.await
 import java.awt.Component
 import java.awt.Dimension
+import java.awt.event.ActionEvent
 import java.util.*
 import java.util.concurrent.CancellationException
-import javax.swing.Action
-import javax.swing.JComponent
-import javax.swing.JProgressBar
-import javax.swing.JRootPane
+import javax.swing.*
+import javax.swing.border.Border
 import javax.swing.event.HyperlinkEvent
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.time.Duration.Companion.seconds
 
 private val LOG = logger<JBAAuthService>()
 private const val JBA_USER_ID = "jba"
@@ -213,7 +223,7 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
     if (ApplicationManagerEx.isInIntegrationTest() || System.getProperty("settings.sync.test.auth") == "true") {
       return DummyJBAccountInfoService
     }
-    var instance = JBAccountInfoService.getInstance()
+    val instance = JBAccountInfoService.getInstance()
     if (instance == null && !AppMode.isRemoteDevHost()) {
       LOG.info("Attempting to load info service from plugin...")
       val descriptorImpl = PluginManagerCore.findPlugin(PluginId.getId("com.intellij.marketplace")) ?: return null
@@ -224,26 +234,109 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
     return instance
   }
 
-  override val logoutFunction: (suspend (Component?) -> Unit)?
+  private fun getAllProductCodes(): Set<String> {
+    return PluginManagerCore.loadedPlugins.mapNotNullTo(mutableSetOf()) { it.getProductCode() }
+  }
+
+  private suspend fun shouldShowCheckLicenses(): Boolean = coroutineScope {
+    val service = getAccountInfoService() ?: return@coroutineScope false
+    val allProductCodes = getAllProductCodes()
+    return@coroutineScope allProductCodes.map { productCode ->
+      async {
+        when (val result = service.getAvailableLicenses(productCode).await()) {
+          is JBAccountInfoService.LicenseListResult.LicenseList -> {
+            result.licenses.isNotEmpty()
+          }
+          is JBAccountInfoService.LicenseListResult.RequestFailed -> {
+            LOG.warn("License request failed for $productCode: ${result.errorMessage}")
+            true
+          }
+          is JBAccountInfoService.LicenseListResult.RequestDeclined -> {
+            LOG.warn("License request declined for $productCode: ${result.message}")
+            true
+          }
+          is JBAccountInfoService.AuthRequired -> {
+            LOG.warn("Authentication required for license check for $productCode")
+            true
+          }
+        }
+      }
+    }.awaitAll().any()
+  }
+
+  override val logoutFunction: (suspend (Component) -> Unit)?
     get() {
       if (RemoteCommunicatorHolder.getExternalProviders().isEmpty())
         return null
-      val actionManager = ActionManager.getInstance()
-      val registerAction = actionManager.getAction("RegisterPlugins") ?: actionManager.getAction("Register")
-      if (registerAction != null) {
-        return {
-          performAction(registerAction,
-                        AnActionEvent.createEvent(DataContext.EMPTY_CONTEXT, Presentation(), "", ActionUiKind.NONE, null))
 
+      return lambda@{ component ->
+        val shouldShowCheckLicenses = try {
+          withModalProgress(
+            ModalTaskOwner.component(component),
+            SettingsSyncJbaBundle.message("check.licenses.progress.text"),
+            TaskCancellation.cancellable()
+          ) {
+            withTimeout(3.seconds) {
+              shouldShowCheckLicenses()
+            }
+          }
+        } catch (_: TimeoutCancellationException) {
+          LOG.warn("Timeout while checking licenses")
+          true
+        } catch (_ : CancellationException) {
+          return@lambda
+        }
+
+        val dialog = ConfirmLogoutDialog(component, shouldShowCheckLicenses)
+        if (dialog.showAndGet()) {
+          performLogout(component)
         }
       }
-
-      return null
     }
+
+  private fun performLogout(component: Component) {
+    if (RemoteCommunicatorHolder.getExternalProviders().isEmpty())
+      return
+    val accountInfoService = getAccountInfoService()
+    if (accountInfoService != null) {
+      if (AppMode.isRemoteDevHost()) {
+        showManageLicensesDialog(component)
+      }
+      accountInfoService.performLogout()
+    }
+    else {
+      LOG.error("JBA auth service is not available!")
+    }
+  }
 
   internal var authRequiredAction: SettingsSyncAuthService.PendingUserAction? = null
 
   override fun getPendingUserAction(userId: String): SettingsSyncAuthService.PendingUserAction? = authRequiredAction
+
+  companion object {
+    fun showManageLicensesDialog(component: Component) {
+      val actionManager = ActionManager.getInstance()
+      val registerPluginAction = actionManager.getAction("RegisterPlugins")
+      if (registerPluginAction != null) { // community
+        ActionUtil.performAction(registerPluginAction, AnActionEvent.createEvent(DataContext.EMPTY_CONTEXT, Presentation(), "", ActionUiKind.NONE, null))
+      }
+      else {
+        val registerAction = actionManager.getAction("Register") // ultimate
+        if (registerAction != null) {
+          val dataContext = DataContext { dataId: String? ->
+            when (dataId) {
+              "register.request.direct.call" -> true
+              else -> null
+            }
+          }
+          ActionUtil.performAction(registerAction, AnActionEvent.createEvent(dataContext, Presentation(), "", ActionUiKind.NONE, null))
+        }
+        else {
+          Messages.showErrorDialog(component, SettingsSyncJbaBundle.message("manage.license.not.found.error.message"))
+        }
+      }
+    }
+  }
 }
 
 private class LogInProgressDialog(parent: JComponent) : DialogWrapper(parent, false) {
@@ -279,9 +372,7 @@ private class LogInProgressDialog(parent: JComponent) : DialogWrapper(parent, fa
           addHyperlinkListener {
             if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
               job2Cancel?.cancel()
-              val action = ActionUtil.getAction("Register")!!
-              val event = AnActionEvent(DataContext.EMPTY_CONTEXT, Presentation(), "", ActionUiKind.NONE, null, 0, ActionManager.getInstance())
-              ActionUtil.performAction(action, event)
+              JBAAuthService.showManageLicensesDialog(contentPane)
             }
           }
           if (SystemInfoRt.isMac) {
@@ -295,5 +386,78 @@ private class LogInProgressDialog(parent: JComponent) : DialogWrapper(parent, fa
 
   override fun createActions(): Array<out Action?> {
     return emptyArray()
+  }
+}
+
+private class ConfirmLogoutDialog(parent: Component, private val shouldCheckLicenses: Boolean) : DialogWrapper(parent, false) {
+  private lateinit var confirmCheckbox: Cell<JBCheckBox>
+  private lateinit var logOutAction: AbstractAction
+  private lateinit var checkLicensesAction: AbstractAction
+
+  init {
+    title = message("title.settings.sync")
+    init()
+  }
+
+  override fun createContentPaneBorder(): Border {
+    val insets = JButton().insets
+    return JBUI.Borders.empty(20, 20, 14 - insets.bottom, 20)
+  }
+
+  override fun createCenterPanel(): JComponent {
+    return panel {
+      row {
+        icon(AllIcons.General.QuestionDialog).align(AlignY.TOP)
+        panel {
+          row {
+            text(SettingsSyncJbaBundle.message("confirm.logout.title")).applyToComponent {
+              font = JBFont.h4()
+            }
+          }
+          row {
+            text(if (shouldCheckLicenses) SettingsSyncJbaBundle.message("confirm.logout.licenses.text") else SettingsSyncJbaBundle.message("confirm.logout.text"))
+          }
+          if (shouldCheckLicenses) {
+            row {
+              confirmCheckbox = checkBox(SettingsSyncJbaBundle.message("confirm.logout.checkbox.text"))
+                .applyToComponent {
+                  addActionListener {
+                    logOutAction.isEnabled = isSelected
+                  }
+                }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  override fun createActions(): Array<Action> {
+    val cancelAction = getCancelAction()
+    checkLicensesAction = object : AbstractAction(SettingsSyncJbaBundle.message("confirm.logout.check.licenses.button")) {
+      override fun actionPerformed(e: ActionEvent) {
+        JBAAuthService.showManageLicensesDialog(contentPane)
+      }
+    }
+
+    logOutAction = object : AbstractAction(SettingsSyncJbaBundle.message("confirm.logout.check.logout.button")) {
+      init {
+        putValue(DEFAULT_ACTION, true)
+      }
+      override fun actionPerformed(e: ActionEvent) {
+        if (!shouldCheckLicenses || confirmCheckbox.component.isSelected) {
+          close(OK_EXIT_CODE)
+        }
+      }
+    }.apply { isEnabled = !shouldCheckLicenses }
+    return if (shouldCheckLicenses) {
+      arrayOf(logOutAction, cancelAction, checkLicensesAction)
+    } else {
+      arrayOf(logOutAction, cancelAction)
+    }
+  }
+
+  override fun getPreferredFocusedComponent(): JComponent? {
+    return if (shouldCheckLicenses) getButton(checkLicensesAction) else getButton(logOutAction)
   }
 }

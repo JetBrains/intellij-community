@@ -1,4 +1,4 @@
-// "Change 2nd parameter of method 'f' from 'Integer' to 'String'" "true-preview"
+// "Change 2nd parameter of method 'f()' from 'Integer' to 'String'" "true-preview"
 import java.lang.annotation.*;
 
 class A {

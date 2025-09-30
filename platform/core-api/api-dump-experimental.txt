@@ -245,6 +245,7 @@ a:com.intellij.openapi.application.ReadAction
 a:com.intellij.openapi.command.CommandProcessor
 - *a:allowMergeGlobalCommands(java.lang.Runnable):V
 - *a:executeCommand(com.intellij.openapi.project.Project,java.lang.Runnable,java.lang.String,java.lang.Object,com.intellij.openapi.command.UndoConfirmationPolicy,Z,com.intellij.openapi.editor.Document):V
+- *:isCommandInProgress():Z
 f:com.intellij.openapi.command.CoroutinesKt
 - *sf:execute(com.intellij.openapi.command.WriteCommandAction$Builder,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:writeCommandAction(com.intellij.openapi.application.ReadAndWriteScope,com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function0):com.intellij.openapi.application.ReadResult
@@ -323,6 +324,8 @@ a:com.intellij.openapi.project.DumbService
 - com.intellij.openapi.roots.ContentIterator
 - processFile(com.intellij.openapi.vfs.VirtualFile):Z
 - a:processFileEx(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.containers.TreeNodeProcessingResult
+a:com.intellij.openapi.roots.FileIndexFacade
+- *a:isIndexable(com.intellij.openapi.vfs.VirtualFile):Z
 *:com.intellij.openapi.vfs.FileVisibilityProvider
 - *sf:Companion:com.intellij.openapi.vfs.FileVisibilityProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
@@ -409,9 +412,6 @@ f:com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 - a:presentableText(java.lang.String):com.intellij.platform.backend.presentation.TargetPresentationBuilder
 - a:presentableTextAttributes(com.intellij.openapi.editor.markup.TextAttributes):com.intellij.platform.backend.presentation.TargetPresentationBuilder
 - a:presentation():com.intellij.platform.backend.presentation.TargetPresentation
-*:com.intellij.pom.AsyncNavigatable
-- com.intellij.pom.Navigatable
-- a:navigateAsync(Z,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.pom.Navigatable
 - *:navigationRequest():com.intellij.platform.backend.navigation.NavigationRequest
 *f:com.intellij.psi.BasicInspectionVisitorBean

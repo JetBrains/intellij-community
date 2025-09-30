@@ -7,7 +7,7 @@ import com.intellij.psi.stubs.StubInputStream
 import com.intellij.psi.stubs.StubOutputStream
 import com.intellij.psi.tree.IElementType
 
-open class HtmlStubBasedTagStubSerializer(elementType: IElementType) : XmlStubBasedStubSerializer<XmlTagStubImpl>(elementType) {
+open class HtmlStubBasedTagStubSerializer(elementTypeSupplier: () -> IElementType) : XmlStubBasedStubSerializer<XmlTagStubImpl>(elementTypeSupplier) {
   override fun serialize(stub: XmlTagStubImpl, dataStream: StubOutputStream) {
     stub.serialize(dataStream)
   }

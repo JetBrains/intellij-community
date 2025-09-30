@@ -5,8 +5,7 @@ import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.GitNotificationIdsHolder
@@ -29,6 +28,11 @@ import org.jetbrains.annotations.NonNls
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.reflect.KClass
 
+/**
+ * Performs an interactive rebase without modifying the working directory and index.
+ * Supports pick, reword, fixup, and drop operations on a linear sequence of commits.
+ * @throws MergeConflictException if rebase fails due to merge conflicts.
+ */
 internal class GitInMemoryInteractiveRebaseProcess(
   objectRepo: GitObjectRepository,
   private val rebaseData: GitInMemoryRebaseData,
@@ -51,14 +55,15 @@ internal class GitInMemoryInteractiveRebaseProcess(
       entry to commit
     }
 
-    reportRawProgress { reporter ->
+    reportSequentialProgress(entriesWithCommits.size) { reporter ->
       entriesWithCommits.forEachIndexed { index, (entry, commitToRebase) ->
-        reporter.fraction(index.toDouble() / rebaseData.entries.size)
         baseCommit = processEntry(baseCommit, entry, commitToRebase)
+        reporter.itemStep()
       }
     }
 
     if (baseCommit == null) { // all commits are dropped
+      // To have the same behavior as regular interactive rebase action, creates empty commit
       baseCommit = objectRepo.findCommit(objectRepo.commitTree(objectRepo.emptyTree.oid, listOf(), byteArrayOf()))
     }
 
@@ -125,12 +130,17 @@ internal class GitInMemoryInteractiveRebaseProcess(
     }
   }
 
+  /**
+   * Implementations should cover rebase actions [GitRebaseEntry.Action]
+   * They should apply the action with respective commit and return the new top of the commit sequence.
+   * All created objects must be persisted to the repository.
+   */
   private interface RebaseActionProcessor {
     /**
      * @param baseCommit Top of the current commit sequence being built (null if a sequence is empty)
      * @param commitToRebase The commit being processed
      * @param entry Details for the rebase operation
-     * @return New top commit after processing
+     * @return New top commit after processing. It should be persisted to the repository.
      */
     fun process(
       objectRepo: GitObjectRepository,
@@ -141,18 +151,44 @@ internal class GitInMemoryInteractiveRebaseProcess(
   }
 }
 
+
+/**
+ * Main entry point for performing an in-memory interactive rebase.
+ * In-memory rebase doesn't support stops (in this case we would have to modify the working directory).
+ * Thus, it fails if we have a merge conflict or doesn't start if we have an EDIT entry.
+ * Optionally can show a success notification to the user.
+ * There is a setting whether to show a failure to the user
+ */
 internal suspend fun performInMemoryRebase(
   repository: GitRepository,
   entries: List<GitRebaseEntryWithDetails>,
   model: GitRebaseTodoModel<out GitRebaseEntryWithDetails>,
-): Boolean {
+  notifySuccess: Boolean = true,
+): GitCommitEditingOperationResult {
   val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.notify.errors")
 
-  val rebaseData = createRebaseData(model, entries, repository, showFailureNotification) ?: return false
+  val rebaseData = createRebaseData(model, entries, repository, showFailureNotification)
+                   ?: return GitCommitEditingOperationResult.Incomplete
   val rebaseActivity = GitOperationsCollector.startInMemoryInteractiveRebase(repository.project)
-  val operationResult = executeRebase(repository, rebaseData, showFailureNotification, rebaseActivity) ?: return false
+  val operationResult = executeRebase(repository, rebaseData, showFailureNotification, rebaseActivity)
+                        ?: return GitCommitEditingOperationResult.Incomplete
 
-  return handleRebaseResult(operationResult, rebaseActivity)
+  if (operationResult is GitCommitEditingOperationResult.Complete) {
+    GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.SUCCESS)
+    if (notifySuccess) {
+      operationResult.notifySuccess(
+        GitBundle.message("in.memory.rebase.log.interactive.action.notification.successful"),
+        null,
+        GitBundle.message("in.memory.rebase.log.interactive.action.progress.indicator.undo.title"),
+        GitBundle.message("in.memory.rebase.log.interactive.action.notification.undo.not.allowed.title"),
+        GitBundle.message("in.memory.rebase.log.interactive.action.notification.undo.failed.title")
+      )
+    }
+  }
+  else {
+    GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.ERROR)
+  }
+  return operationResult
 }
 
 private fun createRebaseData(
@@ -182,13 +218,11 @@ private suspend fun executeRebase(
   repository: GitRepository,
   rebaseData: GitInMemoryRebaseData,
   showFailureNotification: Boolean,
-  rebaseActivity: StructuredIdeActivity
+  rebaseActivity: StructuredIdeActivity,
 ): GitCommitEditingOperationResult? {
   return try {
-    withBackgroundProgress(repository.project, GitBundle.message("rebase.progress.indicator.title"), true) {
-      val objectRepo = GitObjectRepository(repository)
-      GitInMemoryInteractiveRebaseProcess(objectRepo, rebaseData).execute(showFailureNotification)
-    }
+    val objectRepo = GitObjectRepository(repository)
+    GitInMemoryInteractiveRebaseProcess(objectRepo, rebaseData).execute(showFailureNotification)
   }
   catch (e: MergeConflictException) {
     GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.CONFLICT)
@@ -205,22 +239,6 @@ private suspend fun executeRebase(
     GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.ERROR)
     throw e
   }
-}
-
-private fun handleRebaseResult(operationResult: GitCommitEditingOperationResult, rebaseActivity: StructuredIdeActivity): Boolean {
-  if (operationResult is GitCommitEditingOperationResult.Complete) {
-    GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.SUCCESS)
-    operationResult.notifySuccess(
-      GitBundle.message("in.memory.rebase.log.interactive.action.notification.successful"),
-      null,
-      GitBundle.message("in.memory.rebase.log.interactive.action.progress.indicator.undo.title"),
-      GitBundle.message("in.memory.rebase.log.interactive.action.notification.undo.not.allowed.title"),
-      GitBundle.message("in.memory.rebase.log.interactive.action.notification.undo.failed.title")
-    )
-    return true
-  }
-  GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.ERROR)
-  return false
 }
 
 private fun notifyValidationFailure(repository: GitRepository, @Nls reason: String) {
@@ -242,6 +260,11 @@ private fun notifyMergeConflict(repository: GitRepository, exception: MergeConfl
   )
 }
 
+/**
+ * Represents the data needed to perform an in-memory rebase.
+ * [baseCommit] is needed to load initial range of commits (entries may be reordered)
+ * [initialHead] is used to validate that HEAD didn't move during rebase
+ */
 internal data class GitInMemoryRebaseData(
   val entries: List<GitRebaseEntryWithDetails>,
   val baseCommit: VcsCommitMetadata,

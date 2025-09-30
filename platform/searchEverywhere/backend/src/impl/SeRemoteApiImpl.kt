@@ -7,6 +7,7 @@ import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
+import com.intellij.platform.searchEverywhere.providers.SeSortedProviderIds
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
@@ -73,8 +74,8 @@ class SeRemoteApiImpl: SeRemoteApi {
     projectId: ProjectId,
     session: SeSession,
     dataContextId: DataContextId
-  ) : Map<String, Set<SeProviderId>> {
-    val project = projectId.findProjectOrNull() ?: return emptyMap()
+  ) : SeSortedProviderIds? {
+    val project = projectId.findProjectOrNull() ?: return null
     return SeBackendService.getInstance(project).getAvailableProviderIds(session, dataContextId)
   }
 

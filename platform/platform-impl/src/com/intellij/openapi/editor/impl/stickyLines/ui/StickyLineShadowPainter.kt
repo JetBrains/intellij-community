@@ -11,32 +11,33 @@ internal class StickyLineShadowPainter(var isDarkColorScheme: Boolean = false) {
 
   // shadow settings
   private val SHADOW_HEIGHT_FACTOR_LIGHT: Double = 0.17
-  private val SHADOW_HEIGHT_FACTOR_DARK : Double = 0.25
-  private val SHADOW_COLOR_ALPHA_LIGHT  : Int = 8
-  private val SHADOW_COLOR_ALPHA_DARK   : Int = 32
-  private val SHADOW_COLOR_LIGHT       = Color(0, 0, 0, SHADOW_COLOR_ALPHA_LIGHT)
-  private val SHADOW_COLOR_DARK        = Color(0, 0, 0, SHADOW_COLOR_ALPHA_DARK)
+  private val SHADOW_HEIGHT_FACTOR_DARK: Double = 0.25
+  private val SHADOW_COLOR_ALPHA_LIGHT: Int = 8
+  private val SHADOW_COLOR_ALPHA_DARK: Int = 32
+  private val SHADOW_COLOR_LIGHT = Color(0, 0, 0, SHADOW_COLOR_ALPHA_LIGHT)
+  private val SHADOW_COLOR_DARK = Color(0, 0, 0, SHADOW_COLOR_ALPHA_DARK)
   private val SHADOW_COLOR_TRANSPARENT = Color(0, 0, 0, 0)
 
-  @Suppress("GraphicsSetClipInspection")
   fun paintShadow(g: Graphics2D, panelHeight: Int, panelWidth: Int, lineHeight: Int) {
     if (isEnabled()) {
-      val shadowHeight = shadowHeight(lineHeight)
-      val prevPaint = g.paint
-      g.setClip(0, 0, panelWidth, panelHeight + shadowHeight)
-      g.translate(0, panelHeight)
-      g.paint = GradientPaint(
-        0.0f,
-        0.0f,
-        shadowColor(),
-        0.0f,
-        shadowHeight.toFloat(),
-        SHADOW_COLOR_TRANSPARENT
-      )
-      g.fillRect(0, 0, panelWidth, shadowHeight)
-      g.paint = prevPaint
-      g.translate(0, -panelHeight)
-      g.setClip(0, 0, panelWidth, panelHeight)
+      val g2d = g.create() as Graphics2D
+      try {
+        val shadowHeight = shadowHeight(lineHeight)
+        g2d.clipRect(0, 0, panelWidth, panelHeight + shadowHeight)
+        g2d.translate(0, panelHeight)
+        g2d.paint = GradientPaint(
+          0.0f,
+          0.0f,
+          shadowColor(),
+          0.0f,
+          shadowHeight.toFloat(),
+          SHADOW_COLOR_TRANSPARENT
+        )
+        g2d.fillRect(0, 0, panelWidth, shadowHeight)
+      }
+      finally {
+        g2d.dispose()
+      }
     }
   }
 

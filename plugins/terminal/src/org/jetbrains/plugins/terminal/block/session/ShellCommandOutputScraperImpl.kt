@@ -17,14 +17,12 @@ import kotlin.math.max
 class ShellCommandOutputScraperImpl(
   private val textBuffer: TerminalTextBuffer,
   parentDisposable: Disposable,
-  private val commandEndMarker: String?,
-  private val debounceTimeout: Int = 50,
+  debounceTimeout: Int = 50,
 ) : ShellCommandOutputScraper {
 
   constructor(session: BlockTerminalSession) : this(
     session.model.textBuffer,
-    session as Disposable,
-    session.commandBlockIntegration.commandEndMarker
+    session as Disposable
   )
 
   private val listeners: MutableList<ShellCommandOutputListener> = CopyOnWriteArrayList()
@@ -61,12 +59,12 @@ class ShellCommandOutputScraperImpl(
   }
 
   override fun scrapeOutput(): StyledCommandOutput = textBuffer.withLock {
-    scrapeOutput(textBuffer, commandEndMarker)
+    scrapeOutput(textBuffer)
   }
 
   companion object {
     fun scrapeOutput(session: BlockTerminalSession): StyledCommandOutput {
-      return scrapeOutput(session.model.textBuffer, session.commandBlockIntegration.commandEndMarker)
+      return scrapeOutput(session.model.textBuffer)
     }
 
     /**
@@ -76,28 +74,21 @@ class ShellCommandOutputScraperImpl(
      */
     fun scrapeOutput(
       textBuffer: TerminalTextBuffer,
-      commandEndMarker: String? = null,
       startLine: Int = -textBuffer.historyLinesCount,
     ): StyledCommandOutput {
-      var commandEndMarkerFound = false
-      val stringCollector: StringCollector = CommandEndMarkerListeningStringCollector(
-        DropTrailingNewLinesStringCollector(SimpleStringCollector()),
-        commandEndMarker
-      ) {
-        commandEndMarkerFound = true
-      }
+      val stringCollector: StringCollector = DropTrailingNewLinesStringCollector(SimpleStringCollector())
 
       val styles: MutableList<StyleRange> = mutableListOf()
       val styleCollectingOutputBuilder: TerminalLinesCollector = StylesCollectingTerminalLinesCollector(stringCollector, styles::add)
       val terminalLinesCollector: TerminalLinesCollector = styleCollectingOutputBuilder
       textBuffer.collectLines(terminalLinesCollector, startLine)
-      return StyledCommandOutput(stringCollector.buildText(), commandEndMarkerFound, styles)
+      return StyledCommandOutput(stringCollector.buildText(), styles)
     }
   }
 }
 
 @ApiStatus.Internal
-data class StyledCommandOutput(val text: String, val commandEndMarkerFound: Boolean, val styleRanges: List<StyleRange>)
+data class StyledCommandOutput(val text: String, val styleRanges: List<StyleRange>)
 
 @ApiStatus.Internal
 interface ShellCommandOutputListener {

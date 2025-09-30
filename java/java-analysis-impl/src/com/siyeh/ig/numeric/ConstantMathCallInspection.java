@@ -279,7 +279,7 @@ public final class ConstantMathCallInspection extends BaseInspection implements 
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ConstantMathCallVisitor();
   }
 

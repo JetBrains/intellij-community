@@ -411,11 +411,11 @@ internal class MutableEntityStorageImpl(
   override fun collectSymbolicEntityIdsChanges(): Set<ReferenceChange<*>> {
     val result: MutableSet<ReferenceChange<*>> = mutableSetOf()
 
-    for (entry in changeLog.addedSymbolicIds) {
+    for (entry in changeLog.addedSymbolicIds()) {
       result.add(ReferenceChange.Added(entry))
     }
 
-    for (entry in changeLog.removedSymbolicIds) {
+    for (entry in changeLog.removedSymbolicIds()) {
       result.add(ReferenceChange.Removed(entry))
     }
 

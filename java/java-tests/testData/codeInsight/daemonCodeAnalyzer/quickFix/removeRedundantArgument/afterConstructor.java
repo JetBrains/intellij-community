@@ -1,4 +1,4 @@
-// "Remove redundant arguments to call 'A()'" "true-preview"
+// "Remove redundant argument to call 'A()'" "true-preview"
 class A {
   public A() { }
 

@@ -3,10 +3,7 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.PluginHeaderPanel
 import com.intellij.ide.plugins.PluginManagerCore.getPlugin
-import com.intellij.ide.plugins.newui.MyPluginModel
-import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
-import com.intellij.ide.plugins.newui.PluginModelFacade
-import com.intellij.ide.plugins.newui.PluginUiModelAdapter
+import com.intellij.ide.plugins.newui.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -35,6 +32,9 @@ internal class DetectedPluginsPanel(project: Project?) : OrderPanel<PluginDownlo
 
   init {
     val pluginModel = MyPluginModel(project)
+    pluginModel.pluginUpdatesService = object : PluginUpdatesService() {
+      override fun finishUpdate() {}
+    }
     myDetailsComponent = PluginDetailsPageComponent(PluginModelFacade(pluginModel), LinkListener { _, _ -> }, true)
     val entryTable = getEntryTable()
     entryTable.setTableHeader(null)
@@ -75,7 +75,7 @@ internal class DetectedPluginsPanel(project: Project?) : OrderPanel<PluginDownlo
       }
     })
     entryTable.getSelectionModel().addListSelectionListener {
-      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         val selectedRow = entryTable.selectedRow
         if (selectedRow != -1) {
           val plugin = getValueAt(selectedRow)!!.descriptor

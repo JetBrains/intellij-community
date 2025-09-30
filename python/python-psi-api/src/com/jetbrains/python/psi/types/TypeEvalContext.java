@@ -55,7 +55,7 @@ public sealed class TypeEvalContext {
   protected final Map<Pair<PyExpression, Object>, PyType> contextTypeCache = CollectionFactory.createConcurrentSoftValueMap();
 
   private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, boolean allowCallContext, @Nullable PsiFile origin) {
-    myConstraints = new TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, origin);
+    this(new TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, origin));
   }
 
   private TypeEvalContext(@NotNull TypeEvalConstraints constraints) {
@@ -78,6 +78,10 @@ public sealed class TypeEvalContext {
 
   public boolean allowCallContext(@NotNull PsiElement element) {
     return myConstraints.myAllowCallContext && !inPyiFile(element) && inOrigin(element);
+  }
+
+  public boolean maySwitchToAST(@NotNull PsiElement element) {
+    return myConstraints.myAllowStubToAST && !inPyiFile(element) || inOrigin(element);
   }
 
   /**
@@ -316,10 +320,6 @@ public sealed class TypeEvalContext {
     }
   }
 
-  public boolean maySwitchToAST(@NotNull PsiElement element) {
-    return myConstraints.myAllowStubToAST && !inPyiFile(element) || inOrigin(element);
-  }
-
   public @Nullable PsiFile getOrigin() {
     return myConstraints.myOrigin;
   }
@@ -354,7 +354,14 @@ public sealed class TypeEvalContext {
   }
 
   private boolean inOrigin(@NotNull PsiElement element) {
-    return myConstraints.myOrigin == element.getContainingFile() || myConstraints.myOrigin == getContextFile(element);
+    return isSameVirtualFile(myConstraints.myOrigin, element.getContainingFile()) ||
+           isSameVirtualFile(myConstraints.myOrigin, getContextFile(element));
+  }
+
+  private static boolean isSameVirtualFile(@Nullable PsiFile file1, @Nullable PsiFile file2) {
+    if (file1 == null) return false;
+    if (file2 == null) return false;
+    return file1.getViewProvider().getVirtualFile().equals(file2.getViewProvider().getVirtualFile());
   }
 
   private static boolean inPyiFile(@NotNull PsiElement element) {
@@ -491,7 +498,7 @@ public sealed class TypeEvalContext {
         }
       }
       TypeEvalConstraints constraints = getConstraints();
-      return constraints.myOrigin != null && file != constraints.myOrigin && (file instanceof PyFile) &&
+      return constraints.myOrigin != null && !isSameVirtualFile(file, constraints.myOrigin) && (file instanceof PyFile) &&
              !constraints.myAllowDataFlow && !constraints.myAllowStubToAST && !constraints.myAllowCallContext;
     }
 

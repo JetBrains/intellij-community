@@ -138,6 +138,11 @@
                  defaultValue="true"
                  restartRequired="false"/>
 
+    <registryKey key="kotlin.k2.complete.top.level.packages"
+                 description="Allows completion of top level packages"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
     <weigher key="proximity" implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinxLibrariesWeigher"
              id="kotlin.preferKotlinx"
              order="after sameModule, before knownElement"/>

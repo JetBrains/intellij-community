@@ -7,7 +7,6 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ModuleSdkData
-import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
@@ -77,9 +76,11 @@ internal fun doCreateSourceSetInfo(
         info.gradleModuleId = GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule)
         info.actualPlatforms.pushPlatforms(sourceSet.actualPlatforms)
         info.isTestModule = sourceSet.isTestComponent
-        info.dependsOn = mppModel.resolveAllDependsOnSourceSets(sourceSet).map { dependsOnSourceSet ->
-            KotlinModuleUtils.getGradleModuleQualifiedName(resolverCtx, gradleModule, dependsOnSourceSet.name)
-        }.toSet()
+        info.dependsOn = mppModel.resolveAllDependsOnSourceSets(sourceSet)
+            .sortedWith(sourceSetOrderComparator(mppModel))
+            .map { dependsOnSourceSet ->
+                KotlinModuleUtils.getGradleModuleQualifiedName(resolverCtx, gradleModule, dependsOnSourceSet.name)
+            }.toSet()
         info.additionalVisible = sourceSet.additionalVisibleSourceSets.map { additionalVisibleSourceSetName ->
             KotlinModuleUtils.getGradleModuleQualifiedName(resolverCtx, gradleModule, additionalVisibleSourceSetName)
         }.toSet()
@@ -144,6 +145,7 @@ internal fun doCreateSourceSetInfo(
         sourceSetInfo.actualPlatforms.pushPlatforms(compilation.platform)
         sourceSetInfo.isTestModule = compilation.isTestComponent
         sourceSetInfo.dependsOn = model.resolveAllDependsOnSourceSets(compilation.declaredSourceSets)
+            .sortedWith(sourceSetOrderComparator(model))
             .map { dependsOnSourceSet ->
                 KotlinModuleUtils.getGradleModuleQualifiedName(
                     resolverCtx,
@@ -182,34 +184,40 @@ private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
             val path = ExternalSystemApiUtil.toCanonicalPath(target.jar!!.archiveFile!!.absolutePath)
             val allSourceSetOfCompilation = target.jar!!.compilations.flatMap { it.allSourceSets }
 
-            allSourceSetOfCompilation.forEach { sourceSet ->
-                resolverCtx.artifactsMap.storeModuleId(
-                    artifactPath = path,
-                    moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx),
-                    /*
-                    Using 'kotlin' as moduleId to mark the artifact as being owned by the Kotlin plugin.
-                    As of writing this comment, the exact moduleId is not relevant; there won't be code that will query
-                    artifacts with this ownerId. This acts more as 'tinting' this artifact to be owned by someone else than the
-                    platform. This will disable some special logic from the platform that is mostly relevant for pure java projects.
 
-                    (e.g., retaining some artifacts despite being resolved to _some_ source modules)
-                     */
-                    ownerId = "kotlin"
-                )
-            }
+            allSourceSetOfCompilation
+                .sortedWith(sourceSetOrderComparator(mppModel))
+                .forEach { sourceSet ->
+                    resolverCtx.artifactsMap.storeModuleId(
+                        artifactPath = path,
+                        moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx),
+                        /*
+                        Using 'kotlin' as moduleId to mark the artifact as being owned by the Kotlin plugin.
+                        As of writing this comment, the exact moduleId is not relevant; there won't be code that will query
+                        artifacts with this ownerId. This acts more as 'tinting' this artifact to be owned by someone else than the
+                        platform. This will disable some special logic from the platform that is mostly relevant for pure java projects.
+
+                        (e.g., retaining some artifacts despite being resolved to _some_ source modules)
+                         */
+                        ownerId = "kotlin"
+                    )
+                }
         }
 
         // Collect compilation output archives
         mppModel.targets.flatMap { it.compilations }.forEach { compilation ->
             val archiveFile = compilation.archiveFile ?: return@forEach
             val path = ExternalSystemApiUtil.toCanonicalPath(archiveFile.absolutePath)
-            compilation.allSourceSets.forEach { sourceSet ->
-                resolverCtx.artifactsMap.storeModuleId(
-                    artifactPath = path,
-                    moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx),
-                    ownerId = "kotlin"
-                )
-            }
+
+            compilation.allSourceSets
+                .sortedWith(sourceSetOrderComparator(mppModel))
+                .forEach { sourceSet ->
+                    resolverCtx.artifactsMap.storeModuleId(
+                        artifactPath = path,
+                        moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx),
+                        ownerId = "kotlin"
+                    )
+                }
         }
     }
 
@@ -232,6 +240,19 @@ private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
         }
     }
 }
+
+internal fun sourceSetOrderComparator(mppModel: KotlinMPPGradleModel): Comparator<KotlinSourceSet> =
+    // Sort source sets: platform-specific (most dependent) first, then common (less dependent)
+    Comparator<KotlinSourceSet> { a, b ->
+        // If A depends on B, then B should come after A
+        when {
+            a.isDependsOn(mppModel, b) -> -1
+            b.isDependsOn(mppModel, a) -> 1
+            else -> 0
+        }
+    }
+
+
 
 private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataNodes() {
     val mainModuleData = moduleDataNode.data

@@ -21,6 +21,7 @@ import com.intellij.build.events.BuildIssueEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
@@ -381,7 +382,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testInvalidProjectModel() = runBlocking {
-    // invalid packaging
+    assumeModel_4_0_0("IDEA-379706")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

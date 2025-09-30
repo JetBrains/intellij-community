@@ -8,6 +8,7 @@
 *f:com.intellij.platform.searchEverywhere.SeExtendedInfo$Companion
 - f:serializer():kotlinx.serialization.KSerializer
 *:com.intellij.platform.searchEverywhere.SeItem
+- getRawObject():java.lang.Object
 - a:presentation(kotlin.coroutines.Continuation):java.lang.Object
 - a:weight():I
 *:com.intellij.platform.searchEverywhere.SeItemPresentation

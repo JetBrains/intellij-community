@@ -78,7 +78,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   protected fun <E> treeSet(): StoredPropertyBase<MutableSet<E>> where E : Comparable<E>, E : BaseState = addProperty(factory.treeSet())
 
   /**
-   * Charset is immutable, so, it is safe to use it as the default value.
+   * Charset is immutable, so it is safe to use it as the default value.
    */
   protected fun <T : Charset> property(initialValue: T): StoredPropertyBase<T> = addProperty(factory.obj(initialValue))
 
@@ -90,8 +90,9 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   protected inline fun <reified T : Enum<*>> enum(): StoredPropertyBase<T?> = doEnum(null, T::class.java)
 
   @PublishedApi
-  internal fun <T : Enum<*>> doEnum(defaultValue: T? = null, clazz: Class<T>): StoredPropertyBase<T?> = addProperty(
-    factory.enum(defaultValue, clazz))
+  internal fun <T : Enum<*>> doEnum(defaultValue: T? = null, clazz: Class<T>): StoredPropertyBase<T?> {
+    return addProperty(factory.enum(defaultValue, clazz))
+  }
 
   /**
    * Not-null list. Initialized as SmartList.

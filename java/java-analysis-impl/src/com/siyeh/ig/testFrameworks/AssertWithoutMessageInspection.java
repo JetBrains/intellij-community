@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 public final class AssertWithoutMessageInspection extends BaseInspection {
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new AssertionsWithoutMessagesVisitor();
   }
 

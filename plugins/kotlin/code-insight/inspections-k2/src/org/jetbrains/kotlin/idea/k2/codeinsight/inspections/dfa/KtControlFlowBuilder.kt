@@ -34,28 +34,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.arrayElementType
-import org.jetbrains.kotlin.analysis.api.components.builtinTypes
-import org.jetbrains.kotlin.analysis.api.components.evaluate
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.components.functionType
-import org.jetbrains.kotlin.analysis.api.components.isArrayOrPrimitiveArray
-import org.jetbrains.kotlin.analysis.api.components.isBooleanType
-import org.jetbrains.kotlin.analysis.api.components.isDoubleType
-import org.jetbrains.kotlin.analysis.api.components.isFloatType
-import org.jetbrains.kotlin.analysis.api.components.isIntType
-import org.jetbrains.kotlin.analysis.api.components.isLongType
-import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.components.isNothingType
-import org.jetbrains.kotlin.analysis.api.components.isStringType
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
-import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
-import org.jetbrains.kotlin.analysis.api.components.targetSymbol
-import org.jetbrains.kotlin.analysis.api.components.type
-import org.jetbrains.kotlin.analysis.api.components.withNullability
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsInPlaceContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -385,8 +364,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (kotlinType is KaErrorType || kotlinType is KaTypeParameterType) return DfType.TOP
         val result = if (kotlinType.isMarkedNullable) kotlinType.toDfType()
         else {
-            // makeNullable to convert primitive to boxed
-            val dfType = kotlinType.withNullability(true).toDfType().meet(DfTypes.NOT_NULL_OBJECT)
+            val dfType = kotlinType.toDfReferenceType()
             if (dfType is DfReferenceType) dfType.dropSpecialField() else dfType
         }
         return if (result is DfReferenceType)
@@ -1856,14 +1834,18 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         ((this as? KaClassType)?.expandedSymbol as? KaNamedClassSymbol)?.isInline == true
 
     context(_: KaSession)
-    private fun balanceType(leftType: KaType?, rightType: KaType?, forceEqualityByContent: Boolean): KaType? = when {
-        leftType == null || rightType == null -> null
-        leftType.isNothingType && leftType.isMarkedNullable -> rightType.withNullability(true)
-        rightType.isNothingType && rightType.isMarkedNullable -> leftType.withNullability(true)
-        !forceEqualityByContent -> balanceType(leftType, rightType)
-        leftType.isSubtypeOf(rightType) -> rightType
-        rightType.isSubtypeOf(leftType) -> leftType
-        else -> null
+    private fun balanceType(leftType: KaType?, rightType: KaType?, forceEqualityByContent: Boolean): KaType? {
+        return when {
+            leftType == null || rightType == null -> null
+            leftType.isNothingType && leftType.isMarkedNullable -> rightType.withNullability(true)
+            rightType.isNothingType && rightType.isMarkedNullable -> leftType.withNullability(true)
+            !forceEqualityByContent -> balanceType(leftType, rightType)
+            leftType is KaTypeParameterType && leftType.symbol.upperBounds.any { rightType.isSubtypeOf(it) } -> rightType
+            rightType is KaTypeParameterType && rightType.symbol.upperBounds.any { leftType.isSubtypeOf(it) } -> leftType
+            leftType.isSubtypeOf(rightType) -> rightType
+            rightType.isSubtypeOf(leftType) -> leftType
+            else -> null
+        }
     }
 
     context(_: KaSession)

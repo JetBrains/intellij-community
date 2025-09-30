@@ -115,10 +115,6 @@ a:com.intellij.concurrency.JobScheduler
 com.intellij.concurrency.ResultConsumer
 - a:onFailure(java.lang.Throwable):V
 - a:onSuccess(java.lang.Object):V
-f:com.intellij.core.CoreBundle
-- sf:BUNDLE:java.lang.String
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messageOrNull(java.lang.String,java.lang.Object[]):java.lang.String
 com.intellij.diagnostic.Dumpable
 - a:dumpState():java.lang.String
 f:com.intellij.diagnostic.ImplementationConflictException
@@ -1525,7 +1521,6 @@ a:com.intellij.openapi.project.DumbService
 - f:withAlternativeResolveEnabled(java.lang.Runnable):V
 - f:withAlternativeResolveEnabled(kotlin.jvm.functions.Function0):java.lang.Object
 - a:wrapGently(javax.swing.JComponent,com.intellij.openapi.Disposable):javax.swing.JComponent
-- a:wrapWithSpoiler(javax.swing.JComponent,java.lang.Runnable,com.intellij.openapi.Disposable):javax.swing.JComponent
 f:com.intellij.openapi.project.DumbService$Companion
 - f:allowStartingDumbModeInside(com.intellij.openapi.project.DumbModePermission,java.lang.Runnable):V
 - f:getDumbAwareExtensions(com.intellij.openapi.project.Project,com.intellij.openapi.extensions.ExtensionPointName):java.util.List
@@ -1543,7 +1538,6 @@ f:com.intellij.openapi.project.ProjectCoreUtil
 - sf:INSTANCE:com.intellij.openapi.project.ProjectCoreUtil
 - sf:isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile):Z
 - sf:isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileTypes.FileType):Z
-- sf:isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile,java.lang.CharSequence):Z
 Fa:com.intellij.openapi.project.ProjectLocator
 - sf:Companion:com.intellij.openapi.project.ProjectLocator$Companion
 - <init>():V

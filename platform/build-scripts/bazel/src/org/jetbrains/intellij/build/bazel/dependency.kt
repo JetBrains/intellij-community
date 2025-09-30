@@ -16,6 +16,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Path
 import java.util.TreeSet
+import kotlin.io.path.Path
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
@@ -48,6 +49,7 @@ internal data class ModuleDeps(
 }
 
 internal fun generateDeps(
+  m2Repo: Path,
   module: ModuleDescriptor,
   hasSources: Boolean,
   isTest: Boolean,
@@ -160,14 +162,14 @@ internal fun generateDeps(
 
         // repositoryJpsLibrary == null
         // non-repository library, meaning library files are under VCS
-        // or from -SNAPSHOT versions already resolved to .m2/repo
+        // or from "-SNAPSHOT" versions already resolved to .m2/repo
         repositoryJpsLibrary == null -> {
           val firstFile = files.first()
           val isCommunityLib = firstFile.startsWith(context.communityRoot)
           val libraryContainer = context.getLibraryContainer(isCommunityLib)
 
           val targetName = if (underKotlinSnapshotLibRoot(firstFile, communityRoot = context.communityRoot)) {
-            // name the same way as maven library, so there will be minimal changes
+            // name the same way as a maven library, so there will be minimal changes
             // migrating from kotlin from maven to kotlin from a snapshot
             escapeBazelLabel(jpsLibrary.name)
           }
@@ -257,9 +259,9 @@ internal fun generateDeps(
           libraryContainer = context.addMavenLibrary(
             MavenLibrary(
               mavenCoordinates = "${jpsMavenLibraryDescriptor.groupId}:${jpsMavenLibraryDescriptor.artifactId}:${jpsMavenLibraryDescriptor.version}",
-              jars = repositoryJpsLibrary.getPaths(JpsOrderRootType.COMPILED).map { getFileMavenFileDescription(repositoryJpsLibrary, it) },
-              sourceJars = repositoryJpsLibrary.getPaths(JpsOrderRootType.SOURCES).map { getFileMavenFileDescription(repositoryJpsLibrary, it) },
-              javadocJars = repositoryJpsLibrary.getPaths(JpsOrderRootType.DOCUMENTATION).map { getFileMavenFileDescription(repositoryJpsLibrary, it) },
+              jars = repositoryJpsLibrary.getPaths(JpsOrderRootType.COMPILED).map { getFileMavenFileDescription(m2Repo, repositoryJpsLibrary, it) },
+              sourceJars = repositoryJpsLibrary.getPaths(JpsOrderRootType.SOURCES).map { getFileMavenFileDescription(m2Repo, repositoryJpsLibrary, it) },
+              javadocJars = repositoryJpsLibrary.getPaths(JpsOrderRootType.DOCUMENTATION).map { getFileMavenFileDescription(m2Repo, repositoryJpsLibrary, it) },
               target = LibraryTarget(targetName = targetName, container = libraryContainer, jpsName = jpsLibrary.name, isModuleLibrary = isModuleLibrary),
             ),
             isProvided = isProvided,
@@ -295,7 +297,7 @@ internal fun generateDeps(
     }
   }
 
-  if (exports.isNotEmpty()) {
+  if (exports.isNotEmpty() && !dependentModuleName.startsWith("intellij.libraries.")) {
     require(!exports.any { it.label == "@lib//:kotlinx-serialization-core" }) {
       "Do not export kotlinx-serialization-core (module=$dependentModuleName})"
     }
@@ -354,7 +356,7 @@ private fun getLocalLibBazelFileDir(files: List<Path>, communityRoot: Path): Pat
 private fun underKotlinSnapshotLibRoot(dir: Path, communityRoot: Path) =
   dir.startsWith(communityRoot.resolve("lib").resolve("kotlin-snapshot"))
 
-private fun getFileMavenFileDescription(lib: JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>, jar: Path): MavenFileDescription {
+private fun getFileMavenFileDescription(m2Repo: Path, lib: JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>, jar: Path): MavenFileDescription {
   require(jar.isAbsolute) {
     "jar path for jps library ${lib.name} must be absolute: $jar"
   }
@@ -363,14 +365,29 @@ private fun getFileMavenFileDescription(lib: JpsTypedLibrary<JpsSimpleElement<Jp
     "jar path for jps library ${lib.name} must not contain redundant . and .. segments: $jar"
   }
 
+  val repositoryJarSegments = jar.drop(m2Repo.nameCount).toList()
+  val initSubPath = repositoryJarSegments.firstOrNull() ?: throw IllegalStateException("Unable to get .m2/repository/ location for $jar")
+  val jarSubPath = Path(initSubPath.toString(), *repositoryJarSegments.drop(1).map { it.toString() }.toTypedArray())
+
+  if (jarSubPath.nameCount < 3) throw IllegalStateException("Unable to get maven coordinates for $jar by its path")
+
+  val artifactStartIndex = jarSubPath.nameCount - 3
+  if (artifactStartIndex < 0) throw IllegalStateException("Unable to get artifactId for $jar")
+
+  val groupIdPaths = jarSubPath.subpath(0, artifactStartIndex)
+  val groupId = groupIdPaths.joinToString(".")
+
+  val version = jarSubPath.getName(jarSubPath.nameCount - 2).toString()
+  val artifactId = jarSubPath.getName(jarSubPath.nameCount - 3).toString()
+
   val libraryDescriptor = lib.properties.data
   for (verification in libraryDescriptor.artifactsVerification) {
     if (JpsPathUtil.urlToNioPath(verification.url) == jar) {
-      return MavenFileDescription(path = jar, sha256checksum = verification.sha256sum)
+      return MavenFileDescription(groupId, artifactId, version, path = jar, sha256checksum = verification.sha256sum)
     }
   }
 
-  return MavenFileDescription(path = jar, sha256checksum = null)
+  return MavenFileDescription(groupId, artifactId, version, path = jar, sha256checksum = null)
 }
 
 private fun isTestFriend(
@@ -423,7 +440,7 @@ private fun addDep(
         else {
           if (hasOnlyTestResources(dependencyModuleDescriptor)) {
             // module with only test resources
-            runtimeDeps.add(addSuffix(dependencyLabel, TEST_RESOURCES_TARGET_SUFFIX))
+            runtimeDeps.add(getLabelForTest(dependencyLabel))
             if (isExported) {
               throw RuntimeException("Do not export test dependency (module=${dependentModule.module.name}, exported=${dependencyModuleDescriptor.module.name})")
             }

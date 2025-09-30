@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings
 
-import com.intellij.ide.isIdeStartupWizardEnabled
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingController
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.ide.startup.importSettings.data.StartupWizardService
@@ -15,8 +14,6 @@ import kotlinx.coroutines.coroutineScope
 
 private class IdeStartupWizardImpl : IdeStartupWizard {
   override suspend fun run() {
-    if (!isIdeStartupWizardEnabled) return
-
     logger.info("Initial startup wizard is enabled. Will start the wizard.")
     ThreadingAssertions.assertEventDispatchThread()
 
@@ -28,7 +25,7 @@ private class IdeStartupWizardImpl : IdeStartupWizard {
       if (settingsService.shouldShowImport()) {
         logger.info("Settings service reports that we should show the import wizard.")
         OnboardingController.getInstance().startImport(
-          { settingsService.importCancelled.fire() },
+          cancelCallback = { settingsService.importCancelled.fire() },
           titleGetter = { ApplicationNamesInfo.getInstance().fullProductName }
         )
         return@coroutineScope

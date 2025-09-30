@@ -23,7 +23,7 @@ public final class ArrayCreationWithoutNewKeywordInspection extends BaseInspecti
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ArrayCreationExpressionVisitor();
   }
 

@@ -24,6 +24,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -600,5 +601,14 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   protected int getNumberOfSteps() {
     return mySteps.size();
+  }
+
+  @ApiStatus.Internal
+  public void setStepListener(Collection<T> steps) {
+    for (T step : steps) {
+      if (step instanceof StepAdapter) {
+        ((StepAdapter)step).registerStepListener(myStepListener);
+      }
+    }
   }
 }

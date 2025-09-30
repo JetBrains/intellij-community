@@ -3,6 +3,8 @@ package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.spellchecker.ProjectDictionaryLayer
 import com.intellij.spellchecker.SpellCheckerManager
@@ -15,7 +17,6 @@ import java.util.function.Consumer
 
 
 class JavaSupportTest : GrazieTestBase() {
-  override val additionalEnabledRules: Set<String> = setOf("LanguageTool.EN.UPPERCASE_SENTENCE_START", "LanguageTool.EN.FILE_EXTENSIONS_CASE")
   override val enableGrazieChecker: Boolean = true
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
@@ -121,11 +122,31 @@ class JavaSupportTest : GrazieTestBase() {
     )
   }
 
-  fun `test meaningful suggestions in RenameTo action`() {
+  fun `test meaningful single suggestion in RenameTo action`() {
     myFixture.configureByText("a.java", """
       class A {
         void foo() {
           int <TYPO descr="Typo: In word 'tagret'">tag<caret>ret</TYPO>Dir = 1;
+        }
+      }
+    """)
+    myFixture.checkHighlighting()
+    val intention = myFixture.findSingleIntention("Typo: Rename to 'targetDir'")
+    myFixture.launchAction(intention)
+    myFixture.checkResult("""
+      class A {
+        void foo() {
+          int targetDir = 1;
+        }
+      }
+    """)
+  }
+
+  fun `test multiple suggestions in RenameTo action`() {
+    myFixture.configureByText("a.java", """
+      class A {
+        void foo() {
+          int <TYPO descr="Typo: In word 'barek'">barek<caret></TYPO> = 1;
         }
       }
     """)
@@ -135,7 +156,7 @@ class JavaSupportTest : GrazieTestBase() {
     myFixture.checkResult("""
       class A {
         void foo() {
-          int targetDir = 1;
+          int bark = 1;
         }
       }
     """)
@@ -181,6 +202,16 @@ class JavaSupportTest : GrazieTestBase() {
 
     myFixture.configureByText("a.java", "// wexwex, Wexwex, WEXWEX")
     myFixture.checkHighlighting()
+  }
+
+  fun `test performance on typos by word-level spellchecker`() {
+    // German is not enabled on purpose to disable suggestion-based typo detection
+    Benchmark.newBenchmark("word-level spellchecking performance") {
+      runHighlightTestForFile("ide/language/java/Dictionary.java")
+    }.setup {
+      psiManager.dropPsiCaches()
+      GrazieSpellCheckerEngine.getInstance(project).dropSuggestionCache()
+    }.start()
   }
 
   private fun doTest(beforeText: String, afterText: String, hint: String) {

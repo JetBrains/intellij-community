@@ -16,7 +16,7 @@ class TextProblemSeverities : SeveritiesProvider() {
   override fun getSeveritiesHighlightInfoTypes(): List<HighlightInfoType> {
     return listOf(
       TextHighlightInfoType(STYLE_SUGGESTION, STYLE_SUGGESTION_ATTRIBUTES, GrazieIcons.StyleSuggestion),
-      TextHighlightInfoType(GRAMMAR_ERROR, GRAMMAR_ERROR_ATTRIBUTES, AllIcons.General.InspectionsGrammar, applicableToInspections = true)
+      TextHighlightInfoType(GRAMMAR_ERROR, GRAMMAR_ERROR_ATTRIBUTES, AllIcons.General.InspectionsGrammar)
     )
   }
 
@@ -24,10 +24,8 @@ class TextProblemSeverities : SeveritiesProvider() {
     severity: HighlightSeverity,
     attributesKey: TextAttributesKey,
     private val icon: Icon,
-    private val applicableToInspections: Boolean = false,
   ) : HighlightInfoTypeImpl(severity, attributesKey), HighlightInfoType.Iconable {
     override fun getIcon(): Icon = icon
-    override fun isApplicableToInspections() = applicableToInspections
   }
 
   @Suppress("CompanionObjectInExtension")

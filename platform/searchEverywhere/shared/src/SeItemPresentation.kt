@@ -21,6 +21,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.Icon
+import javax.swing.ListCellRenderer
 
 @ApiStatus.Experimental
 @Serializable
@@ -186,4 +187,18 @@ class SeTextSearchItemPresentation(
   override val isMultiSelectionSupported: Boolean,
 ) : SeItemPresentation {
   val backgroundColor: Color? get() = backgroundColorId?.color()
+}
+
+@ApiStatus.Internal
+@Serializable
+class SeAdaptedItemEmptyPresentation(override val isMultiSelectionSupported: Boolean) : SeItemPresentation {
+  override val text: String get() = ""
+}
+
+// Must stay internal, it's not serializable and can't be used for transfer
+@ApiStatus.Internal
+class SeAdaptedItemPresentation(override val isMultiSelectionSupported: Boolean,
+                                val fetchedItem: Any,
+                                val rendererProvider: () -> ListCellRenderer<Any>) : SeItemPresentation {
+  override val text: String get() = ""
 }

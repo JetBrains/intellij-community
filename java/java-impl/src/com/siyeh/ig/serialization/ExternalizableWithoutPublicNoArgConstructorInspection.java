@@ -42,7 +42,7 @@ public final class ExternalizableWithoutPublicNoArgConstructorInspection extends
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ExternalizableWithoutPublicNoArgConstructorVisitor();
   }
 

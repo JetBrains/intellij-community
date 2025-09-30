@@ -1418,6 +1418,16 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../../completion/testData/handlers/basic/typeArgsForCall/Simple.kt");
             }
 
+            @TestMetadata("TypeArgumentsForComparator.kt")
+            public void testTypeArgumentsForComparator() throws Exception {
+                runTest("../../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsForComparator.kt");
+            }
+
+            @TestMetadata("TypeArgumentsForReversed.kt")
+            public void testTypeArgumentsForReversed() throws Exception {
+                runTest("../../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsForReversed.kt");
+            }
+
             @TestMetadata("TypeArgumentsFromParameters.kt")
             public void testTypeArgumentsFromParameters() throws Exception {
                 runTest("../../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsFromParameters.kt");

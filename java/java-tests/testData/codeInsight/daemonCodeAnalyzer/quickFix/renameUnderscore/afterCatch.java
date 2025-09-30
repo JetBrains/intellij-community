@@ -1,4 +1,4 @@
-// "Rename unnamed variable|->Rename catch parameter of type NumberFormatException" "true-preview"
+// "Rename unnamed variable|->Rename catch parameter of type 'NumberFormatException'" "true-preview"
 import java.util.function.BiConsumer;
 
 public class JavaTest {

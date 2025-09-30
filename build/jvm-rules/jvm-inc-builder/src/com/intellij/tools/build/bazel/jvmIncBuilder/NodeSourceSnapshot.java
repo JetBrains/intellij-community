@@ -7,7 +7,7 @@ import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.util.Iterators;
 
 import java.io.IOException;
-import java.util.Set;
+import java.util.*;
 
 public interface NodeSourceSnapshot extends ElementSnapshot<NodeSource> {
   NodeSourceSnapshot EMPTY = new NodeSourceSnapshot() {

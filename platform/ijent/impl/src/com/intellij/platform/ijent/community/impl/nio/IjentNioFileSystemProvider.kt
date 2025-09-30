@@ -9,10 +9,10 @@ import com.intellij.platform.eel.fs.EelFileInfo.Type.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.*
 import com.intellij.platform.eel.fs.EelPosixFileInfo.Type.Symlink
 import com.intellij.platform.eel.impl.fs.EelFsResultImpl
+import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.eel.provider.utils.throwFileSystemException
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.Companion.newFileSystemMap
-import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
@@ -341,8 +341,6 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     return IjentNioFileStore(path.eelPath, path.nioFs.ijentFs)
   }
 
-  private enum class UnixFilePermissionBranch { OWNER, GROUP, OTHER }
-
   override fun checkAccess(path: Path, vararg modes: AccessMode) {
     val fs = ensureAbsoluteIjentNioPath(path).nioFs
     fsBlocking {
@@ -354,52 +352,9 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
             .resolveAndFollow()
             .getOrThrowFileSystemException()
 
-          if (ijentFs.user.uid == 0) {
-            val executable = fileInfo.permissions.run {
-              ownerCanExecute || groupCanExecute || otherCanExecute
-            }
-            if (!executable && AccessMode.EXECUTE in modes) {
-              EelFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: execute").throwFileSystemException()
-            }
-            return@fsBlocking
-          }
-
-          // Inspired by sun.nio.fs.UnixFileSystemProvider#checkAccess
-          val filePermissionBranch = when {
-            ijentFs.user.uid == fileInfo.permissions.owner -> OWNER
-            ijentFs.user.gid == fileInfo.permissions.group -> GROUP
-            else -> OTHER
-          }
-
-          if (AccessMode.READ in modes) {
-            val canRead = when (filePermissionBranch) {
-              OWNER -> fileInfo.permissions.ownerCanRead
-              GROUP -> fileInfo.permissions.groupCanRead
-              OTHER -> fileInfo.permissions.otherCanRead
-            }
-            if (!canRead) {
-              (EelFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: read") as EelFsError).throwFileSystemException()
-            }
-          }
-          if (AccessMode.WRITE in modes) {
-            val canWrite = when (filePermissionBranch) {
-              OWNER -> fileInfo.permissions.ownerCanWrite
-              GROUP -> fileInfo.permissions.groupCanWrite
-              OTHER -> fileInfo.permissions.otherCanWrite
-            }
-            if (!canWrite) {
-              (EelFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: write") as EelFsError).throwFileSystemException()
-            }
-          }
-          if (AccessMode.EXECUTE in modes) {
-            val canExecute = when (filePermissionBranch) {
-              OWNER -> fileInfo.permissions.ownerCanExecute
-              GROUP -> fileInfo.permissions.groupCanExecute
-              OTHER -> fileInfo.permissions.otherCanExecute
-            }
-            if (!canExecute) {
-              (EelFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: execute") as EelFsError).throwFileSystemException()
-            }
+          val error = EelPathUtils.checkAccess(ijentFs.user, fileInfo, *modes)
+          if (error != null) {
+            EelFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: ${error.name}").throwFileSystemException()
           }
         }
         is IjentFileSystemWindowsApi -> TODO()
@@ -410,17 +365,15 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   override fun <V : FileAttributeView?> getFileAttributeView(path: Path, type: Class<V>?, vararg options: LinkOption): V? {
     ensureAbsoluteIjentNioPath(path)
     if (type == BasicFileAttributeView::class.java) {
-      val basicAttributes = readAttributes<BasicFileAttributes>(path, BasicFileAttributes::class.java, *options)
       @Suppress("UNCHECKED_CAST")
-      return IjentNioBasicFileAttributeView(path.nioFs.ijentFs, path.eelPath, path, basicAttributes) as V
+      return IjentNioBasicFileAttributeView(path.nioFs.ijentFs, path.eelPath, path) as V
     }
     val nioFs = ensureIjentNioPath(path).nioFs
     when (nioFs.ijentFs) {
       is IjentFileSystemPosixApi -> {
         if (type == PosixFileAttributeView::class.java) {
-          val posixAttributes = readAttributes<PosixFileAttributes>(path, PosixFileAttributes::class.java, *options)
           @Suppress("UNCHECKED_CAST")
-          return IjentNioPosixFileAttributeView(path.nioFs.ijentFs, path.eelPath, path, posixAttributes) as V
+          return IjentNioPosixFileAttributeView(path.nioFs.ijentFs, path.eelPath, path) as V
         }
         else {
           return null

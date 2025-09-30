@@ -42,4 +42,9 @@ interface CommitProgressUi {
 
   fun clearCommitCheckFailures()
   fun getCommitCheckFailures(): List<CommitCheckFailure>
+
+  @ApiStatus.Internal
+  fun showWarningAboutDumbMode()
+  @ApiStatus.Internal
+  fun hideWarningAboutDumbMode()
 }

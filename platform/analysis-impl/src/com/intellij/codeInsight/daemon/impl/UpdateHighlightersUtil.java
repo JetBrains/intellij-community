@@ -127,6 +127,11 @@ public final class UpdateHighlightersUtil {
   }
 
 
+  /**
+   * @deprecated please use {@link BackgroundUpdateHighlightersUtil#setHighlightersToEditor} instead for better responsiveness
+   */
+  @Deprecated
+  @RequiresEdt
   public static void setHighlightersToSingleEditor(@NotNull Project project,
                                                    @NotNull Editor editor,
                                                    int startOffset,
@@ -140,6 +145,11 @@ public final class UpdateHighlightersUtil {
     setHighlightersToEditor(project, document, startOffset, endOffset, highlights, colorsScheme, group, markup);
   }
 
+  /**
+   * @deprecated please use {@link BackgroundUpdateHighlightersUtil#setHighlightersToEditor} instead for better responsiveness
+   */
+  @Deprecated
+  @RequiresEdt
   public static void setHighlightersToEditor(@NotNull Project project,
                                              @NotNull Document document,
                                              int startOffset,
@@ -306,7 +316,7 @@ public final class UpdateHighlightersUtil {
       info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
 
-    RangeHighlighterEx highlighter = infosToRemove == null ? null : (RangeHighlighterEx)infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
+    RangeHighlighterEx highlighter = infosToRemove == null ? null : (RangeHighlighterEx)infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer, info.getDescription());
     if (highlighter == null) {
       highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
                                                                   HighlighterTargetArea.EXACT_RANGE, false, changeAttributes);

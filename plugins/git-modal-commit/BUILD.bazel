@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.vcs.git.commit.modal` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "vcs-git-commit-modal_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.vcs.git.commit.modal",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":vcs-git-commit-modal_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/vcs-api:vcs",
@@ -22,7 +23,6 @@ jvm_library(
     "//platform/ide-core",
     "//platform/projectModel-api:projectModel",
     "//platform/dvcs-impl:vcs-dvcs-impl",
-  ],
-  runtime_deps = [":vcs-git-commit-modal_resources"]
+  ]
 )
 ### auto-generated section `build intellij.vcs.git.commit.modal` end

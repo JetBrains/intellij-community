@@ -62,7 +62,7 @@ public final class NegatedConditionalInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NegatedConditionalVisitor();
   }
 

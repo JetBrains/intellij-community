@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
-import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -27,7 +26,6 @@ interface XDebugManagerProxy {
 
   suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T
   fun getCurrentSessionProxy(project: Project): XDebugSessionProxy?
-  fun getSessionIdByContentDescriptor(project: Project, descriptor: RunContentDescriptor): XDebugSessionId?
   fun getCurrentSessionFlow(project: Project): Flow<XDebugSessionProxy?>
   fun getSessions(project: Project): List<XDebugSessionProxy>
 

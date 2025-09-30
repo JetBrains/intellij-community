@@ -3,8 +3,8 @@ from decorator import my_dataclass
 
 
 @my_dataclass()
-class <error descr="Non-default argument(s) follows default argument(s) defined in 'A1'">B1</error>(A1):
-    y1: str
+class B1(A1):
+    <error descr="Non-default argument(s) follows default argument(s) defined in 'A1'">y1</error>: str
     y2: str = "1"
 
 

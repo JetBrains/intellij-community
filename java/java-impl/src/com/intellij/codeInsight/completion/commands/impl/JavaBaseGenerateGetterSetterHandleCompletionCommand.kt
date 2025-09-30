@@ -43,6 +43,8 @@ internal class GenerateGetterSetterHandleCompletionCommandProvider : CommandProv
     }
     return result
   }
+
+  override fun supportNewLineCompletion(): Boolean = true
 }
 
 private data class GetterSetterCase(val generateGetter: Boolean, val generateSetter: Boolean, val name: String, val i18nName: String)

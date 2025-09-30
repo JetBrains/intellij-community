@@ -3,7 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.sun.jna.platform.win32.User32;
 
 final class RemoteDesktopDetector extends RemoteDesktopService {
@@ -11,7 +11,7 @@ final class RemoteDesktopDetector extends RemoteDesktopService {
   private volatile boolean myRemoteDesktopConnected;
 
   private RemoteDesktopDetector() {
-    if (SystemInfo.isWindows && JnaLoader.isLoaded()) {
+    if (SystemInfoRt.isWindows && JnaLoader.isLoaded()) {
       DisplayChangeDetector.getInstance().addListener(this::updateState);
       updateState();
     }

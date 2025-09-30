@@ -95,6 +95,32 @@ class EdtFreezeChainMonitor(val scope: CoroutineScope) {
   // The queue is bounded, i.e. we remove the minimal element if there are too many reports.
   private val priorityQueue: SortedSet<FreezeChainReport> = ConcurrentSkipListSet(compareBy { it.durationNs })
 
+  private val readSegments: ArrayDeque<Pair<Segment, /* actual length*/ Long>> = ArrayDeque()
+  private val writeSegments: ArrayDeque<Segment> = ArrayDeque()
+
+  // is IDE currently in freeze chain
+  private var chainActive: Boolean = false
+
+  // timestamp when a chain started
+  private var chainStartNs: Long = 0L
+
+  // total time spent on waiting and executing write actions
+  private var totalWriteInChainNs: Long = 0L
+
+  // total time spent on waiting and executing read and write-intent actions
+  private var totalReadInChainNs: Long = 0L
+
+  // total number of write operations in a chain
+  private var totalWriteOps: Int = 0
+
+  // total number of read and write-intent operations in chain
+  private var totalReadOps: Int = 0
+  private var lastWindowDurationNs = 0L
+  private var lastWindowReadDurationNs = 0L
+  private var lastWindowWriteDurationNs = 0L
+
+  // this init section should be called after all properties are initialized
+  // e.g.
   init {
     // Register listeners to get intervals on EDT for read/write/write-intent
     val disposable = scope.asDisposable()
@@ -236,27 +262,6 @@ class EdtFreezeChainMonitor(val scope: CoroutineScope) {
     fun length(): Long = endNs - startNs
   }
 
-  private val readSegments: ArrayDeque<Pair<Segment, /* actual length*/ Long>> = ArrayDeque()
-  private val writeSegments: ArrayDeque<Segment> = ArrayDeque()
-
-  // is IDE currently in freeze chain
-  private var chainActive: Boolean = false
-
-  // timestamp when a chain started
-  private var chainStartNs: Long = 0L
-
-  // total time spent on waiting and executing write actions
-  private var totalWriteInChainNs: Long = 0L
-
-  // total time spent on waiting and executing read and write-intent actions
-  private var totalReadInChainNs: Long = 0L
-
-  // total number of write operations in a chain
-  private var totalWriteOps: Int = 0
-
-  // total number of read and write-intent operations in chain
-  private var totalReadOps: Int = 0
-
   /**
    * Handle the incoming interval
    */
@@ -309,10 +314,6 @@ class EdtFreezeChainMonitor(val scope: CoroutineScope) {
   }
 
   data class WindowBlocked(val actualStartNs: Long, val report: FreezeChainReport)
-
-  private var lastWindowDurationNs = 0L
-  private var lastWindowReadDurationNs = 0L
-  private var lastWindowWriteDurationNs = 0L
 
   private fun addSegment(segment: Segment) {
     when (segment.kind) {

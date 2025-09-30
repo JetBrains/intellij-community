@@ -92,16 +92,8 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
 
   private static boolean suppressWarning(@NotNull String message, String fileName, Integer offset) {
     Set<Pair<String, Integer>> suppressed = Set.of(
-      Pair.create("Irrelevant.java", 44), // see: IDEA-377761
-      Pair.create("Irrelevant.java", 46), // see: IDEA-377761
-
       Pair.create("Other.java", 72), // see: IDEA-377763
-      Pair.create("Other.java", 70), // see: IDEA-377763
-
-      Pair.create("Other.java", 102), // see: IDEA-377764
-      Pair.create("Other.java", 106), // see: IDEA-377764
-      Pair.create("Other.java", 104), // see: IDEA-377764
-      Pair.create("Other.java", 108) // see: IDEA-377764
+      Pair.create("Other.java", 70) // see: IDEA-377763
     );
     LineColumn column = StringUtil.offsetToLineColumn(message, offset);
     return suppressed.contains(Pair.create(fileName, column.line));
@@ -178,15 +170,6 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
     Pattern.compile("// test:irrelevant[^\\r\\n]*\n *// test:irrelevant.*\n");
 
   private static @NotNull String clean(@NotNull String text, String fileName) {
-    //it is a bug in tests
-    text = text.replaceAll(Pattern.quote("""
-                                               // test:irrelevant-annotation:NonNull
-                                               try (@Nullable AutoCloseable a = () -> {}) {}
-                                           """),
-                           """
-                                 // test:irrelevant-annotation:Nullable
-                                 try (@Nullable AutoCloseable a = () -> {}) {}
-                             """);
     text = JOIN_TEST_IRRELEVANT_ANNOTATIONS.matcher(text)
       .replaceAll("// test:irrelevant-annotation:Nullable & test:irrelevant-annotation:NonNull\n");
     text = CANNOT_CONVERT.matcher(text).replaceAll("// jspecify_nullness_mismatch\n");
@@ -241,8 +224,10 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
                                  @NotNull String messageKey, Object... args) {
       switch (messageKey) {
         case "inspection.nullable.problems.primitive.type.annotation",
+             "inspection.nullable.problems.at.throws",
              "inspection.nullable.problems.at.type.parameter",
              "inspection.nullable.problems.Nullable.NotNull.conflict",
+             "conflicting.nullability.annotations",
              "inspection.nullable.problems.at.wildcard",
              "inspection.nullable.problems.at.local.variable" ->
           warnings.put(anchor, "test:irrelevant-annotation:" + getAnnotationShortName(((PsiAnnotationImpl)anchor).getQualifiedName()));

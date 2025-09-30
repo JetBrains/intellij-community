@@ -58,11 +58,10 @@ record ChangeLanguageVariant(Lang from, Lang to, boolean wasOxford, boolean toOx
       languages.add(to);
 
       return s.copy(
-        languages, s.getEnabledGrammarStrategies(), s.getDisabledGrammarStrategies(),
-        s.getEnabledCommitIntegration(),
-        s.getUserDisabledRules(), s.getUserEnabledRules(),
+        languages, s.getEnabledGrammarStrategies(), s.getDisabledGrammarStrategies(), s.getEnabledCommitIntegration(),
+        s.getUserDisabledRules(), s.getUserEnabledRules(), s.getDomainDisabledRules(), s.getDomainEnabledRules(),
         s.getSuppressingContext(), s.getDetectionContext(), s.getCheckingContext(), s.getVersion(),
-        s.getStyleProfile(), s.getParameters(), s.getUseOxfordSpelling(), s.getAutoFix()
+        s.getStyleProfile(), s.getParameters(), s.getParametersPerDomain(), s.getUseOxfordSpelling(), s.getAutoFix()
       );
     });
     if (from.isEnglish()) {
@@ -79,8 +78,7 @@ record ChangeLanguageVariant(Lang from, Lang to, boolean wasOxford, boolean toOx
 
     boolean toOxford = BRITISH_OXFORD_ID.equals(toVariant);
     String toCountry = toOxford ? "GB" : toVariant;
-    Lang[] values = Lang.values();
-    Lang to = ContainerUtil.find(values, l -> l.getIso().equals(from.getIso()) && toCountry.equals(countryCode(l)));
+    Lang to = ContainerUtil.find(Lang.values(), l -> l.getIso().equals(from.getIso()) && toCountry.equals(countryCode(l)));
     return to == null ? null : new ChangeLanguageVariant(from, to, GrazieConfig.Companion.get().getUseOxfordSpelling(), toOxford, text);
   }
 

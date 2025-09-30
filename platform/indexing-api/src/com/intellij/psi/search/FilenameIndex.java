@@ -136,7 +136,10 @@ public final class FilenameIndex {
     return result[0];
   }
 
-  /** @return true if all the matching files were scanned, false if scanning was stopped early because the processor returns false */
+  /**
+   * @param caseSensitively BEWARE: <b>case-insensitive lookup is quite expensive</b>, it involves full-scan over index!
+   * @return true if all the matching files were scanned, false if scanning was stopped early because the processor returns false
+   */
   public static boolean processFilesByName(@NotNull String name,
                                            boolean caseSensitively,
                                            @NotNull GlobalSearchScope scope,
@@ -144,7 +147,10 @@ public final class FilenameIndex {
     return processFilesByNames(Set.of(name), caseSensitively, scope, null, processor);
   }
 
-  /** @return true if all the matching files were scanned, false if scanning was stopped early because the processor returns false */
+  /**
+   * @param caseSensitively BEWARE: <b>case-insensitive lookup is quite expensive</b>, it involves full-scan over index!
+   * @return true if all the matching files were scanned, false if scanning was stopped early because the processor returns false
+   */
   public static boolean processFilesByNames(@NotNull Set<String> names,
                                             boolean caseSensitively,
                                             @NotNull GlobalSearchScope scope,
@@ -243,6 +249,7 @@ public final class FilenameIndex {
     return files;
   }
 
+  /** @param caseSensitively BEWARE: <b>case-insensitive lookup is quite expensive</b>, it involves full-scan over index! */
   @ApiStatus.Experimental
   public static boolean hasVirtualFileWithName(@NotNull String name,
                                                boolean caseSensitively,
@@ -251,6 +258,7 @@ public final class FilenameIndex {
     return !processFilesByNames(Set.of(name), caseSensitively, scope, filter, file -> false);
   }
 
+  /** @param caseSensitively BEWARE: <b>case-insensitive lookup is quite expensive</b>, it involves full-scan over index! */
   @ApiStatus.Experimental
   public static @Nullable VirtualFile firstVirtualFileWithName(@NotNull String name,
                                                                boolean caseSensitively,

@@ -9,6 +9,8 @@ Reports calls to overridable methods of the current class during object construc
   <li><code>clone()</code> method</li>
   <li><code>readObject()</code> method</li>
   <li><code>readObjectNoData()</code> method</li>
+</ul>
+
 <p>Methods are overridable if they are not declared as <code>final</code>, <code>static</code>, or <code>private</code>.
   Package-local methods are considered safe, even though they are overridable. Such calls may result in subtle bugs,
   as object initialization may happen before the method call.</p>

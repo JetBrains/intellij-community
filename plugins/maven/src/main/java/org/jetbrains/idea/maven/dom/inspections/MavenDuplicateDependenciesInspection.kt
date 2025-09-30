@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.dom.inspections
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.project.DumbAware
 import com.intellij.util.Processor
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.xml.DomFileElement
@@ -19,7 +20,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.utils.MavenLog
 
-class MavenDuplicateDependenciesInspection : DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java) {
+class MavenDuplicateDependenciesInspection : DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java), DumbAware {
   override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>, holder: DomElementAnnotationHolder) {
     val projectModel = domFileElement.rootElement
 

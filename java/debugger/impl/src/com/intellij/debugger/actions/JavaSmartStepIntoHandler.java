@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -68,13 +69,19 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     Objects.requireNonNull(context.getManagerThread()).schedule(new DebuggerContextCommandImpl(context) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+        if (!Objects.equals(ContextUtil.getSourcePosition(suspendContext), position)) {
+          // The source position has changed - just cancel the current command
+          res.cancel();
+          return;
+        }
+
         Promises.compute(res, () ->
           ReadAction.nonBlocking(() -> findStepTargets(position, suspendContext, getDebuggerContext(), smart)).executeSynchronously());
       }
 
       @Override
       protected void commandCancelled() {
-        res.setError("Cancelled");
+        res.cancel();
       }
 
       @Override
@@ -146,7 +153,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     final PsiElement initial = element;
     element = getTopmostParentAfterOffset(element, lineRange.getStartOffset());
 
-    final PsiElement statementParent = PsiTreeUtil.getParentOfType(initial, PsiStatement.class, false);
+    final PsiElement statementParent = PsiTreeUtil.getNonStrictParentOfType(initial, PsiStatement.class, PsiField.class);
     if (statementParent != null
         && (body == null || body.getTextRange().contains(statementParent.getTextRange()))
         // take only wider statements
@@ -208,7 +215,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
       @Override
       public void visitField(@NotNull PsiField field) {
-        if (checkTextRange(field, false)) {
+        if (checkTextRange(field, true)) {
           super.visitField(field);
         }
       }
@@ -274,8 +281,13 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       boolean checkTextRange(@NotNull PsiElement expression, boolean expand) {
         TextRange range = expression.getTextRange();
         if (lineRange.intersects(range)) {
-          if (expand && matchLine(expression)) {
-            textRange.set(textRange.get().union(range));
+          if (expand) {
+            // only expand to the bottom of the file
+            TextRange current = textRange.get();
+            int delta = range.getEndOffset() - current.getEndOffset();
+            if (delta > 0) {
+              textRange.set(current.grown(delta));
+            }
           }
           return true;
         }

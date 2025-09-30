@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendOnlyItemsProviderFactory
+import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProviderFactory
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -17,6 +18,7 @@ class SeActionsProviderFactory : SeWrappedLegacyContributorItemsProviderFactory,
 
   override suspend fun getItemsProvider(project: Project?, legacyContributor: SearchEverywhereContributor<Any>): SeItemsProvider? {
     if (legacyContributor !is ActionSearchEverywhereContributor) return null
-    return SeActionsAdaptedProvider(legacyContributor)
+
+    return SeActionsAdaptedProvider(SeAsyncContributorWrapper(legacyContributor))
   }
 }

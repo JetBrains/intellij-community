@@ -602,7 +602,7 @@ final class FindInProjectTask {
       else {
         ContainerUtil.addAll(searchItems, cacheAvoidingDirectory.getChildren());
       }
-      //MAYBE RC: should we return early here? Should FindModelExtension and nonIndexableFiles be added if user explicitly
+      //MAYBE RC: should we return early here? Should FindModelExtension be added if user explicitly
       //          request a search in a specific directory _only_?
     }
     else if (moduleToSearchIn != null) {
@@ -616,15 +616,16 @@ final class FindInProjectTask {
       FileBasedIndexEx indexes = (FileBasedIndexEx)FileBasedIndex.getInstance();
       //Don't wrap those files in cache-avoiding wrappers: indexable files are scanned, and hence (will be) cached in VFS anyway:
       searchItems.addAll(indexes.getIndexableFilesProviders(project));
+
+      if (Boolean.TRUE.equals(project.getUserData(FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE))) {
+        //MAYBE RC: currently nonIndexableFiles() returns transient files already -- but maybe it is safer to return _regular_ files
+        //          from nonIndexableFiles(), and wrap them all into transient here, in a unified way?
+        searchItems.add(ReadAction.nonBlocking(() -> FilesDeque.nonIndexableDequeue(project)).executeSynchronously());
+      }
     }
 
     searchItems.addAll(FindModelExtension.EP_NAME.getExtensionList());
 
-    if (Boolean.TRUE.equals(project.getUserData(FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE))) {
-      //MAYBE RC: currently nonIndexableFiles() returns transient files already -- but maybe it is safer to return _regular_ files
-      //          from nonIndexableFiles(), and wrap them all into transient here, in a unified way?
-      searchItems.add(ReadAction.nonBlocking(() -> FilesDeque.Companion.nonIndexableDequeue(project)).executeSynchronously());
-    }
 
     return searchItems;
   }

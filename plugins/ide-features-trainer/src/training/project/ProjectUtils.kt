@@ -93,7 +93,7 @@ object ProjectUtils {
         if (createProjectDirectory(canonicalPlace)) {
           // Remove the old learning directory
           val rpProvider = RecentProjectListActionProvider.getInstance()
-          val projectActions = rpProvider.getActions()
+          val projectActions = rpProvider.getActionsWithoutGroups()
           for (action in projectActions) {
             val projectPath = (action as? ReopenProjectAction)?.projectPath
             if (projectPath != null && Paths.get(projectPath) == path) {

@@ -1212,7 +1212,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   }
 
   @Override
-  public @NlsContexts.HintText String handleEmptyLookup(@NotNull CompletionParameters parameters, Editor editor) {
+  public @NlsContexts.HintText String handleEmptyLookup(@NotNull CompletionParameters parameters, @NotNull Editor editor) {
     if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return null;
 
     String ad = advertise(parameters);

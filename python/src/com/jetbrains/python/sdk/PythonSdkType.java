@@ -230,7 +230,7 @@ public final class PythonSdkType extends SdkType {
     final File virtualEnvRoot = PythonSdkUtil.getVirtualEnvRoot(sdkHome);
     if (virtualEnvRoot != null) {
       final String path = FileUtil.getLocationRelativeToUserHome(virtualEnvRoot.getAbsolutePath());
-      return name + " virtualenv at " + path;
+      return name + " " + path;
     }
     else {
       return name;

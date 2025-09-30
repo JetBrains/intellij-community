@@ -270,7 +270,10 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   @Override
   public @Nullable String getRunClass() {
     PsiClass mainClass = getMainClass();
-    if (mainClass == null) return null;
+    // if it is impossible to find a class, then it shouldn't be adjusted and should be used as is
+    // it is important for implicit classes, and
+    // it is necessary for compatibility with the older behavior
+    if (mainClass == null) return getMainClassName();
     return JavaExecutionUtil.getRuntimeQualifiedName(mainClass);
   }
 

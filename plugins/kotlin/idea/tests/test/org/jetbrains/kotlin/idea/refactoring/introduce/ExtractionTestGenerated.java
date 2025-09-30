@@ -255,6 +255,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/extractToScope/insideNestedLamba.kt");
             }
 
+            @TestMetadata("insideNestedLambdaAllOccurrences.kt")
+            public void testInsideNestedLambdaAllOccurrences() throws Exception {
+                runTest("testData/refactoring/introduceVariable/extractToScope/insideNestedLambdaAllOccurrences.kt");
+            }
+
             @TestMetadata("insideNestedLambdaInFunExpression.kt")
             public void testInsideNestedLambdaInFunExpression() throws Exception {
                 runTest("testData/refactoring/introduceVariable/extractToScope/insideNestedLambdaInFunExpression.kt");
@@ -263,11 +268,6 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("itInsideNestedLamba.kt")
             public void testItInsideNestedLamba() throws Exception {
                 runTest("testData/refactoring/introduceVariable/extractToScope/itInsideNestedLamba.kt");
-            }
-
-            @TestMetadata("KTIJ-17001.kt")
-            public void testKTIJ_17001() throws Exception {
-                runTest("testData/refactoring/introduceVariable/extractToScope/KTIJ-17001.kt");
             }
 
             @TestMetadata("outerItInsideNestedLamba.kt")
@@ -934,6 +934,16 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/IntroduceDestructuringDeclarationAndCreateBlock.kt");
             }
 
+            @TestMetadata("IntroduceInsideClassAllOccurrencesExpression.kt")
+            public void testIntroduceInsideClassAllOccurrencesExpression() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroduceInsideClassAllOccurrencesExpression.kt");
+            }
+
+            @TestMetadata("IntroduceInsideClassAllOccurrencesLiteral.kt")
+            public void testIntroduceInsideClassAllOccurrencesLiteral() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroduceInsideClassAllOccurrencesLiteral.kt");
+            }
+
             @TestMetadata("IntroduceLambdaAndCreateBlock.kt")
             public void testIntroduceLambdaAndCreateBlock() throws Exception {
                 runTest("testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock.kt");
@@ -967,21 +977,6 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("javaInnerClassQualifier.kt")
             public void testJavaInnerClassQualifier() throws Exception {
                 runTest("testData/refactoring/introduceVariable/javaInnerClassQualifier.kt");
-            }
-
-            @TestMetadata("KTIJ-14455.kt")
-            public void testKTIJ_14455() throws Exception {
-                runTest("testData/refactoring/introduceVariable/KTIJ-14455.kt");
-            }
-
-            @TestMetadata("KTIJ-6396.kt")
-            public void testKTIJ_6396() throws Exception {
-                runTest("testData/refactoring/introduceVariable/KTIJ-6396.kt");
-            }
-
-            @TestMetadata("KTIJ-9043.kt")
-            public void testKTIJ_9043() throws Exception {
-                runTest("testData/refactoring/introduceVariable/KTIJ-9043.kt");
             }
 
             @TestMetadata("kt10808.kt")
@@ -1137,6 +1132,16 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("OneExplicitReceiver.kt")
             public void testOneExplicitReceiver() throws Exception {
                 runTest("testData/refactoring/introduceVariable/OneExplicitReceiver.kt");
+            }
+
+            @TestMetadata("parenthesizedInIfBranchWithoutBraces.kt")
+            public void testParenthesizedInIfBranchWithoutBraces() throws Exception {
+                runTest("testData/refactoring/introduceVariable/parenthesizedInIfBranchWithoutBraces.kt");
+            }
+
+            @TestMetadata("parenthesizedInWhenBranch.kt")
+            public void testParenthesizedInWhenBranch() throws Exception {
+                runTest("testData/refactoring/introduceVariable/parenthesizedInWhenBranch.kt");
             }
 
             @TestMetadata("PropertyAccessorAddBlock.kt")

@@ -10,6 +10,7 @@ public class NaturalTextDetectorTest {
     assertTrue(NaturalTextDetector.seemsNatural("The dog barks"));
     assertTrue(NaturalTextDetector.seemsNatural("This is the greatest setting of all: you can turn it on/off without any trouble"));
     assertTrue(NaturalTextDetector.seemsNatural("two dog"));
+    assertTrue(NaturalTextDetector.seemsNatural("原子笔"));
 
     assertFalse(NaturalTextDetector.seemsNatural("someSpringBean"));
     assertFalse(NaturalTextDetector.seemsNatural("Accept: text/plain"));

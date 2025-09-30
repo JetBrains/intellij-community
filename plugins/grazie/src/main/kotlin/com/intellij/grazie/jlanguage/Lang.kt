@@ -11,14 +11,15 @@ import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.grazie.remote.HunspellDescriptor
 import com.intellij.grazie.remote.LanguageToolDescriptor
 import com.intellij.grazie.remote.RemoteLangDescriptor
+import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
+import com.intellij.grazie.spellcheck.hunspell.HunspellDictionary
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
-import com.intellij.spellchecker.hunspell.HunspellDictionary
 import org.jetbrains.annotations.NonNls
 import org.languagetool.Language
 import org.languagetool.language.English
 import org.languagetool.noop.NoopChunker
 
+@Suppress("NonAsciiCharacters", "ANNOTATION_WILL_BE_APPLIED_ALSO_TO_PROPERTY_OR_FIELD")
 enum class Lang(val displayName: String, val className: String, val iso: LanguageISO, @NlsSafe val nativeName: String, @NonNls val variant: String? = null) {
   BRITISH_ENGLISH("English (GB)", "BritishEnglish", LanguageISO.EN, "English (Great Britain)"),
   AMERICAN_ENGLISH("English (US)", "AmericanEnglish", LanguageISO.EN, "English (USA)"),
@@ -107,7 +108,9 @@ enum class Lang(val displayName: String, val className: String, val iso: Languag
       if (shouldDisableChunker(it)) {
         it.chunker = NoopChunker()
       }
+      it.disambiguator = LazyCachingConcurrentDisambiguator(it)
       _jLanguage = it
+      
     }
 
   fun isAvailable() = GrazieRemote.isAvailableLocally(this)

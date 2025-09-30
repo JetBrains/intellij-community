@@ -1,5 +1,5 @@
 <!--suppress PluginXmlDynamicPlugin -->
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.vcs"/>
 
   <dependencies>

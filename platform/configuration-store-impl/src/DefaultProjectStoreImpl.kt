@@ -30,7 +30,7 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 
   private val storage by lazy {
     val file = ApplicationManager.getApplication().stateStore.storageManager.expandMacro(PROJECT_DEFAULT_FILE_SPEC)
-    DefaultProjectStorage(file, PROJECT_DEFAULT_FILE_SPEC, PathMacroManager.getInstance(project), compoundStreamProvider)
+    DefaultProjectStorage(file = file, fileSpec = PROJECT_DEFAULT_FILE_SPEC, pathMacroManager = PathMacroManager.getInstance(project), streamProvider = compoundStreamProvider)
   }
 
   override val serviceContainer: ComponentManagerEx
@@ -68,8 +68,8 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 
   override fun getPathMacroManagerForDefaults(): PathMacroManager = PathMacroManager.getInstance(project)
 
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<FileStorageAnnotation> {
-    return listOf(PROJECT_FILE_STORAGE_ANNOTATION)
+  override fun <T : Any> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<FileStorageAnnotation> {
+    return listOf(FileStorageAnnotation.PROJECT_FILE_STORAGE_ANNOTATION)
   }
 
   override fun setPath(path: Path) {}
@@ -103,24 +103,28 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
       }
     }
 
-    override fun createSaveSession(states: StateMap): FileSaveSessionProducer =
-      object : FileSaveSessionProducer(storageData = states, storage = this) {
-        override fun saveLocally(dataWriter: DataWriter?, useVfs: Boolean, events: MutableList<VFileEvent>?) {
-          val dataWriter = if (dataWriter == null) null else object : StringDataWriter() {
-            override fun hasData(filter: DataWriterFilter): Boolean = dataWriter.hasData(filter)
+    override fun createSaveSession(states: StateMap): FileSaveSessionProducer {
+      return object : FileSaveSessionProducer(storageData = states, storage = this) {
+        override fun saveLocally(dataWriter: DataWriter, events: MutableList<VFileEvent>?) {
+          super.saveLocally(
+            dataWriter = object : StringDataWriter() {
+              override fun hasData(filter: DataWriterFilter): Boolean = dataWriter.hasData(filter)
 
-            override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
-              val lineSeparatorWithIndent = "${lineSeparator}    "
-              writer.append("<application>").append(lineSeparator)
-              writer.append("""  <component name="ProjectManager">""").append(lineSeparatorWithIndent)
-              (dataWriter as StringDataWriter).writeTo(writer, lineSeparatorWithIndent, filter)
-              writer.append(lineSeparator)
-              writer.append("  </component>").append(lineSeparator)
-              writer.append("</application>")
-            }
-          }
-          super.saveLocally(dataWriter, useVfs, events)
+              override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
+                val lineSeparatorWithIndent = "${lineSeparator}    "
+                writer.append("<application>").append(lineSeparator)
+                writer.append("""  <component name="ProjectManager">""").append(lineSeparatorWithIndent)
+                (dataWriter as StringDataWriter).writeTo(writer, lineSeparatorWithIndent, filter)
+                writer.append(lineSeparator)
+                writer.append("  </component>").append(lineSeparator)
+                writer.append("</application>")
+              }
+            },
+            events = events,
+          )
         }
       }
+    }
   }
 }
+

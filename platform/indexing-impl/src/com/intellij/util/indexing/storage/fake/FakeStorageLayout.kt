@@ -66,7 +66,7 @@ internal class FakeIndexStorage<K, V> : VfsAwareIndexStorage<K, V> {
   override fun <E : Exception?> read(key: K?, processor: ValueContainerProcessor<V?, E?>): Boolean {
     return processor.process(ValueContainer.emptyContainer())
   }
-  
+
   override fun flush() = Unit
 
   override fun close() = Unit
@@ -86,4 +86,6 @@ internal class FakeIndexStorage<K, V> : VfsAwareIndexStorage<K, V> {
   override fun isClosed(): Boolean = false
 
   override fun keysCountApproximately(): Int = 0
+
+  override fun isReadLockHeldByCurrentThread(): Boolean = false
 }

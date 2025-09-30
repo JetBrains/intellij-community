@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.fs
 
 import com.intellij.platform.eel.EelResult
@@ -14,10 +14,6 @@ object EelFsResultImpl {
   data class Error<E : EelFsError>(override val error: E) : EelResult.Error<E>
 
   data class DiskInfoImpl(override val totalSpace: ULong, override val availableSpace: ULong) : EelFileSystemApi.DiskInfo
-
-  data class FullBytesReadImpl(override val bytes: ByteArray) : EelFileSystemApi.FullReadResult.Bytes
-  data class FullBytesReadOverflown(override val bytes: ByteArray) : EelFileSystemApi.FullReadResult.BytesOverflown
-  data object Overflow : EelFileSystemApi.FullReadResult.Overflow
 
   data class Other(override val where: EelPath, override val message: String) :
     EelFileSystemApi.FileReaderError.Other,
@@ -40,8 +36,7 @@ object EelFsResultImpl {
     EelFileSystemPosixApi.CreateSymbolicLinkError.Other,
     EelOpenedFile.CloseError.Other,
     EelOpenedFile.Writer.TruncateError.Other,
-    EelFileSystemApi.FullReadError.Other,
-    EelFileSystemApi.DirectoryHashError.Other
+    EelFileSystemApi.WalkDirectoryError.Other
 
   data class DoesNotExist(override val where: EelPath, override val message: String) :
     EelFileSystemApi.ChangeAttributesError.SourceDoesNotExist,
@@ -51,13 +46,13 @@ object EelFsResultImpl {
     EelFileSystemApi.SameFileError.DoesNotExist,
     EelFileSystemApi.StatError.DoesNotExist,
     EelFileSystemApi.CanonicalizeError.DoesNotExist,
-    EelFileSystemApi.FullReadError.DoesNotExist,
     EelFileSystemApi.DiskInfoError.PathDoesNotExists,
     EelFileSystemPosixApi.CreateDirectoryError.ParentNotFound,
     EelFileSystemApi.CopyError.SourceDoesNotExist,
     EelFileSystemApi.MoveError.SourceDoesNotExist,
     EelFileSystemPosixApi.CreateSymbolicLinkError.DoesNotExist,
-    EelFileSystemApi.DeleteError.DoesNotExist
+    EelFileSystemApi.DeleteError.DoesNotExist,
+  EelFileSystemApi.WalkDirectoryError.Other
 
   data class AlreadyExists(override val where: EelPath, override val message: String) :
     EelFileSystemApi.FileReaderError.AlreadyExists,
@@ -80,7 +75,7 @@ object EelFsResultImpl {
     EelFileSystemApi.CopyError.PermissionDenied,
     EelFileSystemApi.MoveError.PermissionDenied,
     EelFileSystemPosixApi.CreateSymbolicLinkError.PermissionDenied,
-    EelFileSystemApi.FullReadError.PermissionDenied
+    EelFileSystemApi.WalkDirectoryError.Other
 
   data class NotDirectory(override val where: EelPath, override val message: String) :
     EelFileSystemApi.CanonicalizeError.NotDirectory,
@@ -104,8 +99,7 @@ object EelFsResultImpl {
     EelFileSystemApi.FileWriterError.NotFile,
     EelFileSystemApi.SameFileError.NotFile,
     EelFileSystemApi.StatError.NotFile,
-    EelFileSystemApi.MoveError.TargetIsDirectory,
-    EelFileSystemApi.FullReadError.NotFile
+    EelFileSystemApi.MoveError.TargetIsDirectory
 
   data class InvalidValue(override val where: EelPath, override val message: String) :
     EelOpenedFile.Reader.ReadError.InvalidValue,
@@ -145,4 +139,7 @@ object EelFsResultImpl {
 
   data class OffsetTooBig(override val where: EelPath, override val message: String) :
     EelOpenedFile.Writer.TruncateError.OffsetTooBig
+
+  data class FileBiggerThanRequested(override val where: EelPath, override val message: String) :
+    EelFileSystemApi.FileReaderError.FileBiggerThanRequested
 }

@@ -11,6 +11,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -38,7 +39,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public abstract class DebuggerUtils {
@@ -598,4 +602,23 @@ public abstract class DebuggerUtils {
   public static boolean isAndroidVM(@NotNull VirtualMachine virtualMachine) {
     return StringUtil.containsIgnoreCase(virtualMachine.name(), "dalvik");
   }
+
+  // do not catch VMDisconnectedException
+  public static <T> void forEachSafe(ExtensionPointName<T> ep, Consumer<? super T> action) {
+    forEachSafe(ep.getIterable(), action);
+  }
+
+  // do not catch VMDisconnectedException
+  public static <T> void forEachSafe(Iterable<? extends T> iterable, Consumer<? super T> action) {
+    for (T o : iterable) {
+      try {
+        action.accept(o);
+      }
+      catch (Throwable e) {
+        getInstance().logErrorImpl(e);
+      }
+    }
+  }
+
+  protected abstract void logErrorImpl(@NotNull Throwable e);
 }

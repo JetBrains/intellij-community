@@ -102,14 +102,14 @@ open class FileParser(private val myParser: JavaParser) {
   private fun parsePackageStatement(builder: SyntaxTreeBuilder) {
     val statement = builder.mark()
 
-    if (!builder.expect(JavaSyntaxTokenType.PACKAGE_KEYWORD)) {
-      val modList = builder.mark()
+    val modList = builder.mark()
+    if (builder.tokenType != JavaSyntaxTokenType.PACKAGE_KEYWORD) {
       myParser.declarationParser.parseAnnotations(builder)
-      JavaParserUtil.done(modList, JavaSyntaxElementType.MODIFIER_LIST, myParser.languageLevel)
-      if (!builder.expect(JavaSyntaxTokenType.PACKAGE_KEYWORD)) {
-        statement.rollbackTo()
-        return
-      }
+    }
+    JavaParserUtil.done(modList, JavaSyntaxElementType.MODIFIER_LIST, myParser.languageLevel)
+    if (!builder.expect(JavaSyntaxTokenType.PACKAGE_KEYWORD)) {
+      statement.rollbackTo()
+      return
     }
 
     val ref = myParser.referenceParser.parseJavaCodeReference(builder, true, false, false, false)

@@ -14,6 +14,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
+import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
@@ -24,10 +25,6 @@ internal suspend fun createLibraryLicensesListGenerator(
   usedModulesNames: Set<String>,
   allowEmpty: Boolean = false,
 ): LibraryLicensesListGenerator {
-  val licences = generateLicenses(project = context.project, licensesList = licenseList, usedModulesNames = usedModulesNames)
-  check(allowEmpty || !licences.isEmpty()) {
-    "Empty licenses table for ${licenseList.size} licenses and ${usedModulesNames.size} used modules names"
-  }
   val generator = createLibraryLicensesListGenerator(context.project, licenseList, usedModulesNames, allowEmpty)
   checkLibraryUrls(context, generator.libraryLicenses)
   return generator
@@ -165,10 +162,26 @@ private fun generateHtmlLine(name: String, libVersion: String, license: String):
 private fun generateLicenses(project: JpsProject, licensesList: List<LibraryLicense>, usedModulesNames: Set<String>): List<LibraryLicense> {
   Span.current().setAttribute(AttributeKey.stringArrayKey("modules"), usedModulesNames.toList())
   val usedModules = project.modules.filterTo(HashSet()) { usedModulesNames.contains(it.name) }
-  val usedLibraries = HashMap<String, String>()
+  val usedLibraries = HashMap<String, Pair<JpsLibrary, JpsModule>>()
   for (module in usedModules) {
     for (item in JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
-      usedLibraries.put(getLibraryFilename(item), module.name)
+      usedLibraries.put(getLibraryFilename(item), item to module)
+    }
+  }
+
+  val librariesWithKnownLicences = licensesList.flatMapTo(HashSet()) { it.getLibraryNames() }
+  val missing = usedLibraries.entries.asSequence().filterNot { (libraryName, _) ->
+    librariesWithKnownLicences.contains(libraryName)
+  }.filter {
+    val mavenDescriptor = it.value.first.asTyped(JpsRepositoryLibraryType.INSTANCE)?.properties?.data
+    mavenDescriptor != null && !LibraryLicense.isJetBrainsOwnLibrary(mavenDescriptor)
+  }.toList()
+  check(missing.none()) {
+    "Missing licenses for libraries:\n" +
+    missing.joinToString(separator = "\n") {
+      "${it.key}: " +
+      (it.value.first.asTyped(JpsRepositoryLibraryType.INSTANCE)?.properties?.data ?: it.value.first.name) +
+      " used in the module ${it.value.second.name}"
     }
   }
 

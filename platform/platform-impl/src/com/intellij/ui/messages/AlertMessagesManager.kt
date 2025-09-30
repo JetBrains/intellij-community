@@ -95,19 +95,20 @@ internal class AlertMessagesManager {
 
 private const val PARENT_WIDTH_KEY = "parent.width"
 
-@ApiStatus.Internal
-class AlertDialog(project: Project?,
-                  parentComponent: Component?,
-                  @NlsContexts.DialogMessage val myMessage: String?,
-                  @NlsContexts.DialogTitle val myTitle: String?,
-                  val myOptions: Array<String>,
-                  val myDefaultOptionIndex: Int,
-                  val myFocusedOptionIndex: Int,
-                  icon: Icon,
-                  doNotAskOption: DoNotAskOption?,
-                  val myHelpId: String?,
-                  invocationPlace: String? = null,
-                  val exitActionTypes: Array<ExitActionType> = emptyArray()) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE, false) {
+internal class AlertDialog(
+  project: Project?,
+  parentComponent: Component?,
+  @NlsContexts.DialogMessage val myMessage: String?,
+  @NlsContexts.DialogTitle val myTitle: String?,
+  val myOptions: Array<String>,
+  val myDefaultOptionIndex: Int,
+  val myFocusedOptionIndex: Int,
+  icon: Icon,
+  @Suppress("RemoveRedundantQualifierName") doNotAskOption: com.intellij.openapi.ui.DoNotAskOption?,
+  val myHelpId: String?,
+  invocationPlace: String? = null,
+  val exitActionTypes: Array<ExitActionType> = emptyArray(),
+) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE, false) {
 
   private val myIsTitleComponent = SystemInfoRt.isMac || !Registry.`is`("ide.message.dialogs.as.swing.alert.show.title.bar", false)
 
@@ -209,6 +210,14 @@ class AlertDialog(project: Project?,
     }
 
     WindowRoundedCornersManager.configure(this)
+
+    val alertBackground = JBColor.namedColor("AlertDialog.background", JBColor.PanelBackground)
+
+    UIUtil.uiTraverser(window).traverse().consumeEach {
+      if (JBColor.PanelBackground.equals(it.background)) {
+        it.background = alertBackground
+      }
+    }
   }
 
   override fun setSizeDuringPack() = false

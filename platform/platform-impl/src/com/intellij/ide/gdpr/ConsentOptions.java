@@ -2,6 +2,7 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.idea.AppMode;
 import com.intellij.l10n.LocalizationUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -34,6 +35,8 @@ public final class ConsentOptions implements ModificationTracker {
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
   private static final String EAP_FEEDBACK_OPTION_ID = "eap";
   private static final String AI_DATA_COLLECTION_OPTION_ID = "ai.data.collection.and.use.policy";
+  private static final String TRACE_DATA_COLLECTION_NON_COM_OPTION_ID = "ai.trace.data.collection.and.use.noncom.policy";
+  private static final String TRACE_DATA_COLLECTION_COM_OPTION_ID = "ai.trace.data.collection.and.use.com.policy";
   private static final String TRACE_DATA_COLLECTION_OPTION_ID = "ai.trace.data.collection.and.use.policy";
   private static final Set<String> PER_PRODUCT_CONSENTS = Set.of(EAP_FEEDBACK_OPTION_ID);
 
@@ -197,6 +200,17 @@ public final class ConsentOptions implements ModificationTracker {
     return consent -> AI_DATA_COLLECTION_OPTION_ID.equals(consent.getId());
   }
 
+  public static @NotNull Predicate<Consent> condTraceDataCollectionNonComConsent() {
+    return consent -> TRACE_DATA_COLLECTION_NON_COM_OPTION_ID.equals(consent.getId());
+  }
+
+  public static @NotNull Predicate<Consent> condTraceDataCollectionComConsent() {
+    return consent -> TRACE_DATA_COLLECTION_COM_OPTION_ID.equals(consent.getId());
+  }
+
+  /**
+   * Should only be used to limit the visibility of the outdated TRACE content in the settings.
+   */
   public static @NotNull Predicate<Consent> condTraceDataCollectionConsent() {
     return consent -> TRACE_DATA_COLLECTION_OPTION_ID.equals(consent.getId());
   }
@@ -226,12 +240,20 @@ public final class ConsentOptions implements ModificationTracker {
     setPermission(AI_DATA_COLLECTION_OPTION_ID, permitted);
   }
 
-  public @NotNull Permission getTraceDataCollectionPermission() {
-    return getPermission(TRACE_DATA_COLLECTION_OPTION_ID);
+  public @NotNull Permission getTraceDataCollectionNonComPermission() {
+    return getPermission(TRACE_DATA_COLLECTION_NON_COM_OPTION_ID);
   }
 
-  public void setTraceDataCollectionPermission(boolean permitted) {
-    setPermission(TRACE_DATA_COLLECTION_OPTION_ID, permitted);
+  public void setTraceDataCollectionNonComPermission(boolean permitted) {
+    setPermission(TRACE_DATA_COLLECTION_NON_COM_OPTION_ID, permitted);
+  }
+
+  public @NotNull Permission getTraceDataCollectionComPermission() {
+    return getPermission(TRACE_DATA_COLLECTION_COM_OPTION_ID);
+  }
+
+  public void setTraceDataCollectionComPermission(boolean permitted) {
+    setPermission(TRACE_DATA_COLLECTION_COM_OPTION_ID, permitted);
   }
 
   private Permission getPermission(String consentId) {
@@ -343,7 +365,8 @@ public final class ConsentOptions implements ModificationTracker {
       }
     }
     result.sort(Comparator.comparing(ConsentBase::getId));
-    var confirmationEnabled = Boolean.parseBoolean(System.getProperty(CONSENTS_CONFIRMATION_PROPERTY, "true"));
+    var confirmationEnabled = Boolean.parseBoolean(System.getProperty(CONSENTS_CONFIRMATION_PROPERTY, "true")) &&
+                              !AppMode.isRemoteDevHost();
     return new Pair<>(result, confirmationEnabled && needReconfirm(allDefaults, allConfirmed));
   }
 

@@ -98,6 +98,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
+import static com.intellij.ide.scratch.ScratchTreeStructureProvider.SCRATCHES_NODE_SETTING;
 import static com.intellij.ui.treeStructure.Tree.AUTO_SCROLL_FROM_SOURCE_BLOCKED;
 
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), getStateRequiresEdt = true)
@@ -322,7 +323,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final Option myShowScratchesAndConsoles = new Option() {
     @Override
     public boolean isEnabled(@NotNull AbstractProjectViewPane pane) {
-      return pane.supportsShowScratchesAndConsoles();
+      return AdvancedSettings.getBoolean(SCRATCHES_NODE_SETTING) &&
+             pane.supportsShowScratchesAndConsoles();
     }
 
     @Override
@@ -1286,7 +1288,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return getSelectInTarget(getCurrentViewId());
   }
 
-  private @Nullable SelectInTarget getSelectInTarget(String id) {
+  @ApiStatus.Internal
+  public @Nullable SelectInTarget getSelectInTarget(String id) {
     if (id == null) {
       return null;
     }
@@ -1298,7 +1301,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @ApiStatus.Internal
-  public ProjectViewSelectInTarget getProjectViewSelectInTarget(@NotNull AbstractProjectViewPane pane) {
+  ProjectViewSelectInTarget getProjectViewSelectInTarget(@NotNull AbstractProjectViewPane pane) {
     SelectInTarget target = getSelectInTarget(pane.getId());
     return target instanceof ProjectViewSelectInTarget
            ? (ProjectViewSelectInTarget)target

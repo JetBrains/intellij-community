@@ -1,4 +1,16 @@
 KaLibraryModule:
+  description: Library @kotlin_test_deps//:annotations-java5-24.0.0.jar
+  targetPlatform: JVM (1.8)
+  libraryName: @kotlin_test_deps//:annotations-java5-24.0.0.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of @kotlin_test_deps//:annotations-java5-24.0.0.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
   description: Library NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.2.0-dev-15683)
   targetPlatform: Native (android_arm32)/Native (android_arm64)/Native (android_x64)/Native (android_x86)/Native (ios_arm64)/Native (ios_simulator_arm64)/Native (ios_x64)/Native (linux_arm32_hfp)/Native (linux_arm64)/Native (linux_x64)/Native (macos_arm64)/Native (macos_x64)/Native (mingw_x64)/Native (tvos_arm64)/Native (tvos_simulator_arm64)/Native (tvos_x64)/Native (watchos_arm32)/Native (watchos_arm64)/Native (watchos_device_arm64)/Native (watchos_simulator_arm64)/Native (watchos_x64)
   libraryName: NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.2.0-dev-15683)
@@ -142,18 +154,6 @@ KaLibraryModule:
   dependsOnDependencies:
     <empty>
 
-KaLibraryModule:
-  description: Library org.jetbrains:annotations-java5:24.0.0
-  targetPlatform: JVM (1.8)
-  libraryName: org.jetbrains:annotations-java5:24.0.0
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains:annotations-java5:24.0.0)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
 KaSourceModule:
   description: Sources of Common
   targetPlatform: JS/JVM (1.8)
@@ -333,8 +333,8 @@ KaSourceModule:
   sourceModuleKind: PRODUCTION
   stableModuleName: <light_idea_test_case>
   regularDependencies:
+    KaLibraryModule(@kotlin_test_deps//:annotations-java5-24.0.0.jar)
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains:annotations-java5:24.0.0)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -347,8 +347,8 @@ KaSourceModule:
   sourceModuleKind: TEST
   stableModuleName: <light_idea_test_case>
   regularDependencies:
+    KaLibraryModule(@kotlin_test_deps//:annotations-java5-24.0.0.jar)
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains:annotations-java5:24.0.0)
     KaSourceModule(light_idea_test_case, production)
   friendDependencies:
     KaSourceModule(light_idea_test_case, production)

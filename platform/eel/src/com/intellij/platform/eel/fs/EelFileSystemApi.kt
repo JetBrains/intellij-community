@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.fs
 
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.flow.Flow
@@ -178,12 +179,51 @@ interface EelFileSystemApi {
   }
 
   /**
-   * Opens the file only for reading
+   * Opens the file only for reading.
+   *
+   * In many cases [readFile] suits better than [openForReading].
    */
   @CheckReturnValue
-  suspend fun openForReading(path: EelPath): EelResult<
+  suspend fun openForReading(@GeneratedBuilder args: OpenForReadingArgs): EelResult<
     EelOpenedFile.Reader,
     FileReaderError>
+
+  interface OpenForReadingArgs {
+    val path: EelPath
+
+    /**
+     * When specified, data from the file MAY be written into this buffer.
+     * [ByteBuffer.position] and [ByteBuffer.limit] are always changed.
+     * The buffer is prepared for reading after the call,
+     * so the caller SHOULD NOT call [ByteBuffer.flip] after calling [openForReading].
+     *
+     * If some data is written into this buffer,
+     * the first call of [EelOpenedFile.Reader.read] reads the data following this buffer.
+     */
+    @EelDelicateApi
+    val readFirstChunkInto: ByteBuffer? get() = null
+
+    /**
+     * When specified, the implementation closes its internal file descriptor
+     * as soon as it internally reaches the end of the file.
+     *
+     * There are two ways to figure out if the file is closed after calling [openForReading] or [EelOpenedFile.Reader.read]
+     * * By calling [EelOpenedFile.Reader.read], which implies an additional system call or an RPC call.
+     * * By checking inexpensive but unreliable [EelOpenedFile.isClosed].
+     */
+    @EelDelicateApi
+    val autoCloseAfterLastChunk: Boolean get() = false
+
+    /**
+     * An optimization suitable for reading into memory.
+     * It allows aborting the reading fast if the whole file content
+     * won't fit into some buffer.
+     *
+     * If it happens, [readFile] returns [FileReaderError.FileBiggerThanRequested].
+     */
+    @EelDelicateApi
+    val closeImmediatelyIfFileBiggerThan: Long? get() = null
+  }
 
   sealed interface FileReaderError : EelFsError {
     interface AlreadyExists : FileReaderError, EelFsError.AlreadyExists
@@ -191,48 +231,211 @@ interface EelFileSystemApi {
     interface PermissionDenied : FileReaderError, EelFsError.PermissionDenied
     interface NotDirectory : FileReaderError, EelFsError.NotDirectory
     interface NotFile : FileReaderError, EelFsError.NotFile
+
+    /** See [com.intellij.platform.eel.fs.EelFileSystemApi.OpenForReadingArgs.closeImmediatelyIfFileBiggerThan] */
+    interface FileBiggerThanRequested : FileReaderError
+
     interface Other : FileReaderError, EelFsError.Other
   }
 
-  enum class OverflowPolicy {
-    DROP,
-    RETAIN,
+  /**
+   * Fully or partially reads the file.
+   *
+   * Although it's possible to implement file reading with [openForReading],
+   * this function is optimized and covered with tests.
+   *
+   * The returned [ReadFileResult.bytes] is prepared for reading.
+   */
+  suspend fun readFile(@GeneratedBuilder args: ReadFileArgs): EelResult<ReadFileResult, FileReaderError>
+
+  interface ReadFileArgs {
+    val path: EelPath
+
+    /**
+     * Maximal number of bytes to read.
+     */
+    val limit: Int? get() = null
+
+    /**
+     * If this flag is set, the implementation checks the file size before trying to read data,
+     * and if the file is certainly bigger than [limit], no data is read.
+     */
+    @EelDelicateApi
+    val failFastIfBeyondLimit: Boolean get() = false
+
+    /**
+     * Use some specific buffer for reading files instead of creating a temporary buffer.
+     *
+     * The implementation MAY use only a fraction of this buffer for invoking a single system or RPC call.
+     *
+     * The buffer is ready for reading, no need to call `flip`.
+     */
+    @EelDelicateApi
+    val buffer: ByteBuffer? get() = null
+
+    /**
+     * If this flag is set and [buffer] is specified, the implementation reads the whole
+     * file into [buffer] and [ReadFileResult.bytes] contains a reference to [buffer]. However, if the file size is greater than the capacity of the buffer, the implementation returns a different buffer.
+     *
+     * If [buffer] is not specified, the value of the flag is ignored.
+     */
+    @EelDelicateApi
+    val mayReturnSameBuffer: Boolean get() = true
   }
 
-  sealed interface FullReadResult {
-    interface Overflow : FullReadResult
-    interface BytesOverflown : FullReadResult {
-      val bytes: ByteArray
-    }
+  interface ReadFileResult {
+    /**
+     * It's ready for reading, the position and the limit are already set.
+     */
+    val bytes: ByteBuffer
 
-    interface Bytes : FullReadResult {
-      val bytes: ByteArray
-    }
+    /**
+     * `true` if [bytes] contains the whole file, `false` only if the part of the file.
+     */
+    val fullyRead: Boolean
   }
 
-  @CheckReturnValue
-  suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: OverflowPolicy): EelResult<FullReadResult, FullReadError>
+  interface WalkDirectoryOptions {
+    /**
+     * Path to the directory that is to be traversed. If the path is not a directory, WalkDirectory will still yield just the file itself.
+     */
+    val path: EelPath
 
-  sealed interface FullReadError : EelFsError {
-    interface DoesNotExist : FullReadError, EelFsError.DoesNotExist
-    interface PermissionDenied : FullReadError, EelFsError.PermissionDenied
-    interface NotFile : FullReadError, EelFsError.NotFile
-    interface Other : FullReadError, EelFsError.Other
+    /**
+     * maxDepth parameter specifies how many levels deep to traverse within the given directory. A negative depth (the default is -1) means
+     * the entire directory will be traversed without any depth limit. Depth of 0 will just return the directory itself.
+     *
+     * Example for depth = 1:
+     * ```
+     * a/
+     * |- b/
+     * |  |- c
+     * |  |- d
+     * |- e
+     * ```
+     * Returned:
+     * ```
+     * a
+     * a/b
+     * a/e
+     * ```
+     */
+    val maxDepth: Int get() = -1
+
+    /**
+     * The default is DFS.
+     */
+    val traversalOrder: WalkDirectoryTraversalOrder get() = WalkDirectoryTraversalOrder.DFS
+
+    /**
+     * The default is RANDOM.
+     */
+    val entryOrder: WalkDirectoryEntryOrder get() = WalkDirectoryEntryOrder.RANDOM
+
+    /**
+     * Yield permissions and timestamps. Default is false.
+     */
+    val readMetadata: Boolean get() = false
+
+    /**
+     * Default is true.
+     */
+    val yieldRegularFiles: Boolean get() = true
+
+    /**
+     * Default is true.
+     */
+    val yieldSymlinks: Boolean get() = true
+
+    /**
+     * Default is true.
+     */
+    val yieldDirectories: Boolean get() = true
+
+    /**
+     * Default is true.
+     */
+    val yieldOtherFileTypes: Boolean get() = true
+
+    /**
+     * Yield hash of the regular file's contents. Contents are hashed using xxHash. Default is false.
+     */
+    val fileContentsHash: Boolean get() = false
+
+    enum class WalkDirectoryTraversalOrder {
+      /**
+       * Breadth-first traversal.
+       * ```
+       * a/
+       * |- b/
+       * |  |- c
+       * |  |- d
+       * |- e
+       * ```
+       * Returned:
+       * ```
+       * a
+       * a/b
+       * a/e
+       * a/b/c
+       * a/b/d
+       * ```
+       */
+      BFS,
+
+      /**
+       * Depth-first traversal, where directory entries are yielded in order they are encountered.
+       * If you do not care for the manner of traversal, this is the preferable option.
+       * ```
+       * a/
+       * |- b/
+       * |  |- c
+       * |  |- d
+       * |- e
+       * ```
+       * Returned:
+       * ```
+       * a
+       * a/b
+       * a/b/c
+       * a/b/d
+       * a/e
+       * ```
+       */
+      DFS
+    }
+
+    enum class WalkDirectoryEntryOrder {
+      /**
+       * Yield directory entries in order in which they appear on the file system.
+       * If you do not care for the order of the files, this is the preferable option.
+       */
+      RANDOM,
+
+      /**
+       * Yield directory entries in alphabetical order.
+       */
+      ALPHABETICAL
+    }
+
+    interface Builder {
+      fun build(): WalkDirectoryOptions
+    }
   }
 
   /**
-   * Calculates a xxHash3 hash for each file in the given directory in a DFS manner. The provided path can point to a nonexistent file or\
-   * directory when the target EelPath is on the remote side (this would indicate that the file/directory has been created locally).\
-   * EelPath pointing to a local file/directory has to be valid. Directory hash supports directories, files, and symlinks.
+   * Traverses given directory, yielding directory entries, including the target directory.
    *
-   * @param path is the target directory through which will be recursed.
-   * @return a flow which emits a tuple of file EelPath and its hash.
+   * Default walkDirectory options are to traverse in a DFS manner, yield entries in a random order, yielding all file types, and to not
+   * yield metadata and file hash.
    */
   @CheckReturnValue
-  suspend fun directoryHash(path: EelPath): Flow<DirectoryHashEntryResult>
+  suspend fun walkDirectory(@GeneratedBuilder options: WalkDirectoryOptions): Flow<WalkDirectoryEntryResult>
 
-  sealed interface DirectoryHashError : EelFsError {
-    interface Other : DirectoryHashError, EelFsError.Other
+  sealed interface WalkDirectoryError : EelFsError {
+    interface Other : WalkDirectoryError, EelFsError.Other
+    interface DoesNotExist : WalkDirectoryError, EelFsError.DoesNotExist
+    interface PermissionDenied : WalkDirectoryError, EelFsError.PermissionDenied
   }
 
   /**
@@ -626,6 +829,18 @@ sealed interface EelOpenedFile {
   @CheckReturnValue
   suspend fun close(): EelResult<Unit, CloseError>
 
+  /**
+   * This method is to be used for avoiding potentially excessive calls.
+   * However, rely on this function with suspicion: the implementation may return `null` whatever happens.
+   *
+   * Returns:
+   * * `true` if the file is closed.
+   * * `false` if it's not closed.
+   * * `null` if it's not possible to determine if the file is closed without calling any suspending method.
+   */
+  @EelDelicateApi
+  val isClosed: Boolean?
+
   sealed interface CloseError : EelFsError {
     interface Other : CloseError, EelFsError.Other
   }
@@ -788,7 +1003,7 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
   override suspend fun listDirectoryWithAttrs(@GeneratedBuilder args: EelFileSystemApi.ListDirectoryWithAttrsArgs): EelResult<
     Collection<Pair<String, EelPosixFileInfo>>,
     EelFileSystemApi.ListDirectoryError> =
-    listDirectoryWithAttrs(args)
+    listDirectoryWithAttrs(path = args.path, symlinkPolicy = args.symlinkPolicy)
 
   @Deprecated("Use the method with the builder")
   @CheckReturnValue

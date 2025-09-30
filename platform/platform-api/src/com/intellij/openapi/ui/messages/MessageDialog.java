@@ -2,7 +2,10 @@
 package com.intellij.openapi.ui.messages;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.ExitActionType;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
@@ -46,7 +49,7 @@ public class MessageDialog extends DialogWrapper {
                        int defaultOptionIndex,
                        int focusedOptionIndex,
                        @Nullable Icon icon,
-                       @Nullable DoNotAskOption doNotAskOption,
+                       @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
                        boolean canBeParent) {
     this(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, canBeParent, null);
   }
@@ -59,7 +62,7 @@ public class MessageDialog extends DialogWrapper {
                        int defaultOptionIndex,
                        int focusedOptionIndex,
                        @Nullable Icon icon,
-                       @Nullable DoNotAskOption doNotAskOption,
+                       @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
                        boolean canBeParent,
                        @Nullable String helpId,
                        @Nullable String invocationPlace,
@@ -76,7 +79,7 @@ public class MessageDialog extends DialogWrapper {
                        int defaultOptionIndex,
                        int focusedOptionIndex,
                        @Nullable Icon icon,
-                       @Nullable DoNotAskOption doNotAskOption,
+                       @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
                        boolean canBeParent,
                        @Nullable String helpId) {
   this(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, canBeParent, helpId, null, new ExitActionType[0]);
@@ -108,6 +111,18 @@ public class MessageDialog extends DialogWrapper {
                        int defaultOptionIndex,
                        int focusedOptionIndex,
                        @Nullable Icon icon,
+                       @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
+                       @Nullable String helpId) {
+    _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, helpId, null, new ExitActionType[0]);
+  }
+
+  @Deprecated(forRemoval = true)
+  protected void _init(@NlsContexts.DialogTitle String title,
+                       @NlsContexts.DialogMessage @Nullable String message,
+                       String @NotNull [] options,
+                       int defaultOptionIndex,
+                       int focusedOptionIndex,
+                       @Nullable Icon icon,
                        @Nullable DoNotAskOption doNotAskOption,
                        @Nullable String helpId) {
     _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, helpId, null, new ExitActionType[0]);
@@ -119,7 +134,7 @@ public class MessageDialog extends DialogWrapper {
                        int defaultOptionIndex,
                        int focusedOptionIndex,
                        @Nullable Icon icon,
-                       @Nullable DoNotAskOption doNotAskOption,
+                       @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
                        @Nullable String helpId,
                        @Nullable String invocationPlace,
                        ExitActionType @NotNull [] exitActionTypes) {

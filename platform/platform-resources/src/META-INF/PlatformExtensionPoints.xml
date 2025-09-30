@@ -9,6 +9,7 @@
 
     <extensionPoint name="projectTypesProvider" interface="com.intellij.openapi.project.ProjectTypesProvider" dynamic="true"/>
     <extensionPoint name="errorHandler" interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter" dynamic="true"/>
+    <extensionPoint name="configFolderChangedListener" interface="com.intellij.openapi.project.impl.shared.ConfigFolderChangedListener" dynamic="true"/>
 
     <extensionPoint name="jps.plugin"
                     beanClass="com.intellij.jps.impl.JpsPluginBean" dynamic="true"/>
@@ -706,5 +707,7 @@
     <extensionPoint name="projectStorePathCustomizer"
                     interface="com.intellij.configurationStore.ProjectStorePathCustomizer"
                     dynamic="true"/>
+
+    <extensionPoint name="openAnotherToolHandler" interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.OpenAnotherToolHandler" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

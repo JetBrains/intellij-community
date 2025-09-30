@@ -61,7 +61,7 @@ public final class ConstructorCountInspection extends ClassMetricInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ConstructorCountVisitor();
   }
 

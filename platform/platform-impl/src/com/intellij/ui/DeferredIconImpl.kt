@@ -64,7 +64,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   val isNeedReadAction: Boolean
 
   @get:RequiresEdt
-  var isDone: Boolean = false
+  override var isDone: Boolean = false
     private set
 
   private var modificationCount = AtomicLong(0)
@@ -137,7 +137,8 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     return icon
   }
 
-  override fun getBaseIcon(): Icon = delegateIcon
+  override val baseIcon: Icon
+    get() = delegateIcon
 
   private fun checkDelegationDepth() {
     var depth = 0
@@ -281,7 +282,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 
   private suspend fun processRepaints(oldWidth: Int, result: Icon) {
     val shouldRevalidate = Registry.`is`("ide.tree.deferred.icon.invalidates.cache", true) && scaledDelegateIcon.iconWidth != oldWidth
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
       val repaints = scheduledRepaints
       if (result == delegateIcon || repaints == null) {
         return@withContext

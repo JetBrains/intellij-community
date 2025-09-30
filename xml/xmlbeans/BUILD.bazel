@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.xml.xmlbeans` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "xmlbeans_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.xml.xmlbeans",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":xmlbeans_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -28,8 +29,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//xml/xml-psi-api:psi",
     "//platform/lang-impl",
-  ],
-  runtime_deps = [":xmlbeans_resources"]
+  ]
 )
 
 jvm_library(
@@ -57,8 +57,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//xml/xml-psi-api:psi",
     "//platform/lang-impl",
-  ],
-  runtime_deps = [":xmlbeans_resources"]
+  ]
 )
 ### auto-generated section `build intellij.xml.xmlbeans` end
 

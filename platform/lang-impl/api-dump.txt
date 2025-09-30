@@ -61,6 +61,8 @@ com.intellij.application.options.editor.AutoImportOptionsProvider
 - com.intellij.openapi.options.UnnamedConfigurable
 com.intellij.application.options.editor.CodeFoldingOptionsProvider
 - com.intellij.openapi.options.UnnamedConfigurable
+a:com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
+- runBackground():V
 com.intellij.codeInsight.actions.DirectoryFormattingOptions
 - com.intellij.codeInsight.actions.ReformatFilesOptions
 - a:isIncludeSubdirectories():Z
@@ -617,6 +619,7 @@ com.intellij.ide.projectView.ProjectViewSettings
 - isShowExcludedFiles():Z
 - isShowVisibilityIcons():Z
 - isUseFileNestingRules():Z
+c:com.intellij.ide.projectView.impl.ProjectViewImpl
 com.intellij.ide.projectView.impl.ProjectViewListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - initCachedNodesLoaded():V
@@ -646,6 +649,13 @@ com.intellij.ide.util.PsiElementRenderingInfo
 com.intellij.ide.util.TypeVisibilityStateHolder
 - a:isVisible(java.lang.Object):Z
 - a:setVisible(java.lang.Object,Z):V
+com.intellij.ide.util.gotoByName.ChooseByNameContributorWithDisposableCleanup
+- com.intellij.navigation.ChooseByNameContributorEx2
+- processElementsWithName(java.lang.String,com.intellij.util.Processor,com.intellij.util.indexing.FindSymbolParameters):V
+- a:processElementsWithNameWithDisposable(com.intellij.openapi.Disposable,java.lang.String,com.intellij.util.Processor,com.intellij.util.indexing.FindSymbolParameters):V
+- processNames(com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):V
+- processNames(com.intellij.util.Processor,com.intellij.util.indexing.FindSymbolParameters):V
+- a:processNamesWithDisposable(com.intellij.openapi.Disposable,com.intellij.util.Processor,com.intellij.util.indexing.FindSymbolParameters):V
 com.intellij.ide.util.gotoByName.ChooseByNameItem
 - a:getDescription():java.lang.String
 - a:getName():java.lang.String
@@ -669,6 +679,18 @@ com.intellij.ide.util.gotoByName.ChooseByNameWeightedItemProvider
 - a:filterElementsWithWeights(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String,Z,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):Z
 com.intellij.ide.util.gotoByName.CustomMatcherModel
 - a:matches(java.lang.String,java.lang.String):Z
+a:com.intellij.ide.util.gotoByName.DisposableGotoModelWithPersistentFilter
+- com.intellij.ide.util.gotoByName.FilteringGotoByModel
+- com.intellij.openapi.Disposable$Default
+- <init>(com.intellij.openapi.project.Project,java.util.List):V
+- p:doProcessContributorForName(com.intellij.navigation.ChooseByNameContributor,java.lang.String,com.intellij.util.indexing.FindSymbolParameters,com.intellij.openapi.progress.ProgressIndicator,java.util.List,I[],Z):V
+- p:doProcessContributorNames(com.intellij.navigation.ChooseByNameContributor,com.intellij.util.indexing.FindSymbolParameters,com.intellij.util.Processor):V
+c:com.intellij.ide.util.gotoByName.GotoClassModel2
+- com.intellij.ide.util.gotoByName.DisposableGotoModelWithPersistentFilter
+c:com.intellij.ide.util.gotoByName.GotoFileModel
+- com.intellij.ide.util.gotoByName.DisposableGotoModelWithPersistentFilter
+c:com.intellij.ide.util.gotoByName.GotoSymbolModel2
+- com.intellij.ide.util.gotoByName.DisposableGotoModelWithPersistentFilter
 com.intellij.ide.util.gotoByName.ModelDiff$Cmd
 - a:apply():V
 - a:translateSelection(I):I
@@ -925,6 +947,9 @@ com.intellij.openapi.roots.ui.distribution.FileChooserInfo
 - a:getFileChooserDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
 - a:getFileChooserMacroFilter():kotlin.jvm.functions.Function1
 - getFileChooserTitle():java.lang.String
+f:com.intellij.openapi.wm.impl.WindowDressing
+- lightEditWindowClosed(com.intellij.openapi.project.Project):V
+- lightEditWindowOpened(com.intellij.openapi.project.Project):V
 com.intellij.packageDependencies.ui.Marker
 - a:isMarked(com.intellij.openapi.vfs.VirtualFile):Z
 com.intellij.platform.ModuleAttachListener
@@ -933,6 +958,8 @@ com.intellij.platform.ModuleAttachListener
 - beforeDetach(com.intellij.openapi.module.Module):V
 f:com.intellij.platform.ModuleAttachProcessor
 - attachToProjectAsync(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ModuleAttachProcessorKt
+- sf:getMultiProjectDisplayName(com.intellij.openapi.project.Project):java.lang.String
 com.intellij.platform.backend.documentation.DocumentationContent
 - s:content(java.lang.String):com.intellij.platform.backend.documentation.DocumentationContent
 - s:content(java.lang.String,java.util.Map):com.intellij.platform.backend.documentation.DocumentationContent

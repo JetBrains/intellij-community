@@ -42,6 +42,7 @@ public final class ServiceViewActionProvider {
   private static final @NonNls String SERVICE_VIEW_TREE_TOOLBAR = "ServiceViewTreeToolbar";
 
   static final DataKey<List<ServiceViewItem>> SERVICES_SELECTED_ITEMS = DataKey.create("services.selected.items");
+  static final DataKey<List<ServiceViewDescriptorId>> SERVICES_SELECTED_DESCRIPTOR_IDS = DataKey.create("services.selected.descriptor.ids");
 
   private static final ServiceViewActionProvider ourInstance = new ServiceViewActionProvider();
 
@@ -272,6 +273,10 @@ public final class ServiceViewActionProvider {
     implements ActionRemoteBehaviorSpecification.Frontend {
 
     public DefaultFrontendServiceViewActionGroup() {
+    }
+
+    public DefaultFrontendServiceViewActionGroup(AnAction @NotNull ... actions) {
+      super(actions);
     }
 
     public DefaultFrontendServiceViewActionGroup(@NotNull List<? extends AnAction> actions) {

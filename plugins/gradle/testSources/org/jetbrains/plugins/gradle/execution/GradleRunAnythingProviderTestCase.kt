@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution
 
+import com.intellij.build.BuildDuration
 import com.intellij.build.BuildTreeConsoleView
+import com.intellij.build.BuildTreeNode
 import com.intellij.build.BuildView
-import com.intellij.build.ExecutionNode
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessHandler
@@ -138,23 +139,24 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
       PlatformTestUtil.waitWhileBusy(tree)
     }
 
-    val buildNode = Ref<ExecutionNode>()
-    eventView.invokeLater {
-      val rootNode = (tree.model.root as DefaultMutableTreeNode).userObject as ExecutionNode
-      val buildsNodes = rootNode.childList
-      assertThat(buildsNodes).hasSize(1)
-      buildNode.set(buildsNodes.firstOrNull())
-    }.blockingGet(5, TimeUnit.SECONDS)
-
+    val buildNode = Ref<BuildTreeNode>()
     for (i in 0..5000) {
-      if (!buildNode.get().isRunning) break
+      eventView.invokeLater {
+        val treeModel = tree.model
+        val rootNode = treeModel.root
+        assertThat(treeModel.getChildCount(rootNode)).isEqualTo(1)
+        buildNode.set((treeModel.getChild(rootNode, 0) as DefaultMutableTreeNode).userObject as BuildTreeNode)
+      }.blockingGet(5, TimeUnit.SECONDS)
+
+      if (buildNode.get().duration !is BuildDuration.InProgress) break
+
       TimeoutUtil.sleep(5)
       runInEdtAndWait {
         dispatchAllEventsInIdeEventQueue()
         PlatformTestUtil.waitWhileBusy(tree)
       }
     }
-    Assert.assertFalse(buildNode.get().isRunning)
+    Assert.assertFalse("The tree node is still in Running state", buildNode.get().duration is BuildDuration.InProgress)
     return buildView
   }
 

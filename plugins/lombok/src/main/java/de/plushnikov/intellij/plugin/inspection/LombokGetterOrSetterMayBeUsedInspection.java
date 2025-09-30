@@ -8,7 +8,6 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -29,7 +28,7 @@ import java.util.List;
 public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJavaInspectionBase {
 
   @Override
-  protected @NotNull PsiElementVisitor createVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+  protected @NotNull PsiElementVisitor createVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new LombokGetterOrSetterMayBeUsedVisitor(holder, null);
   }
 
@@ -50,6 +49,7 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
 
     @Override
     public void visitClass(@NotNull PsiClass psiClass) {
+      if (psiClass instanceof PsiAnonymousClass || psiClass instanceof PsiImplicitClass) return;
       if (psiClass.isRecord()) return;
 
       List<Pair<PsiField, PsiMethod>> instanceCandidates = new ArrayList<>();
@@ -91,21 +91,19 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
       List<Pair<PsiField, PsiMethod>> fieldsAndMethods = new ArrayList<>();
       if (!processMethod(psiMethod, fieldsAndMethods, fieldsAndMethods)) return;
       if (!fieldsAndMethods.isEmpty()) {
-        final Pair<PsiField, PsiMethod> psiFieldPsiMethodPair = fieldsAndMethods.get(0);
+        final Pair<PsiField, PsiMethod> psiFieldPsiMethodPair = fieldsAndMethods.getFirst();
         warnOrFix(psiFieldPsiMethodPair.getFirst(), psiFieldPsiMethodPair.getSecond());
       }
     }
 
     private void warnOrFix(@NotNull PsiClass psiClass, @NotNull List<Pair<PsiField, PsiMethod>> fieldsAndMethods) {
       if (myHolder != null) {
-        String className = psiClass.getName();
-        if (StringUtil.isNotEmpty(className)) {
-          final PsiIdentifier psiClassNameIdentifier = psiClass.getNameIdentifier();
-          final LocalQuickFix fix = new LombokGetterOrSetterMayBeUsedFix(className);
-          myHolder.registerProblem(psiClass, getClassErrorMessage(className), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                   psiClassNameIdentifier != null ? psiClassNameIdentifier.getTextRangeInParent() : psiClass.getTextRange(),
-                                   fix);
-        }
+        final PsiIdentifier identifier = psiClass.getNameIdentifier();
+        if (identifier == null) return;
+        String className = identifier.getText();
+        final LocalQuickFix fix = new LombokGetterOrSetterMayBeUsedFix(className);
+        myHolder.registerProblem(psiClass, getClassErrorMessage(className), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                 identifier.getTextRangeInParent(), fix);
       }
       else if (myLombokGetterOrSetterMayBeUsedFix != null) {
         myLombokGetterOrSetterMayBeUsedFix.effectivelyDoFix(psiClass, fieldsAndMethods);
@@ -143,11 +141,11 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      if (element instanceof PsiMethod) {
-        new LombokGetterOrSetterMayBeUsedVisitor(null, this).visitMethodForFix((PsiMethod)element);
+      if (element instanceof PsiMethod method) {
+        new LombokGetterOrSetterMayBeUsedVisitor(null, this).visitMethodForFix(method);
       }
-      else if (element instanceof PsiClass) {
-        new LombokGetterOrSetterMayBeUsedVisitor(null, this).visitClass((PsiClass)element);
+      else if (element instanceof PsiClass aClass) {
+        new LombokGetterOrSetterMayBeUsedVisitor(null, this).visitClass(aClass);
       }
     }
 

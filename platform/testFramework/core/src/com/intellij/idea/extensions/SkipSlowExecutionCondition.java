@@ -2,6 +2,7 @@
 package com.intellij.idea.extensions;
 
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.TestFrameworkUtil;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -10,11 +11,9 @@ import org.junit.platform.commons.support.AnnotationSupport;
 public class SkipSlowExecutionCondition implements ExecutionCondition {
   private static final ConditionEvaluationResult ENABLED = ConditionEvaluationResult.enabled("Enabled locally");
   private static final ConditionEvaluationResult DISABLED = ConditionEvaluationResult.disabled("Slow tests are disabled locally");
-  private static final boolean SKIP_SLOW_TESTS = System.getProperty("skip.slow.tests.locally") != null;
 
   @Override
   public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
-    if (!SKIP_SLOW_TESTS) return ENABLED;
-    return AnnotationSupport.findAnnotation(context.getTestClass(), SkipSlowTestLocally.class).isPresent() ? DISABLED : ENABLED;
+    return TestFrameworkUtil.SKIP_SLOW && AnnotationSupport.findAnnotation(context.getTestClass(), SkipSlowTestLocally.class).isPresent() ? DISABLED : ENABLED;
   }
 }

@@ -1,5 +1,6 @@
 package com.intellij.grazie.ide.language
 
+import ai.grazie.nlp.langs.Language
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
 import com.intellij.codeInsight.intention.CustomizableIntentionAction
@@ -10,6 +11,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.ide.TextProblemSeverities
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
 import com.intellij.grazie.text.*
@@ -33,9 +35,11 @@ class ReportingTest : BasePlatformTestCase() {
 
   fun `test tooltip and description texts in inspection`() {
     val inspection = GrazieInspection()
-    myFixture.enableInspections(inspection)
+    myFixture.enableInspections(inspection, GrazieInspection.Grammar())
     myFixture.configureByText("a.txt", "I have an new apple here.")
-    val info = assertOneElement(myFixture.doHighlighting().filter { it.inspectionToolId == inspection.id })
+    val highlightings = myFixture.doHighlighting().filter { it.inspectionToolId == inspection.id }
+    val info = assertOneElement(highlightings)
+    assertEquals(TextProblemSeverities.GRAMMAR_ERROR_ATTRIBUTES, info.type.attributesKey)
     val message = "Use a instead of 'an' if the following word doesn't start with a vowel sound, e.g. 'a sentence', 'a university'."
     assertEquals(info.description, message)
     assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*" + Regex.escape(message) + ".*Powered by LanguageTool.*")))
@@ -50,7 +54,7 @@ class ReportingTest : BasePlatformTestCase() {
   }
 
   fun `test changed range highlighting`() {
-    myFixture.enableInspections(GrazieInspection::class.java)
+    myFixture.enableInspections(GrazieInspection::class.java, GrazieInspection.Grammar::class.java)
     myFixture.configureByText("a.txt", "Hello there! You <GRAMMAR_ERROR>are <caret>best</GRAMMAR_ERROR> person!")
     myFixture.checkHighlighting()
 
@@ -101,7 +105,7 @@ class ReportingTest : BasePlatformTestCase() {
   }
 
   fun `test quick fix sorting`() {
-    myFixture.enableInspections(GrazieInspection())
+    myFixture.enableInspections(GrazieInspection(), GrazieInspection.Grammar())
 
     val testChecker = object: TextChecker() {
       override fun getRules(locale: Locale) = emptyList<Rule>()
@@ -177,7 +181,7 @@ class ReportingTest : BasePlatformTestCase() {
                                          range: TextRange,
                                          suggestions: List<TextProblem.Suggestion>,
                                          customFixes: List<LocalQuickFix>): TextProblem {
-    val rule = object : Rule("something.something", "something", "something") {
+    val rule = object : Rule("something.something", Language.UNKNOWN, "something", "something") {
       override fun getDescription() = "something"
     }
     return object : TextProblem(rule, text, range) {

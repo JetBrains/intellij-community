@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.markdown.spellchecker` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "spellchecker_resources",
-  files = glob(["src/main/resources/**/*"]),
+  srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.markdown.spellchecker",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":spellchecker_resources"],
   deps = [
     "//plugins/markdown/core:markdown",
     "//platform/core-api:core",
@@ -19,9 +20,6 @@ jvm_library(
     "//platform/core-impl",
     "//spellchecker",
   ],
-  runtime_deps = [
-    ":spellchecker_resources",
-    "//platform/backend",
-  ]
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.markdown.spellchecker` end

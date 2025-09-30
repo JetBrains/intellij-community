@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_8
@@ -32,13 +31,11 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
     private val conversions: Map<String, List<Conversion>> =
         ConversionsHolder(symbolProvider, typeFactory).getConversions()
 
-    context(_: KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKExpression) return recurse(element)
         return recurse(element.convert() ?: element)
     }
 
-    context(_: KaSession)
     private fun JKExpression.convert(): JKExpression? {
         val selector = when (this) {
             is JKQualifiedExpression -> selector
@@ -107,7 +104,6 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
     }
 
     private interface ResultBuilder {
-        context(_: KaSession)
         fun build(from: JKExpression): JKExpression
     }
 
@@ -117,7 +113,6 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
         private val argumentsProvider: (JKArgumentList) -> JKArgumentList,
         private val canMoveLambdaOutsideParentheses: Boolean = false
     ) : ResultBuilder {
-        context(_: KaSession)
         override fun build(from: JKExpression): JKExpression {
             val methodSymbol = provideMethodSymbol(fqName, parameterTypesFqNames)
             val type = determineNewExpressionType(methodSymbol, from)
@@ -157,7 +152,6 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
     }
 
     private inner class FieldBuilder(private val fqName: String) : ResultBuilder {
-        context(_: KaSession)
         override fun build(from: JKExpression): JKExpression {
             if (from !is JKCallExpression && from !is JKFieldAccessExpression) error("Bad conversion")
             val symbol = symbolProvider.provideFieldSymbol(fqName)
@@ -170,7 +164,6 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
         private val fqName: String,
         private val parameterTypesFqNames: List<String>?,
     ) : ResultBuilder {
-        context(_: KaSession)
         override fun build(from: JKExpression): JKExpression {
             if (from !is JKCallExpression) error("Bad conversion")
 
@@ -198,7 +191,6 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
     }
 
     private inner class CustomExpressionBuilder(val builder: (JKExpression) -> JKExpression) : ResultBuilder {
-        context(_: KaSession)
         override fun build(from: JKExpression): JKExpression = builder(from)
     }
 
@@ -212,7 +204,6 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
 
     // Usually, the types of original and replacement expressions should be semantically the same,
     // but this is not always the case with number types (ex. with java.lang.Math vs. kotlin.math methods)
-    context(_: KaSession)
     private fun determineNewExpressionType(newSymbol: JKSymbol, originalExpression: JKExpression): JKType? {
         val symbolType = when (newSymbol) {
             is JKMethodSymbol -> newSymbol.returnType
@@ -222,7 +213,6 @@ class BuiltinMembersConversion(context: ConverterContext) : RecursiveConversion(
         return symbolType ?: originalExpression.calculateType(typeFactory)
     }
 
-    context(_: KaSession)
     private fun provideMethodSymbol(fqName: String, parameterTypesFqNames: List<String>?): JKMethodSymbol {
         return if (parameterTypesFqNames == null) {
             symbolProvider.provideMethodSymbol(fqName)
@@ -409,7 +399,10 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
     )
 
     private val collectionConversions: List<Conversion> = listOf(
-        Method("java.util.Iterable.forEach") convertTo Method("kotlin.collections.Iterable.forEach", canMoveLambdaOutsideParentheses = true),
+        Method("java.util.Iterable.forEach") convertTo Method(
+            "kotlin.collections.Iterable.forEach",
+            canMoveLambdaOutsideParentheses = true
+        ),
 
         Method("java.util.Map.entrySet") convertTo Field("kotlin.collections.Map.entries"),
         Method("java.util.Map.keySet") convertTo Field("kotlin.collections.Map.keys"),
@@ -447,7 +440,10 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
 
         Method("java.util.Collection.size") convertTo Field("kotlin.collections.Collection.size"),
         Method("java.util.Collection.remove") convertTo Method("kotlin.collections.MutableCollection.remove"),
-        Method("java.util.Collection.removeIf") convertTo Method("kotlin.collections.MutableCollection.removeIf", canMoveLambdaOutsideParentheses = true),
+        Method("java.util.Collection.removeIf") convertTo Method(
+            "kotlin.collections.MutableCollection.removeIf",
+            canMoveLambdaOutsideParentheses = true
+        ),
         Method("java.util.Collection.toArray") convertTo Method("kotlin.collections.toTypedArray") withByArgumentsFilter { it.isEmpty() },
         Method("java.util.Collection.toArray") convertTo Method("kotlin.collections.toTypedArray") withByArgumentsFilter {
             it.singleOrNull()?.let { parameter ->
@@ -456,7 +452,10 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         } withArgumentsProvider { JKArgumentList() },
 
         Method("java.util.List.remove") convertTo Method("kotlin.collections.MutableCollection.removeAt"),
-        Method("java.util.List.replaceAll") convertTo Method("kotlin.collections.MutableCollection.replaceAll", canMoveLambdaOutsideParentheses = true),
+        Method("java.util.List.replaceAll") convertTo Method(
+            "kotlin.collections.MutableCollection.replaceAll",
+            canMoveLambdaOutsideParentheses = true
+        ),
         Method("java.util.Map.Entry.getKey") convertTo Field("kotlin.collections.Map.Entry.key"),
         Method("java.util.Map.Entry.getValue") convertTo Field("kotlin.collections.Map.Entry.value"),
 
@@ -471,33 +470,99 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
 
     // For now, these conversions only mark that the last lambda can be moved outside parentheses
     private val streamConversions: List<Conversion> = listOf(
-        Method("java.util.stream.Stream.allMatch") convertTo Method("java.util.stream.Stream.allMatch", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.anyMatch") convertTo Method("java.util.stream.Stream.anyMatch", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.collect") convertTo Method("java.util.stream.Stream.collect", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.dropWhile") convertTo Method("java.util.stream.Stream.dropWhile", canMoveLambdaOutsideParentheses = true),
+        Method("java.util.stream.Stream.allMatch") convertTo Method(
+            "java.util.stream.Stream.allMatch",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.anyMatch") convertTo Method(
+            "java.util.stream.Stream.anyMatch",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.collect") convertTo Method(
+            "java.util.stream.Stream.collect",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.dropWhile") convertTo Method(
+            "java.util.stream.Stream.dropWhile",
+            canMoveLambdaOutsideParentheses = true
+        ),
         Method("java.util.stream.Stream.filter") convertTo Method("java.util.stream.Stream.filter", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.flatMap") convertTo Method("java.util.stream.Stream.flatMap", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.flatMapToDouble") convertTo Method("java.util.stream.Stream.flatMapToDouble", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.flatMapToInt") convertTo Method("java.util.stream.Stream.flatMapToInt", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.flatMapToLong") convertTo Method("java.util.stream.Stream.flatMapToLong", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.forEach") convertTo Method("java.util.stream.Stream.forEach", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.forEachOrdered") convertTo Method("java.util.stream.Stream.forEachOrdered", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.generate") convertTo Method("java.util.stream.Stream.generate", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.iterate") convertTo Method("java.util.stream.Stream.iterate", canMoveLambdaOutsideParentheses = true),
+        Method("java.util.stream.Stream.flatMap") convertTo Method(
+            "java.util.stream.Stream.flatMap",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.flatMapToDouble") convertTo Method(
+            "java.util.stream.Stream.flatMapToDouble",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.flatMapToInt") convertTo Method(
+            "java.util.stream.Stream.flatMapToInt",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.flatMapToLong") convertTo Method(
+            "java.util.stream.Stream.flatMapToLong",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.forEach") convertTo Method(
+            "java.util.stream.Stream.forEach",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.forEachOrdered") convertTo Method(
+            "java.util.stream.Stream.forEachOrdered",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.generate") convertTo Method(
+            "java.util.stream.Stream.generate",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.iterate") convertTo Method(
+            "java.util.stream.Stream.iterate",
+            canMoveLambdaOutsideParentheses = true
+        ),
         Method("java.util.stream.Stream.map") convertTo Method("java.util.stream.Stream.map", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.mapMulti") convertTo Method("java.util.stream.Stream.mapMulti", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.mapMultiToDouble") convertTo Method("java.util.stream.Stream.mapMultiToDouble", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.mapMultiToInt") convertTo Method("java.util.stream.Stream.mapMultiToInt", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.mapMultiToLong") convertTo Method("java.util.stream.Stream.mapMultiToLong", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.mapToDouble") convertTo Method("java.util.stream.Stream.mapToDouble", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.mapToInt") convertTo Method("java.util.stream.Stream.mapToInt", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.mapToLong") convertTo Method("java.util.stream.Stream.mapToLong", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.noneMatch") convertTo Method("java.util.stream.Stream.noneMatch", canMoveLambdaOutsideParentheses = true),
+        Method("java.util.stream.Stream.mapMulti") convertTo Method(
+            "java.util.stream.Stream.mapMulti",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.mapMultiToDouble") convertTo Method(
+            "java.util.stream.Stream.mapMultiToDouble",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.mapMultiToInt") convertTo Method(
+            "java.util.stream.Stream.mapMultiToInt",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.mapMultiToLong") convertTo Method(
+            "java.util.stream.Stream.mapMultiToLong",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.mapToDouble") convertTo Method(
+            "java.util.stream.Stream.mapToDouble",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.mapToInt") convertTo Method(
+            "java.util.stream.Stream.mapToInt",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.mapToLong") convertTo Method(
+            "java.util.stream.Stream.mapToLong",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.noneMatch") convertTo Method(
+            "java.util.stream.Stream.noneMatch",
+            canMoveLambdaOutsideParentheses = true
+        ),
         Method("java.util.stream.Stream.peek") convertTo Method("java.util.stream.Stream.peek", canMoveLambdaOutsideParentheses = true),
         Method("java.util.stream.Stream.reduce") convertTo Method("java.util.stream.Stream.reduce", canMoveLambdaOutsideParentheses = true),
         Method("java.util.stream.Stream.sorted") convertTo Method("java.util.stream.Stream.sorted", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.takeWhile") convertTo Method("java.util.stream.Stream.takeWhile", canMoveLambdaOutsideParentheses = true),
-        Method("java.util.stream.Stream.toArray") convertTo Method("java.util.stream.Stream.toArray", canMoveLambdaOutsideParentheses = true),
+        Method("java.util.stream.Stream.takeWhile") convertTo Method(
+            "java.util.stream.Stream.takeWhile",
+            canMoveLambdaOutsideParentheses = true
+        ),
+        Method("java.util.stream.Stream.toArray") convertTo Method(
+            "java.util.stream.Stream.toArray",
+            canMoveLambdaOutsideParentheses = true
+        ),
     )
 
     private val enumConversions: List<Conversion> = listOf(
@@ -1049,10 +1114,10 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         arguments: List<JKArgument> = emptyList(),
         expressionType: JKType? = null
     ) = JKQualifiedExpression(
-            this.parenthesizeIfCompoundExpression(),
-            JKCallExpressionImpl(symbol, JKArgumentList(arguments), JKTypeArgumentList(), expressionType),
-            expressionType
-        )
+        this.parenthesizeIfCompoundExpression(),
+        JKCallExpressionImpl(symbol, JKArgumentList(arguments), JKTypeArgumentList(), expressionType),
+        expressionType
+    )
 
     private fun isSystemOutCall(expression: JKExpression): Boolean =
         expression.parent

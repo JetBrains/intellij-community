@@ -8,6 +8,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.searchEverywhere.backend.impl.SeRemoteApiProvider"/>
 
+    <uiDataRule implementation="com.intellij.platform.searchEverywhere.backend.impl.SeUiDataRule"/>
+
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.files.SeFilesProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.recentFiles.SeRecentFilesProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.classes.SeClassesProviderFactory"/>

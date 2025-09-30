@@ -49,6 +49,15 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
 
   protected open fun definitionsString(params: JavaParameters): String = ""
 
+  protected open fun getMainClass(profile: JavaRunConfigurationBase): String? = profile.runClass
+
+  protected open fun getConfigurationRunName(profile: JavaRunConfigurationBase): String? = getMainClass(profile)
+
+  protected open fun configureParameters(runProfile: JavaRunConfigurationBase): JavaParameters? = JavaParameters().apply {
+    JavaParametersUtil.configureConfiguration(this, runProfile)
+    this.vmParametersList.addParametersString(runProfile.vmParameters)
+  }
+
   override fun createExecutionEnvironment(project: Project,
                                           executeRunConfigurationTask: ExecuteRunConfigurationTask,
                                           executor: Executor?): ExecutionEnvironment? {
@@ -57,7 +66,8 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     val runProfile = executeRunConfigurationTask.runProfile
     if (runProfile !is JavaRunConfigurationBase) return null
 
-    val mainClass = runProfile.runClass ?: return null
+    val mainClass = getMainClass(runProfile) ?: return null
+    val configurationRunName = getConfigurationRunName(runProfile) ?: return null
     val module = runProfile.configurationModule.module ?: return null
     val javaModuleName = runProfile.findJavaModuleName(isTestModule(module))
 
@@ -68,10 +78,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     if (!projectSettings.isResolveModulePerSourceSet) {
       return null
     }
-    val params = JavaParameters().apply {
-      JavaParametersUtil.configureConfiguration(this, runProfile)
-      this.vmParametersList.addParametersString(runProfile.vmParameters)
-    }
+    val params = configureParameters(runProfile) ?: return null
 
     val taskSettings = ExternalSystemTaskExecutionSettings()
     taskSettings.isPassParentEnvs = params.isPassParentEnvs
@@ -79,7 +86,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     taskSettings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
     taskSettings.externalProjectPath = externalProjectPath
 
-    val runAppTaskName = "$mainClass.main()"
+    val runAppTaskName = "$configurationRunName.main()"
     taskSettings.taskNames = listOf(gradleModuleData.getTaskPath(runAppTaskName))
     customiseTaskExecutionsSettings(taskSettings, module)
 

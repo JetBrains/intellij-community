@@ -1775,7 +1775,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-20409
   public void testGetFromDictWithDefaultNoneValue() {
-    doTest("Optional[Any]",
+    doTest("Any",
            "d = {}\n" +
            "expr = d.get(\"abc\", None)");
   }

@@ -86,6 +86,20 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     return getAnnotations(true);
   }
 
+  @Override
+  public boolean hasAnnotations() {
+    if (super.hasAnnotations()) return true;
+    PsiJavaCodeReferenceElement reference = myReference.retrieveReference();
+    if (reference != null && reference.isValid() && reference.isQualified()) {
+      for (PsiElement child = reference.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child instanceof PsiAnnotation) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   private PsiAnnotation[] getAnnotations(boolean merge) {
     PsiAnnotation[] annotations = super.getAnnotations();
 
@@ -120,7 +134,9 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   @Override
   public @NotNull PsiClassType annotate(@NotNull TypeAnnotationProvider provider) {
     PsiClassReferenceType annotated = (PsiClassReferenceType)super.annotate(provider);
-    annotated.myNullability = null;
+    if (annotated != this) {
+      annotated.myNullability = null;
+    }
     return annotated;
   }
 

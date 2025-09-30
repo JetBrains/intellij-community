@@ -46,6 +46,9 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - getTokenType(I):com.intellij.psi.tree.IElementType
 - getTokenizedText():java.lang.CharSequence
 - s:performLexing(java.lang.CharSequence,com.intellij.lexer.Lexer):com.intellij.lexer.TokenList
+c:com.intellij.mock.MockFileIndexFacade
+- com.intellij.openapi.roots.FileIndexFacade
+- *:isIndexable(com.intellij.openapi.vfs.VirtualFile):Z
 com.intellij.openapi.application.ex.ApplicationEx
 - com.intellij.openapi.application.Application
 - *:addWriteActionListener(com.intellij.openapi.application.WriteActionListener,com.intellij.openapi.Disposable):V

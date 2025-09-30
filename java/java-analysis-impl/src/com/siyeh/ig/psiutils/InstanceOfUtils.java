@@ -520,7 +520,7 @@ public final class InstanceOfUtils {
   public static boolean isSafeToNarrowType(@NotNull PsiVariable variable, @NotNull PsiTypeCastExpression cast, @NotNull PsiType type) {
     PsiType castType = GenericsUtil.getVariableTypeByExpressionType(type);
     PsiTypeElement varTypeElement = variable.getTypeElement();
-    if (varTypeElement == null || varTypeElement.isInferredType() || varTypeElement.getAnnotations().length > 0) return false;
+    if (varTypeElement == null || varTypeElement.isInferredType() || varTypeElement.hasAnnotations()) return false;
     PsiType variableType = varTypeElement.getType();
     if (!(variableType instanceof PsiClassType classType) || classType.isRaw()) return false;
     if (variableType.equals(castType) || !variableType.isAssignableFrom(castType)) return false;

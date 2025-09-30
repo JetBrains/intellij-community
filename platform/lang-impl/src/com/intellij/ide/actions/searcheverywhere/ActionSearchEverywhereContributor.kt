@@ -108,19 +108,12 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
                                      consumer: Processor<in FoundItemDescriptor<MatchedValue>>) {
     ProgressManager.getInstance().runProcess({
       runBlockingCancellable {
-        fetchWeightedElements(this, pattern) { consumer.process(it) }
+        model.buildGroupMappings()
+        runUpdateSessionForActionSearch(model.updateSession) { presentationProvider ->
+          doFetchItems(this, presentationProvider, pattern)  { consumer.process(it) }
+        }
       }
     }, progressIndicator)
-  }
-
-  @Internal
-  fun fetchWeightedElements(scope: CoroutineScope,
-                            pattern: String,
-                            consumer: suspend (FoundItemDescriptor<MatchedValue>) -> Boolean) {
-    model.buildGroupMappings()
-    scope.runUpdateSessionForActionSearch(model.getUpdateSession()) { presentationProvider ->
-      doFetchItems(this, presentationProvider, pattern, consumer)
-    }
   }
 
   override fun getActions(onChanged: Runnable): List<AnAction> {

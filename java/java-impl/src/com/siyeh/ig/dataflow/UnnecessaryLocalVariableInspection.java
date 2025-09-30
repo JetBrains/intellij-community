@@ -74,7 +74,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryLocalVariableVisitor();
   }
 
@@ -85,13 +85,10 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       super.visitLocalVariable(variable);
       if (m_ignoreAnnotatedVariablesNew) {
         final PsiModifierList list = variable.getModifierList();
-        if (list != null) {
-          int length = list.getAnnotations().length;
-          if (length > 0) {
-            PsiAnnotation annotation = list.findAnnotation(SuppressWarnings.class.getName());
-            if (annotation == null || !JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation(list).contains(getSuppressId())) {
-              return;
-            }
+        if (list != null && list.hasAnnotations()) {
+          PsiAnnotation annotation = list.findAnnotation(SuppressWarnings.class.getName());
+          if (annotation == null || !JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation(list).contains(getSuppressId())) {
+            return;
           }
         }
       }

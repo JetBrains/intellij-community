@@ -1,0 +1,6 @@
+
+fun foo(): List<String> {
+    return listOf<String>().reversed()
+}
+
+// ELEMENT: reversed

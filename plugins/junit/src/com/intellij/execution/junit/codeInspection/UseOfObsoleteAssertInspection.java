@@ -48,7 +48,7 @@ public final class UseOfObsoleteAssertInspection extends BaseInspection implemen
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UseOfObsoleteAssertVisitor();
   }
 

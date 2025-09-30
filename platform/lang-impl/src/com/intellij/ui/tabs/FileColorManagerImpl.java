@@ -52,8 +52,8 @@ public final class FileColorManagerImpl extends FileColorManager {
 
   @Override
   public boolean isEnabled() {
-    if (WelcomeScreenProjectProvider.isWelcomeScreenProject(myProject) &&
-        WelcomeScreenProjectProvider.isForceDisabledFileColors()) {
+    if (WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject(myProject) &&
+        WelcomeScreenProjectProvider.Companion.isForceDisabledFileColors()) {
       return false;
     }
 
@@ -189,11 +189,11 @@ public final class FileColorManagerImpl extends FileColorManager {
     return myProject;
   }
 
-  public @NotNull List<FileColorConfiguration> getApplicationLevelConfigurations() {
+  @NotNull List<FileColorConfiguration> getApplicationLevelConfigurations() {
     return myInitializedModel.getValue().getLocalConfigurations();
   }
 
-  public List<FileColorConfiguration> getProjectLevelConfigurations() {
+  List<FileColorConfiguration> getProjectLevelConfigurations() {
     return myInitializedModel.getValue().getProjectLevelConfigurations();
   }
 

@@ -51,7 +51,7 @@ public final class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspe
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new LoopConditionNotUpdatedInsideLoopVisitor();
   }
 

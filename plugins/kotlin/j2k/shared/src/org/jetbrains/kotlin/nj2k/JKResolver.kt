@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
@@ -34,7 +33,6 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
         resolveFqNameOfKtFunctionByIndex(fqName)
             ?: resolveFqName(fqName)
 
-    context(_: KaSession)
     fun resolveMethodWithExactSignature(methodFqName: FqName, parameterTypesFqNames: List<FqName>): PsiElement? =
         resolveFqNameOfKtFunctionByIndex(methodFqName, filter = fun(function: KtNamedFunction): Boolean {
             if (function.valueParameters.size != parameterTypesFqNames.size) return false

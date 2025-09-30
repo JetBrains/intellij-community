@@ -59,6 +59,8 @@ import javax.swing.event.TreeWillExpandListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreePath
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.pathString
 
 @ApiStatus.Internal
 class RecentProjectFilteringTree(
@@ -194,7 +196,7 @@ class RecentProjectFilteringTree(
     val node = TreeUtil.findNode(root, Condition {
       when (val item = TreeUtil.getUserObject(RecentProjectTreeItem::class.java, it)) {
         is RecentProjectItem -> item.projectPath == projectPath
-        is CloneableProjectItem -> item.projectPath == projectPath
+        is CloneableProjectItem -> item.projectPath.invariantSeparatorsPathString == projectPath
         else -> false
       }
     })
@@ -663,7 +665,7 @@ class RecentProjectFilteringTree(
         val cloneStatus = cloneableProject.cloneStatus
 
         projectNameLabel.text = item.displayName() // NON-NLS
-        projectPathLabel.text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
+        projectPathLabel.text = FileUtil.getLocationRelativeToUserHome(item.projectPath.pathString, false)
         when (cancelButton) {
           true -> {
             buttonViewModel.prepareActionsButton(projectActionButton, rowHovered, AllIcons.Actions.DeleteTag,

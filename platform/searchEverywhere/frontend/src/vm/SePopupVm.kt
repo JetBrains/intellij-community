@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.frontend.vm
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.HistoryIterator
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchHistoryList
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -15,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
@@ -27,12 +29,14 @@ import org.jetbrains.annotations.ApiStatus
 @OptIn(ExperimentalCoroutinesApi::class)
 class SePopupVm(
   val coroutineScope: CoroutineScope,
+  val session: SeSession,
   private val project: Project?,
   tabs: List<SeTab>,
   deferredTabs: List<SuspendLazyProperty<SeTab?>>,
   initialSearchPattern: String?,
   initialTabIndex: String,
   private val historyList: SearchHistoryList,
+  private val availableLegacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
   private val closePopupHandler: () -> Unit,
 ) {
   private val _searchPattern: MutableStateFlow<String> = MutableStateFlow("")
@@ -40,7 +44,7 @@ class SePopupVm(
 
   private val _deferredTabVms = MutableSharedFlow<SeTabVm>(replay = 100)
   val deferredTabVms: SharedFlow<SeTabVm> = _deferredTabVms.asSharedFlow()
-  private val tabVmsSateFlow = MutableStateFlow(tabs.map { SeTabVm(project, coroutineScope, it, searchPattern) })
+  private val tabVmsSateFlow = MutableStateFlow(tabs.map { SeTabVm(project, coroutineScope, it, searchPattern, availableLegacyContributors) })
   val tabVms: List<SeTabVm> get() = tabVmsSateFlow.value
 
   val currentTabIndex: MutableStateFlow<Int> = MutableStateFlow(tabVms.indexOfFirst { it.tabId == initialTabIndex }.takeIf { it >= 0 } ?: 0)
@@ -97,7 +101,7 @@ class SePopupVm(
     deferredTabs.forEach {
       coroutineScope.launch {
         it.getValue()?.let { tab ->
-          _deferredTabVms.emit(SeTabVm(project, coroutineScope, tab, searchPattern))
+          _deferredTabVms.emit(SeTabVm(project, coroutineScope, tab, searchPattern, availableLegacyContributors))
         }
       }
     }

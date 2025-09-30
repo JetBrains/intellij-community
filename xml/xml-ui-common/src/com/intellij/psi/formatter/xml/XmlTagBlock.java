@@ -2,6 +2,7 @@
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.*;
+import com.intellij.html.embedding.HtmlRawTextElementType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
@@ -172,7 +173,7 @@ public class XmlTagBlock extends AbstractXmlBlock {
         return createXmlTextBlocks(result, child, wrap, alignment);
       }
     }
-    else if (type == XmlElementType.HTML_RAW_TEXT) {
+    else if (type instanceof HtmlRawTextElementType) {
       return createXmlTextBlocks(result, child, wrap, alignment);
     }
     else if (type == XmlElementType.XML_COMMENT) {

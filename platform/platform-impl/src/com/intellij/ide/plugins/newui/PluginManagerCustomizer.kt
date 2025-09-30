@@ -4,12 +4,12 @@ package com.intellij.ide.plugins.newui
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.Component
 import javax.swing.JComponent
 
 @ApiStatus.Internal
@@ -29,6 +29,7 @@ interface PluginManagerCustomizer {
   suspend fun getDisableButtonCustomizationModel(
     pluginModelFacade: PluginModelFacade,
     pluginModel: PluginUiModel,
+    installedDescriptorForMarketplace: PluginUiModel?,
     modalityState: ModalityState,
   ): OptionsButonCustomizationModel?
 
@@ -50,11 +51,16 @@ interface PluginManagerCustomizer {
   @Nls
   fun getAdditionalTitleText(pluginModel: PluginUiModel): String?
 
+  @Nls
+  fun getUpdateSourceText(pluginModel: PluginUiModel): String?
+
   fun ensurePluginStatesLoaded()
 
-  fun customRepositoriesUpdated(repoUrls: List<String>)
+  fun updateCustomRepositories(repoUrls: List<String>, updateUi: () -> Unit)
 
   fun requestRestart(pluginModelFacade: PluginModelFacade, parentComponent: JComponent? = null)
+
+  fun getAllPluginIds(pluginId: PluginId): Set<PluginId>
 
   companion object {
     @JvmField

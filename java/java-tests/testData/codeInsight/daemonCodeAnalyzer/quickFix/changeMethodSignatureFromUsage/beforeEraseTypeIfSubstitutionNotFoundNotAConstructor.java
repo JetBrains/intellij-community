@@ -1,4 +1,4 @@
-// "Add 'Foo' as 1st parameter to method 'bar'" "true-preview"
+// "Add 'Foo' as 1st parameter to method 'bar()'" "true-preview"
  public class Bar {
      static void bar(String args) {
 

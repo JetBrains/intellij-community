@@ -354,7 +354,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       if (project.isDisposed) return
       if (hasUndoInCommand) return
       if (undoManager.isUndoOrRedoInProgress) return
-      if (CommandProcessor.getInstance().currentCommand == null) return
+      if (!CommandProcessor.getInstance().isCommandInProgress) return
       hasUndoInCommand = true
 
       registerUndoAction(true)
@@ -375,13 +375,13 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
 
     override fun undoTransparentActionStarted() {
-      if (CommandProcessor.getInstance().currentCommand == null) {
+      if (!CommandProcessor.getInstance().isCommandInProgress) {
         hasUndoInCommand = false
       }
     }
 
     override fun undoTransparentActionFinished() {
-      if (CommandProcessor.getInstance().currentCommand == null) {
+      if (!CommandProcessor.getInstance().isCommandInProgress) {
         hasUndoInCommand = false
       }
     }

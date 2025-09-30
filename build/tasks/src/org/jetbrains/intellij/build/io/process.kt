@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.io.InputStream
+import java.lang.ProcessBuilder.Redirect
 import java.nio.charset.MalformedInputException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -30,7 +31,8 @@ suspend fun runJava(mainClass: String,
                     javaExe: Path,
                     timeout: Duration = DEFAULT_TIMEOUT,
                     workingDir: Path? = null,
-                    customOutputFile: Path? = null,
+                    customOutput: Redirect? = null,
+                    customError: Redirect? = null,
                     onError: (() -> Unit)? = null) {
   val workingDir = workingDir ?: Path.of(System.getProperty("user.dir"))
   val useJsonOutput = jvmArgs.any { it == "-Dintellij.log.to.json.stdout=true" }
@@ -47,19 +49,35 @@ suspend fun runJava(mainClass: String,
     .use(Dispatchers.IO) { span ->
       val toDelete = ArrayList<Path>(3)
       var process: Process? = null
+      fun processRedirect(customRedirect: Redirect?, prefix: String): Pair<Path?, Redirect?> {
+        var outputFile: Path? = null
+        val outputRedirect = if (customRedirect != null) {
+          if (customRedirect != Redirect.DISCARD && (customRedirect.type() == Redirect.Type.WRITE || customRedirect.type() == Redirect.Type.APPEND)) {
+            customRedirect.file()?.parentFile?.let { Files.createDirectories(it.toPath()) }
+            outputFile = customRedirect.file()?.toPath()
+          }
+          customRedirect
+        }
+        else {
+          val file = Files.createTempFile(prefix, ".txt").also(toDelete::add).toFile()
+          outputFile = file.toPath()
+          Redirect.to(file)
+        }
+        return Pair(outputFile, outputRedirect)
+      }
+
       try {
         val classpathFile = Files.createTempFile("classpath-", ".txt").also(toDelete::add)
         val classPathStringBuilder = createClassPathFile(classPath, classpathFile)
         val processArgs = createProcessArgs(javaExe, jvmArgs, classpathFile, mainClass, args)
         span.setAttribute(AttributeKey.stringArrayKey("processArgs"), processArgs)
-        val errorOutputFile = Files.createTempFile("error-out-", ".txt").also(toDelete::add)
-        val outputFile = customOutputFile?.also { customOutputFile.parent?.let { Files.createDirectories(it) } }
-                         ?: Files.createTempFile("out-", ".txt").also(toDelete::add)
+        val (outputFile, outputRedirect) = processRedirect(customOutput, "out-")
+        val (errorOutputFile, errorRedirect) = processRedirect(customError, "error-out-")
         logFreeDiskSpace(workingDir, "before $commandLine")
         process = ProcessBuilder(processArgs)
           .directory(workingDir.toFile())
-          .redirectError(errorOutputFile.toFile())
-          .redirectOutput(outputFile.toFile())
+          .redirectError(errorRedirect)
+          .redirectOutput(outputRedirect)
           .start()
 
         span.setAttribute("pid", process.pid())
@@ -67,9 +85,9 @@ suspend fun runJava(mainClass: String,
         fun javaRunFailed(reason: String) {
           span.setAttribute("classPath", classPathStringBuilder.substring("-classpath".length))
           span.setAttribute("processArgs", processArgs.joinToString(separator = " "))
-          span.setAttribute("output", runCatching { Files.readString(outputFile) }.getOrNull() ?: "output file doesn't exist")
-          val errorOutput = runCatching { Files.readString(errorOutputFile) }.getOrNull()
-          val output = runCatching { Files.readString(outputFile) }.getOrNull()
+          val output = runCatching { outputFile?.let(Files::readString) }.getOrNull()
+          span.setAttribute("output", output ?: "output file doesn't exist")
+          val errorOutput = runCatching { errorOutputFile?.let(Files::readString) }.getOrNull()
           val errorMessage = StringBuilder(
             "Cannot execute $mainClass: $reason\n${processArgs.joinToString(separator = " ")}" +
             "\n--- error output ---\n" +
@@ -119,7 +137,11 @@ suspend fun runJava(mainClass: String,
     }
 }
 
-private fun checkOutput(outputFile: Path, span: Span, errorConsumer: (String) -> Unit) {
+private fun checkOutput(outputFile: Path?, span: Span, errorConsumer: (String) -> Unit) {
+  if (outputFile == null) {
+    span.setAttribute("output", "output file is null")
+    return
+  }
   val out = try {
     try {
       Files.readString(outputFile)

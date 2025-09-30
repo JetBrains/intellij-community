@@ -106,6 +106,9 @@ open class UsageViewSettings(
   @get:OptionTag("GROUP_BY_SCOPE")
   open var isGroupByScope: Boolean by property(isGroupByScope)
 
+  @get:OptionTag("SHORT_FILE_PATH")
+  open var showShortFilePath: Boolean by property(true)
+
   var exportFileName: String?
     @Transient
     get() = PathUtil.toSystemDependentName(EXPORT_FILE_NAME)

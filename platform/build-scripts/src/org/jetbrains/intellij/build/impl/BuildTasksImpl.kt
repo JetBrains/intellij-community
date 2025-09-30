@@ -35,6 +35,7 @@ import org.jetbrains.intellij.build.LinuxLibcImpl
 import org.jetbrains.intellij.build.LocalDistFileContent
 import org.jetbrains.intellij.build.MacLibcImpl
 import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.WindowsLibcImpl
@@ -887,7 +888,12 @@ private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll
 }
 
 private fun checkPlatformSpecificPluginResources(pluginLayouts: List<PluginLayout>, pluginModulesToPublish: Set<String>) {
-  val offenders = pluginLayouts.filter { it.hasPlatformSpecificResources && it.mainModule in pluginModulesToPublish }
+  val offenders = pluginLayouts.filter {
+    it.hasPlatformSpecificResources
+    && it.mainModule in pluginModulesToPublish
+    && !pluginLayouts.any { p -> p.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE && p.mainModule == it.mainModule }
+  }
+
   check(offenders.isEmpty()) {
     "Non-bundled plugins are not allowed yet to specify platform-specific resources. Offenders:\n  ${offenders.joinToString("  \n")}"
   }

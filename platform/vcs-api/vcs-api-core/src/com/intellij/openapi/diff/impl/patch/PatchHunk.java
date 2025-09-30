@@ -5,6 +5,7 @@ package com.intellij.openapi.diff.impl.patch;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class PatchHunk {
   private final int myStartLineBefore;
@@ -66,5 +67,20 @@ public class PatchHunk {
       return false;
     }
     return myLines.get(myLines.size()-1).isSuppressNewLine();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof PatchHunk hunk)) return false;
+    return myStartLineBefore == hunk.myStartLineBefore &&
+           myEndLineBefore == hunk.myEndLineBefore &&
+           myStartLineAfter == hunk.myStartLineAfter &&
+           myEndLineAfter == hunk.myEndLineAfter &&
+           Objects.equals(myLines, hunk.myLines);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myStartLineBefore, myEndLineBefore, myStartLineAfter, myEndLineAfter, myLines);
   }
 }

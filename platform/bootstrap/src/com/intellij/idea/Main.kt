@@ -9,7 +9,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.project.impl.P3SupportInstaller
@@ -44,7 +44,7 @@ fun main(rawArgs: Array<String>) {
   val startupTimings = ArrayList<Any>(12)
   startupTimings.add("startup begin")
   startupTimings.add(startTimeNano)
-  mainImpl(rawArgs, startupTimings, startTimeUnixNano, changeClassPath = null)
+  mainImpl(rawArgs = rawArgs, startupTimings = startupTimings, startTimeUnixNano = startTimeUnixNano, changeClassPath = null)
 }
 
 internal fun mainImpl(
@@ -61,7 +61,6 @@ internal fun mainImpl(
     addBootstrapTiming("properties loading", startupTimings)
     PathManager.customizePaths(args)
     addBootstrapTiming("customizePaths", startupTimings)
-    P3SupportInstaller.seal()
 
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
@@ -71,14 +70,15 @@ internal fun mainImpl(
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler() + rootTask()) {
         addBootstrapTiming("init scope creating", startupTimings)
         StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixNano)
-        startApp(args = args, mainScope = this@runBlocking, busyThread = busyThread, changeClassPath = changeClassPath)
+
+        startApp(args, mainScope = this@runBlocking, busyThread, changeClassPath)
       }
 
       awaitCancellation()
     }
   }
-  catch (t: Throwable) {
-    StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), t)
+  catch (e: Throwable) {
+    StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), e)
     exitProcess(AppExitCodes.STARTUP_EXCEPTION)
   }
 }
@@ -91,10 +91,12 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
 
         override fun rootTrace() = rootTask()
 
-        override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T {
-          return com.intellij.platform.diagnostic.telemetry.impl.span(name, context, action)
-        }
+        override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T =
+          com.intellij.platform.diagnostic.telemetry.impl.span(name, context, action)
       }
+    }
+    launch {
+      P3SupportInstaller.seal()
     }
 
     if (AppMode.isRemoteDevHost() || java.lang.Boolean.getBoolean("ide.started.from.remote.dev.launcher")) {
@@ -116,7 +118,7 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
     // this check must be performed before system directories are locked
     if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
       span("plugin updates installation") {
-        val configImportNeeded = !AppMode.isHeadless() && !Files.exists(Path.of(PathManager.getConfigPath()))
+        val configImportNeeded = !AppMode.isHeadless() && Files.notExists(PathManager.getConfigDir())
         if (!configImportNeeded) {
           // Consider following steps:
           // - user opens settings, and installs some plugins;
@@ -161,23 +163,29 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
     }
 
     startApplication(
-      scope = this, args, configImportNeededDeferred, customTargetDirectoryToImportConfig, mainClassLoaderDeferred,
-      appStarterDeferred, mainScope, busyThread
+      scope = this,
+      args = args,
+      configImportNeededDeferred = configImportNeededDeferred,
+      customTargetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
+      mainClassLoaderDeferred = mainClassLoaderDeferred,
+      appStarterDeferred = appStarterDeferred,
+      mainScope = mainScope,
+      busyThread = busyThread,
     )
   }
 }
 
 /**
  * Directory where the configuration files should be imported to.
- * This property is used to override the default target directory ([PathManager.getConfigPath]) when a custom way to read and write
+ * This property is used to override the default target directory ([PathManager.getConfigDir]) when a custom way to read and write
  * configuration files is implemented.
  */
 @JvmField
 internal var customTargetDirectoryToImportConfig: Path? = null
 
 internal fun isConfigImportNeeded(configPath: Path): Boolean =
-  !Files.exists(configPath) ||
-  Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)) ||
+  Files.notExists(configPath) ||
+  Files.exists(configPath.resolve(InitialConfigImportState.CUSTOM_MARKER_FILE_NAME)) ||
   customTargetDirectoryToImportConfig != null
 
 private fun initRemoteDev(args: List<String>) {
@@ -186,11 +194,6 @@ private fun initRemoteDev(args: List<String>) {
   }
 
   val isSplitMode = args.firstOrNull() == AppMode.SPLIT_MODE_COMMAND
-  if (isSplitMode) {
-    System.setProperty("jb.privacy.policy.text", "<!--999.999-->")
-    System.setProperty("jb.consents.confirmation.enabled", "false")
-    System.setProperty("idea.initially.ask.config", "never")
-  }
 
   // avoid an icon jumping in dock for the backend process
   if (OS.CURRENT == OS.macOS) {
@@ -220,10 +223,13 @@ private fun setStaticField(clazz: Class<out Any>, fieldName: String, value: Any)
 }
 
 private fun isInAquaSession(): Boolean {
-  if (OS.CURRENT != OS.macOS) return false
+  if (OS.CURRENT != OS.macOS) {
+    return false
+  }
 
   if ("true" == System.getenv("AWT_FORCE_HEADFUL")) {
-    return false // the value is forcefully set, assume the worst case
+    // the value is forcefully set, assume the worst case
+    return false
   }
 
   try {
@@ -303,7 +309,7 @@ private fun preprocessArgs(args: Array<String>): List<String> {
   }
 
   val (propertyArgs, otherArgs) = args.partition { it.startsWith("-D") && it.contains('=') }
-  propertyArgs.forEach { arg ->
+  for (arg in propertyArgs) {
     val (option, value) = arg.removePrefix("-D").split('=', limit = 2)
     System.setProperty(option, value)
   }
@@ -319,16 +325,13 @@ private fun installPluginUpdates() {
       StartupActionScriptManager.executeActionScript()
     }
   }
-  catch (t: Throwable) {
-    StartupErrorReporter.pluginInstallationProblem(t)
+  catch (e: Throwable) {
+    StartupErrorReporter.pluginInstallationProblem(e)
   }
 }
 
 // separate class for nicer presentation in dumps
 private class StartupAbortedExceptionHandler : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
-  override fun handleException(context: CoroutineContext, exception: Throwable) {
-    StartupErrorReporter.processException(exception)
-  }
-
+  override fun handleException(context: CoroutineContext, exception: Throwable) = StartupErrorReporter.processException(exception)
   override fun toString() = "StartupAbortedExceptionHandler"
 }

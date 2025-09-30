@@ -352,7 +352,7 @@ class DynamicPluginsTest {
       content {
         module("intellij.foo.one.module1") {
           packagePrefix = "org.foo"
-          dependencies { module(pluginTwoBuilder.id!!) } // TODO this shouldn't work o_O
+          dependencies { plugin(pluginTwoBuilder.id!!) }
           extensions("""<barExtension key="foo" implementationClass="y"/>""", "bar")
         }
       }

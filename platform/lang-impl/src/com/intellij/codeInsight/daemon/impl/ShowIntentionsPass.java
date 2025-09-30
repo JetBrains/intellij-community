@@ -116,7 +116,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     boolean[] hasAvailableAction = {false};
     HighlightInfo.IntentionActionDescriptor[] unavailableAction = {null};
     info.findRegisteredQuickFix((descriptor, fixRange) -> {
-      if (!DumbService.getInstance(psiFile.getProject()).isUsableInCurrentContext(descriptor.getAction())) {
+      if (!DumbService.getInstance(psiFile.getProject()).isUsableInCurrentContext(descriptor.getAction(), psiFile.getVirtualFile())) {
         return null;
       }
 
@@ -369,7 +369,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     DumbService dumbService = DumbService.getInstance(hostFile.getProject());
     for (IntentionAction action : availableIntentions) {
       ProgressManager.checkCanceled();
-      if (!dumbService.isUsableInCurrentContext(action)) {
+      if (!dumbService.isUsableInCurrentContext(action, hostFile.getVirtualFile())) {
         continue;
       }
 
@@ -405,7 +405,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     for (IntentionMenuContributor extension : IntentionMenuContributor.EP_NAME.getExtensionList()) {
       ProgressManager.checkCanceled();
       try {
-        if (dumbService.isUsableInCurrentContext(extension)) {
+        if (dumbService.isUsableInCurrentContext(extension, hostFile.getVirtualFile())) {
           extension.collectActions(hostEditor, hostFile, intentions, passIdToShowIntentionsFor, offset);
         }
       }

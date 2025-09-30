@@ -119,7 +119,7 @@ public final class SimplifiableAnnotationInspection extends BaseInspection imple
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SimplifiableAnnotationVisitor();
   }
 

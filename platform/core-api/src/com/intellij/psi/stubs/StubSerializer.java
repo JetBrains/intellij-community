@@ -15,8 +15,5 @@
  */
 package com.intellij.psi.stubs;
 
-/*
- * @author max
- */
 public interface StubSerializer<T extends StubElement> extends ObjectStubSerializer<T, StubElement> {
 }

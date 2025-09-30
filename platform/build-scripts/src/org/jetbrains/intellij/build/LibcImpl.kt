@@ -10,7 +10,7 @@ interface LibcImpl {
       return when (osFamily) {
         OsFamily.MACOS -> MacLibcImpl.DEFAULT
         OsFamily.WINDOWS -> WindowsLibcImpl.DEFAULT
-        OsFamily.LINUX -> LinuxLibcImpl.current
+        OsFamily.LINUX -> LinuxLibcImpl.GLIBC
       }
     }
   }

@@ -34,8 +34,8 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
-import com.intellij.openapi.ui.validation.CHECK_DIRECTORY
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
+import com.intellij.openapi.ui.validation.CHECK_READABLE_DIRECTORY
 import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
@@ -187,7 +187,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
               textFieldWithBrowseButton(fileChooserDescriptor, context.project)
                 .applyToComponent { setEmptyState(GradleBundle.message("gradle.project.settings.distribution.local.location.empty.state")) }
                 .bindText(gradleHomeProperty.toUiPathProperty())
-                .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
+                .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_READABLE_DIRECTORY)
                 .validationOnInput { validateGradleHome(withDialog = false) }
                 .validationOnApply { validateGradleHome(withDialog = true) }
                 .align(AlignX.FILL)

@@ -392,7 +392,7 @@ class CodeInliner(
 
         markAsUserCode(resultExpression)
 
-        val expressionType = analyze(call) { createTypeDescription(resultExpression.expressionType) }
+        val expressionType = analyze(resultExpression) { createTypeDescription(resultExpression.expressionType) }
         if (argumentExpressionsForParameter.isEmpty() && callableDeclaration is KtFunction) {
             //encode default value
             val allParameters = callableDeclaration.valueParameters()

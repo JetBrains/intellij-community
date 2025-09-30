@@ -3,18 +3,16 @@
 - <init>():V
 - canOpenProject(com.intellij.openapi.vfs.VirtualFile):Z
 - psf:getLOG():com.intellij.openapi.diagnostic.Logger
-- p:getProjectDirectory(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - pf:getProjectFile(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - a:getSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - pa:isProjectFile(com.intellij.openapi.vfs.VirtualFile):Z
-- p:linkProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+- pa:linkProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - linkToExistingProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):V
 - f:linkToExistingProject(java.lang.String,com.intellij.openapi.project.Project):V
 - f:linkToExistingProjectAsync(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - f:linkToExistingProjectAsync(java.lang.String,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-- openProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,Z,kotlin.coroutines.Continuation):java.lang.Object
+- f:openProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,Z,kotlin.coroutines.Continuation):java.lang.Object
 - pf:unlinkOtherLinkedProjects(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
-- unlinkProject(com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider$Companion
 *c:com.intellij.openapi.externalSystem.issue.BuildIssueException
 - com.intellij.openapi.externalSystem.model.ExternalSystemException

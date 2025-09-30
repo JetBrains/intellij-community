@@ -2289,6 +2289,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey GO = new IntelliJIconKey("language/go.svg", "language/go.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Kotlin = new IntelliJIconKey("language/kotlin.svg", "language/kotlin.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Php = new IntelliJIconKey("language/php.svg", "expui/language/php.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
@@ -3248,9 +3251,6 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey Athena = new IntelliJIconKey("providers/athena.svg", "providers/athena.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey Aws = new IntelliJIconKey("providers/aws.svg", "providers/aws.svg", AllIconsKeys.class);
-    /** 16x16 */ 
-    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Azure = new IntelliJIconKey("providers/azure.svg", "providers/azure.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
@@ -3438,6 +3438,14 @@ public final class AllIconsKeys {
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Yugabyte = new IntelliJIconKey("providers/yugabyte.svg", "providers/yugabyte.svg", AllIconsKeys.class);
+
+    /** @deprecated to be removed (Use AllIcons.Providers.AmazonWebServices instead) */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
+
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Aws = new IntelliJIconKey("providers/aws.svg", "providers/aws.svg", AllIconsKeys.class);
   }
 
   @GeneratedFromIntelliJSources

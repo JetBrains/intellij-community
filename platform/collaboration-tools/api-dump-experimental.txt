@@ -1019,6 +1019,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - a:isLineCommentable(I):Z
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel$WithMultilineComments
 - com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$WithMultilineComments
+- a:updateCommentLines(com.intellij.diff.util.LineRange,com.intellij.diff.util.LineRange):V
 *f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.editor.markup.ActiveGutterRenderer

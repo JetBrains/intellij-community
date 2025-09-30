@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.base.fe10.analysis-api-platform` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_analysis-api-platform",
@@ -14,9 +14,9 @@ create_kotlinc_options(
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "analysis-api-platform_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -25,6 +25,7 @@ jvm_library(
   module_name = "kotlin.base.fe10.analysis-api-platform",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":analysis-api-platform_resources"],
   kotlinc_opts = ":custom_analysis-api-platform",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -39,7 +40,6 @@ jvm_library(
     "//java/openapi:java",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/fe10/analysis",
-  ],
-  runtime_deps = [":analysis-api-platform_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.base.fe10.analysis-api-platform` end

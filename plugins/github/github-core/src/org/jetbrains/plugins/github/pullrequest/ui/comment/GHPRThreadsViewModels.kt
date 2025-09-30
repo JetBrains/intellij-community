@@ -6,6 +6,7 @@ import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.collaboration.util.map
+import com.intellij.diff.util.Side
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
@@ -29,7 +30,7 @@ internal interface GHPRThreadsViewModels {
   val canComment: Boolean
 
   val compactThreads: StateFlow<Collection<GHPRCompactReviewThreadViewModel>>
-  val newComments: StateFlow<Map<GHPRReviewCommentPosition, GHPRReviewNewCommentEditorViewModel>>
+  val newComments: StateFlow<Collection<GHPRReviewNewCommentEditorViewModel>>
 
   val threadMappingData: StateFlow<Map<String, ThreadMappingData>>
 
@@ -38,8 +39,8 @@ internal interface GHPRThreadsViewModels {
   fun lookupPreviousComment(cursorLocation: GHPRReviewUnifiedPosition, isVisible: (String) -> Boolean): String?
   fun lookupPreviousComment(currentThreadId: String, isVisible: (String) -> Boolean): String?
 
-  fun requestNewComment(location: GHPRReviewCommentPosition): GHPRReviewNewCommentEditorViewModel
-  fun cancelNewComment(location: GHPRReviewCommentPosition)
+  fun requestNewComment(position: GHPRReviewCommentPosition): GHPRReviewNewCommentEditorViewModel
+  fun cancelNewComment(change: RefComparisonChange, side: Side, lineIdx: Int)
 
   data class ThreadIdAndPosition(
     val id: String?,
@@ -133,26 +134,28 @@ internal class GHPRThreadsViewModelsImpl(
         }
       }.map { it.getOrNull().orEmpty() }.stateInNow(cs, emptyMap())
 
-  private val _newComments = MutableStateFlow<Map<GHPRReviewCommentPosition, GHPRReviewNewCommentEditorViewModelImpl>>(emptyMap())
-  override val newComments: StateFlow<Map<GHPRReviewCommentPosition, GHPRReviewNewCommentEditorViewModel>> = _newComments.asStateFlow()
+  private val _newComments = MutableStateFlow<List<GHPRReviewNewCommentEditorViewModelImpl>>(emptyList())
+  override val newComments: StateFlow<Collection<GHPRReviewNewCommentEditorViewModel>> = _newComments.asStateFlow()
 
-  override fun requestNewComment(location: GHPRReviewCommentPosition): GHPRReviewNewCommentEditorViewModel =
-    _newComments.updateAndGet { currentNewComments ->
-      if (!currentNewComments.containsKey(location)) {
-        val vm = createNewCommentVm(location)
-        currentNewComments + (location to vm)
-      }
-      else {
-        currentNewComments
-      }
-    }[location]!!
+  override fun requestNewComment(position: GHPRReviewCommentPosition): GHPRReviewNewCommentEditorViewModel {
+    val updated = _newComments.updateAndGet { list ->
+      if (list.any { it.position.value == position }) return@updateAndGet list
+      val vm = createNewCommentVm(position)
+      list + vm
+    }
+    return updated.first { it.position.value == position }
+  }
 
-  override fun cancelNewComment(location: GHPRReviewCommentPosition) =
+  override fun cancelNewComment(change: RefComparisonChange, side: Side, lineIdx: Int) =
     _newComments.update {
-      val oldVm = it[location]
-      val newMap = it - location
-      oldVm?.destroy()
-      newMap
+      val oldVm = it.firstOrNull {
+        val vmPosition = it.position.value
+        vmPosition.location.side == side && vmPosition.location.lineIdx == lineIdx && vmPosition.change == change
+      }
+      if (oldVm == null) return@update it
+      val newList: List<GHPRReviewNewCommentEditorViewModelImpl> = it - oldVm
+      oldVm.destroy()
+      newList
     }
 
   private fun createNewCommentVm(position: GHPRReviewCommentPosition) =
@@ -160,8 +163,8 @@ internal class GHPRThreadsViewModelsImpl(
                                             dataContext.repositoryDataService.remoteCoordinates.repository,
                                             dataContext.securityService.currentUser,
                                             dataContext.avatarIconsProvider,
-                                            position) {
-      cancelNewComment(position)
+                                            position) { position ->
+      cancelNewComment(position.change, position.location.side, position.location.lineIdx)
     }
 
   override fun lookupNextComment(cursorLocation: GHPRReviewUnifiedPosition, isVisible: (String) -> Boolean): String? =

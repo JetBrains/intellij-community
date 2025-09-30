@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.devkit.kotlin.tests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-tests_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
@@ -17,6 +17,7 @@ jvm_library(
   name = "kotlin-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":kotlin-tests_test_resources"],
   associates = ["//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit"],
   deps = [
     "//plugins/devkit/devkit-tests:testFramework",
@@ -53,10 +54,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
   ],
-  runtime_deps = [
-    ":kotlin-tests_test_resources",
-    "//plugins/devkit",
-  ]
+  runtime_deps = ["//plugins/devkit"]
 )
 ### auto-generated section `build intellij.devkit.kotlin.tests` end
 

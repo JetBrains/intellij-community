@@ -41,9 +41,9 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW;
  */
 @SuppressWarnings("UnregisteredNamedColor")
 public class DarculaButtonUI extends BasicButtonUI {
-  protected final Rectangle viewRect = new Rectangle();
-  protected final Rectangle textRect = new Rectangle();
-  protected final Rectangle iconRect = new Rectangle();
+  final Rectangle viewRect = new Rectangle();
+  final Rectangle textRect = new Rectangle();
+  final Rectangle iconRect = new Rectangle();
 
   protected static JBValue HELP_BUTTON_DIAMETER = new JBValue.Float(22);
   protected static JBValue HORIZONTAL_PADDING = new JBValue.Float(14);
@@ -102,7 +102,7 @@ public class DarculaButtonUI extends BasicButtonUI {
     return c instanceof AbstractButton button && button.getClientProperty("gotItButton.contrast.only.button") == Boolean.TRUE;
   }
 
-  public static @Nullable Insets getCustomButtonInsets(Component c) {
+  static @Nullable Insets getCustomButtonInsets(Component c) {
     if (!(c instanceof AbstractButton b)) return null;
 
     Object maybeInsets = b.getClientProperty("customButtonInsets");
@@ -400,7 +400,7 @@ public class DarculaButtonUI extends BasicButtonUI {
     return JBColor.namedColor("GotItTooltip.Button.endBackground", JBUI.CurrentTheme.Button.buttonColorEnd());
   }
 
-  protected String layout(AbstractButton b, @Nls String text, Icon icon, FontMetrics fm, int width, int height) {
+  String layout(AbstractButton b, @Nls String text, Icon icon, FontMetrics fm, int width, int height) {
     textRect.setBounds(0, 0, 0, 0);
     iconRect.setBounds(0, 0, 0, 0);
 
@@ -416,6 +416,7 @@ public class DarculaButtonUI extends BasicButtonUI {
       StringUtil.isEmpty(text) || icon == null ? 0 : b.getIconTextGap());
   }
 
+  @ApiStatus.Internal
   protected void modifyViewRect(AbstractButton b, Rectangle rect) {
     JBInsets.removeFrom(rect, b.getInsets());
     JBInsets.removeFrom(rect, b.getMargin());

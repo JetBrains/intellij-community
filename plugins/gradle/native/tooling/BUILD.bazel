@@ -1,6 +1,6 @@
 ### auto-generated section `build intellij.gradle.native.tooling` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_tooling",
@@ -11,9 +11,9 @@ create_kotlinc_options(
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "tooling_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -22,6 +22,7 @@ jvm_library(
   module_name = "intellij.gradle.native.tooling",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":tooling_resources"],
   kotlinc_opts = ":custom_tooling",
   deps = [
     "@lib//:jetbrains-annotations",
@@ -30,8 +31,7 @@ jvm_library(
     "@lib//:gradle",
     "//platform/object-serializer:objectSerializer-annotations",
     "@lib//:commons-lang3",
-  ],
-  runtime_deps = [":tooling_resources"]
+  ]
 )
 ### auto-generated section `build intellij.gradle.native.tooling` end
 

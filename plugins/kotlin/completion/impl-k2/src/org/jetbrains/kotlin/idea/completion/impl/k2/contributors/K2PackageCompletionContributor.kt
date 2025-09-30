@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.packageScope
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.util.positionContext.*
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 
 internal class K2PackageCompletionContributor : K2SimpleCompletionContributor<KotlinRawPositionContext>(
     KotlinRawPositionContext::class
@@ -24,6 +26,11 @@ internal class K2PackageCompletionContributor : K2SimpleCompletionContributor<Ko
     context(_: KaSession, context: K2CompletionSectionContext<KotlinRawPositionContext>)
     override fun shouldExecute(): Boolean {
         return !context.positionContext.isAfterRangeOperator() && !context.positionContext.allowsOnlyNamedArguments()
+    }
+
+    companion object {
+        internal fun shouldCompleteTopLevelPackages(): Boolean =
+            Registry.`is`("kotlin.k2.complete.top.level.packages", true)
     }
 
     @OptIn(KaExperimentalApi::class)
@@ -56,12 +63,16 @@ internal class K2PackageCompletionContributor : K2SimpleCompletionContributor<Ko
             )
         }
 
+        is KotlinPackageDirectivePositionContext,
+        is KotlinImportDirectivePositionContext -> true
+
         is KotlinWithSubjectEntryPositionContext,
         is KotlinAnnotationTypeNameReferencePositionContext,
         is KotlinExpressionNameReferencePositionContext,
-        is KotlinImportDirectivePositionContext,
-        is KotlinPackageDirectivePositionContext,
-        is KDocLinkNamePositionContext -> true
+        is KDocLinkNamePositionContext -> {
+            // Allow disabling top-level package completion for LSP: KTIJ-35650
+            shouldCompleteTopLevelPackages() || position.position.parent?.parent is KtDotQualifiedExpression
+        }
 
         else -> false
     }

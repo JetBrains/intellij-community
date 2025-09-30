@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.python.psi.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "psi-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.python.psi.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":psi-impl_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -51,7 +52,6 @@ jvm_library(
     "//python/impl.helperLocator:community-helpersLocator",
     "@lib//:hash4j",
   ],
-  exports = ["//python/python-syntax-core:syntax-core"],
-  runtime_deps = [":psi-impl_resources"]
+  exports = ["//python/python-syntax-core:syntax-core"]
 )
 ### auto-generated section `build intellij.python.psi.impl` end

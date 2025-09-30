@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.driver.sdk` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "driver-sdk_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,12 +12,13 @@ jvm_library(
   module_name = "intellij.driver.sdk",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":driver-sdk_resources"],
   deps = [
     "//platform/remote-driver/client",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
     "//platform/remote-driver/model",
     "//platform/util",
     "//platform/ui.jcef",
@@ -26,7 +27,6 @@ jvm_library(
     "//platform/remote-driver/client",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
-  ],
-  runtime_deps = [":driver-sdk_resources"]
+  ]
 )
 ### auto-generated section `build intellij.driver.sdk` end

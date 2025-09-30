@@ -25,6 +25,9 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.Nls
 
 internal class JavaGenerateConstructorCompletionCommandProvider : CommandProvider {
+
+  override fun supportNewLineCompletion(): Boolean = true
+
   private fun findContext(context: CommandCompletionProviderContext): PsiClass? {
     val element = getCommandContext(context.offset, context.psiFile) ?: return null
     val containingClass = element.parentOfType<PsiClass>() ?: return null

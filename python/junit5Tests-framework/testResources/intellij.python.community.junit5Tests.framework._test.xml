@@ -1,6 +1,10 @@
 <idea-plugin>
   <dependencies>
+    <module name="intellij.community.wintools"/>
+    <module name="intellij.libraries.sshd.osgi"/>
+    <module name="intellij.libraries.system.stubs.jupiter"/>
     <module name="intellij.libraries.testcontainers"/>
+    <module name="intellij.platform.testFramework"/>
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.python.community.testFramework.testEnv"/>
   </dependencies>

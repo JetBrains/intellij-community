@@ -1,11 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.ide.startup.importSettings.jb
 
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.diagnostic.VMOptions
+import com.intellij.ide.ConfigImportOptions
+import com.intellij.ide.ConfigImportSettings
 import com.intellij.ide.fileTemplates.FileTemplatesScheme
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginInstaller
@@ -17,7 +18,10 @@ import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.LafManagerImpl
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.CustomConfigMigrationOption
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.logger
@@ -30,7 +34,7 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.Registry
@@ -40,9 +44,9 @@ import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.serviceContainer.getComponentManagerEx
 import com.intellij.ui.ExperimentalUI
-import com.intellij.util.application
 import com.intellij.util.io.copy
-import java.io.FileInputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -51,15 +55,13 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.*
 
-class JbSettingsImporter(private val configDirPath: Path,
-                         private val pluginsPath: Path,
-                         private val prevIdeHome: Path?
-) {
+private val LOG = logger<JbSettingsImporter>()
+
+internal class JbSettingsImporter(private val configDirPath: Path, private val pluginsPath: Path) {
   private val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
-  private val defaultNewUIValue = true
   private val additionalSchemeDirs = mapOf(FileTemplatesScheme.TEMPLATES_DIR to SettingsCategory.CODE)
 
-  // will be used as toposort for dependencies
+  // will be used as topological ordering for dependencies
   // TODO: move to the component declaration instead
   private val componentNamesDependencies = mapOf(
     //IDEA-342818
@@ -103,12 +105,12 @@ class JbSettingsImporter(private val configDirPath: Path,
     val parentElement = JDOMUtil.load(projectDefaultXmlPath)
     val defaultProjectElement = parentElement.getChild("component")?.getChild("defaultProject") ?: return emptySet()
 
-    val retval = mutableSetOf<String>()
+    val retVal = mutableSetOf<String>()
     for (componentElement in defaultProjectElement.getChildren("component")) {
       val componentName = componentElement.getAttributeValue("name")
-      retval.add(componentName)
+      retVal.add(componentName)
     }
-    return retval
+    return retVal
   }
 
   private fun findComponentsAndFiles(): Pair<Set<String>, Set<String>> {
@@ -215,20 +217,18 @@ class JbSettingsImporter(private val configDirPath: Path,
     }
 
     // we use LinkedHashSet, because we need ordering here
-    val appComponentNames: LinkedHashSet<String> = toposortComponentNames(componentAndFilesMap.keys)
+    val appComponentNames: LinkedHashSet<String> = topoSortComponentNames(componentAndFilesMap.keys)
 
     withExternalStreamProvider(arrayOf(storageManager, defaultProjectStore.storageManager)) {
       progressIndicator.checkCanceled()
-      application.runReadAction {
-        componentStore.reloadComponents(changedFileSpecs = componentFiles + schemeFiles,
-                                        deletedFileSpecs = emptyList(),
-                                        componentNames2reload = appComponentNames,
-                                        forceReloadNonReloadable = true)
-      }
+      componentStore.reloadComponents(
+        changedFileSpecs = componentFiles + schemeFiles,
+        deletedFileSpecs = emptyList(),
+        componentNames2reload = appComponentNames,
+        forceReloadNonReloadable = true,
+      )
       progressIndicator.checkCanceled()
-      application.runReadAction {
-        defaultProjectStore.reinitComponents(projectDefaultComponentNames, setOf(defaultProjectStorage), emptySet())
-      }
+      defaultProjectStore.reinitComponents(projectDefaultComponentNames, setOf(defaultProjectStorage), emptySet())
     }
     progressIndicator.checkCanceled()
     JbImportSpecialHandler.postProcess(configDirPath)
@@ -239,21 +239,21 @@ class JbSettingsImporter(private val configDirPath: Path,
     return Registry.getInstance().isRestartNeeded
   }
 
-  // very basic and primitive toposort. Doesn't traverse, doesn't support transitive deps, etc.
-  private fun toposortComponentNames(components: Collection<String>): LinkedHashSet<String> {
-    val retval = LinkedHashSet<String>()
+  // very basic and primitive topological sort. Doesn't traverse, doesn't support transitive deps, etc.
+  private fun topoSortComponentNames(components: Collection<String>): LinkedHashSet<String> {
+    val retVal = LinkedHashSet<String>()
     for (c in components) {
       for (d in componentNamesDependencies[c]?:emptyList()) {
-        if (!retval.contains(d)){
-          retval.add(d)
+        if (!retVal.contains(d)){
+          retVal.add(d)
         }
       }
-      retval.add(c)
+      retVal.add(c)
     }
-    return retval
+    return retVal
   }
 
-  private suspend fun withExternalStreamProvider(storageManagers: Array<StateStorageManager>, action: () -> Unit) {
+  private suspend fun withExternalStreamProvider(storageManagers: Array<StateStorageManager>, action: suspend () -> Unit) {
     val provider = ImportStreamProvider(configDirPath)
     for (storageManager in storageManagers) {
       storageManager.addStreamProvider(provider)
@@ -264,7 +264,10 @@ class JbSettingsImporter(private val configDirPath: Path,
     for (storageManager in storageManagers) {
       storageManager.removeStreamProvider(provider::class.java)
     }
-    saveSettings(ApplicationManager.getApplication(), true)
+    // todo make sure that withExternalStreamProvider is not called in EDT
+    withContext(Dispatchers.Default) {
+      saveSettings(componentManager = ApplicationManager.getApplication(), forceSavingAllSettings = true)
+    }
   }
 
   private fun loadNotLoadedComponents(
@@ -301,29 +304,29 @@ class JbSettingsImporter(private val configDirPath: Path,
   }
 
   private fun filesFromFolder(dir: Path, prefix: String = dir.name): Collection<String> {
-    val retval = ArrayList<String>()
+    val retVal = ArrayList<String>()
     for (entry in dir.listDirectoryEntries()) {
       if (entry.isRegularFile()) {
         if (prefix.isEmpty()) {
-          retval.add(entry.name)
+          retVal.add(entry.name)
         }
         else {
-          retval.add("$prefix/${entry.name}")
+          retVal.add("$prefix/${entry.name}")
         }
       }
       else {
         val folderFiles = filesFromFolder(entry, "$prefix/${entry.name}")
-        retval.addAll(folderFiles)
+        retVal.addAll(folderFiles)
       }
     }
-    return retval
+    return retVal
   }
 
 
   // key: PSC, value - file
   private fun filterComponents(allFiles: Set<String>, categories: Set<SettingsCategory>): Map<String, String> {
     val componentManager = ApplicationManager.getApplication() as ComponentManagerEx
-    val retval = hashMapOf<String, String>()
+    val retVal = hashMapOf<String, String>()
     val osFolderName = getPerOsSettingsStorageFolderName()
     componentManager.processAllImplementationClasses { aClass, _ ->
       val state = getStateOrNull(aClass) ?: return@processAllImplementationClasses
@@ -336,13 +339,13 @@ class JbSettingsImporter(private val configDirPath: Path,
         return@processAllImplementationClasses
 
       if (activeStorage.roamingType.isOsSpecific && allFiles.contains("$osFolderName/${activeStorage.value}")) {
-        retval[state.name] = "$osFolderName/${activeStorage.value}"
+        retVal[state.name] = "$osFolderName/${activeStorage.value}"
       }
       else if (allFiles.contains(activeStorage.value)) {
-        retval[state.name] = activeStorage.value
+        retVal[state.name] = activeStorage.value
       }
     }
-    return retval
+    return retVal
   }
 
   private fun getStateOrNull(aClass: Class<*>): State? {
@@ -357,9 +360,9 @@ class JbSettingsImporter(private val configDirPath: Path,
   }
 
   private fun filterSchemes(allFiles: Set<String>, categories: Set<SettingsCategory>): Set<String> {
-    val retval = hashSetOf<String>()
+    val retVal = hashSetOf<String>()
     val schemeCategories = hashSetOf<String>()
-    // fileSpec is e.g. keymaps/mykeymap.xml
+    // fileSpec is e.g. `keymaps/my-keymap.xml`
     (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
       if (categories.contains(it.getSettingsCategory())) {
         schemeCategories.add(it.fileSpec)
@@ -376,10 +379,10 @@ class JbSettingsImporter(private val configDirPath: Path,
         continue
 
       if (schemeCategories.contains(split[0])) {
-        retval.add(file)
+        retVal.add(file)
       }
     }
-    return retval
+    return retVal
   }
 
   fun installPlugins(
@@ -403,7 +406,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     RepositoryHelper.updatePluginHostsFromConfigDir(configDirPath, LOG)
     val updateableMap = HashMap<PluginId, IdeaPluginDescriptor?>(pluginsMap)
     progressIndicator.text2 = ImportSettingsBundle.message("progress.details.checking.for.plugin.updates")
-    val internalPluginUpdates = UpdateChecker.getInternalPluginUpdates(
+    val internalPluginUpdates = service<UpdateCheckerFacade>().getInternalPluginUpdates(
       buildNumber = null,
       indicator = progressIndicator,
       updateablePluginsMap = updateableMap
@@ -451,15 +454,17 @@ class JbSettingsImporter(private val configDirPath: Path,
     }
   }
 
-  private fun configImportOptions(progressIndicator: ProgressIndicator,
-                                  pluginIds: Collection<PluginId>): ConfigImportHelper.ConfigImportOptions {
-    val importOptions = ConfigImportHelper.ConfigImportOptions(LOG)
-    importOptions.isHeadless = true
+  private fun configImportOptions(progressIndicator: ProgressIndicator, pluginIds: Collection<PluginId>): ConfigImportOptions {
+    val importOptions = ConfigImportOptions(LOG)
+    importOptions.headless = true
     importOptions.headlessProgressIndicator = progressIndicator
     importOptions.importSettings = object : ConfigImportSettings {
       override fun processPluginsToMigrate(
         newConfigDir: Path,
         oldConfigDir: Path,
+        oldPluginsDir: Path,
+        options: ConfigImportOptions,
+        brokenPluginVersions: Map<PluginId?, Set<String?>?>?,
         bundledPlugins: MutableList<IdeaPluginDescriptor>, // FIXME wrong arg name
         nonBundledPlugins: MutableList<IdeaPluginDescriptor>, // FIXME wrong arg name
       ) {
@@ -498,43 +503,40 @@ class JbSettingsImporter(private val configDirPath: Path,
   internal class ImportStreamProvider(private val configDirPath: Path) : StreamProvider {
     override val isExclusive = false
 
-    override val saveStorageDataOnReload: Boolean
-      get() = false
+    override val saveStorageDataOnReload: Boolean get() = false
 
-    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
-      return false
-    }
+    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = false
 
-    override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
-    }
+    override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) { }
 
     override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
       if (fileSpec == PROJECT_DEFAULT_FILE_SPEC) {
-        val path = configDirPath / PathManager.OPTIONS_DIRECTORY / PROJECT_DEFAULT_FILE_NAME
-        if (!path.isRegularFile())
-          return false
-        consumer(FileInputStream(path.toFile()))
+        val path = configDirPath.resolve(PathManager.OPTIONS_DIRECTORY).resolve(PROJECT_DEFAULT_FILE_NAME)
+        if (!path.isRegularFile()) return false
+        consumer(Files.newInputStream(path))
         return true
       }
-      (configDirPath / PathManager.OPTIONS_DIRECTORY / fileSpec).let {
+      (configDirPath.resolve(PathManager.OPTIONS_DIRECTORY).resolve(fileSpec)).let {
         if (it.exists()) {
-          consumer(FileInputStream(it.toFile()))
+          consumer(Files.newInputStream(it))
           return true
         }
       }
-      (configDirPath / fileSpec).let {
+      (configDirPath.resolve(fileSpec)).let {
         if (it.exists()) {
-          consumer(FileInputStream(it.toFile()))
+          consumer(Files.newInputStream(it))
           return true
         }
       }
       return false
     }
 
-    override fun processChildren(path: String,
-                                 roamingType: RoamingType,
-                                 filter: (name: String) -> Boolean,
-                                 processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
+    override fun processChildren(
+      path: String,
+      roamingType: RoamingType,
+      filter: (name: String) -> Boolean,
+      processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean,
+    ): Boolean {
       LOG.debug("Process Children $path")
       val folder = configDirPath.resolve(path)
       if (!folder.exists()) return true
@@ -561,8 +563,5 @@ class JbSettingsImporter(private val configDirPath: Path,
       LOG.debug("Deleting $fileSpec")
       return false
     }
-
   }
 }
-
-private val LOG = logger<JbSettingsImporter>()

@@ -28,14 +28,21 @@ private val GeneratorPreferences.kotlincArtifactCoordinates: ArtifactCoordinates
     get() = ArtifactCoordinates(kotlincVersion, kotlincArtifactsMode)
 
 private val GeneratorPreferences.jpsArtifactCoordinates: ArtifactCoordinates
-    get() = ArtifactCoordinates(jpsPluginVersion, jpsPluginArtifactsMode)
+    get() = if (jpsPluginVersion != "dev") {
+        ArtifactCoordinates(jpsPluginVersion, jpsPluginArtifactsMode)
+    } else {
+        kotlincArtifactCoordinates
+    }
 
 internal val GeneratorPreferences.kotlincArtifactVersion: String
     get() = kotlincArtifactCoordinates.version
 
+internal val GeneratorPreferences.jpsArtifactVersion: String
+    get() = jpsArtifactCoordinates.version
+
 internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommunity: Boolean): List<JpsLibrary> {
     val kotlincCoordinates = preferences.kotlincArtifactCoordinates
-    val jpsPluginCoordinates = preferences.jpsArtifactCoordinates.takeIf { it.version != "dev" } ?: kotlincCoordinates
+    val jpsPluginCoordinates = preferences.jpsArtifactCoordinates
 
     return buildLibraryList(isCommunity) {
         kotlincForIdeWithStandardNaming("kotlinc.allopen-compiler-plugin", kotlincCoordinates)

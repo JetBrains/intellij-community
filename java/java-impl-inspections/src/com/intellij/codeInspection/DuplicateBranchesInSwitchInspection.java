@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -179,7 +180,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
         if (body != null) {
           //noinspection AssignmentToForLoopParameter
           element = collectCommentsUntilNewLine(commentTexts, element);
-          Rule rule = new Rule(ruleStatement, body, ArrayUtilRt.toStringArray(commentTexts));
+          Rule rule = new Rule(ruleStatement, ruleStatement, body, ArrayUtilRt.toStringArray(commentTexts));
           commentTexts.clear();
           rulesByHash.computeIfAbsent(rule.hash(), __ -> new ArrayList<>()).add(rule);
         }
@@ -249,11 +250,12 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     if (statementList == null || statementList.isEmpty()) {
       return previousBranch;
     }
-    PsiSwitchLabelStatement[] labels = Branch.collectLabels(statementList.get(0));
+    PsiStatement first = statementList.getFirst();
+    PsiSwitchLabelStatement[] labels = Branch.collectLabels(first);
     if (labels.length == 0) {
       return previousBranch; // the code without a label is not allowed in 'switch', just ignore it
     }
-    Branch branch = new Branch(labels, statementList, hasImplicitBreak, comments.fetchTexts());
+    Branch branch = new Branch(first, labels, statementList, hasImplicitBreak, comments.fetchTexts());
     if (!branch.canFallThrough() && (previousBranch == null || !previousBranch.canFallThrough())) {
       int hash = branch.hash();
       List<Branch> branches = branchesByHash.get(hash);
@@ -447,13 +449,13 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
       myNextFromLabelToMergeWith = PsiTreeUtil.skipWhitespacesForward(myLabelToMergeWith);
 
-      myCommentsToMergeWith = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(myBranchToMergeWith.myCommentTexts)));
+      myCommentsToMergeWith = Collections.unmodifiableSet(ContainerUtil.newHashSet(myBranchToMergeWith.myCommentTexts));
       return true;
     }
 
     void moveBranchLabel() {
-      PsiElement firstElementToMove = myBranchPrefixToMove.get(0);
-      PsiElement lastElementToMove = myBranchPrefixToMove.get(myBranchPrefixToMove.size() - 1);
+      PsiElement firstElementToMove = myBranchPrefixToMove.getFirst();
+      PsiElement lastElementToMove = myBranchPrefixToMove.getLast();
 
       PsiElement moveTarget = myLabelToMergeWith;
       if (myLabelToMergeWith.isDefaultCase()) {
@@ -598,11 +600,16 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     private final boolean myIsDefault;
     private DuplicatesFinder myFinder;
     protected final boolean myCanDeleteRedundantBranch;
+    /**
+     * Represents the context in which this branch is defined.
+     * It can contain any element inside the current branch.
+     */
+    private final PsiElement myContext;
 
-    BranchBase(T @NotNull [] labels, PsiStatement @NotNull [] statements, String @NotNull [] commentTexts) {
+    BranchBase(@NotNull PsiElement context, T @NotNull [] labels, PsiStatement @NotNull [] statements, String @NotNull [] commentTexts) {
       LOG.assertTrue(labels.length != 0, "labels.length");
       LOG.assertTrue(statements.length != 0, "statements.length");
-
+      myContext = context;
       myFirstLabel = labels[0];
       myStatements = statements;
       myCommentTexts = commentTexts;
@@ -635,9 +642,8 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     abstract PsiSwitchLabelStatementBase[] getLabels();
 
     private boolean canBeJoinedWith(@NotNull BranchBase<?> other) {
-      //for default branch, it is always possible to delete another branch.
-      //see also BranchBase.mergeWithDefaultFix
-      if (isDefault() || other.isDefault()) return true;
+      if (isDefault() && !hasDominanceAfter(other, this)) return true;
+      if (other.isDefault() && !hasDominanceAfter(this, other)) return true;
 
       //fast exist
       if (!this.canMergeBranch()) return false;
@@ -686,6 +692,40 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       IElementType baseElementType = other instanceof Rule ? JavaElementType.SWITCH_LABELED_RULE : JavaElementType.SWITCH_LABEL_STATEMENT;
       return PsiTreeUtil.findSiblingBackward(thisLabels[0], baseElementType, true, null) == otherLabels[otherLabels.length - 1] ||
              PsiTreeUtil.findSiblingForward(thisLabels[thisLabels.length - 1], baseElementType, true, null) == otherLabels[0];
+    }
+
+    private static boolean hasDominanceAfter(@NotNull BranchBase<?> branch,
+                                             @NotNull BranchBase<?> other) {
+      PsiElement context = branch.myContext;
+      PsiSwitchLabelStatementBase overWhom = PsiTreeUtil.getParentOfType(branch.myContext, PsiSwitchLabelStatementBase.class, false);
+      if (overWhom == null) return false;
+      PsiCaseLabelElementList whomCaseLabelElementList = overWhom.getCaseLabelElementList();
+      if (whomCaseLabelElementList == null) return false;
+      PsiSwitchLabelStatementBase until = PsiTreeUtil.getParentOfType(other.myContext, PsiSwitchLabelStatementBase.class, false);
+      PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(context, PsiSwitchBlock.class, false);
+      if (switchBlock == null) return false;
+      boolean start = false;
+      PsiExpression switchBlockExpression = switchBlock.getExpression();
+      if (switchBlockExpression == null) return false;
+      PsiType expressionType = switchBlockExpression.getType();
+      if (expressionType == null) return false;
+      for (PsiElement switchBranch : JavaPsiSwitchUtil.getSwitchBranches(switchBlock)) {
+        if (!start) {
+          if (PsiTreeUtil.isAncestor(context, switchBranch, false)) {
+            start = true;
+          }
+          continue;
+        }
+        if (PsiTreeUtil.isAncestor(until, switchBranch, false)) {
+          return false;
+        }
+        if (ContainerUtil.or(whomCaseLabelElementList.getElements(),
+                             element ->
+                               JavaPsiSwitchUtil.isDominated(element, switchBranch, expressionType))) {
+          return true;
+        }
+      }
+      return false;
     }
 
     int effectiveLength() {
@@ -836,11 +876,12 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     private final boolean myCanCopyCaseValues;
     private final PsiSwitchLabelStatement @NotNull [] myLabels;
 
-    Branch(PsiSwitchLabelStatement @NotNull [] labels,
+    Branch(@NotNull PsiElement context,
+           PsiSwitchLabelStatement @NotNull [] labels,
            @NotNull List<PsiStatement> statementList,
            boolean hasImplicitBreak,
            String @NotNull [] comments) {
-      super(labels, statementsWithoutTrailingBreak(statementList), comments);
+      super(context, labels, statementsWithoutTrailingBreak(statementList), comments);
 
       int lastIndex = statementList.size() - 1;
       PsiStatement lastStatement = statementList.get(lastIndex);
@@ -989,7 +1030,8 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       return false;
     }
 
-    private static PsiSwitchLabelStatement[] collectLabels(PsiStatement statement) {
+    private static PsiSwitchLabelStatement[] collectLabels(@Nullable PsiStatement statement) {
+      if (statement == null) return EMPTY_LABELS_ARRAY;
       List<PsiSwitchLabelStatement> labels = new ArrayList<>();
       for (PsiElement element = PsiTreeUtil.getPrevSiblingOfType(statement, PsiStatement.class);
            element instanceof PsiSwitchLabelStatement;
@@ -1041,8 +1083,11 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     private final boolean myCanMergeBranches;
     private final boolean myCanMergeWithDefaultBranch;
 
-    Rule(@NotNull PsiSwitchLabeledRuleStatement rule, @NotNull PsiStatement body, String @NotNull [] commentTexts) {
-      super(new PsiSwitchLabeledRuleStatement[]{rule}, new PsiStatement[]{body}, commentTexts);
+    Rule(@NotNull PsiElement context,
+         @NotNull PsiSwitchLabeledRuleStatement rule,
+         @NotNull PsiStatement body,
+         String @NotNull [] commentTexts) {
+      super(context, new PsiSwitchLabeledRuleStatement[]{rule}, new PsiStatement[]{body}, commentTexts);
       myIsSimpleExit = body instanceof PsiExpressionStatement || body instanceof PsiThrowStatement;
       myCanMergeBranches = calculateCanMergeBranches(rule);
       myCanMergeWithDefaultBranch = SwitchUtils.isCaseNull(rule);
@@ -1185,7 +1230,8 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
           }
         }
       }
-      myCommentsToMergeWith = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(myRuleToMergeWith.myCommentTexts)));
+      if(myRuleToMergeWith == null) return false;
+      myCommentsToMergeWith = Set.of(myRuleToMergeWith.myCommentTexts);
       return true;
     }
 

@@ -125,6 +125,7 @@ abstract class KotlinMavenConfigurator protected constructor(
                 if (file != null) {
                     val configured = configureModule(module, file, IdeKotlinVersion.get(kotlinVersion), collector)
                     if (configured) {
+                        queueSyncIfNeeded(project)
                         OpenFileAction.openFile(file.virtualFile, project)
                         configuredModules.add(module)
                     }

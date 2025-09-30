@@ -320,7 +320,7 @@ final class ComponentPanelTestAction extends DumbAwareAction {
       ExtendableTextField cellEditor = new ExtendableTextField();
       ExtendableTextComponent.Extension browseExtension =
         ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover,
-                                                 "Open file", () -> System.out.println("Table browse clicked"));
+                                                 "Open file", true, () -> System.out.println("Table browse clicked"));
       cellEditor.addExtension(browseExtension);
       cellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);
 

@@ -40,6 +40,13 @@ internal sealed interface GHPREditorMappedComponentModel : CodeReviewInlayModel,
     override fun showOutline(isHovered: Boolean) {
       _isHovered.value = isHovered
     }
+    abstract fun setRange(range: Pair<Side, IntRange>?)
+
+    private val _isHidden: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isHidden: StateFlow<Boolean> = _isHidden.asStateFlow()
+    fun isHidden(hidden: Boolean) {
+      _isHidden.value = hidden
+    }
   }
 
   abstract class AIComment(val vm: GHPRAICommentViewModel)

@@ -53,6 +53,7 @@ public final class ModuleDependencyEntitiesIndexableEntityProvider implements In
 
   private static @NotNull Collection<? extends IndexableIteratorBuilder> createIteratorBuildersForDependency(@NotNull ModuleDependencyItem dependency) {
     if (dependency instanceof SdkDependency) {
+      if (Registry.is("use.workspace.file.index.for.partial.scanning")) return Collections.emptyList();
       return Collections.singletonList(IndexableIteratorBuilders.INSTANCE.forSdk(((SdkDependency)dependency).getSdk().getName(),
                                                                                  ((SdkDependency)dependency).getSdk().getType()));
     }
@@ -62,6 +63,8 @@ public final class ModuleDependencyEntitiesIndexableEntityProvider implements In
       return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(libraryId, true);
     }
     else if (dependency instanceof InheritedSdkDependency) {
+      if (Registry.is("use.workspace.file.index.for.partial.scanning") &&
+          Registry.is("project.root.manager.over.wsm")) return Collections.emptyList();
       return IndexableIteratorBuilders.INSTANCE.forInheritedSdk();
     }
     return Collections.emptyList();

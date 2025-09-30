@@ -25,7 +25,11 @@ internal open class GetFromVersionControlAction : DumbAwareAction() {
       return
     }
     if (e.place == ActionPlaces.WELCOME_SCREEN) {
-      if (FlatWelcomeFrame.USE_TABBED_WELCOME_SCREEN) {
+      if (e.getData(WelcomeScreenActionsUtil.NON_MODAL_WELCOME_SCREEN) == true) {
+        presentation.icon = AllIcons.General.Vcs
+        presentation.text = ActionsBundle.message("Vcs.VcsClone.Tabbed.Welcome.NonModal.text")
+      }
+      else if (FlatWelcomeFrame.USE_TABBED_WELCOME_SCREEN) {
         presentation.icon = AllIcons.Welcome.FromVCSTab
         presentation.selectedIcon = AllIcons.Welcome.FromVCSTabSelected
         presentation.text = ActionsBundle.message("Vcs.VcsClone.Tabbed.Welcome.text")

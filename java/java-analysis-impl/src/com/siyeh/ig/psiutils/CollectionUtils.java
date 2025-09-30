@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.*;
 
@@ -157,9 +156,7 @@ public final class CollectionUtils {
     Map.entry("com.sun.java.util.collections.Hashtable", "com.sun.java.util.collections.Map"));
   }
 
-  private CollectionUtils() {
-    super();
-  }
+  private CollectionUtils() {}
 
   @Contract("null -> false")
   public static boolean isConcreteCollectionClass(@Nullable PsiType type) {
@@ -199,8 +196,7 @@ public final class CollectionUtils {
    * alreadyChecked set to avoid infinite loop in constructs like:
    * class C extends C {}
    */
-  private static boolean isCollectionClassOrInterface(
-    PsiClass aClass, Set<? super PsiClass> visitedClasses) {
+  private static boolean isCollectionClassOrInterface(PsiClass aClass, Set<? super PsiClass> visitedClasses) {
     if (!visitedClasses.add(aClass)) {
       return false;
     }
@@ -208,8 +204,7 @@ public final class CollectionUtils {
     if (className != null && s_allCollectionClassesAndInterfaces.contains(className)) {
       return true;
     }
-    final PsiClass[] supers = aClass.getSupers();
-    for (PsiClass aSuper : supers) {
+    for (PsiClass aSuper : aClass.getSupers()) {
       if (isCollectionClassOrInterface(aSuper, visitedClasses)) {
         return true;
       }
@@ -218,39 +213,23 @@ public final class CollectionUtils {
   }
 
   public static boolean isWeakCollectionClass(@Nullable PsiType type) {
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final String typeText = type.getCanonicalText();
-    return "java.util.WeakHashMap".equals(typeText);
+    return type instanceof PsiClassType && "java.util.WeakHashMap".equals(type.getCanonicalText());
   }
 
   public static boolean isConstantEmptyArray(@NotNull PsiField field) {
-    if (!field.hasModifierProperty(PsiModifier.STATIC) ||
-        !field.hasModifierProperty(PsiModifier.FINAL)) {
-      return false;
-    }
-    return isEmptyArray(field);
+    return field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL) && isEmptyArray(field);
   }
 
   public static boolean isEmptyArray(PsiVariable variable) {
     final PsiExpression initializer = variable.getInitializer();
-    if (initializer instanceof PsiArrayInitializerExpression arrayInitializerExpression) {
-      final PsiExpression[] initializers = arrayInitializerExpression.getInitializers();
-      return initializers.length == 0;
-    }
-    return ConstructionUtils.isEmptyArrayInitializer(initializer);
+    return initializer instanceof PsiArrayInitializerExpression arrayInitializerExpression
+           ? arrayInitializerExpression.isEmpty()
+           : ConstructionUtils.isEmptyArrayInitializer(initializer);
   }
 
   public static String getInterfaceForClass(@NotNull String name) {
     final int parameterStart = name.indexOf('<');
-    final String baseName;
-    if (parameterStart >= 0) {
-      baseName = name.substring(0, parameterStart).trim();
-    }
-    else {
-      baseName = name;
-    }
+    final String baseName = (parameterStart >= 0) ? name.substring(0, parameterStart).trim() : name;
     return s_interfaceForCollection.get(baseName);
   }
 
@@ -264,8 +243,8 @@ public final class CollectionUtils {
    */
   @Contract("null, _ -> false")
   public static boolean isCollectionOrMapSize(@Nullable PsiExpression expression, @NotNull PsiExpression collection) {
-    PsiMethodCallExpression sizeCall = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiMethodCallExpression.class);
-    if (!COLLECTION_MAP_SIZE.test(sizeCall)) return false;
+    if (!(PsiUtil.skipParenthesizedExprDown(expression) instanceof PsiMethodCallExpression sizeCall) 
+        || !COLLECTION_MAP_SIZE.test(sizeCall)) return false;
     PsiExpression sizeQualifier = sizeCall.getMethodExpression().getQualifierExpression();
     if (sizeQualifier == null) return false;
     sizeQualifier = getBaseCollection(sizeQualifier);
@@ -274,15 +253,10 @@ public final class CollectionUtils {
   }
 
   private static @Nullable PsiExpression getBaseCollection(@NotNull PsiExpression derivedCollection) {
-    while(true) {
-      PsiMethodCallExpression derivedCall =
-        ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(derivedCollection), PsiMethodCallExpression.class);
-      if (DERIVED_COLLECTION.test(derivedCall)) {
+    while(PsiUtil.skipParenthesizedExprDown(derivedCollection) instanceof PsiMethodCallExpression derivedCall
+          && DERIVED_COLLECTION.test(derivedCall)) {
         derivedCollection = ExpressionUtils.getEffectiveQualifier(derivedCall.getMethodExpression());
-      }
-      else {
-        return derivedCollection;
-      }
     }
+    return derivedCollection;
   }
 }

@@ -10,10 +10,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.Text
 
 //TIP Go to <b>Tools — Compose Prototyping Sandbox</b> to run the demo.
+@Preview
 @Composable
 internal fun ComposeSandbox() {
   //TIP Click <b>Code Changed</b> <icon src="AllIcons.Debugger.DebuggerSync"/> toolbar to apply changes without restart

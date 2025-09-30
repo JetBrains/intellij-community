@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers
 
 import com.intellij.codeInsight.highlighting.HighlightManager
@@ -50,6 +50,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
 import com.intellij.xdebugger.ui.DebuggerColors
 import fleet.util.indexOfOrNull
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -118,6 +119,9 @@ internal open class XDebuggerSmartStepIntoHandler : XDebuggerProxySuspendedActio
             choose(targets, position, session, editor)
           }
         }
+      }
+      catch (ce: CancellationException) {
+        throw ce
       }
       catch (_: Throwable) {
         session.stepInto(ignoreBreakpoints = false)

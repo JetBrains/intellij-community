@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.project` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "project_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,17 +12,17 @@ jvm_library(
   module_name = "intellij.platform.project",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":project_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/kernel/shared:kernel",
     "//platform/util",
     "//platform/projectModel-api:projectModel",
     "//platform/util/coroutines",
     "//platform/core-api:core",
     "//platform/platform-impl/rpc",
-  ],
-  runtime_deps = [":project_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.project` end

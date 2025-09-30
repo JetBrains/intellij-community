@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
+import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -87,7 +88,7 @@ abstract class KotlinIntroduceVariableContext(
         addToReferences: Boolean,
         lambdaArgumentName: Name?,
     ): KtExpression {
-        val isActualExpression = actualExpression.getOutermostParenthesizerOrThis() == expressionToReplace
+        val isActualExpression = actualExpression == expressionToReplace.safeDeparenthesize()
 
         val replacement = psiFactory.createExpression(nameSuggestions.single().first())
         val substringInfo = expressionToReplace.extractableSubstringInfo

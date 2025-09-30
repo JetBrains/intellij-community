@@ -1,15 +1,15 @@
 ### auto-generated section `build intellij.platform.testFramework.junit5` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "junit5_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "junit5_test_resources",
-  files = glob(["test-resources/**/*"]),
+  srcs = glob(["test-resources/**/*"]),
   strip_prefix = "test-resources"
 )
 
@@ -28,6 +28,7 @@ jvm_library(
   module_name = "intellij.platform.testFramework.junit5",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":junit5_resources"],
   deps = [
     "@lib//:junit5Jupiter",
     "@lib//:jetbrains-annotations",
@@ -55,14 +56,14 @@ jvm_library(
     "//platform/util/jdom",
     ":libraries_junit5_provided",
     ":libraries_junit5-launcher_provided",
-  ],
-  runtime_deps = [":junit5_resources"]
+  ]
 )
 
 jvm_library(
   name = "junit5_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":junit5_test_resources"],
   associates = [":junit5"],
   deps = [
     "@lib//:junit5Jupiter",
@@ -92,10 +93,6 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util-ex",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [
-    ":junit5_resources",
-    ":junit5_test_resources",
   ]
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5` end

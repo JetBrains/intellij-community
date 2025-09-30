@@ -3,6 +3,7 @@ package com.intellij.ide.browsers;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,10 +11,11 @@ import org.jetbrains.annotations.Nullable;
  * Don't implement - consider to implement {@link com.jetbrains.javascript.debugger.FileUrlMapper} instead of providing mappings directly
  * If you still want to implement - don't implement directly, use {@link com.intellij.javascript.debugger.execution.BaseJavaScriptDebuggerStarter}
  */
+@ApiStatus.Internal
 public interface JavaScriptDebuggerStarter<RC extends RunConfiguration, U> {
   boolean isApplicable(@NotNull RunConfiguration runConfiguration);
 
-  void start(@NotNull String url, @NotNull RC runConfiguration, @NotNull U userData, @Nullable WebBrowser browser);
+  void start(@NotNull String url, @NotNull RC runConfiguration, @NotNull U userData, @Nullable String browserId);
 
   final class Util {
     static final ExtensionPointName<JavaScriptDebuggerStarter> EP_NAME = ExtensionPointName.create("org.jetbrains.javaScriptDebuggerStarter");
@@ -33,26 +35,29 @@ public interface JavaScriptDebuggerStarter<RC extends RunConfiguration, U> {
       return start(runConfiguration, url, null);
     }
 
-    public static <RC extends RunConfiguration> boolean start(@NotNull RC runConfiguration, @NotNull String url, @Nullable WebBrowser browser) {
+    public static <RC extends RunConfiguration> boolean start(@NotNull RC runConfiguration,
+                                                              @NotNull String url,
+                                                              @Nullable String browserId) {
       JavaScriptDebuggerStarter<RC, Object> starter = get(runConfiguration);
       if (starter == null) {
         return false;
       }
-      starter.start(url, runConfiguration, NULL_OBJECT, browser);
+      starter.start(url, runConfiguration, NULL_OBJECT, browserId);
       return true;
     }
 
     public static <RC extends RunConfiguration> void startDebugOrLaunchBrowser(@NotNull RC runConfiguration, @NotNull StartBrowserSettings settings) {
       String url = settings.getUrl();
       assert url != null;
-      startDebugOrLaunchBrowser(runConfiguration, url, settings.getBrowser(), settings.isStartJavaScriptDebugger());
+      startDebugOrLaunchBrowser(runConfiguration, url, settings.getBrowserReference(), settings.isStartJavaScriptDebugger());
     }
 
     public static <RC extends RunConfiguration> void startDebugOrLaunchBrowser(@NotNull RC runConfiguration,
                                                                                @NotNull String url,
-                                                                               @Nullable WebBrowser browser,
+                                                                               @Nullable String browserId,
                                                                                boolean startDebugger) {
-      if (!startDebugger || !start(runConfiguration, url, browser)) {
+      if (!startDebugger || !start(runConfiguration, url, browserId)) {
+        var browser = WebBrowserManager.getInstance().findBrowserById(browserId);
         BrowserLauncher.getInstance().browse(url, browser, runConfiguration.getProject());
       }
     }

@@ -15,13 +15,14 @@ import git4idea.config.gpg.isGpgSignEnabledCached
 import git4idea.inMemory.objects.GitObject
 import git4idea.inMemory.objects.Oid
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 
 /**
- * In-memory representation of a git repository.
- * Objects are cached and created in memory and persisted to disk on request
+ * Manages Git objects with in-memory caching.
+ * Interacts with the repository using Git plumbing commands.
  *
- * Lifetime is a single in-memory operation
+ * Each instance is intended for a single operation.
  */
 internal class GitObjectRepository(val repository: GitRepository) {
   companion object {
@@ -32,14 +33,15 @@ internal class GitObjectRepository(val repository: GitRepository) {
 
   val emptyTree by lazy { createTree(emptyMap()) }
 
-  fun findObjectFromCache(oid: Oid): GitObject? {
+  private fun findObjectFromCache(oid: Oid): GitObject? {
     return objectCache[oid]
   }
 
-  fun cacheObject(obj: GitObject) {
+  private fun cacheObject(obj: GitObject) {
     objectCache.putIfAbsent(obj.oid, obj)
   }
 
+  @TestOnly
   fun clearCache() {
     objectCache.clear()
   }
@@ -104,8 +106,9 @@ internal class GitObjectRepository(val repository: GitRepository) {
     }
   }
 
-  /*
-  All dependencies should be persisted on disk
+  /**
+   * All dependent objects should be already persisted to the Git repository
+   * Creates commit in Git and returns its OID but doesn't construct it in memory
    */
   @RequiresBackgroundThread
   fun commitTree(
@@ -166,6 +169,10 @@ internal class GitObjectRepository(val repository: GitRepository) {
     return commitTree(newTree, newParents, newMessage, newAuthor)
   }
 
+  /**
+   * Computes the OID that Git would assign to the corresponding object.
+   * Does not persist the object to the repository
+   */
   @RequiresBackgroundThread
   fun fetchOid(type: GitObjectType, body: ByteArray): Oid {
     val handler = GitLineHandler(repository.project, repository.root, GitCommand.HASH_OBJECT).apply {
@@ -211,7 +218,7 @@ internal class GitObjectRepository(val repository: GitRepository) {
   }
 
   /**
-   * Object should be persisted on disk
+   * Object should be persisted to the repository
    */
   @RequiresBackgroundThread
   private fun fetchObjectType(oid: Oid): GitObjectType {
@@ -266,5 +273,24 @@ internal class GitObjectRepository(val repository: GitRepository) {
       LOG.error("Failed to load object $oid from git", e)
       throw e
     }
+  }
+
+  /**
+   * Trees should be persisted on disk
+   */
+  @RequiresBackgroundThread
+  internal fun GitObjectRepository.mergeTrees(ours: GitObject.Tree, theirs: GitObject.Tree, base: GitObject.Tree): GitObject.Tree {
+    val handler = GitLineHandler(repository.project, repository.root, GitCommand.MERGE_TREE).apply {
+      setSilent(true)
+      addParameters("--merge-base=${base.oid}")
+      addParameters(ours.oid.hex(), theirs.oid.hex())
+    }
+    val result = Git.getInstance().runCommand(handler)
+    if (result.exitCode == 1) {
+      throw MergeConflictException(result.outputAsJoinedString)
+    }
+    result.throwOnError()
+
+    return findTree(Oid.fromHex(result.outputAsJoinedString))
   }
 }

@@ -94,7 +94,7 @@ private object TryWithResourcesPositionMatcher: LookupPositionMatcher {
 
   private fun match(lookupElement: LookupElement): Boolean {
     val obj = lookupElement.`object`
-    if (obj is PsiKeyword && obj.text in JavaKeywordCompletion.PRIMITIVE_TYPES) {
+    if (obj is PsiKeyword && obj.text in PsiTypes.primitiveTypeNames()) {
       return true
     }
     val psiClass = obj as? PsiClass ?: return false

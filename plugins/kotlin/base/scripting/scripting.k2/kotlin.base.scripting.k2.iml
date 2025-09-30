@@ -60,6 +60,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="kotlin.base.scripting.shared" />
     <orderEntry type="module" module-name="kotlin.highlighting.shared" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
   </component>

@@ -185,6 +185,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return (JavaPsiFacadeImpl)JavaPsiFacade.getInstance(getProject());
   }
 
+  /**
+   * Returns the classes with the given short name in the given scope. Note that the result can contain extra classes, not contained in the scope.
+   *
+   * @param shortName the short name of the class to find
+   * @param scope the scope to search in. Note that the result can contain extra classes, not contained in the scope
+   */
   private PsiClass @NotNull [] getCachedClassesByName(@NotNull String shortName, @NotNull GlobalSearchScope scope) {
     DumbService dumbService = DumbService.getInstance(getProject());
     if (dumbService.isAlternativeResolveEnabled()) {
@@ -429,7 +435,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
         if (file instanceof PsiJavaFile) {
           PsiPackageStatement stmt = ((PsiJavaFile)file).getPackageStatement();
           if (stmt != null) {
-            ContainerUtil.addIfNotNull(modifiers, stmt.getAnnotationList());
+            modifiers.add(stmt.getAnnotationList());
           }
         }
       }

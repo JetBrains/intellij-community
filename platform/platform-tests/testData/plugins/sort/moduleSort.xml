@@ -3,7 +3,7 @@
     <id>com.intellij</id>
     <module value="com.intellij.modules.microservices"/>
   </idea-plugin>
-  <idea-plugin package="com.intellij.microservices.ui">
+  <idea-plugin package="com.intellij.microservices.plugin">
     <id>com.intellij.microservices.ui</id>
     <name>Endpoints</name>
     <vendor>JetBrains</vendor>

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.java.execution.impl.frontend` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "frontend_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,9 +12,10 @@ jvm_library(
   module_name = "intellij.java.execution.impl.frontend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":frontend_resources"],
   deps = [
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//java/execution/shared",
     "//platform/core-api:core",
     "//platform/core-ui",
@@ -25,7 +26,6 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/testRunner",
     "//java/java-frontback-impl:frontback-impl",
-  ],
-  runtime_deps = [":frontend_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.execution.impl.frontend` end

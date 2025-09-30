@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.devkit.apiDump` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "api-dump_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.devkit.apiDump",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":api-dump_resources"],
   deps = [
     "//platform/core-api:core",
     "//platform/workspace/jps",
@@ -22,7 +23,6 @@ jvm_library(
     "//platform/util",
     "//platform/workspace/storage",
     "//platform/projectModel-impl",
-  ],
-  runtime_deps = [":api-dump_resources"]
+  ]
 )
 ### auto-generated section `build intellij.devkit.apiDump` end

@@ -62,7 +62,11 @@
       "arc": 20,
       "borderWidth": 4,
       "inactiveAlpha": 0.44,
-      "inactiveAlphaInStatusBar": 0.2
+      "inactiveAlphaInStatusBar": {
+        "os.mac": 0.2,
+        "os.windows": 0.2,
+        "os.linux": 0.15
+      }
     },
 
     "MainWindow.background": "BackgroundLight",
@@ -83,7 +87,8 @@
     "MainToolbar": {
       "background": "BackgroundLight",
       "borderColor": "BorderTransparent",
-      "Dropdown.transparentHoverBackground": "#FFFFFF12"
+      "Dropdown.transparentHoverBackground": "#FFFFFF12",
+      "Button.arc.compact": 8
     },
 
     "StatusBar": {
@@ -120,6 +125,7 @@
       "hoverBackground": "Gray2",
 
       "tabInsets": "-7,8,-7,8",
+      "tabInsets.compact": "-2,6,-2,4",
       "tabContentActionsRightInsets": "0,4,0,2"
     },
 
@@ -195,7 +201,7 @@
       "borderColor": "BorderLight"
     },
 
-    "SearchEverywhere.Header.insets": "0,4,0,9",
+    "SearchEverywhere.Header.insets": "2,4,0,9",
 
     "Button": {
       "startBackground": "PanelBackground",
@@ -348,7 +354,7 @@
         "hoverThumbColor": "#8080808C",
         "hoverTrackColor": "#8080801A",
         "thumbBorderColor": "#26262600",
-        "thumbColor": "#80808000",
+        "thumbColor": "#80808059",
         "trackColor": "#80808000"
       }
     },
@@ -358,6 +364,11 @@
     "NewClass": {
       "Panel.background": "PopupBackground",
       "SearchField.background": "PopupBackground"
+    },
+
+    "ProgressBar": {
+      "progressCounterBackground": "Blue5",
+      "progressCounterForeground": "#000000"
     }
   }
 }

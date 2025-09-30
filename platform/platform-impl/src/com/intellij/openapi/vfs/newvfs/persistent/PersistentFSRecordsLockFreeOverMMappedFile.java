@@ -855,7 +855,9 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   private void checkRecordIdIsValid(int recordId) throws IndexOutOfBoundsException {
     if (!isValidFileId(recordId)) {
       throw new IndexOutOfBoundsException(
-        "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + maxAllocatedID() + "]");
+        "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + maxAllocatedID() + "], " +
+        "(wasClosedProperly: " + wasClosedProperly() + ")"
+      );
     }
   }
 
@@ -866,7 +868,9 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     }
     if (!isValidFileId(parentId)) {
       throw new IndexOutOfBoundsException(
-        "parentId(=" + parentId + ") is outside of allocated IDs range [0, " + maxAllocatedID() + "]");
+        "parentId(=" + parentId + ") is outside of allocated IDs range [0, " + maxAllocatedID() + "], " +
+        "(wasClosedProperly: " + wasClosedProperly() + ")"
+      );
     }
   }
 

@@ -11,13 +11,17 @@ import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
+import fleet.util.logging.logger
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.time.Duration.Companion.seconds
 
 object CodeFoldingZombieUtils {
   private val ZOMBIE_RAISED_KEY: Key<Boolean> = Key.create("zombie.raised.in.editor")
   private val ZOMBIE_CLEANUP_CONTEXT_KEY: Key<CoroutineScope> = Key.create("zombie.cleanup.context.in.editor")
+  private val LOG = logger<CodeFoldingZombieUtils>()
   
   @ApiStatus.Internal
   fun getZombieRegions(editor: Editor, removeFiltered: Boolean, zombieFilter: (FoldRegion) -> Boolean): List<FoldRegion> {
@@ -41,6 +45,19 @@ object CodeFoldingZombieUtils {
   fun isZombieRaised(editor: Editor): Boolean = ZOMBIE_RAISED_KEY.get(editor) ?: false
 
   private val waitingForNovaAndRiderBackendInitializationCompleteIfAny = 5.seconds
+  private val reapingSuppressorDelay = 1.seconds
+
+  private val reapingSuppressors = mutableListOf<ReapingSuppressor>()
+  private val reapingSuppressorsLock = ReentrantLock()
+  interface ReapingSuppressor {
+    fun suppress() {
+      reapingSuppressorsLock.withLock { reapingSuppressors.add(this) }
+    }
+
+    fun unsuppress() {
+      reapingSuppressorsLock.withLock { reapingSuppressors.remove(this) }
+    }
+  }
 
   @ApiStatus.Internal
   fun postponeAndScheduleCleanupZombieRegions(editor: Editor) {
@@ -54,6 +71,11 @@ object CodeFoldingZombieUtils {
       while (!editor.isDisposed) {
         if (!isZombieRaised(editor)) break
         delay(waitingForNovaAndRiderBackendInitializationCompleteIfAny)
+        // Suppressors are registered before the postponeAndScheduleCleanupZombieRegions cleanup uis triggered
+        // so no race (yay?)
+        while (reapingSuppressorsLock.withLock { reapingSuppressors.isNotEmpty() }) {
+          delay(reapingSuppressorDelay)
+        }
         if (isZombieRaised(editor)) {
           withContext(Dispatchers.EDT) {
             editor.foldingModel.runBatchFoldingOperationDoNotCollapseCaret {

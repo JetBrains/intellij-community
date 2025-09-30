@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.externalSystem` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "externalSystem_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.externalSystem",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":externalSystem_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -37,7 +38,6 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/backend/workspace",
   ],
-  exports = ["//platform/external-system-rt:externalSystem-rt"],
-  runtime_deps = [":externalSystem_resources"]
+  exports = ["//platform/external-system-rt:externalSystem-rt"]
 )
 ### auto-generated section `build intellij.platform.externalSystem` end

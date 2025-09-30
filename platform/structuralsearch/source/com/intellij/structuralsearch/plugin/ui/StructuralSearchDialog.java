@@ -119,6 +119,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
   private static final @NonNls String REPLACE_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralReplaceDialog";
 
   private static final Key<Configuration> STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION = Key.create("STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION");
+  private static final String BELOW_LABELS_PROPERTY = "StructuralSearchDialog.belowLabels";
 
   private final @NotNull Project myProject;
   private final @NotNull SearchContext mySearchContext;
@@ -535,6 +536,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     myFilterPanel = new FilterPanel(myProject, myFileType, getDisposable());
     myFilterPanel.setConstraintChangedCallback(() -> initValidation());
     myFilterPanel.getComponent().setMinimumSize(new Dimension(300, 50));
+    myFilterPanel.getComponent().putClientProperty(BELOW_LABELS_PROPERTY, true);
+    myComponentsWithEditorBackground.add(myFilterPanel.getTable());
 
     // Pin action
     final DumbAwareToggleAction pinAction =
@@ -572,6 +575,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
 
     // Search editor panel, 1st splitter element
     final var searchEditorPanel = new JPanel(new GridBagLayout());
+    myComponentsWithEditorBackground.add(searchEditorPanel);
+    searchEditorPanel.putClientProperty(BELOW_LABELS_PROPERTY, true);
 
     // Search panel options
     myTargetComboBox = new LinkComboBox(SSRBundle.message("complete.match.variable.name"));
@@ -622,6 +627,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     searchEditorPanel.add(myMatchCase, searchConstraint.anchor(WEST).insetRight(DEFAULT_HGAP));
 
     mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
+    myComponentsWithEditorBackground.add(myFilterPanel.getTable());
+    myFilterPanel.getTable().putClientProperty(BELOW_LABELS_PROPERTY, true);
 
     final JPanel searchPanel = new JPanel(new GridBagLayout());
     final var northConstraint = new GridBag().setDefaultWeightX(1.0);
@@ -648,6 +655,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
 
     myReplaceCriteriaEdit = createEditor(true);
     myReplaceWrapper = new JPanel(new GridBagLayout());
+    myComponentsWithEditorBackground.add(myReplaceWrapper);
+    myReplaceWrapper.putClientProperty(BELOW_LABELS_PROPERTY, true);
 
     final var wrapperConstraint = new GridBag().setDefaultInsets(DEFAULT_VGAP, DEFAULT_HGAP, DEFAULT_VGAP, 0);
     myReplaceWrapper.add(myReplaceCriteriaEdit, wrapperConstraint.nextLine().emptyInsets().fillCell().coverLine().weightx(1.0).weighty(1.0));
@@ -1198,8 +1207,47 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
 
   private void updateColors() {
     final var scheme = EditorColorsManager.getInstance().getGlobalScheme();
+
+    final var isBrightEditor = !EditorColorsManager.getInstance().isDarkEditor();
+    if (JBColor.isBright() != isBrightEditor) {
+      updateColorsMixedThemes();
+      return;
+    }
+
     myComponentsWithEditorBackground.forEach(component -> {
       component.setBackground(scheme.getDefaultBackground());
+    });
+
+    final var borderTopBottom = JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 1, 0, 1, 0);
+    mySearchWrapper.setBorder(JBUI.Borders.empty());
+    myReplaceWrapper.setBorder(JBUI.Borders.empty());
+    if (myEditConfigOnly) {
+      final var borderTopOnly = JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 1, 0, 0, 0);
+      if (mySearchWrapper != null) mySearchWrapper.setBorder(myReplace ? borderTopBottom : borderTopOnly);
+      if (myReplaceWrapper != null) myReplaceWrapper.setBorder(borderTopOnly);
+    } else {
+      if (mySearchWrapper != null) mySearchWrapper.setBorder(borderTopBottom);
+      if (myReplaceWrapper != null) myReplaceWrapper.setBorder(borderTopBottom);
+    }
+    mySearchCriteriaEdit.setBorder(JBUI.Borders.empty());
+    myReplaceCriteriaEdit.setBorder(JBUI.Borders.empty());
+    myReplacePanel.setBorder(JBUI.Borders.empty());
+
+    myExistingTemplatesComponent.updateColors();
+  }
+
+  /**
+   * Ensures readable labels in case of incoherent IDE and editor schemes.
+   */
+  private void updateColorsMixedThemes() {
+    final var scheme = EditorColorsManager.getInstance().getGlobalScheme();
+
+    myComponentsWithEditorBackground.forEach(component -> {
+      if (component.getClientProperty(BELOW_LABELS_PROPERTY) != null) {
+        component.setBackground(JBColor.background());
+      } else {
+        component.setBackground(scheme.getDefaultBackground());
+      }
     });
 
     final var borderTopBottom = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0);

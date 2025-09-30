@@ -6,9 +6,12 @@ import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.impl.fs.WindowsNioBasedEelFileSystemApi
 import com.intellij.platform.eel.impl.local.EelLocalExecWindowsApi
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.utils.toEelArch
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
 import com.intellij.util.system.CpuArch
+import java.nio.file.Files
+import java.nio.file.Path
 
 internal class EelTestWindowsApi(override val descriptor: EelTestDescriptor, fileSystem: EelUnitTestFileSystem, localPrefix: String) : EelWindowsApi {
   override val userInfo: EelUserWindowsInfo = EelTestWindowsUserInfo(descriptor)
@@ -27,16 +30,18 @@ internal class EelTestWindowsApi(override val descriptor: EelTestDescriptor, fil
 
 private class EelTestFileSystemWindowsApi(override val descriptor: EelDescriptor, fileSystem: EelUnitTestFileSystem) : WindowsNioBasedEelFileSystemApi(fileSystem, EelTestWindowsUserInfo(descriptor)) {
 
-  override suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> {
-    TODO("Not yet implemented")
-  }
-
   override suspend fun createTemporaryDirectory(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> {
-    TODO("Not yet implemented")
+    return wrapIntoEelResult {
+      val nioTempDir = Files.createTempDirectory(options.prefix)
+      Path.of(nioTempDir.toString()).asEelPath()
+    }
   }
 
   override suspend fun createTemporaryFile(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> {
-    TODO("Not yet implemented")
+    return wrapIntoEelResult {
+      val nioTempFile = Files.createTempFile(options.prefix, options.suffix)
+      Path.of(nioTempFile.toString()).asEelPath()
+    }
   }
 }
 

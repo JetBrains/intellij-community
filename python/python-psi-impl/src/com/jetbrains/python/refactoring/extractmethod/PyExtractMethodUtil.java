@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.*;
@@ -30,10 +31,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -41,6 +39,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
+import com.jetbrains.python.lexer.PythonLexer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -576,14 +575,76 @@ public final class PyExtractMethodUtil {
       builder.makeAsync();
     }
     final String text;
-    if (expression instanceof PyYieldExpression) {
-      text = String.format("(%s)", expression.getText());
+    String expressionText = expression.getText();
+    if (needToWrapInParenthesis(expression, expressionText)) {
+      text = String.format("(%s)", expressionText);
     }
     else {
-      text = expression.getText();
+      text = expressionText;
     }
     builder.statement("return " + text);
     return builder.buildFunction();
+  }
+
+  private static boolean needToWrapInParenthesis(@NotNull PsiElement expression, @NotNull String expressionText) {
+    if (expression instanceof PyYieldExpression) {
+      return true;
+    }
+    if (expression instanceof PyGeneratorExpression) {
+      final PsiElement firstChild = expression.getFirstChild();
+      return firstChild != null && firstChild.getNode().getElementType() != PyTokenTypes.LPAR;
+    }
+    return hasLineBreakOutsideBraces(expressionText);
+  }
+
+  private static boolean hasLineBreakOutsideBraces(@NotNull String text) {
+    int parensCount = 0;
+    int bracketsCount = 0;
+    int bracesCount = 0;
+
+    PythonLexer lexer = new PythonLexer();
+    lexer.start(text);
+
+    do {
+      final IElementType tokenType = lexer.getTokenType();
+      if (tokenType == null) {
+        break;
+      }
+      if (PyTokenTypes.BACKSLASH.equals(tokenType)) {
+        lexer.advance();
+        if (PyTokenTypes.LINE_BREAK.equals(lexer.getTokenType())) {
+          lexer.advance();
+        }
+        continue;
+      }
+      if (PyTokenTypes.LPAR.equals(tokenType)) {
+        parensCount++;
+      }
+      else if (PyTokenTypes.RPAR.equals(tokenType)) {
+        parensCount--;
+      }
+      else if (PyTokenTypes.LBRACKET.equals(tokenType)) {
+        bracketsCount++;
+      }
+      else if (PyTokenTypes.RBRACKET.equals(tokenType)) {
+        bracketsCount--;
+      }
+      else if (PyTokenTypes.LBRACE.equals(tokenType)) {
+        bracesCount++;
+      }
+      else if (PyTokenTypes.RBRACE.equals(tokenType)) {
+        bracesCount--;
+      }
+      else if (PyTokenTypes.LINE_BREAK.equals(tokenType)) {
+        if (parensCount <= 0 && bracketsCount <= 0 && bracesCount <= 0) {
+          return true;
+        }
+      }
+      lexer.advance();
+    }
+    while (true);
+
+    return false;
   }
 
   private static @NotNull PyFunction generateMethodFromElements(final @NotNull PyExtractMethodSettings methodSettings,

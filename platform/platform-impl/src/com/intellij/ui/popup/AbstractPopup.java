@@ -1005,10 +1005,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public boolean canClose() {
+    Computable<Boolean> callBack = myCallBack;
     return
       (!anyModalWindowsKeepPopupOpen() &&
-      (myCallBack == null || myCallBack.compute().booleanValue()) &&
-      !preventImmediateClosingAfterOpening()) ||
+       (callBack == null || callBack.compute().booleanValue()) &&
+       !preventImmediateClosingAfterOpening()) ||
       myDisposed; // check for myDisposed last to allow `myCallBack` to be executed
   }
 

@@ -113,8 +113,8 @@
     <orderEntry type="library" scope="RUNTIME" name="jgoodies-common" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jgoodies-forms" level="project" />
     <orderEntry type="library" name="jbr-api" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="jvm-native-trusted-roots" level="project" />
@@ -171,5 +171,8 @@
     <orderEntry type="module" module-name="intellij.platform.locking.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.pratt" />
+    <orderEntry type="module" module-name="intellij.platform.eel.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.recentProjects" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.product" />
   </component>
 </module>

@@ -38,13 +38,7 @@ public class ModuleUtilCore {
   public static boolean projectContainsFile(@NotNull Project project, @NotNull VirtualFile file, boolean isLibraryElement) {
     ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
     if (isLibraryElement) {
-      List<OrderEntry> orders = projectFileIndex.getOrderEntriesForFile(file);
-      for (OrderEntry orderEntry : orders) {
-        if (orderEntry instanceof JdkOrderEntry || orderEntry instanceof LibraryOrderEntry) {
-          return true;
-        }
-      }
-      return false;
+      return !projectFileIndex.findContainingSdks(file).isEmpty() || !projectFileIndex.findContainingLibraries(file).isEmpty();
     }
     else {
       return projectFileIndex.isInContent(file);

@@ -3,7 +3,7 @@ package com.intellij.mcpserver.impl
 import com.intellij.mcpserver.clientConfiguration.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.containers.addIfNotNull
 import kotlinx.serialization.ExperimentalSerializationApi
 import java.nio.file.Path
@@ -78,7 +78,7 @@ object McpClientDetector {
       else -> null
     }
     if (configPath == null) return null
-    val path = Paths.get(FileUtil.expandUserHome(configPath))
+    val path = Paths.get(OSAgnosticPathUtil.expandUserHome(configPath))
     if (path.exists() && path.isRegularFile()) {
       return VSCodeClient(path)
     }
@@ -93,7 +93,7 @@ object McpClientDetector {
       else -> null
     }
     if (configPath == null) return null
-    val path = Paths.get(FileUtil.expandUserHome(configPath))
+    val path = Paths.get(OSAgnosticPathUtil.expandUserHome(configPath))
 
     if (path.exists() && path.isRegularFile()) {
       return ClaudeCodeMcpClient(path)
@@ -109,7 +109,7 @@ object McpClientDetector {
       else -> null
     }
     if (configPath == null) return null
-    val path = Paths.get(FileUtil.expandUserHome(configPath))
+    val path = Paths.get(OSAgnosticPathUtil.expandUserHome(configPath))
 
     if (path.parent.exists() && path.parent.toFile().isDirectory()) {
       return ClaudeMcpClient(path)
@@ -118,7 +118,7 @@ object McpClientDetector {
   }
 
   private fun detectCursorGlobal(): McpClient? {
-    val path = Paths.get(FileUtil.expandUserHome("~/.cursor/mcp.json"))
+    val path = Paths.get(OSAgnosticPathUtil.expandUserHome("~/.cursor/mcp.json"))
     if (path.parent.exists() && path.parent.toFile().isDirectory()) {
       return CursorClient(path)
     }
@@ -126,7 +126,7 @@ object McpClientDetector {
   }
 
   private fun detectWindsurf(): McpClient? {
-    val path = Paths.get(FileUtil.expandUserHome("~/.codeium/windsurf/mcp_config.json"))
+    val path = Paths.get(OSAgnosticPathUtil.expandUserHome("~/.codeium/windsurf/mcp_config.json"))
     if (path.parent.exists() && path.parent.toFile().isDirectory()) {
       return WindsurfClient(path)
     }

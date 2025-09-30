@@ -8,9 +8,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.startOffset
 import com.intellij.util.containers.sequenceOfNotNull
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -29,25 +27,22 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.base.serialization.names.KotlinFqNameSerializer
 import org.jetbrains.kotlin.idea.codeinsight.utils.singleReturnExpressionOrNull
 import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.api.serialization.ensureSerializable
-import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WithImportInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaParameterNameWeigher.isTrailingLambdaParameter
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.addImportIfRequired
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.factories.TrailingFunctionDescriptor
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleParameterPositionContext
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
@@ -250,27 +245,6 @@ internal sealed class K2TrailingFunctionParameterNameCompletionContributorBase<P
 
             else -> emptySequence()
         }
-    }
-
-    @Serializable
-    internal data class WithImportInsertionHandler(
-        @Serializable(with = FqNameListSerializer::class) val namesToImport: List<FqName>,
-    ): SerializableInsertHandler {
-        override fun handleInsert(
-            context: InsertionContext,
-            item: LookupElement
-        ) {
-            val targetFile = context.file
-            if (targetFile !is KtFile) throw IllegalStateException("Target file '${targetFile.name}' is not a Kotlin file")
-
-            for (nameToImport in namesToImport) {
-                addImportIfRequired(context, nameToImport)
-            }
-            context.commitDocument()
-            context.doPostponedOperationsAndUnblockDocument()
-        }
-
-        object FqNameListSerializer : KSerializer<List<FqName>> by ListSerializer(KotlinFqNameSerializer)
     }
 
     context(_: KaSession, context: K2CompletionSectionContext<P>)

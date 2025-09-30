@@ -52,6 +52,7 @@ import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
 import com.intellij.util.pico.DefaultPicoContainer;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +62,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+@Internal
 public class CoreApplicationEnvironment {
   private final CoreFileTypeRegistry myFileTypeRegistry;
   protected final MockApplication application;
@@ -118,7 +120,7 @@ public class CoreApplicationEnvironment {
     registerApplicationService(GraphAlgorithms.class, new GraphAlgorithmsImpl());
 
     registerApplicationExtensionPoint(StubElementRegistryServiceImplKt.STUB_REGISTRY_EP, StubRegistryExtension.class);
-    registerApplicationService(StubElementRegistryService.class, new StubElementRegistryServiceImpl());
+    registerApplicationService(StubElementRegistryService.class, new StubElementRegistryServiceImpl(application.getCoroutineScope()));
 
     application.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
 

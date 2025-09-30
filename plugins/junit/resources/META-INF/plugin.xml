@@ -28,7 +28,8 @@
     <cantBeStatic implementation="com.intellij.execution.junit2.inspection.JUnitCantBeStaticExtension" />
     <testFramework implementation="com.intellij.execution.junit.JUnit4Framework" id="junit4"/>
     <testFramework implementation="com.intellij.execution.junit.JUnit3Framework" id="junit3" order="after junit4"/>
-    <testFramework implementation="com.intellij.execution.junit.JUnit5Framework" id="junit5" order="after junit3"/>
+    <testFramework implementation="com.intellij.execution.junit.JUnit6Framework" id="junit6" order="after junit3"/>
+    <testFramework implementation="com.intellij.execution.junit.JUnit5Framework" id="junit5" order="after junit6"/>
     <configurationType implementation="com.intellij.execution.junit.JUnitConfigurationType"/>
     <library.dependencyScopeSuggester implementation="com.intellij.execution.junit.JUnitDependencyScopeSuggester"/>
     <externalSystem.runConfigurationImporter implementation="com.intellij.execution.junit.JUnitRunConfigurationImporter"/>
@@ -49,6 +50,7 @@
     <stacktrace.fold substring="at com.intellij.junit3."/>
     <stacktrace.fold substring="at com.intellij.junit4."/>
     <stacktrace.fold substring="at com.intellij.junit5."/>
+    <stacktrace.fold substring="at com.intellij.junit6."/>
     <stacktrace.fold substring="at com.intellij.rt.junit."/>
     <stacktrace.fold substring="at junit.framework.TestSuite.run"/>
     <stacktrace.fold substring="at junit.framework.TestCase.run"/>

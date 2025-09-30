@@ -8,7 +8,12 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubElementFactory
 import com.intellij.psi.tree.IElementType
 
-open class XmlStubBasedAttributeStubFactory(val elementType: IElementType) : StubElementFactory<XmlAttributeStubImpl, XmlStubBasedAttribute> {
+open class XmlStubBasedAttributeStubFactory(elementTypeSupplier: () -> IElementType) : StubElementFactory<XmlAttributeStubImpl, XmlStubBasedAttribute> {
+
+  constructor(elementType: IElementType) : this({ elementType })
+
+  val elementType: IElementType by lazy(elementTypeSupplier)
+
   override fun createStub(psi: XmlStubBasedAttribute, parentStub: StubElement<out PsiElement>?): XmlAttributeStubImpl =
     XmlAttributeStubImpl(psi, parentStub, elementType)
 

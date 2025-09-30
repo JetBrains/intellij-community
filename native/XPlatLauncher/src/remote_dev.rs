@@ -38,6 +38,13 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
             vm_options.push("-Djava.net.preferIPv4Stack=true".to_string())
         }
 
+        let remote_dev_properties = self.get_remote_dev_properties()?;
+        for p in remote_dev_properties {
+            let key = p.key.as_str();
+            let value = p.value.as_str();
+            vm_options.push(format!("-D{key}={value}"));
+        }
+
         if let Some(command) = self.get_args().get(0) {
             match command.as_str() {
                 "remoteDevStatus" | "cwmHostStatus" => {
@@ -58,10 +65,7 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
     }
 
     fn get_custom_properties_file(&self) -> Result<PathBuf> {
-        let remote_dev_properties_file = self.write_merged_properties_file()
-            .context("Failed to write remote dev IDE properties file")?;
-
-        Ok(remote_dev_properties_file)
+        bail!("Custom remote dev properties are not needed");
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
@@ -189,9 +193,6 @@ impl RemoteDevLaunchConfiguration {
     fn get_remote_dev_properties(&self) -> Result<Vec<IdeProperty>> {
         let mut remote_dev_properties = vec![
             // TODO: remove once all of this is disabled for remote dev
-            ("jb.privacy.policy.text", "<!--999.999-->"),
-            ("jb.consents.confirmation.enabled", "false"),
-            ("idea.initially.ask.config", "never"),
             ("ide.show.tips.on.startup.default.value", "false"),
 
             // Prevent CWM plugin from being disabled, as it's required for Remote Dev
@@ -249,31 +250,6 @@ impl RemoteDevLaunchConfiguration {
             .collect();
 
         Ok(result)
-    }
-
-    fn write_merged_properties_file(&self) -> Result<PathBuf> {
-        let pid = std::process::id();
-        let filename = format!("pid.{pid}.temp.remote-dev.properties");
-        let path = get_ide_temp_directory(&self.default)?.join(filename);
-
-        if let Some(dir) = path.parent() {
-            fs::create_dir_all(dir)
-                .with_context(|| format!("Failed to create to parent folder for IDE properties file at path {dir:?}"))?
-        }
-
-        let file = File::create(&path)?;
-        let mut writer = BufWriter::new(file);
-
-        let remote_dev_properties = self.get_remote_dev_properties()?;
-        for p in remote_dev_properties {
-            let key = p.key.as_str();
-            let value = p.value.as_str();
-            writeln!(&mut writer, "{key}={value}")?;
-        }
-
-        writer.flush()?;
-
-        Ok(path)
     }
 }
 

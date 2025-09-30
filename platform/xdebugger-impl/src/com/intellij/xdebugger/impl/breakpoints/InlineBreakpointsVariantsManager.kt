@@ -27,7 +27,7 @@ import org.jetbrains.concurrency.asDeferred
 
 @ApiStatus.Internal
 data class InlineVariantWithMatchingBreakpointProxy(
-  val breakpoint: XLineBreakpointProxy?,
+  val breakpoint: InlineLightBreakpoint?,
   val variant: XLineBreakpointInlineVariantProxy?,
 ) {
   init {
@@ -52,19 +52,12 @@ class InlineBreakpointsVariantsManager(private val project: Project) {
 
   suspend fun calculateBreakpointsVariants(
     document: Document,
-    onlyLine: Int?,
+    lines: Set<Int>,
   ): Map<Int, List<InlineVariantWithMatchingBreakpoint>> {
-    val lineToBreakpoints = readAction {
-      if (onlyLine != null) {
-        val breakpoints = allBreakpointsIn(document).filter { it.line == onlyLine }
-        if (breakpoints.isEmpty()) return@readAction emptyMap()
-        mapOf(onlyLine to breakpoints)
-      }
-      else {
-        allBreakpointsIn(document).groupBy { it.line }
-      }
-    }
-    val variants = calculateBreakpointsVariants(document, lineToBreakpoints.keys)
+    val variants = calculateBreakpointsVariantsInternal(document, lines)
+    if (variants.isEmpty()) return emptyMap()
+    val breakpoints = allBreakpointsIn(document).groupBy { it.line }
+    val lineToBreakpoints = breakpoints.keys.intersect(variants.keys).associateWith { breakpoints[it] }
     return readAction {
       variants.mapValues { (line, variants) ->
         val lineBreakpoints = lineToBreakpoints[line] ?: return@mapValues emptyList()
@@ -73,7 +66,7 @@ class InlineBreakpointsVariantsManager(private val project: Project) {
     }
   }
 
-  private suspend fun calculateBreakpointsVariants(document: Document, lines: Set<Int>): Map<Int, List<XLineBreakpointType<*>.XLineBreakpointVariant>> {
+  private suspend fun calculateBreakpointsVariantsInternal(document: Document, lines: Set<Int>): Map<Int, List<XLineBreakpointType<*>.XLineBreakpointVariant>> {
     return withSemaphorePermit {
       val lineToVariants = readAction {
         val file = FileDocumentManager.getInstance().getFile(document) ?: return@readAction emptyMap()

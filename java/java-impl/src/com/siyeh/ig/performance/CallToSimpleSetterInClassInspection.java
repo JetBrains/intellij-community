@@ -69,7 +69,7 @@ public final class CallToSimpleSetterInClassInspection extends BaseInspection im
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new CallToSimpleSetterInClassVisitor();
   }
 

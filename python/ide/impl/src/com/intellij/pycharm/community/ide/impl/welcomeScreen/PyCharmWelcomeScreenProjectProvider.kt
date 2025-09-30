@@ -11,9 +11,7 @@ private class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvider
 
   override fun doIsWelcomeScreenProject(project: Project): Boolean = project.name == WELCOME_SCREEN_PROJECT_NAME
 
-  override fun doIsForceDisabledFileColors(): Boolean {
-    return true
-  }
+  override fun doIsForceDisabledFileColors(): Boolean = true
 
   override fun doGetCreateNewFileProjectPrefix(): String = "awesomeProject"
 }

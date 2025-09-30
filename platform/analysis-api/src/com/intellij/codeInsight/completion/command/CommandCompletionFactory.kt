@@ -7,6 +7,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Factory interface for creating and managing completion commands in a specific context.
@@ -17,6 +18,7 @@ import com.intellij.psi.PsiFile
  *
  * Should implement DumbAware to support dumb mode
  */
+@ApiStatus.Experimental
 interface CommandCompletionFactory : PossiblyDumbAware {
   /**
    * Provides the default character suffix. After that, suffix command completion will be enabled
@@ -44,6 +46,7 @@ interface CommandCompletionFactory : PossiblyDumbAware {
   /**
    * Determines whether the functionality is applicable in the given context.
    * For injected languages, the context is the injected file.
+   * Should be fast because it can be called on EDT.
    *
    * @param psiFile the PSI file representing the file in which the applicability is being evaluated
    * @param offset the position within the file where the applicability should be checked
@@ -70,6 +73,16 @@ interface CommandCompletionFactory : PossiblyDumbAware {
    * @return true if double prefix filtering is supported, false otherwise
    */
   fun supportFiltersWithDoublePrefix(): Boolean = true
+
+  /**
+   * Adjust the caret position after GoTo command completion.
+   * @return the new caret position or null if no adjustment is needed
+   */
+  fun adjustCaret(psiFile: PsiFile, offset: Int): Int? {
+    val element = psiFile.findElementAt(offset) ?: return null
+    if (element.textRange.startOffset != offset) return null
+    return element.textRange.endOffset
+  }
 }
 
 private val EP_NAME = LanguageExtension<CommandProvider>("com.intellij.codeInsight.completion.command.provider")

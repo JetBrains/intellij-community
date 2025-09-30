@@ -52,7 +52,7 @@ public final class ExceptionNameDoesntEndWithExceptionInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ExceptionNameDoesntEndWithExceptionVisitor();
   }
 

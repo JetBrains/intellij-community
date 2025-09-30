@@ -29,8 +29,9 @@ class GrazieLanguagesList(private val download: suspend (Collection<Lang>) -> Un
     .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
     .setToolbarPosition(ActionToolbarPosition.BOTTOM)
     .setRemoveAction {
-      myList.selectedValuesList.forEach(onLanguageRemoved)
-      ListUtil.removeSelectedItems(myList)
+      val itemsToRemove = myList.selectedValuesList.filter { !it.isEnglish() }
+      itemsToRemove.forEach(onLanguageRemoved)
+      itemsToRemove.forEach { myListModel.removeElement(it) }
     }
 
   init {
@@ -114,7 +115,9 @@ class GrazieLanguagesList(private val download: suspend (Collection<Lang>) -> Un
     override fun updateButtons() {
       val (available, download) = getLangsForPopup()
       actionsPanel.setEnabled(Buttons.ADD, list.isEnabled && (available.isNotEmpty() || download.isNotEmpty()))
-      actionsPanel.setEnabled(Buttons.REMOVE, !list.isSelectionEmpty)
+      
+      val canRemove = !list.isSelectionEmpty && list.selectedValuesList.none { it.isEnglish() }
+      actionsPanel.setEnabled(Buttons.REMOVE, canRemove)
       updateExtraElementActions(!list.isSelectionEmpty)
     }
 

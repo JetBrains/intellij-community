@@ -3,10 +3,10 @@ package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.openapi.components.service
-import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 class YamlSupportTest : GrazieTestBase() {
@@ -27,7 +27,7 @@ class YamlSupportTest : GrazieTestBase() {
       runHighlightTestForFile("ide/language/yaml/i18n.yaml")
     }.setup {
       psiManager.dropPsiCaches()
-      project.service<GrazieSpellCheckerEngine>().dropSuggestionCache()
+      GrazieSpellCheckerEngine.getInstance(project).dropSuggestionCache()
     }.start()
   }
 }

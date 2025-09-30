@@ -7,3 +7,6 @@
 - name: lib/junit5-rt.jar
   modules:
   - name: intellij.junit.v5.rt
+- name: lib/junit6-rt.jar
+  modules:
+    - name: intellij.junit.v6.rt

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.script
 
 import com.intellij.ide.CliResult
@@ -18,10 +18,8 @@ import java.io.OutputStreamWriter
 import java.nio.charset.Charset
 import java.nio.file.Path
 
-/**
- * @author gregsh
- */
 private class IdeScriptStarter : ApplicationStarterBase() {
+  override val commandName: String get() = "ideScript"
   override val usageMessage: String
     get() {
       val scriptName = ApplicationNamesInfo.getInstance().scriptName

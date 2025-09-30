@@ -47,6 +47,9 @@ def _map_plugins_optins_to_flag(values):
         result += ["-P", v]
     return result
 
+def _map_x_x_language_to_flag(values):
+    return ["-XXLanguage:%s" % v for v in values]
+
 _KOPTS = {
 #     "jvm_default": struct(
 #         flag = "-jvm-default",
@@ -323,15 +326,12 @@ _KOPTS = {
     ),
     "x_x_language" :struct(
         args = dict(
-            default = "",
-            doc = "Language compatibility flags",
-            values = ["", "+InlineClasses"],
+            default = [],
+            doc = "Language compatibility flags.",
         ),
-        type = attr.string,
-        value_to_flag = {
-            "+InlineClasses": ["-XXLanguage:+InlineClasses"],
-            "": None,
-        },
+        type = attr.string_list,
+        value_to_flag = None,
+        map_value_to_flag = _map_x_x_language_to_flag,
     ),
 }
 

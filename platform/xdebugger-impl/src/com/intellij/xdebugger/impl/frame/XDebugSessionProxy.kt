@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
+import com.intellij.execution.RunContentDescriptorId
 import com.intellij.execution.process.ProcessHandler
-import com.intellij.execution.runners.ExecutionEnvironmentProxy
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
@@ -42,6 +42,8 @@ import javax.swing.event.HyperlinkListener
 
 @ApiStatus.Internal
 interface XDebugSessionProxy {
+  val runContentDescriptorId: RunContentDescriptorId?
+
   val project: Project
 
   val id: XDebugSessionId
@@ -53,6 +55,7 @@ interface XDebugSessionProxy {
   val restartActions: List<AnAction>
   val extraActions: List<AnAction>
   val extraStopActions: List<AnAction>
+  val consoleActions: List<AnAction>
   val processHandler: ProcessHandler?
   val coroutineScope: CoroutineScope
   val editorsProvider: XDebuggerEditorsProvider
@@ -69,8 +72,6 @@ interface XDebugSessionProxy {
   val isRunToCursorActionAllowed: Boolean
   val isLibraryFrameFilterSupported: Boolean
   val isValuesCustomSorted: Boolean
-
-  val environmentProxy: ExecutionEnvironmentProxy?
 
   @get:NlsSafe
   val currentStateMessage: String
@@ -95,7 +96,6 @@ interface XDebugSessionProxy {
   fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup)
   fun putKey(sink: DataSink)
   fun updateExecutionPosition()
-  fun onTabInitialized(tab: XDebugSessionTab)
   fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache
 
   fun areBreakpointsMuted(): Boolean
@@ -133,6 +133,9 @@ interface XDebugSessionProxy {
 
   // TODO WeakReference<XDebugSession>?
   class Monolith(val session: XDebugSession) : XDebugSessionProxy {
+    override val runContentDescriptorId: RunContentDescriptorId?
+      get() = session.runContentDescriptor.id
+
     override val project: Project
       get() = session.project
     override val id: XDebugSessionId
@@ -149,6 +152,8 @@ interface XDebugSessionProxy {
       get() = (session as? XDebugSessionImpl)?.extraActions ?: emptyList()
     override val extraStopActions: List<AnAction>
       get() = (session as? XDebugSessionImpl)?.extraStopActions ?: emptyList()
+    override val consoleActions: List<AnAction>
+      get() = consoleView?.createConsoleActions()?.toList() ?: emptyList()
     override val processHandler: ProcessHandler
       get() = session.debugProcess.processHandler
     override val coroutineScope: CoroutineScope
@@ -163,8 +168,6 @@ interface XDebugSessionProxy {
       get() = (session as XDebugSessionImpl).sessionTabDeferred
     override val isPaused: Boolean
       get() = session.isPaused
-    override val environmentProxy: ExecutionEnvironmentProxy?
-      get() = null // Monolith shouldn't provide proxy, since the real one ExecutionEnvironment will be used
     override val isStopped: Boolean
       get() = session.isStopped
     override val isReadOnly: Boolean
@@ -263,10 +266,6 @@ interface XDebugSessionProxy {
 
     override fun updateExecutionPosition() {
       (session as? XDebugSessionImpl)?.updateExecutionPosition()
-    }
-
-    override fun onTabInitialized(tab: XDebugSessionTab) {
-      (session as? XDebugSessionImpl)?.tabInitialized(tab)
     }
 
     override fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache {

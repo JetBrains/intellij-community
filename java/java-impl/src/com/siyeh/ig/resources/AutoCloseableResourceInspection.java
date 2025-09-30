@@ -183,7 +183,7 @@ public final class AutoCloseableResourceInspection extends ResourceInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new AutoCloseableResourceVisitor();
   }
 

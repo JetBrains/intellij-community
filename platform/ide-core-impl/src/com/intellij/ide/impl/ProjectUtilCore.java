@@ -27,7 +27,7 @@ public final class ProjectUtilCore {
    */
   @Deprecated
   public static boolean isValidProjectPath(@NotNull Path file) {
-    ProjectStorePathManager storePathManager = ProjectStorePathManager.getInstance();
+    ProjectStorePathManager storePathManager = ProjectStorePathManager.Companion.getInstance();
     return storePathManager.testStoreDirectoryExistsForProjectRoot(file) ||
            (Strings.endsWith(file.toString(), ProjectFileType.DOT_DEFAULT_EXTENSION) && Files.isRegularFile(file));
   }

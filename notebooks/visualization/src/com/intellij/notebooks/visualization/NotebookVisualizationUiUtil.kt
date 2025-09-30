@@ -1,5 +1,6 @@
 package com.intellij.notebooks.visualization
 
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.notebooks.visualization.NotebookCellLines.Companion.get
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -82,7 +83,7 @@ fun NotebookCellLines.getCells(lines: IntRange): Sequence<NotebookCellLines.Inte
 fun makeMarkersFromIntervals(document: Document, intervals: Iterable<NotebookCellLines.Interval>): List<NotebookCellLinesLexer.Marker> {
   val markers = ArrayList<NotebookCellLinesLexer.Marker>()
 
-  fun addMarker(line: Int, type: NotebookCellLines.CellType, data: KeyFMap) {
+  fun addMarker(line: Int, type: CellType, data: KeyFMap) {
     val startOffset = document.getLineStartOffset(line)
     val endOffset =
       if (line + 1 < document.lineCount) document.getLineStartOffset(line + 1)

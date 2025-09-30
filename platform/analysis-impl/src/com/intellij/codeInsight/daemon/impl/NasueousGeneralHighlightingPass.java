@@ -3,8 +3,8 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.psi.PsiFile;
@@ -31,6 +31,8 @@ final class NasueousGeneralHighlightingPass extends GeneralHighlightingPass {
     myError = error;
   }
 
+  private static class StopAnalysisException extends RuntimeException implements ControlFlowException {
+  }
   @Override
   protected @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile psiFile) {
     return new HighlightInfoHolder(psiFile) {
@@ -38,7 +40,7 @@ final class NasueousGeneralHighlightingPass extends GeneralHighlightingPass {
       public boolean add(@Nullable HighlightInfo info) {
         if (info != null && info.getSeverity() == HighlightSeverity.ERROR) {
           myError.set(info);
-          throw new ProcessCanceledException();
+          throw new StopAnalysisException();
         }
         return super.add(info);
       }
@@ -50,8 +52,7 @@ final class NasueousGeneralHighlightingPass extends GeneralHighlightingPass {
     try {
       super.collectInformationWithProgress(progress);
     }
-    catch (Exception ignored) {
-      // could throw PCE now
+    catch (StopAnalysisException ignored) {
     }
   }
 }

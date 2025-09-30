@@ -144,6 +144,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testOverrideFunctionProperty()
     }
 
+    override fun testOverrideFunctionPropertyWithoutBody() {
+        super.testOverrideFunctionPropertyWithoutBody()
+    }
+
     override fun testOverridePrimitiveProperty() {
         super.testOverridePrimitiveProperty()
     }

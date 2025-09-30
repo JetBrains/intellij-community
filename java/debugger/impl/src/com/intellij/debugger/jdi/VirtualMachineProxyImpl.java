@@ -224,8 +224,8 @@ public class VirtualMachineProxyImpl extends UserDataHolderBase implements JdiTi
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myModelSuspendCount++;
-    myVirtualMachine.suspend();
-    clearCaches();
+    DebuggerUtilsAsync.suspend(myVirtualMachine)
+      .thenRun(this::clearCaches);
   }
 
   public void resume() {

@@ -23,24 +23,24 @@ data class DependencyConfig(
   val dependencies: List<Dependency>
 ) {
   fun getVersion(group: String, artifact: String): String? {
-    return dependencies.find { it.group == group && it.artifact == artifact }?.version
+    return dependencies
+      .find { it.group == group && it.artifact == artifact }
+      ?.version
   }
 }
 
 data class LibraryCategory(
   val id: String,
   val icon: Icon?,
-  @Nls val title: String,
-  @Nls val description: String
+  val title: @Nls String,
+  val description: @Nls String
 )
 
 class Library (
   val id: String,
   val icon: Icon?,
-  @NlsSafe
-  override val title: String,
-  @Nls
-  override val description: String,
+  override val title: @NlsSafe String,
+  override val description: @Nls String,
   val group: String?,
   val artifact: String?,
   override val links: List<LibraryLink> = emptyList(),

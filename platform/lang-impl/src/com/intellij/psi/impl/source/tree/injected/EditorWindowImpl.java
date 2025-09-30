@@ -12,6 +12,7 @@ import com.intellij.injected.editor.MarkupModelWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -798,7 +799,7 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
 
   @Override
   public String toString() {
-    return super.toString() + "[disposed=" + myDisposed + "; valid=" + isValid() + "]";
+    return super.toString() + "[disposed=" + myDisposed + "; valid=" + ReadAction.compute(()->isValid()) + "]";
   }
 
   @Override

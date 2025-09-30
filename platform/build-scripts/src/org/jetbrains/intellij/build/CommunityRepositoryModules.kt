@@ -154,6 +154,7 @@ object CommunityRepositoryModules {
     pluginAuto("intellij.junit") { spec ->
       spec.withModule("intellij.junit.rt", "junit-rt.jar")
       spec.withModule("intellij.junit.v5.rt", "junit5-rt.jar")
+      spec.withModule("intellij.junit.v6.rt", "junit6-rt.jar")
     },
     plugin("intellij.testng") { spec ->
       spec.mainJarName = "testng-plugin.jar"
@@ -214,6 +215,10 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("package-search-api-client")
       spec.withProjectLibrary("ktor-client-logging")
       spec.withProjectLibrary("kotlinx-document-store-mvstore")
+    },
+    pluginAuto("intellij.java.jshell") { spec ->
+      spec.withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
+      spec.withModuleLibrary("jshell-frontend", "intellij.java.jshell.execution", "jshell-frontend.jar")
     }
   )
 
@@ -662,7 +667,7 @@ private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<Distri
       dirFilter = { !it.endsWith("src") },
       fileFilter = { file ->
         if (file.toString().endsWith(".jar")) {
-          sources.add(ZipSource(file = file, distributionFileEntryProducer = null, filter = ::defaultLibrarySourcesNamesFilter))
+          sources.add(ZipSource(file = file, distributionFileEntryProducer = null, filter = ::defaultLibrarySourcesNamesFilter, moduleName = null))
           false
         }
         else {

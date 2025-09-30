@@ -55,7 +55,7 @@ class SettingsSyncIdeMediatorTest : BasePlatformTestCase() {
         TODO("Not yet implemented")
       }
     }
-    val mediator = SettingsSyncIdeMediatorImpl(componentStore, rootConfig, {true})
+    val mediator = SettingsSyncIdeMediatorImpl(componentStore = componentStore, rootConfig = rootConfig, enabledCondition = { true })
 
     val fileTypes = rootConfig.resolve("filetypes")
     val code = fileTypes.resolve("code").createDirectories()

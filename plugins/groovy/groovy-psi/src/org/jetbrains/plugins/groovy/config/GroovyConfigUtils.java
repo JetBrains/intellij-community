@@ -122,13 +122,22 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
     return isVersionAtLeast(psiElement, version, true);
   }
 
-  public boolean isVersionAtLeast(PsiElement psiElement, String version, boolean unknownResult) {
+  public boolean isVersionAtLeast(@Nullable Module module, @NotNull String version) {
+    return isVersionAtLeast(module, version, true);
+  }
+
+  public boolean isVersionAtLeast(PsiElement psiElement, @NotNull String version, boolean unknownResult) {
     Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
+    return isVersionAtLeast(module, version, unknownResult);
+  }
+
+  public boolean isVersionAtLeast(@Nullable Module module, @NotNull String version, boolean unknownResult) {
     if (module == null) return unknownResult;
     final String sdkVersion = getSDKVersion(module);
     if (sdkVersion == null) return unknownResult;
     return compareSdkVersions(sdkVersion, version) >= 0;
   }
+
 
   public static int compareSdkVersions(@NotNull String leftVersion, @NotNull String rightVersion) {
     return getInstance().compareSdkVersionsInner(leftVersion, rightVersion);

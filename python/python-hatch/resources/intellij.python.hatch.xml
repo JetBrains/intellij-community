@@ -1,9 +1,10 @@
-<idea-plugin package="com.intellij.python.hatch">
+<idea-plugin>
   <dependencies>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.sdk.ui"/>
+    <module name="intellij.python.pyproject"/>
   </dependencies>
 
   <extensions defaultExtensionNs="Pythonid">

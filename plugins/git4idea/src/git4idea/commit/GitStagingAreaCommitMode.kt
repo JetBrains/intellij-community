@@ -4,7 +4,7 @@ package git4idea.commit
 import com.intellij.vcs.commit.CommitMode
 
 data object GitStagingAreaCommitMode : CommitMode {
-  override fun useCommitToolWindow(): Boolean = true
+  override fun useCommitToolWindow(): Boolean = CommitMode.NonModalCommitMode.commitTwEnabled()
   override fun hideLocalChangesTab(): Boolean = true
   override fun disableDefaultCommitAction(): Boolean = true
 }

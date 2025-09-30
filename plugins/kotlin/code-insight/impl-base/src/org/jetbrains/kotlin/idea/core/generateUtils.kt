@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import kotlin.math.min
 
 fun moveCaretIntoGeneratedElement(editor: Editor, element: PsiElement) {
@@ -222,11 +223,13 @@ fun <T : KtDeclaration> insertMembersAfter(
                     commentOrSpace.copy().also { commentOrSpace.delete() }
                 }
             }
-        val body = classOrObject.getOrCreateBody()
-        val lBrace = body.lBrace
-        if (lBrace != null) {
-            tailComments.reversed().map { body.addAfter(it, lBrace) }
+        val existedBody = classOrObject.body
+        val body = existedBody?.takeIf { it.lBrace != null } ?: run {
+            existedBody?.delete()
+            classOrObject.getOrCreateBody()
         }
+        val lBrace = body.lBrace ?: throw KotlinExceptionWithAttachments("no lBrace").withPsiAttachment("classOrObject", classOrObject)
+        tailComments.reversed().forEach { body.addAfter(it, lBrace) }
 
         var afterAnchor = anchor ?: findInsertAfterAnchor(editor, body) ?: return emptyList()
         otherMembers.mapTo(insertedMembers) {
@@ -242,7 +245,7 @@ fun <T : KtDeclaration> insertMembersAfter(
                         afterAnchor = bound
                     }
                 } else if (bound == null && body.declarations.isNotEmpty()) {
-                    afterAnchor = body.lBrace!!
+                    afterAnchor = lBrace
                 } else if (bound != null && afterAnchor.startOffset > bound.startOffset) {
                     afterAnchor = bound.prevSibling!!
                 }

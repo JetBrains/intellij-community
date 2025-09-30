@@ -7,8 +7,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.highlighting.PassRunningAssert;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
 class HighlightVisitorRunner {
@@ -131,6 +132,9 @@ class HighlightVisitorRunner {
           }
           return result;
         }
+        catch (CancellationException e) {
+          throw e;
+        }
         catch (Exception e) {
           if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
             GeneralHighlightingPass.LOG.debug("GHP: visitor " + visitor + "(" + visitor.getClass() + ") threw " + ExceptionUtil.getThrowableText(e)+"; "+Thread.currentThread());
@@ -200,10 +204,10 @@ class HighlightVisitorRunner {
         catch (IndexNotReadyException e) {
           break;
         }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
         catch (Exception e) {
+          if (Logger.shouldRethrow(e)) {
+            throw e;
+          }
           if (!failed) {
             GeneralHighlightingPass.LOG.error("In file: " + psiFile.getViewProvider().getVirtualFile(), e);
           }

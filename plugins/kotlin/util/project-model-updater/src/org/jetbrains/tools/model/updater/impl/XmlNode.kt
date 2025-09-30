@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater.impl
 
 import org.jdom.Document
 import org.jdom.Element
 import org.jdom.output.Format
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.inputStream
 
 fun xml(name: String, vararg args: Pair<String, Any>, block: XmlNode.() -> Unit = {}): XmlNode {
     return XmlNode(name, args.asList(), block)
@@ -62,7 +63,7 @@ class XmlNode(private val name: String, private val args: List<Pair<String, Any>
     }
 }
 
-fun File.readXml(): Document {
+fun Path.readXml(): Document = inputStream().use { input ->
     @Suppress("DEPRECATION")
-    return org.jdom.input.SAXBuilder().build(this)
+    org.jdom.input.SAXBuilder().build(input)
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
+import com.intellij.platform.backend.workspace.InternalEnvironmentName
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.eel.EelMachine
@@ -58,7 +59,7 @@ class GlobalWorkspaceModel internal constructor(
    * 2. Ensure that the namespace of "global" entities (such as SDKs and global libraries) is local to each environment.
    */
   private val eelMachine: EelMachine,
-  private val internalEnvironmentName: GlobalWorkspaceModelCache.InternalEnvironmentName,
+  private val internalEnvironmentName: InternalEnvironmentName,
 ) {
 
   /**
@@ -340,8 +341,8 @@ class GlobalWorkspaceModel internal constructor(
       return ApplicationManager.getApplication().serviceAsync<GlobalWorkspaceModelRegistry>().getGlobalModel(eelMachine)
     }
 
-    suspend fun getInstanceByInternalName(name: GlobalWorkspaceModelCache.InternalEnvironmentName): GlobalWorkspaceModel {
-      return ApplicationManager.getApplication().serviceAsync<GlobalWorkspaceModelRegistry>().getGlobalModelByDescriptorName(name)
+    suspend fun getInstanceByEnvironmentName(environmentName: InternalEnvironmentName): GlobalWorkspaceModel {
+      return ApplicationManager.getApplication().serviceAsync<GlobalWorkspaceModelRegistry>().getGlobalModelByEnvironmentName(environmentName)
     }
 
     fun getInstancesBlocking(): List<GlobalWorkspaceModel> = service<GlobalWorkspaceModelRegistry>().getGlobalModels()
@@ -421,7 +422,7 @@ class GlobalWorkspaceModelRegistry {
     return environmentToModel.computeIfAbsent(protectedMachine) { GlobalWorkspaceModel(protectedMachine, InternalEnvironmentNameImpl(internalName)) }
   }
 
-  fun getGlobalModelByDescriptorName(name: GlobalWorkspaceModelCache.InternalEnvironmentName): GlobalWorkspaceModel {
+  fun getGlobalModelByEnvironmentName(name: InternalEnvironmentName): GlobalWorkspaceModel {
     val protectedName = if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) name.name else GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID
     val machine = if (protectedName == GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID) {
       LocalEelMachine
@@ -450,4 +451,4 @@ class GlobalWorkspaceModelRegistry {
 }
 
 @ApiStatus.Internal
-class InternalEnvironmentNameImpl(override val name: String) : GlobalWorkspaceModelCache.InternalEnvironmentName
+class InternalEnvironmentNameImpl(override val name: String) : InternalEnvironmentName

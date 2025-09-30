@@ -27,7 +27,7 @@ jvm_library(
     "@lib//:opentelemetry-semconv",
     "//platform/util",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "@lib//:kotlinx-serialization-protobuf",
     "//platform/diagnostic/telemetry-impl",
     "//platform/diagnostic",

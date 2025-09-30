@@ -213,7 +213,7 @@ public final class PluginInstaller {
     else {
       target = targetPath.resolve(rootEntryName(sourceFile));
       NioFiles.deleteRecursively(target);
-      new Decompressor.Zip(sourceFile).extract(targetPath);
+      new Decompressor.Zip(sourceFile).withZipExtensions().extract(targetPath);
     }
     return target;
   }

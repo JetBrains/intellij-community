@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.preferences` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "preferences_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "kotlin.preferences",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":preferences_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:swingx",
@@ -24,7 +25,7 @@ jvm_library(
     "//plugins/kotlin/plugin-updater",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
-  ],
-  runtime_deps = [":preferences_resources"]
+    "//plugins/kotlin/base/scripting/scripting.shared",
+  ]
 )
 ### auto-generated section `build kotlin.preferences` end

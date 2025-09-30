@@ -66,10 +66,7 @@
   - name: intellij.java.typeMigration
   - name: intellij.java.ultimate.icons
   - name: intellij.java.jam
-  - name: intellij.java.jam.impl
-  - name: intellij.java.duplicatesDetection
   - name: intellij.java.duplicates
-  - name: intellij.java.duplicates.analysis
   - name: intellij.java.plugin
   - name: intellij.java.resources
     reason: <- intellij.java.plugin
@@ -114,14 +111,6 @@
 - name: lib/jps-launcher.jar
   modules:
   - name: intellij.platform.jps.build.launcher
-- name: lib/jshell-frontend.jar
-  library: jshell-frontend
-  module: intellij.java.execution.impl
-  files:
-  - name: $PROJECT_DIR$/community/java/execution/impl/jshell-frontend.jar
-- name: lib/jshell-protocol.jar
-  modules:
-  - name: intellij.java.jshell.protocol
 - name: lib/kotlin-metadata.jar
   library: kotlin-metadata
   files:
@@ -145,6 +134,12 @@
 - name: lib/modules/intellij.java.debugger.impl.frontend.jar
   contentModules:
   - name: intellij.java.debugger.impl.frontend
+- name: lib/modules/intellij.java.duplicates.analysis.jar
+  contentModules:
+  - name: intellij.java.duplicates.analysis
+- name: lib/modules/intellij.java.duplicatesDetection.jar
+  contentModules:
+  - name: intellij.java.duplicatesDetection
 - name: lib/modules/intellij.java.execution.impl.backend.jar
   contentModules:
   - name: intellij.java.execution.impl.backend
@@ -154,6 +149,9 @@
 - name: lib/modules/intellij.java.featuresTrainer.jar
   contentModules:
   - name: intellij.java.featuresTrainer
+- name: lib/modules/intellij.java.jam.impl.jar
+  contentModules:
+  - name: intellij.java.jam.impl
 - name: lib/modules/intellij.java.langInjection.jar
   contentModules:
   - name: intellij.java.langInjection

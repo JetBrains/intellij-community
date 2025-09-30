@@ -2,6 +2,10 @@
 package com.intellij.platform.searchEverywhere
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.Navigatable
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -29,4 +33,10 @@ interface SeItemsProvider: Disposable {
   suspend fun performExtendedAction(item: SeItem): Boolean {
     return false
   }
+
+  // Data snapshot methods
+  fun addDataForItem(item: SeItem, sink: DataSink) {}
+  fun getPsiElementForItem(item: SeItem): PsiElement? = null
+  fun getVirtualFileForItem(item: SeItem): VirtualFile? = null
+  fun getNavigatableForItem(item: SeItem): Navigatable? = null
 }

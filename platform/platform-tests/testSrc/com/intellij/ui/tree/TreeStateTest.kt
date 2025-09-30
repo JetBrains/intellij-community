@@ -103,18 +103,100 @@ internal class TreeStateTest : BasePlatformTestCase() {
     )
   }
 
+  fun `test restore selection - the selected child is found`() {
+    syncSelectionTest(
+      inputToSave = """
+       +root
+        +a1
+         *a1.1
+        +a2
+         *[a2.1]
+         *a2.2
+        *a3
+      """.trimIndent(),
+      inputToRestore = """
+       +root
+        +a1
+        +a2
+         *[a2.1]
+         *a2.2
+        *a3
+      """.trimIndent(),
+    )
+  }
+
+  fun `test restore selection - the selected child is removed`() {
+    syncSelectionTest(
+      inputToSave = """
+       +root
+        +a1
+         *a1.1
+        +a2
+         *[a2.1]
+         *a2.2
+        *a3
+      """.trimIndent(),
+      inputToRestore = """
+       +root
+        +a1
+        +a2
+         *[a2.2]
+        *a3
+      """.trimIndent(),
+    )
+  }
+
+  fun `test restore selection - the selected child is removed, and it's the last child`() {
+    syncSelectionTest(
+      inputToSave = """
+       +root
+        +a1
+         *a1.1
+        +a2
+         *a2.1
+         *[a2.2]
+        *a3
+      """.trimIndent(),
+      inputToRestore = """
+       +root
+        +a1
+        +a2
+         *[a2.1]
+        *a3
+      """.trimIndent(),
+    )
+  }
+
+  fun `test restore selection - all children are removed`() {
+    syncSelectionTest(
+      inputToSave = """
+       +root
+        +a1
+         *a1.1
+        +a2
+         *a2.1
+         *[a2.2]
+        *a3
+      """.trimIndent(),
+      inputToRestore = """
+       +root
+        +a1
+        +[a2]
+        *a3
+      """.trimIndent(),
+    )
+  }
+
   private fun cachedPresentationTest(
     inputToSave: String,
     inputToRestore: String = inputToSave,
     expectedLoadedNodes: List<String>,
   ) = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     val coroutineScope = this
-    val tree = createTree(inputToSave, coroutineScope)
-    TreeUtil.promiseExpand(tree, Int.MAX_VALUE) { treePath ->
-      (TreeUtil.getLastUserObject(treePath) as? UserObject)?.value?.isInitiallyExpanded == true
-    }.await()
+    val tree = createTree(inputToSave, coroutineScope, async = true)
+    expandInitiallyExpanded(tree)
     val state = TreeState.createOn(tree, true, false, true)
-    val newTree = createTree(inputToRestore, coroutineScope)
+    val newTree = createTree(inputToRestore, coroutineScope, async = true)
     state.applyTo(newTree)
     val actualLoadedNodes = suspendCancellableCoroutine { continuation -> 
       newTree.addPropertyChangeListener(CACHED_TREE_PRESENTATION_PROPERTY, PropertyChangeListener {
@@ -126,13 +208,40 @@ internal class TreeStateTest : BasePlatformTestCase() {
     assertThat(actualLoadedNodes).isEqualTo(expectedLoadedNodes)
   }
 
+  private fun syncSelectionTest(inputToSave: String, inputToRestore: String) = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val coroutineScope = this
+    val tree = createTree(inputToSave, coroutineScope, async = false)
+    expandInitiallyExpanded(tree)
+    tree.selectionPaths = initiallySelected(tree).toTypedArray()
+    val state = TreeState.createOn(tree, true, true, false)
+    val newTree = createTree(inputToRestore, coroutineScope, async = false)
+    state.applyTo(newTree)
+    assertThat(newTree.selectionPaths).containsExactlyInAnyOrder(*initiallySelected(newTree).toTypedArray())
+  }
+
+  private suspend fun expandInitiallyExpanded(tree: Tree) {
+    TreeUtil.promiseExpand(tree, Int.MAX_VALUE) { treePath ->
+      (TreeUtil.getLastUserObject(treePath) as? UserObject)?.value?.isInitiallyExpanded == true
+    }.await()
+  }
+
+  private fun initiallySelected(tree: Tree): List<TreePath> {
+    val result = mutableListOf<TreePath>()
+    for (row in 0 until tree.rowCount) {
+      val path = tree.getPathForRow(row)
+      if ((TreeUtil.getLastUserObject(path) as? UserObject)?.value?.isInitiallySelected == true) {
+        result += path
+      }
+    }
+    return result
+  }
+
   private fun parseStructure(input: String) = Parser(project, input).parse()
 
-  private fun createTree(input: String, coroutineScope: CoroutineScope): Tree {
+  private fun createTree(input: String, coroutineScope: CoroutineScope, async: Boolean): Tree {
     val root = parseStructure(input)
-    val bgtModel = createBgtModel(root, coroutineScope)
-    val edtModel = AsyncTreeModel(bgtModel, coroutineScope.asDisposable())
-    return Tree(edtModel)
+    val syncModel = createSyncTreeModel(root, coroutineScope)
+    return Tree(if (async) AsyncTreeModel(syncModel, coroutineScope.asDisposable()) else syncModel)
   }
 
   private fun collectVisibleLoadedPaths(tree: Tree): List<String> {
@@ -168,8 +277,8 @@ private fun TreePath.toTestString(): String {
 
 private fun TreeModel.getChildren(node: Any): List<Any> = (0 until getChildCount(node)).map { getChild(node, it) }
 
-private fun createBgtModel(root: UserObject, coroutineScope: CoroutineScope) =
-  BackendTreeModel(root, coroutineScope)
+private fun createSyncTreeModel(root: UserObject, coroutineScope: CoroutineScope) =
+  SyncTreeModel(root, coroutineScope)
 
 private class Parser(private val project: Project, private val input: String) {
   val lines = input.split("\n")
@@ -194,8 +303,10 @@ private class Parser(private val project: Project, private val input: String) {
         '+' -> true
         else -> null
       }
-      val text = currentLine.substring(currentLineLevel + 1)
-      val userObject = UserObject(project, Data(text, isInitiallyExpanded))
+      val remainingPart = currentLine.substring(currentLineLevel + 1)
+      val isInitiallySelected = remainingPart.length > 2 && remainingPart.first() == '[' && remainingPart.last() == ']'
+      val text = if (isInitiallySelected) remainingPart.substring(1, remainingPart.length - 1) else remainingPart
+      val userObject = UserObject(project, Data(text, isInitiallyExpanded, isInitiallySelected))
       ++line
       ++level
       userObject.children = parseChildren()
@@ -206,7 +317,7 @@ private class Parser(private val project: Project, private val input: String) {
   }
 }
 
-private class BackendTreeModel(
+private class SyncTreeModel(
   private val root: UserObject,
   private val coroutineScope: CoroutineScope,
 ) : BaseTreeModel<UserObject>(), AsyncTreeModel.AsyncChildrenProvider<UserObject>, InvokerSupplier {
@@ -239,6 +350,7 @@ private class BackendTreeModel(
 private data class Data(
   val text: String,
   val isInitiallyExpanded: Boolean?,
+  val isInitiallySelected: Boolean,
 )
 
 private class UserObject(project: Project, value: Data) : AbstractTreeNode<Data>(project, value) {

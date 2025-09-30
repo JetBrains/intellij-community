@@ -257,8 +257,6 @@
   <projectListeners>
     <listener class="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardUpdater"
               topic="com.intellij.execution.ExecutionListener"/>
-    <listener class="com.intellij.xdebugger.impl.ui.XDebugRunContentListener"
-              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
     <listener class="com.intellij.xdebugger.impl.MonolithListenerAdapter"
               topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
   </projectListeners>

@@ -9,9 +9,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.*
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onFirstVisible
 import androidx.compose.ui.unit.dp
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.project.Project
@@ -62,7 +66,7 @@ internal fun ComponentShowcaseTab(project: Project) {
 
 @Composable
 private fun RowScope.ColumnOne() {
-  Column(Modifier.trackActivation().weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+  Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
     var activated by remember { mutableStateOf(false) }
     Text(
       "Here is a selection of our finest components(activated: $activated):",
@@ -71,10 +75,16 @@ private fun RowScope.ColumnOne() {
     )
 
     var selectedItem by remember { mutableIntStateOf(-1) }
+    val focusRequester = remember { FocusRequester() }
+
     ListComboBox(
       items = remember { listOf("Hello", "World") },
       selectedIndex = selectedItem,
       onSelectedItemChange = { selectedItem = it },
+      modifier =
+        Modifier
+          .focusRequester(focusRequester)
+          .onFirstVisible { focusRequester.requestFocus() },
     )
     ListComboBox(
       items = remember { listOf("Hello", "World") },
@@ -217,6 +227,7 @@ private fun RowScope.ColumnOne() {
       }
     }
 
+    var selected by remember { mutableStateOf("") }
     DefaultSplitButton(
       onClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button clicked") },
       secondaryOnClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button chevron clicked") },
@@ -231,8 +242,9 @@ private fun RowScope.ColumnOne() {
 
             if (stack.size == 4) {
               selectableItem(
-                selected = false,
+                selected = selected == itemStr,
                 onClick = {
+                  selected = itemStr
                   JewelLogger.getInstance("Jewel").warn("Item clicked: $itemStr") },
               ) {
                 Text("Item $itemStr")
@@ -247,17 +259,52 @@ private fun RowScope.ColumnOne() {
 
           separator()
 
-          items(
-            10,
-            isSelected = { false },
-            onItemClick = { JewelLogger.getInstance("Jewel").warn("Item clicked: $it") },
-            content = { Text("Other Item ${it + 1}") },
-          )
+          repeat(10) {
+            val number = it + 1
+            val itemStr = "${stackStr}other.$number"
+
+            selectableItem(
+              selected = selected == itemStr,
+              onClick = {
+                selected = itemStr
+                JewelLogger.getInstance("Jewel").warn("Item clicked: $itemStr")
+              },
+            ) {
+              Text("Other Item ${it + 1}")
+            }
+          }
         }
 
         buildSubmenus(emptyList())
       },
     )
+
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+      var selectedIndex by remember { mutableStateOf(-1) }
+      RadioButtonChip(selected = selectedIndex == 0, onClick = { selectedIndex = 0 }, enabled = true) {
+        Text("First")
+      }
+
+      RadioButtonChip(selected = selectedIndex == 1, onClick = { selectedIndex = 1 }, enabled = true) {
+        Text("Second")
+      }
+
+      RadioButtonChip(selected = selectedIndex == 2, onClick = { selectedIndex = 2 }, enabled = true) {
+        Text("Third")
+      }
+
+      Divider(Orientation.Vertical, Modifier.fillMaxHeight())
+
+      var isChecked by remember { mutableStateOf(false) }
+      ToggleableChip(checked = isChecked, onClick = { isChecked = it }, enabled = true) { Text("Toggleable") }
+
+      var count by remember { mutableIntStateOf(1) }
+      Chip(enabled = true, onClick = { count++ }) { Text("Clicks: $count") }
+
+      Divider(Orientation.Vertical, Modifier.fillMaxHeight())
+
+      Chip(enabled = false, onClick = {}) { Text("Disabled") }
+    }
   }
 }
 

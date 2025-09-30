@@ -16,6 +16,7 @@ import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
+import com.intellij.platform.searchEverywhere.providers.SeSortedProviderIds
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.platform.searchEverywhere.utils.SeResultsCountBalancer
 import com.jetbrains.rhizomedb.EID
@@ -30,11 +31,12 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class SeBackendService(val project: Project, private val coroutineScope: CoroutineScope) {
-  private val sessionIdToProviderHolders: MutableMap<EID, SeProvidersHolder> = HashMap()
+  private val sessionIdToProviderHolders: ConcurrentHashMap<EID, SeProvidersHolder> = ConcurrentHashMap()
   private val mutex: Mutex = Mutex()
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -55,11 +57,11 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
       }
     }
 
-    val splitProviderIds = providerHolder.splitToEssentialAndNonEssential(providerIds)
+    val sortedProviderIds = SeSortedProviderIds.create(providerIds, providerHolder, session)
     val resultsBalancer = SeResultsCountBalancer("BE",
                                                  nonBlockedProviderIds = emptyList(),
-                                                 highPriorityProviderIds = splitProviderIds[SeProviderIdUtils.ESSENTIAL_KEY]!!,
-                                                 lowPriorityProviderIds = splitProviderIds[SeProviderIdUtils.NON_ESSENTIAL_KEY]!!)
+                                                 highPriorityProviderIds = sortedProviderIds.essential,
+                                                 lowPriorityProviderIds = sortedProviderIds.nonEssential)
 
     SeLog.log(SeLog.ITEM_EMIT) { "Backend will request items from providers: ${providerIds.joinToString(", ")}" }
 
@@ -99,17 +101,16 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
   suspend fun getAvailableProviderIds(
     session: SeSession,
     dataContextId: DataContextId
-  ) : Map<String, Set<SeProviderId>> {
-    val providersHolder = getProvidersHolder(session, dataContextId) ?: return emptyMap()
-    return providersHolder.splitToEssentialAndNonEssential(
-      SeItemsProviderFactory.EP_NAME.extensionList.map { it.id.toProviderId() }
-    )
+  ) : SeSortedProviderIds? {
+    val providersHolder = getProvidersHolder(session, dataContextId) ?: return null
+    val allProviderIds = SeItemsProviderFactory.EP_NAME.extensionList.map { it.id.toProviderId() } + providersHolder.legacyAllTabContributors.map { it.key }
+    return SeSortedProviderIds.create(allProviderIds, providersHolder, session)
   }
 
-  private fun SeProvidersHolder.splitToEssentialAndNonEssential(providerIds: List<SeProviderId>): Map<String, Set<SeProviderId>> {
-    val essential = getEssentialAllTabProviderIds().filter { it in providerIds }.toSet()
-    val nonEssential = providerIds.filter { it !in essential }.toSet()
-    return mapOf(SeProviderIdUtils.ESSENTIAL_KEY to essential, SeProviderIdUtils.NON_ESSENTIAL_KEY to nonEssential)
+  fun tryGetProvider(id: SeProviderId, isAllTab: Boolean, session: SeSession) : SeItemsProvider? {
+    return session.asRef().derefOrNull()?.eid?.let {
+      sessionIdToProviderHolders[it]?.get(id, isAllTab)?.provider
+    }
   }
 
   private suspend fun getProvidersHolder(
@@ -133,7 +134,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
       }
 
       val actionEvent = AnActionEvent.createEvent(dataContext, null, "", ActionUiKind.NONE, null)
-      val providersHolder = SeProvidersHolder.initialize(actionEvent, project, session, "Backend")
+      val providersHolder = SeProvidersHolder.initialize(actionEvent, project, session, "Backend", true)
       sessionIdToProviderHolders[sessionEntity.eid] = providersHolder
 
       sessionEntity.onDispose(coroutineScope.coroutineContext[Rete]!!) {

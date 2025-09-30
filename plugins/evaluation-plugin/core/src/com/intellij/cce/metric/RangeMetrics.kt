@@ -19,7 +19,7 @@ import kotlinx.coroutines.async
 import kotlin.collections.forEach
 
 
-abstract class RangeMetricBase(protected val category: String?) : ConfidenceIntervalMetric<Double>(), RangeFilter {
+abstract class RangeMetricBase(protected val filters: Map<String, String>) : ConfidenceIntervalMetric<Double>(), RangeFilter {
   override val showByDefault: Boolean = true
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
@@ -30,8 +30,8 @@ abstract class RangeMetricBase(protected val category: String?) : ConfidenceInte
     val lookups = sessions.flatMap { session -> session.lookups }
     val fileSample = Sample()
     lookups.forEach { lookup ->
-      val referenceRanges = filter(getFromProperty(lookup, REFERENCE_CODE_COMMENT_RANGE_PROPERTY), category)
-      val predictedRanges = filter(getFromProperty(lookup, PREDICTED_CODE_COMMENT_RANGE_PROPERTY), category)
+      val referenceRanges = filter(getFromProperty(lookup, REFERENCE_CODE_COMMENT_RANGE_PROPERTY), filters)
+      val predictedRanges = filter(getFromProperty(lookup, PREDICTED_CODE_COMMENT_RANGE_PROPERTY), filters)
 
       calculateMetric(getMatchedRanges(referenceRanges, predictedRanges), predictedRanges.size, referenceRanges.size, fileSample)
     }
@@ -54,34 +54,42 @@ abstract class RangeMetricBase(protected val category: String?) : ConfidenceInte
   abstract fun calculateMetric(matchedRanges: Map<CodeCommentRange, CodeCommentRange>, predictedSize: Int, referenceSize: Int, fileSample: Sample)
 }
 
-abstract class MeanRangeMetricBase(category: String?) : RangeMetricBase(category) {
+abstract class MeanRangeMetricBase(filters: Map<String, String>) : RangeMetricBase(filters) {
   override fun aggregateFileSample(fileSample: Sample): Double = fileSample.mean()
 
   override fun compute(sample: List<Double>): Double = sample.average()
 }
 
-abstract class SumRangeMetricBase(category: String?) : RangeMetricBase(category) {
+abstract class SumRangeMetricBase(filters: Map<String, String>) : RangeMetricBase(filters) {
   override fun aggregateFileSample(fileSample: Sample): Double = fileSample.sum()
 
   override fun compute(sample: List<Double>): Double = sample.sum()
 }
 
 interface RangeFilter {
-  fun filter(ranges: List<CodeCommentRange>, category: String?): List<CodeCommentRange> {
-    if (category == null) return ranges
-    return ranges.filter { it.category == category }
+  fun filter(ranges: List<CodeCommentRange>, filters: Map<String, String>): List<CodeCommentRange> {
+    if (filters["category"] == null) return ranges
+    return ranges.filter {
+      filters.all { (k, v) ->
+        when (k) {
+          "category" -> it.category.equals(v, ignoreCase = true)
+          "type" -> it.type.equals(v, ignoreCase = true)
+          else -> true // ignore unknown filters
+        }
+      }
+    }
   }
 }
 
 interface PositiveOrUnknownExamplesRangeFilter : RangeFilter {
-  override fun filter(ranges: List<CodeCommentRange>, category: String?): List<CodeCommentRange> {
-    return super.filter(ranges, category).filter { !(it.negativeExample ?: false) }
+  override fun filter(ranges: List<CodeCommentRange>, filters: Map<String, String>): List<CodeCommentRange> {
+    return super.filter(ranges, filters).filter { !(it.negativeExample ?: false) }
   }
 }
 
 interface NegativeOrUnknownExamplesRangeFilter : RangeFilter {
-  override fun filter(ranges: List<CodeCommentRange>, category: String?): List<CodeCommentRange> {
-    return super.filter(ranges, category).filter { it.negativeExample ?: true }
+  override fun filter(ranges: List<CodeCommentRange>, filters: Map<String, String>): List<CodeCommentRange> {
+    return super.filter(ranges, filters).filter { it.negativeExample ?: true }
   }
 }
 
@@ -102,7 +110,7 @@ interface PerfectOverlapScorer : Scorer {
   }
 }
 
-abstract class PrecisionRangeMetricBase(category: String?) : MeanRangeMetricBase(category), Scorer {
+abstract class PrecisionRangeMetricBase(filters: Map<String, String>) : MeanRangeMetricBase(filters), Scorer {
   override fun calculateMetric(matchedRanges: Map<CodeCommentRange, CodeCommentRange>, predictedSize: Int, referenceSize: Int, fileSample: Sample) {
     val bestOverlaps = matchedRanges.map { computeScore(it.key, it.value) }
     (bestOverlaps + List(predictedSize - matchedRanges.size) { 0.0 }).forEach {
@@ -112,28 +120,28 @@ abstract class PrecisionRangeMetricBase(category: String?) : MeanRangeMetricBase
   }
 }
 
-abstract class RecallRangeMetricBase(category: String?) : PrecisionRangeMetricBase(category), Scorer {
+abstract class RecallRangeMetricBase(filters: Map<String, String>) : PrecisionRangeMetricBase(filters), Scorer {
   override fun calculateMetric(matchedRanges: Map<CodeCommentRange, CodeCommentRange>, predictedSize: Int, referenceSize: Int, fileSample: Sample) {
     super.calculateMetric(matchedRanges, referenceSize, predictedSize, fileSample)
   }
 }
 
 
-class PositivePerfectOverlapRecallMetric(category: String?) : RecallRangeMetricBase(category), PerfectOverlapScorer, PositiveOrUnknownExamplesRangeFilter {
+class PositivePerfectOverlapRecallMetric(filters: Map<String, String>) : RecallRangeMetricBase(filters), PerfectOverlapScorer, PositiveOrUnknownExamplesRangeFilter {
   override val showByDefault: Boolean = false
-  override val name = "Positive Perfect Overlap Recall" + ("".takeIf { category == null } ?: " ($category)")
+  override val name = "Positive Perfect Overlap Recall: " + ("".takeIf { filters.isEmpty() } ?: " ($filters)")
   override val description: String = "Ratio of positive reference ranges that perfectly overlap with predicted ranges"
 }
 
-class PositiveIoURecallMetric(category: String?) : RecallRangeMetricBase(category), IOUScorer, PositiveOrUnknownExamplesRangeFilter {
-  override val showByDefault: Boolean = category == null
-  override val name = "Positive IoU Recall" + ("".takeIf { category == null } ?: " ($category)")
+class PositiveIoURecallMetric(filters: Map<String, String>) : RecallRangeMetricBase(filters), IOUScorer, PositiveOrUnknownExamplesRangeFilter {
+  override val showByDefault: Boolean = filters.isEmpty()
+  override val name = "Positive IoU Recall: " + ("".takeIf { filters.isEmpty() } ?: " ($filters)")
   override val description: String = "Sum of IoU between matched predicted & positive reference range divided by total number of positive reference ranges"
 }
 
-class PositivePerfectOverlapMatchedMetric(category: String?) : PrecisionRangeMetricBase(category), PerfectOverlapScorer, PositiveOrUnknownExamplesRangeFilter {
+class PositivePerfectOverlapMatchedMetric(filters: Map<String, String>) : PrecisionRangeMetricBase(filters), PerfectOverlapScorer, PositiveOrUnknownExamplesRangeFilter {
   override val showByDefault: Boolean = false
-  override val name = "Positive Perfect Overlap Matched" + ("".takeIf { category == null } ?: " ($category)")
+  override val name = "Positive Perfect Overlap Matched: " + ("".takeIf { filters.isEmpty() } ?: " ($filters)")
   override val description: String = "Number of positive reference ranges that perfectly overlap with predicted ranges divided by total number of matched ranges"
 
   override fun calculateMetric(matchedRanges: Map<CodeCommentRange, CodeCommentRange>, predictedSize: Int, referenceSize: Int, fileSample: Sample) {
@@ -141,9 +149,9 @@ class PositivePerfectOverlapMatchedMetric(category: String?) : PrecisionRangeMet
   }
 }
 
-class PositiveIOUMatchedMetric(category: String?) : PrecisionRangeMetricBase(category), IOUScorer, PositiveOrUnknownExamplesRangeFilter {
-  override val showByDefault: Boolean = category == null
-  override val name = "Positive IoU Matched" + ("".takeIf { category == null } ?: " ($category)")
+class PositiveIOUMatchedMetric(filters: Map<String, String>) : PrecisionRangeMetricBase(filters), IOUScorer, PositiveOrUnknownExamplesRangeFilter {
+  override val showByDefault: Boolean = filters.isEmpty()
+  override val name = "Positive IoU Matched: " + ("".takeIf { filters.isEmpty() } ?: " ($filters)")
   override val description: String = "Sum of IoU between matched predicted & positive reference range divided by total number of matched ranges"
 
   override fun calculateMetric(matchedRanges: Map<CodeCommentRange, CodeCommentRange>, predictedSize: Int, referenceSize: Int, fileSample: Sample) {
@@ -151,21 +159,21 @@ class PositiveIOUMatchedMetric(category: String?) : PrecisionRangeMetricBase(cat
   }
 }
 
-class NegativePerfectOverlapRecallMetric(category: String?) : RecallRangeMetricBase(category), PerfectOverlapScorer, NegativeOrUnknownExamplesRangeFilter {
+class NegativePerfectOverlapRecallMetric(filters: Map<String, String>) : RecallRangeMetricBase(filters), PerfectOverlapScorer, NegativeOrUnknownExamplesRangeFilter {
   override val showByDefault: Boolean = false
-  override val name = "Negative Perfect Overlap Recall" + ("".takeIf { category == null } ?: " ($category)")
+  override val name = "Negative Perfect Overlap Recall: " + ("".takeIf { filters.isEmpty() } ?: " ($filters)")
   override val description: String = "Ratio of negative reference ranges that perfectly overlap with predicted ranges"
 }
 
-class NegativeIOURecallMetric(category: String?) : RecallRangeMetricBase(category), IOUScorer, NegativeOrUnknownExamplesRangeFilter {
-  override val showByDefault: Boolean = category == null
-  override val name = "Negative IoU Recall" + ("".takeIf { category == null } ?: " ($category)")
+class NegativeIOURecallMetric(filters: Map<String, String>) : RecallRangeMetricBase(filters), IOUScorer, NegativeOrUnknownExamplesRangeFilter {
+  override val showByDefault: Boolean = filters.isEmpty()
+  override val name = "Negative IoU Recall: " + ("".takeIf { filters.isEmpty() } ?: " ($filters)")
   override val description: String = "Sum of IoU between predicted & negative reference range divided by total number of negative reference ranges"
 }
 
-class PositiveMatchedNumWordsMetric(category: String?) : MeanRangeMetricBase(category), PositiveOrUnknownExamplesRangeFilter {
+class PositiveMatchedNumWordsMetric(filters: Map<String, String>) : MeanRangeMetricBase(filters), PositiveOrUnknownExamplesRangeFilter {
   override val showByDefault: Boolean = false
-  override val name = "Positive Matched Num Words" + ("".takeIf { category == null } ?: " ($category)")
+  override val name = "Positive Matched Num Words: " + ("".takeIf { filters.isEmpty() } ?: " ($filters)")
   override val description: String = "Number of words in predicted text within matched predicted & reference ranges"
 
   override fun calculateMetric(matchedRanges: Map<CodeCommentRange, CodeCommentRange>, predictedSize: Int, referenceSize: Int, fileSample: Sample) {
@@ -177,9 +185,9 @@ class PositiveMatchedNumWordsMetric(category: String?) : MeanRangeMetricBase(cat
   }
 }
 
-class PositiveCountMetric(category: String?) : SumRangeMetricBase(category), PositiveOrUnknownExamplesRangeFilter {
-  override val showByDefault: Boolean = category == null
-  override val name = "Number Of Positive Examples" + ("".takeIf { category == null } ?: " ($category)")
+class PositiveCountMetric(filters: Map<String, String>) : SumRangeMetricBase(filters), PositiveOrUnknownExamplesRangeFilter {
+  override val showByDefault: Boolean = filters.isEmpty()
+  override val name = "Number Of Positive Examples: " + ("".takeIf { filters.isEmpty() } ?: " ($filters)")
   override val description: String = "Number of positive examples"
 
   override fun calculateMetric(matchedRanges: Map<CodeCommentRange, CodeCommentRange>, predictedSize: Int, referenceSize: Int, fileSample: Sample) {
@@ -188,9 +196,9 @@ class PositiveCountMetric(category: String?) : SumRangeMetricBase(category), Pos
   }
 }
 
-class NegativeCountMetric(category: String?) : SumRangeMetricBase(category), NegativeOrUnknownExamplesRangeFilter {
-  override val showByDefault: Boolean = category == null
-  override val name = "Number Of Negative Examples" + ("".takeIf { category == null } ?: " ($category)")
+class NegativeCountMetric(filters: Map<String, String>) : SumRangeMetricBase(filters), NegativeOrUnknownExamplesRangeFilter {
+  override val showByDefault: Boolean = filters.isEmpty()
+  override val name = "Number Of Negative Examples: " + ("".takeIf { filters.isEmpty() } ?: " ($filters)")
   override val description: String = "Number of negative examples"
 
   override fun calculateMetric(matchedRanges: Map<CodeCommentRange, CodeCommentRange>, predictedSize: Int, referenceSize: Int, fileSample: Sample) {
@@ -199,9 +207,9 @@ class NegativeCountMetric(category: String?) : SumRangeMetricBase(category), Neg
   }
 }
 
-open class TextSimilarityRangeMetric(val cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator, category: String?) : MeanRangeMetricBase(category), PositiveOrUnknownExamplesRangeFilter {
-  override val showByDefault: Boolean = category == null
-  override val name = "Text Similarity" + ("".takeIf { category == null } ?: " ($category)")
+open class TextSimilarityRangeMetric(val cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator, filters: Map<String, String>) : MeanRangeMetricBase(filters), PositiveOrUnknownExamplesRangeFilter {
+  override val showByDefault: Boolean = filters.isEmpty()
+  override val name = "Text Similarity: " + ("".takeIf { filters.isEmpty() } ?: " ($filters)")
   override val description: String = "Semantic Similarity between texts of best matched predicted & reference ranges"
 
   private val project: Project
@@ -224,9 +232,9 @@ open class TextSimilarityRangeMetric(val cloudSemanticSimilarityCalculator: Clou
   }
 }
 
-class OverlapPredictionsTextSimilarityMetric(cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator, category: String?) : TextSimilarityRangeMetric(cloudSemanticSimilarityCalculator, category), PositiveOrUnknownExamplesRangeFilter {
+class OverlapPredictionsTextSimilarityMetric(cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator, filters: Map<String, String>) : TextSimilarityRangeMetric(cloudSemanticSimilarityCalculator, filters), PositiveOrUnknownExamplesRangeFilter {
   override val showByDefault: Boolean = false
-  override val name = "Overlap Predictions Text Similarity" + ("".takeIf { category == null } ?: " ($category)")
+  override val name = "Overlap Predictions Text Similarity: " + ("".takeIf { filters.isEmpty() } ?: " ($filters)")
   override val description: String = "Semantic Similarity between texts of pairs of overlapping predicted ranges"
 
   override fun calculateMetric(matchedRanges: Map<CodeCommentRange, CodeCommentRange>, predictedSize: Int, referenceSize: Int, fileSample: Sample) {

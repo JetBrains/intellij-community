@@ -19,6 +19,10 @@
             interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator"
             dynamic="true"/>
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.compilerPluginConfigurator"
+            interface="org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator"
+            dynamic="true"/>
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.kotlinCompilerVersionProvider"
             interface="org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerVersionProvider"
             dynamic="true"/>
@@ -145,7 +149,6 @@
             key="kotlin.language.configurable"
             id="preferences.language.Kotlin"
             instance="org.jetbrains.kotlin.idea.configuration.KotlinLanguageConfiguration"/>
-    <search.optionContributor implementation="org.jetbrains.kotlin.idea.configuration.KotlinPluginSwitchSearchOptionContributor"/>
 
     <projectConfigurable
             instance="org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab"
@@ -422,7 +425,6 @@
     <editorFileSwapper implementation="org.jetbrains.kotlin.idea.editor.KotlinEditorFileSwapper"/>
 
     <copyPastePreProcessor implementation="org.jetbrains.kotlin.idea.editor.KDocCopyPastePreProcessor"/>
-    <copyPastePreProcessor implementation="org.jetbrains.kotlin.idea.editor.KotlinLiteralCopyPasteProcessor"/>
 
     <registryKey
             key="kotlin.enable.inlay.hint.for.lambda.return.type"

@@ -20,6 +20,7 @@ import com.intellij.ui.tabs.impl.themes.TabTheme
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import java.awt.*
+import kotlin.math.floor
 
 internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, var isEnabled: Boolean) : TabPainterAdapter {
   private val editorAdapter = if (isDefault) DefaultTabPainterAdapter(if (debugger) JBTabPainter.DEBUGGER else JBTabPainter.DEFAULT) else EditorTabPainterAdapter()
@@ -48,7 +49,7 @@ internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, v
     try {
       GraphicsUtil.setupAAPainting(g2)
 
-      tabs.setFirstTabOffset(5)
+      tabs.setFirstTabOffset(JBUI.scale(3))
       (tabPainter as IslandsTabPainter).paintTab(g2, rect, info.tabColor, active, hovered, selected)
     }
     finally {
@@ -124,7 +125,7 @@ internal open class IslandsTabPainter(isDefault: Boolean) : JBTabPainter {
     val vOffset = (rect.height - fullHeight).coerceAtLeast(JBUIScale.scale(8f).toDouble())
 
     val x = rect.x + hOffset
-    val y = rect.y + vOffset / 2.0
+    val y = floor(rect.y + vOffset / 2.0)
     val width = rect.width - hOffset * 2.0
     val height = rect.height - vOffset
 

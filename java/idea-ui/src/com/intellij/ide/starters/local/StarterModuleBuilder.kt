@@ -55,6 +55,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.ModalityUiUtil
+import com.intellij.util.application
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.annotations.TestOnly
@@ -94,10 +95,13 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
     @JvmStatic
     fun importModule(module: Module) {
-      if (module.isDisposed) return
-      val moduleBuilderPostTasks = IMPORTER_EP_NAME.extensions
-      for (task in moduleBuilderPostTasks) {
-        if (!task.runAfterSetup(module)) break
+      application.invokeAndWait {
+        if (module.isDisposed) return@invokeAndWait
+
+        val moduleBuilderPostTasks = IMPORTER_EP_NAME.extensionList
+        for (task in moduleBuilderPostTasks) {
+          if (!task.runAfterSetup(module)) break
+        }
       }
     }
 
@@ -117,16 +121,20 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
     @JvmStatic
     fun openSampleFiles(module: Module, filePathsToOpen: List<String>) {
-      val contentRoot = module.rootManager.contentRoots.firstOrNull()
-      if (contentRoot != null) {
-        val fileEditorManager = FileEditorManager.getInstance(module.project)
-        for (filePath in filePathsToOpen) {
-          val fileToOpen = VfsUtil.findRelativeFile(filePath, contentRoot)
-          if (fileToOpen != null) {
-            fileEditorManager.openTextEditor(OpenFileDescriptor(module.project, fileToOpen), true)
-          }
-          else {
-            logger<StarterModuleBuilder>().debug("Unable to find sample file $filePath in module: ${module.name}")
+      application.invokeAndWait {
+        if (module.isDisposed) return@invokeAndWait
+
+        val contentRoot = module.rootManager.contentRoots.firstOrNull()
+        if (contentRoot != null) {
+          val fileEditorManager = FileEditorManager.getInstance(module.project)
+          for (filePath in filePathsToOpen) {
+            val fileToOpen = VfsUtil.findRelativeFile(filePath, contentRoot)
+            if (fileToOpen != null) {
+              fileEditorManager.openTextEditor(OpenFileDescriptor(module.project, fileToOpen), true)
+            }
+            else {
+              logger<StarterModuleBuilder>().debug("Unable to find sample file $filePath in module: ${module.name}")
+            }
           }
         }
       }
@@ -135,6 +143,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     @TestOnly
     fun StarterModuleBuilder.setupTestModule(module: Module, starterId: String? = null, consumer: StarterContext.() -> Unit) {
       this.apply {
+        starterContext.language = getLanguages().first()
         starterContext.starterPack = getStarterPack()
         moduleJdk = ModuleRootManager.getInstance(module).sdk
 
@@ -379,17 +388,21 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
         ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), module.disposed, Runnable {
           if (module.isDisposed) return@Runnable
 
-          ReformatCodeProcessor(module.project, module, false).run()
-          // import of module may dispose it and create another. open samples first.
-          openSampleFiles(module, getFilePathsToOpen())
+          val processor = ReformatCodeProcessor(module.project, module, false)
+          processor.setPostRunnable {
+            // import of module may dispose it and create another. open samples first.
+            openSampleFiles(module, getFilePathsToOpen())
 
-          if (starterContext.gitIntegration && starterContext.isCreatingNewProject) {
-            runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
-              GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot, true)
+            if (starterContext.gitIntegration && starterContext.isCreatingNewProject) {
+              runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
+                GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot, true)
+              }
             }
+
+            importModule(module)
           }
 
-          importModule(module)
+          processor.runBackground()
         })
       }
     }

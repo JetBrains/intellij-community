@@ -2,6 +2,9 @@ com.intellij.codeInsight.completion.BatchConsumer
 - com.intellij.util.Consumer
 - endBatch():V
 - startBatch():V
+f:com.intellij.codeInsight.completion.CompletionConfidenceEP
+- com.intellij.lang.LanguageExtensionPoint
+- <init>():V
 com.intellij.codeInsight.completion.CompletionProcess
 - a:isAutopopupCompletion():Z
 a:com.intellij.codeInsight.completion.CompletionService
@@ -708,20 +711,6 @@ com.intellij.openapi.fileEditor.FileOpenedSyncListener
 - sf:Companion:com.intellij.openapi.fileEditor.FileOpenedSyncListener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
 - fileOpenedSync(com.intellij.openapi.fileEditor.FileEditorManager,com.intellij.openapi.vfs.VirtualFile,java.util.List):V
-c:com.intellij.openapi.fileEditor.OpenFileDescriptor
-- com.intellij.pom.AsyncNavigatable
-- sf:Companion:com.intellij.openapi.fileEditor.OpenFileDescriptor$Companion
-- f:dispose():V
-- f:getColumn():I
-- f:getLine():I
-- f:getProject():com.intellij.openapi.project.Project
-- f:getRangeMarker():com.intellij.openapi.editor.RangeMarker
-- sf:getRangeToUnfoldOnNavigation(com.intellij.openapi.editor.Editor):com.intellij.openapi.util.TextRange
-- f:setScrollType(com.intellij.openapi.editor.ScrollType):V
-- f:setUseCurrentWindow(Z):com.intellij.openapi.fileEditor.OpenFileDescriptor
-- f:setUsePreviewTab(Z):com.intellij.openapi.fileEditor.OpenFileDescriptor
-f:com.intellij.openapi.fileEditor.OpenFileDescriptor$Companion
-- f:getRangeToUnfoldOnNavigation(com.intellij.openapi.editor.Editor):com.intellij.openapi.util.TextRange
 com.intellij.openapi.ui.InputValidatorEx
 - com.intellij.openapi.ui.InputValidator
 - canClose(java.lang.String):Z

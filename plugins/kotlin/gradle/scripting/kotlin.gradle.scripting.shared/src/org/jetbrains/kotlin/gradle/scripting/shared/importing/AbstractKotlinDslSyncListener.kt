@@ -87,13 +87,13 @@ abstract class AbstractKotlinDslSyncListener : ExternalSystemTaskNotificationLis
         // project may be null in case of new project
         val project = id.findProject() ?: return
 
-        GradleBuildRootsLocator.getInstance(project)?.markImportingInProgress(sync.workingDir, false)
+        GradleBuildRootsLocator.getInstance(project).markImportingInProgress(sync.workingDir, false)
 
         if (sync.failed) {
             reportErrors(project, sync)
         }
     }
 
-    private fun ExternalSystemTaskId.isGradleRelatedTask() = projectSystemId == GradleConstants.SYSTEM_ID &&
-            (type == RESOLVE_PROJECT /*|| type == EXECUTE_TASK*/)
+    private fun ExternalSystemTaskId.isGradleRelatedTask() = /*|| type == EXECUTE_TASK*/
+        projectSystemId == GradleConstants.SYSTEM_ID && type == RESOLVE_PROJECT
 }

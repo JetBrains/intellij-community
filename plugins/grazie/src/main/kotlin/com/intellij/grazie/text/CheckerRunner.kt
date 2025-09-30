@@ -5,6 +5,7 @@ package com.intellij.grazie.text
 import ai.grazie.nlp.tokenizer.Tokenizer
 import ai.grazie.nlp.tokenizer.sentence.StandardSentenceTokenizer
 import ai.grazie.utils.toLinkedSet
+import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorBase
@@ -13,11 +14,13 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.fus.AcceptanceRateTracker
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
+import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieAddExceptionQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieCustomFixWrapper
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
+import com.intellij.grazie.utils.getTextDomain
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
@@ -26,21 +29,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.startOffset
-import com.intellij.util.progress.withLockCancellable
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.locks.Lock
-import java.util.concurrent.locks.ReentrantLock
 
 private val problemsKey = Key.create<CachedResults>("grazie.text.problems")
-private val lockKey = Key.create<Lock>("grazie.text.lock")
 
 class CheckerRunner(val text: TextContent) {
   private val tokenizer
@@ -62,14 +60,9 @@ class CheckerRunner(val text: TextContent) {
     val configStamp = service<GrazieConfig>().modificationCount
     var cachedProblems = getCachedProblems(configStamp)
     if (cachedProblems != null) return cachedProblems
-    val lock = text.getOrCreateUserData(lockKey) { ReentrantLock() }
-    return lock.withLockCancellable {
-      cachedProblems = getCachedProblems(configStamp)
-      if (cachedProblems != null) return@withLockCancellable cachedProblems
-      cachedProblems = filter(doRun(TextChecker.allCheckers()))
-      text.putUserData(problemsKey, CachedResults(configStamp, cachedProblems!!))
-      return@withLockCancellable cachedProblems
-    } ?: emptyList()
+    cachedProblems = filter(doRun(TextChecker.allCheckers()))
+    text.putUserData(problemsKey, CachedResults(configStamp, cachedProblems))
+    return cachedProblems
   }
 
   @Suppress("unused")
@@ -139,7 +132,10 @@ class CheckerRunner(val text: TextContent) {
       if (isOnTheFly) {
         descriptor.quickFixes = toFixes(problem, descriptor)
       }
-      descriptor
+      ProblemDescriptorWithReporterName(
+        descriptor,
+        if (problem.isStyleLike) GrazieInspection.STYLE_INSPECTION else GrazieInspection.GRAMMAR_INSPECTION
+      )
     }
   }
 
@@ -151,15 +147,11 @@ class CheckerRunner(val text: TextContent) {
                                         @NlsContexts.Tooltip private val tooltip: String
   ): ProblemDescriptorBase(
     psi, psi, descriptionTemplate, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false,
-    rangeInElement, true, onTheFly
+    rangeInElement, true, onTheFly, tooltip
   ) {
     var quickFixes: Array<LocalQuickFix> = LocalQuickFix.EMPTY_ARRAY
 
     override fun getFixes(): Array<LocalQuickFix> = quickFixes
-
-    override fun getTooltipTemplate(): String {
-      return tooltip
-    }
   }
 
   private fun isIgnoredByStrategies(descriptor: TextProblem): Boolean {
@@ -242,7 +234,7 @@ class CheckerRunner(val text: TextContent) {
         super.applyFix(project, psiFile, editor)
       }
     })
-    result.add(GrazieRuleSettingsAction(problem.rule.presentableName, problem.rule))
+    result.add(GrazieRuleSettingsAction(problem.rule, problem.text.getTextDomain()))
     return result.toTypedArray()
   }
 

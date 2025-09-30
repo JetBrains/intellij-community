@@ -26,6 +26,7 @@ load("//:rules/impl/associates.bzl", "get_associates")
 load("//:rules/impl/builder-args.bzl", "init_builder_args")
 load("//:rules/impl/javac-options.bzl", "JavacOptions")
 load("//:rules/impl/kotlinc-options.bzl", "KotlincOptions")
+load("//:rules/resource.bzl", "ResourceGroupInfo")
 
 visibility("private")
 
@@ -212,6 +213,7 @@ def kt_jvm_produce_jar_actions(ctx, isTest = False):
         ctx = ctx,
         output_jar = output_jar,
         srcs = srcs,
+        resources = [r[ResourceGroupInfo] for r in ctx.attr.resources],
         associates = associates,
         compile_deps = compile_deps,
         transitiveInputs = transitiveInputs,
@@ -261,6 +263,7 @@ def _run_jvm_builder(
         ctx,
         output_jar,
         srcs,
+        resources,
         associates,
         compile_deps,
         transitiveInputs,
@@ -277,7 +280,7 @@ def _run_jvm_builder(
         kotlin_inc_threshold = kotlinc_options.inc_threshold
     java_inc_threshold = ctx.attr._java_inc_threshold[BuildSettingInfo].value
 
-    args = init_builder_args(ctx, associates, transitiveInputs, plugins = plugins, compile_deps = compile_deps)
+    args = init_builder_args(ctx, srcs, resources, associates, transitiveInputs, plugins = plugins, compile_deps = compile_deps)
     args.add("--out", output_jar)
 
     outputs = [output_jar]
@@ -299,6 +302,8 @@ def _run_jvm_builder(
     javaCount = len(srcs.java)
     args.add("--java-count", javaCount)
 
+    all_resources = [f for r in resources for f in r.files]
+
     java_runtime = ctx.attr._tool_java_runtime[java_common.JavaRuntimeInfo]
 
     ctx.actions.run(
@@ -306,7 +311,7 @@ def _run_jvm_builder(
         env = {
             "MALLOC_ARENA_MAX": "2",
         },
-        inputs = depset(srcs.all_srcs, transitive = transitiveInputs),
+        inputs = depset(srcs.all_srcs + all_resources, transitive = transitiveInputs),
         outputs = outputs,
         tools = [ctx.file._jvm_builder_launcher, ctx.file._jvm_builder],
         executable = java_runtime.java_executable_exec_path,

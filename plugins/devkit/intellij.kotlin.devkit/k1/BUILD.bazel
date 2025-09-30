@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.kotlin.devkit.k1` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "k1_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.kotlin.devkit.k1",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":k1_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
@@ -27,8 +28,7 @@ jvm_library(
     "//plugins/kotlin/base/fe10/analysis",
     "//plugins/devkit/devkit-core:core",
     "//plugins/kotlin/code-insight/api",
-  ],
-  runtime_deps = [":k1_resources"]
+  ]
 )
 
 jvm_library(
@@ -61,8 +61,7 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/devkit/devkit-core:core",
     "//plugins/kotlin/code-insight/api",
-  ],
-  runtime_deps = [":k1_resources"]
+  ]
 )
 ### auto-generated section `build intellij.kotlin.devkit.k1` end
 

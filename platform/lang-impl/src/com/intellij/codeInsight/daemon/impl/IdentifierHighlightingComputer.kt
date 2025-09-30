@@ -250,7 +250,10 @@ class IdentifierHighlightingComputer(
 
     private fun findTarget(editor: Editor, file: PsiFile, myCaretOffset: Int): PsiElement? {
       val offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), myCaretOffset)
-      return file.findElementAt(offset)
+      val psiElement = file.findElementAt(offset)
+      // LSP has an edge case when it tries to highlight a file with no (finegrained) PSI, where the only PSI element is the whole file.
+      // In this situation we wouldn't want to cache the whole file as an underlying identifier
+      return if (psiElement != null && psiElement.textRange == file.textRange) null else psiElement
     }
 
     /**

@@ -34,17 +34,12 @@ class DirectoryBasedStorageTest {
   }
 
   @Test
-  fun saveVFS() = save(useVfs = true)
-
-  @Test
-  fun saveNIO() = save(useVfs = false)
-
-  private fun save(useVfs: Boolean) = runBlocking<Unit> {
-    val dir = tempDirManager.newPath(refreshVfs = useVfs)
+  fun saveNIO() = runBlocking<Unit> {
+    val dir = tempDirManager.newPath(refreshVfs = false)
     val storage = DirectoryBasedStorage(dir, TestStateSplitter())
     val componentName = "test"
 
-    setStateAndSave(storage, componentName,"""<component name="${componentName}"><sub name="foo"/><sub name="bar"/></component>""", useVfs)
+    setStateAndSave(storage, componentName,"""<component name="${componentName}"><sub name="foo"/><sub name="bar"/></component>""")
     assertThat(dir).hasChildren("foo.xml", "bar.xml", "main.xml")
     assertThat(dir.resolve("foo.xml")).hasContent(generateData("foo"))
     assertThat(dir.resolve("bar.xml")).hasContent(generateData("bar"))
@@ -52,34 +47,36 @@ class DirectoryBasedStorageTest {
     val vDir = LocalFileSystem.getInstance().findFileByNioFile(dir)!!
     assertThat(vDir.findChild("foo.xml")!!.contentsToByteArray()).asString(Charsets.UTF_8).isEqualTo(generateData("foo"))
 
-    setStateAndSave(storage, componentName, """<component name="${componentName}"><sub name="bar"/></component>""", useVfs)
+    setStateAndSave(storage, componentName, """<component name="${componentName}"><sub name="bar"/></component>""")
     assertThat(dir).hasChildren("main.xml", "bar.xml")
     assertThat(dir.resolve("bar.xml")).hasContent(generateData("bar"))
     assertThat(dir.resolve("main.xml")).hasContent(generateData("test"))
     assertThat(vDir.findChild("foo.xml")).isNull()
     assertThat(vDir.findChild("bar.xml")!!.contentsToByteArray()).asString(Charsets.UTF_8).isEqualTo(generateData("bar"))
 
-    setStateAndSave(storage, componentName, """<component name="${componentName}"><sub name="bar" extra="."/></component>""", useVfs)
+    setStateAndSave(storage, componentName, """<component name="${componentName}"><sub name="bar" extra="."/></component>""")
     assertThat(dir.resolve("bar.xml")).hasContent(generateData("bar", " extra=\".\""))
     assertThat(vDir.findChild("bar.xml")!!.contentsToByteArray()).asString(Charsets.UTF_8).isEqualTo(generateData("bar", " extra=\".\""))
 
-    setStateAndSave(storage, componentName, state = null, useVfs)
+    setStateAndSave(storage = storage, componentName = componentName, state = null)
     assertThat(dir).doesNotExist()
     assertThat(vDir.isValid).isFalse()
   }
 
-  private suspend fun setStateAndSave(storage: StateStorageBase<*>, componentName: String, state: String?, useVfs: Boolean) {
-    val sessionManager = SaveSessionProducerManager(useVfs, collectVfsEvents = true)
+  private suspend fun setStateAndSave(storage: StateStorageBase<*>, componentName: String, state: String?) {
+    val sessionManager = SaveSessionProducerManager()
     val sessionProducer = sessionManager.getProducer(storage)!!
     val state = if (state == null) Element("state") else JDOMUtil.load(state)
     sessionProducer.setState(component = null, componentName, PluginManagerCore.CORE_ID, state)
-    sessionManager.save(SaveResult())
+    sessionManager.save(SaveResult(), collectVfsEvents = true)
   }
 
-  private fun generateData(name: String, extra: String = ""): String = """
-    <component name="test">
-      <${if (name == "test") "component" else "sub"} name="${name}"${extra} />
-    </component>""".trimIndent()
+  private fun generateData(name: String, extra: String = ""): String {
+    return """
+      <component name="test">
+        <${if (name == "test") "component" else "sub"} name="${name}"${extra} />
+      </component>""".trimIndent()
+  }
 
   private class TestStateSplitter : MainConfigurationStateSplitter() {
     override fun getComponentStateFileName() = "main"

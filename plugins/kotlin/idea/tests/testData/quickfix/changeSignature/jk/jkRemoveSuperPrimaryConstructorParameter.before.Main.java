@@ -1,4 +1,4 @@
-// "Remove 2nd parameter from constructor 'KotlinBase'" "true"
+// "Remove 2nd parameter from constructor 'KotlinBase()'" "true"
 
 public class JavaInheritor extends KotlinBase {
     public JavaInheritor() {

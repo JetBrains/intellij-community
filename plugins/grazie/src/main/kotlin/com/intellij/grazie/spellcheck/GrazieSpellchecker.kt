@@ -10,6 +10,7 @@ import com.intellij.grazie.ide.msg.CONFIG_STATE_TOPIC
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
+import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.components.Service
@@ -113,7 +114,7 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     for (lang in GrazieConfig.get().availableLanguages) {
       if (lang.isEnglish()) continue
 
-      val tool = LangTool.getTool(lang)
+      val tool = LangTool.getTool(lang, TextStyleDomain.Other)
       tool.allSpellingCheckRules.firstOrNull()
         ?.let { set.add(SpellerTool(tool, lang, it)) }
     }

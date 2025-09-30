@@ -129,4 +129,5 @@ data class CodeCommentRange(
   val text: String,
   val negativeExample: Boolean? = null,
   val category: String? = null,
+  val type: String? = null,
 ) : Range

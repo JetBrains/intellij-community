@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.monorepo.api
 
-import com.intellij.platform.testFramework.monorepo.processProductionOutputs
+import com.intellij.platform.testFramework.monorepo.processProductionOutput
 import com.intellij.tools.apiDump.API
 import com.intellij.tools.apiDump.api
 import com.intellij.tools.apiDump.emptyApiIndex
@@ -47,8 +47,8 @@ class ModuleApi(private val cs: CoroutineScope) {
       acc + item
     }
 
-    return module.processProductionOutputs { outputRoots ->
-      api(dependencyIndex, outputRoots)
+    return module.processProductionOutput { outputRoot ->
+      api(dependencyIndex, outputRoot)
     }
   }
 }

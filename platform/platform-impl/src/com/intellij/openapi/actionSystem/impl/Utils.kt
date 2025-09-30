@@ -55,6 +55,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.mac.MacMenuSettings
 import com.intellij.ui.mac.foundation.NSDefaults
 import com.intellij.ui.mac.screenmenu.Menu
+import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.application
@@ -71,7 +72,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -1300,7 +1300,7 @@ internal inline fun <R> runBlockingForActionExpand(context: CoroutineContext = E
     val (lockContextElement, cleanup) = getGlobalThreadingSupport().getPermitAsContextElement(ctx, !application.isWriteAccessAllowed)
     try {
       @OptIn(InternalCoroutinesApi::class)
-      IntellijCoroutines.runBlockingWithParallelismCompensation(
+      IntelliJCoroutinesFacade.runBlockingWithParallelismCompensation(
         ctx +
         context +
         lockContextElement +

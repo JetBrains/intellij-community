@@ -1,10 +1,16 @@
 ### auto-generated section `build intellij.python.terminal` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "terminal_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
+)
+
+resourcegroup(
+  name = "terminal_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
 )
 
 jvm_library(
@@ -12,6 +18,7 @@ jvm_library(
   module_name = "intellij.python.terminal",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":terminal_resources"],
   deps = [
     "//python:python-community-impl",
     "//plugins/terminal",
@@ -20,14 +27,14 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//python/python-sdk:sdk",
     "//platform/lang-api:lang",
-  ],
-  runtime_deps = [":terminal_resources"]
+  ]
 )
 
 jvm_library(
   name = "terminal_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  resources = [":terminal_test_resources"],
   associates = [":terminal"],
   deps = [
     "//python:python-community-impl",
@@ -53,8 +60,7 @@ jvm_library(
     "@lib//:junit5Params",
     "@lib//:junit5Pioneer",
     "//platform/testFramework/common",
-  ],
-  runtime_deps = [":terminal_resources"]
+  ]
 )
 ### auto-generated section `build intellij.python.terminal` end
 

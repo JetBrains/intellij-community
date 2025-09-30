@@ -198,6 +198,12 @@ public final class PlatformUtils {
     return is(GIT_CLIENT_PREFIX);
   }
 
+  /**
+   * Returns {@code true} if the IDE is running in a frontend mode (JetBrains Client).
+   * This is an internal method supposed to be used only from code running during early startup phases.
+   * If the instance container is initialized (in particular, in any plugin code), its equivalent
+   * {@link com.intellij.platform.ide.productMode.IdeProductMode#isFrontend()} should be used instead.
+   */
   public static boolean isJetBrainsClient() { return is(JETBRAINS_CLIENT_PREFIX); }
 
   public static boolean isGateway() { return is(GATEWAY_PREFIX); }

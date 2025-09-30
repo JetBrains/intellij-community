@@ -20,6 +20,5 @@
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.util.project-model-updater" scope="TEST" />
   </component>
 </module>

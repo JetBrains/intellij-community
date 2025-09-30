@@ -113,4 +113,7 @@ public interface IndexStorage<Key, Value> extends Flushable, Closeable {
   default void invalidateCachedMappings() {
     //nothing
   }
+
+  @Internal
+  boolean isReadLockHeldByCurrentThread();
 }

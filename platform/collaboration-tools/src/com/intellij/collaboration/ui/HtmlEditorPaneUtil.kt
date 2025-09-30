@@ -7,13 +7,17 @@ import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.HyperlinkAdapter
-import com.intellij.util.ui.*
+import com.intellij.ui.components.JBHtmlPane
+import com.intellij.ui.components.JBHtmlPaneConfiguration
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
+import com.intellij.util.ui.ExtendableHTMLViewFactory
+import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.JBInsets
 import org.intellij.lang.annotations.Language
 import java.awt.Graphics
 import java.awt.Shape
 import java.net.URL
 import javax.swing.JEditorPane
-import javax.swing.JTextPane
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.DefaultCaret
 import javax.swing.text.Element
@@ -31,20 +35,21 @@ fun SimpleHtmlPane(
   baseUrl: URL? = null,
   aClass: Class<*> = HtmlEditorPaneUtil::class.java,
 ): JEditorPane =
-  JTextPane().apply {
-    editorKit = HTMLEditorKitBuilder().withViewFactoryExtensions(
-      ExtendableHTMLViewFactory.Extensions.WORD_WRAP,
-      HtmlEditorPaneUtil.CONTENT_TOOLTIP,
-      HtmlEditorPaneUtil.inlineIconExtension(aClass),
-      HtmlEditorPaneUtil.IMAGES_EXTENSION
-    ).apply {
-      if (additionalStyleSheet != null) {
-        val defaultStyleSheet = StyleSheetUtil.getDefaultStyleSheet()
-        additionalStyleSheet.addStyleSheet(defaultStyleSheet)
-        withStyleSheet(additionalStyleSheet)
-      }
-    }.build()
-
+  JBHtmlPane(
+    JBHtmlPaneStyleConfiguration.builder().build(),
+    JBHtmlPaneConfiguration.builder()
+      .customStyleSheet("""
+        p {
+            padding: 0 0 0 0;
+        }
+      """.trimIndent())
+      .customStyleSheetProvider { additionalStyleSheet ?: StyleSheet() }
+      .extensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP,
+                  HtmlEditorPaneUtil.CONTENT_TOOLTIP,
+                  HtmlEditorPaneUtil.inlineIconExtension(aClass),
+                  HtmlEditorPaneUtil.IMAGES_EXTENSION)
+      .build()
+  ).apply {
     isEditable = false
     isOpaque = false
     if (addBrowserListener) {

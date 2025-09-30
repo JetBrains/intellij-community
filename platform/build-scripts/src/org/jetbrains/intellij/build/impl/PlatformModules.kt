@@ -122,6 +122,8 @@ suspend fun createPlatformLayout(context: BuildContext): PlatformLayout {
   )
 }
 
+internal const val LIB_MODULE_PREFIX = "intellij.libraries."
+
 internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>, context: BuildContext): PlatformLayout {
   val frontendModuleFilter = context.getFrontendModuleFilter()
   val productLayout = context.productProperties.productLayout
@@ -302,25 +304,41 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
       .sortedBy { it.moduleName },
   )
 
+  val libAsProductModule: HashSet<String> = layout.includedModules.mapNotNullTo(HashSet()) {
+    if (it.moduleName.startsWith(LIB_MODULE_PREFIX)) {
+      it.moduleName.substring(LIB_MODULE_PREFIX.length).replace('.', '-')
+    }
+    else {
+      null
+    }
+  }
+  layout.libAsProductModule = libAsProductModule
+
   // sqlite - used by DB and "import settings" (temporarily)
   layout.alwaysPackToPlugin(listOf("flexmark", "sqlite"))
   for (item in projectLibrariesUsedByPlugins) {
-    if (!layout.isProjectLibraryExcluded(item.libraryName) && !layout.isLibraryAlwaysPackedIntoPlugin(item.libraryName)) {
+    val libName = item.libraryName
+    if (!libAsProductModule.contains(libName) && !layout.isProjectLibraryExcluded(libName) && !layout.isLibraryAlwaysPackedIntoPlugin(libName)) {
       layout.includedProjectLibraries.add(item)
     }
   }
-  // as a separate step, not a part of computing implicitModules, as we should collect libraries from a such implicitly included modules
+
+  // as a separate step, not a part of computing implicitModules, as we should collect libraries from such implicitly included modules
   layout.collectProjectLibrariesFromIncludedModules(context = context) { lib, module ->
-    val name = lib.name
+    val libName = lib.name
     // this module is used only when running IDE from sources, no need to include its dependencies, see IJPL-125
-    if (module.name == "intellij.platform.buildScripts.downloader" && name == "zstd-jni") {
+    if (module.name == "intellij.platform.buildScripts.downloader" && libName == "zstd-jni") {
+      return@collectProjectLibrariesFromIncludedModules
+    }
+
+    if (libAsProductModule.contains(libName)) {
       return@collectProjectLibrariesFromIncludedModules
     }
 
     layout.includedProjectLibraries
       .addOrGet(ProjectLibraryData(
-        libraryName = name,
-        packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(name, LibraryPackMode.MERGED),
+        libraryName = libName,
+        packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libName, LibraryPackMode.MERGED),
         reason = "<- ${module.name}",
       ))
       .dependentModules.computeIfAbsent("core") { mutableListOf() }.add(module.name)
@@ -634,7 +652,19 @@ private suspend fun collectAndEmbedProductModules(root: Element, xIncludePathRes
       continue
     }
 
-    val relativeOutFile = if (loadingRule == "embedded") getProductModuleJarName(moduleName, context, frontendModuleFilter) else "modules/$moduleName.jar"
+    val relativeOutFile = if (loadingRule == "embedded") {
+      if (isModuleCloseSource(moduleName, context = context)) {
+        if (frontendModuleFilter.isBackendModule(moduleName)) PRODUCT_BACKEND_JAR else PRODUCT_JAR
+      }
+      else {
+        // todo Change location after feature-freeze (and maybe by that time, https://youtrack.jetbrains.com/issue/IJPL-209476/extract-core-out-of-core will be ready).
+        // Using `modules` before release is not a safe option.
+        "module-$moduleName.jar"
+      }
+    }
+    else {
+      "modules/$moduleName.jar"
+    }
     result.add(ModuleItem(moduleName = moduleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES))
     PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let {
       it.mapTo(result) { subModuleName ->

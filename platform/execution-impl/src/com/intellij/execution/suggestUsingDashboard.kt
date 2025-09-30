@@ -5,6 +5,7 @@ package com.intellij.execution
 import com.intellij.CommonBundle
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.dashboard.RunDashboardManager
+import com.intellij.execution.dashboard.RunDashboardUiManager
 import com.intellij.icons.AllIcons
 import com.intellij.lang.LangBundle
 import com.intellij.notification.*
@@ -18,12 +19,13 @@ import com.intellij.openapi.project.Project
 internal fun promptUserToUseRunDashboard(project: Project, configurationTypes: Collection<ConfigurationType>) {
   ApplicationManager.getApplication().invokeLater {
     val currentTypes = RunDashboardManager.getInstance(project).types
+    val toolWindowId = RunDashboardUiManager.getInstance(project).toolWindowId
     val typesToAdd = configurationTypes.filter {
       it.id !in currentTypes
     }
     if (typesToAdd.isNotEmpty()) {
       Notifications.Bus.notify(
-        SuggestDashboardNotification(project, typesToAdd.toSet(), RunDashboardManager.getInstance(project).toolWindowId), project)
+        SuggestDashboardNotification(project, typesToAdd.toSet(), toolWindowId), project)
     }
   }
 }

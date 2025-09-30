@@ -27,6 +27,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.Result.Companion.success
+import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -102,7 +103,7 @@ abstract class PythonAddInterpreterModel(
       modificationCounter.updateAndGet { it + 1 }
     }.launchIn(scope + Dispatchers.EDT)
 
-    scope.launch(CoroutineName("Loading Interpreter List") + Dispatchers.EDT) {
+    scope.launch(TraceContext(message("tracecontext.loading.interpreter.list"), scope) + Dispatchers.EDT) {
       installable = getExistingInstallableInterpreters()
       val existingSelectableInterpreters = getExistingSelectableInterpreters()
       knownInterpreters.value = existingSelectableInterpreters
@@ -128,7 +129,7 @@ abstract class PythonAddInterpreterModel(
     }.stateIn(scope, started = SharingStarted.Eagerly, initialValue = null)
 
 
-    scope.launch(CoroutineName("Detecting Conda Executable and environments") + Dispatchers.IO) {
+    scope.launch(TraceContext(message("tracecontext.detecting.conda.executable.and.environments"), scope) + Dispatchers.IO) {
       detectCondaExecutable()
       detectCondaEnvironments()
     }.invokeOnCompletion {
@@ -268,22 +269,22 @@ abstract class PythonMutableTargetAddInterpreterModel(projectPathFlows: ProjectP
 
   override fun initialize(scope: CoroutineScope) {
     super.initialize(scope)
-    scope.launch(CoroutineName("Detecting Poetry Executable")) {
+    scope.launch(TraceContext(message("tracecontext.detecting.poetry.executable"), scope)) {
       detectPoetryExecutable()
     }
-    scope.launch(CoroutineName("Detecting Pip Executable")) {
+    scope.launch(TraceContext(message("tracecontext.detecting.pip.executable"), scope)) {
       detectPipEnvExecutable()
     }
-    scope.launch(CoroutineName("Detecting uv Executable")) {
+    scope.launch(TraceContext(message("tracecontext.detecting.uv.executable"), scope)) {
       detectUvExecutable()
     }
-    scope.launch(CoroutineName("Detecting Hatch Executable")) {
+    scope.launch(TraceContext(message("tracecontext.detecting.hatch.executable"), scope)) {
       detectHatchExecutable()
     }
 
     state.hatchExecutable.afterChange(scope.asDisposable()) { pathString ->
       hatchEnvironmentsResult.value = null
-      scope.launch(CoroutineName("Detecting Hatch Environments")) {
+      scope.launch(TraceContext(message("tracecontext.detecting.hatch.environments"), scope)) {
         val hatchEnvironments = detectHatchEnvironments(pathString)
         withContext(Dispatchers.EDT) {
           hatchEnvironmentsResult.value = hatchEnvironments

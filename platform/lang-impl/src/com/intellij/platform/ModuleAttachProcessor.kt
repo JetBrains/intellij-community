@@ -7,6 +7,7 @@ import com.intellij.configurationStore.saveSettings
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ModuleAttachProcessor.Companion.getPrimaryModule
 import com.intellij.projectImport.ProjectAttachProcessor
+import com.intellij.projectImport.ProjectAttachProcessor.Companion.canAttachToProject
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.util.io.directoryStreamIfExists
 import kotlinx.coroutines.CancellationException
@@ -41,44 +43,6 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
     fun getPrimaryModule(project: Project): Module? {
       return if (canAttachToProject()) PrimaryModuleManager.findPrimaryModule(project) else null
     }
-
-    @JvmStatic
-    fun getSortedModules(project: Project): List<Module> {
-      val primaryModule = getPrimaryModule(project)
-      val result = ArrayList<Module>()
-      ModuleManager.getInstance(project).modules.filterTo(result) { it !== primaryModule}
-      result.sortBy(Module::getName)
-      primaryModule?.let {
-        result.add(0, it)
-      }
-      return result
-    }
-
-    /**
-     * @param project the project
-     * @return `null` if either multi-projects are not enabled or the project has only one module
-     */
-    @JvmStatic
-    @NlsSafe
-    fun getMultiProjectDisplayName(project: Project): String? {
-      if (!canAttachToProject()) {
-        return null
-      }
-
-      val modules = ModuleManager.getInstance(project).modules
-      if (modules.size <= 1) {
-        return null
-      }
-
-      val primaryModule = getPrimaryModule(project) ?: modules.first()
-      val result = StringBuilder(primaryModule.name)
-        .append(", ")
-        .append(modules.asSequence().filter { it !== primaryModule }.first().name)
-      if (modules.size > 2) {
-        result.append("...")
-      }
-      return result.toString()
-    }
   }
 
   override suspend fun attachToProjectAsync(project: Project,
@@ -87,17 +51,28 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
                                             beforeOpen: (suspend (Project) -> Boolean)?): Boolean {
     LOG.info("Attaching directory: $projectDir")
     val dotIdeaDir = projectDir.resolve(Project.DIRECTORY_STORE_FOLDER)
-    if (!Files.exists(dotIdeaDir)) {
-      val options = OpenProjectTask { useDefaultProjectAsTemplate = true; isNewProject = true }
-      val newProject = ProjectManagerEx.getInstanceEx().newProjectAsync(file = projectDir, options = options)
-      PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir = projectDir,
-                                                                    project = newProject,
-                                                                    newProject = true,
-                                                                    createModule = true)
-      runInAutoSaveDisabledMode {
-        saveSettings(newProject)
+    if (Files.notExists(dotIdeaDir)) {
+      val options = OpenProjectTask {
+        useDefaultProjectAsTemplate = true
+        isNewProject = true
       }
-      edtWriteAction { Disposer.dispose(newProject) }
+      val newProject = ProjectManagerEx.getInstanceEx().newProjectAsync(file = projectDir, options = options)
+      try {
+        PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
+          projectFile = projectDir,
+          project = newProject,
+          newProject = true,
+          createModule = true,
+        )
+        runInAutoSaveDisabledMode {
+          saveSettings(newProject)
+        }
+      }
+      finally {
+        withContext(Dispatchers.EDT) {
+          ApplicationManager.getApplication().runWriteAction { Disposer.dispose(newProject) }
+        }
+      }
     }
 
     val newModule = try {
@@ -172,4 +147,40 @@ private fun addPrimaryModuleDependency(project: Project, newModule: Module): Mod
     return module
   }
   return null
+}
+
+/**
+ * @param project the project
+ * @return `null` if either multi-projects are not enabled or the project has only one module
+ */
+@NlsSafe
+fun getMultiProjectDisplayName(project: Project): String? {
+  if (!canAttachToProject()) {
+    return null
+  }
+
+  val modules = ModuleManager.getInstance(project).modules
+  if (modules.size <= 1) {
+    return null
+  }
+
+  val primaryModule = getPrimaryModule(project) ?: modules.first()
+  val result = StringBuilder(primaryModule.name)
+    .append(", ")
+    .append(modules.asSequence().filter { it !== primaryModule }.first().name)
+  if (modules.size > 2) {
+    result.append("...")
+  }
+  return result.toString()
+}
+
+internal fun getSortedModules(project: Project): List<Module> {
+  val primaryModule = getPrimaryModule(project)
+  val result = ArrayList<Module>()
+  ModuleManager.getInstance(project).modules.filterTo(result) { it !== primaryModule}
+  result.sortBy(Module::getName)
+  primaryModule?.let {
+    result.add(0, it)
+  }
+  return result
 }

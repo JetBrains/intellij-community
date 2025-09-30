@@ -1,0 +1,17 @@
+package org.example;
+
+import org.jetbrains.annotations.Nullable;
+
+public class TestAnnotationExtendObjectClass<T extends @Nullable Object, L extends @Nullable String, M> {
+   public static void main(String[] args) {
+   }// 8
+}
+
+class 'org/example/TestAnnotationExtendObjectClass' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      6
+   }
+}
+
+Lines mapping:
+8 <-> 7

@@ -159,14 +159,10 @@ com.intellij.execution.configurations.WrappingRunConfiguration
 - com.intellij.execution.configurations.WithoutOwnBeforeRunSteps
 - a:getPeer():com.intellij.execution.configurations.RunConfiguration
 - s:unwrapRunProfile(com.intellij.execution.configurations.RunProfile):com.intellij.execution.configurations.RunProfile
-com.intellij.execution.dashboard.RunDashboardManager
+com.intellij.execution.dashboard.RunDashboardListener
 - sf:DASHBOARD_TOPIC:com.intellij.util.messages.Topic
-- a:getDashboardContentManager():com.intellij.ui.content.ContentManager
+com.intellij.execution.dashboard.RunDashboardManager
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.execution.dashboard.RunDashboardManager
-- a:getReuseCondition():java.util.function.Predicate
-- a:getRunConfigurations():java.util.List
-- a:getToolWindowIcon():javax.swing.Icon
-- a:getToolWindowId():java.lang.String
 - a:getTypes():java.util.Set
 - a:isShowInDashboard(com.intellij.execution.configurations.RunConfiguration):Z
 - a:setTypes(java.util.Set):V

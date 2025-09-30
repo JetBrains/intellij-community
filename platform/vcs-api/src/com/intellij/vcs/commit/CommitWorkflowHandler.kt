@@ -25,6 +25,7 @@ sealed class CommitChecksResult {
   class Failed(val toCloseWindow: Boolean = false) : CommitChecksResult()
   object Cancelled : CommitChecksResult()
   object ExecutionError : CommitChecksResult()
+  object SmartModeRequired : CommitChecksResult()
 
   val shouldCommit: Boolean get() = this is Passed
   val shouldCloseWindow: Boolean get() = this is Failed && toCloseWindow

@@ -36,7 +36,11 @@
       "arc": 20,
       "borderWidth": 4,
       "inactiveAlpha": 0.44,
-      "inactiveAlphaInStatusBar": 0.2
+      "inactiveAlphaInStatusBar": {
+        "os.mac": 0.2,
+        "os.windows": 0.2,
+        "os.linux": 0.15
+      }
     },
 
     "MainWindow.background": "BackgroundDark",
@@ -52,7 +56,8 @@
 
     "MainToolbar": {
       "background": "BackgroundDark",
-      "borderColor": "BorderTransparent"
+      "borderColor": "BorderTransparent",
+      "Button.arc.compact": 8
     },
 
     "StatusBar": {
@@ -88,6 +93,7 @@
       "hoverBackground": "#0000000C",
 
       "tabInsets": "-6,8,-6,8",
+      "tabInsets.compact": "-2,6,-2,4",
       "tabContentActionsRightInsets": "0,2,0,2"
     },
 
@@ -152,12 +158,12 @@
         "hoverThumbColor": "#00000080",
         "hoverTrackColor": "#8080801A",
         "thumbBorderColor": "#00000000",
-        "thumbColor": "#00000000",
+        "thumbColor": "#00000033",
         "trackColor": "#80808000"
       }
     },
 
-    "SearchEverywhere.Header.insets": "0,4,0,9",
+    "SearchEverywhere.Header.insets": "2,4,0,9",
 
     "HelpBrowser.UserMessage.background": "#DFE1E5CC",
 
@@ -172,6 +178,11 @@
     "RecentProject.Color9.MainToolbarGradientStart": "#ceedd4",
 
     "RecentProject.MainToolbarGradient.width": 600,
-    "RecentProject.MainToolbarGradient.height": 300
+    "RecentProject.MainToolbarGradient.height": 300,
+
+    "ProgressBar": {
+      "progressCounterBackground": "#5288f2",
+      "progressCounterForeground": "#FFFFFF"
+    }
   }
 }

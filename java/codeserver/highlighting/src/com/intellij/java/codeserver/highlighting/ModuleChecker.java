@@ -64,7 +64,7 @@ final class ModuleChecker {
           PsiJavaModule anotherJavaModule = JavaPsiModuleUtil.findDescriptorByElement(directory);
           if (anotherJavaModule != null) {
             VirtualFile moduleVFile = PsiUtilCore.getVirtualFile(anotherJavaModule);
-            if (moduleVFile != null && ContainerUtil.find(fileIndex.getOrderEntriesForFile(moduleVFile), JdkOrderEntry.class::isInstance) != null) {
+            if (moduleVFile != null && !fileIndex.findContainingSdks(moduleVFile).isEmpty()) {
               VirtualFile rootForFile = fileIndex.getSourceRootForFile(file.getVirtualFile());
               if (rootForFile != null && JavaCompilerConfigurationProxy.isPatchedModuleRoot(anotherJavaModule.getName(), module, rootForFile)) {
                 return;

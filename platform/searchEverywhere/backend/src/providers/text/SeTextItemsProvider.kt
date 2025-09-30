@@ -4,20 +4,15 @@ package com.intellij.platform.searchEverywhere.backend.providers.text
 import com.intellij.find.FindManager
 import com.intellij.find.impl.JComboboxAction
 import com.intellij.find.impl.SearchEverywhereItem
-import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.toSerializableTextChunk
-import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
-import com.intellij.platform.searchEverywhere.backend.providers.ScopeChooserActionProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.*
-import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -25,7 +20,13 @@ import org.jetbrains.annotations.Nls
 import java.awt.event.InputEvent
 
 @ApiStatus.Internal
-class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int, val extendedInfo: SeExtendedInfo, val isMultiSelectionSupported: Boolean) : SeItem {
+class SeTextSearchItem(
+  val item: SearchEverywhereItem,
+  override val contributor: SearchEverywhereContributor<*>,
+  private val weight: Int,
+  val extendedInfo: SeExtendedInfo,
+  val isMultiSelectionSupported: Boolean) : SeLegacyItem {
+  override val rawObject: Any get() = item
   override fun weight(): Int = weight
 
   override suspend fun presentation(): SeItemPresentation =
@@ -40,11 +41,11 @@ class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int, 
 }
 
 @ApiStatus.Internal
-class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) : SeItemsProvider, SeSearchScopesProvider {
-  private val contributor = contributorWrapper.contributor
+class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(), SeSearchScopesProvider {
   override val id: String get() = SeProviderIdUtils.TEXT_ID
   override val displayName: @Nls String
     get() = contributor.fullGroupName
+  override val contributor: SearchEverywhereContributor<Any> get() = contributorWrapper.contributor
   private val findModel = FindManager.getInstance(project).findInProjectModel
   private val scopeProviderDelegate = ScopeChooserActionProviderDelegate(contributorWrapper)
 
@@ -73,18 +74,12 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
       findModel.isRegularExpressions = SeTextFilter.isRegularExpressions(params.filter) ?: false
     }
 
-    coroutineToIndicator {
-      val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
-
-      contributorWrapper.fetchWeightedElements(inputQuery, indicator, object : AsyncProcessor<FoundItemDescriptor<Any>> {
-        override suspend fun process(t: FoundItemDescriptor<Any>): Boolean {
-          val weight = t.weight
-          val legacyItem = t.item as? SearchEverywhereItem ?: return true
-
-          return collector.put(SeTextSearchItem(legacyItem, weight, contributor.getExtendedInfo(legacyItem), contributorWrapper.contributor.isMultiSelectionSupported))
-        }
-      })
-    }
+    contributorWrapper.fetchElements(inputQuery, object : AsyncProcessor<Any> {
+      override suspend fun process(item: Any, weight: Int): Boolean {
+        if (item !is SearchEverywhereItem) return true
+        return collector.put(SeTextSearchItem(item, contributor, weight, contributor.getExtendedInfo(item), contributorWrapper.contributor.isMultiSelectionSupported))
+      }
+    })
   }
 
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
@@ -99,7 +94,7 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
   }
 
   private fun applyScope(scopeId: String?) {
-    scopeProviderDelegate.applyScope(scopeId)
+    scopeProviderDelegate.applyScope(scopeId, false)
   }
 
   override suspend fun getSearchScopesInfo(): SearchScopesInfo? {

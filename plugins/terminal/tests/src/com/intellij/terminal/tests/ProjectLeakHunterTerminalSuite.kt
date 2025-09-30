@@ -41,7 +41,6 @@ import org.junit.runners.Suite
   ShellCommandTreeBuilderTest::class,
   ClassicTerminalBasicTest::class,
   TerminalStateSerializationTest::class,
-  //CommandEndMarkerListeningStringCollectorTest::class, // JUnit 5
 
   _LastInSuiteTest::class,
 )

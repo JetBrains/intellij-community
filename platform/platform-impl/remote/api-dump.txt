@@ -1,3 +1,6 @@
+f:com.intellij.remote.DeferredRemoteProcess
+- com.intellij.execution.process.PtyBasedProcess
+- hasPty():Z
 com.intellij.remote.RemoteConnector
 - getAdditionalData():java.lang.String
 - a:getConnectorKey():java.lang.Object

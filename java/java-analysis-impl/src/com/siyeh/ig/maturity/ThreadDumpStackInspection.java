@@ -37,7 +37,7 @@ public final class ThreadDumpStackInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ThreadDumpStackVisitor();
   }
 

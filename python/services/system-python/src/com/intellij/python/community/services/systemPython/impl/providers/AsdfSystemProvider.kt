@@ -7,7 +7,7 @@ import com.intellij.platform.eel.getOrNull
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.python.community.services.shared.UICustomization
-import com.intellij.python.community.services.systemPython.PythonCommunityServicesSystemPythonIcons
+import com.intellij.python.community.services.systemPython.icons.PythonCommunityServicesSystemPythonIcons
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult

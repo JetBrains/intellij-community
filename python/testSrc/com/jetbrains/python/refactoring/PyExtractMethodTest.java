@@ -396,4 +396,34 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testInnerFunctionWithSameNameAsOuterMethod() {
     doTest("foo");
   }
+
+  // PY-54512
+  public void testLineBreakOutsideBraces() {
+    doTest("bar");
+  }
+
+  // PY-54512
+  public void testLineBreakOutsideBraces2() {
+    doTest("bar");
+  }
+
+  // PY-54512
+  public void testLineBreakInsideBraces() {
+    doTest("bar");
+  }
+
+  // PY-54512
+  public void testExplicitLineJoining() {
+    doTest("bar");
+  }
+
+  // PY-54512
+  public void testGeneratorNoParens() {
+    doTest("bar");
+  }
+
+  // PY-54512
+  public void testGeneratorParenthesized() {
+    doTest("bar");
+  }
 }

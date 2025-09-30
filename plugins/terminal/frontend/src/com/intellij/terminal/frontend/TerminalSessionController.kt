@@ -67,9 +67,10 @@ internal class TerminalSessionController(
     when (event) {
       is TerminalInitialStateEvent -> {
         sessionModel.updateTerminalState(event.sessionState.toTerminalState())
-        outputModelController.applyPendingUpdates()
-        alternateBufferModelController.applyPendingUpdates()
         withContext(edtContext) {
+          outputModelController.applyPendingUpdates()
+          alternateBufferModelController.applyPendingUpdates()
+
           outputModelController.model.restoreFromState(event.outputModelState.toState())
           alternateBufferModelController.model.restoreFromState(event.alternateBufferState.toState())
           blocksModel.restoreFromState(event.blocksModelState.toState())

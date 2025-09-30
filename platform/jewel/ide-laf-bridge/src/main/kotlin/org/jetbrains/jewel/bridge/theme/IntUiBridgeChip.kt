@@ -2,10 +2,14 @@ package org.jetbrains.jewel.bridge.theme
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.intellij.util.ui.JBUI
 import org.jetbrains.jewel.bridge.createVerticalBrush
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.retrieveColorsOrUnspecified
+import org.jetbrains.jewel.bridge.toNonNegativeDpSize
 import org.jetbrains.jewel.ui.component.styling.ChipColors
 import org.jetbrains.jewel.ui.component.styling.ChipMetrics
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
@@ -19,7 +23,10 @@ import org.jetbrains.jewel.ui.component.styling.ChipStyle
 internal fun readChipStyle(): ChipStyle {
     val normalBackground =
         retrieveColorsOrUnspecified("Button.startBackground", "Button.endBackground").createVerticalBrush()
+
     val normalContent = retrieveColorOrUnspecified("Label.foreground")
+    val disabledContent = retrieveColorOrUnspecified("Label.disabledForeground").takeOrElse { normalContent }
+
     val normalBorder = retrieveColorOrUnspecified("Button.startBorderColor")
     val disabledBorder = retrieveColorOrUnspecified("Button.disabledBorderColor")
     val selectedBorder = retrieveColorOrUnspecified("Component.focusColor")
@@ -37,12 +44,12 @@ internal fun readChipStyle(): ChipStyle {
             backgroundSelectedFocused = normalBackground,
             backgroundSelectedHovered = normalBackground,
             content = normalContent,
-            contentDisabled = normalContent,
+            contentDisabled = disabledContent,
             contentFocused = normalContent,
             contentPressed = normalContent,
             contentHovered = normalContent,
             contentSelected = normalContent,
-            contentSelectedDisabled = normalContent,
+            contentSelectedDisabled = disabledContent,
             contentSelectedPressed = normalContent,
             contentSelectedFocused = normalContent,
             contentSelectedHovered = normalContent,
@@ -58,14 +65,16 @@ internal fun readChipStyle(): ChipStyle {
             borderSelectedHovered = selectedBorder,
         )
 
+    val minimumSize = JBUI.CurrentTheme.Button.minimumSize().toNonNegativeDpSize()
     return ChipStyle(
         colors = colors,
         metrics =
             ChipMetrics(
-                cornerSize = CornerSize(6.dp),
-                padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                cornerSize = CornerSize(100),
+                padding = PaddingValues(horizontal = 14.dp), // see DarculaButtonUI.HORIZONTAL_PADDING
                 borderWidth = 1.dp,
                 borderWidthSelected = 2.dp,
+                minSize = DpSize(minimumSize.width, minimumSize.height),
             ),
     )
 }

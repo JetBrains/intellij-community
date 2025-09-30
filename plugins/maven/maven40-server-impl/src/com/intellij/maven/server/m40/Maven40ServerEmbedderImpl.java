@@ -2,22 +2,12 @@
 package com.intellij.maven.server.m40;
 
 import com.intellij.maven.server.m40.compat.Maven40InvokerRequestFactory;
-import com.intellij.maven.server.m40.utils.ExceptionUtils;
-import com.intellij.maven.server.m40.utils.Maven40ApiModelConverter;
-import com.intellij.maven.server.m40.utils.Maven40EffectivePomDumper;
-import com.intellij.maven.server.m40.utils.Maven40ExecutionResult;
-import com.intellij.maven.server.m40.utils.Maven40ImporterSpy;
-import com.intellij.maven.server.m40.utils.Maven40Invoker;
-import com.intellij.maven.server.m40.utils.Maven40ModelConverter;
-import com.intellij.maven.server.m40.utils.Maven40ProjectResolver;
-import com.intellij.maven.server.m40.utils.Maven40RepositorySystemSessionFactory;
-import com.intellij.maven.server.m40.utils.Maven40ServerConsoleLogger;
-import com.intellij.maven.server.m40.utils.Maven40Sl4jLoggerWrapper;
-import com.intellij.maven.server.m40.utils.Maven40Slf4jServiceProvider;
-import com.intellij.maven.server.m40.utils.Maven40TransferListenerAdapter;
-import com.intellij.maven.server.m40.utils.Maven40WorkspaceMapReader;
+import com.intellij.maven.server.m40.utils.*;
 import com.intellij.maven.server.telemetry.MavenServerOpenTelemetry;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtilRt;
+import org.apache.maven.*;
+import org.apache.maven.api.*;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.DefaultMaven;
 import org.apache.maven.Maven;
@@ -29,6 +19,7 @@ import org.apache.maven.api.cli.InvokerException;
 import org.apache.maven.api.cli.InvokerRequest;
 import org.apache.maven.api.cli.Logger;
 import org.apache.maven.api.cli.ParserRequest;
+import org.apache.maven.api.services.*;
 import org.apache.maven.api.cli.mvn.MavenOptions;
 import org.apache.maven.api.model.Source;
 import org.apache.maven.api.services.ArtifactResolver;
@@ -42,11 +33,7 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.bridge.MavenRepositorySystem;
 import org.apache.maven.cling.invoker.ProtoLookup;
 import org.apache.maven.cling.invoker.mvn.MavenParser;
-import org.apache.maven.execution.DefaultMavenExecutionResult;
-import org.apache.maven.execution.MavenExecutionRequest;
-import org.apache.maven.execution.MavenExecutionResult;
-import org.apache.maven.execution.MavenSession;
-import org.apache.maven.execution.ProfileActivation;
+import org.apache.maven.execution.*;
 import org.apache.maven.internal.impl.DefaultSessionFactory;
 import org.apache.maven.internal.impl.InternalMavenSession;
 import org.apache.maven.jline.JLineMessageBuilderFactory;
@@ -68,13 +55,12 @@ import org.apache.maven.session.scope.internal.SessionScope;
 import org.codehaus.plexus.classworlds.ClassWorld;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.graph.DependencyFilter;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.WorkspaceReader;
-import org.eclipse.aether.resolution.ArtifactRequest;
-import org.eclipse.aether.resolution.ArtifactResolutionException;
-import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.aether.resolution.*;
 import org.eclipse.aether.transfer.ArtifactTransferException;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -102,24 +88,15 @@ import org.jetbrains.idea.maven.server.PluginResolutionRequest;
 import org.jetbrains.idea.maven.server.PluginResolutionResponse;
 import org.jetbrains.idea.maven.server.PomHashMap;
 import org.jetbrains.idea.maven.server.ProjectResolutionRequest;
+import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -513,15 +490,25 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   /**
    * adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
    */
+
   public MavenExecutionResult executeWithMavenSession(@NotNull MavenExecutionRequest request,
                                                       @NotNull MavenWorkspaceMap workspaceMap,
                                                       @NotNull MavenServerConsoleIndicatorImpl indicator,
+                                                      Consumer<MavenSession> runnable) {
+    return executeWithMavenSession(request, workspaceMap, indicator, b -> {
+    }, runnable);
+  }
+  public MavenExecutionResult executeWithMavenSession(@NotNull MavenExecutionRequest request,
+                                                      @NotNull MavenWorkspaceMap workspaceMap,
+                                                      @NotNull MavenServerConsoleIndicatorImpl indicator,
+                                                      @NotNull Consumer<RepositorySystemSession.SessionBuilder> builderModifier,
                                                       Consumer<MavenSession> runnable) {
     RepositorySystemSessionFactory rsf = getComponent(RepositorySystemSessionFactory.class);
     Maven40RepositorySystemSessionFactory irsf = new Maven40RepositorySystemSessionFactory(
       rsf,
       workspaceMap,
-      indicator
+      indicator,
+      builderModifier
     );
     WorkspaceReader workspaceReader = new Maven40WorkspaceMapReader(workspaceMap);
     WorkspaceReader ideWorkspaceReader = getComponentIfExists(WorkspaceReader.class, "ide");
@@ -1064,16 +1051,18 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @Override
   @NotNull
-  public MavenServerResponse<@NotNull MavenArtifactResolveResult> resolveArtifactsTransitively(
+  public MavenServerResponse<@NotNull MavenArtifactResolveResult> resolveProcessorPathEntries(
     @NotNull LongRunningTaskInput longRunningTaskInput,
     @NotNull ArrayList<MavenArtifactInfo> artifacts,
     @NotNull ArrayList<MavenRemoteRepository> remoteRepositories,
+    @NotNull HashMap<String, MavenArtifactInfo> managedDependencies,
+    @NotNull MavenExplicitProfiles profiles,
     MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
       String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
       try (LongRunningTask task = newLongRunningTask(longRunningTaskId, artifacts.size(), myConsoleWrapper)) {
-        MavenArtifactResolveResult result = resolveArtifactsTransitively(task ,artifacts);
+        MavenArtifactResolveResult result = resolveProcessorPathEntries(task, artifacts, remoteRepositories, managedDependencies);
         return new MavenServerResponse<>(result, getLongRunningTaskStatus(longRunningTaskId, token));
       }
     }
@@ -1083,7 +1072,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @NotNull
-  private MavenArtifactResolveResult resolveArtifactsTransitively(@NotNull LongRunningTask task, @NotNull ArrayList<MavenArtifactInfo> artifacts) {
+  private MavenArtifactResolveResult resolveProcessorPathEntries(
+    @NotNull LongRunningTask task,
+    @NotNull ArrayList<MavenArtifactInfo> artifacts,
+    @NotNull ArrayList<MavenRemoteRepository> remoteRepositories,
+    @NotNull HashMap<String, MavenArtifactInfo> managedDependencies) {
     if (artifacts.isEmpty()) return new MavenArtifactResolveResult(new ArrayList<>(), null);
     try {
       return doResolveArtifactsTransitively(task, artifacts);

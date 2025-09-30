@@ -23,7 +23,7 @@ dependencies {
     implementation(compose.components.resources)
     implementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
 
-    implementation(libs.filePicker)
+    implementation(libs.jbr.api)
     implementation(libs.intellijPlatform.icons)
     implementation(libs.kotlin.reflect)
 

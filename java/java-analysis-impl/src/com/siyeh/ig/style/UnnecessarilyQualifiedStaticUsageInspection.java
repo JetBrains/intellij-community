@@ -90,7 +90,7 @@ public final class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspe
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnnecessarilyQualifiedStaticUsageVisitor();
   }
 

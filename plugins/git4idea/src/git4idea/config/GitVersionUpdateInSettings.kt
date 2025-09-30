@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.ide.IdleTracker
@@ -10,11 +10,14 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsListener
+import git4idea.GitVcs
 import git4idea.i18n.GitBundle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.debounce
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.minutes
 
 internal class GitVersionUpdateSettingsEntryProvider : SettingsEntryPointAction.ActionProvider {
@@ -41,16 +44,22 @@ internal class GitVersionUpdateSettingsEntryProvider : SettingsEntryPointAction.
 
     override fun update(e: AnActionEvent) {
       val project = e.project
-      val versionToUpdate = project?.service<GitNewVersionChecker>()?.newAvailableVersion
       val presentation = e.presentation
 
-      if (project == null || versionToUpdate == null || versionToUpdate.isNull || versionToUpdate.isWSL) {
+      if (project == null) {
         presentation.isEnabledAndVisible = false
+        return
       }
-      else {
-        presentation.text = GitBundle.message("git.executable.new.version.update.available", versionToUpdate.presentation)
-        presentation.isEnabledAndVisible = true
-      }
+
+      val versionChecker = project.service<GitNewVersionChecker>()
+      val versionToUpdate = versionChecker.newAvailableVersion
+      val gitNotInstalled = versionChecker.gitNotInstalled
+
+      presentation.text =
+        if (gitNotInstalled) GitBundle.message("git.executable.install.available", versionToUpdate.presentation)
+        else GitBundle.message("git.executable.new.version.update.available", versionToUpdate.presentation)
+
+      presentation.isEnabledAndVisible = isUpdateSupported(versionToUpdate)
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -67,31 +76,45 @@ internal class GitVersionUpdateSettingsEntryProvider : SettingsEntryPointAction.
   }
 }
 
+internal class GitNewVersionCheckerStarter(private val project: Project) : VcsListener {
+  override fun directoryMappingChanged() {
+    if (afterIdleCheckRegistryValue >= 0) {
+      project.service<GitNewVersionChecker>().restart()
+    }
+  }
+}
+
 @Service(Service.Level.PROJECT)
-internal class GitNewVersionChecker(project: Project, cs: CoroutineScope) {
-  class Starter : ProjectActivity {
-    override suspend fun execute(project: Project) {
-      if (afterIdleCheckRegistryValue >= 0) {
-        project.service<GitNewVersionChecker>()
-      }
+internal class GitNewVersionChecker(private val project: Project, private val cs: CoroutineScope) {
+
+  @Volatile
+  var newAvailableVersion: GitVersion = GitVersion.NULL
+    private set
+
+  @Volatile
+  var gitNotInstalled: Boolean = true
+    private set
+
+  private val job = AtomicReference<Job?>(null)
+
+  fun restart() {
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    vcsManager.runAfterInitialization {
+      val haveGitMappings = vcsManager.getDirectoryMappings(GitVcs.getInstance(project)).isNotEmpty()
+      job.getAndSet(
+        if (haveGitMappings) checkNewVersionPeriodicallyOnIdle(project, cs) else null
+      )?.cancel()
     }
   }
 
-  @Volatile
-  var newAvailableVersion: GitVersion? = null
-    private set
-
-  init {
-    checkNewVersionPeriodicallyOnIdle(project, cs)
-  }
-
   internal fun reset() {
-    newAvailableVersion = null
+    newAvailableVersion = GitVersion.NULL
+    gitNotInstalled = true
   }
 
   @OptIn(FlowPreview::class)
-  private fun checkNewVersionPeriodicallyOnIdle(project: Project, cs: CoroutineScope) {
-    cs.launch(CoroutineName("Git update present check")) {
+  private fun checkNewVersionPeriodicallyOnIdle(project: Project, cs: CoroutineScope): Job {
+    return cs.launch(CoroutineName("Git update present check")) {
       IdleTracker.getInstance().events
         .debounce(afterIdleCheckRegistryValue.minutes)
         .collect {
@@ -99,8 +122,9 @@ internal class GitNewVersionChecker(project: Project, cs: CoroutineScope) {
             if (newAvailableVersion.isNotNull) return@withContext
 
             val currentVersion = GitExecutableManager.getInstance().getVersionOrIdentifyIfNeeded(project)
+            gitNotInstalled = currentVersion.isNull
 
-            if (currentVersion.isWSL) {
+            if (!isUpdateSupported(currentVersion)) {
               newAvailableVersion = currentVersion
               return@withContext
             }
@@ -117,6 +141,15 @@ internal class GitNewVersionChecker(project: Project, cs: CoroutineScope) {
           }
         }
     }
+  }
+
+}
+
+private fun isUpdateSupported(version: GitVersion): Boolean {
+  return when (version.type) {
+    GitVersion.Type.MSYS -> true
+    GitVersion.Type.CYGWIN -> true
+    else -> false
   }
 }
 

@@ -34,7 +34,12 @@ class LegacyBridgeJpsEntitySourceFactoryImpl(val project: Project) : LegacyBridg
   }
 
   override fun createEntitySourceForModule(baseModuleDir: VirtualFileUrl, externalSource: ProjectModelExternalSource?): EntitySource {
-    return createEntitySourceForModule(baseModuleDir, externalSource, null, null)
+    return createEntitySourceForModule(
+      baseModuleDir = baseModuleDir,
+      externalSource = externalSource,
+      fileInDirectoryNames = null,
+      moduleFileName = null,
+    )
   }
 
   private fun createImportedEntitySource(
@@ -78,8 +83,7 @@ class LegacyBridgeJpsEntitySourceFactoryImpl(val project: Project) : LegacyBridg
       return null
     }
 
-    val configLocation = getJpsProjectConfigLocation(project)
-    return when (configLocation) {
+    return when (val configLocation = getJpsProjectConfigLocation(project)) {
       is JpsProjectConfigLocation.FileBased ->
         JpsProjectFileEntitySource.ExactFile(configLocation.iprFile, configLocation)
       is JpsProjectConfigLocation.DirectoryBased -> {

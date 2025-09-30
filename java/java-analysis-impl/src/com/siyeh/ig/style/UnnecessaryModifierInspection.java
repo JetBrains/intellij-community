@@ -40,7 +40,7 @@ public final class UnnecessaryModifierInspection extends BaseInspection implemen
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryModifierVisitor();
   }
 

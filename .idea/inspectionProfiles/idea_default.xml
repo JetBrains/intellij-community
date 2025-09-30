@@ -1048,6 +1048,16 @@
         <constraint name="MethodCall" regexp="create" within="" contains="" />
         <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="ClassPathResourcesOnJars" description="Accessing `File($ClassLoader$.getRerource($String$).path)` won't work when running on jars (e.g. with Bazel)&#10;&#10;See https://youtrack.jetbrains.com/articles/IJPL-A-200#fixing-tests-which-fail-to-run-on-jars" text="File($ClassLoader$.getResource($String$)!!.path)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ClassLoader" within="" contains="" />
+        <constraint name="String" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="ClassPathResourcesOnJars" text="Path.of($ClassLoader$.getResource($String$)).toFile()" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="ClassLoader" within="" contains="" />
+        <constraint name="String" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="Comparing Swift Types without context" description="Whether two types are equal depends on the context" suppressId="swift.type.equals" problemDescriptor="Use equalsInContext" text="$ref1$.equals($ref2$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="ref2" nameOfExprType="com\.jetbrains\.swift\.psi\.types\.SwiftType" exprTypeWithinHierarchy="true" within="" contains="" />

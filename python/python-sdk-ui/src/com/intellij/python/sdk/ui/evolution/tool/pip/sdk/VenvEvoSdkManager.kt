@@ -17,7 +17,7 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.getOrNull
-import com.jetbrains.python.resolvePythonHome
+import com.jetbrains.python.sdk.impl.resolvePythonHome
 import io.github.z4kn4fein.semver.Version
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.FileVisitOption

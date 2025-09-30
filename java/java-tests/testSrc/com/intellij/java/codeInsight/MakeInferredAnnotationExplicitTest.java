@@ -2,11 +2,15 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixtureTestCase {
-  public void test_contract_and_notNull() {
+  public void testContractAndNotNull() {
     myFixture.configureByText("a.java", """
       class Foo {
         static String f<caret>oo() {
@@ -28,7 +32,7 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
       }""");
   }
 
-  public void test_parameter() {
+  public void testParameter() {
     myFixture.configureByText("a.java", """
       class Foo {
         static String foo(String s<caret>tr) {
@@ -46,7 +50,7 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
       }""");
   }
 
-  public void test_custom_notNull() {
+  public void testCustomNotNull() {
     myFixture.addClass("package foo; public @interface MyNotNull {}");
     NullableNotNullManager.getInstance(getProject()).setNotNulls("foo.MyNotNull");
 
@@ -70,7 +74,7 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
                             }""");
   }
 
-  public void test_type_use() {
+  public void testTypeUse() {
     myFixture.addClass("package foo; import java.lang.annotation.*;@Target(ElementType.TYPE_USE)public @interface MyNotNull {}");
     NullableNotNullManager.getInstance(getProject()).setNotNulls("foo.MyNotNull");
     myFixture.configureByText("a.java", """
@@ -90,7 +94,7 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
                             }""");
   }
 
-  public void test_type_use_qualified_type() {
+  public void testTypeUseQualifiedType() {
     myFixture.addClass("package foo; import java.lang.annotation.*;@Target(ElementType.TYPE_USE)public @interface MyNotNull {}");
     NullableNotNullManager.getInstance(getProject()).setNotNulls("foo.MyNotNull");
     myFixture.configureByText("a.java", """
@@ -115,6 +119,29 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
           }
       }""");
     assert myFixture.filterAvailableIntentions("Insert '@MyNotNull'").isEmpty();
+  }
+
+  public void testNoUnmodifiableInferenceWhenTypeAnnotated() {
+    myFixture.configureByText("a.java", """
+       import java.util.List;
+       import org.jetbrains.annotations.NotNull;
+       import org.jetbrains.annotations.Unmodifiable;
+
+       public final class Example<A>
+       {
+           public <T> @Unmodifiable @NotNull List<T> <caret>genericInstanceMethod(T value)
+           {
+               return List.of(value);
+           }
+       }""");
+    List<IntentionAction> actions =
+      myFixture.filterAvailableIntentions("Insert '@Contract(value = \"_ -> new\", pure = true) @Unmodifiable'");
+    assertEmpty(actions);
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   @Override

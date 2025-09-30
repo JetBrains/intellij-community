@@ -83,7 +83,7 @@ public final class ClassEditorField extends EditorTextField {
     field.addSettingsProvider(editor -> {
       ExtendableTextComponent.Extension extension =
         ExtendableTextComponent.Extension.create(AllIcons.General.InlineVariables, AllIcons.General.InlineVariablesHover,
-                                                 ComponentWithBrowseButton.getTooltip(), () -> browser.actionPerformed(null));
+                                                 ComponentWithBrowseButton.getTooltip(), true, () -> browser.actionPerformed(null));
       ExtendableEditorSupport.setupExtension(editor, field.getBackground(), extension);
     });
     new DumbAwareAction() {

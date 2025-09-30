@@ -4,13 +4,14 @@ package com.intellij.platform.pluginManager.backend.rpc
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
+import com.intellij.platform.pluginManager.shared.rpc.PluginUpdaterApi
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @IntellijInternalApi
-internal class PluginManagerApiProvider: RemoteApiProvider {
+internal class PluginManagerApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<PluginManagerApi>()) {
       BackendPluginManagerApi()
@@ -18,6 +19,10 @@ internal class PluginManagerApiProvider: RemoteApiProvider {
 
     remoteApi(remoteApiDescriptor<PluginInstallerApi>()) {
       BackendPluginInstallerApi()
+    }
+
+    remoteApi(remoteApiDescriptor<PluginUpdaterApi>()) {
+      BackendPluginUpdaterApi()
     }
   }
 }

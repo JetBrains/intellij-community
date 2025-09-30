@@ -32,6 +32,10 @@ class GitDefaultBranchesPopupStep private constructor(
   repositories: List<GitRepositoryModel>,
   private val isFirstStep: Boolean,
 ) : GitBranchesPopupStepBase(project, selectedRepository, repositories) {
+  init {
+    check(repositories.isNotEmpty()) { "Repositories list must not be empty" }
+  }
+
   private var finalRunnable: Runnable? = null
 
   private val topLevelItems: List<Any> = buildList {

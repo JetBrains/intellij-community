@@ -13,7 +13,6 @@ import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,12 +26,12 @@ final class UndoableGroup implements Dumpable {
   private static final Logger LOG = Logger.getInstance(UndoableGroup.class);
   private static final int BULK_MODE_ACTION_THRESHOLD = 50;
 
-  private final @Nullable Project project;
   private final @Nullable @Command String commandName;
   private final @NotNull List<? extends UndoableAction> actions;
   private final @NotNull UndoConfirmationPolicy confirmationPolicy;
   private final @Nullable UndoCommandFlushReason flushReason;
   private final int commandTimestamp;
+  private final boolean isLocalHistoryActivity;
   private final boolean isTransparent;
   private final boolean isGlobal;
   private final boolean isUndoable;
@@ -44,7 +43,6 @@ final class UndoableGroup implements Dumpable {
   private boolean isValid;
 
   UndoableGroup(
-    @Nullable Project project,
     @Nullable @Command String commandName,
     @NotNull List<? extends UndoableAction> actions,
     @NotNull UndoConfirmationPolicy confirmationPolicy,
@@ -53,11 +51,11 @@ final class UndoableGroup implements Dumpable {
     @Nullable EditorAndState stateAfter,
     @Nullable UndoCommandFlushReason flushReason,
     int commandTimestamp,
+    boolean isLocalHistoryActivity,
     boolean isTransparent,
     boolean isGlobal,
     boolean isValid
   ) {
-    this.project = project;
     this.commandName = commandName;
     this.actions = actions;
     this.confirmationPolicy = confirmationPolicy;
@@ -66,6 +64,7 @@ final class UndoableGroup implements Dumpable {
     this.stateAfter = stateAfter;
     this.flushReason = flushReason;
     this.commandTimestamp = commandTimestamp;
+    this.isLocalHistoryActivity = isLocalHistoryActivity;
     this.isTransparent = isTransparent;
     this.isTemporary = isTransparent;
     this.isGlobal = isGlobal;
@@ -149,6 +148,10 @@ final class UndoableGroup implements Dumpable {
     return isTransparent;
   }
 
+  boolean isLocalHistoryActivity() {
+    return isLocalHistoryActivity;
+  }
+
   int getCommandTimestamp() {
     return commandTimestamp;
   }
@@ -176,8 +179,8 @@ final class UndoableGroup implements Dumpable {
       return -1L;
     }
     return Math.min(
-      actions.get(0).getPerformedNanoTime(),
-      actions.get(actions.size() - 1).getPerformedNanoTime()
+      actions.getFirst().getPerformedNanoTime(),
+      actions.getLast().getPerformedNanoTime()
     );
   }
 
@@ -239,7 +242,7 @@ final class UndoableGroup implements Dumpable {
       LOG.debug("Performing " + (isUndo ? "undo" : "redo") + " for " + dumpState());
     }
     LocalHistoryAction action;
-    if (project != null && isGlobal()) {
+    if (isLocalHistoryActivity && isGlobal()) {
       String actionName = IdeBundle.message(isUndo ? "undo.command" : "redo.command", commandName);
       action = LocalHistory.getInstance().startAction(actionName);
     } else {
@@ -408,8 +411,8 @@ final class UndoableGroup implements Dumpable {
 
   @Override
   public @NotNull String dumpState() {
-    return "UndoableGroup[project=%s, name=%s, global=%s, transparent=%s, stamp=%s, policy=%s, temporary=%s, valid=%s, actions=%s, documents=%s]"
-      .formatted(project, commandName, isGlobal, isTransparent, commandTimestamp, confirmationPolicy, isTemporary, isValid, actions, getAffectedDocuments());
+    return "UndoableGroup[name=%s, global=%s, transparent=%s, stamp=%s, localHistory=%s, policy=%s, temporary=%s, valid=%s, actions=%s, documents=%s]"
+      .formatted(commandName, isGlobal, isTransparent, commandTimestamp, isLocalHistoryActivity, confirmationPolicy, isTemporary, isValid, actions, getAffectedDocuments());
   }
 
   @Override

@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.JewelFlags
 import org.jetbrains.jewel.foundation.modifier.trackActivation
@@ -32,7 +34,11 @@ import org.jetbrains.jewel.ui.typography
 internal fun WelcomeView() {
     Column(
         modifier =
-            Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground).padding(24.dp),
+            Modifier.trackActivation()
+                .fillMaxSize()
+                .background(JewelTheme.globalColors.panelBackground)
+                .padding(24.dp)
+                .semantics { isTraversalGroup = true },
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         Icon(key = ShowcaseIcons.jewelLogo, contentDescription = null, modifier = Modifier.size(200.dp))

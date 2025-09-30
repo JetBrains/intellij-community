@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+
 import java.util.Comparator
 
 class S(val a: Int)
@@ -9,6 +11,5 @@ fun testInsertion() {
     val comp: Comparator<S> = Comparator.comparingInt<S?> { it.a }.reversed()<caret>
 }
 
-// IGNORE_K2
 // ELEMENT: reversed
 // TAIL_TEXT: "()"

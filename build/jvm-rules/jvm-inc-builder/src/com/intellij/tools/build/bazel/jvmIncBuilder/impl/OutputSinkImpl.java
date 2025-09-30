@@ -100,10 +100,12 @@ public class OutputSinkImpl implements OutputSink {
   @Override
   public Iterable<NodeWithSources> getNodes() {
     Map<NodeSource, Set<Usage>> fileLocalUsages = new HashMap<>();
+    Set<NodeSource> registeredSources = new HashSet<>();
 
     for (BuilderWithSources bs : myBuilders) {
       JvmClassNodeBuilder builder = bs.builder();
       Iterable<NodeSource> sources = bs.sources();
+      Iterators.collect(sources, registeredSources);
 
       JvmNodeReferenceID nodeID = builder.getReferenceID();
       String nodeName = nodeID.getNodeName();
@@ -159,6 +161,10 @@ public class OutputSinkImpl implements OutputSink {
 
     for (Map.Entry<NodeSource, Set<Usage>> entry : myPerSourceAdditionalUsages.entrySet()) {
       NodeSource src = entry.getKey();
+      if (!registeredSources.contains(src)) {
+        // create synthetic FileNode instances for those sources only, that have at least one compiled ClassNode associated
+        continue;
+      }
       Set<Usage> usages = entry.getValue();
       Set<Usage> selfUsages = fileLocalUsages.get(src);
       if (selfUsages != null) {

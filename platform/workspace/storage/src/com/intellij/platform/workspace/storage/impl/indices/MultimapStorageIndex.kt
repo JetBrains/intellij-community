@@ -43,9 +43,13 @@ internal class MutableMultimapStorageIndex private constructor(
 
   private var freezed = true
 
-  internal fun index(id: EntityId, elements: Set<SymbolicEntityId<*>>? = null) {
+  /**
+   * Does not track first added and last removed values
+   * Must be used only during WSM deserialization
+   */
+  internal fun populateIndex(id: EntityId, elements: Set<SymbolicEntityId<*>>? = null) {
     startWrite()
-    lastRemovedValues.addAll(index.removeKey(id))
+    index.removeKey(id)
     if (elements == null) return
     elements.forEach { index.put(id, it) }
   }
@@ -69,6 +73,9 @@ internal class MutableMultimapStorageIndex private constructor(
   }
 
   @TestOnly
+  /**
+   * Because this is TestOnly method we don't track firstAdded and lastRemoved values
+   */
   internal fun copyFrom(another: AbstractMultimapStorageIndex) {
     startWrite()
     this.index.putAll(another.index)

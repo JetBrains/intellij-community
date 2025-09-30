@@ -172,14 +172,17 @@ public final class AboutDialog extends DialogWrapper {
       lines.add(branchInfo.first);
       myInfo.add(branchInfo.second);
     }
-    lines.add("");
 
     CustomProperty revision = ContainerUtil.find(
       IdeProductInfo.getInstance().getCurrentProductInfo()
         .getCustomProperties(), o -> CustomPropertyNames.GIT_REVISION.equals(o.getKey()));
     if (revision != null) {
+      if (branchInfo != null) {
+        lines.add(IdeBundle.message("about.box.build.revision", revision.getValue()));
+      }
       myInfo.add("Source revision: " + revision.getValue());
     }
+    lines.add("");
 
     LicensingFacade la = LicensingFacade.getInstance();
     if (la != null) {
@@ -256,7 +259,7 @@ public final class AboutDialog extends DialogWrapper {
     Date buildDate = appInfo.getBuildDate().getTime();
     String formattedBuildDate = DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(buildDate);
 
-    if (AppMode.isDevServer()) {
+    if (AppMode.isRunningFromDevBuild()) {
       // Dev mode build date is not accurate, so we don't show it to avoid confusion
       buildInfo += IdeBundle.message("about.box.build.date.omitted.in.dev.build.mode");
       buildInfoNonLocalized += ", build date omitted in Dev build mode";

@@ -17,8 +17,6 @@
     <notificationGroup displayType="BALLOON" id="newUsersOnboarding" bundle="messages.NewUsersOnboardingBundle"
                        key="notification.group"/>
 
-    <experiment.abExperimentOption implementation="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingExperimentOption"/>
-
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStatistics"/>
   </extensions>
 

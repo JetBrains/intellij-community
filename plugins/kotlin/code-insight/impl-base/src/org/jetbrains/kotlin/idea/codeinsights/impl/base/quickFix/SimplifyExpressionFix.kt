@@ -11,13 +11,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsi
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SimplifyBooleanWithConstantsUtils.areThereExpressionsToBeSimplified
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SimplifyBooleanWithConstantsUtils.performSimplification
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SimplifyBooleanWithConstantsUtils.removeRedundantAssertion
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtIfExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 @ApiStatus.Internal
@@ -34,7 +29,8 @@ class SimplifyExpressionFix(
         updater: ModPsiUpdater,
     ) {
         val replacement = KtPsiFactory(element.project).createExpression(elementContext.toExpressionText())
-        val result = (element.getParentOfTypeAndBranch<KtQualifiedExpression> { selectorExpression } ?: element).replaced(replacement)
+        val elementToReplace = element.parent.takeIf { (it as? KtQualifiedExpression)?.selectorExpression == element } ?: element
+        val result = elementToReplace.replaced(replacement)
 
         val booleanExpression = result.getNonStrictParentOfType<KtBinaryExpression>()
         if (booleanExpression != null && areThereExpressionsToBeSimplified(booleanExpression)) {

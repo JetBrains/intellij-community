@@ -268,6 +268,7 @@ jvm_library(
     "//jvm/jvm-analysis-impl:analysis-impl",
     "//plugins/ByteCodeViewer:java-byteCodeViewer",
     "//plugins/github/github-json:vcs-github-json",
+    "//plugins/github/github-tracker:vcs-github-tracker",
     "//plugins/search-everywhere-ml/ranking/core",
     "//plugins/search-everywhere-ml/ranking/java",
     "//plugins/search-everywhere-ml/ranking/vcs",
@@ -286,6 +287,8 @@ jvm_library(
     "//plugins/maven/maven36-server-impl:server-m36-impl",
     "//plugins/maven/maven40-server-impl:server-m40",
     "//plugins/mcp-server:mcpserver",
+    "//plugins/jshell",
+    "//plugins/jshell/console",
   ]
 )
 
@@ -546,6 +549,7 @@ jvm_library(
     "//jvm/jvm-analysis-impl:analysis-impl",
     "//plugins/ByteCodeViewer:java-byteCodeViewer",
     "//plugins/github/github-json:vcs-github-json",
+    "//plugins/github/github-tracker:vcs-github-tracker",
     "//plugins/search-everywhere-ml/ranking/core",
     "//plugins/search-everywhere-ml/ranking/java",
     "//plugins/search-everywhere-ml/ranking/vcs",
@@ -564,6 +568,8 @@ jvm_library(
     "//plugins/maven/maven36-server-impl:server-m36-impl",
     "//plugins/maven/maven40-server-impl:server-m40",
     "//plugins/mcp-server:mcpserver",
+    "//plugins/jshell",
+    "//plugins/jshell/console",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main` end

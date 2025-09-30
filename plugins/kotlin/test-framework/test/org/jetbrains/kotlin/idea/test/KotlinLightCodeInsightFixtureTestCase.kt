@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.test
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.daemon.impl.EditorTracker
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -389,6 +390,16 @@ fun <T> withCustomCompilerOptions(fileText: String, project: Project, module: Mo
             runInEdtAndWait { rollbackCompilerOptions(project, module, removeFacet) }
         }
     }
+}
+
+fun withRegistry(registryKey: String, value: Any, parentDisposable: Disposable, body: () -> Unit) {
+    val registryValue = Registry.get(registryKey)
+    when(value) {
+        is Boolean -> registryValue.setValue(value, parentDisposable)
+        is Int -> registryValue.setValue(value, parentDisposable)
+        else -> registryValue.setValue(value.toString(), parentDisposable)
+    }
+    body()
 }
 
 private fun configureCompilerOptions(fileText: String, project: Project, module: Module): Boolean {

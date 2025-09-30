@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.devkit.apiDump.lang` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "apiDump-lang_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.devkit.apiDump.lang",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":apiDump-lang_resources"],
   deps = [
     "//java/java-indexing-api:indexing",
     "//platform/core-api:core",
@@ -30,8 +31,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//plugins/devkit/api-dump",
     "//java/java-impl:impl",
-  ],
-  runtime_deps = [":apiDump-lang_resources"]
+  ]
 )
 
 jvm_library(
@@ -59,8 +59,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ],
-  runtime_deps = [":apiDump-lang_resources"]
+  ]
 )
 ### auto-generated section `build intellij.devkit.apiDump.lang` end
 

@@ -14,7 +14,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.sdk.PySdkSettings

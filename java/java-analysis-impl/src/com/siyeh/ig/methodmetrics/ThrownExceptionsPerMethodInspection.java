@@ -50,7 +50,7 @@ public final class ThrownExceptionsPerMethodInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ThrownExceptionsPerMethodVisitor();
   }
 

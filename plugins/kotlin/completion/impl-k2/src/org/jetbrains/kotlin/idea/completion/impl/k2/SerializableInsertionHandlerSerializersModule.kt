@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.BracketOperatorInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.TrailingLambdaInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WithImportInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentWithValueInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeInsertHandler
@@ -79,9 +80,10 @@ val serializableInsertionHandlerSerializersModule: SerializersModule = Serialize
         subclass(CompoundInsertionHandler::class, CompoundInsertionHandler.serializer())
         subclass(UpdateLookupElementBuilderToInsertTypeQualifierOnSuperInsertionHandler::class, UpdateLookupElementBuilderToInsertTypeQualifierOnSuperInsertionHandler.serializer())
         subclass(FirCompletionContributorBase.AdaptToExplicitReceiverInsertionHandler::class, FirCompletionContributorBase.AdaptToExplicitReceiverInsertionHandler.serializer())
-        subclass(K2TrailingFunctionParameterNameCompletionContributorBase.WithImportInsertionHandler::class, K2TrailingFunctionParameterNameCompletionContributorBase.WithImportInsertionHandler.serializer())
+        subclass(WithImportInsertionHandler::class, WithImportInsertionHandler.serializer())
         subclass(NameWithTypeLookupElementDecoratorInsertHandler::class, NameWithTypeLookupElementDecoratorInsertHandler.serializer())
         subclass(NamedArgumentWithValueInsertionHandler::class, NamedArgumentWithValueInsertionHandler.serializer())
         subclass(TrailingLambdaInsertionHandler::class, serializer = TrailingLambdaInsertionHandler.serializer())
+        subclass(InsertRequiredTypeArgumentsInsertHandler::class, serializer = InsertRequiredTypeArgumentsInsertHandler.serializer())
     }
 }

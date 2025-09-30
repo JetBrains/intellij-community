@@ -1,7 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.rules
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
+import com.intellij.util.system.OS
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -10,6 +12,7 @@ import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.net.URLEncoder
 import java.nio.file.FileSystem
+import java.nio.file.FileSystems
 import java.nio.file.Path
 import kotlin.properties.Delegates
 
@@ -25,12 +28,7 @@ class InMemoryFsRule(private val windows: Boolean = false) : ExternalResource() 
   val fs: FileSystem
     get() {
       if (_fs == null) {
-        _fs = (if (windows) {
-          MemoryFileSystemBuilder.newWindows().setCurrentWorkingDirectory("C:\\")
-        }
-        else {
-          MemoryFileSystemBuilder.newLinux().setCurrentWorkingDirectory("/")
-        }).build(sanitizedName)
+        _fs = fsBuilder(windows).build(sanitizedName)
       }
       return _fs!!
     }
@@ -53,12 +51,7 @@ class InMemoryFsExtension(private val windows: Boolean = false) : BeforeEachCall
   val fs: FileSystem
     get() {
       if (_fs == null) {
-        _fs = (if (windows) {
-          MemoryFileSystemBuilder.newWindows().setCurrentWorkingDirectory("C:\\")
-        }
-        else {
-          MemoryFileSystemBuilder.newLinux().setCurrentWorkingDirectory("/")
-        }).build(sanitizedName)
+        _fs = fsBuilder(windows).build(sanitizedName)
       }
       return _fs!!
     }
@@ -72,3 +65,18 @@ class InMemoryFsExtension(private val windows: Boolean = false) : BeforeEachCall
     _fs = null
   }
 }
+
+private fun fsBuilder(windows: Boolean): MemoryFileSystemBuilder =
+  if (windows) {
+    val builder = MemoryFileSystemBuilder.newWindows().setCurrentWorkingDirectory("C:\\")
+    if (OS.CURRENT == OS.Windows) {
+      FileSystems.getDefault().rootDirectories.asSequence()
+        .map { it.toString() }
+        .filter { OSAgnosticPathUtil.isAbsoluteDosPath(it) }
+        .forEach { builder.addRoot(it) }
+    }
+    builder
+  }
+  else {
+    MemoryFileSystemBuilder.newLinux().setCurrentWorkingDirectory("/")
+  }

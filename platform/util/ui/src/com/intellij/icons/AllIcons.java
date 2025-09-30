@@ -820,6 +820,7 @@ public class AllIcons {
 
   public static final class Language {
     /** 16x16 */ public static final @NotNull Icon GO = load("language/go.svg", -1894540570, 2);
+    /** 16x16 */ public static final @NotNull Icon Kotlin = load("language/kotlin.svg", -412084699, 2);
     /** 16x16 */ public static final @NotNull Icon Php = load("expui/language/php.svg", "language/php.svg", 185644961, 0);
     /** 16x16 */ public static final @NotNull Icon Python = load("language/python.svg", -543505712, 2);
     /** 16x16 */ public static final @NotNull Icon Ruby = load("language/ruby.svg", -1736610380, 2);
@@ -1172,7 +1173,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ApacheIgnite = load("providers/apacheIgnite.svg", 550257054, 2);
     /** 16x16 */ public static final @NotNull Icon ApachePhoenix = load("providers/apachePhoenix.svg", 426659470, 0);
     /** 16x16 */ public static final @NotNull Icon Athena = load("providers/athena.svg", 1959048894, 0);
-    /** 16x16 */ public static final @NotNull Icon Aws = load("providers/aws.svg", 1091870915, 2);
     /** 16x16 */ public static final @NotNull Icon Azure = load("providers/azure.svg", 146675790, 0);
     /** 16x16 */ public static final @NotNull Icon BigQuery = load("providers/bigQuery.svg", 1138709532, 0);
     /** 16x16 */ public static final @NotNull Icon Cassandra = load("providers/cassandra.svg", -819208447, 2);
@@ -1236,6 +1236,12 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Turso = load("providers/turso.svg", -988781978, 2);
     /** 16x16 */ public static final @NotNull Icon Vertica = load("providers/vertica.svg", 237190308, 2);
     /** 16x16 */ public static final @NotNull Icon Yugabyte = load("providers/yugabyte.svg", -644567085, 2);
+
+    /** @deprecated to be removed (Use AllIcons.Providers.AmazonWebServices instead) */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
+    public static final @NotNull Icon Aws = load("providers/aws.svg", 0, 0);
   }
 
   public static final class RemoteServers {

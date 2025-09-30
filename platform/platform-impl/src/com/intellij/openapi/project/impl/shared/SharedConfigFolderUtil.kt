@@ -2,14 +2,14 @@
 package com.intellij.openapi.project.impl.shared
 
 import com.intellij.openapi.application.Application
+import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.TimeoutUtil
-import com.intellij.util.application
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.delete
-import com.intellij.util.messages.Topic
 import java.io.IOException
 import java.io.InputStream
 import java.nio.ByteBuffer
@@ -18,18 +18,14 @@ import java.nio.channels.FileChannel
 import java.nio.file.OpenOption
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import kotlin.io.path.exists
 import kotlin.io.path.fileSize
 import kotlin.io.path.inputStream
 import kotlin.random.Random
 
-interface ConfigFolderChangedListener {
-  companion object {
-    @JvmField
-    val TOPIC: Topic<ConfigFolderChangedListener> = Topic(ConfigFolderChangedListener::class.java.simpleName, ConfigFolderChangedListener::class.java)
-  }
+private val EP: ExtensionPointName<ConfigFolderChangedListener> = ExtensionPointName("com.intellij.configFolderChangedListener")
 
-  fun onChange(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>)
+interface ConfigFolderChangedListener {
+  suspend fun onChange(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>, componentStore: IComponentStore)
 }
 
 object SharedConfigFolderUtil {
@@ -43,12 +39,14 @@ object SharedConfigFolderUtil {
   /**
    * @param path $ROOT_CONFIG$ to watch (aka <config>, idea.config.path)
    */
-  internal fun installFsWatcher(path: Path, configFilesUpdatedByThisProcess: ConfigFilesUpdatedByThisProcess) {
+  internal suspend fun installFsWatcher(path: Path, configFilesUpdatedByThisProcess: ConfigFilesUpdatedByThisProcess) {
     SharedConfigFolderNioListener(path, configFilesUpdatedByThisProcess).init()
   }
 
-  internal fun reloadComponents(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>) {
-    application.messageBus.syncPublisher(ConfigFolderChangedListener.TOPIC).onChange(changedFileSpecs, deletedFileSpecs)
+  internal suspend fun reloadComponents(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>, componentStore: IComponentStore) {
+    for (listener in EP.lazySequence()) {
+      listener.onChange(changedFileSpecs, deletedFileSpecs, componentStore)
+    }
   }
 
   fun writeToSharedFile(file: Path, content: ByteArray) {
@@ -61,9 +59,7 @@ object SharedConfigFolderUtil {
   
   fun deleteSharedFile(file: Path) {
     ioWithRetries {
-      if (file.exists()) {
-        file.delete()
-      }
+      NioFiles.deleteRecursively(file)
     }
   }
 

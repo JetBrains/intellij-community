@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.gradle.dependencyUpdater` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "dependencyUpdater_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.gradle.dependencyUpdater",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":dependencyUpdater_resources"],
   deps = [
     "//plugins/gradle",
     "//plugins/gradle:gradle-common",
@@ -24,7 +25,6 @@ jvm_library(
     "//platform/core-ui",
   ],
   runtime_deps = [
-    ":dependencyUpdater_resources",
     "//android/gradle-dsl-kotlin",
     "//android/gradle-dsl-toml",
     "//android/gradle-dsl-declarative",

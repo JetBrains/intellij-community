@@ -12,5 +12,7 @@
     <orderEntry type="module" module-name="intellij.python.community.services.systemPython" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.services.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.json.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.aliasProvider" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.helpersLocator" scope="RUNTIME" />
   </component>
 </module>

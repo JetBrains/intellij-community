@@ -9,8 +9,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.EelDescriptor;
@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.terminal.*;
-import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration;
 import org.jetbrains.plugins.terminal.util.ShellIntegration;
 import org.jetbrains.plugins.terminal.util.ShellNameUtil;
 import org.jetbrains.plugins.terminal.util.ShellType;
@@ -54,9 +53,9 @@ public final class LocalShellIntegrationInjector {
   public static final String IJ_ZSH_DIR = "JETBRAINS_INTELLIJ_ZSH_DIR";
   private static final Logger LOG = Logger.getInstance(LocalShellIntegrationInjector.class);
   private static final String LOGIN_SHELL = "LOGIN_SHELL";
-  private static final String IJ_COMMAND_END_MARKER = "JETBRAINS_INTELLIJ_COMMAND_END_MARKER";
   private static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
-  private static final String ZDOTDIR = "ZDOTDIR";
+  @VisibleForTesting
+  public static final String ZDOTDIR = "ZDOTDIR";
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
   private static final String BASH_RCFILE_OPTION = "--rcfile";
   private static final String SHELL_INTEGRATIONS_DIR_NAME = "shell-integrations";
@@ -88,7 +87,7 @@ public final class LocalShellIntegrationInjector {
         boolean loginShell = arguments.removeAll(LOGIN_CLI_OPTIONS);
         setLoginShellEnv(envs, loginShell);
         setCommandHistoryFile(options, envs, eelDescriptor);
-        integration = new ShellIntegration(ShellType.BASH, addBlocksIntegration ? new CommandBlockIntegration() : null);
+        integration = new ShellIntegration(ShellType.BASH, addBlocksIntegration);
       }
       else if (ShellNameUtil.isZshName(shellName)) {
         String originalZDotDir = envs.get(ZDOTDIR);
@@ -98,23 +97,23 @@ public final class LocalShellIntegrationInjector {
         String intellijZDotDir = PathUtil.getParentPath(remoteRcFilePath);
         envs.put(ZDOTDIR, intellijZDotDir);
         envs.put(IJ_ZSH_DIR, PathUtil.getParentPath(intellijZDotDir));
-        integration = new ShellIntegration(ShellType.ZSH, addBlocksIntegration ? new CommandBlockIntegration() : null);
+        integration = new ShellIntegration(ShellType.ZSH, addBlocksIntegration);
       }
       else if (shellName.equals(ShellNameUtil.FISH_NAME)) {
         // `--init-command=COMMANDS` is available since Fish 2.7.0 (released November 23, 2017)
         // Multiple `--init-command=COMMANDS` are supported.
         resultCommand.add("--init-command=source " + CommandLineUtil.posixQuote(remoteRcFilePath));
-        integration = new ShellIntegration(ShellType.FISH, addBlocksIntegration ? new CommandBlockIntegration() : null);
+        integration = new ShellIntegration(ShellType.FISH, addBlocksIntegration);
       }
       else if (ShellNameUtil.isPowerShell(shellName)) {
         resultCommand.addAll(arguments);
         arguments.clear();
         resultCommand.addAll(List.of("-NoExit", "-ExecutionPolicy", "Bypass", "-File", remoteRcFilePath));
-        integration = new ShellIntegration(ShellType.POWERSHELL, addBlocksIntegration ? new CommandBlockIntegration(true) : null);
+        integration = new ShellIntegration(ShellType.POWERSHELL, addBlocksIntegration);
       }
     }
 
-    if ((isGenOneTerminal || isGenTwoTerminal) && integration != null && integration.getCommandBlockIntegration() != null) {
+    if ((isGenOneTerminal || isGenTwoTerminal) && integration != null && integration.getCommandBlocks()) {
       // If Gen1 is enabled, use its integration even if Gen2 is enabled.
       // So the Gen1 setting takes precedence over Gen2 setting.
       var commandBlocksOption = isGenOneTerminal
@@ -131,12 +130,6 @@ public final class LocalShellIntegrationInjector {
       envs.put("PROCESS_LAUNCHED_BY_CW", "1");
       // The same story as the above. Amazon Q is a renamed CodeWhisperer. So, they also renamed the env variables.
       envs.put("PROCESS_LAUNCHED_BY_Q", "1");
-    }
-
-    CommandBlockIntegration commandIntegration = integration != null ? integration.getCommandBlockIntegration() : null;
-    String commandEndMarker = commandIntegration != null ? commandIntegration.getCommandEndMarker() : null;
-    if (commandEndMarker != null) {
-      envs.put(IJ_COMMAND_END_MARKER, commandEndMarker);
     }
 
     resultCommand.addAll(arguments);
@@ -269,7 +262,7 @@ public final class LocalShellIntegrationInjector {
     if (idx >= 0) {
       arguments.remove(idx);
       if (idx < arguments.size()) {
-        String userRcFile = FileUtil.expandUserHome(arguments.get(idx));
+        String userRcFile = OSAgnosticPathUtil.expandUserHome(arguments.get(idx));
         // do not set the same RC file path to avoid sourcing recursion
         if (!userRcFile.equals(rcFilePath)) {
           envs.put(JEDITERM_USER_RCFILE, userRcFile);

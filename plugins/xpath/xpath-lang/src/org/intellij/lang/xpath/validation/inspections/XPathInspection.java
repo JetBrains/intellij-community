@@ -17,6 +17,7 @@ package org.intellij.lang.xpath.validation.inspections;
 
 import com.intellij.codeInspection.*;
 import com.intellij.lang.Language;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -31,7 +32,7 @@ import org.intellij.lang.xpath.psi.XPathPredicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class XPathInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
+public abstract class XPathInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool, DumbAware {
 
   @Override
   public SuppressIntentionAction @NotNull [] getSuppressActions(@Nullable PsiElement element) {

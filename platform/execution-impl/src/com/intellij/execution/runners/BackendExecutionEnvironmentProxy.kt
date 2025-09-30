@@ -2,9 +2,10 @@
 package com.intellij.execution.runners
 
 import com.intellij.execution.ExecutionManager
-import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
@@ -13,13 +14,20 @@ import javax.swing.Icon
 @ApiStatus.Internal
 class BackendExecutionEnvironmentProxy(private val environment: ExecutionEnvironment) : ExecutionEnvironmentProxy {
   override fun isShowInDashboard(): Boolean {
-    val settings: RunnerAndConfigurationSettings? = environment.runnerAndConfigurationSettings
-    val configuration = settings?.getConfiguration() ?: return false
+    val configuration = environment.runProfile as? RunConfiguration ?: environment.runnerAndConfigurationSettings?.configuration ?: return false
     return RunDashboardManager.getInstance(configuration.getProject()).isShowInDashboard(configuration)
+  }
+
+  override fun getContentDescriptorToolWindowId(): String? {
+    return RunContentManager.getInstance(environment.project).getContentDescriptorToolWindowId(environment)
   }
 
   override fun getRunProfileName(): @NlsSafe String {
     return environment.runProfile.name
+  }
+
+  override fun getRunConfigurationTypeId(): String {
+    return (environment.runProfile as? RunConfiguration)?.type?.id ?: environment.runnerAndConfigurationSettings?.configuration?.type?.id ?: "FakeMissingTypeIdInEnvironment"
   }
 
   override fun getIcon(): Icon {

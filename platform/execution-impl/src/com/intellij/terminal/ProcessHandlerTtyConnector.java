@@ -5,7 +5,6 @@ import com.intellij.execution.process.BaseProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.PtyBasedProcess;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.remote.RemoteProcess;
 import com.intellij.util.ObjectUtils;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
@@ -59,15 +58,30 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
   @Override
   public void resize(@NotNull TermSize termSize) {
     if (myPtyProcess instanceof PtyProcess ptyProcess) {
-      if (ptyProcess.isAlive()) {
+      setWindowSizeSafely(myPtyProcess, () -> {
         ptyProcess.setWinSize(new WinSize(termSize.getColumns(), termSize.getRows()));
-      }
+      });
     }
     else if (myPtyProcess instanceof PtyBasedProcess ptyBasedProcess) {
-      ptyBasedProcess.setWindowSize(termSize.getColumns(), termSize.getRows());
+      setWindowSizeSafely(myPtyProcess, () -> {
+        ptyBasedProcess.setWindowSize(termSize.getColumns(), termSize.getRows());
+      });
     }
-    else if (myPtyProcess instanceof RemoteProcess remoteProcess) {
-      remoteProcess.setWindowSize(termSize.getColumns(), termSize.getRows());
+  }
+
+  private static void setWindowSizeSafely(@NotNull Process process, @NotNull Runnable setWindowSizeCallback) {
+    if (process.isAlive()) {
+      try {
+        setWindowSizeCallback.run();
+      }
+      catch (Exception e) {
+        if (!process.isAlive()) {
+          throw e;
+        }
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Suppressed failure of setWindowSize due to the terminated process", e);
+        }
+      }
     }
   }
 

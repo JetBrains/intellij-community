@@ -1,18 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable
 
-import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable
 import com.intellij.ide.util.treeView.FileNameComparator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator
@@ -23,8 +25,8 @@ import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.progress.ProgressUIUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil
@@ -36,14 +38,13 @@ import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
 import java.io.File
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JTable
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 
-internal class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), Disposable {
+internal class VcsDirectoryConfigurationPanel(private val project: Project) : Disposable {
   private val POSTPONE_MAPPINGS_LOADING_PANEL = ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS
 
   private val isEditingDisabled = project.isDefault
@@ -62,10 +63,6 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
   private val directoryRenderer: MyDirectoryRenderer
 
   private val vcsComboBox: ComboBox<AbstractVcs?>
-
-  private val detectVcsMappingsCheckBox: JCheckBox
-
-  private val scopeFilterConfigurable: VcsUpdateInfoScopeFilterConfigurable
 
   private var rootDetectionIndicator: ProgressIndicator? = null
 
@@ -105,12 +102,14 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
   }
 
   private class MyVcsRenderer(private val info: RecordInfo, private val allSupportedVcss: List<AbstractVcs>) : ColoredTableCellRenderer() {
-    override fun customizeCellRenderer(table: JTable,
-                                       value: Any?,
-                                       selected: Boolean,
-                                       hasFocus: Boolean,
-                                       row: Int,
-                                       column: Int) {
+    override fun customizeCellRenderer(
+      table: JTable,
+      value: Any?,
+      selected: Boolean,
+      hasFocus: Boolean,
+      row: Int,
+      column: Int,
+    ) {
       val textAttributes = getAttributes(info)
 
       if (!selected && info.isUnregistered()) {
@@ -138,22 +137,13 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
       if (info is RecordInfo.MappingInfo) getPresentablePath(project, info.mapping) else ""
     }
 
-    scopeFilterConfigurable = VcsUpdateInfoScopeFilterConfigurable(project, vcsConfiguration)
-
     // don't start loading automatically
     tableLoadingPanel = JBLoadingPanel(BorderLayout(), this, POSTPONE_MAPPINGS_LOADING_PANEL.toInt() * 2)
-
-    detectVcsMappingsCheckBox = JCheckBox(VcsBundle.message("directory.mapping.checkbox.detect.vcs.mappings.automatically"))
-
-    layout = BorderLayout()
-    add(createMainComponent())
 
     directoryRenderer = MyDirectoryRenderer(project)
 
     mappingTableModel = ListTableModel(MyDirectoryColumnInfo(), MyVcsColumnInfo())
     mappingTable.setModelAndUpdateColumns(mappingTableModel)
-
-    initializeModel()
 
     vcsComboBox = buildVcsesComboBox(project, allSupportedVcss)
     vcsComboBox.addItemListener {
@@ -170,17 +160,12 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
 
   override fun dispose() {
     rootDetectionIndicator?.cancel()
-    scopeFilterConfigurable.disposeUIResources()
   }
 
   private fun initializeModel() {
-    scopeFilterConfigurable.reset()
-
     val items = mutableListOf<RecordInfo>()
     items.addAll(vcsManager.getDirectoryMappings().map { createRegisteredInfo(it) })
     setDisplayedMappings(items)
-
-    detectVcsMappingsCheckBox.isSelected = sharedProjectSettings.isDetectVcsMappingsAutomatically
 
     scheduleUnregisteredRootsLoading()
   }
@@ -291,36 +276,48 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
     mappingTable.selectionModel.setSelectionInterval(toSelect, toSelect)
   }
 
-  private fun createMainComponent(): JComponent {
-    val panel = JPanel(GridBagLayout())
-    val gb = GridBag()
-      .setDefaultInsets(JBUI.insets(0, 0, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP))
-      .setDefaultWeightX(1.0)
-      .setDefaultFill(GridBagConstraints.HORIZONTAL)
+  fun createMainComponent(): DialogPanel {
+    lateinit var result: DialogPanel
+    result = panel {
+      if (!TrustedProjects.isProjectTrusted(project)) {
+        row {
+          cell(EditorNotificationPanel(LightColors.RED, EditorNotificationPanel.Status.Error))
+            .applyToComponent {
+              text = VcsBundle.message("configuration.project.not.trusted.label")
+            }.align(AlignX.FILL)
+        }
+      }
 
-    if (!TrustedProjects.isProjectTrusted(project)) {
-      val notificationPanel = EditorNotificationPanel(LightColors.RED, EditorNotificationPanel.Status.Error)
-      notificationPanel.text = VcsBundle.message("configuration.project.not.trusted.label")
-      panel.add(notificationPanel, gb.nextLine().next())
+      tableLoadingPanel.add(createMappingsTable())
+
+      row {
+        cell(tableLoadingPanel)
+          .comment(getProjectMappingDescription(), maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
+          .align(Align.FILL)
+      }.resizableRow()
+
+      row {
+        checkBox(VcsBundle.message("directory.mapping.checkbox.detect.vcs.mappings.automatically"))
+          .bindSelected(sharedProjectSettings::isDetectVcsMappingsAutomatically)
+          .gap(RightGap.SMALL)
+        contextHelp(VcsBundle.message("directory.mapping.checkbox.detect.vcs.mappings.automatically.hint"))
+      }
+
+      if (!AbstractCommonUpdateAction.showsCustomNotification(vcsManager.getAllActiveVcss().asList())) {
+        val scopeFilter = VcsUpdateInfoScopeFilter(project, vcsConfiguration, this@VcsDirectoryConfigurationPanel)
+        scopeFilter.createContent(this) {
+          val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(result))
+          if (settings != null) {
+            settings.select(settings.find(ScopeChooserConfigurable.PROJECT_SCOPES))
+          }
+        }
+      }
+
+      onApply(::apply)
+      onReset(::reset)
+      onIsModified(::isModified)
     }
-
-    val mappingsTable = createMappingsTable()
-    tableLoadingPanel.add(mappingsTable)
-    panel.add(tableLoadingPanel, gb.nextLine().next().fillCell().weighty(1.0))
-
-    panel.add(createProjectMappingDescription(), gb.nextLine().next())
-
-    val detectVcsMappingsHintLabel = JLabel(AllIcons.General.ContextHelp).apply {
-      border = JBUI.Borders.emptyLeft(4)
-      toolTipText = VcsBundle.message("directory.mapping.checkbox.detect.vcs.mappings.automatically.hint")
-    }
-    panel.add(JBUI.Panels.simplePanel(detectVcsMappingsCheckBox).addToRight(detectVcsMappingsHintLabel),
-              gb.nextLine().next().fillCellNone().anchor(GridBagConstraints.WEST))
-
-    if (!AbstractCommonUpdateAction.showsCustomNotification(vcsManager.getAllActiveVcss().asList())) {
-      panel.add(scopeFilterConfigurable.createComponent(), gb.nextLine().next())
-    }
-    return panel
+    return result
   }
 
   private fun createMappingsTable(): JComponent {
@@ -374,30 +371,20 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
     return getSelectedRegisteredRoots().size == mappingTable.selection.size
   }
 
-  private fun createProjectMappingDescription(): JComponent {
-    val projectMessage = HtmlBuilder()
-      .append(VcsDirectoryMapping.PROJECT_CONSTANT.get())
-      .append(" - ")
-      .append(DefaultVcsRootPolicy.getInstance(project).projectConfigurationMessage.replace('\n', ' '))
-      .wrapWithHtmlBody().toString()
-
-    val label = JBLabel(projectMessage)
-    label.componentStyle = UIUtil.ComponentStyle.SMALL
-    label.fontColor = UIUtil.FontColor.BRIGHTER
-    label.border = JBUI.Borders.empty(2, 5, 2, 0)
-    return label
+  private fun getProjectMappingDescription(): @Nls String {
+    @Suppress("HardCodedStringLiteral")
+    val message = DefaultVcsRootPolicy.getInstance(project).projectConfigurationMessage.replace('\n', ' ')
+    return StringUtil.escapeXmlEntities(VcsDirectoryMapping.PROJECT_CONSTANT.get() + " - " + message)
   }
 
-  fun reset() {
+  private fun reset() {
     initializeModel()
   }
 
   @Throws(ConfigurationException::class)
-  fun apply() {
+  private fun apply() {
     adjustIgnoredRootsSettings()
     vcsManager.setDirectoryMappings(getModelMappings())
-    scopeFilterConfigurable.apply()
-    sharedProjectSettings.isDetectVcsMappingsAutomatically = detectVcsMappingsCheckBox.isSelected
     initializeModel()
   }
 
@@ -410,10 +397,8 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : JP
     vcsConfiguration.removeFromIgnoredUnregisteredRoots(newMappings.map { obj: VcsDirectoryMapping -> obj.directory })
   }
 
-  fun isModified(): Boolean {
-    if (scopeFilterConfigurable.isModified) return true
-    return getModelMappings() != vcsManager.getDirectoryMappings() ||
-           detectVcsMappingsCheckBox.isSelected != sharedProjectSettings.isDetectVcsMappingsAutomatically
+  private fun isModified(): Boolean {
+    return getModelMappings() != vcsManager.getDirectoryMappings()
   }
 
   private fun getModelMappings(): List<VcsDirectoryMapping> {

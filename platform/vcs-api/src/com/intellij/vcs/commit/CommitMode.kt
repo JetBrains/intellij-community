@@ -2,6 +2,7 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import org.jetbrains.annotations.ApiStatus
 
 interface CommitMode {
   fun useCommitToolWindow(): Boolean
@@ -27,8 +28,11 @@ interface CommitMode {
   data class NonModalCommitMode(val isToggleMode: Boolean) : CommitMode {
     companion object {
       const val COMMIT_TOOL_WINDOW_SETTINGS_KEY: String = "vcs.commit.tool.window"
+
+      @ApiStatus.Internal
+      fun commitTwEnabled(): Boolean = AdvancedSettings.getBoolean(COMMIT_TOOL_WINDOW_SETTINGS_KEY)
     }
 
-    override fun useCommitToolWindow(): Boolean = AdvancedSettings.getBoolean(COMMIT_TOOL_WINDOW_SETTINGS_KEY)
+    override fun useCommitToolWindow(): Boolean = commitTwEnabled()
   }
 }

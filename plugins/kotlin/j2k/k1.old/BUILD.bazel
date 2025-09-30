@@ -1,15 +1,15 @@
 ### auto-generated section `build kotlin.j2k.k1.old` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
   name = "custom_k1.old",
   x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "k1.old_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -18,6 +18,7 @@ jvm_library(
   module_name = "kotlin.j2k.k1.old",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":k1.old_resources"],
   kotlinc_opts = ":custom_k1.old",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -38,7 +39,6 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/fe10/code-insight",
     "//plugins/kotlin/j2k/k1.new",
-  ],
-  runtime_deps = [":k1.old_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.j2k.k1.old` end

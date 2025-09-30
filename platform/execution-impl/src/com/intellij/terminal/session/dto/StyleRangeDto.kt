@@ -11,10 +11,11 @@ data class StyleRangeDto(
   val startOffset: Long,
   val endOffset: Long,
   val style: TextStyleDto,
+  val ignoreContrastAdjustment: Boolean,
 )
 
 @ApiStatus.Internal
-fun StyleRange.toDto(): StyleRangeDto = StyleRangeDto(startOffset, endOffset, style.toDto())
+fun StyleRange.toDto(): StyleRangeDto = StyleRangeDto(startOffset, endOffset, style.toDto(), ignoreContrastAdjustment)
 
 @ApiStatus.Internal
-fun StyleRangeDto.toStyleRange(): StyleRange = StyleRange(startOffset, endOffset, style.toTextStyle())
+fun StyleRangeDto.toStyleRange(): StyleRange = StyleRange(startOffset, endOffset, style.toTextStyle(), ignoreContrastAdjustment)

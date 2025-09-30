@@ -11265,6 +11265,21 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/importAllMembers/TypeReference2.kt");
         }
 
+        @TestMetadata("typeReferenceAtStart.kt")
+        public void testTypeReferenceAtStart() throws Exception {
+            runTest("testData/intentions/importAllMembers/typeReferenceAtStart.kt");
+        }
+
+        @TestMetadata("typeReferenceLeftOfImportableSegment.kt")
+        public void testTypeReferenceLeftOfImportableSegment() throws Exception {
+            runTest("testData/intentions/importAllMembers/typeReferenceLeftOfImportableSegment.kt");
+        }
+
+        @TestMetadata("typeReferenceOnImportableSegment.kt")
+        public void testTypeReferenceOnImportableSegment() throws Exception {
+            runTest("testData/intentions/importAllMembers/typeReferenceOnImportableSegment.kt");
+        }
+
         @TestMetadata("UnresolvedMember.kt")
         public void testUnresolvedMember() throws Exception {
             runTest("testData/intentions/importAllMembers/UnresolvedMember.kt");
@@ -11392,6 +11407,26 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("TopLevelFun.kt")
         public void testTopLevelFun() throws Exception {
             runTest("testData/intentions/importMember/TopLevelFun.kt");
+        }
+
+        @TestMetadata("typeReferenceAtStart.kt")
+        public void testTypeReferenceAtStart() throws Exception {
+            runTest("testData/intentions/importMember/typeReferenceAtStart.kt");
+        }
+
+        @TestMetadata("typeReferenceLeftOfImportableSegment.kt")
+        public void testTypeReferenceLeftOfImportableSegment() throws Exception {
+            runTest("testData/intentions/importMember/typeReferenceLeftOfImportableSegment.kt");
+        }
+
+        @TestMetadata("typeReferenceOnImportableSegment.kt")
+        public void testTypeReferenceOnImportableSegment() throws Exception {
+            runTest("testData/intentions/importMember/typeReferenceOnImportableSegment.kt");
+        }
+
+        @TestMetadata("typeReferenceOnLastSegment.kt")
+        public void testTypeReferenceOnLastSegment() throws Exception {
+            runTest("testData/intentions/importMember/typeReferenceOnLastSegment.kt");
         }
     }
 
@@ -16020,6 +16055,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("unnecessaryDefinitelyNonNullableTypeArg.kt")
         public void testUnnecessaryDefinitelyNonNullableTypeArg() throws Exception {
             runTest("testData/intentions/removeExplicitTypeArguments/unnecessaryDefinitelyNonNullableTypeArg.kt");
+        }
+
+        @TestMetadata("unresolvedUnrelatedReference.kt")
+        public void testUnresolvedUnrelatedReference() throws Exception {
+            runTest("testData/intentions/removeExplicitTypeArguments/unresolvedUnrelatedReference.kt");
         }
 
         @TestMetadata("valueDeclaration.kt")

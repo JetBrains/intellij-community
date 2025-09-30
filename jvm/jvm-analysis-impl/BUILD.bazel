@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.jvm.analysis.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "analysis-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.jvm.analysis.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":analysis-impl_resources"],
   deps = [
     "//java/java-indexing-api:indexing",
     "//jvm/jvm-analysis-api:analysis",
@@ -36,7 +37,6 @@ jvm_library(
     "//jvm/jvm-analysis-quickFix:analysis-quickFix",
     "//java/codeserver/core",
   ],
-  exports = ["//jvm/jvm-analysis-api:analysis"],
-  runtime_deps = [":analysis-impl_resources"]
+  exports = ["//jvm/jvm-analysis-api:analysis"]
 )
 ### auto-generated section `build intellij.jvm.analysis.impl` end

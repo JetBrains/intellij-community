@@ -73,7 +73,7 @@ public final class RedundantImplementsInspection extends BaseInspection implemen
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new RedundantImplementsVisitor();
   }
 

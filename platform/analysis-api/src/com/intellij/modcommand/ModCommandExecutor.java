@@ -89,7 +89,7 @@ public interface ModCommandExecutor {
       title, true, context.project());
     if (!command.isEmpty()) {
       CommandProcessor commandProcessor = CommandProcessor.getInstance();
-      if (commandProcessor.getCurrentCommand() == null) {
+      if (!commandProcessor.isCommandInProgress()) {
         commandProcessor.executeCommand(context.project(), 
                                         () -> getInstance().executeInteractively(context, command, editor), title, null);
       } else {

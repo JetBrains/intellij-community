@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.IntellijInternalApi
+import org.jetbrains.annotations.ApiStatus
 
 object StatisticsEventLogProviderUtil {
   @JvmStatic
@@ -13,6 +15,13 @@ object StatisticsEventLogProviderUtil {
   @JvmStatic
   fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider {
     return ApplicationManager.getApplication().getService(StatisticsEventLogProvidersHolder::class.java).getEventLogProvider(recorderId)
+  }
+
+  @ApiStatus.Internal
+  @IntellijInternalApi
+  @JvmStatic
+  fun getEventLogProvidersExt(recorderId: String): Collection<StatisticsEventLoggerProvider> {
+    return ApplicationManager.getApplication().getService(StatisticsEventLogProvidersHolder::class.java).getEventLogProvidersExt(recorderId)
   }
 
   @JvmStatic

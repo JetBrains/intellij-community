@@ -79,7 +79,7 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
       }
 
       if (element != null && ",".equals(element.getText())) {
-        registerForAllMatchingVersions(level -> level.isPy3K() && registerForLanguageLevel(level),
+        registerForAllMatchingVersions(level -> level.isPy3K() && level.isOlderThan(LanguageLevel.PYTHON314) && registerForLanguageLevel(level),
                                        PyPsiBundle.message("INSP.compatibility.feature.support.this.syntax"),
                                        node,
                                        new ReplaceExceptPartQuickFix());

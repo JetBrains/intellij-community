@@ -21,7 +21,7 @@ internal object RequirementsTxtManipulationHelper {
     // Write the modified content back to the file
     @Suppress("DialogTitleCapitalization")
     WriteCommandAction.runWriteCommandAction(project, PyBundle.message("command.name.add.package.to.requirements.txt"), null, {
-      document.insertString(0, requirementName + "\n")
+      document.insertString(document.textLength, "\n" + requirementName)
       FileDocumentManager.getInstance().saveDocument(document)
     }, PsiManager.getInstance(project).findFile(requirementsTxt))
 

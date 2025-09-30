@@ -61,8 +61,8 @@ private fun computeIdeFingerprint(debugHelperToken: Int): IdeFingerprint {
   val hasher = Hashing.xxh3_64().hashStream()
 
   val appInfo = ApplicationInfoImpl.getShadowInstance()
-  if (AppMode.isDevServer()) {
-    hasher.putBytes(Files.readAllBytes(Path.of(PathManager.getHomePath(), "fingerprint.txt")))
+  if (AppMode.isRunningFromDevBuild()) {
+    hasher.putBytes(Files.readAllBytes(PathManager.getHomeDir().resolve("fingerprint.txt")))
   }
   else {
     hasher.putLong(appInfo.buildTime.toEpochSecond())

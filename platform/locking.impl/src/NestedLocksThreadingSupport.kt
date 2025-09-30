@@ -13,9 +13,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.locking.impl.listeners.ErrorHandler
 import com.intellij.platform.locking.impl.listeners.LegacyProgressIndicatorProvider
 import com.intellij.platform.locking.impl.listeners.LockAcquisitionListener
+import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.ReflectionUtil
 import kotlinx.coroutines.*
-import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
@@ -816,35 +816,40 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     val currentReadState = myTopmostReadAction.get()
     myTopmostReadAction.set(true)
 
-    val computationState = getComputationState()
-    val currentPermit = computationState.getThisThreadPermit()
-    var readPermitToRelease: ReadPermit? = null
-
-    when (currentPermit) {
-      is ParallelizablePermit.Read, is ParallelizablePermit.Write, is ParallelizablePermit.WriteIntent -> {}
-      null -> {
-        readPermitToRelease = smartAcquireReadPermit(computationState)
-      }
-    }
-
-    // For diagnostic purposes register that we in read action, even if we use stronger lock
-    myReadActionsInThread.set(myReadActionsInThread.get() + 1)
-
     try {
-      fireReadActionStarted(frozenListeners, clazz)
-      val rv = action()
-      return rv
+      val computationState = getComputationState()
+      val currentPermit = computationState.getThisThreadPermit()
+      var readPermitToRelease: ReadPermit? = null
+
+      when (currentPermit) {
+        is ParallelizablePermit.Read, is ParallelizablePermit.Write, is ParallelizablePermit.WriteIntent -> {}
+        null -> {
+          readPermitToRelease = smartAcquireReadPermit(computationState)
+        }
+      }
+
+      // For diagnostic purposes register that we in read action, even if we use stronger lock
+      myReadActionsInThread.set(myReadActionsInThread.get() + 1)
+
+      try {
+        fireReadActionStarted(frozenListeners, clazz)
+        val rv = action()
+        return rv
+      }
+      finally {
+        fireReadActionFinished(frozenListeners, clazz)
+
+        myReadActionsInThread.set(myReadActionsInThread.get() - 1)
+        if (readPermitToRelease != null) {
+          computationState.releaseReadPermit(readPermitToRelease)
+        }
+      }
     }
     finally {
-      fireReadActionFinished(frozenListeners, clazz)
-
-      myReadActionsInThread.set(myReadActionsInThread.get() - 1)
-      if (readPermitToRelease != null) {
-        computationState.releaseReadPermit(readPermitToRelease)
-      }
       myTopmostReadAction.set(currentReadState)
       fireAfterReadActionFinished(frozenListeners, clazz)
     }
+
   }
 
   override fun tryRunReadAction(action: Runnable): Boolean {
@@ -1673,7 +1678,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   @OptIn(InternalCoroutinesApi::class)
   fun <T> runSuspendMaybeConsuming(tryCompensateParallelism: Boolean, block: suspend () -> T): T {
     return if (tryCompensateParallelism && readLockCompensationTimeout != -1) {
-      IntellijCoroutines.runAndCompensateParallelism(readLockCompensationTimeout.toDuration(DurationUnit.MILLISECONDS)) {
+      IntelliJCoroutinesFacade.runAndCompensateParallelism(readLockCompensationTimeout.toDuration(DurationUnit.MILLISECONDS)) {
         runSuspendWithWaitingConsumer(block, myLockInterceptor.get())
       }
     }

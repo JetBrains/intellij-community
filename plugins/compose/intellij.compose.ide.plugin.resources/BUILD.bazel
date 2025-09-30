@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.compose.ide.plugin.resources` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "ide-plugin-resources_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.compose.ide.plugin.resources",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide-plugin-resources_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
@@ -42,8 +43,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/statistics",
-  ],
-  runtime_deps = [":ide-plugin-resources_resources"]
+  ]
 )
 
 jvm_library(
@@ -101,8 +101,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-test",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
-  ],
-  runtime_deps = [":ide-plugin-resources_resources"]
+  ]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.resources` end
 

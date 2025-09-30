@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
@@ -55,37 +54,23 @@ public final class ManagedHighlighterRecycler {
   synchronized @Nullable InvalidPsi pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer, @Nullable String preferredDescription) {
     long range = TextRangeScalarUtil.toScalarRange(startOffset, endOffset);
     List<InvalidPsi> list = incinerator.get(range);
-    if (list == null) {
-      return null;
-    }
-    int i;
-    int previousFound = -1;
-    for (i = list.size()-1; i>=0; i--) {
-      InvalidPsi psi = list.get(i);
-      RangeHighlighterEx highlighter = psi.info().getHighlighter();
-      if (highlighter.isValid() && highlighter.getLayer() == layer) {
-        if (Comparing.strEqual(psi.info().getDescription(), preferredDescription)) {
-          break;
-        }
-        else {
-          previousFound = i;
+    if (list != null) {
+      for (int i = 0; i < list.size(); i++) {
+        InvalidPsi psi = list.get(i);
+        RangeHighlighterEx highlighter = psi.info().getHighlighter();
+        if (highlighter.isValid() && highlighter.getLayer() == layer) {
+          list.remove(i);
+          if (list.isEmpty()) {
+            incinerator.remove(range);
+          }
+          if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {
+            UpdateHighlightersUtil.LOG.debug("pickupHighlighterFromGarbageBin pickedup:" + highlighter + HighlightInfoUpdaterImpl.currentProgressInfo());
+          }
+          return psi;
         }
       }
     }
-    if (i == -1) {
-      i = previousFound;
-      if (i == -1) {
-        return null;
-      }
-    }
-    InvalidPsi psi = list.remove(i);
-    if (list.isEmpty()) {
-      incinerator.remove(range);
-    }
-    if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {
-      UpdateHighlightersUtil.LOG.debug("pickupHighlighterFromGarbageBin pickedup:" + psi.info().getHighlighter() + HighlightInfoUpdaterImpl.currentProgressInfo());
-    }
-    return psi;
+    return null;
   }
 
   synchronized @NotNull @Unmodifiable Collection<InvalidPsi> forAllInGarbageBin() {

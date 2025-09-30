@@ -2,18 +2,15 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.workspaceModel.ide.WsmSingletonEntityUtils
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.core.fileIndex.*
+import com.intellij.workspaceModel.ide.WsmSingletonEntityUtils
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.customName
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 
 class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, PlatformInternalWorkspaceFileIndexContributor {
 
@@ -31,8 +28,13 @@ class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, 
       sourceRootFileSetData = SdkSourceRootFileSetData(entity.symbolicId)
     }
     else {
-      compiledRootsData = UnloadableSdkRootFileSetData(entity.symbolicId)
-      sourceRootFileSetData = UnloadableSdkSourceRootFileSetData(entity.symbolicId)
+      val enforced = WorkspaceFileIndexContributorEnforcer.EP_NAME
+        .extensionsIfPointIsRegistered.any { it.shouldContribute(entity, storage) }
+      if (!enforced && !storage.hasReferrers(entity.symbolicId)) {
+        return
+      }
+      compiledRootsData = SdkRootFileSetData(entity.symbolicId)
+      sourceRootFileSetData = SdkSourceRootFileSetData(entity.symbolicId)
     }
 
     for (root in entity.roots) {
@@ -47,14 +49,7 @@ class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, 
 
   override val dependenciesOnOtherEntities: List<DependencyDescription<SdkEntity>>
     get() = listOf(
-      DependencyDescription.OnArbitraryEntity(ProjectSettingsEntity::class.java) {
-        if (it is WorkspaceEntityBase) {
-          val jdk = it.projectSdk?.resolve(it.snapshot)
-          if (jdk != null) return@OnArbitraryEntity sequenceOf(jdk)
-        }
-
-        return@OnArbitraryEntity sequenceOf()
-      }
+      DependencyDescription.OnReference(SdkId::class.java),
     )
 
   private fun isProjectSdk(entity: SdkEntity, storage: EntityStorage): Boolean {
@@ -68,15 +63,5 @@ class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, 
 
   internal open class SdkRootFileSetData(internal val sdkId: SdkId) : JvmPackageRootDataInternal {
     override val packagePrefix: String = ""
-  }
-
-  internal class UnloadableSdkSourceRootFileSetData(
-    sdkId: SdkId,
-  ) : UnloadableSdkRootFileSetData(sdkId), ModuleOrLibrarySourceRootData
-
-  internal open class UnloadableSdkRootFileSetData(sdkId: SdkId) : SdkRootFileSetData(sdkId), UnloadableFileSetData {
-    override fun isUnloaded(project: Project): Boolean {
-      return !ModuleDependencyIndex.getInstance(project).hasDependencyOn(sdkId)
-    }
   }
 }

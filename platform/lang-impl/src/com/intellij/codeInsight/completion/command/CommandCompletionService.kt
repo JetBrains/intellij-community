@@ -85,11 +85,14 @@ internal class CommandCompletionService(
     val fullSuffix = completionFactory.suffix() + filterSuffix.toString()
     val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(originalEditor)
     if (!nonWrittenFiles) {
-      val index = findActualIndex(fullSuffix, topLevelEditor.document.immutableCharSequence, lookup.lookupOriginalStart)
+      val document = topLevelEditor.document
+      val index = findActualIndex(fullSuffix, document.immutableCharSequence, lookup.lookupOriginalStart)
       val offsetOfFullIndex = lookup.lookupOriginalStart - index
+      val currentOffset = topLevelEditor.caretModel.offset
       if (index == 0 || offsetOfFullIndex < 0 ||
-          offsetOfFullIndex >= topLevelEditor.document.textLength ||
-          !topLevelEditor.document.immutableCharSequence.substring(offsetOfFullIndex, topLevelEditor.caretModel.offset).startsWith(fullSuffix)) {
+          offsetOfFullIndex >= document.textLength ||
+          offsetOfFullIndex >= currentOffset ||
+          !document.immutableCharSequence.substring(offsetOfFullIndex, currentOffset).startsWith(fullSuffix)) {
         if (installed != true) return
         lookup.removeUserData(INSTALLED_ADDITIONAL_MATCHER_KEY)
         lookup.arranger.registerAdditionalMatcher { true }
@@ -279,6 +282,7 @@ private class CommandCompletionHighlightingListener(
   }
 
   private fun updatePromptHighlighting(item: CommandCompletionLookupElement) {
+    if (nonWrittenFiles) return
     val installed = ConcurrencyUtil.computeIfAbsent(lookup, INSTALLED_PROMPT_KEY) { AtomicBoolean(false) }
     val startOffset = lookup.lookupOriginalStart - findActualIndex(item.suffix, topLevelEditor.document.immutableCharSequence,
                                                                    lookup.lookupOriginalStart)
@@ -316,7 +320,7 @@ private class CommandCompletionHighlightingListener(
                                            lookup.lookupOriginalStart)
     val highlightInfo = element.highlighting ?: return
     val rangeHighlighters = mutableListOf<RangeHighlighter>()
-    if (highlightInfo.range.startOffset <= min(highlightInfo.range.endOffset, startOffset)) {
+    if (nonWrittenFiles || highlightInfo.range.startOffset <= min(highlightInfo.range.endOffset, startOffset)) {
       highlightManager.addRangeHighlight(topLevelEditor, highlightInfo.range.startOffset, highlightInfo.range.endOffset, EditorColors.SEARCH_RESULT_ATTRIBUTES, false, rangeHighlighters)
       highlightManager.addRangeHighlight(topLevelEditor, highlightInfo.range.startOffset, highlightInfo.range.endOffset, highlightInfo.attributesKey, false, rangeHighlighters)
     }

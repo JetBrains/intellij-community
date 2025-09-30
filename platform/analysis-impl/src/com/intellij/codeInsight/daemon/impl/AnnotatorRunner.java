@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
@@ -29,6 +30,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -117,13 +119,14 @@ final class AnnotatorRunner {
     if (supported.isEmpty()) {
       return;
     }
+    VirtualFile virtualFile = myPsiFile.getVirtualFile();
     // create AnnotationHolderImpl for each Annotator to make it immutable thread-safe converter to the corresponding HighlightInfo
     AnnotationSessionImpl.computeWithSession(myBatchMode, annotator, myAnnotationSession, annotationHolder -> {
       for (PsiElement psiElement : insideThenOutside) {
         if (!supported.contains(psiElement.getLanguage())) {
           continue;
         }
-        if (!myDumbService.isUsableInCurrentContext(annotator)) {
+        if (!myDumbService.isUsableInCurrentContext(annotator, virtualFile)) {
           continue;
         }
         ProgressManager.checkCanceled();

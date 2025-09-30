@@ -63,6 +63,7 @@ public data class SdkmanReleaseData(val target: String,
 }
 
 private const val SDKMANRC = ".sdkmanrc"
+private val JAVA_PATTERN: Regex = Regex("^java=(.*)$", RegexOption.MULTILINE)
 
 public class SdkmanrcConfigurationProvider: ExternalJavaConfigurationProvider<SdkmanReleaseData> {
   override fun isConfigurationFile(fileName: String): Boolean = fileName == SDKMANRC
@@ -79,7 +80,7 @@ public class SdkmanrcConfigurationProvider: ExternalJavaConfigurationProvider<Sd
 
   override fun getReleaseDataOffset(text: String): TextRange? {
     val releaseData = getReleaseData(text) ?: return null
-    val range = Regex("^java=(.*)$", RegexOption.MULTILINE)
+    val range = JAVA_PATTERN
       .findAll(text)
       .firstOrNull { it.groupValues.getOrNull(1)?.contains(releaseData.target) == true }
       ?.range ?: return null

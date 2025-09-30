@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components.impl.stores
 
+import com.intellij.configurationStore.ProjectStoreDescriptor
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -18,11 +19,7 @@ interface IProjectStore : IComponentStore {
   @get:Internal
   val locationHash: String
 
-  val projectName: String
-
   val storageScheme: StorageScheme
-
-  val presentableUrl: String
 
   /**
    * The path to project configuration file - `misc.xml` for directory-based and `*.ipr` for file-based.
@@ -49,6 +46,9 @@ interface IProjectStore : IComponentStore {
   fun setPath(file: Path, template: Project?)
 
   val projectWorkspaceId: String?
+
+  @get:Internal
+  val storeDescriptor: ProjectStoreDescriptor
 
   @Internal
   companion object {

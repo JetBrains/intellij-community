@@ -2,17 +2,27 @@
 
 A decompiler from Java bytecode to Java.
 
-### About Fernflower
+## About Fernflower
 
-Fernflower is the first actually working analytical decompiler for Java and
-probably for a high-level programming language in general.
+Fernflower is the first actually working analytical decompiler for Java
+and probably for a high-level programming language in general.
 Naturally, it is still under development.
-Please send your bug reports and improvement suggestions to the [issue tracker] (in subsystem `Java. Decompiler`).
+Please send your bug reports and improvement suggestions to the [issue tracker] (in subsystem `Java. Decompiler. Engine`).
 
-### Fernflower and ForgeFlower
+### Naming
+
+The correct name is Fernflower, not FernFlower.
+
+### Credits
+
+[Fernflower was originally written by Stiver](https://blog.jetbrains.com/idea/2024/11/in-memory-of-stiver).
 
 Fernflower includes some patches from [ForgeFlower](https://github.com/MinecraftForge/ForgeFlower).
 Sincere appreciation is extended to the maintainers of ForgeFlower for their valuable contributions and enhancements.
+
+A mirror of this repository has been maintained for many years by [Andrew McRae](https://github.com/fesh0r)
+until JetBrains offered to take over.
+Sincere appreciation is extended to Andrew for his work maintaining the mirror.
 
 ### License
 
@@ -24,6 +34,8 @@ Fernflower is licensed under the [Apache License Version 2.0](http://www.apache.
 
 The Fernflower IDE plugin is bundled in IntelliJ IDEA.
 Open any `.class` file and you should see the decompiled Java source code: this is Fernflower in action.
+
+The plugin is also open-source and [can be found here](https://github.com/JetBrains/intellij-community/tree/master/plugins/java-decompiler/plugin). 
 
 ### Running from the command line
 
@@ -128,4 +140,4 @@ Build an executable start-up script:
 
 The startup script is generated in `build/install/engine/bin`.
 
-[issue tracker]: https://youtrack.jetbrains.com/newIssue?project=IDEA&clearDraft=true&c=Subsystem%20Java.%20Decompiler
+[issue tracker]: https://youtrack.jetbrains.com/newIssue?project=IDEA&clearDraft=true&c=Subsystem%20Java.%20Decompiler.%20Engine

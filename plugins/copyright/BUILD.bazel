@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.copyright` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "copyright_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.copyright",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":copyright_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -32,8 +33,7 @@ jvm_library(
     "//platform/core-ui",
     "//xml/xml-psi-api:psi",
     "//platform/util/jdom",
-  ],
-  runtime_deps = [":copyright_resources"]
+  ]
 )
 
 jvm_library(
@@ -72,8 +72,7 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/testFramework/junit5.jimfs",
     "//platform/testFramework/junit5.jimfs:junit5.jimfs_test_lib",
-  ],
-  runtime_deps = [":copyright_resources"]
+  ]
 )
 ### auto-generated section `build intellij.copyright` end
 

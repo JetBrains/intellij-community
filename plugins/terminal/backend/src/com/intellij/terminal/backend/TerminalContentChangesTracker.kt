@@ -148,7 +148,7 @@ class TerminalContentChangesTracker(
     }
     textBuffer.collectLines(terminalLinesCollector, startLine)
 
-    return StyledCommandOutput(stringCollector.buildText(), false, styles)
+    return StyledCommandOutput(stringCollector.buildText(), styles)
   }
 }
 

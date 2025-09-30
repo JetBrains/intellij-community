@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.EventDispatcher
 import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.TerminalCustomCommandListener
-import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
@@ -20,19 +19,13 @@ import kotlin.time.TimeSource
 
 @ApiStatus.Internal
 class ShellCommandManager(
-  private val commandEndMarker: String?,
   private val terminal: Terminal,
   private val shellIntegration: ShellIntegration,
-  private val parentDisposable: Disposable,
-  private val terminalTextBuffer: TerminalTextBuffer,
 ) {
 
   constructor(session: BlockTerminalSession) : this(
-    session.commandBlockIntegration.commandEndMarker,
     session.controller,
-    session.shellIntegration,
-    session as Disposable,
-    session.model.textBuffer
+    session.shellIntegration
   )
 
   private val dispatcher = EventDispatcher.create(ShellCommandListener::class.java)
@@ -64,15 +57,7 @@ class ShellCommandManager(
 
   private fun processInitialized(event: List<String>) {
     val shellInfo = Param.SHELL_INFO.getDecodedValueOrNull(event.getOrNull(1)) ?: "{}"
-    if (commandEndMarker != null) {
-      debug { "Received initialized event, waiting for command end marker" }
-      ShellCommandEndMarkerListener(terminalTextBuffer, commandEndMarker, parentDisposable) {
-        fireInitialized(shellInfo)
-      }
-    }
-    else {
-      fireInitialized(shellInfo)
-    }
+    fireInitialized(shellInfo)
   }
 
   private fun processCommandStartedEvent(event: List<String>) {
@@ -86,17 +71,8 @@ class ShellCommandManager(
   private fun processCommandFinishedEvent(event: List<String>) {
     val exitCode = Param.EXIT_CODE.getIntValue(event.getOrNull(1))
     val startedCommand = this.startedCommand
-    if (commandEndMarker != null) {
-      debug { "Received command_finished event, waiting for command end marker" }
-      ShellCommandEndMarkerListener(terminalTextBuffer, commandEndMarker, parentDisposable) {
-        fireCommandFinished(startedCommand, exitCode)
-        this.startedCommand = null
-      }
-    }
-    else {
-      fireCommandFinished(startedCommand, exitCode)
-      this.startedCommand = null
-    }
+    fireCommandFinished(startedCommand, exitCode)
+    this.startedCommand = null
   }
 
   private fun processPromptStateUpdatedEvent(event: List<String>) {
@@ -123,15 +99,7 @@ class ShellCommandManager(
     val requestId = Param.REQUEST_ID.getIntValue(event.getOrNull(1))
     val result = Param.RESULT.getDecodedValue(event.getOrNull(2))
     val exitCode = Param.EXIT_CODE.getIntValue(event.getOrNull(3))
-    if (commandEndMarker != null) {
-      debug { "Received generator_finished event, waiting for command end marker" }
-      ShellCommandEndMarkerListener(terminalTextBuffer, commandEndMarker, parentDisposable) {
-        fireGeneratorFinished(requestId, result, exitCode)
-      }
-    }
-    else {
-      fireGeneratorFinished(requestId, result, exitCode)
-    }
+    fireGeneratorFinished(requestId, result, exitCode)
   }
 
   /**

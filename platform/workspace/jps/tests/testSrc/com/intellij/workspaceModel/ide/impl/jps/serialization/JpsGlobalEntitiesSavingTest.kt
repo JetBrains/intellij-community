@@ -8,15 +8,13 @@ import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.PersistentOrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
- import org.junit.*
+import org.junit.*
 import org.junit.rules.TemporaryFolder
 
 class JpsGlobalEntitiesSavingTest {
@@ -34,10 +32,13 @@ class JpsGlobalEntitiesSavingTest {
   @JvmField
   val disposableRule = DisposableRule()
 
+  @Before
+  fun ensureAnnotationAndJavadocOrderRootTypes() {
+    ensureAnnotationAndJavadocOrderRootTypes(disposableRule.disposable)
+  }
+
   @Test
   fun `test global libraries saving`() {
-    // TODO:: Investigate failing on TC
-    Assume.assumeFalse("Temporary failed in check of expected file content", UsefulTestCase.IS_UNDER_TEAMCITY)
     copyAndLoadGlobalEntities(expectedFile = "libraries/saving", testDir = temporaryFolder.newFolder(),
                               parentDisposable = disposableRule.disposable) { entitySource, _ ->
       val librariesNames = listOf("com.gradle", "org.maven")
@@ -72,11 +73,8 @@ class JpsGlobalEntitiesSavingTest {
 
   @Test
   fun `test global sdk saving`() {
-    // TODO:: Investigate failing on TC
-    Assume.assumeFalse("Temporary failed in check of expected file content", UsefulTestCase.IS_UNDER_TEAMCITY)
     copyAndLoadGlobalEntities(expectedFile = "sdk/saving", testDir = temporaryFolder.newFolder(),
                               parentDisposable = disposableRule.disposable) { entitySource, _ ->
-      OrderRootType.EP_NAME.point.registerExtension(AnnotationOrderRootType(), disposableRule.disposable)
       val sdkNames = listOf("jbr-2048", "amazon.crevetto")
       val sdks = ProjectJdkTable.getInstance().allJdks
       Assert.assertEquals(0, sdks.size)

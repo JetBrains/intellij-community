@@ -1269,7 +1269,6 @@ f:com.intellij.openapi.project.ProjectUtil
 - bs:getProjectCachePath$default(com.intellij.openapi.project.Project,java.lang.String,Z,java.lang.String,I,java.lang.Object):java.nio.file.Path
 - bs:getProjectCachePath$default(com.intellij.openapi.project.Project,java.nio.file.Path,Z,java.lang.String,I,java.lang.Object):java.nio.file.Path
 - sf:getProjectDataPath(com.intellij.openapi.project.Project,java.lang.String):java.nio.file.Path
-- sf:getProjectsDataDir():java.nio.file.Path
 - sf:getRootManager(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ModuleRootManager
 - sf:guessCurrentProject(javax.swing.JComponent):com.intellij.openapi.project.Project
 - sf:guessModuleDir(com.intellij.openapi.module.Module):com.intellij.openapi.vfs.VirtualFile
@@ -1910,6 +1909,7 @@ a:com.intellij.util.io.RequestBuilder
 - a:connect(com.intellij.util.io.HttpRequests$RequestProcessor):java.lang.Object
 - connect(com.intellij.util.io.HttpRequests$RequestProcessor,java.lang.Object,com.intellij.openapi.diagnostic.Logger):java.lang.Object
 - a:connectTimeout(I):com.intellij.util.io.RequestBuilder
+- a:followRedirects(Z):com.intellij.util.io.RequestBuilder
 - a:forceHttps(Z):com.intellij.util.io.RequestBuilder
 - a:gzip(Z):com.intellij.util.io.RequestBuilder
 - a:hostNameVerifier(javax.net.ssl.HostnameVerifier):com.intellij.util.io.RequestBuilder

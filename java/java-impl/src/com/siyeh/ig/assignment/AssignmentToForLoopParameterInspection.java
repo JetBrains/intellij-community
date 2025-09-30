@@ -48,7 +48,7 @@ public final class AssignmentToForLoopParameterInspection extends BaseInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new AssignmentToForLoopParameterVisitor();
   }
 

@@ -182,6 +182,11 @@ public abstract class JavaAgainstKotlinSourceCheckerTestGenerated extends Abstra
             runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ReturnInnerClasses.kt");
         }
 
+        @TestMetadata("SelfBoundedGenericWithWildcard.kt")
+        public void testSelfBoundedGenericWithWildcard() throws Exception {
+            runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/SelfBoundedGenericWithWildcard.kt");
+        }
+
         @TestMetadata("ThrowsOnGenericMethod.kt")
         public void testThrowsOnGenericMethod() throws Exception {
             runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ThrowsOnGenericMethod.kt");

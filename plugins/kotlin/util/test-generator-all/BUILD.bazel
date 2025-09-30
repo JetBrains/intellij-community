@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:junit4",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/util/project-model-updater",
   ]
 )
 ### auto-generated section `build kotlin.util.test-generator-all` end

@@ -5,6 +5,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface SeItem {
+  val rawObject: Any get() = this
+
   fun weight(): Int
   suspend fun presentation(): SeItemPresentation
 }

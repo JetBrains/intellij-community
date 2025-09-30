@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.execution.rpc.ExecutionEnvironmentProxyDto
-import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabEvent
 import com.intellij.platform.rpc.Id
@@ -27,7 +26,7 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface XDebugSessionTabApi : RemoteApi<Unit> {
 
-  suspend fun sessionTabInfo(sessionId: XDebugSessionId): Flow<XDebuggerSessionTabDto>
+  suspend fun sessionTabInfo(sessionDataId: XDebugSessionDataId): Flow<XDebuggerSessionTabDto>
   suspend fun onTabInitialized(sessionId: XDebugSessionId, tabInfo: XDebuggerSessionTabInfoCallback)
 
   suspend fun additionalTabEvents(tabComponentsManagerId: XDebugSessionAdditionalTabComponentManagerId): Flow<XDebuggerSessionAdditionalTabEvent>
@@ -75,8 +74,6 @@ data class XDebuggerSessionTabInfo(
   val forceNewDebuggerUi: Boolean,
   val withFramesCustomization: Boolean,
   val defaultFramesViewKey: String?,
-  // TODO pass to frontend
-  @Transient val contentToReuse: RunContentDescriptor? = null,
   val executionEnvironmentId: ExecutionEnvironmentId?,
   val executionEnvironmentProxyDto: ExecutionEnvironmentProxyDto?,
   val additionalTabsComponentManagerId: XDebugSessionAdditionalTabComponentManagerId,
@@ -91,6 +88,7 @@ data class ExecutionEnvironmentId(override val uid: UID) : Id
 
 @ApiStatus.Internal
 @Serializable
+@Deprecated("Let's try using the RunContentDescriptorIdImpl instead which is declared and accessible outside debugger code")
 data class RunContentDescriptorId(override val uid: UID) : Id
 
 @ApiStatus.Internal

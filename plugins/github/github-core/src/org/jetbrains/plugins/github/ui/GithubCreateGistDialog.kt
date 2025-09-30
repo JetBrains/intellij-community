@@ -56,20 +56,21 @@ class GithubCreateGistDialog(
 
   override fun createCenterPanel(): DialogPanel = panel {
     fileNameField?.let {
-      row(message("create.gist.dialog.filename.field")) {
+      row(message("create.gist.dialog.filename.field")) {}
+      row {
         cell(it).align(AlignX.FILL)
-      }
+      }.bottomGap(BottomGap.SMALL)
     }
 
+    row(message("create.gist.dialog.description.field")) {}
     row {
-      label(message("create.gist.dialog.description.field"))
-        .align(AlignY.TOP)
       textArea()
         .rows(4)
         .align(Align.FILL)
-    }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
+    }.bottomGap(BottomGap.SMALL).resizableRow()
 
-    row(CollaborationToolsBundle.message("snippet.create.path-mode")) {
+    row(CollaborationToolsBundle.message("snippet.create.path-mode")) {}
+    row {
       comboBox(PathHandlingMode.entries,
                ListCellRenderer { _, value, _, _, _ ->
                  val selectable = value in PathHandlingMode.entries
@@ -86,16 +87,17 @@ class GithubCreateGistDialog(
       }
         .align(Align.FILL)
         .bindItem(::pathMode)
-    }
+    }.bottomGap(BottomGap.SMALL)
 
-    row("") {
+    row {
       cell(secretCheckBox)
       cell(browserCheckBox)
       checkBox(message("create.gist.dialog.copy.url")).bindSelected(::isCopyURL)
-    }
+    }.bottomGap(BottomGap.SMALL)
 
     if (accountsModel.size != 1) {
-      row(message("create.gist.dialog.create.for.field")) {
+      row(message("create.gist.dialog.create.for.field")) {}
+      row {
         comboBox(accountsModel)
           .align(AlignX.FILL)
           .validationOnApply { if (accountsModel.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }

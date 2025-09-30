@@ -167,7 +167,7 @@ c:com.intellij.usages.impl.rules.FileGroupingRule
 - com.intellij.usages.rules.SingleParentUsageGroupingRule
 - com.intellij.openapi.project.DumbAware
 - com.intellij.usages.rules.UsageGroupingRuleEx
-- <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,Z):V
 - getGroupingActionId():java.lang.String
 - getParentGroupFor(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):com.intellij.usages.UsageGroup
 - getRank():I
@@ -176,7 +176,7 @@ c:com.intellij.usages.impl.rules.FileGroupingRule$FileUsageGroup
 - com.intellij.openapi.actionSystem.UiDataProvider
 - com.intellij.usages.NamedPresentably
 - com.intellij.usages.UsageGroup
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z):V
 - canNavigate():Z
 - canNavigateToSource():Z
 - compareTo(com.intellij.usages.UsageGroup):I

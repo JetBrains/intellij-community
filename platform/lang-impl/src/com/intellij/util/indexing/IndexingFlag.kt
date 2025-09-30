@@ -79,7 +79,7 @@ object IndexingFlag {
   @JvmStatic
   fun isFileChanged(file: VirtualFile, stamp: FileIndexingStamp): IsFileChangedResult {
     val fileWithId = file.asApplicable() ?: return IsFileChangedResult.UNKNOWN
-    return stamp.isFileChanged(persistence.readLong(fileWithId.id).toFileModCount())
+    return stamp.isFileChanged(persistence.readLong(fileWithId.id))
   }
 
   @JvmStatic

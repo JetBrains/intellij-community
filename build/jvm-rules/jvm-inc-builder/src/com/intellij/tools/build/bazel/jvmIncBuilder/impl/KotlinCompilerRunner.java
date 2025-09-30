@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.build.GeneratedFile;
 import org.jetbrains.kotlin.build.GeneratedJvmClass;
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys;
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
+import org.jetbrains.kotlin.cli.common.config.ContentRoot;
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector;
 import org.jetbrains.kotlin.cli.jvm.config.VirtualJvmClasspathRoot;
 import org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline;
@@ -303,7 +304,11 @@ public class KotlinCompilerRunner implements CompilerRunner {
   private @NotNull Function1<? super @NotNull CompilerConfiguration, @NotNull Unit> createCompilerConfigurationUpdater(OutputSink out, VirtualFile outputRoot) throws IOException {
     var abiConsumer = createAbiOutputConsumer(myStorageManager.getAbiOutputBuilder());
     return configuration -> {
-      configuration.add(CLIConfigurationKeys.CONTENT_ROOTS, new VirtualJvmClasspathRoot(outputRoot, false, true));
+      List<ContentRoot> contentRootList = new ArrayList<>();
+      contentRootList.add(new VirtualJvmClasspathRoot(outputRoot, false, true));
+      contentRootList.addAll(configuration.getList(CLIConfigurationKeys.CONTENT_ROOTS));
+      configuration.put(CLIConfigurationKeys.CONTENT_ROOTS, contentRootList);
+
       configurePlugins(myPluginIdToPluginClasspath, myInternalPluginIdToOptions, myContext.getBaseDir(), abiConsumer, out, myStorageManager, registeredPluginInfo -> {
         CompilerPluginRegistrar registrar = Objects.requireNonNull(registeredPluginInfo.getCompilerPluginRegistrar());
         configuration.add(CompilerPluginRegistrar.Companion.getCOMPILER_PLUGIN_REGISTRARS(), registrar);

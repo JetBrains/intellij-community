@@ -6,6 +6,7 @@ import com.intellij.ide.structureView.TreeBasedStructureViewBuilder
 import com.intellij.lang.LanguageStructureViewBuilder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -19,12 +20,13 @@ interface SearchEverywherePreviewPrimaryUsageFinder {
     @JvmField val EP_NAME: ExtensionPointName<SearchEverywherePreviewPrimaryUsageFinder> = ExtensionPointName("com.intellij.searchEverywherePreviewPrimaryUsageFinder")
   }
   
-  fun findPrimaryUsageInfo(psiFile: PsiFile): Pair<UsageInfo, Disposable?>?
+  fun tryFindPrimaryUsageInfo(psiFile: PsiFile): Pair<UsageInfo, Disposable?>?
+  fun tryFindPsiElementForUsageInfo(project: Project, psiElement: PsiElement): PsiElement?
 }
 
 @ApiStatus.Internal
 class PreviewPrimaryUsageFinderImpl : SearchEverywherePreviewPrimaryUsageFinder {
-  override fun findPrimaryUsageInfo(psiFile: PsiFile): Pair<UsageInfo, Disposable?>? {
+  override fun tryFindPrimaryUsageInfo(psiFile: PsiFile): Pair<UsageInfo, Disposable?>? {
     val structureViewBuilder = LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(psiFile);
     if (structureViewBuilder !is TreeBasedStructureViewBuilder) return null;
 
@@ -38,5 +40,9 @@ class PreviewPrimaryUsageFinderImpl : SearchEverywherePreviewPrimaryUsageFinder 
     if (firstChildElement !is PsiElement) return Pair(UsageInfo(psiFile), structuredViewModelDisposable)
 
     return Pair(UsageInfo(firstChildElement), structuredViewModelDisposable)
+  }
+
+  override fun tryFindPsiElementForUsageInfo(project: Project, psiElement: PsiElement): PsiElement {
+    return psiElement
   }
 }

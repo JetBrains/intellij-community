@@ -6,9 +6,10 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubSerializer
 import com.intellij.psi.tree.IElementType
 
-abstract class XmlStubBasedStubSerializer<T : StubElement<*>>(val elementType: IElementType) : StubSerializer<T> {
-  override fun getExternalId(): String =
-    elementType.toString()
+abstract class XmlStubBasedStubSerializer<T : StubElement<*>>(elementTypeSupplier: () -> IElementType) : StubSerializer<T> {
+  val elementType: IElementType by lazy(elementTypeSupplier)
+
+  override fun getExternalId(): String = elementType.toString()
 
   override fun indexStub(stub: T, sink: IndexSink) {
   }

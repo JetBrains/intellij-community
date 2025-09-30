@@ -2874,7 +2874,7 @@ public class StringUtil {
   @Contract(pure = true)
   public static <E extends Enum<E>> E parseEnum(@NotNull String string, E defaultValue, @NotNull Class<E> clazz) {
     try {
-      return Enum.valueOf(clazz, string);
+      return string.isEmpty() ? defaultValue : Enum.valueOf(clazz, string);
     }
     catch (Exception e) {
       return defaultValue;

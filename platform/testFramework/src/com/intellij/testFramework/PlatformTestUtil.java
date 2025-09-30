@@ -1305,7 +1305,7 @@ public final class PlatformTestUtil {
       configCopy = Files.move(configDir, Paths.get(configDir + "_bak"), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
     }
     else {
-      FileUtil.delete(configDir);
+      NioFiles.deleteRecursively(configDir);
       configCopy = null;
     }
 
@@ -1313,7 +1313,7 @@ public final class PlatformTestUtil {
       task.run();
     }
     finally {
-      FileUtil.delete(configDir);
+      NioFiles.deleteRecursively(configDir);
       if (configCopy != null) {
         Files.move(configCopy, configDir, StandardCopyOption.ATOMIC_MOVE);
       }

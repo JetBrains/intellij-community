@@ -1,4 +1,16 @@
 KaLibraryModule:
+  description: Library @kotlin_test_deps//:annotations-java5-24.0.0.jar
+  targetPlatform: JVM (1.8)
+  libraryName: @kotlin_test_deps//:annotations-java5-24.0.0.jar
+  isSdk: false
+  regularDependencies:
+    KaLibraryFallbackDependenciesModule(fallback dependencies of @kotlin_test_deps//:annotations-java5-24.0.0.jar)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
   description: SDK
   targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
   libraryName: SDK
@@ -46,18 +58,6 @@ KaLibraryModule:
   dependsOnDependencies:
     <empty>
 
-KaLibraryModule:
-  description: Library org.jetbrains:annotations-java5:24.0.0
-  targetPlatform: JVM (1.8)
-  libraryName: org.jetbrains:annotations-java5:24.0.0
-  isSdk: false
-  regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains:annotations-java5:24.0.0)
-  friendDependencies:
-    <empty>
-  dependsOnDependencies:
-    <empty>
-
 KaSourceModule:
   description: Sources of Common
   targetPlatform: JS/JVM (1.8)
@@ -96,8 +96,8 @@ KaSourceModule:
   sourceModuleKind: PRODUCTION
   stableModuleName: <light_idea_test_case>
   regularDependencies:
+    KaLibraryModule(@kotlin_test_deps//:annotations-java5-24.0.0.jar)
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains:annotations-java5:24.0.0)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -110,8 +110,8 @@ KaSourceModule:
   sourceModuleKind: TEST
   stableModuleName: <light_idea_test_case>
   regularDependencies:
+    KaLibraryModule(@kotlin_test_deps//:annotations-java5-24.0.0.jar)
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains:annotations-java5:24.0.0)
     KaSourceModule(light_idea_test_case, production)
   friendDependencies:
     KaSourceModule(light_idea_test_case, production)

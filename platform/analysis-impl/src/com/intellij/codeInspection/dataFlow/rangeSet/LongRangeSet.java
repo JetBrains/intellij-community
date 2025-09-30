@@ -26,7 +26,7 @@ import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeUtil.*;
  *
  * @author Tagir Valeev
  */
-public abstract class LongRangeSet {
+public abstract sealed class LongRangeSet {
 
   LongRangeSet() {}
 
@@ -1135,7 +1135,7 @@ public abstract class LongRangeSet {
     }
   }
 
-  static class Range extends LongRangeSet {
+  static sealed class Range extends LongRangeSet {
     static final Range LONG_RANGE = new Range(Long.MIN_VALUE, Long.MAX_VALUE);
     static final Range INT_RANGE = new Range(Integer.MIN_VALUE, Integer.MAX_VALUE);
 
@@ -1938,9 +1938,8 @@ public abstract class LongRangeSet {
     @Override
     public boolean contains(long value) {
       for (int i = 0; i < myRanges.length; i += 2) {
-        if (value >= myRanges[i] && value <= myRanges[i + 1]) {
-          return true;
-        }
+        if (value < myRanges[i]) return false;
+        if (value <= myRanges[i + 1]) return true;
       }
       return false;
     }
@@ -1951,10 +1950,29 @@ public abstract class LongRangeSet {
       if (other instanceof Point point) {
         return contains(point.myValue);
       }
-      LongRangeSet result = other;
+      if (other instanceof Range otherRange) {
+        // Todo: precise handling of ModRange
+        for (int i = 0; i < myRanges.length; i += 2) {
+          long from = myRanges[i];
+          long to = myRanges[i + 1];
+          if (otherRange.myFrom < from) return false;
+          if (otherRange.myTo <= to) return true;
+        }
+        return false;
+      }
+      long[] otherRanges = ((RangeSet)other).myRanges;
+      int j = 0;
       for (int i = 0; i < myRanges.length; i += 2) {
-        result = result.subtract(range(myRanges[i], myRanges[i + 1]));
-        if (result.isEmpty()) return true;
+        long from = myRanges[i];
+        long to = myRanges[i + 1];
+        while (true) {
+          long otherFrom = otherRanges[j];
+          long otherTo = otherRanges[j + 1];
+          if (otherFrom < from) return false;
+          if (otherTo > to) break;
+          j += 2;
+          if (j == otherRanges.length) return true;
+        }
       }
       return false;
     }

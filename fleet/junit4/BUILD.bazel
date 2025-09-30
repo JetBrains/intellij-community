@@ -8,10 +8,12 @@ jvm_library(
   exports = [
     "@lib//:junit4",
     "@lib//:hamcrest",
+    "@lib//:kotlin-test-junit",
   ],
   runtime_deps = [
     "@lib//:junit4",
     "@lib//:hamcrest",
+    "@lib//:kotlin-test-junit",
   ]
 )
 ### auto-generated section `build fleet.junit4` end

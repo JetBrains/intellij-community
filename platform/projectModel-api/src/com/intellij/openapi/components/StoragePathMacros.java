@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 
 /**
  * The IntelliJ Platform allows for persisting component states (see {@link State} and {@link Storage}).
@@ -37,7 +37,7 @@ public final class StoragePathMacros {
 
   public static final String MODULE_FILE = "$MODULE_FILE$";
 
-  @ApiStatus.Internal
+  @Internal
   public static final String PROJECT_DEFAULT_FILE = "project.default.xml";
 
   /**
@@ -45,8 +45,11 @@ public final class StoragePathMacros {
    */
   public static final String NON_ROAMABLE_FILE = "other.xml";
 
-  @ApiStatus.Internal
+  @Internal
   public static final String APP_INTERNAL_STATE_DB = "app-internal-state.db";
+
+  @Internal
+  public static final String PROJECT_FILE = "$PROJECT_FILE$";
 
   private StoragePathMacros() { }
 }

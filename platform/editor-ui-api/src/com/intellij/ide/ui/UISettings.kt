@@ -121,6 +121,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.dndWithPressedAltOnly = value
     }
 
+  @get:Internal
+  @set:Internal
   var mainMenuDisplayMode: MainMenuDisplayMode
     get() = MainMenuDisplayMode.valueOf(state.mainMenuDisplayMode)
     set(value) {
@@ -570,6 +572,14 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showPreviewInSearchEverywhere = value
     }
 
+  @get:Internal
+  @set:Internal
+  var useSimplifiedSplashImage: Boolean
+    get() = state.useSimplifiedSplashImage
+    set(value) {
+      state.useSimplifiedSplashImage = value
+    }
+
   companion object {
     init {
       if (JBUIScale.SCALE_VERBOSE) {
@@ -781,13 +791,16 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     EDITOR_TAB_LIMIT = editorTabLimit
   }
 
+  @Internal
   override fun getState(): UISettingsState = state
 
+  @Internal
   override fun noStateLoaded() {
     migrateFontParameters()
     migrateSearchEverywherePreview()
   }
 
+  @Internal
   override fun loadState(state: UISettingsState) {
     this.state = state
     updateDeprecatedProperties()

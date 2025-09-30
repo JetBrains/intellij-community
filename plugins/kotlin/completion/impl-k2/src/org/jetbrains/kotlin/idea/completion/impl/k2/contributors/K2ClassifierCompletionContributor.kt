@@ -241,7 +241,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
     context(_: KaSession, context: K2CompletionSectionContext<KotlinExpressionNameReferencePositionContext>)
     override fun createChainedLookupElements(
         receiverExpression: KtDotQualifiedExpression,
-        importingStrategy: ImportStrategy
+        nameToImport: FqName,
     ): Sequence<LookupElement> {
         val selectorExpression = receiverExpression.selectorExpression ?: return emptySequence()
 
@@ -255,7 +255,7 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
                 createClassifierLookupElement(
                     classifierSymbol = it,
                     expectedType = context.weighingContext.expectedType,
-                    importingStrategy = importingStrategy,
+                    importingStrategy = ImportStrategy.AddImport(nameToImport),
                     positionContext = context.positionContext,
                     visibilityChecker = context.visibilityChecker
                 )

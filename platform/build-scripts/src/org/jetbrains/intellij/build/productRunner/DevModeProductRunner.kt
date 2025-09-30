@@ -38,8 +38,9 @@ internal suspend fun createDevModeProductRunner(context: BuildContext, additiona
           newClassPath = classPath
         },
         buildOptionsTemplate = context.options,
+        isBootClassPathCorrect = true,
       ),
-      createProductProperties = { context.productProperties }
+      createProductProperties = { context.productProperties },
     )
     DevModeProductRunner(context = context, homePath = runDir, classPath = newClassPath!!.map { it.toString() })
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.blobstorage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -483,7 +483,8 @@ public final class StreamlinedBlobStorageOverPagedStorage extends StreamlinedBlo
           case RecordLayout.RECORD_TYPE_MOVED -> {
             int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
             if (!isValidRecordId(redirectToId)) {
-              throw new RecordAlreadyDeletedException("Can't delete record[" + recordId + "]: it was already deleted");
+              throw new RecordAlreadyDeletedException("Can't delete record[" + recordId + "]: it was already deleted " +
+                                                      "(wasClosedProperly: " + wasClosedProperly() + ")");
             }
 
             // (redirectToId=NULL) <=> 'record deleted' ('moved nowhere')
@@ -549,12 +550,12 @@ public final class StreamlinedBlobStorageOverPagedStorage extends StreamlinedBlo
               boolean isActual = recordType == RecordLayout.RECORD_TYPE_ACTUAL;
               int recordActualLength = isActual ? recordLayout.length(buffer, offsetOnPage) : -1;
               ByteBuffer slice = isActual ?
-                                       buffer.slice(offsetOnPage + headerSize, recordActualLength)
-                                         .asReadOnlyBuffer()
-                                         .order(buffer.order()) :
-                                       buffer.slice(offsetOnPage + headerSize, 0)
-                                         .asReadOnlyBuffer()
-                                         .order(buffer.order());
+                                 buffer.slice(offsetOnPage + headerSize, recordActualLength)
+                                   .asReadOnlyBuffer()
+                                   .order(buffer.order()) :
+                                 buffer.slice(offsetOnPage + headerSize, 0)
+                                   .asReadOnlyBuffer()
+                                   .order(buffer.order());
               boolean ok = processor.processRecord(currentId, recordCapacity, recordActualLength, slice);
               if (!ok) {
                 return recordNo + 1;

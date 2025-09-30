@@ -214,7 +214,9 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     myLastDisposable = null;
   }
 
-  private final SynchronizedClearableLazy<IComponentStore> componentStoreValue = new SynchronizedClearableLazy<>(() -> getService(IComponentStore.class));
+  private final SynchronizedClearableLazy<IComponentStore> componentStoreValue = new SynchronizedClearableLazy<>(() -> {
+    return getService(IComponentStore.class);
+  });
 
   @Override
   public @NotNull IComponentStore getComponentStore() {
@@ -707,6 +709,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     exit(force, exitConfirmed, restart, 0);
   }
 
+  @Override
   public void restart(int flags, String @NotNull [] beforeRestart) {
     exit(flags, true, beforeRestart, 0);
   }

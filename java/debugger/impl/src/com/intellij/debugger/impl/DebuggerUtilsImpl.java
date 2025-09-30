@@ -20,7 +20,6 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -223,6 +222,11 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
 
   public static boolean isRemote(DebugProcess debugProcess) {
     return Boolean.TRUE.equals(debugProcess.getUserData(BatchEvaluator.REMOTE_SESSION_KEY));
+  }
+
+  @Override
+  protected void logErrorImpl(@NotNull Throwable e) {
+    logError(e);
   }
 
   public static void logError(@NotNull Throwable e) {
@@ -591,23 +595,6 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
       }
     }
     return null;
-  }
-
-  // do not catch VMDisconnectedException
-  public static <T> void forEachSafe(ExtensionPointName<T> ep, Consumer<? super T> action) {
-    forEachSafe(ep.getIterable(), action);
-  }
-
-  // do not catch VMDisconnectedException
-  public static <T> void forEachSafe(Iterable<? extends T> iterable, Consumer<? super T> action) {
-    for (T o : iterable) {
-      try {
-        action.accept(o);
-      }
-      catch (Throwable e) {
-        logError(e);
-      }
-    }
   }
 
   public static @Nullable Value invokeClassMethod(@NotNull EvaluationContext evaluationContext,

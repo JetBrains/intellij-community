@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
@@ -48,8 +47,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> extends DialogWrapper implements TreeChooser<T> {
 
@@ -223,7 +222,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
         dummyPanel.add(myGotoByNamePanel.getPanel(), BorderLayout.CENTER);
         if (myProject != null && !myProject.isDefault() && DumbService.getInstance(myProject).isDumb()) {
           JBLabel dumbLabel = new JBLabel(IdeBundle.message("dumb.mode.results.might.be.incomplete"), SwingConstants.LEFT);
-          dumbLabel.setIcon(AllIcons.General.Warning);
+          dumbLabel.setIcon(AnimatedIcon.Default.INSTANCE);
           dumbLabel.setBorder(new JBEmptyBorder(10, 3, 0, 3));
           dummyPanel.add(dumbLabel, BorderLayout.SOUTH);
         }

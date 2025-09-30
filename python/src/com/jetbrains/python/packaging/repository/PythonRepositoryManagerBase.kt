@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging.repository
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.cancelOnDispose
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.PyRequirement
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 abstract class PythonRepositoryManagerBase() : PythonRepositoryManager, Disposable.Default {
   protected val initializationJob: Job by lazy {
-    PyPackageCoroutine.launch(project, start = CoroutineStart.LAZY) {
+    PyPackageCoroutine.launch(project, NON_INTERACTIVE_ROOT_TRACE_CONTEXT, start = CoroutineStart.LAZY) {
       initCaches()
     }.also {
       it.cancelOnDispose(this)

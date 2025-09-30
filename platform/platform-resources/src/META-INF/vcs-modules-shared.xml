@@ -1,5 +1,5 @@
 <idea-plugin>
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.platform.vcs.core" loading="embedded"/>
     <module name="intellij.platform.vcs.shared" loading="embedded"/>
     <module name="intellij.platform.vcs.impl.shared"/>

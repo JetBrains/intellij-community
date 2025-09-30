@@ -62,4 +62,9 @@ public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends In
   void cleanupForNextTest();
 
   boolean isDirty();
+
+  @Internal
+  default boolean canUpdate() {
+    return true;
+  }
 }

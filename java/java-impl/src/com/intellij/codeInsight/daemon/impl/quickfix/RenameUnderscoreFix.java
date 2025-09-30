@@ -44,7 +44,13 @@ public final class RenameUnderscoreFix extends PsiBasedModCommandAction<PsiRefer
         v.setName(defaultName);
         writableRef.replace(JavaPsiFacade.getElementFactory(context.project()).createExpressionFromText(defaultName, writableRef));
         updater.rename(v, names);
-      }, v -> v.getTextRange()));
+      }, v -> {
+        PsiIdentifier identifier = v.getNameIdentifier();
+        PsiTypeElement typeElement = v.getTypeElement();
+        if (identifier == null) return v.getTextRange();
+        if (typeElement == null) return identifier.getTextRange();
+        return typeElement.getTextRange().union(identifier.getTextRange());
+      }));
     return ModCommand.chooseAction(JavaBundle.message("intention.rename.underscore.popup.title"), actions);
   }
 

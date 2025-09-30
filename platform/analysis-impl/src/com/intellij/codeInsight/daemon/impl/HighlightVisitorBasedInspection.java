@@ -129,8 +129,8 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
     // in case the inspection is running in batch mode
     // todo IJPL-339 figure out what is the correct context here
     CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
-    HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, context, daemonProgressIndicator, visibleRange,
-                                                           TextRange.EMPTY_RANGE);
+    HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, context, daemonProgressIndicator, visibleRange
+    );
     GeneralHighlightingPass ghp =
     new GeneralHighlightingPass(psiFile, document, startOffset, endOffset, true, visibleRange, null,
                                 runAnnotators, runVisitors, highlightErrorElements, HighlightInfoUpdater.EMPTY);

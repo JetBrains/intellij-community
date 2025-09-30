@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.commit
 
+import com.intellij.openapi.application.PathManager
 import org.junit.Test
 import org.junit.experimental.runners.Enclosed
 import org.junit.runner.RunWith
@@ -8,6 +9,9 @@ import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameter
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.readText
 
 @RunWith(Enclosed::class)
 class IntelliJPlatformPrePushHandlerTest {
@@ -210,6 +214,11 @@ class IntelliJPlatformPrePushHandlerTest {
             
             Relates to #WHATEVER-123
           """.trimIndent(),
+          """
+            [subsystem] refactoring: rename a to b
+
+            Explains why it is needed.
+          """.trimIndent(),
 
           "test thing", "test: thing", "[test] thing", "Test thing",
           "tests thing", "tests: thing", "[tests] thing",
@@ -222,6 +231,11 @@ class IntelliJPlatformPrePushHandlerTest {
           "style thing", "style: thing", "[style] thing",
           "refactor this thing", "refactor: this thing",
           "WIP", "[WIP] do stuff", "Add thingies WIP", "wip", "(wip) hoho", "wip: haha",
+          """
+            WIP
+            
+            Some additional remarks.
+          """.trimIndent(),
 
           "Cleanup (reason)",
           "[subsystem][tests] new tests",
@@ -271,6 +285,16 @@ class IntelliJPlatformPrePushHandlerTest {
             Body-line-1
             Body-line-N
           """.trimIndent(),
+          """
+            No explanation
+            
+            Test added
+          """.trimIndent(),
+          """
+            No explanation
+            
+            WIP
+          """.trimIndent(),
 
           "test", "test:", "[test]", "test ", "add test", "drop test",
           "tests", "tests:", "[tests]", "tests ", "add tests", "drop tests",
@@ -310,6 +334,44 @@ class IntelliJPlatformPrePushHandlerTest {
       assert(!prePushHandler.isCommitMessageCorrect(commitMessage)) {
         "The following commit message was considered as valid: $commitMessage"
       }
+    }
+  }
+
+  class ContributingMdCommitMessagesAreValid {
+    @Test
+    fun testCommitMessagesFromContributingMd() {
+      val contributingFile = Path.of(PathManager.getCommunityHomePath()) / "CONTRIBUTING.md"
+      assert(contributingFile.exists()) { "CONTRIBUTING.md file not found at expected location" }
+      
+      val content = contributingFile.readText()
+      val commitMessages = extractCommitMessagesFromMarkdown(content)
+      
+      assert(commitMessages.isNotEmpty()) { "No commit messages found in CONTRIBUTING.md" }
+      
+      commitMessages.forEach { commitMessage ->
+        assert(prePushHandler.isCommitMessageCorrect(commitMessage)) {
+          "Commit message from CONTRIBUTING.md is invalid: '$commitMessage'"
+        }
+      }
+    }
+    
+    private fun extractCommitMessagesFromMarkdown(content: String): List<String> {
+      val codeBlockRegex = Regex("```(.*?)```", RegexOption.DOT_MATCHES_ALL)
+      val commitMessages = mutableListOf<String>()
+      
+      codeBlockRegex.findAll(content).forEach { match ->
+        val codeBlock = match.groupValues[1].trim()
+
+        if (codeBlock.contains("[<") && codeBlock.contains(">]")) {
+          return@forEach
+        }
+
+        if (codeBlock.isNotEmpty()) {
+          commitMessages.add(codeBlock)
+        }
+      }
+      
+      return commitMessages
     }
   }
 }

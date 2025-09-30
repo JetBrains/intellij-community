@@ -2,9 +2,8 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.PluginModuleId.Companion.getId
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.util.containers.Interner
+import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -12,25 +11,38 @@ import org.jetbrains.annotations.ApiStatus
  *
  * This class is not supposed to be used in API.
  */
-@JvmInline
 @ApiStatus.Internal
 @IntellijInternalApi
-value class PluginModuleId private constructor(val id: String){
+class PluginModuleId private constructor(val id: String) {
   override fun toString(): String = id
 
-  companion object {
-    // PluginModuleId can be either boxed or unboxed, so only interning of value matters
-    private val interner = Interner.createWeakInterner<String>()
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
 
-    fun getId(id: String): PluginModuleId = PluginModuleId(interner.intern(id))
+    other as PluginModuleId
+
+    return id == other.id
+  }
+
+  override fun hashCode(): Int {
+    return id.hashCode()
+  }
+
+  companion object {
+    private val interner = CollectionFactory.createConcurrentWeakKeyWeakValueMap<String, PluginModuleId>()
+
+    fun getId(id: String): PluginModuleId {
+      val interned = interner[id]
+      if (interned != null) {
+        return interned
+      }
+      val moduleId = PluginModuleId(id)
+      val old = interner.putIfAbsent(id, moduleId)
+      return old ?: moduleId
+    }
 
     /** shorthand for [getId] in kotlin */
     operator fun invoke(id: String): PluginModuleId = getId(id)
-
-    @Deprecated("plugin and module id namespaces are separate")
-    fun PluginId.asPluginModuleId(): PluginModuleId = getId(idString)
-
-    @Deprecated("plugin and module id namespaces are separate")
-    fun PluginModuleId.asPluginId(): PluginId = PluginId.getId(id)
   }
 }

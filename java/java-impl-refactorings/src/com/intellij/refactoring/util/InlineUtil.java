@@ -842,7 +842,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     if (!target.getType().equals(variable.getType())) return;
     if (!(target.getParent() instanceof PsiDeclarationStatement declaration) || declaration.getDeclaredElements().length != 1) return;
     PsiModifierList modifiers = target.getModifierList();
-    if (modifiers != null && modifiers.getAnnotations().length != 0) return;
+    if (modifiers != null && modifiers.hasAnnotations()) return;
     boolean effectivelyFinal = ControlFlowUtil.isEffectivelyFinal(variable, context);
     if (!effectivelyFinal && !VariableAccessUtils.canUseAsNonFinal(target)) return;
 

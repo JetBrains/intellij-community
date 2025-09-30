@@ -18,8 +18,8 @@ jvm_library(
     "//platform/object-serializer:objectSerializer-annotations",
     "@lib//:lz4-java",
     "@lib//:fastutil-min",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/util/xmlDom",
     "//platform/settings",
   ]
@@ -43,8 +43,8 @@ jvm_library(
     "@lib//:lz4-java",
     "@lib//:assert_j",
     "@lib//:fastutil-min",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/util/xmlDom",
     "//platform/settings",
   ]

@@ -25,7 +25,8 @@ import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 import org.jetbrains.kotlin.util.match
 
 internal class K2KeywordCompletionContributor : K2SimpleCompletionContributor<KotlinRawPositionContext>(
-    KotlinRawPositionContext::class
+    positionContextClass = KotlinRawPositionContext::class,
+    priority = K2ContributorSectionPriority.HEURISTIC,
 ) {
 
     private val keywordCompletion = KeywordCompletion()

@@ -1,10 +1,12 @@
 package com.intellij.grazie.grammar
 
 import com.intellij.grazie.GrazieBundle
+import com.intellij.grazie.detection.toLanguage
 import com.intellij.grazie.ide.ui.components.utils.html
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.Rule
+import com.intellij.grazie.utils.TextStyleDomain
 import kotlinx.html.*
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.Categories
@@ -16,9 +18,9 @@ import java.util.*
 // ltRule used in ReSharper
 class LanguageToolRule(
   private val lang: Lang, val ltRule: org.languagetool.rules.Rule, private val similarLtRules: List<org.languagetool.rules.Rule> = emptyList(),
-) : Rule(LangTool.globalIdPrefix(lang) + ltRule.id, ltRule.description, categories(ltRule, lang)) {
+) : Rule(LangTool.globalIdPrefix(lang) + ltRule.id, lang.toLanguage(), ltRule.description, categories(ltRule, lang)) {
 
-  override fun isEnabledByDefault(): Boolean = LangTool.isRuleEnabledByDefault(lang, ltRule.id)
+  override fun isEnabledByDefault(domain: TextStyleDomain): Boolean = LangTool.isRuleEnabledByDefault(lang, ltRule.id, domain)
 
   override fun getUrl(): URL? = similarLtRules.map { it.url }.toSet().singleOrNull()
 

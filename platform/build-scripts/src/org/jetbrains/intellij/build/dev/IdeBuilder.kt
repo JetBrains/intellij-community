@@ -5,6 +5,7 @@ import com.dynatrace.hash4j.hashing.HashFunnel
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.util.PathUtilRt
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
@@ -42,8 +43,7 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
-import org.jetbrains.intellij.build.computeAppClassPath
-import org.jetbrains.intellij.build.excludedLibJars
+import org.jetbrains.intellij.build.generateClassPathByLayoutReport
 import org.jetbrains.intellij.build.generatePluginClassPath
 import org.jetbrains.intellij.build.generatePluginClassPathFromPrebuiltPluginFiles
 import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
@@ -66,7 +66,6 @@ import org.jetbrains.intellij.build.impl.getToolModules
 import org.jetbrains.intellij.build.impl.layoutPlatformDistribution
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.postData
 import org.jetbrains.intellij.build.readSearchableOptionIndex
@@ -99,7 +98,7 @@ data class BuildRequest(
   @JvmField val keepHttpClient: Boolean = true,
   @JvmField val platformClassPathConsumer: ((mainClass: String, classPath: Set<Path>, runDir: Path) -> Unit)? = null,
   /**
-   * If `true`, the dev build will include a [runtime module repository](psi_element://com.intellij.platform.runtime.repository). 
+   * If `true`, the dev build will include a [runtime module repository](psi_element://com.intellij.platform.runtime.repository).
    * It is currently used only to run an instance of JetBrains Client from IDE's installation,
    * and its generation makes the project build a little longer, so it should be enabled only if needed.
    */
@@ -114,10 +113,12 @@ data class BuildRequest(
 
   @JvmField val tracer: Tracer? = null,
 
-  @JvmField val os: OsFamily = OsFamily.currentOs
+  @JvmField val os: OsFamily = OsFamily.currentOs,
+
+  @JvmField val isBootClassPathCorrect: Boolean = false,
 ) {
-  override fun toString(): String =
-    buildString {
+  override fun toString(): String {
+    return buildString {
       append("BuildRequest(platformPrefix='$platformPrefix', ")
       if (baseIdePlatformPrefixForFrontend != null) {
         append("baseIdePlatformPrefixForFrontend='$baseIdePlatformPrefixForFrontend', ")
@@ -127,10 +128,11 @@ data class BuildRequest(
       append("keepHttpClient=$keepHttpClient, ")
       append("generateRuntimeModuleRepository=$generateRuntimeModuleRepository")
     }
+  }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal suspend fun buildProduct(request: BuildRequest, createProductProperties: suspend (CompilationContext) -> ProductProperties ): Path {
+internal suspend fun buildProduct(request: BuildRequest, createProductProperties: suspend (CompilationContext) -> ProductProperties): Path {
   val rootDir = withContext(Dispatchers.IO) {
     val rootDir = request.devRootDir
     // if symlinked to RAM disk, use a real path for performance reasons and avoid any issues in ant/other code
@@ -227,15 +229,12 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
           searchableOptionSet = searchableOptionSet,
           context = context,
           moduleOutputPatcher = moduleOutputPatcher,
+          request = request,
         )
       }
 
       if (request.writeCoreClasspath) {
-        val excluded = excludedLibJars(context)
-        val classPathString = classPath
-          .asSequence()
-          .filter { !excluded.contains(it.fileName.toString()) }
-          .joinToString(separator = "\n")
+        val classPathString = classPath.joinToString(separator = "\n")
         launch(Dispatchers.IO) {
           Files.writeString(runDir.resolve("core-classpath.txt"), classPathString)
         }
@@ -309,7 +308,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       // ensure plugin dist files added to the list
       pluginDistributionEntriesDeferred.await()
 
-      spanBuilder("scramble platform").use{
+      spanBuilder("scramble platform").use {
         request.scrambleTool?.scramble(platformLayout.await(), context)
       }
       copyDistFiles(
@@ -327,12 +326,14 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
   return runDir
 }
 
-private suspend fun getSearchableOptionSet(context: BuildContext): SearchableOptionSetDescriptor? = withContext(Dispatchers.IO) {
-  try {
-    readSearchableOptionIndex(context.paths.searchableOptionDir)
-  }
-  catch (_: NoSuchFileException) {
-    null
+private suspend fun getSearchableOptionSet(context: BuildContext): SearchableOptionSetDescriptor? {
+  return withContext(Dispatchers.IO) {
+    try {
+      readSearchableOptionIndex(context.paths.searchableOptionDir)
+    }
+    catch (_: NoSuchFileException) {
+      null
+    }
   }
 }
 
@@ -467,9 +468,8 @@ private suspend fun createBuildContext(
 ): BuildContext {
   return coroutineScope {
     val buildOptionsTemplate = request.buildOptionsTemplate
-    val useCompiledClassesFromProjectOutput =
-      buildOptionsTemplate == null ||
-      (buildOptionsTemplate.useCompiledClassesFromProjectOutput && buildOptionsTemplate.unpackCompiledClassesArchives)
+    val useCompiledClassesFromProjectOutput = buildOptionsTemplate == null ||
+                                              (buildOptionsTemplate.useCompiledClassesFromProjectOutput && buildOptionsTemplate.unpackCompiledClassesArchives)
     val classOutDir = if (useCompiledClassesFromProjectOutput) {
       request.productionClassOutput.parent
     }
@@ -484,7 +484,7 @@ private suspend fun createBuildContext(
       spanBuilder("create build context").use {
         // we cannot inject a proper build time as it is a part of resources, so, set to the first day of the current month
         val options = BuildOptions(
-          jarCacheDir,
+          jarCacheDir = jarCacheDir,
           buildDateInSeconds = getDevModeOrTestBuildDateInSeconds(),
           printFreeSpace = false,
           validateImplicitPlatformModule = false,
@@ -544,8 +544,8 @@ private suspend fun createBuildContext(
           options = options,
           customBuildPaths = result,
         )
-        .asBazelIfNeeded
-        .let { if (options.unpackCompiledClassesArchives) it else it.asArchived }
+          .asBazelIfNeeded
+          .let { if (options.unpackCompiledClassesArchives) it else it.asArchived }
       }
     }
 
@@ -561,10 +561,23 @@ private suspend fun createBuildContext(
     }
 
     BuildContextImpl(
-      compilationContext, productProperties.await(), WindowsDistributionCustomizer(), LinuxDistributionCustomizer(), MacDistributionCustomizer(),
-      proprietaryBuildTools = if (request.scrambleTool == null) ProprietaryBuildTools.DUMMY else ProprietaryBuildTools(
-        ProprietaryBuildTools.DUMMY_SIGN_TOOL, request.scrambleTool, featureUsageStatisticsProperties = null, artifactsServer = null, licenseServerHost = null
-      ),
+      compilationContext = compilationContext,
+      productProperties = productProperties.await(),
+      windowsDistributionCustomizer = WindowsDistributionCustomizer(),
+      linuxDistributionCustomizer = LinuxDistributionCustomizer(),
+      macDistributionCustomizer = MacDistributionCustomizer(),
+      proprietaryBuildTools = if (request.scrambleTool == null) {
+        ProprietaryBuildTools.DUMMY
+      }
+      else {
+        ProprietaryBuildTools(
+          signTool = ProprietaryBuildTools.DUMMY_SIGN_TOOL,
+          scrambleTool = request.scrambleTool,
+          featureUsageStatisticsProperties = null,
+          artifactsServer = null,
+          licenseServerHost = null,
+        )
+      },
       jarCacheManager = jarCacheManager,
     )
   }
@@ -619,34 +632,29 @@ private suspend fun layoutPlatform(
   searchableOptionSet: SearchableOptionSetDescriptor?,
   context: BuildContext,
   moduleOutputPatcher: ModuleOutputPatcher,
+  request: BuildRequest,
 ): Pair<List<DistributionFileEntry>, Set<Path>> {
-  val entries = layoutPlatformDistribution(moduleOutputPatcher, runDir, platformLayout, searchableOptionSet, copyFiles = true, context)
-  lateinit var sortedClassPath: Set<Path>
-  coroutineScope {
-    launch {
-      val classPath = LinkedHashSet<Path>()
-      val libDir = runDir.resolve("lib")
-      for (entry in entries) {
-        val file = entry.path
-        // exclude files like ext/platform-main.jar - if a file in lib, take only direct children in an account
-        if ((entry.relativeOutputFile ?: "").contains('/')) {
-          continue
-        }
-        if (entry is ModuleOutputEntry &&
-            (entry.moduleName == "intellij.platform.testFramework" || entry.moduleName.startsWith("intellij.platform.unitTestMode"))) {
-          continue
-        }
-
-        classPath.add(file)
-      }
-      sortedClassPath = computeAppClassPath(libDir = libDir, existing = classPath)
-    }
-
+  // cannot be in parallel
+  val entries = layoutPlatformDistribution(
+    moduleOutputPatcher = moduleOutputPatcher,
+    targetDirectory = runDir,
+    platform = platformLayout,
+    searchableOptionSet = searchableOptionSet,
+    copyFiles = true,
+    context = context,
+  )
+  return entries to coroutineScope {
     launch(Dispatchers.IO) {
       Files.writeString(runDir.resolve("build.txt"), context.fullBuildNumber)
     }
+
+    // todo - we cannot for now skip nio-fs.jar, probably `-Xbootclasspath/a` is not correctly set for dev-mode based tests
+    generateClassPathByLayoutReport(
+      libDir = runDir.resolve("lib"),
+      entries = entries,
+      skipNioFs = if (request.isBootClassPathCorrect) isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix) else false,
+    )
   }
-  return entries to sortedClassPath
 }
 
 private fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String {
@@ -661,5 +669,6 @@ private fun computeAdditionalModulesFingerprint(additionalModules: List<String>)
   }
 }
 
-private fun getCommunityHomePath(homePath: Path): Path =
-  if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath
+private fun getCommunityHomePath(homePath: Path): Path {
+  return if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath
+}

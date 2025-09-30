@@ -445,6 +445,93 @@ class PluginSetLoadingTest {
   }
 
   @Test
+  fun `test a module graph take into account aliases and sort them correctly`() {
+    val aPath = pluginsDirPath.resolve("a")
+    val bPath = pluginsDirPath.resolve("b")
+    val dPath = pluginsDirPath.resolve("d")
+    plugin("d") {
+      content {
+        module("d.a", loadingRule = ModuleLoadingRule.REQUIRED) {
+          dependencies {
+            plugin("BBB")
+          }
+        }
+      }
+    }.buildDir(dPath)
+
+    plugin("a") {
+      content {
+        module("a.a", loadingRule = ModuleLoadingRule.REQUIRED) {
+          dependencies {
+            plugin("BBB")
+          }
+        }
+      }
+    }.buildDir(aPath)
+
+    plugin("b") {
+      content {
+        module("b1", loadingRule = ModuleLoadingRule.REQUIRED) {}
+        module("b2", loadingRule = ModuleLoadingRule.REQUIRED) {
+          pluginAlias("BBB")
+          dependencies {
+            module("b1")
+          }
+        }
+      }
+    }.buildDir(bPath)
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("a", "b", "d")
+  }
+
+  @Test
+  fun `test a fail of one required module leads to not loading of all plugins`() {
+    val aPath = pluginsDirPath.resolve("a")
+    val bPath = pluginsDirPath.resolve("b")
+    val dPath = pluginsDirPath.resolve("d")
+    plugin("d") {
+      content {
+        module("d.a", loadingRule = ModuleLoadingRule.REQUIRED) {
+          dependencies {
+            plugin("BBB")
+          }
+        }
+      }
+    }.buildDir(dPath)
+
+    plugin("a") {
+      content {
+        module("a.a", loadingRule = ModuleLoadingRule.REQUIRED) {
+          dependencies {
+            plugin("BBB")
+          }
+        }
+      }
+    }.buildDir(aPath)
+
+    plugin("b") {
+      content {
+        module("b1", loadingRule = ModuleLoadingRule.REQUIRED) {}
+        module("b2", loadingRule = ModuleLoadingRule.REQUIRED) {
+          pluginAlias("BBB")
+          dependencies {
+            module("b1")
+          }
+        }
+        module("b0", loadingRule = ModuleLoadingRule.REQUIRED) {
+          dependencies {
+            module("unresolved")
+          }
+        }
+      }
+    }.buildDir(bPath)
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins()
+  }
+
+  @Test
   fun testLoadDisabledPlugin() {
     plugin("disabled") { }.buildDir(pluginsDirPath.resolve("disabled"))
     val pluginSet = buildPluginSet {

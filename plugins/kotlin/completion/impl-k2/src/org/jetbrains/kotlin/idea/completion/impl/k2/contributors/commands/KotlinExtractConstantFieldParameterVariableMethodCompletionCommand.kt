@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands
 
-import com.intellij.codeInsight.completion.command.commands.AbstractExtractLocalVariableCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.commands.AbstractExtractMethodCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.commands.AbstractExtractParameterCompletionCommandProvider
 import com.intellij.codeInsight.completion.command.getCommandContext
@@ -19,20 +18,6 @@ import org.jetbrains.kotlin.psi.*
 internal class KotlinExtractParameterCompletionCommandProvider : AbstractExtractParameterCompletionCommandProvider() {
     override fun findOffsetToCall(offset: Int, psiFile: PsiFile): Int? {
         return findOffsetForLocalVariable(offset, psiFile)
-    }
-}
-
-internal class KotlinExtractLocalVariableCompletionCommandProvider : AbstractExtractLocalVariableCompletionCommandProvider() {
-    override fun findOutermostExpression(
-        offset: Int,
-        psiFile: PsiFile,
-        editor: Editor?
-    ): KtExpression? {
-        val expression = findExpressionInsideMethod(offset, psiFile)
-        if (expression?.findParentOfType<KtFunction>() != null &&
-            (expression.findParentOfType<KtProperty>() != null || expression is KtCallExpression || expression is KtDotQualifiedExpression)
-        )return expression
-        return null
     }
 }
 

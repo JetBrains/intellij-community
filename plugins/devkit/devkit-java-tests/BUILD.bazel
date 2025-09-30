@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.devkit.java.tests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "java-tests_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
@@ -17,6 +17,7 @@ jvm_library(
   name = "java-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":java-tests_test_resources"],
   associates = ["//plugins/devkit/devkit-core:core"],
   deps = [
     "@lib//:jetbrains-annotations",
@@ -68,10 +69,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//java/codeserver/highlighting",
   ],
-  runtime_deps = [
-    ":java-tests_test_resources",
-    "//plugins/devkit",
-  ]
+  runtime_deps = ["//plugins/devkit"]
 )
 ### auto-generated section `build intellij.devkit.java.tests` end
 

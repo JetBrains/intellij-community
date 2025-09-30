@@ -1,5 +1,6 @@
 package com.intellij.grazie.ide.language
 
+import ai.grazie.nlp.langs.Language
 import com.intellij.grazie.text.*
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -110,7 +111,7 @@ class CheckerRunnerTest: BasePlatformTestCase() {
   }
 
   private fun createFakeProblem(text: TextContent, range: TextRange): TextProblem {
-    val rule = object: Rule("fake.global.id", "Fake rule", "Fake category") {
+    val rule = object : Rule("fake.global.id", Language.UNKNOWN, "Fake rule", "Fake category") {
       override fun getDescription(): String {
         return "Fake rule description"
       }

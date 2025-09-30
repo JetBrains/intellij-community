@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.performanceTesting.ui` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "ui_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.performanceTesting.ui",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":ui_resources"],
   deps = [
     "//platform/core-api:core",
     "//platform/core-impl",
@@ -22,8 +23,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
-  ],
-  runtime_deps = [":ui_resources"]
+  ]
 )
 
 jvm_library(
@@ -44,8 +44,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ],
-  runtime_deps = [":ui_resources"]
+  ]
 )
 ### auto-generated section `build intellij.performanceTesting.ui` end
 

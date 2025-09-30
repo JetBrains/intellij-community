@@ -12,6 +12,7 @@ import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.NaturalTextDetector
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
 import java.util.*
 
@@ -87,6 +88,16 @@ class ParsedSentence private constructor(
       return runBlockingCancellable { getSentencesAsync(content) }
     }
 
+    @JvmStatic
+    fun getAllCheckedSentences(viewProvider: FileViewProvider): Map<TextContent, List<ParsedSentence>> {
+      val contents = HighlightingUtil.getCheckedFileTexts(viewProvider).filterNot { HighlightingUtil.isTooLargeText(listOf(it)) }
+      if (contents.isEmpty()) return emptyMap()
+
+      return runBlockingCancellable {
+        contents.associateWith { getSentencesAsync(it) }
+      }
+    }
+
     suspend fun getSentencesAsync(content: TextContent): List<ParsedSentence> {
       return getSentences(content, content.commonParent.textRange, minimal = false)
     }
@@ -113,9 +124,9 @@ class ParsedSentence private constructor(
           var tree = trees[sentence.swe()]
           if (tree != null) {
             val start = sentence.start
-            tree = tree.withStartOffset(start)!!
+            tree = tree.withStartOffset(start)
             val stubbed = trees[sentence.stubbedSwe()]
-            if (stubbed != null) tree = tree.withStubbed(StubbedSentence(sentence.swe(), stubbed.withStartOffset(start)))!!
+            if (stubbed != null) tree = tree.withStubbed(StubbedSentence(sentence.swe(), stubbed.withStartOffset(start)))
             out.add(ParsedSentence(tree.startOffset(), tree.text(), content, tree, TextRange(sentence.start, sentence.end())))
           }
         }

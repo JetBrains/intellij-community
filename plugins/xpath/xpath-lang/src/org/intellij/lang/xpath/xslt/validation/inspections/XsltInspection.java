@@ -18,6 +18,7 @@ package org.intellij.lang.xpath.xslt.validation.inspections;
 import com.intellij.codeInspection.CustomSuppressableInspectionTool;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @ApiStatus.Internal
-public abstract class XsltInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
+public abstract class XsltInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool, DumbAware {
   @Override
   public SuppressIntentionAction @NotNull [] getSuppressActions(@Nullable PsiElement psiElement) {
     final List<SuppressIntentionAction> actions = InspectionUtil.getSuppressActions(this, false);

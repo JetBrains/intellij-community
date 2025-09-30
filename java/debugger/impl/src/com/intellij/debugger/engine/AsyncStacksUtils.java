@@ -365,7 +365,7 @@ public final class AsyncStacksUtils {
 
   @NativePath
   private static @Nullable String getAgentArtifactPath(@Nullable Project project, @Nullable Disposable disposable) {
-    if (PluginManagerCore.isRunningFromSources() && !AppMode.isDevServer()) {
+    if (PluginManagerCore.isRunningFromSources() && !AppMode.isRunningFromDevBuild()) {
       return getArtifactPathForDownloadedAgent(project, disposable);
     }
     else {

@@ -5,7 +5,6 @@ import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.rpc.*
@@ -38,8 +37,10 @@ class FrontendXValue private constructor(
   private val cs: CoroutineScope,
   val xValueDto: XValueDto,
   hasParentValue: Boolean,
-  private val presentation: StateFlow<XValueSerializedPresentation>,
+  presentation: Flow<XValueSerializedPresentation>,
 ) : XValue(), XValueTextProvider, PinToTopParentValue, PinToTopMemberValue {
+  
+  private val statePresentation = cs.async { presentation.stateIn(cs) }
 
   init {
     cs.launch {
@@ -127,8 +128,21 @@ class FrontendXValue private constructor(
   }
 
   override fun computeInlineDebuggerData(callback: XInlineDebuggerDataCallback): ThreeState {
-    thisLogger().error("#computeInlineDebuggerData should not be called for FrontendXValue, XValueApi.computeInlineData")
-    return super.computeInlineDebuggerData(callback)
+    cs.launch {
+      val (canCompute, positionFlow) = XValueApi.getInstance().computeInlineData(xValueDto.id) ?: return@launch
+      if (canCompute != ThreeState.UNSURE) {
+        positionFlow.toFlow().collect {
+          withContext(Dispatchers.EDT) {
+            val sourcePosition = it.sourcePosition()
+            callback.computed(sourcePosition)
+          }
+        }
+      }
+      else {
+        computeSourcePosition(callback::computed)
+      }
+    }
+    return ThreeState.YES
   }
 
   override fun computeSourcePosition(navigatable: XNavigatable) {
@@ -145,10 +159,14 @@ class FrontendXValue private constructor(
     }
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
     if (place == XValuePlace.TREE) {
       // for TOOLTIP we are going to calculate it separately
-      node.setPresentation(presentation.value)
+      // TODO: is it really needed?
+      if (statePresentation.isCompleted) {
+        node.setPresentation(statePresentation.getCompleted().value)
+      }
     }
     val initialFullValueEvaluator = fullValueEvaluator.value
     if (initialFullValueEvaluator != null) {
@@ -168,7 +186,7 @@ class FrontendXValue private constructor(
       launch {
         val presentationFlow = when (place) {
           XValuePlace.TREE -> {
-            presentation
+            statePresentation.await()
           }
           XValuePlace.TOOLTIP -> {
             XValueApi.getInstance().computeTooltipPresentation(xValueDto.id)
@@ -200,7 +218,6 @@ class FrontendXValue private constructor(
     xValueContainer.computeChildren(node)
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   override fun getModifier(): XValueModifier? {
     return modifier
   }
@@ -221,8 +238,9 @@ class FrontendXValue private constructor(
 
   override fun getValueText(): String? = textProvider?.value?.textValue
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun toString(): String {
-    return "FrontendXValue(id=${xValueDto.id}, value=${presentation.value.rawText()})"
+    return "FrontendXValue(id=${xValueDto.id}, value=${statePresentation.getCompleted().value.rawText()})"
   }
 
   override val tag: String? get() = pinToTopData?.tag
@@ -297,7 +315,7 @@ class FrontendXValue private constructor(
     }
 
     @JvmStatic
-    suspend fun create(project: Project, evaluatorCoroutineScope: CoroutineScope, xValueDto: XValueDto, hasParentValue: Boolean): XValue {
+    fun create(project: Project, evaluatorCoroutineScope: CoroutineScope, xValueDto: XValueDto, hasParentValue: Boolean): XValue {
       // TODO[IJPL-160146]: Is it ok to dispose only when evaluator is changed?
       //   So, XValues will live more than popups where they appeared
       //   But it is needed for Mark object functionality at least.
@@ -305,7 +323,7 @@ class FrontendXValue private constructor(
       //   because it getting closed when Mark Object dialog is shown,
       //   so we cannot refer to the backend's xValue
       val cs = evaluatorCoroutineScope.childScope("FrontendXValue")
-      val presentation = xValueDto.presentation.toFlow().stateIn(cs)
+      val presentation = xValueDto.presentation.toFlow()
       val frontendXValue = FrontendXValue(project, cs, xValueDto, hasParentValue, presentation)
       val name = xValueDto.name
       return if (name != null) FrontendXNamedValue(frontendXValue, name) else frontendXValue

@@ -1,5 +1,5 @@
 <component name="ArtifactManager">
-  <artifact type="jar" build-on-make="true" name="intellij.platform.jewel.detektPlugin:jar">
+  <artifact type="jar" name="intellij.platform.jewel.detektPlugin:jar">
     <output-path>$PROJECT_DIR$/platform/jewel/detekt-libs</output-path>
     <root id="archive" name="intellij.platform.jewel.detektPlugin.jar">
       <element id="module-output" name="intellij.platform.jewel.detektPlugin" />

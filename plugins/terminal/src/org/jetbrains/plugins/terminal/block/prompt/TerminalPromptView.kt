@@ -35,7 +35,6 @@ import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorUtil
 import org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptFileType
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
-import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.ui.getCharSize
 import org.jetbrains.plugins.terminal.block.ui.invokeLater
 import java.awt.*
@@ -184,7 +183,6 @@ class TerminalPromptView(
     editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
     editor.setVerticalScrollbarVisible(true)
     editor.gutterComponentEx.isPaintBackground = false
-    editor.useTerminalDefaultBackground(this)
     editor.colorsScheme.apply {
       editorFontName = settings.terminalFont.fontName
       editorFontSize = settings.terminalFont.size

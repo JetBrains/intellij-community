@@ -8,10 +8,8 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
-import com.jetbrains.python.sdk.detectAssociatedEnvironments
-import com.jetbrains.python.sdk.setupSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -35,13 +33,11 @@ class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
   private suspend fun setupVenv(module: Module): PyResult<Sdk> {
     val env = withContext(Dispatchers.IO) {
       detectAssociatedEnvironments(module, existingSdks, context).firstOrNull()
-    }
+    } ?: return PyResult.failure(MessageError("Can't find venv for the module"))
 
-    if (env != null) {
-      env.setupSdk(module, existingSdks, true)
-      return PyResult.success(env)
-    }
+    val sdk = env.setupAssociated(existingSdks, module.basePath, true).getOr { return it }
+    sdk.persist()
 
-    return PyResult.failure(MessageError("Can't find venv for the module"))
+    return PyResult.success(sdk)
   }
 }

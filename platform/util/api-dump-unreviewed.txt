@@ -1128,15 +1128,6 @@ f:com.intellij.openapi.util.io.NioPathUtil
 - sf:getResolvedPath(java.nio.file.Path,java.lang.String):java.nio.file.Path
 - sf:toCanonicalPath(java.nio.file.Path):java.lang.String
 - sf:toNioPathOrNull(java.lang.String):java.nio.file.Path
-f:com.intellij.openapi.util.io.OSAgnosticPathUtil
-- sf:COMPARATOR:java.util.Comparator
-- s:getParent(java.lang.String):java.lang.String
-- s:isAbsolute(java.lang.String):Z
-- s:isAbsoluteDosPath(java.lang.String):Z
-- s:isDriveLetter(C):Z
-- s:isUncPath(java.lang.String):Z
-- s:startsWith(java.lang.String,java.lang.String):Z
-- s:startsWithWindowsDrive(java.lang.String):Z
 f:com.intellij.openapi.util.io.StreamUtil
 - sf:BUFFER_SIZE:I
 - s:closeStream(java.io.Closeable):V

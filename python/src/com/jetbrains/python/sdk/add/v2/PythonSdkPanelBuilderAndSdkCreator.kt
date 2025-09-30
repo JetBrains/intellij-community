@@ -15,6 +15,7 @@ import com.intellij.util.asDisposable
 import com.intellij.util.ui.launchOnShow
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
+import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -139,7 +140,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
   }
 
   override fun onShownInitialization(scopingComponent: Component) {
-    scopingComponent.launchOnShow("${this::class.java} onShown initialization") {
+    scopingComponent.launchOnShow("${this::class.java} onShown initialization", TraceContext(message("tracecontext.new.project.wizard"), null)) {
       initMutex.withLock {
         supervisorScope {
           initialize(this@supervisorScope)

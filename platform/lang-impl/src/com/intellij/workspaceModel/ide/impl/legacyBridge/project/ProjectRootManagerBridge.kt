@@ -20,7 +20,9 @@ import kotlinx.coroutines.CoroutineScope
 class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope) : ProjectRootManagerComponent(project, coroutineScope) {
   init {
     if (!project.isDefault) {
-      moduleDependencyIndex.addListener(ModuleDependencyListenerImpl())
+      if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) {
+        moduleDependencyIndex.addListener(ModuleDependencyListenerImpl())
+      }
     }
   }
 
@@ -56,14 +58,12 @@ class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope)
     private var insideRootsChange = false
 
     override fun referencedLibraryAdded(library: Library) {
-      if (Registry.`is`("use.workspace.file.index.for.partial.scanning")) return
       if (shouldListen(library)) {
         fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addLibrary(library).buildInfo())
       }
     }
 
     override fun referencedLibraryChanged(library: Library) {
-      if (Registry.`is`("use.workspace.file.index.for.partial.scanning")) return
       if (insideRootsChange || !shouldListen(library)) return
       insideRootsChange = true
       try {
