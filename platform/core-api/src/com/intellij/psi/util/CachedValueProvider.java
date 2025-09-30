@@ -3,6 +3,7 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,8 +24,7 @@ public interface CachedValueProvider<T> {
   /**
    * @return result object holding the value to cache and the dependencies indicating when that value will be outdated
    */
-  @Nullable
-  Result<T> compute();
+  @Nullable Result<T> compute();
 
   /**
    * The object holding the value to cache and the dependencies indicating when that value will be outdated.
@@ -64,21 +64,27 @@ public interface CachedValueProvider<T> {
      * The state is remembered as a collection of {@code long} values representing some time stamps.
      * Whenever changes to the dependencies occur, these stamps are incremented.
      * <p>
+     * When {@link CachedValue#getValue()} is invoked, the current stamps of dependencies are queried and compared to the remembered stamps.
+     * If there is any difference, the cached value is invalidated and {@link CachedValueProvider#compute computed} again.
+     * <p>
      * Dependencies can be the following:
      * <ul>
-     *   <li/>Instances of {@link com.intellij.openapi.util.ModificationTracker ModificationTracker} returning stamps explicitly
-     *   <li/>Constant fields of {@link PsiModificationTracker} class, e.g. {@link PsiModificationTracker#MODIFICATION_COUNT}
+     *   <li/>Instances of {@link ModificationTracker ModificationTracker}.
+     *      Such a cache is invalidated when the stamp returned by {@link ModificationTracker#getModificationCount()} differs from the remembered stamp.
+     *   <li/>The constant {@link PsiModificationTracker#MODIFICATION_COUNT}.
+     *      Such a cache is invalidated on any physical PSI change.
      *   <li/>Instances of {@link com.intellij.openapi.editor.Document Document} or {@link com.intellij.openapi.vfs.VirtualFile VirtualFile}.
-     *      Such a cache is invalidated any change in the corresponding file.
+     *      Such a cache is invalidated on any change in the file's content.
      *   <li/>Instances of {@link PsiElement}.
      *      Such a cache is invalidated on any change in the {@link PsiElement#getContainingFile() element's containing file}.
      * </ul>
      * <p>
+     * <h3>What to use as a dependency?</h3>
      * If your cached value uses a document instance as an input, you should use that document as a dependency.
      * If it uses a PSI as an input, it should use that PSI as a dependency.
      *
      * @return the dependency items
-     * @see com.intellij.openapi.util.ModificationTracker ModificationTracker
+     * @see ModificationTracker ModificationTracker
      * @see PsiModificationTracker
      * @see com.intellij.openapi.roots.ProjectRootModificationTracker ProjectRootModificationTracker
      * @see PsiModificationTracker#forLanguage(Language)
