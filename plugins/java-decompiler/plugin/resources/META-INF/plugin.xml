@@ -44,7 +44,11 @@
 
   <actions>
     <group id="idea.java.decompiler.action.group">
-      <action id="ByteCodeDecompiler" class="org.jetbrains.java.decompiler.ShowDecompiledClassAction"/>
+      <action 
+        id="ByteCodeDecompiler"
+        class="org.jetbrains.java.decompiler.ShowDecompiledClassAction"
+        icon="AllIcons.FileTypes.JavaClass"
+      />
       <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickJavaDoc"/>
     </group>
   </actions>

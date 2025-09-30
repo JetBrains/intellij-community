@@ -15,7 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
 
-class ShowDecompiledClassAction : AnAction(IdeaDecompilerBundle.message("action.show.decompiled.name")) {
+class ShowDecompiledClassAction : AnAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
