@@ -5307,6 +5307,11 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/replaceMapIndexedWithListGenerator/labeledReturn3.kt");
         }
 
+        @TestMetadata("labeledReturnImplicitUnit.kt")
+        public void testLabeledReturnImplicitUnit() throws Exception {
+            runTest("../testData/inspectionsLocal/replaceMapIndexedWithListGenerator/labeledReturnImplicitUnit.kt");
+        }
+
         @TestMetadata("thisReceiver.kt")
         public void testThisReceiver() throws Exception {
             runTest("../testData/inspectionsLocal/replaceMapIndexedWithListGenerator/thisReceiver.kt");

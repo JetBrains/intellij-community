@@ -127,8 +127,12 @@ internal class ReplaceMapIndexedWithListGeneratorInspection :
                         psiFactory.createLambdaParameterList(argumentExpression.valueParameters.first().text)
                     )
                     writableReturnExpressions.forEach {
-                        val returnedExpression = it.returnedExpression ?: return@forEach
-                        it.replace(psiFactory.createExpressionByPattern("return@List $0", returnedExpression))
+                        val returnedExpression = it.returnedExpression
+                        if (returnedExpression != null) {
+                            it.replace(psiFactory.createExpressionByPattern("return@List $0", returnedExpression))
+                        } else {
+                            it.replace(psiFactory.createExpressionByPattern("return@List"))
+                        }
                     }
                     if (receiverExpression != null) {
                         qualifiedExpression.replace(
