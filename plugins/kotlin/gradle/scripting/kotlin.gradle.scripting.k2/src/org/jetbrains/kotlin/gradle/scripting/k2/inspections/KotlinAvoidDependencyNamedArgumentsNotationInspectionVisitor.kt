@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
 import com.intellij.codeInspection.CommonQuickFixBundle
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
@@ -14,7 +13,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForBi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 
-class KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(val holder: ProblemsHolder) : KtVisitorVoid() {
+class KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
     override fun visitCallExpression(expression: KtCallExpression) {
         val dependencyType = findDependencyType(expression) ?: return
         if (dependencyType != DependencyType.NAMED_ARGUMENTS) return
@@ -32,7 +31,6 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(val holder: P
         holder.registerProblem(
             argList,
             GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor"),
-            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
             GradleDependencyNamedArgumentsFix()
         )
     }

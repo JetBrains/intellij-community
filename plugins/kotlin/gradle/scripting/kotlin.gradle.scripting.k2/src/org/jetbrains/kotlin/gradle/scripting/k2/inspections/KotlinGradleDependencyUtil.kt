@@ -13,6 +13,7 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADL
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY
 
 internal const val KOTLIN_GROUP_ID: String = "org.jetbrains.kotlin"
+internal const val GRADLE_KOTLIN_PACKAGE: String = "org.gradle.kotlin.dsl"
 
 internal enum class DependencyType {
     SINGLE_ARGUMENT, NAMED_ARGUMENTS, OTHER
@@ -24,12 +25,12 @@ internal enum class DependencyType {
 internal fun findDependencyType(expression: KtCallExpression): DependencyType? {
     analyze(expression) {
         val symbol = expression.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null
-        if (symbol.callableId?.packageName != FqName("org.gradle.kotlin.dsl")
-            || (symbol.returnType.symbol?.classId?.asSingleFqName() != FqName(GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY)
-                    && symbol.returnType.symbol?.classId?.asSingleFqName() != FqName(GRADLE_API_ARTIFACTS_DEPENDENCY))
-        ) {
-            return null
-        }
+        if (symbol.callableId?.packageName != FqName(GRADLE_KOTLIN_PACKAGE)) return null
+        val returnType = symbol.returnType.symbol?.classId?.asSingleFqName() ?: return null
+        if (returnType != FqName(GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY)
+            && returnType != FqName(GRADLE_API_ARTIFACTS_DEPENDENCY)
+        ) return null
+
         val parameters = symbol.valueParameters
         if (parameters.isEmpty()) return DependencyType.OTHER
         val firstParameter = parameters.first()

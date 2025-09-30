@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInspection.groovy
 
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.OriginInfoAwareElement
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.codeInspection.fix.GradleDependencyNamedArgumentsFix
@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
-class GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(val holder: ProblemsHolder) : GroovyElementVisitor() {
+class GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val holder: ProblemsHolder) : GroovyElementVisitor() {
   override fun visitMethodCall(call: GrMethodCall) {
     val method = call.resolveMethod() ?: return
     if (method !is OriginInfoAwareElement || method.originInfo != GradleDependencyHandlerContributor.DEPENDENCY_NOTATION) {
@@ -26,27 +26,25 @@ class GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(val holder: P
     if (arguments.isEmpty()) {
       if (!isReplaceableWithSingleString(call.namedArguments.asList())) return
 
-      holder.registerProblem(
-        call.argumentList,
-        GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor"),
-        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-        GradleDependencyNamedArgumentsFix()
-      )
+      registerProblem(call.argumentList)
     }
     else {
       for (argument in arguments) {
-        if (InheritanceUtil.isInheritor(argument.type, CommonClassNames.JAVA_UTIL_MAP) && argument is GrListOrMap) {
-          if (!isReplaceableWithSingleString(argument.namedArguments.asList())) continue
+        if (!InheritanceUtil.isInheritor(argument.type, CommonClassNames.JAVA_UTIL_MAP)) continue
+        if (argument !is GrListOrMap) continue
+        if (!isReplaceableWithSingleString(argument.namedArguments.asList())) continue
 
-          holder.registerProblem(
-            argument,
-            GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor"),
-            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-            GradleDependencyNamedArgumentsFix()
-          )
-        }
+        registerProblem(argument)
       }
     }
+  }
+
+  private fun registerProblem(element: PsiElement) {
+    holder.registerProblem(
+      element,
+      GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor"),
+      GradleDependencyNamedArgumentsFix()
+    )
   }
 
   private fun isReplaceableWithSingleString(namedArguments: List<GrNamedArgument>): Boolean {
