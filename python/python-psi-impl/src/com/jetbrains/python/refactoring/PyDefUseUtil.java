@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Version;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyLanguageFacadeKt;
 import com.jetbrains.python.codeInsight.controlflow.*;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -69,10 +70,13 @@ public final class PyDefUseUtil {
     if (startNum < 0) {
       return Collections.emptyList();
     }
+    
+    QualifiedName varQname = QualifiedName.fromDottedString(varName);
 
     LanguageLevel languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(anchor.getContainingFile());
     final Collection<Instruction> result = new LinkedHashSet<>();
     final HashMap<PyCallSiteExpression, ConditionalInstruction> pendingTypeGuard = new HashMap<>();
+    final Ref<@NotNull Boolean> foundPrefixWrite = Ref.create(false);
     iteratePrev(startNum, controlFlow,
                 instruction -> {
                   if (instruction instanceof PyWithContextExitInstruction withExit) {
@@ -101,8 +105,16 @@ public final class PyDefUseUtil {
                                        ? TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin())
                                        : TypeEvalContext.codeInsightFallback(context.getOrigin().getProject());
                       if (newContext.getType(typedElement) instanceof PyNarrowedType narrowedType && narrowedType.isBound()) {
-                        if (varName.equals(narrowedType.getQname())) {
-                          pendingTypeGuard.put(narrowedType.getOriginal(), conditionalInstruction);
+                        String narrowedQname = narrowedType.getQname();
+                        if (narrowedQname != null) {
+                          if (isQualifiedBy(varQname, narrowedQname)) {
+                            foundPrefixWrite.set(true);
+                            return ControlFlowUtil.Operation.BREAK;
+                          }
+
+                          if (narrowedQname.equals(varName)) {
+                            pendingTypeGuard.put(narrowedType.getOriginal(), conditionalInstruction);
+                          }
                         }
                       }
                     }
@@ -111,7 +123,17 @@ public final class PyDefUseUtil {
                     final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
                     if (access.isWriteAccess() ||
                         acceptTypeAssertions && access.isAssertTypeAccess() && instruction.num() < startNum) {
-                      if (Comparing.strEqual(rwInstruction.getName(), varName)) {
+
+                      final String name = rwInstruction.getName();
+                      
+                      if (name != null && isQualifiedBy(varQname, name)) {
+                        if (isReachableWithVersionChecks(rwInstruction, languageLevel)){
+                          foundPrefixWrite.set(true);
+                          return ControlFlowUtil.Operation.BREAK;
+                        }
+                      }
+                      
+                      if (Comparing.strEqual(name, varName)) {
                         if (isReachableWithVersionChecks(rwInstruction, languageLevel)) {
                           result.add(rwInstruction);
                         }
@@ -129,7 +151,15 @@ public final class PyDefUseUtil {
                   }
                   return ControlFlowUtil.Operation.NEXT;
                 });
+    if (foundPrefixWrite.get()) {
+      return Collections.emptyList();
+    }
     return new ArrayList<>(result);
+  }
+
+  private static boolean isQualifiedBy(QualifiedName varQname, @NotNull String qualifier) {
+    QualifiedName elementQname = QualifiedName.fromDottedString(qualifier);
+    return varQname.getComponentCount() > elementQname.getComponentCount() && varQname.matchesPrefix(elementQname);
   }
 
   private static int findStartInstructionId(@NotNull PsiElement startAnchor, @NotNull PyControlFlow flow) {

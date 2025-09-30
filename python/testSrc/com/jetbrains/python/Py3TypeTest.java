@@ -17,6 +17,108 @@ import java.util.Map;
 
 public class Py3TypeTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "/types/";
+  
+  // See PyReferenceExpressionImpl.getQualifiedReferenceType for explanations.
+  public void testQualifiedNameResolution() {
+    doTest("str", """
+      class C:
+          def m(self):
+              self.t = 5
+      
+      def f(self: C, x: float):
+          self.t = "foo"
+          expr = self.t
+      """);
+
+    doTest("int", """
+      class C:
+          def m(self):
+              self.t: int = 5
+      
+      def f(self: C, x: float):
+          self.t = "foo"
+          expr = self.t
+      """);
+
+    doTest("int", """
+      class C:
+          def __init__(self):
+              self.t: int = 5
+      
+      def f(self: C, x: float):
+          self.t = "foo"
+          expr = self.t
+      """);
+  }
+  
+  // PY-83047
+  public void testQualifiedReferenceTypeNarrowing() {
+    doTest("int | None", """
+      class C:
+          def __init__(self):
+              self.t: int | None = 5
+      
+          def f(self, x: float):
+              if x < 0:
+                  self.t = None
+      
+              expr = self.t
+      """);
+
+    doTest("int", """
+      class C:
+          def __init__(self):
+              self.t: int | None = 5
+      
+          def f(self, x: float):
+              if self.t is not None:
+                  expr = self.t
+      """);
+
+    doTest("None", """
+      class C:
+          def __init__(self):
+              self.t: int | None = 5
+      
+          def f(self, x: float):
+              if self.t is None:
+                  expr = self.t
+      """);
+
+    // Same, but as a separate function
+    
+    doTest("int | None", """
+      class C:
+          def __init__(self):
+              self.t: int | None = 5
+      
+      def f(self: C, x: float):
+          if x < 0:
+              self.t = None
+  
+          expr = self.t
+      """);
+
+    doTest("int", """
+      class C:
+          def __init__(self):
+              self.t: int | None = 5
+      
+      def f(self: C, x: float):
+          if self.t is not None:
+              expr = self.t
+      """);
+
+    doTest("None", """
+      class C:
+          def __init__(self):
+              self.t: int | None = 5
+      
+      def f(self: C, x: float):
+          if self.t is None:
+              expr = self.t
+      """);
+  }
 
   /** 
   Overload signatures for dict.get and dict.pop in builtins.pyi differ slightly,

@@ -1148,6 +1148,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     Map<String, ScopeOwner> scopesToSkip = StreamEx.of(getInstanceAttributes())
       .filter(e -> e.getName() != null)
       .mapToEntry(e -> e.getName(), e -> ScopeUtil.getScopeOwner(e))
+      .distinct()
       .toMap();
     attributes = collectInstanceAttributes(scopesToSkip);
     myFallbackInstanceAttributes = attributes;
@@ -1155,7 +1156,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   private @NotNull List<PyTargetExpression> collectInstanceAttributes(@NotNull Map<String, ScopeOwner> scopesToSkip) {
-    Map<String, PyTargetExpression> result = new HashMap<>();
+    MultiMap<String, PyTargetExpression> result = new MultiMap<>();
     collectAttributesInConstructors(result, scopesToSkip);
     final PyFunction[] methods = getMethods();
     for (PyFunction method : methods) {
@@ -1164,14 +1165,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return new ArrayList<>(result.values());
   }
 
-  private void collectAttributesInConstructors(@NotNull Map<String, PyTargetExpression> result,
+  private void collectAttributesInConstructors(@NotNull MultiMap<String, PyTargetExpression> result,
                                                @NotNull Map<String, ScopeOwner> scopesToSkip) {
     PyFunction newMethod = findMethodByName(PyNames.NEW, false, null);
     if (newMethod != null) {
       for (PyTargetExpression target : getTargetExpressions(newMethod)) {
         String name = target.getName();
         if (scopesToSkip.get(name) != newMethod) {
-          result.put(name, target);
+          result.putValue(name, target);
         }
       }
     }
@@ -1181,12 +1182,24 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
   }
 
-  public static void collectInstanceAttributes(@NotNull PyFunction method, final @NotNull Map<String, PyTargetExpression> result) {
+  public static void collectInstanceAttributes(@NotNull PyFunction method, final @NotNull MultiMap<String, PyTargetExpression> result) {
     collectInstanceAttributes(method, result, emptySet(), Collections.emptyMap());
   }
 
+  /**
+   * @deprecated Use collectInstanceAttributes(com.jetbrains.python.psi.PyFunction, com.intellij.util.containers.MultiMap)
+   */
+  @Deprecated
+  public static void collectInstanceAttributes(@NotNull PyFunction method, final @NotNull Map<String, PyTargetExpression> result) {
+    MultiMap<String, PyTargetExpression> localResult = new MultiMap<>();
+    collectInstanceAttributes(method, localResult, emptySet(), Collections.emptyMap());
+    for (Map.Entry<String, Collection<PyTargetExpression>> entry : localResult.entrySet()) {
+      result.put(entry.getKey(), ContainerUtil.getFirstItem(entry.getValue()));
+    }
+  }
+
   private static void collectInstanceAttributes(@NotNull PyFunction method,
-                                                final @NotNull Map<String, PyTargetExpression> result,
+                                                final @NotNull MultiMap<String, PyTargetExpression> result,
                                                 @NotNull Set<String> namesToSkip,
                                                 @NotNull Map<String, ScopeOwner> scopesToSkip) {
     final PyParameter[] params = method.getParameterList().getParameters();
@@ -1198,7 +1211,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       if (!namesToSkip.contains(name) &&
           scopesToSkip.get(name) != method &&
           PyUtil.isInstanceAttribute(target)) {
-        result.put(name, target);
+        result.putValue(name, target);
       }
     }
   }
@@ -1354,27 +1367,10 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PsiElement location) {
-    final PyFunction instanceMethod = PsiTreeUtil.getStubOrPsiParentOfType(location, PyFunction.class);
-    final PyClass containingClass = instanceMethod != null ? instanceMethod.getContainingClass() : null;
-    if (instanceMethod != null && containingClass != null && CompletionUtilCoreImpl.getOriginalElement(containingClass) == this) {
-      for (PyTargetExpression target : getTargetExpressions(instanceMethod)) {
-        if (PyUtil.isInstanceAttribute(target) && !processor.execute(target, ResolveState.initial())) {
-          return false;
-        }
-      }
+    for (PyTargetExpression expr : getInstanceAttributes()) {
+      if (!processor.execute(expr, ResolveState.initial())) return false;
     }
-    if (!processInstanceAttributesNotInMethod(processor, instanceMethod, getInstanceAttributes())) return false;
-    if (!processInstanceAttributesNotInMethod(processor, instanceMethod, getFallbackInstanceAttributes())) return false;
-    return true;
-  }
-
-  private static boolean processInstanceAttributesNotInMethod(@NotNull PsiScopeProcessor processor,
-                                                              @Nullable PyFunction instanceMethod,
-                                                              @NotNull List<PyTargetExpression> instanceAttributes) {
-    for (PyTargetExpression expr : instanceAttributes) {
-      if (instanceMethod != null && ScopeUtil.getScopeOwner(expr) == instanceMethod) {
-        continue;
-      }
+    for (PyTargetExpression expr : getFallbackInstanceAttributes()) {
       if (!processor.execute(expr, ResolveState.initial())) return false;
     }
     return true;
