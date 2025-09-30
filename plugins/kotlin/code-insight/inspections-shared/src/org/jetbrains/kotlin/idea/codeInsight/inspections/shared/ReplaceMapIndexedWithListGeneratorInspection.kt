@@ -70,13 +70,18 @@ internal class ReplaceMapIndexedWithListGeneratorInspection :
 
         if (!receiver.type.isSubtypeOf(StandardClassIds.Collection)) return null
         val valueArgument = element.valueArguments.singleOrNull() ?: element.lambdaArguments.singleOrNull() ?: return null
-        val list = mutableListOf<SmartPsiElementPointer<KtReturnExpression>>()
+        val returns = mutableListOf<SmartPsiElementPointer<KtReturnExpression>>()
         val valueParameters = when (val argumentExpression = valueArgument.getLambdaOrNamedFunction()) {
             is KtLambdaExpression -> {
                 val functionLiteral = argumentExpression.functionLiteral
                 functionLiteral.collectDescendantsOfType<KtReturnExpression>().forEach {
-                    if (it.getTargetLabel()?.mainReference?.resolveToSymbol()?.psi == functionLiteral) {
-                        list.add(it.createSmartPointer())
+                    val targetsMapIndexed = it.getTargetLabel()
+                        ?.mainReference
+                        ?.resolveToSymbol()
+                        ?.psi == functionLiteral
+
+                    if (targetsMapIndexed) {
+                        returns.add(it.createSmartPointer())
                     }
                 }
                 argumentExpression.valueParameters
@@ -94,7 +99,7 @@ internal class ReplaceMapIndexedWithListGeneratorInspection :
             return null
         }
 
-        return Context(list)
+        return Context(returns)
     }
 
     override fun createQuickFix(
