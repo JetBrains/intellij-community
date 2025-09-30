@@ -1,9 +1,21 @@
+- name: lib/modules/intellij.platform.ide.nonModalWelcomeScreen.backend.jar
+  contentModules:
+  - name: intellij.platform.ide.nonModalWelcomeScreen.backend
+- name: lib/modules/intellij.platform.ide.nonModalWelcomeScreen.frontend.jar
+  contentModules:
+  - name: intellij.platform.ide.nonModalWelcomeScreen.frontend
 - name: lib/modules/intellij.platform.ide.nonModalWelcomeScreen.jar
   contentModules:
   - name: intellij.platform.ide.nonModalWelcomeScreen
 - name: lib/modules/intellij.python.ast.jar
   contentModules:
   - name: intellij.python.ast
+- name: lib/modules/intellij.python.common.frontend.jar
+  contentModules:
+  - name: intellij.python.common.frontend
+- name: lib/modules/intellij.python.common.jar
+  contentModules:
+  - name: intellij.python.common
 - name: lib/modules/intellij.python.community.aliasProvider.jar
   contentModules:
   - name: intellij.python.community.aliasProvider
