@@ -63,8 +63,8 @@ internal class TerminalDockContainer private constructor(
     else if (classicTerminalFile != null) {
       val engine = TerminalEngine.CLASSIC // Engine doesn't matter here because we will reuse the existing terminal widget.
       val manager = TerminalToolWindowManager.getInstance(project)
-      val newContent = manager.createNewTab(nearestManager, classicTerminalFile.terminalWidget, manager.terminalRunner, engine,
-                                            null, null, null, true, true)
+      val newContent = manager.createNewTab(nearestManager, classicTerminalFile.terminalWidget, manager.terminalRunner,
+                                            engine, null, true, true)
       newContent.setDisplayName(classicTerminalFile.name)
     }
   }

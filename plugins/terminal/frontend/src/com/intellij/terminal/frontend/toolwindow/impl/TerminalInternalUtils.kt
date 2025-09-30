@@ -26,7 +26,7 @@ internal fun createTerminalTab(
   startupFusInfo: TerminalStartupFusInfo? = null,
 ) {
   if (shouldUseReworkedTerminal()) {
-    // todo: pass fusInfo there as well
+    // todo: pass fusInfo there
     TerminalToolWindowTabsManager.getInstance(project).createTabBuilder()
       .shellCommand(shellCommand)
       .workingDirectory(workingDirectory)
@@ -42,7 +42,7 @@ internal fun createTerminalTab(
       it.myTabName = tabName
     }
     val engine = TerminalOptionsProvider.instance.terminalEngine
-    TerminalToolWindowManager.getInstance(project).createNewTab(engine, startupFusInfo, tabState, contentManager)
+    TerminalToolWindowManager.getInstance(project).createNewTab(engine, tabState, contentManager)
   }
 }
 

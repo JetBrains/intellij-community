@@ -58,7 +58,6 @@ public final class RevealFileInTerminalAction extends DumbAwareAction {
     tabState.myWorkingDirectory = selectedFile.getPath();
     TerminalToolWindowManager.getInstance(project).createNewTab(
       TerminalOptionsProvider.getInstance().getTerminalEngine(),
-      null,
       tabState,
       null
     );

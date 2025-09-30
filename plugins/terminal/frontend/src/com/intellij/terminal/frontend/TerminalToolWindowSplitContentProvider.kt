@@ -8,17 +8,14 @@ import com.intellij.ui.content.Content
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalTabState
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
-import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
-import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 
 internal class TerminalToolWindowSplitContentProvider : ToolWindowSplitContentProvider {
   override fun createContentCopy(project: Project, content: Content): Content {
-    val startupFusInfo = TerminalStartupFusInfo(TerminalOpeningWay.SPLIT_TOOLWINDOW)
     return if (shouldUseReworkedTerminal()) {
       createReworkedTerminalContent(project)
     }
     else {
-      createClassicTerminalContent(project, content, startupFusInfo)
+      createClassicTerminalContent(project, content)
     }
   }
 
@@ -35,7 +32,6 @@ internal class TerminalToolWindowSplitContentProvider : ToolWindowSplitContentPr
   private fun createClassicTerminalContent(
     project: Project,
     originalContent: Content,
-    startupFusInfo: TerminalStartupFusInfo,
   ): Content {
     val widget = TerminalToolWindowManager.findWidgetByContent(originalContent)
     val currentDirectory = widget?.getCurrentDirectory()
@@ -49,8 +45,6 @@ internal class TerminalToolWindowSplitContentProvider : ToolWindowSplitContentPr
       TerminalOptionsProvider.instance.terminalEngine,
       null,
       tabState,
-      null,
-      startupFusInfo,
       true,
       null,
     )
