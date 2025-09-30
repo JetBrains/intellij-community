@@ -15,9 +15,11 @@
  */
 package com.intellij.psi.formatter;
 
+import com.intellij.html.embedding.HtmlRawTextElementType;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
@@ -28,10 +30,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public class MarkupLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositionStrategy {
 
+  private static final IElementType[] TEXT_TOKENS = IElementType.enumerate(
+    t -> t == XmlElementType.XML_TEXT ||
+         t == XmlTokenType.XML_COMMENT_CHARACTERS ||
+         t == TokenType.WHITE_SPACE ||
+         t instanceof HtmlRawTextElementType
+  );
   private final DefaultLineWrapPositionStrategy myDefaultStrategy = new DefaultLineWrapPositionStrategy();
 
   public MarkupLineWrapPositionStrategy() {
-    super(true, XmlElementType.XML_TEXT, XmlElementType.HTML_RAW_TEXT, XmlTokenType.XML_COMMENT_CHARACTERS, TokenType.WHITE_SPACE);
+    super(true, TEXT_TOKENS);
 
     myDefaultStrategy.addRule(new GenericLineWrapPositionStrategy.Rule('<', GenericLineWrapPositionStrategy.WrapCondition.BEFORE));
     myDefaultStrategy.addRule(new GenericLineWrapPositionStrategy.Rule('/', GenericLineWrapPositionStrategy.WrapCondition.AFTER,
