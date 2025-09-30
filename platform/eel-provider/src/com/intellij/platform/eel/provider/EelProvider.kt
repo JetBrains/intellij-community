@@ -159,32 +159,6 @@ interface EelProvider {
 
   // TODO Better name.
   fun getEelMachineByInternalName(internalName: String): EelMachine?
-
-  /**
-   * Returns `true` if one of [EelMachine] associated with this provider is responsible for the path.
-   */
-  fun handlesPath(path: @MultiRoutingFileSystemPath String): Boolean
-
-  /**
-   * Returns a lightweight predicate that checks whether a given path is handled by the specified machine.
-   *
-   * Contract and performance:
-   * - Must be cheap to obtain and safe to call repeatedly.
-   * - Must not allocate, start, or initialize the machine or any external resources.
-   * - Implementations should avoid I/O, process launches, or network calls; use only fast, local checks (e.g., prefix matching).
-   *
-   * Nullability:
-   * - Returns `null` if the machine is not associated with this provider.
-   *
-   * Semantics:
-   * - The predicate should return true for any path that belongs to, or could belong to, the machine managed by this provider.
-   * - Consistency expectation: within the same provider, for a given `path`, if the predicate returned by [getPathHandlerPredicate]
-   *   returns `true` for that `path`, then [handlesPath] should also return `true` for the same `path`.
-   *
-   * @param machine the target environment/machine
-   * @return a predicate to test paths for this machine, or `null` if not applicable
-   */
-  fun getPathHandlerPredicate(machine: EelMachine): ((path: @MultiRoutingFileSystemPath String) -> Boolean)?
 }
 
 @ApiStatus.Internal

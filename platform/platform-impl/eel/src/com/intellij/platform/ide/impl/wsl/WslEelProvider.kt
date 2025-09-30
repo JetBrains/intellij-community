@@ -195,23 +195,6 @@ class WslEelProvider : EelProvider {
     else
       null
 
-  override fun handlesPath(path: @MultiRoutingFileSystemPath String): Boolean {
-    if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) {
-      return false
-    }
-
-    return WslPath.parseWindowsUncPath(path) != null
-  }
-
-  override fun getPathHandlerPredicate(machine: EelMachine): ((path: @MultiRoutingFileSystemPath String) -> Boolean)? {
-    if (machine !is WslEelMachine) return null
-    if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) return null
-    return predicate@{ path ->
-      val windowsUncPath = WslPath.parseWindowsUncPath(path) ?: return@predicate false
-      windowsUncPath.distributionId == machine.distribution.id
-    }
-  }
-
   override suspend fun tryInitialize(@MultiRoutingFileSystemPath path: String) {
     if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) {
       return

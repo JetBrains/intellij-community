@@ -100,13 +100,6 @@ fun CoroutineScope.registerIjentNioFs(
       override fun getEelMachineByInternalName(internalName: String): EelMachine? =
         if (internalName == ijent.descriptor.machine.name) ijent.descriptor.machine
         else null
-
-      override fun handlesPath(path: String): Boolean = path.startsWith(root)
-
-      override fun getPathHandlerPredicate(machine: EelMachine): ((path: @MultiRoutingFileSystemPath String) -> Boolean)? {
-        if (machine != ijent.descriptor.machine) return null
-        return { path -> path.startsWith(root) }
-      }
     },
     disposable,
   )
