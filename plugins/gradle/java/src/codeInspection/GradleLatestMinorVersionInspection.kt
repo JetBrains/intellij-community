@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.codeInspection
 
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.properties.psi.Property
 import com.intellij.openapi.util.TextRange
@@ -42,13 +41,10 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
         val latestMinorGradleVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(currentGradleVersion.majorVersion)
         if (currentGradleVersion >= latestMinorGradleVersion) return
 
-        holder.registerProblem(
-          element,
-          GradleInspectionBundle.message("inspection.message.outdated.gradle.minor.version.descriptor"),
-          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-          versionTextRange,
-          GradleWrapperVersionFix(latestMinorGradleVersion)
-        )
+        holder.problem(element, GradleInspectionBundle.message("inspection.message.outdated.gradle.minor.version.descriptor"))
+          .range(versionTextRange)
+          .fix(GradleWrapperVersionFix(latestMinorGradleVersion))
+          .register()
       }
     }
   }
