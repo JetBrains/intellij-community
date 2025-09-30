@@ -212,8 +212,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
                 context.symbolFromIndexProvider.getKotlinCallableSymbolsByNameFilter(context.completionContext.scopeNameFilter) {
                     if (!context.visibilityChecker.canBeVisible(it)) return@getKotlinCallableSymbolsByNameFilter false
                     // We should not show class members when we do not have a receiver.
-                    // See: KT-78882 for why we need `runCatching` here.
-                    val containingSymbol = runCatching { it.symbol.containingSymbol }.getOrNull()
+                    val containingSymbol = it.symbol.containingSymbol
                     containingSymbol !is KaClassSymbol || containingSymbol.classKind.isObject
                 }
             } else {
