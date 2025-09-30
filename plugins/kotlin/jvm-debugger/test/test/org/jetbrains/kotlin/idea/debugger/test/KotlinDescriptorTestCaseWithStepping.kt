@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -21,8 +21,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.xdebugger.frame.XStackFrame
@@ -197,14 +195,14 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             SteppingInstructionKind.Resume -> loop(instruction.arg) { resume(this) }
             SteppingInstructionKind.SmartStepTargetsExpectedNumber ->
                 doOnBreakpoint {
-                    checkNumberOfSmartStepTargets(instruction.arg)
+                    checkNumberOfSmartStepTargets(instruction.arg, this)
                     resume(this)
                 }
         }
     }
 
-    private fun checkNumberOfSmartStepTargets(expectedNumber: Int) {
-        val smartStepFilters = createSmartStepIntoFilters()
+    private fun checkNumberOfSmartStepTargets(expectedNumber: Int, suspendContext: SuspendContextImpl) {
+        val smartStepFilters = createSmartStepIntoFilters(suspendContext)
         try {
             val actualTargets = smartStepFilters.joinToString(prefix = "[", postfix = "]") {
                 if (it is NamedMethodFilter) it.methodName else it.toString()
@@ -269,7 +267,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     protected open fun extraPrintContext(context: SuspendContextImpl) {}
 
     private fun SuspendContextImpl.doSmartStepInto(chooseFromList: Int, ignoreFilters: Boolean) {
-        val filters = createSmartStepIntoFilters()
+        val filters = createSmartStepIntoFilters(this)
         if (chooseFromList == 0) {
             if (filters.isEmpty()) {
                 throw AssertionError("Couldn't find any smart step into targets at: \n${getElementText()}")
@@ -291,9 +289,9 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         elementAt.getElementTextWithContext()
     }
 
-    private fun createSmartStepIntoFilters(): List<MethodFilter> {
+    private fun createSmartStepIntoFilters(suspendContext: SuspendContextImpl): List<MethodFilter> {
         val stepTargets = KotlinSmartStepIntoHandler()
-            .findSmartStepTargetsSync(debuggerContext.sourcePosition, debuggerSession)
+            .findSmartStepTargetsSync(debuggerContext.sourcePosition, debuggerSession, suspendContext)
 
         // the resulting order is different from the order in code when stepping some methods are filtered
         // due to de-prioritisation in JvmSmartStepIntoHandler.reorderWithSteppingFilters
