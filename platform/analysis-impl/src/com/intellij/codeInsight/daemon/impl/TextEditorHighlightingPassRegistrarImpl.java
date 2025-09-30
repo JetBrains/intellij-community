@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -172,6 +173,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   }
 
   @Override
+  @RequiresBackgroundThread
   public @NotNull List<@NotNull TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile,
                                                                               @NotNull Editor editor,
                                                                               int @NotNull [] passesToIgnore) {
@@ -250,6 +252,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   }
 
   @Override
+  @RequiresBackgroundThread
   public @NotNull List<@NotNull TextEditorHighlightingPass> instantiateMainPasses(@NotNull PsiFile psiFile,
                                                                                   @NotNull Document document,
                                                                                   @NotNull HighlightInfoProcessor highlightInfoProcessor) {

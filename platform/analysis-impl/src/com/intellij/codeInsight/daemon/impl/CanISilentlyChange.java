@@ -11,6 +11,7 @@ import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,6 +68,7 @@ final class CanISilentlyChange {
     }
   }
 
+  @RequiresEdt
   @ApiStatus.Internal
   static @NotNull Result thisFile(@NotNull PsiFileSystemItem file) {
     ThreadingAssertions.assertEventDispatchThread();

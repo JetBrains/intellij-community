@@ -79,6 +79,7 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -529,7 +530,9 @@ public final class DaemonListeners implements Disposable {
    * - files under explicit write permission version control (such as Perforce, which asks "do you want to edit this file"),
    * - files in the middle of cut-n-paste operation.
    */
-  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file, boolean isInContent,
+  @RequiresEdt
+  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file,
+                                              boolean isInContent,
                                               @NotNull ThreeState extensionsAllowToChangeFileSilently) {
     ThreadingAssertions.assertEventDispatchThread();
     Project project = file.getProject();

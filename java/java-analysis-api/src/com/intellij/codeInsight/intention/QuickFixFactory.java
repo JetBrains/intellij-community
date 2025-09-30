@@ -13,6 +13,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyMemberType;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -280,6 +281,7 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createCreateAnnotationMethodFromUsageFix(@NotNull PsiNameValuePair pair);
 
+  @RequiresBackgroundThread
   public abstract @NotNull ModCommandAction createOptimizeImportsFix(boolean fixOnTheFly, @NotNull PsiFile file);
 
   public abstract @NotNull IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter, boolean excludingHierarchy);

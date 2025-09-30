@@ -313,6 +313,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
 
   // compute additional stuff in background thread
   @ApiStatus.Internal
+  @RequiresBackgroundThread
   public void additionalSetupFromBackground(@NotNull PsiFile psiFile) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ReadAction.run(() -> {
@@ -394,6 +395,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   @ApiStatus.Internal
+  @RequiresEdt
   public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file,
                                               boolean isInContent,
                                               @NotNull ThreeState extensionsAllowToChangeFileSilently) {
