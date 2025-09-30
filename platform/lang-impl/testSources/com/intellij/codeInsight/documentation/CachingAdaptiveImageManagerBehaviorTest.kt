@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.icons.HiDPIImage
 import com.intellij.ui.svg.*
 import com.intellij.util.DataUrl
@@ -28,6 +29,7 @@ import javax.imageio.ImageIO
 import com.intellij.ui.svg.ImageDimension.Unit as IDUnit
 
 @ExperimentalCoroutinesApi
+@TestApplication
 class CachingAdaptiveImageManagerBehaviorTest {
 
   private val testScope = TestScope()

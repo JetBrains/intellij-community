@@ -4,22 +4,24 @@ package com.intellij.codeInsight.documentation
 import com.intellij.codeInsight.documentation.render.CachingDataReader
 import com.intellij.diagnostic.VMOptions
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.svg.*
 import com.intellij.util.MemorySizeAware
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.ApiStatus
@@ -57,9 +59,17 @@ internal class CachingAdaptiveImageManagerService(private val coroutineScope: Co
   )
 
   init {
-    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: MutableList<out VFileEvent>) = delegate.processVfsEvents(events)
+    val vfsEvents = Channel<List<VFileEvent>>(capacity = Channel.UNLIMITED)
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListenerBackgroundable {
+      override fun after(events: List<VFileEvent>) {
+        vfsEvents.trySend(events)
+      }
     })
+    coroutineScope.launch(Dispatchers.UI) {
+      for (events in vfsEvents) {
+        delegate.processVfsEvents(events)
+      }
+    }
   }
 
   override fun createRenderer(rendererScope: CoroutineScope, eventListener: (AdaptiveImageRendererEvent) -> Unit) =
@@ -76,7 +86,7 @@ private fun determineCacheSize(): Long {
     memorySizeMb = VMOptions.readOption(VMOptions.MemoryKind.HEAP, true)
   }
   catch (e: Throwable) {
-    logger<CachingAdaptiveImageManagerService>().error("Failed to get Xmx", e)
+    LOG.error("Failed to get Xmx", e)
   }
 
   var cacheSize = 20_000_00L // minimum value
@@ -84,7 +94,7 @@ private fun determineCacheSize(): Long {
     cacheSize = max(cacheSize, (memorySizeMb.toLong() * 1024 * 1024 * Registry.get("doc.render.image.cache.size").asDouble()).toLong())
   }
   catch (e: Throwable) {
-    logger<CachingAdaptiveImageManagerService>().error("Error calculating cache size limit", e)
+    LOG.error("Error calculating cache size limit", e)
   }
 
   return cacheSize
@@ -173,6 +183,8 @@ class CachingAdaptiveImageManager(
 
   companion object {
     const val RENDER_THROTTLE_MS: Long = 100L
+
+    private val LOG = logger<CachingAdaptiveImageManager>()
   }
 
   internal class RasterizationIntention(
@@ -191,6 +203,7 @@ class CachingAdaptiveImageManager(
   private val myVirtualFileToRenderersMap = HashMap<VirtualFile, MutableList<RendererRef>>()
 
   suspend fun loadAdaptiveImage(src: AdaptiveImageSource): UnloadableAdaptiveImage {
+    assertEDT()
     processRendererRefQueue()
     myLoadedImagesCache.get(src)?.also { return it }
 
@@ -213,6 +226,7 @@ class CachingAdaptiveImageManager(
   }
 
   internal inline fun <T> withRasterizationIntention(config: SVGRasterizationConfig, block: (Deferred<UnloadableRasterizedImage>) -> T): T {
+    assertEDT()
     val intention = myRasterizationIntentions.getOrPut(config) { RasterizationIntention(CompletableDeferred()) }
     intention.numWaiting++
 
@@ -228,6 +242,7 @@ class CachingAdaptiveImageManager(
   }
 
   internal suspend fun rasterizeSVGImage(rasterizationConfig: SVGRasterizationConfig): UnloadableRasterizedImage {
+    assertEDT()
     processRendererRefQueue()
 
     myRasterizedImagesCache.get(rasterizationConfig)?.also { return it }
@@ -253,10 +268,13 @@ class CachingAdaptiveImageManager(
     return newValue
   }
 
-  internal fun tryGetRasterizedSVGFromCache(rasterizationConfig: SVGRasterizationConfig) : UnloadableRasterizedImage? =
-    myRasterizedImagesCache.get(rasterizationConfig)
+  internal fun tryGetRasterizedSVGFromCache(rasterizationConfig: SVGRasterizationConfig) : UnloadableRasterizedImage? {
+    assertEDT()
+    return myRasterizedImagesCache.get(rasterizationConfig)
+  }
 
-  internal fun processVfsEvents(events: MutableList<out VFileEvent>) {
+  internal fun processVfsEvents(events: List<VFileEvent>) {
+    assertEDT()
     processRendererRefQueue()
     for (event in events) {
       val virtualFile = event.file ?: continue
@@ -278,7 +296,7 @@ class CachingAdaptiveImageManager(
       else loadedItem ?: rasterizedItem
 
       if (itemToUnload == null) {
-        thisLogger().warn("no items to unload, but size $memorySize is still over max $maxSize")
+        LOG.warn("no items to unload, but size $memorySize is still over max $maxSize")
         return
       }
 
@@ -304,6 +322,7 @@ class CachingAdaptiveImageManager(
   }
 
   internal fun updateRendererDependencies(rendererRef: RendererRef, newImage: UnloadableAdaptiveImage?) {
+    assertEDT()
     val oldDeps = rendererRef.dependencies
     val src = newImage?.src
     rendererRef.dependencies = if (src is VfsAdaptiveImageSource) listOf(src.virtualFile) else listOf()
@@ -317,9 +336,13 @@ class CachingAdaptiveImageManager(
     }
   }
 
-  override fun getMemorySize(): Long = myLoadedImagesCache.memorySize + myRasterizedImagesCache.memorySize
+  override fun getMemorySize(): Long {
+    assertEDT()
+    return myLoadedImagesCache.memorySize + myRasterizedImagesCache.memorySize
+  }
 
   override fun createRenderer(rendererScope: CoroutineScope, eventListener: (AdaptiveImageRendererEvent) -> Unit): AdaptiveImageRenderer {
+    assertEDT()
     processRendererRefQueue()
 
     val renderer = AdaptiveImageRendererImpl(rendererScope, this, eventListener, timeProvider)
@@ -328,7 +351,7 @@ class CachingAdaptiveImageManager(
   }
 
   override fun createRenderer(eventListener: (AdaptiveImageRendererEvent) -> Unit): AdaptiveImageRenderer =
-    createRenderer(coroutineScope.childScope("AdaptiveImageRenderer", Dispatchers.EDT), eventListener)
+    createRenderer(coroutineScope.childScope("AdaptiveImageRenderer", Dispatchers.UI), eventListener)
 
 
   @TestOnly
@@ -373,6 +396,11 @@ internal class AdaptiveImageRendererImpl(
   private val eventListener: (AdaptiveImageRendererEvent) -> Unit,
   val timeProvider: () -> Milliseconds,
 ) : AdaptiveImageRenderer {
+
+  companion object {
+    private val LOG = logger<AdaptiveImageRendererImpl>()
+  }
+
   internal lateinit var rendererRef: RendererRef
 
   private data class ConfigSnapshot(val src: AdaptiveImageSource?, val width: Float, val height: Float, val scale: Float)
@@ -393,6 +421,7 @@ internal class AdaptiveImageRendererImpl(
   private var myIsError: Boolean = false
 
   override fun setRenderConfig(width: Float, height: Float, scale: Float) {
+    assertEDT()
     myRenderLogicalWidth = width
     myRenderLogicalHeight = height
     myScale = scale
@@ -400,6 +429,7 @@ internal class AdaptiveImageRendererImpl(
   }
 
   override fun setOrigin(origin: AdaptiveImageOrigin?) {
+    assertEDT()
     val oldOrigin = myOrigin
     if (origin == oldOrigin) return
     myOrigin = origin
@@ -415,6 +445,7 @@ internal class AdaptiveImageRendererImpl(
   }
 
   override fun getRenderedImage(): BufferedImage? {
+    assertEDT()
     val nonBlockingResult = tryRenderNonBlocking()
     if (nonBlockingResult.shouldReRender && myRenderingJob == null) {
       coroutineScope.launch(CoroutineName("AdaptiveImageRenderer $myOrigin"), start = CoroutineStart.UNDISPATCHED) {
@@ -435,6 +466,7 @@ internal class AdaptiveImageRendererImpl(
   }
 
   override fun invalidate(reload: Boolean) {
+    assertEDT()
     myAdaptiveImage = null
     myRasterizedImage = null
     if (reload) {
@@ -480,7 +512,7 @@ internal class AdaptiveImageRendererImpl(
         } catch (e: CancellationException) {
           throw e
         } catch (e: Throwable) {
-          thisLogger().info("Failed to load image", e)
+          LOG.warn("Failed to load image ${config.src}", e)
           myAdaptiveImage = null
           myRasterizedImage = null
           myIsError = true
@@ -536,7 +568,7 @@ internal class AdaptiveImageRendererImpl(
         } catch (e: CancellationException) {
           throw e
         } catch (e: Throwable) {
-          thisLogger().info("Failed to rasterize image", e)
+          LOG.warn("Failed to rasterize image ${config.src}", e)
           myAdaptiveImage = null
           myRasterizedImage = null
           myIsError = true
@@ -568,3 +600,11 @@ internal class AdaptiveImageRendererImpl(
     return ConfigSnapshot(source, myRenderLogicalWidth, myRenderLogicalHeight, myScale)
   }
 }
+
+private fun assertEDT() {
+  if (!ApplicationManager.getApplication().isUnitTestMode) {
+  ThreadingAssertions.assertEventDispatchThread()
+    }
+}
+
+private val LOG = fileLogger()
