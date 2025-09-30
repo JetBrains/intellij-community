@@ -35,6 +35,8 @@ object ChangesViewPanelActions {
     actions.add(CommonActionsManager.getInstance().createCollapseAllAction(clView.treeExpander, clView))
     actions.add(Separator.getInstance())
     actions.add(ActionManager.getInstance().getAction("ChangesView.SingleClickPreview"))
+    actions.add(ActionManager.getInstance().getAction("Vcs.GroupedDiffToolbarAction"))
+    actions.add(Separator.getInstance())
 
     return actions.filterNotNull()
   }
