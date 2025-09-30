@@ -3,16 +3,13 @@ package com.intellij.cce.java.callGraphs
 import com.intellij.cce.callGraphs.*
 import com.intellij.cce.core.Language
 import com.intellij.ide.actions.QualifiedNameProviderUtil
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
 
-
-private fun getNodeLocation(method: PsiMethod): CallGraphNodeLocation {
-  return CallGraphNodeLocation(
-    projectRootFilePath = method.containingFile.virtualFile.path,
-    textRange = method.textRange.startOffset..method.textRange.endOffset
-  )
-}
 
 private class NodeCollectorVisitor : JavaRecursiveElementVisitor() {
   val nodes: MutableList<CallGraphNode> = mutableListOf()
@@ -22,7 +19,7 @@ private class NodeCollectorVisitor : JavaRecursiveElementVisitor() {
   }
 
   private fun buildNodeFromMethod(method: PsiMethod, nodeId: String): CallGraphNode {
-    val nodeLocation = getNodeLocation(method)
+    val nodeLocation = method.getNodeLocation()
     val projectName = method.project.name
     val qualifiedName = QualifiedNameProviderUtil.getQualifiedName(method)!!
 
@@ -52,12 +49,12 @@ private class EdgeCollectorVisitor(
   }
 
   private fun findNodeId(method: PsiMethod): String {
-    val location = getNodeLocation(method)
+    val location = method.getNodeLocation()
     return locationToNode[location]!!.id
   }
 
   private fun findNodeIdOrNull(method: PsiMethod): String? {
-    val location = getNodeLocation(method)
+    val location = method.getNodeLocation()
     return locationToNode[location]?.id
   }
 
@@ -80,26 +77,13 @@ private class EdgeCollectorVisitor(
 class JavaCallGraphBuilder : CallGraphBuilder {
   override val language: Language = Language.JAVA
   override fun build(project: Project): CallGraph {
-    val psiFiles = collectPsiFiles(project)
-    println("number of psiFiles")
+    val psiFiles = collectPsiFiles(project, JavaFileType.INSTANCE)
     val nodes = collectNodes(psiFiles)
     val edges = collectEdges(nodes, psiFiles)
     return CallGraph(nodes, edges)
 
   }
 
-  private fun collectPsiFiles(project: Project): List<PsiFile> {
-    val psiManager = PsiManager.getInstance(project)
-    val result = mutableListOf<PsiFile>()
-    val index = com.intellij.openapi.roots.ProjectFileIndex.getInstance(project)
-    index.iterateContent { file ->
-      if (!file.isDirectory && file.fileType == com.intellij.ide.highlighter.JavaFileType.INSTANCE) {
-        psiManager.findFile(file)?.let { result.add(it) }
-      }
-      true
-    }
-    return result
-  }
 
   private fun collectNodes(psiFiles: List<PsiFile>): List<CallGraphNode> {
     val nodeCollectorVisitor = NodeCollectorVisitor()
