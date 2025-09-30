@@ -27,4 +27,5 @@ kotlin [branch = master]
    You should execute this task every time you update the code inside `kotlin` repository.
 
 **Pro tip**: `intellij` repository doesn't have to be put into `kotlin` repository. You can create `local.properties` next to the `model.properties` file
-(from `plugins/kotlin/util/project-model-updater/resources` folder) and add a path to `kotlin` repository as `kotlinCompilerRepoPath` property there.
+(from `plugins/kotlin/util/project-model-updater/resources` folder) and add a path to `kotlin` repository as `kotlinCompilerRepoPath` property there.  
+See [project-model-updater](../../util/project-model-updater/README.md) for more info.

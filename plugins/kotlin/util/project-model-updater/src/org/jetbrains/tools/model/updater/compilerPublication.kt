@@ -1,23 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
+import java.nio.file.Path
 import kotlin.io.path.absolute
 import kotlin.io.path.isDirectory
 import kotlin.system.exitProcess
 
 internal fun publishCompiler(preferences: GeneratorPreferences) {
-    val kotlinCompilerRepoPath = preferences.kotlinCompilerRepoPath
-    val root = KotlinTestsDependenciesUtil.projectRoot
-    val kotlinRepoRoot = root.resolve(kotlinCompilerRepoPath)
-        .also {
-            if (!it.isDirectory()) {
-                exitWithErrorMessage("Kotlin compiler repo path does not exist or is not a directory: $it")
-            }
-        }
-        .absolute()
-        .normalize()
+    val kotlinRepoRoot = preferences.kotlinCompilerRepositoryRoot
+    println("Kotlin compiler repository: $kotlinRepoRoot")
 
-    println("Kotlin compiler repo: $kotlinRepoRoot")
     val kotlinSnapshotPath = KotlinTestsDependenciesUtil.communityRoot
         .resolve("lib")
         .resolve("kotlin-snapshot")
@@ -45,6 +37,20 @@ internal fun publishCompiler(preferences: GeneratorPreferences) {
 
     println("Successfully published to $kotlinSnapshotPath")
 }
+
+/**
+ * The root of the Kotlin compiler repository.
+ */
+internal val GeneratorPreferences.kotlinCompilerRepositoryRoot: Path
+    get() = KotlinTestsDependenciesUtil.projectRoot
+        .resolve(kotlinCompilerRepoPath)
+        .also {
+            if (!it.isDirectory()) {
+                exitWithErrorMessage("Kotlin compiler repo path does not exist or is not a directory: $it")
+            }
+        }
+        .absolute()
+        .normalize()
 
 private val gradleWrapperExecutable: String
     get() {
