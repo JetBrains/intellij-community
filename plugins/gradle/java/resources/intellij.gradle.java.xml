@@ -176,5 +176,12 @@
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.AvoidRepositoriesInBuildGradleInspection"/>
 
+    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidDuplicateDependencies"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.avoid.duplicate.dependencies" groupKey="inspection.best.practises"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDuplicateDependenciesInspection"/>
+
   </extensions>
 </idea-plugin>
