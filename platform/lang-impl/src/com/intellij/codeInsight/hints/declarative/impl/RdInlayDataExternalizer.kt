@@ -14,6 +14,7 @@ import java.io.DataOutput
 
 @ApiStatus.Internal
 object RdInlayDataExternalizer : InlayDataExternalizer(RdPresentationTreeExternalizer) {
+  /** see [DeclarativeInlayHintsPass.applyInlayData] */
   const val RD_INLAY_DATA_SOURCE_ID: String = "rd.deserialized.inlay.data"
 
   override fun writeProviderClass(output: DataOutput, providerClass: Class<*>) {
@@ -51,6 +52,7 @@ private object RdPresentationTreeExternalizer : PresentationTreeExternalizer() {
   }
 
   override fun readInlayActionData(input: DataInput): InlayActionData {
+    // signals to the frontend that an inlay tree node is actionable
     return INLAY_ACTION_DATA_PLACEHOLDER
   }
 
