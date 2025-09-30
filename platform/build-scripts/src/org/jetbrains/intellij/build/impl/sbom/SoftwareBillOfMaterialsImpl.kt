@@ -944,10 +944,16 @@ class SoftwareBillOfMaterialsImpl(
   }
 
   private fun validate(modelObject: ModelObject) {
-    if (!STRICT_MODE) return
     val errors = modelObject.verify()
-    check(errors.none()) {
-      errors.joinToString(separator = "\n")
+    if (STRICT_MODE && errors.any()) {
+      throw Exception("Cannot validate $modelObject").apply {
+        errors.forEach { addSuppressed(Exception(it)) }
+      }
+    }
+    else {
+      errors.forEach {
+        context.messages.warning("Cannot validate $modelObject: $it")
+      }
     }
   }
 
