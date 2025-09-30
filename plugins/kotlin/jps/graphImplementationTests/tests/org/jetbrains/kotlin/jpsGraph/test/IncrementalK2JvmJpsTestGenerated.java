@@ -26,12 +26,10 @@ import java.util.regex.Pattern;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestRoot("jps/graphImplementationTests/testData/incremental")
 public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJpsTest {
-    static String kotlinCompilerVersion = "2.2.0";
-
     static void setUpTests() {
         // Use kotlinCompilerVersion to set version of Kotlin compiler
         // Do not set version directly here, as there is checks depending on it
-        File kotlincFolder = getKotlincFolder(kotlinCompilerVersion);
+        File kotlincFolder = getKotlincFolder();
         System.setProperty("jps.kotlin.home", kotlincFolder.getAbsolutePath());
 
         // enable graph implementation
@@ -41,14 +39,9 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         System.setProperty("kotlin.jps.dumb.mode", "true");
     }
 
-    static private File getKotlincFolder(String compilerVersion) {
-        if (compilerVersion == null) {
-            return KotlinPluginLayout.getKotlinc();
-        }
-
+    static private File getKotlincFolder() {
         // Use custom compiler for tests
         Path unpackedDistDir = TestKotlinArtifacts.getKotlinDistForIdeUnpackedForIncrementalCompilation();
-        assertTrue(unpackedDistDir.toString().endsWith(compilerVersion));
         return unpackedDistDir.toFile();
     }
 
@@ -61,6 +54,7 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
      */
     static private void checkIfUnmuteIsNeeded() {
         KotlinToolingVersion kotlinVersionWithFixes = KotlinToolingVersionKt.KotlinToolingVersion("2.3.0-dev-6974");
+        var kotlinCompilerVersion = KotlinPluginLayout.getStandaloneCompilerVersion().getKotlinVersion().toString();
         if (KotlinToolingVersionKt.KotlinToolingVersion(kotlinCompilerVersion).compareTo(kotlinVersionWithFixes) > 0) {
             throw new RuntimeException("Unmute this test because current " + kotlinCompilerVersion + " Kotlin version has updated AbstractIncrementalK2JvmJpsTest");
         } else {

@@ -69,7 +69,7 @@ object TestKotlinArtifacts {
 
     @JvmStatic
     val kotlinDistForIdeUnpackedForIncrementalCompilation: Path by lazy {
-        val artifact = getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-dist-for-ide-increment-compilation-2.2.0.jar")
+        val artifact = getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-dist-for-ide-increment-compilation.jar")
         val targetDirectory = KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.toPath().resolve(artifact.nameWithoutExtension)
         runBlocking(Dispatchers.IO) {
             extractFile(artifact, targetDirectory, communityRoot)
