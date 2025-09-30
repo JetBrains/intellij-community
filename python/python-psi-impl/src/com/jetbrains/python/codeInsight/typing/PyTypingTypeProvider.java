@@ -80,6 +80,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public static final String ANY = "typing.Any";
   public static final String NEW_TYPE = "typing.NewType";
   public static final String CALLABLE = "typing.Callable";
+  public static final String CALLABLE_EXT = "typing_extensions.Callable";
   public static final String MAPPING = "typing.Mapping";
   public static final String MAPPING_GET = "typing.Mapping.get";
   private static final String LIST = "typing.List";
@@ -182,7 +183,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   public static final ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
     // special forms
-    .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR, FINAL, LITERAL, ANNOTATED, REQUIRED, NOT_REQUIRED, READONLY)
+    .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, CALLABLE_EXT, TYPE, CLASS_VAR, FINAL, LITERAL, ANNOTATED, REQUIRED, NOT_REQUIRED, READONLY)
     // type aliases
     .add(UNION, OPTIONAL, LIST, DICT, DEFAULT_DICT, ORDERED_DICT, SET, FROZEN_SET, COUNTER, DEQUE, CHAIN_MAP)
     .add(PROTOCOL_EXT, FINAL_EXT, LITERAL_EXT, ANNOTATED_EXT, REQUIRED_EXT, NOT_REQUIRED_EXT, READONLY_EXT)
@@ -207,6 +208,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     .add(CONCATENATE_EXT)
     .add(TUPLE)
     .add(CALLABLE)
+    .add(CALLABLE_EXT)
     .add(TYPE)
     .add(PyKnownDecorator.TYPING_NO_TYPE_CHECK.getQualifiedName().toString())
     .add(PyKnownDecorator.TYPING_NO_TYPE_CHECK_EXT.getQualifiedName().toString())
@@ -260,7 +262,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     }
     // Check for the exact name in advance for performance reasons
     if ("Callable".equals(referenceExpression.getName())) {
-      if (resolvesToQualifiedNames(referenceExpression, context.myContext, CALLABLE)) {
+      if (resolvesToQualifiedNames(referenceExpression, context.myContext, CALLABLE, CALLABLE_EXT)) {
         return createTypingCallableType(referenceExpression);
       }
     }
@@ -462,7 +464,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         return Ref.create(createTypingProtocolType(target));
       }
       // Depends on typing.Callable defined as a target expression
-      if (CALLABLE.equals(targetQName)) {
+      if (CALLABLE.equals(targetQName) || CALLABLE_EXT.equals(targetQName)) {
         return Ref.create(createTypingCallableType(referenceTarget));
       }
 
@@ -1438,7 +1440,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   private static @Nullable PyType getCallableType(@NotNull PsiElement resolved, @NotNull Context context) {
     if (resolved instanceof PySubscriptionExpression subscriptionExpr) {
-      if (resolvesToQualifiedNames(subscriptionExpr.getOperand(), context.getTypeContext(), CALLABLE)) {
+      if (resolvesToQualifiedNames(subscriptionExpr.getOperand(), context.getTypeContext(), CALLABLE, CALLABLE_EXT)) {
         final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
         if (indexExpr instanceof PyTupleExpression tupleExpr) {
           final PyExpression[] elements = tupleExpr.getElements();
@@ -1465,7 +1467,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       }
     }
     else if (resolved instanceof PyTargetExpression targetExpression) {
-      if (resolvesToQualifiedNames(targetExpression, context.getTypeContext(), CALLABLE)) {
+      if (resolvesToQualifiedNames(targetExpression, context.getTypeContext(), CALLABLE, CALLABLE_EXT)) {
         return new PyCallableTypeImpl(null, null);
       }
     }
