@@ -85,6 +85,7 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
         holder: ProblemsHolder,
         isOnTheFly: Boolean
     ): PsiElementVisitor {
+        if (!isOnTheFly) return PsiElementVisitor.EMPTY_VISITOR // probably better done interactively
         return KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(holder)
     }
 
