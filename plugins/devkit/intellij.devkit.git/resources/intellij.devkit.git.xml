@@ -6,9 +6,8 @@
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <prePushHandler implementation="org.jetbrains.idea.devkit.commit.KotlinBuildToolsPrePushHandler"/>
-    <prePushHandler implementation="org.jetbrains.idea.devkit.commit.KotlinPluginPrePushHandler"/>
     <prePushHandler implementation="org.jetbrains.idea.devkit.commit.KotlinNotebookPluginPrePushHandler"/>
-    <prePushHandler implementation="org.jetbrains.idea.devkit.commit.IntelliJPlatformPrePushHandler"/>
+    <prePushHandler implementation="org.jetbrains.idea.devkit.commit.IntelliJMonorepoPrePushHandler"/>
     <prePushHandler implementation="org.jetbrains.idea.devkit.commit.AiAssistantPluginPrePushHandler"/>
   </extensions>
 </idea-plugin>

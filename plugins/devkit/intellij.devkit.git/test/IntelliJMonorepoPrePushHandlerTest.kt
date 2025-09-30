@@ -14,7 +14,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 
 @RunWith(Enclosed::class)
-class IntelliJPlatformPrePushHandlerTest {
+class IntelliJMonorepoPrePushHandlerTest {
 
   @RunWith(Parameterized::class)
   class FilesBelongToPlatform {
@@ -376,7 +376,7 @@ class IntelliJPlatformPrePushHandlerTest {
   }
 }
 
-private val prePushHandler = IntelliJPlatformPrePushHandler()
+private val prePushHandler = IntelliJMonorepoPrePushHandler()
 private val tempDir: String = System.getProperty("java.io.tmpdir")
 private const val COMMUNITY_PLATFORM = "community/platform/"
 private const val COMMUNITY = "community/"

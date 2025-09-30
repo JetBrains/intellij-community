@@ -20,9 +20,15 @@ import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.JPanel
 
-internal class IntelliJPlatformPrePushHandler : IssueIDPrePushHandler() {
-  override val paths: List<String> = listOf("/community/platform/", "remote-dev")
-  override val pathsToIgnore: List<String> = listOf()
+internal class IntelliJMonorepoPrePushHandler : IssueIDPrePushHandler() {
+  override val paths: List<String> = listOf(
+    "/community/platform/",
+    "remote-dev", // ij platform
+    "plugins/kotlin/" // kotlin plugin
+  )
+  override val pathsToIgnore: List<String> = super.pathsToIgnore.toMutableList()
+    .apply { add("/fleet/plugins/kotlin/") }
+    .apply { add("/plugins/kotlin/jupyter/") }
 
   override val commitMessageRegex = Regex("""(?:^|.*[^-A-Z0-9])[A-Z]+-\d+.*""", RegexOption.DOT_MATCHES_ALL)
   override val ignorePattern = Regex(
@@ -31,7 +37,7 @@ internal class IntelliJPlatformPrePushHandler : IssueIDPrePushHandler() {
   )
   override val validateCommitsOnlyFromCurrentUser: Boolean = true
 
-  override fun isAvailable(): Boolean = Registry.`is`("intellij.platform.commit.message.validation.enabled", true)
+  override fun isAvailable(): Boolean = Registry.`is`("intellij.monorepo.commit.message.validation.enabled", true)
   override fun getPresentableName(): @Nls String = DevKitGitBundle.message("push.commit.intellij.platform.handler.name")
 
   override fun handleCommitsValidationFailure(
