@@ -536,16 +536,6 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
           }
           return null;
         });
-    fixes(NEW_EXPRESSION_ARGUMENTS_TO_DEFAULT_CONSTRUCTOR_CALL, (error, sink) -> {
-      PsiConstructorCall constructorCall = error.psi();
-      PsiJavaCodeReferenceElement classReference =
-        constructorCall instanceof PsiNewExpression newExpression ? newExpression.getClassOrAnonymousClassReference() : null;
-      if (classReference != null) {
-        ConstructorParametersFixer.registerFixActions(constructorCall, sink);
-      }
-      QuickFixFactory.getInstance().createCreateConstructorFromUsageFixes(constructorCall).forEach(sink);
-      RemoveRedundantArgumentsFix.registerIntentions(requireNonNull(constructorCall.getArgumentList()), sink);
-    });
     fixes(NEW_EXPRESSION_UNRESOLVED_CONSTRUCTOR, (error, sink) -> {
       PsiConstructorCall constructorCall = error.psi();
       PsiExpressionList list = constructorCall.getArgumentList();

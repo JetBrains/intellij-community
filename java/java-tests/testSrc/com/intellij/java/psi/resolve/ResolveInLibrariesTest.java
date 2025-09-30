@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.resolve;
 
 import com.intellij.openapi.application.WriteAction;
@@ -207,6 +207,27 @@ public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     assertNull(StubTreeLoader.getInstance().readFromVFile(getProject(), vfile));
     assertFalse(StubTreeLoader.getInstance().canHaveStub(vfile));
     assertNotNull(file.getStub());
+  }
+
+  public void testLibraryClassWithoutConstructors() {
+    VirtualFile lib =
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/libResolve/classWithoutConstructors");
+
+    PsiTestUtil.addLibrary(getModule(), "lib", lib.getPath(), new String[] {"/test.jar!/"}, ArrayUtil.EMPTY_STRING_ARRAY);
+    myFixture.configureByText("p/Generous.java", """
+      package p;
+
+      import com.pack.HiddenConstructor;
+      import com.pack.ValueClass;
+      
+      class Generous {
+        static void main(){
+          HiddenConstructor h = new HiddenConstructor<error descr="Cannot resolve constructor 'HiddenConstructor()'">()</error>;
+          ValueClass v = new ValueClass<error descr="Cannot resolve constructor 'ValueClass()'">()</error>;
+        }
+      }
+      """);
+    myFixture.checkHighlighting();
   }
 
   public void testDirectoryWithClassFilesInsideProjectContent() {

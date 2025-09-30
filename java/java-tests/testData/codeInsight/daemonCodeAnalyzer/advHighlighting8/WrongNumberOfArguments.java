@@ -1,6 +1,9 @@
 import java.util.function.Consumer;
 
 class WrongNumberOfArguments {
+  WrongNumberOfArguments() {
+    super<error descr="Expected no arguments but found 1">(1)</error>;
+  }
 
   void fun1(String str, Consumer<String> onFinish) { }
   void getStr(String asd) { }

@@ -88,13 +88,6 @@ public final class RemoveRedundantArgumentsFix extends PsiUpdateModCommandAction
     }
   }
 
-  public static void registerIntentions(@NotNull PsiExpressionList arguments,
-                                        @NotNull Consumer<? super CommonIntentionAction> info) {
-    if (!arguments.isEmpty()) {
-      info.accept(new ForImplicitConstructorAction(arguments));
-    }
-  }
-
   private static void registerIntention(@NotNull PsiExpressionList arguments,
                                         @NotNull Consumer<? super CommonIntentionAction> info,
                                         @NotNull JavaResolveResult candidate) {
@@ -109,28 +102,5 @@ public final class RemoveRedundantArgumentsFix extends PsiUpdateModCommandAction
       return;
     }
     info.accept(new RemoveRedundantArgumentsFix(method, arguments, substitutor));
-  }
-
-  private static class ForImplicitConstructorAction extends PsiUpdateModCommandAction<PsiExpressionList> {
-    ForImplicitConstructorAction(@NotNull PsiExpressionList list) { 
-      super(list);
-    }
-
-    @Override
-    public @NotNull String getFamilyName() {
-      return QuickFixBundle.message("remove.redundant.arguments.family");
-    }
-
-    @Override
-    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpressionList args) {
-      return args.isEmpty() ? null : Presentation.of(getFamilyName());
-    }
-
-    @Override
-    protected void invoke(@NotNull ActionContext context, @NotNull PsiExpressionList args, @NotNull ModPsiUpdater updater) {
-      PsiExpression[] expressions = args.getExpressions();
-      if (expressions.length == 0) return;
-      args.deleteChildRange(expressions[0], expressions[expressions.length - 1]);
-    }
   }
 }

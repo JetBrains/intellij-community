@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
+import com.intellij.psi.impl.light.LightDefaultConstructor;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiGraphInferenceHelper;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -67,8 +68,13 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     }
 
     ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
-    for (PsiMethod constructor : aClass.getConstructors()) {
+    PsiMethod[] constructors = aClass.getConstructors();
+    for (PsiMethod constructor : constructors) {
       if (!processor.execute(constructor, state)) break;
+    }
+    if (constructors.length == 0) {
+      PsiMethod defaultConstructor = LightDefaultConstructor.create(aClass);
+      if (defaultConstructor != null) processor.execute(defaultConstructor, state);
     }
 
     return processor.getResult();

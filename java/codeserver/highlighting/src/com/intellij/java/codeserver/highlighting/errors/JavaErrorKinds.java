@@ -1126,10 +1126,6 @@ public final class JavaErrorKinds {
     parameterized(PsiReferenceParameterList.class, PsiDiamondType.DiamondInferenceResult.class, "new.expression.diamond.inference.failure")
       .withDescription(
         (list, inferenceResult) -> message("new.expression.diamond.inference.failure", inferenceResult.getErrorMessage()));
-  public static final Simple<PsiConstructorCall> NEW_EXPRESSION_ARGUMENTS_TO_DEFAULT_CONSTRUCTOR_CALL =
-    error(PsiConstructorCall.class, "new.expression.arguments.to.default.constructor.call")
-      .withAnchor(call -> call.getArgumentList())
-      .withNavigationShift(1);
   public static final Parameterized<PsiConstructorCall, UnresolvedConstructorContext> NEW_EXPRESSION_UNRESOLVED_CONSTRUCTOR =
     parameterized(PsiConstructorCall.class, UnresolvedConstructorContext.class, "new.expression.unresolved.constructor")
       .withAnchor(PsiCall::getArgumentList)

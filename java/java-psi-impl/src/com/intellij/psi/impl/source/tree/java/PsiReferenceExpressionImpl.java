@@ -306,7 +306,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression)getParent();
     MethodResolverProcessor processor = new MethodResolverProcessor(methodCall, containingFile);
     try {
-      PsiScopesUtil.setupAndRunProcessor(processor, methodCall, false);
+      PsiScopesUtil.setupAndRunProcessor(processor, methodCall, true);
     }
     catch (MethodProcessorSetupFailedException e) {
       return JavaResolveResult.EMPTY_ARRAY;

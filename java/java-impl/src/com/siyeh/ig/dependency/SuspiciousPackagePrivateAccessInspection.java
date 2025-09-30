@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.dependency;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -138,6 +138,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     }
 
     private void checkPackageLocalAccess(@NotNull UElement sourceNode, PsiJvmMember targetElement, final String accessType) {
+      if (targetElement instanceof SyntheticElement) return;
       PsiElement sourcePsi = sourceNode.getSourcePsi();
       if (sourcePsi != null) {
         SuspiciousPackagePrivateAccess suspiciousAccess = verifyPackagePrivateAccess(sourcePsi, targetElement);
@@ -164,6 +165,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     }
 
     private void checkOverridePackageLocal(@NotNull UMethod sourceNode, @NotNull PsiJvmMember targetElement) {
+      if (targetElement instanceof SyntheticElement) return;
       PsiElement sourcePsi = sourceNode.getSourcePsi();
       PsiElement nameIdentifier = UElementKt.getSourcePsiElement(sourceNode.getUastAnchor());
       if (sourcePsi != null && nameIdentifier != null && targetElement.hasModifier(JvmModifier.PACKAGE_LOCAL)) {

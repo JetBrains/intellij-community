@@ -212,16 +212,7 @@ class JavaConstructorUCallExpression(
     get() = null
 
   override fun resolve(): PsiMethod? = sourcePsi.resolveMethod()
-  override fun multiResolve(): Iterable<ResolveResult> {
-    val methodResolve = sourcePsi.resolveMethodGenerics()
-    if (methodResolve != JavaResolveResult.EMPTY) {
-      // if there is a non-default constructor
-      return listOf<ResolveResult>(methodResolve)
-    }
-    // unable to resolve constructor method - resolve to class
-    val classResolve = sourcePsi.classReference?.multiResolve(false) ?: emptyArray()
-    return classResolve.asIterable()
-  }
+  override fun multiResolve() = sourcePsi.multiResolve(false).asIterable()
 }
 
 @ApiStatus.Internal

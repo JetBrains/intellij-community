@@ -313,7 +313,9 @@ final class GenericsChecker {
       if (targetParametersNum == 0) {
         boolean shouldSuppress = PsiTreeUtil.getParentOfType(referenceParameterList, PsiCall.class) != null &&
                                  typeParameterListOwner instanceof PsiMethod psiMethod &&
-                                 (myVisitor.sdkVersion().isAtLeast(JavaSdkVersion.JDK_1_7) || hasSuperMethodsWithTypeParams(psiMethod));
+                                 (myVisitor.sdkVersion().isAtLeast(JavaSdkVersion.JDK_1_7) 
+                                  || hasSuperMethodsWithTypeParams(psiMethod)
+                                  || psiMethod.isDefaultConstructor());
         if (!shouldSuppress) {
           if (typeParameterListOwner instanceof PsiMethod psiMethod) {
             myVisitor.report(JavaErrorKinds.TYPE_PARAMETER_ABSENT_METHOD.create(referenceParameterList, psiMethod));
