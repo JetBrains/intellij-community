@@ -15,10 +15,7 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
-import com.intellij.psi.SyntaxTraverser;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -157,12 +154,15 @@ public class XmlTextExtractor extends TextExtractor {
       private void flushGroup(boolean unknownAfter) {
         int containerStart = container.getTextRange().getStartOffset();
         List<TextContent> components = new ArrayList<>(group.size());
-        for (int i = 0; i < group.size(); i++) {
+        int i = 0;
+        while (i < group.size() && group.get(i) instanceof PsiWhiteSpace) i++;
+        while (i < group.size()) {
           PsiElement e = group.get(i);
           TextContent component = extractRange(e.getTextRange().shiftLeft(containerStart));
           component = applyExclusions(i, component, markupIndices, ExclusionKind.markup);
           component = applyExclusions(i, component, unknownIndices, ExclusionKind.unknown);
           components.add(component);
+          i++;
         }
         unknownIndices.clear();
         markupIndices.clear();
