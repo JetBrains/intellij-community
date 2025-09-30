@@ -105,7 +105,7 @@ object TestKotlinArtifacts {
             val file = cooperativeRepoRoot.resolve(relativePath)
             if (!Files.exists(file)) {
                 error("File $file doesn't exist in cooperative repo $cooperativeRepoRoot. " +
-                              "Please run 'Kotlin Coop: Publish compiler-for-ide JARs' run configuration in IntelliJ.")
+                              "Please run 'Kotlin Coop: Publish Compiler JARs' run configuration in IntelliJ.")
             }
             file
         } else {
