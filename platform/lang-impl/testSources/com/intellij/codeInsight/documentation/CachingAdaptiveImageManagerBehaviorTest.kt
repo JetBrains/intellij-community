@@ -1107,7 +1107,7 @@ class CachingAdaptiveImageManagerBehaviorTest {
   private fun createAdaptiveImageManager(
     contentLoader: suspend (AdaptiveImageSource) -> DataWithMimeType = { getImageSourceData(it) },
     svgRasterizer: (SVGRasterizationConfig) -> RasterizedVectorImage = ::rasterizeSVGImage,
-    sourceResolver: (AdaptiveImageOrigin) -> AdaptiveImageSource? = ::adaptiveImageOriginToSource,
+    sourceResolver: suspend (AdaptiveImageOrigin) -> AdaptiveImageSource? = ::adaptiveImageOriginToSource,
     unloadListener: ((Unloadable<*, *>) -> Unit)? = null,
     cacheSize: Long = 1024L * 1024,
   ): CachingAdaptiveImageManager {

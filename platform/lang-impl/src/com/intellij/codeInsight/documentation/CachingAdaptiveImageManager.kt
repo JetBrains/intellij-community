@@ -134,7 +134,7 @@ fun getImageSourceData(src: AdaptiveImageSource): DataWithMimeType {
 }
 
 @ApiStatus.Internal
-fun adaptiveImageOriginToSource(origin: AdaptiveImageOrigin): AdaptiveImageSource? {
+suspend fun adaptiveImageOriginToSource(origin: AdaptiveImageOrigin): AdaptiveImageSource? {
   return when (origin) {
     is AdaptiveImageOrigin.DataUrl -> DataUrlAdaptiveImageSource(origin.dataUrl)
     is AdaptiveImageOrigin.Url -> {
@@ -142,7 +142,7 @@ fun adaptiveImageOriginToSource(origin: AdaptiveImageOrigin): AdaptiveImageSourc
       val protocolSeparator = vfsUrl.indexOf(URLUtil.SCHEME_SEPARATOR).takeIf { it >= 0 } ?: return null
       val protocol = vfsUrl.substring(0, protocolSeparator)
       when (protocol) {
-        URLUtil.JAR_PROTOCOL, URLUtil.FILE_PROTOCOL -> {
+        URLUtil.JAR_PROTOCOL, URLUtil.FILE_PROTOCOL -> withContext(Dispatchers.IO) {
           val virtualFile = VirtualFileManager.getInstance().findFileByUrl(vfsUrl)
           virtualFile?.let { VfsAdaptiveImageSource(it) }
         }
@@ -166,7 +166,7 @@ class CachingAdaptiveImageManager(
   private val rasterizationContext: CoroutineContext = EmptyCoroutineContext,
   private val contentLoader: suspend (AdaptiveImageSource) -> DataWithMimeType,
   private val svgRasterizer: (SVGRasterizationConfig) -> RasterizedVectorImage,
-  val sourceResolver: (AdaptiveImageOrigin) -> AdaptiveImageSource?,
+  val sourceResolver: suspend (AdaptiveImageOrigin) -> AdaptiveImageSource?,
   private val unloadListener: ((Unloadable<*, *>) -> Unit)? = null,
   private val timeProvider: () -> Milliseconds,
   private val maxSize: Long,
@@ -381,7 +381,7 @@ internal class AdaptiveImageRendererImpl(
       field = value
     }
   private var myRasterizedImage: UnloadableRasterizedImage? = null
-  private var mySrc: AdaptiveImageSource? = null
+  private var myOrigin: AdaptiveImageOrigin? = null
   private var myRenderLogicalWidth: Float = 0f
   private var myRenderLogicalHeight: Float = 0f
   private var myScale: Float = 0f
@@ -397,17 +397,16 @@ internal class AdaptiveImageRendererImpl(
   }
 
   override fun setOrigin(origin: AdaptiveImageOrigin?) {
-    val src = origin?.let { adaptiveImageManager.sourceResolver(it) }
-    val oldSrc = mySrc
-    if (src == oldSrc) return
-    mySrc = src
+    val oldOrigin = myOrigin
+    if (origin == oldOrigin) return
+    myOrigin = origin
     myAdaptiveImage = null
     myRasterizedImage = null
     myRenderingJob?.cancel()
     myRenderingJob = null
     myIsError = false
 
-    if (oldSrc != null) {
+    if (oldOrigin != null) {
       eventListener(AdaptiveImageRendererEvent.Unloaded())
     }
   }
@@ -415,7 +414,7 @@ internal class AdaptiveImageRendererImpl(
   override fun getRenderedImage(): BufferedImage? {
     val nonBlockingResult = tryRenderNonBlocking()
     if (nonBlockingResult.shouldReRender && myRenderingJob == null) {
-      coroutineScope.launch(CoroutineName("AdaptiveImageRenderer $mySrc"), start = CoroutineStart.UNDISPATCHED) {
+      coroutineScope.launch(CoroutineName("AdaptiveImageRenderer $myOrigin"), start = CoroutineStart.UNDISPATCHED) {
         myRenderingJob = coroutineContext.job
         try {
           rendererMain()
@@ -441,7 +440,7 @@ internal class AdaptiveImageRendererImpl(
   }
 
   private fun tryRenderNonBlocking(): NonBlockingRenderResult {
-    if (mySrc == null) return NonBlockingRenderResult(null, false)
+    if (myOrigin == null) return NonBlockingRenderResult(null, false)
 
     val adaptiveImage = myAdaptiveImage
     val renderedImage = myRasterizedImage
@@ -561,5 +560,8 @@ internal class AdaptiveImageRendererImpl(
     myIsError = false
   }
 
-  private fun createConfigSnapshot() = ConfigSnapshot(mySrc, myRenderLogicalWidth, myRenderLogicalHeight, myScale)
+  private suspend fun createConfigSnapshot(): ConfigSnapshot {
+    val source = myOrigin?.let { origin -> adaptiveImageManager.sourceResolver(origin) }
+    return ConfigSnapshot(source, myRenderLogicalWidth, myRenderLogicalHeight, myScale)
+  }
 }
