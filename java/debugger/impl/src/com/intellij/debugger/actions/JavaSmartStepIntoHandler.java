@@ -153,7 +153,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     final PsiElement initial = element;
     element = getTopmostParentAfterOffset(element, lineRange.getStartOffset());
 
-    final PsiElement statementParent = PsiTreeUtil.getParentOfType(initial, PsiStatement.class, false);
+    final PsiElement statementParent = PsiTreeUtil.getNonStrictParentOfType(initial, PsiStatement.class, PsiField.class);
     if (statementParent != null
         && (body == null || body.getTextRange().contains(statementParent.getTextRange()))
         // take only wider statements
@@ -215,7 +215,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
       @Override
       public void visitField(@NotNull PsiField field) {
-        if (checkTextRange(field, false)) {
+        if (checkTextRange(field, true)) {
           super.visitField(field);
         }
       }
@@ -281,8 +281,13 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       boolean checkTextRange(@NotNull PsiElement expression, boolean expand) {
         TextRange range = expression.getTextRange();
         if (lineRange.intersects(range)) {
-          if (expand && matchLine(expression)) {
-            textRange.set(textRange.get().union(range));
+          if (expand) {
+            // only expand to the bottom of the file
+            TextRange current = textRange.get();
+            int delta = range.getEndOffset() - current.getEndOffset();
+            if (delta > 0) {
+              textRange.set(current.grown(delta));
+            }
           }
           return true;
         }
