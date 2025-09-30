@@ -119,11 +119,11 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     }
 
     fun isRuleEnabled(ruleId: String, domain: TextStyleDomain): Boolean {
-      return ruleId in (if (domain == TextStyleDomain.Other) userEnabledRules else domainEnabledRules[domain] ?: emptySet())
+      return ruleId in if (domain == TextStyleDomain.Other) userEnabledRules else domainEnabledRules[domain] ?: emptySet()
     }
 
     fun isRuleDisabled(ruleId: String, domain: TextStyleDomain): Boolean {
-      return ruleId in (if (domain == TextStyleDomain.Other) userDisabledRules else domainDisabledRules[domain] ?: emptySet())
+      return ruleId in if (domain == TextStyleDomain.Other) userDisabledRules else domainDisabledRules[domain] ?: emptySet()
     }
 
     fun withAutoFix(autoFix: Boolean): State = copy(autoFix = autoFix)
@@ -285,6 +285,9 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     myModCount.incrementAndGet()
     val prevState = myState
     myState = migrateLTRuleIds(VersionedState.migrate(state))
+    if (myState.enabledLanguages.none { it.isEnglish() }) {
+      myState = myState.copy(enabledLanguages = myState.enabledLanguages + Lang.AMERICAN_ENGLISH)
+    }
 
     if (prevState != myState) {
       if (prevState.useOxfordSpelling != state.useOxfordSpelling) {
