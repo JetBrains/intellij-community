@@ -1,6 +1,6 @@
 {
   "nodes": [
-    "testMethod"
+    "subdir.TestClass#testMethod"
   ],
   "edges": []
 }

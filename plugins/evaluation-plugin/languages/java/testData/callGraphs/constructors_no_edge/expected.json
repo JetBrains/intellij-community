@@ -1,12 +1,12 @@
 {
   "nodes": [
-    "method",
-    "Inner"
+    "OnlyConstructor#method",
+    "OnlyConstructor.Inner#Inner"
   ],
   "edges": [
     [
-      "method",
-      "Inner"
+      "OnlyConstructor#method",
+      "OnlyConstructor.Inner#Inner"
     ]
   ]
 }

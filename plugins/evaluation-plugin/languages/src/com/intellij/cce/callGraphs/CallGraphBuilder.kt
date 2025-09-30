@@ -5,18 +5,20 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 
 interface CallGraphBuilder {
-  val language: Language
+  val supportedLanguages: List<Language>
 
   companion object {
     val EP_NAME: ExtensionPointName<CallGraphBuilder> = ExtensionPointName.create("com.intellij.cce.callGraphBuilder")
 
-    fun getForLanguage(language: Language): CallGraphBuilder {
-      val suitableGraphBuilders = EP_NAME.extensionList.filter { it.language == language }
+    fun getForLanguages(languages: List<Language>): CallGraphBuilder {
+      val suitableGraphBuilders = EP_NAME.extensionList.filter {
+        it.supportedLanguages.sorted() == languages.sorted()
+      }
       if (suitableGraphBuilders.isEmpty()) {
-        throw IllegalStateException("No suitable graph builder found for language $language")
+        throw IllegalStateException("No suitable graph builder found for languages $languages")
       }
       if (suitableGraphBuilders.size > 1) {
-        throw IllegalStateException("More than 1 suitable graph builder found for language $language")
+        throw IllegalStateException("More than 1 suitable graph builder found for languages $languages")
       }
       return suitableGraphBuilders[0]
     }
@@ -24,4 +26,6 @@ interface CallGraphBuilder {
 
   fun build(project: Project): CallGraph
 }
+
+
 

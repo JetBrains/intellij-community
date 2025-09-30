@@ -6,12 +6,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 
-fun collectPsiFiles(project: Project, fileType: FileType): List<PsiFile> {
+fun collectPsiFiles(project: Project, fileTypes: List<FileType>): List<PsiFile> {
   val psiManager = PsiManager.getInstance(project)
   val result = mutableListOf<PsiFile>()
   val index = com.intellij.openapi.roots.ProjectFileIndex.getInstance(project)
   index.iterateContent { file ->
-    if (!file.isDirectory && (file.fileType == fileType)) {
+    if (!file.isDirectory && (file.fileType in fileTypes)) {
       psiManager.findFile(file)?.let { result.add(it) }
     }
     true

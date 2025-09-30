@@ -1,12 +1,12 @@
 {
   "nodes": [
-    "methodOne",
-    "methodTwo"
+    "ClassOne#methodOne",
+    "ClassTwo#methodTwo"
   ],
   "edges": [
     [
-      "methodOne",
-      "methodTwo"
+      "ClassOne#methodOne",
+      "ClassTwo#methodTwo"
     ]
   ]
 }

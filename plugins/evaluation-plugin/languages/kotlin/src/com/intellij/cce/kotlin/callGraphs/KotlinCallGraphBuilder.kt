@@ -12,10 +12,10 @@ import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 
 
 class KotlinCallGraphBuilder : CallGraphBuilder {
-  override val language: Language = Language.KOTLIN
+  override val supportedLanguages: List<Language> = listOf(Language.KOTLIN)
 
   override fun build(project: Project): CallGraph {
-    val psiFiles = collectPsiFiles(project, KotlinFileType.INSTANCE)
+    val psiFiles = collectPsiFiles(project, listOf(KotlinFileType.INSTANCE))
     val nodes = collectNodes(psiFiles)
     val edges = collectEdges(nodes, psiFiles)
     return CallGraph(nodes, edges)

@@ -1,12 +1,12 @@
 {
   "nodes": [
-    "callerMethod",
-    "calleeMethod"
+    "TestClass#callerMethod",
+    "TestClass#calleeMethod"
   ],
   "edges": [
     [
-      "callerMethod",
-      "calleeMethod"
+      "TestClass#callerMethod",
+      "TestClass#calleeMethod"
     ]
   ]
 }

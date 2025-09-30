@@ -1,12 +1,12 @@
 {
   "nodes": [
-    "caller",
-    "baseMethod"
+    "Derived#caller",
+    "Base#baseMethod"
   ],
   "edges": [
     [
-      "caller",
-      "baseMethod"
+      "Derived#caller",
+      "Base#baseMethod"
     ]
   ]
 }

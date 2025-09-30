@@ -1,6 +1,6 @@
 {
   "nodes": [
-    "testMethod"
+    "TestClass#testMethod"
   ],
   "edges": []
 }

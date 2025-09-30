@@ -62,12 +62,17 @@ class JavaCallGraphBuilderTest(private val scenario: String) : BasePlatformTestC
 
     val callGraph = JavaCallGraphBuilder().build(myFixture.project)
 
-    val actualNodeIds = callGraph.nodes.map { it.id }.toSet()
-    val expectedNodeIds = expected.nodes.map { it.id }.toSet()
-    assertEquals("Mismatch in node IDs for scenario '$scenario'", expectedNodeIds, actualNodeIds)
+    val actualQualifiedNames = callGraph.nodes.map { it.qualifiedName }.toSet()
 
-    val actualEdges = callGraph.edges.map { it.callerId to it.calleeId }.toSet()
-    val expectedEdges = expected.edges.map { it.callerId to it.calleeId }.toSet()
-    assertEquals("Mismatch in edges for scenario '$scenario'", expectedEdges, actualEdges)
+    val expectedQualifiedNames = expected.nodes.map { it.qualifiedName }.toSet()
+
+    assertEquals("Mismatch in node qualifiedNames for scenario '$scenario'", expectedQualifiedNames, actualQualifiedNames)
+
+    val idToQualifiedName = callGraph.nodes.associate { it.id to it.qualifiedName }
+    val actualEdgesByQualifiedNames = callGraph.edges.map { idToQualifiedName.getValue(it.callerId) to idToQualifiedName.getValue(it.calleeId) }.toSet()
+
+    val expectedEdgesByQualifiedNames = expected.edges.map { it.callerId to it.calleeId }.toSet()
+
+    assertEquals("Mismatch in edges (by qualifiedName) for scenario '$scenario'", expectedEdgesByQualifiedNames, actualEdgesByQualifiedNames)
   }
 }
