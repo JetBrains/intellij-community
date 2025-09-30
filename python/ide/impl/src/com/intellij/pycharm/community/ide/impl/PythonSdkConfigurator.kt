@@ -20,8 +20,11 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectConfigurator
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.python.community.services.systemPython.SystemPython
+import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.*
@@ -34,6 +37,7 @@ import com.jetbrains.python.sdk.impl.PySdkBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 
 class PythonSdkConfigurator : DirectoryProjectConfigurator {
@@ -119,26 +123,33 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return@withContext
     }
 
-    findSystemWideSdk(module, existingSdks, context, project)
+    findSystemWideSdk(module, existingSdks, project)
   }
 
   private suspend fun findSystemWideSdk(
     module: Module,
     existingSdks: List<Sdk>,
-    context: UserDataHolderBase,
     project: Project,
-  ) = reportRawProgress { indicator ->
+  ): Unit = reportRawProgress { indicator ->
     indicator.text(PyBundle.message("looking.for.system.interpreter"))
     thisLogger().debug("Looking for a system-wide interpreter")
-    detectSystemWideSdks(module, existingSdks, context).firstOrNull()?.let {
-      thisLogger().debug { "Detected system-wide interpreter: $it" }
-      withContext(Dispatchers.EDT) {
-        SdkConfigurationUtil.createAndAddSDK(project, it.homePath!!, PythonSdkType.getInstance())?.apply {
-          thisLogger().debug { "Created system-wide interpreter: $this" }
-          setReadyToUseSdk(project, module, this)
+    val eelDescriptor = module.project.getEelDescriptor()
+    val homePaths = existingSdks
+      .mapNotNull { sdk -> sdk.homePath?.let { homePath -> Path.of(homePath) } }
+      .filter { it.getEelDescriptor() == eelDescriptor }
+    SystemPythonService().findSystemPythons(eelDescriptor.toEelApi())
+      .sortedWith(compareByDescending<SystemPython> { it.languageLevel }.thenBy { it.pythonBinary })
+      .sortedByDescending { it.pythonBinary }
+      .sortedByDescending { it.languageLevel }
+      .firstOrNull { it.pythonBinary !in homePaths }?.let {
+        thisLogger().debug { "Detected system-wide interpreter: $it" }
+        withContext(Dispatchers.EDT) {
+          SdkConfigurationUtil.createAndAddSDK(project, it.pythonBinary, PythonSdkType.getInstance())?.apply {
+            thisLogger().debug { "Created system-wide interpreter: $this" }
+            setReadyToUseSdk(project, module, this)
+          }
         }
       }
-    }
   }
 
   private suspend fun findPreviousUsedSdk(

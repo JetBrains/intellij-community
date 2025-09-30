@@ -345,8 +345,12 @@ public final class SdkConfigurationUtil {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Sdk createAndAddSDK(@NotNull Project project, @NotNull String path, @NotNull SdkType sdkType) {
-    return createAndAddSDK(path, sdkType, () -> ProjectJdkTable.getInstance(project));
+  public static @Nullable Sdk createAndAddSDK(@NotNull Project project, @NotNull Path path, @NotNull SdkType sdkType) {
+    VirtualFile sdkHome = WriteAction.compute(() -> {
+      return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path);
+    });
+    if (sdkHome == null) return null;
+    return createAndAddSDK(sdkHome, sdkType, () -> ProjectJdkTable.getInstance(project));
   }
 
   /**
@@ -364,14 +368,27 @@ public final class SdkConfigurationUtil {
     VirtualFile sdkHome = WriteAction.compute(() -> {
       return LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path));
     });
-    if (sdkHome != null) {
-      final Sdk newSdk = setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, sdkType, true, null, null, projectJdkTableSupplier);
-      if (newSdk != null) {
-        addSdk(newSdk, projectJdkTableSupplier);
-      }
-      return newSdk;
+    if (sdkHome == null) return null;
+    return createAndAddSDK(sdkHome, sdkType, projectJdkTableSupplier);
+  }
+
+  /**
+   * Tries to create an SDK identified by path; if successful, add the SDK to the global SDK table.
+   * <p>
+   * Must be called from the EDT (because it uses {@link WriteAction#compute} under the hood).
+   *
+   * @param sdkHome                 identifies the SDK
+   * @param projectJdkTableSupplier provides access to the ProjectJdkTable instance (either global or project-specific)
+   * @return newly created SDK, or null.
+   */
+  private static @Nullable Sdk createAndAddSDK(@NotNull VirtualFile sdkHome,
+                                               @NotNull SdkType sdkType,
+                                               @NotNull Supplier<? extends @NotNull ProjectJdkTable> projectJdkTableSupplier) {
+    final Sdk newSdk = setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, sdkType, true, null, null, projectJdkTableSupplier);
+    if (newSdk != null) {
+      addSdk(newSdk, projectJdkTableSupplier);
     }
-    return null;
+    return newSdk;
   }
 
   /// Tries to create an SDK identified by path; if successful, add the SDK to the global SDK table.
