@@ -87,4 +87,15 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
     ): PsiElementVisitor {
         return KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(holder)
     }
+
+    override fun isAvoidDuplicateDependenciesInspectionAvailable(file: PsiFile): Boolean {
+        return FileUtilRt.extensionEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
+    }
+
+    override fun getAvoidDuplicateDependenciesInspectionVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): PsiElementVisitor {
+        return KotlinAvoidDuplicateDependenciesInspectionVisitor(holder)
+    }
 }
