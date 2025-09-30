@@ -32,6 +32,7 @@ import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.*
+import org.jetbrains.plugins.terminal.block.reworked.TerminalPortForwardingUiProvider
 import org.jetbrains.plugins.terminal.block.reworked.session.FrontendTerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalPortForwardingId
@@ -299,7 +300,11 @@ internal class TerminalToolWindowTabsManagerImpl(
     terminal.connectToSession(session)
 
     if (portForwardingId != null) {
-      // todo: setup port forwarding
+      val disposable = terminal.coroutineScope.asDisposable()
+      val component = TerminalPortForwardingUiProvider.getInstance(project).createComponent(portForwardingId, disposable)
+      if (component != null) {
+        terminal.setTopComponent(component, disposable)
+      }
     }
   }
 
