@@ -10,56 +10,6 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 
-
-private fun supportsAnsi(): Boolean {
-  val os = System.getProperty("os.name").lowercase()
-  val term = System.getenv("TERM")?.lowercase().orEmpty()
-  return !os.contains("win") || term.contains("xterm") || term.contains("ansi")
-}
-
-fun <T> Iterable<T>.forEachIndexedWithProgress(
-  label: String = "Progress",
-  barWidth: Int = 40,
-  out: java.io.PrintStream = System.out,
-  action: (index: Int, item: T) -> Unit,
-) {
-  val data: List<T> = when (this) {
-    is Collection<T> -> this as? List<T> ?: this.toList()
-    else -> this.toList()
-  }
-  val total = data.size
-  if (total == 0) return
-
-  val ansi = supportsAnsi()
-  fun render(i: Int) {
-    val done = i + 1
-    val pct = (done * 100.0 / total).toInt()
-    if (ansi) {
-      out.print("\u001B[2K\r")
-    }
-    else {
-      out.print("\r")
-    }
-    val filled = (pct * barWidth / 100).coerceIn(0, barWidth)
-    val bar = buildString {
-      append('[')
-      repeat(filled) { append('=') }
-      if (filled < barWidth) append('>')
-      repeat((barWidth - filled - 1).coerceAtLeast(0)) { append(' ') }
-      append(']')
-    }
-    out.printf("%s %s %3d%% (%d/%d)", label, bar, pct, done, total)
-    out.flush()
-  }
-
-  data.forEachIndexed { index, item ->
-    action(index, item)
-    render(index)
-  }
-
-  out.println()
-}
-
 class KotlinCallGraphBuilder : CallGraphBuilder {
   override val supportedLanguages: List<Language> = listOf(Language.KOTLIN)
 
@@ -88,7 +38,7 @@ class KotlinCallGraphBuilder : CallGraphBuilder {
       }
     }
     println("Collecting nodes from ${psiFiles.size} files...")
-    psiFiles.forEachIndexedWithProgress { index, file ->
+    psiFiles.forEachIndexedWithProgress { _, file ->
       file.accept(visitor)
     }
     return nodes
@@ -120,7 +70,7 @@ class KotlinCallGraphBuilder : CallGraphBuilder {
       }
     }
 
-    psiFiles.forEachIndexedWithProgress { index, file ->
+    psiFiles.forEachIndexedWithProgress { _, file ->
       file.accept(visitor)
     }
     return edges
