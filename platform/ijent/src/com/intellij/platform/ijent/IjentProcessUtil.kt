@@ -22,7 +22,8 @@ fun getIjentGrpcArgv(
     // "gdbserver", "0.0.0.0:12345",  // https://sourceware.org/gdb/onlinedocs/gdb/Connecting.html
     remotePathToIjent,
     "grpc-server",
-    if (tcpConfig != null) "--port=${tcpConfig.remotePort}" else null,
+    if (tcpConfig != null) "--address=${tcpConfig.ijentBindAddress}" else null,
+    if (tcpConfig != null) "--port=${tcpConfig.ijentListeningPort}" else null,
     if (selfDeleteOnExit) "--self-delete-on-exit" else null,
   )
 }
