@@ -403,10 +403,9 @@ public final class TreeRuleChecker {
 
     List<SentenceWithContent> doc = new ArrayList<>();
     int offset = 0;
-    for (TextContent content : HighlightingUtil.getCheckedFileTexts(file.getViewProvider())) {
-      if (HighlightingUtil.isTooLargeText(List.of(content))) continue;
-
-      List<ParsedSentence> sentences = ParsedSentence.getSentences(content);
+    for (var entry : ParsedSentence.getAllCheckedSentences(file.getViewProvider()).entrySet()) {
+      TextContent content = entry.getKey();
+      List<ParsedSentence> sentences = entry.getValue();
       if (sentences.isEmpty()) continue;
 
       List<MatchingResult> matches = doCheck(content, sentences);

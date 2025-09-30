@@ -12,6 +12,7 @@ import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.NaturalTextDetector
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
 import java.util.*
 
@@ -85,6 +86,16 @@ class ParsedSentence private constructor(
     @JvmStatic
     fun getSentences(content: TextContent): List<ParsedSentence> {
       return runBlockingCancellable { getSentencesAsync(content) }
+    }
+
+    @JvmStatic
+    fun getAllCheckedSentences(viewProvider: FileViewProvider): Map<TextContent, List<ParsedSentence>> {
+      val contents = HighlightingUtil.getCheckedFileTexts(viewProvider).filterNot { HighlightingUtil.isTooLargeText(listOf(it)) }
+      if (contents.isEmpty()) return emptyMap()
+
+      return runBlockingCancellable {
+        contents.associateWith { getSentencesAsync(it) }
+      }
     }
 
     suspend fun getSentencesAsync(content: TextContent): List<ParsedSentence> {
