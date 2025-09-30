@@ -471,6 +471,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
                                      "Debug", "Debug", sessionName) {
           init {
             myEnvironment = executionEnvironment
+            myUi.getContentManager().addUiDataProvider { sink ->
+              sink[XDebugSessionData.DATA_KEY] = sessionData
+            }
           }
 
           val component get() = myUi.component

@@ -71,7 +71,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private Consumer<DataSink> myAdditionalKeysProvider;
 
   /**
-   * @deprecated Use {@link XDebugSessionTab#create(XDebugSessionProxy, Icon, ExecutionEnvironmentProxy, RunContentDescriptor, boolean, boolean)}
+   * @deprecated Use {@link XDebugSessionTab#create(XDebugSessionProxy, Icon, ExecutionEnvironmentProxy, RunContentDescriptor, boolean, boolean, String)}
    */
   @Deprecated
   public static @NotNull XDebugSessionTab create(@NotNull XDebugSessionImpl session,
