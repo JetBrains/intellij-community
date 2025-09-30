@@ -100,11 +100,15 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
           val (leftLine, rightLine) = lineToUnified(it)
           GHPRReviewUnifiedPosition(change, leftLine, rightLine)
         }.apply {
+          editor.putUserData(GHPRReviewDiffEditorModel.KEY, this)
           cs.launchNow {
             inlays
-              .mapStatefulToStateful { inlayModel -> GHPRInlayUtils.installInlayHoverOutline(this, editor, side, locationToLine, inlayModel) }
+              .mapStatefulToStateful { inlayModel ->
+                GHPRInlayUtils.installInlayHoverOutline(this, editor, side, locationToLine, inlayModel)
+              }
               .collect()
           }
+          GHPRInlayUtils.installInlaysDimming(cs, this@apply)
         }
       }
   }

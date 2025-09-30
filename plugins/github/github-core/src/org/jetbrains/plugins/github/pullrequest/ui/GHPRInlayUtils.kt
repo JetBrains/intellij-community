@@ -2,10 +2,12 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.flatMapLatestEach
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.Editor
@@ -19,13 +21,18 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.pullrequest.ui.comment.CommentedCodeFrameRenderer
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPREditorMappedComponentModel
-import java.awt.Cursor
-import java.awt.Point
+import java.awt.*
+import javax.swing.JComponent
+import javax.swing.JLayer
+import javax.swing.plaf.LayerUI
 import kotlin.math.abs
 
 internal object GHPRInlayUtils {
@@ -78,9 +85,7 @@ internal object GHPRInlayUtils {
       finally {
         if (frameResizer != null) {
           val editorEx = editor as EditorEx
-          val gutterGlassComp = IdeGlassPaneUtil.find(editorEx.gutterComponentEx)
           editorEx.setCustomCursor(frameResizer, null)
-          gutterGlassComp.setCursor(null, frameResizer)
           editor.removeEditorMouseListener(frameResizer)
           editor.removeEditorMouseMotionListener(frameResizer)
         }
@@ -105,7 +110,6 @@ internal object GHPRInlayUtils {
     catch (_: IllegalArgumentException) {
       Cursor.getDefaultCursor()
     }
-
 
     override fun mouseDragged(e: EditorMouseEvent) {
       if (!isDraggingFrame || edge == null || oldRange == null) return
@@ -201,6 +205,63 @@ internal object GHPRInlayUtils {
 
     private enum class Edge {
       TOP, BOTTOM
+    }
+  }
+
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  fun installInlaysDimming(cs: CoroutineScope, model: CodeReviewEditorInlaysModel<*>) {
+    cs.launchNow {
+      model.inlays
+        .map { it.filterIsInstance<GHPREditorMappedComponentModel>() }
+        .flatMapLatestEach { item ->
+          combine(item.shouldShowOutline, item.range) { shouldShowOutline, range ->
+            InlayState(item, shouldShowOutline, range)
+          }
+        }
+        .collectLatest { inlayStates ->
+          val rangesToDim = inlayStates
+            .filter { it.shouldShowOutline }
+            .mapNotNull {
+              val (_, lines) = it.range ?: return@mapNotNull null
+              lines.first..<lines.last
+            }
+
+          inlayStates.forEach { (vm, _, range) ->
+            val (_, lines) = range ?: return@forEach
+            val onLine = lines.last
+
+            vm.setDimmed(rangesToDim.any { dimRange -> dimRange.contains(onLine) })
+          }
+        }
+    }
+  }
+
+  private data class InlayState(
+    val inlay: GHPREditorMappedComponentModel,
+    val shouldShowOutline: Boolean,
+    val range: Pair<Side, IntRange>?,
+  )
+}
+
+internal class FadeLayerUI : LayerUI<JComponent>() {
+  private var alpha: Float = 1f
+
+  fun setAlpha(a: Float, jLayer: JLayer<JComponent>) {
+    alpha = a.coerceIn(0f, 1f)
+    jLayer.repaint()
+  }
+
+  override fun paint(g: Graphics, c: JComponent) {
+    val g2 = g.create() as Graphics2D
+    try {
+      val old = g2.composite
+      g2.composite = AlphaComposite.SrcOver.derive(alpha)
+      super.paint(g2, c)
+      g2.composite = old
+    }
+    finally {
+      g2.dispose()
     }
   }
 }

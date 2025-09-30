@@ -6,4 +6,6 @@ import kotlinx.coroutines.flow.StateFlow
 interface GHPRHoverableReviewComment {
   val shouldShowOutline: StateFlow<Boolean>
   fun showOutline(isHovered: Boolean)
+  val isDimmed: StateFlow<Boolean>
+  fun setDimmed(isDimmed: Boolean)
 }

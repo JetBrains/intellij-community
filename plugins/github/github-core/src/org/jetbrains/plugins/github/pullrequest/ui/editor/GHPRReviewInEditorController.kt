@@ -121,6 +121,7 @@ private suspend fun showReview(project: Project, settings: GithubPullRequestsPro
     launchNow {
       val userIcon = fileVm.iconProvider.getIcon(fileVm.currentUser.url, 16)
       editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GHPREditorMappedComponentModel::key)) {
+        GHPRInlayUtils.installInlaysDimming(this, model)
         launchNow {
           model.inlays
             .mapStatefulToStateful { inlayModel -> GHPRInlayUtils.installInlayHoverOutline(this, editor, Side.RIGHT, null, inlayModel) }

@@ -12,36 +12,25 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRHoverableReviewComment
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRHoverableReviewCommentImpl
 import javax.swing.Icon
 
 internal sealed interface GHPREditorMappedComponentModel : CodeReviewInlayModel, GHPRHoverableReviewComment {
   val range: StateFlow<Pair<Side, IntRange>?>
 
   abstract class Thread<VM : GHPRCompactReviewThreadViewModel>(val vm: VM)
-    : GHPREditorMappedComponentModel, Hideable {
+    : GHPREditorMappedComponentModel, Hideable,
+      GHPRHoverableReviewComment by GHPRHoverableReviewCommentImpl() {
     final override val key: Any = vm.id
     final override val hiddenState = MutableStateFlow(false)
     final override fun setHidden(hidden: Boolean) {
       hiddenState.value = hidden
     }
-
-    private val _isHovered: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    override val shouldShowOutline: StateFlow<Boolean> = _isHovered.asStateFlow()
-
-    override fun showOutline(isHovered: Boolean) {
-      _isHovered.value = isHovered
-    }
   }
 
-  abstract class NewComment<VM : GHPRReviewNewCommentEditorViewModel>(val vm: VM) : GHPREditorMappedComponentModel {
-    private val _isHovered: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    override val shouldShowOutline: StateFlow<Boolean> = _isHovered.asStateFlow()
-
-    override fun showOutline(isHovered: Boolean) {
-      _isHovered.value = isHovered
-    }
+  abstract class NewComment<VM : GHPRReviewNewCommentEditorViewModel>(val vm: VM)
+    : GHPREditorMappedComponentModel, GHPRHoverableReviewComment by GHPRHoverableReviewCommentImpl() {
     abstract fun setRange(range: Pair<Side, IntRange>?)
-
     private val _isHidden: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isHidden: StateFlow<Boolean> = _isHidden.asStateFlow()
     fun isHidden(hidden: Boolean) {
@@ -50,18 +39,11 @@ internal sealed interface GHPREditorMappedComponentModel : CodeReviewInlayModel,
   }
 
   abstract class AIComment(val vm: GHPRAICommentViewModel)
-    : GHPREditorMappedComponentModel, Hideable {
+    : GHPREditorMappedComponentModel, Hideable, GHPRHoverableReviewComment by GHPRHoverableReviewCommentImpl() {
     final override val key: Any = vm.key
     final override val hiddenState = MutableStateFlow(false)
     final override fun setHidden(hidden: Boolean) {
       hiddenState.value = hidden
-    }
-
-    private val _isHovered: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    override val shouldShowOutline: StateFlow<Boolean> = _isHovered.asStateFlow()
-
-    override fun showOutline(isHovered: Boolean) {
-      _isHovered.value = isHovered
     }
   }
 }
