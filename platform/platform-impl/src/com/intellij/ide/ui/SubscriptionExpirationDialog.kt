@@ -3,13 +3,18 @@ package com.intellij.ide.ui
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.Project
+import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.InlineBanner
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 
@@ -58,6 +63,17 @@ class SubscriptionExpirationDialog(project: Project?, private val settings: Subs
 
   init {
     initDialog(dialogTitle())
+  }
+
+  override fun configureHeader(header: JComponent) {
+    if (settings.errorMessage != null) {
+      val banner = InlineBanner(settings.errorMessage, EditorNotificationPanel.Status.Warning).showCloseButton(false)
+      val errorLabel = Wrapper(banner)
+      errorLabel.border = JBUI.Borders.empty(20, 20, 0, 20)
+
+      header.layout = BorderLayout()
+      header.add(errorLabel, BorderLayout.NORTH)
+    }
   }
 
   override fun createPanel(): JComponent {
@@ -140,4 +156,5 @@ data class SubscriptionExpirationSettings(
   val showExtendTrial: Boolean,
   val showContinueWithoutSubscription: Boolean,
   val showRemDevHint: Boolean,
+  @param:Nls val errorMessage: String?
 )

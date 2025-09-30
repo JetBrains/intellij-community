@@ -116,10 +116,11 @@ abstract class LicenseExpirationDialog(project: Project?, private val imagePath:
 
     val image = loadImage()!!
     val label = object : JBLabel() {
-      override fun paint(g: Graphics) {
+      override fun paintComponent(g: Graphics) {
         StartupUiUtil.drawImage(g, image, Rectangle(0, 0, width, height), this)
       }
     }
+    configureHeader(label)
 
     val contentWidth = panel.preferredSize.width
     val contentSize = Dimension(contentWidth, (contentWidth / 1.8).toInt())
@@ -129,6 +130,9 @@ abstract class LicenseExpirationDialog(project: Project?, private val imagePath:
     panel.add(label, BorderLayout.NORTH)
 
     return panel
+  }
+
+  protected open fun configureHeader(header: JComponent) {
   }
 
   protected open fun createAndConfigurePanel(): JComponent {
