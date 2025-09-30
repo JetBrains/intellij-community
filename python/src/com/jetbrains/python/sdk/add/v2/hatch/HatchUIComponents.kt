@@ -20,6 +20,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.components.ValidationType
 import com.intellij.ui.dsl.builder.components.validationTooltip
+import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
@@ -96,7 +97,7 @@ private class HatchEnvComboBoxListCellRenderer(val contentFlow: StateFlow<PyResu
   }
 }
 
-private fun <P: PathHolder> Panel.addEnvironmentComboBox(
+private fun <P : PathHolder> Panel.addEnvironmentComboBox(
   model: PythonAddInterpreterModel<P>,
   hatchEnvironmentProperty: ObservableMutableProperty<HatchVirtualEnvironment?>,
   validationRequestor: DialogValidationRequestor,
@@ -125,6 +126,9 @@ private fun <P: PathHolder> Panel.addEnvironmentComboBox(
         }
       }
       .align(Align.FILL)
+      .applyToComponent {
+        preferredSize = JBUI.size(preferredSize)
+      }
       .component
   }
 
@@ -142,7 +146,7 @@ private fun <P: PathHolder> Panel.addEnvironmentComboBox(
   return environmentComboBox
 }
 
-private fun <P: PathHolder> Panel.addExecutableSelector(
+private fun <P : PathHolder> Panel.addExecutableSelector(
   model: PythonMutableTargetAddInterpreterModel<P>,
   hatchExecutableProperty: ObservableMutableProperty<ValidatedPath.Executable<P>?>,
   validationRequestor: DialogValidationRequestor,
@@ -165,7 +169,7 @@ private fun <P: PathHolder> Panel.addExecutableSelector(
   return executablePath
 }
 
-internal data class HatchFormFields<P: PathHolder>(
+internal data class HatchFormFields<P : PathHolder>(
   val environmentComboBox: ComboBox<HatchVirtualEnvironment>,
   val basePythonComboBox: PythonInterpreterComboBox<P>?,
   val validatedPathField: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>,
@@ -193,7 +197,7 @@ internal data class HatchFormFields<P: PathHolder>(
   }
 }
 
-internal fun <P: PathHolder> Panel.buildHatchFormFields(
+internal fun <P : PathHolder> Panel.buildHatchFormFields(
   model: PythonMutableTargetAddInterpreterModel<P>,
   hatchEnvironmentProperty: ObservableMutableProperty<HatchVirtualEnvironment?>,
   hatchExecutableProperty: ObservableMutableProperty<ValidatedPath.Executable<P>?>,
@@ -209,7 +213,7 @@ internal fun <P: PathHolder> Panel.buildHatchFormFields(
     installHatchActionLink
   ) {
     val binaryToExec = model.fileSystem.getBinaryToExec(it)
-    ValidatedPath.Executable(it,binaryToExec.getToolVersion("hatch"))
+    ValidatedPath.Executable(it, binaryToExec.getToolVersion("hatch"))
   }
 
   val environmentComboBox = addEnvironmentComboBox(

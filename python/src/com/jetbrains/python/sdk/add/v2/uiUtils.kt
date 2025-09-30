@@ -257,7 +257,7 @@ internal fun <P : PathHolder> Panel.pythonInterpreterComboBox(
       cell(comboBox)
         .bindItem(selectedSdkProperty)
         .applyToComponent {
-          preferredHeight = JBUI.scale(30)
+          preferredSize = JBUI.size(preferredSize)
           isEditable = true
         }
         .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(selectedSdkProperty))
