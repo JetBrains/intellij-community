@@ -488,7 +488,8 @@ public final class ConfigImportHelper {
 
   public static final class ConfigDirsSearchResult {
     private final List<? extends Pair<Path, FileTime>> directories;
-    private final boolean mixedEditions;
+
+    public final boolean mixedEditions;
 
     private ConfigDirsSearchResult(List<? extends Pair<Path, FileTime>> directories, boolean mixedEditions) {
       this.directories = directories;
