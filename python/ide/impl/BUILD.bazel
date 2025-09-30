@@ -63,6 +63,8 @@ jvm_library(
     "//python/python-hatch:hatch",
     "@lib//:io-github-z4kn4fein-semver-jvm-provided",
     "//platform/non-modal-welcome-screen",
+    "//python/common",
+    "//platform/non-modal-welcome-screen/backend",
   ],
   runtime_deps = ["//python/python-features-trainer:featuresTrainer"],
   plugins = ["@lib//:compose-plugin"]
@@ -130,6 +132,8 @@ jvm_library(
     "@lib//:junit5",
     "@lib//:io-github-z4kn4fein-semver-jvm-provided",
     "//platform/non-modal-welcome-screen",
+    "//python/common",
+    "//platform/non-modal-welcome-screen/backend",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

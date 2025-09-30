@@ -2,6 +2,7 @@
   <!--Customization code for both Community and Pro PyCharms-->
   <dependencies>
     <plugin id="com.intellij.modules.python"/>
+    <module name="intellij.python.common"/>
     <module name="intellij.platform.whatsNew"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
     <module name="intellij.platform.ide.nonModalWelcomeScreen.backend"/>
