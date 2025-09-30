@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.todo.backend` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "backend_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.todo.backend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/todo",
@@ -28,9 +29,6 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/editor-ui-api:editor-ui",
   ],
-  runtime_deps = [
-    ":backend_resources",
-    "//platform/backend",
-  ]
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.platform.todo.backend` end

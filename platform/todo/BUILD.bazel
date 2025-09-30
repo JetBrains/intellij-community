@@ -36,6 +36,7 @@ jvm_library(
     "//platform/indexing-impl",
     "//platform/usageView-impl",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/kernel/shared:kernel",
     "//platform/projectModel-impl",
     "//platform/core-impl",
     "//platform/lang-api:lang",
