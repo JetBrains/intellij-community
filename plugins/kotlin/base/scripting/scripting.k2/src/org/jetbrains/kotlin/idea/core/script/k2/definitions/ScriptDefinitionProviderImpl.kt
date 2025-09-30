@@ -45,12 +45,11 @@ class ScriptDefinitionProviderImpl(val project: Project) : ScriptDefinitionProvi
             ScriptDefinitionProviderImpl::class.java,
             ScriptDefinitionsModificationTracker.getInstance(project)
         ) {
-            val settingsByDefinitionId =
-                ScriptDefinitionPersistentSettings.getInstance(project).getIndexedSettingsPerDefinition()
+            val settingsProvider = ScriptDefinitionPersistentSettings.getInstance(project)
 
             SCRIPT_DEFINITIONS_SOURCES.getExtensions(project).flatMap { it.definitions }
-                .filter { settingsByDefinitionId[it.definitionId]?.setting?.enabled != false }
-                .sortedBy { settingsByDefinitionId[it.definitionId]?.index ?: it.order }
+                .filter { settingsProvider.isScriptDefinitionEnabled(it) }
+                .sortedBy { settingsProvider.getScriptDefinitionOrder(it) }
                 .asSequence()
         }
 
