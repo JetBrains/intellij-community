@@ -301,6 +301,8 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
                   null
                 }
                 userComboBoxModel.selectedItem = userProviderHolder
+                updateUserAccountLogout(userProviderHolder)
+                updateUserComboBoxModel()
                 syncStatusChanged()
               }
               .onIsModified {
