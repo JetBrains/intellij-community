@@ -26,11 +26,7 @@ import java.util.function.Function
 
 @ApiStatus.Internal
 class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
-  override val name: String
-    get() = IdeBundle.message("searcheverywhere.all.elements.tab.name")
-
-  override val shortName: String
-    get() = name
+  override val name: String get() = NAME
 
   override val isIndexingDependent: Boolean get() = true
 
@@ -88,6 +84,8 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
   companion object {
     @ApiStatus.Internal
     const val ID: String = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
+    @ApiStatus.Internal
+    val NAME: String = IdeBundle.message("searcheverywhere.all.elements.tab.name")
   }
 }
 

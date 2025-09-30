@@ -23,8 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
-  override val name: String get() = IdeBundle.message("search.everywhere.group.name.symbols")
-  override val shortName: String get() = name
+  override val name: String get() = NAME
   override val id: String get() = ID
   override val isIndexingDependent: Boolean get() = true
 
@@ -73,5 +72,7 @@ class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
   companion object {
     @ApiStatus.Internal
     const val ID: String = "SymbolSearchEverywhereContributor"
+    @ApiStatus.Internal
+    val NAME: String = IdeBundle.message("search.everywhere.group.name.symbols")
   }
 }

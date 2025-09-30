@@ -23,8 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SeClassesTab(private val delegate: SeTabDelegate) : SeTab {
-  override val name: String get() = GotoClassPresentationUpdater.getTabTitlePluralized()
-  override val shortName: String get() = name
+  override val name: String get() = NAME
   override val id: String get() = ID
   override val isIndexingDependent: Boolean get() = true
 
@@ -73,5 +72,8 @@ class SeClassesTab(private val delegate: SeTabDelegate) : SeTab {
   companion object {
     @ApiStatus.Internal
     const val ID: String = "ClassSearchEverywhereContributor"
+
+    val NAME: String
+    @ApiStatus.Internal get() = GotoClassPresentationUpdater.getTabTitlePluralized()
   }
 }

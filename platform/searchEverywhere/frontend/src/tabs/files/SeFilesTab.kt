@@ -23,8 +23,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeFilesTab(private val delegate: SeTabDelegate) : SeTab {
-  override val name: String get() = IdeBundle.message("search.everywhere.group.name.files")
-  override val shortName: String get() = name
+  override val name: String get() = NAME
   override val id: String get() = ID
   override val isIndexingDependent: Boolean get() = true
 
@@ -74,5 +73,7 @@ class SeFilesTab(private val delegate: SeTabDelegate) : SeTab {
   companion object {
     @Internal
     const val ID: String = "FileSearchEverywhereContributor"
+    @Internal
+    val NAME: String = IdeBundle.message("search.everywhere.group.name.files")
   }
 }

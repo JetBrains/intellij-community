@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.Internal
 interface SeTab : Disposable {
   val name: @Nls String
-  val shortName: @Nls String
   val id: String
   val isIndexingDependent: Boolean get() = false
 

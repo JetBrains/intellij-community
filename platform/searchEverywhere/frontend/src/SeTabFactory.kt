@@ -13,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface SeTabFactory {
   val id: String
+
   suspend fun getTab(scope: CoroutineScope, project: Project?, session: SeSession, initEvent: AnActionEvent, registerShortcut: (AnAction) -> Unit): SeTab? = null
 
   companion object {

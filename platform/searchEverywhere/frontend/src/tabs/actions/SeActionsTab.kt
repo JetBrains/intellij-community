@@ -24,8 +24,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SeActionsTab(private val delegate: SeTabDelegate) : SeTab {
-  override val name: String get() = IdeBundle.message("search.everywhere.group.name.actions")
-  override val shortName: String get() = name
+  override val name: String get() = NAME
   override val id: String get() = ID
   private val filterEditor: SeFilterEditor = SeActionsFilterEditor()
 
@@ -71,6 +70,8 @@ class SeActionsTab(private val delegate: SeTabDelegate) : SeTab {
   companion object {
     @ApiStatus.Internal
     const val ID: String = "ActionSearchEverywhereContributor"
+    @ApiStatus.Internal
+    val NAME: String = IdeBundle.message("search.everywhere.group.name.actions")
   }
 }
 

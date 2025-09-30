@@ -20,8 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SeTextTab(private val delegate: SeTabDelegate, registerShortcut: (AnAction) -> Unit) : SeTab {
-  override val name: String get() = FindBundle.message("search.everywhere.group.name")
-  override val shortName: String get() = name
+  override val name: String get() = NAME
   override val id: String get() = ID
   private val filterEditorDisposable = Disposer.newDisposable()
   private val filterEditor: SuspendLazyProperty<SeTextFilterEditor> = initAsync(delegate.scope) {
@@ -77,5 +76,7 @@ class SeTextTab(private val delegate: SeTabDelegate, registerShortcut: (AnAction
   companion object {
     @ApiStatus.Internal
     const val ID: String = "TextSearchContributor"
+    @ApiStatus.Internal
+    val NAME: String = FindBundle.message("search.everywhere.group.name")
   }
 }
