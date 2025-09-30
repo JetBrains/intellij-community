@@ -27,6 +27,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.JBIterable;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import static com.intellij.task.impl.ProjectTaskManagerStatisticsCollector.*;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
@@ -351,7 +351,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     }
   }
 
-  private static @NotNull Supplier<List<String>> moduleOutputPathsProvider(@NotNull Module module) {
+  private static @NotNull Function0<List<String>> moduleOutputPathsProvider(@NotNull Module module) {
     return () -> ReadAction.compute(() -> {
       return JBIterable.of(OrderEnumerator.orderEntries(module).withoutSdk().withoutLibraries().getClassesRoots())
         .filterMap(file -> file.isDirectory() && !file.getFileSystem().isReadOnly() ? file.getPath() : null)

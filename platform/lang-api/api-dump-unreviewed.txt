@@ -4913,7 +4913,6 @@ c:com.intellij.task.ProjectTaskContext
 - <init>(java.lang.Object,com.intellij.execution.configurations.RunConfiguration):V
 - <init>(java.lang.Object,com.intellij.execution.configurations.RunConfiguration,Z):V
 - <init>(Z):V
-- getDirtyOutputPaths():java.util.Optional
 Fa:com.intellij.task.ProjectTaskManager
 - sf:EMPTY_TASKS_ARRAY:com.intellij.task.ProjectTask[]
 - <init>(com.intellij.openapi.project.Project):V

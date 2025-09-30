@@ -7,10 +7,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Unmodifiable
-import java.util.*
-import java.util.function.Supplier
-import java.util.stream.Stream
+import java.util.Optional
 import kotlin.concurrent.Volatile
 
 /**
@@ -24,23 +21,18 @@ open class ProjectTaskContext @JvmOverloads constructor(
    */
   val isAutoRun: Boolean = false
 ) : UserDataHolderBase() {
-  private val myGeneratedFiles: MultiMap<String?, String?> = MultiMap.createConcurrentSet<String?, String?>()
-  private val myDirtyOutputPaths: MutableList<Supplier<out Collection<String?>?>?> = ContainerUtil.createConcurrentList<Supplier<out Collection<String?>?>?>()
+
+  private val myGeneratedFiles: MultiMap<String, String> = MultiMap.createConcurrentSet()
+  private val myDirtyOutputPaths: MutableList<() -> Collection<String>> = ContainerUtil.createConcurrentList()
 
   constructor(autoRun: Boolean) : this(null, null, autoRun)
 
   @get:ApiStatus.Experimental
   @Volatile
   var isCollectionOfGeneratedFilesEnabled: Boolean = false
-    private set
-
-  @ApiStatus.Experimental
-  fun enableCollectionOfGeneratedFiles() {
-    this.isCollectionOfGeneratedFilesEnabled = true
-  }
 
   @get:ApiStatus.Experimental
-  val generatedFilesRoots: @Unmodifiable MutableCollection<String?>
+  val generatedFilesRoots: Collection<String>
     /**
      * Returns roots of the files generated during the task session.
      * Note, generated files collecting is disabled by default.
@@ -56,7 +48,7 @@ open class ProjectTaskContext @JvmOverloads constructor(
    * Or using the [ProjectTaskListener.started] event.
    */
   @ApiStatus.Experimental
-  fun getGeneratedFilesRelativePaths(root: String): @Unmodifiable MutableCollection<String?> {
+  fun getGeneratedFilesRelativePaths(root: String): Collection<String?> {
     return myGeneratedFiles.get(root)
   }
 
@@ -69,7 +61,7 @@ open class ProjectTaskContext @JvmOverloads constructor(
    */
   @ApiStatus.Experimental
   fun fileGenerated(root: String, relativePath: String) {
-    if (this.isCollectionOfGeneratedFilesEnabled) {
+    if (isCollectionOfGeneratedFilesEnabled) {
       myGeneratedFiles.putValue(root, relativePath)
     }
   }
@@ -87,14 +79,13 @@ open class ProjectTaskContext @JvmOverloads constructor(
    * The method should be used ONLY if the [ProjectTaskRunner] doesn't support [.fileGenerated] events.
    */
   @ApiStatus.Experimental
-  fun addDirtyOutputPathsProvider(outputPathsProvider: Supplier<out Collection<String?>?>) {
-    if (this.isCollectionOfGeneratedFilesEnabled) {
+  fun addDirtyOutputPathsProvider(outputPathsProvider: () -> Collection<String>) {
+    if (isCollectionOfGeneratedFilesEnabled) {
       myDirtyOutputPaths.add(outputPathsProvider)
     }
   }
 
-  @get:ApiStatus.OverrideOnly
-  open val dirtyOutputPaths: Optional<Stream<String?>>
+  val dirtyOutputPaths: Optional<List<String>>
     /**
      * Provides output paths that can be used for generated files by some tasks.
      * The intended usage is to scan those directories for modified files.
@@ -102,12 +93,11 @@ open class ProjectTaskContext @JvmOverloads constructor(
      * 
      * Can be useful for [ProjectTaskRunner]s which doesn't support [.fileGenerated] events.
      */
-    get() = if (myDirtyOutputPaths.isEmpty()) Optional.empty<Stream<String?>>()
-    else Optional.of(
-      myDirtyOutputPaths.stream()
-        .map { supplier -> supplier?.get() }
-        .flatMap<String?> { obj -> obj?.stream() }
-        .distinct()
+    get() = if (myDirtyOutputPaths.isEmpty()) Optional.empty<List<String>>()
+    else Optional.of(myDirtyOutputPaths
+                       .map { supplier -> supplier() }
+                       .flatten()
+                       .distinct()
     )
 
   fun <T> withUserData(key: Key<T>, value: T?): ProjectTaskContext {

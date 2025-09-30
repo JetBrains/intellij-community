@@ -724,8 +724,7 @@ com.intellij.refactoring.RenameRefactoring
 - *a:respectEnabledAutomaticRenames():V
 c:com.intellij.task.ProjectTaskContext
 - com.intellij.openapi.util.UserDataHolderBase
-- *f:addDirtyOutputPathsProvider(java.util.function.Supplier):V
-- *f:enableCollectionOfGeneratedFiles():V
+- *f:addDirtyOutputPathsProvider(kotlin.jvm.functions.Function0):V
 - *f:fileGenerated(java.lang.String,java.lang.String):V
 - *f:getGeneratedFilesRelativePaths(java.lang.String):java.util.Collection
 - *f:getGeneratedFilesRoots():java.util.Collection
