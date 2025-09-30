@@ -934,6 +934,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/IntroduceDestructuringDeclarationAndCreateBlock.kt");
             }
 
+            @TestMetadata("IntroduceInsideClassAllOccurrencesLiteral.kt")
+            public void testIntroduceInsideClassAllOccurrencesLiteral() throws Exception {
+                runTest("testData/refactoring/introduceVariable/IntroduceInsideClassAllOccurrencesLiteral.kt");
+            }
+
             @TestMetadata("IntroduceLambdaAndCreateBlock.kt")
             public void testIntroduceLambdaAndCreateBlock() throws Exception {
                 runTest("testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock.kt");
@@ -972,11 +977,6 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("KTIJ-14455.kt")
             public void testKTIJ_14455() throws Exception {
                 runTest("testData/refactoring/introduceVariable/KTIJ-14455.kt");
-            }
-
-            @TestMetadata("KTIJ-9043.kt")
-            public void testKTIJ_9043() throws Exception {
-                runTest("testData/refactoring/introduceVariable/KTIJ-9043.kt");
             }
 
             @TestMetadata("kt10808.kt")

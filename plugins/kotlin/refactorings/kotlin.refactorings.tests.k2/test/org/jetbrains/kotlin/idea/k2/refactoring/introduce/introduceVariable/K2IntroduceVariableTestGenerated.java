@@ -932,6 +932,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceDestructuringDeclarationAndCreateBlock.kt");
         }
 
+        @TestMetadata("IntroduceInsideClassAllOccurrencesLiteral.kt")
+        public void testIntroduceInsideClassAllOccurrencesLiteral() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceInsideClassAllOccurrencesLiteral.kt");
+        }
+
         @TestMetadata("IntroduceLambdaAndCreateBlock.kt")
         public void testIntroduceLambdaAndCreateBlock() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock.kt");
@@ -970,11 +975,6 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
         @TestMetadata("KTIJ-14455.kt")
         public void testKTIJ_14455() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/KTIJ-14455.kt");
-        }
-
-        @TestMetadata("KTIJ-9043.kt")
-        public void testKTIJ_9043() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/KTIJ-9043.kt");
         }
 
         @TestMetadata("kt10808.kt")
