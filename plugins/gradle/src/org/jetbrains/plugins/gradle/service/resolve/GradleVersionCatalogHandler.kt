@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -9,9 +9,6 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 
-/**
- * Allows to handle gradle version catalogs
- */
 @ApiStatus.Internal
 interface GradleVersionCatalogHandler {
   @Deprecated("Doesn't work for included builds of a composite build", ReplaceWith("getVersionCatalogFiles(module)"))
@@ -79,4 +76,4 @@ fun getAccessorsForAllCatalogs(context: PsiElement) : Map<String, PsiClass> {
   return container
 }
 
-private val EP_NAME : ExtensionPointName<GradleVersionCatalogHandler> = ExtensionPointName.create("org.jetbrains.plugins.gradle.externallyHandledExtensions")
+private val EP_NAME : ExtensionPointName<GradleVersionCatalogHandler> = ExtensionPointName.Companion.create("org.jetbrains.plugins.gradle.externallyHandledExtensions")

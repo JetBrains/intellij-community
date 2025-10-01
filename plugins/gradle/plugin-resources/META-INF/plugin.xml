@@ -56,6 +56,9 @@
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.autoReloadSettingsCollector"
                     interface="org.jetbrains.plugins.gradle.service.project.GradleAutoReloadSettingsCollector"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.externallyHandledExtensions"
+                    interface="org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogHandler"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">

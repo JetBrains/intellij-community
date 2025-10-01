@@ -61,5 +61,6 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.trove" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
   </component>
 </module>
