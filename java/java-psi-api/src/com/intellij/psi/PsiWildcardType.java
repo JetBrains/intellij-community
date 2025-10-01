@@ -74,13 +74,11 @@ public final class PsiWildcardType extends PsiType.Stub implements JvmWildcardTy
 
   @Override
   public @NotNull PsiWildcardType withNullability(@NotNull TypeNullability nullability) {
-    if (nullability == getNullability()) return this;
     return new PsiWildcardType(myManager, myIsExtending, myBound, getAnnotationProvider(), nullability);
   }
 
   @Override
   public @NotNull PsiType annotate(@NotNull TypeAnnotationProvider provider) {
-    if (getAnnotationProvider() == provider) return this;
     return new PsiWildcardType(myManager, myIsExtending, myBound, provider);
   }
 

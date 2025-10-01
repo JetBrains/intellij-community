@@ -34,12 +34,6 @@ interface ContextNullabilityInfo {
     public @NotNull ContextNullabilityInfo filtering(@NotNull Predicate<@NotNull PsiElement> contextFilter) {
       return this;
     }
-
-    @Override
-    public @NotNull ContextNullabilityInfo withNullabilityInContext(@NotNull Predicate<@NotNull PsiElement> contextFilter,
-                                                                    @NotNull Nullability nullability) {
-      return this;
-    }
   };
 
   /**
@@ -73,15 +67,6 @@ interface ContextNullabilityInfo {
    */
   default @NotNull ContextNullabilityInfo filtering(@NotNull Predicate<@NotNull PsiElement> contextFilter) {
     return context -> contextFilter.test(context) ? forContext(context) : null;
-  }
-  
-  default @NotNull ContextNullabilityInfo withNullabilityInContext(@NotNull Predicate<@NotNull PsiElement> contextFilter, 
-                                                                   @NotNull Nullability nullability) {
-    return context -> {
-      NullabilityAnnotationInfo info = forContext(context);
-      if (info == null) return null;
-      return contextFilter.test(context) ? new NullabilityAnnotationInfo(info.getAnnotation(), nullability, info.isContainer()) : info;
-    };
   }
 
   /**

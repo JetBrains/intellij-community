@@ -29,9 +29,6 @@ public class JSpecifyFilteredAnnotationTest extends JSpecifyAnnotationTest {
     new SkipIndividuallyFilter( //each case has its own reason (line number starts from 0)
       Set.of(
         new Pair<>("CastWildcardToTypeVariable.java", 21),  // see: IDEA-377686
-        new Pair<>("CastOfCaptureOfUnboundedWildcardForNotNullMarkedObjectBoundedTypeParameter.java", 27),  // see: jspecify issue #771
-        new Pair<>("NotNullMarkedTypeVariableBound.java", 51),  // see: jspecify issue #771
-        new Pair<>("NotNullMarkedTypeVariableBound.java", 56),  // see: jspecify issue #771
 
         new Pair<>("ContravariantReturns.java", 32),  // see: IDEA-377687
         new Pair<>("ContravariantReturns.java", 36),  // see: IDEA-377687
@@ -56,6 +53,8 @@ public class JSpecifyFilteredAnnotationTest extends JSpecifyAnnotationTest {
         new Pair<>("TypeVariableUnionNullToSelf.java", 103), // see: IDEA-377691
         new Pair<>("TypeVariableUnionNullToSelf.java", 118), // see: IDEA-377691
         new Pair<>("TypeVariableToParent.java", 94), // see: IDEA-377691
+
+        new Pair<>("NullUnmarkedUndoesNullMarkedForWildcards.java", 23), // see: IDEA-377693
 
         new Pair<>("SuperObject.java", 31),  // see: IDEA-377694
         new Pair<>("SuperTypeVariable.java", 28),  // see: IDEA-377694
