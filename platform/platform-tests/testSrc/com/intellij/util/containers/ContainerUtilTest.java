@@ -364,14 +364,14 @@ public class ContainerUtilTest extends TestCase {
       range(6, 6)
     ), target);
     target = mergeSegmentLists(target, Arrays.asList(
-      range(-1, -1),
+      range(-2, -3),
       range(-1, -2),
-      range(-2, -3)
+      range(-1, -1)
     ));
     assertEquals(Arrays.asList(
-      range(-1, -1),
-      range(-1, -2),
       range(-2, -3),
+      range(-1, -2),
+      range(-1, -1),
       range(0, 0),
       range(1, 1),
       range(2, 2),
@@ -396,6 +396,14 @@ public class ContainerUtilTest extends TestCase {
     assertEquals(Arrays.asList(0, 4), m);
     m = ContainerUtil.mergeSortedLists(list2, list1, Comparator.naturalOrder(), true);
     assertEquals(Arrays.asList(0, 4), m);
+  }
+  public void testWhenMergeSortedArraysButTheyAreActuallyUnsortedTheExceptionMustBeThrown() {
+    List<Integer> list1 = Arrays.asList(5, 4);
+    List<Integer> list2 = Arrays.asList(4, 5);
+    Assert.assertThrows(IllegalArgumentException.class, ()->ContainerUtil.mergeSortedLists(list1, list2, Comparator.naturalOrder(), true));
+    Assert.assertThrows(IllegalArgumentException.class, ()->ContainerUtil.mergeSortedLists(list2, list1, Comparator.naturalOrder(), true));
+    Assert.assertThrows(IllegalArgumentException.class, ()->ContainerUtil.mergeSortedLists(list1, List.of(), Comparator.naturalOrder(), true));
+    Assert.assertThrows(IllegalArgumentException.class, ()->ContainerUtil.mergeSortedLists(List.of(), list1, Comparator.naturalOrder(), true));
   }
 
   public void testMergeSortedArrays2() {

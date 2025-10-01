@@ -670,16 +670,22 @@ public final class ContainerUtil {
     while (index1 < list1.size() || index2 < list2.size()) {
       T e;
       if (index1 >= list1.size()) {
-        e = list2.get(index2++);
+        e = list2.get(index2);
+        checkElementsAreSorted(list2, comparator, index2, e);
         processor.consume(e, MergeResult.COPIED_FROM_LIST2);
+        index2++;
       }
       else if (index2 >= list2.size()) {
-        e = list1.get(index1++);
+        e = list1.get(index1);
+        checkElementsAreSorted(list1, comparator, index1, e);
         processor.consume(e, MergeResult.COPIED_FROM_LIST1);
+        index1++;
       }
       else {
         T element1 = list1.get(index1);
         T element2 = list2.get(index2);
+        checkElementsAreSorted(list1, comparator, index1, element1);
+        checkElementsAreSorted(list2, comparator, index2, element2);
         int c = comparator.compare(element1, element2);
         if (c == 0) {
           index1++;
@@ -705,6 +711,13 @@ public final class ContainerUtil {
           processor.consume(e, MergeResult.COPIED_FROM_LIST2);
         }
       }
+    }
+  }
+
+  private static <T> void checkElementsAreSorted(@NotNull List<? extends T> list, @NotNull Comparator<? super T> comparator, int index, T element) {
+    if (index > 0 && comparator.compare(list.get(index - 1), element) > 0) {
+      throw new IllegalArgumentException("List is not sorted according to the comparator: list[" + (index - 1) + "]=" +
+                                         list.get(index - 1) + " > list[" + index + "]=" + element + "; all results are invalid. list=" + list);
     }
   }
 
@@ -1545,8 +1558,40 @@ public final class ContainerUtil {
     };
   }
 
+  private static class SubList<T> extends AbstractList<T> implements RandomAccess {
+    private final int myFinalSize;
+    @NotNull @Unmodifiable List<? extends T> @NotNull [] lists;
+
+    private SubList(@NotNull @Unmodifiable List<? extends T> @NotNull [] lists, int totalSize) {
+      this.lists = lists;
+      assert lists.length > 1;
+      myFinalSize = totalSize;
+    }
+    @Override
+    public T get(int index) {
+      if (index >= 0 && index < myFinalSize) {
+        int from = 0;
+        for (List<? extends T> each : lists) {
+          if (from <= index && index < from + each.size()) {
+            return each.get(index - from);
+          }
+          from += each.size();
+        }
+        if (from != myFinalSize) {
+          throw new ConcurrentModificationException("The list has changed. Its size was " + myFinalSize + "; now it's " + from);
+        }
+      }
+      throw new IndexOutOfBoundsException("index: " + index + "; size: " + size());
+    }
+    @Override
+    public int size() {
+      return myFinalSize;
+    }
+  }
+
   /**
-   * @return read-only list consisting of the lists added together
+   * @return read-only list consisting of the lists added together.
+   * It's assumed the {@code lists} are all {@link RandomAccess} and not modified after this method called, otherwise the result is undefined.
    */
   @SafeVarargs
   @Contract(pure = true)
@@ -1561,29 +1606,7 @@ public final class ContainerUtil {
     }
     if (size == 0) return emptyList();
     int finalSize = size;
-    return new AbstractList<T>() {
-      @Override
-      public T get(int index) {
-        if (index >= 0 && index < finalSize) {
-          int from = 0;
-          for (List<? extends T> each : lists) {
-            if (from <= index && index < from + each.size()) {
-              return each.get(index - from);
-            }
-            from += each.size();
-          }
-          if (from != finalSize) {
-            throw new ConcurrentModificationException("The list has changed. Its size was " + finalSize + "; now it's " + from);
-          }
-        }
-        throw new IndexOutOfBoundsException("index: " + index + "; size: " + size());
-      }
-
-      @Override
-      public int size() {
-        return finalSize;
-      }
-    };
+    return new SubList<>(lists, finalSize);
   }
 
   /**
