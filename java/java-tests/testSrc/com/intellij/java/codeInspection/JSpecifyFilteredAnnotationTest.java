@@ -28,8 +28,6 @@ public class JSpecifyFilteredAnnotationTest extends JSpecifyAnnotationTest {
     new ReturnSynchronizedWithUnspecifiedFilter(), // it looks like it is useless because @Unspecified is not supported
     new SkipIndividuallyFilter( //each case has its own reason (line number starts from 0)
       Set.of(
-        new Pair<>("CastWildcardToTypeVariable.java", 21),  // see: IDEA-377686
-
         new Pair<>("ContravariantReturns.java", 32),  // see: IDEA-377687
         new Pair<>("ContravariantReturns.java", 36),  // see: IDEA-377687
         new Pair<>("ExtendsTypeVariableImplementedForNullableTypeArgument.java",
