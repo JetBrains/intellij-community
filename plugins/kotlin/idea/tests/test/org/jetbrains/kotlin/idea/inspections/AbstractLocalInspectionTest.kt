@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.AFTER_ERROR_DIRE
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.configureRegistryAndRun
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
@@ -108,28 +109,30 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         val fileText = FileUtil.loadFile(mainFile, true)
         assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
 
-        withCustomCompilerOptions(fileText, project, module) {
-            val minJavaVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MIN_JAVA_VERSION: ")?.toInt()
-            if (minJavaVersion != null && !currentJavaVersion().isAtLeast(minJavaVersion)) {
-                return@withCustomCompilerOptions
+        configureRegistryAndRun(project, fileText) {
+            withCustomCompilerOptions(fileText, project, module) {
+                val minJavaVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MIN_JAVA_VERSION: ")?.toInt()
+                if (minJavaVersion != null && !currentJavaVersion().isAtLeast(minJavaVersion)) {
+                    return@withCustomCompilerOptions
+                }
+
+
+                val extraFileNames = findExtraFilesForTest(mainFile)
+
+                myFixture.configureByFiles(*(listOf(mainFile.name) + extraFileNames).toTypedArray()).first()
+
+                registerDirectiveBasedChooserOptionInterceptor(fileText, myFixture.testRootDisposable)
+
+                val ktFile = myFixture.file as KtFile
+                if (ktFile.isScript()) {
+                    ScriptConfigurationManager.updateScriptDependenciesSynchronously(ktFile)
+                }
+                checkForUnexpectedErrors(mainFile, ktFile, fileText, beforeCheck = true)
+
+                doTestFor(mainFile, inspection, fileText)
+
+                PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
             }
-
-
-            val extraFileNames = findExtraFilesForTest(mainFile)
-
-            myFixture.configureByFiles(*(listOf(mainFile.name) + extraFileNames).toTypedArray()).first()
-
-            registerDirectiveBasedChooserOptionInterceptor(fileText, myFixture.testRootDisposable)
-
-            val ktFile = myFixture.file as KtFile
-            if (ktFile.isScript()) {
-                ScriptConfigurationManager.updateScriptDependenciesSynchronously(ktFile)
-            }
-            checkForUnexpectedErrors(mainFile, ktFile, fileText, beforeCheck = true)
-
-            doTestFor(mainFile, inspection, fileText)
-
-            PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
         }
     }
 
