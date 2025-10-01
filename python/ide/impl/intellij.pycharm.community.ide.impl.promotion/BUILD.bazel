@@ -27,6 +27,8 @@ jvm_library(
     "//libraries/http-client",
     "//platform/core-ui",
     "//python/ide/customization.shared",
+    "//platform/platform-impl/update-checker",
+    "//platform/util/jdom",
   ]
 )
 ### auto-generated section `build intellij.pycharm.community.ide.impl.promotion` end

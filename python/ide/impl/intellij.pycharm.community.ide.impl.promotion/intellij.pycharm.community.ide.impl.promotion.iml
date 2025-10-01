@@ -21,5 +21,7 @@
     <orderEntry type="module" module-name="intellij.libraries.http.client" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.pycharm.community.customization.shared" />
+    <orderEntry type="module" module-name="intellij.platform.ide.updateChecker" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
   </component>
 </module>
