@@ -19,117 +19,99 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.*
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.getThisLabelName
-import org.jetbrains.kotlin.idea.k2.refactoring.getThisReceiverOwner
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getOrCreateParameterList
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-
-private val counterpartNames = mapOf(
-    "apply" to "also",
-    "run" to "let",
-    "also" to "apply",
-    "let" to "run"
-)
 
 class ScopeFunctionConversionInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return callExpressionVisitor { expression ->
-            val counterpartName = getCounterpart(expression)
-            if (counterpartName != null) {
-                holder.registerProblem(
-                    expression.calleeExpression!!,
-                    KotlinBundle.message("call.is.replaceable.with.another.scope.function"),
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                    if (counterpartName == "also" || counterpartName == "let")
-                        ConvertScopeFunctionToParameter(counterpartName)
-                    else
-                        ConvertScopeFunctionToReceiver(counterpartName)
-                )
+         return callExpressionVisitor { expression ->
+            val counterpartNames = getCounterparts(expression)
+            if (counterpartNames.isNotEmpty()) {
+                val calleeName = expression.calleeExpression?.text ?: ""
+                val quickFixes = counterpartNames.flatMap { counterpartName ->
+                    when {
+                        // Converting from implicit 'this' to explicit parameter
+                        usesImplicitThis(calleeName) && usesExplicitParameter(counterpartName) -> 
+                            listOf(ConvertScopeFunctionToParameter(counterpartName))
+                        
+                        // Converting from explicit parameter to implicit 'this'
+                        usesExplicitParameter(calleeName) && usesImplicitThis(counterpartName) -> 
+                            listOf(ConvertScopeFunctionToReceiver(counterpartName))
+                        
+                        // Both use implicit 'this' or both use explicit parameter - offer both options
+                        else -> listOf(
+                            ConvertScopeFunctionToReceiver(counterpartName),
+                            ConvertScopeFunctionToParameter(counterpartName)
+                        )
+                    }
+                }.toTypedArray()
+
+                expression.calleeExpression?.let {
+                    holder.registerProblem(
+                        it,
+                        KotlinBundle.message("call.is.replaceable.with.another.scope.function"),
+                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                        *quickFixes
+                    )
+                }
             }
         }
     }
 }
 
 /**
- * Determines if the given call expression can be converted to its counterpart scope function.
- * For example, 'apply' can be converted to 'also', 'run' to 'let', etc.
+ * Determines which counterpart scope functions the given call expression can be converted to.
+ * For example, 'apply' can be converted to 'also', 'run' to 'let', 'with' to both 'run' and 'let'.
  *
  * @param expression The call expression to check
- * @return The name of the counterpart function, or null if conversion is not possible
+ * @return List of counterpart function names that are valid conversions
  */
-private fun getCounterpart(expression: KtCallExpression): String? {
-    // Check if this is a call to a scope function with a lambda argument
-    val callee = expression.calleeExpression as? KtNameReferenceExpression ?: return null
+private fun getCounterparts(expression: KtCallExpression): List<String> {
+    val callee = expression.calleeExpression as? KtNameReferenceExpression ?: return emptyList()
     val calleeName = callee.getReferencedName()
-    val counterpartName = counterpartNames[calleeName] ?: return null
-    val lambdaExpression = expression.lambdaArguments.singleOrNull()?.getLambdaExpression() ?: return null
+    val counterpartCandidates = when (val counterpart = counterpartNames[calleeName]) {
+        is String -> listOf(counterpart)
+        is List<*> -> counterpart.filterIsInstance<String>()
+        else -> return emptyList()
+    }.takeIf { it.isNotEmpty() } ?: return emptyList()
 
-    // Lambda must not have explicit parameters
-    if (lambdaExpression.valueParameters.isNotEmpty()) {
-        return null
+    val lambdaExpression = expression.lambdaArguments.singleOrNull()?.getLambdaExpression() ?: return emptyList()
+    
+    if (lambdaExpression.valueParameters.isNotEmpty() && !isSimpleLambdaParameterCase(lambdaExpression)) {
+        return emptyList()
     }
 
-    var result: String? = null
-    analyze(callee) {
-        // Verify this is a call to a Kotlin standard library function with a receiver
-        val resolvedCall = callee.resolveToCall()?.successfulCallOrNull<KaCall>() ?: return@analyze
-        val symbol: KaCallableSymbol? = (resolvedCall as? KaCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.symbol
-        if (symbol?.dispatchReceiverType == null && symbol?.receiverType == null) return@analyze
+    return analyze(callee) {
+        val resolvedCall = callee.resolveToCall()?.successfulCallOrNull<KaCall>() ?: return@analyze emptyList()
+        val symbol = (resolvedCall as? KaCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.symbol ?: return@analyze emptyList()
+        if (symbol.receiverType == null && (symbol as? KaNamedFunctionSymbol)?.name?.asString() != "with") return@analyze emptyList()
 
-        if (nameResolvesToStdlib(expression, calleeName, counterpartName)) {
-            result = counterpartName
+        counterpartCandidates.filter { counterpartName ->
+            if (!nameResolvesToStdlib(expression, calleeName, counterpartName)) return@filter false
+            
+            // Don't suggest "with" conversion if the parameter is nullable
+            if (counterpartName == "with") {
+                val callReceiver = (expression.parent as? KtQualifiedExpression)?.receiverExpression
+                if (callReceiver != null) {
+                    val actualReceiverType = callReceiver.expressionType
+                    if (actualReceiverType?.isNullable == true) return@filter false
+                }
+            }
+            true
         }
     }
-    return result
 }
 
-/**
- * Checks if the given name resolves to a standard library function.
- * This is done by creating a code fragment with the counterpart name and checking if it resolves to a function in the Kotlin package.
- *
- * @param expression The original call expression
- * @param calleeName The name of the original function
- * @param name The name of the counterpart function
- * @return True if the counterpart name resolves to a standard library function
- */
-private fun nameResolvesToStdlib(expression: KtCallExpression, calleeName: String, name: String): Boolean {
-    // Create a code fragment with the counterpart name
-    val updatedExpressionText = expression.parent.text.replace(calleeName, name)
-    val fragment = KtPsiFactory(expression.project).createExpressionCodeFragment(updatedExpressionText, expression.parent)
-
-    return analyze(fragment) {
-        // Resolve the symbol for the counterpart function
-        val callableSymbol: KaCallableSymbol? = when (val fragmentExpression: KtExpression? = fragment.getContentElement()) {
-            is KtDotQualifiedExpression -> {
-                // Handle qualified expressions like "receiver.function()"
-                val callExpression = fragmentExpression.selectorExpression as? KtCallExpression
-                callExpression?.calleeExpression?.mainReference?.resolveToSymbol() as? KaCallableSymbol
-            }
-            else -> {
-                // Handle other expressions
-                val resolvedFragmentCall = fragmentExpression?.resolveToCall()?.successfulCallOrNull<KaCall>()
-                (resolvedFragmentCall as? KaCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.symbol
-            }
-        }
-
-        // Check if the symbol is from the Kotlin standard library
-        callableSymbol != null &&
-        callableSymbol.callableId?.packageName?.asString() == "kotlin" &&
-        callableSymbol.callableId?.callableName?.asString() == name
-    }
-}
 
 class Replacement<T : PsiElement> private constructor(
     private val elementPointer: SmartPsiElementPointer<T>,
@@ -179,7 +161,7 @@ class ReplacementCollection(private val project: Project) {
  * Base class for quick fixes that convert between scope functions.
  * Handles the common logic for converting between 'let'/'run' and 'apply'/'also'.
  */
-abstract class ConvertScopeFunctionFix(private val counterpartName: String) : KotlinModCommandQuickFix<KtNameReferenceExpression>() {
+abstract class ConvertScopeFunctionFix(protected val counterpartName: String) : KotlinModCommandQuickFix<KtNameReferenceExpression>() {
     override fun getFamilyName(): String = KotlinBundle.message("convert.scope.function.fix.family.name", counterpartName)
 
     override fun applyFix(
@@ -188,29 +170,49 @@ abstract class ConvertScopeFunctionFix(private val counterpartName: String) : Ko
         updater: ModPsiUpdater
     ) {
         val callExpression = element.parent as? KtCallExpression ?: return
-
+        val originalCalleeName = element.getReferencedName()
         val lambda = callExpression.lambdaArguments.firstOrNull() ?: return
         val functionLiteral = lambda.getLambdaExpression()?.functionLiteral ?: return
-
-        // Remove any existing parameter list and arrow
-        functionLiteral.valueParameterList?.delete()
-        functionLiteral.arrow?.delete()
+        val factory = KtPsiFactory(project)
 
         val replacements = ReplacementCollection(project)
 
-        // Analyze the lambda and collect replacements
+        // Analyze the lambda and collect replacements BEFORE deleting a parameter list
         analyze(lambda) {
             analyzeLambda(lambda, replacements)
         }
 
-        // Replace the function name with its counterpart
-        element.replace(KtPsiFactory(project).createExpression(counterpartName) as KtNameReferenceExpression)
+        // Remove any existing parameter list and arrow AFTER processing
+        functionLiteral.valueParameterList?.delete()
+        functionLiteral.arrow?.delete()
 
-        // Apply all collected replacements
-        replacements.apply()
+        // Handle different structural transformations based on function characteristics
+        val newLambda = when {
+            originalCalleeName == "with" -> {
+                // Converting FROM 'with': with(receiver) -> receiver.counterpartName
+                if (applyFromWithConversion(callExpression, element, counterpartName, factory)) {
+                    replacements.apply()
+                    lambda // Lambda is still valid for postprocessing
+                } else null
+            }
+            counterpartName == "with" -> {
+                // Converting TO 'with': receiver.originalCalleeName -> with(receiver)
+                // Apply replacements to the lambda BEFORE doing structural transformation
+                replacements.apply()
+                val replacedElement = applyToWithConversion(element, counterpartName, lambda, factory)
+                // Get the new lambda from the replaced element
+                replacedElement?.lambdaArguments?.firstOrNull()
+            }
+            else -> {
+                // For regular scope functions, just replace the function name with its counterpart
+                element.replace(factory.createExpression(counterpartName) as KtNameReferenceExpression)
+                replacements.apply()
+                lambda // Lambda is still valid for postprocessing
+            }
+        }
 
         // Perform any additional processing specific to the conversion type
-        postprocessLambda(lambda)
+        newLambda?.let { postprocessLambda(it) }
 
         // Start in-place rename if needed
         if (replacements.isNotEmpty() && replacements.elementToRename != null && !isUnitTestMode()) {
@@ -242,88 +244,60 @@ private fun PsiElement.startInPlaceRename() {
     }
 }
 
+
 /**
- * Determines if a unique parameter name is needed for the lambda.
- * This is necessary when the default parameter name 'it' would conflict with existing declarations.
- *
- * @param lambdaArgument The lambda argument to check
- * @return True if a unique parameter name is needed
+ * Visitor that replaces implicit 'this' receiver calls with explicit parameter calls.
+ * Used when converting from receiver-based scope functions (like 'run') to parameter-based ones (like 'let').
  */
-fun KaSession.needUniqueNameForParameter(lambdaArgument: KtLambdaArgument): Boolean {
-    // Check if 'it' is already used in the current scope
-    val nameValidator = KotlinDeclarationNameValidator(
-        visibleDeclarationsContext = lambdaArgument,
-        checkVisibleDeclarationsContext = true,
-        target = KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
-    )
+private class ReceiverToParameterVisitor(
+    private val functionLiteral: KtFunctionLiteral?,
+    private val replacements: ReplacementCollection,
+    private val parameterName: String,
+    private val factory: KtPsiFactory,
+    private val session: KaSession
+) : KtTreeVisitorVoid() {
 
-    // If 'it' is already invalid in the current scope, we need a unique name
-    var needUniqueName = !nameValidator.validate(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier)
+    override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+        super.visitSimpleNameExpression(expression)
+        // Skip operation references like '+', '-', etc.
+        if (expression is KtOperationReferenceExpression) return
 
-    // If 'it' is valid in the current scope, check nested scopes
-    if (!needUniqueName) {
-        lambdaArgument.accept(object : KtTreeVisitorVoid() {
-            override fun visitDeclaration(dcl: KtDeclaration) {
-                super.visitDeclaration(dcl)
-                checkNeedUniqueName(dcl)
-            }
+        // Try to resolve the call
+        val resolvedCall = with(session) { 
+            expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() 
+        } ?: return
+        val dispatchReceiver: KaReceiverValue? = resolvedCall.partiallyAppliedSymbol.dispatchReceiver
+        val extensionReceiver = resolvedCall.partiallyAppliedSymbol.extensionReceiver
 
-            override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression) {
-                super.visitLambdaExpression(lambdaExpression)
-                // Check the first statement in the lambda body
-                lambdaExpression.bodyExpression?.statements?.firstOrNull()?.let { checkNeedUniqueName(it) }
-            }
-
-            private fun checkNeedUniqueName(element: KtElement) {
-                // Check if 'it' is valid in this nested scope
-                val nestedValidator = KotlinDeclarationNameValidator(
-                    visibleDeclarationsContext = element,
-                    checkVisibleDeclarationsContext = true,
-                    target = KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
-                )
-
-                if (!nestedValidator.validate(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier)) {
-                    needUniqueName = true
+        // If the call is on the lambda's receiver, replace it with a call on the parameter
+        if (with(session) { isReceiverFromFunctionLiteral(dispatchReceiver, functionLiteral) } || 
+            with(session) { isReceiverFromFunctionLiteral(extensionReceiver, functionLiteral) }) {
+            val parent = expression.parent
+            if (parent is KtCallExpression && expression == parent.calleeExpression) {
+                // Handle method calls: this.foo() -> paramName.foo()
+                if ((parent.parent as? KtQualifiedExpression)?.receiverExpression !is KtThisExpression) {
+                    replacements.add(parent) { element ->
+                        factory.createExpressionByPattern("$0.$1", parameterName, element)
+                    }
+                }
+            } else if (parent is KtQualifiedExpression && parent.receiverExpression is KtThisExpression) {
+                // Skip already qualified expressions: this.foo -> paramName.foo (handled elsewhere)
+            } else {
+                // Handle property access: this.prop -> paramName.prop
+                val referencedName = expression.getReferencedName()
+                replacements.add(expression) {
+                    createExpression("$parameterName.$referencedName")
                 }
             }
-        })
+        }
     }
-    return needUniqueName
-}
 
-/**
- * Finds a unique parameter name for the lambda.
- * Tries to suggest a name based on the type of the receiver, or falls back to a generic name.
- *
- * @param lambdaArgument The lambda argument to find a name for
- * @return A unique parameter name
- */
-private fun KaSession.findUniqueParameterName(lambdaArgument: KtLambdaArgument): String {
-    // Create a name validator to check if suggested names are valid
-    val nameValidator = KotlinDeclarationNameValidator(
-        visibleDeclarationsContext = lambdaArgument,
-        checkVisibleDeclarationsContext = true,
-        target = KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
-    )
-
-    // Get the receiver type from the call expression
-    val callExpression = lambdaArgument.getStrictParentOfType<KtCallExpression>()
-    val resolvedCall = callExpression?.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
-    val dispatchReceiver = resolvedCall?.partiallyAppliedSymbol?.dispatchReceiver
-    val extensionReceiver = resolvedCall?.partiallyAppliedSymbol?.extensionReceiver
-    val parameterType = dispatchReceiver?.type ?: extensionReceiver?.type
-
-    // If we have a type, suggest a name based on it
-    return if (parameterType != null) {
-        with(KotlinNameSuggester()) {
-            suggestTypeNames(parameterType).map { typeName ->
-                KotlinNameSuggester.suggestNameByName(typeName) { nameValidator.validate(it) }
+    override fun visitThisExpression(expression: KtThisExpression) {
+        // Replace 'this' with the parameter name
+        if (expression.instanceReference.mainReference.resolve() == functionLiteral) {
+            replacements.add(expression) {
+                createExpression(parameterName)
             }
-        }.first()
-    } else {
-        // Otherwise, use a generic name like "p1", "p2", etc.
-        KotlinNameSuggester.suggestNameByName("p") { candidate ->
-            nameValidator.validate(candidate)
         }
     }
 }
@@ -342,72 +316,30 @@ class ConvertScopeFunctionToParameter(counterpartName: String) : ConvertScopeFun
         val factory = KtPsiFactory(project)
         val functionLiteral = lambda.getLambdaExpression()?.functionLiteral
 
-        // Determine if we need a unique parameter name
-        val parameterName = if (needUniqueNameForParameter(lambda)) {
-            findUniqueParameterName(lambda)
-        } else {
-            StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
-        }
-
-        // Add a parameter to the lambda if needed
-        if (functionLiteral != null && needUniqueNameForParameter(lambda)) {
-            replacements.createParameter = {
-                val lambdaParameterList = functionLiteral.getOrCreateParameterList()
-                val parameterToAdd = createLambdaParameterList(parameterName).parameters.first()
-                lambdaParameterList.addParameterBefore(parameterToAdd, lambdaParameterList.parameters.firstOrNull())
+        // Determine the parameter name to use
+        val parameterName = when {
+            // Lambda already has explicit parameters - don't create new ones
+            functionLiteral?.valueParameters?.isNotEmpty() == true -> {
+                functionLiteral.valueParameters.first().name ?: StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
             }
+            // Lambda needs a unique parameter name
+            usesExplicitParameter(counterpartName) && hasImplicitItConflicts(lambda) -> {
+                val uniqueName = findUniqueParameterName(lambda)
+                // Create the parameter for an implicit case
+                replacements.createParameter = {
+                    val lambdaParameterList = functionLiteral?.getOrCreateParameterList()
+                    val parameterToAdd = createLambdaParameterList(uniqueName).parameters.first()
+                    lambdaParameterList?.addParameterBefore(parameterToAdd, lambdaParameterList.parameters.firstOrNull())
+                }
+                uniqueName
+            }
+            // Use default 'it'
+            else -> StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
         }
 
         // Process the lambda body to replace 'this' with the parameter name
-        lambda.accept(object : KtTreeVisitorVoid() {
-            override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-                super.visitSimpleNameExpression(expression)
-                // Skip operation references like '+', '-', etc.
-                if (expression is KtOperationReferenceExpression) return
-
-                // Try to resolve the call
-                val resolvedCall = expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() ?: return
-                val dispatchReceiver: KaReceiverValue? = resolvedCall.partiallyAppliedSymbol.dispatchReceiver
-                val extensionReceiver = resolvedCall.partiallyAppliedSymbol.extensionReceiver
-
-                // Check if the receiver is from the function literal we're converting
-                fun isReceiverFromFunctionLiteral(receiver: KaReceiverValue?): Boolean {
-                    if (receiver is KaExplicitReceiverValue) return receiver.expression.mainReference?.resolve() == functionLiteral
-                    if (receiver is KaImplicitReceiverValue) return receiver.getThisReceiverOwner()?.psi == functionLiteral
-                    return false
-                }
-
-                // If the call is on the lambda's receiver, replace it with a call on the parameter
-                if (isReceiverFromFunctionLiteral(dispatchReceiver) || isReceiverFromFunctionLiteral(extensionReceiver)) {
-                    val parent = expression.parent
-                    if (parent is KtCallExpression && expression == parent.calleeExpression) {
-                        // Handle method calls: this.foo() -> paramName.foo()
-                        if ((parent.parent as? KtQualifiedExpression)?.receiverExpression !is KtThisExpression) {
-                            replacements.add(parent) { element ->
-                                factory.createExpressionByPattern("$0.$1", parameterName, element)
-                            }
-                        }
-                    } else if (parent is KtQualifiedExpression && parent.receiverExpression is KtThisExpression) {
-                        // Skip already qualified expressions: this.foo -> paramName.foo (handled elsewhere)
-                    } else {
-                        // Handle property access: this.prop -> paramName.prop
-                        val referencedName = expression.getReferencedName()
-                        replacements.add(expression) {
-                            createExpression("$parameterName.$referencedName")
-                        }
-                    }
-                }
-            }
-
-            override fun visitThisExpression(expression: KtThisExpression) {
-                // Replace 'this' with the parameter name
-                if (expression.instanceReference.mainReference.resolve() == functionLiteral) {
-                    replacements.add(expression) {
-                        createExpression(parameterName)
-                    }
-                }
-            }
-        })
+        val visitor = ReceiverToParameterVisitor(functionLiteral, replacements, parameterName, factory, this)
+        lambda.accept(visitor)
     }
 
     @OptIn(KaIdeApi::class)
@@ -423,6 +355,181 @@ class ConvertScopeFunctionToParameter(counterpartName: String) : ConvertScopeFun
 }
 
 /**
+ * Visitor that replaces explicit parameter calls with implicit 'this' receiver calls.
+ * Used when converting from parameter-based scope functions (like 'let') to receiver-based ones (like 'run').
+ */
+private class ParameterToReceiverVisitor(
+    private val functionLiteral: KtFunctionLiteral?,
+    private val replacements: ReplacementCollection,
+    private val session: KaSession
+) : KtTreeVisitorVoid() {
+    
+    /**
+     * Gets the parameter name from the function literal (must be called before parameter list deletion).
+     */
+    private fun getParameterName(): String {
+        return functionLiteral?.valueParameters?.firstOrNull()?.name ?: StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
+    }
+
+    /**
+     * Checks if the given parameter reference belongs to our target lambda.
+     * This prevents converting parameters from nested lambdas.
+     */
+    private fun belongsToTargetLambda(expression: KtSimpleNameExpression): Boolean {
+        val resolved = expression.mainReference.resolve()
+        
+        // For explicit parameters, check if the parameter belongs to our function literal
+        if (resolved is KtParameter) {
+            return resolved.ownerFunction == functionLiteral
+        }
+        
+        // For implicit 'it' parameters, find the nearest enclosing lambda
+        var current: PsiElement? = expression
+        while (current != null) {
+            if (current is KtFunctionLiteral) {
+                return current == functionLiteral
+            }
+            current = current.parent
+        }
+        
+        return false
+    }
+
+    /**
+     * Helper method to handle qualified expressions like 'param.foo' -> 'foo'
+     */
+    private fun handleQualifiedExpression(parent: KtDotQualifiedExpression) {
+        val selectorExpression = parent.selectorExpression
+        selectorExpression?.let {
+            // Check if we're inside a string template entry
+            val stringTemplateEntry = parent.parent as? KtStringTemplateEntryWithExpression
+            if (stringTemplateEntry != null && selectorExpression is KtSimpleNameExpression) {
+                // Replace ${param.foo} with $foo (no braces for simple identifier)
+                replacements.add(stringTemplateEntry) { _ ->
+                    // Create a temporary string template to extract the simple reference entry
+                    val tempString = createExpression("\"\$${selectorExpression.text}\"") as KtStringTemplateExpression
+                    tempString.entries.first()
+                }
+            } else {
+                // Replace 'param.foo' with just 'foo'
+                replacements.add(parent) {
+                    createExpression(selectorExpression.text)
+                }
+            }
+        }
+    }
+
+    override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+        super.visitSimpleNameExpression(expression)
+
+        // Check if this expression should be converted to 'this'
+        val parameterName = getParameterName()
+        val shouldConvert = (expression.getReferencedName() == parameterName && belongsToTargetLambda(expression)) ||
+                           (expression.getReferencedNameAsName() == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME && 
+                            expression.mainReference.resolve() == functionLiteral)
+
+        if (shouldConvert) {
+            val parent = expression.parent
+            if (parent is KtDotQualifiedExpression && expression == parent.receiverExpression) {
+                // Handle qualified expressions like 't.trim()' or 'it.foo'
+                handleQualifiedExpression(parent)
+            } else {
+                // Replace parameter with 'this'
+                replacements.add(expression) { createThisExpression() }
+            }
+            return
+        } else {
+            // Handle implicit receiver references that need to be qualified
+            val resolvedCall = with(session) { 
+                expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() 
+            } ?: return
+            val dispatchReceiver = resolvedCall.partiallyAppliedSymbol.dispatchReceiver
+
+            // Skip if this is the receiver from the lambda we're converting (e.g., 'with' to 'run')
+            if (with(session) { isReceiverFromFunctionLiteral(dispatchReceiver, functionLiteral) }) return
+
+            // Only handle implicit receivers
+            if (dispatchReceiver !is KaImplicitReceiverValue) return
+
+            val symbol = dispatchReceiver.type.symbol
+            if (symbol !is KaDeclarationSymbol) return
+
+            val implicitReceiverValue = with(session) { 
+                expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.dispatchReceiver as? KaImplicitReceiverValue 
+            } ?: return
+
+            // Get the appropriate qualifier for this receiver
+            val thisQualifier = getThisQualifier(implicitReceiverValue)
+
+            val parent = expression.parent
+            if (parent is KtCallExpression && expression == parent.calleeExpression) {
+                // Handle method calls: foo() -> this@Qualifier.foo()
+                replacements.add(parent) { element ->
+                    createExpressionByPattern("$thisQualifier.$0", element)
+                }
+            } else {
+                // Handle property access: prop -> this@Qualifier.prop
+                val referencedName = expression.getReferencedName()
+                replacements.add(expression) {
+                    createExpression("$thisQualifier.$referencedName")
+                }
+            }
+        }
+    }
+
+    /**
+     * Determines the appropriate qualifier for 'this' expressions based on the receiver value.
+     */
+    @OptIn(KaExperimentalApi::class)
+    private fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String? {
+        val symbol = receiverValue.symbol
+        return when {
+            // For companion objects, use ContainingClass.CompanionName
+            (symbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT -> {
+                val containingClassName = (with(session) { symbol.containingSymbol } as KaClassifierSymbol).name?.asString() ?: ""
+                val companionName = symbol.name?.asString() ?: ""
+                "$containingClassName.$companionName"
+            }
+            // For objects, use the object name
+            (symbol as? KaClassSymbol)?.classKind == KaClassKind.OBJECT -> {
+                symbol.name?.asString()
+            }
+            // For classes, use this@ClassName
+            symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol -> {
+                val className = (symbol.psi as? PsiClass)?.name ?: symbol.name?.asString()
+                if (className != null) "this@$className" else "this"
+            }
+            // For functions, use this@FunctionName if available
+            symbol is KaReceiverParameterSymbol && 
+            (symbol.owningCallableSymbol is KaNamedSymbol || symbol.owningCallableSymbol is KaAnonymousFunctionSymbol) -> {
+                symbol.owningCallableSymbol.getThisLabelName()?.let { "this@$it" } ?: "this"
+            }
+            // Default case
+            else -> "this"
+        }
+    }
+
+    override fun visitThisExpression(expression: KtThisExpression) {
+        // Handle 'this' expressions that need to be qualified
+        val implicitReceiverValue = with(session) { 
+            expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.dispatchReceiver as? KaImplicitReceiverValue
+        }
+
+        if (implicitReceiverValue == null) {
+            // If we can't get an implicit receiver, try to get the class name directly
+            val className = (expression.instanceReference.mainReference.resolve() as? KtClass)?.name ?: return
+            // Replace with a qualified 'this' expression
+            replacements.add(expression) { createThisExpression(className) }
+        } else {
+            // Get the appropriate qualifier for this receiver
+            val thisQualifier = getThisQualifier(implicitReceiverValue)
+            // Replace with a qualified 'this' expression
+            thisQualifier?.let { replacements.add(expression) { createExpression(thisQualifier) } }
+        }
+    }
+}
+
+/**
  * Quick fix that converts a scope function with a regular parameter to one with a receiver parameter.
  * For example, converts 'let' to 'run' or 'also' to 'apply'.
  */
@@ -431,8 +538,8 @@ class ConvertScopeFunctionToReceiver(counterpartName: String) : ConvertScopeFunc
         lambda: KtLambdaArgument,
         replacements: ReplacementCollection
     ) {
-        // Check if we need a unique parameter name (not used in this conversion, but needed for consistency)
-        if (needUniqueNameForParameter(lambda)) {
+        // Check if we need a unique parameter name (not used in this conversion, but needed for consistency)  
+        if (usesExplicitParameter(counterpartName) && hasImplicitItConflicts(lambda)) {
             findUniqueParameterName(lambda)
         } else {
             StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
@@ -441,116 +548,8 @@ class ConvertScopeFunctionToReceiver(counterpartName: String) : ConvertScopeFunc
         val functionLiteral = lambda.getLambdaExpression()?.functionLiteral
 
         // Process the lambda body to replace parameter references with 'this'
-        lambda.accept(object : KtTreeVisitorVoid() {
-            override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-                super.visitSimpleNameExpression(expression)
-
-                // Check if this is a reference to the lambda parameter (e.g., 'it')
-                if (expression.getReferencedNameAsName() == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME
-                    && expression.mainReference.resolve() == functionLiteral
-                ) {
-                    val parent = expression.parent
-                    if (parent is KtDotQualifiedExpression) {
-                        // Handle qualified expressions like 'it.foo'
-                        if (expression == parent.receiverExpression) {
-                            val selectorExpression = parent.selectorExpression
-                            selectorExpression?.let {
-                                // Replace 'it.foo' with just 'foo'
-                                replacements.add(parent) {
-                                    createExpression(selectorExpression.text)
-                                }
-                            }
-                        }
-                    } else {
-                        // Replace 'it' with 'this'
-                        replacements.add(expression) { createThisExpression() }
-                    }
-                } else {
-                    // Handle implicit receiver references that need to be qualified
-                    val resolvedCall = expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() ?: return
-                    val dispatchReceiver = resolvedCall.partiallyAppliedSymbol.dispatchReceiver
-
-                    // Only handle implicit receivers
-                    if (dispatchReceiver !is KaImplicitReceiverValue) return
-
-                    val symbol = dispatchReceiver.type.symbol
-                    if (symbol !is KaDeclarationSymbol) return
-
-                    val implicitReceiverValue = expression.resolveToCall()
-                        ?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.dispatchReceiver as? KaImplicitReceiverValue
-
-                    if (implicitReceiverValue == null) return
-
-                    // Get the appropriate qualifier for this receiver
-                    val thisQualifier = getThisQualifier(implicitReceiverValue)
-
-                    val parent = expression.parent
-                    if (parent is KtCallExpression && expression == parent.calleeExpression) {
-                        // Handle method calls: foo() -> this@Qualifier.foo()
-                        replacements.add(parent) { element ->
-                            createExpressionByPattern("$thisQualifier.$0", element)
-                        }
-                    } else {
-                        // Handle property access: prop -> this@Qualifier.prop
-                        val referencedName = expression.getReferencedName()
-                        replacements.add(expression) {
-                            createExpression("$thisQualifier.$referencedName")
-                        }
-                    }
-                }
-            }
-
-            /**
-             * Determines the appropriate qualifier for 'this' expressions based on the receiver value.
-             */
-            context(session: KaSession)
-            @OptIn(KaExperimentalApi::class)
-            fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String? {
-                val symbol = receiverValue.symbol
-                return when {
-                    // For companion objects, use ContainingClass.CompanionName
-                    (symbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT -> {
-                        val containingClassName = (with (session) { symbol.containingSymbol } as KaClassifierSymbol).name?.asString() ?: ""
-                        val companionName = symbol.name?.asString() ?: ""
-                        "$containingClassName.$companionName"
-                    }
-                    // For objects, use the object name
-                    (symbol as? KaClassSymbol)?.classKind == KaClassKind.OBJECT -> {
-                        symbol.name?.asString()
-                    }
-                    // For classes, use this@ClassName
-                    symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol -> {
-                        val className = (symbol.psi as? PsiClass)?.name ?: symbol.name?.asString()
-                        if (className != null) "this@$className" else "this"
-                    }
-                    // For functions, use this@FunctionName if available
-                    symbol is KaReceiverParameterSymbol && 
-                    (symbol.owningCallableSymbol is KaNamedSymbol || symbol.owningCallableSymbol is KaAnonymousFunctionSymbol) -> {
-                        symbol.owningCallableSymbol.getThisLabelName()?.let { "this@$it" } ?: "this"
-                    }
-                    // Default case
-                    else -> "this"
-                }
-            }
-
-            override fun visitThisExpression(expression: KtThisExpression) {
-                // Handle 'this' expressions that need to be qualified
-                val implicitReceiverValue = expression.resolveToCall()
-                    ?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.dispatchReceiver as? KaImplicitReceiverValue
-
-                if (implicitReceiverValue == null) {
-                    // If we can't get an implicit receiver, try to get the class name directly
-                    val className = (expression.instanceReference.mainReference.resolve() as? KtClass)?.name ?: return
-                    // Replace with a qualified 'this' expression
-                    replacements.add(expression) { createThisExpression(className) }
-                } else {
-                    // Get the appropriate qualifier for this receiver
-                    val thisQualifier = getThisQualifier(implicitReceiverValue)
-                    // Replace with a qualified 'this' expression
-                    thisQualifier?.let { replacements.add(expression) { createExpression(thisQualifier) } }
-                }
-            }
-        })
+        val visitor = ParameterToReceiverVisitor(functionLiteral, replacements, this)
+        lambda.accept(visitor)
     }
 
     /**

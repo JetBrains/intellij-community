@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// FIX: Convert to 'run'
 
 class C {
     fun foo() = "c"

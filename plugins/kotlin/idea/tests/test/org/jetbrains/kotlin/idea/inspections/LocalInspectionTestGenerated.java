@@ -15538,6 +15538,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("lambdaWithParam.kt")
+            public void testLambdaWithParam() throws Exception {
+                runTest("testData/inspectionsLocal/scopeFunctions/letToRun/lambdaWithParam.kt");
+            }
+
             @TestMetadata("nestedLambda.kt")
             public void testNestedLambda() throws Exception {
                 runTest("testData/inspectionsLocal/scopeFunctions/letToRun/nestedLambda.kt");
@@ -15580,6 +15585,60 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/scopeFunctions/letToWith")
+        public static class LetToWith extends AbstractK1LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("complexStringTemplates.kt")
+            public void testComplexStringTemplates() throws Exception {
+                runTest("testData/inspectionsLocal/scopeFunctions/letToWith/complexStringTemplates.kt");
+            }
+
+            @TestMetadata("destructuringNotSupported.kt")
+            public void testDestructuringNotSupported() throws Exception {
+                runTest("testData/inspectionsLocal/scopeFunctions/letToWith/destructuringNotSupported.kt");
+            }
+
+            @TestMetadata("innerClassContext.kt")
+            public void testInnerClassContext() throws Exception {
+                runTest("testData/inspectionsLocal/scopeFunctions/letToWith/innerClassContext.kt");
+            }
+
+            @TestMetadata("labeledReturn.kt")
+            public void testLabeledReturn() throws Exception {
+                runTest("testData/inspectionsLocal/scopeFunctions/letToWith/labeledReturn.kt");
+            }
+
+            @TestMetadata("lambdaWithParam.kt")
+            public void testLambdaWithParam() throws Exception {
+                runTest("testData/inspectionsLocal/scopeFunctions/letToWith/lambdaWithParam.kt");
+            }
+
+            @TestMetadata("multipleLambdaParameters.kt")
+            public void testMultipleLambdaParameters() throws Exception {
+                runTest("testData/inspectionsLocal/scopeFunctions/letToWith/multipleLambdaParameters.kt");
+            }
+
+            @TestMetadata("nullableReceiver.kt")
+            public void testNullableReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/scopeFunctions/letToWith/nullableReceiver.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/inspectionsLocal/scopeFunctions/letToWith/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/scopeFunctions/runToLet")
         public static class RunToLet extends AbstractK1LocalInspectionTest {
             @java.lang.Override
@@ -15605,6 +15664,73 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("testData/inspectionsLocal/scopeFunctions/runToLet/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/scopeFunctions/runToWith")
+        public static class RunToWith extends AbstractK1LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/inspectionsLocal/scopeFunctions/runToWith/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/scopeFunctions/withToLet")
+        public static class WithToLet extends AbstractK1LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("complexThisQualification.kt")
+            public void testComplexThisQualification() throws Exception {
+                runTest("testData/inspectionsLocal/scopeFunctions/withToLet/complexThisQualification.kt");
+            }
+
+            @TestMetadata("preserveControlFlow.kt")
+            public void testPreserveControlFlow() throws Exception {
+                runTest("testData/inspectionsLocal/scopeFunctions/withToLet/preserveControlFlow.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/inspectionsLocal/scopeFunctions/withToLet/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/scopeFunctions/withToRun")
+        public static class WithToRun extends AbstractK1LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/inspectionsLocal/scopeFunctions/withToRun/simple.kt");
             }
         }
     }
