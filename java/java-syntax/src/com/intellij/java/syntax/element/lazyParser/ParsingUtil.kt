@@ -17,7 +17,9 @@ inline fun parseFragment(
   val root = builder.mark()
   block()
   if (!builder.eof()) {
-    if (!eatAll) throw IncompleteFragmentParsingException("Unexpected token: '${builder.tokenText}'")
+    if (!eatAll) {
+      throw IncompleteFragmentParsingException("Unexpected token: '${builder.tokenText}'")
+    }
     val extras = builder.mark()
     while (!builder.eof()) {
       builder.advanceLexer()
