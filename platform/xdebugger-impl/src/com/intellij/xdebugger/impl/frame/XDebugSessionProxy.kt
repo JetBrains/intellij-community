@@ -134,7 +134,7 @@ interface XDebugSessionProxy {
   // TODO WeakReference<XDebugSession>?
   class Monolith(val session: XDebugSession) : XDebugSessionProxy {
     override val runContentDescriptorId: RunContentDescriptorId?
-      get() = session.runContentDescriptor.id
+      get() = (session as XDebugSessionImpl).getRunContentDescriptorIfInitialized()?.id
 
     override val project: Project
       get() = session.project

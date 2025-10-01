@@ -54,7 +54,6 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.UIBundle
@@ -316,7 +315,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
                 // Assign tool window id on the happy execution path in the monolith,
                 // which is used by the Services tool window.
                 // In the split mode this id is assigned on the backend side when the mock run content descriptor is created.
-                descriptor.id = storeValueGlobally(coroutineScope, descriptor, RunContentDescriptorIdType)
+                descriptor.id = descriptor.storeGlobally(coroutineScope)
               }
               RunContentManager.getInstance(project).registerRunContentDescriptor(descriptor)
               runningConfigurations.add(entry)

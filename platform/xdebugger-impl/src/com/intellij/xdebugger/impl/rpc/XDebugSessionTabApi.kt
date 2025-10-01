@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.rpc
 
+import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.rpc.ExecutionEnvironmentProxyDto
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabEvent
@@ -78,18 +79,12 @@ data class XDebuggerSessionTabInfo(
   val executionEnvironmentProxyDto: ExecutionEnvironmentProxyDto?,
   val additionalTabsComponentManagerId: XDebugSessionAdditionalTabComponentManagerId,
   @Serializable(with = SendChannelSerializer::class) val tabClosedCallback: SendChannel<Unit>,
-  @Serializable(with = DeferredSerializer::class) val backendRunContendDescriptorId: Deferred<RunContentDescriptorId>,
+  @Serializable(with = DeferredSerializer::class) val backendRunContendDescriptorId: Deferred<RunContentDescriptorIdImpl>,
 ) : XDebuggerSessionTabAbstractInfo
 
 @ApiStatus.Internal
 @Serializable
 data class ExecutionEnvironmentId(override val uid: UID) : Id
-
-
-@ApiStatus.Internal
-@Serializable
-@Deprecated("Let's try using the RunContentDescriptorIdImpl instead which is declared and accessible outside debugger code")
-data class RunContentDescriptorId(override val uid: UID) : Id
 
 @ApiStatus.Internal
 @Serializable

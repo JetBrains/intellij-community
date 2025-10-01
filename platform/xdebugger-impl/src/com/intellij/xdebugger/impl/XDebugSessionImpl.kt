@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
-import com.intellij.execution.RunContentDescriptorIdType
+import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunProfile
@@ -13,6 +13,7 @@ import com.intellij.execution.rpc.toDto
 import com.intellij.execution.runners.BackendExecutionEnvironmentProxy
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.RunTab
+import com.intellij.execution.storeGlobally
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.RunContentDescriptor
@@ -36,7 +37,6 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
@@ -461,7 +461,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
       val localTabScope = tabCoroutineScope.childScope("ExecutionEnvironmentDto")
       val tabClosedChannel = Channel<Unit>(capacity = 1)
       val additionalTabComponentManager = XDebugSessionAdditionalTabComponentManager(localTabScope)
-      val runContentDescriptorId = CompletableDeferred<RunContentDescriptorId>()
+      val runContentDescriptorId = CompletableDeferred<RunContentDescriptorIdImpl>()
       val executionEnvironmentId = executionEnvironment?.storeGlobally(localTabScope)
       val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization, defaultFramesViewKey,
                                             executionEnvironmentId, executionEnvironment?.toDto(localTabScope),
@@ -491,7 +491,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
         Disposer.register(mockDescriptor, runTab)
         val descriptorId = mockDescriptor.storeGlobally(localTabScope)
         runContentDescriptorId.complete(descriptorId)
-        mockDescriptor.id = contentToReuse?.id ?: storeValueGlobally(debuggerManager.coroutineScope, mockDescriptor, RunContentDescriptorIdType)
+        mockDescriptor.id = descriptorId
         debuggerManager.coroutineScope.launch(Dispatchers.EDT) {
           tabClosedChannel.consumeEach {
             tabCoroutineScope.cancel()
