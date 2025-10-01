@@ -128,6 +128,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <dependencySupport kind="vcs" coordinate="svn" displayName="Subversion"/>
+
     <registryKey key="svn.use.incoming.optimization" defaultValue="false"
                  description="Use remotely (in svn repository) changed files list to optimize incoming revisions processing"/>
     <registryKey key="svn.lowest.supported.format.for.command.line" defaultValue="1.7.0"
