@@ -2,7 +2,6 @@
 package com.intellij.internal.statistics.metadata.storage
 
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
-import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesInMemoryStorage
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
@@ -35,19 +34,9 @@ internal class CompositeValidationRulesStorageTest : ValidationRulesBaseStorageT
         "      }\n" +
         "    }"
       ))
-    ValidationRulesInMemoryStorage.eventsValidators[groupId] = EventGroupRules.EMPTY
 
-    val groupRules = storage.getGroupRules(groupId)
+    val groupRules = storage.getGroupValidators(groupId).eventGroupRules
     assertThat(groupRules).isNotNull
-    assertThat(groupRules!!.eventDataRules).isNotEmpty
-  }
-
-  fun testGetGroupRules() {
-    val mergedStorage = IntellijSensitiveDataValidator.getInstance(recorderId).validationRulesStorage
-    ValidationRulesInMemoryStorage.eventsValidators[groupId] = EventGroupRules.EMPTY
-
-    val groupRules = mergedStorage.getGroupRules(groupId)
-    assertThat(groupRules).isNotNull
-    assertThat(groupRules!!.eventDataRules).isEmpty()
+    assertThat(groupRules!!.getEventDataRules()).isNotEmpty
   }
 }

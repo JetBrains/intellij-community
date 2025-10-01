@@ -3,10 +3,9 @@ package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.config.EventLogOptions.MACHINE_ID_SALT
 import com.intellij.internal.statistic.config.EventLogOptions.MACHINE_ID_SALT_REVISION
-import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration
-import com.intellij.internal.statistic.eventLog.validator.storage.EventLogMetadataLoader
+import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlin.test.assertNotEquals
 
@@ -50,20 +49,8 @@ class EventLogConfigurationTest : BasePlatformTestCase() {
     val configuration = EventLogConfiguration.getInstance().getOrCreate(recorderId)
     val initialValue = function(configuration)
 
-    EventLogConfigOptionsService.getInstance().updateOptions(recorderId, TestEventLogMetadataLoader(values))
+    FusComponentProvider.updateOptions(recorderId, values)
     val newValue = function(configuration)
     return Pair(initialValue, newValue)
-  }
-
-  class TestEventLogMetadataLoader(private val values: Map<String, String>) : EventLogMetadataLoader {
-    override fun getLastModifiedOnServer(): Long = 0
-
-    override fun loadMetadataFromServer(): String = ""
-
-    override fun getDictionariesLastModifiedOnServer(recorderId: String?): Map<String?, Long?> = emptyMap()
-
-    override fun loadDictionaryFromServer(recorderId: String?, dictionaryName: String?): String = ""
-
-    override fun getOptionValues(): Map<String, String> = values
   }
 }

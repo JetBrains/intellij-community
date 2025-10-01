@@ -19,6 +19,7 @@ import io.ktor.client.plugins.auth.providers.basic
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.request.get
+import io.ktor.client.request.head
 import io.ktor.client.request.post
 import io.ktor.client.request.prepareGet
 import io.ktor.client.request.setBody
@@ -182,6 +183,12 @@ private val fileLocks = StripedMutex()
 suspend fun downloadAsBytes(url: String): ByteArray = spanBuilder("download").setAttribute("url", url).useWithScope {
   withContext(Dispatchers.IO) {
     httpClient.value.get(url).body()
+  }
+}
+
+suspend fun lastModifiedFromHeadRequest(url: String): String? = spanBuilder("last-modified").setAttribute("url", url).useWithScope {
+  withContext(Dispatchers.IO) {
+    httpClient.value.head(url).headers["Last-Modified"]
   }
 }
 

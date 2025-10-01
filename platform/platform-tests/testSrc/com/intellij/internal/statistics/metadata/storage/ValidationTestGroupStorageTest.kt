@@ -16,7 +16,7 @@ internal class ValidationTestGroupStorageTest : ValidationRulesBaseStorageTest()
 
     val groupRules = storageForTest.getGroupRules(groupId)
     assertThat(groupRules).isNotNull
-    assertThat(groupRules!!.eventDataRules).isEmpty()
+    assertThat(groupRules!!.getEventDataRules()).isEmpty()
   }
 
   @Test
@@ -34,7 +34,7 @@ internal class ValidationTestGroupStorageTest : ValidationRulesBaseStorageTest()
     ))
     val groupRules = storageForTest.getGroupRules(groupId)
     assertThat(groupRules).isNotNull
-    assertThat(groupRules!!.eventDataRules).isNotEmpty
+    assertThat(groupRules!!.getEventDataRules()).isNotEmpty
   }
 
   fun testCleanup() {

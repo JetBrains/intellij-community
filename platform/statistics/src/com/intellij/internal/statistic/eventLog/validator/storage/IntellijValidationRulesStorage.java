@@ -6,24 +6,17 @@ import com.intellij.internal.statistic.eventLog.validator.DictionaryStorage;
 import com.intellij.internal.statistic.eventLog.validator.GroupValidators;
 import com.intellij.internal.statistic.eventLog.validator.ValidationRuleStorage;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.RecorderDataValidationRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory;
-import com.jetbrains.fus.reporting.MetadataStorage;
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors;
-import kotlin.NotImplementedError;
-import kotlin.coroutines.Continuation;
-import kotlinx.coroutines.CoroutineScope;
-import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-public interface IntellijValidationRulesStorage extends ValidationRuleStorage<EventLogBuild>, MetadataStorage<EventLogBuild> {
+public interface IntellijValidationRulesStorage extends ValidationRuleStorage<EventLogBuild> {
   @Nullable EventGroupRules getGroupRules(@NotNull String groupId);
 
   /**
@@ -31,7 +24,6 @@ public interface IntellijValidationRulesStorage extends ValidationRuleStorage<Ev
    *
    * @return true if events scheme was updated without errors, false otherwise
    */
-  @Override
   boolean update();
 
   /**
@@ -64,43 +56,4 @@ public interface IntellijValidationRulesStorage extends ValidationRuleStorage<Ev
 
   @Override
   boolean isUnreachable();
-
-  // only required if anonymization is handled by the library
-  @Override
-  default @NotNull Set<String> getFieldsToAnonymize(@NotNull String groupId, @NotNull String eventId) {
-    throw new NotImplementedError("getFieldsToAnonymize is not implemented for IntellijValidationRulesStorage");
-  }
-
-  // only required when scheduled updates are handled by the library
-  @Override
-  default @Nullable Job update(@NotNull CoroutineScope scope, @NotNull Continuation<? super Job> continuation) {
-    throw new NotImplementedError("update is not implemented for IntellijValidationRulesStorage");
-  }
-
-  // only required if anonymization is handled by the library
-  @Override
-  default @NotNull Set<String> getSkipAnonymizationIds() {
-    throw new NotImplementedError("getSkipAnonymizationIds is not implemented for IntellijValidationRulesStorage");
-  }
-
-  // only required if v4 validation format is used (not the case for IntelliJ)
-  @Override
-  @NotNull
-  default RecorderDataValidationRule getClientDataRulesRevisions() {
-    throw new NotImplementedError("getClientDataRulesRevisions is not implemented for IntellijValidationRulesStorage");
-  }
-
-  // only required if v4 validation format is used (not the case for IntelliJ)
-  @Override
-  @NotNull
-  default RecorderDataValidationRule getSystemDataRulesRevisions() {
-    throw new NotImplementedError("getSystemDataRulesRevisions is not implemented for IntellijValidationRulesStorage");
-  }
-
-  // only required if v4 validation format is used (not the case for IntelliJ)
-  @Override
-  @NotNull
-  default RecorderDataValidationRule getIdsRulesRevisions() {
-    throw new NotImplementedError("getIdsRulesRevisions is not implemented for IntellijValidationRulesStorage");
-  }
 }

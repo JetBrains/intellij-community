@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.DatabindException;
 import com.intellij.internal.statistic.config.SerializationHelper;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
-import com.intellij.internal.statistic.eventLog.validator.DictionaryStorage;
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.Strings;
@@ -48,12 +47,6 @@ public final class EventLogTestMetadataPersistence extends BaseEventLogMetadataP
     catch (IOException e) {
       LOG.error(e);
     }
-    return null;
-  }
-
-  @Override
-  public DictionaryStorage getDictionaryStorage() throws IOException {
-    // no dictionary storage required for test metadata persistence as of now
     return null;
   }
 

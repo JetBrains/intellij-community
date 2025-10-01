@@ -13,7 +13,7 @@ import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
 import com.jetbrains.fus.reporting.configuration.RegionCode
 import com.jetbrains.fus.reporting.jvm.JvmHttpClient
 import com.jetbrains.fus.reporting.jvm.ProxyInfo
-import com.jetbrains.fus.reporting.serialization.FusKotlinSerializer
+import com.jetbrains.fus.reporting.serialization.FusJacksonSerializer
 import org.assertj.core.api.Assertions
 import java.time.Duration
 
@@ -65,7 +65,7 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
       httpClient = httpClient,
       regionCode = RegionCode.ALL,
       cacheTimeoutMs = 1,
-      serializer = FusKotlinSerializer()
+      serializer = FusJacksonSerializer
     )
     Assertions.assertThat(configurationClient.configurationUrl).isNotEqualTo(URL)
   }
@@ -83,7 +83,7 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
       httpClient = httpClient,
       regionCode = RegionCode.ALL,
       cacheTimeoutMs = 1,
-      serializer = FusKotlinSerializer()
+      serializer = FusJacksonSerializer
     )
     Assertions.assertThat(configurationClient.configurationUrl).isEqualTo(CONFIG_URL)
   }
@@ -101,7 +101,7 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
       httpClient = httpClient,
       regionCode = RegionCode.CN,
       cacheTimeoutMs = 1,
-      serializer = FusKotlinSerializer()
+      serializer = FusJacksonSerializer
     )
     Assertions.assertThat(configurationClient.configurationUrl).isEqualTo(CHINA_CONFIG_URL)
   }
@@ -119,7 +119,7 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
       httpClient = httpClient,
       regionCode = RegionCode.ALL,
       cacheTimeoutMs = 1,
-      serializer = FusKotlinSerializer()
+      serializer = FusJacksonSerializer
     )
     Assertions.assertThat(configurationClient.configurationUrl).isEqualTo(TEST_CONFIG_URL)
   }

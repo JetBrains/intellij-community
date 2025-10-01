@@ -10,10 +10,9 @@ import com.intellij.internal.statistic.eventLog.connection.EventLogSettingsClien
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService
 import com.intellij.internal.statistic.uploader.EventLogExternalSendConfig
 import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
-import com.jetbrains.fus.reporting.connection.JavaHttpClientBuilder
-import com.jetbrains.fus.reporting.connection.JavaHttpRequestBuilder
-import com.jetbrains.fus.reporting.connection.ProxyInfo
-import com.jetbrains.fus.reporting.serialization.FusKotlinSerializer
+import com.jetbrains.fus.reporting.jvm.JvmHttpClient
+import com.jetbrains.fus.reporting.jvm.ProxyInfo
+import com.jetbrains.fus.reporting.serialization.FusJacksonSerializer
 import java.io.File
 import java.time.Duration
 import java.util.concurrent.TimeUnit
@@ -38,16 +37,17 @@ internal class TestEventLogUploadSettingsClient(
   override val configurationClient = ConfigurationClientFactory.createTest(
     productCode = applicationInfo.productCode,
     productVersion = applicationInfo.productVersion,
-    httpClientBuilder = JavaHttpClientBuilder()
-      .setProxyProvider { ProxyInfo(
-        applicationInfo.connectionSettings.provideProxy(it).proxy
-      )}.setSSLContext(applicationInfo.connectionSettings.provideSSLContext()),
-    httpRequestBuilder = JavaHttpRequestBuilder()
-      .setExtraHeaders(applicationInfo.connectionSettings.provideExtraHeaders())
-      .setUserAgent(applicationInfo.connectionSettings.provideUserAgent())
-      .setTimeout(Duration.ofMillis(configCacheTimeoutMs)),
+    httpClient = JvmHttpClient(
+      sslContextProvider = { applicationInfo.connectionSettings.provideSSLContext() },
+      proxyProvider = { configurationUrl ->
+        ProxyInfo(applicationInfo.connectionSettings.provideProxy(configurationUrl).proxy)
+      },
+      extraHeadersProvider = { applicationInfo.connectionSettings.provideExtraHeaders() },
+      userAgent = applicationInfo.connectionSettings.provideUserAgent(),
+      timeout = Duration.ofMillis(configCacheTimeoutMs)
+    ),
     configurationUrl = configUrl,
-    serializer = FusKotlinSerializer()
+    serializer = FusJacksonSerializer
   )
   override val recorderId: String = RECORDER_ID
 }

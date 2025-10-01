@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage.persistence;
 
-import com.intellij.internal.statistic.eventLog.validator.DictionaryStorage;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,8 +26,6 @@ public abstract class BaseEventLogMetadataPersistence {
   private static final String CUSTOM_FUS_SCHEMA_DIR_PROPERTY = "intellij.fus.custom.schema.dir";
 
   public abstract @Nullable String getCachedEventsScheme();
-
-  public abstract DictionaryStorage getDictionaryStorage() throws IOException;
 
   public static Path getDefaultMetadataFile(@NotNull String recorderId,
                                             @NotNull String fileName,

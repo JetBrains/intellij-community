@@ -7,10 +7,8 @@ import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
 import com.jetbrains.fus.reporting.configuration.RegionCode
 import com.jetbrains.fus.reporting.jvm.JvmHttpClient
 import com.jetbrains.fus.reporting.jvm.ProxyInfo
-import com.jetbrains.fus.reporting.serialization.FusKotlinSerializer
+import com.jetbrains.fus.reporting.serialization.FusJacksonSerializer
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
-import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 /**
@@ -26,8 +24,7 @@ open class EventLogUploadSettingsClient(
   cacheTimeoutMs: Long = TimeUnit.MINUTES.toMillis(10)
 ) : EventLogSettingsClient() {
   companion object {
-    @VisibleForTesting
-    val chinaRegion: String = "china" //com.intellij.ide.Region.CHINA
+    const val chinaRegion: String = "china" //com.intellij.ide.Region.CHINA
   }
   override var configurationClient: ConfigurationClient = ConfigurationClientFactory.create(
     recorderId = recorderId,
@@ -43,7 +40,7 @@ open class EventLogUploadSettingsClient(
       userAgent = applicationInfo.connectionSettings.provideUserAgent()
     ),
     regionCode = if (applicationInfo.regionalCode == chinaRegion) RegionCode.CN else RegionCode.ALL,
-    serializer = FusKotlinSerializer(),
+    serializer = FusJacksonSerializer,
     cacheTimeoutMs = cacheTimeoutMs
   )
 }
