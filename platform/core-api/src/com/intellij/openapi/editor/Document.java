@@ -4,6 +4,7 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
@@ -13,10 +14,12 @@ import org.jetbrains.annotations.*;
 import java.beans.PropertyChangeListener;
 
 /**
- * Represents the contents of a text file loaded into memory, and possibly opened in an IDE
- * text editor. Line breaks in the document text are always normalized as single {@code \n} characters,
+ * Represents the contents of a text file loaded into memory and possibly opened in an IDE text editor.
+ * Line breaks in the document text are always normalized as single {@code \n} characters,
  * and are converted to proper format when the document is saved.
- * <p/>
+ * <p>
+ * Document is also a {@link ModificationTracker} whose stamp is incremented whenever the content changes.</p>
+ * <p>
  * Please see <a href="https://plugins.jetbrains.com/docs/intellij/documents.html">IntelliJ Platform Docs</a>
  * for a high-level overview.
  *
