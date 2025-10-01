@@ -229,12 +229,18 @@ private suspend fun prepareSignTool(nsiConfDir: Path, context: BuildContext, uni
   val toolFile =
     context.proprietaryBuildTools.signTool.commandLineClient(context, OsFamily.currentOs, JvmArchitecture.currentJvmArch)
     ?: error("No command line sign tool is configured")
+  val extensions = BuildOptions.WIN_SIGN_OPTIONS
+                     .takeIf { it.any() }
+                     ?.entries?.asSequence()
+                     ?.map { "${it.key}=${it.value}" }
+                     ?.joinToString(prefix = " -extensions ", separator = ",")
+                   ?: ""
   val scriptFile = Files.writeString(nsiConfDir.resolve("sign-tool.cmd"), when (OsFamily.currentOs) {
     // moving the file back and forth is required for NSIS to fail if signing didn't happen
     OsFamily.WINDOWS -> """
       @ECHO OFF
       MOVE /Y "%1" "${nsiConfDir}\\Uninstall.exe"
-      "${toolFile}" -denoted-content-type application/x-exe -signed-files-dir "${nsiConfDir}\\_signed" "${nsiConfDir}\\Uninstall.exe"
+      "${toolFile}"$extensions -denoted-content-type application/x-exe -signed-files-dir "${nsiConfDir}\\_signed" "${nsiConfDir}\\Uninstall.exe"
       COPY /B /Y "${nsiConfDir}\\_signed\\Uninstall.exe" "${uninstallerCopy}"
       MOVE /Y "${nsiConfDir}\\_signed\\Uninstall.exe" "%1"
       """.trimIndent()
@@ -242,7 +248,7 @@ private suspend fun prepareSignTool(nsiConfDir: Path, context: BuildContext, uni
       #!/bin/sh
       set -eux
       mv -f "$1" "$${nsiConfDir}/Uninstall.exe"
-      "$${toolFile}" -denoted-content-type application/x-exe -signed-files-dir "$${nsiConfDir}/_signed" "$${nsiConfDir}/Uninstall.exe"
+      "$${toolFile}"$$extensions -denoted-content-type application/x-exe -signed-files-dir "$${nsiConfDir}/_signed" "$${nsiConfDir}/Uninstall.exe"
       cp -f "$${nsiConfDir}/_signed/Uninstall.exe" "$${uninstallerCopy}"
       mv -f "$${nsiConfDir}/_signed/Uninstall.exe" "$1"
       """.trimIndent()
