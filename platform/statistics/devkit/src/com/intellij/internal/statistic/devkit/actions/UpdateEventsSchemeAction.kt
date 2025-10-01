@@ -27,7 +27,6 @@ internal class UpdateEventsSchemeAction(val recorder: String)
       override fun run(indicator: ProgressIndicator) {
         val validator = IntellijSensitiveDataValidator.getInstance(recorder)
         validator.update()
-        validator.reload()
       }
     })
   }

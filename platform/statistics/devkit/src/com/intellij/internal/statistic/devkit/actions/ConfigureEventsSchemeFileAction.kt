@@ -59,7 +59,6 @@ internal class ConfigureEventsSchemeFileAction(private var myRecorderId: String 
       }
       val validator = IntellijSensitiveDataValidator.getInstance(recorder)
       validator.update()
-      validator.reload()
     }
   }
 

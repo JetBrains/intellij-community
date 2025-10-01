@@ -14,5 +14,5 @@ object ValidationRulesInMemoryStorage : IntellijValidationRulesStorage {
   override fun getGroupRules(groupId: String): EventGroupRules? = eventsValidators[groupId]
   override fun isUnreachable(): Boolean = false
   override fun update(): Boolean = true
-  override fun reload() = Unit
+  override fun reload(): Unit = Unit
 }

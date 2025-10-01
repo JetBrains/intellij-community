@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.fus
 import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
 import com.jetbrains.fus.reporting.configuration.ConfigurationClient
 import com.google.gson.JsonParser
-import com.jetbrains.fus.reporting.serialization.FusKotlinSerializer
+import com.jetbrains.fus.reporting.serialization.FusJacksonSerializer
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -16,7 +16,11 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.downloadAsBytes
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.createSkippableJob
+import org.jetbrains.intellij.build.lastModifiedFromHeadRequest
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.util.concurrent.CancellationException
 
 /**
@@ -35,6 +39,11 @@ internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(
         val recorderId = featureUsageStatisticsProperties.recorderId
         moduleOutputPatcher.patchModuleOutput(
           moduleName = "intellij.platform.ide.impl",
+          path = "resources/event-log-metadata/$recorderId/events-scheme.json.meta",
+          content = lastModified(metadataServiceUri(featureUsageStatisticsProperties, context))
+        )
+        moduleOutputPatcher.patchModuleOutput(
+          moduleName = "intellij.platform.ide.impl",
           path = "resources/event-log-metadata/$recorderId/events-scheme.json",
           content = download(metadataServiceUri(featureUsageStatisticsProperties, context))
         )
@@ -45,6 +54,11 @@ internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(
         if (!dictionariesList.isEmpty) {
           moduleOutputPatcher.patchModuleOutput(
             moduleName = "intellij.platform.ide.impl",
+            path = "resources/event-log-metadata/$recorderId/dictionaries/dictionaries.json.meta",
+            content = lastModified(dictionaryServiceUri(featureUsageStatisticsProperties, context, "dictionaries.json"))
+          )
+          moduleOutputPatcher.patchModuleOutput(
+            moduleName = "intellij.platform.ide.impl",
             path = "resources/event-log-metadata/$recorderId/dictionaries/dictionaries.json",
             content = dictionaryListBytes
           )
@@ -52,6 +66,11 @@ internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(
 
         for (dictionary in dictionariesList) {
           val dictionaryName = dictionary.asString
+          moduleOutputPatcher.patchModuleOutput(
+            moduleName = "intellij.platform.ide.impl",
+            path = "resources/event-log-metadata/$recorderId/dictionaries/$dictionaryName.meta",
+            content = lastModified(dictionaryServiceUri(featureUsageStatisticsProperties, context, dictionaryName))
+          )
           moduleOutputPatcher.patchModuleOutput(
             moduleName = "intellij.platform.ide.impl",
             path = "resources/event-log-metadata/$recorderId/dictionaries/$dictionaryName",
@@ -82,6 +101,28 @@ private suspend fun download(url: String): ByteArray {
   return downloadAsBytes(url)
 }
 
+val RFC1123_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss zzz")
+val RFC1036_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE, dd-MMM-yy HH:mm:ss zzz")
+val ASCTIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss yyyy")
+val DATE_FORMATS: Array<DateTimeFormatter> = arrayOf(RFC1123_FORMAT, RFC1036_FORMAT, ASCTIME_FORMAT)
+
+private fun String.parseDate(): Long? {
+  for (format in DATE_FORMATS) {
+    try {
+      return ZonedDateTime.parse(this, format).toInstant().toEpochMilli()
+    } catch (_: DateTimeParseException) {
+    }
+  }
+  return null
+}
+
+private suspend fun lastModified(url: String): ByteArray {
+  Span.current().addEvent("last-modified", Attributes.of(AttributeKey.stringKey("url"), url))
+  val dateTimeString = lastModifiedFromHeadRequest(url)
+  val epochTime = dateTimeString?.parseDate() ?: 0L
+  return epochTime.toString().toByteArray()
+}
+
 private suspend fun serviceUri(featureUsageStatisticsProperties: FeatureUsageStatisticsProperties, context: BuildContext): ConfigurationClient {
   val providerUri = appendProductCode(featureUsageStatisticsProperties.metadataProviderUri, context)
   Span.current().addEvent("parsing", Attributes.of(AttributeKey.stringKey("url"), providerUri))
@@ -90,7 +131,7 @@ private suspend fun serviceUri(featureUsageStatisticsProperties: FeatureUsageSta
     reader = download(providerUri).inputStream().reader(),
     productCode = context.applicationInfo.productCode,
     productVersion = "${appInfo.majorVersion}.${appInfo.minorVersion}",
-    serializer = FusKotlinSerializer()
+    serializer = FusJacksonSerializer
   )
   return configurationClient
 }

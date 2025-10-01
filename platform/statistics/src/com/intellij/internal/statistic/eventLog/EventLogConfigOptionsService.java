@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.config.EventLogOptions;
-import com.intellij.internal.statistic.eventLog.validator.storage.EventLogMetadataLoader;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
@@ -23,14 +22,6 @@ public final class EventLogConfigOptionsService {
 
   public static EventLogConfigOptionsService getInstance() {
     return ApplicationManager.getApplication().getService(EventLogConfigOptionsService.class);
-  }
-
-  public void updateOptions(@NotNull String recorderId, @NotNull EventLogMetadataLoader loader) {
-    EventLogMetadataSettingsPersistence persisted = EventLogMetadataSettingsPersistence.getInstance();
-    Map<String, String> changedOptions = persisted.updateOptions(recorderId, loader.getOptionValues());
-    if (!changedOptions.isEmpty()) {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).optionsChanged(recorderId, changedOptions);
-    }
   }
 
   public @NotNull EventLogOptions getOptions(@NotNull String recorderId) {

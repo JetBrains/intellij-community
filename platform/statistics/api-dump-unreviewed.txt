@@ -28,7 +28,6 @@ f:com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService
 - <init>():V
 - s:getInstance():com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService
 - getOptions(java.lang.String):com.intellij.internal.statistic.config.EventLogOptions
-- updateOptions(java.lang.String,com.intellij.internal.statistic.eventLog.validator.storage.EventLogMetadataLoader):V
 a:com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService$EventLogThresholdConfigOptionsListener
 - com.intellij.internal.statistic.eventLog.EventLogConfigOptionsListener
 - p:<init>(java.lang.String):V

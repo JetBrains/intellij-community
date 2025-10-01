@@ -5,12 +5,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.intellij.internal.statistic.config.SerializationHelper;
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules;
 import com.intellij.internal.statistic.eventLog.validator.DictionaryStorage;
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
+import com.intellij.internal.statistic.eventLog.validator.rules.utils.CustomRuleProducer;
+import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence;
+import com.jetbrains.fus.reporting.MetadataStorage;
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors;
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
@@ -78,12 +83,25 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
     return EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myMetadataPersistence);
   }
 
+  public static @NotNull Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build,
+                                                                       @NotNull EventGroupRemoteDescriptors groups,
+                                                                       @NotNull GlobalRulesHolder globalRulesHolder,
+                                                                       @NotNull String recorderId,
+                                                                       DictionaryStorage dictionaryStorage) {
+    ValidationSimpleRuleFactory ruleFactory = new ValidationSimpleRuleFactory(new CustomRuleProducer(recorderId));
+    return groups.groups.stream()
+      .filter(group -> EventGroupFilterRules.create(group, EventLogBuild.EVENT_LOG_BUILD_PRODUCER).accepts(build))
+      .collect(Collectors.toMap(group -> group.id, group -> {
+        return EventGroupRules.create(group, globalRulesHolder, ruleFactory, FeatureUsageData.Companion.getPlatformDataKeys(), dictionaryStorage);
+      }));
+  }
+
   private @NotNull Map<String, EventGroupRules> createValidators(@NotNull EventGroupRemoteDescriptors groups,
                                                                  @Nullable EventGroupRemoteDescriptors.GroupRemoteRule productionRules) {
     final GroupRemoteRule rules = merge(groups.rules, productionRules);
     GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(rules);
     final EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.getInstance().getBuild());
-    return ValidationRulesPersistedStorage.createValidators(build, groups, globalRulesHolder, myRecorderId, getDictionaryStorage());
+    return createValidators(build, groups, globalRulesHolder, myRecorderId, getDictionaryStorage());
   }
 
   public void addTestGroup(@NotNull GroupValidationTestRule group) throws IOException {
@@ -123,11 +141,7 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
 
   @Override
   public @Nullable DictionaryStorage getDictionaryStorage() {
-    try {
-      return myTestMetadataPersistence.getDictionaryStorage();
-    } catch (IOException e) {
-      return null;
-    }
+    return null;
   }
 
   private static @Nullable GroupRemoteRule merge(@Nullable GroupRemoteRule testRules, @Nullable GroupRemoteRule productionTestRules) {
@@ -176,7 +190,7 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
   public static @Nullable ValidationTestRulesPersistedStorage getTestStorage(@NotNull String recorderId, boolean initIfNeeded) {
     IntellijSensitiveDataValidator validator =
       initIfNeeded ? IntellijSensitiveDataValidator.getInstance(recorderId) : IntellijSensitiveDataValidator.getIfInitialized(recorderId);
-    IntellijValidationRulesStorage storage = validator != null ? validator.getValidationRulesStorage() : null;
+    MetadataStorage<EventLogBuild> storage = validator != null ? validator.getValidationRulesStorage() : null;
     return storage instanceof ValidationTestRulesStorageHolder ? ((ValidationTestRulesStorageHolder)storage).getTestGroupStorage() : null;
   }
 

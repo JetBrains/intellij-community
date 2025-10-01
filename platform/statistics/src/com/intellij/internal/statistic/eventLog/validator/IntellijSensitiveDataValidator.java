@@ -1,22 +1,30 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator;
 
+import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.*;
+import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider;
 import com.intellij.internal.statistic.eventLog.validator.storage.IntellijValidationRulesStorage;
-import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesStorageProvider;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil;
 import com.intellij.internal.statistic.utils.StatisticsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.fus.reporting.MessageBus;
+import com.jetbrains.fus.reporting.MetadataStorage;
+import kotlin.coroutines.Continuation;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.Job;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -96,7 +104,7 @@ import java.util.concurrent.ConcurrentMap;
  * </pre></li>
  * </ul>
  */
-public class IntellijSensitiveDataValidator extends SensitiveDataValidator<IntellijValidationRulesStorage> {
+public class IntellijSensitiveDataValidator extends SensitiveDataValidator<MetadataStorage<EventLogBuild>> {
   private static final ConcurrentMap<String, IntellijSensitiveDataValidator> ourInstances = new ConcurrentHashMap<>();
 
   static {
@@ -112,10 +120,10 @@ public class IntellijSensitiveDataValidator extends SensitiveDataValidator<Intel
     return ourInstances.computeIfAbsent(
       recorderId,
       id -> {
-        IntellijValidationRulesStorage storage = ValidationRulesStorageProvider.newStorage(recorderId);
+        FusComponentProvider.FusComponents fusComponents = FusComponentProvider.createFusComponents(recorderId);
         return ApplicationManager.getApplication().isUnitTestMode()
-               ? new BlindSensitiveDataValidator(storage, recorderId)
-               : new IntellijSensitiveDataValidator(storage, recorderId);
+               ? new BlindSensitiveDataValidator(fusComponents, recorderId)
+               : new IntellijSensitiveDataValidator(fusComponents, recorderId);
       }
     );
   }
@@ -124,25 +132,115 @@ public class IntellijSensitiveDataValidator extends SensitiveDataValidator<Intel
     return ourInstances.get(recorderId);
   }
 
+  private final FusComponentProvider.FusComponents myFusComponents;
   private final String myRecorderId;
 
-  protected IntellijSensitiveDataValidator(@NotNull IntellijValidationRulesStorage storage, @NotNull String recorderId) {
-    super(storage);
+  protected IntellijSensitiveDataValidator(@NotNull FusComponentProvider.FusComponents fusComponents, @NotNull String recorderId) {
+    super(fusComponents.getMetadataStorage());
+    myFusComponents = fusComponents;
     myRecorderId = recorderId;
+  }
+  /**
+   * @deprecated Do not use this. Metadata/dictionary storage is handled internally by ap-validation library.
+   */
+  @Deprecated
+  protected IntellijSensitiveDataValidator(@NotNull IntellijValidationRulesStorage storage, @NotNull String recorderId) {
+    super(new MetadataStorage<>() {
+      @Override
+      public @Nullable Object update(@NotNull CoroutineScope scope, @NotNull Continuation<? super Job> continuation) { return null; }
+
+      @Override
+      public boolean update() { return false; }
+
+      @Override
+      public void reload() { }
+
+      @Override
+      public @NotNull Set<String> getFieldsToAnonymize(@NotNull String s, @NotNull String s1) { return Set.of(); }
+
+      @Override
+      public @NotNull Set<String> getSkipAnonymizationIds() { return Set.of(); }
+
+      @Override
+      public @NotNull IGroupValidators<EventLogBuild> getGroupValidators(@NotNull String s) {
+        return new IGroupValidators<>() {
+          @Override
+          public @Nullable IEventGroupRules getEventGroupRules() { return null; }
+
+          @Override
+          public @Nullable IEventGroupsFilterRules<EventLogBuild> getVersionFilter() { return null; }
+        };
+      }
+
+      @Override
+      public boolean isUnreachable() { return false; }
+
+      @Override
+      public @NotNull RecorderDataValidationRule getSystemDataRulesRevisions() { return null; }
+
+      @Override
+      public @NotNull RecorderDataValidationRule getClientDataRulesRevisions() { return null; }
+
+      @Override
+      public @NotNull RecorderDataValidationRule getIdsRulesRevisions() { return null; }
+    });
+    myFusComponents = null;
+    myRecorderId = recorderId;
+  }
+
+  public MessageBus getMessageBus() {
+    return myFusComponents.getMessageBus();
   }
 
   public boolean isGroupAllowed(@NotNull EventLogGroup group) {
     if (StatisticsRecorderUtil.isTestModeEnabled(myRecorderId)) return true;
 
-    IntellijValidationRulesStorage storage = getValidationRulesStorage();
+    MetadataStorage<EventLogBuild> storage = getValidationRulesStorage();
     if (storage.isUnreachable()) return true;
-    return storage.getGroupRules(group.getId()) != null;
+    return storage.getGroupValidators(group.getId()).getEventGroupRules() != null;
+  }
+
+  /**
+   * only for binary compatibility - in case somebody has overriden this method
+   *
+   * @deprecated If you really must, override the same methods using IEventContext and IEventGroupRules as parameters
+   */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2026.1")
+  public String guaranteeCorrectEventId(@NotNull EventContext context, @Nullable EventGroupRules groupRules) {
+    return null;
   }
 
   @Override
-  public @NotNull Map<String, Object> guaranteeCorrectEventData(@NotNull EventContext context, EventGroupRules groupRules) {
+  public @NotNull String guaranteeCorrectEventId(@NotNull IEventContext context, @Nullable IEventGroupRules groupRules){
+    if (context instanceof EventContext && groupRules instanceof EventGroupRules) {
+      var result = guaranteeCorrectEventId((EventContext)context, (EventGroupRules)groupRules);
+      if (result != null) return result;
+    }
+
+    return super.guaranteeCorrectEventId(context, groupRules);
+  }
+
+  /**
+   * only for binary compatibility - in case somebody has overriden this method
+   *
+   * @deprecated If you really must, override the same methods using IEventContext and IEventGroupRules as parameters
+   */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2026.1")
+  public Map<String, Object> guaranteeCorrectEventData(@NotNull EventContext context, EventGroupRules groupRules) {
+    return null;
+  }
+
+  @Override
+  public @NotNull Map<String, Object> guaranteeCorrectEventData(@NotNull IEventContext context, IEventGroupRules groupRules) {
+    if (context instanceof EventContext && groupRules instanceof EventGroupRules) {
+      var result = guaranteeCorrectEventData((EventContext)context, (EventGroupRules)groupRules);
+      if (result != null) return result;
+    }
+
     if (isTestModeEnabled(groupRules)) {
-      return context.eventData;
+      return context.getEventData();
     }
 
     Map<String, Object> validatedData = super.guaranteeCorrectEventData(context, groupRules);
@@ -157,7 +255,7 @@ public class IntellijSensitiveDataValidator extends SensitiveDataValidator<Intel
     return validatedData;
   }
 
-  private boolean isTestModeEnabled(@Nullable EventGroupRules rule) {
+  private boolean isTestModeEnabled(@Nullable IEventGroupRules rule) {
     return StatisticsRecorderUtil.isTestModeEnabled(myRecorderId) && rule != null &&
            ContainerUtil.exists(rule.getEventIdRules(), r -> r instanceof TestModeValidationRule);
   }
@@ -166,23 +264,19 @@ public class IntellijSensitiveDataValidator extends SensitiveDataValidator<Intel
     getValidationRulesStorage().update();
   }
 
-  public void reload() {
-    getValidationRulesStorage().reload();
-  }
-
   private static class BlindSensitiveDataValidator extends IntellijSensitiveDataValidator {
-    protected BlindSensitiveDataValidator(@NotNull IntellijValidationRulesStorage storage, @NotNull String recorderId) {
-      super(storage, recorderId);
+    protected BlindSensitiveDataValidator(@NotNull FusComponentProvider.FusComponents fusComponents, @NotNull String recorderId) {
+      super(fusComponents, recorderId);
     }
 
     @Override
-    public @NotNull String guaranteeCorrectEventId(@NotNull EventContext context, @Nullable EventGroupRules groupRules) {
-      return context.eventId;
+    public @NotNull String guaranteeCorrectEventId(@NotNull IEventContext context, @Nullable IEventGroupRules groupRules) {
+      return context.getEventId();
     }
 
     @Override
-    public @NotNull Map<String, Object> guaranteeCorrectEventData(@NotNull EventContext context, EventGroupRules groupRules) {
-      return context.eventData;
+    public @NotNull Map<String, Object> guaranteeCorrectEventData(@NotNull IEventContext context, IEventGroupRules groupRules) {
+      return context.getEventData();
     }
 
     @Override

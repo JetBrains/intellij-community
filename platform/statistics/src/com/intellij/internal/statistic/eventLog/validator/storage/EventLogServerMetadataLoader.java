@@ -8,9 +8,11 @@ import com.intellij.internal.statistic.eventLog.connection.metadata.StatsConnect
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Only used for test {@link com.intellij.ide.starter.extended.TestContextExtensionKt#loadMetadataFromServer}
+ */
 public class EventLogServerMetadataLoader implements EventLogMetadataLoader {
   private final @NotNull EventLogSettingsClient mySettingsClient;
 
@@ -23,31 +25,8 @@ public class EventLogServerMetadataLoader implements EventLogMetadataLoader {
   }
 
   @Override
-  public long getLastModifiedOnServer() {
-    StatsConnectionSettings settings = mySettingsClient.getApplicationInfo().getConnectionSettings();
-    return EventLogMetadataUtils.lastModifiedMetadata(mySettingsClient.provideMetadataProductUrl(), settings);
-  }
-
-  @Override
   public @NotNull String loadMetadataFromServer() throws EventLogMetadataLoadException {
     StatsConnectionSettings settings = mySettingsClient.getApplicationInfo().getConnectionSettings();
     return EventLogMetadataUtils.loadMetadataFromServer(mySettingsClient.provideMetadataProductUrl(), settings);
-  }
-
-  @Override
-  public @NotNull Map<String, Long> getDictionariesLastModifiedOnServer(String recorderId) throws EventLogMetadataLoadException {
-    StatsConnectionSettings settings = mySettingsClient.getApplicationInfo().getConnectionSettings();
-    return EventLogMetadataUtils.dictionariesLastModified(mySettingsClient.provideDictionaryServiceUrl(), recorderId, settings);
-  }
-
-  @Override
-  public @NotNull String loadDictionaryFromServer(String recorderId, String dictionaryName) throws EventLogMetadataLoadException {
-    StatsConnectionSettings settings = mySettingsClient.getApplicationInfo().getConnectionSettings();
-    return EventLogMetadataUtils.loadDictionaryFromServer(mySettingsClient.provideDictionaryServiceUrl(), recorderId, dictionaryName, settings);
-  }
-
-  @Override
-  public @NotNull Map<String, String> getOptionValues() {
-    return mySettingsClient.provideOptions();
   }
 }

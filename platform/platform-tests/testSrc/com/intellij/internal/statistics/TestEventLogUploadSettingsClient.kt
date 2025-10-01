@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.eventLog.connection.metadata.StatsConnect
 import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
 import com.jetbrains.fus.reporting.jvm.JvmHttpClient
 import com.jetbrains.fus.reporting.jvm.ProxyInfo
-import com.jetbrains.fus.reporting.serialization.FusKotlinSerializer
+import com.jetbrains.fus.reporting.serialization.FusJacksonSerializer
 import java.security.SecureRandom
 import java.time.Duration
 import javax.net.ssl.SSLContext
@@ -17,7 +17,7 @@ const val DEFAULT_RECORDER_ID = "FUS"
 
 internal class TestEventLogUploadSettingsClient(configurationUrl: String) : EventLogSettingsClient() {
   override val applicationInfo = TestEventLogApplicationInfo()
-  override val configurationClient = ConfigurationClientFactory.Companion.createTest(
+  override val configurationClient = ConfigurationClientFactory.createTest(
     applicationInfo.productCode,
     applicationInfo.productVersion,
     httpClient = JvmHttpClient(
@@ -30,7 +30,7 @@ internal class TestEventLogUploadSettingsClient(configurationUrl: String) : Even
       timeout = Duration.ofSeconds(1)
     ),
     configurationUrl = configurationUrl,
-    serializer = FusKotlinSerializer()
+    serializer = FusJacksonSerializer
   )
   override val recorderId: String = DEFAULT_RECORDER_ID
 }
