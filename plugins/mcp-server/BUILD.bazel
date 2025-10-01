@@ -70,9 +70,11 @@ jvm_library(
     "//plugins/sh/core",
     "//platform/util/jdom",
     "//libraries/io",
-    "//libraries/ktor-client",
-    "//libraries/ktor-client-cio",
+    "//libraries/ktor/client",
+    "//libraries/ktor/client-cio:libraries-ktor-client-cio",
+    "//libraries/ktor/network-tls:libraries-ktor-network-tls",
     "@lib//:mcpserver-ktor-server-cio-internal",
+    "//libraries/ktor/io",
   ]
 )
 
@@ -151,9 +153,11 @@ jvm_library(
     "//plugins/sh/core",
     "//platform/util/jdom",
     "//libraries/io",
-    "//libraries/ktor-client",
-    "//libraries/ktor-client-cio",
+    "//libraries/ktor/client",
+    "//libraries/ktor/client-cio:libraries-ktor-client-cio",
+    "//libraries/ktor/network-tls:libraries-ktor-network-tls",
     "@lib//:mcpserver-ktor-server-cio-internal",
+    "//libraries/ktor/io",
   ]
 )
 ### auto-generated section `build intellij.mcpserver` end

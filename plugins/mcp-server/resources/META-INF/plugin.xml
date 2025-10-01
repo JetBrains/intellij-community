@@ -22,6 +22,8 @@
   <dependencies>
     <module name="intellij.libraries.kotlinx.io"/>
     <module name="intellij.libraries.ktor.client"/>
+    <module name="intellij.libraries.ktor.io"/>
+    <module name="intellij.libraries.ktor.network.tls"/>
     <module name="intellij.libraries.ktor.client.cio"/>
   </dependencies>
 

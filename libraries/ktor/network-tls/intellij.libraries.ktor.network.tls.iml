@@ -7,6 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="kotlinx-io-core" level="project" />
+    <orderEntry type="library" exported="" name="ktor-network-tls" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
   </component>
 </module>

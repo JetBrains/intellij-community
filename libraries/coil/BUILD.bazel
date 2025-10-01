@@ -19,7 +19,7 @@ jvm_library(
     "@lib//:libraries-coil-io-coil-kt-coil3-compose-jvm",
   ],
   runtime_deps = [
-    "//libraries/ktor-client",
+    "//libraries/ktor/client",
     "//libraries/compose-foundation-desktop",
     "@lib//:libraries-coil-io-coil-kt-coil3-network-ktor3-jvm",
     "@lib//:libraries-coil-io-coil-kt-coil3-svg-jvm",

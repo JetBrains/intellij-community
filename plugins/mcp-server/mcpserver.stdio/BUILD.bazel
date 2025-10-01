@@ -17,7 +17,7 @@ jvm_library(
     "@lib//:io-modelcontextprotocol-kotlin-sdk",
     "@lib//:io-github-oshai-kotlin-logging-jvm",
     "//libraries/io",
-    "//libraries/ktor-client",
+    "//libraries/ktor/client",
   ],
   exports = [
     "@lib//:kotlin-stdlib",

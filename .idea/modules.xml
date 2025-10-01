@@ -648,8 +648,11 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/io/intellij.libraries.kotlinx.io.iml" filepath="$PROJECT_DIR$/libraries/io/intellij.libraries.kotlinx.io.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/kotlinx/serialization/core/intellij.libraries.kotlinx.serialization.core.iml" filepath="$PROJECT_DIR$/libraries/kotlinx/serialization/core/intellij.libraries.kotlinx.serialization.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/kotlinx/serialization/json/intellij.libraries.kotlinx.serialization.json.iml" filepath="$PROJECT_DIR$/libraries/kotlinx/serialization/json/intellij.libraries.kotlinx.serialization.json.iml" />
-      <module fileurl="file://$PROJECT_DIR$/libraries/ktor-client/intellij.libraries.ktor.client.iml" filepath="$PROJECT_DIR$/libraries/ktor-client/intellij.libraries.ktor.client.iml" />
-      <module fileurl="file://$PROJECT_DIR$/libraries/ktor-client-cio/intellij.libraries.ktor.client.cio.iml" filepath="$PROJECT_DIR$/libraries/ktor-client-cio/intellij.libraries.ktor.client.cio.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/ktor/client/intellij.libraries.ktor.client.iml" filepath="$PROJECT_DIR$/libraries/ktor/client/intellij.libraries.ktor.client.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/ktor/client-cio/intellij.libraries.ktor.client.cio.iml" filepath="$PROJECT_DIR$/libraries/ktor/client-cio/intellij.libraries.ktor.client.cio.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/ktor/io/intellij.libraries.ktor.io.iml" filepath="$PROJECT_DIR$/libraries/ktor/io/intellij.libraries.ktor.io.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/ktor/network-tls/intellij.libraries.ktor.network.tls.iml" filepath="$PROJECT_DIR$/libraries/ktor/network-tls/intellij.libraries.ktor.network.tls.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/ktor/utils/intellij.libraries.ktor.utils.iml" filepath="$PROJECT_DIR$/libraries/ktor/utils/intellij.libraries.ktor.utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/lucene.common/intellij.libraries.lucene.common.iml" filepath="$PROJECT_DIR$/libraries/lucene.common/intellij.libraries.lucene.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/microba/intellij.libraries.microba.iml" filepath="$PROJECT_DIR$/libraries/microba/intellij.libraries.microba.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/mockito/intellij.libraries.mockito.iml" filepath="$PROJECT_DIR$/libraries/mockito/intellij.libraries.mockito.iml" />

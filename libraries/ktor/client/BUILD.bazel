@@ -2,16 +2,16 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
-  name = "ktor-client_resources",
+  name = "client_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "ktor-client",
+  name = "client",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":ktor-client_resources"],
+  resources = [":client_resources"],
   exports = [
     "@lib//:ktor-client-core",
     "@lib//:ktor-client-java",
@@ -21,6 +21,8 @@ jvm_library(
     "@lib//:kotlinx-serialization-json-io",
     "@lib//:ktor-client-auth",
     "@lib//:ktor-client-logging",
+    "//libraries/ktor/utils",
+    "//libraries/ktor/io",
   ],
   runtime_deps = [
     "@lib//:ktor-client-core",
@@ -31,7 +33,8 @@ jvm_library(
     "@lib//:kotlinx-serialization-json-io",
     "@lib//:ktor-client-auth",
     "@lib//:ktor-client-logging",
-    "//libraries/io",
+    "//libraries/ktor/utils",
+    "//libraries/ktor/io",
   ]
 )
 ### auto-generated section `build intellij.libraries.ktor.client` end

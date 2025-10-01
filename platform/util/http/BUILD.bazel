@@ -11,7 +11,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "//libraries/ktor-client",
+    "//libraries/ktor/client",
     "//libraries/io",
   ]
 )
