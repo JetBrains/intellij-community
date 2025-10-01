@@ -918,7 +918,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     }
 
     override fun createActions(): Array<Action> =
-      arrayOf(cancelAction, okAction)
+      arrayOf(okAction, cancelAction)
   }
 
   private class DisableSyncDialog(parent: JComponent, val providerName: String, val showRemoveDataCheckBox: Boolean) : DialogWrapper(parent, false) {
@@ -961,7 +961,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
 
 
     override fun createActions(): Array<Action> =
-      arrayOf(cancelAction, okAction)
+      arrayOf(okAction, cancelAction)
   }
 
   private class AddAccountDialog(parent: JComponent, private val currentUserAccounts: List<UserProviderHolder>) : DialogWrapper(parent, false) {
@@ -1036,7 +1036,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     }
 
     override fun createActions(): Array<Action> =
-      arrayOf(cancelAction, loginAction)
+      arrayOf(loginAction, cancelAction)
 
 
     private fun createRadioButtonPanelForProvider(provider: SettingsSyncCommunicatorProvider, buttonGroup: ButtonGroup, enabled: Boolean): JPanel {
