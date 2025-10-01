@@ -297,8 +297,9 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     intentions.setOffset(offset);
 
     List<HighlightInfo.IntentionActionDescriptor> fixes = new ArrayList<>();
-    CodeInsightContext context = EditorContextManager.getEditorContext(hostEditor, hostFile.getProject());
-    DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor highestPriorityInfoFinder = new DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor(true, true, context);
+    Project project = hostFile.getProject();
+    CodeInsightContext context = EditorContextManager.getEditorContext(hostEditor, project);
+    DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor highestPriorityInfoFinder = new DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor(true, true, context, project);
     List<HighlightInfo> infos = new ArrayList<>();
     List<HighlightInfo> additionalInfos = new ArrayList<>();
     Document document = hostEditor.getDocument();
@@ -306,7 +307,6 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     int lineStartOffset = document.getLineStartOffset(line);
     int lineEndOffset = document.getLineEndOffset(line);
     // assumption: HighlightInfo.fixRange does not extend beyond that the containing lines, otherwise it would look silly, and searching for these infos would be expensive
-    Project project = hostFile.getProject();
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     DaemonCodeAnalyzerEx.processHighlights(model, project, HighlightSeverity.INFORMATION, lineStartOffset, lineEndOffset, context, info -> {
       if (info.containsOffset(offset, true)) {

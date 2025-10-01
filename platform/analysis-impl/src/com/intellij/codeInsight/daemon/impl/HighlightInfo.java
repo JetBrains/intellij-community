@@ -156,6 +156,15 @@ public class HighlightInfo implements Segment {
     @NotNull OffsetStore withHighlighter(@NotNull RangeHighlighterEx highlighter) {
       return highlighter.equals(this.highlighter()) ? this : new OffsetStore(highlighter, fixMarker(), intentionActionDescriptors(), lazyQuickFixes());
     }
+
+    @Override
+    public @NotNull String toString() {
+      return this==TOMB?"TOMB":this==INITIAL_STORE?"INITIAL" :
+         "highlighter: "+highlighter+
+         (fixMarker == null ? "" : "; fixMarker:"+fixMarker.getTextRange()) +
+         (intentionActionDescriptors.isEmpty() ? "" : "; intentionActionDescriptors:"+intentionActionDescriptors)+
+         (lazyQuickFixes.isEmpty() ? "" : "; lazyQuickFixes:"+lazyQuickFixes);
+    }
   }
   // store some offset-containing things in a separate record for atomicity and lock-freedom
   @NotNull
@@ -837,12 +846,12 @@ public class HighlightInfo implements Segment {
 
   public final int getActualStartOffset() {
     RangeHighlighterEx h = offsetStore.highlighter();
-    return h == null || !h.isValid() || isFileLevelAnnotation() ? startOffset : h.getStartOffset();
+    return h == null || !h.isValid() ? startOffset : h.getStartOffset();
   }
 
   public final int getActualEndOffset() {
     RangeHighlighterEx h = offsetStore.highlighter();
-    return h == null || !h.isValid() || isFileLevelAnnotation() ? endOffset : h.getEndOffset();
+    return h == null || !h.isValid() ? endOffset : h.getEndOffset();
   }
 
   public static final class IntentionActionDescriptor {
@@ -1309,25 +1318,32 @@ public class HighlightInfo implements Segment {
 
   @ApiStatus.Internal
   @Contract(pure = true)
-  public static @NotNull HighlightInfo createComposite(@NotNull List<? extends HighlightInfo> infos) {
-    // derive composite's offsets from an info with tooltip, if present
-    HighlightInfo anchorInfo = ContainerUtil.find(infos, info -> info.getToolTip() != null);
-    if (anchorInfo == null) anchorInfo = infos.get(0);
-    Builder builder = anchorInfo.copy(false);
-    String compositeDescription = createCompositeDescription(infos);
-    String compositeTooltip = createCompositeTooltip(infos);
-    if (compositeDescription != null) {
-      builder.description(compositeDescription);
+  public static @NotNull HighlightInfo createComposite(@NotNull List<? extends HighlightInfo> infos, @NotNull Project project) {
+    // sync to avoid data race on info.getHighlighter, which is updated under HU lock only
+    synchronized (HighlightInfoUpdater.getInstance(project)) {
+      // derive composite's offsets from an info with tooltip, if present
+      HighlightInfo anchorInfo = ContainerUtil.find(infos, info -> info.getToolTip() != null && info.getHighlighter() != null);
+      if (anchorInfo == null) anchorInfo = infos.get(0);
+      Builder builder = anchorInfo.copy(false);
+      String compositeDescription = createCompositeDescription(infos);
+      String compositeTooltip = createCompositeTooltip(infos);
+      if (compositeDescription != null) {
+        builder.description(compositeDescription);
+      }
+      if (compositeTooltip != null) {
+        builder.escapedToolTip(compositeTooltip);
+      }
+      HighlightInfo newInfo = builder.createUnconditionally();
+      OffsetStore oldStore = newInfo.offsetStore;
+      List<IntentionActionDescriptor> newDescriptors =
+        ContainerUtil.concat(ContainerUtil.map(infos, i -> ((HighlightInfo)i).offsetStore.intentionActionDescriptors()));
+      OffsetStore newStore = oldStore.withIntentionDescriptorsAndFixMarker(newDescriptors, oldStore.fixMarker());
+      if (anchorInfo.getHighlighter() != null) {
+        newStore = newStore.withHighlighter(anchorInfo.getHighlighter());
+      }
+      newInfo.offsetStore = newStore;
+      return newInfo;
     }
-    if (compositeTooltip != null) {
-      builder.escapedToolTip(compositeTooltip);
-    }
-    HighlightInfo newInfo = builder.createUnconditionally();
-    OffsetStore oldStore = newInfo.offsetStore;
-    List<IntentionActionDescriptor> newDescriptors =
-      ContainerUtil.concat(ContainerUtil.map(infos, i -> ((HighlightInfo)i).offsetStore.intentionActionDescriptors()));
-    newInfo.offsetStore = oldStore.withIntentionDescriptorsAndFixMarker(newDescriptors, oldStore.fixMarker()).withHighlighter(anchorInfo.getHighlighter());
-    return newInfo;
   }
   private static @Nullable @NlsSafe String createCompositeDescription(@NotNull List<? extends HighlightInfo> infos) {
     StringBuilder description = new StringBuilder();
@@ -1380,7 +1396,7 @@ public class HighlightInfo implements Segment {
         return oldStore;
       }
       // invariant: the highlighter can only be written once, in a 'null -> notnull' way
-      assert oldStore.highlighter() == null || oldStore.highlighter() == newStore.highlighter() : "Trying overwrite '"+oldStore+"' with '"+newStore+"'";
+      assert oldStore != TOMB && (oldStore.highlighter() == null || oldStore.highlighter() == newStore.highlighter()) : "Trying overwrite '"+oldStore+"' with '"+newStore+"'";
       if (OFFSET_STORE_HANDLE.compareAndSet(this, oldStore, newStore)) {
         return newStore;
       }
@@ -1466,6 +1482,9 @@ public class HighlightInfo implements Segment {
     updateOffsetStore(oldStore -> {
       progressIndicator.get().cancel(); // cancel the previous computations started before but not stored in the "future" field because the CAS failed
       progressIndicator.set(new DaemonProgressIndicator());
+      if (oldStore == TOMB) {
+        return oldStore;
+      }
       List<LazyFixDescription> newLazyFixes = ContainerUtil.map(oldStore.lazyQuickFixes(), description -> {
         Future<List<IntentionActionDescriptor>> future = description.future();
         if (future == null) {
@@ -1557,5 +1576,11 @@ public class HighlightInfo implements Segment {
       builder.group(group);
     }
     return builder;
+  }
+
+  private static final OffsetStore TOMB = new OffsetStore(null, null, List.of(), List.of());
+  // after recycled the highlighter, destroy its reference to avoid the highlighter being stored in two HIs by accident
+  void invalidate() {
+    offsetStore = TOMB;
   }
 }

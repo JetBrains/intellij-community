@@ -459,6 +459,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   @Override
+  @RequiresBackgroundThread
   public @NotNull List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile, @NotNull Document document, @NotNull ProgressIndicator progress) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     assertFileFromMyProject(psiFile.getProject(), psiFile);
@@ -1147,7 +1148,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                                         @NotNull HighlightSeverity minSeverity,
                                                         boolean includeFileLevel,
                                                         @NotNull CodeInsightContext context) {
-    HighlightByOffsetProcessor processor = new HighlightByOffsetProcessor(highestPriorityOnly, includeFileLevel, context);
+    HighlightByOffsetProcessor processor = new HighlightByOffsetProcessor(highestPriorityOnly, includeFileLevel, context, myProject);
     processHighlightsNearOffset(document, myProject, minSeverity, offset, includeFixRange, processor);
     return processor.getResult();
   }
@@ -1191,11 +1192,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     private final boolean highestPriorityOnly;
     private final boolean myIncludeFileLevel;
     private final @NotNull CodeInsightContext highlightingContext;
+    @NotNull private final Project myProject;
 
-    HighlightByOffsetProcessor(boolean highestPriorityOnly, boolean includeFileLevel, @NotNull CodeInsightContext context) {
+    HighlightByOffsetProcessor(boolean highestPriorityOnly, boolean includeFileLevel, @NotNull CodeInsightContext context, @NotNull Project project) {
       this.highestPriorityOnly = highestPriorityOnly;
       myIncludeFileLevel = includeFileLevel;
       highlightingContext = context;
+      myProject = project;
     }
 
     @Override
@@ -1233,7 +1236,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         return foundInfoList.get(0);
       }
       foundInfoList.sort(Comparator.comparing(HighlightInfo::getSeverity).reversed());
-      return HighlightInfo.createComposite(foundInfoList);
+      return HighlightInfo.createComposite(foundInfoList, myProject);
     }
   }
 
@@ -1822,7 +1825,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     Editor editor = PsiEditorUtil.getInstance().findEditorByPsiElement(psiFile);
     if (editor != null) {
-      TextEditorHighlightingPass showAutoImportPass = new ShowAutoImportPass(psiFile, editor, ProperTextRange.create(visibleRange.isProperRange() ? visibleRange : psiFile.getTextRange()), false);
+      ShowAutoImportPass showAutoImportPass = new ShowAutoImportPass(psiFile, editor, ProperTextRange.create(visibleRange.isProperRange() ? visibleRange : psiFile.getTextRange()), false);
       // have to restart ShowAutoImportPass manually because the highlighting session might very well be over by now
       ApplicationManager.getApplication().invokeLater(() -> {
         DaemonProgressIndicator sessionIndicator = new DaemonProgressIndicator();

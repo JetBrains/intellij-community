@@ -86,8 +86,8 @@ public final class BackgroundUpdateHighlightersUtil {
     boolean[] changed = {false};
     HighlighterRecycler.runWithRecycler(session, toReuse -> {
       Processor<HighlightInfo> processor = info -> {
-        if (info.getGroup() == group && !info.isFromAnnotator() && !info.isFromInspection()) { // ignore annotators/inspections, they are applied via HighlightInfoUpdater
-          RangeHighlighterEx highlighter = info.getHighlighter();
+        RangeHighlighterEx highlighter = info.getHighlighter();
+        if (highlighter != null && info.getGroup() == group && !info.isFromAnnotator() && !info.isFromInspection()) { // ignore annotators/inspections, they are applied via HighlightInfoUpdater
           int hiStart = highlighter.getStartOffset();
           int hiEnd = highlighter.getEndOffset();
 
