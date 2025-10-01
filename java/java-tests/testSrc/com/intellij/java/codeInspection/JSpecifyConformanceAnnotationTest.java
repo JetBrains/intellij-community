@@ -127,7 +127,7 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
     PsiFile file = myFixture.addFileToProject(relativeFile, stripped);
 
     Map<PsiElement, String> actual = new LinkedHashMap<>();
-    var dfaInspection = new JSpecifyAnnotationTest.JSpecifyDataFlowInspection(actual);
+    var dfaInspection = new JSpecifyFilteredAnnotationTest.JSpecifyDataFlowInspection(actual);
     dfaInspection.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true;
     var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
     List<LocalInspectionTool> inspections = List.of(dfaInspection, nullableStuffInspection);
