@@ -2,15 +2,30 @@
 package com.intellij.platform.eel
 
 import org.jetbrains.annotations.ApiStatus
+import kotlin.reflect.KClass
 
 /**
  * `com.intellij.platform.eel.codegen.BuildersGeneratorTest` generates builders for all methods
  * that have a single argument with this annotation.
+ *
+ * @property type The class type associated with the generated builder.
+ * It must be a subtype of the annotated argument's type.
+ * Default value of the type property is `GeneratedBuilder::class` which means that the annotated argument's type will be used.
+ *
+ * Examples:
+ * ```kotlin
+ * // Generates a builder for `ExecuteProcessWindowsOptions`
+ * fun spawnProcess(@GeneratedBuilder(ExecuteProcessWindowsOptions::class) generatedBuilder: ExecuteProcessOptions)
+ * ```
+ * `````kotlin
+ * // Generates a builder for `ExecuteProcessOptions`
+ * fun spawnProcess(@GeneratedBuilder() generatedBuilder: ExecuteProcessOptions)
+ * ```
  */
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @ApiStatus.Internal
-annotation class GeneratedBuilder {
+annotation class GeneratedBuilder(val type: KClass<*> = GeneratedBuilder::class) {
   /**
    * The only purpose of this annotation is to help to find generated builders via "Find Usages".
    */
