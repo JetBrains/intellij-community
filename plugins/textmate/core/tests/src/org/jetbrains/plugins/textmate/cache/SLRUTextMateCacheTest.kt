@@ -4,11 +4,21 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.testTimeSource
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.textmate.TestUtilMultiplatform
 import org.jetbrains.plugins.textmate.update
 import org.junit.jupiter.api.Test
@@ -16,8 +26,11 @@ import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
-import kotlin.random.Random
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
@@ -210,7 +223,7 @@ class SLRUTextMateCacheTest {
       capacity = 10,
       computeFn = { key ->
         TestUtilMultiplatform.threadSleep(10) // Simulate blocking computation time
-        "computed-$key-${Random.nextInt()}"
+        "computed-$key-${kotlin.random.Random.nextInt()}"
       },
       disposeFn = { }
     )

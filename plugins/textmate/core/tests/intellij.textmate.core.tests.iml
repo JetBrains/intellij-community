@@ -15,5 +15,8 @@
     <orderEntry type="module" module-name="intellij.textmate.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-collections-immutable" level="project" />
   </component>
 </module>
