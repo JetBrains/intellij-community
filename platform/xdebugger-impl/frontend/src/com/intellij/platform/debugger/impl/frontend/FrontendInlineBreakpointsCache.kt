@@ -39,7 +39,7 @@ internal class FrontendInlineBreakpointsCache(
   private val entriesLock = Mutex()
   private val requestCounter = AtomicLong()
 
-  internal fun increment() = requestCounter.incrementAndGet()
+  internal fun incrementRequestId() = requestCounter.incrementAndGet()
 
   private fun getDocumentCache(document: Document): DocumentCacheEntry? {
     assert(entriesLock.isLocked) { "This method should be called under the lock" }
@@ -81,12 +81,12 @@ internal class FrontendInlineBreakpointsCache(
       return
     }
     val cachedVariants = getCachedVariants(document, lines)
-    // Draw cached variants if available
+    // First, use cached variants if available
     if (cachedVariants != null && !block(cachedVariants)) {
-      // draw request is outdated, no need for the backend request, as it will be drawn anyway
+      // the caller marked this request as outdated
       return
     }
-    // Draw variants from the backend anyway
+    // Second, request variants from backend and updated the cache
     block(cacheVariantsFromBackend(document, lines))
   }
 
@@ -94,7 +94,7 @@ internal class FrontendInlineBreakpointsCache(
     document: Document,
     lines: Set<Int>,
   ): Map<Int, List<InlineVariantWithMatchingBreakpointProxy>> {
-    val requestId = increment()
+    val requestId = incrementRequestId()
     // create the document cache before requesting backend to save the document stamp
     val documentCache = entriesLock.withLock {
       getOrCreateDocumentCache(document)
@@ -117,11 +117,13 @@ internal class FrontendInlineBreakpointsCache(
     cachedVariants: List<InlineVariantWithMatchingBreakpointProxy>?,
     requestId: Long,
   ): List<InlineVariantWithMatchingBreakpointProxy> {
-    if (cachedVariants == null || cachedVariants.size != beVariants.size) return beVariants
+    if (cachedVariants == null) return beVariants
+    // cached variants are out of sync, we cannot merge, so just clear cached data
+    if (cachedVariants.size != beVariants.size) return beVariants
     if (cachedVariants.none { it.isPendingInstall(requestId) }) return beVariants
     return cachedVariants.zip(beVariants) { cached, be ->
       if (cached.isPendingInstall(requestId)) {
-        be.copy(breakpoint = cached.breakpoint)
+        be.copy(lightBreakpoint = cached.lightBreakpoint)
       }
       else {
         be
@@ -142,7 +144,7 @@ internal class FrontendInlineBreakpointsCache(
         val (variantDto, breakpointId) = dto
         val breakpoint = breakpointId?.let { breakpointsManager.getBreakpointById(it) } as? XLineBreakpointProxy
         val variant = variantDto?.let { FrontendXLineBreakpointInlineVariantProxy(it, cs, index, this) }
-        InlineVariantWithMatchingBreakpointProxy(breakpoint?.asInlineLightBreakpoint(), variant)
+        InlineVariantWithMatchingBreakpointProxy(variant, breakpoint?.asInlineLightBreakpoint())
       }
     }
   }
@@ -157,7 +159,7 @@ internal class FrontendInlineBreakpointsCache(
         if (entry.any { it.isBreakpointDisposed() }) {
           entry = entry.mapNotNull {
             if (it.isBreakpointDisposed()) {
-              if (it.variant == null) null else it.copy(breakpoint = null)
+              if (it.variant == null) null else it.copy(lightBreakpoint = null)
             }
             else {
               it
@@ -176,11 +178,12 @@ internal class FrontendInlineBreakpointsCache(
       // Do nothing if no data in the cache
       val variants = documentCache.lineCache[line] ?: return
       val variantEntry = variants.firstOrNull { it.variant === variant } ?: return
+      // If a breakpoint has been already installed, the temporary breakpoint is outdated
+      if (variantEntry.lightBreakpoint != null) return
       // Replace a null breakpoint with a temporary one
-      if (variantEntry.breakpoint != null) return
       documentCache.lineCache[line] = variants.map {
         if (it === variantEntry) {
-          it.copy(breakpoint = breakpoint)
+          it.copy(lightBreakpoint = breakpoint)
         }
         else {
           it
@@ -191,11 +194,11 @@ internal class FrontendInlineBreakpointsCache(
 }
 
 private fun InlineVariantWithMatchingBreakpointProxy.isPendingInstall(requestId: Long): Boolean {
-  val lightBreakpoint = breakpoint as? FrontendInlineLightBreakpoint ?: return false
+  val lightBreakpoint = lightBreakpoint as? FrontendInlineLightBreakpoint ?: return false
   return lightBreakpoint.unlockedBeforeRequestId > requestId
 }
 
-private fun InlineVariantWithMatchingBreakpointProxy.isBreakpointDisposed(): Boolean = breakpoint?.breakpointProxy?.isDisposed() == true
+private fun InlineVariantWithMatchingBreakpointProxy.isBreakpointDisposed(): Boolean = lightBreakpoint?.breakpointProxy?.isDisposed() == true
 
 private class FrontendXLineBreakpointInlineVariantProxy(
   private val variant: XInlineBreakpointVariantDto,
@@ -219,7 +222,7 @@ private class FrontendXLineBreakpointInlineVariantProxy(
         XBreakpointTypeApi.getInstance().createVariantBreakpoint(project.projectId(), file.rpcId(), line, index)
       }
       finally {
-        lightBreakpoint.unlockedBeforeRequestId = cache.increment()
+        lightBreakpoint.unlockedBeforeRequestId = cache.incrementRequestId()
       }
     }
   }

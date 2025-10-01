@@ -310,7 +310,7 @@ class InlineBreakpointInlayManager(private val project: Project, parentScope: Co
     val lineRange = DocumentUtil.getLineStartIndentedOffset(document, line)..document.getLineEndOffset(line)
     assert(!lineRange.isEmpty())
 
-    return variants.map { (breakpoint, variant) ->
+    return variants.map { (variant, breakpoint) ->
       val offset = if (breakpoint != null) {
         getBreakpointRangeStartOffset(breakpoint, lineRange)
       }

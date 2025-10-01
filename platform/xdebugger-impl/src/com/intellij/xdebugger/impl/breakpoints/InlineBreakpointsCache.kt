@@ -28,9 +28,9 @@ interface InlineBreakpointsCache {
 internal class MonolithInlineBreakpointsCache(override val project: Project) : InlineBreakpointsCache {
   override suspend fun performWithVariants(document: Document, lines: Set<Int>, block: suspend (Map<Int, List<InlineVariantWithMatchingBreakpointProxy>>) -> Boolean) { // calculate variants without caching
     val variants = InlineBreakpointsVariantsManager.getInstance(project).calculateBreakpointsVariants(document, lines).mapValues { (_, variants) ->
-        variants.map { (breakpoint, variant) ->
+        variants.map { (variant, breakpoint) ->
           val inlineBreakpoint = breakpoint?.asProxy()?.asInlineLightBreakpoint()
-          InlineVariantWithMatchingBreakpointProxy(inlineBreakpoint, variant?.asProxy())
+          InlineVariantWithMatchingBreakpointProxy(variant?.asProxy(), inlineBreakpoint)
         }
       }
     block(variants)
