@@ -308,7 +308,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
     if (buttonManager is ToolWindowPaneNewButtonManager) {
       buttonManager.addVisibleToolbarsListener { leftVisible, rightVisible ->
         val isIslands = isManyIslandEnabled
-        val gap = JBUI.unscale(JBUI.getInt("Islands.emptyGap", JBUI.scale(4)))
+        val gap = JBUI.getInt("Islands.emptyGap", 4)
 
         if (SystemInfo.isMac) {
           UIUtil.getRootPane(toolWindowPaneParent)?.let { rootPane ->
@@ -553,8 +553,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
       val height = component.height
 
       val shape = Area(Rectangle(0, 0, width, height))
-      val cornerRadius = JBUI.getInt("Island.arc", 10).toFloat()
-      val borderWith = JBUI.getInt("Island.borderWidth", 4)
+      val cornerRadius = JBUIScale.scale(JBUI.getInt("Island.arc", 10).toFloat())
+      val borderWith = JBUI.scale(JBUI.getInt("Island.borderWidth", 4))
       val offset = borderWith / 2f
       val offsetWidth = borderWith + 0.5f
       val border = Area(RoundRectangle2D.Float(offset, offset, width.toFloat() - offsetWidth, height.toFloat() - offsetWidth, cornerRadius, cornerRadius))
@@ -752,7 +752,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
     if (selected || hovered) {
       val gg = if (isGradient) IdeBackgroundUtil.getOriginalGraphics(g) else g
-      val cornerRadius = JBUI.getInt("Island.arc", 10)
+      val cornerRadius = JBUI.scale(JBUI.getInt("Island.arc", 10))
 
       rect.x += JBUI.scale(1)
       rect.width -= rect.x * 2
