@@ -18,14 +18,14 @@ import kotlin.io.path.readText
 private const val RECEIPT_FILE_NAME: String = "receipt.json"
 
 /**
- * This collector sends information from the receipt.json file about the source from which
- * the user arrived at the site start.ktor.io.
- * Fields are validated as strings to allow for adding values from the FUS server.
+ * This collector sends information from the receipt.json file about the source from which the user arrived (for example, from start.ktor.io,
+ * or from any other sites that create projects with a necessary receipt.json format).
+ * Fields are validated as strings to allow adding values from the FUS server.
  *
  * The receipt.json file will be deleted once it has been read.
  */
 internal class KotlinProjectOpenerCollector : ProjectUsagesCollector() {
-    private val GROUP = EventLogGroup("ktor.project.opener", 5)
+    private val GROUP = EventLogGroup("kotlin.project.opener", 1)
 
     private val utmSourceList = listOf(
         "google",
@@ -44,13 +44,11 @@ internal class KotlinProjectOpenerCollector : ProjectUsagesCollector() {
     private val utmMediumList =
         listOf("social", "referral", "cpc", "email", "banner", "conference", "organic", "integration", "sticky_banner", "other")
 
-    private val utmCampaignList = listOf("ktor3-wave2", "organic", "other")
-
     private val UTM_SOURCE = EventFields.String("utm_source", utmSourceList)
     private val UTM_MEDIUM = EventFields.String("utm_medium", utmMediumList)
-    private val UTM_CAMPAIGN = EventFields.String("utm_campaign", utmCampaignList)
+    private val UTM_CAMPAIGN = EventFields.StringValidatedByInlineRegexp("utm_campaign", "ktor3-wave2|organic|other|c-(\\d)+")
 
-    private val KTOR_PROJECT_OPENED_FROM_WEBSITE = GROUP.registerEvent(
+    private val PROJECT_OPENED_FROM_WEBSITE = GROUP.registerEvent(
         "project.opened.from.website",
         UTM_SOURCE, UTM_MEDIUM, UTM_CAMPAIGN
     )
@@ -93,7 +91,7 @@ internal class KotlinProjectOpenerCollector : ProjectUsagesCollector() {
     private fun KotlinProjectOpenEvent.toMetricEvent(): MetricEvent {
         val (utmSource, utmMedium, utmCampaign) = spec.parameters
 
-        return KTOR_PROJECT_OPENED_FROM_WEBSITE.metric(utmSource, utmMedium, utmCampaign)
+        return PROJECT_OPENED_FROM_WEBSITE.metric(utmSource, utmMedium, utmCampaign)
     }
 }
 
