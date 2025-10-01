@@ -45,7 +45,7 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
   private val myContext: Deferred<DeployingContextAndShell> = run {
     var createdShellProcess: ShellProcessWrapper? = null
     val context = scope.async(start = CoroutineStart.LAZY) {
-      val shellProcess = ShellProcessWrapper(IjentSessionMediator.create(scope, createShellProcess(), ijentLabel, ::isExpectedProcessExit))
+      val shellProcess = ShellProcessWrapper(IjentSessionProcessMediator.create(scope, createShellProcess(), ijentLabel, ::isExpectedProcessExit))
       createdShellProcess = shellProcess
       createDeployingContext(shellProcess.apply {
         val initializationTime = measureTime {
@@ -74,7 +74,7 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
     return myTargetPlatform.await()
   }
 
-  final override suspend fun createProcess(binaryPath: String): IjentSessionMediator {
+  final override suspend fun createProcess(binaryPath: String): IjentSessionProcessMediator {
     return myContext.await().execCommand {
       when (val strategy = getConnectionStrategy()) {
         is IjentConnectionStrategy.Tcp -> execIjentWithTcp(binaryPath, strategy.config)
@@ -97,7 +97,7 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
 
   override suspend fun getConnectionStrategy(): IjentConnectionStrategy = IjentConnectionStrategy.Default
 
-  internal class ShellProcessWrapper(private var mediator: IjentSessionMediator?) {
+  internal class ShellProcessWrapper(private var mediator: IjentSessionProcessMediator?) {
     @OptIn(DelicateCoroutinesApi::class)
     suspend fun write(data: String) {
       val process = mediator!!.process
@@ -163,7 +163,7 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
       }
     }
 
-    fun extractProcess(): IjentSessionMediator {
+    fun extractProcess(): IjentSessionProcessMediator {
       val result = mediator!!
       mediator = null
       return result
@@ -386,7 +386,7 @@ private suspend fun DeployingContextAndShell.uploadIjentBinary(
 }
 
 
-private suspend fun DeployingContextAndShell.execIjent(remotePathToBinary: String): IjentSessionMediator {
+private suspend fun DeployingContextAndShell.execIjent(remotePathToBinary: String): IjentSessionProcessMediator {
   val joinedCmd = getIjentGrpcArgv(remotePathToBinary, selfDeleteOnExit = true, usrBinEnv = context.env).joinToString(" ")
     return createMediator(remotePathToBinary, joinedCmd)
   }
@@ -394,7 +394,7 @@ private suspend fun DeployingContextAndShell.execIjent(remotePathToBinary: Strin
 private suspend fun DeployingContextAndShell.createMediator(
   remotePathToBinary: String,
   joinedCmd: String,
-): IjentSessionMediator {
+): IjentSessionProcessMediator {
   val commandLineArgs = context.run {
     """
     | cd ${posixQuote(remotePathToBinary.substringBeforeLast('/'))};
@@ -408,7 +408,7 @@ private suspend fun DeployingContextAndShell.createMediator(
 }
 
 
-private suspend fun DeployingContextAndShell.execIjentWithTcp(remotePathToBinary: String, tcpConfiguration: TcpConnectionInfo): IjentSessionMediator {
+private suspend fun DeployingContextAndShell.execIjentWithTcp(remotePathToBinary: String, tcpConfiguration: TcpConnectionInfo): IjentSessionProcessMediator {
   val joinedCmd = getIjentGrpcArgv(remotePathToBinary,
                                    selfDeleteOnExit = true,
                                    usrBinEnv = context.env,

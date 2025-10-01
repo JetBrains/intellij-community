@@ -6,7 +6,6 @@ import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.IjentSessionRegistry
-import java.nio.file.Path
 
 /**
  * Given that there is some IJent process launched, this extension gets handles to stdin+stdout of the process and returns
@@ -20,7 +19,7 @@ interface IjentSessionProvider {
     strategy: IjentConnectionStrategy,
     platform: EelPlatform,
     binaryPath: String,
-    mediator: IjentSessionMediator,
+    mediator: IjentSessionProcessMediator,
   ): IjentSession<*>
 
   companion object {
@@ -44,7 +43,7 @@ sealed class IjentStartupError : RuntimeException {
 }
 
 internal class DefaultIjentSessionProvider : IjentSessionProvider {
-  override suspend fun connect(strategy: IjentConnectionStrategy, platform: EelPlatform, binaryPath: String, mediator: IjentSessionMediator): IjentSession<*> {
+  override suspend fun connect(strategy: IjentConnectionStrategy, platform: EelPlatform, binaryPath: String, mediator: IjentSessionProcessMediator): IjentSession<*> {
     throw IjentStartupError.MissingImplPlugin()
   }
 }
@@ -55,7 +54,7 @@ internal class DefaultIjentSessionProvider : IjentSessionProvider {
  *
  * The process terminates automatically only when the IDE exits, or if [IjentApi.close] is called explicitly.
  */
-suspend fun <T : IjentApi> createIjentSession(strategy: IjentConnectionStrategy, binaryPath: String, platform: EelPlatform, mediator: IjentSessionMediator): IjentSession<T> {
+suspend fun <T : IjentApi> createIjentSession(strategy: IjentConnectionStrategy, binaryPath: String, platform: EelPlatform, mediator: IjentSessionProcessMediator): IjentSession<T> {
   @Suppress("UNCHECKED_CAST")
   return IjentSessionProvider.instanceAsync().connect(strategy, platform, binaryPath, mediator) as IjentSession<T>
 }

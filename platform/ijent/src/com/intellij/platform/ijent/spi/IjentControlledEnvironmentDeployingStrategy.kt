@@ -5,8 +5,8 @@ import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentExecFileProvider
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.IjentUnavailableException
-import com.intellij.platform.ijent.spi.IjentSessionMediator.ProcessExitPolicy
-import com.intellij.platform.ijent.spi.IjentSessionMediator.ProcessExitPolicy.CHECK_CODE
+import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy
+import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.CHECK_CODE
 import java.nio.file.Path
 
 /**
@@ -30,7 +30,7 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
    * @param binaryPath path to ijent binary on target environment
    * @return process that will be used for communication
    */
-  protected abstract suspend fun createProcess(binaryPath: String): IjentSessionMediator
+  protected abstract suspend fun createProcess(binaryPath: String): IjentSessionProcessMediator
 
   /**
    * Copy files to the target environment. Typically used to transfer the ijent binary to the target machine.

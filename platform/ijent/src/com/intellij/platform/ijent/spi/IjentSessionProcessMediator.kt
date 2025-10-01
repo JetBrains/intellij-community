@@ -13,8 +13,8 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.coroutineNameAppended
-import com.intellij.platform.ijent.spi.IjentSessionMediator.ProcessExitPolicy.CHECK_CODE
-import com.intellij.platform.ijent.spi.IjentSessionMediator.ProcessExitPolicy.NORMAL
+import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.CHECK_CODE
+import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.NORMAL
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.*
@@ -43,7 +43,7 @@ import kotlin.time.toKotlinDuration
  * No matter if IJent exits expectedly or not, an attempt to do anything with [ijentProcessScope] after the IJent has exited
  * throws [IjentUnavailableException].
  */
-abstract class IjentSessionMediator private constructor(
+abstract class IjentSessionProcessMediator private constructor(
   val ijentProcessScope: CoroutineScope,
   val process: Process,
   val processExit: Deferred<Unit>,
@@ -73,7 +73,7 @@ abstract class IjentSessionMediator private constructor(
 
   companion object {
     /**
-     * See the docs of [IjentSessionMediator].
+     * See the docs of [IjentSessionProcessMediator].
      *
      * [ijentLabel] is used only for logging.
      *
@@ -81,7 +81,7 @@ abstract class IjentSessionMediator private constructor(
      * Nothing happens with [parentScope] if IJent exits expectedly, f.i., after [com.intellij.platform.ijent.IjentApi.close].
      */
     @OptIn(DelicateCoroutinesApi::class)
-    fun create(parentScope: CoroutineScope, process: Process, ijentLabel: String, isExpectedProcessExit: suspend (exitCode: Int) -> Boolean = { it == 0 }): IjentSessionMediator {
+    fun create(parentScope: CoroutineScope, process: Process, ijentLabel: String, isExpectedProcessExit: suspend (exitCode: Int) -> Boolean = { it == 0 }): IjentSessionProcessMediator {
       require(parentScope.coroutineContext[Job] != null) {
         "Scope $parentScope has no Job"
       }
@@ -144,7 +144,7 @@ abstract class IjentSessionMediator private constructor(
 
       val processExit = CompletableDeferred<Unit>()
 
-      val mediator = object : IjentSessionMediator(ijentProcessScope, process, processExit) {
+      val mediator = object : IjentSessionProcessMediator(ijentProcessScope, process, processExit) {
         override suspend fun isExpectedProcessExit(exitCode: Int): Boolean = isExpectedProcessExit(exitCode)
       }
 
@@ -303,7 +303,7 @@ private class LogIjentStderr {
 
 private suspend fun ijentProcessExitAwaiter(
   ijentLabel: String,
-  mediator: IjentSessionMediator,
+  mediator: IjentSessionProcessMediator,
   lastStderrMessages: MutableSharedFlow<String?>,
 ): Nothing {
   while (!mediator.process.waitFor(1, TimeUnit.SECONDS)) {
@@ -358,7 +358,7 @@ private suspend fun collectLines(lastStderrMessages: SharedFlow<String?>, stderr
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-private suspend fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSessionMediator): Nothing {
+private suspend fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSessionProcessMediator): Nothing {
   try {
     awaitCancellation()
   }
@@ -399,4 +399,4 @@ private suspend fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSes
   }
 }
 
-private val LOG = logger<IjentSessionMediator>()
+private val LOG = logger<IjentSessionProcessMediator>()
