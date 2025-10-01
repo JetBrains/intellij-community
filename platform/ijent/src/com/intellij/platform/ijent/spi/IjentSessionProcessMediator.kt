@@ -44,10 +44,10 @@ import kotlin.time.toKotlinDuration
  * throws [IjentUnavailableException].
  */
 abstract class IjentSessionProcessMediator private constructor(
-  val ijentProcessScope: CoroutineScope,
+  override val ijentProcessScope: CoroutineScope,
   val process: Process,
-  val processExit: Deferred<Unit>,
-) {
+  override val processExit: Deferred<Unit>,
+): IjentSessionMediator {
   /**
    * Defines how process exits should be handled in terms of error reporting.
    * Used to determine whether a process termination should be treated as an error.
