@@ -26,6 +26,7 @@ import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.Files
 import java.nio.file.Path
@@ -304,14 +305,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
       .sortedBy { it.moduleName },
   )
 
-  val libAsProductModule: HashSet<String> = layout.includedModules.mapNotNullTo(HashSet()) {
-    if (it.moduleName.startsWith(LIB_MODULE_PREFIX)) {
-      it.moduleName.substring(LIB_MODULE_PREFIX.length).replace('.', '-')
-    }
-    else {
-      null
-    }
-  }
+  val libAsProductModule = collectExportedLibrariesFromLibraryModules(layout, context).keys
   layout.libAsProductModule = libAsProductModule
 
   // sqlite - used by DB and "import settings" (temporarily)
@@ -352,6 +346,50 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   }
 
   return layout
+}
+
+/**
+ * Collects names of libraries that are exported by library modules (modules with prefix [LIB_MODULE_PREFIX]).
+ * 
+ * Library modules like `intellij.libraries.grpc` export one or more project libraries 
+ * (e.g., `grpc-core`, `grpc-stub`, `grpc-kotlin-stub`, `grpc-protobuf`).
+ * These exported libraries should be treated as product modules and not included separately.
+ * 
+ * Note: We cannot replace all direct library references with library modules due to:
+ * - Dual project structures (Fleet, Toolbox) that require direct library references
+ * - Modules used in both production and build scripts (e.g., `intellij.platform.buildScripts.downloader`)
+ * 
+ * @param layout the platform layout containing included modules
+ * @param context the build context
+ * @return map from library name to the library module that exports it
+ */
+fun collectExportedLibrariesFromLibraryModules(
+  layout: PlatformLayout,
+  context: BuildContext
+): Map<String, String> {
+  val javaExtensionService = JpsJavaExtensionService.getInstance()
+  val result = mutableMapOf<String, String>()
+  
+  layout.includedModules
+    .asSequence()
+    .filter { it.moduleName.startsWith(LIB_MODULE_PREFIX) }
+    .forEach { moduleItem ->
+      val module = context.findRequiredModule(moduleItem.moduleName)
+      // Get all library dependencies from the module
+      module.dependenciesList.dependencies
+        .asSequence()
+        .filterIsInstance<JpsLibraryDependency>()
+        .filter { libDep ->
+          // Check if this library is exported
+          javaExtensionService.getDependencyExtension(libDep)?.isExported == true
+        }
+        .mapNotNull { it.library?.name }
+        .forEach { libName ->
+          result[libName] = moduleItem.moduleName
+        }
+    }
+  
+  return result
 }
 
 private fun getProductModuleJarName(moduleName: String, context: BuildContext, frontendModuleFilter: FrontendModuleFilter): String {
