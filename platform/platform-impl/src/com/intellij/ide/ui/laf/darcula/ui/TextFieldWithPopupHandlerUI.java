@@ -650,7 +650,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
     private IconHolder(Extension extension) {
       this.extension = extension;
-      if (extension.isFocusable() && Registry.is("text.field.extension.buttons.focusable")) {
+      if (extension.isFocusable() && Registry.is("text.field.extension.buttons.focusable", true)) {
         iconButton = new IconButton(this);
         iconButton.setToolTipText(extension.getTooltip());
         iconButton.getAccessibleContext().setAccessibleName(extension.getTooltip());
