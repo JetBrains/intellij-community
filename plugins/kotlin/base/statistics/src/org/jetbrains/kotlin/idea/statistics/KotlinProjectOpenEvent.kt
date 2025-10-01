@@ -5,7 +5,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data class KtorOpenEvent(
+internal data class KotlinProjectOpenEvent(
   @SerialName("spec") val spec: Spec,
   @SerialName("timestamp") val timestamp: String,
   @SerialName("uid") val uid: String? = null

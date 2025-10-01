@@ -66,24 +66,24 @@ internal class KtorProjectOpenerCollector : ProjectUsagesCollector() {
     return projectFileDir.resolve(RECEIPT_FILE_NAME)
   }
 
-  private fun readReceiptFile(receiptPath: Path): KtorOpenEvent? {
+  private fun readReceiptFile(receiptPath: Path): KotlinProjectOpenEvent? {
     return runCatching {
       readAndDeserializeJson(receiptPath)
     }.getOrNull()
   }
 
-  private fun readAndDeserializeJson(receiptPath: Path): KtorOpenEvent {
+  private fun readAndDeserializeJson(receiptPath: Path): KotlinProjectOpenEvent {
     val text = receiptPath.readText()
 
     val json = Json { ignoreUnknownKeys = true }
-    val event = json.decodeFromString<KtorOpenEvent>(text)
+    val event = json.decodeFromString<KotlinProjectOpenEvent>(text)
 
     receiptPath.deleteIfExists()
 
     return event
   }
 
-  private fun KtorOpenEvent.toMetricEvent(): MetricEvent {
+  private fun KotlinProjectOpenEvent.toMetricEvent(): MetricEvent {
     val (utmSource, utmMedium, utmCampaign) = spec.parameters
 
     return KTOR_PROJECT_OPENED_FROM_WEBSITE.metric(utmSource, utmMedium, utmCampaign)
