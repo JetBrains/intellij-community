@@ -4,7 +4,7 @@ package com.intellij.python.community.services.systemPython.impl.providers
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.isMac
-import com.intellij.python.community.services.shared.UICustomization
+import com.jetbrains.python.PyToolUIInfo
 import com.intellij.python.community.services.systemPython.icons.PythonCommunityServicesSystemPythonIcons
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.jetbrains.python.PythonBinary
@@ -37,9 +37,9 @@ private class BrewSystemPythonProvider : SystemPythonProvider {
     return PyResult.success(pythons)
   }
 
-  override val uiCustomization: UICustomization?
+  override val uiCustomization: PyToolUIInfo
     get() {
       // TODO: proper icon
-      return UICustomization(title = "homebrew", icon = PythonCommunityServicesSystemPythonIcons.Homebrew)
+      return PyToolUIInfo(toolName = "homebrew", icon = PythonCommunityServicesSystemPythonIcons.Homebrew)
     }
 }

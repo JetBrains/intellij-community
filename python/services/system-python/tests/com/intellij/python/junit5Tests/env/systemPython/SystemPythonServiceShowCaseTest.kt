@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import com.intellij.platform.eel.EelApi
-import com.intellij.python.community.services.shared.UICustomization
+import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import java.nio.file.Path
@@ -120,7 +120,7 @@ class SystemPythonServiceShowCaseTest {
 
   private class CountingTestProvider(
     private val result: PyResult<Set<PythonBinary>>,
-    override val uiCustomization: UICustomization? = null,
+    override val uiCustomization: PyToolUIInfo? = null,
   ) : SystemPythonProvider {
     var calls: Int = 0
     override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> {

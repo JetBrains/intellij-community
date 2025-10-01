@@ -6,7 +6,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.getOrNull
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.python.community.services.shared.UICustomization
+import com.jetbrains.python.PyToolUIInfo
 import com.intellij.python.community.services.systemPython.icons.PythonCommunityServicesSystemPythonIcons
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.jetbrains.python.PythonBinary
@@ -56,9 +56,9 @@ private class PyenvSystemPythonProvider : SystemPythonProvider {
     return PyResult.success(pythons)
   }
 
-  override val uiCustomization: UICustomization?
+  override val uiCustomization: PyToolUIInfo?
     get() {
       // TODO: proper icon
-      return UICustomization(title = "pyenv", icon = PythonCommunityServicesSystemPythonIcons.Pyenv)
+      return PyToolUIInfo(toolName = "pyenv", icon = PythonCommunityServicesSystemPythonIcons.Pyenv)
     }
 }

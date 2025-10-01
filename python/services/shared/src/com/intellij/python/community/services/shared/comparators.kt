@@ -2,6 +2,7 @@
 package com.intellij.python.community.services.shared
 
 import com.intellij.openapi.diagnostic.fileLogger
+import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.psi.LanguageLevel
 import java.util.*
 
@@ -21,9 +22,9 @@ object LanguageLevelComparator : Comparator<LanguageLevelHolder> {
 object UiComparator : Comparator<UiHolder> {
   override fun compare(o1: UiHolder, o2: UiHolder): Int {
     if (logger.isDebugEnabled) {
-      logger.debug("ui ${o1.ui?.title} vs ${o2.ui?.title}")
+      logger.debug("ui ${o1.ui?.toolName} vs ${o2.ui?.toolName}")
     }
-    return Objects.compare(o1.ui, o2.ui, Comparator.nullsFirst(UICustomization::compareTo))
+    return Objects.compare(o1.ui, o2.ui, Comparator.nullsFirst(PyToolUIInfo::compareTo))
   }
 }
 
@@ -36,4 +37,4 @@ class LanguageLevelWithUiComparator<T> : Comparator<T> where T : LanguageLevelHo
   }
 }
 
-private fun <T> T.string(): String where T : LanguageLevelHolder, T : UiHolder = "($languageLevel,${ui?.title})"
+private fun <T> T.string(): String where T : LanguageLevelHolder, T : UiHolder = "($languageLevel,${ui?.toolName})"

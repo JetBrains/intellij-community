@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.interpreters.Interpreter
-import com.intellij.python.community.services.shared.UICustomization
+import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.sdk.flavors.PyFlavorData
@@ -26,7 +26,7 @@ interface InterpreterProvider<T : PyFlavorData> {
       EP.extensionList.firstOrNull { it.flavorDataClass.isInstance(data) } as InterpreterProvider<T>?
   }
 
-  val ui: UICustomization?
+  val ui: PyToolUIInfo?
   val flavorDataClass: Class<T>
   suspend fun createExecutablePython(sdkHomePath: Path, flavorData: T): Result<ExecutablePython, MessageError>
 }

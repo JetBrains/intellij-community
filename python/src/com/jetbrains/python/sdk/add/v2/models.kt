@@ -25,6 +25,7 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.Result.Companion.success
 import com.jetbrains.python.TraceContext
@@ -348,7 +349,7 @@ sealed class PythonSelectableInterpreter : Comparable<PythonSelectableInterprete
 
   abstract val homePath: String
   abstract override val languageLevel: LanguageLevel
-  override val ui: UICustomization? = null
+  override val ui: PyToolUIInfo? = null
   override fun toString(): String = "PythonSelectableInterpreter(homePath='$homePath')"
 
   override fun compareTo(other: PythonSelectableInterpreter): Int = comparator.compare(this, other)
@@ -376,7 +377,7 @@ class DetectedSelectableInterpreter(
   override val homePath: String,
   override val languageLevel: LanguageLevel,
   val isBase: Boolean,
-  override val ui: UICustomization? = null,
+  override val ui: PyToolUIInfo? = null,
 ) : PythonSelectableInterpreter() {
   override fun toString(): String {
     return "DetectedSelectableInterpreter(homePath='$homePath', languageLevel=$languageLevel, isBase=$isBase, uiCustomization=$ui)"
