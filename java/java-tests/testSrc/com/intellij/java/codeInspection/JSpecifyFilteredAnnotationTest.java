@@ -74,56 +74,47 @@ public class JSpecifyFilteredAnnotationTest extends JSpecifyAnnotationTest {
         new Pair<>("OutOfBoundsTypeVariable.java", 21)  // see: IDEA-377707
       )
     ),
-    new SkipIndividuallyFilter( //cases to investigate. (line number starts from 0)
+    new SkipIndividuallyFilter( //cases to investigate later (with unspecified annotation). (line number starts from 0)
       Set.of(
-        new Pair<>("AnnotatedBoundsOfWildcard.java", 74), // @unspecified, skip
-        new Pair<>("AnnotatedBoundsOfWildcard.java", 76), // @unspecified, skip
-        new Pair<>("ComplexParametric.java", 158), // @unspecified, skip
-        new Pair<>("ComplexParametric.java", 172), // @unspecified, skip
-        new Pair<>("ComplexParametric.java", 176), // @unspecified, skip
-        new Pair<>("ComplexParametric.java", 238), // @unspecified, skip
-        new Pair<>("ComplexParametric.java", 246), // @unspecified, skip
-        new Pair<>("DereferenceTypeVariable.java", 123), // @unspecified, skip
-        new Pair<>("MultiBoundTypeVariableToObject.java", 43), // @unspecified, skip
-        new Pair<>("MultiBoundTypeVariableToObject.java", 52), // @unspecified, skip
-        new Pair<>("MultiBoundTypeVariableToOther.java", 43), // @unspecified, skip
-        new Pair<>("MultiBoundTypeVariableToOther.java", 52), // @unspecified, skip
-        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 27), // @unspecified, skip
-        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 37), // @unspecified, skip
-        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 42), // @unspecified, skip
-        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 47), // @unspecified, skip
-        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 57), // @unspecified, skip
-        new Pair<>("MultiBoundTypeVariableUnspecToObject.java", 63), // @unspecified, skip
-        new Pair<>("MultiBoundTypeVariableUnspecToOther.java", 63), // @unspecified, skip
-        new Pair<>("NullLiteralToTypeVariable.java", 53), // @unspecified, skip
-        new Pair<>("NullLiteralToTypeVariable.java", 73), // @unspecified, skip
-        new Pair<>("NullLiteralToTypeVariable.java", 83), // @unspecified, skip
-        new Pair<>("NullLiteralToTypeVariable.java", 93), // @unspecified, skip
-        new Pair<>("NullLiteralToTypeVariable.java", 113), // @unspecified, skip
-        new Pair<>("TypeVariableToObject.java", 109), // @unspecified, skip
-        new Pair<>("TypeVariableToParent.java", 80), // @unspecified, skip
-        new Pair<>("TypeVariableUnionNullToParent.java", 73), // @unspecified, skip
-        new Pair<>("TypeVariableUnionNullToParent.java", 78), // @unspecified, skip
-        new Pair<>("TypeVariableUnionNullToParent.java", 83), // @unspecified, skip
-        new Pair<>("TypeVariableUnionNullToParent.java", 93), // @unspecified, skip
-        new Pair<>("TypeVariableUnionNullToSelf.java", 53), // @unspecified, skip
-        new Pair<>("TypeVariableUnionNullToSelf.java", 73), // @unspecified, skip
-        new Pair<>("TypeVariableUnionNullToSelf.java", 83), // @unspecified, skip
-        new Pair<>("TypeVariableUnionNullToSelf.java", 93), // @unspecified, skip
-        new Pair<>("TypeVariableUnionNullToSelf.java", 98), // @unspecified, skip
-        new Pair<>("TypeVariableUnionNullToSelf.java", 113), // @unspecified, skip
-        new Pair<>("TypeVariableUnspecToObject.java", 58), // @unspecified, skip
-        new Pair<>("TypeVariableUnspecToObject.java", 78), // @unspecified, skip
-        new Pair<>("TypeVariableUnspecToObject.java", 98), // @unspecified, skip
-        new Pair<>("TypeVariableUnspecToObject.java", 103), // @unspecified, skip
-        new Pair<>("TypeVariableUnspecToObject.java", 108), // @unspecified, skip
-        new Pair<>("TypeVariableUnspecToObject.java", 113), // @unspecified, skip
-        new Pair<>("TypeVariableUnspecToObject.java", 118), // @unspecified, skip
-        new Pair<>("TypeVariableUnspecToParent.java", 53), // @unspecified, skip
-        new Pair<>("TypeVariableUnspecToParent.java", 68), // @unspecified, skip
-        new Pair<>("TypeVariableUnspecToParent.java", 83), // @unspecified, skip
-        new Pair<>("TypeVariableUnspecToParent.java", 98), // @unspecified, skip
-        new Pair<>("UnionTypeArgumentWithUseSite.java", 95) // @unspecified, skip
+        new Pair<>("DereferenceTypeVariable.java", 123),
+        new Pair<>("MultiBoundTypeVariableToObject.java", 43),
+        new Pair<>("MultiBoundTypeVariableToObject.java", 52),
+        new Pair<>("MultiBoundTypeVariableToOther.java", 43),
+        new Pair<>("MultiBoundTypeVariableToOther.java", 52),
+        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 42),
+        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 47),
+        new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 57),
+        new Pair<>("MultiBoundTypeVariableUnspecToObject.java", 63),
+        new Pair<>("MultiBoundTypeVariableUnspecToOther.java", 63),
+        new Pair<>("NullLiteralToTypeVariable.java", 53),
+        new Pair<>("NullLiteralToTypeVariable.java", 73),
+        new Pair<>("NullLiteralToTypeVariable.java", 83),
+        new Pair<>("NullLiteralToTypeVariable.java", 93),
+        new Pair<>("NullLiteralToTypeVariable.java", 113),
+        new Pair<>("TypeVariableToObject.java", 109),
+        new Pair<>("TypeVariableToParent.java", 80),
+        new Pair<>("TypeVariableUnionNullToParent.java", 73),
+        new Pair<>("TypeVariableUnionNullToParent.java", 78),
+        new Pair<>("TypeVariableUnionNullToParent.java", 83),
+        new Pair<>("TypeVariableUnionNullToParent.java", 93),
+        new Pair<>("TypeVariableUnionNullToSelf.java", 53),
+        new Pair<>("TypeVariableUnionNullToSelf.java", 73),
+        new Pair<>("TypeVariableUnionNullToSelf.java", 83),
+        new Pair<>("TypeVariableUnionNullToSelf.java", 93),
+        new Pair<>("TypeVariableUnionNullToSelf.java", 98),
+        new Pair<>("TypeVariableUnionNullToSelf.java", 113),
+        new Pair<>("TypeVariableUnspecToObject.java", 58),
+        new Pair<>("TypeVariableUnspecToObject.java", 78),
+        new Pair<>("TypeVariableUnspecToObject.java", 98),
+        new Pair<>("TypeVariableUnspecToObject.java", 103),
+        new Pair<>("TypeVariableUnspecToObject.java", 108),
+        new Pair<>("TypeVariableUnspecToObject.java", 113),
+        new Pair<>("TypeVariableUnspecToObject.java", 118),
+        new Pair<>("TypeVariableUnspecToParent.java", 53),
+        new Pair<>("TypeVariableUnspecToParent.java", 68),
+        new Pair<>("TypeVariableUnspecToParent.java", 83),
+        new Pair<>("TypeVariableUnspecToParent.java", 98),
+        new Pair<>("UnionTypeArgumentWithUseSite.java", 95)
       )
     ) {
       @Override
