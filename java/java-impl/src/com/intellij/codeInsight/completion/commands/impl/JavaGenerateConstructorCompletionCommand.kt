@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.TypeConversionUtil
-import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
@@ -32,18 +31,19 @@ internal class JavaGenerateConstructorCompletionCommandProvider : CommandProvide
 
   private fun findContext(context: CommandCompletionProviderContext): PsiClass? {
     val element = getCommandContext(context.offset, context.psiFile) ?: return null
-    val containingClass = element.parentOfType<PsiClass>() ?: return null
+    val containingClass = element.parent as? PsiClass ?: return null
     if (containingClass.isInterface || containingClass.isRecord || containingClass is PsiImplicitClass) return null
-    if (element is PsiIdentifier && element.parent is PsiClass) return element.parent as PsiClass
+    if (element is PsiIdentifier) return containingClass
     if (!(element is PsiWhiteSpace && element.text.contains("\n"))) return null
-    return element.parentOfType<PsiClass>()
+    return containingClass
   }
 
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     val clazz = findContext(context) ?: return emptyList()
     val result = mutableListOf<CompletionCommand>()
     val actionContext = ActionContext.from(context.editor, context.psiFile)
-    if (clazz.constructors.none { it.parameters.isEmpty() }) {
+    if (clazz.name == null) return emptyList()
+    if (clazz.constructors.none { it.parameters.isEmpty() } && clazz.superClass?.qualifiedName == CommonClassNames.JAVA_LANG_OBJECT) {
       val fix = AddDefaultConstructorFix(clazz, PsiModifier.PUBLIC)
       result.add(GenerateConstructorCompletionCommand({ fix },
                                                       actionContext,

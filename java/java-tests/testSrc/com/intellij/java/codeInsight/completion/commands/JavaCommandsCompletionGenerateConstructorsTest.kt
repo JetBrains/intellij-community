@@ -115,6 +115,54 @@ class JavaCommandsCompletionGenerateConstructorsTest : LightFixtureCompletionTes
     assertNull(elements.firstOrNull { element -> element.lookupString.contains("Generate 'No-Args Constructor'", ignoreCase = true) })
   }
 
+  fun testNoGenerateAllArgsConstructorForAnonymousClass() {
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          int a;
+          public static void main(String[] args) {
+              new A(){
+                  g<caret>
+              }
+          }
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertNull(elements.firstOrNull { element -> element.lookupString.contains("Generate 'All-Args Constructor'", ignoreCase = true) })
+  }
+
+  fun testNoExceptionGenerateAllArgsConstructorForAnonymousClass() {
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          int a;
+          /// some comment
+          A(int a){}
+      }
+      
+      class B extends A {
+          int c;
+          gen<caret>
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Generate 'All-Args Constructor'", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    myFixture.checkResult("""
+        class A {
+            int a;
+            /// some comment
+            A(int a){}
+        }
+        
+        class B extends A {
+            int c;
+        
+            public B(int a, int c) {
+                super(a);
+                this.c = c;
+            }
+        }""".trimIndent())
+  }
+
   fun testNoGenerateAllArgsConstructor() {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A extends B{ 
