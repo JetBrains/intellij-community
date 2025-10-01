@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
@@ -39,6 +39,10 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     super(JavaDocElementType.DOC_COMMENT, text);
   }
 
+  public PsiDocCommentImpl(CharSequence text, boolean markdownComment) {
+    super(markdownComment ? DOC_MARKDOWN_COMMENT : DOC_COMMENT, text);
+  }
+
   @Override
   public PsiJavaDocumentedElement getOwner() {
     return PsiImplUtil.findDocCommentOwner(this);
@@ -64,7 +68,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
 
   @Override
   public PsiDocTag findTagByName(String name) {
-    if (getFirstChildNode().getElementType() == JavaDocElementType.DOC_COMMENT) {
+    if (DOC_COMMENT_TOKENS.contains(getFirstChildNode().getElementType())) {
       if (!getFirstChildNode().getText().contains(name)) return null;
     }
 
@@ -336,7 +340,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     if (i == DOC_TAG) {
       return ChildRole.DOC_TAG;
     }
-    else if (i == JavaDocElementType.DOC_COMMENT || i == DOC_INLINE_TAG) {
+    else if (DOC_COMMENT_TOKENS.contains(i) || i == DOC_INLINE_TAG) {
       return ChildRole.DOC_CONTENT;
     }
     else if (i == DOC_COMMENT_LEADING_ASTERISKS) {

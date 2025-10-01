@@ -67,8 +67,16 @@ public interface JavaDocElementType {
       return new PsiDocCommentImpl(text);
     }
   };
+  ILazyParseableElementType DOC_MARKDOWN_COMMENT = new BasicJavaDocElementType.DocCommentElementType() {
+    @Override
+    public ASTNode createNode(final CharSequence text) {
+      return new PsiDocCommentImpl(text, true);
+    }
+  };
+
+  TokenSet DOC_COMMENT_TOKENS = TokenSet.create(DOC_COMMENT, DOC_MARKDOWN_COMMENT);
 
   @SuppressWarnings("unused") // used in plugins
   TokenSet ALL_JAVADOC_ELEMENTS = TokenSet.create(DOC_TAG, DOC_INLINE_TAG, DOC_METHOD_OR_FIELD_REF, DOC_PARAMETER_REF, DOC_TAG_VALUE_ELEMENT,
-                                                  DOC_REFERENCE_HOLDER, DOC_TYPE_HOLDER, DOC_COMMENT);
+                                                  DOC_REFERENCE_HOLDER, DOC_TYPE_HOLDER, DOC_COMMENT, DOC_MARKDOWN_COMMENT);
 }
