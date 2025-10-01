@@ -603,12 +603,20 @@ public abstract class DebuggerUtils {
     return StringUtil.containsIgnoreCase(virtualMachine.name(), "dalvik");
   }
 
-  // do not catch VMDisconnectedException
+  /**
+   * Safely iterates through the elements provided by the specified extension point and applies the given {@code action} to each element.
+   * Any exceptions thrown during the action execution are caught and handled using {@code logErrorImpl},
+   * while execution continues for the other elements.
+   */
   public static <T> void forEachSafe(ExtensionPointName<T> ep, Consumer<? super T> action) {
     forEachSafe(ep.getIterable(), action);
   }
 
-  // do not catch VMDisconnectedException
+  /**
+   * Safely iterates through the provided {@code iterable} and applies the given {@code action} to each element.
+   * Any exceptions thrown during the action execution are caught and handled using {@code logErrorImpl},
+   * while execution continues for the other elements.
+   */
   public static <T> void forEachSafe(Iterable<? extends T> iterable, Consumer<? super T> action) {
     for (T o : iterable) {
       try {
