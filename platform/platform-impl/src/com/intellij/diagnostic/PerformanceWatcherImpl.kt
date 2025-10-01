@@ -27,6 +27,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.sanitizeFileName
 import kotlinx.coroutines.*
@@ -84,6 +85,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   }
 
   private val isActive: Boolean = !ApplicationManager.getApplication().isHeadlessEnvironment
+  private var smokeAndMirrorsCounter: Int = 0
 
   private val taskFlow = MutableSharedFlow<FreezeCheckerTask?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -236,15 +238,29 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       return if (value <= 0) 0 else value.coerceIn(500, 20000)
     }
 
+  override fun smokeAndMirrors(name: @NonNls String): AccessToken {
+    LOG.trace("Entered smokeAndMirrors phase: $name")
+    ThreadingAssertions.assertEventDispatchThread()
+    smokeAndMirrorsCounter++
+
+    return AccessToken.create {
+      LOG.trace("Exited smokeAndMirrors phase: $name")
+      ThreadingAssertions.assertEventDispatchThread()
+      smokeAndMirrorsCounter--
+    }
+  }
+
   @ApiStatus.Internal
   override fun edtEventStarted() {
     if (!isActive) return
+    if (smokeAndMirrorsCounter > 0) return
     stopCurrentTaskAndReEmit(FreezeCheckerTask(System.nanoTime()))
   }
 
   @ApiStatus.Internal
   override fun edtEventFinished() {
     if (!isActive) return
+    if (smokeAndMirrorsCounter > 0) return
     stopCurrentTaskAndReEmit(null)
   }
 

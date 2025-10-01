@@ -7,6 +7,7 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.lightEdit.LightEdit
@@ -2522,8 +2523,10 @@ private fun Job.waitBlockingAndPumpEdt() {
         EventQueue.invokeLater(EmptyRunnable.getInstance())
       }
 
-      IdeEventQueue.getInstance().pumpEventsForHierarchy {
-        isCompleted
+      PerformanceWatcher.getInstance().smokeAndMirrors("blockingWaitForCompositeFileOpen").use {
+        IdeEventQueue.getInstance().pumpEventsForHierarchy {
+          isCompleted
+        }
       }
     }
   }
