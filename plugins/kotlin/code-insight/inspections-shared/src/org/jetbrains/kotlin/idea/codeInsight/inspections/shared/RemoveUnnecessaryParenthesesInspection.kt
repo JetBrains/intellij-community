@@ -19,12 +19,12 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 class RemoveUnnecessaryParenthesesInspection : KotlinApplicableInspectionBase.Simple<KtParenthesizedExpression, Unit>() {
     override fun getProblemDescription(
         element: KtParenthesizedExpression, context: Unit
-    ): @InspectionMessage String = KotlinBundle.message("inspection.remove.unnecessary.parentheses.display.name")
+    ): @InspectionMessage String = KotlinBundle.message("inspection.remove.unnecessary.parentheses.problem.description")
 
     override fun createQuickFix(
         element: KtParenthesizedExpression, context: Unit
     ): KotlinModCommandQuickFix<KtParenthesizedExpression> = object : KotlinModCommandQuickFix<KtParenthesizedExpression>() {
-        override fun getFamilyName() = KotlinBundle.message("inspection.remove.unnecessary.parentheses.display.name")
+        override fun getFamilyName() = KotlinBundle.message("inspection.remove.unnecessary.parentheses.quickfix.text")
 
         override fun applyFix(project: Project, element: KtParenthesizedExpression, updater: ModPsiUpdater) {
             element.removeUnnecessaryParentheses()
