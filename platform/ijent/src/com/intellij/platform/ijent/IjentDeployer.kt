@@ -4,8 +4,6 @@
 package com.intellij.platform.ijent
 
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.ijent.spi.IjentDeployingStrategy
-import com.intellij.platform.ijent.spi.createIjentSession
 
 interface IjentSession<T : IjentApi> {
   val isRunning: Boolean
@@ -21,15 +19,3 @@ interface IjentSession<T : IjentApi> {
     INFO, DEBUG, TRACE
   }
 }
-
-suspend fun <T : IjentApi> IjentDeployingStrategy.createIjentSession(): IjentSession<T> =
-  try {
-    val targetPlatform = getTargetPlatform()
-    val remotePathToBinary = copyFile(IjentExecFileProvider.getInstance().getIjentBinary(targetPlatform))
-    val mediator = createProcess(remotePathToBinary)
-
-    createIjentSession<T>(getConnectionStrategy(), remotePathToBinary, targetPlatform, mediator)
-  }
-  finally {
-    close()
-  }

@@ -10,7 +10,6 @@ import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentSession
-import com.intellij.platform.ijent.createIjentSession
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 

@@ -31,7 +31,7 @@ interface IjentDeploymentListener {
   fun shellInitialized(initializationTime: Duration)
 }
 
-abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : IjentDeployingStrategy.Posix {
+abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : IjentControlledEnvironmentDeployingStrategy(), IjentDeployingStrategy.Posix {
   protected abstract val ijentLabel: String
 
   /**
