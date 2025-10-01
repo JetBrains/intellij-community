@@ -624,6 +624,10 @@
                 id="KotlinThrowException"
                 class="org.jetbrains.kotlin.idea.actions.internal.KotlinThrowExceptionAction"/>
 
+        <action
+                id="EnableExperimentalKDocResolutionStrategy"
+                class="org.jetbrains.kotlin.idea.actions.internal.EnableExperimentalKDocResolutionStrategyToggleAction"/>
+
         <group id="KotlinCompletionBenchmarkGroup" popup="true">
           <action
                   id="TopLevelCompletionBenchmarkAction"
