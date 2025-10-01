@@ -29,6 +29,11 @@ sealed interface SeItemPresentation {
   val text: String
   val extendedInfo: SeExtendedInfo? get() = null
   val isMultiSelectionSupported: Boolean
+
+  fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (other == null) return false
+    return text == other.text && extendedInfo?.actionText == other.extendedInfo?.actionText
+  }
 }
 
 @ApiStatus.Internal
@@ -59,6 +64,16 @@ class SeSimpleItemPresentation(
     accessibleAdditionToText,
     extendedInfo,
     isMultiSelectionSupported)
+
+  override fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (this === other) return true
+    if (other !is SeSimpleItemPresentation) return false
+
+    return super.contentEquals(other) &&
+           selectedTextChunk?.text == other.selectedTextChunk?.text &&
+           description == other.description &&
+           accessibleAdditionToText == other.accessibleAdditionToText
+  }
 }
 
 @ApiStatus.Internal
@@ -77,6 +92,13 @@ sealed interface SeActionItemPresentation : SeItemPresentation {
     fun toggleStateIfSwitcher() {
       _switcherState = _switcherState?.not()
     }
+  }
+
+  override fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (this === other) return true
+    if (other !is SeActionItemPresentation) return false
+
+    return super.contentEquals(other) && commonData == other.commonData
   }
 }
 
@@ -102,6 +124,18 @@ data class SeRunnableActionItemPresentation(
     val productIconId: IconId?,
     val callToActionText: @Nls String,
   )
+
+  override fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (this === other) return true
+    if (other !is SeRunnableActionItemPresentation) return false
+
+    return super.contentEquals(other) &&
+           commonData == other.commonData &&
+           toolTip == other.toolTip &&
+           actionId == other.actionId &&
+           shortcut == other.shortcut &&
+           promo == other.promo
+  }
 }
 
 @ApiStatus.Internal
@@ -114,6 +148,16 @@ data class SeOptionActionItemPresentation(
 ) : SeActionItemPresentation {
   override val text: String get() = commonData.text
   override val extendedInfo: SeExtendedInfo? get() = commonData.extendedInfo
+
+  override fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (this === other) return true
+    if (other !is SeOptionActionItemPresentation) return false
+
+    return super.contentEquals(other) &&
+           commonData == other.commonData &&
+           value == other.value &&
+           isBooleanOption == other.isBooleanOption
+  }
 }
 
 @ApiStatus.Internal
@@ -174,6 +218,15 @@ class SeTargetItemPresentation(
       return matchingFragments(text)?.map { SerializableRange(it) }
     }
   }
+
+  override fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (this === other) return true
+    if (other !is SeTargetItemPresentation) return false
+    return super.contentEquals(other) &&
+           presentableText == other.presentableText &&
+           containerText == other.containerText &&
+           locationText == other.locationText
+  }
 }
 
 @ApiStatus.Internal
@@ -187,6 +240,15 @@ class SeTextSearchItemPresentation(
   override val isMultiSelectionSupported: Boolean,
 ) : SeItemPresentation {
   val backgroundColor: Color? get() = backgroundColorId?.color()
+
+  override fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (this === other) return true
+    if (other !is SeTextSearchItemPresentation) return false
+
+    return super.contentEquals(other) &&
+           fileString == other.fileString &&
+           isMultiSelectionSupported == other.isMultiSelectionSupported
+  }
 }
 
 @ApiStatus.Internal
@@ -197,8 +259,17 @@ class SeAdaptedItemEmptyPresentation(override val isMultiSelectionSupported: Boo
 
 // Must stay internal, it's not serializable and can't be used for transfer
 @ApiStatus.Internal
-class SeAdaptedItemPresentation(override val isMultiSelectionSupported: Boolean,
-                                val fetchedItem: Any,
-                                val rendererProvider: () -> ListCellRenderer<Any>) : SeItemPresentation {
+class SeAdaptedItemPresentation(
+  override val isMultiSelectionSupported: Boolean,
+  val fetchedItem: Any,
+  val rendererProvider: () -> ListCellRenderer<Any>,
+) : SeItemPresentation {
   override val text: String get() = ""
+
+  override fun contentEquals(other: SeItemPresentation?): Boolean {
+    if (this === other) return true
+    if (other !is SeAdaptedItemPresentation) return false
+
+    return super.contentEquals(other) && fetchedItem == other.fetchedItem
+  }
 }
