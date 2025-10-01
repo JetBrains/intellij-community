@@ -1204,11 +1204,13 @@ class InfoAndProgressPanel internal constructor(
       indicator!!.component.isVisible = isIndicatorVisible
       if (showCounterInsteadOfMultiProcessLink) {
         counterComponent.setNumber(size, isIndicatorVisible)
-        counterComponent.isVisible = true
+        counterComponent.isVisible = !showPopup
+        progressIcon.isVisible = !showPopup && !isIndicatorVisible
         multiProcessLink.isVisible = false
       }
       else {
         counterComponent.isVisible = false
+        progressIcon.isVisible = false
         multiProcessLink.isVisible = showPopup || size > 1
         if (showPopup) {
           multiProcessLink.setText(IdeBundle.message("link.hide.processes", size))
