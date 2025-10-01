@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.inspections
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
@@ -12,15 +12,12 @@ import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.getTypeInfo
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtVisitorVoid
-
 
 class ImplicitNullableNothingTypeInspection : KotlinApplicableInspectionBase.Simple<KtCallableDeclaration, Unit>() {
 
@@ -65,18 +62,18 @@ class ImplicitNullableNothingTypeInspection : KotlinApplicableInspectionBase.Sim
         KotlinBundle.message("inspection.implicit.nullable.nothing.type.display.name")
 
     override fun createQuickFix(
-        element: KtCallableDeclaration,
-        context: Unit,
+      element: KtCallableDeclaration,
+      context: Unit,
     ): KotlinModCommandQuickFix<KtCallableDeclaration> = object : KotlinModCommandQuickFix<KtCallableDeclaration>() {
         override fun getFamilyName(): String =
             if (element is KtNamedFunction) KotlinBundle.message("specify.return.type.explicitly")
             else KotlinBundle.message("specify.type.explicitly")
 
         override fun applyFix(project: Project, element: KtCallableDeclaration, updater: ModPsiUpdater) {
-            val info: TypeInfo = analyze(element) {
-                getTypeInfo(element, useSmartCastType = true)
+            val info: CallableReturnTypeUpdaterUtils.TypeInfo = analyze(element) {
+              CallableReturnTypeUpdaterUtils.getTypeInfo(element, useSmartCastType = true)
             }
-            updateType(element, info, project, updater)
+          CallableReturnTypeUpdaterUtils.updateType(element, info, project, updater)
         }
     }
 }

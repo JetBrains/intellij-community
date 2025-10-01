@@ -773,5 +773,13 @@
                      level="INFORMATION"
                      language="kotlin"
                      key="inspection.replace.addAll.with.mapTo.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ImplicitNullableNothingTypeInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.implicit.nullable.nothing.type.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>
