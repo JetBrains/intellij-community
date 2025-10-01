@@ -9,6 +9,9 @@ com.intellij.lang.DefaultASTFactory
 - a:createComment(com.intellij.psi.tree.IElementType,java.lang.CharSequence):com.intellij.psi.impl.source.tree.LeafElement
 com.intellij.lexer.FilterLexer$Filter
 - a:reject(com.intellij.psi.tree.IElementType):Z
+c:com.intellij.lexer.FlexAdapter
+- getCurrentPosition():com.intellij.lexer.LexerPosition
+- restore(com.intellij.lexer.LexerPosition):V
 com.intellij.lexer.FlexLexer
 - a:advance():com.intellij.psi.tree.IElementType
 - a:getTokenEnd():I
