@@ -65,8 +65,9 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
             for (arg in args.flatMap { it.split(" ") }) {
                 val parts = arg.split('=')
                 if (parts.size != 2) {
-                    throw IllegalArgumentException("Invalid argument: $arg")
+                    exitWithErrorMessage("Invalid argument: $arg")
                 }
+
                 properties[parts[0]] = parts[1]
             }
 
