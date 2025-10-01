@@ -127,7 +127,7 @@ internal suspend fun buildNsisInstaller(
   val installerFile = context.paths.artifactDir.resolve("${installerFileName}.exe")
   check(Files.exists(installerFile)) { "Windows installer wasn't created." }
   context.executeStep(spanBuilder("sign").setAttribute("file", installerFile.toString()), BuildOptions.WIN_SIGN_STEP) {
-    context.signFiles(listOf(installerFile))
+    context.signFiles(listOf(installerFile), options = BuildOptions.WIN_SIGN_OPTIONS)
   }
   context.notifyArtifactBuilt(installerFile)
 
