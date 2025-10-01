@@ -5,9 +5,10 @@
     <module name="intellij.python.sdk"/>
     <plugin id="org.toml.lang"/>
   </dependencies>
+
+  <resource-bundle>messages.PyProjectTomlBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="false" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model" restartRequired="true"/>
-
     <externalSystemUnlinkedProjectAware
       implementation="com.intellij.python.pyproject.model.internal.PyExternalSystemUnlinkedProjectAware"/>
 
