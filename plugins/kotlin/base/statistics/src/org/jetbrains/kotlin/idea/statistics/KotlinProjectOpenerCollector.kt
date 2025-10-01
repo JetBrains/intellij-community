@@ -22,7 +22,7 @@ private const val RECEIPT_FILE_NAME: String = "receipt.json"
  *
  * The receipt.json file will be deleted once it has been read.
  */
-internal class KtorProjectOpenerCollector : ProjectUsagesCollector() {
+internal class KotlinProjectOpenerCollector : ProjectUsagesCollector() {
   private val GROUP = EventLogGroup("ktor.project.opener", 5)
 
   private val utmSourceList = listOf("google",

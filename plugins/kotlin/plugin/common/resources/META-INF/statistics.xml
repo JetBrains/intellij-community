@@ -31,6 +31,6 @@
     <internal.statistic.libraryUsageImportProcessor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinLibraryUsageImportProcessor"/>
     <statistics.applicationUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.K2MetricsFUSCollector"/>
 
-    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.KtorProjectOpenerCollector"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.KotlinProjectOpenerCollector"/>
   </extensions>
 </idea-plugin>
