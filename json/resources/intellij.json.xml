@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.json.jsonLiteralChecker"
                     interface="com.intellij.json.codeinsight.JsonLiteralChecker"

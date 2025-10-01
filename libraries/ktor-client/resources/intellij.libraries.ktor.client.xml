@@ -1,5 +1,5 @@
 <!-- cannot use dependent-on-core="false" - kotlin stdlib is required -->
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.libraries.kotlinx.io" />
   </dependencies>

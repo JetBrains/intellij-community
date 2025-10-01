@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="true"
                  description="Allows changing how ComposePanel is rendered using rendering on Graphics (when `true`, it provides smooth Swing interop) or on native AWT texture (when `false`). Works only in internal mode"
