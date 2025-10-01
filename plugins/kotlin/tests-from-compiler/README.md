@@ -14,7 +14,7 @@ For using kotlinc version as JPS version change the value of the JPS version pro
 ```
 jpsPluginVersion=dev
 ```
-After changing the version, regenerate the versions in XMLs by running the `Update Kotlin Compiler Version` run configuration.
+After changing the version, regenerate the versions in XMLs by running the `Kotlin Coop: Update Compiler Version` run configuration.
 This mode is used in bootstrap JPS tests in the Aggregator.
 
 You might need to change the working directory of the run configuration for correct test data detection.
