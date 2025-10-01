@@ -26,7 +26,7 @@ abstract class HelpRequestHandlerBase : HttpRequestHandler() {
   }
 
   fun getRequestLocalePath(request: HttpRequest): String {
-    val requestLocale = request.uri().substringBefore(prefix).substringBeforeLast("/")
+    val requestLocale = request.uri().substringBefore(prefix).substringAfter("/")
     return if (supportedLocales.contains(requestLocale)) requestLocale else ""
   }
 
