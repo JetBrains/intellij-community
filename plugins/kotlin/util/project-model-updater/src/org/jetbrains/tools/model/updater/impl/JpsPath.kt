@@ -1,13 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater.impl
 
-@Suppress("CanConvertToMultiDollarString") // Gradle version doesn't support this feature
 sealed class JpsPath(private val root: String) {
-    class ProjectDir(path: String, isCommunity: Boolean) : JpsPath("\$PROJECT_DIR$") {
+    class ProjectDir(path: String, isCommunity: Boolean) : JpsPath($$"$PROJECT_DIR$") {
         override val relativePath: String = if (isCommunity || path.startsWith("..")) path else "community/$path"
     }
 
-    class MavenRepository(mavenId: MavenId, classifier: String? = null) : JpsPath("\$MAVEN_REPOSITORY$") {
+    class MavenRepository(mavenId: MavenId, classifier: String? = null) : JpsPath($$"$MAVEN_REPOSITORY$") {
         override val relativePath: String = mavenId.toJarPath(classifier)
     }
 
