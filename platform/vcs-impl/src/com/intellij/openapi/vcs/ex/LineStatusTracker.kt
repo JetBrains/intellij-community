@@ -235,10 +235,6 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
     var clientIds: List<ClientId>
   }
 
-  @ApiStatus.Experimental
-  interface LstLocalRange {
-    val clientIds: List<ClientId>
-  }
 }
 
 fun saveDocumentWhenUnchanged(project: Project, document: Document) {

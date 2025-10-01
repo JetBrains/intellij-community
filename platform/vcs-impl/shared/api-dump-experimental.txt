@@ -7,6 +7,8 @@
 c:com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 - com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
 - *:build(Z):javax.swing.tree.DefaultTreeModel
+*:com.intellij.openapi.vcs.ex.LstLocalRange
+- a:getClientIds():java.util.List
 *:com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 - a:getAuthor():com.intellij.vcs.log.VcsUser
 - a:getChanges():java.util.Collection

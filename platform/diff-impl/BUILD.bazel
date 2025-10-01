@@ -38,6 +38,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util/diff",
     "//platform/util/jdom",
+    "//libraries/kotlinx/serialization/core",
   ],
   exports = ["//platform/diff-api:diff"]
 )

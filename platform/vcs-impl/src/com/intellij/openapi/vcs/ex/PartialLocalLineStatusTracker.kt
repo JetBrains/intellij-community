@@ -113,20 +113,6 @@ abstract class PartialCommitHelper(val content: String) {
 
 class PartialCommitContent(val vcsContent: CharSequence, val currentContent: CharSequence, val rangesToCommit: List<LocalRange>)
 
-enum class ExclusionState { ALL_INCLUDED, ALL_EXCLUDED, PARTIALLY, NO_CHANGES }
-
-class LocalRange internal constructor(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int, innerRanges: List<InnerRange>?,
-                                      override val clientIds: List<ClientId>,
-                                      val changelistId: String, val exclusionState: RangeExclusionState)
-  : Range(line1, line2, vcsLine1, vcsLine2, innerRanges), LocalLineStatusTrackerImpl.LstLocalRange {
-  init {
-    if (exclusionState is RangeExclusionState.Partial) {
-      exclusionState.validate(vcsLine2 - vcsLine1, line2 - line1)
-    }
-  }
-}
-
-
 @ApiStatus.Internal
 class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
                                                              document: Document,

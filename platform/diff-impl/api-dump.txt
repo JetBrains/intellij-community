@@ -2487,13 +2487,28 @@ c:com.intellij.openapi.vcs.ex.Range
 - f:hasVcsLines():Z
 f:com.intellij.openapi.vcs.ex.Range$Companion
 f:com.intellij.openapi.vcs.ex.Range$InnerRange
+- sf:Companion:com.intellij.openapi.vcs.ex.Range$InnerRange$Companion
 - <init>(I,I,B):V
 - f:getLine1():I
 - f:getLine2():I
 - f:getType():B
+bf:com.intellij.openapi.vcs.ex.Range$InnerRange$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.openapi.vcs.ex.Range$InnerRange$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.openapi.vcs.ex.Range$InnerRange
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.openapi.vcs.ex.Range$InnerRange):V
+f:com.intellij.openapi.vcs.ex.Range$InnerRange$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 a:com.intellij.openapi.vcs.ex.RangeExclusionState
+- sf:Companion:com.intellij.openapi.vcs.ex.RangeExclusionState$Companion
+- b:<init>(I,kotlinx.serialization.internal.SerializationConstructorMarker):V
 - a:getHasExcluded():Z
 - a:getHasIncluded():Z
+- bsf:write$Self(com.intellij.openapi.vcs.ex.RangeExclusionState,kotlinx.serialization.encoding.CompositeEncoder,kotlinx.serialization.descriptors.SerialDescriptor):V
+f:com.intellij.openapi.vcs.ex.RangeExclusionState$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.openapi.vcs.ex.RangeExclusionState$Excluded
 - com.intellij.openapi.vcs.ex.RangeExclusionState
 - sf:INSTANCE:com.intellij.openapi.vcs.ex.RangeExclusionState$Excluded
