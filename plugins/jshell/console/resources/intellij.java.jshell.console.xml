@@ -14,6 +14,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="JSHELL_NOTIFICATIONS" displayType="BALLOON" bundle="messages.JShellBundle" key="notification.group.jshell"/>
     <scratch.rootType implementation="com.intellij.execution.jshell.JShellRootType"/>
     <editorNotificationProvider implementation="com.intellij.execution.jshell.SnippetEditorDecorator"/>
   </extensions>
