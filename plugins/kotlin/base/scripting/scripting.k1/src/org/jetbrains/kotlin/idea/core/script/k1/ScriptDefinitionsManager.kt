@@ -17,10 +17,10 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.shared.definition.defaultDefinition
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
-import org.jetbrains.kotlin.idea.core.script.v1.IdeScriptDefinitionProvider
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingErrorLog
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingWarnLog
+import org.jetbrains.kotlin.scripting.definitions.LazyScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
@@ -52,7 +52,7 @@ import kotlin.script.experimental.api.SourceCode
  * **Note** that the class is `open` for inheritance only for the testing purpose. Its dependencies are cut via a set of `protected open`
  * methods.
  */
-open class ScriptDefinitionsManager(private val project: Project) : IdeScriptDefinitionProvider(), Disposable {
+open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinitionProvider(), Disposable {
 
     companion object {
         fun getInstance(project: Project): ScriptDefinitionsManager =
@@ -78,21 +78,11 @@ open class ScriptDefinitionsManager(private val project: Project) : IdeScriptDef
      * conforms default by-source order (see [ScriptDefinitionsManager]).
      * @see [getDefinitions]
      */
-    public override val currentDefinitions: Sequence<ScriptDefinition>
+    override val currentDefinitions: Sequence<ScriptDefinition>
         get() {
             val scriptingSettings = getKotlinScriptingSettings()
             return getOrLoadDefinitions().asSequence().filter { scriptingSettings.isScriptDefinitionEnabled(it) }
         }
-
-    /**
-     *  Property lists all discovered definitions with no [KotlinScriptingSettingsImpl.isScriptDefinitionEnabled] filtering applied.
-     *  If by the moment of the call any of the [ScriptDefinitionsSource]s has not yet contributed to the resulting set of definitions,
-     *  it's called before returning the result.
-     *  @return All discovered definitions. The list is sorted according to the [KotlinScriptingSettingsImpl.getScriptDefinitionOrder] or,
-     *  if the latter is missing, conforms default by-source order (see [ScriptDefinitionsManager]).
-     *  @see [currentDefinitions]
-     */
-    override fun getDefinitions(): List<ScriptDefinition> = getOrLoadDefinitions()
 
     /**
      * Searches script definition that best matches the specified [script].

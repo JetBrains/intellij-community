@@ -7,13 +7,14 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoById
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettingsStorage
-import org.jetbrains.kotlin.idea.core.script.v1.IdeScriptDefinitionProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 
 class IDESettingsFUSCollector : ProjectUsagesCollector() {
     override fun getGroup() = GROUP
@@ -27,7 +28,7 @@ class IDESettingsFUSCollector : ProjectUsagesCollector() {
         val pluginInfo = getPluginInfoById(KotlinIdePlugin.id)
 
         // filling up scriptingAutoReloadEnabled Event
-        IdeScriptDefinitionProvider.getInstance(project).getDefinitions().forEach { definition ->
+        project.service<ScriptDefinitionProvider>().currentDefinitions.forEach { definition ->
             if (definition.canAutoReloadScriptConfigurationsBeSwitchedOff) {
                 val scriptingAutoReloadEnabled = KotlinScriptingSettingsStorage.getInstance(project).autoReloadConfigurations(definition)
                 metrics.add(scriptingAREvent.metric(definition.name, scriptingAutoReloadEnabled, pluginInfo))

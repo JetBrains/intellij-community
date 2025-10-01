@@ -12134,6 +12134,80 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/replaceAddAllWithMapTo")
+    public static class ReplaceAddAllWithMapTo extends AbstractLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("addAllFilter.kt")
+        public void testAddAllFilter() throws Exception {
+            runTest("testData/inspectionsLocal/replaceAddAllWithMapTo/addAllFilter.kt");
+        }
+
+        @TestMetadata("addAllImplicitReceiver1.kt")
+        public void testAddAllImplicitReceiver1() throws Exception {
+            runTest("testData/inspectionsLocal/replaceAddAllWithMapTo/addAllImplicitReceiver1.kt");
+        }
+
+        @TestMetadata("addAllImplicitReceiver2.kt")
+        public void testAddAllImplicitReceiver2() throws Exception {
+            runTest("testData/inspectionsLocal/replaceAddAllWithMapTo/addAllImplicitReceiver2.kt");
+        }
+
+        @TestMetadata("addAllImplicitReceiver3.kt")
+        public void testAddAllImplicitReceiver3() throws Exception {
+            runTest("testData/inspectionsLocal/replaceAddAllWithMapTo/addAllImplicitReceiver3.kt");
+        }
+
+        @TestMetadata("addAllMap.kt")
+        public void testAddAllMap() throws Exception {
+            runTest("testData/inspectionsLocal/replaceAddAllWithMapTo/addAllMap.kt");
+        }
+
+        @TestMetadata("addAllMapSafeCall.kt")
+        public void testAddAllMapSafeCall() throws Exception {
+            runTest("testData/inspectionsLocal/replaceAddAllWithMapTo/addAllMapSafeCall.kt");
+        }
+
+        @TestMetadata("plusAssignCallFilter.kt")
+        public void testPlusAssignCallFilter() throws Exception {
+            runTest("testData/inspectionsLocal/replaceAddAllWithMapTo/plusAssignCallFilter.kt");
+        }
+
+        @TestMetadata("plusAssignCallMap.kt")
+        public void testPlusAssignCallMap() throws Exception {
+            runTest("testData/inspectionsLocal/replaceAddAllWithMapTo/plusAssignCallMap.kt");
+        }
+
+        @TestMetadata("plusAssignFilter.kt")
+        public void testPlusAssignFilter() throws Exception {
+            runTest("testData/inspectionsLocal/replaceAddAllWithMapTo/plusAssignFilter.kt");
+        }
+
+        @TestMetadata("plusAssignMap.kt")
+        public void testPlusAssignMap() throws Exception {
+            runTest("testData/inspectionsLocal/replaceAddAllWithMapTo/plusAssignMap.kt");
+        }
+
+        @TestMetadata("wrongPlusAssignOverload.kt")
+        public void testWrongPlusAssignOverload() throws Exception {
+            runTest("testData/inspectionsLocal/replaceAddAllWithMapTo/wrongPlusAssignOverload.kt");
+        }
+
+        @TestMetadata("wrongPlusAssignOverload2.kt")
+        public void testWrongPlusAssignOverload2() throws Exception {
+            runTest("testData/inspectionsLocal/replaceAddAllWithMapTo/wrongPlusAssignOverload2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals")
     public static class ReplaceArrayEqualityOpWithArraysEquals extends AbstractLocalInspectionTest {
         @java.lang.Override

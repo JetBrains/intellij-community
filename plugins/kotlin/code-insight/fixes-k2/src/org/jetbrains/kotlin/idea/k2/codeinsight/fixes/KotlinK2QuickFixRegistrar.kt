@@ -130,7 +130,6 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddIsToWhenConditionFixFactory.addIsToWhenConditionFixFactory)
         registerFactory(SmartCastImpossibleInIfThenFactory.smartcastImpossible)
         registerFactory(MissingConstructorKeywordFixFactory.missingConstructorFix)
-        registerFactory(MoveTypeAliasToTopLevelFixFactory.moveTypeAliasToTopLevelFixFactory)
         registerPsiQuickFixes(KaFirDiagnostic.InvalidIfAsExpression::class, AddIfElseBranchFix)
         registerFactory(RemoveSupertypeFixFactory.removeSupertypeFixFactory)
         registerFactory(NumberConversionFixFactory.numberConversionFixFactory)

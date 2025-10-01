@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.resolution.*
@@ -31,8 +32,12 @@ internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol
         return canBeResolvedViaImport(reference, symbol)
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private val definitelyNotImported: Boolean get() = when {
+        // context sensitive resolve does not require imports
+        reference.usesContextSensitiveResolution -> true
+
         symbol.isLocal -> true
 
         // symbols from <dynamic> scope cannot be imported,

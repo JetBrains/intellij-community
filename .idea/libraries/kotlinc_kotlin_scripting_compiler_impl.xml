@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-compiler-impl" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:2.3.0-dev-7984">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:2.3.0-dev-9317">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.3.0-dev-7984/kotlin-scripting-compiler-impl-2.3.0-dev-7984.jar">
-          <sha256sum>3b5b3be1b5be814f4d3eed338e0c3e280e1d62f96f37ba3c8441b8735209a490</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.3.0-dev-9317/kotlin-scripting-compiler-impl-2.3.0-dev-9317.jar">
+          <sha256sum>d3537d5a6a81fcdcf1cf716eb6a84b201a3258c71c22c1a04b55e4eeea5f036c</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.3.0-dev-7984/kotlin-scripting-compiler-impl-2.3.0-dev-7984.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.3.0-dev-9317/kotlin-scripting-compiler-impl-2.3.0-dev-9317.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.3.0-dev-7984/kotlin-scripting-compiler-impl-2.3.0-dev-7984-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.3.0-dev-9317/kotlin-scripting-compiler-impl-2.3.0-dev-9317-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

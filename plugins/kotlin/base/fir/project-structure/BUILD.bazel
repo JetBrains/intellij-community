@@ -103,6 +103,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//java/openapi:java",
     "//plugins/kotlin/base/scripting/scripting.k2",
+    "//plugins/kotlin/base/scripting/scripting.k2:scripting.k2_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.base.fir.project-structure` end

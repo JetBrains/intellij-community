@@ -18,7 +18,7 @@ abstract class AbstractScriptDefinitionsOrderTest : AbstractScriptConfigurationT
             ?.map { it.substringBefore(":").trim() to it.substringAfter(":").trim() }
             ?: error("SCRIPT DEFINITIONS directive should be defined")
 
-        val allDefinitions = ScriptDefinitionsManager.getInstance(project).getDefinitions()
+      val allDefinitions = ScriptDefinitionsManager.getInstance(project).currentDefinitions.toList()
         for ((definitionName, action) in definitions) {
             val scriptDefinition = allDefinitions
                 .find { it.name == definitionName }

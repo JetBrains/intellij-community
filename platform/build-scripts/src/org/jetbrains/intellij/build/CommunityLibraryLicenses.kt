@@ -331,6 +331,9 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/ec4j/ec4j/blob/master/LICENSE")
       .suppliedByPersons("Peter Palaga", "Angelo Zerr"),
 
+    LibraryLicense("Ehcache SizeOf", libraryName = "ehcache.sizeof", url = "https://github.com/ehcache/sizeof")
+      .apache("https://github.com/ehcache/sizeof/blob/master/LICENSE"),
+
     LibraryLicense("emoji-java", libraryName = "com.vdurmont:emoji-java", url = "https://github.com/vdurmont/emoji-java")
       .mit("https://github.com/vdurmont/emoji-java/blob/master/LICENSE.md")
       .suppliedByPersons("Vincent DURMONT"),

@@ -28,12 +28,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.k2.ReloadScriptConfigurationService.Companion.TOPIC
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
-import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl
+import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
 import org.jetbrains.kotlin.idea.core.script.k2.highlighting.DefaultScriptResolutionStrategy
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptModuleManager.Companion.removeScriptModules
+import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.shared.scriptDiagnostics
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.psi.KtFile
@@ -114,7 +114,7 @@ class ReloadScriptConfigurationService(private val project: Project, private val
         scope.launch {
             definition.getConfigurationResolver(project).remove(virtualFile)
             project.removeScriptModules(listOf(virtualFile))
-            ScriptDefinitionProviderImpl.getInstance(project).notifyDefinitionsChanged()
+            ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
             DefaultScriptResolutionStrategy.getInstance(project).execute(ktFile).join()
 
             ktFile.putUserData(SHOW_NOTIFICATION, false)
