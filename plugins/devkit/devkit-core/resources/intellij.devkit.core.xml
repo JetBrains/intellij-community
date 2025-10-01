@@ -550,6 +550,15 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.ContentModuleNamespaceInspection"
                      key="inspection.content.module.namespace.name"/>
 
+    <localInspection isInternal="true"
+                     language="JVM"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.eel.UseOptimizedEelFunctions"
+                     groupPathKey="inspections.group.path"
+                     groupKey="inspections.group.code"
+                     key="inspection.use.optimized.eel.functions.display.name"/>"
+
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
 

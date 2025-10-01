@@ -1,0 +1,20 @@
+<html>
+<body>
+Reports usage of standard Java I/O operations that may work inefficiently in a remote Eel environment.
+
+<p>
+  When working with remote development, standard Java I/O operations like Files.readAllBytes() can be inefficient
+  due to network communication overhead. This inspection suggests using optimized Eel API alternatives that are designed
+  specifically for remote development scenarios.
+</p>
+
+<p>Example:</p>
+<pre><code>
+// Inefficient for remote development:
+byte[] data = Files.readAllBytes(path);
+
+// Optimized Eel API:
+byte[] data = EelFiles.readAllBytes(path);
+</code></pre>
+</body>
+</html>
