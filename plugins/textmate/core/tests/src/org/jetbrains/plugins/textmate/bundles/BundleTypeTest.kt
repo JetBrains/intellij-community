@@ -2,7 +2,7 @@ package org.jetbrains.plugins.textmate.bundles
 
 import org.jetbrains.plugins.textmate.TestUtil
 import org.jetbrains.plugins.textmate.TestUtilMultiplatform
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class BundleTypeTest {

@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
 
 class RstLexerTest : TextMateLexerTestCase() {

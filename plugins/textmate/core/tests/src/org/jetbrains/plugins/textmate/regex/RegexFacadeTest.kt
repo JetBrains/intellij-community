@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.textmate.regex
 
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
+import kotlin.test.Ignore
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -85,7 +85,8 @@ abstract class RegexFacadeTest {
     }
   }
 
-  @Disabled("Joni doesn't support disabling \\A")
+  // Joni doesn't support disabling \\A
+  @Ignore
   @Test
   fun matchBeginString() {
     withRegex("\\Afoo") { regex ->

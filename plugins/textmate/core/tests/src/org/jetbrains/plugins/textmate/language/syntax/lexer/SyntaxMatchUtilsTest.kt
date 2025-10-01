@@ -2,7 +2,7 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer
 
 import org.jetbrains.plugins.textmate.regex.MatchData
 import org.jetbrains.plugins.textmate.regex.TextMateStringImpl
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class SyntaxMatchUtilsTest {
