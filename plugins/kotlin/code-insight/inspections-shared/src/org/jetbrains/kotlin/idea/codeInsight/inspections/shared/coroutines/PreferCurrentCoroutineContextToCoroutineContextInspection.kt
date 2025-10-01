@@ -43,6 +43,10 @@ internal class PreferCurrentCoroutineContextToCoroutineContextInspection : Kotli
             else -> null
         } ?: return null
 
+        if (nameReferenceExpression.getQualifiedExpressionForSelector()?.parent is KtImportDirective) {
+            return null
+        }
+
         if (!isCoroutineContextFunctionAccess(nameReferenceExpression)) {
             return null
         }

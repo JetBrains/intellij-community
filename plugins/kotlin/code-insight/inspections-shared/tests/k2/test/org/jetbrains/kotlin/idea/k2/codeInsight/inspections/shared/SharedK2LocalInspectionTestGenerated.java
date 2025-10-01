@@ -2175,6 +2175,16 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
                 runTest("../testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext/coroutineScopeContext_implicitReceiver.kt");
             }
 
+            @TestMetadata("importDirective.kt")
+            public void testImportDirective() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext/importDirective.kt");
+            }
+
+            @TestMetadata("importDirective_aliased.kt")
+            public void testImportDirective_aliased() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext/importDirective_aliased.kt");
+            }
+
             @TestMetadata("noCoroutinesDependency.kt")
             public void testNoCoroutinesDependency() throws Exception {
                 runTest("../testData/inspectionsLocal/coroutines/preferCurrentCoroutineContextToCoroutineContext/noCoroutinesDependency.kt");
