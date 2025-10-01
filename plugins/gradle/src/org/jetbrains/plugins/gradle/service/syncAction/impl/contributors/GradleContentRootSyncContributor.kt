@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncAction.impl.contributors
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntity
 import com.intellij.platform.workspace.jps.entities.*
@@ -15,13 +14,12 @@ import org.jetbrains.plugins.gradle.model.GradleLightProject
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity
+import org.jetbrains.plugins.gradle.model.projectModel.gradleModuleEntity
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.*
 import org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeEntitySource
 import org.jetbrains.plugins.gradle.util.GradleConstants
-
-private val LOG: Logger = Logger.getInstance(GradleContentRootSyncContributor::class.java)
 
 internal class GradleContentRootSyncContributor : GradleSyncContributor {
 
@@ -46,10 +44,7 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
 
         val externalProject = context.getProjectModel(projectModel, ExternalProject::class.java) ?: continue
         val contentRootData = GradleContentRootData(projectModel, externalProject, entitySource)
-        val moduleEntity = createModuleEntity(context, contentRootData)
-        builder addEntity moduleEntity
-
-        addGradleModuleEntity(builder, projectModel, context, moduleEntity)
+        builder addEntity createModuleEntity(context, contentRootData)
       }
     }
 
@@ -62,9 +57,10 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
   ): ModuleEntity.Builder {
     val projectModel = contentRootData.projectModel
     val externalProject = contentRootData.externalProject
+    val entitySource = contentRootData.entitySource
     return ModuleEntity(
       name = GradleProjectResolverUtil.getHolderModuleName(context, projectModel, externalProject),
-      entitySource = contentRootData.entitySource,
+      entitySource = entitySource,
       dependencies = listOf(
         InheritedSdkDependency,
         ModuleSourceDependency
@@ -74,9 +70,13 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
       contentRoots = listOf(
         ContentRootEntity(
           url = context.virtualFileUrl(projectModel.projectDirectory),
-          entitySource = contentRootData.entitySource,
+          entitySource = entitySource,
           excludedPatterns = emptyList()
         )
+      )
+      gradleModuleEntity = GradleModuleEntity(
+        gradleProjectId = projectModel.projectEntityId(context),
+        entitySource = entitySource
       )
     }
   }
@@ -158,21 +158,6 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
     linkedProjectId = GradleProjectResolverUtil.getModuleId(context, projectModel),
     entitySource = entitySource
   )
-
-  private fun addGradleModuleEntity(
-    storage: MutableEntityStorage,
-    projectModel: GradleLightProject,
-    context: ProjectResolverContext,
-    moduleEntity: ModuleEntity.Builder,
-  ) {
-    val projectEntity = storage.resolve(projectModel.projectEntityId(context)) ?: run {
-      LOG.warn("GradleProjectEntity is not found: it should be already created for the project ${projectModel.projectDirectory}")
-      return
-    }
-    storage addEntity GradleModuleEntity(projectEntity.symbolicId, projectEntity.entitySource) {
-      module = moduleEntity
-    }
-  }
 
   private data class GradleProjectModelEntitySource(
     override val projectPath: String,
