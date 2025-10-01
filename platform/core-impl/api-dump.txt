@@ -13,6 +13,9 @@ c:com.intellij.lang.impl.PsiBuilderImpl
 - remapCurrentTokenAndRestoreOnRollback(com.intellij.psi.tree.IElementType):V
 com.intellij.lexer.FilterLexer$Filter
 - a:reject(com.intellij.psi.tree.IElementType):Z
+c:com.intellij.lexer.FlexAdapter
+- getCurrentPosition():com.intellij.lexer.LexerPosition
+- restore(com.intellij.lexer.LexerPosition):V
 com.intellij.lexer.FlexLexer
 - a:advance():com.intellij.psi.tree.IElementType
 - a:getTokenEnd():I
