@@ -148,7 +148,7 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
           .whenItemSelectedFromUi { language ->
             selectTextStyle(textStyle, language)
             separator.text = GrazieBundle.message(if (language in ruleEngineLanguages) "grazie.settings.style.rules.other" else "grazie.settings.style.rules.all")
-            if (filterComponent.text.isNotBlank()) settings.updateFilter(textStyle, language, filterComponent.text)
+            settings.updateFilter(textStyle, language, filterComponent.text)
             settings.getTreeSettings(textStyle, language).description.listener(language)
           }
           .component
@@ -325,47 +325,37 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
 }
 
 data class Settings(
-  val featuredSettings: MutableMap<String, MutableMap<Language, FeaturedSettings>> = HashMap(),
-  val treeSettings: MutableMap<String, MutableMap<Language, TreeSettings>> = HashMap(),
+  val combinedSettings: MutableMap<String, MutableMap<Language, CombinedSettings>> = HashMap(),
 ) {
-  fun getFeaturedSettings(textStyle: TextStyle, language: Language): FeaturedSettings? = featuredSettings[textStyle.id]?.get(language)
-  fun getTreeSettings(textStyle: TextStyle, language: Language): TreeSettings = treeSettings[textStyle.id]!![language]!!
+  fun getFeaturedSettings(textStyle: TextStyle, language: Language): FeaturedSettings? = combinedSettings[textStyle.id]!![language]!!.featuredSettings
+  fun getTreeSettings(textStyle: TextStyle, language: Language): TreeSettings = combinedSettings[textStyle.id]!![language]!!.treeSettings
 
   fun isModified(state: GrazieConfig.State): Boolean =
-    featuredSettings.values.any { areModifiedFeaturedSettings(it) } ||
-    treeSettings.values.any { areModifiedTreeSettings(it, state) }
+    combinedSettings.values.any { settings -> settings.values.any { it.isModified(state) } }
 
   fun reset(state: GrazieConfig.State) {
-    featuredSettings.forEach { (domain, featuredSettings) ->
-      if (areModifiedFeaturedSettings(featuredSettings)) {
-        featuredSettings.filter { areModifiedFeaturedSettings(it.value) }.forEach { (language, settings) ->
-          val textStyle = getTextStyle(domain)
-          settings.component.loadState(getSettingsState(language, textStyle), textStyle)
-          settings.resetState = settings.component.state
-        }
-      }
-    }
-    treeSettings.forEach { (_, treesSettings) ->
-      if (areModifiedTreeSettings(treesSettings, state)) {
-        treesSettings.filter { areModifiedTreeSettings(it.value, state) }.forEach { (_, settings) -> settings.tree.reset(state) }
+    combinedSettings.forEach { (textStyleId, settingsMap) ->
+      settingsMap.forEach { (language, settings) ->
+        settings.reset(state, getTextStyle(textStyleId), language)
       }
     }
   }
 
   fun apply(originalState: GrazieConfig.State) {
-    treeSettings
-      .filter { (domainId, treeSettingsMap) -> areModifiedFeaturedSettings(featuredSettings[domainId]!!) || areModifiedTreeSettings(treeSettingsMap, originalState) }
-      .forEach { (domainId, treeSettingsMap) ->
+    combinedSettings
+      .filter { it.value.any { settings -> settings.value.isModified(originalState) } }
+      .forEach { (domainId, settingsMap) ->
         val domain = getTextStyle(domainId).getTextDomain()
         val userEnabledRules = HashSet<String>()
         val userDisabledRules = HashSet<String>()
         val parameters = HashMap<Language, Map<String, String>>()
 
-        treeSettingsMap.filter { areModifiedTreeSettings(it.value, originalState) }.forEach { (language, treeSettings) ->
+        val changedSettings = settingsMap.filter { settings -> settings.value.isModified(originalState) }
+        changedSettings.forEach { (language, combinedSettings) ->
           val userEnabledRulesPerLanguage = HashSet<String>()
           val userDisabledRulesPerLanguage = HashSet<String>()
 
-          featuredSettings[domainId]?.filter { areModifiedFeaturedSettings(it.value) }?.get(language)?.let { featuredSettings ->
+          combinedSettings.featuredSettings?.let { featuredSettings ->
             val prefix = Rule.globalIdPrefix(language)
             val settingsState = featuredSettings.component.state
             featuredSettings.resetState = settingsState
@@ -381,7 +371,7 @@ data class Settings(
             parameters[language] = settingsState.paramValues
           }
 
-          val updatedState = treeSettings.tree.apply(originalState)
+          val updatedState = combinedSettings.treeSettings.tree.apply(originalState)
           val affectedGlobalRules = getAffectedGlobalRules(language)
           updatedState.getUserChangedRules(domain).let { (enabledRules, disabledRules) ->
             userEnabledRulesPerLanguage.addAll(enabledRules - affectedGlobalRules)
@@ -391,33 +381,34 @@ data class Settings(
           userDisabledRules.addAll(userDisabledRulesPerLanguage)
         }
 
-        if (domain == TextStyleDomain.Other) GrazieConfig.update { it.copy(parameters = parameters) }
-        else GrazieConfig.update { it.copy(parametersPerDomain = mapOf(domain to parameters)) }
-        GrazieConfig.update { it.updateUserRules(domain, userEnabledRules, userDisabledRules) }
-        treeSettingsMap.forEach { it.value.tree.reset(GrazieConfig.get()) }
+        GrazieConfig.update {
+          val withParameters = if (domain == TextStyleDomain.Other) it.copy(parameters = parameters) else it.copy(parametersPerDomain = mapOf(domain to parameters))
+          withParameters.updateUserRules(domain, userEnabledRules, userDisabledRules)
+        }
+        changedSettings.forEach { (_, settings) -> settings.treeSettings.tree.reset(GrazieConfig.get()) }
       }
   }
 
   fun addTextStyle(textStyle: TextStyle, language: Language, filterComponent: SearchTextField) {
-    val settings = treeSettings[textStyle.id]
+    val settings = combinedSettings[textStyle.id]
     if (settings != null && language in settings) return
-    if (featuredSettings[textStyle.id] == null) featuredSettings[textStyle.id] = HashMap()
-    if (treeSettings[textStyle.id] == null) treeSettings[textStyle.id] = HashMap()
+    if (settings == null) combinedSettings[textStyle.id] = HashMap()
     addLanguage(textStyle, language, filterComponent)
   }
 
   fun addLanguage(textStyle: TextStyle, language: Language, filterComponent: SearchTextField) {
-    val featuredSettingsPerLanguage = featuredSettings[textStyle.id]!!
-    val treeSettingsPerLanguage = treeSettings[textStyle.id]!!
-    if (language in featuredSettingsPerLanguage || language in treeSettingsPerLanguage) return
+    val settingsPerLanguage = combinedSettings[textStyle.id]!!
+    if (language in settingsPerLanguage) return
 
     val domain = textStyle.getTextDomain()
     val description = GrazieDescriptionComponent()
     val tree = GrazieTreeComponent(description.listener, language, domain, filterComponent)
-    treeSettingsPerLanguage[language] = TreeSettings(description, tree)
-    treeSettingsPerLanguage[language]!!.tree.reset(GrazieConfig.get())
+    tree.reset(GrazieConfig.get())
 
-    if (language !in ruleEngineLanguages) return
+    if (language !in ruleEngineLanguages) {
+      settingsPerLanguage[language] = CombinedSettings(null, TreeSettings(description, tree))
+      return
+    }
 
     val toolkit = LanguageToolkit.forLanguage(language)
     val spacing = IntelliJSpacingConfiguration()
@@ -464,29 +455,39 @@ data class Settings(
 
     val settingState = getSettingsState(language, textStyle)
     component.loadState(settingState, textStyle)
-    featuredSettingsPerLanguage[language] = FeaturedSettings(component, settingState)
+    settingsPerLanguage[language] = CombinedSettings(FeaturedSettings(component, settingState), TreeSettings(description, tree))
   }
 
-  fun updateFilter(textStyle: TextStyle, language: Language, option: String) {
-    featuredSettings[textStyle.id]!![language]!!.component.filter(option)
-    treeSettings[textStyle.id]!![language]!!.tree.filter(option)
+  fun updateFilter(textStyle: TextStyle, language: Language, option: String): Unit =
+    combinedSettings[textStyle.id]!![language]!!.updateFilter(option)
+
+  fun clear(): Unit = combinedSettings.clear()
+}
+
+data class CombinedSettings(
+  val featuredSettings: FeaturedSettings?,
+  val treeSettings: TreeSettings,
+) {
+
+  fun isModified(state: GrazieConfig.State): Boolean {
+    return areModifiedFeaturedSettings(featuredSettings) || areModifiedTreeSettings(treeSettings, state)
   }
 
-  fun clear() {
-    featuredSettings.clear()
-    treeSettings.clear()
+  fun reset(state: GrazieConfig.State, textStyle: TextStyle, language: Language) {
+    if (areModifiedFeaturedSettings(featuredSettings)) {
+      featuredSettings!!.component.loadState(getSettingsState(language, textStyle), textStyle)
+      featuredSettings.resetState = featuredSettings.component.state
+    }
+    if (areModifiedTreeSettings(treeSettings, state)) treeSettings.tree.reset(state)
   }
 
-  private fun areModifiedFeaturedSettings(featuredSettings: MutableMap<Language, FeaturedSettings>): Boolean {
-    return featuredSettings.any { areModifiedFeaturedSettings(it.value) }
+  fun updateFilter(option: String) {
+    featuredSettings?.component?.filter(option)
+    treeSettings.tree.filter(option)
   }
 
-  private fun areModifiedTreeSettings(treeSettings: MutableMap<Language, TreeSettings>, state: GrazieConfig.State): Boolean {
-    return treeSettings.any { areModifiedTreeSettings(it.value, state) }
-  }
-
-  private fun areModifiedFeaturedSettings(featuredSettings: FeaturedSettings): Boolean {
-    return featuredSettings.component.state != featuredSettings.resetState
+  private fun areModifiedFeaturedSettings(featuredSettings: FeaturedSettings?): Boolean {
+    return featuredSettings != null && featuredSettings.component.state != featuredSettings.resetState
   }
 
   private fun areModifiedTreeSettings(treeSettings: TreeSettings, state: GrazieConfig.State): Boolean {

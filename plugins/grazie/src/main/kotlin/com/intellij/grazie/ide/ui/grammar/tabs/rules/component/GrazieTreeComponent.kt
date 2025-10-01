@@ -82,13 +82,13 @@ class GrazieTreeComponent(
 
   override fun isModified(state: GrazieConfig.State): Boolean {
     val (userEnabledRules, userDisabledRules) = state.getUserChangedRules(domain)
-    return userEnabledRules != enabledRules || userDisabledRules != disabledRules
+    return filterByLanguage(userEnabledRules) != enabledRules || filterByLanguage(userDisabledRules) != disabledRules
   }
 
   override fun reset(state: GrazieConfig.State) {
     val (userEnabledRules, userDisabledRules) = state.getUserChangedRules(domain)
-    enabledRules.clear(); enabledRules.addAll(userEnabledRules)
-    disabledRules.clear(); disabledRules.addAll(userDisabledRules)
+    enabledRules.clear(); enabledRules.addAll(filterByLanguage(userEnabledRules))
+    disabledRules.clear(); disabledRules.addAll(filterByLanguage(userDisabledRules))
     filterComponent.filter(filter.text)
   }
 
@@ -97,6 +97,9 @@ class GrazieTreeComponent(
   }
 
   override fun dispose() {}
+
+  private fun filterByLanguage(rules: Set<String>): Set<String> =
+    rules.filter { it.contains(".${language.iso.name}.", ignoreCase = true) }.toSet()
 
   @JvmOverloads
   fun filter(filterText: String? = filter.text) {
