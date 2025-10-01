@@ -112,4 +112,10 @@
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.statistics.PyCommunityUnifiedPromoFusCollector"/>
   </extensions>
+
+  <applicationListeners>
+    <listener
+      class="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.statistics.PyCommunityUpdateReadyNotificationListener"
+      topic="com.intellij.notification.Notifications"/>
+  </applicationListeners>
 </idea-plugin>

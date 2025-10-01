@@ -39,4 +39,7 @@ internal object PyCommunityUnifiedPromoFusCollector : CounterUsagesCollector() {
   // Update dialog
   internal val UpdateDialogShown = GROUP.registerEvent("update.dialog.shown")
   internal val UpdateDialogClosed = GROUP.registerEvent("update.dialog.closed", UpdateDialogCloseReasonField, DurationMsField)
+
+  // Update ready restart notification (balloon)
+  internal val UpdateReadyRestartNotificationShown = GROUP.registerEvent("update.ready.restart.notification.shown")
 }
