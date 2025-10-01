@@ -1,6 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -33,7 +31,7 @@ class IconMapLoader {
 
     // reduce memory usage
     result.replaceAll(BiFunction { _, value ->
-      java.util.Map.copyOf(value)
+      @Suppress("RemoveRedundantQualifierName") java.util.Map.copyOf(value)
     })
 
     cachedResult.compareAndSet(null, result)
@@ -49,10 +47,8 @@ class IconMapLoader {
             readDataFromJson(jsonFactory.createParser(data), result)
           }
         }
-      }
-        .toList()
-    }
-      .mapNotNull { it.getCompleted() }
+      }.toList()
+    }.mapNotNull { it.getCompleted() }
 
     val result = CollectionFactory.createWeakIdentityMap<ClassLoader, MutableMap<String, String>>(50, 0.5f)
     for (pair in list) {
@@ -61,8 +57,10 @@ class IconMapLoader {
     return result
   }
 
-  private suspend fun loadFromExtension(extension: LazyExtension<IconMapperBean>,
-                                        dataLoader: (data: ByteArray, result: HashMap<String, String>) -> Unit): Pair<ClassLoader, HashMap<String, String>>? {
+  private suspend fun loadFromExtension(
+    extension: LazyExtension<IconMapperBean>,
+    dataLoader: (data: ByteArray, result: HashMap<String, String>) -> Unit,
+  ): Pair<ClassLoader, HashMap<String, String>>? {
     val classLoader = extension.pluginDescriptor.pluginClassLoader ?: return null
     val mappingFile = extension.instance?.mappingFile ?: return null
     val data = withContext(Dispatchers.IO) { ResourceUtil.getResourceAsBytes(mappingFile, classLoader) }
@@ -79,15 +77,12 @@ class IconMapLoader {
       throw e
     }
     catch (e: Throwable) {
-      logger<IconMapLoader>().warn("Can't process ${extension.instance?.mappingFile}",
-                                   PluginException(e, extension.pluginDescriptor.pluginId))
+      logger<IconMapLoader>().warn("Can't process ${extension.instance?.mappingFile}", PluginException(e, extension.pluginDescriptor.pluginId))
     }
-    return (classLoader to result)
+    return classLoader to result
   }
 
-  fun loadIconMapping(): Map<ClassLoader, Map<String, String>>? {
-    return cachedResult.getAndSet(null) ?: return null
-  }
+  fun loadIconMapping(): Map<ClassLoader, Map<String, String>>? = cachedResult.getAndSet(null)
 }
 
 private fun readDataFromJson(parser: JsonParser, result: MutableMap<String, String>) {
@@ -157,5 +152,5 @@ private fun addWithCheck(result: MutableMap<String, String>, parser: JsonParser,
 }
 
 private fun logError(parser: JsonParser) {
-  logger<IconMapLoader>().warn("JSON contains data in unsupported format (token=${parser.currentToken}): ${parser.currentValue()}")
+  logger<IconMapLoader>().warn("JSON contains data in unsupported format (token=${parser.currentToken()}): ${parser.currentValue()}")
 }

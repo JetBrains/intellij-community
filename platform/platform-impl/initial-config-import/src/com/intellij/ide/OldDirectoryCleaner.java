@@ -2,6 +2,8 @@
 package com.intellij.ide;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventId;
@@ -20,14 +22,13 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Formats;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.io.jackson.JacksonUtil;
+import com.intellij.util.system.OS;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.IoErrorText;
 import com.intellij.util.ui.JBUI;
@@ -130,7 +131,7 @@ public final class OldDirectoryCleaner {
   private List<DirectoryGroup> collectDirectoryData(ConfigDirsSearchResult result, @Nullable ProgressIndicator indicator) {
     var configPaths = result.getPaths();
     var groups = new ArrayList<DirectoryGroup>(configPaths.size());
-    var productInfoFileName = SystemInfo.isMac ? ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC : ApplicationEx.PRODUCT_INFO_FILE_NAME;
+    var productInfoFileName = OS.CURRENT == OS.macOS ? ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC : ApplicationEx.PRODUCT_INFO_FILE_NAME;
 
     for (var configPath : configPaths) {
       var directories = result.findRelatedDirectories(configPath, myBestBefore != 0);
@@ -147,7 +148,7 @@ public final class OldDirectoryCleaner {
           var homeDir = Path.of(Files.readString(directory.resolve(ApplicationEx.LOCATOR_FILE_NAME)));
           if (Files.exists(homeDir)) {
             try (var reader = Files.newBufferedReader(homeDir.resolve(productInfoFileName)); var parser = new JsonFactory().createParser(reader)) {
-              if (nameAndVersion.equals(JacksonUtil.readSingleField(parser, "dataDirectoryName"))) {
+              if (nameAndVersion.equals(readDataDirectoryName(parser))) {
                 isInstalled = true;
               }
             }
@@ -170,6 +171,19 @@ public final class OldDirectoryCleaner {
     }
 
     return groups;
+  }
+
+  private static @Nullable String readDataDirectoryName(JsonParser parser) throws IOException {
+    if (parser.nextToken() == JsonToken.START_OBJECT) {
+      while (parser.nextToken() != null) {
+        if ("dataDirectoryName".equals(parser.currentName())) {
+          parser.nextToken();
+          return parser.getText();
+        }
+        parser.skipChildren();
+      }
+    }
+    return null;
   }
 
   private static final class StatsCollectingVisitor extends NioFiles.StatsCollectingVisitor {
@@ -369,7 +383,7 @@ public final class OldDirectoryCleaner {
           case 0 -> mySelected.get(row);
           case 1 -> myGroups.get(row).name;
           case 2 -> DateFormatUtil.formatBetweenDates(myGroups.get(row).lastUpdated, myNow);
-          case 3 -> StringUtil.formatFileSize(myGroups.get(row).size);
+          case 3 -> Formats.formatFileSize(myGroups.get(row).size);
           default -> null;
         };
       }

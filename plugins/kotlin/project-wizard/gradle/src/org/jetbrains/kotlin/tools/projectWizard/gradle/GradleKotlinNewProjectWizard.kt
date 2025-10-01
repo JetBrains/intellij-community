@@ -205,10 +205,9 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         var selectedJdkJvmTarget: Int? = null
             private set
 
-        private fun resolveSelectedJvmTarget(): Int? {
+        private fun resolveSelectedJvmTarget(): Int? =
             // Ordinal here works correctly, starting at Java 1.0 (0)
-            return jdkIntent?.javaVersion?.feature
-        }
+            jdkIntent.javaVersion?.feature
 
         override fun resolveIsFoojayPluginSupported(): Boolean {
             if (!super.resolveIsFoojayPluginSupported()) {
@@ -292,7 +291,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                 // Find the library entries from the libraries table in the TOML file
                 val libraryEntries = tomlTree.get("libraries") ?: return false
                 // Find the name of the library entry that contains the Kotlin Gradle Plugin
-                libraryEntries.fields().asSequence().firstOrNull { (_, node) ->
+                libraryEntries.properties().firstOrNull { (_, node) ->
                     node.get("module")?.asText()?.contains(KOTLIN_GRADLE_PLUGIN_ID) == true
                 }?.key
             }.getOrNull() ?: return false

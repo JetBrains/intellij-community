@@ -15,7 +15,6 @@ import org.apache.http.HttpRequest
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.auth.BasicScheme
-import java.io.ByteArrayOutputStream
 import java.io.InputStreamReader
 import java.net.URI
 import java.nio.file.Files
@@ -23,7 +22,7 @@ import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.*
 
-/** Clone of the com.intellij.ide.starter.ci.teamcity.TeamCityClient */
+/** Clone of the `com.intellij.ide.starter.ci.teamcity.TeamCityClient` */
 class TeamCityClient(
   val baseUri: URI = URI("https://buildserver.labs.intellij.net").normalize(),
   private val systemPropertiesFilePath: Path = Path(System.getenv("TEAMCITY_BUILD_PROPERTIES_FILE"))
@@ -39,8 +38,7 @@ class TeamCityClient(
         val map = mutableMapOf<String, String>()
         val ps = Properties()
         ps.load(it)
-
-        ps.forEach { k, v ->
+        ps.forEach { (k, v) ->
           if (k != null && v != null) {
             map[k.toString()] = v.toString()
           }
@@ -48,7 +46,7 @@ class TeamCityClient(
         map
       }
     }
-    catch (t: Throwable) {
+    catch (_: Throwable) {
       emptyMap()
     }
 
@@ -58,11 +56,10 @@ class TeamCityClient(
   }
 
   private val restUri = baseUri.resolve("/app/rest/")
-  val guestAuthUri = baseUri.resolve("/guestAuth/app/rest/")
 
-  val buildNumber by lazy { System.getenv("BUILD_NUMBER") ?: "" }
+  val buildNumber: String by lazy { System.getenv("BUILD_NUMBER") ?: "" }
 
-  val configurationName by lazy { systemProperties["teamcity.buildConfName"] }
+  val configurationName: String? by lazy { systemProperties["teamcity.buildConfName"] }
 
   private val buildParams by lazy {
     val configurationPropertiesFile = systemProperties["teamcity.configuration.properties.file"]
@@ -87,10 +84,7 @@ class TeamCityClient(
   val buildId: String by lazy { getExistingParameter("teamcity.build.id") }
   val buildTypeId: String by lazy { getExistingParameter("teamcity.buildType.id") }
   val os: String by lazy { getExistingParameter("teamcity.agent.jvm.os.name") }
-  val branchName by lazy { systemProperties.plus(buildParams)["teamcity.build.branch"] ?: "" }
-  val isPersonalBuild by lazy {
-    systemProperties.plus(buildParams)["teamcity.build.branch"].equals("true", ignoreCase = true)
-  }
+  val branchName: String by lazy { systemProperties.plus(buildParams)["teamcity.build.branch"] ?: "" }
 
   private val userName: String by lazy { getExistingParameter("teamcity.auth.userId") }
   private val password: String by lazy { getExistingParameter("teamcity.auth.password") }
@@ -136,37 +130,18 @@ class TeamCityClient(
     return requireNotNull(result) { "Request ${request.uri} failed" }
   }
 
-  private fun downloadChangesPatch(buildTypeId: String, modificationId: String, isPersonal: Boolean): String {
-    val uri = baseUri.resolve("/downloadPatch.html?buildTypeId=${buildTypeId}&modId=${modificationId}&personal=$isPersonal")
-
-    return NastradamusCache.get(uri) {
-      val outputStream = ByteArrayOutputStream()
-
-      if (!HttpClient.download(request = HttpGet(uri).withAuth(), outStream = outputStream, retries = 3)) {
-        throw RuntimeException("Couldn't download patch $uri in 3 attempts")
-      }
-
-      outputStream.toString("UTF-8")
-    }
-  }
-
-  fun downloadChangesPatch(modificationId: String, isPersonal: Boolean): String =
-    downloadChangesPatch(buildTypeId = buildTypeId,
-                         modificationId = modificationId,
-                         isPersonal = isPersonal)
-
   fun getChanges(buildId: String): List<JsonNode> {
     val fullUrl = restUri.resolve("changes?locator=build:(id:$buildId)")
 
     val rawData = NastradamusCache.get(fullUrl) { get(fullUrl).toString() }
 
-    return jacksonMapper.readTree(rawData).fields().asSequence()
+    return jacksonMapper.readTree(rawData).properties().asSequence()
       .filter { it.key == "change" }
       .flatMap { it.value }
       .toList()
   }
 
-  fun getChanges() = getChanges(buildId)
+  fun getChanges(): List<JsonNode> = getChanges(buildId)
 
   fun getChangeDetails(changeId: String): List<ChangeEntity> {
     val fullUrl = restUri.resolve("changes/id:$changeId")
@@ -215,7 +190,7 @@ class TeamCityClient(
 
       val rawData = NastradamusCache.get(fullUrl) { get(fullUrl).toString() }
 
-      currentTests = jacksonMapper.readTree(rawData).fields().asSequence()
+      currentTests = jacksonMapper.readTree(rawData).properties().asSequence()
         .filter { it.key == "testOccurrence" }
         .flatMap { it.value }
         .toList()
@@ -282,7 +257,8 @@ class TeamCityClient(
     }
     while (artifactDir.exists())
 
-    artifactDir.toFile().deleteRecursively()
+    @OptIn(ExperimentalPathApi::class)
+    artifactDir.deleteRecursively()
     artifactDir.createDirectories()
 
     if (source.isDirectory()) {
@@ -310,4 +286,3 @@ class TeamCityClient(
     }
   }
 }
-
