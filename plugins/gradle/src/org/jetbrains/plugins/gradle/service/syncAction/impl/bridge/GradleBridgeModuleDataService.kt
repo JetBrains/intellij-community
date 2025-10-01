@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
+import com.intellij.platform.workspace.storage.EntitySource
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity
@@ -38,9 +39,14 @@ class GradleBridgeModuleDataService : AbstractProjectDataService<GradleBridgeMod
       // GradleModuleEntity could be already created. For example, by GradleContentRootSyncContributor.
       if (moduleEntity.gradleModuleEntity == null) {
         storage.modifyModuleEntity(moduleEntity) {
-          gradleModuleEntity = GradleModuleEntity(projectEntity.symbolicId, projectEntity.entitySource)
+          gradleModuleEntity = GradleModuleEntity(
+            projectEntity.symbolicId,
+            GradleBridgeModuleEntitySource()
+          )
         }
       }
     }
   }
+
+  private class GradleBridgeModuleEntitySource : EntitySource
 }

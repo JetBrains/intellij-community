@@ -115,10 +115,11 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
           assertEntities<GradleBuildEntity>(myProject, rootBuildId)
           assertEntities<GradleProjectEntity>(myProject, rootProjectId, rootSubprojectId)
 
-          // TODO Make sure that it's a correct behavior: entity for `project` does not exist at the second sync.
-          // EXPECTED:
-          //assertGradleModuleEntities(myProject, "project" to rootProjectId, "project.module" to rootSubprojectId)
-          assertGradleModuleEntities(myProject, "project.module" to rootSubprojectId)
+          assertGradleModuleEntities(
+            myProject,
+            "project" to rootProjectId,
+            "project.module" to rootSubprojectId
+          )
 
           assertGradleBuildEntity(myProject, rootBuildUrl, externalProjectId)
           assertGradleProjectEntity(
@@ -322,15 +323,12 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
           assertEntities<GradleBuildEntity>(myProject, rootBuildId, firstIncludedBuildId, secondIncludedBuildId)
           assertEntities<GradleProjectEntity>(myProject, rootProjectId, firstIncludedProjectId, secondIncludedProjectId)
 
-          // TODO Make sure that it's a correct behavior: entities for `project` and `includedProject1` don't exist at the second sync
-          // EXPECTED:
-          //assertGradleModuleEntities(
-          //  myProject,
-          //  "project" to rootProjectId,
-          //  "includedProject1" to firstIncludedProjectId,
-          //  "includedProject2" to secondIncludedProjectId
-          //)
-          assertGradleModuleEntities(myProject, "includedProject2" to secondIncludedProjectId)
+          assertGradleModuleEntities(
+            myProject,
+            "project" to rootProjectId,
+            "includedProject1" to firstIncludedProjectId,
+            "includedProject2" to secondIncludedProjectId
+          )
 
           assertGradleBuildEntity(myProject, rootBuildUrl, externalProjectId)
           assertGradleProjectEntity(
@@ -626,7 +624,6 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
     Disposer.newDisposable().use { disposable ->
 
       val contentRootContributorAssertion = ListenerAssertion()
-      val isFirstSyncBeforeStandaloneBuildSrcSync = AtomicBoolean(isBuildSrcResolvedOnSecondCall)
 
       whenSyncPhaseCompleted(GradleSyncPhase.PROJECT_MODEL_PHASE, disposable) {
         contentRootContributorAssertion.trace {
@@ -638,32 +635,11 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
           assertEntities<ExternalProjectEntity>(myProject, externalProjectId)
           assertEntities<GradleBuildEntity>(myProject, rootBuildId, buildSrcBuildId)
           assertEntities<GradleProjectEntity>(myProject, rootProjectId, buildSrcProjectId)
-          // TODO The assertions match the existing behavior. Make sure the behavior is correct.
-          // On this sync, GradleContentRootSyncContributor creates GradleModuleEntity for modules listed in the commented assertions.
-          // Somehow the actual set of entities is different, when it's not the first import.
-          when {
-            isFirstSyncBeforeStandaloneBuildSrcSync.getAndSet(false) -> {
-              // On this sync, GradleContentRootSyncContributor creates GradleModuleEntity ONLY for `project` module. But it's absent.
-              // The entity for `project.buildSrc` probably exists from the previous sync, but it's unclear how.
-              // EXPECTED:
-              //assertGradleModuleEntities(myProject, "project" to rootProjectId)
-              assertGradleModuleEntities(myProject, "project.buildSrc" to buildSrcProjectId)
-            }
-            isBuildSrcResolvedOnSecondCall -> {
-              // On this buildSrc sync, GradleContentRootSyncContributor creates GradleModuleEntity only for `project.buildSrc` module.
-              // However, the entity for it is absent.
-              // EXPECTED:
-              //assertGradleModuleEntities(myProject, "project.buildSrc" to buildSrcProjectId)
-              assertGradleModuleEntities(myProject)
-            }
-            else -> {
-              // Since Gradle 8.0, there is no standalone sync for buildSrc, so GradleContentRootSyncContributor creates
-              // GradleModuleEntity for both `project` and `project.buildSrc` modules. None of them are available, actually.
-              // EXPECTED:
-              //assertGradleModuleEntities(myProject, "project" to rootProjectId, "project.buildSrc" to buildSrcProjectId)
-              assertGradleModuleEntities(myProject)
-            }
-          }
+          assertGradleModuleEntities(
+            myProject,
+            "project" to rootProjectId,
+            "project.buildSrc" to buildSrcProjectId
+          )
 
           assertContentRoots(myProject, "project", projectRoot)
           assertContentRoots(myProject, "project.main", projectRoot.resolve("src/main"))
