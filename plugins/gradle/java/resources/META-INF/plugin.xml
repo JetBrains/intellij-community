@@ -62,6 +62,8 @@
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleJavaFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleJavaFrameworkSupportProvider" />
     <targetEnvironmentAware implementation="org.jetbrains.plugins.gradle.execution.target.GradleServerDebugAware" />
+
+    <externallyHandledExtensions implementation="org.jetbrains.plugins.gradle.service.resolve.GradleWsmVersionCatalogHandler" order="first"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
