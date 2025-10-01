@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.miscProject.impl
 
+import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.EDT
@@ -40,7 +41,12 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.time.Duration.Companion.milliseconds
 
-internal val miscProjectDefaultPath: Lazy<Path> = lazy { Path.of(SystemProperties.getUserHome()).resolve("PyCharmMiscProject") }
+internal val miscProjectDefaultPath: Path
+  get() {
+    val default = GeneralLocalSettings.getInstance().defaultProjectDirectory
+    val directory = if (default.isEmpty()) Path.of(SystemProperties.getUserHome()) else Path.of(default)
+    return directory.resolve("PyCharmMiscProject")
+  }
 
 /**
  * Creates a project in [projectPath] in a modal window.
@@ -54,7 +60,7 @@ suspend fun createMiscProject(
   miscFileType: MiscFileType,
   scopeProvider: (Project) -> CoroutineScope,
   confirmInstallation: suspend () -> Boolean,
-  projectPath: Path = miscProjectDefaultPath.value,
+  projectPath: Path = miscProjectDefaultPath,
   systemPythonService: SystemPythonService = SystemPythonService(),
 ): PyResult<Job> {
   return createProjectAndSdk(projectPath,

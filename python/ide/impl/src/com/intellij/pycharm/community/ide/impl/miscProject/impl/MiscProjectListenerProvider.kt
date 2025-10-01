@@ -14,7 +14,7 @@ internal class MiscProjectListenerProvider : RefactoringElementListenerProvider 
   override fun getListener(element: PsiElement): RefactoringElementListener? {
     val dir = (element as? PsiDirectory) ?: return null
     // dir name is enough
-    return if (dir.name == miscProjectDefaultPath.value.name) MiscProjectRenameReporter else null
+    return if (dir.name == miscProjectDefaultPath.name) MiscProjectRenameReporter else null
   }
 }
 
