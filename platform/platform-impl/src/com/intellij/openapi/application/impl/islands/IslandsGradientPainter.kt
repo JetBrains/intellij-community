@@ -6,6 +6,7 @@ import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.GradientTextureCache
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
@@ -48,17 +49,18 @@ internal fun islandsGradientPaint(frame: IdeFrame, mainColor: Color, projectWind
   if (component is IdeGlassPaneEx && !component.isColorfulToolbar) {
     return
   }
+
+  val project = frame.project ?: return
+
   if (Registry.`is`("idea.islands.color.gradient.enabled", false)) {
-    doColorGradientPaint(component, g)
+    doColorGradientPaint(project, projectWindowCustomizer, component, g)
   }
   else {
-    doGradientPaint(frame, mainColor, projectWindowCustomizer, component, g)
+    doGradientPaint(frame, mainColor, project, projectWindowCustomizer, component, g)
   }
 }
 
-private fun doGradientPaint(frame: IdeFrame, mainColor: Color, projectWindowCustomizer: ProjectWindowCustomizerService, component: Component, g: Graphics2D) {
-  val project = frame.project ?: return
-
+private fun doGradientPaint(frame: IdeFrame, mainColor: Color, project: Project, projectWindowCustomizer: ProjectWindowCustomizerService, component: Component, g: Graphics2D) {
   val centerColor = projectWindowCustomizer.getGradientProjectColor(project)
 
   val centerX = project.service<ProjectWidgetGradientLocationService>().gradientOffsetRelativeToRootPane
@@ -109,10 +111,13 @@ private fun getGradientCache(root: JComponent, key: String): GradientTextureCach
   return newValue
 }
 
-private fun doColorGradientPaint(component: Component, g: Graphics2D) {
+private fun doColorGradientPaint(project: Project, projectWindowCustomizer: ProjectWindowCustomizerService, component: Component, g: Graphics2D) {
+  val info = projectWindowCustomizer.getProjectGradients(project)
+
   g.paint = LinearGradientPaint(0f, 0f, component.width.toFloat(), component.height.toFloat(),
-                                floatArrayOf(0f, 0.13f, 0.3f, 1f),
-                                arrayOf(Color(0xFF0000), Color(0x4800FF), Color(0x1FB6D4), Color(0xFF0000)))
+                                floatArrayOf(info.getDiagonalFraction1(0f), info.getDiagonalFraction2(0.13f),
+                                             info.getDiagonalFraction3(0.3f), info.getDiagonalFraction4(1f)),
+                                arrayOf(info.diagonalColor1, info.diagonalColor2, info.diagonalColor3, info.diagonalColor4))
 
   g.fillRect(0, 0, component.width, component.height)
 
@@ -123,15 +128,15 @@ private fun doColorGradientPaint(component: Component, g: Graphics2D) {
 
   g.paint = RadialGradientPaint(ovalCenterX, ovalCenterY, ovalRadius,
                                 floatArrayOf(0f, 1f),
-                                arrayOf(Color(0xE5, 0x00, 0xFF, 0xFF), Color(0xE5, 0x00, 0xFF, 0x00)))
+                                arrayOf(info.radialColor1, info.radialColor2))
 
   g.fillOval((ovalCenterX - ovalRadius).toInt(), (ovalCenterY - ovalRadius).toInt(), ovalWidth, ovalWidth)
 
-  g.paint = GradientPaint(0f, 0f, Color(0x2B, 0x2D, 0x30, 0x1A), component.width.toFloat(), 0f, Color(0x2B, 0x2D, 0x30, 0x33))
+  g.paint = GradientPaint(0f, 0f, info.horizontalColor1, component.width.toFloat(), 0f, info.horizontalColor2)
 
   g.fillRect(0, 0, component.width, component.height)
 
-  g.paint = GradientPaint(0f, 0f, Color(0x2B, 0x2D, 0x30, 0x1A), 0f, component.height.toFloat(), Color(0x2B, 0x2D, 0x30, 0x9A))
+  g.paint = GradientPaint(0f, 0f, info.verticalColor1, 0f, component.height.toFloat(), info.verticalColor2)
 
   g.fillRect(0, 0, component.width, component.height)
 }

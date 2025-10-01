@@ -98,6 +98,35 @@ private data class ProjectColors(val gradient: Color,
                                  val iconColorEnd: Color,
                                  val index: Int? = null)
 
+internal class ProjectGradients(val index: Int) {
+  val diagonalColor1 = JBColor.namedColor("ProjectGradients.Group${index}.DiagonalGradient.Color1")
+  val diagonalColor2 = JBColor.namedColor("ProjectGradients.Group${index}.DiagonalGradient.Color2")
+  val diagonalColor3 = JBColor.namedColor("ProjectGradients.Group${index}.DiagonalGradient.Color3")
+  val diagonalColor4 = JBColor.namedColor("ProjectGradients.Group${index}.DiagonalGradient.Color4")
+
+  private val fraction1Key = "ProjectGradients.Group${index}.DiagonalGradient.Fraction1"
+  private val fraction2Key = "ProjectGradients.Group${index}.DiagonalGradient.Fraction2"
+  private val fraction3Key = "ProjectGradients.Group${index}.DiagonalGradient.Fraction3"
+  private val fraction4Key = "ProjectGradients.Group${index}.DiagonalGradient.Fraction4"
+
+  fun getDiagonalFraction1(value: Float): Float = JBUI.getFloat(fraction1Key, value)
+
+  fun getDiagonalFraction2(value: Float): Float = JBUI.getFloat(fraction2Key, value)
+
+  fun getDiagonalFraction3(value: Float): Float = JBUI.getFloat(fraction3Key, value)
+
+  fun getDiagonalFraction4(value: Float): Float = JBUI.getFloat(fraction4Key, value)
+
+  val radialColor1 = JBColor.namedColor("ProjectGradients.Group${index}.RadialGradient.Color1")
+  val radialColor2 = JBColor.namedColor("ProjectGradients.Group${index}.RadialGradient.Color2")
+
+  val horizontalColor1 = JBColor.namedColor("ProjectGradients.Group${index}.HorizontalGradient.Color1")
+  val horizontalColor2 = JBColor.namedColor("ProjectGradients.Group${index}.HorizontalGradient.Color2")
+
+  val verticalColor1 = JBColor.namedColor("ProjectGradients.Group${index}.VerticalGradient.Color1")
+  val verticalColor2 = JBColor.namedColor("ProjectGradients.Group${index}.VerticalGradient.Color2")
+}
+
 @Service
 class ProjectWindowCustomizerService : Disposable {
   companion object {
@@ -149,6 +178,8 @@ class ProjectWindowCustomizerService : Disposable {
 
   private val gradientRepaintRoots = HashSet<JComponent>()
 
+  private val allGradients = mutableMapOf<Int, ProjectGradients>()
+
   internal fun addGradientRepaintRoot(component: JComponent) {
     gradientRepaintRoots.add(component)
   }
@@ -190,6 +221,14 @@ class ProjectWindowCustomizerService : Disposable {
 
   @Internal
   fun getCurrentProjectColorIndex(project: Project): Int? =  storageFor(project)?.let { getProjectColor(it).index }
+
+  internal fun getProjectGradients(project: Project): ProjectGradients {
+    val index = getCurrentProjectColorIndex(project) ?: 0
+
+    return allGradients.getOrPut(index) {
+      ProjectGradients(index + 1)
+    }
+  }
 
   private fun getProjectColor(colorStorage: ProjectColorStorage): ProjectColors {
     ThreadingAssertions.assertEventDispatchThread()
