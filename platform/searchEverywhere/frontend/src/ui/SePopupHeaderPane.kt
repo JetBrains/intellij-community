@@ -69,7 +69,7 @@ class SePopupHeaderPane(
           }
           .component
 
-        setFilterActions(emptyList(), null)
+        setFilterActions(emptyList(), null, false)
         cell(tabFilterContainer).align(AlignY.FILL + AlignX.RIGHT).resizableColumn()
       }
 
@@ -135,17 +135,16 @@ class SePopupHeaderPane(
     super.removeNotify()
   }
 
-  fun setFilterActions(actions: List<AnAction>, showInFindToolWindowAction: AnAction? = null) {
+  fun setFilterActions(actions: List<AnAction>, showInFindToolWindowAction: AnAction?, isPreviewEnabled: Boolean) {
     toolbarListenerDisposable?.let { Disposer.dispose(it) }
     val toolbarListenerDisposable = Disposer.newDisposable()
     this.toolbarListenerDisposable = toolbarListenerDisposable
 
     val actionGroup = DefaultActionGroup(actions)
-    showInFindToolWindowAction?.let { actionGroup.add(it) }
     if (isPreviewEnabled) {
       actionGroup.add(PreviewAction())
     }
-    actionGroup.add(showInFindToolWindowAction)
+    showInFindToolWindowAction?.let { actionGroup.add(it) }
     toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true)
     toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY)
     toolbar.targetComponent = this

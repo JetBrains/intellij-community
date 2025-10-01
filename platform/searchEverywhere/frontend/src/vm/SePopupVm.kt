@@ -158,7 +158,7 @@ class SePopupVm(
 
     if (PreviewExperiment.isExperimentEnabled && previewFetcher != null) {
       previewConfigurationFlow = combine(currentTabFlow, showPreviewSetting) { tabVm, previewSetting ->
-        tabVm.isPreviewEnabled() to previewSetting
+        tabVm.isPreviewEnabled.getValue() to previewSetting
       }.mapLatest { (tabPreviewEnabled, previewSetting) ->
         if (tabPreviewEnabled) {
           if (previewSetting) SePreviewConfiguration(previewFetcher.project, this::fetchPreview)
