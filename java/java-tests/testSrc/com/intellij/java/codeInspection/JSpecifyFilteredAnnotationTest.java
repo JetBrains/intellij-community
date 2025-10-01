@@ -124,8 +124,37 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
         new Pair<>("OutOfBoundsTypeVariable.java", 21)  // see: IDEA-377707 (also see the commented case in warning matchers)
       )
     ),
-    new SkipIndividuallyFilter( //cases to investigate later (with unspecified annotation). (line number starts from 0)
+    new SkipIndividuallyFilter( //cases to investigate later (with unspecified annotation and complicated to understand). (line number starts from 0)
       Set.of(
+        new Pair<>("NullLiteralToTypeVariable.java", 53), //IDEA-380143
+        new Pair<>("NullLiteralToTypeVariable.java", 73), //IDEA-380143
+        new Pair<>("NullLiteralToTypeVariable.java", 83), //IDEA-380143
+        new Pair<>("NullLiteralToTypeVariable.java", 93), //IDEA-380143
+        new Pair<>("NullLiteralToTypeVariable.java", 113), //IDEA-380143
+        new Pair<>("TypeVariableToObject.java", 109), //IDEA-380143
+        new Pair<>("TypeVariableToParent.java", 80), //IDEA-380143
+        new Pair<>("TypeVariableUnionNullToParent.java", 73), //IDEA-380143
+        new Pair<>("TypeVariableUnionNullToParent.java", 78), //IDEA-380143
+        new Pair<>("TypeVariableUnionNullToParent.java", 83), //IDEA-380143
+        new Pair<>("TypeVariableUnionNullToParent.java", 93), //IDEA-380143
+        new Pair<>("TypeVariableUnionNullToSelf.java", 53), //IDEA-380143
+        new Pair<>("TypeVariableUnionNullToSelf.java", 73), //IDEA-380143
+        new Pair<>("TypeVariableUnionNullToSelf.java", 83), //IDEA-380143
+        new Pair<>("TypeVariableUnionNullToSelf.java", 93), //IDEA-380143
+        new Pair<>("TypeVariableUnionNullToSelf.java", 98), //IDEA-380143
+        new Pair<>("TypeVariableUnionNullToSelf.java", 113), //IDEA-380143
+        new Pair<>("TypeVariableUnspecToObject.java", 58), //IDEA-380143
+        new Pair<>("TypeVariableUnspecToObject.java", 78), //IDEA-380143
+        new Pair<>("TypeVariableUnspecToObject.java", 98), //IDEA-380143
+        new Pair<>("TypeVariableUnspecToObject.java", 103), //IDEA-380143
+        new Pair<>("TypeVariableUnspecToObject.java", 108), //IDEA-380143
+        new Pair<>("TypeVariableUnspecToObject.java", 113), //IDEA-380143
+        new Pair<>("TypeVariableUnspecToObject.java", 118), //IDEA-380143
+        new Pair<>("TypeVariableUnspecToParent.java", 53), //IDEA-380143
+        new Pair<>("TypeVariableUnspecToParent.java", 68), //IDEA-380143
+        new Pair<>("TypeVariableUnspecToParent.java", 83), //IDEA-380143
+        new Pair<>("TypeVariableUnspecToParent.java", 98), //IDEA-380143
+
         new Pair<>("DereferenceTypeVariable.java", 123),
         new Pair<>("MultiBoundTypeVariableToObject.java", 43),
         new Pair<>("MultiBoundTypeVariableToObject.java", 52),
@@ -136,34 +165,6 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
         new Pair<>("MultiBoundTypeVariableUnionNullToSelf.java", 57),
         new Pair<>("MultiBoundTypeVariableUnspecToObject.java", 63),
         new Pair<>("MultiBoundTypeVariableUnspecToOther.java", 63),
-        new Pair<>("NullLiteralToTypeVariable.java", 53),
-        new Pair<>("NullLiteralToTypeVariable.java", 73),
-        new Pair<>("NullLiteralToTypeVariable.java", 83),
-        new Pair<>("NullLiteralToTypeVariable.java", 93),
-        new Pair<>("NullLiteralToTypeVariable.java", 113),
-        new Pair<>("TypeVariableToObject.java", 109),
-        new Pair<>("TypeVariableToParent.java", 80),
-        new Pair<>("TypeVariableUnionNullToParent.java", 73),
-        new Pair<>("TypeVariableUnionNullToParent.java", 78),
-        new Pair<>("TypeVariableUnionNullToParent.java", 83),
-        new Pair<>("TypeVariableUnionNullToParent.java", 93),
-        new Pair<>("TypeVariableUnionNullToSelf.java", 53),
-        new Pair<>("TypeVariableUnionNullToSelf.java", 73),
-        new Pair<>("TypeVariableUnionNullToSelf.java", 83),
-        new Pair<>("TypeVariableUnionNullToSelf.java", 93),
-        new Pair<>("TypeVariableUnionNullToSelf.java", 98),
-        new Pair<>("TypeVariableUnionNullToSelf.java", 113),
-        new Pair<>("TypeVariableUnspecToObject.java", 58),
-        new Pair<>("TypeVariableUnspecToObject.java", 78),
-        new Pair<>("TypeVariableUnspecToObject.java", 98),
-        new Pair<>("TypeVariableUnspecToObject.java", 103),
-        new Pair<>("TypeVariableUnspecToObject.java", 108),
-        new Pair<>("TypeVariableUnspecToObject.java", 113),
-        new Pair<>("TypeVariableUnspecToObject.java", 118),
-        new Pair<>("TypeVariableUnspecToParent.java", 53),
-        new Pair<>("TypeVariableUnspecToParent.java", 68),
-        new Pair<>("TypeVariableUnspecToParent.java", 83),
-        new Pair<>("TypeVariableUnspecToParent.java", 98),
         new Pair<>("UnionTypeArgumentWithUseSite.java", 95)
       )
     ) {
