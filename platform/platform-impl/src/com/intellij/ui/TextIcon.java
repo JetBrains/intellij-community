@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -215,6 +216,11 @@ public final class TextIcon implements Icon {
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    if (customization != null) {
+      g = customization.preserveGraphics(g);
+    }
+
     if (g instanceof Graphics2D) {
       if (myBackground != null) {
         g.setColor(myBackground);
