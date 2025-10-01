@@ -625,6 +625,17 @@ class PluginModelValidator(
 
       checkContentModuleUnexpectedElements(moduleDescriptor, referencingModuleInfo.sourceModule, moduleInfo)
       checkModuleElements(moduleDescriptor, moduleInfo.sourceModule, moduleInfo.descriptorFile)
+
+      if (moduleDescriptor.moduleVisibility != ModuleVisibility.PUBLIC && moduleDescriptor.pluginAliases.isNotEmpty()) {
+        val aliases =
+          if (moduleDescriptor.pluginAliases.size > 1) "${moduleDescriptor.pluginAliases.size} plugin aliases (${moduleDescriptor.pluginAliases.joinToString()})"
+          else "a plugin alias '${moduleDescriptor.pluginAliases.first()}'"
+        registerError("""
+          |Module '$moduleName' has '${moduleDescriptor.moduleVisibility.name.lowercase()}' visibility but it declares $aliases so
+          |actually any module may depend on it using <dependencies><plugin> or <depends> tag.
+          |If this is intended, change visibility of '$moduleName' to 'public'.
+        """.trimMargin())
+      }
     }
 
     if (nonPrivateModules.isNotEmpty() && referencingModuleInfo.descriptor.namespace == null) {
