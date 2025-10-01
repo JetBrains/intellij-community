@@ -11,6 +11,7 @@ kt_jvm_library(
   name = "zip",
   kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
   visibility = [
+    "//jvm-inc-builder:__pkg__",
     "//src/builder-state:__pkg__",
     "//src/jvm-builder-core:__pkg__",
     "//src/jvm-builder:__pkg__",

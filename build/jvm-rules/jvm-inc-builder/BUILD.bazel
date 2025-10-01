@@ -32,6 +32,7 @@ kt_jvm_library(
     "//:qdox",
     "//src/worker-framework",
     "//src/worker-util",
+    "//zip",
     "patched-kotlin-compiler-for-bazel",
     "//:kotlin-compose-compiler-plugin",
     "//:kotlin-serialization-compiler-plugin",
