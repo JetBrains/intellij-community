@@ -83,11 +83,6 @@ final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase imple
     ThreadingAssertions.assertEventDispatchThread();
 
     try {
-      String actualSdkName = mySdk.getSdkName();
-      if (actualSdkName == null) {
-        actualSdkName = myFix.getSuggestedSdkName();
-      }
-
       Sdk sdk = UnknownMissingSdkFix.createNewSdk(mySdk, myFix::getSuggestedSdkName);
       SdkModificator mod = sdk.getSdkModificator();
       mod.setHomePath(FileUtil.toSystemIndependentName(myFix.getExistingSdkHome()));
@@ -98,7 +93,7 @@ final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase imple
 
       mySdk.getSdkType().setupSdkPaths(sdk);
       myFix.configureSdk(sdk);
-      UnknownMissingSdkFix.registerNewSdkInJdkTable(actualSdkName, sdk);
+      UnknownMissingSdkFix.registerNewSdkInJdkTable(sdk.getName(), sdk);
 
       LOG.info("Automatically set Sdk " + mySdk + " to " + myFix.getExistingSdkHome());
       return sdk;
