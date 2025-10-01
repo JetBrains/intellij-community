@@ -6,10 +6,8 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
 abstract class Preferences(private val properties: Properties) {
-    protected class MandatoryPreference<T : Any>(private val mapper: (String) -> T?) : ReadOnlyProperty<Preferences, T> {
-        companion object {
-            operator fun invoke(): MandatoryPreference<String> = MandatoryPreference { it }
-        }
+    protected open class MandatoryPreference<T : Any>(private val mapper: (String) -> T?) : ReadOnlyProperty<Preferences, T> {
+        companion object : MandatoryPreference<String>({ it })
 
         override fun getValue(thisRef: Preferences, property: KProperty<*>): T {
             val key = property.name
@@ -18,11 +16,13 @@ abstract class Preferences(private val properties: Properties) {
         }
     }
 
-    protected class OptionalPreference<T: Any>(private val mapper: (String) -> T?) : ReadOnlyProperty<Preferences, T?> {
+    protected open class OptionalPreference<T : Any>(private val mapper: (String) -> T?) : ReadOnlyProperty<Preferences, T?> {
         override fun getValue(thisRef: Preferences, property: KProperty<*>): T? {
             val key = property.name
             val rawValue = thisRef.properties.getProperty(key) ?: return null
             return mapper(rawValue) ?: error("Property \"$key\" contains invalid value")
         }
+
+        companion object : OptionalPreference<String>({ it })
     }
 }

@@ -6,16 +6,16 @@ import org.jetbrains.tools.model.updater.impl.Preferences
 import java.util.*
 
 class GeneratorPreferences(properties: Properties) : Preferences(properties) {
-    val jpsPluginVersion: String by MandatoryPreference()
+    val jpsPluginVersion: String by MandatoryPreference
     val jpsPluginArtifactsMode: ArtifactMode by MandatoryPreference(ArtifactMode::valueOf)
 
-    val kotlincVersion: String by MandatoryPreference()
-    val kotlinGradlePluginVersion: String by MandatoryPreference()
+    val kotlincVersion: String by MandatoryPreference
+    val kotlinGradlePluginVersion: String by MandatoryPreference
     val kotlincArtifactsMode: ArtifactMode by MandatoryPreference(ArtifactMode::valueOf)
 
     val applicationMode: ApplicationMode? by OptionalPreference(ApplicationMode::valueOf)
 
-    val kotlinCompilerRepoPath: String by MandatoryPreference()
+    val kotlinCompilerRepoPath: String by MandatoryPreference
 
     /**
      * Represents modes of the application. [PROJECT_MODEL_UPDATER] is the default one.
@@ -55,7 +55,7 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
         fun parse(args: Array<String>): GeneratorPreferences {
             val properties = Properties()
 
-            val classForResources = object {}::class.java
+            val classForResources = this::class.java
             for (resourceFilePath in configurationResources) {
                 val configurationFile = classForResources.getResource(resourceFilePath)
                 configurationFile?.openStream()?.use { stream -> properties.load(stream) }
