@@ -92,8 +92,11 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
 
   private static boolean suppressWarning(@NotNull String message, String fileName, Integer offset) {
     Set<Pair<String, Integer>> suppressed = Set.of(
-      Pair.create("Other.java", 72), // see: IDEA-377763
-      Pair.create("Other.java", 70) // see: IDEA-377763
+      // These two exceptions are expected: unlike JSpecify, we don't assign NotNull nullness to non-final catch parameter
+      // Instead, we are doing the flow analysis and may change the nullness during the variable lifetime
+      // See IDEA-377763 for details
+      Pair.create("Other.java", 72),
+      Pair.create("Other.java", 70)
     );
     LineColumn column = StringUtil.offsetToLineColumn(message, offset);
     return suppressed.contains(Pair.create(fileName, column.line));
