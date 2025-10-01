@@ -8,8 +8,8 @@
         </compilerSettings>
         <compilerArguments>
           <option name="jvmTarget" value="1.7" />
-          <option name="languageVersion" value="1.1" />
           <option name="apiVersion" value="1.0" />
+          <option name="languageVersion" value="1.1" />
         </compilerArguments>
       </configuration>
     </facet>

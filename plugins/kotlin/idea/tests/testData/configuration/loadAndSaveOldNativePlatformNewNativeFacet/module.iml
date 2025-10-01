@@ -7,8 +7,8 @@
           <option name="additionalArguments" value="-version -Xallow-kotlin-package -Xskip-metadata-version-check" />
         </compilerSettings>
         <compilerArguments>
-          <option name="languageVersion" value="1.1" />
           <option name="apiVersion" value="1.0" />
+          <option name="languageVersion" value="1.1" />
         </compilerArguments>
       </configuration>
     </facet>
