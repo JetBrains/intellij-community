@@ -31,7 +31,7 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14-dev"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
 
     steps:
@@ -46,5 +46,8 @@ jobs:
           check-latest: true
       - name: Install dependencies
         run: pip install -r requirements-tests.txt
+      # Temporary to get @disjoint_base support; can remove once mypy 1.18 is released
+      - name: Install mypy from git
+        run: pip install git+https://github.com/python/mypy.git@116b92bae7b5dbf5e6bd36fd9b0c6804973e5554
       - name: Run stubtest
         run: python tests/stubtest_stdlib.py

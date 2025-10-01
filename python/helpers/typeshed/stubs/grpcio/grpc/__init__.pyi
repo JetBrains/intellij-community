@@ -108,8 +108,8 @@ def composite_channel_credentials(
 
 def server(
     thread_pool: futures.ThreadPoolExecutor,
-    handlers: list[GenericRpcHandler[Any, Any]] | None = None,
-    interceptors: list[ServerInterceptor[Any, Any]] | None = None,
+    handlers: list[GenericRpcHandler] | None = None,
+    interceptors: list[ServerInterceptor] | None = None,
     options: _Options | None = None,
     maximum_concurrent_rpcs: int | None = None,
     compression: Compression | None = None,
@@ -173,7 +173,7 @@ def stream_stream_rpc_method_handler(
 ) -> RpcMethodHandler[_TRequest, _TResponse]: ...
 def method_handlers_generic_handler(
     service: str, method_handlers: dict[str, RpcMethodHandler[Any, Any]]
-) -> GenericRpcHandler[Any, Any]: ...
+) -> GenericRpcHandler: ...
 
 # Channel Ready Future:
 
@@ -264,7 +264,7 @@ class Channel(abc.ABC):
 
 class Server(abc.ABC):
     @abc.abstractmethod
-    def add_generic_rpc_handlers(self, generic_rpc_handlers: Iterable[GenericRpcHandler[Any, Any]]) -> None: ...
+    def add_generic_rpc_handlers(self, generic_rpc_handlers: Iterable[GenericRpcHandler]) -> None: ...
 
     # Returns an integer port on which server will accept RPC requests.
     @abc.abstractmethod
@@ -493,17 +493,19 @@ class HandlerCallDetails(abc.ABC):
     method: str
     invocation_metadata: _Metadata
 
-class GenericRpcHandler(abc.ABC, Generic[_TRequest, _TResponse]):
+class GenericRpcHandler(abc.ABC):
+    # The return type depends on the handler call details.
     @abc.abstractmethod
-    def service(self, handler_call_details: HandlerCallDetails) -> RpcMethodHandler[_TRequest, _TResponse] | None: ...
+    def service(self, handler_call_details: HandlerCallDetails) -> RpcMethodHandler[Any, Any] | None: ...
 
-class ServiceRpcHandler(GenericRpcHandler[_TRequest, _TResponse], metaclass=abc.ABCMeta):
+class ServiceRpcHandler(GenericRpcHandler, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def service_name(self) -> str: ...
 
 # Service-Side Interceptor:
 
-class ServerInterceptor(abc.ABC, Generic[_TRequest, _TResponse]):
+class ServerInterceptor(abc.ABC):
+    # This method (not the class) is generic over _TRequest and _TResponse.
     @abc.abstractmethod
     def intercept_service(
         self,

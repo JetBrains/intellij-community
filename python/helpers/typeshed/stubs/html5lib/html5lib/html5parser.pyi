@@ -1,5 +1,5 @@
 from _typeshed import Incomplete
-from typing import Literal, overload
+from typing import Any, Literal, overload
 from xml.etree.ElementTree import Element
 
 from ._inputstream import _InputStream
@@ -58,6 +58,8 @@ class HTMLParser:
 
 def getPhases(debug): ...
 def adjust_attributes(token, replacements) -> None: ...
-def impliedTagToken(name, type: str = "EndTag", attributes=None, selfClosing: bool = False): ...
+def impliedTagToken(
+    name: str, type: str = "EndTag", attributes: dict[str, Any] | None = None, selfClosing: bool = False
+) -> dict[str, Any]: ...
 
 class ParseError(Exception): ...

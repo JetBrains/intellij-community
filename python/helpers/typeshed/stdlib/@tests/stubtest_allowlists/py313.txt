@@ -62,6 +62,9 @@ posixpath.join
 ntpath.join
 os.path.join
 
+# this is implemented with *args having a minimum size so arguments before it must be positional (but stubtest doesn't see that)
+tkinter.ttk.Style.element_create
+
 # typing.IO uses positional-or-keyword arguments, but in the stubs we prefer
 # to mark these as positional-only for compatibility with existing sub-classes.
 typing(_extensions)?\.BinaryIO\.write
@@ -78,18 +81,11 @@ typing(_extensions)?\.IO\.writelines
 # <= 3.13
 # =======
 
-# Pretend typing.ByteString is a Union, to better match its documented semantics.
-# As a side effect, this changes the definition of collections.abc.ByteString, which is okay,
-# because it's not an ABC that makes any sense and was deprecated in 3.12
-_collections_abc.ByteString
-
 ast.Ellipsis.__new__  # Implementation has *args, but shouldn't allow any
 
 _?hashlib.scrypt  # Raises TypeError if salt, n, r or p are None
 
 importlib.abc.Traversable.open  # Problematic protocol signature at runtime, see source code comments.
-
-typing\.ByteString
 
 # Will always raise. Not included to avoid type checkers inferring that
 # TypeAliasType instances are callable.

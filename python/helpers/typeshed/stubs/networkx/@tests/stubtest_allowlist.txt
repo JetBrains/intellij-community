@@ -37,6 +37,3 @@ networkx\._typing
 # "..._DT is not present at runtime" but we don't set it in stubs, I don't understand this one
 networkx(\.algorithms)?(\.tree)?(\.mst)?\.SpanningTreeIterator\.Partition\._DT
 networkx(\.algorithms)?(\.tree)?(\.branchings)?\.ArborescenceIterator\.Partition\._DT
-
-# variable differs from runtime type abc.ABCMeta
-networkx\.classes\.reportviews\.\w*EdgeView\.dataview

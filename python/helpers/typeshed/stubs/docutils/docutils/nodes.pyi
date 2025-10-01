@@ -12,7 +12,8 @@ from docutils.transforms import Transform, Transformer
 from docutils.utils import Reporter
 
 _N = TypeVar("_N", bound=Node)
-_ContentModelCategory: TypeAlias = type[Element] | tuple[type[Element], ...]
+_ElementLikeType: TypeAlias = type[Element | Text | Body | Bibliographic | Inline]
+_ContentModelCategory: TypeAlias = _ElementLikeType | tuple[_ElementLikeType, ...]
 _ContentModelQuantifier: TypeAlias = Literal[".", "?", "+", "*"]
 _ContentModelItem: TypeAlias = tuple[_ContentModelCategory, _ContentModelQuantifier]
 _ContentModelTuple: TypeAlias = tuple[_ContentModelItem, ...]
@@ -112,7 +113,6 @@ class Text(Node, str):
 
     # we omit the rawsource parameter because it has been deprecated and is ignored
     def __new__(cls, data: str) -> Self: ...
-    def __init__(self, data: str) -> None: ...
     def shortrepr(self, maxlen: int = 18) -> str: ...
     def copy(self) -> Self: ...
     def deepcopy(self) -> Self: ...

@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterable, Sequence
 from typing import Any, Generic, TypeVar
-from typing_extensions import Self
+from typing_extensions import Self, disjoint_base
 
 from gevent._types import _AddrinfoResult, _Loop, _NameinfoResult, _SockAddr
 
@@ -10,6 +10,7 @@ class ares_host_result(tuple[str, list[str], list[str]]):
     family: int
     def __new__(cls, family: int, iterable: Iterable[Any]) -> Self: ...
 
+@disjoint_base
 class Result(Generic[_T]):
     exception: BaseException | None
     value: _T | None
@@ -17,6 +18,7 @@ class Result(Generic[_T]):
     def get(self) -> Any | None: ...
     def successful(self) -> bool: ...
 
+@disjoint_base
 class channel:
     @property
     def loop(self) -> _Loop: ...

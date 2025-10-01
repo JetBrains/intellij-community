@@ -57,13 +57,6 @@ reportlab.lib.utils.CIDict.setdefault
 # it doesn't actually accept arbitrary arguments
 reportlab.platypus.doctemplate.PTCycle.__new__
 
-# type[Canvas] is a _CanvasMaker, for some reason stubtest trips up
-reportlab.platypus.BaseDocTemplate.build
-reportlab.platypus.SimpleDocTemplate.build
-reportlab.platypus.doctemplate.BaseDocTemplate.build
-reportlab.platypus.doctemplate.SimpleDocTemplate.build
-reportlab.platypus.tableofcontents.SimpleIndex.getCanvasMaker
-
 
 # Error: not present in stub
 # ==========================

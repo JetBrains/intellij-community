@@ -4,15 +4,13 @@
 
 # Please keep sorted alphabetically
 
-collections\.ChainMap\.fromkeys  # https://github.com/python/mypy/issues/17023
-http.client.HTTPConnection.response_class  # the actual type at runtime is abc.ABCMeta
 importlib.abc.Loader.exec_module  # See Lib/importlib/_abc.py. Might be defined for backwards compatibility
 importlib.abc.MetaPathFinder.find_spec  # Not defined on the actual class, but expected to exist.
 importlib.abc.PathEntryFinder.find_spec  # Not defined on the actual class, but expected to exist.
 tkinter.simpledialog.[A-Z_]+
 tkinter.simpledialog.TclVersion
 tkinter.simpledialog.TkVersion
-tkinter.Text.count  # stubtest somehow thinks that index1 parameter has a default value, but it doesn't in any of the overloads
+tarfile.TarInfo.__slots__  # it's a big dictionary at runtime and the dictionary values are a bit long
 
 
 # ===============================================================
@@ -183,6 +181,12 @@ _collections_abc.AsyncGenerator.__anext__
 _collections_abc.AsyncGenerator.aclose
 _collections_abc.AsyncIterator.__anext__
 
+# Pretend typing.ByteString is a Union, to better match its documented semantics.
+# As a side effect, this changes the definition of collections.abc.ByteString, which is okay,
+# because it's not an ABC that makes any sense and was deprecated in 3.12
+_collections_abc\.ByteString
+typing\.ByteString
+
 _collections_abc.Callable  # Typing-related weirdness
 _collections_abc.Mapping.get  # Adding None to the Union messed up mypy
 _collections_abc.Sequence.index  # Supporting None in end is not mandatory
@@ -201,7 +205,6 @@ _markupbase.ParserBase.parse_marked_section
 
 _pydecimal.*  # See comments in file
 _typeshed.*  # Utility types for typeshed, doesn't exist at runtime
-argparse.ArgumentParser.__init__  # stubtest doesn't recognise the runtime default (a class) as being compatible with a callback protocol (the stub annotation)
 argparse.Namespace.__getattr__  # The whole point of this class is its attributes are dynamic
 
 # Runtime AST node runtime constructor behaviour is too loose.
@@ -218,8 +221,6 @@ argparse.Namespace.__setattr__  # should allow setting any attribute
 
 ast.ImportFrom.level  # None on the class, but never None on instances
 ast.NodeVisitor.visit_\w+  # Methods are discovered dynamically, see #3796
-_?asyncio.Future.__init__  # Usually initialized from c object
-asyncio.futures.Future.__init__  # Usually initialized from c object
 
 # Condition functions are exported in __init__
 asyncio.Condition.acquire
@@ -230,7 +231,6 @@ asyncio.locks.Condition.locked
 asyncio.locks.Condition.release
 
 builtins.memoryview.__contains__  # C type that implements __getitem__
-builtins.object.__init__  # default C signature is incorrect
 builtins.reveal_locals  # Builtins that type checkers pretends exist
 builtins.reveal_type  # Builtins that type checkers pretends exist
 builtins.type.__dict__  # read-only but not actually a property; stubtest thinks it's a mutable attribute.
@@ -259,8 +259,6 @@ configparser.SectionProxy.getint  # SectionProxy get functions are set in __init
 # they are generic to type checkers anyway.
 contextlib.AbstractAsyncContextManager.__class_getitem__
 contextlib.AbstractContextManager.__class_getitem__
-
-_?contextvars.Context.__init__  # C signature is broader than what is actually accepted
 
 copy.PyStringMap  # defined only in Jython
 
@@ -329,9 +327,6 @@ importlib.machinery.ExtensionFileLoader.get_filename
 inspect.Parameter.__init__
 inspect.Signature.__init__
 
-inspect.Parameter.empty  # set as private marker _empty
-inspect.Signature.empty  # set as private marker _empty
-
 logging.LogRecord.__setattr__  # doesn't exist, but makes things easy if we pretend it does
 
 # Iterable classes that don't define __iter__ at runtime (usually iterable via __getitem__)
@@ -377,11 +372,6 @@ multiprocessing.queues.JoinableQueue.__init__
 multiprocessing.queues.Queue.__init__
 multiprocessing.queues.SimpleQueue.__init__
 
-# alias for a class defined elsewhere,
-# mypy infers the variable has type `(*args) -> ForkingPickler`
-# but stubtest infers the runtime type as <class ForkingPickler>
-multiprocessing.reduction.AbstractReducer.ForkingPickler
-
 # These methods are dynamically created after object initialization,
 # copied from a wrapped lock object. Stubtest doesn't think they exist
 # because of that.
@@ -406,7 +396,6 @@ os.PathLike.__class_getitem__  # PathLike is a protocol; we don't expect all Pat
 
 pickle._Pickler\..*  # Best effort typing for undocumented internals
 pickle._Unpickler\..*  # Best effort typing for undocumented internals
-_?queue.SimpleQueue.__init__  # C signature is broader than what is actually accepted
 shutil.rmtree  # function with attributes, which we approximate with a callable protocol
 socketserver.BaseServer.get_request  # Not implemented, but expected to exist on subclasses.
 ssl.PROTOCOL_SSLv2  # Depends on the existence and flags of SSL

@@ -1,3 +1,5 @@
+import datetime
+
 from .autumn_holiday import (
     AutumnHolidayFirstMondayOctober as AutumnHolidayFirstMondayOctober,
     AutumnHolidayLastMondaySeptember as AutumnHolidayLastMondaySeptember,
@@ -27,13 +29,13 @@ from .victoria_day import (
 )
 
 class LateSummer:
-    def get_variable_days(self, year): ...
+    def get_variable_days(self, year: int) -> list[tuple[datetime.date, str]]: ...
 
 class BattleStirlingBridge:
-    def get_variable_days(self, year): ...
+    def get_variable_days(self, year: int) -> list[tuple[datetime.date, str]]: ...
 
 class AyrGoldCup:
-    def get_variable_days(self, year): ...
+    def get_variable_days(self, year: int) -> list[tuple[datetime.date, str]]: ...
 
 # Names in __all__ with no definition:
 #   VictoriaDayTuesdayAfterFirstMondayMay

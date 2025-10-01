@@ -1,5 +1,5 @@
 from typing import Literal, SupportsIndex, final, overload
-from typing_extensions import Never
+from typing_extensions import Never, Self, disjoint_base
 
 import numpy as np
 from numpy.typing import NDArray
@@ -142,6 +142,7 @@ geos_version: tuple[int, int, int]
 geos_version_string: str
 registry: list[type[Geometry]]
 
+@disjoint_base
 class Geometry:
     def __hash__(self) -> int: ...
     def __eq__(self, other: object, /) -> bool: ...
@@ -154,7 +155,7 @@ class Geometry:
 @final
 class STRtree:
     count: int
-    def __init__(self, geoms: NDArray[np.object_], node_capacity: SupportsIndex, /, **kwargs: object) -> None: ...
+    def __new__(cls, geoms: NDArray[np.object_], node_capacity: SupportsIndex, /, **kwargs: object) -> Self: ...
     def dwithin(self, geoms: NDArray[np.object_], distances: NDArray[np.float64], /) -> NDArray[np.int64]: ...
     def nearest(self, geoms: NDArray[np.object_], /) -> NDArray[np.int64]: ...
     def query(self, geoms: NDArray[np.object_], predicate: SupportsIndex, /) -> NDArray[np.int64]: ...

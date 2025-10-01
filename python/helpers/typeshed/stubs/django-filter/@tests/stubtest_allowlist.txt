@@ -1,9 +1,3 @@
-# Iterator class attributes: Runtime behavior differs due to Django 5.0 compatibility logic in choice setters
-django_filters.fields.ChoiceField.iterator
-django_filters.fields.ModelChoiceField.iterator
-django_filters.fields.ModelMultipleChoiceField.iterator
-django_filters.fields.MultipleChoiceField.iterator
-
 # Lookup NamedTuple: Parameter name mismatch between inferred stub and runtime
 django_filters.fields.Lookup.__new__
 django_filters.fields.Lookup.__doc__
@@ -20,3 +14,6 @@ django_filters.fields.MultipleChoiceField.__init__
 django_filters.fields.RangeField.__init__
 django_filters.filters.QuerySetRequestMixin.__init__
 django_filters.widgets.CSVWidget.__init__
+
+# BaseCSVFilter constructs a custom class dynamically, which stubtest can't handle.
+django_filters(\.\w+)*\.OrderingFilter.field_class
