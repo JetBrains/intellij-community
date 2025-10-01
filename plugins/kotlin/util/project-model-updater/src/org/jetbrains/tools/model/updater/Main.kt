@@ -18,6 +18,13 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val kotlinCompilerRepoPath: String by MandatoryPreference
 
     /**
+     * Whether to convert the JPS project to Bazel format.
+     *
+     * @see ApplicationMode.PROJECT_MODEL_UPDATER
+     */
+    val convertJpsToBazel: Boolean? by OptionalPreference(String::toBooleanStrictOrNull)
+
+    /**
      * Represents modes of the application. [PROJECT_MODEL_UPDATER] is the default one.
      */
     enum class ApplicationMode {

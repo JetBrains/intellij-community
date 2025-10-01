@@ -40,6 +40,23 @@ internal fun updateProjectModel(preferences: GeneratorPreferences) {
     processRoot(communityRoot, isCommunity = true)
     updateLatestGradlePluginVersion(communityRoot, preferences.kotlinGradlePluginVersion)
     updateKGPVersionForKotlinNativeTests(communityRoot, preferences.kotlinGradlePluginVersion)
+
+    if (monorepoRoot != null && preferences.convertJpsToBazel == true) {
+        convertJpsToBazel(monorepoRoot)
+    }
+}
+
+private fun convertJpsToBazel(monorepoRoot: Path) {
+    println("Converting JPS model to Bazel...")
+    val exitCode = ProcessBuilder("build/jpsModelToBazel.cmd")
+        .directory(monorepoRoot.toFile())
+        .inheritIO()
+        .start()
+        .waitFor()
+
+    if (exitCode != 0) {
+        exitWithErrorMessage("The JPS-to-Bazel converter has failed", exitCode)
+    }
 }
 
 private fun regenerateProjectLibraries(dotIdea: Path, newLibraries: List<JpsLibrary>, resolverSettings: JpsResolverSettings) {

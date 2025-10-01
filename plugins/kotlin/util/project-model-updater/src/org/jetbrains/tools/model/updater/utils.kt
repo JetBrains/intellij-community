@@ -3,7 +3,7 @@ package org.jetbrains.tools.model.updater
 
 import kotlin.system.exitProcess
 
-internal fun exitWithErrorMessage(message: String): Nothing {
+internal fun exitWithErrorMessage(message: String, exitCode: Int = 1): Nothing {
     System.err.println(message)
-    exitProcess(1)
+    exitProcess(exitCode)
 }
