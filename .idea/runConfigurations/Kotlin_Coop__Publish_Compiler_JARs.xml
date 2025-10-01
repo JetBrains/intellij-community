@@ -4,7 +4,6 @@
     <module name="kotlin.util.project-model-updater" />
     <option name="PROGRAM_PARAMETERS" value="applicationMode=COMPILER_PUBLICATION" />
     <shortenClasspath name="NONE" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
