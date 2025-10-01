@@ -13,7 +13,7 @@ class Utils {
     @NonNls
     private const val EMPTY_STRING = ""
     @NonNls
-    const val BASE_HELP_URL = "https://www.jetbrains.com/"
+    const val BASE_HELP_URL: String = "https://www.jetbrains.com/"
 
     private val secureKey = CredentialAttributes("Web Help Bundle")
 

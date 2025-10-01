@@ -19,17 +19,15 @@ import kotlin.io.path.nameWithoutExtension
 abstract class HelpRequestHandlerBase : HttpRequestHandler() {
   @NonNls
   open val prefix: String = "/help/"
+  val supportedLocales: Set<String> = setOf("zh-cn")
 
   override fun isAccessible(request: HttpRequest): Boolean {
     return super.isAccessible(request) && request.uri().contains(prefix)
   }
 
-  fun getDefaultLocalePath(): String {
-    return "en-us"
-  }
-
   fun getRequestLocalePath(request: HttpRequest): String {
-    return request.uri().substringBefore(prefix).substringBeforeLast("/")
+    val requestLocale = request.uri().substringBefore(prefix).substringBeforeLast("/")
+    return if (supportedLocales.contains(requestLocale)) requestLocale else ""
   }
 
   protected fun sendResource(
@@ -42,7 +40,7 @@ abstract class HelpRequestHandlerBase : HttpRequestHandler() {
 
     val isImage = resourceLocation.contains("/img/")
 
-    //We don't ship dark images because of storage concerns, yet frontent might still request them and to avoid 404 we provide fallback
+    //We don't ship dark images because of storage concerns, yet frontend might still request them, and to avoid 404 we provide fallback
     val retrieveName = when (isImage) {
       true -> {
         val base = Path(resourceName)
@@ -58,18 +56,18 @@ abstract class HelpRequestHandlerBase : HttpRequestHandler() {
       if (isImage) "images" else "${getRequestLocalePath(request)}/topics", retrieveName
     )
 
-    //First try to deliver a topic from the selected locale and fallback to en-us when needed
+    //First, try to deliver a topic from the selected locale and fallback to en-us when needed
     val contentToSend = resStream.use { res ->
       try {
         res.readAllBytes()
       }
       catch (e: IOException) {
         LOG.warn(e)
-        //Because of space concerns, images are only shipped for en-us anyway
+        //Because of space concerns, images are only shipped for en-us anyway and stored under /images
         if (!isImage) {
           ResourceUtil.getResourceAsStream(
             HelpRequestHandlerBase::class.java.classLoader,
-            "${getDefaultLocalePath()}/topics", retrieveName
+            "topics", retrieveName
           ).use { res ->
             res.readAllBytes()
           }
