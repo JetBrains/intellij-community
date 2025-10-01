@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.statistics.PyCommunityUnifiedPromoFusCollector
 import com.intellij.ui.GotItTooltip
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.UIUtil
@@ -31,6 +32,7 @@ object PyCommunityToUnifiedTooltip {
 
       if (settingsButton != null) {
         val tooltip = constructToolTip(project)
+        PyCommunityUnifiedPromoFusCollector.TooltipShown.log()
         // TODO won't show properly in the corner :(
         tooltip.show(settingsButton, GotItTooltip.BOTTOM_LEFT)
       }
@@ -49,10 +51,12 @@ object PyCommunityToUnifiedTooltip {
         PyPromoSharedComponents.learnMoreBrowserAction.invoke()
       }
       .withSecondaryButton(PyPromoSharedComponents.skip) {
+        PyCommunityUnifiedPromoFusCollector.TooltipClosed.log(PyCommunityUnifiedPromoFusCollector.TooltipCloseReason.DISMISSED)
         PyCommunityToUnifiedPromoService.getInstance().onRemindMeLaterClicked()
         PyCharmCommunityToUnifiedScheduleService.getInstance().scheduleFallbackModal()
       }
       .withGotItButtonAction {
+        PyCommunityUnifiedPromoFusCollector.TooltipClosed.log(PyCommunityUnifiedPromoFusCollector.TooltipCloseReason.UPDATE_NOW)
         PyCommunityToUnifiedShowPromoActivity.launchUpdateDialog(project)
       }
       .withShowCount(Int.MAX_VALUE)
