@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.Restarter;
 import com.intellij.util.SystemProperties;
@@ -127,16 +128,17 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
 
   @Override
   protected @NotNull JComponent createCenterPanel() {
-    return UpdateInfoPanel.create(
-      myPlatformUpdate.getNewBuild(),
-      myPlatformUpdate.getPatches(),
-      myTestPatch,
-      myWriteProtected,
-      myLicenseInfo != null ? myLicenseInfo.licenseNote : null,
-      myLicenseInfo != null && myLicenseInfo.warning,
-      myAddConfigureUpdatesLink,
-      myPlatformUpdate.getUpdatedChannel()
-    );
+    UpdateInfoPanel infoPanel =
+      new UpdateInfoPanel(myPlatformUpdate.getNewBuild(),
+                          myPlatformUpdate.getPatches(),
+                          myTestPatch,
+                          myWriteProtected,
+                          myLicenseInfo != null ? myLicenseInfo.licenseNote : null,
+                          myLicenseInfo != null && myLicenseInfo.warning,
+                          myAddConfigureUpdatesLink,
+                          myPlatformUpdate.getUpdatedChannel(),
+                          this.myDisposable);
+    return Registry.is("ide.update.dialog.new.ui.enabled") ? infoPanel.createNew() : infoPanel.create();
   }
 
   @Override
