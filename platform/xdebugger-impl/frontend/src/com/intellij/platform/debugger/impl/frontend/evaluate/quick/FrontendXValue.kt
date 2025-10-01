@@ -159,15 +159,7 @@ class FrontendXValue private constructor(
     }
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
-    if (place == XValuePlace.TREE) {
-      // for TOOLTIP we are going to calculate it separately
-      // TODO: is it really needed?
-      if (statePresentation.isCompleted) {
-        node.setPresentation(statePresentation.getCompleted().value)
-      }
-    }
     val initialFullValueEvaluator = fullValueEvaluator.value
     if (initialFullValueEvaluator != null) {
       node.setFullValueEvaluator(initialFullValueEvaluator)
@@ -238,9 +230,9 @@ class FrontendXValue private constructor(
 
   override fun getValueText(): String? = textProvider?.value?.textValue
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   override fun toString(): String {
-    return "FrontendXValue(id=${xValueDto.id}, value=${statePresentation.getCompleted().value.rawText()})"
+    val presentation = statePresentation.asCompletableFuture().getNow(null)?.value?.rawText() ?: "not yet computed"
+    return "FrontendXValue(id=${xValueDto.id}, value=$presentation)"
   }
 
   override val tag: String? get() = pinToTopData?.tag
