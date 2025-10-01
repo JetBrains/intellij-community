@@ -1111,6 +1111,9 @@ com.intellij.ui.GotItTextBuilder
 - a:link(java.lang.String,kotlin.jvm.functions.Function0):java.lang.String
 - shortcut(java.lang.String):java.lang.String
 - shortcut(javax.swing.KeyStroke):java.lang.String
+f:com.intellij.ui.GotItTooltip
+- f:withImage(javax.swing.Icon,Z):com.intellij.ui.GotItTooltip
+- bs:withImage$default(com.intellij.ui.GotItTooltip,javax.swing.Icon,Z,I,java.lang.Object):com.intellij.ui.GotItTooltip
 com.intellij.ui.Hint
 - a:addHintListener(com.intellij.ui.HintListener):V
 - a:hide():V
