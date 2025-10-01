@@ -109,5 +109,7 @@
                  defaultValue="259200"
                  description="PyCharm promo remind-later fallback delay in seconds"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.promotion.PyCharmPromoCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.statistics.PyCommunityUnifiedPromoFusCollector"/>
   </extensions>
 </idea-plugin>
