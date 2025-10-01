@@ -54,8 +54,6 @@ public class JSpecifyFilteredAnnotationTest extends JSpecifyAnnotationTest {
         new Pair<>("TypeVariableUnionNullToSelf.java", 118), // see: IDEA-377691
         new Pair<>("TypeVariableToParent.java", 94), // see: IDEA-377691
 
-        new Pair<>("NullUnmarkedUndoesNullMarkedForWildcards.java", 23), // see: IDEA-377693
-
         new Pair<>("SuperObject.java", 31),  // see: IDEA-377694
         new Pair<>("SuperTypeVariable.java", 28),  // see: IDEA-377694
         new Pair<>("SuperTypeVariable.java", 57),  // see: IDEA-377694

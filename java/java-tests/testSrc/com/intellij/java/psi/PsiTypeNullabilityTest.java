@@ -215,14 +215,13 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
   
   public void testWildcardAnnotated() {
     PsiType type = configureAndGetExpressionType("""
-      import org.jetbrains.annotations.NotNull;
-      import org.jetbrains.annotations.Nullable;
+      import org.jetbrains.annotations.*;
       
-      class X<T> {
+      class X<T extends @Nullable Object> {
         native X<@NotNull T> foo();
       
-        @SuppressWarnings("NullableProblems")
-        static void test(X<@Nullable ?> x) {
+        @NotNullByDefault
+        static void test(X<?> x) {
           <caret>x;
         }
       }
