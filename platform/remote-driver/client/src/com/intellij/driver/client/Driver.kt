@@ -150,8 +150,8 @@ interface Driver : AutoCloseable {
      */
     @JvmStatic
     @Contract(pure = true)
-    fun create(jmxHost: JmxHost, isRemDevMode: Boolean = false): Driver =
-      DriverImpl(jmxHost, isRemDevMode)
+    fun create(host: JmxHost, isRemDevMode: Boolean = false): Driver =
+      DriverImpl(host, isRemDevMode)
   }
 }
 

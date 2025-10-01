@@ -13,8 +13,8 @@ import javax.management.AttributeNotFoundException
 import javax.management.InstanceNotFoundException
 import kotlin.reflect.KClass
 
-open class DriverImpl(jmxHost: JmxHost, override val isRemDevMode: Boolean) : Driver {
-  private val invoker: Invoker = JmxCallHandler.jmx(Invoker::class.java, jmxHost)
+open class DriverImpl(host: JmxHost, override val isRemDevMode: Boolean) : Driver {
+  private val invoker: Invoker = JmxCallHandler.jmx(Invoker::class.java, host)
   private val sessionHolder = ThreadLocal<Session>()
 
   private val appServices: MutableMap<AppServiceId, Any> = ConcurrentHashMap()
