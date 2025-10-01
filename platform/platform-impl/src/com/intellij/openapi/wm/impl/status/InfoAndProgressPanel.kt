@@ -1010,9 +1010,7 @@ class InfoAndProgressPanel internal constructor(
             addVisibleToPreferred(counterComponent, withGap = true, enforceOnInvisible = true)
             addVisibleToPreferred(progressIcon, withGap = false)
           }
-          else {
-            addVisibleToPreferred(multiProcessLink, withGap = true)
-          }
+          addVisibleToPreferred(multiProcessLink, withGap = true)
 
           if (progressIcon.isVisible) {
             result.height = max(result.height, progressIcon.getPreferredSize().height)
@@ -1139,7 +1137,10 @@ class InfoAndProgressPanel internal constructor(
               rightX = setBounds(counterComponent, rightX, centerY, null, true)
             }
             if (progressIcon.isVisible) {
-              setBounds(progressIcon, rightX, centerY, null, true)
+              rightX = setBounds(progressIcon, rightX, centerY, null, true)
+            }
+            if (multiProcessLink.isVisible) {
+              rightX = setBounds(multiProcessLink, rightX, centerY, null, true)
             }
             return
           }
@@ -1207,10 +1208,11 @@ class InfoAndProgressPanel internal constructor(
       val isIndicatorVisible = !showPopup && (!supportSecondaryProgresses || indicator!!.visibleInStatusBar)
       indicator!!.component.isVisible = isIndicatorVisible
       if (showCounterInsteadOfMultiProcessLink) {
-        counterComponent.setNumber(size, isIndicatorVisible)
-        counterComponent.isVisible = !showPopup
+        counterComponent.setNumber(size, isIndicatorVisible, showPopup)
+        counterComponent.isVisible = true
         progressIcon.isVisible = !showPopup && !isIndicatorVisible
-        multiProcessLink.isVisible = false
+        multiProcessLink.setText(IdeBundle.message("link.hide.processes", size))
+        multiProcessLink.isVisible = showPopup
       }
       else {
         counterComponent.isVisible = false
@@ -1244,7 +1246,7 @@ private class CounterLabel : JPanel() {
     label = createLabel()
     layout = BorderLayout()
     add(label, BorderLayout.CENTER)
-    setNumber(0, false)
+    setNumber(0, isProgressVisible =false, isPopupShowing = false)
   }
 
   private fun createLabel(): JBLabel {
@@ -1255,7 +1257,7 @@ private class CounterLabel : JPanel() {
   }
 
 
-  fun setNumber(numberOfProgresses: Int, isProgressVisible: Boolean) {
+  fun setNumber(numberOfProgresses: Int, isProgressVisible: Boolean, isPopupShowing: Boolean) {
     this.numberOfProgresses = numberOfProgresses
     this.isProgressVisible = isProgressVisible
 
@@ -1269,6 +1271,7 @@ private class CounterLabel : JPanel() {
     refreshTextForMinimumSizeIfNeeded(numberToShow)
 
     val labelText = when {
+      isPopupShowing -> ""
       numberToShow <= 0 -> ""
       isProgressVisible -> "+${numberToShow}"
       else -> "${numberToShow}"
