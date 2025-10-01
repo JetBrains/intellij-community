@@ -1008,6 +1008,7 @@ class InfoAndProgressPanel internal constructor(
 
           if (showCounterInsteadOfMultiProcessLink) {
             addVisibleToPreferred(counterComponent, withGap = true, enforceOnInvisible = true)
+            addVisibleToPreferred(progressIcon, withGap = false)
           }
           else {
             addVisibleToPreferred(multiProcessLink, withGap = true)
@@ -1061,7 +1062,7 @@ class InfoAndProgressPanel internal constructor(
             }
           }
           else {
-            layoutWithoutIndicator(initialX = x, rightX = rightX, centerY = centerY)
+            layoutWithoutIndicator(initialX = x, initialRightX = rightX, centerY = centerY)
           }
         }
 
@@ -1131,11 +1132,14 @@ class InfoAndProgressPanel internal constructor(
           setBounds(indicatorComponent, rightX, centerY, indicatorSize, true)
         }
 
-        private fun layoutWithoutIndicator(rightX: Int, centerY: Int, initialX: Int) {
+        private fun layoutWithoutIndicator(initialRightX: Int, centerY: Int, initialX: Int) {
+          var rightX = initialRightX
           if (showCounterInsteadOfMultiProcessLink) {
-            progressIcon.isVisible = false
             if (counterComponent.isVisible) {
-              setBounds(counterComponent, rightX, centerY, null, true)
+              rightX = setBounds(counterComponent, rightX, centerY, null, true)
+            }
+            if (progressIcon.isVisible) {
+              setBounds(progressIcon, rightX, centerY, null, true)
             }
             return
           }
