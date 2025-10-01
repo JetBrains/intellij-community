@@ -4,20 +4,22 @@ package org.jetbrains.plugins.gradle.service.syncAction.impl.bridge
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.project.ProjectData
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
+import com.intellij.openapi.externalSystem.service.project.manage.WorkspaceDataService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.entities
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity
 import org.jetbrains.plugins.gradle.model.projectModel.gradleModuleEntity
 
 @ApiStatus.Internal
-class GradleBridgeModuleDataService : AbstractProjectDataService<GradleBridgeModuleData, Unit>() {
+class GradleBridgeModuleDataService : WorkspaceDataService<GradleBridgeModuleData> {
 
   override fun getTargetDataKey(): Key<GradleBridgeModuleData> = GradleBridgeModuleData.KEY
 
@@ -25,25 +27,21 @@ class GradleBridgeModuleDataService : AbstractProjectDataService<GradleBridgeMod
     toImport: Collection<DataNode<GradleBridgeModuleData>>,
     projectData: ProjectData?,
     project: Project,
-    modelsProvider: IdeModifiableModelsProvider,
+    mutableStorage: MutableEntityStorage,
   ) {
-    val storage = modelsProvider.actualStorageBuilder
-    val linkedProjectIdToModule = storage.entities(ModuleEntity::class.java)
+    if (Registry.`is`("gradle.phased.sync.bridge.disabled")) return
+    addGradleModuleEntities(mutableStorage)
+  }
+
+  private fun addGradleModuleEntities(mutableStorage: MutableEntityStorage) {
+    val linkedProjectIdToModule = mutableStorage.entities<ModuleEntity>()
       .mapNotNull { it.exModuleOptions }
       .associate { it.linkedProjectId to it.module }
 
-    val projectEntities = storage.entities(GradleProjectEntity::class.java)
-
-    for (projectEntity in projectEntities) {
-      val moduleEntity = linkedProjectIdToModule[projectEntity.linkedProjectId] ?: continue
-      // GradleModuleEntity could be already created. For example, by GradleContentRootSyncContributor.
-      if (moduleEntity.gradleModuleEntity == null) {
-        storage.modifyModuleEntity(moduleEntity) {
-          gradleModuleEntity = GradleModuleEntity(
-            projectEntity.symbolicId,
-            GradleBridgeModuleEntitySource()
-          )
-        }
+    for (gradleProjectEntity in mutableStorage.entities(GradleProjectEntity::class.java)) {
+      val moduleEntity = linkedProjectIdToModule[gradleProjectEntity.linkedProjectId] ?: continue
+      mutableStorage.modifyModuleEntity(moduleEntity) {
+        gradleModuleEntity = GradleModuleEntity(gradleProjectEntity.symbolicId, GradleBridgeModuleEntitySource())
       }
     }
   }
