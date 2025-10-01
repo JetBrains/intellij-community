@@ -23,7 +23,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.html.p
 import kotlinx.html.style
 import org.jetbrains.annotations.ApiStatus
@@ -58,7 +58,7 @@ open class LanguageToolChecker : ExternalTextChecker() {
 
     val domain = content.getTextDomain()
     val language = LangDetector.getLang(text) ?: return emptyList()
-    return computeDetached(currentCoroutineContext()) {
+    return computeDetached(Dispatchers.Default) {
       try {
         computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
           collectLanguageToolProblems(content, text, language, domain)

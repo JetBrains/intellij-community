@@ -5,7 +5,7 @@ import com.intellij.openapi.util.ClassLoaderUtil.runWithClassLoader
 import com.intellij.util.containers.ContainerUtil.createConcurrentSoftKeySoftValueMap
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.Dispatchers
 import org.languagetool.AnalyzedSentence
 import org.languagetool.AnalyzedTokenReadings
 import org.languagetool.Language
@@ -38,7 +38,7 @@ internal class LazyCachingConcurrentDisambiguator(private val jLanguage: Languag
   @OptIn(DelicateCoroutinesApi::class)
   suspend fun ensureInitializedAsync() {
     if (disambiguator == null) {
-      computeDetached(currentCoroutineContext()) {
+      computeDetached(Dispatchers.Default) {
         runWithClassLoader<Throwable>(GraziePlugin.classLoader) {
           ensureInitialized()
         }
