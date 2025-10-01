@@ -36,7 +36,7 @@ class HelpSearch {
     private val analyzer: StandardAnalyzer = StandardAnalyzer()
 
     @NotNull
-    fun search(query: String?, maxHits: Int, locale: String = "en-us"): String {
+    fun search(query: String?, maxHits: Int, locale: String): String {
 
       if (query != null) {
         val indexDir: Path? = Files.createTempDirectory("${locale}-search-index")
@@ -55,7 +55,7 @@ class HelpSearch {
                   lines.forEach { line ->
                     val path = Paths.get(indexDirPath, line)
                     ResourceUtil.getResourceAsStream(HelpSearch::class.java.classLoader,
-                                                     "${locale}/search", line)
+                                                     "$locale/search", line)
                       ?.use { resourceStream ->
                         path.safeOutputStream().use { resourceOutput ->
                           resourceOutput.write(resourceStream.readAllBytes())
