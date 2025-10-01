@@ -4,6 +4,7 @@ package com.intellij.psi.util;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,7 @@ public interface CachedValueProvider<T> {
 
     /**
      * Dependency items are used in a {@link CachedValue cached value} to remember the state of the world as it was when the value was computed
-     * and to compare that to the state of the world when querying {@link CachedValue#getValue()}.
+     * and to compare that to the state of the world when {@link CachedValue#getValue()} is called.
      * <p>
      * The state is remembered as a collection of {@code long} values representing some time stamps.
      * Whenever changes to the dependencies occur, these stamps are incremented.
@@ -69,14 +70,15 @@ public interface CachedValueProvider<T> {
      * <p>
      * Dependencies can be the following:
      * <ul>
+     *   <li/>Constant keys like {@link PsiModificationTracker#MODIFICATION_COUNT} or {@link VirtualFileManager#VFS_STRUCTURE_MODIFICATIONS}.
      *   <li/>Instances of {@link ModificationTracker ModificationTracker}.
      *      Such a cache is invalidated when the stamp returned by {@link ModificationTracker#getModificationCount()} differs from the remembered stamp.
-     *   <li/>The constant {@link PsiModificationTracker#MODIFICATION_COUNT}.
-     *      Such a cache is invalidated on any physical PSI change.
-     *   <li/>Instances of {@link com.intellij.openapi.editor.Document Document} or {@link com.intellij.openapi.vfs.VirtualFile VirtualFile}.
+     *   <li/>Instances of {@link com.intellij.openapi.vfs.VirtualFile VirtualFile}.
      *      Such a cache is invalidated on any change in the file's content.
+     *   <li/>Instances of {@link com.intellij.openapi.editor.Document Document}.
+     *      Such a cache is invalidated on any change in the document's content.
      *   <li/>Instances of {@link PsiElement}.
-     *      Such a cache is invalidated on any change in the {@link PsiElement#getContainingFile() element's containing file}.
+     *      Such a cache is invalidated on any change in the {@link PsiElement#getContainingFile() element's containing PsiFile}.
      * </ul>
      * <p>
      * <h3>What to use as a dependency?</h3>
