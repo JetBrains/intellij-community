@@ -9,7 +9,6 @@ import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.concurrency.JobLauncher
 import com.intellij.diff.tools.util.base.DiffViewerBase
-import com.intellij.idea.IdeaLogger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
@@ -71,7 +70,7 @@ class InlayHintsPass(
             catch (_: IndexNotReadyException) {
             }
             catch (e: Throwable) {
-              if (Logger.shouldRethrow(e)) throw e;
+              if (Logger.shouldRethrow(e)) throw e
               LOG.error(e)
             }
             progress.checkCanceled()
