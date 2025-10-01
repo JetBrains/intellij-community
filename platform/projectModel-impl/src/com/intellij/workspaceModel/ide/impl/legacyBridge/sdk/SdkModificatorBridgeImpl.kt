@@ -110,7 +110,9 @@ internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Bu
   @RequiresWriteLock
   override fun commitChanges() {
     ThreadingAssertions.assertWriteAccess()
-    thisLogger().trace(Throwable("Committing changes for SDK"))
+    if (thisLogger().isTraceEnabled) {
+      thisLogger().trace(Throwable("Committing changes for SDK"))
+    }
     if (isCommitted) error("Modification already completed")
 
     val descriptor = getMachine(modifiedSdkEntity.homePath?.toString())
