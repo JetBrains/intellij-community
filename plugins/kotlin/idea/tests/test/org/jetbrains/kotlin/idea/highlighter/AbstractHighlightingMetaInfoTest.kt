@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiFileEx
+import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.ensureFilesResolved
@@ -30,6 +31,9 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
         if (this is KMPTest) {
             KMPProjectDescriptorTestUtilities.validateTest(files, testPlatform)
         }
+
+        val tools = InTextDirectivesUtils.findLinesWithPrefixesRemoved(runReadAction { psiFile.text }, AbstractHighlightingTest.TOOL_PREFIX)
+        myFixture.enableInspections(*InspectionTestUtil.instantiateTools(tools.toSet()).toTypedArray())
 
         files.forEach {
             val fileText = runReadAction { it.text }
