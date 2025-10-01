@@ -10,11 +10,6 @@ fragment pullRequestInfo on PullRequest {
 
   reviewDecision
 
-  baseRef {
-    refUpdateRule {
-      ...refUpdateRule
-    }
-  }
   baseRefName
   baseRefOid
   baseRepository {

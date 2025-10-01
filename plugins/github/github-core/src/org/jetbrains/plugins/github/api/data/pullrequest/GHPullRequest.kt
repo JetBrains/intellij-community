@@ -40,8 +40,6 @@ class GHPullRequest(id: String,
                        assignees, labels, reviewRequests, reviewThreads,
                        reviews, mergeable, viewerCanUpdate, viewerCanReact, viewerDidAuthor, reactions) {
 
-  data class BaseRef(val refUpdateRule: GHRefUpdateRule?)
-
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is GHPullRequest) return false
