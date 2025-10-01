@@ -1,6 +1,8 @@
 // Gralde file just to be able to run project-model-updater on TeamCity.
 // (probably, it's possible to run arbitrary `main`/runConfiguration on TeamCity but I don't know how to do it yet)
 
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
 	id "org.jetbrains.kotlin.jvm" version "2.2.20"
     id "application"
@@ -15,6 +17,17 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
     implementation "org.jetbrains.kotlin:kotlin-reflect"
     implementation "org.jetbrains.intellij.deps:jdom:2.0.6"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+    }
 }
 
 sourceSets {
