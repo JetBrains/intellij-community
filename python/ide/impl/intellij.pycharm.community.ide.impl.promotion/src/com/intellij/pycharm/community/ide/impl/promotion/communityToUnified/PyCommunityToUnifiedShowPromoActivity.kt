@@ -10,6 +10,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.updateSettings.impl.PlatformUpdateDialog
 import com.intellij.openapi.updateSettings.impl.PlatformUpdates
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
+import com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.statistics.PyCommunityUnifiedPromoFusCollector
 import com.intellij.util.PlatformUtils
 import com.intellij.util.application
 import kotlinx.coroutines.Dispatchers
@@ -48,12 +49,17 @@ class PyCommunityToUnifiedShowPromoActivity : ProjectActivity {
 
     suspend fun showModalPromo(project: Project) {
       withContext(Dispatchers.EDT) {
+        val started = System.currentTimeMillis()
+        PyCommunityUnifiedPromoFusCollector.PromoModalShown.log()
         val result = PyCommunityToUnifiedPromoDialog(project).showAndGet()
+        val duration = System.currentTimeMillis() - started
         if (!result) {
+          PyCommunityUnifiedPromoFusCollector.PromoModalClosed.log(PyCommunityUnifiedPromoFusCollector.PromoModalCloseReason.DISMISSED, duration)
           service<PyCommunityToUnifiedPromoService>().onRemindMeLaterClicked()
           PyCharmCommunityToUnifiedScheduleService.getInstance().scheduleFallbackModal()
         }
         else {
+          PyCommunityUnifiedPromoFusCollector.PromoModalClosed.log(PyCommunityUnifiedPromoFusCollector.PromoModalCloseReason.UPDATE_NOW, duration)
           launchUpdateDialog(project)
         }
       }
@@ -74,7 +80,10 @@ class PyCommunityToUnifiedShowPromoActivity : ProjectActivity {
 
     private suspend fun showModalUpdateDialog(project: Project?, update: PlatformUpdates.Loaded) {
       withContext(Dispatchers.EDT) {
+        val started = System.currentTimeMillis()
+        PyCommunityUnifiedPromoFusCollector.UpdateDialogShown.log()
         val result = PlatformUpdateDialog(project, update, true, emptyList(), emptyList()).showAndGet()
+        val duration = System.currentTimeMillis() - started
         val promoService = service<PyCommunityToUnifiedPromoService>()
         if (!result) {
           val buildNum = update.newBuild.number.asStringWithoutProductCode()
@@ -82,12 +91,17 @@ class PyCommunityToUnifiedShowPromoActivity : ProjectActivity {
           if (UpdateSettings.getInstance().ignoredBuildNumbers.contains(buildNum)) {
             LOG.info("Update declined for: $buildNum")
             promoService.setUpdateDeclined()
+            PyCommunityUnifiedPromoFusCollector.UpdateDialogClosed.log(PyCommunityUnifiedPromoFusCollector.UpdateDialogCloseReason.IGNORE, duration)
           }
           else {
             LOG.info("Remind me later clicked for: $buildNum")
             promoService.onRemindMeLaterClicked()
             PyCharmCommunityToUnifiedScheduleService.getInstance().scheduleFallbackModal()
+            PyCommunityUnifiedPromoFusCollector.UpdateDialogClosed.log(PyCommunityUnifiedPromoFusCollector.UpdateDialogCloseReason.REMIND_LATER, duration)
           }
+        }
+        else {
+          PyCommunityUnifiedPromoFusCollector.UpdateDialogClosed.log(PyCommunityUnifiedPromoFusCollector.UpdateDialogCloseReason.UPDATE_NOW, duration)
         }
       }
     }

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.wm.BannerStartPagePromoter
 import com.intellij.openapi.wm.StartPagePromoter
+import com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.statistics.PyCommunityUnifiedPromoFusCollector
 import com.intellij.pycharm.community.ide.impl.promotion.icons.PycharmCommunityIdeImplPromotionIcons
 import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.ui.components.panels.Wrapper
@@ -51,6 +52,7 @@ internal class PyCommunityToUnifiedWelcomeScreenBanner : BannerStartPagePromoter
         withContext(Dispatchers.EDT) {
           container.setContent(mainBannerPanel)
           container.isVisible = true
+          PyCommunityUnifiedPromoFusCollector.WelcomeScreenBannerShown.log()
           container.revalidate()
           container.repaint()
         }
@@ -85,11 +87,15 @@ internal class PyCommunityToUnifiedWelcomeScreenBanner : BannerStartPagePromoter
       }
       row {
         button(PyPromoSharedComponents.updateNow) {
+          PyCommunityUnifiedPromoFusCollector.WelcomeScreenBannerClicked.log(PyCommunityUnifiedPromoFusCollector.BannerControl.UPDATE_NOW)
           PyCommunityToUnifiedShowPromoActivity.launchUpdateDialog(null)
         }.applyToComponent { putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true) }
           .focused()
           .customize(customGaps = UnscaledGaps(right = 10))
-        browserLink(PyPromoSharedComponents.learnMore, PyPromoSharedComponents.LEARN_MORE_URL)
+        link(PyPromoSharedComponents.learnMore) {
+          PyCommunityUnifiedPromoFusCollector.WelcomeScreenBannerClicked.log(PyCommunityUnifiedPromoFusCollector.BannerControl.LEARN_MORE)
+          PyPromoSharedComponents.learnMoreBrowserAction.invoke()
+        }
       }.topGap(TopGap.NONE)
     }.apply {
       isOpaque = false
