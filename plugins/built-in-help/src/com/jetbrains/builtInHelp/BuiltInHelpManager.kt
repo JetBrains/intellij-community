@@ -18,7 +18,12 @@ import java.lang.String.valueOf
 import java.net.*
 import java.nio.charset.StandardCharsets
 
-val LOG = Logger.getInstance(BuiltInHelpManager::class.java)
+val LOG: Logger = Logger.getInstance(BuiltInHelpManager::class.java)
+
+//Later we'll add more languages here, for now it's Chinese only
+val localesToUrls = mapOf(
+  "zh-cn" to "zh-cn",
+)
 
 class BuiltInHelpManager : HelpManager() {
 
@@ -70,15 +75,14 @@ class BuiltInHelpManager : HelpManager() {
         else
           "&keymap=${URLEncoder.encode(activeKeymap.presentableName, StandardCharsets.UTF_8)}"
 
-        //Later we'll add more languages here, for now it's either Chinese or English default
-        val langToUrl = mapOf(
-          "zh" to "zh-cn",
-        )
+        //Determine if we need to try loading localized docs first
+        val selectedLocale = LocalizationStateService.getInstance()?.selectedLocale?.lowercase()
+        val langPart = if (localesToUrls.containsKey(selectedLocale)) {
+          "/" + localesToUrls[selectedLocale]
+        }
+        else ""
 
-        val selectedLocale = LocalizationStateService.getInstance()?.selectedLocale
-
-        val langPart = langToUrl[selectedLocale] ?: "en-us"
-        "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/${langPart}/help/?${
+        "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}${langPart}/help/?${
           helpIdToUse
         }$activeKeymapParam"
       }
