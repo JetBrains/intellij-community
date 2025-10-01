@@ -29,6 +29,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_E
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.resolveExtensionFileModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.config.KOTLIN_SOURCE_ROOT_TYPE_ID
 import org.jetbrains.kotlin.config.KOTLIN_TEST_ROOT_TYPE_ID
@@ -71,7 +72,7 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
         val fileSystemItem = psiFile ?: element.parentOfType<PsiFileSystemItem>(withSelf = true)
         val virtualFile = fileSystemItem?.virtualFile
 
-        virtualFile?.analysisContextModule?.let { return it }
+        virtualFile?.resolveExtensionFileModule?.let { return it }
 
         if (useSiteModule is KaSourceModuleForOutsider || useSiteModule is KaScriptDependencyModule) {
             if (virtualFile != null && virtualFile in useSiteModule.contentScope) {
