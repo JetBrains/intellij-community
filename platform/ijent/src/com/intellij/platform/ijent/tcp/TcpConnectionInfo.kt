@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent
+package com.intellij.platform.ijent.tcp
 
 data class TcpConnectionInfo(
   /**
@@ -15,15 +15,16 @@ data class TcpConnectionInfo(
   /**
    * Port that remote agent is listening to on.
    */
-  val ijentListeningPort: Int,
+  val ijentListeningPort: Int?,
   /**
    * Port that local agent is connecting to.
    *
    * It could be a different port than [ijentListeningPort] if the port is forwarded (e.g., docker, ssh)
    */
-  val localPort: Int
+  val localPort: Int?
 ) {
   companion object {
+    fun createLocalConfigurationWithRandomPort(): TcpConnectionInfo = TcpConnectionInfo("127.0.0.1", "127.0.0.1", null, null)
     fun createLocalConfiguration(port: Int): TcpConnectionInfo = TcpConnectionInfo("127.0.0.1", "127.0.0.1", port, port)
     fun createDockerConfiguration(ijentListeningPort: Int, localPort: Int): TcpConnectionInfo = TcpConnectionInfo("0.0.0.0", "127.0.0.1", ijentListeningPort, localPort)
   }

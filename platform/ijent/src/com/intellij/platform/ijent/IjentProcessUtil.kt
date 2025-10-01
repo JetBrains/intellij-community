@@ -4,6 +4,7 @@
 package com.intellij.platform.ijent
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.platform.ijent.tcp.TcpConnectionInfo
 import com.intellij.util.containers.map2Array
 
 /**
@@ -23,7 +24,7 @@ fun getIjentGrpcArgv(
     remotePathToIjent,
     "grpc-server",
     if (tcpConfig != null) "--address=${tcpConfig.ijentBindAddress}" else null,
-    if (tcpConfig != null) "--port=${tcpConfig.ijentListeningPort}" else null,
+    if (tcpConfig != null && tcpConfig.ijentListeningPort != null) "--port=${tcpConfig.ijentListeningPort}" else null,
     if (selfDeleteOnExit) "--self-delete-on-exit" else null,
   )
 }

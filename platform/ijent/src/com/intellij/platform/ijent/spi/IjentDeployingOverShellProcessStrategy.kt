@@ -8,8 +8,8 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.IjentUnavailableException
-import com.intellij.platform.ijent.TcpConnectionInfo
 import com.intellij.platform.ijent.getIjentGrpcArgv
+import com.intellij.platform.ijent.tcp.TcpConnectionInfo
 import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting

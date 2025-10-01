@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
-import com.intellij.platform.ijent.TcpConnectionInfo
+import com.intellij.platform.ijent.tcp.TcpConnectionInfo
 
 /**
  * Strategy for establishing connection with a running IJent process.
