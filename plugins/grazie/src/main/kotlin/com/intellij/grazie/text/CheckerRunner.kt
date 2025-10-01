@@ -21,6 +21,7 @@ import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuic
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.utils.getTextDomain
+import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
@@ -128,14 +129,14 @@ class CheckerRunner(val text: TextContent) {
     val tooltip = problem.tooltipTemplate
     val description = problem.getDescriptionTemplate(isOnTheFly)
     return fileHighlightRanges(problem).map { range ->
-      val descriptor = GrazieProblemDescriptor(parent, description, range.shiftLeft(parent.startOffset), isOnTheFly, tooltip)
+      val grazieDescriptor = GrazieProblemDescriptor(parent, description, range.shiftLeft(parent.startOffset), isOnTheFly, tooltip)
       if (isOnTheFly) {
-        descriptor.quickFixes = toFixes(problem, descriptor)
+        grazieDescriptor.quickFixes = toFixes(problem, grazieDescriptor)
       }
-      ProblemDescriptorWithReporterName(
-        descriptor,
-        if (problem.isStyleLike) GrazieInspection.STYLE_INSPECTION else GrazieInspection.GRAMMAR_INSPECTION
-      )
+      val shortName = if (problem.isStyleLike) GrazieInspection.STYLE_INSPECTION else GrazieInspection.GRAMMAR_INSPECTION
+      val descriptor = ProblemDescriptorWithReporterName(grazieDescriptor, shortName)
+      descriptor.problemGroup = ProblemGroup { shortName }
+      descriptor
     }
   }
 
