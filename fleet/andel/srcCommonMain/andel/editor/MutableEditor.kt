@@ -151,7 +151,7 @@ interface EditorLayout {
 interface MutableEditorLayout : EditorLayout {
   fun unfold(affectedFolds: List<Interval<*, Fold>>)
 
-  fun toggleFolds(add: List<Interval<*, Fold>>, remove: List<Interval<*, Fold>>, isConfirm: Boolean = false)
+  fun toggleFolds(add: List<Interval<*, Fold>>, remove: List<Interval<*, Fold>>)
 }
 
 // Order is significant: the greater index, the more specific is the command type
