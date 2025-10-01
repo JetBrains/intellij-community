@@ -81,7 +81,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
     get() {
       var value = isIslandsGradientEnabledCache
       if (value == null) {
-        value = Registry.`is`("idea.islands.gradient.enabled", true) && UISettings.getInstance().differentiateProjects
+        value = UISettings.getInstance().differentiateProjects
         isIslandsGradientEnabledCache = value
       }
       return value

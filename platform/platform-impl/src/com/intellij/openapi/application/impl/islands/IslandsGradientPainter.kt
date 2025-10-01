@@ -7,6 +7,7 @@ import com.intellij.ide.ui.GradientTextureCache
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.AbstractPainter
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
@@ -47,7 +48,15 @@ internal fun islandsGradientPaint(frame: IdeFrame, mainColor: Color, projectWind
   if (component is IdeGlassPaneEx && !component.isColorfulToolbar) {
     return
   }
+  if (Registry.`is`("idea.islands.color.gradient.enabled", false)) {
+    doColorGradientPaint(component, g)
+  }
+  else {
+    doGradientPaint(frame, mainColor, projectWindowCustomizer, component, g)
+  }
+}
 
+private fun doGradientPaint(frame: IdeFrame, mainColor: Color, projectWindowCustomizer: ProjectWindowCustomizerService, component: Component, g: Graphics2D) {
   val project = frame.project ?: return
 
   val centerColor = projectWindowCustomizer.getGradientProjectColor(project)
@@ -98,4 +107,31 @@ private fun getGradientCache(root: JComponent, key: String): GradientTextureCach
   val newValue = GradientTextureCache()
   root.putClientProperty(key, newValue)
   return newValue
+}
+
+private fun doColorGradientPaint(component: Component, g: Graphics2D) {
+  g.paint = LinearGradientPaint(0f, 0f, component.width.toFloat(), component.height.toFloat(),
+                                floatArrayOf(0f, 0.13f, 0.3f, 1f),
+                                arrayOf(Color(0xFF0000), Color(0x4800FF), Color(0x1FB6D4), Color(0xFF0000)))
+
+  g.fillRect(0, 0, component.width, component.height)
+
+  val ovalRadius = component.width / 4f
+  val ovalWidth = component.width / 2
+  val ovalCenterX = component.width * 0.2f
+  val ovalCenterY = 36f
+
+  g.paint = RadialGradientPaint(ovalCenterX, ovalCenterY, ovalRadius,
+                                floatArrayOf(0f, 1f),
+                                arrayOf(Color(0xE5, 0x00, 0xFF, 0xFF), Color(0xE5, 0x00, 0xFF, 0x00)))
+
+  g.fillOval((ovalCenterX - ovalRadius).toInt(), (ovalCenterY - ovalRadius).toInt(), ovalWidth, ovalWidth)
+
+  g.paint = GradientPaint(0f, 0f, Color(0x2B, 0x2D, 0x30, 0x1A), component.width.toFloat(), 0f, Color(0x2B, 0x2D, 0x30, 0x33))
+
+  g.fillRect(0, 0, component.width, component.height)
+
+  g.paint = GradientPaint(0f, 0f, Color(0x2B, 0x2D, 0x30, 0x1A), 0f, component.height.toFloat(), Color(0x2B, 0x2D, 0x30, 0x9A))
+
+  g.fillRect(0, 0, component.width, component.height)
 }
